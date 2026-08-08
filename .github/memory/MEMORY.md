@@ -41,7 +41,7 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Reveal Original is a context item](reveal-original-context-menu.md) — the 3-second hover-to-locate is gone; use `genRevealOriginal`, and note it can't open a closed panel yet
 - [Presenting Flows panel is no longer dev-only](presenting-flow-panel-no-longer-dev-only.md) — `203d35cc` dropped the `isDev` gate and took the Lyric List's slot; every "dev builds only" note is stale
 - [Presenting Flow on-screen marking design](presenting-flow-onscreen-marking-design.md) — ONE shared subscription + shared debounce for the whole tree; per-row screen hooks hit "Maximum update depth exceeded"
-- [Presenting Flow preview is a run player](presenting-flow-preview-run-player.md) — forward-only focus-gated keys; a document element is walked slide by slide before the run leaves it
+- [Presenting Flow preview is a run player](presenting-flow-preview-run-player.md) — forward-only focus-gated keys; a document element is walked slide by slide before the run leaves it; SEVERAL previews open at once now, one per file, each its own run
 - [Presenting Flow screen pinning](presenting-flow-screen-pinning.md) — `Set Specific Screen` rides `chooseScreenIds`; `isForceChoosing` and a drag deliberately outrank a pin
 - [Presenting Flow screen actions](presenting-flow-screen-actions.md) — a run sheet can hold things to DO; two families now (screen vs run), extend `presentingFlowActionList`, never `acceptedDragTypeList`
 - [Presenting Flow `Screen: Show` / `Screen: Hide`](presenting-flow-screen-show-hide.md) — the only actions that NAME their screens; asked at add time, stored in the ordinary pin, and no ambient fallback ever

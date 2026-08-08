@@ -40,9 +40,9 @@ import {
 } from './presentingFlowHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import {
-    setPresentingFlowPreviewFilePath,
+    openPresentingFlowPreviewFilePath,
     togglePresentingFlowPreviewFilePath,
-    usePresentingFlowPreviewFilePath,
+    useIsPresentingFlowPreviewOpened,
 } from './presentingFlowPreviewFloatingHelpers';
 
 function PresentingFlowItemsComp({
@@ -112,7 +112,11 @@ function PresentingFlowPreviewComp({
     presentingFlow: PresentingFlow;
 }>) {
     const fileSource = FileSource.getInstance(presentingFlow.filePath);
-    const previewingFilePath = usePresentingFlowPreviewFilePath();
+    // A boolean for THIS presenting flow rather than the whole open list, so
+    // opening a second preview re-renders only the row it was opened from.
+    const isPreviewing = useIsPresentingFlowPreviewOpened(
+        presentingFlow.filePath,
+    );
     const isOpenedRef = useAppCurrentRef(isOpened);
     const setIsOpenedRef = useAppCurrentRef(setIsOpened);
     const handleToggleOpened = useCallback(() => {
@@ -138,7 +142,7 @@ function PresentingFlowPreviewComp({
                 <i
                     className={
                         'bi bi-window-stack app-caught-hover-pointer px-1' +
-                        (previewingFilePath === presentingFlow.filePath
+                        (isPreviewing
                             ? ' app-presenting-flow-preview-showing'
                             : '')
                     }
@@ -273,7 +277,7 @@ export default function PresentingFlowFileComp({
                 childBefore: genContextMenuItemIcon('window-stack'),
                 menuElement: tran('Open Preview'),
                 onSelect: () => {
-                    setPresentingFlowPreviewFilePath(filePath);
+                    openPresentingFlowPreviewFilePath(filePath);
                 },
             },
             {

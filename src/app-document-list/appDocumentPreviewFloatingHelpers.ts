@@ -13,10 +13,11 @@ import appProvider from '../server/appProvider';
 /**
  * Which documents have a floating slides preview open.
  *
- * Unlike the presenting flow preview — deliberately ONE widget wherever it is opened
- * from — a document preview is per file: the whole point is looking at several
- * documents at once. Still at most one widget per file, because two previews of
- * one document would fight over the same persisted rect and the same zoom key.
+ * Per file, and several at once: the whole point is looking at several documents
+ * together. Still at most one widget per file, because two previews of one
+ * document would fight over the same persisted rect and the same zoom key. The
+ * presenting flow previews are the same shape, for the same reasons — see
+ * `presentingFlowPreviewFloatingHelpers`.
  *
  * In memory only. Nothing is reopened on the next launch: the widgets each hold
  * a document's slides, and restoring a set of them would put that cost on every

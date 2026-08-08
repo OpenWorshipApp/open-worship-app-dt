@@ -1,20 +1,24 @@
 ---
 name: presenting-flow-auto-next
-description: The presenting flow run can walk itself (one clock, two endings), stop its own interval and jump; the run's SELECTION CHANGING cancels a timeout and restarts an interval — raw clicks/keys mean nothing
+description: The presenting flow run can walk itself (one clock per OPEN RUN, two endings), stop its own interval and jump; the run's SELECTION CHANGING cancels a timeout and restarts an interval — raw clicks/keys mean nothing
 metadata:
   type: project
 ---
 
 `src/presenting-flow/presentingFlowAutoNextHelpers.ts` (added 2026-08-05, branch refactor24) is the
 run sheet's own clock, armed by the two `next-*` run actions of
-[[presenting-flow-screen-actions]]. ONE slot for the whole app, in memory only, ticking once a
-second and only while something is armed.
+[[presenting-flow-screen-actions]]. ONE slot **per open run** (changed 2026-08-08 with
+[[presenting-flow-preview-run-player]]'s move to several previews at once — a `runStateMap`
+keyed by file path holds the controller, the armed clock, its interval id and its
+generation together, so an entry cannot outlive the widget that registered it). In memory
+only, ticking once a second and only while something is armed.
 
 The two modes differ ONLY in what the RUN MOVING does to them. **Neither answers to raw
 input** — that was the first design and it was wrong: an unintended click anywhere killed
 the wait. The one signal is the preview's CURSOR changing
-(`notifyPresentingFlowRunSelectionChanged`, called from `notifySelecting` in
-`presentingFlowPreviewFloatingHelpers`, which is the only place that knows the run moved):
+(`notifyPresentingFlowRunSelectionChanged(filePath)`, called from `notifySelecting` in
+`presentingFlowPreviewFloatingHelpers`, which is the only place that knows the run moved —
+and it names WHICH run, so stepping one open sheet leaves another's clock ticking):
 
 - **timeout** — counts down once, forces the next selection, spent. The run going
   somewhere CANCELS it ("I have taken over"); a click on a background, a button or the

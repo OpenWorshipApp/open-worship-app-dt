@@ -105,8 +105,8 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
 | `.app-presenting-flow-cc-row` | a **CC element** row (PL-89..93) |
 | `.app-presenting-flow-row-dragging-over` / `…-over-cc` | the drop target is a REORDER / an ATTACH-AS-CC — the two drops differ only by this class |
 | `.app-presenting-flow-row-error` | a damaged entry (PL-51) |
-| `.app-presenting-flow-preview` | the floating widget, portaled to `body` |
-| `.bi-window-stack.app-presenting-flow-preview-showing` | on a presenting flow card's header icon: **this** is the presenting flow the one widget is showing (only ever one) |
+| `.app-presenting-flow-preview` | a floating widget, portaled to `body` — **several may be open at once, one per presenting flow file** |
+| `.bi-window-stack.app-presenting-flow-preview-showing` | on a presenting flow card's header icon: this presenting flow has a preview open. One per file, so several icons can wear it together |
 | `.app-presenting-flow-preview-item` (`…-body`, `…-chevron`, `…-label`) | one element inside the widget; **the chevron's state is the fold memory** (PL-58) |
 | `.app-presenting-flow-preview-item-selected` | **the run's cursor** — cyan `--bs-info` outline, on the label AND the slide card. Distinct from the magenta blinking `.app-highlight-selected`, which means "live on a screen" and can be on several cards at once |
 | `.app-presenting-flow-preview-item-disabled` / `.app-presenting-flow-preview-slide-disabled` (+ `…-icon`) | parked element / parked slide inside the widget |

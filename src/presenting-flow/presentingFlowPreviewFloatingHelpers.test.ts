@@ -29,25 +29,43 @@ import { DragTypeEnum } from '../helper/DragInf';
 import {
     checkIsPresentingFlowPreviewItemExpanded,
     checkIsPresentingFlowPreviewItemSelected,
+    checkIsPresentingFlowPreviewOpened,
+    closePresentingFlowPreviewFilePath,
     requestPresentingFlowPreviewChildEntry,
-    clearPresentingFlowPreviewSelectedItem,
     findNextPresentingFlowPreviewChildIndex,
     findNextPresentingFlowPreviewIndex,
+    forgetPresentingFlowPreviewState,
+    getPresentingFlowPreviewFilePaths,
+    openPresentingFlowPreviewFilePath,
     registerPresentingFlowPreviewChildStepping,
     stepPresentingFlowPreviewChild,
     resolvePresentingFlowPreviewSelectedChildIndex,
     resolvePresentingFlowPreviewSelectedIndex,
     setAllPresentingFlowPreviewItemsCollapsed,
-    setPresentingFlowPreviewFilePath,
     setPresentingFlowPreviewItemCollapsed,
     setPresentingFlowPreviewSelectedChild,
     setPresentingFlowPreviewSelectedItem,
     toPresentingFlowPreviewItemKey,
+    togglePresentingFlowPreviewFilePath,
 } from './presentingFlowPreviewFloatingHelpers';
 
 const PRESENTING_FLOW_FILE_PATH = '/data/presenting-flows/pl2.owpf';
+const OTHER_PRESENTING_FLOW_FILE_PATH = '/data/presenting-flows/pl1.owpf';
 const SETTING_NAME =
     'presenting-flow-preview-collapsed-_data_presenting-flows_pl2_owpf';
+
+// Every widget the tests may have opened, and every cursor they may have left
+// behind: these are module-level stores, so one test's run must not be the state
+// the next one starts from.
+function resetPresentingFlowPreviews() {
+    for (const filePath of [
+        PRESENTING_FLOW_FILE_PATH,
+        OTHER_PRESENTING_FLOW_FILE_PATH,
+    ]) {
+        closePresentingFlowPreviewFilePath(filePath);
+        forgetPresentingFlowPreviewState(filePath);
+    }
+}
 
 function genActionItem(actionId: PresentingFlowActionIdType) {
     return PresentingFlowItem.fromJson(
@@ -71,6 +89,7 @@ function genSlideItem(
 describe('presenting flow preview collapsing', () => {
     beforeEach(() => {
         getSettingMock.mockReturnValue(null);
+        resetPresentingFlowPreviews();
     });
     afterEach(() => {
         vi.clearAllMocks();
@@ -325,7 +344,7 @@ function select(presentingFlowItems: PresentingFlowItem[], index: number) {
 describe('presenting flow preview next-element stepping', () => {
     beforeEach(() => {
         getSettingMock.mockReturnValue(null);
-        clearPresentingFlowPreviewSelectedItem();
+        resetPresentingFlowPreviews();
     });
     afterEach(() => {
         vi.clearAllMocks();
@@ -590,27 +609,80 @@ describe('presenting flow preview next-element stepping', () => {
     test('a registered stepping is reachable and drops on cleanup', () => {
         const stepping = vi.fn().mockReturnValue(true);
         const unregister = registerPresentingFlowPreviewChildStepping(
+            PRESENTING_FLOW_FILE_PATH,
             2,
             stepping,
         );
         const mouseEvent = new MouseEvent('click');
-        expect(stepPresentingFlowPreviewChild(2, mouseEvent, false)).toBe(true);
+        expect(
+            stepPresentingFlowPreviewChild(
+                PRESENTING_FLOW_FILE_PATH,
+                2,
+                mouseEvent,
+                false,
+            ),
+        ).toBe(true);
         expect(stepping).toHaveBeenCalledWith(mouseEvent, false);
         // An element with nothing registered simply has nothing to walk.
-        expect(stepPresentingFlowPreviewChild(3, mouseEvent, false)).toBe(
-            false,
-        );
+        expect(
+            stepPresentingFlowPreviewChild(
+                PRESENTING_FLOW_FILE_PATH,
+                3,
+                mouseEvent,
+                false,
+            ),
+        ).toBe(false);
         unregister();
-        expect(stepPresentingFlowPreviewChild(2, mouseEvent, false)).toBe(
+        expect(
+            stepPresentingFlowPreviewChild(
+                PRESENTING_FLOW_FILE_PATH,
+                2,
+                mouseEvent,
+                false,
+            ),
+        ).toBe(false);
+    });
+
+    test('one sheet’s element 2 is not another sheet’s element 2', () => {
+        const stepping = vi.fn().mockReturnValue(true);
+        const otherStepping = vi.fn().mockReturnValue(true);
+        registerPresentingFlowPreviewChildStepping(
+            PRESENTING_FLOW_FILE_PATH,
+            2,
+            stepping,
+        );
+        registerPresentingFlowPreviewChildStepping(
+            OTHER_PRESENTING_FLOW_FILE_PATH,
+            2,
+            otherStepping,
+        );
+        const mouseEvent = new MouseEvent('click');
+        stepPresentingFlowPreviewChild(
+            OTHER_PRESENTING_FLOW_FILE_PATH,
+            2,
+            mouseEvent,
             false,
         );
+        // Two open sheets both have an element 2, and a press in one must never
+        // walk the other's document.
+        expect(otherStepping).toHaveBeenCalledTimes(1);
+        expect(stepping).not.toHaveBeenCalled();
     });
 
     test('crossing into an element is told apart from walking it', () => {
         const stepping = vi.fn().mockReturnValue(true);
-        registerPresentingFlowPreviewChildStepping(4, stepping);
+        registerPresentingFlowPreviewChildStepping(
+            PRESENTING_FLOW_FILE_PATH,
+            4,
+            stepping,
+        );
         const mouseEvent = new MouseEvent('click');
-        stepPresentingFlowPreviewChild(4, mouseEvent, true);
+        stepPresentingFlowPreviewChild(
+            PRESENTING_FLOW_FILE_PATH,
+            4,
+            mouseEvent,
+            true,
+        );
         expect(stepping).toHaveBeenCalledWith(mouseEvent, true);
     });
 
@@ -618,13 +690,23 @@ describe('presenting flow preview next-element stepping', () => {
         const oldStepping = vi.fn().mockReturnValue(true);
         const newStepping = vi.fn().mockReturnValue(true);
         const unregisterOld = registerPresentingFlowPreviewChildStepping(
+            PRESENTING_FLOW_FILE_PATH,
             1,
             oldStepping,
         );
-        registerPresentingFlowPreviewChildStepping(1, newStepping);
+        registerPresentingFlowPreviewChildStepping(
+            PRESENTING_FLOW_FILE_PATH,
+            1,
+            newStepping,
+        );
         unregisterOld();
         expect(
-            stepPresentingFlowPreviewChild(1, new MouseEvent('click'), false),
+            stepPresentingFlowPreviewChild(
+                PRESENTING_FLOW_FILE_PATH,
+                1,
+                new MouseEvent('click'),
+                false,
+            ),
         ).toBe(true);
         expect(oldStepping).not.toHaveBeenCalled();
         expect(newStepping).toHaveBeenCalled();
@@ -632,12 +714,20 @@ describe('presenting flow preview next-element stepping', () => {
 
     test('an element landed on while still loading is entered when it can be', async () => {
         const mouseEvent = new MouseEvent('click');
-        requestPresentingFlowPreviewChildEntry(7, mouseEvent);
+        requestPresentingFlowPreviewChildEntry(
+            PRESENTING_FLOW_FILE_PATH,
+            7,
+            mouseEvent,
+        );
         const stepping = vi.fn().mockReturnValue(true);
 
         // Nothing happens until the slides actually arrive...
         expect(stepping).not.toHaveBeenCalled();
-        registerPresentingFlowPreviewChildStepping(7, stepping);
+        registerPresentingFlowPreviewChildStepping(
+            PRESENTING_FLOW_FILE_PATH,
+            7,
+            stepping,
+        );
         // ...and then a macrotask later, not inside the mount that registered it.
         expect(stepping).not.toHaveBeenCalled();
         await new Promise((resolve) => {
@@ -647,38 +737,145 @@ describe('presenting flow preview next-element stepping', () => {
 
         // Spent: a later re-register must not enter it all over again.
         const laterStepping = vi.fn().mockReturnValue(true);
-        registerPresentingFlowPreviewChildStepping(7, laterStepping);
+        registerPresentingFlowPreviewChildStepping(
+            PRESENTING_FLOW_FILE_PATH,
+            7,
+            laterStepping,
+        );
         await new Promise((resolve) => {
             setTimeout(resolve, 5);
         });
         expect(laterStepping).not.toHaveBeenCalled();
     });
 
+    test('an entry waiting in one sheet is not answered by another', async () => {
+        requestPresentingFlowPreviewChildEntry(
+            PRESENTING_FLOW_FILE_PATH,
+            6,
+            new MouseEvent('click'),
+        );
+        const otherStepping = vi.fn().mockReturnValue(true);
+        registerPresentingFlowPreviewChildStepping(
+            OTHER_PRESENTING_FLOW_FILE_PATH,
+            6,
+            otherStepping,
+        );
+        await new Promise((resolve) => {
+            setTimeout(resolve, 5);
+        });
+        // The other sheet merely unfolded its own element 6 — it is not where
+        // this run landed, and it must not put a slide on a screen for it.
+        expect(otherStepping).not.toHaveBeenCalled();
+    });
+
     test('the run moving on drops an entry that had not happened yet', async () => {
         const presentingFlowItems = [genSlideItem(), genDocumentItem()];
-        requestPresentingFlowPreviewChildEntry(8, new MouseEvent('click'));
+        requestPresentingFlowPreviewChildEntry(
+            PRESENTING_FLOW_FILE_PATH,
+            8,
+            new MouseEvent('click'),
+        );
         // The operator stepped somewhere else while the document was loading.
         select(presentingFlowItems, 0);
 
         const stepping = vi.fn().mockReturnValue(true);
-        registerPresentingFlowPreviewChildStepping(8, stepping);
+        registerPresentingFlowPreviewChildStepping(
+            PRESENTING_FLOW_FILE_PATH,
+            8,
+            stepping,
+        );
         await new Promise((resolve) => {
             setTimeout(resolve, 5);
         });
         expect(stepping).not.toHaveBeenCalled();
     });
 
-    test('closing the widget forgets where the run had got to', () => {
+    test('closing one widget forgets where ITS run had got to', () => {
         const presentingFlowItems = [genSlideItem()];
-        setPresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
+        openPresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
+        openPresentingFlowPreviewFilePath(OTHER_PRESENTING_FLOW_FILE_PATH);
         select(presentingFlowItems, 0);
-        setPresentingFlowPreviewFilePath(null);
+        setPresentingFlowPreviewSelectedItem(
+            OTHER_PRESENTING_FLOW_FILE_PATH,
+            toPresentingFlowPreviewItemKey(presentingFlowItems[0]),
+            0,
+        );
+        closePresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
         expect(
             resolvePresentingFlowPreviewSelectedIndex(
                 PRESENTING_FLOW_FILE_PATH,
                 presentingFlowItems,
             ),
         ).toBe(-1);
+        // The other sheet is still open, and its run is exactly where it was.
+        expect(
+            resolvePresentingFlowPreviewSelectedIndex(
+                OTHER_PRESENTING_FLOW_FILE_PATH,
+                presentingFlowItems,
+            ),
+        ).toBe(0);
+    });
+});
+
+describe('presenting flow previews opened at once', () => {
+    beforeEach(() => {
+        getSettingMock.mockReturnValue(null);
+        resetPresentingFlowPreviews();
+    });
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    test('several sheets can be open together, in the order they were opened', () => {
+        openPresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
+        openPresentingFlowPreviewFilePath(OTHER_PRESENTING_FLOW_FILE_PATH);
+        expect(getPresentingFlowPreviewFilePaths()).toEqual([
+            PRESENTING_FLOW_FILE_PATH,
+            OTHER_PRESENTING_FLOW_FILE_PATH,
+        ]);
+        expect(
+            checkIsPresentingFlowPreviewOpened(PRESENTING_FLOW_FILE_PATH),
+        ).toBe(true);
+    });
+
+    test('one sheet gets one widget, however often it is asked for', () => {
+        openPresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
+        openPresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
+        // Two widgets on one presenting flow would fight over the same persisted
+        // rect, the same folding and the same cursor.
+        expect(getPresentingFlowPreviewFilePaths()).toHaveLength(1);
+    });
+
+    test('closing one leaves the others open', () => {
+        openPresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
+        openPresentingFlowPreviewFilePath(OTHER_PRESENTING_FLOW_FILE_PATH);
+        closePresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
+        expect(getPresentingFlowPreviewFilePaths()).toEqual([
+            OTHER_PRESENTING_FLOW_FILE_PATH,
+        ]);
+    });
+
+    test('the list is replaced rather than mutated', () => {
+        openPresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
+        const before = getPresentingFlowPreviewFilePaths();
+        // `useSyncExternalStore` compares snapshots by identity: a mutated array
+        // would leave every row showing the state it opened with.
+        openPresentingFlowPreviewFilePath(OTHER_PRESENTING_FLOW_FILE_PATH);
+        expect(getPresentingFlowPreviewFilePaths()).not.toBe(before);
+        // ...and an open that changes nothing keeps the very same snapshot.
+        const after = getPresentingFlowPreviewFilePaths();
+        openPresentingFlowPreviewFilePath(OTHER_PRESENTING_FLOW_FILE_PATH);
+        expect(getPresentingFlowPreviewFilePaths()).toBe(after);
+    });
+
+    test('the row toggle opens and closes only its own sheet', () => {
+        openPresentingFlowPreviewFilePath(OTHER_PRESENTING_FLOW_FILE_PATH);
+        togglePresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
+        expect(getPresentingFlowPreviewFilePaths()).toHaveLength(2);
+        togglePresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
+        expect(getPresentingFlowPreviewFilePaths()).toEqual([
+            OTHER_PRESENTING_FLOW_FILE_PATH,
+        ]);
     });
 });
 
@@ -691,7 +888,7 @@ describe('presenting flow preview slide cursor', () => {
 
     beforeEach(() => {
         getSettingMock.mockReturnValue(null);
-        clearPresentingFlowPreviewSelectedItem();
+        resetPresentingFlowPreviews();
     });
     afterEach(() => {
         vi.clearAllMocks();
@@ -813,9 +1010,9 @@ describe('presenting flow preview slide cursor', () => {
 
     test('closing the widget forgets the slide too', () => {
         const presentingFlowItems = [genDocumentItem()];
-        setPresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
+        openPresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
         selectChild(presentingFlowItems, 0, 5);
-        setPresentingFlowPreviewFilePath(null);
+        closePresentingFlowPreviewFilePath(PRESENTING_FLOW_FILE_PATH);
         expect(resolveChild(presentingFlowItems, 0)).toBe(-1);
     });
 

@@ -691,8 +691,13 @@ PL-54 / PL-58.
 
 ### 14.6 The floating preview is a run-sheet player
 
-- Exactly ONE widget at a time (a shared store, not per-row state); opening another
-  presenting flow's preview replaces it and clears the remembered position.
+- **SEVERAL widgets may be open at once, one per FILE** (2026-08-08; before that a shared
+  slot meant opening another presenting flow's preview REPLACED the first and threw its
+  run position away). Each is its own run — its own cursor, its own folding, its own
+  auto-next clock — and its own rect under
+  `floating-widget-rect-presenting-flow-preview-<sanitized path>`, staggered 24px on first
+  open. Every icon of a previewed presenting flow is highlighted, not just one. The zoom
+  slider stays a single shared setting, so zooming one resizes them all.
 - **Space / ↓ / → / PageDown** step the run FORWARD only — no wrap, because wrapping
   round to element 1 mid-service would put the wrong thing on a live screen. The keys are
   gated on focus being inside the widget, since the presenter's slide list answers the very

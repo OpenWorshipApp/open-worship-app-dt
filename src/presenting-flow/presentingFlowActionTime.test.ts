@@ -80,7 +80,7 @@ describe('counting down to a time of day', () => {
         vi.setSystemTime(NOW);
     });
     afterEach(() => {
-        stopPresentingFlowAutoNext();
+        stopPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH);
         vi.useRealTimers();
         vi.clearAllMocks();
     });
@@ -92,7 +92,9 @@ describe('counting down to a time of day', () => {
                 '14:35',
             ),
         ).toBe('Open the presenting flow preview to use this action');
-        expect(getPresentingFlowAutoNextState()).toBe(null);
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
     });
 
     test('it arms a TIMEOUT with the seconds to that time', () => {
@@ -106,7 +108,9 @@ describe('counting down to a time of day', () => {
                 '14:35',
             ),
         ).toBe(null);
-        expect(getPresentingFlowAutoNextState()).toEqual({
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH),
+        ).toEqual({
             mode: 'timeout',
             seconds: 300,
             remainingSeconds: 300,
@@ -127,7 +131,9 @@ describe('counting down to a time of day', () => {
                 '08:30',
             ),
         ).toBe('The set time is already due');
-        expect(getPresentingFlowAutoNextState()).toBe(null);
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
         unregister();
     });
 
@@ -142,11 +148,16 @@ describe('counting down to a time of day', () => {
         startPresentingFlowAutoNextAtTime(PRESENTING_FLOW_FILE_PATH, '14:32');
         vi.advanceTimersByTime(119_000);
         expect(stepForward).not.toHaveBeenCalled();
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(1);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(1);
         vi.advanceTimersByTime(1_000);
         expect(stepForward).toHaveBeenCalledTimes(1);
         // A timeout is spent when it fires — it does not go round again.
-        expect(getPresentingFlowAutoNextState()).toBe(null);
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
         unregister();
     });
 
@@ -162,12 +173,18 @@ describe('counting down to a time of day', () => {
             genController(stepForward),
         );
         startPresentingFlowAutoNextAtTime(PRESENTING_FLOW_FILE_PATH, '14:40');
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(600);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(600);
         // One tick delivered, nine minutes of wall clock gone with it (and the
         // second the tick itself takes).
         vi.setSystemTime(NOW + 9 * 60 * 1000);
         vi.advanceTimersByTime(1_000);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(59);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(59);
         expect(stepForward).not.toHaveBeenCalled();
         unregister();
     });

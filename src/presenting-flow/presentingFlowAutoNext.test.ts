@@ -41,7 +41,8 @@ describe('presenting flow auto next', () => {
         vi.useFakeTimers();
     });
     afterEach(() => {
-        stopPresentingFlowAutoNext();
+        stopPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH);
+        stopPresentingFlowAutoNext(OTHER_FILE_PATH);
         vi.useRealTimers();
         vi.clearAllMocks();
     });
@@ -57,7 +58,9 @@ describe('presenting flow auto next', () => {
                 5,
             ),
         ).toBe(false);
-        expect(getPresentingFlowAutoNextState()).toBe(null);
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
     });
 
     test('a run open on ANOTHER presenting flow does not answer', () => {
@@ -97,7 +100,9 @@ describe('presenting flow auto next', () => {
                 -3,
             ),
         ).toBe(false);
-        expect(getPresentingFlowAutoNextState()).toBe(null);
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
         unregister();
     });
 
@@ -108,14 +113,22 @@ describe('presenting flow auto next', () => {
             genController(step),
         );
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'timeout', 3);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(3);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(3);
         tickSeconds(2);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(1);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(1);
         expect(step).not.toHaveBeenCalled();
         tickSeconds(1);
         expect(step).toHaveBeenCalledTimes(1);
         // Spent: the panel must not be left showing a 0 that never fires again.
-        expect(getPresentingFlowAutoNextState()).toBe(null);
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
         tickSeconds(10);
         expect(step).toHaveBeenCalledTimes(1);
         unregister();
@@ -133,10 +146,15 @@ describe('presenting flow auto next', () => {
         window.dispatchEvent(new Event('pointerdown'));
         window.dispatchEvent(new Event('keydown'));
         tickSeconds(2);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(3);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(3);
         // Going somewhere in the run IS.
-        notifyPresentingFlowRunSelectionChanged();
-        expect(getPresentingFlowAutoNextState()).toBe(null);
+        notifyPresentingFlowRunSelectionChanged(PRESENTING_FLOW_FILE_PATH);
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
         tickSeconds(10);
         expect(step).not.toHaveBeenCalled();
         unregister();
@@ -150,11 +168,17 @@ describe('presenting flow auto next', () => {
         );
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 4);
         tickSeconds(3);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(1);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(1);
         // The operator stepped ahead by hand: the line they landed on gets the
         // WHOLE interval, not the second that was left of the last one.
-        notifyPresentingFlowRunSelectionChanged();
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(4);
+        notifyPresentingFlowRunSelectionChanged(PRESENTING_FLOW_FILE_PATH);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(4);
         tickSeconds(3);
         expect(step).not.toHaveBeenCalled();
         tickSeconds(1);
@@ -171,11 +195,16 @@ describe('presenting flow auto next', () => {
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 2);
         window.dispatchEvent(new Event('pointerdown'));
         window.dispatchEvent(new Event('keydown'));
-        expect(getPresentingFlowAutoNextState()?.mode).toBe('interval');
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)?.mode,
+        ).toBe('interval');
         tickSeconds(2);
         expect(step).toHaveBeenCalledTimes(1);
         // Counting again from what it was armed with, not stopping.
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(2);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(2);
         tickSeconds(4);
         expect(step).toHaveBeenCalledTimes(3);
         unregister();
@@ -190,7 +219,9 @@ describe('presenting flow auto next', () => {
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 1);
         tickSeconds(1);
         expect(step).toHaveBeenCalledTimes(1);
-        expect(getPresentingFlowAutoNextState()).toBe(null);
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
         tickSeconds(10);
         expect(step).toHaveBeenCalledTimes(1);
         unregister();
@@ -203,7 +234,9 @@ describe('presenting flow auto next', () => {
         );
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'timeout', 9);
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'timeout', 4);
-        expect(getPresentingFlowAutoNextState()).toEqual({
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH),
+        ).toEqual({
             mode: 'timeout',
             seconds: 4,
             remainingSeconds: 4,
@@ -215,7 +248,9 @@ describe('presenting flow auto next', () => {
         // operator naming the sheet's own pace.
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 6);
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 2);
-        expect(getPresentingFlowAutoNextState()?.seconds).toBe(2);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)?.seconds,
+        ).toBe(2);
         unregister();
     });
 
@@ -227,7 +262,10 @@ describe('presenting flow auto next', () => {
         );
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 5);
         tickSeconds(2);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(3);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(3);
         // The line the run is showing carries a `Next: Timeout (7)`: hold this
         // one longer, do not kill the loop walking the sheet.
         expect(
@@ -237,7 +275,9 @@ describe('presenting flow auto next', () => {
                 7,
             ),
         ).toBe(true);
-        expect(getPresentingFlowAutoNextState()).toEqual({
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH),
+        ).toEqual({
             mode: 'interval',
             // What it goes back to counting once this cycle is spent.
             seconds: 5,
@@ -247,14 +287,23 @@ describe('presenting flow auto next', () => {
         });
         tickSeconds(6);
         expect(step).not.toHaveBeenCalled();
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(1);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(1);
         tickSeconds(1);
         expect(step).toHaveBeenCalledTimes(1);
         // Spent: its own count from here on, 5 and not 7.
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(5);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(5);
         tickSeconds(5);
         expect(step).toHaveBeenCalledTimes(2);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(5);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(5);
         unregister();
     });
 
@@ -270,12 +319,17 @@ describe('presenting flow auto next', () => {
             30,
             Date.now() + 30_000,
         );
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(30);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(30);
         // The operator stepped ahead by hand: the line they landed on gets the
         // interval's own count, and the wall clock the borrow was reading goes
         // with it — left behind, every later tick would read a time long past.
-        notifyPresentingFlowRunSelectionChanged();
-        expect(getPresentingFlowAutoNextState()).toEqual({
+        notifyPresentingFlowRunSelectionChanged(PRESENTING_FLOW_FILE_PATH);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH),
+        ).toEqual({
             mode: 'interval',
             seconds: 4,
             remainingSeconds: 4,
@@ -300,7 +354,9 @@ describe('presenting flow auto next', () => {
         );
         tickSeconds(2);
         expect(step).toHaveBeenCalledTimes(1);
-        expect(getPresentingFlowAutoNextState()).toEqual({
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH),
+        ).toEqual({
             mode: 'interval',
             seconds: 3,
             remainingSeconds: 3,
@@ -311,7 +367,10 @@ describe('presenting flow auto next', () => {
         // gone by — which would step the run every single tick.
         tickSeconds(1);
         expect(step).toHaveBeenCalledTimes(1);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(2);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(2);
         unregister();
     });
 
@@ -323,18 +382,28 @@ describe('presenting flow auto next', () => {
         );
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'timeout', 5);
         tickSeconds(2);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(3);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(3);
 
-        setPresentingFlowAutoNextPaused(true);
-        expect(getPresentingFlowAutoNextState()?.isPaused).toBe(true);
+        setPresentingFlowAutoNextPaused(PRESENTING_FLOW_FILE_PATH, true);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)?.isPaused,
+        ).toBe(true);
         // Frozen, and costing nothing: the ticking is cleared outright rather
         // than left running against a flag.
         tickSeconds(30);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(3);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(3);
         expect(step).not.toHaveBeenCalled();
 
-        setPresentingFlowAutoNextPaused(false);
-        expect(getPresentingFlowAutoNextState()?.isPaused).toBe(false);
+        setPresentingFlowAutoNextPaused(PRESENTING_FLOW_FILE_PATH, false);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)?.isPaused,
+        ).toBe(false);
         tickSeconds(3);
         expect(step).toHaveBeenCalledTimes(1);
         unregister();
@@ -353,15 +422,20 @@ describe('presenting flow auto next', () => {
             Date.now() + 10_000,
         );
         tickSeconds(2);
-        setPresentingFlowAutoNextPaused(true);
+        setPresentingFlowAutoNextPaused(PRESENTING_FLOW_FILE_PATH, true);
         // Holding "go on at 7:05" means the run waits that many more seconds
         // from when it is let go — not that the hour comes round anyway.
-        expect(getPresentingFlowAutoNextState()?.dueTime).toBe(null);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(8);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)?.dueTime,
+        ).toBe(null);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(8);
         tickSeconds(60);
         expect(step).not.toHaveBeenCalled();
 
-        setPresentingFlowAutoNextPaused(false);
+        setPresentingFlowAutoNextPaused(PRESENTING_FLOW_FILE_PATH, false);
         tickSeconds(7);
         expect(step).not.toHaveBeenCalled();
         tickSeconds(1);
@@ -376,12 +450,17 @@ describe('presenting flow auto next', () => {
             genController(step),
         );
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 4);
-        setPresentingFlowAutoNextPaused(true);
+        setPresentingFlowAutoNextPaused(PRESENTING_FLOW_FILE_PATH, true);
         // A line going up with a timeout attached is not the operator letting
         // the run walk itself again.
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'timeout', 7);
-        expect(getPresentingFlowAutoNextState()?.isPaused).toBe(true);
-        expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(7);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)?.isPaused,
+        ).toBe(true);
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)
+                ?.remainingSeconds,
+        ).toBe(7);
         tickSeconds(20);
         expect(step).not.toHaveBeenCalled();
         unregister();
@@ -396,11 +475,13 @@ describe('presenting flow auto next', () => {
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 3);
         // Even while HELD: a paused interval is still an interval, and holding
         // it is not the sheet having said "stop looping".
-        setPresentingFlowAutoNextPaused(true);
+        setPresentingFlowAutoNextPaused(PRESENTING_FLOW_FILE_PATH, true);
         expect(
             stopPresentingFlowAutoNextInterval(PRESENTING_FLOW_FILE_PATH),
         ).toBe(true);
-        expect(getPresentingFlowAutoNextState()).toBe(null);
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
         tickSeconds(30);
         expect(step).not.toHaveBeenCalled();
 
@@ -410,7 +491,9 @@ describe('presenting flow auto next', () => {
         expect(
             stopPresentingFlowAutoNextInterval(PRESENTING_FLOW_FILE_PATH),
         ).toBe(true);
-        expect(getPresentingFlowAutoNextState()?.mode).toBe('timeout');
+        expect(
+            getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)?.mode,
+        ).toBe('timeout');
         tickSeconds(4);
         expect(step).toHaveBeenCalledTimes(1);
 
@@ -444,10 +527,69 @@ describe('presenting flow auto next', () => {
         // the loop" — unlike the interval it ends.
         expect(presentingFlowItem.runAction?.canBeCcItem).toBe(true);
         firePresentingFlowRunAction(presentingFlowItem);
-        expect(getPresentingFlowAutoNextState()).toBe(null);
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
         tickSeconds(10);
         expect(step).not.toHaveBeenCalled();
         unregister();
+    });
+
+    test('two open runs each keep their own clock', () => {
+        const step = genStepping();
+        const otherStep = genStepping();
+        const unregister = registerPresentingFlowRunController(
+            PRESENTING_FLOW_FILE_PATH,
+            genController(step),
+        );
+        const unregisterOther = registerPresentingFlowRunController(
+            OTHER_FILE_PATH,
+            genController(otherStep),
+        );
+        // A pre-service loop walking one sheet while the operator steps through
+        // another: arming one must not touch the other's count.
+        startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 2);
+        startPresentingFlowAutoNext(OTHER_FILE_PATH, 'timeout', 5);
+        expect(getPresentingFlowAutoNextState(OTHER_FILE_PATH)?.mode).toBe(
+            'timeout',
+        );
+        tickSeconds(2);
+        expect(step).toHaveBeenCalledTimes(1);
+        expect(otherStep).not.toHaveBeenCalled();
+        expect(
+            getPresentingFlowAutoNextState(OTHER_FILE_PATH)?.remainingSeconds,
+        ).toBe(3);
+        // Stepping one sheet by hand is not the other sheet's operator taking
+        // over, so the timeout waiting there is left counting.
+        notifyPresentingFlowRunSelectionChanged(PRESENTING_FLOW_FILE_PATH);
+        expect(getPresentingFlowAutoNextState(OTHER_FILE_PATH)).not.toBe(null);
+        tickSeconds(3);
+        expect(otherStep).toHaveBeenCalledTimes(1);
+        unregister();
+        unregisterOther();
+    });
+
+    test('closing one run leaves the other one ticking', () => {
+        const step = genStepping();
+        const otherStep = genStepping();
+        const unregister = registerPresentingFlowRunController(
+            PRESENTING_FLOW_FILE_PATH,
+            genController(step),
+        );
+        const unregisterOther = registerPresentingFlowRunController(
+            OTHER_FILE_PATH,
+            genController(otherStep),
+        );
+        startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 2);
+        startPresentingFlowAutoNext(OTHER_FILE_PATH, 'interval', 2);
+        unregister();
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
+        tickSeconds(4);
+        expect(step).not.toHaveBeenCalled();
+        expect(otherStep).toHaveBeenCalledTimes(2);
+        unregisterOther();
     });
 
     test('closing the run stops the clock with it', () => {
@@ -458,7 +600,9 @@ describe('presenting flow auto next', () => {
         );
         startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 2);
         unregister();
-        expect(getPresentingFlowAutoNextState()).toBe(null);
+        expect(getPresentingFlowAutoNextState(PRESENTING_FLOW_FILE_PATH)).toBe(
+            null,
+        );
         tickSeconds(10);
         expect(step).not.toHaveBeenCalled();
     });

@@ -25,7 +25,7 @@ export default function RenderHiddenWidgetTitleComp({
             title={`${tran('Enable')} ${widgetName}`}
             className={
                 `${ACTIVE_HIDDEN_WIDGET_CLASS} ${HIDDEN_WIDGET_CLASS}` +
-                ` app-caught-hover-pointer bar-type-${type}` +
+                ` bar-type-${type}` +
                 (isOnScreen ? ` app-hidden-widget-on-screen` : '')
             }
             style={{

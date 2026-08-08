@@ -87,6 +87,33 @@ Two widgets only, top to bottom: **Documents**, then **Presenting Flows**. The s
   `.app-on-screen` on the label while live). Header icon `bi-window-stack` opens the
   floating preview (`.app-presenting-flow-preview`, portaled to `body`). See knowledge-base §14.
 
+#### Presenting Flow deep-mode selectors (the assertions PL-32..PL-99 are read from)
+
+Prefer these over text — the labels are translated, these are not. Component elements can
+also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
+
+| selector | means |
+|---|---|
+| `.app-presenting-flow-row` | one element row in the tree |
+| `.app-presenting-flow-row-index` / `.app-presenting-flow-row-id` | its position number / its badge (`#3`, or an action's glyph — **tinted with the icon's colour for an action**) |
+| `.app-presenting-flow-row-icon` | the kind icon; its inline `color` is the action's colour |
+| `.app-presenting-flow-row-chevron` | the expand/collapse affordance (absent = nothing to expand) |
+| `.app-presenting-flow-row-disabled` + `.app-presenting-flow-row-disabled-icon` | **parked**; `…-icon-presenting-flow` + `…-label-parked` + `bi-slash-circle` = parked by the RUN SHEET, plain `bi-eye-slash` = hidden by the document |
+| `.app-presenting-flow-row-disabled-presenting-flow` | the whole presenting flow card is parked |
+| `.app-presenting-flow-row-screen-pin` | a **Set Specific Screen** pin is on this row (PL-81..85) |
+| `.app-presenting-flow-row-color-note` | the colour dot (PL-52) |
+| `.app-presenting-flow-cc-row` | a **CC element** row (PL-89..93) |
+| `.app-presenting-flow-row-dragging-over` / `…-over-cc` | the drop target is a REORDER / an ATTACH-AS-CC — the two drops differ only by this class |
+| `.app-presenting-flow-row-error` | a damaged entry (PL-51) |
+| `.app-presenting-flow-preview` | a floating widget, portaled to `body` — **several may be open at once, one per presenting flow file** |
+| `.bi-window-stack.app-presenting-flow-preview-showing` | on a presenting flow card's header icon: this presenting flow has a preview open. One per file, so several icons can wear it together |
+| `.app-presenting-flow-preview-item` (`…-body`, `…-chevron`, `…-label`) | one element inside the widget; **the chevron's state is the fold memory** (PL-58) |
+| `.app-presenting-flow-preview-item-selected` | **the run's cursor** — cyan `--bs-info` outline, on the label AND the slide card. Distinct from the magenta blinking `.app-highlight-selected`, which means "live on a screen" and can be on several cards at once |
+| `.app-presenting-flow-preview-item-disabled` / `.app-presenting-flow-preview-slide-disabled` (+ `…-icon`) | parked element / parked slide inside the widget |
+| `.app-presenting-flow-preview-auto-next` (`…-interval`, `…-paused`, `…-button`) | the clock pill at the widget's top-right (PL-95) |
+| `.app-presenting-flow-preview-cc-rows` | the CC rows under a slide card |
+| `.app-presenting-flow-preview-collapsing-buttons` | **Collapse All** / **Expand All** (PL-47) |
+
 ### Middle column — presenter + background
 - **Presenter tabs** (`.nav.nav-tabs`): `Documents`, `Lyrics`, `Bibles`, `Foreground`.
   Active tab has `.active`; a tab shows `.app-on-screen` when its content is live on the

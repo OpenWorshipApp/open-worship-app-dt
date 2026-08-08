@@ -10,6 +10,7 @@ import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { useVarySlideThumbnailSizeScale } from '../event/VaryAppDocumentEventListener';
 import AppRangeComp, { useZoomingRegistering } from '../others/AppRangeComp';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
+import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { handleAutoHide } from '../helper/domHelpers';
 import { handleError } from '../helper/errorHelpers';
 import FileSource from '../helper/FileSource';
@@ -33,6 +34,7 @@ import { refreshOnScreenAfterPresenting } from './presentingFlowOnScreenHelpers'
 import {
     PRESENTING_FLOW_PREVIEW_ITEM_INDEX_KEY,
     bringPresentingFlowRunElementToView,
+    closePresentingFlowPreviewFilePath,
     collectPresentingFlowRunShortcutKeys,
     expandPresentingFlowPreviewItem,
     findNextPresentingFlowPreviewIndex,
@@ -41,19 +43,32 @@ import {
     resolvePresentingFlowPreviewSelectedIndex,
     stepPresentingFlowPreviewChild,
     setAllPresentingFlowPreviewItemsCollapsed,
-    setPresentingFlowPreviewFilePath,
     setPresentingFlowPreviewSelectedItem,
     toPresentingFlowPreviewItemKey,
+    toPresentingFlowPreviewRectSettingName,
     usePresentingFlowPreviewCollapsedCount,
-    usePresentingFlowPreviewFilePath,
+    usePresentingFlowPreviewFilePaths,
 } from './presentingFlowPreviewFloatingHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 
 // Its own setting, so zooming the presenting flow preview does not resize the slides
 // in the documents previewer (and the other way round).
+//
+// SHARED by every open preview on purpose, unlike the rect beside it: how big a
+// thumbnail should be is one preference about this operator's eyes and this
+// machine's screen, not a property of one run sheet — and the sizing event every
+// widget already answers to keeps them in step for free, with no extra settings
+// file per presenting flow.
 const THUMBNAIL_SCALE_SETTING_NAME =
     'presenting-flow-preview-thumbnail-size-scale';
 const DEFAULT_THUMBNAIL_SCALE = 50;
+
+// So a second widget opened before either has been moved does not land exactly
+// on top of the first. It shifts the FIRST-EVER position only — once a widget
+// has been dragged, its own persisted rect wins. Same pair, and the same
+// reasoning, as the documents panel's floating previews.
+const WIDGET_STAGGER_STEP = 24;
+const WIDGET_STAGGER_COUNT = 6;
 
 // The same keys that advance the presenter's own slide list, forward only —
 // a run sheet is walked from where it is to its end.
@@ -150,6 +165,7 @@ function stepPresentingFlowRunForward(
     if (
         fromIndex !== -1 &&
         stepPresentingFlowPreviewChild(
+            filePath,
             fromIndex,
             toElementMouseEvent(toElementBox(container, fromIndex)),
             false,
@@ -210,7 +226,7 @@ function landPresentingFlowRunOnIndex(
     const mouseEvent = toElementMouseEvent(element);
     // Crossing into an element that holds slides always opens it at its FIRST
     // one, whatever of it may still be on a screen.
-    if (stepPresentingFlowPreviewChild(index, mouseEvent, true)) {
+    if (stepPresentingFlowPreviewChild(filePath, index, mouseEvent, true)) {
         return;
     }
     // It holds slides but has none to walk YET: unfolding it a moment ago is
@@ -219,7 +235,7 @@ function landPresentingFlowRunOnIndex(
     // stepping onto a folded song would show nothing and the run would look
     // stuck on its header.
     if (presentingFlowItem.isAppDocument) {
-        requestPresentingFlowPreviewChildEntry(index, mouseEvent);
+        requestPresentingFlowPreviewChildEntry(filePath, index, mouseEvent);
         return;
     }
     // Only the kinds that DO something when the run reaches them have anything
@@ -422,8 +438,12 @@ function usePresentingFlowRunShortcuts(
  * read as part of the widget's furniture rather than as "this run is moving
  * itself". A div rather than one button, since two controls may not nest.
  */
-function PresentingFlowPreviewAutoNextComp() {
-    const autoNextState = usePresentingFlowAutoNext();
+function PresentingFlowPreviewAutoNextComp({
+    filePath,
+}: Readonly<{
+    filePath: string;
+}>) {
+    const autoNextState = usePresentingFlowAutoNext(filePath);
     if (autoNextState === null) {
         return null;
     }
@@ -450,7 +470,7 @@ function PresentingFlowPreviewAutoNextComp() {
                 className="app-presenting-flow-preview-auto-next-button"
                 title={tran(isPaused ? 'Resume Auto Next' : 'Pause Auto Next')}
                 onClick={() => {
-                    setPresentingFlowAutoNextPaused(!isPaused);
+                    setPresentingFlowAutoNextPaused(filePath, !isPaused);
                 }}
             >
                 <i className={'bi bi-' + (isPaused ? 'play' : 'pause')} />
@@ -471,7 +491,7 @@ function PresentingFlowPreviewAutoNextComp() {
                 className="app-presenting-flow-preview-auto-next-button"
                 title={tran('Stop Auto Next')}
                 onClick={() => {
-                    stopPresentingFlowAutoNext();
+                    stopPresentingFlowAutoNext(filePath);
                 }}
             >
                 <i
@@ -679,38 +699,85 @@ function PresentingFlowPreviewBodyComp({
             {/* Pinned at the TOP, opposite the collapse pair: it is the one
                 thing in here that changes on its own, and it must be readable
                 without scrolling back to whichever element armed it. */}
-            <PresentingFlowPreviewAutoNextComp />
+            <PresentingFlowPreviewAutoNextComp filePath={filePath} />
         </div>
     );
 }
 
-// Single host, portaled to the body so the widget is never clipped by the left
+// ONE open run, portaled to the body so the widget is never clipped by the left
 // panel it is opened from.
-export default function PresentingFlowPreviewFloatingComp() {
-    const filePath = usePresentingFlowPreviewFilePath();
+function PresentingFlowPreviewFloatingItemComp({
+    filePath,
+    index,
+}: Readonly<{
+    filePath: string;
+    // Only for the first-open stagger below — the widgets are otherwise
+    // independent, and closing one must not move the others.
+    index: number;
+}>) {
     const { theme } = useThemeSource();
-    if (filePath === null) {
-        return null;
-    }
+    const handleClosing = useCallback(() => {
+        closePresentingFlowPreviewFilePath(filePath);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const fileSource = FileSource.getInstance(filePath);
+    const staggerOffset = (index % WIDGET_STAGGER_COUNT) * WIDGET_STAGGER_STEP;
     return createPortal(
         <div className="app app-floating-widget-portal" data-bs-theme={theme}>
             <FloatingWidgetComp
                 title={`${tran('Presenting Flow')}: ${fileSource.name}`}
-                persistKey="floating-widget-rect-presenting-flow-preview"
-                onClose={() => {
-                    setPresentingFlowPreviewFilePath(null);
-                }}
+                // Per FILE: two sheets open at once each keep their own size and
+                // corner of the desktop, and dragging one does not write over
+                // where the other was left.
+                persistKey={toPresentingFlowPreviewRectSettingName(filePath)}
+                onClose={handleClosing}
                 options={{
                     width: 760,
                     height: 560,
                     minWidth: 320,
                     minHeight: 240,
+                    initialOffset: staggerOffset,
                 }}
             >
                 <PresentingFlowPreviewBodyComp filePath={filePath} />
             </FloatingWidgetComp>
         </div>,
         document.body,
+    );
+}
+
+/**
+ * Hosts every open presenting flow preview.
+ *
+ * Each is its own run — its own cursor, its own folding, its own clock — and the
+ * keys are gated on which widget holds focus, so several sheets can sit open side
+ * by side while only the one being worked in answers a press.
+ */
+export default function PresentingFlowPreviewFloatingComp() {
+    const filePaths = usePresentingFlowPreviewFilePaths();
+    const filePathsRef = useAppCurrentRef(filePaths);
+    // On the host and not on the row: the row owning a deleted file is
+    // unmounting at exactly the moment the event fires, and a widget left open on
+    // a file that is gone can only ever draw a read error.
+    useFileSourceEvents(['delete'], (deletedFilePath: any) => {
+        if (
+            typeof deletedFilePath === 'string' &&
+            filePathsRef.current.includes(deletedFilePath)
+        ) {
+            closePresentingFlowPreviewFilePath(deletedFilePath);
+        }
+    });
+    return (
+        <>
+            {filePaths.map((filePath, index) => {
+                return (
+                    <PresentingFlowPreviewFloatingItemComp
+                        key={filePath}
+                        filePath={filePath}
+                        index={index}
+                    />
+                );
+            })}
+        </>
     );
 }

@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-08b** (**W-22** step 5 gained **Media Control** — a
+**workflowsVersion: 2026-08-08c** (**W-22** step 9: the running-order preview panel is no
+longer one-at-a-time — **several may be open together, one per running order**, each with
+its own place on screen, its own folding, its own marker and its own countdown, and each
+closed on its own. Opening a second used to close the first and lose where its run had got
+to. The thumbnail zoom stays shared across them. **Driven live** (two panels open side by
+side, independent markers, independent rects, one closed while the other stayed).
+Previous: **2026-08-08b** (**W-22** step 5 gained **Media Control** — a
 running order can now play, pause or stop the video or song *inside* a slide by itself:
 wait N seconds, start at a point of the clip, stop after a while or at a point of the clip,
 at a volume and a speed. It is attached to the slide it controls (**Add Media Control**,
@@ -1140,7 +1146,14 @@ thing to another machine.
    To make the thumbnails bigger or smaller, use the zoom slider in the panel's footer
    (it tucks itself away into a **⋯** button at the bottom-left), **Ctrl + scroll**, or a
    two-finger **pinch**. This zoom is remembered separately from the one in the middle
-   Documents tab.
+   Documents tab — and it is shared by every one of these panels, so zooming one resizes
+   them all.
+   **You can have several of these panels open at once**, one per running order — the
+   songs in one and the sermon in another, side by side. Each opens beside the last rather
+   than on top of it, remembers its own size and place, and is closed on its own with its
+   ✕ (or by clicking its window icon in the list again). Each is its own run, too: where
+   you are, what you have folded away and any countdown belong to that panel alone, and
+   the keys below always drive the one you last clicked into. 📸
    **Run the service from this panel.** Click an element — the panel outlines it and
    remembers it as where you are. Clicking its preview also shows it, and clicking the
    title line of a folded element marks it just the same — folding is the chevron on its

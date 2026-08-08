@@ -89,6 +89,11 @@ const PRESENTING_FLOW_SETTING_PREFIXES = [
     'presenting-flow-opened',
     'presenting-flow-item-expanded',
     'presenting-flow-preview-collapsed',
+    // Where each floating preview remembers its size and corner of the desktop.
+    // Per file since several may be open at once — see
+    // `toPresentingFlowPreviewRectSettingName`, whose prefix this repeats rather
+    // than imports: that module imports this one.
+    'floating-widget-rect-presenting-flow-preview',
 ];
 
 /**

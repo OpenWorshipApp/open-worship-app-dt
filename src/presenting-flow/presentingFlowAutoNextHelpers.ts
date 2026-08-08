@@ -25,10 +25,12 @@ import type PresentingFlowItem from './PresentingFlowItem';
  * A TIMEOUT going off while an INTERVAL is running is the one crossing between
  * them, and it does NOT replace it — see `borrowPresentingFlowAutoNextCycle`.
  *
- * ONE slot for the whole app, exactly like the preview's own cursor: there is one
- * run being walked, and it is the one open floating preview. Held in memory only
- * — this is where a run has got to right now, not something to restore later —
- * and the ticking timer exists only while something is armed.
+ * ONE slot PER OPEN RUN, exactly like the preview's own cursor: a floating
+ * preview is one run being walked, and several of them may be open at once — a
+ * pre-service loop ticking in one sheet must go on ticking while the operator
+ * steps through another. Held in memory only — this is where a run has got to
+ * right now, not something to restore later — for exactly as long as that run's
+ * widget is open, and a ticking timer exists only while something is armed.
  */
 
 export type PresentingFlowAutoNextModeType = 'timeout' | 'interval';
@@ -85,18 +87,30 @@ export type PresentingFlowRunControllerType = {
     jumpToUuid: (uuid: string) => boolean;
 };
 
-const controllerState: {
-    filePath: string | null;
-    controller: PresentingFlowRunControllerType | null;
-} = { filePath: null, controller: null };
+/**
+ * Everything ONE open run holds: how it is driven, what it has armed, and the
+ * timer counting that down.
+ *
+ * The entry exists for exactly as long as the widget's controller is registered,
+ * so nothing here can outlive the preview it belongs to — closing a run drops its
+ * clock, its timer and its entry together.
+ */
+type PresentingFlowRunStateType = {
+    controller: PresentingFlowRunControllerType;
+    autoNextState: PresentingFlowAutoNextStateType | null;
+    tickingId: any;
+    // Bumped by every start and stop, so a step that arms something new (a run
+    // that walks straight onto another auto-next element) is not undone by the
+    // tick it was fired from.
+    generation: number;
+};
 
+const runStateMap = new Map<string, PresentingFlowRunStateType>();
+
+// ONE listener set for every open run: a widget's snapshot is its own file's
+// state, and a notification it has no interest in compares identical and
+// re-renders nothing.
 const listeners = new Set<() => void>();
-let state: PresentingFlowAutoNextStateType | null = null;
-let tickingId: any = null;
-// Bumped by every start and stop, so a step that arms something new (a run that
-// walks straight onto another auto-next element) is not undone by the tick it
-// was fired from.
-let generation = 0;
 
 function notify() {
     for (const listener of listeners) {
@@ -111,20 +125,20 @@ function subscribe(listener: () => void) {
     };
 }
 
-function getSnapshot() {
-    return state;
-}
-
 /**
- * What is armed right now, or null. The object is replaced only when something
- * actually changes, so `useSyncExternalStore` can compare it by identity.
+ * What is armed on THIS presenting flow right now, or null. The object is
+ * replaced only when something actually changes, so `useSyncExternalStore` can
+ * compare it by identity.
  */
-export function usePresentingFlowAutoNext() {
+export function usePresentingFlowAutoNext(filePath: string) {
+    const getSnapshot = () => {
+        return runStateMap.get(filePath)?.autoNextState ?? null;
+    };
     return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-export function getPresentingFlowAutoNextState() {
-    return state;
+export function getPresentingFlowAutoNextState(filePath: string) {
+    return runStateMap.get(filePath)?.autoNextState ?? null;
 }
 
 /**
@@ -136,17 +150,21 @@ export function getPresentingFlowAutoNextState() {
  * counts — a click on a background, on a foreground button, on the widget's own
  * chrome, is not the run moving and must leave a countdown alone.
  *
+ * Named with the presenting flow whose cursor moved: stepping one open sheet says
+ * nothing about the clock another one is counting.
+ *
  * Safe to call from the clock's OWN step: a timeout has already stopped itself by
  * then, and an interval restarting the count it has just reset writes the same
  * number back.
  */
-export function notifyPresentingFlowRunSelectionChanged() {
-    const current = state;
-    if (current === null) {
+export function notifyPresentingFlowRunSelectionChanged(filePath: string) {
+    const runState = runStateMap.get(filePath);
+    const current = runState?.autoNextState;
+    if (runState === undefined || current === undefined || current === null) {
         return;
     }
     if (current.mode === 'timeout') {
-        stopPresentingFlowAutoNext();
+        stopPresentingFlowAutoNext(filePath);
         return;
     }
     // `dueTime` as well as the count: a BORROWED cycle is given up here too, the
@@ -157,65 +175,86 @@ export function notifyPresentingFlowRunSelectionChanged() {
     ) {
         return;
     }
-    state = { ...current, remainingSeconds: current.seconds, dueTime: null };
+    runState.autoNextState = {
+        ...current,
+        remainingSeconds: current.seconds,
+        dueTime: null,
+    };
     notify();
 }
 
 /**
  * Where the run is stepped from, for as long as the preview is open on this
- * presenting flow. Unregistering ENDS whatever is armed: the widget closing (or being
- * pointed at another presenting flow) is the run being over, and a timer that outlived
- * it would step a list nothing is looking at.
+ * presenting flow. Unregistering ENDS whatever is armed: the widget closing is the
+ * run being over, and a timer that outlived it would step a list nothing is
+ * looking at.
  */
 export function registerPresentingFlowRunController(
     filePath: string,
     controller: PresentingFlowRunControllerType,
 ) {
-    controllerState.filePath = filePath;
-    controllerState.controller = controller;
+    // Whatever the registration being replaced had ticking goes with it — the
+    // entry below is a fresh run, and an orphaned interval would step it.
+    stopPresentingFlowAutoNext(filePath);
+    runStateMap.set(filePath, {
+        controller,
+        autoNextState: null,
+        tickingId: null,
+        generation: 0,
+    });
     return () => {
         // Only if it is still ours: a re-register from the widget that replaced
         // this one must not be dropped by our cleanup.
-        if (controllerState.controller !== controller) {
+        if (runStateMap.get(filePath)?.controller !== controller) {
             return;
         }
-        controllerState.filePath = null;
-        controllerState.controller = null;
-        stopPresentingFlowAutoNext();
+        stopPresentingFlowAutoNext(filePath);
+        runStateMap.delete(filePath);
     };
 }
 
 /** The open run on THIS presenting flow, or null — what every trigger goes through. */
 function findPresentingFlowRunController(filePath: string) {
-    return controllerState.filePath === filePath
-        ? controllerState.controller
-        : null;
+    return runStateMap.get(filePath)?.controller ?? null;
 }
 
 /** Whether a run is open on this presenting flow at all — what a trigger needs. */
 export function checkPresentingFlowAutoNextIsRunnable(filePath: string) {
-    return findPresentingFlowRunController(filePath) !== null;
+    return runStateMap.has(filePath);
 }
 
 // Always from a whole second, so a count that has just been (re-)armed is not
 // short by whatever was left of the tick it landed in.
-function restartTicking() {
-    if (tickingId !== null) {
-        clearInterval(tickingId);
+function restartTicking(
+    filePath: string,
+    runState: PresentingFlowRunStateType,
+) {
+    if (runState.tickingId !== null) {
+        clearInterval(runState.tickingId);
     }
-    tickingId = setInterval(handleTicking, 1000);
+    runState.tickingId = setInterval(() => {
+        handleTicking(filePath);
+    }, 1000);
 }
 
-export function stopPresentingFlowAutoNext() {
-    if (tickingId !== null) {
-        clearInterval(tickingId);
-        tickingId = null;
+function clearTicking(runState: PresentingFlowRunStateType) {
+    if (runState.tickingId !== null) {
+        clearInterval(runState.tickingId);
+        runState.tickingId = null;
     }
-    generation += 1;
-    if (state === null) {
+}
+
+export function stopPresentingFlowAutoNext(filePath: string) {
+    const runState = runStateMap.get(filePath);
+    if (runState === undefined) {
         return;
     }
-    state = null;
+    clearTicking(runState);
+    runState.generation += 1;
+    if (runState.autoNextState === null) {
+        return;
+    }
+    runState.autoNextState = null;
     notify();
 }
 
@@ -238,19 +277,25 @@ export function stopPresentingFlowAutoNext() {
  * is a borrowed cycle by definition.
  */
 function borrowPresentingFlowAutoNextCycle(
+    filePath: string,
+    runState: PresentingFlowRunStateType,
     mode: PresentingFlowAutoNextModeType,
     seconds: number,
     dueTime: number | null,
 ) {
-    const current = state;
+    const current = runState.autoNextState;
     if (current === null || mode !== 'timeout' || current.mode !== 'interval') {
         return false;
     }
-    state = { ...current, remainingSeconds: seconds, dueTime };
+    runState.autoNextState = {
+        ...current,
+        remainingSeconds: seconds,
+        dueTime,
+    };
     // Not while HELD: the operator stopped this run walking itself, and a line
     // going up with a timeout attached is not them letting it go again.
     if (!current.isPaused) {
-        restartTicking();
+        restartTicking(filePath, runState);
     }
     notify();
     return true;
@@ -268,33 +313,40 @@ function borrowPresentingFlowAutoNextCycle(
  * Ticking is CLEARED rather than made to skip: a run sheet left paused must cost
  * nothing at all.
  */
-export function setPresentingFlowAutoNextPaused(isPaused: boolean) {
-    const current = state;
-    if (current === null || current.isPaused === isPaused) {
+export function setPresentingFlowAutoNextPaused(
+    filePath: string,
+    isPaused: boolean,
+) {
+    const runState = runStateMap.get(filePath);
+    const current = runState?.autoNextState;
+    if (
+        runState === undefined ||
+        current === undefined ||
+        current === null ||
+        current.isPaused === isPaused
+    ) {
         return;
     }
     if (isPaused) {
-        if (tickingId !== null) {
-            clearInterval(tickingId);
-            tickingId = null;
-        }
-        state = { ...current, isPaused: true, dueTime: null };
+        clearTicking(runState);
+        runState.autoNextState = { ...current, isPaused: true, dueTime: null };
     } else {
-        state = { ...current, isPaused: false };
-        restartTicking();
+        runState.autoNextState = { ...current, isPaused: false };
+        restartTicking(filePath, runState);
     }
     notify();
 }
 
 /**
- * Arm the run to move itself on, replacing whatever was armed before: one run has
- * one clock, and an operator who fires a second one is saying "this instead". The
- * one exception is a timeout met by a running interval — see
+ * Arm the run to move itself on, replacing whatever THIS run had armed before:
+ * one run has one clock, and an operator who fires a second one is saying "this
+ * instead". The one exception is a timeout met by a running interval — see
  * `borrowPresentingFlowAutoNextCycle`.
  *
  * Refuses when no run is open on THIS presenting flow — a run action clicked in the tree
- * with the preview closed (or open on another sheet) must say so rather than
- * quietly stepping a list nobody is looking at.
+ * with that sheet's preview closed must say so rather than quietly stepping a
+ * list nobody is looking at, or stepping some other sheet that happens to be
+ * open.
  */
 export function startPresentingFlowAutoNext(
     filePath: string,
@@ -302,28 +354,33 @@ export function startPresentingFlowAutoNext(
     seconds: number,
     dueTime: number | null = null,
 ) {
-    if (
-        !checkPresentingFlowAutoNextIsRunnable(filePath) ||
-        !Number.isFinite(seconds) ||
-        seconds <= 0
-    ) {
+    const runState = runStateMap.get(filePath);
+    if (runState === undefined || !Number.isFinite(seconds) || seconds <= 0) {
         return false;
     }
     // After the guard above, so a timeout with nothing valid to count leaves the
     // interval running on its own count rather than borrowing a nonsense one.
-    if (borrowPresentingFlowAutoNextCycle(mode, seconds, dueTime)) {
+    if (
+        borrowPresentingFlowAutoNextCycle(
+            filePath,
+            runState,
+            mode,
+            seconds,
+            dueTime,
+        )
+    ) {
         return true;
     }
-    stopPresentingFlowAutoNext();
-    state = {
+    stopPresentingFlowAutoNext(filePath);
+    runState.autoNextState = {
         mode,
         seconds,
         remainingSeconds: seconds,
         dueTime,
         isPaused: false,
     };
-    restartTicking();
-    generation += 1;
+    restartTicking(filePath, runState);
+    runState.generation += 1;
     notify();
     return true;
 }
@@ -352,11 +409,12 @@ export function startPresentingFlowAutoNext(
  * reason `Screen: Show` is silent on an already-showing screen.
  */
 export function stopPresentingFlowAutoNextInterval(filePath: string) {
-    if (!checkPresentingFlowAutoNextIsRunnable(filePath)) {
+    const runState = runStateMap.get(filePath);
+    if (runState === undefined) {
         return false;
     }
-    if (state?.mode === 'interval') {
-        stopPresentingFlowAutoNext();
+    if (runState.autoNextState?.mode === 'interval') {
+        stopPresentingFlowAutoNext(filePath);
     }
     return true;
 }
@@ -421,8 +479,9 @@ export function toPresentingFlowAutoNextCountdownLabel(
  * `presentingFlowHelpers` — this module is under both of them and takes `PresentingFlowItem`
  * as a TYPE only, so nothing is added to the cycle either way.
  *
- * A run open on ANOTHER presenting flow (or none at all) is told, not swallowed: an
- * operator whose countdown did not start has to know it did not start.
+ * A sheet whose own preview is not open is told, not swallowed: an operator whose
+ * countdown did not start has to know it did not start, and another sheet's open
+ * run is not an answer to it.
  */
 export function firePresentingFlowRunAction(
     presentingFlowItem: PresentingFlowItem,
@@ -465,9 +524,10 @@ export function jumpPresentingFlowRunToCcItem(
     return null;
 }
 
-function handleTicking() {
-    const current = state;
-    if (current === null) {
+function handleTicking(filePath: string) {
+    const runState = runStateMap.get(filePath);
+    const current = runState?.autoNextState;
+    if (runState === undefined || current === undefined || current === null) {
         return;
     }
     // One armed with a time of day is RE-READ from the wall clock; the ordinary
@@ -478,7 +538,7 @@ function handleTicking() {
             : Math.ceil((current.dueTime - Date.now()) / 1000);
     if (remainingSeconds > 0) {
         if (remainingSeconds !== current.remainingSeconds) {
-            state = { ...current, remainingSeconds };
+            runState.autoNextState = { ...current, remainingSeconds };
             notify();
         }
         return;
@@ -487,23 +547,29 @@ function handleTicking() {
     // is spent, an interval starts its next count — so the panel never draws a
     // stale `0`, and so an action the step lands on can take the slot over.
     if (current.mode === 'timeout') {
-        stopPresentingFlowAutoNext();
+        stopPresentingFlowAutoNext(filePath);
     } else {
         // Back to the interval's OWN count, and off any wall clock a borrowed
         // cycle was counting to — that cycle is spent.
-        state = {
+        runState.autoNextState = {
             ...current,
             remainingSeconds: current.seconds,
             dueTime: null,
         };
         notify();
     }
-    const steppedGeneration = generation;
-    const isStepped = controllerState.controller?.stepForward() ?? false;
-    if (isStepped || generation !== steppedGeneration) {
+    const steppedGeneration = runState.generation;
+    const isStepped = runState.controller.stepForward();
+    // The run may have been closed by what the step fired, taking its entry with
+    // it — anything still armed went with it too.
+    if (
+        isStepped ||
+        runStateMap.get(filePath) !== runState ||
+        runState.generation !== steppedGeneration
+    ) {
         return;
     }
     // The end of the run sheet: an interval has nothing left to step, so it
     // stops itself rather than ticking against the last element for good.
-    stopPresentingFlowAutoNext();
+    stopPresentingFlowAutoNext(filePath);
 }

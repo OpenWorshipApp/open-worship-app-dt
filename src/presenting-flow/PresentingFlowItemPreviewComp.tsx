@@ -719,11 +719,15 @@ function useChildStepping(
         if (!varySlides?.length) {
             return;
         }
+        // Registered under its own presenting flow as well as its position: two
+        // sheets open at once both have an element 3, and one's next-key must
+        // never walk the other's document.
         return registerPresentingFlowPreviewChildStepping(
+            presentingFlowFilePath,
             index,
             handleStepping,
         );
-    }, [index, varySlides, handleStepping]);
+    }, [presentingFlowFilePath, index, varySlides, handleStepping]);
 }
 
 /**

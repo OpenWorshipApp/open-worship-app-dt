@@ -17,34 +17,81 @@ import { notifyPresentingFlowRunSelectionChanged } from './presentingFlowAutoNex
 import type PresentingFlowItem from './PresentingFlowItem';
 import { toPresentingFlowSettingName } from './presentingFlowHelpers';
 
-// Which presenting flow the floating full-preview widget is showing, if any. A shared
-// store (rather than per-row state) keeps exactly one widget open no matter how
-// many presenting flows are listed.
+/**
+ * WHICH presenting flows have a floating full-preview widget open.
+ *
+ * One widget per FILE, and several at once: a service is built out of more than
+ * one run sheet often enough — the songs in one, the sermon in another — and
+ * before this, opening the second silently closed the first and threw away where
+ * its run had got to. Still at most one per file, because two widgets on one
+ * presenting flow would fight over the same persisted rect, the same folding and
+ * the same cursor.
+ *
+ * An ARRAY that is REPLACED, never mutated: `useSyncExternalStore` compares
+ * snapshots by identity, so building a fresh array per read would re-render
+ * forever. The same shape the documents panel's floating previews use.
+ *
+ * In memory only, and nothing is reopened on the next launch: each widget holds
+ * the slides of whatever it has unfolded, and restoring a set of them would put
+ * that cost on every start.
+ */
 const listeners = new Set<() => void>();
-const state: { filePath: string | null } = { filePath: null };
+let openedFilePaths: string[] = [];
 
-export function getPresentingFlowPreviewFilePath() {
-    return state.filePath;
+export function getPresentingFlowPreviewFilePaths() {
+    return openedFilePaths;
 }
 
-export function setPresentingFlowPreviewFilePath(filePath: string | null) {
-    if (state.filePath === filePath) {
-        return;
-    }
-    state.filePath = filePath;
-    // Closing the widget, or pointing it at another presenting flow, ends the run the
-    // remembered element belonged to — keeping it would leave the next-key
-    // stepping from an element that is no longer listed.
-    clearPresentingFlowPreviewSelectedItem();
+function notifyListeners() {
     for (const listener of listeners) {
         listener();
     }
 }
 
+export function checkIsPresentingFlowPreviewOpened(filePath: string) {
+    return openedFilePaths.includes(filePath);
+}
+
+export function openPresentingFlowPreviewFilePath(filePath: string) {
+    if (openedFilePaths.includes(filePath)) {
+        return;
+    }
+    openedFilePaths = [...openedFilePaths, filePath];
+    notifyListeners();
+}
+
+export function closePresentingFlowPreviewFilePath(filePath: string) {
+    if (!openedFilePaths.includes(filePath)) {
+        return;
+    }
+    openedFilePaths = openedFilePaths.filter((openedFilePath) => {
+        return openedFilePath !== filePath;
+    });
+    forgetPresentingFlowPreviewState(filePath);
+    notifyListeners();
+}
+
+/**
+ * Drop everything held in memory for ONE presenting flow's preview.
+ *
+ * Closing a widget ends THAT run — the remembered element belonged to it, and
+ * keeping it would leave the next-key stepping from an element that is no longer
+ * listed. Its folding goes too: that lives in a setting, so reopening reads it
+ * back for the cost of one file read, and a session that opened a dozen sheets
+ * must not keep a set of keys for every one of them.
+ */
+export function forgetPresentingFlowPreviewState(filePath: string) {
+    clearPresentingFlowPreviewSelectedItem(filePath);
+    collapsingCacheMap.delete(filePath);
+    childSteppingMap.delete(filePath);
+}
+
 export function togglePresentingFlowPreviewFilePath(filePath: string) {
-    setPresentingFlowPreviewFilePath(
-        state.filePath === filePath ? null : filePath,
-    );
+    if (openedFilePaths.includes(filePath)) {
+        closePresentingFlowPreviewFilePath(filePath);
+    } else {
+        openPresentingFlowPreviewFilePath(filePath);
+    }
 }
 
 function subscribe(listener: () => void) {
@@ -54,12 +101,23 @@ function subscribe(listener: () => void) {
     };
 }
 
-export function usePresentingFlowPreviewFilePath() {
+export function usePresentingFlowPreviewFilePaths() {
     return useSyncExternalStore(
         subscribe,
-        getPresentingFlowPreviewFilePath,
-        getPresentingFlowPreviewFilePath,
+        getPresentingFlowPreviewFilePaths,
+        getPresentingFlowPreviewFilePaths,
     );
+}
+
+/**
+ * A boolean for ONE presenting flow rather than the whole list, so opening a
+ * widget re-renders only the row it was opened from.
+ */
+export function useIsPresentingFlowPreviewOpened(filePath: string) {
+    const getSnapshot = () => {
+        return openedFilePaths.includes(filePath);
+    };
+    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 /**
@@ -73,12 +131,10 @@ export function usePresentingFlowPreviewFilePath() {
  */
 const COLLAPSING_SETTING_PREFIX = 'presenting-flow-preview-collapsed';
 const collapsingListeners = new Set<() => void>();
-// Exactly one preview widget is open at a time, so this deliberately holds ONE
-// presenting flow's parsed keys rather than a map that would grow per presenting flow visited.
-const collapsingCache: { filePath: string | null; keys: Set<string> } = {
-    filePath: null,
-    keys: new Set(),
-};
+// One entry per OPEN widget, dropped again by `closePresentingFlowPreviewFilePath`
+// — a map that merely grew per presenting flow ever visited would hold a set of
+// keys for every sheet of a long session.
+const collapsingCacheMap = new Map<string, Set<string>>();
 
 function toCollapsingSettingName(presentingFlowFilePath: string) {
     return toPresentingFlowSettingName(
@@ -90,8 +146,9 @@ function toCollapsingSettingName(presentingFlowFilePath: string) {
 // Read once per presenting flow and kept in memory afterwards: nothing else writes
 // this setting, so re-reading it on every render would be pure I/O.
 function readCollapsedKeys(presentingFlowFilePath: string) {
-    if (collapsingCache.filePath === presentingFlowFilePath) {
-        return collapsingCache.keys;
+    const cachedKeys = collapsingCacheMap.get(presentingFlowFilePath);
+    if (cachedKeys !== undefined) {
+        return cachedKeys;
     }
     const keys = new Set<string>();
     const rawSetting = getSetting(
@@ -111,8 +168,7 @@ function readCollapsedKeys(presentingFlowFilePath: string) {
             handleError(error);
         }
     }
-    collapsingCache.filePath = presentingFlowFilePath;
-    collapsingCache.keys = keys;
+    collapsingCacheMap.set(presentingFlowFilePath, keys);
     return keys;
 }
 
@@ -155,8 +211,7 @@ export function checkIsPresentingFlowPreviewItemExpanded(
 }
 
 function writeCollapsedKeys(presentingFlowFilePath: string, keys: Set<string>) {
-    collapsingCache.filePath = presentingFlowFilePath;
-    collapsingCache.keys = keys;
+    collapsingCacheMap.set(presentingFlowFilePath, keys);
     const settingName = toCollapsingSettingName(presentingFlowFilePath);
     if (keys.size === 0) {
         // Everything is expanded again — drop the file instead of leaving an
@@ -274,9 +329,10 @@ export const PRESENTING_FLOW_PREVIEW_ITEM_INDEX_KEY =
     'data-presenting-flow-preview-index';
 
 /**
- * WHICH element the preview is currently "on", so a next-key knows where to
- * step from. One slot for the one open widget, held in memory only: this is
- * where a run has got to right now, not something to restore days later.
+ * WHICH element each open preview is currently "on", so a next-key knows where to
+ * step from. One slot PER OPEN WIDGET, held in memory only: this is where a run
+ * has got to right now, not something to restore days later, and two sheets open
+ * side by side are two runs that must not read each other's cursor.
  *
  * The position is kept ALONGSIDE the key rather than instead of it: two
  * identical entries in one presenting flow share a key (see
@@ -285,7 +341,7 @@ export const PRESENTING_FLOW_PREVIEW_ITEM_INDEX_KEY =
  * fallback when the position no longer holds it.
  *
  * `childId` is the same answer one level down — WHICH slide of the selected
- * element the run is on. ONE slot, not one per element: the run has one
+ * element the run is on. ONE slot per widget, not one per element: a run has one
  * position, and crossing into an element always restarts it at its first slide
  * anyway (`isEntering`), so remembering where each element was left would be
  * remembering something nothing ever reads back.
@@ -293,16 +349,16 @@ export const PRESENTING_FLOW_PREVIEW_ITEM_INDEX_KEY =
  * Deliberately NOT derived from what is on a screen. Several elements can be
  * live at once — the same document may even be listed twice, or be live from
  * the presenter's own list — and the screens cannot say which of those the
- * operator is walking. This is the panel's own cursor, held in memory for as
- * long as it is open on one presenting flow and forgotten with it.
+ * operator is walking. This is the panel's own cursor, held for as long as its
+ * widget is open and forgotten with it.
  */
-const selectingListeners = new Set<() => void>();
-const selectingState: {
-    filePath: string | null;
-    itemKey: string | null;
+type PresentingFlowPreviewSelectingType = {
+    itemKey: string;
     index: number;
     childId: number | null;
-} = { filePath: null, itemKey: null, index: -1, childId: null };
+};
+const selectingListeners = new Set<() => void>();
+const selectingStateMap = new Map<string, PresentingFlowPreviewSelectingType>();
 
 function notifySelectingListeners() {
     for (const listener of selectingListeners) {
@@ -311,35 +367,33 @@ function notifySelectingListeners() {
 }
 
 /**
- * The cursor MOVED. Told to the panel's own subscribers, and to the run's clock —
- * a `Next: Timeout` is cancelled by the run going somewhere and by nothing else,
- * and a `Next: Interval` starts its count again from there. This is the one place
- * that knows the cursor moved at all, so it is the one place either can be
- * answered from without guessing at raw clicks and keys.
+ * The cursor of ONE run MOVED. Told to the panel's own subscribers, and to that
+ * run's clock — a `Next: Timeout` is cancelled by the run going somewhere and by
+ * nothing else, and a `Next: Interval` starts its count again from there. This is
+ * the one place that knows the cursor moved at all, so it is the one place either
+ * can be answered from without guessing at raw clicks and keys.
+ *
+ * Named with the presenting flow it belongs to, so stepping one open sheet leaves
+ * the clock of another one ticking.
  *
  * Not to be used for a REPAIR — writing back the position a reorder shifted the
  * same element to is not the run going anywhere, and a countdown must survive the
  * sheet being tidied underneath it. That one notifies the listeners only.
  */
-function notifySelecting() {
+function notifySelecting(presentingFlowFilePath: string) {
     notifySelectingListeners();
-    notifyPresentingFlowRunSelectionChanged();
+    notifyPresentingFlowRunSelectionChanged(presentingFlowFilePath);
 }
 
-export function clearPresentingFlowPreviewSelectedItem() {
-    clearPendingPresentingFlowPreviewChildEntry();
-    if (
-        selectingState.itemKey === null &&
-        selectingState.filePath === null &&
-        selectingState.childId === null
-    ) {
+export function clearPresentingFlowPreviewSelectedItem(
+    presentingFlowFilePath: string,
+) {
+    clearPendingPresentingFlowPreviewChildEntry(presentingFlowFilePath);
+    if (!selectingStateMap.has(presentingFlowFilePath)) {
         return;
     }
-    selectingState.filePath = null;
-    selectingState.itemKey = null;
-    selectingState.index = -1;
-    selectingState.childId = null;
-    notifySelecting();
+    selectingStateMap.delete(presentingFlowFilePath);
+    notifySelecting(presentingFlowFilePath);
 }
 
 export function setPresentingFlowPreviewSelectedItem(
@@ -351,30 +405,30 @@ export function setPresentingFlowPreviewSelectedItem(
     // doing now. Dropped before the early return as well: landing on the element
     // the cursor is ALREADY on (a jump, or a shortcut pressed twice) is still a
     // fresh landing, and it will make its own ask.
-    clearPendingPresentingFlowPreviewChildEntry();
+    clearPendingPresentingFlowPreviewChildEntry(presentingFlowFilePath);
+    const selectingState = selectingStateMap.get(presentingFlowFilePath);
     if (
-        selectingState.filePath === presentingFlowFilePath &&
+        selectingState !== undefined &&
         selectingState.itemKey === itemKey &&
         selectingState.index === index
     ) {
         return;
     }
-    selectingState.filePath = presentingFlowFilePath;
-    selectingState.itemKey = itemKey;
-    selectingState.index = index;
     // The run moved to another element, so the slide it was on is not where it
     // is any more. Dropped here rather than left to the element that owned it:
     // that element may well be folded away, or no longer listed at all.
-    selectingState.childId = null;
-    notifySelecting();
+    selectingStateMap.set(presentingFlowFilePath, {
+        itemKey,
+        index,
+        childId: null,
+    });
+    notifySelecting(presentingFlowFilePath);
 }
 
 export function getPresentingFlowPreviewSelectedItemKey(
     presentingFlowFilePath: string,
 ) {
-    return selectingState.filePath === presentingFlowFilePath
-        ? selectingState.itemKey
-        : null;
+    return selectingStateMap.get(presentingFlowFilePath)?.itemKey ?? null;
 }
 
 /**
@@ -395,8 +449,9 @@ export function checkIsPresentingFlowPreviewItemSelected(
     itemKey: string,
     index: number,
 ) {
+    const selectingState = selectingStateMap.get(presentingFlowFilePath);
     return (
-        selectingState.filePath === presentingFlowFilePath &&
+        selectingState !== undefined &&
         selectingState.itemKey === itemKey &&
         selectingState.index === index
     );
@@ -418,18 +473,20 @@ export function setPresentingFlowPreviewSelectedChild(
     index: number,
     childId: number | null,
 ) {
+    const selectingState = selectingStateMap.get(presentingFlowFilePath);
     if (
         !checkIsPresentingFlowPreviewItemSelected(
             presentingFlowFilePath,
             itemKey,
             index,
         ) ||
+        selectingState === undefined ||
         selectingState.childId === childId
     ) {
         return;
     }
     selectingState.childId = childId;
-    notifySelecting();
+    notifySelecting(presentingFlowFilePath);
 }
 
 export function getPresentingFlowPreviewSelectedChildId(
@@ -442,7 +499,7 @@ export function getPresentingFlowPreviewSelectedChildId(
         itemKey,
         index,
     )
-        ? selectingState.childId
+        ? (selectingStateMap.get(presentingFlowFilePath)?.childId ?? null)
         : null;
 }
 
@@ -480,13 +537,11 @@ export function resolvePresentingFlowPreviewSelectedIndex(
     presentingFlowFilePath: string,
     presentingFlowItems: PresentingFlowItem[],
 ) {
-    const itemKey = getPresentingFlowPreviewSelectedItemKey(
-        presentingFlowFilePath,
-    );
-    if (itemKey === null) {
+    const selectingState = selectingStateMap.get(presentingFlowFilePath);
+    if (selectingState === undefined) {
         return -1;
     }
-    const { index } = selectingState;
+    const { itemKey, index } = selectingState;
     const itemAtIndex = presentingFlowItems[index];
     if (
         itemAtIndex !== undefined &&
@@ -551,6 +606,11 @@ export function findNextPresentingFlowPreviewIndex(
  * or an imported archive, and the honest reading of two lines answering to one
  * key is the first of them. Without it the widget would also register the same
  * key twice and render two rows under one React key.
+ *
+ * Only unique WITHIN a sheet: two sheets open side by side may well answer to the
+ * same key, and each widget gates its own on holding focus
+ * (`checkIsPresentingFlowRunKeyOwned`), so the one the operator is working in is
+ * the one that moves.
  *
  * PARKED lines are left out rather than registered and then ignored: a shortcut
  * that swallowed a key press and did nothing is worse than one that never took
@@ -636,16 +696,19 @@ export function findNextPresentingFlowPreviewChildIndex(
  * registration rather than a store of slides: nothing here keeps a document in
  * memory after its preview is folded away or the widget is closed.
  *
- * Keyed by the element's position, which is what the key handler has; a stepper
- * re-registers itself when the list is re-read and the position moves.
+ * Keyed by the presenting flow and then by the element's position, which is what
+ * that widget's key handler has; a stepper re-registers itself when the list is
+ * re-read and the position moves. The presenting flow is part of the key because
+ * two open sheets both have an element 3, and one sheet's next-key must never
+ * walk the other's document.
  */
 export type PresentingFlowPreviewChildSteppingType = (
     event: MouseEvent,
     isEntering: boolean,
 ) => boolean;
 const childSteppingMap = new Map<
-    number,
-    PresentingFlowPreviewChildSteppingType
+    string,
+    Map<number, PresentingFlowPreviewChildSteppingType>
 >();
 
 /**
@@ -657,35 +720,47 @@ const childSteppingMap = new Map<
  * ask; `registerPresentingFlowPreviewChildStepping` answers it as soon as the slides
  * arrive.
  *
- * ONE slot, exactly like the cursor it belongs to, and cleared the moment the
- * cursor moves anywhere else: an ask that outlived its landing would put a slide
- * on a live screen the next time the operator happened to unfold that element by
- * hand.
+ * ONE slot per open widget, exactly like the cursor it belongs to, and cleared
+ * the moment that cursor moves anywhere else: an ask that outlived its landing
+ * would put a slide on a live screen the next time the operator happened to
+ * unfold that element by hand.
  */
-let pendingChildEntry: {
-    index: number;
-    event: MouseEvent;
-} | null = null;
+const pendingChildEntryMap = new Map<
+    string,
+    {
+        index: number;
+        event: MouseEvent;
+    }
+>();
 
-function clearPendingPresentingFlowPreviewChildEntry() {
-    pendingChildEntry = null;
+function clearPendingPresentingFlowPreviewChildEntry(
+    presentingFlowFilePath: string,
+) {
+    pendingChildEntryMap.delete(presentingFlowFilePath);
 }
 
 export function requestPresentingFlowPreviewChildEntry(
+    presentingFlowFilePath: string,
     index: number,
     event: MouseEvent,
 ) {
-    pendingChildEntry = { index, event };
+    pendingChildEntryMap.set(presentingFlowFilePath, { index, event });
 }
 
 export function registerPresentingFlowPreviewChildStepping(
+    presentingFlowFilePath: string,
     index: number,
     stepping: PresentingFlowPreviewChildSteppingType,
 ) {
-    childSteppingMap.set(index, stepping);
-    const pending = pendingChildEntry;
-    if (pending !== null && pending.index === index) {
-        clearPendingPresentingFlowPreviewChildEntry();
+    let steppingMap = childSteppingMap.get(presentingFlowFilePath);
+    if (steppingMap === undefined) {
+        steppingMap = new Map();
+        childSteppingMap.set(presentingFlowFilePath, steppingMap);
+    }
+    steppingMap.set(index, stepping);
+    const pending = pendingChildEntryMap.get(presentingFlowFilePath);
+    if (pending !== undefined && pending.index === index) {
+        clearPendingPresentingFlowPreviewChildEntry(presentingFlowFilePath);
         // One macrotask later: this runs from the child's own mount effect, and
         // what it does is dispatch a real click onto a card — which presents,
         // and which must not run inside the render commit that has only just put
@@ -693,7 +768,10 @@ export function registerPresentingFlowPreviewChildStepping(
         setTimeout(() => {
             // Still the element the cursor is on? A second landing between the
             // slides being asked for and arriving has already taken over.
-            if (childSteppingMap.get(index) === stepping) {
+            if (
+                childSteppingMap.get(presentingFlowFilePath)?.get(index) ===
+                stepping
+            ) {
                 stepping(pending.event, true);
             }
         }, 0);
@@ -701,8 +779,15 @@ export function registerPresentingFlowPreviewChildStepping(
     return () => {
         // Only if it is still ours: a re-register for the same position from the
         // element that replaced this one must not be dropped by our cleanup.
-        if (childSteppingMap.get(index) === stepping) {
-            childSteppingMap.delete(index);
+        const currentMap = childSteppingMap.get(presentingFlowFilePath);
+        if (currentMap?.get(index) !== stepping) {
+            return;
+        }
+        currentMap.delete(index);
+        // The last unfolded document of this sheet has gone: drop its map rather
+        // than leaving an empty one per presenting flow ever previewed.
+        if (currentMap.size === 0) {
+            childSteppingMap.delete(presentingFlowFilePath);
         }
     };
 }
@@ -712,11 +797,17 @@ export function registerPresentingFlowPreviewChildStepping(
  * the run crossing INTO this element, which always starts it at its first slide.
  */
 export function stepPresentingFlowPreviewChild(
+    presentingFlowFilePath: string,
     index: number,
     event: MouseEvent,
     isEntering: boolean,
 ) {
-    return childSteppingMap.get(index)?.(event, isEntering) ?? false;
+    return (
+        childSteppingMap.get(presentingFlowFilePath)?.get(index)?.(
+            event,
+            isEntering,
+        ) ?? false
+    );
 }
 
 function subscribeSelecting(listener: () => void) {
@@ -847,4 +938,15 @@ export function usePresentingFlowPreviewItemExpanding(
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return [isExpanded, handleToggling];
+}
+
+// Where each open widget remembers its size and location. Per FILE, so a second
+// sheet opened beside the first does not land on top of it and drag one of them
+// does not move the other. Under the prefix the single widget used, so the
+// cleanup that runs when a presenting flow is deleted picks these up too.
+const PREVIEW_RECT_SETTING_PREFIX =
+    'floating-widget-rect-presenting-flow-preview';
+
+export function toPresentingFlowPreviewRectSettingName(filePath: string) {
+    return toPresentingFlowSettingName(PREVIEW_RECT_SETTING_PREFIX, filePath);
 }

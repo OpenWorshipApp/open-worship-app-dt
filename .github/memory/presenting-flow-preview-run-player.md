@@ -62,15 +62,22 @@ keep getting "fixed" by mistake:
   (`checkIsPresentingFlowPreviewItemSelected`) — a key-only test lit up both copies of a
   twice-listed entry. A reorder un-marks until the next press, which
   `resolvePresentingFlowPreviewSelectedIndex` repairs by writing back the position it found.
-  Closing the widget or pointing it at another presenting flow clears it.
+  Closing that presenting flow's widget clears it — and only it.
 - **The cursor's mark is `app-presenting-flow-preview-item-selected`** — a cyan `var(--bs-info)`
   outline, on the element's sticky label AND (same class, second rule) on the slide card.
   It is a different question from the magenta blinking `app-highlight-selected`, which
   says "live on a screen" and can be on several cards at once; both are meant to be
   readable together.
-- Only ONE widget exists at a time (module-level store, not per-row state). Its fold state
-  is one setting per presenting flow holding only the COLLAPSED keys, deleted when everything is
-  expanded.
+- **SEVERAL widgets may be open at once, one per FILE** (2026-08-08; before that a shared
+  slot meant opening one silently closed the other and threw its run position away). The
+  store is a module-level ARRAY of open file paths, and everything the run holds is keyed
+  by file path with it: the cursor, the pending child entry, the child-stepping registry
+  (`Map<filePath, Map<index, stepping>>` — two sheets both have an element 3) and the
+  auto-next clock. Each widget keeps its own rect under
+  `floating-widget-rect-presenting-flow-preview-<sanitized path>` and is staggered 24px on
+  first open; the zoom slider is deliberately still ONE shared setting. Closing a widget
+  drops everything it held, its cached fold keys included. Its fold state is one setting
+  per presenting flow holding only the COLLAPSED keys, deleted when everything is expanded.
 - Slide cards inside the widget get a **restricted** right-click menu (Show on Screens
   only, caught on the capture phase) — the previewer's colour-note/background/edit family
   acts on the document, not on the run sheet. Bible entries render read-only for the same
