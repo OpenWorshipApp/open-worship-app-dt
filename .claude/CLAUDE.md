@@ -241,7 +241,7 @@ taken over or touching a display the user says is in live use.
 
 **`presentingFlow` is a tracked MODE, not a focus area.** `/owa-robot-test presentingFlow` runs the
 11-phase deep pass (SKILL.md §6f, recipe test-plan §S20, model knowledge-base §14) over
-the 67 run-sheet rows `PL-10, PL-29, PL-32..76, PL-81..100` with coverage accounting on
+the 68 run-sheet rows `PL-10, PL-29, PL-32..76, PL-81..101` with coverage accounting on
 (`coverage-<runid>.json`, `"focus": "presentingFlow"`), a scratch `zz-robot-<runid>` fixture that
 is torn down at the end, and the mandatory blocks ridden from the presenting flow itself. The
 other PL rows are the Documents/Lyrics lists — same prefix, different subsystem.

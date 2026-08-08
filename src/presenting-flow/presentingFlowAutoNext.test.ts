@@ -13,6 +13,7 @@ import {
     setPresentingFlowAutoNextPaused,
     startPresentingFlowAutoNext,
     stopPresentingFlowAutoNext,
+    stopPresentingFlowAutoNextInterval,
 } from './presentingFlowAutoNextHelpers';
 
 const PRESENTING_FLOW_FILE_PATH = '/data/presenting-flows/pl1.owpf';
@@ -382,6 +383,69 @@ describe('presenting flow auto next', () => {
         expect(getPresentingFlowAutoNextState()?.isPaused).toBe(true);
         expect(getPresentingFlowAutoNextState()?.remainingSeconds).toBe(7);
         tickSeconds(20);
+        expect(step).not.toHaveBeenCalled();
+        unregister();
+    });
+
+    test('`Next: Clear Interval` ends a running interval and nothing else', () => {
+        const step = genStepping();
+        const unregister = registerPresentingFlowRunController(
+            PRESENTING_FLOW_FILE_PATH,
+            genController(step),
+        );
+        startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 3);
+        // Even while HELD: a paused interval is still an interval, and holding
+        // it is not the sheet having said "stop looping".
+        setPresentingFlowAutoNextPaused(true);
+        expect(
+            stopPresentingFlowAutoNextInterval(PRESENTING_FLOW_FILE_PATH),
+        ).toBe(true);
+        expect(getPresentingFlowAutoNextState()).toBe(null);
+        tickSeconds(30);
+        expect(step).not.toHaveBeenCalled();
+
+        // A TIMEOUT is left counting: it is a one-shot the run moving cancels by
+        // itself, and it is nearly always a CC holding the line that is up.
+        startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'timeout', 4);
+        expect(
+            stopPresentingFlowAutoNextInterval(PRESENTING_FLOW_FILE_PATH),
+        ).toBe(true);
+        expect(getPresentingFlowAutoNextState()?.mode).toBe('timeout');
+        tickSeconds(4);
+        expect(step).toHaveBeenCalledTimes(1);
+
+        // Doing it twice is doing it once — no toast, nothing to undo — which is
+        // what lets it sit inside a looping set.
+        expect(
+            stopPresentingFlowAutoNextInterval(PRESENTING_FLOW_FILE_PATH),
+        ).toBe(true);
+        unregister();
+        // With no run open it refuses, exactly as every other run action does.
+        expect(
+            stopPresentingFlowAutoNextInterval(PRESENTING_FLOW_FILE_PATH),
+        ).toBe(false);
+    });
+
+    test('a `Next: Clear Interval` element fires the same way', () => {
+        const step = genStepping();
+        const unregister = registerPresentingFlowRunController(
+            PRESENTING_FLOW_FILE_PATH,
+            genController(step),
+        );
+        startPresentingFlowAutoNext(PRESENTING_FLOW_FILE_PATH, 'interval', 2);
+        const presentingFlowItem = PresentingFlowItem.fromJson(
+            PRESENTING_FLOW_FILE_PATH,
+            // No number, and none is asked for: there is only ever one clock, so
+            // there is nothing for this line to name.
+            PresentingFlowItem.fromActionId('next-clear-interval'),
+        );
+        expect(presentingFlowItem.runAction?.number).toBe(null);
+        // It may ride another line as a CC — "put this last slide up AND stop
+        // the loop" — unlike the interval it ends.
+        expect(presentingFlowItem.runAction?.canBeCcItem).toBe(true);
+        firePresentingFlowRunAction(presentingFlowItem);
+        expect(getPresentingFlowAutoNextState()).toBe(null);
+        tickSeconds(10);
         expect(step).not.toHaveBeenCalled();
         unregister();
     });

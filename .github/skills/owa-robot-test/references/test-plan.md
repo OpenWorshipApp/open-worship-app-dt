@@ -295,7 +295,7 @@ runtime could be found` is a real Critical. A failed attempt also leaves an orph
 `temp-*.part` behind (known app bug — the error path does not remove partials); step 5
 takes it.
 
-### S20 — Presenting Flow deep pass `[PL-10, PL-29, PL-32..76, PL-81..100]` — the whole run sheet
+### S20 — Presenting Flow deep pass `[PL-10, PL-29, PL-32..76, PL-81..101]` — the whole run sheet
 
 The recipe for **presenting flow deep mode** (SKILL.md §6f), run whenever the argument is
 `presentingFlow` / `run sheet`, and in its short form inside every full-coverage run. **Read
@@ -319,8 +319,8 @@ every scope row ending with a status.
    Items**);
    **fire all 13 clear actions against a showing screen**; the two `Screen: Show` /
    `Screen: Hide` lines, which ask WHICH SCREENS before they are added and then run on
-   those and no others; then the 4 run actions and their menus, which must offer no screen
-   family. `[PL-71..74, PL-95, PL-96, PL-97, PL-100]`
+   those and no others; then the 5 run actions and their menus, which must offer no screen
+   family. `[PL-71..74, PL-95, PL-96, PL-97, PL-100, PL-101]`
 5. **P4 CC elements** — attach by drop and by menu, propagate onto the screens in ONE
    gesture with **no second "which screen?" question**, reveal-original, export/import
    round trip, and the two distinct refusal toasts. `[PL-89..93]`

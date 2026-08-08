@@ -18,14 +18,15 @@ icon, color, and a `target` discriminant that splits it into TWO families:
   `screen-show` / `screen-hide` (added 2026-08-06), which are about the WINDOW rather than
   what is on it — see [[presenting-flow-screen-show-hide]].
 - `target: 'run'` → `start(presentingFlowItem)` and drives the RUN rather than a screen (added
-  2026-08-05, branch refactor24). Four ship: `next-interval` and `next-timeout`, which drive
-  [[presenting-flow-auto-next]]; `jump-to`, the sheet's GOTO; and `keyboard-event`, the hotkey — the
-  ONE of them that reaches a screen at all, and only through its CC elements
+  2026-08-05, branch refactor24). Five ship: `next-interval` and `next-timeout`, which drive
+  [[presenting-flow-auto-next]]; `next-clear-interval` (2026-08-08), which ends a running
+  interval and only an interval; `jump-to`, the sheet's GOTO; and `keyboard-event`, the
+  hotkey — the ONE of them that reaches a screen at all, and only through its CC elements
   (see [[presenting-flow-keyboard-event]]).
 
 **The `Add Action` menu is FOUR levels now** (2026-08-08): everything that erases folds behind
 one `Clear Screen` row — the five whole-layer clears, and inside them the eight per-widget FG
-clears behind `Other Clear FG Items` again. Thirteen of the nineteen entries clear something, so
+clears behind `Other Clear FG Items` again. Thirteen of the twenty entries clear something, so
 inline they WERE the menu. `presentingFlowActionMenuList` is the menu's SHAPE (a flat action or a
 `{label, iconName, color, actionList}` group, told apart by `checkIsPresentingFlowActionGroup`);
 a group holds MENU ENTRIES, so a family may hold a family, and `PresentingFlowFileComp`'s

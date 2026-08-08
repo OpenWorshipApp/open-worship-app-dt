@@ -5,6 +5,7 @@ import {
     jumpPresentingFlowRunToCcItem,
     startPresentingFlowAutoNext,
     startPresentingFlowAutoNextAtTime,
+    stopPresentingFlowAutoNextInterval,
 } from './presentingFlowAutoNextHelpers';
 // A TYPE only: `PresentingFlowItem` imports this module for its values, so anything
 // else here would close that cycle.
@@ -46,6 +47,7 @@ export type PresentingFlowActionIdType =
     | 'screen-show'
     | 'screen-hide'
     | 'next-interval'
+    | 'next-clear-interval'
     | 'next-timeout'
     | 'jump-to'
     | 'keyboard-event';
@@ -382,15 +384,18 @@ const screenShowHideActionList: PresentingFlowScreenActionType[] = [
  *
  * The two clocks are the same timer armed with two different endings — see
  * `presentingFlowAutoNextHelpers` for why input cancels one and not the other — so they
- * are written as one pair here rather than twice over; the jump is the third way
- * and the only one that goes anywhere but forward; the keyboard event is the
- * fourth and the only one the OPERATOR aims, at any moment, from a key.
+ * are written as one pair here rather than twice over, with the interval's own
+ * off switch beside it; the jump is the third way and the only one that goes
+ * anywhere but forward; the keyboard event is the fourth and the only one the
+ * OPERATOR aims, at any moment, from a key.
  *
  * None of them wears an eraser: none of them clears a screen, the RUN moves. And
  * each wears its OWN colour rather than one family colour — a run sheet is read
  * at a glance mid-service, and "waits once" (amber), "keeps going" (teal), "goes
  * somewhere else" (purple) and "when I press it" (pink) are four different things
- * to find in a hurry. The badge and the icon say the same thing twice over.
+ * to find in a hurry. The badge and the icon say the same thing twice over. The
+ * one exception is `Next: Clear Interval`, which shares the interval's teal
+ * BECAUSE it is that same thing undone.
  */
 const SECONDS_NUMBER = { label: 'Seconds', defaultValue: 10 };
 const NO_RUN_MESSAGE = 'Open the presenting flow preview to use this action';
@@ -415,6 +420,56 @@ const nextActionList: PresentingFlowRunActionType[] = [
                 presentingFlowItem.filePath,
                 'interval',
                 presentingFlowItem.actionNumber,
+            )
+                ? null
+                : NO_RUN_MESSAGE;
+        },
+    },
+    {
+        /**
+         * The INTERVAL's off switch, written as a line of the sheet.
+         *
+         * An interval ends by its own button on the floating pill, or with the
+         * run — both of them the operator being at the machine, which is the one
+         * thing an interval running a pre-service loop cannot assume. It is also
+         * the only clock the run MOVING does not cancel (that is what makes it a
+         * loop), so until now "walk these four slides over and over, then stop
+         * and wait for me" could not be written at all: a `Jump to` at the end of
+         * the set makes the loop, and nothing in the sheet could end it.
+         *
+         * It arms with nothing and asks nothing — there is only ever one clock,
+         * so there is nothing to name — and it clears the INTERVAL alone; see
+         * `stopPresentingFlowAutoNextInterval` for why a timeout is left counting.
+         * Doing it twice is doing it once, which is what lets it sit inside a
+         * looping set safely.
+         *
+         * It wears the interval's OWN teal rather than a fifth colour: the other
+         * run actions differ because they are four different things, while this
+         * one is the interval and nothing else — the same thing, undone. The
+         * stopped-square glyph and the `⊘` badge are what tell the pair apart.
+         *
+         * It may BE a CC (`canBeCcItem`), and for the same reason the timeout may:
+         * "put this last slide up AND stop the loop" is one line worth having, and
+         * unlike a CC'd interval — which would walk a sheet forward from a line
+         * that only meant to be shown — a follower that STOPS something can never
+         * run away with the run.
+         */
+        id: 'next-clear-interval',
+        label: 'Next: Clear Interval',
+        badge: '⊘',
+        iconName: 'stop-circle',
+        color: 'var(--bs-teal)',
+        target: 'run',
+        number: null,
+        canBeTimeArmed: false,
+        canBeKeyArmed: false,
+        ccItemCount: 0,
+        ccItemsAreTargets: false,
+        canBeCcItem: true,
+        movesRunAtOnce: false,
+        start: (presentingFlowItem) => {
+            return stopPresentingFlowAutoNextInterval(
+                presentingFlowItem.filePath,
             )
                 ? null
                 : NO_RUN_MESSAGE;
@@ -656,7 +711,7 @@ export function checkIsPresentingFlowActionGroup(
  * The `Add Action` menu, as it is READ.
  *
  * Everything that ERASES is folded behind one `Clear Screen` row, and nothing
- * else is: thirteen of the menu's nineteen entries clear something, so left
+ * else is: thirteen of the menu's twenty entries clear something, so left
  * inline they were the menu, and the two questions an operator opens it with —
  * "clear something" or "do something" — could not be told apart at a glance.
  * Inside it, the five whole-layer clears first, in the mini screen bar's own

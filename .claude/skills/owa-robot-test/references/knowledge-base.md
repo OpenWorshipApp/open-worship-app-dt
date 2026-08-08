@@ -596,7 +596,7 @@ Notes that save time on this subsystem:
 The Presenting Flows panel (`src/presenting-flow/`) is the app's **run sheet**: one file per service,
 holding everything that service will present, in order. It is small in code and dense in
 rules, and almost every one of those rules is a testable claim. Read **all of this**
-before driving PL-10 / PL-29 / PL-32..PL-76 / PL-81..PL-100 — it explains *why* each row's
+before driving PL-10 / PL-29 / PL-32..PL-76 / PL-81..PL-101 — it explains *why* each row's
 pass condition is what it is, and which "odd" behaviours are deliberate. It is also the
 required reading for **presenting flow deep mode** (SKILL.md §6f, recipe in test-plan §S20).
 
@@ -820,15 +820,15 @@ Two families, split by a `target` discriminant — the difference decides the wh
   clear on purpose — it drives the background manager, so `Clear Background` covers it.
   The last two are **`Screen: Show` / `Screen: Hide`** (below), which are about the
   WINDOW rather than about what is on it.
-- **`target: 'run'` (4)** — `start(presentingFlowItem)`; drives the RUN, reaches no screen of its
-  own. `Next: Interval`, `Next: Timeout` (§14.11), `Jump to` (§14.11), `Keyboard Event`
-  (§14.12). Their menus must never offer **Show on Screens** / **Reveal Original**, and
+- **`target: 'run'` (5)** — `start(presentingFlowItem)`; drives the RUN, reaches no screen of its
+  own. `Next: Interval`, `Next: Timeout`, `Next: Clear Interval` (§14.11), `Jump to`
+  (§14.11), `Keyboard Event` (§14.12). Their menus must never offer **Show on Screens** / **Reveal Original**, and
   they must never appear in another row's **Add CC Elements** list — except the two that
   deliberately do (§14.10).
 
 **The menu is FOUR levels** since 2026-08-08: everything that erases folds behind one
 **Clear Screen** row with a chevron, and inside it the eight per-widget FG clears fold again
-behind **Other Clear FG Items** (thirteen of the nineteen entries clear something, so inline
+behind **Other Clear FG Items** (thirteen of the twenty entries clear something, so inline
 they were the menu). `presentingFlowActionMenuList` is the menu's SHAPE — a group holds MENU
 ENTRIES, so a family may hold a family — and `presentingFlowActionList` the flat registry an id
 resolves against; only `PresentingFlowFileComp` reads the former, and its `genMenuEntry` walks
@@ -845,9 +845,10 @@ Two traps when driving this by CDP:
 
 - **Colours are load-bearing, not decoration.** The two `secondary` clears use
   `--bs-gray-500` because the context menu's own background IS `--bs-secondary` and they
-  were invisible; the run family wears three different colours on purpose (timeout
+  were invisible; the run family wears four different colours on purpose (timeout
   warning, interval teal, jump purple, keyboard pink) so they are told apart at a glance
-  mid-service. A "wrong colour" here is a real finding.
+  mid-service — `Next: Clear Interval` shares the interval's teal BECAUSE it is that same
+  thing undone. A "wrong colour" here is a real finding.
 - **Closing nested menus programmatically pollutes the keyboard layer stack.** After a lot
   of synthetic menu driving, the preview's keys stop firing — the tell is `ArrowDown`
   reporting `defaultPrevented: true` while the run does not move. **Reload the window and
@@ -894,11 +895,12 @@ puts the host AND every CC on the screens in ONE gesture.
 - A CC row's menu is short — never **Show on Screens**, never **Disable** — and clicking
   it reveals its original in the tree.
 
-### 14.11 The two clocks and the GOTO — the sheet walking itself (PL-95, PL-96)
+### 14.11 The two clocks and the GOTO — the sheet walking itself (PL-95, PL-96, PL-101)
 
 `Next: Interval (n)` / `Next: Timeout (n)` move the run on by themselves; `Jump to` aims
 it at a line another line names (backwards up the sheet is the point — that plus an
-interval is the looping set of slides).
+interval is the looping set of slides), and `Next: Clear Interval` is the loop's off
+switch as a line (PL-101).
 
 The rules that get "fixed" by mistake:
 
@@ -912,7 +914,14 @@ The rules that get "fixed" by mistake:
   The remainder is re-read from the wall clock each tick, so a sleeping laptop still fires
   on time.
 - A **timeout may be a CC element and an interval may not** — a slide can carry "go on by
-  yourself in N seconds"; nothing may carry a loop no input can stop.
+  yourself in N seconds"; nothing may carry a loop no input can stop. A
+  **`Next: Clear Interval` may be one too**: a follower that STOPS something can never run
+  away with the run.
+- **`Next: Clear Interval` ends an INTERVAL and only an interval** — a running timeout is
+  deliberately left counting (it is a one-shot the run moving already cancels, and it is
+  nearly always a CC holding the line that is up). It arms with nothing, asks nothing,
+  says nothing when there was no interval to end (doing it twice is doing it once), and
+  ends a PAUSED interval as readily as a running one.
 - With the preview closed, or open on ANOTHER presenting flow, firing any run action toasts
   **Open the presenting flow preview to use this action** and does nothing else. That is why
   these rows can only be tested with the widget open.

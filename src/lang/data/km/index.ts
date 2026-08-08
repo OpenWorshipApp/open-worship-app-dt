@@ -363,6 +363,7 @@ const dictionary = {
     'Please choose at least one screen': 'សូមជ្រើសរើសអេក្រង់យ៉ាងតិចមួយ',
     'No screen is open': 'គ្មានអេក្រង់បើកទេ',
     'Next: Interval': 'បន្ទាប់៖ រៀងរាល់ចន្លោះពេល',
+    'Next: Clear Interval': 'បន្ទាប់៖ បញ្ឈប់រៀងរាល់ចន្លោះពេល',
     'Next: Timeout': 'បន្ទាប់៖ អស់ពេលកំណត់',
     Seconds: 'វិនាទី',
     'Start Auto Next': 'ចាប់ផ្តើមបន្តដោយស្វ័យប្រវត្តិ',

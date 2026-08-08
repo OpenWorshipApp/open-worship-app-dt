@@ -17,7 +17,7 @@ runs P0..P10 in order, so a presenting flow run is auditable the same way a full
 
 **How to apply:**
 
-- **Scope = 67 rows: PL-10, PL-29, PL-32..PL-76, PL-81..PL-100.** The other PL rows are the
+- **Scope = 68 rows: PL-10, PL-29, PL-32..PL-76, PL-81..PL-101.** The other PL rows are the
   Documents/Lyrics lists and generic file-list chrome — same prefix, different subsystem,
   out of scope except where the fixture uses them. Adjacent-when-touched: `PL-77..80` +
   `NAV-17/18` (the `.owadoc`/`.owadata` archives share the bundle's code — see

@@ -1,6 +1,6 @@
 ---
 name: presenting-flow-auto-next
-description: The presenting flow run can walk itself (one clock, two endings) and jump; the run's SELECTION CHANGING cancels a timeout and restarts an interval — raw clicks/keys mean nothing
+description: The presenting flow run can walk itself (one clock, two endings), stop its own interval and jump; the run's SELECTION CHANGING cancels a timeout and restarts an interval — raw clicks/keys mean nothing
 metadata:
   type: project
 ---
@@ -28,8 +28,11 @@ the wait. The one signal is the preview's CURSOR changing
   hour-long countdown that subtracted one per tick would be minutes out).
 - **interval** — keeps forcing it every N seconds, and the run going somewhere RESTARTS
   its count: an operator who steps ahead by hand gets the whole interval on the line they
-  landed on. It is cleared by its own ⊗ pill, by the widget closing, or by reaching the end
-  of the sheet. Do not "fix" this into cancelling.
+  landed on. It is cleared by its own ⊗ pill, by the widget closing, by reaching the end
+  of the sheet, or by a **`Next: Clear Interval`** line (2026-08-08,
+  `stopPresentingFlowAutoNextInterval`) — the SHEET's own off switch, since the other three
+  are all the operator being at the machine and a loop is exactly what an unattended sheet
+  runs. Do not "fix" this into cancelling.
 
 **A timeout met by a running interval LENDS it its count for one cycle** rather than
 replacing it (`borrowPresentingFlowAutoNextCycle`, 2026-08-06) — interval at 5 + a
@@ -66,6 +69,16 @@ interval IS the looping set. The only thing withheld is another JUMP (`movesRunA
 the registry entry, `isFromJump` at the landing) — two aimed at each other would move the
 run for ever with nothing in between. Withholding every run action instead was a bug that
 silently broke the loop.
+
+The fifth is **`next-clear-interval`** (`Next: Clear Interval`, 2026-08-08): armed with
+nothing, asked nothing, and it ends a running INTERVAL and NOTHING else — a timeout is a
+one-shot the run moving already cancels, and is nearly always a CC holding the line that is
+up, so a line named after the interval must not silently kill a wait. Doing it twice is
+doing it once and says nothing (like `Screen: Show` on a live screen); with no run open it
+refuses with the family's `Open the presenting flow preview to use this action`. A PAUSED
+interval is still an interval; a borrowed cycle goes with it. It wears the interval's own
+teal — the same thing, undone — and MAY be a CC ("put this last slide up AND stop the
+loop"), which an interval may not.
 
 A timeout may also be attached to another line as a **CC element** (an interval may not —
 `canBeCcItem` on the registry entry): "show this slide, and go on by yourself N seconds

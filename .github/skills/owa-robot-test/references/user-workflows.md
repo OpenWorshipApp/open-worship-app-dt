@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-08** (**W-22** step 2: **Add Action** now opens with one
+**workflowsVersion: 2026-08-08a** (**W-22** step 2: a fifth run action,
+**Next: Clear Interval** — the loop's off switch written as a line of the running order.
+An interval could only be stopped by hand (the pill, closing the panel, the end of the
+sheet); now a sheet can stop its own loop, wait, and be picked up again. It asks nothing
+when you add it, ends a running or paused interval and only an interval, and does nothing
+— silently — when there is no loop to end. **Driven live.** Previous:
+**2026-08-08** (**W-22** step 2: **Add Action** now opens with one
 **Clear Screen** row instead of six clearing rows — the five clears and the per-widget
 **Other Clear FG Items** row moved inside it, so the menu opens on the choice between
 clearing something, putting the screen up or down, and moving the run on. Nothing was
@@ -833,6 +839,17 @@ thing to another machine.
      the same colour as the line that started it). Closing the panel stops it too, as does
      reaching the end of the sheet.
 
+   - **Next: Clear Interval** (បន្ទាប់៖ បញ្ឈប់រៀងរាល់ចន្លោះពេល) stops that loop, and it is the
+     one way the SHEET can stop it: the pill, closing the panel and the end of the list are
+     all you being at the machine. Add it — it asks nothing, there being only ever one clock
+     running — and the line reads `⊘ Next: Clear Interval` in the interval's own colour,
+     because it is that same thing undone. Put it after a looping set (an interval, a few
+     slides, a **Jump to** pointing back at the interval) and the loop runs until the run
+     reaches this line, then stops and waits for you. Firing it when nothing is looping does
+     nothing at all and says nothing, so it is safe to leave in a sheet you re-run. It stops
+     an interval you have PAUSED as well; a **Next: Timeout** it leaves alone, so a wait
+     attached to a slide is never killed by a line that only meant to end a loop. 📸
+
    Both only mean something while that presenting flow's **preview panel** is open (step 8) —
    that panel is what walks the running order. Click one with the panel closed and the app
    says so (**Open the presenting flow preview to use this action**) rather than looking as
@@ -849,7 +866,10 @@ thing to another machine.
    line of its own. 📸
    **A Next: Interval cannot be attached to anything** and is simply not in that list —
    an interval is not stopped by anything you do, so one riding a slide would keep moving
-   the running order on with nothing to call it off but the panel's own pill.
+   the running order on with nothing to call it off but the panel's own pill. A
+   **Next: Clear Interval** CAN be attached, for the opposite reason: "put this last slide
+   up **and** stop the loop" is one click, and something that stops a loop can never run
+   away with the running order.
 
    **Go back, not just forward.** The third one, **Jump to** (លោតទៅ), is how a running
    order reaches a line that is not the next one. Add it, then right-click it →
@@ -1178,7 +1198,7 @@ thing to another machine.
 > **Invalid item**, that one entry is damaged (usually a hand-edited file) — the rest of
 > the running order still works; remove that line and re-add it.
 
-_Verify: PL-10, PL-29, PL-32..PL-76, PL-81..PL-96._
+_Verify: PL-10, PL-29, PL-32..PL-76, PL-81..PL-96, PL-101._
 
 ---
 

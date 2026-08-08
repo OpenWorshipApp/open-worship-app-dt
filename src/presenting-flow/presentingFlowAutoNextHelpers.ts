@@ -329,6 +329,39 @@ export function startPresentingFlowAutoNext(
 }
 
 /**
+ * End a running INTERVAL — and ONLY an interval — which is what a
+ * `Next: Clear Interval` line does.
+ *
+ * The loop's off switch as a line of the sheet. An interval ends by its own
+ * button or with the run, and neither is available to a sheet that has to walk
+ * itself: "loop these four slides, then stop looping and wait for me" could not
+ * be written at all, since the one thing an interval does not answer to is the
+ * run moving.
+ *
+ * A TIMEOUT is deliberately left alone. It is a one-shot that the run moving
+ * cancels by itself, and it is nearly always a CC riding a line that is being
+ * shown ("hold this one a little longer") — killing that from a line named after
+ * the interval would leave a sheet that says it stops a loop silently stopping a
+ * wait as well, and an unattended sheet with its clock gone never moves again. A
+ * PAUSED interval is still an interval and is ended; a BORROWED cycle goes with
+ * the interval that borrowed it.
+ *
+ * Answers whether there is a run to act on at all — NOT whether it stopped
+ * anything: an interval that was not running is already the state this asks for,
+ * and a toast fired mid-service to say so would be noise. This is the same
+ * reason `Screen: Show` is silent on an already-showing screen.
+ */
+export function stopPresentingFlowAutoNextInterval(filePath: string) {
+    if (!checkPresentingFlowAutoNextIsRunnable(filePath)) {
+        return false;
+    }
+    if (state?.mode === 'interval') {
+        stopPresentingFlowAutoNext();
+    }
+    return true;
+}
+
+/**
  * Arm a TIMEOUT to end at a time of day instead of after a count of seconds —
  * "go on at 7:05", which is how the start of a service is actually described.
  *
