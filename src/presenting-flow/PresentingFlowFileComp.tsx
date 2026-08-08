@@ -17,6 +17,7 @@ import LoadingComp from '../others/LoadingComp';
 import PresentingFlow from './PresentingFlow';
 import type {
     PresentingFlowActionArmingType,
+    PresentingFlowActionMenuEntryType,
     PresentingFlowActionType,
 } from './presentingFlowActionHelpers';
 import {
@@ -219,6 +220,40 @@ export default function PresentingFlowFileComp({
                 },
             };
         };
+        // Recursive, because a family may hold a family: `Clear Screen` holds
+        // `Other Clear FG Items`. The component knows nothing of either name —
+        // it draws whatever shape `presentingFlowActionMenuList` has.
+        const genMenuEntry = (
+            entry: PresentingFlowActionMenuEntryType,
+        ): ContextMenuItemType => {
+            if (!checkIsPresentingFlowActionGroup(entry)) {
+                return genActionMenuItem(entry);
+            }
+            // A FAMILY, not an action: it adds nothing and opens a menu of its
+            // own. A chevron says so before it is clicked — every other row
+            // here writes a line into the run sheet.
+            return {
+                childBefore: genContextMenuItemIcon(entry.iconName, {
+                    color: entry.color,
+                }),
+                childAfter: genContextMenuItemIcon('chevron-right'),
+                menuElement: tran(entry.label),
+                onSelect: (subEvent: any) => {
+                    subEvent.stopPropagation();
+                    // The host closes this menu around `onSelect`, so the event
+                    // is spent by the time the next level opens — its
+                    // coordinates are kept and a fresh event synthesized at
+                    // them, exactly as the screen-pin checklist reopens itself.
+                    const { clientX, clientY } = subEvent;
+                    showAppContextMenu(
+                        createMouseEvent(clientX, clientY),
+                        entry.actionList.map((subEntry) => {
+                            return genMenuEntry(subEntry);
+                        }),
+                    );
+                },
+            };
+        };
         return [
             {
                 childBefore: genContextMenuItemIcon('window-stack'),
@@ -240,36 +275,7 @@ export default function PresentingFlowFileComp({
                     showAppContextMenu(
                         event as MouseEvent,
                         presentingFlowActionMenuList.map((entry) => {
-                            if (!checkIsPresentingFlowActionGroup(entry)) {
-                                return genActionMenuItem(entry);
-                            }
-                            // A FAMILY, not an action: it adds nothing and opens
-                            // a menu of its own. A chevron says so before it is
-                            // clicked — every other row here writes a line into
-                            // the run sheet.
-                            return {
-                                childBefore: genContextMenuItemIcon(
-                                    entry.iconName,
-                                    { color: entry.color },
-                                ),
-                                childAfter:
-                                    genContextMenuItemIcon('chevron-right'),
-                                menuElement: tran(entry.label),
-                                onSelect: (subEvent: any) => {
-                                    subEvent.stopPropagation();
-                                    // The host closes this menu around
-                                    // `onSelect`, so the event is spent by the
-                                    // time the third level opens — its
-                                    // coordinates are kept and a fresh event
-                                    // synthesized at them, exactly as the
-                                    // screen-pin checklist reopens itself.
-                                    const { clientX, clientY } = subEvent;
-                                    showAppContextMenu(
-                                        createMouseEvent(clientX, clientY),
-                                        entry.actionList.map(genActionMenuItem),
-                                    );
-                                },
-                            };
+                            return genMenuEntry(entry);
                         }),
                     );
                 },

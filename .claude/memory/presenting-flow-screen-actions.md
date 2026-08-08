@@ -23,10 +23,14 @@ icon, color, and a `target` discriminant that splits it into TWO families:
   ONE of them that reaches a screen at all, and only through its CC elements
   (see [[presenting-flow-keyboard-event]]).
 
-**The `Add Action` menu is three levels now**: the eight per-widget FG clears fold behind one
-`Other Clear FG Items` row. `presentingFlowActionMenuList` is the menu's SHAPE (a flat action or a
+**The `Add Action` menu is FOUR levels now** (2026-08-08): everything that erases folds behind
+one `Clear Screen` row — the five whole-layer clears, and inside them the eight per-widget FG
+clears behind `Other Clear FG Items` again. Thirteen of the nineteen entries clear something, so
+inline they WERE the menu. `presentingFlowActionMenuList` is the menu's SHAPE (a flat action or a
 `{label, iconName, color, actionList}` group, told apart by `checkIsPresentingFlowActionGroup`);
-`presentingFlowActionList` stays the flat registry an id resolves against. Only `PresentingFlowFileComp`
+a group holds MENU ENTRIES, so a family may hold a family, and `PresentingFlowFileComp`'s
+`genMenuEntry` walks it RECURSIVELY. `presentingFlowActionList` stays the flat registry an id
+resolves against — the stored ids did NOT change, so no migration. Only `PresentingFlowFileComp`
 reads the former — a family added later folds itself away without the component learning its
 name.
 

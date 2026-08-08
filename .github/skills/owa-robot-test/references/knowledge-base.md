@@ -785,7 +785,7 @@ an old file, not a new bug.
   `Open Preview`, `Remove from PresentingFlow`, `Choose Color`, `Move up`, `Move down`,
   `Collapse All`, `Expand All`, `Slide Thumbnail Size Scale`, `Import`, `Export`,
   `Fail to read file data` — plus everything the action families added since:
-  `Add Action`, `Other Clear FG Items`, every action label, `Set Specific Screen`,
+  `Add Action`, `Clear Screen`, `Other Clear FG Items`, every action label, `Set Specific Screen`,
   `Add CC Elements`, `Disable`/`Enable`, `Duplicate`, `Move to Top`/`Move to Bottom`,
   `Apply on Screens`, `Start Auto Next`, `Change Seconds`/`Change Timing`,
   `Change Shortcut`, `Keyboard Event`, `Shortcut`, `Press a shortcut`,
@@ -826,12 +826,16 @@ Two families, split by a `target` discriminant — the difference decides the wh
   they must never appear in another row's **Add CC Elements** list — except the two that
   deliberately do (§14.10).
 
-**The menu is three levels** since 2026-08-06: the eight per-widget FG clears fold behind
-one **Other Clear FG Items** row with a chevron. `presentingFlowActionMenuList` is the menu's
-SHAPE, `presentingFlowActionList` the flat registry an id resolves against — only
-`PresentingFlowFileComp` reads the former, so a family added later folds itself away. Its
-second level reads **clear something → clear one FG widget → put the screen up or down →
-move the run on**, twelve rows in that order.
+**The menu is FOUR levels** since 2026-08-08: everything that erases folds behind one
+**Clear Screen** row with a chevron, and inside it the eight per-widget FG clears fold again
+behind **Other Clear FG Items** (thirteen of the nineteen entries clear something, so inline
+they were the menu). `presentingFlowActionMenuList` is the menu's SHAPE — a group holds MENU
+ENTRIES, so a family may hold a family — and `presentingFlowActionList` the flat registry an id
+resolves against; only `PresentingFlowFileComp` reads the former, and its `genMenuEntry` walks
+it recursively, so a family added later folds itself away. The stored ids did not change. The
+top level reads **clear something → put the screen up or down → move the run on**, seven rows
+in that order; **Clear Screen** opens the five whole-layer clears in the mini screen bar's own
+order plus the **Other Clear FG Items** row.
 
 **Three things are asked BEFORE a line is written**, and Cancel must add nothing in every
 case: how a clock is armed, what shortcut a `Keyboard Event` answers to, and — new

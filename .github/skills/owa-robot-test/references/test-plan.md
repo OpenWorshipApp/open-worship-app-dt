@@ -315,7 +315,8 @@ every scope row ending with a status.
    (incl. a parked document's slides), the on-screen indicator at all three levels,
    expansion memory following the DOCUMENT not the position. `[PL-32..36, PL-41, PL-53,
    PL-62, PL-86..88]`
-4. **P3 actions** — the three-level **Add Action** menu (**Other Clear FG Items**);
+4. **P3 actions** — the four-level **Add Action** menu (**Clear Screen** ▸ **Other Clear FG
+   Items**);
    **fire all 13 clear actions against a showing screen**; the two `Screen: Show` /
    `Screen: Hide` lines, which ask WHICH SCREENS before they are added and then run on
    those and no others; then the 4 run actions and their menus, which must offer no screen

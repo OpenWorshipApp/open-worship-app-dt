@@ -533,9 +533,9 @@ than the position (PL-53).
 
 #### P3 — Actions, both families (PL-71..PL-74, PL-95, PL-96, PL-97)
 
-The **Add Action** menu is three levels now: the eight per-widget foreground clears fold
-behind **Other Clear FG Items** (PL-71). Two families, and the difference is the whole
-point:
+The **Add Action** menu is four levels now: every clear folds behind **Clear Screen**, and
+the eight per-widget foreground clears behind **Other Clear FG Items** inside it (PL-71).
+Two families, and the difference is the whole point:
 
 - **Screen actions** (13) — `apply(screenManager)`. **Fire every one of them at least
   once against a real, showing screen** (PL-72, PL-74). They are the only presenting flow rows

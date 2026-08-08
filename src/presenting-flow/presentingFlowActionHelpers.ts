@@ -630,12 +630,17 @@ const clearActionList: PresentingFlowScreenActionType[] = [
  * the grouping IS part of what these actions are (a finer version of the one
  * above them), and a family added later must be able to fold itself away without
  * the component learning its name.
+ *
+ * A group holds MENU ENTRIES rather than actions, so a family may hold a finer
+ * family of its own: `Clear Screen` holds the per-widget foreground clears the
+ * same way it holds the five whole-layer ones. The component that draws the menu
+ * walks this recursively, so the nesting is a property of the registry alone.
  */
 export type PresentingFlowActionGroupType = {
     label: string;
     iconName: string;
     color: string;
-    actionList: PresentingFlowActionType[];
+    actionList: PresentingFlowActionMenuEntryType[];
 };
 
 export type PresentingFlowActionMenuEntryType =
@@ -650,27 +655,45 @@ export function checkIsPresentingFlowActionGroup(
 /**
  * The `Add Action` menu, as it is READ.
  *
- * The five clears first, in the mini screen bar's own order; then the eight
- * per-widget foreground clears, folded behind ONE row — they are a finer version
- * of the `Clear Foreground` right above them, and left inline they were two
- * thirds of a menu that had to be scrolled past to reach anything else. Then the
- * screen itself, up and down — still a screen action, but about the window
- * rather than about what is on it, so it reads after everything that clears. The
+ * Everything that ERASES is folded behind one `Clear Screen` row, and nothing
+ * else is: thirteen of the menu's nineteen entries clear something, so left
+ * inline they were the menu, and the two questions an operator opens it with —
+ * "clear something" or "do something" — could not be told apart at a glance.
+ * Inside it, the five whole-layer clears first, in the mini screen bar's own
+ * order, then the eight per-widget foreground ones folded again behind
+ * `Other Clear FG Items`: they are a finer version of the `Clear Foreground`
+ * right above them, and they are eight of the thirteen.
+ *
+ * Then the screen itself, up and down — still a screen action, but about the
+ * window rather than about what is on it, so it reads after the clearing. The
  * run family closes it, after every screen action rather than mixed in among
  * them: they are the entries that ask a question before they are added and that
- * do nothing to a screen at all, so the menu reads as "clear something", "clear
- * one foreground widget", "put the screen up or down", then "move the run on".
+ * do nothing to a screen at all. So the menu reads as "clear something", "put
+ * the screen up or down", then "move the run on".
  */
 export const presentingFlowActionMenuList: PresentingFlowActionMenuEntryType[] =
     [
-        ...clearActionList,
         {
-            // The eraser and neutral of the family it holds, since that is what
-            // every one of them wears — the row is the family, not an action.
-            label: 'Other Clear FG Items',
-            iconName: 'eraser',
+            // The eraser of the family it holds, since that is what every one of
+            // them wears, but the FILLED one and a neutral: filled says "all of
+            // the clearing is in here" without wearing `Clear All`'s red, which
+            // on a row that clears nothing by itself would read as the whole
+            // screen going dark on click.
+            label: 'Clear Screen',
+            iconName: 'eraser-fill',
             color: 'var(--bs-gray-500)',
-            actionList: foregroundClearActionList,
+            actionList: [
+                ...clearActionList,
+                {
+                    // The eraser and neutral of the family it holds, since that
+                    // is what every one of them wears — the row is the family,
+                    // not an action.
+                    label: 'Other Clear FG Items',
+                    iconName: 'eraser',
+                    color: 'var(--bs-gray-500)',
+                    actionList: foregroundClearActionList,
+                },
+            ],
         },
         ...screenShowHideActionList,
         ...nextActionList,

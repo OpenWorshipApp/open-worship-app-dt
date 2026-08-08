@@ -21,7 +21,12 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-07g** (**W-26** amended: **Ctrl** (**⌘**) **+ click** a
+**workflowsVersion: 2026-08-08** (**W-22** step 2: **Add Action** now opens with one
+**Clear Screen** row instead of six clearing rows — the five clears and the per-widget
+**Other Clear FG Items** row moved inside it, so the menu opens on the choice between
+clearing something, putting the screen up or down, and moving the run on. Nothing was
+renamed or removed, and sheets already written are untouched. **Driven live.** Earlier:
+**2026-08-07g** (**W-26** amended: **Ctrl** (**⌘**) **+ click** a
 Documents row is now a shortcut for **Open Slides Preview** — it toggles that document's
 floating window without selecting the document, and does nothing on the row that is
 already in the middle panel. **Driven live.** Earlier:
@@ -772,7 +777,8 @@ thing to another machine.
    - an **audio track** — drag it out of the **♫Audios♫** (សំលេង) split.
 
    **Add a screen action.** A running order can also hold something to _do_ rather than
-   something to show. Right-click the presenting flow → **Add Action** (បន្ថែមសកម្មភាព) and pick
+   something to show. Right-click the presenting flow → **Add Action** (បន្ថែមសកម្មភាព) →
+   **Clear Screen** (លុបអេក្រង់) — a row that adds nothing and opens the clears — and pick
    one of **Clear All** (លុបទាំងអស់), **Clear Background** (លុបផ្ទៃខាងក្រោយ), **Clear
    Slide** (លុបស្លាយ), **Clear Bible** (លុបព្រះគម្ពីរ) or **Clear Foreground**
    (លុបផ្ទៃខាងមុខ) — the same five clears as the buttons on each mini screen, and the line
@@ -780,8 +786,9 @@ thing to another machine.
    glance. It lands at the end of the list; drag it up to where it belongs — say between
    the last song and the sermon. 📸
 
-   Under those five the same menu offers a **finer clear for one foreground widget at a
-   time**, so you can take the countdown down and leave the marquee running: **Clear FG
+   Under those five, **Other Clear FG Items** (ការលុប FG ផ្សេងទៀត) offers a **finer clear
+   for one foreground widget at a time**, so you can take the countdown down and leave the
+   marquee running: **Clear FG
    Marquee Top** (`M↑`), **Marquee Bottom** (`M↓`), **Quick Text** (`QT`), **Countdown**
    (`CD`), **Stopwatch** (`SW`), **Time** (`TM`), **Camera Show** (`CM`) and **Web Show**
    (`WB`). Each does exactly what that widget's own hide button in the **Foreground** panel
@@ -789,8 +796,8 @@ thing to another machine.
    The panel's **Background Images Slide Show** has no action of its own — it is a
    _background_ despite sitting in that panel, so **Clear Background** is what stops it.
 
-   **Let the running order walk itself.** The same menu ends with two actions that move
-   the RUN on instead of touching a screen: **Next: Interval** (បន្ទាប់៖ រៀងរាល់ចន្លោះពេល)
+   **Let the running order walk itself.** Back on the first menu — beside **Clear Screen**,
+   not inside it — are two actions that move the RUN on instead of touching a screen: **Next: Interval** (បន្ទាប់៖ រៀងរាល់ចន្លោះពេល)
    and **Next: Timeout** (បន្ទាប់៖ អស់ពេលកំណត់). Each asks how many **seconds**
    (វិនាទី) when you add it, and the answer is part of the line — `⏱ Next: Timeout (5)` —
    so a glance at the sheet tells you how long it waits. Got it wrong? Right-click the
@@ -901,9 +908,10 @@ thing to another machine.
    either, though they can themselves be attached to another line — "put this last slide
    up **and** light the screen" in one click. 📸
 
-   **Where the actions live in the menu.** **Add Action** lists the five clears, then
-   **Other Clear FG Items** — one row that opens the eight per-widget foreground clears —
-   then **Screen: Show** / **Screen: Hide**, then the four that drive the run.
+   **Where the actions live in the menu.** **Add Action** opens with **Clear Screen** —
+   one row that adds nothing and opens the five clears, with **Other Clear FG Items**
+   under them for the eight per-widget foreground clears — then **Screen: Show** /
+   **Screen: Hide**, then the four that drive the run.
 
 3. Click the presenting flow name to **open it**. Each element is one short line: an icon for
    what it is, its id, and its name. A **document** line has its own arrow — open it to

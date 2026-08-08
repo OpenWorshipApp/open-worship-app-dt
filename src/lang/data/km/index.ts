@@ -348,6 +348,7 @@ const dictionary = {
     'Already showing in the main previewer': 'កំពុងបង្ហាញក្នុងកម្មវិធីមើលមេ',
     'Add Action': 'បន្ថែមសកម្មភាព',
     'Apply on Screens': 'អនុវត្តនៅលើអេក្រង់',
+    'Clear Screen': 'លុបអេក្រង់',
     'Clear FG Marquee Top': 'លុប FG អក្សររត់ខាងលើ',
     'Clear FG Marquee Bottom': 'លុប FG អក្សររត់ខាងក្រោម',
     'Clear FG Quick Text': 'លុប FG អត្ថបទរហ័ស',
