@@ -1,8 +1,11 @@
 ---
 name: presenting-flow-rename
-description: The run-sheet subsystem was renamed to "presenting flow"; two lookalike survivors must never be swept up, and the migration discovers the old name instead of naming it
-metadata:
+description: "The run-sheet subsystem was renamed to \"presenting flow\"; two lookalike survivors must never be swept up, and the migration discovers the old name instead of naming it"
+metadata: 
+  node_type: memory
   type: project
+  originSessionId: ad24e654-a898-4f16-b4af-46c19ebd979b
+  modified: 2026-08-08T15:21:51.665Z
 ---
 
 On 2026-08-07 the whole run-sheet subsystem was renamed away from its old name to
@@ -12,6 +15,16 @@ constants, the `Presenting Flows` UI label (and its Khmer key), the data folder
 `presenting-flows`, and the file extensions `.owp` → **`.owpf`** / `.owapl` →
 **`.owapf`**. The requirement was absolute: the old word appears nowhere in the
 project, not even as a legacy constant.
+
+**The Khmer dictionary was MISSED (verified live 2026-08-08).** The sweep covered the
+English source and every identifier, but four values in
+[src/lang/data/km/index.ts](../../src/lang/data/km/index.ts) still say `បញ្ជីចាក់`
+("playlist") where the rest of the file says `តារាងកម្មវិធី` — lines **81**
+(`This item is disabled in this presenting flow`, the tooltip on every parked row),
+**288** (`Presenting Flow Archive URL:`), **726** (`Export Presenting Flow`, the title of
+the export password dialog) and **727** (`Import Presenting Flow`). So "the old word
+appears nowhere" is true of the code, NOT of the translations — an English-only grep
+cannot see this.
 
 **Two survivors are NOT the subsystem and must never be renamed:**
 
