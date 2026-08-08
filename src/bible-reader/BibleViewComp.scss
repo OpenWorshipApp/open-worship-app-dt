@@ -28,7 +28,7 @@
 
   .card-body {
     .btn.active {
-      border: 1px dashed $app-highlight-color;
+      border: 1px dashed var(--app-accent);
     }
   }
 

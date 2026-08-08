@@ -4,12 +4,35 @@ $dragging-color-full: rgb(0, 117, 109);
 $resizer-color: rgb(123, 173, 205);
 
 .app[data-bs-theme='light'] {
-  --app-color-presenter: #877000;
-  --app-color-reader: #81006c;
+  // See the matching block in `theme-override-dark.scss` for why the app keeps
+  // its semantics under `--app-*` instead of overriding open-lyric's `:root`
+  // tokens: those are the plugin's LIGHT slide palette and are correct as-is.
+  --app-ink: #212529;
+  --app-muted: #495057;
+  --app-line: #ced4da;
+  --app-surface: #ffffff;
+
+  --app-accent: #0f766e;
+  --app-accent-halo: #0f766e33;
+
+  // THE reserved hue -- on-air only. See the dark theme for the full note.
+  --app-on-air: #a3007f;
+  --app-on-air-halo: #a3007f40;
+
+  --app-color-presenter: #212529;
+  --app-color-reader: #212529;
   --app-yellow-green: rgb(118, 178, 0);
+
+  // #6c757d is 3.79:1 on gray-200; #495057 is 6.3:1.
+  --bs-secondary-color: #495057;
 
   background-color: var(--bs-gray-200);
   color: black;
+
+  .text-muted,
+  .text-secondary {
+    color: var(--app-muted) !important;
+  }
 
   // Start: Bootstrap
 

@@ -85,11 +85,13 @@
 
   // While a tool is armed the whole window belongs to the overlay; a hairline
   // frame is the only cue that the app is not accepting clicks any more.
+  // Armed is an operator-window mode, not congregation-visible content, so it
+  // takes the accent. The on-air hue stays reserved for what is actually live.
   &.is-armed::after {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
-    border: 2px solid $app-highlight-color;
+    border: 2px solid var(--app-accent);
   }
 }

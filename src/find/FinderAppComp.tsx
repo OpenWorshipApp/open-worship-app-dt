@@ -2,6 +2,8 @@ import '../others/appInit.scss';
 import '../others/theme-override-dark.scss';
 import '../others/theme-override-light.scss';
 import './FinderAppComp.scss';
+// Must stay last -- see the note at the top of `interaction.scss`.
+import '../others/interaction.scss';
 
 import type { ChangeEvent } from 'react';
 import { useState, useCallback } from 'react';

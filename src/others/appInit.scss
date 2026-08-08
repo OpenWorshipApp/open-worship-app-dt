@@ -194,13 +194,17 @@ body {
   }
 
   .highlight-color {
-    color: $app-highlight-color;
+    color: var(--app-accent);
   }
 
+  // Selected is not live. This used to share the magenta with the on-air
+  // markers and the screen preview border, so a row the operator had merely
+  // clicked looked exactly like a row the congregation was reading. Selection
+  // now takes the cool accent; magenta means on-air and nothing else.
   .app-highlight-selected {
     border-width: 2px;
     border-style: solid;
-    border-color: $app-highlight-color;
+    border-color: var(--app-accent);
     animation: app-highlight-selected-in-anim 0.5s ease-in-out alternate;
 
     &.animation {
@@ -223,6 +227,7 @@ body {
 
     padding: 3px;
     border-radius: var(--bs-border-radius);
+    cursor: pointer;
 
     &.bar-type-v {
       height: 6px;
@@ -359,11 +364,22 @@ body {
     }
   }
 
+  // ON AIR -- the app's one signature signal.
+  // A steady glow, deliberately NOT a pulse: a blinking marker in a dark booth
+  // is fatigue, and the operator needs to read state at a glance rather than be
+  // nagged by it. The 2s entry flash stays, because arriving on screen is a
+  // transient event worth noticing; the resting state is quiet and constant.
+  // The marker was an asterisk in yellow-green, which sat on the text baseline
+  // and disappeared at the 12px this renders at in list rows.
   .app-on-screen {
     animation: app-notify-on-screen-highlight 2s ease-out;
     &::before {
-      content: '*';
-      color: var(--app-yellow-green);
+      content: '\25cf';
+      color: var(--app-on-air);
+      text-shadow: 0 0 0.45rem var(--app-on-air-halo);
+      font-size: 0.62em;
+      vertical-align: 0.28em;
+      padding-right: 0.28em;
     }
   }
 
@@ -403,8 +419,8 @@ body {
 
 @keyframes app-notify-on-screen-highlight {
   0% {
-    background-color: rgba($app-highlight-color, 0.1);
-    border-color: rgba($app-highlight-color, 0.2);
+    background-color: color-mix(in srgb, var(--app-on-air) 10%, transparent);
+    border-color: color-mix(in srgb, var(--app-on-air) 20%, transparent);
   }
   100% {
     background-color: transparent;
@@ -438,10 +454,10 @@ body {
 }
 @keyframes app-highlight-selected {
   0% {
-    border-color: $app-highlight-color;
+    border-color: var(--app-accent);
   }
   80% {
-    border-color: $app-highlight-color;
+    border-color: var(--app-accent);
   }
   100% {
     border-color: transparent;

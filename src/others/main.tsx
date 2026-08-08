@@ -3,6 +3,9 @@ import './bootstrap-override.scss';
 import './theme-override-dark.scss';
 import './theme-override-light.scss';
 import './scrollbar.scss';
+// Must stay last: it carries the focus ring, which has to out-cascade
+// Bootstrap's per-component `outline: 0`. See the note at the top of the file.
+import './interaction.scss';
 
 import type { ReactNode } from 'react';
 import { StrictMode } from 'react';

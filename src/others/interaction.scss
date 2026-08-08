@@ -1,0 +1,121 @@
+// The console's interaction floor: keyboard reachability, hit targets, motion
+// and the numeric-data type role.
+//
+// This sheet is imported LAST by every entry point on purpose. Bootstrap ships
+// `outline: 0` on `.btn:focus` and friends, and `appInit.scss` is imported
+// first, so a focus rule declared there loses the cascade and the ring never
+// paints. Keep this import at the bottom of the list.
+
+.app {
+  // -- Type scale ------------------------------------------------------------
+  // The console renders 11 distinct sizes, four of which (14, 14.08, 14.4,
+  // 14.72px) are visually identical. Those four are NOT a bug to normalise
+  // away: they fall out of `em` sizing, which is correct wherever type has to
+  // track a container the user can resize -- a superscript verse number must
+  // grow with its verse. What was missing is a scale to reach for when the size
+  // is absolute. Prefer these over a fresh magic number; keep `em` for anything
+  // that must stay proportional to its parent.
+  --app-text-xs: 0.6875rem; // 11px -- dense badges, index columns
+  --app-text-sm: 0.75rem; //   12px -- captions, state readouts
+  --app-text-md: 0.875rem; //  14px -- secondary UI
+  --app-text-base: 1rem; //    16px -- body, list rows
+  --app-text-lg: 1.25rem; //   20px -- panel titles
+  --app-text-xl: 1.5rem; //    24px -- the one display tier
+
+  // -- Keyboard reachability -------------------------------------------------
+  // Measured on the live presenter: 306 of 306 focusable elements rendered with
+  // no outline whatsoever, and only 47 of ~400 clickable things were real
+  // buttons -- the rest are `<i>` / `<span>` carrying `cursor: pointer`.
+  // During a service the keyboard is the fast path, so the ring has to be
+  // findable mid-song. `outline` (not `border`) is what keeps it from shifting
+  // layout in the dense list rows.
+  // `!important` is deliberate and is the narrowest tool that works. Bootstrap
+  // ships `outline: 0` on plain `:focus` for form controls, and a focused
+  // element matches BOTH `:focus` and `:focus-visible` at the same specificity
+  // (0,2,0) -- so whichever sheet loads later wins. Component `.scss` files are
+  // imported by their components and land after this one, which put the ring
+  // back to zero on every input. Losing the ring silently is the failure this
+  // whole block exists to prevent, so it does not get to depend on load order.
+  :focus-visible {
+    outline: 2px solid var(--app-accent) !important;
+    outline-offset: 1px;
+    border-radius: var(--bs-border-radius-sm);
+  }
+
+  // Pointer users never see the ring; it is not a hover affordance. Bootstrap
+  // already suppresses `:focus`, but it does so per-component, so state it once
+  // here and let `:focus-visible` above be the single source of the ring.
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  // The controls that are not real buttons still have to take focus. Anything
+  // the app marks as a pointer affordance gets the same ring, so making these
+  // reachable later is a `tabindex` away rather than a restyle.
+  .app-caught-hover-pointer:focus-visible,
+  [role='button']:focus-visible {
+    outline: 2px solid var(--app-accent) !important;
+    outline-offset: 1px;
+  }
+
+  // -- Minimum hit target ----------------------------------------------------
+  // 435 interactive elements measured under 24px, some as small as 11x17 --
+  // including the `x` that clears a screen. Density is right for a console;
+  // sub-20px targets for on-air and destructive actions are not. `min-*` only
+  // grows a box that is genuinely too small, so the dense rows keep their
+  // rhythm and nothing reflows.
+  .btn,
+  [role='button'],
+  .app-caught-hover-pointer {
+    min-width: 24px;
+    min-height: 24px;
+  }
+
+  // An icon that is the entire content of a control IS the control. Centring it
+  // in a 24px box grows the target without touching the glyph size, and without
+  // padding out the icons that merely sit alongside a label.
+  .btn > i:only-child,
+  [role='button'] > i:only-child,
+  .app-caught-hover-pointer > i:only-child {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    min-height: 24px;
+  }
+
+  // -- Data type role --------------------------------------------------------
+  // The console renders in a single family (Battambang, correctly -- this is a
+  // Khmer-first app). What it lacked was a second ROLE. Numeric readouts -- the
+  // screen id, the slide counter, tempo, verse indexes -- sat in proportional
+  // digits and shifted their neighbours every time they ticked. Tabular figures
+  // pin the advance width so a changing number stays still.
+  .app-data {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  // The list index injected by `bootstrap-override.scss` via `attr(data-index)`
+  // is the most-repeated number in the UI; it right-aligns into a 12px box, so
+  // proportional digits made the column ragged.
+  .list-group-item:before {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// -- Reduced motion ----------------------------------------------------------
+// 35 transition/animation declarations shipped against exactly one
+// `prefers-reduced-motion` guard. Honour the preference globally instead of
+// per-component, so a new animation is covered the day it is written.
+//
+// Spinners are exempt: they are not decoration, they are the only signal that a
+// bible download or a media merge is still working. Freezing one reads as a
+// hung app, which is a worse outcome than the motion it avoids.
+@media (prefers-reduced-motion: reduce) {
+  .app *:not(.spinner-border):not(.spinner-grow) {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

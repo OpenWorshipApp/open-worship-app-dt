@@ -47,7 +47,7 @@ export default function DisplayControlComp() {
         : 'Unknown';
     return (
         <button
-            className="btn btn-sm btn-outline-secondary app-ellipsis"
+            className="btn btn-sm btn-outline-secondary app-ellipsis app-data"
             title={
                 `Display:${currentDisplayLabel}, ` +
                 `screen id:${screenManagerBase.screenId}` +

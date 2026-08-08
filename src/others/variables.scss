@@ -32,4 +32,11 @@ $z-index-keyboard-screencast: $base-z-index + 75;
 $z-index-progress-bar: $base-z-index + 80;
 $z-index-context-menu: 99999;
 
-$app-highlight-color: #ad0090;
+// NOTE: `$app-highlight-color` (#ad0090) was deliberately removed. It was a
+// single magenta doing four unrelated jobs -- selected row, armed overlay,
+// progress text, edit affordance -- while the very same hue family also meant
+// "live on a screen" and "Bible Reader mode". Colour carried no rank, so
+// nothing could out-shout the one state that matters during a service.
+// Use `var(--app-accent)` for anything that merely needs to stand out, and
+// `var(--app-on-air)` ONLY for content live on a congregation screen.
+// Both are defined per theme in `theme-override-{dark,light}.scss`.
