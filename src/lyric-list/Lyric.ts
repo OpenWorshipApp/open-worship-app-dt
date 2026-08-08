@@ -1,18 +1,9 @@
+import { MARCH_OF_GRACE_EXAMPLE } from 'open-lyric';
+
 import type { MimetypeNameType } from '../server/fileHelpers';
 import type { AppDocumentMetadataType } from '../helper/AppEditableDocumentSourceAbs';
 import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
 import type { AnyObjectType } from '../helper/typeHelpers';
-
-const DEFAULT_CONTENT = `
----
-# Test1
----
-c1:                    Am     G  F          G      Esus4  E
-l1: All the leaves are brown        and the sky is gray
-
-c1: F               C     E  Am       F        Esus4  E
-l1: I've been for a walk         on a winter's day
-`;
 
 type LyricType = {
     metadata: AppDocumentMetadataType;
@@ -59,7 +50,7 @@ export default class Lyric extends AppEditableDocumentSourceAbs<LyricType> {
     static getDefaultContentJsonData(): LyricType {
         return {
             metadata: this.genMetadata(),
-            content: DEFAULT_CONTENT,
+            content: MARCH_OF_GRACE_EXAMPLE,
         };
     }
 

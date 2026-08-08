@@ -9,11 +9,19 @@ const { getSettingMock, setSettingMock, removeSettingMock } = vi.hoisted(
     }),
 );
 
-vi.mock('../helper/settingHelpers', () => ({
-    getSetting: getSettingMock,
-    setSetting: setSettingMock,
-    removeSetting: removeSettingMock,
-}));
+// Partial: only the three accessors are stubbed. The path→setting-name
+// sanitizer is real, because the keys these tests assert on are the sanitized
+// ones.
+vi.mock('../helper/settingHelpers', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../helper/settingHelpers')>();
+    return {
+        ...actual,
+        getSetting: getSettingMock,
+        setSetting: setSettingMock,
+        removeSetting: removeSettingMock,
+    };
+});
 
 import PlaylistItem from './PlaylistItem';
 import type { PlaylistActionIdType } from './playlistActionHelpers';

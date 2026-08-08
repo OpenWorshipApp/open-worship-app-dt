@@ -24,7 +24,7 @@ export default function BackgroundViewModeComp({
     setViewMode: (viewMode: BackgroundViewModeType) => void;
 }>) {
     return (
-        <div className="btn-group btn-group-sm p-1" role="group">
+        <div className="btn-group btn-group-sm p-1 ms-1" role="group">
             {viewModeList.map(([mode, iconName, title]) => {
                 const isActive = viewMode === mode;
                 return (
@@ -33,7 +33,7 @@ export default function BackgroundViewModeComp({
                         type="button"
                         className={
                             'btn btn-sm' +
-                            ` ${isActive ? 'btn-secondary' : 'btn-outline-secondary'}`
+                            ` ${isActive ? 'btn-info' : 'btn-secondary'}`
                         }
                         title={tran(title)}
                         disabled={isActive}

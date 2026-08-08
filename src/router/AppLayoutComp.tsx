@@ -20,6 +20,7 @@ import {
 } from '../app-document-list/appDocumentHelpers';
 import LayoutTabRenderComp from './LayoutTabRenderComp';
 import { useAppDocumentContextValues } from './layoutHelpers';
+import AppDocumentPreviewFloatingComp from '../app-document-list/AppDocumentPreviewFloatingComp';
 
 export default function AppLayoutComp({
     children,
@@ -88,6 +89,7 @@ export default function AppLayoutComp({
             <ToastComp />
             <AppContextMenuComp />
             <HandleAlertComp />
+            <AppDocumentPreviewFloatingComp />
         </MultiContextRenderComp>
     );
 }

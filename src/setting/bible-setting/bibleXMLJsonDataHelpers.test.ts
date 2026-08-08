@@ -92,6 +92,7 @@ vi.mock('../../helper/bible-helpers/BibleDataReader', () => ({
 }));
 
 vi.mock('../../server/fileHelpers', () => ({
+    checkIsHiddenName: (fileFullName: string) => fileFullName.startsWith('.'),
     fsListFiles: mocks.fsListFilesMock,
     pathJoin: (...parts: string[]) => parts.join('/'),
 }));

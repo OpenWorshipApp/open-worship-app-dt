@@ -100,12 +100,47 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
     return openLyricPreviewer;
 }
 
+/**
+ * Stage number -> the class that renders it, indexed by stage.
+ *
+ * The instance cache keys on the CLASS name + file path
+ * (`AppDocumentSourceAbs._getInstance`), so a stage only gets an identity of
+ * its own by having a class of its own. This list is therefore also the
+ * authoritative answer to "how many stages exist" — `getAvailableLyricStages`
+ * below is what the previewer offers, so adding a layout here is all it takes
+ * to make another stage selectable.
+ */
+const LYRIC_APP_DOCUMENT_STAGE_CLASSES = [
+    LyricAppDocumentStage0,
+    LyricAppDocumentStage1,
+];
+
+export function getAvailableLyricStages() {
+    return LYRIC_APP_DOCUMENT_STAGE_CLASSES.map((_, stage) => {
+        return stage;
+    });
+}
+
+/**
+ * Resolves to a REGISTERED stage, and reports which one it landed on.
+ *
+ * The returned number is the stage actually rendered, not the one asked for:
+ * every unregistered stage used to fall through to `LyricAppDocumentStage1`,
+ * which handed back the very same cached instance stage 1 was already using —
+ * so a second pane rendered a byte-identical clone under a label claiming it
+ * was something else, and `genCacheKey`'s `stage:` part could not tell the two
+ * apart either. Callers that resolve a PERSISTED stage (playlist items,
+ * `lyricSlideScreenHelpers`) need this to stay total, so an out-of-range stage
+ * clamps to the nearest registered one instead of failing.
+ */
 export function getLyricAppDocumentStageByStage(
     filePath: string,
     stage: number,
 ): [number, LyricAppDocumentStageAbstract] {
-    if (stage === 0) {
-        return [stage, LyricAppDocumentStage0.getInstance(filePath)];
-    }
-    return [stage, LyricAppDocumentStage1.getInstance(filePath)];
+    const resolvedStage = Math.min(
+        Math.max(Number.isFinite(stage) ? Math.trunc(stage) : 0, 0),
+        LYRIC_APP_DOCUMENT_STAGE_CLASSES.length - 1,
+    );
+    const StageClass = LYRIC_APP_DOCUMENT_STAGE_CLASSES[resolvedStage];
+    return [resolvedStage, StageClass.getInstance(filePath)];
 }

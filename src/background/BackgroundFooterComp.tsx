@@ -30,12 +30,6 @@ export default function BackgroundFooterComp({
                 }
             }}
         >
-            {viewMode === undefined || setViewMode === undefined ? null : (
-                <BackgroundViewModeComp
-                    viewMode={viewMode}
-                    setViewMode={setViewMode}
-                />
-            )}
             <div className="flex-fill" />
             {viewMode === 'list' ? null : (
                 <div>
@@ -46,6 +40,12 @@ export default function BackgroundFooterComp({
                         defaultSize={defaultRangeSize}
                     />
                 </div>
+            )}
+            {viewMode === undefined || setViewMode === undefined ? null : (
+                <BackgroundViewModeComp
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                />
             )}
         </div>
     );

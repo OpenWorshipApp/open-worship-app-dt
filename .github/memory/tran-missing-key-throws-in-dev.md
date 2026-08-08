@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 65d709fb-f37b-4655-a432-072843474442
-  modified: 2026-08-03T16:43:42.430Z
+  modified: 2026-08-07T13:52:19.672Z
 ---
 
 `tran()` in `src/lang/langHelpers.ts` throws `Translation for text "X" not
@@ -52,6 +52,17 @@ reload — it lives in `<file>.histories/<n>-head` on disk (`EditingHistoryManag
 Keys are matched after `trim().toLowerCase()` (`sanitizeTranKey`), and the km
 module **throws at load on duplicates after sanitization** — so check for a
 case/whitespace variant before adding a key.
+
+**The dictionary side has its own grep trap: keys that are valid JS identifiers
+are written UNQUOTED** — `Stage: 'ស្ទែជ'`, `Seconds: 'វិនាទី'` — while only
+multi-word keys carry quotes (`'Change Seconds':`). A sweep matching just
+`/^\s*'([^']*)'\s*:/gm` sees none of the single-word keys and reports every one of
+them as missing. Match both shapes:
+`/^\s*(?:'([^']*)'|([A-Za-z_$][\w$]*))\s*:/gm`. (2026-08-07: this produced two
+would-be **Critical** false positives — `tran('Stage')` and `tran('Seconds')` —
+that the live app rendered perfectly.) **Never file a missing-key finding from a
+static sweep alone; confirm the actual console throw with the app running in
+Khmer.**
 
 Separately: ~66 user-facing strings never reach `tran()` at all (hardcoded
 `title=`/`aria-label=`/`placeholder=` JSX literals, plus wrappers like

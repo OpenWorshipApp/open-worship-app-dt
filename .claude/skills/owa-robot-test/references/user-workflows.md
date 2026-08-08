@@ -21,7 +21,39 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-07a** (**W-05** steps 4-5: a song's `- Attachments:` links
+**workflowsVersion: 2026-08-07g** (**W-26** amended: **Ctrl** (**⌘**) **+ click** a
+Documents row is now a shortcut for **Open Slides Preview** — it toggles that document's
+floating window without selecting the document, and does nothing on the row that is
+already in the middle panel. **Driven live.** Earlier:
+**2026-08-07f** (new **W-27**: the middle **Documents** tab heading now
+carries a **pin** whenever a document is being previewed. Pinned, the previewer cannot be
+swapped by anything the operator clicks — another Documents/Lyrics row, a document inside a
+playlist, or the file name in the previewer footer — each one is refused with a toast and a
+flash of the pin instead. A rename still follows, trashing the document unpins it, and the
+pin is remembered across a restart. **Driven live, in both locales.** Earlier:
+**2026-08-07e** (**W-26**: a Documents row's right-click menu now
+offers **Open Slides Preview**, which gives that document its own floating previewer —
+the full one, editing strip and Note boxes included — so several documents can be looked
+at at once. One window per document, each with its own zoom and its own remembered
+position/size, and each answering the arrow keys only while it has focus. A document is
+previewed in ONE place: the entry is greyed out on the selected document, and selecting a
+document that has a window closes that window. **Driven live, in both locales.** Earlier:
+**2026-08-07d** (**W-05** steps 6-9: every stage chip in the Stage
+Previewer now carries a **⚙** that opens a draggable **Stage Style** window — Slide
+Padding, Background Opacity, Extra Font Size, Light/Dark and a Custom CSS box, plus
+Reset. The settings belong to the STAGE and apply to every song, so two stages can look
+completely different; Custom CSS is added to the stage's built-in look rather than
+replacing it. A screen already showing a slide keeps it until the slide is presented
+again. **Driven live, in both locales.** Earlier: **2026-08-07c** (**every** export now opens a panel first, asking for an
+optional **Password** + **Confirm Password** — **W-22** step 10/10a (playlist), **W-23**
+step 2 (document/lyric), **W-24** step 1 (bible list) and **W-25** step 2a (whole data).
+Leaving both empty writes exactly the bundle it always did; a password writes `.enc`
+instead of `.tar.gz`/`.tar` and import asks for it, with three tries. There is no password
+recovery. **Driven live, in both locales.** Earlier: **2026-08-07b** — **W-25** step 2: the Export Data panel now also lists
+**Background Webs** and **Bibles XML** — two folders a "back up everything" run used to
+leave out. Bibles XML carries only the bible XML files you added yourself, not the
+downloaded Bible versions, which you re-download on the new machine. **Driven live.**
+Earlier: **2026-08-07a** — **W-05** steps 4-5: a song's `- Attachments:` links
 now each become a real slide at the end of the Stage Previewer — a YouTube video, an
 image/video/audio, or the web page itself, full-bleed and presentable like a verse; a
 `file:///…` link lets a chart or a backing track travel with the song, and a PDF or a
@@ -291,6 +323,7 @@ Tips:
 - The slider in the Documents-tab footer resizes the thumbnails.
 - The stopwatch icon in the same footer opens **auto-play**: set seconds, press play,
   and slides advance automatically; the red ✕ closes it (W-04).
+- **Pin the document so you cannot lose it by a stray click** — see W-27.
 
 _Verify: PL-01, PM-05..09, KB-05, KB-08._
 
@@ -325,8 +358,21 @@ _Verify: PM-10._
    a backing track travels with the song. 📸
 5. Links the app cannot show — a PDF, or a line that is not a web address — still get
    their named slide, just an empty one.
+6. To change how a stage's slides **look**, click the **⚙** on that stage's chip
+   (`Stage 0`, `Stage 1`) in the Stage Previewer header. A small **Stage Style** window
+   opens — drag it anywhere, it remembers where you left it. It sets **Slide Padding**,
+   **Background Opacity**, **Extra Font Size**, a **Light/Dark** theme, and a
+   **Custom CSS** box for anything else. 📸
+7. These settings belong to the **stage**, not to the song — every song you open uses
+   them, which is why the panel says _Applies to every song_. Stage 0 and Stage 1 keep
+   separate settings, so you can leave the projected stage plain and make the chord
+   stage larger. Custom CSS is **added to** the stage's built-in look rather than
+   replacing it, so stage 0 keeps hiding its chords whatever you type.
+8. **Reset** puts that stage back to the defaults.
+9. A screen already showing a slide keeps it — present the slide again to push the new
+   look out to it.
 
-_Verify: PL-07..08, PM-11, PM-115._
+_Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117._
 
 ### W-06 — Look up and present a Bible verse
 
@@ -771,6 +817,7 @@ thing to another machine.
      time you set has **already gone by**, the app says so (**The set time is already due**)
      and starts nothing: it will not quietly wait until tomorrow. Set a new time, or arm it
      in seconds. 📸
+
    - **Next: Interval** keeps going. It moves the run on every so many seconds — a loop of
      announcement slides before the service. Going somewhere yourself does not stop it, it
      **starts the count again from there**, so a line you step to by hand gets the whole
@@ -924,6 +971,7 @@ thing to another machine.
      something dragged in from another panel it means it is INSERTED there — which is the
      only way to put it anywhere but the end of the list, since dropping on the playlist's
      name adds to the end.
+
    - **right-click the line → Add CC Elements** (បន្ថែមធាតុ CC) and pick from the other
      lines already in this playlist. 📸
 
@@ -976,7 +1024,7 @@ thing to another machine.
    services.
    **Two kinds of greyed-out line, and they now look different.** A line YOU parked here is
    crossed out and carries the amber 🚫 ("This item is disabled in this playlist"). A slide
-   that is greyed out because the **document itself** hides it is *not* crossed out and
+   that is greyed out because the **document itself** hides it is _not_ crossed out and
    carries a plain grey 👁‍🗨 ("This item is disabled in its document") — right-clicking that
    one will not bring it back, because a running order cannot re-enable what the document
    turned off; open the document and enable the slide there. In the preview panel the same
@@ -1067,13 +1115,31 @@ thing to another machine.
 
 **Sharing it with another machine**
 
-10. Right-click the playlist → **Export** (នាំចេញ). You get one
-   `<name>.owapl.tar.gz` file in your **Downloads** folder, and the folder opens. It
-   contains the playlist _and every file it needs_ — the full documents behind your
-   slides, the images and videos, and any background attached to those documents.
+10. Right-click the playlist → **Export** (នាំចេញ). A small panel asks for a
+    **Password** (ពាក្យសម្ងាត់) and a **Confirm Password** (បញ្ជាក់ពាក្យសម្ងាត់).
+    **Leave both empty and press Ok** for the ordinary bundle: one
+    `<name>.owapl.tar.gz` file in your **Downloads** folder, and the folder opens. It
+    contains the playlist _and every file it needs_ — the full documents behind your
+    slides, the images and videos, and any background attached to those documents.
+    (See step 10a to put a password on it instead.)
+    10a. **To protect it with a password**, type the same password in both fields and press
+    **Ok**. **Show Password** (បង្ហាញពាក្យសម្ងាត់) reveals what you typed if you want to
+    check it. You get `<name>.owapl.enc` instead — the same bundle, locked. If the two
+    fields do not match the panel says **Passwords do not match**
+    (ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ) and asks again rather than exporting.
+
+    > **There is no way to recover a forgotten password.** Nobody — not you, not the app,
+    > not the person you send it to — can open the bundle without it. Write it down
+    > somewhere safe before you hand the file over, and send it by a different route than
+    > the file itself.
+
 11. On the other machine, right-click an empty part of the **Playlists** list → **Import**
-    (នាំចូល) and pick that file — or just **drag the `.owapl.tar.gz` file from your file
-    manager onto the Playlists list**, which imports it the same way. The songs, documents
+    (នាំចូល) and pick that file — or just **drag the `.owapl.tar.gz` (or `.owapl.enc`)
+    file from your file manager onto the Playlists list**, which imports it the same way.
+    A protected bundle asks for its password first, saying **This archive is password
+    protected** (ឯកសារបណ្ណសារនេះត្រូវបានការពារដោយពាក្យសម្ងាត់); get it wrong and it says
+    **Wrong password, try again** (ពាក្យសម្ងាត់មិនត្រឹមត្រូវ សូមព្យាយាមម្តងទៀត) and lets
+    you retype it, up to three tries. An ordinary bundle never asks. The songs, documents
     and media are re-created in that machine's own folders, Bible verses are added to the
     **Default** list, and every link inside the playlist is re-pointed at the local
     copies. 📸
@@ -1116,18 +1182,24 @@ travels as its own bundle, with everything attached to it.
 1. In the **Documents** list, right-click the item you want — an Open Worship slide
    document, a lyric, a PDF, a PowerPoint or a Word file all work — and choose
    **Export** (នាំចេញ). 📸
-2. You get one `<name>.owadoc.tar.gz` file in your **Downloads** folder, and the folder
-   opens. It contains the document itself plus everything hanging off it: the background
-   you attached to it (and that background's image or video file), any video placed
-   inside its slides, and its colour note.
-3. On the other machine, right-click an empty part of the **Documents** list →
+2. A small panel asks for a **Password** (ពាក្យសម្ងាត់) and a **Confirm Password**
+   (បញ្ជាក់ពាក្យសម្ងាត់). Leave both empty and press **Ok** for the ordinary bundle, or
+   type the same password in both to lock it — see W-22 step 10a, it works identically
+   here and there is no way to recover a forgotten one. 📸
+3. You get one `<name>.owadoc.tar.gz` file in your **Downloads** folder (or
+   `<name>.owadoc.enc` if you set a password), and the folder opens. It contains the
+   document itself plus everything hanging off it: the background you attached to it
+   (and that background's image or video file), any video placed inside its slides, and
+   its colour note.
+4. On the other machine, right-click an empty part of the **Documents** list →
    **Add Items** → **Import** (នាំចូល) and pick that file — or just **drag the
-   `.owadoc.tar.gz` file from your file manager onto the Documents list**, which imports
-   it the same way. 📸
-4. The document appears in that machine's documents folder under its original name, with
+   `.owadoc.tar.gz` (or `.owadoc.enc`) file from your file manager onto the Documents
+   list**, which imports it the same way. A protected bundle asks for its password
+   first; an ordinary one never does. 📸
+5. The document appears in that machine's documents folder under its original name, with
    its background re-attached and its colour note restored, so it is ready to present
    straight away.
-5. If the bundle is on a web server or a machine sharing it over the local network, use
+6. If the bundle is on a web server or a machine sharing it over the local network, use
    **Add Items** → **Import From URL** (នាំចូលពី URL) instead and paste the link. The
    download goes to a temporary folder, is imported exactly as above, and is then
    deleted.
@@ -1159,13 +1231,18 @@ _Verify: PL-77..PL-80, CM-36, CM-37._
 A bible list (the verses you lined up for a service) travels the same way.
 
 1. In the **Bibles** panel, right-click the list you want and choose **Export**
-   (នាំចេញ). You get one `<name>.owbible.tar.gz` file in your **Downloads** folder. 📸
+   (នាំចេញ). A small panel asks for a **Password** (ពាក្យសម្ងាត់) and a **Confirm
+   Password** (បញ្ជាក់ពាក្យសម្ងាត់) — leave both empty for the ordinary bundle, or type
+   the same password in both to lock it (W-22 step 10a). You get one
+   `<name>.owbible.tar.gz` file in your **Downloads** folder, or `<name>.owbible.enc`
+   if you set a password. 📸
 2. The bundle is small: a bible list stores verse _references_, not the Bible text, so
    only the list and any background you attached to it (or to one of its verses) are
    inside.
 3. On the other machine, right-click an empty part of the **Bibles** panel → **Import**
-   (នាំចូល) and pick the file — or **drag the `.owbible.tar.gz` onto the Bibles panel**.
-   **Import From URL** (នាំចូលពី URL) works here too. 📸
+   (នាំចូល) and pick the file — or **drag the `.owbible.tar.gz` (or `.owbible.enc`) onto
+   the Bibles panel**; a protected one asks for its password first. **Import From URL**
+   (នាំចូលពី URL) works here too. 📸
 4. The list appears in that machine's bibles folder with its verses, their colours and
    its background, ready to present.
 
@@ -1191,14 +1268,36 @@ or to set up a second machine — use the app's **File** menu.
 1. Open the **File** menu at the top of the window and choose **Export Data**
    (នាំចេញទិន្នន័យ). 📸
 2. A panel lists every data folder you have set up — Documents, Playlists, Background
-   Images, Videos and Audios, Bible Present, Bible Reader and Notes — with the folder each
-   one points at. **They all start ticked.** Untick anything you do not want (the videos
-   folder is usually the big one), or use **Select All** / **Deselect All**. 📸
+   Images, Videos, Audios and Webs, Bible Present, Bible Reader, Notes, and **Bibles XML**
+   — with the folder each one points at. **They all start ticked.** Untick anything you do
+   not want (the videos folder is usually the big one), or use **Select All** /
+   **Deselect All**. 📸
+
+   > **Bibles XML** is the one folder you never chose yourself — the app keeps it. It
+   > carries the Bible XML files you added by hand (Settings → Bible → Bibles XML), and
+   > **only those**: the Bible versions you downloaded in the app are left out, because
+   > you simply download them again on the other machine. If you have never added an XML
+   > Bible, the row is not offered at all.
+   > 2a. Below the folder list, the same panel asks for a **Password** (ពាក្យសម្ងាត់) and a
+   > **Confirm Password** (បញ្ជាក់ពាក្យសម្ងាត់). Leave both empty for an ordinary backup.
+   > Type the same password in both to lock it — a backup carried on a USB stick holds your
+   > whole document set, so this is the one worth protecting. 📸
+
+   > **There is no way to recover a forgotten password**, and this file is everything you
+   > have. Write it down somewhere that is not the same USB stick.
+
 3. Press **Ok**. You get one `open-worship-data.owadata.tar` file in your **Downloads**
-   folder, and the folder opens. Copy it to a USB stick or the other machine.
+   folder — or `open-worship-data.owadata.enc` if you set a password — and the folder
+   opens. Copy it to a USB stick or the other machine.
 4. On the other machine, choose **File → Import Data** (នាំចូលទិន្នន័យ) and pick that
-   file. The panel now lists only the folders the file actually contains — again all
-   ticked — so you can restore just the songs, or just the backgrounds. 📸
+   file. A protected backup asks for its password first. The panel then lists only the
+   folders the file actually contains — again all ticked — so you can restore just the
+   songs, or just the backgrounds. 📸
+
+   > A protected backup is unlocked in one pass before that list can be shown, so a big
+   > one takes a moment longer to open than an ordinary one. An ordinary backup is read
+   > as quickly as it always was.
+
 5. Press **Ok**. When it finishes you are told how many files were brought in and how
    many were already up to date.
 
@@ -1219,6 +1318,84 @@ or to set up a second machine — use the app's **File** menu.
 > machine the first time you open the document.
 
 _Verify: NAV-17..NAV-19._
+
+### W-26 — Compare two documents side by side (floating slide previews)
+
+**Goal:** look at the slides of more than one document at the same time, without losing
+the one you already had open.
+
+**Preconditions:** at least two documents in the **Documents** list.
+
+The middle panel previews the **one** document you have selected. To look at another one
+as well, give it a window of its own.
+
+1. In the left **Documents** (ឯកសារ) list, **right-click** a document you have NOT
+   selected and choose **Open Slides Preview** (បើកការមើលស្លាយជាមុន). A window titled
+   **Slides: ‹name›** appears over the app. 📸
+   Faster, once you know it: hold **Ctrl** (**⌘** on a Mac) and click the row. Same
+   thing, no menu — and holding Ctrl again on that row closes the window. The menu
+   entry's tooltip reminds you of the shortcut.
+2. It is the full previewer, not a thumbnail strip: the undo / redo / discard / save
+   strip at the top, the slides, the **Note** boxes, and a zoom slider with the document
+   name at the bottom. Everything you can do in the middle panel you can do here —
+   click a slide to put it on the screen, drag a slide to reorder it, drop an image or a
+   video onto it, right-click a slide for its menu.
+3. Drag the window by its title bar to move it, drag any edge or corner to resize it, and
+   use the **chevron** to fold it away to just its title. The **✕** closes it.
+4. Repeat step 1 on a second document. You get a **second** window — one per document, as
+   many as you need, each opening slightly offset from the last. 📸
+5. Zoom one window with its slider (or hold **Ctrl** and scroll over it). Only that
+   window changes: every window and the middle panel keep their own zoom.
+6. Click inside a window's slide area, then use **Arrow keys / PageUp / PageDown /
+   Space** — they step **that** window's document, not whichever one the middle panel is
+   showing.
+
+Tips:
+
+- **A document is previewed in one place at a time.** On the document you currently have
+  selected, **Open Slides Preview** is greyed out ("Already showing in the main
+  previewer" / កំពុងបង្ហាញក្នុងកម្មវិធីមើលមេ) — it is already in the middle panel;
+  Ctrl-clicking that row does nothing at all, and in particular does not re-select it. And if
+  you click a document that has a window open, the window closes and the document moves
+  into the middle panel instead.
+- Each window remembers **where you put it, how big you made it and how far you zoomed
+  it**, per document — reopen it later and it comes back the same.
+- Windows are **not** reopened when you restart the app; you start with a clean screen.
+- Renaming or trashing a document closes its window.
+
+_Verify: PM-118, PM-119, PM-120, PL-01, CM-06._
+
+### W-27 — Pin the document you are presenting from
+
+**Goal:** stop a stray click in the Documents list from swapping the document you are
+half-way through.
+
+**Preconditions:** a document selected in the middle **Documents** tab.
+
+1. Look at the middle **Documents** (ឯកសារ) tab heading. With a document selected, a
+   faint **pin** sits just after the word — nothing selected, no pin. 📸
+2. Click the pin. It fills in and turns amber: the document is now **pinned**. Hovering it
+   reads **Unpin document** (ដោះខ្ទាស់ឯកសារ). 📸
+3. Click a different document in the left list. **Nothing changes** — the previewer keeps
+   your document. A message says **Document is pinned** / *Unpin the document to preview
+   another one* (ឯកសារត្រូវបានខ្ទាស់), and the pin flashes so you can see what stopped
+   it. 📸
+4. The same protection covers every way of swapping the document: a song row, a document
+   inside a **playlist**, and clicking the file name in the previewer's own footer (which
+   normally opens a list of the other documents in the folder — while pinned it does not
+   even open).
+5. Click the pin again to unpin. The clicks from step 3 now work normally.
+
+Tips:
+
+- The pin stays on when you **restart the app** — it is remembered with the selection.
+- **Renaming** the pinned document is not a swap: the previewer follows the new name and
+  stays pinned.
+- **Trashing** the pinned document unpins automatically and the pin disappears, since
+  there is nothing left to hold on to.
+- Clicking the pinned document's own row again is silent — that is not a swap either.
+
+_Verify: PM-121, PM-122, PM-123, PL-01._
 
 ---
 

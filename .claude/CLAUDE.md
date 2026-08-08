@@ -23,13 +23,18 @@ Wrap expensive work that fires on high-frequency event subscriptions
 debounce so rapid repeats collapse into one trailing execution. Exemplar:
 `useFileSourceIsOnScreen` in `src/_screen/screenHelpers.ts`.
 
-- **Multi-instance hooks** (one per list item / tab / bible item) need a
-  **per-instance** timer: `const attemptTimeout = useMemo(() => genTimeoutAttempt(500), [])`.
+- **Multi-instance hooks** (one per list item / tab / bible item / stage pane)
+  need a **per-instance** timer:
+  `const attemptTimeout = useMemo(() => genTimeoutAttempt(500), [])`.
   A module-level shared timer collapses ALL instances into one, leaving N-1
-  items stale — that's a bug.
+  items stale — that's a bug. It bites hardest when the instances share a
+  `filePath`, because then ONE `update` event reaches every one of them and the
+  last caller `clearTimeout`s all the others.
 - A module-level `const attemptTimeout = genTimeoutAttempt(500)` is fine only
-  for clearly single-instance helpers (e.g. `VarySlidesComp`'s
-  `useVarySlidesData`).
+  for helpers that are single-instance **for good** — assume nothing from the
+  current mount count. `VarySlidesComp`'s `useVarySlidesData` was listed here as
+  the safe example until the Lyric Stage Previewer started mounting one per
+  stage over the same file, at which point only one stage ever refreshed.
 - Only debounce when the latest result is all that matters (setState). Skip
   cheap callbacks and skip sites whose tests assert synchronous post-event
   state (e.g. `useSlideWrongDimension`) unless you also update the test.
@@ -242,9 +247,21 @@ is torn down at the end, and the mandatory blocks ridden from the playlist itsel
 other PL rows are the Documents/Lyrics lists — same prefix, different subsystem.
 
 **Media download (video AND audio) is mandatory in every run too** (matrix rows
-`MD-01..03`, SKILL.md §6e). `downloadVideoOrAudio` is the only code path that
+`MD-01..04`, SKILL.md §6e). `downloadVideoOrAudio` is the only code path that
 runs the shipped prebuilt `yt-dlp`/`ffmpeg`/`qjs` binaries, so a missing or
 broken binary passes typecheck, tests, build and every other matrix row. The
 video half proves the ffmpeg merge, the audio half proves its mp3 encoder; both
 use the canonical link recorded in the matrix. (The matrix lives at
 `docs/test-paths/coverage-matrix.md`, not under the skill's `references/`.)
+
+**The media block deletes what it downloaded (`MD-04`).** It is the only part of
+a run that writes ~100 MB into the user's data dir, and the app de-duplicates by
+suffixing rather than overwriting, so an uncleaned run adds a copy every time —
+17 stale copies (≈635 MB) had piled up in
+`Desktop\open-worship-data-dev` by 2026-08-07. Sweep the videos/audios dirs
+before downloading, and trash both files (row → **Move to Trash**, hidden while
+the item is on a screen) as soon as the on-disk evidence is captured. A failed
+download also leaves a `temp-*.part` behind. Deleting on disk needs piped
+objects, not a glob — the names start with `[MV]` and `[` is a PowerShell
+wildcard — and must match the **canonical video's title**, never `*YouTube*`:
+the user's own library holds real downloads whose names also end in `- YouTube`.

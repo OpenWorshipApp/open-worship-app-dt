@@ -60,10 +60,16 @@ export default function DataFolderSelectorComp({
     // Reported from an effect rather than from each handler, so there is one
     // place the answer leaves this component — and the caller is told the
     // starting selection too, instead of having to assume it.
-    const onChangeRef = useAppCurrentRef(onChange);
+    //
+    // `onChange` is IN the dependency list, and must stay there. The Export
+    // Data dialog re-opens itself when the password confirmation does not
+    // match, handing over a fresh closure while React keeps this component and
+    // its state — an effect watching only `selectedKeys` would never fire
+    // again, and the second Ok would act on the default selection rather than
+    // the operator's.
     useAppEffect(() => {
-        onChangeRef.current(selectedKeys);
-    }, [selectedKeys]);
+        onChange(selectedKeys);
+    }, [onChange, selectedKeys]);
     const isAllSelected = selectedKeys.length === choices.length;
     return (
         <div className="app-data-folder-selector d-flex flex-column">

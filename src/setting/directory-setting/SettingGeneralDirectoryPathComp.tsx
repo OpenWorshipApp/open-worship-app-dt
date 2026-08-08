@@ -9,7 +9,7 @@ import {
     useAppCurrentRef,
 } from '../../helper/appHooks';
 import DirSource from '../../helper/DirSource';
-import { dataDirectories } from './dataDirectories';
+import { selectableDataDirectories } from './dataDirectories';
 import {
     checkShouldSelectChildDir,
     getDefaultDataDir,
@@ -193,7 +193,7 @@ function RenderChildDirectoriesComp({
                 </button>
             </SettingCardHeaderComp>
             <div className="card-body">
-                {dataDirectories.map(
+                {selectableDataDirectories.map(
                     ({ title, settingName, defaultDirName, iconClassName }) => {
                         return (
                             <RenderPathElementComp

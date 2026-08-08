@@ -250,7 +250,7 @@ Notes:
 screenshot presenter + settings, check contrast and that no text goes invisible, then
 **restore**.
 
-### S19 — Media download `[MD-01..03]` — **MANDATORY in every run** (needs network)
+### S19 — Media download `[MD-01..04]` — **MANDATORY in every run** (needs network)
 
 The only flow that runs the shipped prebuilt binaries (`bin-helper/yt/yt-dlp` +
 `bin-helper/ffmpeg/bin` + `bin-helper/qjs/qjs`, copied in by
@@ -258,6 +258,12 @@ The only flow that runs the shipped prebuilt binaries (`bin-helper/yt/yt-dlp` +
 
 Canonical link (always this one): `https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7rJs`
 
+0. **MD-04 sweep (before downloading anything)** — list the videos and audios dirs and
+   delete leftovers from earlier runs: files carrying the **canonical video's page title**
+   (`*Flowers by*Official Music Video - YouTube*`, including the ` (N)` copies) and any
+   `temp-*.part`. Match the title, **not `*YouTube*`** — the user's own downloads end in
+   `- YouTube` too. Record how many there were: a non-zero count means the previous run
+   skipped its teardown.
 1. **MD-01 video** — Background → **Videos** → 🖱️R the empty list area → **Download From
    URL** → fill the link → **Ok**. Watch the progress bar; then assert a new file in the
    videos dir and its thumbnail in the tab. This covers the ffmpeg **merge** path.
@@ -268,12 +274,86 @@ Canonical link (always this one): `https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7r
    no download.
 4. Optional runtime proof: while yt-dlp runs, read its command line — it must carry
    `--no-js-runtimes --js-runtimes quickjs:<…>\bin-helper\qjs\qjs.exe`.
+5. **MD-04 teardown (right after step 3's evidence is captured)** — 🖱️R the new video row
+   → **Move to Trash** → **Yes**; same for the new `.mp3`. The row must leave the tab
+   without a manual reload (this also covers CM-06 on a background media row, against a
+   scratch file this run created). **Move to Trash is hidden while the item is on a
+   screen** — clear/hide first. For anything that never reached the list, delete on disk;
+   the names start with `[MV]` and `[` is a PowerShell wildcard, so pipe objects instead
+   of globbing: `Get-ChildItem -LiteralPath $dir | Where-Object { $_.Name -like '*Flowers
+   by*Official Music Video - YouTube*' -or $_.Name -like 'temp-*' } | Remove-Item`. End
+   state: both dirs hold neither. Runs even when MD-01/MD-02 failed or were BLOCKED.
 
-Evidence = the file on disk (or the refreshed panel), never the toast alone. On failure,
+Evidence = the file on disk (or the refreshed panel), never the toast alone — and for
+MD-04 a **post-run listing of both dirs**. Each pass writes ~100 MB and the app
+de-duplicates by suffixing rather than overwriting, so skipping the teardown silently
+grows the user's data dir run over run (17 copies / ≈635 MB had piled up by 2026-08-07).
+On failure,
 follow the triage list in coverage-matrix §MD before filing: an `HTTP Error 403` mid-
 transfer is usually YouTube throttling (retry once), whereas `No supported JavaScript
-runtime could be found` is a real Critical. Clean up any orphaned `temp-*.part` left by a
-failed attempt (known app bug — the error path does not remove partials).
+runtime could be found` is a real Critical. A failed attempt also leaves an orphaned
+`temp-*.part` behind (known app bug — the error path does not remove partials); step 5
+takes it.
+
+### S20 — Playlist deep pass `[PL-10, PL-29, PL-32..76, PL-81..100]` — the whole run sheet
+
+The recipe for **playlist deep mode** (SKILL.md §6f), run whenever the argument is
+`playlist` / `run sheet`, and in its short form inside every full-coverage run. **Read
+KB §14 in full first** — it is the model behind every row, and several of these rows exist
+because the behaviour they assert was once "fixed" the wrong way.
+
+Coverage accounting is ON in this mode: `coverage-<runid>.json` with `"focus":"playlist"`,
+every scope row ending with a status.
+
+1. **P0 fixture** — create `zz-robot-<runid>` (never the user's own sheets) and drop in one
+   of each kind: document, single slide, lyric slide (carries its `stage` — PL-64),
+   background, bible verse, foreground widget, audio. `[PL-10, PL-29, PL-43, PL-44, PL-57]`
+2. **P1 storage kinds** — edit a referenced document → the sheet projects the NEW text; a
+   stored countdown replays its own preset, never a resolved date; the row's title is a
+   captured label and does not follow a rename. `[PL-29, PL-37, PL-44, PL-52, PL-69]`
+3. **P2 the tree** — expand/reorder/move-to-edges with their gating, Duplicate, Disable
+   (incl. a parked document's slides), the on-screen indicator at all three levels,
+   expansion memory following the DOCUMENT not the position. `[PL-32..36, PL-41, PL-53,
+   PL-62, PL-86..88]`
+4. **P3 actions** — the three-level **Add Action** menu (**Other Clear FG Items**);
+   **fire all 13 clear actions against a showing screen**; the two `Screen: Show` /
+   `Screen: Hide` lines, which ask WHICH SCREENS before they are added and then run on
+   those and no others; then the 4 run actions and their menus, which must offer no screen
+   family. `[PL-71..74, PL-95, PL-96, PL-97, PL-100]`
+5. **P4 CC elements** — attach by drop and by menu, propagate onto the screens in ONE
+   gesture with **no second "which screen?" question**, reveal-original, export/import
+   round trip, and the two distinct refusal toasts. `[PL-89..93]`
+6. **P5 screen resolution** — click / drag-to-mini-screen / **Set Specific Screen**; the
+   pin persists and beats the selected screens but loses to a force-choose and to a drag;
+   a missing pinned screen degrades. **Discharge the mandatory §6a block here** by
+   presenting from the sheet and driving the `screen.html` target. `[PL-33, PL-35,
+   PL-81..85, SP-01/02, SC-01/02]`
+7. **P6 the preview as a player** — first press works with nothing clicked (the widget
+   focuses itself); walk the sheet **folded down** and confirm nothing but a PARKED line is
+   stepped over, that the landing UNFOLDS, and that a document is entered at its first
+   slide; fold memory, restricted slide menu, widget frame, every menu mirroring the
+   tree's, the clocks' pill. `[PL-38, PL-42, PL-46..48, PL-58..61, PL-94, PL-98, PL-99]`
+8. **P7 failure surfaces** — empty/unreadable placeholders; a hand-corrupted `.owp` entry
+   becomes ONE error row, the rest still renders, and the bad entry **survives the next
+   write**; the deliberate no-ops. `[PL-50, PL-51, PL-55, PL-56]`
+9. **P8 archives** — export → import round trip on real files; all-or-nothing failure with
+   a folder unset; same-bundle re-import reuse + `(1)` de-duplication; a bible entry
+   re-created in the **Default** list; a CDP-driven drop of a real `.owapl.tar.gz`.
+   `[PL-39, PL-40, PL-45, PL-65..68, PL-76]` (+ `PL-77..80`, `NAV-17/18` when the run
+   covers the document/whole-data archives too)
+10. **P9 performance** — measured, not eyeballed: no `Maximum update depth exceeded` with a
+    ~90-slide document expanded, the clicked row marks immediately, an IDLE list opens no
+    `.owp` files, a collapsed document releases its slides, and a row click does not
+    repaint every file row in the window. `[PL-63, PL-70]`
+11. **P10 locale + restore** — §S15 over this panel and its widget (KB §14.8 lists the
+    strings; a missing Khmer key blanks the menu). Then delete the fixture, remove what the
+    import created, unpark/unpin, stop any interval, hide the screen — and name in the
+    report anything you could not remove.
+
+**Severity guidance:** a row that reaches the wrong screen, a present that raises a second
+screen question, or a run that steps over a line it should stop on are **High** — they put
+the wrong thing in front of a congregation. A stale label or an untranslated string is
+**Low**, a blank Khmer menu is **Critical** (it is the `tran()` throw).
 
 ### S16 — Edge & empty states (opportunistic)
 - `Slide Editor` with no document → alert, no navigation (NAV-03).
@@ -358,11 +438,24 @@ Write to `test-results/robot-test/report-<timestamp>.md`:
 - MD-01 <status> — video file written: `<path>` (<size>)
 - MD-02 <status> — mp3 written: `<path>` (<size>)
 - Runtime line seen: `--no-js-runtimes --js-runtimes quickjs:<…>` (or: not captured)
-- (If skipped: `BLOCKED` + "no network" — never skip silently; a 403 is a retry, not a skip)
+- MD-04 <status> — pre-run sweep removed <n> leftover(s) from earlier runs; both files
+  deleted after the assert (via `Move to Trash` / on disk); post-run listing: videos dir
+  and audios dir hold no copy of the canonical title and no `temp-*.part`
+- (If skipped: `BLOCKED` + "no network" — never skip silently; a 403 is a retry, not a
+  skip. MD-04 is never BLOCKED: with nothing downloaded it is the sweep alone)
+
+## Playlist deep mode (required when the focus was `playlist` — S20)
+
+- Fixture: `zz-robot-<runid>` · torn down: <yes / what was left behind and why>
+- Phases: P0 <status> · P1 <status> · P2 <status> · P3 <status> · P4 <status> ·
+  P5 <status> · P6 <status> · P7 <status> · P8 <status> · P9 <status> · P10 <status>
+- Screen actions fired against a SHOWING screen: <n>/13 (PL-72/74)
+- Folded-sheet walk (PL-99): <lines visited> / <lines in sheet>, stepped over: <the parked ones>
+- Performance (PL-63/70): <the numbers — update-depth errors, idle `.owp` reads, row-click repaints>
 
 ## Coverage (full-coverage runs — from coverage-<runid>.json)
 
-- Matrix version: <date> · rows total: 538
+- Matrix version: <date> · rows total: 634 (or 66 in playlist deep mode — see its scope set)
 - PASS <n> · FAIL <n> · PARTIAL <n> · BLOCKED <n> · EXCLUDED <n>
 - **Coverage: <exercised> / <in-scope> = <xx.x>%**  (exercised = PASS+FAIL;
   in-scope = total − EXCLUDED)

@@ -103,7 +103,33 @@ const sanitize = (k) => k.trim().toLowerCase();
 // sanitized dictionary keys taken from BEFORE `function sanitizeTranKey`
 ```
 
-This only covers **literal** keys; dynamic `tran(someVariable)` sites (e.g.
+#### ⚠️ Half the dictionary keys are UNQUOTED identifiers — match them too
+
+Verified 2026-08-07 (this trap nearly produced two false **Critical** findings). The km
+dictionary is a plain object literal, so any key that is a valid JS identifier is written
+**without quotes**:
+
+```ts
+Seconds: 'វិនាទី',        // line 354 — NOT 'Seconds':
+Stage: 'ស្ទែជ',           // line 601 — NOT 'Stage':
+'Change Seconds': '…',    // quoted only because of the space
+```
+
+A sweep whose regex is `/^\s*'([^']*)'\s*:/gm` therefore sees **only the multi-word keys**
+and reports every single-word key as missing — `Stage`, `Seconds`, `Loading`, `Auto`, … .
+Match both shapes:
+
+```js
+const re = /^\s*(?:'([^']*)'|([A-Za-z_$][\w$]*))\s*:/gm;
+// key = m[1] ?? m[2]
+```
+
+**Never file a missing-key Critical from a static sweep alone.** Confirm it live: switch the
+app to Khmer, reach the component, and look for the actual
+`Translation for text "…" not found in locale km-KH` in the console. A key that renders (e.g.
+the mini-screen footer showing `ស្ទែជ 0`) is present, whatever a grep says.
+
+Both sweeps only cover **literal** keys; dynamic `tran(someVariable)` sites (e.g.
 `SettingCardHeaderComp` doing `tran(title)`) stay invisible to any static sweep and remain
 the residual risk.
 
@@ -203,8 +229,13 @@ Keep the main window on `presenter.html`.
   `Background` / `Note` label). Its tabs **do not exist in the DOM until expanded** — an early
   `.nav-tabs` scan finds only the header + presenter tab groups. **Click the `Background`
   label to expand**, then the tabs (`Colors…Audios`) render as real `button.nav-link`s.
-- **Color swatches are `role=group`** elements with accessible color names
-  (`fuchsia`,`blue`,`red`,…), **not `<button>`s** — target them via a `take_snapshot` `uid`.
+- **Color swatches are plain `div.color-item`s carrying only a `title`** (`fuchsia`, `navy`,
+  `red`, … plus `No Color`) — no `role`, no `aria-label`, no `tabindex`, and **not
+  `<button>`s**. They therefore do **not** appear in `take_snapshot` as named nodes: select
+  them with `document.querySelector('.color-item[title="navy"]')` and `.click()` (verified
+  2026-08-07 — earlier revisions of this file said `role=group` with accessible names, which
+  is stale). Their being unreachable by keyboard and unnamed to a screen reader is a standing
+  **Info** a11y finding, not a new one — don't re-file it every run.
 - **Contrast-aware dialog.** Choosing a background color that may clash with text pops a
   confirm: *"…text color may not be visible… change text color as well?"* (`Cancel`/`Ok`).
   Handle it. (This is **good UX**, not a bug.)
@@ -250,6 +281,21 @@ Keep the main window on `presenter.html`.
   (`document.querySelector('.app-context-menu').parentElement` → dispatch the click there)
   or `Escape`. Verified good: after a proper open/close cycle `Ctrl+B` and `F7` both work.
   If shortcuts have already gone dead, **reload the page** to reset the layer stack.
+- ⚠️ **Never drive a resizer with synthetic mouse events — and never collapse a widget by
+  dragging.** `FlexResizeActorComp` attaches its `mousemove`/`mouseup` listeners to
+  `globalThis`, and `isShouldIgnore` reads `event.target.classList` unguarded
+  (`FlexResizeActorComp.tsx:126`). A `mousemove` you dispatch on `globalThis` has **`window`**
+  as its target, `window.classList` is `undefined`, and every move then throws
+  `Uncaught TypeError: Cannot read properties of undefined (reading 'contains')` — which the
+  app's global handler turns into a **"Reload is needed — Internal process error"** dialog and
+  a `error-datetime-setting` lock-starvation cascade. It looks exactly like a product crash;
+  it is not (a real mouse event always has an element target). Verified 2026-08-07; the drag
+  also does not actually resize anything, because `getMousePagePos` needs `pageX/pageY`.
+  **The supported way to collapse or restore a widget is the resizer's own context menu:**
+  🖱️R the `.flex-resize-actor` → **`Reset Size` / `Close First Widget` / `Close Second
+  Widget`**. That path is clean (zero console errors) and is how you put a panel back the way
+  you found it — the Background panel starts collapsed, and expanding it to test the tabs is a
+  persisted change you must undo.
 - **Presenting a background/slide with multiple screens and none `Select`ed does NOT apply
   immediately** — `ScreenEventHandler.chooseScreenIds` opens a **screen-chooser context
   menu** (`Screen id: 0/1/2`). A click that "does nothing" is usually this menu waiting.
@@ -527,6 +573,12 @@ Notes that save time on this subsystem:
 - **Stages are separate document instances** (`getLyricAppDocumentStageByStage`), each with
   its own cache. Screens on different stages (`St: 0` / `St: 1`) can legitimately render
   different layouts — stage 1 shows chord/section labels. That is not a bug.
+  Since 2026-08-07 each stage ALSO has its own persisted **style**
+  (`lyric-stage-style-<stage>`, PM-116/PM-117), so two stages differing in padding,
+  background opacity, font size or theme is equally expected. The setting is deliberately
+  **unprefixed** — presenter, reader and screen must resolve one key — and its custom CSS
+  is APPENDED to the stage's own layout css, so stage 0 keeps hiding its chords no matter
+  what the operator typed. Chords reappearing on stage 0 IS a bug.
 - **Khmer glyph overhang at segment boundaries** (the tail of one segment drawing into the
   next) is font shaping in the open-lyric output, not a layout bug — check
   `getBoundingClientRect()` on adjacent `.ol-preview-lyric-segment__text` nodes; they are

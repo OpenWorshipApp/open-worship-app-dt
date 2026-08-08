@@ -13,8 +13,12 @@ const {
     pathJoinMock,
     tarExtractMock,
     tarCreateMock,
+    encryptFileMock,
+    decryptFileMock,
     fsCloneFileMock,
     fsCreateFileMock,
+    fsDeleteFileMock,
+    askForNewArchivePasswordMock,
     selectFilesMock,
     showFileOrDirExplorerMock,
 } = vi.hoisted(() => ({
@@ -30,14 +34,29 @@ const {
     pathJoinMock: vi.fn((...parts: string[]) => parts.join('/')),
     tarExtractMock: vi.fn(),
     tarCreateMock: vi.fn(),
+    encryptFileMock: vi.fn(),
+    decryptFileMock: vi.fn(),
     fsCloneFileMock: vi.fn(),
     fsCreateFileMock: vi.fn(),
+    fsDeleteFileMock: vi.fn(),
+    // The default answer is "no password", so every existing expectation
+    // describes an export that is byte for byte what it always was.
+    askForNewArchivePasswordMock: vi.fn(),
     selectFilesMock: vi.fn(),
     showFileOrDirExplorerMock: vi.fn(),
 }));
 
 vi.mock('../../helper/errorHelpers', () => ({
     handleError: vi.fn(),
+}));
+
+// Only the prompt is stubbed; `protectArchiveFile` and `openArchiveForReading`
+// stay real so the wiring around them is what these tests actually exercise.
+vi.mock('../../helper/archivePasswordHelpers', async (importOriginal) => ({
+    ...(await importOriginal<
+        typeof import('../../helper/archivePasswordHelpers')
+    >()),
+    askForNewArchivePassword: askForNewArchivePasswordMock,
 }));
 
 vi.mock('../../helper/FileSource', () => ({
@@ -58,12 +77,30 @@ vi.mock('../../server/appHelpers', () => ({
     showFileOrDirExplorer: showFileOrDirExplorerMock,
     tarCreate: tarCreateMock,
     tarExtract: tarExtractMock,
+    // A plain arrow, not a `vi.fn`: `mockReset` wipes implementations before
+    // every test, and an undefined answer here reads as "protected" and sends
+    // every import down the password path.
+    checkIsEncryptedFile: async () => false,
+    encryptFile: encryptFileMock,
+    decryptFile: decryptFileMock,
 }));
+
+// The Downloads folder answers separately, and empty. Tests here say
+// "everything exists" to describe the files being imported, but the export's
+// own destination is read with the same call: `genNextArchiveFilePath` counts
+// up until it finds a free name, so one blanket `true` never terminates.
+const fsCheckFileExistSplitMock = (filePath: string) => {
+    if (String(filePath).startsWith('/downloads/')) {
+        return Promise.resolve(false);
+    }
+    return fsCheckFileExistMock(filePath);
+};
 
 vi.mock('../../server/fileHelpers', () => ({
     ensureDirectory: ensureDirectoryMock,
-    fsCheckFileExist: fsCheckFileExistMock,
+    fsCheckFileExist: fsCheckFileExistSplitMock,
     fsCloneFile: fsCloneFileMock,
+    fsDeleteFile: fsDeleteFileMock,
     fsCopyFilePathToPath: fsCopyFilePathToPathMock,
     fsCreateFile: fsCreateFileMock,
     fsDeleteDir: fsDeleteDirMock,
@@ -100,6 +137,7 @@ describe('bibleNoteItemArchive import', () => {
             randomUUID: vi.fn(() => 'import-id'),
         });
         vi.spyOn(Date, 'now').mockReturnValue(1780086228518);
+        askForNewArchivePasswordMock.mockResolvedValue('');
         fsCheckFileExistMock.mockResolvedValue(true);
         fsCopyFilePathToPathMock.mockResolvedValue(IMPORTED_TRACE_FILE_PATH);
         fsReadFileMock.mockImplementation((filePath: string) => {

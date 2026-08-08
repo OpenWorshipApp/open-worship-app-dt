@@ -10,7 +10,11 @@ import type { DragDataType, DroppedDataType } from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
 import { deserializeDragData, extractDragData } from '../helper/dragHelpers';
 import { tran } from '../lang/langHelpers';
-import { removeSettingsByPrefix } from '../helper/settingHelpers';
+import {
+    removeSettingsByPrefix,
+    toFilePathSettingKey,
+    toFilePathSettingName,
+} from '../helper/settingHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { firePlaylistRunAction } from './playlistAutoNextHelpers';
 import { armPlaylistCcPropagation } from './playlistCcApplyHelpers';
@@ -59,20 +63,18 @@ export function toDocumentIcon(filePath: string): [string, string?] {
     return documentIconByDotExtension[dotExtension] ?? ['file-earmark-slides'];
 }
 
-/**
- * Settings are stored as files named after their key, so a raw file path in a
- * setting name becomes a path with directory separators in it and every read
- * logs an ENOENT.
- */
+// The path→setting-name sanitizer is shared with the documents panel now (its
+// floating previews are keyed by file path too), so it lives in
+// `settingHelpers`. Kept under the old names here so no playlist call site has
+// to move. Forwarding functions rather than `export const … = imported`: the
+// latter reads the import while this module is still evaluating, which throws
+// in the tests that replace `settingHelpers` with a partial mock.
 export function toPlaylistSettingKey(...parts: string[]) {
-    return parts
-        .join('-')
-        .replace(/[\\/:*?"<>|.]/g, '_')
-        .replace(/\s+/g, '_');
+    return toFilePathSettingKey(...parts);
 }
 
 export function toPlaylistSettingName(prefix: string, ...parts: string[]) {
-    return `${prefix}-${toPlaylistSettingKey(...parts)}`;
+    return toFilePathSettingName(prefix, ...parts);
 }
 
 /**

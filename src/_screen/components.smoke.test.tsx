@@ -256,6 +256,9 @@ vi.mock('./screenHelpers', () => ({
     })),
     genVideoIDFromSrc: vi.fn(() => 'video-md5'),
     hideScreen: hideMock,
+    // `ScreenPreviewerFooterComp` colours the stage chip with this; it is a
+    // pure lookup, so the real shape (a hex string) is all the smoke test needs.
+    getStageAccentColor: vi.fn(() => '#4dabf7'),
 }));
 
 vi.mock('./managers/ScreenManager', () => ({

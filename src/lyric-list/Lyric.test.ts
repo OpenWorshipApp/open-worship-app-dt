@@ -31,6 +31,14 @@ vi.mock('../server/fileHelpers', () => ({
 
 vi.mock('../helper/errorHelpers', () => ({ handleError: handleErrorMock }));
 
+// `Lyric` imports the example chord sheet from `open-lyric` at module scope.
+// The real package is browser-only (it touches `document` while building its
+// markup) and drags monaco in behind it, so loading it here would fail the whole
+// suite. Only the example string matters to these tests.
+vi.mock('open-lyric', () => ({
+    MARCH_OF_GRACE_EXAMPLE: 'c1: mocked chord sheet',
+}));
+
 vi.mock('../helper/FileSource', () => ({
     default: { getInstance: fileSourceGetInstanceMock },
 }));
@@ -97,7 +105,9 @@ describe('Lyric', () => {
     test('a new lyric starts from the default chord sheet', async () => {
         const defaultJsonData = Lyric.getDefaultContentJsonData();
 
-        expect(defaultJsonData.content).toContain('c1:');
+        // the example comes straight from `open-lyric` (mocked above), so what
+        // this pins is that `Lyric` seeds a new file with it verbatim
+        expect(defaultJsonData.content).toBe('c1: mocked chord sheet');
         expect(defaultJsonData.metadata.app).toBeTypeOf('string');
 
         await expect(Lyric.create('/docs', 'song')).resolves.toEqual(

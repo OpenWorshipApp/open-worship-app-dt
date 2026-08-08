@@ -250,7 +250,7 @@ Notes:
 screenshot presenter + settings, check contrast and that no text goes invisible, then
 **restore**.
 
-### S19 — Media download `[MD-01..03]` — **MANDATORY in every run** (needs network)
+### S19 — Media download `[MD-01..04]` — **MANDATORY in every run** (needs network)
 
 The only flow that runs the shipped prebuilt binaries (`bin-helper/yt/yt-dlp` +
 `bin-helper/ffmpeg/bin` + `bin-helper/qjs/qjs`, copied in by
@@ -258,6 +258,12 @@ The only flow that runs the shipped prebuilt binaries (`bin-helper/yt/yt-dlp` +
 
 Canonical link (always this one): `https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7rJs`
 
+0. **MD-04 sweep (before downloading anything)** — list the videos and audios dirs and
+   delete leftovers from earlier runs: files carrying the **canonical video's page title**
+   (`*Flowers by*Official Music Video - YouTube*`, including the ` (N)` copies) and any
+   `temp-*.part`. Match the title, **not `*YouTube*`** — the user's own downloads end in
+   `- YouTube` too. Record how many there were: a non-zero count means the previous run
+   skipped its teardown.
 1. **MD-01 video** — Background → **Videos** → 🖱️R the empty list area → **Download From
    URL** → fill the link → **Ok**. Watch the progress bar; then assert a new file in the
    videos dir and its thumbnail in the tab. This covers the ffmpeg **merge** path.
@@ -268,12 +274,26 @@ Canonical link (always this one): `https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7r
    no download.
 4. Optional runtime proof: while yt-dlp runs, read its command line — it must carry
    `--no-js-runtimes --js-runtimes quickjs:<…>\bin-helper\qjs\qjs.exe`.
+5. **MD-04 teardown (right after step 3's evidence is captured)** — 🖱️R the new video row
+   → **Move to Trash** → **Yes**; same for the new `.mp3`. The row must leave the tab
+   without a manual reload (this also covers CM-06 on a background media row, against a
+   scratch file this run created). **Move to Trash is hidden while the item is on a
+   screen** — clear/hide first. For anything that never reached the list, delete on disk;
+   the names start with `[MV]` and `[` is a PowerShell wildcard, so pipe objects instead
+   of globbing: `Get-ChildItem -LiteralPath $dir | Where-Object { $_.Name -like '*Flowers
+   by*Official Music Video - YouTube*' -or $_.Name -like 'temp-*' } | Remove-Item`. End
+   state: both dirs hold neither. Runs even when MD-01/MD-02 failed or were BLOCKED.
 
-Evidence = the file on disk (or the refreshed panel), never the toast alone. On failure,
+Evidence = the file on disk (or the refreshed panel), never the toast alone — and for
+MD-04 a **post-run listing of both dirs**. Each pass writes ~100 MB and the app
+de-duplicates by suffixing rather than overwriting, so skipping the teardown silently
+grows the user's data dir run over run (17 copies / ≈635 MB had piled up by 2026-08-07).
+On failure,
 follow the triage list in coverage-matrix §MD before filing: an `HTTP Error 403` mid-
 transfer is usually YouTube throttling (retry once), whereas `No supported JavaScript
-runtime could be found` is a real Critical. Clean up any orphaned `temp-*.part` left by a
-failed attempt (known app bug — the error path does not remove partials).
+runtime could be found` is a real Critical. A failed attempt also leaves an orphaned
+`temp-*.part` behind (known app bug — the error path does not remove partials); step 5
+takes it.
 
 ### S20 — Playlist deep pass `[PL-10, PL-29, PL-32..76, PL-81..100]` — the whole run sheet
 
@@ -418,7 +438,11 @@ Write to `test-results/robot-test/report-<timestamp>.md`:
 - MD-01 <status> — video file written: `<path>` (<size>)
 - MD-02 <status> — mp3 written: `<path>` (<size>)
 - Runtime line seen: `--no-js-runtimes --js-runtimes quickjs:<…>` (or: not captured)
-- (If skipped: `BLOCKED` + "no network" — never skip silently; a 403 is a retry, not a skip)
+- MD-04 <status> — pre-run sweep removed <n> leftover(s) from earlier runs; both files
+  deleted after the assert (via `Move to Trash` / on disk); post-run listing: videos dir
+  and audios dir hold no copy of the canonical title and no `temp-*.part`
+- (If skipped: `BLOCKED` + "no network" — never skip silently; a 403 is a retry, not a
+  skip. MD-04 is never BLOCKED: with nothing downloaded it is the sweep alone)
 
 ## Playlist deep mode (required when the focus was `playlist` — S20)
 

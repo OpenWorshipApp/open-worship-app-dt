@@ -18,6 +18,7 @@ import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
 import { useStateSettingString } from '../../helper/settingHelpers';
 import { DRAW_MODE_SETTING_PREFIX } from '../managers/screenSettingKeyHelpers';
 import type { DrawModeType } from '../screenTypeHelpers';
+import { getStageAccentColor } from '../screenHelpers';
 
 const LazyMiniScreenAudioHandlersComp = lazy(() => {
     return import('./MiniScreenAudioHandlersComp');
@@ -333,15 +334,25 @@ export default function ScreenPreviewerFooterComp() {
                 </div>
                 <div
                     className="flex-grow-1 d-flex justify-content-end"
-                    title={tran('Stage')}
+                    title={`${tran('Stage')} ${stageNumber}`}
                 >
                     <div
-                        className="d-flex app-caught-hover-pointer"
-                        title={`${tran('Stage')}: ${tran('Click to change Stage Number')}`}
+                        className="d-flex app-caught-hover-pointer me-1"
+                        title={`${tran('Stage')} ${stageNumber}: ${tran('Click to change Stage Number')}`}
+                        style={{
+                            color: getStageAccentColor(stageNumber),
+                        }}
                         onClick={handleStageNumberChange}
                     >
-                        <small>St:</small>
-                        <div className="px-1 text-muted">{stageNumber}</div>
+                        <small className="mx-1">St:</small>
+                        <div
+                            className="px-0"
+                            style={{
+                                fontSize: '0.9em',
+                            }}
+                        >
+                            {stageNumber}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -122,6 +122,51 @@ export function tarAppend(
     });
 }
 
+// Password protection for an exported archive. The work is done in the main
+// process and both directions stream disk to disk — an archive can be gigabytes
+// and must never be carried across the bridge or held in memory.
+export function encryptFile(
+    filePath: string,
+    outputFilePath: string,
+    password: string,
+) {
+    return electronSendAsync<void>('main:app:file-encrypt', {
+        filePath,
+        outputFilePath,
+        password,
+    });
+}
+
+// A wrong password comes back as a RESULT rather than a rejection: only an
+// `Error`'s message survives the IPC clone, and recognising a wrong password by
+// matching text anyone might reword is a bug waiting to happen. Genuine I/O
+// failures still reject.
+export type ArchiveDecryptResultType =
+    | { isOk: true }
+    | {
+          isOk: false;
+          reason: 'wrong-password' | 'not-encrypted' | 'unsupported';
+      };
+
+export function decryptFile(
+    filePath: string,
+    outputFilePath: string,
+    password: string,
+) {
+    return electronSendAsync<ArchiveDecryptResultType>(
+        'main:app:file-decrypt',
+        { filePath, outputFilePath, password },
+    );
+}
+
+// By the container magic, not by the file name: a bundle mailed around or
+// downloaded from a URL arrives under whatever name that service gave it.
+export function checkIsEncryptedFile(filePath: string) {
+    return electronSendAsync<boolean>('main:app:check-is-encrypted-file', {
+        filePath,
+    });
+}
+
 export function copyToClipboard(str: string) {
     appProvider.systemUtils.copyToClipboard(str);
     showSimpleToast('Copy', 'Text has been copied to clip');

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: da5728a5-2e42-4a20-8512-65b8dc76a945
-  modified: 2026-08-03T16:44:00.556Z
+  modified: 2026-08-07T16:45:00.000Z
 ---
 
 Lyric documents (`src/lyric-list/`) are **not** ordinary slide documents. A
@@ -36,6 +36,30 @@ Things that bite:
   `openLyric` field and its own cache entries. Stage 0's
   `stageOpenLyricOptions.css` is what hides chords and section titles
   (`display: none`); stage 1 omits those rules and sets `isWithKeyNote: true`.
+- **Each stage's style is a user setting now (2026-08-07).**
+  `slidePaddingPercentage` / `slideBackgroundAlpha` / `extraSlideFontSize` /
+  `slideTheme` used to be hard-coded `LyricAppDocument` fields nothing ever
+  assigned. They are now one JSON blob per stage — `lyric-stage-style-<stage>` —
+  read through `get stageStyle()` and edited from the ⚙ on each Stage Previewer
+  chip. Three things to keep:
+  - `src/lyric-list/lyricStageStyleHelpers.ts` is a **leaf** (only
+    `../helper/settingHelpers`) precisely so `LyricAppDocument` can import it
+    without closing the `lyricHelpers → Stage0 → StageAbstract → LyricAppDocument`
+    cycle. `LyricAppDocumentStageAbstract` must NOT import it either — its test
+    stubs `./LyricAppDocument` as `class {}` in node env and would die pulling in
+    `appProvider` (see [[appprovider-mock-node-env]]).
+  - `stageStyle` is a **getter**, not a field: `stage` is a base-class field that
+    `LyricAppDocumentStage1` overrides, and derived fields initialise after the
+    base's, so a field initialiser would freeze every stage on stage 0's style.
+  - The custom CSS is **appended** by `withCustomCss()`, never merged into either
+    side of the `allOpenLyricOptions` spread — `css` is a plain string, so the
+    last object to carry it wins outright and stage 0 would lose the rules that
+    hide its chords. It returns the same object when blank so `genCacheKey` is
+    unchanged for untouched installs. Cache invalidation is automatic: every knob
+    lands in the hashed options.
+  The key is deliberately **unprefixed** (no `getSettingPrefix()`) so presenter,
+  reader and screen resolve one key — same reason as
+  `open-lyric-previewer-setting`; a divergent key is the SC-08 bug class.
 - **Stage resolution used to happen only in the presenter — FIXED 2026-08-03.**
   Two bugs, one root cause (the presented slide is derived for one specific stage
   and nothing re-derived it), both found by robot runs 20260803-1030/-1151:

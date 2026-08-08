@@ -1,5 +1,17 @@
+// From the LEAF, not `appArchiveHelpers`: naming a bundle must not drag that
+// module's collector graph — and the note editor's own dependencies behind it —
+// into a file that only needs an extension and a free path.
+import {
+    PLAIN_ARCHIVE_TEMP_NAME,
+    genNextArchiveFilePath,
+    toArchiveDotExtension,
+} from '../../helper/archiveNameHelpers';
+import {
+    askForNewArchivePassword,
+    openArchiveForReading,
+    protectArchiveFile,
+} from '../../helper/archivePasswordHelpers';
 import { handleError } from '../../helper/errorHelpers';
-import FileSource from '../../helper/FileSource';
 import { appLocalStorage } from '../../setting/directory-setting/appLocalStorage';
 import {
     showFileOrDirExplorer,
@@ -114,9 +126,16 @@ function checkIsEmbeddedFilePathField(key: string, value: string) {
     return key === 'src' && isLocalFilePath(value);
 }
 
-export function toBibleNoteItemArchiveFileName(title: string) {
+export function toBibleNoteItemArchiveFileName(
+    title: string,
+    password: string | null = null,
+) {
     const fileName = sanitizeFileNamePart(title).slice(0, 120);
-    return `${fileName || 'BibleNoteItem'}${BIBLE_NOTE_ITEM_ARCHIVE_DOT_EXTENSION}`;
+    const dotExtension = toArchiveDotExtension(
+        BIBLE_NOTE_ITEM_ARCHIVE_DOT_EXTENSION,
+        password,
+    );
+    return `${fileName || 'BibleNoteItem'}${dotExtension}`;
 }
 
 function toFileNameSafeBase64(value: string) {
@@ -307,20 +326,42 @@ async function writeArchiveFiles(noteItem: NoteItem, stagingDir: string) {
     ];
 }
 
-async function getArchiveOutputPath(noteItem: NoteItem) {
-    const archiveFilePath = pathJoin(
+// `genNextArchiveFilePath`, not `FileSource.genNextFilePath()`: the latter
+// splits a name on its LAST dot, so a second export came back as
+// `Title.owabn.tar (1).gz` — a name that no longer ends in the extension the
+// import gate matches on. This was the last archive writer still doing that.
+async function getArchiveOutputPath(
+    noteItem: NoteItem,
+    password: string | null,
+) {
+    return await genNextArchiveFilePath(
         getDownloadPath(),
-        toBibleNoteItemArchiveFileName(noteItem.title),
+        toBibleNoteItemArchiveFileName(noteItem.title, password),
+        toArchiveDotExtension(BIBLE_NOTE_ITEM_ARCHIVE_DOT_EXTENSION, password),
     );
-    return await FileSource.getInstance(archiveFilePath).genNextFilePath();
 }
 
-export async function createBibleNoteItemArchive(noteItem: NoteItem) {
+export async function createBibleNoteItemArchive(
+    noteItem: NoteItem,
+    password: string | null = null,
+) {
     const stagingDir = await createWorkDir('owabn-export');
     try {
         const archiveEntries = await writeArchiveFiles(noteItem, stagingDir);
-        const archiveFilePath = await getArchiveOutputPath(noteItem);
-        await tarCreate(stagingDir, archiveFilePath, archiveEntries, true);
+        const archiveFilePath = await getArchiveOutputPath(noteItem, password);
+        // Protecting one means tar writes into the staging dir that is deleted
+        // in `finally` anyway, so the plain copy never outlives the call.
+        const plainFilePath = password
+            ? pathJoin(stagingDir, PLAIN_ARCHIVE_TEMP_NAME)
+            : archiveFilePath;
+        await tarCreate(stagingDir, plainFilePath, archiveEntries, true);
+        if (password) {
+            return await protectArchiveFile(
+                plainFilePath,
+                archiveFilePath,
+                password,
+            );
+        }
         return archiveFilePath;
     } finally {
         await safeDeleteDir(stagingDir);
@@ -423,7 +464,18 @@ export async function importBibleNoteItemArchive(
         appLocalStorage.tmpFilesDir,
     );
     try {
-        await tarExtract(archiveFilePath, extractDir);
+        // A protected bundle is decrypted into the same work dir this is
+        // already unpacking into, so `safeDeleteDir` below carries the plain
+        // copy away with everything else.
+        const readableArchive = await openArchiveForReading(
+            archiveFilePath,
+            extractDir,
+            'Import Bible Note Item',
+        );
+        if (readableArchive === null) {
+            return null;
+        }
+        await tarExtract(readableArchive.filePath, extractDir);
         const manifest = await readManifest(extractDir);
         const noteItemText = await fsReadFile(
             pathJoin(extractDir, manifest.noteItem),
@@ -456,8 +508,17 @@ export async function importBibleNoteItemArchive(
 }
 
 export async function exportBibleNoteItem(noteItem: NoteItem) {
+    // One dialog, always — an empty answer writes exactly the bundle this
+    // export has always written; cancelling backs out of the whole thing.
+    const password = await askForNewArchivePassword('Export Bible Note Item');
+    if (password === null) {
+        return null;
+    }
     try {
-        const archiveFilePath = await createBibleNoteItemArchive(noteItem);
+        const archiveFilePath = await createBibleNoteItemArchive(
+            noteItem,
+            password || null,
+        );
         showSimpleToast(
             'Export Bible Note Item',
             `Exported to ${archiveFilePath}`,
@@ -479,7 +540,8 @@ export async function selectAndImportBibleNoteItemArchive(note: Note) {
         const filePaths = await selectFiles([
             {
                 name: 'Open Worship BibleNote Archive',
-                extensions: ['gz', 'tgz', 'tar'],
+                // `enc` is the password protected shape of the same bundle.
+                extensions: ['gz', 'tgz', 'tar', 'enc'],
             },
         ]);
         const archiveFilePath = filePaths[0];
@@ -490,6 +552,11 @@ export async function selectAndImportBibleNoteItemArchive(note: Note) {
             note,
             archiveFilePath,
         );
+        // `null` is the password prompt being cancelled — the operator already
+        // knows they backed out, so it gets no toast.
+        if (noteItem === null) {
+            return null;
+        }
         showSimpleToast('Import Bible Note Item', `Imported ${noteItem.title}`);
         return noteItem;
     } catch (error: any) {

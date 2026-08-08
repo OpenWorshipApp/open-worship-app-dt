@@ -1,8 +1,11 @@
 ---
 name: screen-onscreen-setting-all-or-nothing
 description: FIXED on refactor21 — the VARY_APP_DOCUMENT read now drops only invalid entries instead of the whole map
-metadata:
+metadata: 
+  node_type: memory
   type: project
+  originSessionId: deac06bb-7abf-4575-b053-ee4bfade133f
+  modified: 2026-08-07T19:01:21.908Z
 ---
 
 **Status: FIXED (verified in source 2026-07-26, branch `refactor21`, uncommitted).**
@@ -22,7 +25,12 @@ one — exactly the fix direction this note originally proposed.
 isolated, but the code path was real. The 2026-07-26 robot-test run re-read the source and found
 it corrected.
 
-**How to apply:** a screen coming up blank after restart is no longer explained by this path —
-look at the sync-group logic instead ([[screen-sync-group-echo-guard]],
-[[foreground-sync-shared-refs]]). If you see the "Dropping invalid on-screen slide entry"
-error in the console, that is the new guard working, and the *entry's* origin is the bug to chase.
+**How to apply:** a screen coming up blank after restart is no longer explained by *this*
+path — but it IS still explained by its sibling. The per-entry guard sits inside a `try`
+whose **outer `catch` still returns `{}`**, so a whole-file `JSON.parse` failure reproduces
+the original all-or-nothing wipe exactly. That is not hypothetical: see
+[[settings-write-race-corrupts-onscreen-map]], observed live 2026-08-07. Check the console
+for a `SyntaxError` from `parseJsonSafely` **before** blaming the sync-group logic
+([[screen-sync-group-echo-guard]], [[foreground-sync-shared-refs]]). If you see the
+"Dropping invalid on-screen slide entry" error instead, that is the new guard working, and
+the *entry's* origin is the bug to chase.

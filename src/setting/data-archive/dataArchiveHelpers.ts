@@ -6,12 +6,14 @@ import {
     MANIFEST_FILE_NAME,
     readArchiveManifest,
     safeDeleteDir,
+    toArchiveDotExtension,
     toArchiveFileName,
     toExtractedArchivePath,
     writeArchiveManifest,
     ARCHIVE_VERSION,
     type ImportCollisionPolicyType,
 } from '../../helper/appArchiveHelpers';
+import { protectArchiveFile } from '../../helper/archivePasswordHelpers';
 import DirSource from '../../helper/DirSource';
 // From the LEAF, not through `DirSource`: this module's tests mock `DirSource`
 // wholesale, and a mocked named export comes back `undefined` — which here would
@@ -26,9 +28,11 @@ import {
     tarExtract,
 } from '../../server/appHelpers';
 import {
+    checkIsHiddenName,
     ensureDirectory,
     fsCheckDirExist,
     fsCloneFile,
+    fsDeleteFile,
     fsList,
     getDownloadPath,
     pathJoin,
@@ -73,12 +77,18 @@ export const IMPORT_TITLE = 'Import Data';
  * `<doc>.pptx-htmls` (`pptxHelpers`) and `<doc>.docx-docx-htmls`
  * (`docxHelpers`). Requiring that `.<ext>` in the pattern is what keeps a
  * folder the user happened to call `wedding-images` in the archive.
+ *
+ * The second pattern is `checkIsHiddenName` in regex form — the app never looks
+ * at a dot-prefixed name, so neither does a backup of it. What this really
+ * catches is the `._*` AppleDouble stubs a macOS machine or a USB round-trip
+ * scatters through a folder: junk to carry, and junk to put back.
  */
 // One alternation rather than three patterns: this is tested against every path
 // segment of every file in the archive, which for a full data set is tens of
 // thousands of paths.
 const EXCLUDED_NAME_PATTERNS = [
     '\\.[^.]+(\\' + HISTORY_DIR_NAME_SUFFIX + '|-images|-htmls)$',
+    '^\\.',
 ];
 
 export type DataArchiveFolderType = {
@@ -97,6 +107,11 @@ type DataArchiveManifestType = {
 export type ExportableDataFolderType = {
     dataDirectory: DataDirectoryType;
     dirPath: string;
+    /**
+     * Set only for a folder that archives file by file (`fileNamePattern`) —
+     * listed once, when the panel is built, rather than again on Ok.
+     */
+    fileNames?: string[];
 };
 
 function toPathSegments(dirPath: string) {
@@ -144,25 +159,102 @@ export function toCommonAncestor(dirPaths: string[]) {
 }
 
 /**
+ * Where a folder actually is. An app-managed one (the bible databases) has no
+ * directory setting to read — the app fixed its place — so it answers for
+ * itself; everything else is wherever the user pointed it.
+ */
+export async function getDataDirectoryPath(dataDirectory: DataDirectoryType) {
+    if (dataDirectory.getDirPath !== undefined) {
+        return await dataDirectory.getDirPath();
+    }
+    return DirSource.getDirPathBySettingName(dataDirectory.settingName);
+}
+
+/**
+ * The files a filtered folder contributes, or null when the whole folder goes
+ * in. Only the TOP level is listed: what the pattern is there to leave out (the
+ * downloaded bible databases) is exactly the sub-folders.
+ */
+async function listArchivableFileNames(
+    dataDirectory: DataDirectoryType,
+    dirPath: string,
+) {
+    const { fileNamePattern } = dataDirectory;
+    if (fileNamePattern === undefined) {
+        return null;
+    }
+    const entries = await fsList(dirPath);
+    return entries
+        .filter((entry) => {
+            // The same two-part rule `getAllXMLFileKeys` uses to decide which
+            // XML files in this very folder are bibles at all.
+            return (
+                entry.isFile &&
+                !checkIsHiddenName(entry.name) &&
+                fileNamePattern.test(entry.name)
+            );
+        })
+        .map((entry) => {
+            return entry.name;
+        });
+}
+
+/**
  * The data folders that actually exist right now. A folder with no path chosen,
- * or one whose path has gone missing, has nothing to export and is left out
- * rather than failing the whole archive.
+ * one whose path has gone missing, or a filtered one holding nothing that
+ * matches has nothing to export and is left out rather than being offered as a
+ * row that would restore nothing.
  */
 export async function getExportableDataFolders() {
     const folders: ExportableDataFolderType[] = [];
     for (const dataDirectory of dataDirectories) {
-        const dirPath = DirSource.getDirPathBySettingName(
-            dataDirectory.settingName,
-        );
+        const dirPath = await getDataDirectoryPath(dataDirectory);
         if (!dirPath || !(await fsCheckDirExist(dirPath))) {
             continue;
         }
-        folders.push({ dataDirectory, dirPath });
+        const fileNames = await listArchivableFileNames(dataDirectory, dirPath);
+        if (fileNames !== null && fileNames.length === 0) {
+            continue;
+        }
+        folders.push({
+            dataDirectory,
+            dirPath,
+            ...(fileNames === null ? {} : { fileNames }),
+        });
     }
     return folders;
 }
 
-export async function createDataArchive(folders: ExportableDataFolderType[]) {
+/**
+ * What tar is asked to write. A whole folder is named by its entry; a filtered
+ * one is named file by file instead, so the rest of it never enters the
+ * archive. The manifest still records the FOLDER either way — import extracts
+ * by entry prefix, so the files come back into it unchanged.
+ */
+function toTarEntries(folders: ExportableDataFolderType[], entries: string[]) {
+    return folders.flatMap((folder, index) => {
+        if (folder.dataDirectory.fileNamePattern === undefined) {
+            return [entries[index]];
+        }
+        // `?? []` and not "fall back to the whole folder": a filtered folder
+        // whose files were never listed must archive nothing, or one missed
+        // call site quietly puts the downloaded bibles back in every backup.
+        return (folder.fileNames ?? []).map((fileName) => {
+            return `${entries[index]}/${fileName}`;
+        });
+    });
+}
+
+async function attemptDeletingFile(filePath: string) {
+    try {
+        await fsDeleteFile(filePath);
+    } catch (_error) {}
+}
+
+export async function createDataArchive(
+    folders: ExportableDataFolderType[],
+    password: string | null = null,
+) {
     if (folders.length === 0) {
         throw new Error('No folder to export');
     }
@@ -171,44 +263,74 @@ export async function createDataArchive(folders: ExportableDataFolderType[]) {
             return folder.dirPath;
         }),
     );
+    const dotExtension = toArchiveDotExtension(
+        DATA_ARCHIVE_DOT_EXTENSION,
+        password,
+    );
     const archiveFilePath = await genNextArchiveFilePath(
         getDownloadPath(),
-        toArchiveFileName(
-            FALLBACK_NAME,
-            DATA_ARCHIVE_DOT_EXTENSION,
-            FALLBACK_NAME,
-        ),
-        DATA_ARCHIVE_DOT_EXTENSION,
+        toArchiveFileName(FALLBACK_NAME, dotExtension, FALLBACK_NAME),
+        dotExtension,
     );
-    await tarCreate(
-        ancestorDir,
-        archiveFilePath,
-        entries,
-        false,
-        EXCLUDED_NAME_PATTERNS,
-    );
-    const manifest: DataArchiveManifestType = {
-        version: ARCHIVE_VERSION,
-        kind: ARCHIVE_KIND,
-        folders: folders.map((folder, index) => {
-            return {
-                settingName: folder.dataDirectory.settingName,
-                entry: entries[index],
-            };
-        }),
-    };
-    const stagingDir = await createWorkDir('owadata-manifest');
+    // The plain tar goes BESIDE the destination rather than into the temp
+    // folder. This archive is the only one built without a staging copy — it
+    // can be gigabytes — so routing it through `%TEMP%` would double the disk
+    // on the system volume (usually the smallest) and then force a full
+    // cross-volume copy back. Beside it, both files sit on the volume the
+    // operator already chose and the wrap is a same-volume read and write.
+    const plainFilePath = password
+        ? `${archiveFilePath}.part`
+        : archiveFilePath;
     try {
-        await writeArchiveManifest(stagingDir, manifest);
-        await tarAppend(archiveFilePath, stagingDir, [MANIFEST_FILE_NAME]);
-    } finally {
-        await safeDeleteDir(stagingDir);
+        await tarCreate(
+            ancestorDir,
+            plainFilePath,
+            toTarEntries(folders, entries),
+            false,
+            EXCLUDED_NAME_PATTERNS,
+        );
+        const manifest: DataArchiveManifestType = {
+            version: ARCHIVE_VERSION,
+            kind: ARCHIVE_KIND,
+            folders: folders.map((folder, index) => {
+                return {
+                    settingName: folder.dataDirectory.settingName,
+                    entry: entries[index],
+                };
+            }),
+        };
+        const stagingDir = await createWorkDir('owadata-manifest');
+        try {
+            await writeArchiveManifest(stagingDir, manifest);
+            // Appended BEFORE any wrapping: `tar.r` only works on a plain tar,
+            // and it certainly cannot append to ciphertext.
+            await tarAppend(plainFilePath, stagingDir, [MANIFEST_FILE_NAME]);
+        } finally {
+            await safeDeleteDir(stagingDir);
+        }
+        if (password) {
+            return await protectArchiveFile(
+                plainFilePath,
+                archiveFilePath,
+                password,
+            );
+        }
+        return archiveFilePath;
+    } catch (error) {
+        // A half-built `.part` is not something to leave in someone's Downloads
+        // folder, least of all one the size of their whole data set.
+        if (password) {
+            await attemptDeletingFile(plainFilePath);
+        }
+        throw error;
     }
-    return archiveFilePath;
 }
 
-export async function exportData(folders: ExportableDataFolderType[]) {
-    const archiveFilePath = await createDataArchive(folders);
+export async function exportData(
+    folders: ExportableDataFolderType[],
+    password: string | null = null,
+) {
+    const archiveFilePath = await createDataArchive(folders, password);
     showFileOrDirExplorer(archiveFilePath);
     return archiveFilePath;
 }
@@ -288,7 +410,11 @@ async function copyFilesInto(
     // on a folder that can hold thousands of files.
     const entries = await fsList(sourceDir);
     for (const entry of entries) {
-        if (!entry.isFile) {
+        // Dot-prefixed names are skipped on the way IN as well as on the way
+        // out (`EXCLUDED_NAME_PATTERNS`): an archive written before that
+        // exclusion existed still holds the `._*` stubs, and restoring them
+        // would put back exactly what the app refuses to look at.
+        if (!entry.isFile || checkIsHiddenName(entry.name)) {
             continue;
         }
         const sourceFilePath = pathJoin(sourceDir, entry.name);
@@ -312,7 +438,7 @@ async function copyFilesInto(
     }
     for (const entry of entries) {
         // Dot-prefixed folders are skipped exactly as `fsListDirectories` does.
-        if (!entry.isDirectory || entry.name.startsWith('.')) {
+        if (!entry.isDirectory || checkIsHiddenName(entry.name)) {
             continue;
         }
         await copyFilesInto(
@@ -339,22 +465,22 @@ export async function importDataArchive(
     // A folder this build does not know about is skipped rather than trusted:
     // `settingName` decides where files are written, so an archive from a newer
     // build must not be able to name a destination that is not on the list.
-    const destinations = folders
-        .map((folder) => {
-            const dataDirectory = getDataDirectoryBySettingName(
-                folder.settingName,
-            );
-            if (dataDirectory === null) {
-                return null;
-            }
-            const dirPath = DirSource.getDirPathBySettingName(
-                folder.settingName,
-            );
-            return { folder, dataDirectory, dirPath };
-        })
-        .filter((destination) => {
-            return destination !== null;
+    const destinations: {
+        folder: DataArchiveFolderType;
+        dataDirectory: DataDirectoryType;
+        dirPath: string | null;
+    }[] = [];
+    for (const folder of folders) {
+        const dataDirectory = getDataDirectoryBySettingName(folder.settingName);
+        if (dataDirectory === null) {
+            continue;
+        }
+        destinations.push({
+            folder,
+            dataDirectory,
+            dirPath: await getDataDirectoryPath(dataDirectory),
         });
+    }
     if (destinations.length === 0) {
         throw new Error('No known data folder to import');
     }

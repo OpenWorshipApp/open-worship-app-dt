@@ -42,6 +42,7 @@ export default function ShowingScreenIconComp({
                 <i
                     className="bi bi-collection"
                     style={{ color, fontSize: '1.8em', opacity: 0.3 }}
+                    data-screen-icon-id={screenId}
                 />
                 <span
                     style={{

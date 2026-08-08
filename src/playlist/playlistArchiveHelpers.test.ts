@@ -16,6 +16,8 @@ const {
     genNextFilePathMock,
     tarCreateMock,
     tarExtractMock,
+    encryptFileMock,
+    decryptFileMock,
     getDirPathBySettingNameMock,
     fireUpdateEventMock,
 } = vi.hoisted(() => ({
@@ -32,6 +34,8 @@ const {
     genNextFilePathMock: vi.fn(),
     tarCreateMock: vi.fn(),
     tarExtractMock: vi.fn(),
+    encryptFileMock: vi.fn(),
+    decryptFileMock: vi.fn(),
     getDirPathBySettingNameMock: vi.fn(),
     fireUpdateEventMock: vi.fn(),
 }));
@@ -108,6 +112,12 @@ vi.mock('../server/appHelpers', () => ({
     showFileOrDirExplorer: vi.fn(),
     tarCreate: tarCreateMock,
     tarExtract: tarExtractMock,
+    // A plain arrow, not a `vi.fn`: `mockReset` wipes implementations before
+    // every test, and an undefined answer here reads as "protected" and sends
+    // every import down the password path.
+    checkIsEncryptedFile: async () => false,
+    encryptFile: encryptFileMock,
+    decryptFile: decryptFileMock,
 }));
 
 // The Downloads folder answers separately, and empty by default. Tests here
@@ -128,6 +138,7 @@ vi.mock('../server/fileHelpers', () => ({
     fsCopyFilePathToPath: fsCopyFilePathToPathMock,
     fsCreateFile: fsCreateFileMock,
     fsDeleteDir: fsDeleteDirMock,
+    fsDeleteFile: vi.fn(),
     fsReadFile: fsReadFileMock,
     getDownloadPath: () => '/downloads',
     fsGetFileSize: fsGetFileSizeMock,
@@ -153,7 +164,11 @@ async function loadModule() {
 // that alone exceeds the 10s default and the file fails for no reason of its
 // own — and a half-initialized graph then breaks the NEXT test with
 // "Class extends value undefined".
-const COLD_IMPORT_TIMEOUT = 30_000;
+//
+// Raised from 30s: this file was observed taking 33s under a busy suite, which
+// failed two tests for no reason of their own. The number is a guard against a
+// hang, not a performance budget, so it is set well clear of the real cost.
+const COLD_IMPORT_TIMEOUT = 60_000;
 
 const EXTRACT_DIR = '/system-temp/owapl-import-run-id';
 
@@ -719,6 +734,51 @@ describe(
             ).toBe(false);
             expect(checkIsPlaylistArchiveFileFullName('Service.owp')).toBe(
                 false,
+            );
+        });
+
+        // The protected bundle is the same playlist behind a password, so the
+        // gate that lets a dropped one in has to take its name too — otherwise
+        // dropping it does nothing at all, in silence.
+        test('the drop gate takes the protected name', () => {
+            const { checkIsPlaylistArchiveFileFullName } =
+                playlistArchiveHelpers;
+
+            expect(
+                checkIsPlaylistArchiveFileFullName('Service.owapl.enc'),
+            ).toBe(true);
+            expect(
+                checkIsPlaylistArchiveFileFullName('Service (1).owapl.enc'),
+            ).toBe(true);
+            expect(
+                checkIsPlaylistArchiveFileFullName('Service.owadoc.enc'),
+            ).toBe(false);
+        });
+
+        test('a password wraps the bundle and leaves only the protected one', async () => {
+            downloadsFileExistMock.mockReturnValue(false);
+            fsCheckFileExistMock.mockResolvedValue(true);
+
+            const archiveFilePath =
+                await playlistArchiveHelpers.createPlaylistArchive(
+                    {
+                        fileSource: { name: 'Service' },
+                        getJsonData: async () => ({ items: [] }),
+                    } as any,
+                    'In Jesus Christ',
+                );
+
+            expect(archiveFilePath).toBe('/downloads/Service.owapl.enc');
+            // tar writes into the staging dir this export already deletes in
+            // `finally`, so the plain copy needs no cleanup of its own.
+            const plainFilePath = tarCreateMock.mock.calls[0][1];
+            expect(plainFilePath).toBe(
+                '/system-temp/owapl-export-run-id/plain-archive.tmp',
+            );
+            expect(encryptFileMock).toHaveBeenCalledWith(
+                plainFilePath,
+                '/downloads/Service.owapl.enc',
+                'In Jesus Christ',
             );
         });
     },

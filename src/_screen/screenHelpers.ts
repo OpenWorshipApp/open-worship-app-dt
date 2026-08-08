@@ -419,3 +419,24 @@ export function genVideoIDFromSrc(src: string) {
     const md5 = appProvider.systemUtils.generateMD5(src);
     return `video-${md5}`;
 }
+
+// Each stage gets its own accent, worn by BOTH its chip and the border around
+// its preview pane — with several stages side by side that is the only quick
+// way to tell which pane belongs to which chip. Fixed hexes rather than theme
+// variables: these have to stay distinguishable from each other in light and
+// dark alike, which the semantic bootstrap colours do not guarantee.
+const STAGE_ACCENT_COLOR_LIST = [
+    '#4dabf7',
+    '#51cf66',
+    '#ffa94d',
+    '#cc5de8',
+    '#ff6b6b',
+    '#22b8cf',
+    '#fcc419',
+    '#f783ac',
+];
+
+export function getStageAccentColor(stage: number) {
+    const index = Math.abs(stage) % STAGE_ACCENT_COLOR_LIST.length;
+    return STAGE_ACCENT_COLOR_LIST[index];
+}

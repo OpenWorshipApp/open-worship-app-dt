@@ -555,7 +555,6 @@ function PlaylistPreviewBodyComp({
     return (
         <div
             className="app-playlist-preview d-flex flex-column app-focusable"
-            data-no-widget-drag="true"
             ref={containerRef}
             // Focusable so clicking anywhere in the list hands it the keys —
             // a plain <div> would leave focus wherever it was and the next-key

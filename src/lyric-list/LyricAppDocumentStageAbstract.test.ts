@@ -169,3 +169,65 @@ describe('LyricAppDocumentStageAbstract attachments', () => {
         expect(mocks.videoPropsMock).not.toHaveBeenCalled();
     });
 });
+
+// `allOpenLyricOptions` is a getter, so it is reached through its descriptor and
+// called against a minimal `this` — the same trick as `genPropsFromAttachment`
+// above, and the reason neither needs a real document instance.
+const getAllOpenLyricOptions = Object.getOwnPropertyDescriptor(
+    LyricAppDocumentStageAbstract.prototype,
+    'allOpenLyricOptions',
+)!.get!;
+
+const STAGE_CSS = '.ol-preview-lyric-segment__chord { display: none }';
+
+function genAllOptions(customCss: string, basicCss?: string) {
+    return getAllOpenLyricOptions.call({
+        stageStyle: { customCss },
+        basicOpenLyricOptions: { type: 'html', css: basicCss },
+        stageOpenLyricOptions: { css: STAGE_CSS },
+        withCustomCss: LyricAppDocumentStageAbstract.prototype[
+            'withCustomCss'
+        ] as any,
+    } as any);
+}
+
+describe('LyricAppDocumentStageAbstract custom css', () => {
+    test('APPENDS to the stage css instead of replacing it', () => {
+        // The regression this feature could introduce: `css` is a plain string,
+        // so a custom rule that landed in either spread object would wipe stage
+        // 0's own layout css and turn it into stage 1.
+        const customCss = '.ol-preview-line { color: red }';
+        const { css } = genAllOptions(customCss);
+
+        expect(css).toContain(STAGE_CSS);
+        expect(css).toContain(customCss);
+        // The stage's own rules come FIRST, so equal-specificity custom rules
+        // win — which is what an override box is for.
+        expect(css.indexOf(STAGE_CSS)).toBeLessThan(css.indexOf(customCss));
+    });
+
+    test.each([[''], ['   '], ['\n\t ']])(
+        'blank custom css %j leaves the options object untouched',
+        (customCss) => {
+            const options = genAllOptions(customCss);
+            // Same `css`, so `genCacheKey` is byte-identical to what it was
+            // before this feature — an install that never opens the panel gets
+            // no cold-start re-render of every song.
+            expect(options.css).toBe(STAGE_CSS);
+        },
+    );
+
+    test('never leaks `undefined` when there is no css to append to', () => {
+        const options = getAllOpenLyricOptions.call({
+            stageStyle: { customCss: '.a { color: red }' },
+            basicOpenLyricOptions: { type: 'html' },
+            stageOpenLyricOptions: {},
+            withCustomCss: LyricAppDocumentStageAbstract.prototype[
+                'withCustomCss'
+            ] as any,
+        } as any);
+
+        expect(options.css).not.toContain('undefined');
+        expect(options.css).toContain('.a { color: red }');
+    });
+});

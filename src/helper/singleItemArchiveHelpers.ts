@@ -6,6 +6,7 @@ import type {
 import {
     ARCHIVE_VERSION,
     ArchiveFileCollector,
+    PLAIN_ARCHIVE_TEMP_NAME,
     applyImportedCanvasMedia,
     checkIsArchiveFileFullName,
     createWorkDir,
@@ -16,12 +17,18 @@ import {
     resolveKindDirPaths,
     safeDeleteDir,
     stageArchiveFiles,
+    toArchiveDotExtension,
     toArchiveFileName,
     toArchiveFileNameFromUrl,
     validateArchiveBackgroundMetas,
     validateArchiveFileEntries,
     writeArchiveManifest,
 } from './appArchiveHelpers';
+import {
+    askForNewArchivePassword,
+    openArchiveForReading,
+    protectArchiveFile,
+} from './archivePasswordHelpers';
 import DirSource from './DirSource';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
@@ -111,8 +118,13 @@ type ArchiveManifestType = {
 export function toSingleItemArchiveFileName(
     name: string,
     config: SingleItemArchiveConfigType,
+    password: string | null = null,
 ) {
-    return toArchiveFileName(name, config.dotExtension, config.fallbackName);
+    return toArchiveFileName(
+        name,
+        toArchiveDotExtension(config.dotExtension, password),
+        config.fallbackName,
+    );
 }
 
 export function checkIsSingleItemArchiveFileFullName(
@@ -125,6 +137,7 @@ export function checkIsSingleItemArchiveFileFullName(
 export async function createSingleItemArchive(
     filePath: string,
     config: SingleItemArchiveConfigType,
+    password: string | null = null,
 ) {
     const stagingDir = await createWorkDir(`${config.workDirPrefix}-export`);
     try {
@@ -155,10 +168,25 @@ export async function createSingleItemArchive(
         const fileSource = FileSource.getInstance(filePath);
         const archiveFilePath = await genNextArchiveFilePath(
             getDownloadPath(),
-            toSingleItemArchiveFileName(fileSource.name, config),
-            config.dotExtension,
+            toSingleItemArchiveFileName(fileSource.name, config, password),
+            toArchiveDotExtension(config.dotExtension, password),
         );
-        await tarCreate(stagingDir, archiveFilePath, archiveEntries, true);
+        // Protecting one means tar writes into the staging dir instead — that
+        // dir is deleted in `finally` either way, so the plain copy never
+        // outlives the call and only the wrapped one reaches Downloads. It is
+        // safe at the staging root: `archiveEntries` is an explicit list, so
+        // tar never packs it.
+        const plainFilePath = password
+            ? pathJoin(stagingDir, PLAIN_ARCHIVE_TEMP_NAME)
+            : archiveFilePath;
+        await tarCreate(stagingDir, plainFilePath, archiveEntries, true);
+        if (password) {
+            return await protectArchiveFile(
+                plainFilePath,
+                archiveFilePath,
+                password,
+            );
+        }
         return archiveFilePath;
     } finally {
         await safeDeleteDir(stagingDir);
@@ -189,9 +217,21 @@ export async function exportSingleItem(
     filePath: string,
     config: SingleItemArchiveConfigType,
 ) {
+    // Asked here rather than at the context-menu call sites, so every entry
+    // point into this export gets the same one dialog and none of them had to
+    // change. An empty answer means "no password" and writes exactly what this
+    // export has always written; `null` means the whole export was cancelled.
+    const password = await askForNewArchivePassword(config.exportTitle);
+    if (password === null) {
+        return null;
+    }
     showProgressBar(config.exportTitle);
     try {
-        const archiveFilePath = await createSingleItemArchive(filePath, config);
+        const archiveFilePath = await createSingleItemArchive(
+            filePath,
+            config,
+            password || null,
+        );
         showSimpleToast(config.exportTitle, `Exported to ${archiveFilePath}`);
         showFileOrDirExplorer(archiveFilePath);
         return archiveFilePath;
@@ -284,7 +324,18 @@ export async function importSingleItemArchive(
 ) {
     const extractDir = await createWorkDir(`${config.workDirPrefix}-import`);
     try {
-        await tarExtract(archiveFilePath, extractDir);
+        // A protected bundle is decrypted into the same work dir this is
+        // already unpacking into, so `safeDeleteDir` below carries the plain
+        // copy away with everything else.
+        const readableArchive = await openArchiveForReading(
+            archiveFilePath,
+            extractDir,
+            config.importTitle,
+        );
+        if (readableArchive === null) {
+            return null;
+        }
+        await tarExtract(readableArchive.filePath, extractDir);
         const manifest = validateManifest(
             await readArchiveManifest(
                 extractDir,
@@ -337,6 +388,11 @@ async function runSingleItemArchiveImport(
             archiveFilePath,
             config,
         );
+        // `null` is the password prompt being cancelled — the operator already
+        // knows they backed out, so it gets no toast.
+        if (itemFilePath === null) {
+            return null;
+        }
         showSimpleToast(
             config.importTitle,
             `Imported ${FileSource.getInstance(itemFilePath).name}`,
@@ -360,7 +416,8 @@ export async function selectAndImportSingleItemArchive(
     const filePaths = await selectFiles([
         {
             name: `Open Worship ${config.fallbackName} Archive`,
-            extensions: ['gz', 'tgz', 'tar'],
+            // `enc` is the password protected shape of the same bundle.
+            extensions: ['gz', 'tgz', 'tar', 'enc'],
         },
     ]);
     const archiveFilePath = filePaths[0];

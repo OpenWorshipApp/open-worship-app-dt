@@ -30,6 +30,11 @@ import { printAppDocument } from './appDocumentPrintHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { handleAppDocumentDragStart } from '../helper/dragHelpers';
 import { exportAppDocument } from './appDocumentArchiveHelpers';
+import {
+    checkHandleOpenSlidesPreviewClicking,
+    closeAppDocumentPreviewFloating,
+    genOpenSlidesPreviewContextMenu,
+} from './appDocumentPreviewFloatingHelpers';
 
 function genKindContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
@@ -131,11 +136,15 @@ function genKindContextMenuItems(
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
+    isSelected: boolean,
 ): ContextMenuItemType[] {
     const menuItems = genKindContextMenuItems(varyAppDocument);
     if (!varyAppDocument) {
         return menuItems;
     }
+    menuItems.unshift(
+        genOpenSlidesPreviewContextMenu(varyAppDocument.filePath, isSelected),
+    );
     // Every kind can be exported: the bundle copies the document verbatim and
     // only walks the JSON kinds, so a PDF travels with its attached backgrounds
     // and color notes exactly as a slide document does.
@@ -293,11 +302,30 @@ export default function VaryAppDocumentFileComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const setSelectedAppDocumentRef = useAppCurrentRef(setSelectedAppDocument);
-    const handleClicking = useCallback(() => {
+    const isSelectedRef = useAppCurrentRef(isSelected);
+    const handleClicking = useCallback(async (event: any) => {
+        // Before the loaded check: a widget is keyed by path alone, so the
+        // shortcut works on a row whose document is still being read.
+        if (
+            checkHandleOpenSlidesPreviewClicking(
+                event,
+                filePath,
+                isSelectedRef.current,
+            )
+        ) {
+            return;
+        }
         if (!varyAppDocumentRef.current) {
             return;
         }
-        setSelectedAppDocumentRef.current(varyAppDocumentRef.current);
+        const isApplied = await setSelectedAppDocumentRef.current(
+            varyAppDocumentRef.current,
+        );
+        // The pin refused the switch. Bail before the event: its listener force-
+        // opens the Documents tab, so a refused click would pop the tab open.
+        if (!isApplied) {
+            return;
+        }
         if (!getIsShowingVaryAppDocumentPreviewer()) {
             previewingEventListener.showVaryAppDocument(
                 varyAppDocumentRef.current,
@@ -313,13 +341,19 @@ export default function VaryAppDocumentFileComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const isSelectedRef = useAppCurrentRef(isSelected);
     const handleRenaming = useCallback(async (newFileSource: FileSource) => {
+        // A widget is keyed by path, so the old one would linger over a file
+        // that no longer exists.
+        closeAppDocumentPreviewFloating(filePath);
         if (isSelectedRef.current) {
             const newVaryAppDocument = varyAppDocumentFromFilePath(
                 newFileSource.filePath,
             );
-            setSelectedAppDocumentRef.current(newVaryAppDocument);
+            // Forced: a rename is not a switch, so the selection has to follow
+            // it even while the document is pinned.
+            setSelectedAppDocumentRef.current(newVaryAppDocument, {
+                isForce: true,
+            });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -332,7 +366,7 @@ export default function VaryAppDocumentFileComp({
             filePath={filePath}
             onClick={handleClicking}
             renderChild={handleChildRendering}
-            contextMenuItems={genContextMenuItems(varyAppDocument)}
+            contextMenuItems={genContextMenuItems(varyAppDocument, isSelected)}
             renamedCallback={handleRenaming}
             isSelected={isSelected}
             checkIsOnScreen={checkIsOnScreen}

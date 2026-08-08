@@ -11,12 +11,10 @@ import {
     getContainerDiv,
     handleSlideMoving,
     handleNextItemSelecting,
-    showVarySlideInViewport,
 } from './varyAppDocumentHelpers';
 import VarySlideRenderWrapperComp from './VarySlideRenderWrapperComp';
 import {
     useAppEffect,
-    useAppEffectAsync,
     useAppStateAsync,
     useAppCurrentRef,
 } from '../../helper/appHooks';
@@ -46,8 +44,10 @@ import { notifyElementHighlight } from '../../helper/domHelpers';
 import MissingFontFamilyBannerComp from './MissingFontFamilyBannerComp';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
-
-const varySlidesToView: { [key: string]: VarySlideType } = {};
+import {
+    useSlidesPreviewerScope,
+    useThumbnailScaleSettingOptions,
+} from './slidesPreviewerScopeHelpers';
 
 const movingKeys: KeyboardType[] = [...allArrows, 'PageUp', 'PageDown', ' '];
 const eventMaps: EventMapperType[] = movingKeys.map((key) => {
@@ -57,23 +57,18 @@ eventMaps.push({
     allControlKey: ['Shift'],
     key: ' ',
 });
-const attemptTimeout = genTimeoutAttempt(500);
 function useVarySlidesData() {
     const selectedVaryAppDocument = useVaryAppDocumentContext();
+    // MUST be per-instance: the Lyric Stage Previewer mounts one
+    // `VarySlidesComp` per stage over the SAME `filePath`, so every pane's
+    // `refresh` lands on the same file-source `update` event. A module-level
+    // timer let the second caller `clearTimeout` the first's pending callback,
+    // leaving every stage but one stale.
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const [varySlides, setVarySlide] = useAppStateAsync<VarySlideType[]>(() => {
         return selectedVaryAppDocument.getSlides();
     }, [selectedVaryAppDocument]);
 
-    useAppEffectAsync(
-        async (context) => {
-            if (varySlides === undefined) {
-                const newVarySlides = await selectedVaryAppDocument.getSlides();
-                context.setVarySlide(newVarySlides);
-            }
-        },
-        [varySlides],
-        { setVarySlide },
-    );
     const refresh = async () => {
         attemptTimeout(async () => {
             const newVarySlides = await selectedVaryAppDocument.getSlides();
@@ -88,26 +83,24 @@ function useVarySlidesData() {
         selectedVaryAppDocument.filePath,
     );
 
+    // EVERY mounted previewer's listener fires on a key press, so each one must
+    // ask about ITS OWN container — `handleSlideMoving` is what compares the
+    // container against `document.activeElement` and lets only the focused one
+    // act.
+    const scope = useSlidesPreviewerScope();
+    const scopeRef = useAppCurrentRef(scope);
     useKeyboardRegistering(
         eventMaps,
         (event) => {
-            handleSlideMoving(event, varySlides ?? []);
+            handleSlideMoving(
+                event,
+                varySlides ?? [],
+                scopeRef.current?.containerRef.current ?? null,
+            );
         },
         [varySlides],
     );
 
-    useAppEffect(() => {
-        const varySlides = Object.values(varySlidesToView);
-        if (varySlides.length === 0) {
-            return;
-        }
-        for (const varySlide of varySlides) {
-            showVarySlideInViewport(varySlide.id);
-        }
-        for (const key of Object.keys(varySlidesToView)) {
-            delete varySlidesToView[key];
-        }
-    }, [varySlides]);
     const isPDFAppDocument = useMemo(() => {
         return PdfAppDocument.checkIsThisType(selectedVaryAppDocument);
     }, [selectedVaryAppDocument]);
@@ -183,9 +176,13 @@ function useVarySlidesData() {
 }
 
 export default function VarySlidesComp() {
-    const [thumbSizeScale] = useVarySlideThumbnailSizeScale({
-        defaultSize: MIN_THUMBNAIL_SCALE + 10,
-    });
+    const [thumbSizeScale] = useVarySlideThumbnailSizeScale(
+        useThumbnailScaleSettingOptions({
+            defaultSize: MIN_THUMBNAIL_SCALE + 10,
+        }),
+    );
+    const scope = useSlidesPreviewerScope();
+    const scopeRef = useAppCurrentRef(scope);
     const {
         varySlides,
         startLoading,
@@ -202,7 +199,8 @@ export default function VarySlidesComp() {
     const isAnyItemSelected = useAnyItemSelected(varySlides);
     const varySlidesRef = useAppCurrentRef(varySlides);
     const handleNext = useCallback((data: { isNext: boolean }) => {
-        const element = getContainerDiv();
+        const element =
+            scopeRef.current?.containerRef.current ?? getContainerDiv();
         if (element === null || !varySlidesRef.current) {
             return;
         }
@@ -216,7 +214,8 @@ export default function VarySlidesComp() {
     useAppEffect(() => {
         if (varySlides?.length) {
             notifyElementHighlight(() => {
-                return document.querySelector(
+                const root = scopeRef.current?.containerRef.current ?? document;
+                return root.querySelector(
                     `.${APP_DOCUMENT_ITEM_CLASS}.${HIGHLIGHT_SELECTED_CLASSNAME}.animation`,
                 );
             });

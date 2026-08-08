@@ -55,6 +55,24 @@ describe('Khmer language data', () => {
             'Duplicate',
             'Move to Top',
             'Move to Bottom',
+            // Every export/import opens a dialog whose title goes through
+            // `tran`, plus the optional password protection on top of it.
+            'Export Document',
+            'Import Document',
+            'Export Bible List',
+            'Import Bible List',
+            'Export Playlist',
+            'Import Playlist',
+            'Export Bible Note Item',
+            'Import Bible Note Item',
+            'Password',
+            'Confirm Password',
+            'Show Password',
+            'Hide Password',
+            'Leave empty to export without a password',
+            'Passwords do not match',
+            'This archive is password protected',
+            'Wrong password, try again',
         ]) {
             expect(lang.dictionary[lang.sanitizeTranKey(key)]).toBeDefined();
         }

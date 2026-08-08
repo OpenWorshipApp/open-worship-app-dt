@@ -4,11 +4,12 @@ import { use } from 'react';
 
 import SlideEditorComp from './SlideEditorComp';
 import { SelectedEditingSlideContext } from '../app-document-list/appDocumentHelpers';
+import { tran } from '../lang/langHelpers';
 
 export default function SlideEditorGroundComp() {
     const selectedSlideContext = use(SelectedEditingSlideContext);
     if (!selectedSlideContext?.selectedSlideEditing) {
-        return <div>No slide selected</div>;
+        return <div>{tran('No slide selected')}</div>;
     }
     return <SlideEditorComp />;
 }

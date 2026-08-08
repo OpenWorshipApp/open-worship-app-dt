@@ -26,6 +26,7 @@ import {
     jsonToXMLText,
 } from '../../setting/bible-setting/bibleXMLJsonDataHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { appManagedDataDirNames } from '../constants';
 
 const { base64Decode } = appProvider.appUtils;
 
@@ -151,7 +152,12 @@ export default class BibleDataReader {
     async getWritableBiblePath() {
         if (this._writableBiblePath === null) {
             const userWritablePath = appLocalStorage.defaultStorage;
-            const dirPath = pathJoin(userWritablePath, 'bibles-data');
+            // The same folder the whole-data archive offers to export, built
+            // from the same constant so the two can never drift apart.
+            const dirPath = pathJoin(
+                userWritablePath,
+                appManagedDataDirNames.BIBLE_DATA,
+            );
             try {
                 await fsCreateDir(dirPath);
             } catch (error: any) {

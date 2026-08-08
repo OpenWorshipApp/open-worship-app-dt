@@ -12,8 +12,5 @@ export function openPopupLyricEditorWindow(lyric: Lyric) {
         pathname,
         `${fileFullName}_${Date.now()}`,
         'lyric-editor',
-        {
-            appTopToMain: true,
-        },
     );
 }

@@ -56,7 +56,6 @@ export default function RenderBibleLookupHeaderComp({
             )}
             <div
                 className="app-flex-item input-group app-input-group-header"
-                data-no-widget-drag="true"
                 style={{ width: 350 }}
             >
                 <InputHandlerComp onBibleKeyChange={handleBibleKeyChanging} />

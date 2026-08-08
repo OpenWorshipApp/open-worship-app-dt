@@ -3,7 +3,13 @@ import {
     setAppMenuItems,
     tran,
 } from '../../lang/langHelpers';
-import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
+import { createWorkDir, safeDeleteDir } from '../../helper/appArchiveHelpers';
+import { openArchiveForReading } from '../../helper/archivePasswordHelpers';
+import { ArchivePasswordComp } from '../../popup-widget/ArchivePasswordComp';
+import {
+    showAppAlert,
+    showAppInput,
+} from '../../popup-widget/popupWidgetHelpers';
 import {
     hideProgressBar,
     showProgressBar,
@@ -40,33 +46,69 @@ const EXPORT_CLICK = 'data-archive:export';
 const IMPORT_CLICK = 'data-archive:import';
 
 /**
- * Ask which folders to act on. Returns null when the user cancels or unchecks
- * everything — `showAppInput` only resolves Ok/Cancel, so the live selection is
- * captured here.
+ * Ask which folders to act on, and — on the way out — what to protect the
+ * archive with. Returns null when the user cancels or unchecks everything;
+ * `showAppInput` only resolves Ok/Cancel, so the live answers are captured here.
+ *
+ * The password fields ride INSIDE this dialog rather than in one of their own:
+ * exporting is one action and asking twice for it would be two dialogs for a
+ * single click. Importing does not use them — by the time this is reached, the
+ * archive has already been opened and any password it needed was asked for
+ * against the file itself.
  */
 async function askForFolders(
     title: string,
     message: string,
     choices: DataFolderChoiceType[],
+    isAskingNewPassword = false,
 ) {
     let selectedKeys = choices.map((choice) => {
         return choice.key;
     });
+    let password = '';
+    let confirmedPassword = '';
     const isOk = await showAppInput(
-        title,
-        <DataFolderSelectorComp
-            choices={choices}
-            message={message}
-            onChange={(newSelectedKeys) => {
-                selectedKeys = newSelectedKeys;
-            }}
-        />,
+        // The popup renders its title raw, so it is translated here.
+        tran(title),
+        <>
+            <DataFolderSelectorComp
+                choices={choices}
+                message={message}
+                onChange={(newSelectedKeys) => {
+                    selectedKeys = newSelectedKeys;
+                }}
+            />
+            {isAskingNewPassword ? (
+                <div className="mt-3 pt-3 border-top">
+                    <ArchivePasswordComp
+                        isConfirming
+                        onChange={(newPassword, newConfirmedPassword) => {
+                            password = newPassword;
+                            confirmedPassword = newConfirmedPassword;
+                        }}
+                    />
+                </div>
+            ) : null}
+        </>,
         { escToCancel: true },
     );
     if (!isOk || selectedKeys.length === 0) {
         return null;
     }
-    return selectedKeys;
+    // Ok cannot be vetoed from inside the popup (Enter confirms it outright), so
+    // a mistyped confirmation is caught here and the dialog is re-opened. A
+    // backup locked behind a password that was typed wrong once is a backup
+    // that is gone.
+    if (password !== '' && password !== confirmedPassword) {
+        await showAppAlert(tran(title), tran('Passwords do not match'));
+        return await askForFolders(
+            title,
+            message,
+            choices,
+            isAskingNewPassword,
+        );
+    }
+    return { selectedKeys, password: password || null };
 }
 
 /**
@@ -103,7 +145,7 @@ async function handleExporting() {
             );
             return;
         }
-        const selectedKeys = await askForFolders(
+        const answer = await askForFolders(
             EXPORT_TITLE,
             'Choose the folders to export',
             folders.map(({ dataDirectory, dirPath }) => {
@@ -114,15 +156,17 @@ async function handleExporting() {
                     detail: dirPath,
                 };
             }),
+            true,
         );
-        if (selectedKeys === null) {
+        if (answer === null) {
             return;
         }
+        const { selectedKeys, password } = answer;
         const selectedFolders = folders.filter(({ dataDirectory }) => {
             return selectedKeys.includes(dataDirectory.settingName);
         });
         const archiveFilePath = await runWithProgress(EXPORT_TITLE, () => {
-            return exportData(selectedFolders);
+            return exportData(selectedFolders, password);
         });
         showSimpleToast(EXPORT_TITLE, `Exported to ${archiveFilePath}`);
     });
@@ -151,37 +195,62 @@ async function handleImporting(archiveFilePath?: string) {
     return await runMenuAction(IMPORT_TITLE, async () => {
         if (archiveFilePath === undefined) {
             const filePaths = await selectFiles([
-                { name: 'Open Worship Data Archive', extensions: ['tar'] },
+                {
+                    name: 'Open Worship Data Archive',
+                    // `enc` is the password protected shape of the same archive.
+                    extensions: ['tar', 'enc'],
+                },
             ]);
             archiveFilePath = filePaths[0];
         }
         if (!archiveFilePath) {
             return;
         }
-        const knownArchiveFilePath = archiveFilePath;
-        // Only the manifest is unpacked at this point; the archive may be
-        // gigabytes and the user has not chosen anything yet.
-        const manifest = await runWithProgress(IMPORT_TITLE, () => {
-            return readDataArchiveManifest(knownArchiveFilePath);
-        });
-        const selectedKeys = await askForFolders(
-            IMPORT_TITLE,
-            'Choose the folders to import',
-            toImportChoices(manifest.folders),
-        );
-        if (selectedKeys === null) {
-            return;
+        // Opened ONCE for both the manifest read and the restore. This is the
+        // only flow that reaches into an archive twice, and a protected one has
+        // to be unwrapped whole before anything inside it can be read — doing
+        // that twice on a data set this size is minutes of I/O and a second
+        // full-size temp copy, for nothing.
+        const workDir = await createWorkDir('owadata-read');
+        try {
+            const readableArchive = await openArchiveForReading(
+                archiveFilePath,
+                workDir,
+                IMPORT_TITLE,
+            );
+            if (readableArchive === null) {
+                return;
+            }
+            const readableFilePath = readableArchive.filePath;
+            // Only the manifest is unpacked at this point; the archive may be
+            // gigabytes and the user has not chosen anything yet.
+            const manifest = await runWithProgress(IMPORT_TITLE, () => {
+                return readDataArchiveManifest(readableFilePath);
+            });
+            const answer = await askForFolders(
+                IMPORT_TITLE,
+                'Choose the folders to import',
+                toImportChoices(manifest.folders),
+            );
+            if (answer === null) {
+                return;
+            }
+            const selectedFolders = manifest.folders.filter((folder) => {
+                return answer.selectedKeys.includes(folder.settingName);
+            });
+            const { copied, reused } = await runWithProgress(
+                IMPORT_TITLE,
+                () => {
+                    return importDataArchive(readableFilePath, selectedFolders);
+                },
+            );
+            showSimpleToast(
+                IMPORT_TITLE,
+                `Imported ${copied} file(s); ${reused} already up to date`,
+            );
+        } finally {
+            await safeDeleteDir(workDir);
         }
-        const selectedFolders = manifest.folders.filter((folder) => {
-            return selectedKeys.includes(folder.settingName);
-        });
-        const { copied, reused } = await runWithProgress(IMPORT_TITLE, () => {
-            return importDataArchive(knownArchiveFilePath, selectedFolders);
-        });
-        showSimpleToast(
-            IMPORT_TITLE,
-            `Imported ${copied} file(s); ${reused} already up to date`,
-        );
     });
 }
 

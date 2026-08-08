@@ -5,3 +5,17 @@
     height: $header-height;
   }
 }
+
+// Lives inside the Documents tab button, so it must look like that tab's badge
+// and not like a control of its own: no border, no background, just the icon.
+.app-vary-app-document-pin {
+  cursor: pointer;
+  margin-left: 6px;
+  color: var(--bs-warning);
+  opacity: 0.45;
+
+  &:hover,
+  &.app-pinned {
+    opacity: 1;
+  }
+}

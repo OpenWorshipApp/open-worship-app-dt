@@ -21,14 +21,21 @@ import { tran } from '../lang/langHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { handleAppDocumentDragStart } from '../helper/dragHelpers';
 import { exportAppDocument } from '../app-document-list/appDocumentArchiveHelpers';
+import {
+    checkHandleOpenSlidesPreviewClicking,
+    closeAppDocumentPreviewFloating,
+    genOpenSlidesPreviewContextMenu,
+} from '../app-document-list/appDocumentPreviewFloatingHelpers';
 
 function genContextMenuItems(
     lyric: Lyric | null | undefined,
+    isSelected: boolean,
 ): ContextMenuItemType[] {
     if (lyric === null || lyric === undefined) {
         return [];
     }
     return [
+        genOpenSlidesPreviewContextMenu(lyric.filePath, isSelected),
         {
             childBefore: genContextMenuItemIcon('pencil-square'),
             menuElement: (
@@ -105,14 +112,32 @@ export default function LyricFileComp({
     const setSelectedVaryAppDocumentRef = useAppCurrentRef(
         setSelectedVaryAppDocument,
     );
-    const handleClicking = useCallback(() => {
+    const isSelectedRef = useAppCurrentRef(isSelected);
+    const handleClicking = useCallback(async (event: any) => {
+        // Before the loaded check: a widget is keyed by path alone, so the
+        // shortcut works on a row whose lyric is still being read.
+        if (
+            checkHandleOpenSlidesPreviewClicking(
+                event,
+                filePath,
+                isSelectedRef.current,
+            )
+        ) {
+            return;
+        }
         if (!lyricRef.current) {
             return;
         }
         // A lyric is selected as a document, exactly like a PPTX or a PDF: one
         // selection, one previewer. The previewer swaps its body for a lyric.
         const lyricAppDocument = LyricAppDocument.getInstance(filePath);
-        setSelectedVaryAppDocumentRef.current(lyricAppDocument);
+        const isApplied =
+            await setSelectedVaryAppDocumentRef.current(lyricAppDocument);
+        // The pin refused the switch. Bail before the event: its listener force-
+        // opens the Documents tab, so a refused click would pop the tab open.
+        if (!isApplied) {
+            return;
+        }
         if (!getIsShowingVaryAppDocumentPreviewer()) {
             previewingEventListener.showVaryAppDocument(lyricAppDocument);
         }
@@ -127,11 +152,16 @@ export default function LyricFileComp({
         handleAppDocumentDragStart(event, filePath);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const isSelectedRef = useAppCurrentRef(isSelected);
     const handleRenaming = useCallback(async (newFileSource: FileSource) => {
+        // A widget is keyed by path, so the old one would linger over a file
+        // that no longer exists.
+        closeAppDocumentPreviewFloating(filePath);
         if (isSelectedRef.current) {
+            // Forced: a rename is not a switch, so the selection has to follow
+            // it even while the document is pinned.
             setSelectedVaryAppDocumentRef.current(
                 LyricAppDocument.getInstance(newFileSource.filePath),
+                { isForce: true },
             );
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,7 +174,7 @@ export default function LyricFileComp({
             filePath={filePath}
             onClick={handleClicking}
             renderChild={handleChildRendering}
-            contextMenuItems={genContextMenuItems(lyric)}
+            contextMenuItems={genContextMenuItems(lyric, isSelected)}
             isSelected={isSelected}
             checkIsOnScreen={checkIsOnScreen}
             renamedCallback={handleRenaming}

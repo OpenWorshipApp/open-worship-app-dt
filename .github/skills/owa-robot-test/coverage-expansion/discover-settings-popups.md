@@ -45,8 +45,10 @@ Legend: 🖱️ click · 🖱️🖱️ dbl · 🖱️R contextmenu · ⇕ drag 
 ## B. Settings → General → Directory Paths (`SettingGeneralDirectoryPathComp`)
 
 ST-03 currently collapses this whole card into one vague row. It contains a **Parent
-Directory** selector plus **9 child-directory** items (Documents, Lyrics, Playlists,
-Background Images/Videos/Audios, Bible Present, Bible Reader, Notes —
+Directory** selector plus **9 child-directory** items (Documents, Playlists,
+Background Images/Videos/Audios/Webs, Bible Present, Bible Reader, Notes —
+the app-managed `bibles-data` folder is deliberately NOT one of them, having no
+path to choose, though the data archive does offer it —
 `SettingGeneralDirectoryPathComp.tsx:175-221`), each an independent `PathSelectorComp`.
 
 | Proposed ID | Target (component) | Interaction | Keys | Given | When | Then (observable) | Source (file:line) | Status |

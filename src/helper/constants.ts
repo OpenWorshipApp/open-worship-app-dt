@@ -22,6 +22,17 @@ export const defaultDataDirNames = {
     BIBLE_NOTES: 'bible-notes',
 };
 
+/**
+ * Data folders the APP owns the location of: they sit beside the user-chosen
+ * ones under the parent directory (`appLocalStorage.defaultStorage`) and have
+ * no `dirSourceSettingNames` entry, because there is nothing to choose. Kept
+ * out of `defaultDataDirNames` for exactly that reason — that object is walked
+ * key by key to write a directory setting (`selectPathForChildDir`).
+ */
+export const appManagedDataDirNames = {
+    BIBLE_DATA: 'bibles-data',
+};
+
 export const fontSizeSettingNames = {
     BIBLE_PRESENTER: 'bible-preview-font-size:presenter',
     BIBLE_READING: 'bible-preview-font-size:reader',

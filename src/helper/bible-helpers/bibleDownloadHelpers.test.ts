@@ -71,6 +71,7 @@ vi.mock('../../server/appProvider', () => ({
 }));
 
 vi.mock('../../server/fileHelpers', () => ({
+    checkIsHiddenName: (fileFullName: string) => fileFullName.startsWith('.'),
     fsCheckDirExist: mocks.fsCheckDirExistMock,
     fsDeleteFile: mocks.fsDeleteFileMock,
     fsListDirectories: mocks.fsListDirectoriesMock,

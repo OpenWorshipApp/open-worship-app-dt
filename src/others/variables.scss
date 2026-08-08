@@ -11,8 +11,14 @@ $base-z-index: 10;
 // Floating helper widgets (marquee, quick text, bible custom style, notes) sit
 // just above the app content but BELOW modals/popups, the finder, toasts and
 // context menus so those always render on top of a floating widget.
+// Several widgets can be open at once, so the value below is only the FLOOR of a
+// reserved band: the widget the user last touched is raised within
+// `$z-index-floating-widget-band` levels of it (see `FloatingWidgetComp.scss` /
+// `FLOATING_WIDGET_MAX_Z_OFFSET`). The whole band still ends below every layer
+// listed after it here.
 $z-index-floating-widget: $base-z-index + 5;
-$z-index-bible-lookup: $base-z-index + 10;
+$z-index-floating-widget-band: 9;
+$z-index-bible-lookup: $base-z-index + 15;
 $z-index-popup-full-screen: $base-z-index + 20;
 $z-index-resize-actor-top: $base-z-index + 30;
 $z-index-widget-full-view: $base-z-index + 45;

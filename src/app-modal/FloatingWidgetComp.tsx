@@ -2,6 +2,7 @@ import './FloatingWidgetComp.scss';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
+    CSSProperties,
     PointerEvent as ReactPointerEvent,
     PropsWithChildren,
     ReactNode,
@@ -11,13 +12,16 @@ import { useAppCurrentRef } from '../helper/appHooks';
 import { tran } from '../lang/langHelpers';
 import {
     COLLAPSED_HEIGHT,
+    FLOATING_WIDGET_MAX_Z_OFFSET,
     RESIZE_HANDLES,
+    bringFloatingWidgetToFront,
     clampWidgetRect,
     getInitialWidgetRect,
     isBlankDragArea,
     isIgnored,
     isOnScrollbar,
     readPersistedRect,
+    registerFloatingWidget,
     resizeWidgetRect,
     writePersistedRect,
 } from './floatingWidgetHelpers';
@@ -51,6 +55,16 @@ export default function FloatingWidgetComp({
     const interactionRef = useRef<InteractionState | null>(null);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [activeMode, setActiveMode] = useState<InteractionMode | null>(null);
+    // A widget that just opened is the one the user asked for, so it starts on
+    // top; the registry corrects this on the very next notification.
+    const [zIndexOffset, setZIndexOffset] = useState(
+        FLOATING_WIDGET_MAX_Z_OFFSET,
+    );
+    // Stable identity: it is both the registry key and the callback, so it must
+    // survive re-renders.
+    const stackListenerRef = useRef((nextOffset: number) => {
+        setZIndexOffset(nextOffset);
+    });
     const [widgetRect, setWidgetRect] = useState(() => {
         if (persistKey !== undefined) {
             const persistedRect = readPersistedRect(persistKey);
@@ -70,6 +84,17 @@ export default function FloatingWidgetComp({
     const optionMinHeight = options.minHeight;
     const optionMinWidth = options.minWidth;
     const optionWidth = options.width;
+
+    useEffect(() => {
+        return registerFloatingWidget(stackListenerRef.current);
+    }, []);
+
+    // Any press inside the widget raises it — capture phase, so it still runs
+    // for the buttons, inputs and resize handles whose own handlers stop the
+    // event from bubbling up to here.
+    const handleBringToFront = useCallback(() => {
+        bringFloatingWidgetToFront(stackListenerRef.current);
+    }, []);
 
     useEffect(() => {
         const sizingOptions = {
@@ -311,13 +336,18 @@ export default function FloatingWidgetComp({
             ]
                 .filter(Boolean)
                 .join(' ')}
-            style={{
-                ...options.extraStyle,
-                left: widgetRect.left,
-                top: widgetRect.top,
-                width: widgetRect.width,
-                height: isCollapsed ? COLLAPSED_HEIGHT : widgetRect.height,
-            }}
+            style={
+                {
+                    ...options.extraStyle,
+                    left: widgetRect.left,
+                    top: widgetRect.top,
+                    width: widgetRect.width,
+                    height: isCollapsed ? COLLAPSED_HEIGHT : widgetRect.height,
+                    '--floating-widget-z-offset': zIndexOffset,
+                } as CSSProperties
+            }
+            onPointerDownCapture={handleBringToFront}
+            onFocusCapture={handleBringToFront}
             onPointerDown={handleWidgetPointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={finishInteraction}
@@ -333,7 +363,15 @@ export default function FloatingWidgetComp({
             )}
             <div
                 className="floating-widget__content"
-                data-no-widget-drag={options.isNoBodyDraggable ?? false}
+                // `== null`, matching the header branch above: a widget given
+                // NO title renders the overlay toolbar instead of a header, and
+                // that toolbar is `pointer-events: none`. Marking its body
+                // no-drag too would leave the widget with no drag surface at
+                // all — only the resize handles — so it could never be moved
+                // (`NoteItemEditorPopupComp`'s Bible Lookup is one such widget).
+                data-no-widget-drag={
+                    title == null || options.isBodyDraggable ? 'false' : 'true'
+                }
             >
                 {isCollapsed ? collapsedChildren : children}
             </div>
@@ -342,6 +380,7 @@ export default function FloatingWidgetComp({
                     <div
                         key={handle}
                         className={`floating-widget__resize-handle floating-widget__resize-handle--${handle}`}
+                        data-no-widget-drag="true"
                         onPointerDown={(event) =>
                             startInteraction(event, 'resize', handle)
                         }

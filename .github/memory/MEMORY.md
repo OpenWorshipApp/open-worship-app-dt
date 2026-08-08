@@ -51,6 +51,7 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [`.owapl.tar.gz` playlist archive](playlist-archive-owapl.md) — bundles the whole documents behind slide references; import resolves every destination folder before writing anything
 - [Single-item archives (`.owadoc` / `.owbible`)](document-archive-owadoc.md) — one document, lyric or bible list + everything attached to it; three layers, add a config not a copy
 - [Whole-data archive (`.owadata.tar`)](data-archive-owadata.md) — File → Export/Import Data; uncompressed + no staging copy on purpose, and the File menu now takes renderer items
+- [Archive password protection](archive-password-protection.md) — every export asks; the kind stays in the `.enc` name but detection is by magic, and the dialog is loaded on demand
 - [Playlist drag & setting rules](playlist-drag-and-settings-rules.md) — `playlistDraggingStore` makes cross-playlist drag a silent no-op; setting names must be sanitized paths
 - [Reader full ref not resolved](reader-full-ref-not-resolved.md) — typing `John 3:16` in the Bible Reader drops the chapter:verse; the five docs that claimed otherwise are now corrected
 - [PDF preload decodes all pages — FIXED](pdf-preload-decodes-all-pages.md) — presenter load turned a selected 88-page PDF into 162MB of bitmap; preload is now file-scoped and sizes come from the PNG header
@@ -62,3 +63,6 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Playlist lyric attachment slide — FIXED](playlist-lyric-slide-dead-row.md) — `getSlideById` only searched `getSlidesQuick()`, which never lists the appended attachment slides
 - [`/owa-robot-test playlist` is a MODE](owa-robot-test-playlist-mode.md) — tracked 11 phases over 66 run-sheet rows with coverage accounting on, not a focus area that trims the run
 - [Canvas audio & media links](canvas-audio-and-media-links.md) — the `audio` item is preview-only; a media source may be a link, and "is it remote?" (archive/menu) is NOT "is it already a URL?" (renderers); lyric attachments become such items
+- [Lyric passes the AppDocument type check](lyric-passes-appdocument-typecheck.md) — `checkIsThisType` is `instanceof`, so every editability gate must also test `isEditable`
+- [Settings write race corrupts the on-screen map](settings-write-race-corrupts-onscreen-map.md) — OPEN: `unlocking()` is per-renderer and the write is non-atomic, so showing a screen can blank every screen after the next reload
+- [Monaco `.css` test failure — FIXED](monaco-css-test-failure-local-open-lyric.md) — tests now mock open-lyric / bail before importing it; do NOT "fix" it by inlining the dep, that's strictly worse

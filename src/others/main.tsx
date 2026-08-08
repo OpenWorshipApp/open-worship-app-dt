@@ -34,6 +34,7 @@ import KeyboardEventListener from '../event/KeyboardEventListener';
 import { checkForAppUpdate } from '../server/updatingAppHelpers';
 import { initTitleSoundMeter } from '../helper/titleSoundMeterHelpers';
 import { initTouchDragAndDrop } from '../helper/touchDragHelpers';
+import { checkAreChildrenOnscreen } from '../app-modal/floatingWidgetHelpers';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;
@@ -171,6 +172,7 @@ export async function run(children?: ReactNode) {
         ),
     );
     addDomChangeEventListener(applyFontFamily);
+    addDomChangeEventListener(checkAreChildrenOnscreen);
     addDomChangeEventListener(handleFullWidgetView);
     initTitleSoundMeter();
     initTouchDragAndDrop();

@@ -50,6 +50,7 @@ export function getColorParts(textColor?: string) {
 
 export const THEME_CHANGE_EVENT = 'app:theme-changed';
 function applyDarkModeToApp() {
+    themeSourceSettingCache = null;
     const isDarkMode = checkIsDarkMode();
     const themeSource = isDarkMode ? 'dark' : 'light';
     EventHandler.addPropEvent(THEME_CHANGE_EVENT, themeSource);
@@ -77,8 +78,9 @@ export function useThemeSource() {
         };
     }, []);
     const isDarkMode = checkIsDarkMode(themeSource);
+    const theme = isDarkMode ? 'dark' : 'light';
     return {
-        theme: isDarkMode ? 'dark' : 'light',
+        theme,
         themeSource: appProvider.isPageScreen ? 'dark' : themeSource,
         setThemeSource: setThemeSource1,
     };

@@ -1,5 +1,5 @@
 import type { DragEvent } from 'react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import VarySlidesComp from './VarySlidesComp';
@@ -28,6 +28,12 @@ import {
 import appProvider from '../../server/appProvider';
 import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
 import { notifyElementHighlight } from '../../helper/domHelpers';
+import {
+    genSlidesPreviewerScope,
+    SLIDES_PREVIEWER_SCOPE_KEY,
+    SlidesPreviewerScopeContext,
+    useThumbnailScaleSettingOptions,
+} from './slidesPreviewerScopeHelpers';
 
 async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     const files: File[] = [];
@@ -45,11 +51,22 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
 }
 
 export default function VarySlidesPreviewerComp() {
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    // One per mounted previewer, so everything below can ask for ITS container
+    // instead of the first one in the document.
+    const scope = useMemo(() => {
+        return genSlidesPreviewerScope(containerRef);
+    }, []);
     useAppEffect(() => {
         notifyElementHighlight(
             () => {
-                return document.querySelector(
-                    `.${APP_DOCUMENT_ITEM_CLASS}.active`,
+                // Scoped: `notifyElementHighlight` polls every 100ms up to 30
+                // times, so an unscoped query has every mounted previewer
+                // hunting for — and scrolling to — the same first match.
+                return (
+                    containerRef.current?.querySelector(
+                        `.${APP_DOCUMENT_ITEM_CLASS}.active`,
+                    ) ?? null
                 );
             },
             {
@@ -61,8 +78,9 @@ export default function VarySlidesPreviewerComp() {
 
     const varyAppDocument = useVaryAppDocumentContext();
     const onSlideItemsKeyboardEvent = useSlideItemsControlEventContext();
+    const thumbnailScaleSettingOptions = useThumbnailScaleSettingOptions();
     const [thumbSizeScale, setThumbnailSizeScale] =
-        useVarySlideThumbnailSizeScale();
+        useVarySlideThumbnailSizeScale(thumbnailScaleSettingOptions);
     const isDisplayingEditingMenu =
         appProvider.isPagePresenter && varyAppDocument.isEditable;
     const onSlideItemsKeyboardEventRef = useAppCurrentRef(
@@ -102,7 +120,6 @@ export default function VarySlidesPreviewerComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const containerRef = useRef<HTMLDivElement | null>(null);
     useZoomingRegistering(containerRef, {
         value: thumbSizeScale,
         setValue: setThumbnailSizeScale,
@@ -125,32 +142,35 @@ export default function VarySlidesPreviewerComp() {
             onDragLeave={handleDragLeave}
             onDrop={handleContainerDrop}
             ref={containerRef}
+            {...{ [SLIDES_PREVIEWER_SCOPE_KEY]: scope.scopeId }}
         >
-            <div>
-                {isDisplayingEditingMenu ? (
-                    <div
-                        className="w-100 app-outer-shadow"
-                        style={{
-                            height: 30,
-                        }}
-                    >
+            <SlidesPreviewerScopeContext value={scope}>
+                <div>
+                    {isDisplayingEditingMenu ? (
                         <div
                             className="w-100 app-outer-shadow"
                             style={{
-                                overflowX: 'auto',
-                                overflowY: 'hidden',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
+                                height: 30,
                             }}
                         >
-                            <SlidesMenuComp />
+                            <div
+                                className="w-100 app-outer-shadow"
+                                style={{
+                                    overflowX: 'auto',
+                                    overflowY: 'hidden',
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                }}
+                            >
+                                <SlidesMenuComp />
+                            </div>
                         </div>
-                    </div>
-                ) : null}
-                <VarySlidesComp />
-            </div>
-            <ScrollingHandlerComp />
+                    ) : null}
+                    <VarySlidesComp />
+                </div>
+                <ScrollingHandlerComp />
+            </SlidesPreviewerScopeContext>
         </div>
     );
 }

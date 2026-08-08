@@ -39,8 +39,11 @@ export function checkIsAppDocumentArchiveFileFullName(fileFullName: string) {
     return checkIsSingleItemArchiveFileFullName(fileFullName, CONFIG);
 }
 
-export function createAppDocumentArchive(filePath: string) {
-    return createSingleItemArchive(filePath, CONFIG);
+export function createAppDocumentArchive(
+    filePath: string,
+    password: string | null = null,
+) {
+    return createSingleItemArchive(filePath, CONFIG, password);
 }
 
 export function exportAppDocument(filePath: string) {

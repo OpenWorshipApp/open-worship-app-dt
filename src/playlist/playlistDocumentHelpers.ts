@@ -34,7 +34,14 @@ export function useVaryAppDocumentOpener() {
                     await import('../lyric-list/LyricAppDocument');
                 }
                 const varyAppDocument = varyAppDocumentFromFilePath(filePath);
-                setSelectedVaryAppDocument(varyAppDocument);
+                const isApplied =
+                    await setSelectedVaryAppDocument(varyAppDocument);
+                // The pin refused the switch. Bail before the event: its
+                // listener force-opens the Documents tab, so a refused click
+                // would pop the tab open.
+                if (!isApplied) {
+                    return;
+                }
                 if (!getIsShowingVaryAppDocumentPreviewer()) {
                     previewingEventListener.showVaryAppDocument(
                         varyAppDocument,

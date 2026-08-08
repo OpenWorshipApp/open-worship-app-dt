@@ -12,7 +12,11 @@ import type {
     CustomVerseType,
 } from '../../helper/bible-helpers/BibleDataReader';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
-import { fsListFiles, pathJoin } from '../../server/fileHelpers';
+import {
+    checkIsHiddenName,
+    fsListFiles,
+    pathJoin,
+} from '../../server/fileHelpers';
 import FileSource from '../../helper/FileSource';
 import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
@@ -91,7 +95,7 @@ export async function getAllXMLFileKeys() {
     const dirPath = await bibleDataReader.getWritableBiblePath();
     const files = await fsListFiles(dirPath);
     const xmlFileFullNames = files.filter((fileFullName) => {
-        if (fileFullName.startsWith('.')) {
+        if (checkIsHiddenName(fileFullName)) {
             return false;
         }
         return fileFullName.toLocaleLowerCase().endsWith('.xml');

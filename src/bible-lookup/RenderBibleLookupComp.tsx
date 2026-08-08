@@ -98,7 +98,7 @@ export default function RenderBibleLookupComp() {
                         />
                     </div>
                 </div>
-                <div className="card-body" data-no-widget-drag="true">
+                <div className="card-body">
                     {isValidBibleKey === undefined ? (
                         <LoadingComp />
                     ) : (
@@ -157,7 +157,6 @@ export default function RenderBibleLookupComp() {
                 />
                 <div
                     className={'card-body d-flex w-100 app-overflow-hidden'}
-                    data-no-widget-drag="true"
                     style={{
                         height: 'calc(100% - 38px)',
                     }}

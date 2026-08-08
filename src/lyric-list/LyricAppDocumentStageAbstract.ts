@@ -4,7 +4,10 @@ import type {
     OpenLyricValueOptions,
 } from 'open-lyric';
 
-import LyricAppDocument, { OPEN_LYRIC_NONE_KEY } from './LyricAppDocument';
+import LyricAppDocument, {
+    OPEN_LYRIC_FIRST_KEY,
+    OPEN_LYRIC_NONE_KEY,
+} from './LyricAppDocument';
 import { type AnyObjectType } from '../helper/typeHelpers';
 import { unlockingCacher } from '../server/unlockingHelpers';
 import CacheManager from '../others/CacheManager';
@@ -26,11 +29,18 @@ const cacheManager = new CacheManager<any>(3 * 60); // 3 minutes
 export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocument {
     get basicOpenLyricOptions() {
         const canvasItemBounds = this.canvasItemBounds;
+        // Read ONCE for the whole options object: each access re-reads the
+        // stage's setting, and this getter is on the per-slide path.
+        const stageStyle = this.stageStyle;
         const options: OpenLyricElementMapOptions = {
             type: 'html',
             isWithKeyNote: false,
-            backgroundAlpha: this.slideBackgroundAlpha,
-            theme: this.slideTheme,
+            // open-lyric wants 0..1; the setting holds an integer percentage
+            // because `AppRangeComp` cannot produce a fraction. Same conversion
+            // as `toOpenLyricBackgroundAlpha`, inlined so this module keeps its
+            // import list free of `./lyricStageStyleHelpers` (see `stageStyle`).
+            backgroundAlpha: stageStyle.backgroundAlphaPercentage / 100,
+            theme: stageStyle.theme,
             width: canvasItemBounds.width,
             height: canvasItemBounds.height,
             isShowingAttachments: false,
@@ -49,7 +59,7 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         options.fontSize =
             (Number.isNaN(currentFontSize)
                 ? DEFAULT_OPEN_LYRIC_FONT_SIZE
-                : currentFontSize) + this.extraSlideFontSize;
+                : currentFontSize) + stageStyle.extraFontSize;
         const fontFamily = openLyric?.fontFamily || savedFont.fontFamily;
         if (fontFamily) {
             options.fontFamily = fontFamily;
@@ -59,11 +69,34 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
 
     abstract get stageOpenLyricOptions(): OpenLyricElementMapOptions;
 
+    /**
+     * The stage's own `css` with the operator's custom rules APPENDED.
+     *
+     * Appended, never handed to either side of the spread below: `css` is a
+     * plain string, so whichever object carries it LAST replaces the other's
+     * outright — and stage 0's css is what hides the chords and the section
+     * titles and centres the lines. Dropping it would silently turn stage 0
+     * into stage 1. Appending is also what the operator expects, since
+     * equal-specificity rules are last-wins.
+     *
+     * Returns the SAME object when there is nothing to add, so `genCacheKey`
+     * stays byte-identical for anyone who never opens the panel — no
+     * cold-start re-render of every song for existing installs.
+     */
+    protected withCustomCss<T extends { css?: string }>(options: T): T {
+        const customCss = this.stageStyle.customCss;
+        if (customCss.trim() === '') {
+            return options;
+        }
+        const stageCss = options.css ?? '';
+        return { ...options, css: `${stageCss}\n${customCss}` };
+    }
+
     get allOpenLyricOptions() {
-        return {
+        return this.withCustomCss({
             ...this.basicOpenLyricOptions,
             ...this.stageOpenLyricOptions,
-        };
+        });
     }
 
     genCacheKey(prefix: string, options: AnyObjectType) {
@@ -187,6 +220,15 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             if (key === OPEN_LYRIC_NONE_KEY) {
                 const slide = this.genSlide(key, -1, {});
                 return [slide];
+            } else if (key === OPEN_LYRIC_FIRST_KEY) {
+                const firstCanvasItemProps =
+                    await this.getFirstCanvasItemProps();
+                const slide = this.genLyricSlide(
+                    -1,
+                    OPEN_LYRIC_FIRST_KEY,
+                    firstCanvasItemProps === null ? [] : [firstCanvasItemProps],
+                );
+                return [slide];
             }
             const dataMap = await this.getElementMap({
                 ...this.allOpenLyricOptions,
@@ -199,7 +241,7 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         const openLyricPreviewer = await this.getOpenLyricPreviewer();
         const structure = openLyricPreviewer.getStructure();
 
-        const [canvasItemProps, dataMap] = await Promise.all([
+        const [firstCanvasItemProps, dataMap] = await Promise.all([
             this.getFirstCanvasItemProps(),
             this.getElementMap(this.allOpenLyricOptions),
         ]);
@@ -210,7 +252,7 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         const newSlides = this.extendExtraSlide(
             slides,
             dataMap,
-            canvasItemProps,
+            firstCanvasItemProps,
         );
         const attachments = openLyricPreviewer.getAttachments();
         const attachmentSlides = this.genSlidesFromAttachments(attachments);
@@ -224,6 +266,11 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
 
     async getSlides(key?: string) {
         return this.getStageSlides(key);
+    }
+
+    private async getSlideByIdSlow(id: number) {
+        const slides = await this.getSlides();
+        return slides.find((slide) => slide.id === id) ?? null;
     }
 
     async getSlideById(id: number) {
@@ -249,10 +296,5 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         }
         slide.id = slideQuick.id;
         return slide;
-    }
-
-    private async getSlideByIdSlow(id: number) {
-        const slides = await this.getSlides();
-        return slides.find((slide) => slide.id === id) ?? null;
     }
 }

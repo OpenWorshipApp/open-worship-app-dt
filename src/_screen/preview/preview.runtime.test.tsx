@@ -306,6 +306,11 @@ vi.mock('../../helper/helpers', () => ({
             return null;
         }
     },
+    // `server/fileHelpers` freezes its mimetype lists at module scope, so this
+    // has to exist the moment anything pulls that module in transitively.
+    freezeObject: (obj: any) => {
+        Object.freeze(obj);
+    },
 }));
 
 vi.mock('../../helper/colorNoteHelpers', () => ({
@@ -537,8 +542,11 @@ describe('preview runtime interactions', () => {
         const audioToggle = container.querySelector(
             'button[title="Enable Background Audio Handlers"]',
         ) as HTMLButtonElement | null;
+        // Suffix match: the title now leads with the live stage number
+        // ("Stage 2: Click to change Stage Number"), so an exact match silently
+        // found nothing and the click below never fired.
         const stageControl = container.querySelector(
-            '[title="Stage: Click to change Stage Number"]',
+            '[title$="Click to change Stage Number"]',
         ) as HTMLDivElement | null;
 
         showAppContextMenuMock.mockClear();

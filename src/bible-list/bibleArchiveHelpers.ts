@@ -52,8 +52,11 @@ export function checkIsBibleArchiveFileFullName(fileFullName: string) {
     return checkIsSingleItemArchiveFileFullName(fileFullName, CONFIG);
 }
 
-export function createBibleArchive(filePath: string) {
-    return createSingleItemArchive(filePath, CONFIG);
+export function createBibleArchive(
+    filePath: string,
+    password: string | null = null,
+) {
+    return createSingleItemArchive(filePath, CONFIG, password);
 }
 
 export function exportBible(filePath: string) {

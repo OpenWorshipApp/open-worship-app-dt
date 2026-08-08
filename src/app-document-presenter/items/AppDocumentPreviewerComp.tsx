@@ -9,7 +9,6 @@ import AppDocumentPreviewerFooterComp from './AppDocumentPreviewerFooterComp';
 import {
     checkIsLyricFilePath,
     SelectedVaryAppDocumentContext,
-    useVaryAppDocumentContext,
     VaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
 import AppSuspenseComp from '../../others/AppSuspenseComp';
@@ -22,6 +21,7 @@ import PresenterNoteContainerHandlerComp from '../../slide-editor/note/Presenter
 import { useStateSettingString } from '../../helper/settingHelpers';
 import { DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME } from './slideItemRenderHelpers';
 import { PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME } from '../../_screen/screenAppDocumentTypeHelpers';
+import type { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
 
 type PreviewerBodyStyle = CSSProperties & {
     '--app-docx-preview-background'?: string;
@@ -34,8 +34,16 @@ const LazyLyricHandlerComp = lazy(() => {
     return import('../../lyric-list/LyricHandlerComp');
 });
 
-function EditorComp() {
-    const varyAppDocument = useVaryAppDocumentContext();
+function EditorComp({
+    varyAppDocument,
+    flexSizeNamePrefix = '',
+}: Readonly<{
+    varyAppDocument: VaryAppDocumentType;
+    // A floating preview shows the SAME document as the main panel may be
+    // showing, and the note split is remembered per document name — without a
+    // prefix the two panes would overwrite each other's size.
+    flexSizeNamePrefix?: string;
+}>) {
     const fileSource = varyAppDocument.fileSource;
     if (
         PdfAppDocument.checkIsThisType(varyAppDocument) ||
@@ -45,7 +53,7 @@ function EditorComp() {
     }
     return (
         <ResizeActorComp
-            flexSizeName={fileSource.fullName}
+            flexSizeName={`${flexSizeNamePrefix}${fileSource.fullName}`}
             isHorizontal={false}
             flexSizeDefault={{
                 v1: ['6'],
@@ -86,7 +94,14 @@ function EditorComp() {
  * previewer, everything else gets the slide list. The previewer's card chrome
  * (footer with the thumbnail scale + file name) is shared by all of them.
  */
-function PreviewerBodyComp({ filePath }: Readonly<{ filePath: string }>) {
+function PreviewerBodyComp({
+    varyAppDocument,
+    flexSizeNamePrefix,
+}: Readonly<{
+    varyAppDocument: VaryAppDocumentType;
+    flexSizeNamePrefix?: string;
+}>) {
+    const { filePath } = varyAppDocument;
     if (checkIsLyricFilePath(filePath)) {
         return (
             <AppSuspenseComp>
@@ -95,16 +110,83 @@ function PreviewerBodyComp({ filePath }: Readonly<{ filePath: string }>) {
         );
     }
     if (appProvider.isPagePresenter) {
-        return <EditorComp />;
+        return (
+            <EditorComp
+                varyAppDocument={varyAppDocument}
+                flexSizeNamePrefix={flexSizeNamePrefix}
+            />
+        );
     }
     return <VarySlidesPreviewerComp />;
 }
 
-export default function AppDocumentPreviewerComp() {
-    const selectedAppDocumentContext = use(SelectedVaryAppDocumentContext);
+/**
+ * The previewer for ONE document, given as a prop rather than read from the
+ * global selection — which is what lets a floating preview render the very same
+ * tree for a document the main panel is not showing.
+ */
+export function VaryAppDocumentPreviewerCardComp({
+    varyAppDocument,
+    isDisableChanging,
+    shouldShowHistory,
+    flexSizeNamePrefix,
+}: Readonly<{
+    varyAppDocument: VaryAppDocumentType;
+    isDisableChanging?: boolean;
+    shouldShowHistory?: boolean;
+    flexSizeNamePrefix?: string;
+}>) {
     const [docxPreviewBackgroundColor, setDocxPreviewBackgroundColor] =
         useStateSettingString<string>(PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME);
-    if (!selectedAppDocumentContext?.selectedVaryAppDocument) {
+    const isPDF = varyAppDocument instanceof PdfAppDocument;
+    const isDocx = varyAppDocument instanceof DocxAppDocument;
+    const isPageBase = isPDF || isDocx;
+    const previewerBodyStyle: PreviewerBodyStyle = {
+        position: 'relative',
+    };
+    if (isPageBase && docxPreviewBackgroundColor) {
+        previewerBodyStyle[DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME] =
+            docxPreviewBackgroundColor;
+    }
+    return (
+        <div
+            className="slide-previewer card w-100 h-100 app-zero-border-radius"
+            style={{
+                position: 'relative',
+            }}
+        >
+            <VaryAppDocumentContext value={varyAppDocument}>
+                <div
+                    className="card-body w-100 h-100 app-overflow-hidden"
+                    style={previewerBodyStyle}
+                >
+                    <PreviewerBodyComp
+                        varyAppDocument={varyAppDocument}
+                        flexSizeNamePrefix={flexSizeNamePrefix}
+                    />
+                </div>
+                <AppDocumentPreviewerFooterComp
+                    isDisableChanging={isDisableChanging}
+                    shouldShowHistory={shouldShowHistory}
+                />
+                {isPageBase ? (
+                    <PageBaseAppearanceSettingComp
+                        docxPreviewBackgroundColor={docxPreviewBackgroundColor}
+                        onDocxPreviewBackgroundColorChange={
+                            setDocxPreviewBackgroundColor
+                        }
+                    />
+                ) : null}
+            </VaryAppDocumentContext>
+        </div>
+    );
+}
+
+export default function AppDocumentPreviewerComp() {
+    const selectedAppDocumentContext = use(SelectedVaryAppDocumentContext);
+    const selectedVaryAppDocument =
+        selectedAppDocumentContext?.selectedVaryAppDocument ?? null;
+    if (selectedVaryAppDocument === null) {
         return (
             <div
                 className={
@@ -121,51 +203,9 @@ export default function AppDocumentPreviewerComp() {
             </div>
         );
     }
-    const isPDF =
-        selectedAppDocumentContext.selectedVaryAppDocument instanceof
-        PdfAppDocument;
-    const isDocx =
-        selectedAppDocumentContext.selectedVaryAppDocument instanceof
-        DocxAppDocument;
-    const isPageBase = isPDF || isDocx;
-    const previewerBodyStyle: PreviewerBodyStyle = {
-        position: 'relative',
-    };
-    if (isPageBase && docxPreviewBackgroundColor) {
-        previewerBodyStyle[DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME] =
-            docxPreviewBackgroundColor;
-    }
     return (
-        <div
-            className="slide-previewer card w-100 h-100 app-zero-border-radius"
-            style={{
-                position: 'relative',
-            }}
-        >
-            <VaryAppDocumentContext
-                value={selectedAppDocumentContext.selectedVaryAppDocument}
-            >
-                <div
-                    className="card-body w-100 h-100 app-overflow-hidden"
-                    style={previewerBodyStyle}
-                >
-                    <PreviewerBodyComp
-                        filePath={
-                            selectedAppDocumentContext.selectedVaryAppDocument
-                                .filePath
-                        }
-                    />
-                </div>
-                <AppDocumentPreviewerFooterComp />
-                {isPageBase ? (
-                    <PageBaseAppearanceSettingComp
-                        docxPreviewBackgroundColor={docxPreviewBackgroundColor}
-                        onDocxPreviewBackgroundColorChange={
-                            setDocxPreviewBackgroundColor
-                        }
-                    />
-                ) : null}
-            </VaryAppDocumentContext>
-        </div>
+        <VaryAppDocumentPreviewerCardComp
+            varyAppDocument={selectedVaryAppDocument}
+        />
     );
 }

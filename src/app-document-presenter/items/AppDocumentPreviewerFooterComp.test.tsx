@@ -16,6 +16,7 @@ const {
     renderSlideIndexMock,
     appRangeRenderMock,
     pathPreviewerRenderMock,
+    checkIsVaryAppDocumentSwitchRefusedMock,
 } = vi.hoisted(() => ({
     selectSlideMock: vi.fn(),
     useSelectedAppDocumentSetterContextMock: vi.fn(),
@@ -32,6 +33,14 @@ const {
     renderSlideIndexMock: vi.fn(),
     appRangeRenderMock: vi.fn(),
     pathPreviewerRenderMock: vi.fn(),
+    checkIsVaryAppDocumentSwitchRefusedMock: vi.fn(() => false),
+}));
+
+// Mocked, not merely imported: the real module reaches `settingHelpers` ->
+// `appLocalStorage` -> the file system.
+vi.mock('../../app-document-list/varyAppDocumentLockHelpers', () => ({
+    checkIsVaryAppDocumentSwitchRefused:
+        checkIsVaryAppDocumentSwitchRefusedMock,
 }));
 
 vi.mock('../../app-document-list/appDocumentHelpers', () => ({
@@ -235,6 +244,30 @@ describe('AppDocumentPreviewerFooterComp', () => {
         });
 
         expect(selectSlideMock).not.toHaveBeenCalled();
+    });
+
+    test('never opens the document menu while the document is pinned', async () => {
+        const { default: AppDocumentPreviewerFooterComp } =
+            await import('./AppDocumentPreviewerFooterComp');
+        checkIsVaryAppDocumentSwitchRefusedMock.mockReturnValue(true);
+
+        await act(async () => {
+            root.render(<AppDocumentPreviewerFooterComp />);
+            await flushAsyncEvents();
+        });
+
+        await act(async () => {
+            container
+                .querySelector('[data-testid="path-previewer"]')
+                ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            await flushAsyncEvents();
+        });
+
+        // Refused BEFORE the menu, so the operator never picks a file that is
+        // then thrown away.
+        expect(selectSlideMock).not.toHaveBeenCalled();
+        expect(setSelectedAppDocumentMock).not.toHaveBeenCalled();
+        checkIsVaryAppDocumentSwitchRefusedMock.mockReturnValue(false);
     });
 
     test('shows the presenter history badges and keeps only the latest three selections', async () => {

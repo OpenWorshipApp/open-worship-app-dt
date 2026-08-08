@@ -32,6 +32,22 @@ export function getSettingForce(key: string) {
 }
 
 /**
+ * Settings are stored as files named after their key, so a raw file path in a
+ * setting name becomes a path with directory separators in it and every read
+ * logs an ENOENT.
+ */
+export function toFilePathSettingKey(...parts: string[]) {
+    return parts
+        .join('-')
+        .replace(/[\\/:*?"<>|.]/g, '_')
+        .replace(/\s+/g, '_');
+}
+
+export function toFilePathSettingName(prefix: string, ...parts: string[]) {
+    return `${prefix}-${toFilePathSettingKey(...parts)}`;
+}
+
+/**
  * Drop every setting whose key is `prefix` itself or starts with `prefix-`.
  *
  * For cleaning up after a file that is gone: settings are named after the thing

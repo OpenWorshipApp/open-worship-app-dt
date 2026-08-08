@@ -10,7 +10,7 @@ export default function BibleCustomStyleFloatingToggleComp() {
     return (
         <button
             type="button"
-            className={`btn btn-sm btn-${isShowing ? '' : 'outline-'}info`}
+            className={`btn btn-sm btn-${isShowing ? 'info' : 'secondary'}`}
             title={label}
             aria-label={label}
             onClick={() => {

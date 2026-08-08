@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the shipped prebuilt yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~636 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). The argument "playlist" (or "run sheet") selects PLAYLIST DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 67 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..100) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch playlist and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the shipped prebuilt yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~645 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). The argument "playlist" (or "run sheet") selects PLAYLIST DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 67 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..100) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch playlist and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "playlist" for the tracked deep run-sheet pass — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
@@ -235,7 +235,7 @@ when hunting screen-only bugs while hidden (`SC-05`).
 ### 6b. Coverage accounting (full-coverage mode)
 
 The definition of "coverage" is the row inventory in
-[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~636 rows with stable
+[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~645 rows with stable
 IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..60`) and
 the context-menu-item matrix (`CM-01..92`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
@@ -272,9 +272,12 @@ restarting from zero. This is how a full-coverage pass can span several sessions
    edit→present propagation, §6c — open the editor as a *separate* window and confirm a
    saved edit reaches the Presenter/screen; run it whenever editing/lists were touched)**.
 3. Popups `PU` (each opened from its trigger row).
-4. **Mandatory media block §6e (`MD-01..02`)** — kick the video download off while `PM`
-   is fresh (the Background panel is already open) and do the audio one right after; both
-   take minutes of wall-clock, so start them before the settings churn rather than after.
+4. **Mandatory media block §6e (`MD-01..02` + its teardown `MD-04`)** — sweep the two
+   dirs, then kick the video download off while `PM` is fresh (the Background panel is
+   already open) and do the audio one right after; both take minutes of wall-clock, so
+   start them before the settings churn rather than after. **Trash both files as soon as
+   their evidence is captured** — while the Background panel is still the open one — so
+   the run cannot end with ~100 MB of debris in the user's data dir.
 5. `ST` settings last-but-one, then the **mandatory locale block §6d (`LT-01..02`)** plus
    the `LT-03..05` theme spot-checks, which ride on `ST-04/05`. Restore everything. Each
    `Apply Settings` (`ST-08`) reloads every window, so these go **very last** — and the
@@ -376,8 +379,15 @@ Notes:
 `bin-helper/qjs/qjs`. All three are committed prebuilt per platform
 (`extra-work/experiment-building/<os><suffix>/`) and copied in by
 `extra-work/copy-build.mjs` — so a wrong/missing/stale binary passes typecheck, tests,
-build and every other matrix row, and only shows up here. Rows `MD-01..03`; recipe:
+build and every other matrix row, and only shows up here. Rows `MD-01..04`; recipe:
 test-plan.md §S19.
+
+**The block owns its garbage (`MD-04`).** It is the only part of a run that writes ~100 MB
+of video plus an mp3 into the user's data dir, and the app **de-duplicates by suffixing,
+never overwriting** — so without a teardown every run adds another copy. By 2026-08-07 the
+dev data dir held 17 leftover copies (≈635 MB — six `…YouTube (N).webm` and eleven
+`…(N).mp3`) from earlier runs, which had to be swept by hand.
+Sweep before, delete after — details below.
 
 **Canonical test link** — always use this one so runs are comparable:
 
@@ -385,8 +395,17 @@ test-plan.md §S19.
 https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7rJs
 ```
 
-Minimum pass (both halves required — they exercise different ffmpeg paths):
+Minimum pass (only step 4 is optional — 1 and 2 exercise different ffmpeg paths, and the
+sweep/teardown pair 0 + 5 is what keeps the block idempotent):
 
+0. **Sweep first (MD-04, part 1).** List the videos and audios dirs before downloading
+   anything and delete leftovers from earlier runs — they carry the **canonical video's
+   page title** (`[MV] គ្រប់ទាំងផ្កា Flowers by … - Official Music Video - YouTube`, ` (N)`
+   from the second copy on) — plus any orphaned `temp-*.part`. Match that title, **not
+   `*YouTube*`**: the user's own library holds real downloads whose names also end in
+   `- YouTube` (`ស្រែកថ្វាយព្រះអង្គ Shout to the Lord - YouTube.MKV`, `4K Christian Church
+   Worship … - YouTube.mp4`). Say in the report how many you found: leftovers mean the
+   previous run skipped its teardown.
 1. **Video (MD-01)** — Background → **Videos** tab → right-click the empty area of the
    list → **Download From URL** → put the link in → **Ok**. yt-dlp fetches separate video
    and audio streams and **merges them with ffmpeg**.
@@ -398,10 +417,43 @@ Minimum pass (both halves required — they exercise different ffmpeg paths):
 4. Optional but cheap — prove the JS runtime is really QuickJS by reading the spawned
    command line (`Get-CimInstance Win32_Process -Filter "Name='yt-dlp.exe'"`): it must
    carry `--no-js-runtimes --js-runtimes quickjs:<…>\bin-helper\qjs\qjs.exe`.
+5. **Delete both again (MD-04, part 2)** — once step 3's evidence (screenshot + on-disk
+   listing) is captured. Prefer the app's own path: 🖱️R the new row → **Move to Trash** →
+   **Yes**, for the video and then for the `.mp3`. That also covers `CM-06` on a background
+   media row against a scratch file this run created, and it refreshes the list through the
+   real `delete` event. Two gotchas:
+   - **Move to Trash is hidden while the item is on a screen** (`isInScreen`,
+     `BackgroundMediaItemComp`) — clear/hide the screen first; a missing entry there is not
+     a bug.
+   - **On-disk fallback** for anything that never reached the list (failed/partial
+     download, app already closed). The names start with `[MV]`, and `[` is a
+     character-class metacharacter for PowerShell's `-Path`, so filter objects and pipe
+     them rather than globbing — and list the matches before deleting:
+
+     ```powershell
+     "$env:USERPROFILE\Desktop\open-worship-data-dev\videos",
+     "$env:USERPROFILE\Desktop\open-worship-data-dev\audios" | ForEach-Object {
+         Get-ChildItem -LiteralPath $_ |
+             Where-Object { $_.Name -like '*Flowers by*Official Music Video - YouTube*' -or
+                            $_.Name -like 'temp-*' } |
+             Remove-Item   # binds PSPath → -LiteralPath; brackets stay literal
+     }
+     ```
+
+     (Dev data lives in `…\Desktop\open-worship-data-dev`, not the non-`-dev` dir — KB §10.
+     A file removed behind the app's back leaves a stale thumbnail until the tab reloads.
+     Sweeping someone's data dir is safer via the Recycle Bin —
+     `[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($p,'OnlyErrorDialogs','SendToRecycleBin')`.)
+
+   The end state of every run: **no copy of the canonical title and no `temp-*.part` in
+   either dir**.
+   This step still runs when MD-01/MD-02 are BLOCKED or failed — a partial download leaves
+   the biggest debris.
 
 Triage before filing (a 403 is usually NOT an app bug), the known orphaned-`.part` bug,
 and the `(1)` de-duplication suffix are all documented in the matrix §MD — read it before
-reporting a download failure.
+reporting a download failure. A `(1)` on the run's *first* download means step 0 was
+skipped, not that the app misbehaved.
 
 ### 6f. PLAYLIST DEEP MODE — the run sheet, exhaustively (argument `playlist`)
 
@@ -586,8 +638,9 @@ name.
   was restored.
 - **Every report** MUST also contain the **mandatory media block** (§6e): the
   `MD-01/MD-02` statuses with the on-disk evidence (the video file and the `.mp3`), since
-  no other row touches the shipped yt-dlp/ffmpeg/qjs. BLOCKED is acceptable only with no
-  network, and must say so.
+  no other row touches the shipped yt-dlp/ffmpeg/qjs, **plus `MD-04`** — how many
+  leftovers the pre-download sweep found and the post-run listing showing both dirs clean.
+  BLOCKED is acceptable only with no network, and must say so; `MD-04` is never BLOCKED.
 - In **playlist deep mode** (§6f) the report MUST additionally carry: the per-phase table
   (P0..P10 → status), the coverage summary over the 67-row scope set, the fixture's name
   and **what was torn down vs. left behind**, and — because they are the rows most easily
@@ -605,6 +658,12 @@ name.
 
 ### 8. Cleanup
 
+- **Files the run created must not outlive it.** Before killing anything, confirm the
+  media block's teardown actually happened (`MD-04`, §6e step 5): the videos and audios
+  dirs hold no copy of the canonical title and no `temp-*.part`. This is the one block that writes
+  ~100 MB per run, and the app suffixes duplicates instead of overwriting, so a missed
+  teardown compounds silently. The playlist fixture (`zz-robot-<runid>`, §6f) and any
+  scratch document/web item go the same way.
 - If YOU started `npm run dev` in step 2, **kill that terminal** to stop Vite + Electron
   (`concurrently -k` tears down both children).
 - If the app was already running (step 1), leave it alone.
@@ -712,7 +771,7 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
 - [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) — the
-  **coverage contract**: ~636 stable-ID rows over the whole UI surface — every interactive
+  **coverage contract**: ~645 stable-ID rows over the whole UI surface — every interactive
   path enumerated as a unit test with an observable pass condition and a `(src: file:line)`
   citation, including a complete keyboard-shortcut matrix (`KB-01..60`, every registered
   shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and

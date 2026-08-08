@@ -22,6 +22,8 @@ import {
     THUMBNAIL_SCALE_STEP,
 } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderSlideIndexComp from './RenderSlideIndexComp';
+import { useThumbnailScaleSettingOptions } from './slidesPreviewerScopeHelpers';
+import { checkIsVaryAppDocumentSwitchRefused } from '../../app-document-list/varyAppDocumentLockHelpers';
 
 export const slidePreviewerMethods = {
     handleSlideItemSelected: (
@@ -83,18 +85,35 @@ export const defaultRangeSize = {
 };
 export default function AppDocumentPreviewerFooterComp({
     isDisableChanging,
+    // `slidePreviewerMethods.handleSlideItemSelected` is one module-level slot
+    // that the history strip claims on mount and clears on unmount, so a second
+    // mounted strip steals it and closing that one leaves the first dead. A
+    // floating preview opts out rather than fighting for the slot.
+    shouldShowHistory = appProvider.isPagePresenter,
 }: Readonly<{
     isDisableChanging?: boolean;
+    shouldShowHistory?: boolean;
 }>) {
     const selectedVaryAppDocument = useVaryAppDocumentContext();
     const setSelectedAppDocument = useSelectedAppDocumentSetterContext();
+    const thumbnailScaleSettingOptions = useThumbnailScaleSettingOptions();
     const [thumbnailSizeScale, setThumbnailSizeScale] =
-        useVarySlideThumbnailSizeScale();
+        useVarySlideThumbnailSizeScale(thumbnailScaleSettingOptions);
     const selectedVaryAppDocumentRef = useAppCurrentRef(
         selectedVaryAppDocument,
     );
     const setSelectedAppDocumentRef = useAppCurrentRef(setSelectedAppDocument);
     const handleSlideChoosing = useCallback(async (event: any) => {
+        // Checked before the menu opens: the funnel guard would only refuse
+        // after the operator had already picked a file.
+        if (
+            checkIsVaryAppDocumentSwitchRefused(
+                selectedVaryAppDocumentRef.current,
+                null,
+            )
+        ) {
+            return;
+        }
         const slide = await selectSlide(
             event,
             selectedVaryAppDocumentRef.current.filePath,
@@ -138,7 +157,7 @@ export default function AppDocumentPreviewerFooterComp({
                         />
                     )}
                 </div>
-                {appProvider.isPagePresenter ? (
+                {shouldShowHistory ? (
                     <div className="app-flex-item">
                         <HistoryPreviewerFooterComp />
                     </div>

@@ -39,6 +39,7 @@ import { useThemeSource } from '../../others/themeHelpers';
 import { tran } from '../../lang/langHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { toKeyByFilePath } from '../../app-document-list/appDocumentHelpers';
+import { useSlidesPreviewerScope } from './slidesPreviewerScopeHelpers';
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import { showSimpleToast } from '../../toast/toastHelpers';
 
@@ -244,6 +245,10 @@ export default function VarySlideRenderComp({
     // slide now wakes that slide and the one it replaced — not every preview in
     // the window.
     const onScreenList = useVarySlideOnScreenList(varySlide);
+    // A touch drag autoscrolls the container named here. Without the scope it
+    // named the first previewer in the document, so dragging inside a floating
+    // preview scrolled the main panel behind it.
+    const slidesPreviewerScope = useSlidesPreviewerScope();
     const {
         activeCN: activeClassName,
         presenterCN: presenterClassName,
@@ -347,7 +352,10 @@ export default function VarySlideRenderComp({
                     : {}),
             }}
             data-vary-app-document-item-id={varySlide.id}
-            data-scroll-container-selector={`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`}
+            data-scroll-container-selector={
+                slidesPreviewerScope?.containerSelector ??
+                `.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`
+            }
             data-touch-drag-label={varySlide.name || `#${index + 1}`}
             draggable={!varySlide.isDisabled}
             onDragOver={handleDragOver}

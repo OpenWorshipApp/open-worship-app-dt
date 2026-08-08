@@ -16,6 +16,9 @@ const {
     getPptxToHtmlsVersion,
     tarExtract,
     tarCreate,
+    encryptFile,
+    decryptFile,
+    checkIsEncryptedFile,
     officeFileToPdf,
     pdfToImages,
     getPagesCount,
@@ -34,6 +37,9 @@ const {
     getPptxToHtmlsVersion: vi.fn(),
     tarExtract: vi.fn(),
     tarCreate: vi.fn(),
+    encryptFile: vi.fn(),
+    decryptFile: vi.fn(async () => ({ isOk: true })),
+    checkIsEncryptedFile: vi.fn(async () => true),
     officeFileToPdf: vi.fn(),
     pdfToImages: vi.fn(),
     getPagesCount: vi.fn(),
@@ -65,6 +71,12 @@ vi.mock('./electronHelpers', () => ({
     tarCreate,
     tarExtract,
     toShortcutKey: () => 'CmdOrCtrl+F',
+}));
+
+vi.mock('./archiveCryptoHelpers', () => ({
+    checkIsEncryptedFile,
+    decryptFile,
+    encryptFile,
 }));
 
 vi.mock('./electronOfficeHelpers', () => ({ officeFileToPdf }));
@@ -219,6 +231,61 @@ describe('electronEventListener', () => {
             undefined,
         );
         expect(sender.send).toHaveBeenCalledWith('reply:tar-create', undefined);
+    });
+
+    test('wraps and unwraps a password protected archive', async () => {
+        initEventOther({
+            mainWin: { webContents: { getZoomFactor: vi.fn(() => 1) } },
+        } as any);
+        const findHandler = (eventName: string) => {
+            return electronMockState.ipcMain.on.mock.calls.find(
+                ([name]) => name === eventName,
+            )?.[1];
+        };
+        const sender = { send: vi.fn() };
+
+        await findHandler('main:app:file-encrypt')(
+            { sender },
+            {
+                replyEventName: 'reply:encrypt',
+                filePath: '/tmp/plain-archive.tmp',
+                outputFilePath: '/downloads/Service.owapl.enc',
+                password: 'In Jesus Christ',
+            },
+        );
+        await findHandler('main:app:file-decrypt')(
+            { sender },
+            {
+                replyEventName: 'reply:decrypt',
+                filePath: '/downloads/Service.owapl.enc',
+                outputFilePath: '/tmp/decrypted-archive',
+                password: 'In Jesus Christ',
+            },
+        );
+        await findHandler('main:app:check-is-encrypted-file')(
+            { sender },
+            {
+                replyEventName: 'reply:is-encrypted',
+                filePath: '/downloads/Service.owapl.enc',
+            },
+        );
+
+        expect(encryptFile).toHaveBeenCalledWith(
+            '/tmp/plain-archive.tmp',
+            '/downloads/Service.owapl.enc',
+            'In Jesus Christ',
+        );
+        expect(decryptFile).toHaveBeenCalledWith(
+            '/downloads/Service.owapl.enc',
+            '/tmp/decrypted-archive',
+            'In Jesus Christ',
+        );
+        // A wrong password comes back as a RESULT, not a rejection — only an
+        // `Error`'s message survives the clone across this bridge.
+        expect(sender.send).toHaveBeenCalledWith('reply:decrypt', {
+            isOk: true,
+        });
+        expect(sender.send).toHaveBeenCalledWith('reply:is-encrypted', true);
     });
 
     test('prints HTML payloads or previews the sender window', () => {

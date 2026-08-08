@@ -10,6 +10,11 @@ import electron, {
 
 import type ElectronAppController from './ElectronAppController';
 import {
+    checkIsEncryptedFile,
+    decryptFile,
+    encryptFile,
+} from './archiveCryptoHelpers';
+import {
     attemptClosing,
     captureWebScreenShot,
     getAllNoneFinderWindows,
@@ -354,6 +359,49 @@ export function initEventOther(appController: ElectronAppController) {
             files: string[];
         }) => {
             return tarAppend(data.archiveFilePath, data.inputDir, data.files);
+        },
+    );
+
+    // Password protection for an exported archive. It runs here rather than in
+    // the renderer so the bytes never cross the bridge: an archive can be
+    // gigabytes, and both directions stream straight from disk to disk.
+    onAsync(
+        ipcMain,
+        'main:app:file-encrypt',
+        (data: {
+            filePath: string;
+            outputFilePath: string;
+            password: string;
+        }) => {
+            return encryptFile(
+                data.filePath,
+                data.outputFilePath,
+                data.password,
+            );
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:file-decrypt',
+        (data: {
+            filePath: string;
+            outputFilePath: string;
+            password: string;
+        }) => {
+            return decryptFile(
+                data.filePath,
+                data.outputFilePath,
+                data.password,
+            );
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:check-is-encrypted-file',
+        (data: { filePath: string }) => {
+            return checkIsEncryptedFile(data.filePath);
         },
     );
 

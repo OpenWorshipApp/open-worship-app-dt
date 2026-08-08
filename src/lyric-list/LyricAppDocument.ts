@@ -22,17 +22,39 @@ import {
     type CanvasItemBoxPropsType,
     type CanvasItemPropsType,
 } from '../slide-editor/canvas/CanvasItem';
+import { getLyricStageStyle } from './lyricStageStyleHelpers';
 
 export const OPEN_LYRIC_NONE_KEY = 'None';
+export const OPEN_LYRIC_FIRST_KEY = 'First';
+export const OPEN_LYRIC_INFO_KEY = 'Info';
 
 export default class LyricAppDocument extends AppDocument {
     static readonly mimetypeName: MimetypeNameType = 'lyricAppDocument';
-    public openLyric: OpenLyric | null = null;
     public isEditable = false;
-    public slidePaddingPercentage = 1;
-    public slideBackgroundAlpha: number = 0.5;
-    public extraSlideFontSize: number = 45;
-    public slideTheme: 'light' | 'dark' = 'light';
+
+    public openLyric: OpenLyric | null = null;
+
+    /**
+     * How this stage renders its slides — padding, background opacity, font
+     * boost, theme and the operator's own CSS.
+     *
+     * These were four hard-coded fields nobody ever assigned, so every song on
+     * every stage looked the same. Reading the setting here is what lets the
+     * Stage Previewer's gear panel restyle a stage.
+     *
+     * A GETTER, not a field, and that is load-bearing: `stage` below is a class
+     * FIELD that `LyricAppDocumentStage1` OVERRIDES with its own. Derived-class
+     * fields initialize AFTER the base's, so a base-class field initializer
+     * reading `this.stage` would see `0` even on a stage-1 instance and every
+     * stage would silently share stage 0's style. A getter is evaluated at call
+     * time instead. Nothing in this hierarchy reads it during construction (no
+     * constructor body touches it, and `canvasItemBounds` /
+     * `basicOpenLyricOptions` are getters too) — keep it that way.
+     */
+    get stageStyle() {
+        return getLyricStageStyle(this.stage);
+    }
+
     stage = 0;
 
     get displayDim() {
@@ -42,7 +64,8 @@ export default class LyricAppDocument extends AppDocument {
 
     get canvasItemBounds() {
         const { width: displayWidth, height: displayHeight } = this.displayDim;
-        const padding = (displayWidth * this.slidePaddingPercentage) / 100;
+        const padding =
+            (displayWidth * this.stageStyle.paddingPercentage) / 100;
         const x = Math.round(padding);
         const y = Math.round(padding);
         const width = Math.round(displayWidth - padding * 2);
@@ -150,11 +173,11 @@ export default class LyricAppDocument extends AppDocument {
         const extraSlides: LyricSlide[] = [
             this.genLyricSlide(
                 0,
-                'Info',
+                OPEN_LYRIC_FIRST_KEY,
                 firstCanvasItemProps === null ? [] : [firstCanvasItemProps],
                 displayDim,
             ),
-            this.genSlide('Info', 1, dataMap, displayDim),
+            this.genSlide(OPEN_LYRIC_INFO_KEY, 1, dataMap, displayDim),
             this.genLyricSlide(2, OPEN_LYRIC_NONE_KEY, [], displayDim),
         ];
         const newSlides = [...extraSlides, ...slides].map((slide, i) => {

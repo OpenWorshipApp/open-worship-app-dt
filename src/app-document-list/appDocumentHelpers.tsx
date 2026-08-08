@@ -500,11 +500,25 @@ export async function selectSlide(event: any, currentFilePath: string) {
     });
 }
 
+export type SetSelectedVaryAppDocumentOptionsType = {
+    /**
+     * Bypass the pin. Only for a change the user did not initiate as a SWITCH —
+     * a rename of the pinned document, which the selection has to follow.
+     */
+    isForce?: boolean;
+};
+
 export type SelectedAppDocumentContextType = {
     selectedVaryAppDocument: VaryAppDocumentType | null;
+    /**
+     * Answers `false` when the pin refused the switch (it has already toasted).
+     * The return value is not the guard — it is how a caller learns to skip its
+     * own follow-up side effects.
+     */
     setSelectedVaryAppDocument: (
         newVaryAppDocument: VaryAppDocumentType | null,
-    ) => OptionalPromise<void>;
+        options?: SetSelectedVaryAppDocumentOptionsType,
+    ) => OptionalPromise<boolean>;
 };
 export const SelectedVaryAppDocumentContext =
     createContext<SelectedAppDocumentContextType | null>(null);

@@ -4,6 +4,7 @@ import { DragTypeEnum } from './DragInf';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
 import { parseJsonSafely } from './helpers';
+import { sanitizeFileNamePart } from './archiveNameHelpers';
 import {
     ensureDirectory,
     fsCheckFileExist,
@@ -38,9 +39,6 @@ export const BACKGROUND_META_DOT_EXTENSION = '.bg.json';
 // `src/server/mime/app-document-types.json`). Lyric, PDF, PPTX and DOCX
 // documents have no canvas, so there is nothing inside them to bundle.
 const CANVAS_DOCUMENT_DOT_EXTENSIONS = ['.ows', '.preview'];
-const INVALID_FILE_NAME_CHAR_CODES = new Set([
-    34, 42, 47, 58, 60, 62, 63, 92, 124,
-]);
 
 /**
  * Which directory an archived file belongs in once imported. A slide entry
@@ -98,92 +96,24 @@ export const backgroundTypeKindMap: { [key: string]: ArchiveFileKindType } = {
     [DragTypeEnum.BACKGROUND_WEB]: 'web',
 };
 
-export function sanitizeFileNamePart(value: string) {
-    const sanitizedText = Array.from(value.trim())
-        .map((char) => {
-            const codePoint = char.codePointAt(0) ?? 0;
-            if (codePoint < 32 || INVALID_FILE_NAME_CHAR_CODES.has(codePoint)) {
-                return '_';
-            }
-            return char;
-        })
-        .join('');
-    return sanitizedText
-        .replace(/_+/g, '_')
-        .replace(/\s+/g, ' ')
-        .replace(/[_ .]+$/g, '');
-}
-
-export function toArchiveFileName(
-    name: string,
-    dotExtension: string,
-    fallbackName: string,
-) {
-    const fileName = sanitizeFileNamePart(name).slice(0, 120);
-    return `${fileName || fallbackName}${dotExtension}`;
-}
-
 /**
- * The next free path for an archive, de-duplicated as `<name> (1)<dotExtension>`.
- *
- * NOT `FileSource.genNextFilePath()`: that splits a name on its LAST dot, so a
- * multi-part archive extension came back as `service.owapl.tar (1).gz` — a name
- * that no longer ends in `.owapl.tar.gz`, which the drop-import gate then
- * refused. Exporting the same playlist twice therefore produced a bundle the app
- * itself had written and would not take back, in silence. Every archive
- * extension is known at the call site, so it is kept whole here.
+ * Re-exported so every existing caller keeps importing archive naming from
+ * here. It LIVES in the leaf `archiveNameHelpers` because naming a bundle must
+ * not drag this module's collector graph in behind it.
  */
-export async function genNextArchiveFilePath(
-    dirPath: string,
-    fileFullName: string,
-    dotExtension: string,
-) {
-    const baseName = fileFullName
-        .toLocaleLowerCase()
-        .endsWith(dotExtension.toLocaleLowerCase())
-        ? fileFullName.slice(0, -dotExtension.length)
-        : fileFullName;
-    let filePath = pathJoin(dirPath, `${baseName}${dotExtension}`);
-    let i = 0;
-    while (await fsCheckFileExist(filePath)) {
-        i++;
-        filePath = pathJoin(dirPath, `${baseName} (${i})${dotExtension}`);
-    }
-    return filePath;
-}
-
-/**
- * The tail of an archive file name, in BOTH the shapes that exist on disk.
- *
- * The canonical one is `<name><dotExtension>`. The other is what older builds
- * wrote for a second export: the de-duplicating suffix went in before the LAST
- * dot, giving `service.owapl.tar (1).gz`. Those bundles are already sitting in
- * people's Downloads folders, so every place that recognises an archive name has
- * to know the shape — refusing it is what made a dropped bundle do nothing at
- * all, and failing to strip it is what named the imported playlist
- * `service.owapl.tar (1)`.
- */
-function toArchiveFileNameRegex(dotExtension: string) {
-    const escape = (text: string) =>
-        text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const lastDotIndex = dotExtension.lastIndexOf('.');
-    const head = escape(dotExtension.slice(0, lastDotIndex));
-    const tail = escape(dotExtension.slice(lastDotIndex));
-    return new RegExp(`${head}(\\s*\\(\\d+\\))?${tail}$`, 'i');
-}
-
-/** Whether a file name is an archive of this kind. */
-export function checkIsArchiveFileFullName(
-    fileFullName: string,
-    dotExtension: string,
-) {
-    return toArchiveFileNameRegex(dotExtension).test(fileFullName);
-}
-
-/** The archive's name without its extension, whichever shape that took. */
-export function toArchiveBaseName(fileFullName: string, dotExtension: string) {
-    return fileFullName.replace(toArchiveFileNameRegex(dotExtension), '');
-}
+export {
+    ENCRYPTED_DOT_EXTENSION_TAIL,
+    PLAIN_ARCHIVE_TEMP_NAME,
+    checkIsArchiveFileFullName,
+    checkIsEncryptedArchiveFileFullName,
+    genNextArchiveFilePath,
+    sanitizeFileNamePart,
+    toArchiveBaseName,
+    toArchiveDotExtension,
+    toArchiveFileName,
+    toArchiveFileNameFromUrl,
+    toEncryptedDotExtension,
+} from './archiveNameHelpers';
 
 function createWorkDirName(prefix: string) {
     const randomId =
@@ -901,23 +831,4 @@ export async function importBackgroundMetas(
         await fsCreateFile(metaFilePath, JSON.stringify(metaData), true);
         FileSource.getInstance(metaFilePath).fireUpdateEvent();
     }
-}
-
-/**
- * The file name an archive downloaded from a URL should be saved under. The
- * name comes from a remote URL and is joined onto a temp path, so it goes
- * through the same sanitizing as an exported name.
- */
-export function toArchiveFileNameFromUrl(
-    url: string,
-    dotExtension: string,
-    fallbackName: string,
-) {
-    const fileFullName = decodeURIComponent(
-        pathBasename(new URL(url).pathname),
-    );
-    const name = fileFullName.toLocaleLowerCase().endsWith(dotExtension)
-        ? fileFullName.slice(0, -dotExtension.length)
-        : fileFullName.replace(/\.[^.]*$/, '');
-    return toArchiveFileName(name, dotExtension, fallbackName);
 }

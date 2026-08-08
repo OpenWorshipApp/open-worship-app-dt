@@ -317,7 +317,6 @@ export default function ControllerToolbarComp({
                 // `#presenting-control` is pointer-transparent so `interact` can
                 // hand the app back; the widget has to opt its own box back in.
                 extraClassName: 'presenting-control-widget',
-                isNoBodyDraggable: true,
             }}
         >
             {isDrawing ? (

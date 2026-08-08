@@ -168,7 +168,7 @@ export default function FileItemHandlerComp({
     className?: string;
     contextMenuItems?: ContextMenuItemType[];
     onDrop?: (event: any) => void;
-    onClick?: () => void;
+    onClick?: (event: any) => void;
     renderChild: (data: AppDocumentSourceAbs) => any;
     preDelete?: () => void;
     isDisabledColorNote?: boolean;
@@ -192,9 +192,11 @@ export default function FileItemHandlerComp({
     useFileSourceRefreshEvents(['select']);
     const filePathRef = useAppCurrentRef(filePath);
     const onClickRef = useAppCurrentRef(onClick);
-    const handleClicking = useCallback(() => {
+    // The event is forwarded so a row can read its modifiers — a Ctrl/⌘ click on
+    // a document opens its floating slides preview instead of selecting it.
+    const handleClicking = useCallback((event: any) => {
         FileSource.getInstance(filePathRef.current).fireSelectEvent();
-        onClickRef.current?.();
+        onClickRef.current?.(event);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const reloadRef = useAppCurrentRef(reload);

@@ -46,6 +46,7 @@ import type {
 import {
     ARCHIVE_VERSION,
     ArchiveFileCollector,
+    PLAIN_ARCHIVE_TEMP_NAME,
     applyImportedCanvasMedia,
     backgroundTypeKindMap,
     checkIsArchiveFileFullName,
@@ -58,6 +59,7 @@ import {
     safeDeleteDir,
     stageArchiveFiles,
     toArchiveBaseName,
+    toArchiveDotExtension,
     toArchiveFileName,
     toArchiveFileNameFromUrl,
     toExtractedArchivePath,
@@ -65,6 +67,11 @@ import {
     validateArchiveFileEntries,
     writeArchiveManifest,
 } from '../helper/appArchiveHelpers';
+import {
+    askForNewArchivePassword,
+    openArchiveForReading,
+    protectArchiveFile,
+} from '../helper/archivePasswordHelpers';
 
 export const PLAYLIST_ARCHIVE_DOT_EXTENSION = '.owapl.tar.gz';
 
@@ -167,10 +174,13 @@ function toItemPathRefs(item: PlaylistItemType): PathRefType[] {
     return [];
 }
 
-export function toPlaylistArchiveFileName(name: string) {
+export function toPlaylistArchiveFileName(
+    name: string,
+    password: string | null = null,
+) {
     return toArchiveFileName(
         name,
-        PLAYLIST_ARCHIVE_DOT_EXTENSION,
+        toArchiveDotExtension(PLAYLIST_ARCHIVE_DOT_EXTENSION, password),
         FALLBACK_NAME,
     );
 }
@@ -214,7 +224,10 @@ async function writeArchiveFiles(jsonData: PlaylistType, stagingDir: string) {
     return archiveEntries;
 }
 
-export async function createPlaylistArchive(playlist: Playlist) {
+export async function createPlaylistArchive(
+    playlist: Playlist,
+    password: string | null = null,
+) {
     const jsonData = await playlist.getJsonData();
     if (jsonData === null) {
         throw new Error('Unable to read the playlist');
@@ -224,10 +237,23 @@ export async function createPlaylistArchive(playlist: Playlist) {
         const archiveEntries = await writeArchiveFiles(jsonData, stagingDir);
         const archiveFilePath = await genNextArchiveFilePath(
             getDownloadPath(),
-            toPlaylistArchiveFileName(playlist.fileSource.name),
-            PLAYLIST_ARCHIVE_DOT_EXTENSION,
+            toPlaylistArchiveFileName(playlist.fileSource.name, password),
+            toArchiveDotExtension(PLAYLIST_ARCHIVE_DOT_EXTENSION, password),
         );
-        await tarCreate(stagingDir, archiveFilePath, archiveEntries, true);
+        // Protecting one means tar writes into the staging dir that is deleted
+        // in `finally` anyway, so the plain copy never outlives the call and
+        // only the wrapped one reaches Downloads.
+        const plainFilePath = password
+            ? pathJoin(stagingDir, PLAIN_ARCHIVE_TEMP_NAME)
+            : archiveFilePath;
+        await tarCreate(stagingDir, plainFilePath, archiveEntries, true);
+        if (password) {
+            return await protectArchiveFile(
+                plainFilePath,
+                archiveFilePath,
+                password,
+            );
+        }
         return archiveFilePath;
     } finally {
         await safeDeleteDir(stagingDir);
@@ -235,8 +261,20 @@ export async function createPlaylistArchive(playlist: Playlist) {
 }
 
 export async function exportPlaylist(playlist: Playlist) {
+    // One dialog, always — an empty answer writes exactly the bundle this
+    // export has always written; cancelling backs out of the whole thing.
+    const password = await askForNewArchivePassword('Export Playlist');
+    if (password === null) {
+        return null;
+    }
+    // Protecting a bundle adds a full re-read of it, so the export is no longer
+    // instant and says so.
+    showProgressBar('Export Playlist');
     try {
-        const archiveFilePath = await createPlaylistArchive(playlist);
+        const archiveFilePath = await createPlaylistArchive(
+            playlist,
+            password || null,
+        );
         showSimpleToast('Export Playlist', `Exported to ${archiveFilePath}`);
         showFileOrDirExplorer(archiveFilePath);
         return archiveFilePath;
@@ -247,6 +285,8 @@ export async function exportPlaylist(playlist: Playlist) {
             error?.message ?? 'Unable to export the playlist',
         );
         return null;
+    } finally {
+        hideProgressBar('Export Playlist');
     }
 }
 
@@ -341,7 +381,18 @@ async function applyImportedPaths(
 export async function importPlaylistArchive(archiveFilePath: string) {
     const extractDir = await createWorkDir('owapl-import');
     try {
-        await tarExtract(archiveFilePath, extractDir);
+        // A protected bundle is decrypted into the same work dir this is
+        // already unpacking into, so `safeDeleteDir` below carries the plain
+        // copy away with everything else.
+        const readableArchive = await openArchiveForReading(
+            archiveFilePath,
+            extractDir,
+            IMPORT_TITLE,
+        );
+        if (readableArchive === null) {
+            return null;
+        }
+        await tarExtract(readableArchive.filePath, extractDir);
         const manifest = validateManifest(
             await readArchiveManifest(
                 extractDir,
@@ -401,6 +452,11 @@ async function runPlaylistArchiveImport(archiveFilePath: string) {
     showProgressBar(IMPORT_TITLE);
     try {
         const playlist = await importPlaylistArchive(archiveFilePath);
+        // `null` is the password prompt being cancelled — the operator already
+        // knows they backed out, so it gets no toast.
+        if (playlist === null) {
+            return null;
+        }
         showSimpleToast(IMPORT_TITLE, `Imported ${playlist.fileSource.name}`);
         return playlist;
     } catch (error: any) {
@@ -419,7 +475,8 @@ export async function selectAndImportPlaylistArchive() {
     const filePaths = await selectFiles([
         {
             name: 'Open Worship Playlist Archive',
-            extensions: ['gz', 'tgz', 'tar'],
+            // `enc` is the password protected shape of the same bundle.
+            extensions: ['gz', 'tgz', 'tar', 'enc'],
         },
     ]);
     const archiveFilePath = filePaths[0];

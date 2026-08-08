@@ -17,6 +17,9 @@ const {
     tarAppendMock,
     tarCreateMock,
     tarExtractMock,
+    encryptFileMock,
+    decryptFileMock,
+    fsDeleteFileMock,
     getDirPathBySettingNameMock,
 } = vi.hoisted(() => ({
     ensureDirectoryMock: vi.fn(),
@@ -33,6 +36,9 @@ const {
     tarAppendMock: vi.fn(),
     tarCreateMock: vi.fn(),
     tarExtractMock: vi.fn(),
+    encryptFileMock: vi.fn(),
+    decryptFileMock: vi.fn(),
+    fsDeleteFileMock: vi.fn(),
     getDirPathBySettingNameMock: vi.fn(),
 }));
 
@@ -55,20 +61,38 @@ vi.mock('../../helper/DirSource', () => ({
     default: { getDirPathBySettingName: getDirPathBySettingNameMock },
 }));
 
+// The app-managed bible data folder resolves its own path from the parent
+// directory (it has no directory setting to read), and that is the module it
+// asks — dynamically, so this mock only has to exist, not to be light.
+vi.mock('../directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        get defaultStorage() {
+            return 'C:\\Users\\me\\Desktop\\open-worship-data';
+        },
+    },
+}));
+
 vi.mock('../../server/appHelpers', () => ({
     showFileOrDirExplorer: vi.fn(),
     tarAppend: tarAppendMock,
     tarCreate: tarCreateMock,
     tarExtract: tarExtractMock,
+    // A plain arrow, not a `vi.fn`: `mockReset` wipes implementations before
+    // every test, and an undefined answer here reads as "protected".
+    checkIsEncryptedFile: async () => false,
+    encryptFile: encryptFileMock,
+    decryptFile: decryptFileMock,
 }));
 
 vi.mock('../../server/fileHelpers', () => ({
+    checkIsHiddenName: (fileFullName: string) => fileFullName.startsWith('.'),
     ensureDirectory: ensureDirectoryMock,
     fsCheckDirExist: fsCheckDirExistMock,
     fsCheckFileExist: fsCheckFileExistMock,
     fsCloneFile: fsCloneFileMock,
     fsCreateFile: fsCreateFileMock,
     fsDeleteDir: fsDeleteDirMock,
+    fsDeleteFile: fsDeleteFileMock,
     fsGetFileSize: fsGetFileSizeMock,
     fsList: fsListMock,
     fsReadFile: fsReadFileMock,
@@ -164,6 +188,82 @@ describe('toCommonAncestor', () => {
     });
 });
 
+describe('getExportableDataFolders', () => {
+    /** The bible data folder as it really is: XMLs beside downloaded bibles. */
+    function mockBibleDataFolder(fileNames: string[]) {
+        fsListMock.mockImplementation(async (dirPath: string) => {
+            return dirPath.endsWith('bibles-data')
+                ? genListEntries(fileNames, ['KJV', 'ESV'])
+                : [];
+        });
+    }
+
+    test('offers every folder, including the ones with no path setting', async () => {
+        getDirPathBySettingNameMock.mockImplementation(
+            (settingName: string) => {
+                return `${DATA_DIR}\\${settingName}`;
+            },
+        );
+        mockBibleDataFolder([
+            'KJV.xml',
+            'Berean.XML',
+            'notes.txt',
+            '._KJV.xml',
+        ]);
+
+        const { getExportableDataFolders } = await loadModule();
+        const folders = await getExportableDataFolders();
+        const titles = folders.map(({ dataDirectory }) => {
+            return dataDirectory.title;
+        });
+
+        // The two that used to be silently absent from a "whole data" backup:
+        // the web backgrounds folder, and the bible XMLs — which are not
+        // reachable through a directory setting at all.
+        expect(titles).toContain('Background Webs');
+        expect(titles).toContain('Bibles XML');
+        const bibleXmls = folders.find(({ dataDirectory }) => {
+            return dataDirectory.title === 'Bibles XML';
+        });
+        expect(bibleXmls?.dirPath).toBe(`${DATA_DIR}\\bibles-data`);
+        // `.XML` counts, `.txt` does not, the `._` stub does not even though it
+        // ends in `.xml`, and the downloaded-bible sub-folders are not files so
+        // they never come up.
+        expect(bibleXmls?.fileNames).toEqual(['KJV.xml', 'Berean.XML']);
+    });
+
+    test('leaves out a folder whose path has gone missing', async () => {
+        getDirPathBySettingNameMock.mockReturnValue('');
+        fsCheckDirExistMock.mockImplementation(async (dirPath: string) => {
+            return dirPath.endsWith('bibles-data');
+        });
+        mockBibleDataFolder(['KJV.xml']);
+
+        const { getExportableDataFolders } = await loadModule();
+        const folders = await getExportableDataFolders();
+
+        expect(
+            folders.map(({ dataDirectory }) => {
+                return dataDirectory.title;
+            }),
+        ).toEqual(['Bibles XML']);
+    });
+
+    test('leaves out the bible folder when it holds only downloaded bibles', async () => {
+        getDirPathBySettingNameMock.mockReturnValue('');
+        fsCheckDirExistMock.mockImplementation(async (dirPath: string) => {
+            return dirPath.endsWith('bibles-data');
+        });
+        mockBibleDataFolder([]);
+
+        const { getExportableDataFolders } = await loadModule();
+
+        // Nothing of the user's own in there — a row that would restore
+        // nothing is not worth offering.
+        expect(await getExportableDataFolders()).toEqual([]);
+    });
+});
+
 describe('createDataArchive', () => {
     test('writes the tar from the data folder, then appends the manifest', async () => {
         const { createDataArchive } = await loadModule();
@@ -216,6 +316,15 @@ describe('createDataArchive', () => {
         for (const name of ['wedding-images', 'notes-htmls', 'a.ows']) {
             expect(excludeRegExp.test(name)).toBe(false);
         }
+        // The second pattern is the app's hidden-name rule: the `._*` stubs a
+        // macOS machine or a USB round-trip leaves behind never go in.
+        const hiddenRegExp = new RegExp(tarCreateMock.mock.calls[0][4][1]);
+        for (const name of ['._clock.html', '.DS_Store', '.git']) {
+            expect(hiddenRegExp.test(name)).toBe(true);
+        }
+        for (const name of ['clock.html', 'a.ows', 'my.song.owl']) {
+            expect(hiddenRegExp.test(name)).toBe(false);
+        }
         // Not gzipped, because the manifest can only be appended to a plain tar.
         expect(tarCreateMock.mock.calls[0][3]).toBe(false);
         const manifestCall = fsCreateFileMock.mock.calls.find((call) => {
@@ -234,6 +343,140 @@ describe('createDataArchive', () => {
             expect.stringContaining('owadata-manifest'),
             ['manifest.json'],
         );
+        // No password was given, so nothing was wrapped and the archive is byte
+        // for byte what this export has always written.
+        expect(encryptFileMock).not.toHaveBeenCalled();
+    });
+
+    test('wraps the finished tar when a password is given', async () => {
+        const { createDataArchive } = await loadModule();
+
+        const archiveFilePath = await createDataArchive(
+            [
+                {
+                    dataDirectory: {
+                        title: 'Documents',
+                        settingName: 'select-dir-app-document',
+                        defaultDirName: 'documents',
+                        iconClassName: 'bi-file-earmark-text',
+                    },
+                    dirPath: `${DATA_DIR}\\documents`,
+                },
+            ],
+            'In Jesus Christ',
+        );
+
+        const finalFilePath = 'C:\\downloads\\open-worship-data.owadata.enc';
+        const plainFilePath = `${finalFilePath}.part`;
+        expect(archiveFilePath).toBe(finalFilePath);
+        // The plain tar is built BESIDE the destination, not in the temp
+        // folder: this archive has no staging copy by design and can be
+        // gigabytes, so both files stay on the volume the operator chose.
+        expect(tarCreateMock.mock.calls[0][1]).toBe(plainFilePath);
+        // The manifest is appended BEFORE the wrap — `tar.r` cannot append to
+        // ciphertext.
+        expect(tarAppendMock).toHaveBeenCalledWith(
+            plainFilePath,
+            expect.stringContaining('owadata-manifest'),
+            ['manifest.json'],
+        );
+        expect(encryptFileMock).toHaveBeenCalledWith(
+            plainFilePath,
+            finalFilePath,
+            'In Jesus Christ',
+        );
+        // The unprotected copy is the whole point of the exercise and does not
+        // get to outlive the protected one.
+        expect(fsDeleteFileMock).toHaveBeenCalledWith(plainFilePath);
+    });
+
+    test('leaves no half-built `.part` behind when the wrap fails', async () => {
+        encryptFileMock.mockRejectedValue(new Error('disk full'));
+        const { createDataArchive } = await loadModule();
+
+        await expect(
+            createDataArchive(
+                [
+                    {
+                        dataDirectory: {
+                            title: 'Documents',
+                            settingName: 'select-dir-app-document',
+                            defaultDirName: 'documents',
+                            iconClassName: 'bi-file-earmark-text',
+                        },
+                        dirPath: `${DATA_DIR}\\documents`,
+                    },
+                ],
+                'In Jesus Christ',
+            ),
+        ).rejects.toThrow('disk full');
+
+        expect(fsDeleteFileMock).toHaveBeenCalledWith(
+            'C:\\downloads\\open-worship-data.owadata.enc.part',
+        );
+    });
+});
+
+describe('createDataArchive, filtered folder', () => {
+    const BIBLE_XML_DIRECTORY = {
+        title: 'Bibles XML',
+        settingName: 'app-dir-bible-data',
+        defaultDirName: 'bibles-data',
+        iconClassName: 'bi-filetype-xml',
+        fileNamePattern: /\.xml$/i,
+    };
+
+    test('writes the matching files, and the FOLDER into the manifest', async () => {
+        const { createDataArchive } = await loadModule();
+
+        await createDataArchive([
+            {
+                dataDirectory: BIBLE_XML_DIRECTORY,
+                dirPath: `${DATA_DIR}\\bibles-data`,
+                fileNames: ['KJV.xml', 'Berean.XML'],
+            },
+            {
+                dataDirectory: {
+                    title: 'Documents',
+                    settingName: 'select-dir-app-document',
+                    defaultDirName: 'documents',
+                    iconClassName: 'bi-file-earmark-text',
+                },
+                dirPath: `${DATA_DIR}\\documents`,
+            },
+        ]);
+
+        // The hundreds of MB of downloaded bible databases sitting in the same
+        // folder are named by nothing, so tar never walks them.
+        expect(tarCreateMock.mock.calls[0][2]).toEqual([
+            'bibles-data/KJV.xml',
+            'bibles-data/Berean.XML',
+            'documents',
+        ]);
+        // Import extracts by entry PREFIX, so the manifest still says the
+        // folder and those files land back inside it.
+        const manifestCall = fsCreateFileMock.mock.calls.find((call) => {
+            return String(call[0]).endsWith('manifest.json');
+        });
+        expect(JSON.parse(String(manifestCall?.[1])).folders).toEqual([
+            { settingName: 'app-dir-bible-data', entry: 'bibles-data' },
+            { settingName: 'select-dir-app-document', entry: 'documents' },
+        ]);
+    });
+
+    test('archives nothing of it when its files were never listed', async () => {
+        const { createDataArchive } = await loadModule();
+
+        await createDataArchive([
+            {
+                dataDirectory: BIBLE_XML_DIRECTORY,
+                dirPath: `${DATA_DIR}\\bibles-data`,
+            },
+        ]);
+
+        // Never the whole folder: the fallback has to be "nothing", or one
+        // caller that forgets to list puts the downloaded bibles back in.
+        expect(tarCreateMock.mock.calls[0][2]).toEqual([]);
     });
 });
 
@@ -417,6 +660,43 @@ describe('importDataArchive', () => {
         expect(counts).toEqual({ copied: 1, reused: 0 });
         // A differing size settles it without reading either file through.
         expect(getFileMD5Mock).not.toHaveBeenCalled();
+    });
+
+    test('never restores a dot-prefixed file from an older archive', async () => {
+        getDirPathBySettingNameMock.mockReturnValue(`${DATA_DIR}\\documents`);
+        fsListMock.mockResolvedValue(
+            genListEntries(['a.ows', '._a.ows', '.DS_Store']),
+        );
+
+        const { importDataArchive } = await loadModule();
+        const counts = await importDataArchive('C:\\downloads\\a.tar', FOLDERS);
+
+        // An archive written before those names were excluded still holds
+        // them; putting them back would restore what the app ignores anyway.
+        expect(counts).toEqual({ copied: 1, reused: 0 });
+        expect(fsCloneFileMock).toHaveBeenCalledTimes(1);
+        expect(fsCloneFileMock).toHaveBeenCalledWith(
+            `${EXTRACT_DIR}\\documents\\a.ows`,
+            `${DATA_DIR}\\documents\\a.ows`,
+        );
+    });
+
+    test('restores the bible data folder with no directory setting set', async () => {
+        // Nothing points at it — the app fixed its place — so the "choose it in
+        // Path Settings first" guard must not fire for it.
+        getDirPathBySettingNameMock.mockReturnValue('');
+        fsListMock.mockResolvedValue(genListEntries(['KJV.xml']));
+
+        const { importDataArchive } = await loadModule();
+        const counts = await importDataArchive('C:\\downloads\\a.tar', [
+            { settingName: 'app-dir-bible-data', entry: 'bibles-data' },
+        ]);
+
+        expect(counts).toEqual({ copied: 1, reused: 0 });
+        expect(fsCloneFileMock).toHaveBeenCalledWith(
+            `${EXTRACT_DIR}\\bibles-data\\KJV.xml`,
+            `${DATA_DIR}\\bibles-data\\KJV.xml`,
+        );
     });
 
     test('recurses into sub-folders', async () => {

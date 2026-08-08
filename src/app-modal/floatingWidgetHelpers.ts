@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 
 import { getSetting, setSetting } from '../helper/settingHelpers';
+import { type MutationType } from '../helper/helpers';
 
 const VIEWPORT_PADDING = 8;
 const DEFAULT_WIDTH = 360;
@@ -74,8 +75,59 @@ export type FloatingWidgetOptions = {
     minHeight?: number;
     maxWidth?: number;
     maxHeight?: number;
-    isNoBodyDraggable?: boolean;
+    isBodyDraggable?: boolean;
+    // Shifts only the FIRST-EVER position, before anything is persisted. For
+    // hosts that can open several widgets at once and would otherwise drop them
+    // all on the same spot.
+    initialOffset?: number;
 };
+
+// Floating widgets are opened by unrelated hosts in unrelated React trees, so
+// "the focused one is on top" cannot be solved by DOM order — they all share the
+// same base z-index from the stylesheet and only their offset inside the
+// reserved band changes. Keep in sync with `$z-index-floating-widget-band`.
+export const FLOATING_WIDGET_MAX_Z_OFFSET = 9;
+
+type StackListener = (zIndexOffset: number) => void;
+
+// Live widgets, oldest-focused first — the tail is the topmost one. Only ever
+// holds the handful of widgets currently mounted, and is emptied by unmounts.
+const stackedWidgetListeners: StackListener[] = [];
+
+function notifyStackedWidgets() {
+    const { length } = stackedWidgetListeners;
+    stackedWidgetListeners.forEach((listener, index) => {
+        // Counting from the TOP keeps the widgets the user cares about
+        // separated; if more than the band is open, the bottom ones tie at the
+        // floor instead of the top ones tying with each other.
+        const indexFromTop = length - 1 - index;
+        listener(Math.max(0, FLOATING_WIDGET_MAX_Z_OFFSET - indexFromTop));
+    });
+}
+
+export function registerFloatingWidget(listener: StackListener) {
+    stackedWidgetListeners.push(listener);
+    notifyStackedWidgets();
+    return () => {
+        const index = stackedWidgetListeners.indexOf(listener);
+        if (index !== -1) {
+            stackedWidgetListeners.splice(index, 1);
+            notifyStackedWidgets();
+        }
+    };
+}
+
+export function bringFloatingWidgetToFront(listener: StackListener) {
+    const index = stackedWidgetListeners.indexOf(listener);
+    // Already on top (the common case for repeated clicks in one widget) — no
+    // reorder and no re-render of anything.
+    if (index === -1 || index === stackedWidgetListeners.length - 1) {
+        return;
+    }
+    stackedWidgetListeners.splice(index, 1);
+    stackedWidgetListeners.push(listener);
+    notifyStackedWidgets();
+}
 
 function clampNumber(value: number, min: number, max: number) {
     return Math.min(Math.max(value, min), Math.max(min, max));
@@ -209,11 +261,12 @@ export function getInitialWidgetRect(options: FloatingWidgetOptions) {
         options,
     );
     const viewportSize = getViewportSize();
+    const initialOffset = options.initialOffset ?? 0;
 
     return clampWidgetRect(
         {
-            left: viewportSize.width - size.width - 24,
-            top: 64,
+            left: viewportSize.width - size.width - 24 - initialOffset,
+            top: 64 + initialOffset,
             ...size,
         },
         options,
@@ -281,4 +334,41 @@ export function isOnScrollbar(
     const isOnVerticalBar = clientX - rect.left > target.clientWidth;
     const isOnHorizontalBar = clientY - rect.top > target.clientHeight;
     return isOnVerticalBar || isOnHorizontalBar;
+}
+
+// TODO: this is subject to not be used in the future in favor of performance
+export function checkAreChildrenOnscreen(element: Node, type: MutationType) {
+    // FIRST, and O(1): this runs from the app-wide `MutationObserver`
+    // (`document.body`, `subtree` + `attributes`), so it is handed EVERY
+    // attribute change in the window — hundreds per present on the presenter.
+    // With no widget mounted there is nothing any of them can be inside of, and
+    // the registry already knows that, so the `closest()` ancestor walk below
+    // is skipped entirely for what is by far the common case.
+    if (stackedWidgetListeners.length === 0) {
+        return;
+    }
+    if (
+        element instanceof HTMLElement === false ||
+        element.classList.contains('floating-widget')
+    ) {
+        return;
+    }
+    if (!(type === 'attr-modified' || type === 'added')) {
+        return;
+    }
+    const widgetElement = element.closest<HTMLElement>('.floating-widget');
+    if (widgetElement === null) {
+        return;
+    }
+    const hasOnscreenChild =
+        widgetElement.querySelector('[data-screen-icon-id], .app-on-screen') !==
+        null;
+    const value = hasOnscreenChild ? 'true' : 'false';
+    // Only on a real change: writing the attribute is itself an `attributes`
+    // mutation, so an unconditional write turns every mutation inside a widget
+    // into two records. (The echo is harmless — it lands on `.floating-widget`
+    // and exits at the guard above — but it is still work.)
+    if (widgetElement.dataset.hasOnscreenChild !== value) {
+        widgetElement.dataset.hasOnscreenChild = value;
+    }
 }

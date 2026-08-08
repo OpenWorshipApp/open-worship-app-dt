@@ -15,6 +15,8 @@ const {
     genNextFilePathMock,
     tarCreateMock,
     tarExtractMock,
+    encryptFileMock,
+    decryptFileMock,
     getDirPathBySettingNameMock,
     fireUpdateEventMock,
     getDirSourceSettingNameMock,
@@ -31,6 +33,8 @@ const {
     genNextFilePathMock: vi.fn(),
     tarCreateMock: vi.fn(),
     tarExtractMock: vi.fn(),
+    encryptFileMock: vi.fn(),
+    decryptFileMock: vi.fn(),
     getDirPathBySettingNameMock: vi.fn(),
     fireUpdateEventMock: vi.fn(),
     getDirSourceSettingNameMock: vi.fn(),
@@ -105,6 +109,12 @@ vi.mock('../server/appHelpers', () => ({
     showFileOrDirExplorer: vi.fn(),
     tarCreate: tarCreateMock,
     tarExtract: tarExtractMock,
+    // A plain arrow, not a `vi.fn`: `mockReset` wipes implementations before
+    // every test, and an undefined answer here reads as "protected" and sends
+    // every import down the password path.
+    checkIsEncryptedFile: async () => false,
+    encryptFile: encryptFileMock,
+    decryptFile: decryptFileMock,
 }));
 
 // The Downloads folder answers separately, and empty by default. Tests here

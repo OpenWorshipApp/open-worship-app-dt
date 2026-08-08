@@ -774,6 +774,11 @@ const appInfo = {
 };
 
 async function initLyricMock() {
+    // Bail BEFORE the dynamic imports: `Lyric` pulls the whole `open-lyric`
+    // chain (and monaco behind it) in, which no other page needs.
+    if (!location.pathname.includes('lyricEditor.html')) {
+        return;
+    }
     const { LOCAL_STORAGE_FOLDER_NAME } =
         await import('../setting/directory-setting/appLocalStorage');
     const { defaultDataDirNames, dirSourceSettingNames } =
@@ -783,9 +788,6 @@ async function initLyricMock() {
         await import('../setting/directory-setting/appLocalStorage');
     const { setParamFileFullName } = await import('../helper/domHelpers');
 
-    if (!location.pathname.includes('lyricEditor.html')) {
-        return;
-    }
     globalThis.localStorage.setItem(
         SELECTED_PARENT_DIR_SETTING_NAME,
         BROWSER_DATA_ROOT,

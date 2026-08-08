@@ -3,6 +3,7 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import { get_api_url, get_api_key } from '../../_owa-crypto';
 import appProvider from '../../server/appProvider';
 import {
+    checkIsHiddenName,
     fsDeleteFile,
     fsListDirectories,
     fsCheckDirExist,
@@ -169,7 +170,7 @@ export async function getDownloadedBibleInfoList() {
         // the XML-preview `.cache` dirs and any hidden/dot dir (`.git`,
         // `.DS_Store`, …) — those are never bibles, so probing them is wasted
         // I/O on the low-spec target.
-        if (fileName.endsWith('.cache') || fileName.startsWith('.')) {
+        if (fileName.endsWith('.cache') || checkIsHiddenName(fileName)) {
             return null;
         }
         return getBibleInfo(fileName, true);

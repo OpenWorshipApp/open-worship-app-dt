@@ -1,0 +1,8 @@
+// The previewer card inside is `h-100` and scrolls itself (its slide container
+// is `overflow-y: scroll`), so the widget body must not add a second scrollbar
+// around it.
+.floating-widget.app-document-preview-floating {
+  .floating-widget__content {
+    overflow: hidden;
+  }
+}

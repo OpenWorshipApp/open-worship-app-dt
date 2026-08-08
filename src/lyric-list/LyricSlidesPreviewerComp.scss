@@ -59,13 +59,12 @@
     // A tint of the same accent, so the chip reads as a colour swatch rather
     // than as an outline that happens to be coloured.
     background-color: color-mix(in srgb, var(--stage-accent) 18%, transparent);
-    height: 20px;
+    height: 26px;
 
     // The base stage keeps its own accent but cannot be removed: the padlock
-    // and the missing remove button are what say so.
+    // and the missing remove button are what say so. It still ends in the gear
+    // button, so it takes the same right padding as every other chip.
     &.is-base {
-      padding-right: 8px;
-
       & > .bi-lock-fill {
         font-size: 0.75em;
         opacity: 0.8;
@@ -75,14 +74,16 @@
 
   // The border the stage's preview area wears, in its chip's colour.
   .stage-previewer-pane {
-    width: 100%;
-    height: 100%;
-    border: 1px solid var(--stage-accent);
-    border-radius: 6px;
-    overflow: hidden;
+    border-width: 1px;
+    border-color: var(--stage-accent);
+    border-style: inset;
+    position: relative;
   }
 
-  .stage-previewer-chip-remove {
+  // Both chip buttons share one box so a chip's height never changes with the
+  // number of controls on it - the header is a single unshrinkable line.
+  .stage-previewer-chip-remove,
+  .stage-previewer-chip-config {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -96,12 +97,35 @@
     cursor: pointer;
     font-size: 0.7em;
     opacity: 0.75;
+  }
 
+  .stage-previewer-chip-remove {
     &:hover,
     &:focus-visible {
-      background-color: var(--bs-danger);
+      background-color: var(--bs-secondary);
       color: var(--bs-white);
       opacity: 1;
+    }
+  }
+
+  // The gear wears its own stage's accent rather than a warning colour: it
+  // configures the stage, it does not destroy anything.
+  .stage-previewer-chip-config {
+    &:hover,
+    &:focus-visible {
+      background-color: var(--stage-accent);
+      color: var(--bs-body-bg);
+      opacity: 1;
+    }
+
+    // While this stage's panel is the one showing.
+    &.is-active {
+      opacity: 1;
+      background-color: color-mix(
+        in srgb,
+        var(--stage-accent) 35%,
+        transparent
+      );
     }
   }
 }

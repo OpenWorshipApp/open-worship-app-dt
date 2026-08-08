@@ -17,6 +17,7 @@ dashboard.loadValue = async () => {
 };
 dashboard.saveValue = async (value) => {
     await lyric.setContent(value);
+    await lyric.save();
 };
 void dashboard.mount().catch((error: any) => {
     // The app already rendered its failure state (failBoot); just log here.

@@ -7,6 +7,7 @@ import {
     useStateSettingNumber,
 } from '../helper/settingHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
+import { tran } from '../lang/langHelpers';
 
 export type NextDataType = {
     isNext: boolean;
@@ -155,7 +156,9 @@ export default function SlideAutoPlayComp({
                 />
             </div>
             <div className="input-group" style={{ width: '120px' }}>
-                <div className="input-group-text">M:</div>
+                <div className="input-group-text" title={tran('Seconds')}>
+                    S:
+                </div>
                 <input
                     className="form-control form-control-sm"
                     type="number"

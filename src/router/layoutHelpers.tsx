@@ -16,12 +16,16 @@ import {
     setSelectedEditingSlide,
     preloadAttachedBackground,
     type SelectedAppDocumentContextType,
+    type SetSelectedVaryAppDocumentOptionsType,
     type SelectedSlideContextType,
 } from '../app-document-list/appDocumentHelpers';
+import {
+    checkIsVaryAppDocumentSwitchRefused,
+    forceUnpinVaryAppDocument,
+} from '../app-document-list/varyAppDocumentLockHelpers';
 import type { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers';
 import type { TabOptionType } from './routeHelpers';
 import { toTitleExternal } from './routeHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
 import { type AllControlType as KeyboardControlType } from '../event/KeyboardEventListener';
 import { onSlideItemsKeyboardEvent } from '../slide-editor/slideEditingKeyboardEventHelpers';
 import { checkIsHistoryMovementEventType } from '../editing-manager/EditingHistoryManager';
@@ -199,7 +203,12 @@ export function useAppDocumentContextValues() {
     useAppEffectAsync(
         async (methodContext) => {
             const varyAppDocument = await getSelectedVaryAppDocument();
-            if (varyAppDocument !== null) {
+            if (varyAppDocument === null) {
+                // The pinned document no longer resolves — deleted while the
+                // app was closed, or its directory moved. A pin with nothing to
+                // pin is invisible AND would refuse the next click.
+                forceUnpinVaryAppDocument();
+            } else {
                 preloadAttachedBackground(varyAppDocument);
             }
             methodContext.setVaryAppDocument(varyAppDocument);
@@ -217,7 +226,22 @@ export function useAppDocumentContextValues() {
         useMemo((): SelectedAppDocumentContextType => {
             const setSelectedVaryAppDocument = async (
                 newVaryAppDocument: VaryAppDocumentType | null,
+                { isForce = false }: SetSelectedVaryAppDocumentOptionsType = {},
             ) => {
+                // First statement on purpose: a refused switch must not pay for
+                // `preloadAttachedBackground` or `getSlides()` below, so a
+                // mis-click on a pinned document is cheaper than a real one.
+                // Nothing else needs undoing — the floating-preview auto-close
+                // keys off the selection, which stays put.
+                if (
+                    !isForce &&
+                    checkIsVaryAppDocumentSwitchRefused(
+                        varyAppDocument,
+                        newVaryAppDocument,
+                    )
+                ) {
+                    return false;
+                }
                 setVaryAppDocument1(newVaryAppDocument);
                 let selectedSlideEditing: Slide | null = null;
                 if (newVaryAppDocument !== null) {
@@ -240,6 +264,7 @@ export function useAppDocumentContextValues() {
                     }
                 }
                 setSlide1(selectedSlideEditing);
+                return true;
             };
             return {
                 selectedVaryAppDocument: varyAppDocument,
@@ -333,22 +358,7 @@ export function useAppDocumentContextValues() {
                 slides.find((item) => {
                     return slide !== null && item.checkIsSame(slide);
                 }) ?? null;
-            // Never silently jump the editor to an unrelated slide. If the
-            // slide the user is currently viewing no longer exists at this
-            // point in the document's history (e.g. an Undo/Redo/Discard
-            // moved past the point where it was created/still exists), fall
-            // back to the first slide but tell the user why their view
-            // changed, instead of swapping it out from under them with no
-            // indication (this previously looked like silent data loss).
             if (matchedSlide === null) {
-                if (slide !== null && slides.length > 0) {
-                    showSimpleToast(
-                        'Slide History',
-                        'The slide you were viewing no longer exists at ' +
-                            'this point in history; switched to the first ' +
-                            'slide instead.',
-                    );
-                }
                 setSlide1(slides[0] ?? null);
                 return;
             }
@@ -379,6 +389,9 @@ export function useAppDocumentContextValues() {
     const handleFileDelete = useCallback(
         (filePath: string) => {
             if (varyAppDocument?.filePath === filePath) {
+                // Before clearing: the pin button unmounts on the same render,
+                // and a pin left on would refuse the next click.
+                forceUnpinVaryAppDocument();
                 setVaryAppDocument1(null);
                 setSlide1(null);
             }

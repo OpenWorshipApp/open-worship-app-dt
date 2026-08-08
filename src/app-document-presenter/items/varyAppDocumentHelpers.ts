@@ -191,11 +191,17 @@ export function getContainerDiv(): HTMLDivElement | null {
 export function handleSlideMoving(
     event: KeyboardEvent | ReactKeyboardEvent<any>,
     varySlides: VarySlideType[],
+    // The calling previewer's OWN container. Omitted (or null) keeps the
+    // historical first-match-in-the-document lookup, which is what a previewer
+    // rendered without a scope above it still wants. Passing it is what lets
+    // several previewers coexist: every one of them gets this callback, and
+    // only the one whose container has focus may act on the key.
+    container: HTMLDivElement | null = null,
 ) {
     if (!appProvider.presenterHomePage) {
         return;
     }
-    const element = getContainerDiv();
+    const element = container ?? getContainerDiv();
     if (element === null) {
         return;
     }

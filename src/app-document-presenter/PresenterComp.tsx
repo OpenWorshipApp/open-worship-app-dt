@@ -35,6 +35,7 @@ import type {
     FlexSizeType,
 } from '../resize-actor/flexSizeHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
+import VaryAppDocumentPinComp from './VaryAppDocumentPinComp';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('./items/AppDocumentPreviewerComp');
@@ -113,6 +114,11 @@ const tabTypeList = [
     ['b', toIconedLabel('Bibles'), LazyPresenterBiblePreviewerRenderComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
+
+// Module scope so the element identity survives every recompute of the `tabs`
+// memo. React still routes context updates into a bailed-out subtree, so the
+// pin keeps reacting to the selection.
+const PIN_ELEMENT = <VaryAppDocumentPinComp />;
 
 function ForegroundFloatingComp() {
     const viewController = useBibleItemsViewControllerContext();
@@ -249,7 +255,15 @@ export default function PresenterComp() {
             tabTypeList.map(([key, name]) => {
                 return {
                     key,
-                    title: name,
+                    title:
+                        key === 'd' ? (
+                            <>
+                                {name}
+                                {PIN_ELEMENT}
+                            </>
+                        ) : (
+                            name
+                        ),
                     checkIsOnScreen: async () => {
                         const isOnScreen = await checkIsOnScreen(
                             key,

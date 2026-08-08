@@ -24,9 +24,15 @@ export default function AppDocumentEditorComp() {
     useEffect(() => {
         const selectedVaryAppDocument =
             selectedAppDocumentContext?.selectedVaryAppDocument ?? null;
+        // `isEditable` and not just the type test: `LyricAppDocument` extends
+        // `AppDocument`, so `checkIsThisType` (an `instanceof`) passes for a
+        // lyric and the guard never fired — leaving a dead "No slide selected"
+        // editor with no way back. Same reasoning as
+        // `checkIsAppDocumentSelected`.
         if (
             selectedVaryAppDocument === null ||
-            AppDocument.checkIsThisType(selectedVaryAppDocument)
+            (AppDocument.checkIsThisType(selectedVaryAppDocument) &&
+                selectedVaryAppDocument.isEditable)
         ) {
             return;
         }

@@ -187,6 +187,18 @@ export const mimetypeNameTypeList = [
 ] as const;
 export type MimetypeNameType = (typeof mimetypeNameTypeList)[number];
 
+/**
+ * A name the app does not look at: anything dot-prefixed. Mostly the `._*`
+ * AppleDouble stubs a macOS machine or a USB round-trip leaves in a folder,
+ * plus whatever the OS hides there. Written once because every list that has
+ * ever needed it — directory listings, the XML bibles, the bible download
+ * cache, the data archive — has to agree, or a file skipped by one shows up
+ * through another.
+ */
+export function checkIsHiddenName(fileFullName: string) {
+    return fileFullName.startsWith('.');
+}
+
 export function getFileMetaData(
     fileFullName: string,
     mimetypeList?: AppMimetypeType[],
@@ -481,7 +493,7 @@ export async function fsListDirectories(dirPath: string) {
     const foundFileList = await fsList(dirPath);
     return foundFileList
         .filter(({ name, isDirectory }) => {
-            if (name.startsWith('.')) {
+            if (checkIsHiddenName(name)) {
                 return false;
             }
             return isDirectory;
