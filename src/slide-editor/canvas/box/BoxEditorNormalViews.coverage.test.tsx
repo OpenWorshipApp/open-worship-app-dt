@@ -26,6 +26,7 @@ const {
     textValidateMock,
     videoValidateMock,
     cameraValidateMock,
+    audioValidateMock,
 } = vi.hoisted(() => {
     const defaultContextMenuHandlerMock = vi.fn();
     const genHandleContextMenuOpeningMock = vi.fn(
@@ -92,6 +93,7 @@ const {
         textValidateMock: vi.fn(),
         videoValidateMock: vi.fn(),
         cameraValidateMock: vi.fn(),
+        audioValidateMock: vi.fn(),
     };
 });
 
@@ -159,6 +161,12 @@ vi.mock('../CanvasItemCamera', () => ({
     },
 }));
 
+vi.mock('../CanvasItemAudio', () => ({
+    default: {
+        validate: audioValidateMock,
+    },
+}));
+
 vi.mock('../../../context-menu/appContextMenuHelpers', () => ({
     showAppContextMenu: showAppContextMenuMock,
 }));
@@ -167,10 +175,16 @@ vi.mock('../../../others/commonButtons', () => ({
     useToggleBibleLookupPopupContext: () => null,
 }));
 
+// `pathUtils` is not used by any view here, but the audio view reaches
+// `canvasHelpers` -> `fileHelpers`, which reads `appProvider.pathUtils.sep` at
+// module load and throws without it.
 vi.mock('../../../server/appProvider', () => ({
     default: {
         systemUtils: {
             copyToClipboard: copyToClipboardMock,
+        },
+        pathUtils: {
+            sep: '/',
         },
     },
 }));
@@ -216,6 +230,9 @@ import BoxEditorNormalViewVideoModeComp, {
 import BoxEditorNormalViewCameraModeComp, {
     BoxEditorNormalCameraRender,
 } from './BoxEditorNormalViewCameraModeComp';
+import BoxEditorNormalViewAudioModeComp, {
+    BoxEditorNormalAudioRender,
+} from './BoxEditorNormalViewAudioModeComp';
 import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
 
 describe('BoxEditor normal view components', () => {
@@ -646,6 +663,51 @@ describe('BoxEditor normal view components', () => {
         });
 
         await render(<BoxEditorNormalCameraRender />);
+
+        expect(handleErrorMock).toHaveBeenCalledWith(error);
+        expect(container?.textContent).toContain('Error');
+    });
+
+    test('paints the audio player scaled up to cover its box', async () => {
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            filePath: '/slides/song.mp3',
+            width: 1200,
+            height: 300,
+        };
+
+        await render(
+            <BoxEditorNormalViewAudioModeComp
+                style={{ backgroundColor: 'aliceblue' }}
+            />,
+        );
+
+        const audio = container?.querySelector<HTMLAudioElement>('audio');
+        expect(audioValidateMock).toHaveBeenCalledWith(
+            canvasItemPropsState.value,
+        );
+        expect(audio?.getAttribute('src')).toBe('file:///slides/song.mp3');
+        // Nothing is fetched until the operator presses play.
+        expect(audio?.getAttribute('preload')).toBe('none');
+        // Preview-only: the projected screen hides it and leaves it unsynced.
+        expect(audio?.hasAttribute('data-preview-only')).toBe(true);
+        // 1200x300 is the control's own proportions 5x over, so it is laid out
+        // at exactly those proportions and painted back up by 5 — covering the
+        // box exactly. It must be a `transform`, never a `zoom`: a zoomed
+        // subtree throws off where Chromium puts the native overflow popup.
+        expect(audio?.style.transform).toBe('scale(5)');
+        expect(audio?.getAttribute('style')).not.toContain('zoom');
+        expect(audio?.style.width).toBe('240px');
+        expect(audio?.style.height).toBe('60px');
+    });
+
+    test('falls back to the error view when audio props are invalid', async () => {
+        const error = new Error('bad audio');
+        audioValidateMock.mockImplementation(() => {
+            throw error;
+        });
+
+        await render(<BoxEditorNormalAudioRender />);
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(container?.textContent).toContain('Error');

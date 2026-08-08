@@ -11,6 +11,12 @@ vi.mock('../../server/fileHelpers', () => ({
 }));
 
 import {
+    AUDIO_CONTROL_HEIGHT,
+    AUDIO_CONTROL_WIDTH,
+    AUDIO_EMBED_HEIGHT,
+    AUDIO_EMBED_SCALE,
+    AUDIO_EMBED_WIDTH,
+    calcAudioControlScale,
     canvasItemList,
     checkIsSupportCanvasMediaType,
     checkIsSupportMediaType,
@@ -238,5 +244,35 @@ describe('canvasHelpers', () => {
             null,
         );
         expect(getRemoteMediaMimetypeName('not a url')).toBe(null);
+    });
+
+    test('scales an audio control to its box, clamped at both ends', () => {
+        // The box the operator gets on insert is the control's own proportions
+        // oversized by exactly the insert scale, so it scales by that.
+        expect(
+            calcAudioControlScale(AUDIO_EMBED_WIDTH, AUDIO_EMBED_HEIGHT),
+        ).toBe(AUDIO_EMBED_SCALE);
+        // Whichever axis fits worst wins, so the control is never clipped.
+        expect(
+            calcAudioControlScale(
+                AUDIO_CONTROL_WIDTH * 4,
+                AUDIO_CONTROL_HEIGHT * 2,
+            ),
+        ).toBe(2);
+        expect(
+            calcAudioControlScale(
+                AUDIO_CONTROL_WIDTH * 2,
+                AUDIO_CONTROL_HEIGHT * 4,
+            ),
+        ).toBe(2);
+        // Floored at 1x: an item saved at the old control-sized box renders
+        // exactly as it did before the box became a scale factor.
+        expect(
+            calcAudioControlScale(AUDIO_CONTROL_WIDTH, AUDIO_CONTROL_HEIGHT),
+        ).toBe(1);
+        expect(calcAudioControlScale(10, 10)).toBe(1);
+        // Ceilinged at the insert scale: a full-slide box (a lyric audio
+        // attachment) must not grow a monstrous player.
+        expect(calcAudioControlScale(1920, 1080)).toBe(AUDIO_EMBED_SCALE);
     });
 });
