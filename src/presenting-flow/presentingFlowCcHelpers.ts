@@ -7,6 +7,8 @@
  * Nothing translated, nothing that reads a file, no React.
  */
 
+import type { PresentingFlowMediaControlType } from './presentingFlowMediaControlHelpers';
+
 /**
  * What a CC element STORES: the uuid of the listed entry it follows, and its own
  * pin if it has one. Nothing else.
@@ -27,10 +29,18 @@
  * `screenIds` is the ONE thing a CC may say for itself: where it lands is about
  * this line of the sheet, not about what the element is. Absent means "wherever
  * the element itself is pinned, else wherever the host went".
+ *
+ * `mediaControl` is the second, and the one exception to the paragraph above: a
+ * `Slide: Media Control` is settings and nothing else, and the settings are about
+ * THIS attachment rather than about the element. "Start the video ten seconds in"
+ * is a thing an operator means about one slide, so the same controller attached to
+ * two slides must be able to mean two different things — which is exactly what a
+ * value read off the shared element could never do.
  */
 export type PresentingFlowCcItemType = {
     uuid: string;
     screenIds?: number[];
+    mediaControl?: PresentingFlowMediaControlType;
 };
 
 /**
@@ -79,4 +89,27 @@ export function resolveCcScreenIds(
     hostScreenIds: number[],
 ) {
     return ccScreenIds.length > 0 ? ccScreenIds : hostScreenIds;
+}
+
+/**
+ * The other reading of a CC's pin: it FILTERS the host's screens rather than
+ * replacing them.
+ *
+ * For a follower that SHOWS something, replacing is right — "put this marquee on
+ * screen 2 whatever the slide did" is a sentence with a meaning. For one that acts
+ * on what its host just put up, it is not: a `Slide: Media Control` can only reach
+ * media the host actually projected, so a pin naming a screen the host did not
+ * reach must do NOTHING rather than run against an empty screen. Chosen per action
+ * by `filtersHostScreenIds` on the registry entry.
+ */
+export function intersectCcScreenIds(
+    ccScreenIds: number[],
+    hostScreenIds: number[],
+) {
+    if (ccScreenIds.length === 0) {
+        return hostScreenIds;
+    }
+    return hostScreenIds.filter((screenId) => {
+        return ccScreenIds.includes(screenId);
+    });
 }

@@ -54,6 +54,7 @@ import type {
 import type { VarySlideScreenDataType } from '../screenAppDocumentTypeHelpers';
 import { PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME } from '../screenAppDocumentTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
+import { cancelScreenSlideMediaControl } from './screenSlideMediaControlHelpers';
 import PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -106,6 +107,20 @@ type SlideVideoTimeDataType = {
     videoTime: number;
     timestamp: number;
     isPlaying: boolean;
+    /**
+     * The master's playback rate, when it is not the default 1.
+     *
+     * Rides the time message rather than getting one of its own because the two
+     * are the same question: a follower cannot know where the master WILL be
+     * without knowing how fast it is going. Left off at rate 1 so a sheet that
+     * never touches the speed sends exactly the bytes it always did, and so an
+     * older screen build ignores the field rather than mis-reading it.
+     *
+     * Without it a `Slide: Media Control` set to 2x would run the presenter at 2x
+     * and the projection at 1x, and the 0.15s drift correction below would then
+     * seek the projection forward on every single tick.
+     */
+    playbackRate?: number;
 };
 
 // Seeking a YouTube embed re-buffers, so followers only correct their time when
@@ -198,6 +213,13 @@ class ScreenVaryAppDocumentManager
                 varySlideData.itemJson.id,
             );
         }
+        // Past every early return, so this is the one point at which the slide on
+        // this screen actually changes: anything a `Slide: Media Control` armed for
+        // the outgoing slide has to go with it. A "pause at 1:10" left running
+        // would pause whatever the operator put up in the meantime, and a
+        // `timeupdate` watcher on a replaced element would hold that element — and
+        // the slide behind it — for as long as the app ran.
+        cancelScreenSlideMediaControl(this.screenId);
         this._varySlideData = varySlideData;
         unlocking(screenManagerSettingNames.VARY_APP_DOCUMENT, () => {
             const allSlideList = getAppDocumentListOnScreenSetting();
@@ -290,7 +312,12 @@ class ScreenVaryAppDocumentManager
         return false;
     }
 
-    sendSyncVideoTime(videoId: string, videoTime: number, isPlaying: boolean) {
+    sendSyncVideoTime(
+        videoId: string,
+        videoTime: number,
+        isPlaying: boolean,
+        playbackRate?: number,
+    ) {
         setTimeout(() => {
             this.screenManagerBase.sendScreenMessage(
                 {
@@ -301,6 +328,11 @@ class ScreenVaryAppDocumentManager
                         videoTime,
                         timestamp: Date.now(),
                         isPlaying,
+                        // Omitted at the default so the common message is
+                        // unchanged — see `SlideVideoTimeDataType.playbackRate`.
+                        ...(playbackRate !== undefined && playbackRate !== 1
+                            ? { playbackRate }
+                            : {}),
                     },
                 },
                 true,
@@ -322,14 +354,47 @@ class ScreenVaryAppDocumentManager
         );
     }
 
+    /**
+     * EVERY media element of the rendered slide, whatever its sync id — including
+     * a preview-only canvas `audio`, which has none.
+     *
+     * `getMediaElements` above answers "the element this sync message is about";
+     * this answers "everything in this slide that can be played", which is what a
+     * run sheet's `Slide: Media Control` acts on. Not memoized: a render replaces
+     * these nodes, and a cached list would be one of detached elements.
+     */
+    getAllMediaElements(): HTMLMediaElement[] {
+        const div = this.div;
+        if (div === null) {
+            return [];
+        }
+        return queryAllDeep(div, 'video, audio').filter(
+            (element): element is HTMLMediaElement => {
+                return element instanceof HTMLMediaElement;
+            },
+        );
+    }
+
+    /** The rendered slide's YouTube embeds, for the same caller. */
+    getSlideYouTubePlayers(): SlideYouTubePlayer[] {
+        return this.youTubePlayers;
+    }
+
     setVideoCurrentTime(data: SlideVideoTimeDataType) {
         const div = this.div;
         if (div === null) {
             return;
         }
-        const { videoId, videoTime, timestamp, isPlaying } = data;
+        const { videoId, videoTime, timestamp, isPlaying, playbackRate } = data;
         const mediaElements = this.getMediaElements(videoId);
+        // Absent means the default, not "leave it alone": a master that has gone
+        // back to 1x stops sending the field, and a follower left at 2x would then
+        // be corrected by a seek on every tick for ever.
+        const targetPlaybackRate = playbackRate ?? 1;
         for (const mediaElement of mediaElements) {
+            if (mediaElement.playbackRate !== targetPlaybackRate) {
+                mediaElement.playbackRate = targetPlaybackRate;
+            }
             if (appProvider.isPageScreen) {
                 // The screen follows the mini screen's play state; sound
                 // stays on the presenter side, the screen keeps muted.
@@ -357,13 +422,18 @@ class ScreenVaryAppDocumentManager
     // projected screen mirrors the master's play/pause (staying muted), and any
     // follower seeks only when it has drifted enough to be worth re-buffering.
     private applyYouTubeSync(data: SlideVideoTimeDataType) {
-        const { videoId, videoTime, timestamp, isPlaying } = data;
+        const { videoId, videoTime, timestamp, isPlaying, playbackRate } = data;
         const player = this.youTubePlayers.find((item) => {
             return item.id === videoId;
         });
         if (player === undefined) {
             return;
         }
+        // The player itself drops a repeat, so this costs a comparison on a tick
+        // that changes nothing. Absent means the default rather than "leave it
+        // alone", exactly as on the native path: a master that has gone back to 1x
+        // stops sending the field.
+        player.setPlaybackRate(playbackRate ?? 1);
         if (appProvider.isPageScreen) {
             if (isPlaying && !player.isPlaying) {
                 // Only the master (the first-clicked mini) keeps sound; the
@@ -390,14 +460,16 @@ class ScreenVaryAppDocumentManager
         videoId: string,
         videoTime: number,
         isPlaying: boolean,
+        playbackRate?: number,
     ) {
         const data = {
             videoId,
             videoTime,
             timestamp: Date.now(),
             isPlaying,
+            ...(playbackRate !== undefined ? { playbackRate } : {}),
         };
-        this.sendSyncVideoTime(videoId, videoTime, isPlaying);
+        this.sendSyncVideoTime(videoId, videoTime, isPlaying, playbackRate);
         this.setVideoCurrentTime(data);
     }
 
@@ -405,11 +477,17 @@ class ScreenVaryAppDocumentManager
         videoId: string,
         videoTime: number,
         isPlaying: boolean,
+        playbackRate?: number,
     ) {
-        this.sendSyncVideoTime(videoId, videoTime, isPlaying);
+        this.sendSyncVideoTime(videoId, videoTime, isPlaying, playbackRate);
         const managers = await this.getMemberInstances();
         for (const manager of managers) {
-            manager.setVideoCurrentTimeForce(videoId, videoTime, isPlaying);
+            manager.setVideoCurrentTimeForce(
+                videoId,
+                videoTime,
+                isPlaying,
+                playbackRate,
+            );
         }
     }
 
@@ -418,12 +496,18 @@ class ScreenVaryAppDocumentManager
             return;
         }
         const { data } = message;
-        const { videoId, videoTime, timestamp, isPlaying } = data;
+        const { videoId, videoTime, timestamp, isPlaying, playbackRate } = data;
         if (
             !videoId ||
             typeof videoTime !== 'number' ||
             typeof timestamp !== 'number' ||
-            typeof isPlaying !== 'boolean'
+            typeof isPlaying !== 'boolean' ||
+            // Optional, so only a PRESENT value has to be usable — a garbage rate
+            // must not drop the time message it rode in on.
+            (playbackRate !== undefined &&
+                (typeof playbackRate !== 'number' ||
+                    !Number.isFinite(playbackRate) ||
+                    playbackRate <= 0))
         ) {
             return;
         }
@@ -697,6 +781,7 @@ class ScreenVaryAppDocumentManager
             mediaElement.id,
             mediaElement.currentTime,
             true,
+            mediaElement.playbackRate,
         );
     };
 
@@ -704,6 +789,20 @@ class ScreenVaryAppDocumentManager
     // mini screen is the sound "master": when the operator plays a YouTube
     // embed there, all other slide media stops and the current time + play
     // state is broadcast so the projected screens (and grouped screens) follow.
+    /**
+     * The rate a YouTube embed is running at, as this window last set it.
+     *
+     * Carried on every message the three handlers below send, and not only when a
+     * `Slide: Media Control` sets it: a slide holding ONLY a YouTube embed
+     * broadcasts nothing else that knows the rate, so leaving it off would let the
+     * next ordinary tick tell every follower to go back to 1x.
+     */
+    private getYouTubePlaybackRate(youTubeId: string) {
+        return this.youTubePlayers.find((item) => {
+            return item.id === youTubeId;
+        })?.playbackRate;
+    }
+
     private readonly handleSlideYouTubePlaying = async (
         youTubeId: string,
         currentTime: number,
@@ -711,14 +810,24 @@ class ScreenVaryAppDocumentManager
         const groupManagers = new Set(await this.getMemberInstances());
         groupManagers.add(this);
         this.stopOtherPlayingSlideMedia(groupManagers, { youTubeId });
-        void this.setSlideVideoCurrentTimeForce(youTubeId, currentTime, true);
+        void this.setSlideVideoCurrentTimeForce(
+            youTubeId,
+            currentTime,
+            true,
+            this.getYouTubePlaybackRate(youTubeId),
+        );
     };
 
     private readonly handleSlideYouTubePausing = (
         youTubeId: string,
         currentTime: number,
     ) => {
-        void this.setSlideVideoCurrentTimeForce(youTubeId, currentTime, false);
+        void this.setSlideVideoCurrentTimeForce(
+            youTubeId,
+            currentTime,
+            false,
+            this.getYouTubePlaybackRate(youTubeId),
+        );
     };
 
     private readonly handleSlideYouTubeTimeUpdate = (
@@ -730,6 +839,7 @@ class ScreenVaryAppDocumentManager
             youTubeId,
             currentTime,
             isPlaying,
+            this.getYouTubePlaybackRate(youTubeId),
         );
     };
 
@@ -793,6 +903,7 @@ class ScreenVaryAppDocumentManager
             mediaElement.id,
             mediaElement.currentTime,
             false,
+            mediaElement.playbackRate,
         );
     };
 
@@ -811,6 +922,7 @@ class ScreenVaryAppDocumentManager
             mediaElement.id,
             mediaElement.currentTime,
             !mediaElement.paused,
+            mediaElement.playbackRate,
         );
     };
 

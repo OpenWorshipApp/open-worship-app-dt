@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-08a** (**W-22** step 2: a fifth run action,
+**workflowsVersion: 2026-08-08b** (**W-22** step 5 gained **Media Control** — a
+running order can now play, pause or stop the video or song *inside* a slide by itself:
+wait N seconds, start at a point of the clip, stop after a while or at a point of the clip,
+at a volume and a speed. It is attached to the slide it controls (**Add Media Control**,
+beside **Add CC Elements**) rather than added to the sheet, its settings belong to that one
+attachment, and a screen pin on it narrows where the slide went rather than redirecting it.
+**Driven live.** Previous: **2026-08-08a** (**W-22** step 2: a fifth run action,
 **Next: Clear Interval** — the loop's off switch written as a line of the running order.
 An interval could only be stopped by hand (the pill, closing the panel, the end of the
 sheet); now a sheet can stop its own loop, wait, and be picked up again. It asks nothing
@@ -1026,6 +1032,43 @@ thing to another machine.
 
    An element can hold as many CC elements as you like; a CC element cannot have CC
    elements of its own.
+
+   **Media Control — playing the video or song inside a slide by itself.** A slide can hold
+   a video or an audio clip of its own, and normally you press play on it by hand on the
+   mini screen. Right-click the slide (or the document line, or the line of a slide inside
+   a document) → **Add Media Control** (បន្ថែមការគ្រប់គ្រងមេឌៀ) and the running order does it
+   for you. A settings panel opens first — nothing is added until you press **Ok**:
+
+   - **Action** — **Play**, **Pause** or **Stop**. Play starts the media; Pause leaves it
+     where it is; Stop pauses it and winds it back to the start point, so the same line can
+     be used again. Put a Pause or a Stop on a later line to cut a clip short.
+   - **Delay Before** — wait this many seconds after the slide goes up before doing
+     anything. Leave it at 0 to act at once.
+   - **Media Start At** — where in the clip to begin, in seconds.
+   - **Then Pause** — **Never**, **After** so many seconds of playing, or **At Media Time**
+     to stop at a point of the clip itself (so "play 0:10 to 1:10" is two numbers, not a
+     stopwatch).
+   - **Volume** and **Speed** — each behind a tick box, because leaving one un-ticked means
+     "don't touch it": the level you set by hand on the mini screen stays as it is.
+   - **Set Specific Screen** — leave every box clear and it works on whatever screens the
+     slide went to. Tick one and it works **only** where the slide also landed. It is
+     controlling the media the slide put on a screen, so a screen the slide never reached
+     has nothing on it to control.
+
+   The new line appears as a CC element under the slide, reading what it will do —
+   `Slide: Media Control (Play +3s 10s→70s 70% 2x)` — with a small **cyan gear** at its
+   right. Click the gear (or right-click → **Media Control Settings**) to change it later;
+   it opens on what you set last time. 📸
+
+   Every video and audio clip in that slide is driven together. The sound comes out of the
+   presenter machine, exactly as it does when you press play by hand, so the **Volume** is
+   the level you hear at the desk; the projected screen stays silent and simply keeps in
+   step, at the same speed. Changing the slide cancels anything still waiting — a "stop at
+   1:10" never carries over to whatever you put up next.
+
+   This one is only ever attached to a slide: you will not find it under **Add Action** on
+   the running order itself, because "start this video ten seconds in" is a sentence about
+   one particular slide.
 
    A **document** line can be pinned too — its slides then all follow it — and you can pin
    **one slide on its own**: open the document's arrow, right-click the slide and set its

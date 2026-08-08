@@ -232,6 +232,24 @@ describe('slideYouTubeSyncHelpers', () => {
         expect(player.getCurrentTime()).toBe(12.5);
     });
 
+    test('posts volume and playback rate, un-muting for the volume', () => {
+        const { player, posted } = makePlayer({});
+        posted.length = 0;
+        player.setVolume(70);
+        player.setPlaybackRate(2);
+        expect(
+            posted.map(({ func, args }) => {
+                return [func, args];
+            }),
+        ).toEqual([
+            // A muted player would take the volume and still make no sound, which
+            // reads as the setting having done nothing.
+            ['unMute', []],
+            ['setVolume', [70]],
+            ['setPlaybackRate', [2]],
+        ]);
+    });
+
     test('mutes a follower once, as soon as the player is ready', () => {
         const { fakeWin, posted } = makePlayer({}, { muteOnReady: true });
         posted.length = 0;

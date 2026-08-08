@@ -683,28 +683,38 @@ describe('run action entries', () => {
                 } as any,
             };
         };
-        const genAction = (actionId: 'screen-show' | 'screen-hide') => {
-            return PresentingFlowItem.fromJson(
+        // `apply` takes the ENTRY as well as the screen (one action reads its own
+        // settings off it), so it is fired through the item rather than through a
+        // bare `screenAction` — exactly as every real call site does.
+        const fireAction = (
+            actionId: 'screen-show' | 'screen-hide',
+            screenManager: any,
+        ) => {
+            const presentingFlowItem = PresentingFlowItem.fromJson(
                 PRESENTING_FLOW_FILE_PATH,
                 PresentingFlowItem.fromActionId(actionId),
-            ).screenAction;
+            );
+            presentingFlowItem.screenAction?.apply(
+                screenManager,
+                presentingFlowItem,
+            );
         };
 
         const hidden = genManager(false);
-        genAction('screen-show')?.apply(hidden.manager);
+        fireAction('screen-show', hidden.manager);
         expect(hidden.writes).toEqual([true]);
         const showing = genManager(true);
-        genAction('screen-hide')?.apply(showing.manager);
+        fireAction('screen-hide', showing.manager);
         expect(showing.writes).toEqual([false]);
 
         // The setter does real show/hide window work and fires an event on
         // every write, so a sheet walked by an interval must not re-show a
         // screen that is already live.
         const alreadyShowing = genManager(true);
-        genAction('screen-show')?.apply(alreadyShowing.manager);
+        fireAction('screen-show', alreadyShowing.manager);
         expect(alreadyShowing.writes).toEqual([]);
         const alreadyHidden = genManager(false);
-        genAction('screen-hide')?.apply(alreadyHidden.manager);
+        fireAction('screen-hide', alreadyHidden.manager);
         expect(alreadyHidden.writes).toEqual([]);
     });
 

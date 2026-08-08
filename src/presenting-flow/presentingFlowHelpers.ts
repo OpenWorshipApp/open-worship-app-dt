@@ -267,7 +267,10 @@ export async function handlePresentingFlowItemScreenDropping(
     // not draggable to a screen at all (`isScreenReachable` refuses it), so it
     // cannot get here.
     if (presentingFlowItem.isAction) {
-        presentingFlowItem.screenAction?.apply(screenManager);
+        presentingFlowItem.screenAction?.apply(
+            screenManager,
+            presentingFlowItem,
+        );
         return;
     }
     const droppedData = await presentingFlowItem.toDroppedData();
@@ -369,7 +372,7 @@ export async function sendPresentingFlowItemToScreens(
             event,
             isForceChoosing,
             (screenManager) => {
-                screenAction.apply(screenManager);
+                screenAction.apply(screenManager, presentingFlowItem);
             },
             screenIds,
         );

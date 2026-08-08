@@ -17,6 +17,7 @@ import {
     presentingFlowDraggingStore,
     UNSUPPORTED_DROP_PAYLOAD,
 } from './presentingFlowHelpers';
+import { askForPresentingFlowMediaControl } from './presentingFlowMediaControlDialogHelpers';
 import {
     checkIsPresentingFlowItemOnScreen,
     toPresentingFlowItemOnScreenKey,
@@ -78,6 +79,85 @@ export function genAddCcElementsContextMenu(
             },
         },
     ];
+}
+
+/**
+ * The action id of the one thing added from here rather than from `Add Action`.
+ * Spelled out rather than imported as a value so this module keeps its short
+ * import list; the registry is what resolves it.
+ */
+const MEDIA_CONTROL_ACTION_ID = 'slide-media-control';
+
+/**
+ * `Add Media Control`, offered by every row that can HOLD media — a slide of any
+ * kind, and a document element (whose CCs ride every slide of it).
+ *
+ * Exported from here for the same reason `genAddCcElementsContextMenu` is: four
+ * menus offer it, and two copies would drift.
+ *
+ * Unlike every other action it is added from the HOST rather than from the
+ * presenting flow's own `Add Action` menu, because its settings are a sentence about
+ * one particular slide — see the registry entry. The panel is asked FIRST and the
+ * element written after, so cancelling adds nothing at all: that is the rule every
+ * other action's question follows, and the alternative (write, then ask) leaves an
+ * inert controller in the sheet when the operator changes their mind.
+ */
+export function genAddMediaControlContextMenu(
+    host: PresentingFlowCcHostType,
+): ContextMenuItemType[] {
+    return [
+        {
+            childBefore: genContextMenuItemIcon('sliders', {
+                color: 'var(--bs-cyan)',
+            }),
+            menuElement: tran('Add Media Control'),
+            onSelect: (event: any) => {
+                event.stopPropagation();
+                const { presentingFlow, index, slideId } = host;
+                askForPresentingFlowMediaControl()
+                    .then((answer) => {
+                        if (answer === null) {
+                            return;
+                        }
+                        return presentingFlow.addItemCcAction(
+                            index,
+                            slideId,
+                            MEDIA_CONTROL_ACTION_ID,
+                            {
+                                mediaControl: answer.mediaControl,
+                                ...(answer.screenIds.length > 0
+                                    ? { screenIds: answer.screenIds }
+                                    : {}),
+                            },
+                        );
+                    })
+                    .catch(handleError);
+            },
+        },
+    ];
+}
+
+/** Reopen the panel of an attached controller and write the answer back. */
+function editCcItemMediaControl(
+    host: PresentingFlowCcHostType,
+    ccItem: PresentingFlowItem,
+    ccIndex: number,
+) {
+    const { presentingFlow, index, slideId } = host;
+    askForPresentingFlowMediaControl(ccItem.mediaControl, ccItem.screenIds)
+        .then((answer) => {
+            if (answer === null) {
+                return;
+            }
+            return presentingFlow.setItemCcItemMediaControl(
+                index,
+                slideId,
+                ccIndex,
+                answer.mediaControl,
+                answer.screenIds,
+            );
+        })
+        .catch(handleError);
 }
 
 async function showAddCcElementsMenu(
@@ -174,6 +254,19 @@ export function genCcItemContextMenuItems(
             notifyPresentingFlowCcOrigin(ccItem);
         }),
     ];
+    // The right-click route to what the gear on the row opens: an 11px icon is a
+    // poor target mid-service, and this is the only CC whose settings are its own.
+    if (ccItem.action?.id === MEDIA_CONTROL_ACTION_ID) {
+        menuItems.push({
+            childBefore: genContextMenuItemIcon('gear-fill', {
+                color: 'var(--bs-cyan)',
+            }),
+            menuElement: tran('Media Control Settings'),
+            onSelect: () => {
+                editCcItemMediaControl(host, ccItem, ccIndex);
+            },
+        });
+    }
     if (ccItem.isScreenPinnable) {
         menuItems.push(
             ...genSetSpecificScreenContextMenu(
@@ -273,6 +366,19 @@ function PresentingFlowCcRowComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const isMediaControl = ccItem.action?.id === MEDIA_CONTROL_ACTION_ID;
+    const handleMediaControlEditing = useCallback((event: any) => {
+        // Mandatory: without it the click reaches the row's own handler (which
+        // reveals the element) and then `FileItemHandlerComp`'s <li>, which fires
+        // the app's one UNSCOPED FileSource `select` and repaints every file row.
+        event.stopPropagation();
+        editCcItemMediaControl(
+            hostRef.current,
+            ccItemRef.current,
+            ccIndexRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const isOnScreen = useIsOnScreenChecking(() => {
         return checkIsPresentingFlowItemOnScreen(ccItemRef.current);
     }, toPresentingFlowItemOnScreenKey(ccItem));
@@ -343,12 +449,26 @@ function PresentingFlowCcRowComp({
                     : '')
             }
             extraStyle={{ ...ccItem.extraStyle }}
-            // Only its OWN pin: a CC with none follows its host, whose row right
-            // above it already carries that badge.
+            // The gear first, then its OWN pin: a CC with no pin follows its host,
+            // whose row right above it already carries that badge.
             extraChild={
-                ccItem.screenIds.length > 0 ? (
-                    <PresentingFlowScreenPinComp screenIds={ccItem.screenIds} />
-                ) : null
+                <>
+                    {isMediaControl ? (
+                        <i
+                            className={
+                                'bi bi-gear-fill app-caught-hover-pointer' +
+                                ' app-presenting-flow-row-media-control-gear'
+                            }
+                            title={tran('Media Control Settings')}
+                            onClick={handleMediaControlEditing}
+                        />
+                    ) : null}
+                    {ccItem.screenIds.length > 0 ? (
+                        <PresentingFlowScreenPinComp
+                            screenIds={ccItem.screenIds}
+                        />
+                    ) : null}
+                </>
             }
         />
     );

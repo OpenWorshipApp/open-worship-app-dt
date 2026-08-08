@@ -1,5 +1,6 @@
 import type ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import type ScreenManager from '../_screen/managers/ScreenManager';
+import { applyScreenSlideMediaControl } from '../_screen/managers/screenSlideMediaControlHelpers';
 import type { ForegroundDragTargetType } from '../presenter-foreground/foregroundDragHelpers';
 import {
     jumpPresentingFlowRunToCcItem,
@@ -46,6 +47,7 @@ export type PresentingFlowActionIdType =
     | `clear-foreground-${ForegroundDragTargetType}`
     | 'screen-show'
     | 'screen-hide'
+    | 'slide-media-control'
     | 'next-interval'
     | 'next-clear-interval'
     | 'next-timeout'
@@ -99,7 +101,35 @@ export type PresentingFlowScreenActionType = PresentingFlowActionBaseType & {
      * be a question asked for nothing.
      */
     requiresScreenIds: boolean;
-    apply: (screenManager: ScreenManager) => void;
+    /**
+     * Whether its own pin FILTERS the screens its host resolved to, instead of
+     * replacing them — asked only when it is running as a CC element
+     * (`intersectCcScreenIds` vs `resolveCcScreenIds`).
+     *
+     * True for `Slide: Media Control` alone, and it follows from what the action
+     * does rather than from a preference: it acts on the media its HOST just put on
+     * a screen, so a pin naming a screen the host did not reach names a screen with
+     * no media on it. Replacing there would mean running against an empty screen
+     * and reporting nothing.
+     *
+     * Every other screen action acts on the screen itself and is meaningful wherever
+     * it is aimed — "blank screen 2 whatever the slide did" is a sentence — so they
+     * keep the ordinary override.
+     */
+    filtersHostScreenIds: boolean;
+    /**
+     * Do it.
+     *
+     * The ENTRY is passed as well as the screen because one action's work depends
+     * on what that particular line of the sheet was set to: a `Slide: Media Control`
+     * is settings and nothing else. Every other entry ignores it — an action that
+     * needed the sheet to decide what to do to a screen would be a design smell,
+     * and the fifteen that only clear things read the same as they always did.
+     */
+    apply: (
+        screenManager: ScreenManager,
+        presentingFlowItem: PresentingFlowItem,
+    ) => void;
 };
 
 export type PresentingFlowRunActionType = PresentingFlowActionBaseType & {
@@ -302,6 +332,7 @@ const foregroundClearActionList: PresentingFlowScreenActionType[] =
                 color: 'var(--bs-gray-500)',
                 ccItemCount: Infinity,
                 requiresScreenIds: false,
+                filtersHostScreenIds: false,
                 target: 'screen',
                 apply: (screenManager) => {
                     clear(screenManager.screenForegroundManager);
@@ -351,6 +382,7 @@ const screenShowHideActionList: PresentingFlowScreenActionType[] = [
         color: 'var(--bs-success)',
         ccItemCount: 0,
         requiresScreenIds: true,
+        filtersHostScreenIds: false,
         target: 'screen',
         apply: (screenManager) => {
             // Guarded rather than assigned flat: the setter fires the real
@@ -370,11 +402,60 @@ const screenShowHideActionList: PresentingFlowScreenActionType[] = [
         color: 'var(--bs-danger)',
         ccItemCount: 0,
         requiresScreenIds: true,
+        filtersHostScreenIds: false,
         target: 'screen',
         apply: (screenManager) => {
             if (screenManager.isShowing) {
                 screenManager.isShowing = false;
             }
+        },
+    },
+];
+
+/**
+ * The media INSIDE a slide, driven from the run sheet — play it, pause it, stop it,
+ * from a point, up to a point, at a volume and at a speed.
+ *
+ * **It is the only action that exists solely as a CC element**, and the only one
+ * missing from `presentingFlowActionMenuList`. Everything it does is about ONE host:
+ * "start this video ten seconds in" is a sentence about a particular slide, and a
+ * line of the sheet that said it about nothing in particular could only ever act on
+ * whatever happened to be live — which is the ambient answer this app keeps
+ * refusing everywhere else. So it is added from the SLIDE's own menu
+ * (`genAddMediaControlContextMenu`), which appends its element and attaches it in
+ * one write, and an element reached any other way carries no settings and does
+ * nothing. That split is exactly what the registry/menu separation below is for:
+ * the id still resolves, so a stored one reads back, but nothing offers to add one
+ * loose.
+ *
+ * Its settings live on the CC RECORD rather than here or on the element
+ * (`PresentingFlowCcItemType.mediaControl`) — the same controller attached to two
+ * slides must be able to mean two different things.
+ *
+ * `ccItemCount: 0`: it shows nothing, so there is nothing for a follower to ride
+ * behind. `requiresScreenIds: false` with `filtersHostScreenIds: true`: its pin is
+ * an optional NARROWING of where its host landed, never a redirection — see the
+ * flag's own note.
+ */
+const slideMediaControlActionList: PresentingFlowScreenActionType[] = [
+    {
+        id: 'slide-media-control',
+        label: 'Slide: Media Control',
+        badge: 'MC',
+        // Sliders rather than a play triangle: it is a controller with a mode, and
+        // a row wearing ▶ would read as "this line plays" even when it is the line
+        // that stops. Cyan is the one Bootstrap accent no other action wears.
+        iconName: 'sliders',
+        color: 'var(--bs-cyan)',
+        ccItemCount: 0,
+        requiresScreenIds: false,
+        filtersHostScreenIds: true,
+        target: 'screen',
+        apply: (screenManager, presentingFlowItem) => {
+            applyScreenSlideMediaControl(
+                screenManager.screenVaryAppDocumentManager,
+                presentingFlowItem.mediaControl,
+            );
         },
     },
 ];
@@ -618,6 +699,7 @@ const clearActionList: PresentingFlowScreenActionType[] = [
         color: 'var(--bs-danger)',
         ccItemCount: Infinity,
         requiresScreenIds: false,
+        filtersHostScreenIds: false,
         target: 'screen',
         apply: (screenManager) => {
             screenManager.clear();
@@ -631,6 +713,7 @@ const clearActionList: PresentingFlowScreenActionType[] = [
         color: 'var(--bs-gray-500)',
         ccItemCount: Infinity,
         requiresScreenIds: false,
+        filtersHostScreenIds: false,
         target: 'screen',
         apply: (screenManager) => {
             screenManager.screenBackgroundManager.clear();
@@ -644,6 +727,7 @@ const clearActionList: PresentingFlowScreenActionType[] = [
         color: 'var(--bs-info)',
         ccItemCount: Infinity,
         requiresScreenIds: false,
+        filtersHostScreenIds: false,
         target: 'screen',
         apply: (screenManager) => {
             screenManager.screenVaryAppDocumentManager.clear();
@@ -657,6 +741,7 @@ const clearActionList: PresentingFlowScreenActionType[] = [
         color: 'var(--bs-primary)',
         ccItemCount: Infinity,
         requiresScreenIds: false,
+        filtersHostScreenIds: false,
         target: 'screen',
         apply: (screenManager) => {
             screenManager.screenBibleManager.clear();
@@ -670,6 +755,7 @@ const clearActionList: PresentingFlowScreenActionType[] = [
         color: 'var(--bs-gray-500)',
         ccItemCount: Infinity,
         requiresScreenIds: false,
+        filtersHostScreenIds: false,
         target: 'screen',
         apply: (screenManager) => {
             screenManager.screenForegroundManager.clear();
@@ -763,6 +849,9 @@ export const presentingFlowActionList: PresentingFlowActionType[] = [
     ...clearActionList,
     ...foregroundClearActionList,
     ...screenShowHideActionList,
+    // Deliberately absent from `presentingFlowActionMenuList` above — it is added
+    // from the slide it controls, never loose. See its own note.
+    ...slideMediaControlActionList,
     ...nextActionList,
 ];
 

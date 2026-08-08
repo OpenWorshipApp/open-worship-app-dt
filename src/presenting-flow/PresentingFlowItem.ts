@@ -32,6 +32,12 @@ import {
     checkIsValidPresentingFlowItemUuid,
     genPresentingFlowItemUuid,
 } from './presentingFlowCcHelpers';
+import type { PresentingFlowMediaControlType } from './presentingFlowMediaControlHelpers';
+import {
+    presentingFlowMediaControlModeLabelMap,
+    toPresentingFlowMediaControl,
+    toPresentingFlowMediaControlSummary,
+} from './presentingFlowMediaControlHelpers';
 import { toDocumentIcon, toDragTypeIconName } from './presentingFlowHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
 import type { VarySlideType } from '../app-document-list/appDocumentTypeHelpers';
@@ -149,6 +155,13 @@ export type PresentingFlowItemType = {
     // `disabledSlideIds`. The element's own `ccItems` ride along with EVERY
     // slide of it; these ride with one.
     slideCcItems?: { [slideId: string]: PresentingFlowCcItemType[] };
+    // `Slide: Media Control` only, and NEVER written on a listed element: it lives
+    // on the CC record (`PresentingFlowCcItemType.mediaControl`) because the settings
+    // belong to one attachment, and `buildCcItems` overlays it here so the resolved
+    // follower reads it through one getter like everything else. Present in this
+    // type for that overlay alone — `resolveCcItemJson` strips any that a
+    // hand-edited file put on an element.
+    mediaControl?: PresentingFlowMediaControlType;
 };
 
 /**
@@ -428,6 +441,16 @@ export default class PresentingFlowItem {
             if (screenIds.length > 0) {
                 ccJson.screenIds = screenIds;
             }
+            // The second thing a CC says for itself, and the only one that is not
+            // an override of the element's: a `Slide: Media Control` element holds
+            // no settings at all, so this IS the settings rather than a preference
+            // written over them. See `PresentingFlowCcItemType.mediaControl`.
+            const mediaControl = toPresentingFlowMediaControl(
+                raw?.mediaControl,
+            );
+            if (mediaControl !== null) {
+                ccJson.mediaControl = mediaControl;
+            }
             items.push(new PresentingFlowItem(this.filePath, ccJson));
         }
         return items;
@@ -568,6 +591,24 @@ export default class PresentingFlowItem {
             ? actionKey
             : null;
     }
+    /**
+     * What a `Slide: Media Control` follower is set to do, or null.
+     *
+     * Null for every other action too — the same "ignored everywhere at once" rule
+     * `actionTime` follows, so a `mediaControl` a hand-edited file put on a
+     * `Clear All` is invisible to the row, the panel and the apply loop together
+     * rather than in each of them. Read defensively for the same reason: a bad
+     * config must not turn a line of a live run sheet into an error row.
+     *
+     * Only ever non-null on a resolved CC — `buildCcItems` is what puts it there.
+     * The listed element answers null, which is why clicking it does nothing.
+     */
+    get mediaControl(): PresentingFlowMediaControlType | null {
+        if (this.action?.id !== 'slide-media-control') {
+            return null;
+        }
+        return toPresentingFlowMediaControl(this.originalJson.mediaControl);
+    }
     /** How this run action is armed, as the question asks and answers it. */
     get actionArming(): PresentingFlowActionArmingType {
         // A key-armed action is armed with a key and with nothing else, so it
@@ -703,7 +744,25 @@ export default class PresentingFlowItem {
             // armed with something else (a `Jump to` names its target with a CC)
             // reads as its label alone — the CC row under it says where it goes.
             if (action.target !== 'run') {
-                return tran(action.label);
+                // A media controller's settings are WHAT IT DOES, on exactly the
+                // same reasoning as a clock's number, so the row says them: the
+                // translated mode, then the numbers. Both go on AFTER `tran`, never
+                // into a key. The listed ELEMENT has no settings (they live on the
+                // attachment), so it reads as the bare label and the CC rows under
+                // its hosts are where the detail is.
+                const { mediaControl } = this;
+                if (mediaControl === null) {
+                    return tran(action.label);
+                }
+                const summary =
+                    toPresentingFlowMediaControlSummary(mediaControl);
+                const mode = tran(
+                    presentingFlowMediaControlModeLabelMap[mediaControl.mode],
+                );
+                return (
+                    `${tran(action.label)} (${mode}` +
+                    (summary === '' ? ')' : ` ${summary})`)
+                );
             }
             // The SHORTCUT is what the operator has to find on the row — it is
             // the whole of what tells one `Keyboard Event` from another, and it
@@ -944,6 +1003,11 @@ export default class PresentingFlowItem {
             slideScreenIds: _slideScreenIds,
             disabledSlideIds: _disabledSlideIds,
             isDisabled: _isDisabled,
+            // A media controller's settings belong to the ATTACHMENT, so the
+            // element never legitimately has any — stripped so a hand-edited file
+            // that put one there cannot become a second, invisible source of
+            // settings competing with the CC's own.
+            mediaControl: _mediaControl,
             ...ccJson
         } = cloneJson(itemJson) as PresentingFlowItemType;
         // An error row has no payload to copy either way — there is nothing to

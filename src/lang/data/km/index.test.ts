@@ -73,6 +73,31 @@ describe('Khmer language data', () => {
             'Passwords do not match',
             'This archive is password protected',
             'Wrong password, try again',
+            // The `Slide: Media Control` action, its row label and every field of
+            // its settings panel — six fields plus three refusals, all new keys.
+            'Slide: Media Control',
+            'Add Media Control',
+            'Media Control Settings',
+            'Play',
+            'Pause',
+            'Stop',
+            'Action',
+            'Settings',
+            'Delay Before',
+            'Media Start At',
+            'Then Pause',
+            'Never',
+            'After',
+            'At Media Time',
+            'Media Pause At',
+            'Pause After',
+            'Volume',
+            'Speed',
+            'Set Volume',
+            'Set Speed',
+            'Please enter a number that is 0 or greater',
+            'Please enter a volume between 0 and 100',
+            'The stop point must be after the start point',
         ]) {
             expect(lang.dictionary[lang.sanitizeTranKey(key)]).toBeDefined();
         }

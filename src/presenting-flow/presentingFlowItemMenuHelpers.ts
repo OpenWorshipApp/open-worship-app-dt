@@ -12,7 +12,10 @@ import { chooseColorNote } from '../others/ItemColorNoteComp';
 import type PresentingFlow from './PresentingFlow';
 import type PresentingFlowItem from './PresentingFlowItem';
 import { askForPresentingFlowActionArming } from './presentingFlowActionArmingHelpers';
-import { genAddCcElementsContextMenu } from './PresentingFlowCcRowsComp';
+import {
+    genAddCcElementsContextMenu,
+    genAddMediaControlContextMenu,
+} from './PresentingFlowCcRowsComp';
 import type { PresentingFlowCcHostType } from './PresentingFlowCcRowsComp';
 import {
     genDisableContextMenu,
@@ -167,6 +170,20 @@ export function genPresentingFlowItemContextMenuItems(
                 presentingFlowItem.uuid,
             ),
         );
+        // Right after it, and gated on holding MEDIA rather than on hosting a CC:
+        // it is a CC too, but the one kind the operator authors here instead of
+        // picking from the lines already in the sheet. A slide of any kind can
+        // hold media, and a document element's CCs ride every slide of it — nothing
+        // else in a run sheet has media inside it to control.
+        if (presentingFlowItem.isSlide || presentingFlowItem.isAppDocument) {
+            menuItems.push(
+                ...genAddMediaControlContextMenu({
+                    presentingFlow,
+                    index,
+                    slideId: null,
+                }),
+            );
+        }
     }
     // Each long jump sits right under its one-step sibling and behind the same
     // gate: an element already at an end has nothing to jump to.
@@ -308,8 +325,13 @@ export function genPresentingFlowVarySlideContextMenuItems({
               })),
         ...(ccHost === undefined
             ? []
-            : // A slide is not a line of the sheet, so it is never the host a
-              // CC must not point at — there is nothing to exclude.
-              genAddCcElementsContextMenu(ccHost, null)),
+            : [
+                  // A slide is not a line of the sheet, so it is never the host a
+                  // CC must not point at — there is nothing to exclude.
+                  ...genAddCcElementsContextMenu(ccHost, null),
+                  // Ungated here, unlike the element menu: a row drawn by this
+                  // builder IS a slide, whatever kind of document holds it.
+                  ...genAddMediaControlContextMenu(ccHost),
+              ]),
     ];
 }

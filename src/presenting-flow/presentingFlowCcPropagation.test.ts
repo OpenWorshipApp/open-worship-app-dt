@@ -100,6 +100,41 @@ describe('applying CC elements onto screens', () => {
         expect(showDroppedDataOnScreenIdsMock.mock.calls[1][0]).toEqual([3]);
     });
 
+    test('a media control NARROWS the host screens instead of overriding them', async () => {
+        const genMediaControl = (screenIds?: number[]) => {
+            return genCcItem({
+                type: 'action',
+                data: 'slide-media-control',
+                mediaControl: { mode: 'play' },
+                ...(screenIds === undefined ? {} : { screenIds }),
+            });
+        };
+
+        // Unpinned it rides its host, exactly as any other follower does.
+        await applyPresentingFlowCcItemsOnScreenIds(
+            [genMediaControl()],
+            [1, 2],
+        );
+        expect(applyOnScreenIdsMock.mock.calls[0][0]).toEqual([1, 2]);
+
+        // Pinned it runs only where the host ALSO landed...
+        applyOnScreenIdsMock.mockClear();
+        await applyPresentingFlowCcItemsOnScreenIds(
+            [genMediaControl([2])],
+            [1, 2],
+        );
+        expect(applyOnScreenIdsMock.mock.calls[0][0]).toEqual([2]);
+
+        // ...and a pin naming a screen the host never reached names a screen with
+        // no media on it, so it runs nowhere rather than everywhere.
+        applyOnScreenIdsMock.mockClear();
+        await applyPresentingFlowCcItemsOnScreenIds(
+            [genMediaControl([3])],
+            [1, 2],
+        );
+        expect(applyOnScreenIdsMock).not.toHaveBeenCalled();
+    });
+
     test('a CC is never parked, so a stored flag cannot mute one', async () => {
         // `isDisabled` is stripped on read as well as on write, so a
         // hand-edited file cannot leave a follower that silently does nothing.

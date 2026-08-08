@@ -12,10 +12,17 @@ const mocks = vi.hoisted(() => {
         isPlaying = false;
         pausedBySync = false;
         currentTime = 0;
+        playbackRate = 1;
         readonly mute = vi.fn();
         readonly play = vi.fn();
         readonly pause = vi.fn();
         readonly seekTo = vi.fn();
+        readonly setVolume = vi.fn();
+        // The real one drops a repeat and remembers the rate, which is what the
+        // group sync reads back off it.
+        readonly setPlaybackRate = vi.fn((rate: number) => {
+            this.playbackRate = rate;
+        });
         readonly destroy = vi.fn();
 
         constructor(
@@ -570,7 +577,8 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
 
         manager.setVideoCurrentTimeForce('video-a', 5, true);
 
-        expect(sendSpy).toHaveBeenCalledWith('video-a', 5, true);
+        // The rate rides the time message and is left off when nobody set one.
+        expect(sendSpy).toHaveBeenCalledWith('video-a', 5, true, undefined);
         expect(applySpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 videoId: 'video-a',
@@ -879,16 +887,16 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         player.callbacks.onPlay(11);
         await Promise.resolve();
         await Promise.resolve();
-        expect(forceSpy).toHaveBeenCalledWith(player.id, 11, true);
+        expect(forceSpy).toHaveBeenCalledWith(player.id, 11, true, 1);
         expect(memberPlayer.pausedBySync).toBe(true);
         expect(memberPlayer.pause).toHaveBeenCalledTimes(1);
         memberManager.div = null;
 
         player.callbacks.onPause(12);
-        expect(forceSpy).toHaveBeenCalledWith(player.id, 12, false);
+        expect(forceSpy).toHaveBeenCalledWith(player.id, 12, false, 1);
 
         player.callbacks.onTimeUpdate(13, true);
-        expect(forceSpy).toHaveBeenCalledWith(player.id, 13, true);
+        expect(forceSpy).toHaveBeenCalledWith(player.id, 13, true, 1);
 
         manager.div = null;
     });

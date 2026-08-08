@@ -157,6 +157,21 @@
   }
 }
 
+// The one CLICKABLE trailing icon a row carries: the settings of a
+// `Slide: Media Control` CC. Sized like the pin beside it so the two read as one
+// group, and tinted with the action's own cyan so it is findable at a glance in a
+// sheet of otherwise grey trailing marks.
+.app-presenting-flow-row-media-control-gear {
+  flex: 0 0 auto;
+  font-size: 11px;
+  padding: 0 3px;
+  color: var(--bs-cyan);
+
+  &:hover {
+    filter: brightness(1.3);
+  }
+}
+
 .app-presenting-flow-row-empty {
   opacity: 0.5;
   font-style: italic;

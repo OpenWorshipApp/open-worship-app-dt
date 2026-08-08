@@ -45,6 +45,7 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Presenting Flow screen pinning](presenting-flow-screen-pinning.md) — `Set Specific Screen` rides `chooseScreenIds`; `isForceChoosing` and a drag deliberately outrank a pin
 - [Presenting Flow screen actions](presenting-flow-screen-actions.md) — a run sheet can hold things to DO; two families now (screen vs run), extend `presentingFlowActionList`, never `acceptedDragTypeList`
 - [Presenting Flow `Screen: Show` / `Screen: Hide`](presenting-flow-screen-show-hide.md) — the only actions that NAME their screens; asked at add time, stored in the ordinary pin, and no ambient fallback ever
+- [Presenting Flow `Slide: Media Control`](presenting-flow-media-control.md) — CC-only action, settings on the ATTACHMENT, and a pin that narrows the host's screens instead of replacing them
 - [Presenting Flow auto next](presenting-flow-auto-next.md) — the run walks itself and jumps; the CURSOR MOVING cancels a timeout and restarts an interval, raw clicks/keys mean nothing; a timeout may also be armed with a time of day
 - [Presenting Flow CC elements](presenting-flow-cc-elements.md) — followers that ride a host's present; copies not links, and they may never raise a second "which screen?" menu
 - [Downloads are protocol-aware now](http-downloads-protocol-aware.md) — only `initHttpRequest` speaks plain http; `httpUtils.request` is still https/443-only

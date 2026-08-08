@@ -485,7 +485,7 @@ test-plan **§S20** for the recipe order.
 
 #### Scope set (66 presenting flow rows + adjacencies)
 
-> **PL-10, PL-29, PL-32..PL-76, PL-81..PL-101** — the run sheet itself.
+> **PL-10, PL-29, PL-32..PL-76, PL-81..PL-102** — the run sheet itself.
 >
 > **Adjacent, required when the run touches them:** `PL-77..PL-80` + `NAV-17/18` (the
 > single-document `.owadoc` and whole-data `.owadata` archives — the same three-layer
@@ -537,10 +537,13 @@ The **Add Action** menu is four levels now: every clear folds behind **Clear Scr
 the eight per-widget foreground clears behind **Other Clear FG Items** inside it (PL-71).
 Two families, and the difference is the whole point:
 
-- **Screen actions** (13) — `apply(screenManager)`. **Fire every one of them at least
-  once against a real, showing screen** (PL-72, PL-74). They are the only presenting flow rows
-  that write to a screen while carrying no content; a mis-wired clear is invisible in the
-  tree.
+- **Screen actions** (14) — `apply(screenManager, presentingFlowItem)`. **Fire every one of
+  them at least once against a real, showing screen** (PL-72, PL-74). They are the only
+  presenting flow rows that write to a screen while carrying no content; a mis-wired clear is
+  invisible in the tree. The fourteenth, `Slide: Media Control` (PL-102), is the odd one:
+  it is NOT in the `Add Action` menu at all — it is attached to a slide from that slide's
+  own menu (**Add Media Control**), its settings live on the attachment, and its pin
+  NARROWS the host's screens rather than replacing them.
 - **Run actions** (5) — they drive the RUN, not a screen: `Next: Interval`,
   `Next: Timeout` (also armable with a **time of day**), `Next: Clear Interval` (the
   interval's off switch as a line — PL-101), `Jump to`, `Keyboard Event`.

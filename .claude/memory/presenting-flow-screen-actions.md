@@ -9,14 +9,17 @@ A presenting flow element can be an ACTION (added 2026-08-04, branch refactor23)
 content. The registry is `src/presenting-flow/presentingFlowActionHelpers.ts` — id, label, badge,
 icon, color, and a `target` discriminant that splits it into TWO families:
 
-- `target: 'screen'` → `apply(screenManager)`. Fifteen ship: the five that mirror the
-  mini screen's clear bar, plus one per foreground widget
+- `target: 'screen'` → `apply(screenManager, presentingFlowItem)`. Sixteen ship: the five
+  that mirror the mini screen's clear bar, plus one per foreground widget
   (`clear-foreground-<ForegroundDragTargetType>`) built from `foregroundClearMap`, which
   is keyed by that type so a NEW foreground widget without a clear is a compile error.
   The Foreground panel's **Background Images Slide Show** has none on purpose — it drives
-  `ScreenBackgroundManager`, so `Clear Background` covers it. The last two are
+  `ScreenBackgroundManager`, so `Clear Background` covers it. Then
   `screen-show` / `screen-hide` (added 2026-08-06), which are about the WINDOW rather than
-  what is on it — see [[presenting-flow-screen-show-hide]].
+  what is on it — see [[presenting-flow-screen-show-hide]] — and `slide-media-control`
+  (2026-08-08), the one that acts on what is INSIDE a slide and the only entry that reads
+  its own stored settings off the entry, which is why `apply` takes it
+  ([[presenting-flow-media-control]]).
 - `target: 'run'` → `start(presentingFlowItem)` and drives the RUN rather than a screen (added
   2026-08-05, branch refactor24). Five ship: `next-interval` and `next-timeout`, which drive
   [[presenting-flow-auto-next]]; `next-clear-interval` (2026-08-08), which ends a running
@@ -43,7 +46,10 @@ holds instructions, "carry on by yourself from here" is one too.
 **How to apply:**
 
 - Add an action = append to `presentingFlowActionList` + widen `PresentingFlowActionIdType`; a new
-  FOREGROUND clear is just an entry in `foregroundClearMap` (the id is derived).
+  FOREGROUND clear is just an entry in `foregroundClearMap` (the id is derived). Appending to
+  `presentingFlowActionMenuList` is a SEPARATE decision — `slide-media-control` is in the
+  registry and deliberately not in the menu, because it is added from the slide it controls
+  ([[presenting-flow-media-control]]).
   Storage, `validate`, the row, the preview, the drag and the next-key all read it
   from there. `PRESENTING_FLOW_ACTION_TYPE` is deliberately NOT a `DragTypeEnum` —
   `acceptedDragTypeList` must keep refusing it so nothing else can produce one.

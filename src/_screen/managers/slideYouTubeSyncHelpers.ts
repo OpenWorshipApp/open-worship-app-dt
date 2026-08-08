@@ -48,6 +48,11 @@ export class SlideYouTubePlayer {
     private readonly iframe: HTMLIFrameElement;
     private readonly callbacks: YouTubePlayerCallbacksType;
     private currentTime = 0;
+    // The last rate SET on this player, since the real one lives across the iframe
+    // boundary and cannot be read back synchronously. Kept so the group sync can
+    // carry it (a YouTube-only slide broadcasts nothing else that knows it) and so
+    // `setPlaybackRate` can drop a repeat rather than posting a message per tick.
+    private currentPlaybackRate = 1;
     private lastState = -1;
     private isDisposed = false;
     // Set when this player was paused by group exclusivity so the resulting
@@ -231,6 +236,40 @@ export class SlideYouTubePlayer {
 
     unMute() {
         this.post('unMute');
+    }
+
+    /**
+     * 0-100, the scale the embed API itself uses — so a run sheet's
+     * `Slide: Media Control` volume needs no conversion here, unlike the 0-1 of a
+     * native `<video>`.
+     *
+     * Also un-mutes, because a muted player takes a volume and still makes no
+     * sound — which reads as the setting having done nothing. Safe only because the
+     * one caller (`screenSlideMediaControlHelpers`) runs on the PRESENTER side,
+     * where the sound belongs; the projected screen's players are muted by
+     * `setupYouTubePlayer`/`applyYouTubeSync` and nothing here may reach them.
+     */
+    setVolume(volume: number) {
+        this.post('unMute');
+        this.post('setVolume', [volume]);
+    }
+
+    get playbackRate() {
+        return this.currentPlaybackRate;
+    }
+
+    /**
+     * A no-op when the rate is already what it is asked for. Not a micro-tuning:
+     * `applyYouTubeSync` runs on every sync tick, so posting unconditionally would
+     * be a `postMessage` per player per `timeupdate` for a value that changes once
+     * a service — the kind of steady cost this app cannot afford.
+     */
+    setPlaybackRate(rate: number) {
+        if (this.currentPlaybackRate === rate) {
+            return;
+        }
+        this.currentPlaybackRate = rate;
+        this.post('setPlaybackRate', [rate]);
     }
 
     destroy() {

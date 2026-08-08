@@ -596,7 +596,7 @@ Notes that save time on this subsystem:
 The Presenting Flows panel (`src/presenting-flow/`) is the app's **run sheet**: one file per service,
 holding everything that service will present, in order. It is small in code and dense in
 rules, and almost every one of those rules is a testable claim. Read **all of this**
-before driving PL-10 / PL-29 / PL-32..PL-76 / PL-81..PL-101 — it explains *why* each row's
+before driving PL-10 / PL-29 / PL-32..PL-76 / PL-81..PL-102 — it explains *why* each row's
 pass condition is what it is, and which "odd" behaviours are deliberate. It is also the
 required reading for **presenting flow deep mode** (SKILL.md §6f, recipe in test-plan §S20).
 
@@ -894,6 +894,30 @@ puts the host AND every CC on the screens in ONE gesture.
   **This element takes only one CC element**.
 - A CC row's menu is short — never **Show on Screens**, never **Disable** — and clicking
   it reveals its original in the tree.
+
+### 14.10b Media Control — the slide's own video, driven by the sheet (PL-102)
+
+`Slide: Media Control` is the only action that is **not** in the `Add Action` menu. It is
+authored from the slide it controls (**Add Media Control**, right under **Add CC Elements**
+on a slide row, a document line, or a slide inside a document) and lands as a CC element of
+that host, because everything it says is about one particular slide.
+
+What gets "fixed" by mistake here:
+
+- **Its settings are on the ATTACHMENT, not on the element.** The listed `Slide: Media
+  Control` row is bare and does nothing when clicked; the CC row under the host carries the
+  mode and the numbers and the cyan gear. The same controller attached twice therefore
+  means two different things — that is the point, not a bug.
+- **A pin NARROWS, it does not redirect.** Pinned to a screen the host also reached it runs
+  there alone; pinned to one the host never reached it runs nowhere. It drives media the
+  host put on a screen, so a screen without that slide has nothing to drive.
+- **Volume is presenter-side.** The projected screen holds slide media muted by design, so
+  the level is what the operator hears at the desk. **Speed is synced** — the projection
+  runs at it too, and a projection left at 1x against a 2x master would be re-seeked
+  forward on every tick.
+- An unticked **Volume** / **Speed** means "leave it alone", not "reset it".
+- Changing the slide drops anything still armed, so a "stop at 1:10" never lands on
+  whatever went up next.
 
 ### 14.11 The two clocks and the GOTO — the sheet walking itself (PL-95, PL-96, PL-101)
 

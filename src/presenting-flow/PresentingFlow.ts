@@ -17,6 +17,7 @@ import {
     checkIsValidPresentingFlowItemUuid,
     genPresentingFlowItemUuid,
 } from './presentingFlowCcHelpers';
+import type { PresentingFlowMediaControlType } from './presentingFlowMediaControlHelpers';
 import type { PresentingFlowItemType } from './PresentingFlowItem';
 import PresentingFlowItem from './PresentingFlowItem';
 
@@ -615,6 +616,16 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
             itemJsonList: PresentingFlowItemType[],
             isTarget: boolean,
         ) => PresentingFlowItemType | null,
+        /**
+         * What the new CC RECORD carries beyond the uuid it must point at.
+         *
+         * Only a `Slide: Media Control` uses it, and it has to be written in the
+         * same call rather than by a `setItemCcItem*` afterwards: the settings ARE
+         * the attachment, so a two-write attach would leave a controller in the
+         * sheet doing nothing between the writes and would leave one behind for
+         * good if the second write lost the lock.
+         */
+        extraCcProps?: Omit<PresentingFlowCcItemType, 'uuid'>,
     ) {
         return await this.updateItemCcList(
             index,
@@ -657,8 +668,37 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
                 if (uuid === hostItemJson.uuid) {
                     return false;
                 }
-                ccItemRefList.push({ uuid });
+                ccItemRefList.push({ uuid, ...extraCcProps });
             },
+        );
+    }
+
+    /**
+     * Attach a brand-new ACTION element as a CC of one host, in ONE write.
+     *
+     * The only attach path that mints the element it points at rather than finding
+     * or appending a payload, and it exists for `Slide: Media Control`: that action
+     * is meaningless except as a follower of a particular slide, so it is added from
+     * that slide's own menu instead of from `Add Action`. `insertItemJson` is
+     * bypassed on purpose — the element and the reference to it have to land in the
+     * same write, or a sheet could be left holding a controller nothing points at.
+     */
+    async addItemCcAction(
+        index: number,
+        slideId: number | null,
+        actionId: PresentingFlowActionIdType,
+        extraCcProps?: Omit<PresentingFlowCcItemType, 'uuid'>,
+    ) {
+        return await this.attachItemCcItem(
+            index,
+            slideId,
+            (itemJsonList) => {
+                const actionItemJson =
+                    PresentingFlowItem.fromActionId(actionId);
+                itemJsonList.push(actionItemJson);
+                return actionItemJson;
+            },
+            extraCcProps,
         );
     }
 
@@ -747,6 +787,47 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
             slideId,
             ccIndex,
             (ccItemRef) => {
+                if (screenIds.length === 0) {
+                    delete ccItemRef.screenIds;
+                } else {
+                    ccItemRef.screenIds = screenIds;
+                }
+            },
+        );
+    }
+
+    /**
+     * Re-set what a `Slide: Media Control` CC does — the gear on its row, and the
+     * only settings in a presenting flow that live on the ATTACHMENT rather than on
+     * the element (see `PresentingFlowCcItemType.mediaControl`).
+     *
+     * The pin is written in the SAME call because the panel asks for both as one
+     * answer ("play this, like so, on that screen"): two calls would be two history
+     * entries for one Ok, and a lost second write would leave a controller aimed
+     * where the operator had just stopped aiming it. `Set Specific Screen` on the
+     * row is still the other door to the pin alone.
+     *
+     * A null config deletes the key, so a controller that has been emptied reads
+     * exactly like one written before this existed and its `apply` does nothing —
+     * "absence means default", the way every other field of a presenting flow works.
+     */
+    async setItemCcItemMediaControl(
+        index: number,
+        slideId: number | null,
+        ccIndex: number,
+        mediaControl: PresentingFlowMediaControlType | null,
+        screenIds: number[],
+    ) {
+        return await this.updateItemCcItemRef(
+            index,
+            slideId,
+            ccIndex,
+            (ccItemRef) => {
+                if (mediaControl === null) {
+                    delete ccItemRef.mediaControl;
+                } else {
+                    ccItemRef.mediaControl = mediaControl;
+                }
                 if (screenIds.length === 0) {
                     delete ccItemRef.screenIds;
                 } else {

@@ -1047,15 +1047,18 @@ describe('non-Bible manager coverage', () => {
         manager.getMemberInstances = vi.fn(async () => [groupMember]);
         const sendSyncVideoTimeSpy = vi.spyOn(manager, 'sendSyncVideoTime');
         await manager.setSlideVideoCurrentTimeForce('video-abc123', 33, true);
+        // The playback rate rides the time message, left off when nobody set one.
         expect(sendSyncVideoTimeSpy).toHaveBeenCalledWith(
             'video-abc123',
             33,
             true,
+            undefined,
         );
         expect(groupMember.setVideoCurrentTimeForce).toHaveBeenCalledWith(
             'video-abc123',
             33,
             true,
+            undefined,
         );
 
         const suppressLoopSpy = vi
@@ -1075,6 +1078,7 @@ describe('non-Bible manager coverage', () => {
             'video-abc123',
             presenterVideo.currentTime,
             !presenterVideo.paused,
+            presenterVideo.playbackRate,
         );
         suppressLoopSpy.mockRestore();
 

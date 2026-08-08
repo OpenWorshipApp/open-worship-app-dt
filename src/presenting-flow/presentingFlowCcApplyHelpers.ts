@@ -5,7 +5,10 @@ import {
 } from '../_screen/managers/screenDroppedHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { firePresentingFlowRunAction } from './presentingFlowAutoNextHelpers';
-import { resolveCcScreenIds } from './presentingFlowCcHelpers';
+import {
+    intersectCcScreenIds,
+    resolveCcScreenIds,
+} from './presentingFlowCcHelpers';
 import type PresentingFlowItem from './PresentingFlowItem';
 
 /**
@@ -62,12 +65,20 @@ export async function applyPresentingFlowCcItemsOnScreenIds(
         if (screenAction?.requiresScreenIds === true) {
             if (ownScreenIds.length > 0) {
                 await applyOnScreenIds(ownScreenIds, (screenManager) => {
-                    screenAction.apply(screenManager);
+                    screenAction.apply(screenManager, ccItem);
                 });
             }
             continue;
         }
-        const screenIds = resolveCcScreenIds(ownScreenIds, hostScreenIds);
+        // A `Slide: Media Control` acts on the media its HOST just put up, so its
+        // own pin NARROWS where the host went instead of replacing it: a pin naming
+        // a screen the host never reached names a screen with no media on it, and
+        // running there would be a controller reporting success against nothing.
+        // See `intersectCcScreenIds`.
+        const screenIds =
+            screenAction?.filtersHostScreenIds === true
+                ? intersectCcScreenIds(ownScreenIds, hostScreenIds)
+                : resolveCcScreenIds(ownScreenIds, hostScreenIds);
         if (screenIds.length === 0) {
             continue;
         }
@@ -79,7 +90,7 @@ export async function applyPresentingFlowCcItemsOnScreenIds(
                 continue;
             }
             await applyOnScreenIds(screenIds, (screenManager) => {
-                screenAction.apply(screenManager);
+                screenAction.apply(screenManager, ccItem);
             });
             continue;
         }

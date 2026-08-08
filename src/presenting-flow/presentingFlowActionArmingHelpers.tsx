@@ -337,8 +337,12 @@ export async function askForPresentingFlowActionArming(
  * screen's own identity colour, sorted by id — but as a form the operator OKs
  * rather than as a menu that acts on the first click: this is one answer to one
  * question, and picking two screens must not mean adding two lines.
+ *
+ * Exported for the `Slide: Media Control` panel, which asks the same question as
+ * one field of a larger form. Two copies of a screen checklist would drift on the
+ * next thing a screen row has to say.
  */
-function ActionScreenIdsInputComp({
+export function ActionScreenIdsInputComp({
     defaultScreenIds,
     onChange,
 }: Readonly<{

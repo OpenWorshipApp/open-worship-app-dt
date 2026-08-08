@@ -320,7 +320,11 @@ every scope row ending with a status.
    **fire all 13 clear actions against a showing screen**; the two `Screen: Show` /
    `Screen: Hide` lines, which ask WHICH SCREENS before they are added and then run on
    those and no others; then the 5 run actions and their menus, which must offer no screen
-   family. `[PL-71..74, PL-95, PL-96, PL-97, PL-100, PL-101]`
+   family; and `Slide: Media Control`, which is reached from a SLIDE row's menu rather than
+   from **Add Action** and drives the media inside that slide (play/pause/stop, delay, start
+   point, stop point, volume, speed) — check the projected screen follows at the same speed
+   and that a pin narrows rather than redirects. `[PL-71..74, PL-95, PL-96, PL-97, PL-100,
+   PL-101, PL-102]`
 5. **P4 CC elements** — attach by drop and by menu, propagate onto the screens in ONE
    gesture with **no second "which screen?" question**, reveal-original, export/import
    round trip, and the two distinct refusal toasts. `[PL-89..93]`
