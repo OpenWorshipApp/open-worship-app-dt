@@ -13,6 +13,7 @@ const {
     audioFromJsonMock,
     youtubeFromJsonMock,
     websiteFromJsonMock,
+    cameraFromJsonMock,
 } = vi.hoisted(() => ({
     bibleFromJsonMock: vi.fn(),
     errorFromJsonErrorMock: vi.fn(),
@@ -27,6 +28,7 @@ const {
     audioFromJsonMock: vi.fn(),
     youtubeFromJsonMock: vi.fn(),
     websiteFromJsonMock: vi.fn(),
+    cameraFromJsonMock: vi.fn(),
 }));
 
 vi.mock('../../helper/helpers', () => ({
@@ -89,6 +91,12 @@ vi.mock('./CanvasItemWebsite', () => ({
     },
 }));
 
+vi.mock('./CanvasItemCamera', () => ({
+    default: {
+        fromJson: cameraFromJsonMock,
+    },
+}));
+
 import Canvas from './Canvas';
 
 function createClipboardItem(text: string, types = ['text/plain']) {
@@ -126,6 +134,10 @@ describe('Canvas', () => {
         websiteFromJsonMock.mockImplementation((json: any) => ({
             ...json,
             type: 'website',
+        }));
+        cameraFromJsonMock.mockImplementation((json: any) => ({
+            ...json,
+            type: 'camera',
         }));
         htmlFromJsonMock.mockImplementation((json: any) => ({
             ...json,
@@ -208,6 +220,10 @@ describe('Canvas', () => {
         expect(Canvas.canvasItemFromJson({ type: 'website', id: 8 })).toEqual({
             type: 'website',
             id: 8,
+        });
+        expect(Canvas.canvasItemFromJson({ type: 'camera', id: 10 })).toEqual({
+            type: 'camera',
+            id: 10,
         });
         expect(Canvas.canvasItemFromJson({ type: 'text', id: 3 })).toEqual({
             type: 'text',

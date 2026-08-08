@@ -42,8 +42,21 @@ const mocks = vi.hoisted(() => {
             return this.currentTime;
         }
     }
+    class FakeSlideCameraAttachment {
+        static instances: FakeSlideCameraAttachment[] = [];
+        readonly attach = vi.fn();
+        readonly releaseAll = vi.fn();
+
+        constructor() {
+            FakeSlideCameraAttachment.instances.push(this);
+        }
+    }
     return {
         FakeSlideYouTubePlayer,
+        FakeSlideCameraAttachment,
+        checkIsCameraMediaElement: vi.fn((element: Element) => {
+            return element.hasAttribute('data-camera-item');
+        }),
         getSetting: vi.fn(),
         setSetting: vi.fn(),
         getAppDocumentListOnScreenSetting: vi.fn(() => ({})),
@@ -128,6 +141,11 @@ vi.mock('../../app-document-list/appDocumentHelpers', () => ({
 
 vi.mock('../screenHelpers', () => ({
     genVideoIDFromSrc: mocks.genVideoIDFromSrc,
+}));
+
+vi.mock('./slideCameraSyncHelpers', () => ({
+    checkIsCameraMediaElement: mocks.checkIsCameraMediaElement,
+    SlideCameraAttachment: mocks.FakeSlideCameraAttachment,
 }));
 
 vi.mock('./slideYouTubeSyncHelpers', () => ({
@@ -289,6 +307,7 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         vi.clearAllMocks();
         document.body.innerHTML = '';
         mocks.FakeSlideYouTubePlayer.instances.length = 0;
+        mocks.FakeSlideCameraAttachment.instances.length = 0;
         mocks.appProvider.isPagePresenter = false;
         mocks.appProvider.isPageScreen = false;
         mocks.appProvider.getIsMouseOverApp.mockReturnValue(true);
@@ -977,6 +996,112 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         expect(mocks.FakeSlideYouTubePlayer.instances[1].options).toEqual({
             muteOnReady: true,
         });
+    });
+
+    test('a camera item is hydrated and kept out of the media sync path', () => {
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(90),
+            createEffectManager(),
+        );
+        const [attachment] = mocks.FakeSlideCameraAttachment.instances;
+        const content = document.createElement('div');
+        const camera = createMedia('video', { paused: false });
+        camera.setAttribute('data-camera-item', '');
+        const slideVideo = createMedia('video', { src: 'a.mp4' });
+        const slideAudio = createMedia('audio', { src: 'a.mp3' });
+        content.append(camera, slideVideo, slideAudio);
+        manager.div = content;
+
+        manager.cleanupSlideContent(content);
+
+        expect(attachment.attach).toHaveBeenCalledWith(camera);
+        // It takes no sync id (a `blob:` src differs per stream and per
+        // window), no native controls (there is no timeline to scrub), and no
+        // group-sync listeners.
+        expect(camera.id).toBe('');
+        expect(camera.controls).toBe(false);
+        expect(mocks.genVideoIDFromSrc).not.toHaveBeenCalledWith('');
+        // The ordinary slide media beside it is wired as usual.
+        expect(slideVideo.id).not.toBe('');
+        expect(slideVideo.controls).toBe(true);
+
+        // `Slide: Media Control` must not be able to pause or re-rate a camera.
+        const allMedia = manager.getAllMediaElements();
+        expect(allMedia).toContain(slideVideo);
+        expect(allMedia).toContain(slideAudio);
+        expect(allMedia).not.toContain(camera);
+
+        manager.div = null;
+    });
+
+    test('playing one slide video never freezes a camera on another screen', async () => {
+        detachAllManagerDivs();
+        const cameraManager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(91),
+            createEffectManager(),
+        );
+        const otherContent = document.createElement('div');
+        const camera = createMedia('video', { paused: false });
+        camera.setAttribute('data-camera-item', '');
+        const otherVideo = createMedia('video', {
+            src: 'other.mp4',
+            paused: false,
+        });
+        // `render()` clears the host's last child, so keep a throwaway there.
+        otherContent.append(camera, otherVideo, document.createElement('div'));
+        cameraManager.cleanupSlideContent(otherContent);
+        cameraManager.div = otherContent;
+
+        const playingManager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(92),
+            createEffectManager(),
+        );
+        vi.spyOn(
+            playingManager,
+            'setSlideVideoCurrentTimeForce',
+        ).mockResolvedValue(undefined);
+        playingManager.getMemberInstances = vi.fn(async () => []);
+        const playingContent = document.createElement('div');
+        const playingVideo = createMedia('video', {
+            src: 'a.mp4',
+            paused: false,
+        });
+        playingContent.appendChild(playingVideo);
+        playingManager.div = playingContent;
+        playingManager.cleanupSlideContent(playingContent);
+
+        playingVideo.dispatchEvent(new Event('play'));
+        await Promise.resolve();
+        await Promise.resolve();
+
+        // The ordinary video on the other screen yields the sound...
+        expect(otherVideo.pause).toHaveBeenCalled();
+        // ...but the live camera keeps its picture. A camera is never "paused",
+        // so without the skip it would freeze to a still frame for good.
+        expect(camera.pause).not.toHaveBeenCalled();
+
+        cameraManager.div = null;
+        playingManager.div = null;
+    });
+
+    test('camera streams are released even when the render has no div', async () => {
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(93),
+            createEffectManager(),
+        );
+        const [attachment] = mocks.FakeSlideCameraAttachment.instances;
+        attachment.releaseAll.mockClear();
+
+        // `set div` calls `render()`, and a mini-screen host unmounting comes
+        // through with `div` already null. The release must happen ABOVE that
+        // early return or the device light stays on for ever.
+        manager.div = null;
+        await manager.render();
+        expect(attachment.releaseAll).toHaveBeenCalled();
+
+        attachment.releaseAll.mockClear();
+        manager.delete();
+        expect(attachment.releaseAll).toHaveBeenCalled();
     });
 
     test('renderAppDocument resolves the fonts of every bible canvas item', async () => {

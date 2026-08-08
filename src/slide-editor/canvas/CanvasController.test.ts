@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
     setSettingMock: vi.fn(),
     showCanvasItemContextMenuMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
+    genFromDeviceCameraMock: vi.fn(),
 }));
 
 vi.mock('../../helper/settingHelpers', () => ({
@@ -79,6 +80,12 @@ vi.mock('./CanvasItemYouTube', () => ({
 vi.mock('./CanvasItemWebsite', () => ({
     default: {
         genFromUrl: mocks.genFromUrlWebsiteMock,
+    },
+}));
+
+vi.mock('./CanvasItemCamera', () => ({
+    default: {
+        genFromDevice: mocks.genFromDeviceCameraMock,
     },
 }));
 
@@ -797,6 +804,39 @@ describe('CanvasController', () => {
             'Fail to insert website',
         );
         expect(mocks.handleErrorMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('creates camera items and reports failures', () => {
+        const { controller } = createController();
+        const cameraItem = createCanvasItem({ id: 3 });
+        const camera = { deviceId: 'device-1', label: 'HD Webcam' };
+        const event = {
+            clientX: 110,
+            clientY: 220,
+            target: { getBoundingClientRect: () => ({ left: 10, top: 20 }) },
+        };
+        const brokenEvent = { clientX: 0, clientY: 0, target: null };
+        mocks.genFromDeviceCameraMock.mockReturnValue(cameraItem);
+
+        expect(controller.genNewCameraItem(camera, event as any)).toBe(
+            cameraItem,
+        );
+        // The label travels with the id: it is the fallback matcher once
+        // Chromium rotates the device id.
+        expect(mocks.genFromDeviceCameraMock).toHaveBeenCalledWith(
+            100,
+            200,
+            'device-1',
+            'HD Webcam',
+        );
+
+        expect(
+            controller.genNewCameraItem(camera, brokenEvent as any),
+        ).toBeUndefined();
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Insert Camera',
+            'Fail to insert camera',
+        );
     });
 
     test('reports a failed image paste', async () => {

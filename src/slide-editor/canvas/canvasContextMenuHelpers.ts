@@ -28,6 +28,7 @@ import {
 import appProvider from '../../server/appProvider';
 import { checkIsFilePathCanvasItemType } from './canvasHelpers';
 import { checkIsRemoteMediaSource } from '../../helper/mediaSourceHelpers';
+import { getAllCameraDevices } from '../../helper/cameraHelpers';
 
 export async function showCanvasContextMenu(
     event: any,
@@ -145,6 +146,50 @@ export async function showCanvasContextMenu(
                 if (newCanvasItem) {
                     canvasController.addNewItems([newCanvasItem]);
                 }
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('camera-video'),
+            menuElement: tran('Insert Camera'),
+            onSelect: async () => {
+                // Enumerated on select, not on menu open: `getAllCameraDevices`
+                // asks for camera access, and that must not fire on every
+                // right-click of the canvas.
+                const cameraList = await getAllCameraDevices();
+                if (cameraList.length === 0) {
+                    showSimpleToast(
+                        tran('Insert Camera'),
+                        tran('No camera found'),
+                    );
+                    return;
+                }
+                // There is no submenu support, so the device list is a second
+                // menu. The first one is already closed by now: the context
+                // menu calls `onClose` before `onSelect`, and this awaited an
+                // IPC round trip on top of that.
+                showAppContextMenu(
+                    event,
+                    cameraList.map((camera, index) => {
+                        return {
+                            childBefore: genContextMenuItemIcon('camera-video'),
+                            menuElement:
+                                camera.label ||
+                                `${tran('Camera')} ${index + 1}`,
+                            onSelect: () => {
+                                const newCanvasItem =
+                                    canvasController.genNewCameraItem(
+                                        camera,
+                                        event,
+                                    );
+                                if (newCanvasItem) {
+                                    canvasController.addNewItems([
+                                        newCanvasItem,
+                                    ]);
+                                }
+                            },
+                        };
+                    }),
+                );
             },
         },
         ...(isClipboardHasImage

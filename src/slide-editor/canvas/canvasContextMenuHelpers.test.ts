@@ -16,6 +16,7 @@ const {
     showAppContextMenuMock,
     showFileOrDirExplorerMock,
     showSimpleToastMock,
+    getAllCameraDevicesMock,
 } = vi.hoisted(() => ({
     askForURLMock: vi.fn(),
     checkIsImagesInClipboardMock: vi.fn(),
@@ -32,6 +33,11 @@ const {
     showAppContextMenuMock: vi.fn(),
     showFileOrDirExplorerMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
+    getAllCameraDevicesMock: vi.fn(),
+}));
+
+vi.mock('../../helper/cameraHelpers', () => ({
+    getAllCameraDevices: getAllCameraDevicesMock,
 }));
 
 vi.mock('../../background/downloadHelper', () => ({
@@ -110,6 +116,7 @@ describe('canvasContextMenuHelpers', () => {
             return type === 'audio' ? ['mp3'] : ['mp4'];
         });
         selectFilesMock.mockResolvedValue([]);
+        getAllCameraDevicesMock.mockResolvedValue([]);
     });
 
     test('shows the canvas context menu and executes paste and media actions', async () => {
@@ -158,6 +165,7 @@ describe('canvasContextMenuHelpers', () => {
             'Insert Media Link',
             'Insert YouTube',
             'Insert Website',
+            'Insert Camera',
             'Paste Image',
         ]);
 
@@ -190,7 +198,7 @@ describe('canvasContextMenuHelpers', () => {
             addedCanvasItem,
         ]);
 
-        await menuItems[6].onSelect();
+        await menuItems[7].onSelect();
         expect(canvasController.genNewImageItemFromFile).toHaveBeenCalledWith(
             blob1,
             event,
@@ -202,6 +210,46 @@ describe('canvasContextMenuHelpers', () => {
         expect(canvasController.addNewItems).toHaveBeenCalledWith([
             pastedImageItem,
         ]);
+    });
+
+    test('inserts a camera item through a device submenu', async () => {
+        const cameraItem = { id: 30, type: 'camera' };
+        const canvasController = {
+            addNewTextItem: vi.fn(),
+            addNewItems: vi.fn(),
+            genNewCameraItem: vi.fn().mockReturnValue(cameraItem),
+        };
+        const event = { clientX: 10, clientY: 20 };
+        const camera = { deviceId: 'device-1', label: 'HD Webcam' };
+
+        // No camera on the machine: a toast, and no second menu.
+        await showCanvasContextMenu(event, canvasController as any);
+        const firstMenu = showAppContextMenuMock.mock.calls[0]?.[1] ?? [];
+        const insertCamera = firstMenu.find((item: any) => {
+            return item.menuElement === 'Insert Camera';
+        });
+        await insertCamera.onSelect();
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Insert Camera',
+            'No camera found',
+        );
+        expect(showAppContextMenuMock).toHaveBeenCalledTimes(1);
+
+        // With a device present, the list becomes a second menu.
+        getAllCameraDevicesMock.mockResolvedValue([camera]);
+        await insertCamera.onSelect();
+        expect(showAppContextMenuMock).toHaveBeenCalledTimes(2);
+        const deviceMenu = showAppContextMenuMock.mock.calls[1][1];
+        expect(deviceMenu.map((item: any) => item.menuElement)).toEqual([
+            'HD Webcam',
+        ]);
+
+        deviceMenu[0].onSelect();
+        expect(canvasController.genNewCameraItem).toHaveBeenCalledWith(
+            camera,
+            event,
+        );
+        expect(canvasController.addNewItems).toHaveBeenCalledWith([cameraItem]);
     });
 
     test('inserts YouTube, website and media-link items from a URL prompt', async () => {
@@ -316,10 +364,11 @@ describe('canvasContextMenuHelpers', () => {
             'Insert Media Link',
             'Insert YouTube',
             'Insert Website',
+            'Insert Camera',
             'Paste Bible Item',
         ]);
 
-        menuItems[5].onSelect();
+        menuItems[6].onSelect();
         expect(canvasController.addNewBibleItem).toHaveBeenCalledWith(
             bibleItem,
             event,
@@ -628,6 +677,7 @@ describe('canvasContextMenuHelpers', () => {
             'Insert Media Link',
             'Insert YouTube',
             'Insert Website',
+            'Insert Camera',
         ]);
 
         showCanvasItemContextMenu(

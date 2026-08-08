@@ -16,6 +16,7 @@ import { BoxEditorNormalVideoRender } from './BoxEditorNormalViewVideoModeComp';
 import { BoxEditorNormalAudioRender } from './BoxEditorNormalViewAudioModeComp';
 import { BoxEditorNormalYouTubeRender } from './BoxEditorNormalViewYouTubeModeComp';
 import { BoxEditorNormalWebsiteRender } from './BoxEditorNormalViewWebsiteModeComp';
+import { BoxEditorNormalCameraRender } from './BoxEditorNormalViewCameraModeComp';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { useBoxEditorControllerContext } from '../../BoxEditorController';
 import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
@@ -36,6 +37,8 @@ function BoxEditorCanvasItemRender() {
             return <BoxEditorNormalYouTubeRender />;
         case 'website':
             return <BoxEditorNormalWebsiteRender />;
+        case 'camera':
+            return <BoxEditorNormalCameraRender />;
         case 'text':
             return <BoxEditorNormalTextRender />;
         case 'html':

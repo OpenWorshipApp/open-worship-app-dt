@@ -7,6 +7,7 @@ import { BoxEditorNormalVideoRender } from './canvas/box/BoxEditorNormalViewVide
 import { BoxEditorNormalAudioRender } from './canvas/box/BoxEditorNormalViewAudioModeComp';
 import { BoxEditorNormalYouTubeRender } from './canvas/box/BoxEditorNormalViewYouTubeModeComp';
 import { BoxEditorNormalWebsiteRender } from './canvas/box/BoxEditorNormalViewWebsiteModeComp';
+import { BoxEditorNormalCameraRender } from './canvas/box/BoxEditorNormalViewCameraModeComp';
 
 export default function CanvasItemRendererComp() {
     const canvasItem = useCanvasItemContext();
@@ -21,6 +22,8 @@ export default function CanvasItemRendererComp() {
             return <BoxEditorNormalYouTubeRender />;
         case 'website':
             return <BoxEditorNormalWebsiteRender />;
+        case 'camera':
+            return <BoxEditorNormalCameraRender />;
         case 'text':
             return <BoxEditorNormalTextRender />;
         case 'html':

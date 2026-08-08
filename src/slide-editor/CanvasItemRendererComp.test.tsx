@@ -31,6 +31,10 @@ vi.mock('./canvas/box/BoxEditorNormalViewWebsiteModeComp', () => ({
     BoxEditorNormalWebsiteRender: () => <div>website-render</div>,
 }));
 
+vi.mock('./canvas/box/BoxEditorNormalViewCameraModeComp', () => ({
+    BoxEditorNormalCameraRender: () => <div>camera-render</div>,
+}));
+
 vi.mock('./canvas/box/BoxEditorNormalViewHtmlModeComp', () => ({
     BoxEditorNormalHtmlRenderComp: () => <div>html-render</div>,
 }));
@@ -58,6 +62,7 @@ describe('CanvasItemRendererComp', () => {
             ['audio', 'audio-render'],
             ['youtube', 'youtube-render'],
             ['website', 'website-render'],
+            ['camera', 'camera-render'],
             ['text', 'text-render'],
             ['html', 'html-render'],
             ['bible', 'bible-render'],

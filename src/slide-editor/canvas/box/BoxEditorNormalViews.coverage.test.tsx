@@ -25,6 +25,7 @@ const {
     textGenStyleMock,
     textValidateMock,
     videoValidateMock,
+    cameraValidateMock,
 } = vi.hoisted(() => {
     const defaultContextMenuHandlerMock = vi.fn();
     const genHandleContextMenuOpeningMock = vi.fn(
@@ -90,6 +91,7 @@ const {
         textGenStyleMock: vi.fn(() => ({ fontSize: '18px' })),
         textValidateMock: vi.fn(),
         videoValidateMock: vi.fn(),
+        cameraValidateMock: vi.fn(),
     };
 });
 
@@ -151,6 +153,12 @@ vi.mock('../CanvasItemVideo', () => ({
     },
 }));
 
+vi.mock('../CanvasItemCamera', () => ({
+    default: {
+        validate: cameraValidateMock,
+    },
+}));
+
 vi.mock('../../../context-menu/appContextMenuHelpers', () => ({
     showAppContextMenu: showAppContextMenuMock,
 }));
@@ -205,6 +213,9 @@ import BoxEditorNormalViewTextModeComp, {
 import BoxEditorNormalViewVideoModeComp, {
     BoxEditorNormalVideoRender,
 } from './BoxEditorNormalViewVideoModeComp';
+import BoxEditorNormalViewCameraModeComp, {
+    BoxEditorNormalCameraRender,
+} from './BoxEditorNormalViewCameraModeComp';
 import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
 
 describe('BoxEditor normal view components', () => {
@@ -584,6 +595,60 @@ describe('BoxEditor normal view components', () => {
         const fallbackVideo =
             container?.querySelector<HTMLVideoElement>('video');
         expect(fallbackVideo?.getAttribute('src')).toBe('fallback-404.png');
+    });
+
+    test('renders a camera as a static placeholder carrying its device marks', async () => {
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            deviceId: 'device-1',
+            label: 'HD Webcam',
+            isMirrored: true,
+            objectFit: 'contain',
+        };
+
+        await render(
+            <BoxEditorNormalViewCameraModeComp
+                style={{ backgroundColor: 'aliceblue' }}
+            />,
+        );
+
+        const video = container?.querySelector<HTMLVideoElement>('video');
+        expect(cameraValidateMock).toHaveBeenCalledWith(
+            canvasItemPropsState.value,
+        );
+        // No `src`/`srcObject` here at all: the editor, the item list and slide
+        // thumbnails must never open a device. Only the screen manager
+        // hydrates this element, and these marks are how it finds it.
+        expect(video?.getAttribute('src')).toBeNull();
+        expect(video?.hasAttribute('data-camera-item')).toBe(true);
+        expect(video?.getAttribute('data-camera-device-id')).toBe('device-1');
+        expect(video?.getAttribute('data-camera-device-label')).toBe(
+            'HD Webcam',
+        );
+        // A live feed must not count as "media playing" for the slide-swap or
+        // page-unload guards.
+        expect(video?.getAttribute('data-ignore-media-guarding')).toBe('true');
+        expect(video?.style.objectFit).toBe('contain');
+        expect(video?.style.transform).toBe('scaleX(-1)');
+
+        // Exactly one preview-only badge, and it must be a SIBLING of the video
+        // so `setCameraBadgeVisibility` can find it from the parent.
+        const badges = container?.querySelectorAll('[data-preview-only]') ?? [];
+        expect(badges.length).toBe(1);
+        expect(badges[0].parentElement).toBe(video?.parentElement);
+        expect(container?.textContent).toContain('HD Webcam');
+    });
+
+    test('falls back to the error view when camera props are invalid', async () => {
+        const error = new Error('bad camera');
+        cameraValidateMock.mockImplementation(() => {
+            throw error;
+        });
+
+        await render(<BoxEditorNormalCameraRender />);
+
+        expect(handleErrorMock).toHaveBeenCalledWith(error);
+        expect(container?.textContent).toContain('Error');
     });
 
     test('falls back to the error view when video props are invalid', async () => {

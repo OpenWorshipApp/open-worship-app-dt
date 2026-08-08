@@ -58,3 +58,20 @@ export const screenManagerSettingNames = {
 // badge drawn over a video canvas item). The screen output hides every
 // element carrying this attribute.
 export const PREVIEW_ONLY_ATTR = 'data-preview-only';
+
+/**
+ * A camera canvas item renders as a STATIC placeholder everywhere — the editor
+ * canvas, the tool item list, slide thumbnails and print — and is hydrated into
+ * a live `getUserMedia` feed only by
+ * `ScreenVaryAppDocumentManager.cleanupSlideContent`. A 50-slide document must
+ * never open 50 device streams; this app targets very low-spec machines.
+ *
+ * That means the renderer and the screen manager only ever meet through static
+ * HTML (`genSlideHtml` runs the same React tree through `renderToStaticMarkup`),
+ * so these attributes are how the markup says "this `<video>` is a camera, and
+ * here is which one". `isMirrored`/`objectFit` deliberately get no attribute —
+ * they are pure CSS the renderer already bakes inline.
+ */
+export const CAMERA_ITEM_ATTR = 'data-camera-item';
+export const CAMERA_DEVICE_ID_ATTR = 'data-camera-device-id';
+export const CAMERA_DEVICE_LABEL_ATTR = 'data-camera-device-label';

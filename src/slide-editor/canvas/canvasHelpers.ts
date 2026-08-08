@@ -38,6 +38,35 @@ export type CanvasItemUrlPropsType = {
     url: string;
 };
 
+export const cameraObjectFitList = ['cover', 'contain', 'fill'] as const;
+export type CameraObjectFitType = (typeof cameraObjectFitList)[number];
+
+// A live camera feed has no source file and no size known ahead of its stream
+// opening. `deviceId` is stored alongside the human-readable `label` because
+// Chromium rotates device ids per origin and session — reopening the document
+// tomorrow has to find the same camera by name.
+export type CanvasItemCameraDevicePropsType = {
+    deviceId: string;
+    label: string;
+    isMirrored: boolean;
+    objectFit: CameraObjectFitType;
+};
+
+// A webcam's resolution is unknown until its stream opens, so a camera box is
+// inserted at the same 16:9 the other embeds default to.
+export const CAMERA_EMBED_WIDTH = 640;
+export const CAMERA_EMBED_HEIGHT = 360;
+
+// A camera box is NOT inserted fully transparent like the other media items.
+// It shows a static placeholder until it reaches a screen, and with
+// `objectFit: 'contain'` the letterbox bars stay visible even once the feed is
+// up, so the box needs a faint backing to read against the slide. It also has
+// to be non-zero alpha for the colour picker to be usable at all: the picker
+// keeps the item's current alpha and only replaces the RGB, so an item that
+// starts at `#00000000` turns every colour the operator picks into a fully
+// transparent one.
+export const CAMERA_DEFAULT_BACKGROUND_COLOR = '#00000033';
+
 // YouTube's canonical recommended embed dimensions (16:9).
 export const YOUTUBE_EMBED_WIDTH = 560;
 export const YOUTUBE_EMBED_HEIGHT = 315;
@@ -101,6 +130,21 @@ export function validateUrlProps(props: AnyObjectType) {
     }
 }
 
+export function validateCameraProps(props: AnyObjectType) {
+    // Only the device identity is required, and either half of it will do: an
+    // id alone still resolves right now, a label alone still resolves after
+    // Chromium has rotated the id. `isMirrored`/`objectFit` are defaulted in
+    // the constructor rather than validated, so an item written by an older
+    // build renders instead of collapsing into an error box.
+    if (
+        typeof props.deviceId !== 'string' ||
+        typeof props.label !== 'string' ||
+        (props.deviceId === '' && props.label === '')
+    ) {
+        throw new TypeError('Invalid canvas item camera data');
+    }
+}
+
 export const hAlignmentList = ['left', 'center', 'right'] as const;
 export type HAlignmentType = (typeof hAlignmentList)[number];
 export const vAlignmentList = ['start', 'center', 'end'] as const;
@@ -158,6 +202,7 @@ export const canvasItemList = [
     'youtube',
     'website',
     'bible',
+    'camera',
     'error',
 ] as const;
 export type CanvasItemKindType = (typeof canvasItemList)[number];

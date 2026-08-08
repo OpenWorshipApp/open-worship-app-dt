@@ -5,6 +5,7 @@ import { ExpandChevronComp, useExpandToggle } from './useExpandToggle';
 
 import SlideEditorToolsTextComp from './SlideEditorToolsTextComp';
 import SlideEditorToolsBoxComp from './SlideEditorToolsBoxComp';
+import SlideEditorToolsCameraComp from './SlideEditorToolsCameraComp';
 import type CanvasItem from '../CanvasItem';
 import {
     CanvasItemContext,
@@ -161,6 +162,15 @@ export default function CanvasItemPropsEditorComp({
                                                     isPlainText
                                                 }
                                             />
+                                        </SlideEditorToolTitleComp>
+                                    </div>
+                                ) : null}
+                                {canvasItem.type === 'camera' ? (
+                                    <div>
+                                        <SlideEditorToolTitleComp
+                                            title={tran('Camera Properties')}
+                                        >
+                                            <SlideEditorToolsCameraComp />
                                         </SlideEditorToolTitleComp>
                                     </div>
                                 ) : null}

@@ -14,6 +14,7 @@ import BoxEditorNormalViewVideoModeComp from './BoxEditorNormalViewVideoModeComp
 import BoxEditorNormalViewAudioModeComp from './BoxEditorNormalViewAudioModeComp';
 import BoxEditorNormalViewYouTubeModeComp from './BoxEditorNormalViewYouTubeModeComp';
 import BoxEditorNormalViewWebsiteModeComp from './BoxEditorNormalViewWebsiteModeComp';
+import BoxEditorNormalViewCameraModeComp from './BoxEditorNormalViewCameraModeComp';
 
 export default function BoxEditorNormalModeComp() {
     const canvasItem = useCanvasItemContext();
@@ -37,6 +38,8 @@ export default function BoxEditorNormalModeComp() {
             return <BoxEditorNormalViewYouTubeModeComp style={style} />;
         case 'website':
             return <BoxEditorNormalViewWebsiteModeComp style={style} />;
+        case 'camera':
+            return <BoxEditorNormalViewCameraModeComp style={style} />;
         case 'text':
             if (canvasItem === editingCanvasItem) {
                 return <BoxEditorNormalTextEditModeComp style={style} />;

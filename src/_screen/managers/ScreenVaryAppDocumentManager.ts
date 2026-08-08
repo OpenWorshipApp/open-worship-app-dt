@@ -25,6 +25,10 @@ import {
     genYouTubeSyncId,
     SlideYouTubePlayer,
 } from './slideYouTubeSyncHelpers';
+import {
+    checkIsCameraMediaElement,
+    SlideCameraAttachment,
+} from './slideCameraSyncHelpers';
 import ScreenEventHandler, {
     type GroupMembershipInf,
 } from './ScreenEventHandler';
@@ -142,6 +146,9 @@ class ScreenVaryAppDocumentManager
     // render and torn down before the next one so their window `message`
     // listeners never leak.
     private youTubePlayers: SlideYouTubePlayer[] = [];
+    // Live camera feeds in the currently-rendered slide, released before the
+    // next render and on delete so the device light never stays on.
+    private readonly cameraAttachment = new SlideCameraAttachment();
     effectManager: ScreenEffectManager;
 
     constructor(
@@ -371,7 +378,13 @@ class ScreenVaryAppDocumentManager
         }
         return queryAllDeep(div, 'video, audio').filter(
             (element): element is HTMLMediaElement => {
-                return element instanceof HTMLMediaElement;
+                // A camera feed has no timeline: pausing it or setting a
+                // playback rate on it (which is what `Slide: Media Control`
+                // does with this list) would just freeze the picture.
+                return (
+                    element instanceof HTMLMediaElement &&
+                    !checkIsCameraMediaElement(element)
+                );
             },
         );
     }
@@ -742,7 +755,11 @@ class ScreenVaryAppDocumentManager
                 if (
                     media instanceof HTMLMediaElement === false ||
                     media === initiator.mediaElement ||
-                    media.paused
+                    media.paused ||
+                    // A live camera is never "paused", so without this skip,
+                    // playing one slide's video would freeze the camera on
+                    // every other screen for good.
+                    checkIsCameraMediaElement(media)
                 ) {
                     continue;
                 }
@@ -950,6 +967,16 @@ class ScreenVaryAppDocumentManager
             if (media instanceof HTMLMediaElement === false) {
                 continue;
             }
+            // A camera item is a LIVE device feed, not a file. This is the one
+            // place its stream is opened — everywhere else it stays the static
+            // placeholder — and it stays out of the whole sync path below: a
+            // `blob:` src would key it differently in every window, and a
+            // scrub bar / group pause makes no sense for something with no
+            // timeline.
+            if (checkIsCameraMediaElement(media)) {
+                this.cameraAttachment.attach(media as HTMLVideoElement);
+                continue;
+            }
             media.loop = false;
             // A canvas audio item is preview-only: it is hidden on the
             // projected screen (loop above), so mirroring it there would only
@@ -1082,6 +1109,11 @@ class ScreenVaryAppDocumentManager
     }
 
     async render() {
+        // ABOVE the null guard, unlike `destroyYouTubePlayers` below: `set div`
+        // calls `render()`, so a mini-screen host unmounting comes through here
+        // with `div` already null and takes that early return. A camera left
+        // running on that path keeps the device light on for ever.
+        this.cameraAttachment.releaseAll();
         if (this.div === null) {
             return;
         }
@@ -1198,6 +1230,7 @@ class ScreenVaryAppDocumentManager
         // listeners alive. The persisted entry is dropped centrally by
         // deleteScreenPersistedData.
         this.destroyYouTubePlayers();
+        this.cameraAttachment.releaseAll();
         if (this._div !== null) {
             this._div.replaceChildren();
             this._div = null;

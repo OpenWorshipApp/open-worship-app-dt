@@ -20,6 +20,7 @@ import {
     hAlignmentList,
     tooling2BoxProps,
     vAlignmentList,
+    validateCameraProps,
     validateMediaProps,
 } from './canvasHelpers';
 
@@ -41,6 +42,7 @@ describe('canvasHelpers', () => {
             'youtube',
             'website',
             'bible',
+            'camera',
             'error',
         ]);
 
@@ -69,6 +71,30 @@ describe('canvasHelpers', () => {
                 mediaHeight: '180',
             }),
         ).toThrow('Invalid canvas item media data');
+    });
+
+    test('accepts a camera identified by either its id or its label', () => {
+        // Either half alone is enough: the id resolves now, the label still
+        // resolves after Chromium has rotated the id.
+        expect(() => {
+            validateCameraProps({ deviceId: 'device-1', label: 'HD Webcam' });
+        }).not.toThrow();
+        expect(() => {
+            validateCameraProps({ deviceId: 'device-1', label: '' });
+        }).not.toThrow();
+        expect(() => {
+            validateCameraProps({ deviceId: '', label: 'HD Webcam' });
+        }).not.toThrow();
+
+        expect(() => {
+            validateCameraProps({ deviceId: '', label: '' });
+        }).toThrow('Invalid canvas item camera data');
+        expect(() => {
+            validateCameraProps({ label: 'HD Webcam' });
+        }).toThrow('Invalid canvas item camera data');
+        expect(() => {
+            validateCameraProps({ deviceId: 42, label: 'HD Webcam' });
+        }).toThrow('Invalid canvas item camera data');
     });
 
     test('removes alignment tooling fields and preserves other properties', () => {

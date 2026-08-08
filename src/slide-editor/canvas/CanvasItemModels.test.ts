@@ -149,6 +149,7 @@ import CanvasItemVideo from './CanvasItemVideo';
 import CanvasItemAudio from './CanvasItemAudio';
 import CanvasItemWebsite from './CanvasItemWebsite';
 import CanvasItemYouTube from './CanvasItemYouTube';
+import CanvasItemCamera from './CanvasItemCamera';
 import {
     checkIsAppendSelectionModifier,
     getCanvasItemsInRect,
@@ -785,6 +786,72 @@ describe('CanvasItem models', () => {
         expect(item.embedUrl).toBe(
             'https://www.youtube.com/embed/abc123?rel=0&enablejsapi=1',
         );
+    });
+
+    test('builds camera canvas items centred on the cursor', () => {
+        const item = CanvasItemCamera.genFromDevice(
+            400,
+            300,
+            'device-1',
+            'HD Webcam',
+        ) as CanvasItemCamera;
+
+        expect(item.props.type).toBe('camera');
+        expect(item.props.deviceId).toBe('device-1');
+        expect(item.props.label).toBe('HD Webcam');
+        expect(item.props.width).toBe(640);
+        expect(item.props.height).toBe(360);
+        expect(item.props.left).toBe(400 - 640 / 2);
+        expect(item.props.top).toBe(300 - 360 / 2);
+        expect(item.getStyle()).toEqual({});
+        // NOT the fully-transparent media default: the colour picker only
+        // replaces the RGB and keeps the item's alpha, so a `#00000000` camera
+        // would turn every colour the operator picks into an invisible one.
+        expect(item.props.backgroundColor).toBe('#00000033');
+        // A webcam's own ratio is unknown until the stream opens, so the box is
+        // free and `objectFit` decides how the feed fills it.
+        expect(item.shouldLockAspectRatio).toBe(false);
+        expect(item.toJson()).toEqual(
+            expect.objectContaining({
+                type: 'camera',
+                deviceId: 'device-1',
+                label: 'HD Webcam',
+                isMirrored: false,
+                objectFit: 'cover',
+            }),
+        );
+    });
+
+    test('defaults a camera item written by an older build instead of erroring', () => {
+        // No `isMirrored`/`objectFit` at all — an item saved before those props
+        // existed must still render.
+        const item = CanvasItemCamera.fromJson({
+            id: 1,
+            type: 'camera',
+            deviceId: 'device-1',
+            label: 'HD Webcam',
+        } as any) as CanvasItemCamera;
+        expect(item.props.isMirrored).toBe(false);
+        expect(item.props.objectFit).toBe('cover');
+
+        const bogusFit = CanvasItemCamera.fromJson({
+            id: 1,
+            type: 'camera',
+            deviceId: 'device-1',
+            label: 'HD Webcam',
+            objectFit: 'nonsense',
+        } as any) as CanvasItemCamera;
+        expect(bogusFit.props.objectFit).toBe('cover');
+
+        // A genuinely unusable identity still degrades to an error box.
+        expect(
+            CanvasItemCamera.fromJson({
+                id: 1,
+                type: 'camera',
+                deviceId: 42,
+                label: 'HD Webcam',
+            } as any),
+        ).toEqual(expect.objectContaining({ type: 'error' }));
     });
 
     test('selection helpers append, merge, and rubber-band select boxes', () => {

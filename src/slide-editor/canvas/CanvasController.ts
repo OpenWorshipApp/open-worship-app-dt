@@ -17,6 +17,7 @@ import {
     type CanvasControllerEventType,
 } from './canvasHelpers';
 import CanvasItemVideo from './CanvasItemVideo';
+import CanvasItemCamera from './CanvasItemCamera';
 import CanvasItemAudio from './CanvasItemAudio';
 import CanvasItemYouTube from './CanvasItemYouTube';
 import CanvasItemWebsite from './CanvasItemWebsite';
@@ -275,6 +276,21 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             handleError(error);
         }
         showSimpleToast(tran('Insert Website'), tran('Fail to insert website'));
+    }
+
+    genNewCameraItem(camera: { deviceId: string; label: string }, event: any) {
+        try {
+            const { x, y } = this.getMousePosition(event);
+            return CanvasItemCamera.genFromDevice(
+                x,
+                y,
+                camera.deviceId,
+                camera.label,
+            );
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast(tran('Insert Camera'), tran('Fail to insert camera'));
     }
 
     async genNewImageItemFromFile(file: File | Blob, event: any) {

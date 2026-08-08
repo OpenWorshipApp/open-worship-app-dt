@@ -9,6 +9,7 @@ import CanvasItemVideo from './CanvasItemVideo';
 import CanvasItemAudio from './CanvasItemAudio';
 import CanvasItemYouTube from './CanvasItemYouTube';
 import CanvasItemWebsite from './CanvasItemWebsite';
+import CanvasItemCamera from './CanvasItemCamera';
 import type Slide from '../../app-document-list/Slide';
 
 export default class Canvas {
@@ -63,6 +64,8 @@ export default class Canvas {
                 return CanvasItemYouTube.fromJson(json);
             case 'website':
                 return CanvasItemWebsite.fromJson(json);
+            case 'camera':
+                return CanvasItemCamera.fromJson(json);
             case 'text':
                 return CanvasItemText.fromJson(json);
             case 'html':
