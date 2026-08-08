@@ -70,3 +70,6 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Presenting flow rename](presenting-flow-rename.md) — the four stale Khmer strings are fixed too now; `--no-playlist` (yt-dlp) and `displayListeners` are lookalikes, and the migration discovers the old name rather than holding one
 - [Expanded doc rows went stale — FIXED](presenting-flow-expanded-doc-stale.md) — the expanded document now re-subscribes; keep that timer PER-INSTANCE or one sheet listing a document twice goes stale again
 - [Expansion followed the position — FIXED](presenting-flow-expansion-follows-position.md) — run-sheet rows are keyed by uuid now; never key them by index again
+- [Console design system tokens](console-design-system-tokens.md) — `--app-accent`/`--app-on-air`/`--app-text-*`/`.app-data` exist and are under-adopted; don't reach for `--bs-*` or raw px
+- [Presenting flow cue gutter](presenting-flow-cue-gutter.md) — one left column (number + rail + run cursor) shared by the tree and the preview; content-box and Enter-only are load-bearing
+- [Vite caches a failed import resolution](vite-caches-failed-import-resolution.md) — importing before the file exists 500s the importer forever; touch vite.config.ts, not the importer
