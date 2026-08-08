@@ -58,32 +58,6 @@
     outline-offset: 1px;
   }
 
-  // -- Minimum hit target ----------------------------------------------------
-  // 435 interactive elements measured under 24px, some as small as 11x17 --
-  // including the `x` that clears a screen. Density is right for a console;
-  // sub-20px targets for on-air and destructive actions are not. `min-*` only
-  // grows a box that is genuinely too small, so the dense rows keep their
-  // rhythm and nothing reflows.
-  .btn,
-  [role='button'],
-  .app-caught-hover-pointer {
-    min-width: 24px;
-    min-height: 24px;
-  }
-
-  // An icon that is the entire content of a control IS the control. Centring it
-  // in a 24px box grows the target without touching the glyph size, and without
-  // padding out the icons that merely sit alongside a label.
-  .btn > i:only-child,
-  [role='button'] > i:only-child,
-  .app-caught-hover-pointer > i:only-child {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 24px;
-    min-height: 24px;
-  }
-
   // -- Data type role --------------------------------------------------------
   // The console renders in a single family (Battambang, correctly -- this is a
   // Khmer-first app). What it lacked was a second ROLE. Numeric readouts -- the
