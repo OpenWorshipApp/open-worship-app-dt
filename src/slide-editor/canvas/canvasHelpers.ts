@@ -47,10 +47,34 @@ export const YOUTUBE_EMBED_HEIGHT = 315;
 export const WEBSITE_EMBED_WIDTH = 800;
 export const WEBSITE_EMBED_HEIGHT = 600;
 
-// An audio item is just a player control; default to roughly the native
-// `<audio controls>` proportions so it looks right before being resized.
-export const AUDIO_EMBED_WIDTH = 560;
-export const AUDIO_EMBED_HEIGHT = 60;
+// An audio item is just a player control, drawn at roughly the native
+// `<audio controls>` proportions. Chromium draws that control chrome at a
+// FIXED glyph size whatever the element's box is, so these are the unscaled
+// proportions and the renderer scales the whole control with CSS `zoom`.
+export const AUDIO_CONTROL_WIDTH = 240;
+export const AUDIO_CONTROL_HEIGHT = 60;
+// The player is an operator affordance shown only in the presenter's mini
+// screen (it is preview-only, never projected), where the whole slide is
+// scaled down to a few hundred pixels — at 1x the control is too small to read
+// or hit. Insert it 5x oversized so it stays usable there.
+export const AUDIO_EMBED_SCALE = 5;
+export const AUDIO_EMBED_WIDTH = AUDIO_CONTROL_WIDTH * AUDIO_EMBED_SCALE;
+export const AUDIO_EMBED_HEIGHT = AUDIO_CONTROL_HEIGHT * AUDIO_EMBED_SCALE;
+
+// How much to `zoom` an audio item's player control for its box. The control
+// is laid out in `zoom`-divided units, so `width/height: 100%` still fills the
+// box exactly — only the glyphs, text and bar grow. Scaling by whichever axis
+// fits worst keeps the control from ever being clipped, and the clamp keeps
+// both ends sane: never below 1x, so an item saved at the old control-sized
+// box looks exactly as it did, and never above the insert scale, so a
+// full-slide box (a lyric audio attachment) doesn't grow a monstrous player.
+export function calcAudioControlScale(width: number, height: number) {
+    const fitScale = Math.min(
+        width / AUDIO_CONTROL_WIDTH,
+        height / AUDIO_CONTROL_HEIGHT,
+    );
+    return Math.min(Math.max(fitScale, 1), AUDIO_EMBED_SCALE);
+}
 
 export function validateMediaProps(
     props: AnyObjectType,

@@ -9,6 +9,7 @@ import { pathToFileURL } from '../../../server/calcHelpers';
 import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
 import { PREVIEW_ONLY_ATTR } from '../../../helper/constants';
 import { checkIsUrlMediaSource } from '../../../helper/mediaSourceHelpers';
+import { calcAudioControlScale } from '../canvasHelpers';
 
 export default function BoxEditorNormalViewAudioModeComp({
     style,
@@ -65,6 +66,12 @@ export function BoxEditorNormalAudioRender() {
                     height: '100%',
                     display: 'block',
                     cursor: 'pointer',
+                    // A bigger box on its own only stretches the empty pill —
+                    // the control chrome is drawn at a fixed glyph size — so
+                    // the box's size is turned into a `zoom` to actually grow
+                    // the player. Percentages resolve in the zoomed units, so
+                    // the player still fills the box exactly.
+                    zoom: calcAudioControlScale(props.width, props.height),
                 }}
             />
         </div>

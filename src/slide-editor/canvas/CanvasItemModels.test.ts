@@ -543,11 +543,13 @@ describe('CanvasItem models', () => {
             expect.objectContaining({
                 type: 'audio',
                 filePath: '/slides/song.mp3',
-                // Centered on the insertion point at the default player size.
-                left: 120,
-                top: 270,
-                width: 560,
-                height: 60,
+                // Centered on the insertion point at the default player size,
+                // which is the control's own proportions 5x oversized so it
+                // stays usable in the presenter's scaled-down mini screen.
+                left: -200,
+                top: 150,
+                width: 1200,
+                height: 300,
             }),
         );
 
