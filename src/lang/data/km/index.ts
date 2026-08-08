@@ -77,8 +77,11 @@ const dictionary = {
         'តើអ្នកពិតជាចង់កំណត់ទិន្នន័យស្វែងរកឡើងវិញឬ? នេះនឹងចំណាយពេលមួយដើម្បីស្ដារឡើងវិញ',
     'This slide is disabled': 'ស្លាយនេះត្រូវបានបិទ',
     'This item is disabled': 'ធាតុនេះត្រូវបានបិទ',
+    // What a damaged run-sheet entry reads as, both on its own row and in the
+    // toast raised when the file was parsed.
+    'Invalid item': 'ធាតុមិនត្រឹមត្រូវ',
     'This item is disabled in this presenting flow':
-        'ធាតុនេះត្រូវបានបិទនៅក្នុងបញ្ជីចាក់នេះ',
+        'ធាតុនេះត្រូវបានបិទនៅក្នុងតារាងកម្មវិធីនេះ',
     'This item is disabled in its document':
         'ធាតុនេះត្រូវបានបិទនៅក្នុងឯកសាររបស់វា',
     'Double click to jump to top': 'ចុចពីរដងដើម្បីទៅកាន់ខាងលើ',
@@ -285,7 +288,7 @@ const dictionary = {
     'Image URL:': 'តំណរូបភាព៖',
     'Web URL:': 'តំណវេបសាយ៖',
     'Documents URL:': 'តំណឯកសារ៖',
-    'Presenting Flow Archive URL:': 'តំណប័ណ្ណសារបញ្ជីចាក់៖',
+    'Presenting Flow Archive URL:': 'តំណប័ណ្ណសារតារាងកម្មវិធី៖',
     'Open URL': 'បើកតំណ',
     'Copy URL': 'ចម្លងតំណ',
     New: 'ថ្មី',
@@ -726,10 +729,14 @@ const dictionary = {
     'Import Document': 'នាំចូលឯកសារ',
     'Export Bible List': 'នាំចេញបញ្ជីព្រះគម្ពីរ',
     'Import Bible List': 'នាំចូលបញ្ជីព្រះគម្ពីរ',
-    'Export Presenting Flow': 'នាំចេញបញ្ជីចាក់',
-    'Import Presenting Flow': 'នាំចូលបញ្ជីចាក់',
+    'Export Presenting Flow': 'នាំចេញតារាងកម្មវិធី',
+    'Import Presenting Flow': 'នាំចូលតារាងកម្មវិធី',
     'Export Bible Note Item': 'នាំចេញកំណត់ចំណាំព្រះគម្ពីរ',
     'Import Bible Note Item': 'នាំចូលកំណត់ចំណាំព្រះគម្ពីរ',
+    // The two bodies every export/import toast is built from. The path or the
+    // name goes on AFTER the translation, never into the key.
+    'Exported to': 'បាននាំចេញទៅ',
+    Imported: 'បាននាំចូល',
     // The optional password protection on every export.
     Password: 'ពាក្យសម្ងាត់',
     'Confirm Password': 'បញ្ជាក់ពាក្យសម្ងាត់',

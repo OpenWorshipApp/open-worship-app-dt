@@ -284,16 +284,19 @@ export async function exportPresentingFlow(presentingFlow: PresentingFlow) {
             presentingFlow,
             password || null,
         );
+        // `showSimpleToast` does not translate — unlike the password dialog and
+        // the menu entry that lead here, both of which do. The path goes on
+        // AFTER the translation, never into the key.
         showSimpleToast(
-            'Export Presenting Flow',
-            `Exported to ${archiveFilePath}`,
+            tran('Export Presenting Flow'),
+            `${tran('Exported to')} ${archiveFilePath}`,
         );
         showFileOrDirExplorer(archiveFilePath);
         return archiveFilePath;
     } catch (error: any) {
         handleError(error);
         showSimpleToast(
-            'Export Presenting Flow',
+            tran('Export Presenting Flow'),
             error?.message ?? 'Unable to export the presenting flow',
         );
         return null;
@@ -475,14 +478,14 @@ async function runPresentingFlowArchiveImport(archiveFilePath: string) {
             return null;
         }
         showSimpleToast(
-            IMPORT_TITLE,
-            `Imported ${presentingFlow.fileSource.name}`,
+            tran(IMPORT_TITLE),
+            `${tran('Imported')} ${presentingFlow.fileSource.name}`,
         );
         return presentingFlow;
     } catch (error: any) {
         handleError(error);
         showSimpleToast(
-            IMPORT_TITLE,
+            tran(IMPORT_TITLE),
             error?.message ?? 'Unable to import the presenting flow',
         );
         return null;
@@ -552,7 +555,7 @@ export async function askAndImportPresentingFlowArchiveFromUrl() {
     } catch (error: any) {
         handleError(error);
         showSimpleToast(
-            IMPORT_TITLE,
+            tran(IMPORT_TITLE),
             error?.message ?? 'Unable to import the presenting flow',
         );
         return null;
@@ -593,7 +596,7 @@ export async function importDroppedPresentingFlowArchive(
     } catch (error: any) {
         handleError(error);
         showSimpleToast(
-            IMPORT_TITLE,
+            tran(IMPORT_TITLE),
             error?.message ?? 'Unable to import the presenting flow',
         );
         return null;

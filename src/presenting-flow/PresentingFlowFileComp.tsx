@@ -76,7 +76,21 @@ function PresentingFlowItemsComp({
             {presentingFlowItems.map((presentingFlowItem, i) => {
                 return (
                     <PresentingFlowItemComp
-                        key={`${presentingFlowItem.type}-${i}`}
+                        // Keyed by the entry's OWN uuid, never by its position:
+                        // a reorder must move the row, not hand one row's state
+                        // to whatever slid into its slot. With an index-based
+                        // key React kept the instance in the slot while the
+                        // entry under it changed, and every mount-time read in
+                        // the row — `useStateSettingBoolean` for the expansion
+                        // flag above all — went on answering for the PREVIOUS
+                        // entry, so `Move to Top` silently opened and closed the
+                        // wrong documents. The `type`+index shape stays as the
+                        // fallback for the one entry that can have no uuid: a
+                        // damaged one whose file never carried a valid id.
+                        key={
+                            presentingFlowItem.uuid ??
+                            `${presentingFlowItem.type}-${i}`
+                        }
                         presentingFlow={presentingFlow}
                         presentingFlowItem={presentingFlowItem}
                         index={i}

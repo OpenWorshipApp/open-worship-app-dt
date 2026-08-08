@@ -1,10 +1,12 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { showDroppedDataOnScreens } from '../_screen/managers/screenDroppedHelpers';
 import { checkIsVarySlideOnScreen } from '../app-document-list/appDocumentHelpers';
 import type { VarySlideType } from '../app-document-list/appDocumentTypeHelpers';
 import { useAppCurrentRef, useAppStateAsync } from '../helper/appHooks';
+import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
@@ -294,9 +296,33 @@ export default function PresentingFlowDocumentSlidesComp({
 }>) {
     // Loaded on expand and dropped again on collapse (this component unmounts),
     // so a long presenting flow never holds every document's slides at once.
-    const [varySlides] = useAppStateAsync(() => {
+    const [varySlides, setVarySlides] = useAppStateAsync(() => {
         return loadVaryAppDocumentSlides(filePath);
     }, [filePath]);
+    // MUST be per-instance: one run sheet may list the SAME document more than
+    // once (dragged in twice, or duplicated), so a single `update` event reaches
+    // every one of these components. A module-level timer would let the last
+    // caller `clearTimeout` the others' pending refresh and leave all but one
+    // stale — the exact bug the presenter's own previewer carries this comment
+    // about.
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    // A stored slide is a REFERENCE precisely so that a song edited between the
+    // sheet being built and the service being run projects its NEW words. Read
+    // once on expand, that promise only held until someone touched the document:
+    // the rows went stale, and — worse — clicking one presented the slide object
+    // captured at expand time, putting the OLD text on a live screen. Re-read on
+    // the document's own `update`, debounced, so the rows and what they present
+    // follow the file for as long as they are on screen.
+    useFileSourceEvents(
+        ['update'],
+        () => {
+            attemptTimeout(async () => {
+                setVarySlides(await loadVaryAppDocumentSlides(filePath));
+            });
+        },
+        [],
+        filePath,
+    );
     // Asked ONCE for the whole document rather than once per row: a document of
     // ~90 slides is what this list is measured against, and the answer for the
     // overwhelmingly common case — no CC anywhere in it — is one key count.

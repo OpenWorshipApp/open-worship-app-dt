@@ -3,6 +3,7 @@ import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs
 import type { DragDataType, DroppedDataType } from '../helper/DragInf';
 import { handleError } from '../helper/errorHelpers';
 import { cloneJson } from '../helper/helpers';
+import * as loggerHelpers from '../helper/loggerHelpers';
 import { tran } from '../lang/langHelpers';
 import type { MimetypeNameType } from '../server/fileHelpers';
 import { unlocking } from '../server/unlockingHelpers';
@@ -190,9 +191,14 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
                 try {
                     return PresentingFlowItem.fromJson(this.filePath, json);
                 } catch (error: any) {
+                    // The thrown message names which validator rejected it and
+                    // belongs in the log beside the entry itself, which
+                    // `validate` has already written. What the operator is told
+                    // is the same phrase the row they are about to see reads.
+                    loggerHelpers.appError(error);
                     showSimpleToast(
                         tran('Instantiating Presenting Flow Item'),
-                        error.message,
+                        tran('Invalid item'),
                     );
                 }
                 return PresentingFlowItem.fromJsonError(this.filePath, json);

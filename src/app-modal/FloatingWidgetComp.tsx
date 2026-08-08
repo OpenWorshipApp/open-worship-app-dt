@@ -43,6 +43,26 @@ interface MyProps {
     options: FloatingWidgetOptions;
 }
 
+/**
+ * Whether a pointer event belongs to the gesture currently in progress.
+ *
+ * The null check is SEPARATE from the pointer comparison on purpose: with no
+ * gesture in progress `interactionState?.pointerId` is `undefined`, and an event
+ * whose own `pointerId` is `undefined` — a synthetic or replayed one — then
+ * compares EQUAL. Callers went on to read `startRect` off null, and an uncaught
+ * throw here escalates to the app's "Reload is needed" dialog (the same hazard
+ * `setPointerCapture` is wrapped against below).
+ */
+function checkIsOwnPointer(
+    interactionState: InteractionState | null,
+    event: ReactPointerEvent<HTMLElement>,
+): interactionState is InteractionState {
+    return (
+        interactionState !== null &&
+        interactionState.pointerId === event.pointerId
+    );
+}
+
 export default function FloatingWidgetComp({
     children,
     collapsedChildren = null,
@@ -205,7 +225,7 @@ export default function FloatingWidgetComp({
     const finishInteraction = useCallback(
         (event: ReactPointerEvent<HTMLDivElement>) => {
             const interactionState = interactionRef.current;
-            if (interactionState?.pointerId !== event.pointerId) {
+            if (!checkIsOwnPointer(interactionState, event)) {
                 return;
             }
 
@@ -239,7 +259,7 @@ export default function FloatingWidgetComp({
     const handlePointerMove = useCallback(
         (event: ReactPointerEvent<HTMLDivElement>) => {
             const interactionState = interactionRef.current;
-            if (interactionState?.pointerId !== event.pointerId) {
+            if (!checkIsOwnPointer(interactionState, event)) {
                 return;
             }
 

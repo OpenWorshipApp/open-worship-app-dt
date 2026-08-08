@@ -207,7 +207,7 @@ function reportArchiveFailure(
 ) {
     handleError(error);
     showSimpleToast(
-        title,
+        tran(title),
         error?.message ?? `Unable to ${verb} the ${config.itemLabel}`,
     );
     return null;
@@ -232,7 +232,12 @@ export async function exportSingleItem(
             config,
             password || null,
         );
-        showSimpleToast(config.exportTitle, `Exported to ${archiveFilePath}`);
+        // `showSimpleToast` does not translate; the path goes on AFTER the
+        // translation, never into the key.
+        showSimpleToast(
+            tran(config.exportTitle),
+            `${tran('Exported to')} ${archiveFilePath}`,
+        );
         showFileOrDirExplorer(archiveFilePath);
         return archiveFilePath;
     } catch (error: any) {
@@ -394,8 +399,8 @@ async function runSingleItemArchiveImport(
             return null;
         }
         showSimpleToast(
-            config.importTitle,
-            `Imported ${FileSource.getInstance(itemFilePath).name}`,
+            tran(config.importTitle),
+            `${tran('Imported')} ${FileSource.getInstance(itemFilePath).name}`,
         );
         return itemFilePath;
     } catch (error: any) {

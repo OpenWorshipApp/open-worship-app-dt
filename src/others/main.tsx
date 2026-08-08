@@ -72,17 +72,44 @@ async function confirmLocalStorageErasing() {
     appProvider.reload();
 }
 
+// One dialog at a time. `onerror`/`onunhandledrejection` fire once per failure,
+// and the failures that reach here arrive in bursts — a render loop raises one
+// per attempt. Without this every one of them opened its own confirm on top of
+// the last.
+let isReloadingConfirmShowing = false;
+
 async function confirmReloading() {
-    await unlocking(ERROR_DATETIME_SETTING_NAME, async () => {
-        const oldDatetimeString = getSetting(ERROR_DATETIME_SETTING_NAME);
-        if (oldDatetimeString) {
-            const oldDatetime = Number.parseInt(oldDatetimeString);
-            if (Date.now() - oldDatetime < ERROR_DURATION) {
-                confirmLocalStorageErasing();
-                return;
-            }
+    if (isReloadingConfirmShowing) {
+        return;
+    }
+    isReloadingConfirmShowing = true;
+    try {
+        // The lock covers the read-compare-write of the timestamp and NOTHING
+        // more. It used to be held across the confirm below as well — that is,
+        // for as long as it took a human to answer — so the next error in the
+        // burst spun on it for 60s and then took the escape hatch in
+        // `unlocking`, running CONCURRENTLY with the holder on the very setting
+        // the lock exists to serialize.
+        const isRepeatedError = await unlocking(
+            ERROR_DATETIME_SETTING_NAME,
+            () => {
+                const oldDatetimeString = getSetting(
+                    ERROR_DATETIME_SETTING_NAME,
+                );
+                if (oldDatetimeString) {
+                    const oldDatetime = Number.parseInt(oldDatetimeString);
+                    if (Date.now() - oldDatetime < ERROR_DURATION) {
+                        return true;
+                    }
+                }
+                setSetting(ERROR_DATETIME_SETTING_NAME, Date.now().toString());
+                return false;
+            },
+        );
+        if (isRepeatedError) {
+            await confirmLocalStorageErasing();
+            return;
         }
-        setSetting(ERROR_DATETIME_SETTING_NAME, Date.now().toString());
         const isOk = await showAppConfirm(
             tran('Reload is needed'),
             tran(
@@ -92,7 +119,9 @@ async function confirmReloading() {
         if (isOk) {
             appProvider.reload();
         }
-    });
+    } finally {
+        isReloadingConfirmShowing = false;
+    }
 }
 
 function isDomException(error: any) {

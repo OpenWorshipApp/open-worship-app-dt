@@ -787,6 +787,12 @@ export default class PresentingFlowItem {
                     : `${this.actionNumber}`;
             return `${tran(action.label)} (${arming})`;
         }
+        // Same reasoning as an action's: a damaged entry has no name of its own
+        // to preserve, so its label is translated on read rather than baked in
+        // English into the row when the error is built.
+        if (this.isError) {
+            return tran('Invalid item');
+        }
         return this.originalJson.title ?? this.type;
     }
 
@@ -1068,7 +1074,13 @@ export default class PresentingFlowItem {
     static fromJsonError(filePath: string, json: AnyObjectType) {
         const item = new PresentingFlowItem(filePath, {
             type: ERROR_TYPE,
-            title: 'Invalid item',
+            // The uuid is carried over when the damaged entry still has a valid
+            // one, so the error row keeps a stable React key across a reorder
+            // like every healthy row. What is damaged is the entry's payload;
+            // its identity usually survives.
+            uuid: checkIsValidPresentingFlowItemUuid(json.uuid)
+                ? json.uuid
+                : undefined,
         });
         item.jsonError = json;
         return item;

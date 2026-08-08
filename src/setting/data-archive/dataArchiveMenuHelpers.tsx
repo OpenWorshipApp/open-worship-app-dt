@@ -168,7 +168,10 @@ async function handleExporting() {
         const archiveFilePath = await runWithProgress(EXPORT_TITLE, () => {
             return exportData(selectedFolders, password);
         });
-        showSimpleToast(tran(EXPORT_TITLE), `Exported to ${archiveFilePath}`);
+        showSimpleToast(
+            tran(EXPORT_TITLE),
+            `${tran('Exported to')} ${archiveFilePath}`,
+        );
     });
 }
 

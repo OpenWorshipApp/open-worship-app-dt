@@ -1,6 +1,6 @@
 ---
 name: presenting-flow-expansion-follows-position
-description: "OPEN — index-based React keys make a run sheet's expand/collapse state stay with the row POSITION across a reorder, not with the document (PL-53)"
+description: "FIXED 2026-08-08 — index-based React keys used to make a run sheet's expand/collapse state stay with the row POSITION across a reorder (PL-53); rows are keyed by uuid now"
 metadata: 
   node_type: memory
   type: project
@@ -8,17 +8,17 @@ metadata:
   modified: 2026-08-08T15:22:19.805Z
 ---
 
-Verified live 2026-08-08 (run `20260808-1020`). PL-53 says the expansion state must follow
-the DOCUMENT across a reorder. It does not.
+Found and **FIXED** on 2026-08-08 (run `20260808-1020`). PL-53 says the expansion state must
+follow the DOCUMENT across a reorder. It did not.
 
 The setting *name* is per-document and correct —
 `presenting-flow-item-expanded-<presentingFlow>-<document>` via `useStateSettingBoolean`
 ([src/presenting-flow/PresentingFlowItemComp.tsx](../../src/presenting-flow/PresentingFlowItemComp.tsx):48).
-But `PresentingFlowItemsComp` keys its children `` `${presentingFlowItem.type}-${i}` `` —
+But `PresentingFlowItemsComp` KEYED its children `` `${presentingFlowItem.type}-${i}` `` —
 **index-based**
 ([src/presenting-flow/PresentingFlowFileComp.tsx](../../src/presenting-flow/PresentingFlowFileComp.tsx):77).
-A reorder keeps the same React instance in a slot while the document under it changes, and
-`useStateSettingBoolean` only reads its setting on first mount, so the open/closed state stays
+A reorder kept the same React instance in a slot while the document under it changed, and
+`useStateSettingBoolean` only reads its setting on first mount, so the open/closed state stayed
 with the slot.
 
 Repro (both directions): `zz-robot-doc` collapsed at position 0, `a2` expanded at position 1 →
@@ -29,7 +29,11 @@ persisted truth had diverged.
 **Why:** it is not only cosmetic — the next manual toggle writes the flag under the *other*
 document's key, so the wrong state persists into the following session.
 
-**How to apply:** key the child by the item's `uuid` (every entry already has one) instead of
-`type-index`. That also stops unrelated per-row state being reused across a reorder. Note the
-documented, deliberate trade-off nearby: two entries of the *same* document legitimately share
-one key and expand together — do not "fix" that.
+**The fix:** the child is keyed by the entry's own `uuid`, with `type-index` kept only as the
+fallback for a damaged entry whose file carried no valid id — and `fromJsonError` now carries a
+valid uuid through, so even most error rows key stably. Verified live: expanding one document
+and moving the OTHER to the bottom left both rows exactly as they were.
+
+**How to apply:** never key these rows by position again — the same trap waits for any new
+mount-time read added to the row. Note the documented, deliberate trade-off nearby: two entries
+of the *same* document legitimately share one SETTING and expand together — do not "fix" that.

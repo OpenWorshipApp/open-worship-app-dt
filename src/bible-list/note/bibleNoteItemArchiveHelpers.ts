@@ -524,7 +524,7 @@ export async function exportBibleNoteItem(noteItem: NoteItem) {
         );
         showSimpleToast(
             tran('Export Bible Note Item'),
-            `Exported to ${archiveFilePath}`,
+            `${tran('Exported to')} ${archiveFilePath}`,
         );
         showFileOrDirExplorer(archiveFilePath);
         return archiveFilePath;
@@ -562,7 +562,7 @@ export async function selectAndImportBibleNoteItemArchive(note: Note) {
         }
         showSimpleToast(
             tran('Import Bible Note Item'),
-            `Imported ${noteItem.title}`,
+            `${tran('Imported')} ${noteItem.title}`,
         );
         return noteItem;
     } catch (error: any) {

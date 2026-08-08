@@ -67,6 +67,6 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Lyric passes the AppDocument type check](lyric-passes-appdocument-typecheck.md) — `checkIsThisType` is `instanceof`, so every editability gate must also test `isEditable`
 - [Settings write race corrupts the on-screen map](settings-write-race-corrupts-onscreen-map.md) — OPEN: `unlocking()` is per-renderer and the write is non-atomic, so showing a screen can blank every screen after the next reload
 - [Monaco `.css` test failure — FIXED](monaco-css-test-failure-local-open-lyric.md) — tests now mock open-lyric / bail before importing it; do NOT "fix" it by inlining the dep, that's strictly worse
-- [Presenting flow rename](presenting-flow-rename.md) — the old word is gone from the CODE but four Khmer strings still say it; `--no-playlist` (yt-dlp) and `displayListeners` are lookalikes, and the migration discovers the old name rather than holding one
-- [Expanded doc rows go stale](presenting-flow-expanded-doc-stale.md) — OPEN: a run sheet's expanded document never re-reads its file, so clicking one of its rows projects last week's words
-- [Expansion follows the position](presenting-flow-expansion-follows-position.md) — OPEN: index-based React keys make a reorder swap which rows look open, and the wrong flag then persists
+- [Presenting flow rename](presenting-flow-rename.md) — the four stale Khmer strings are fixed too now; `--no-playlist` (yt-dlp) and `displayListeners` are lookalikes, and the migration discovers the old name rather than holding one
+- [Expanded doc rows went stale — FIXED](presenting-flow-expanded-doc-stale.md) — the expanded document now re-subscribes; keep that timer PER-INSTANCE or one sheet listing a document twice goes stale again
+- [Expansion followed the position — FIXED](presenting-flow-expansion-follows-position.md) — run-sheet rows are keyed by uuid now; never key them by index again

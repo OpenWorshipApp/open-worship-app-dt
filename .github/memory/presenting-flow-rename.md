@@ -16,15 +16,18 @@ constants, the `Presenting Flows` UI label (and its Khmer key), the data folder
 **`.owapf`**. The requirement was absolute: the old word appears nowhere in the
 project, not even as a legacy constant.
 
-**The Khmer dictionary was MISSED (verified live 2026-08-08).** The sweep covered the
+**The Khmer dictionary was MISSED — found and FIXED 2026-08-08.** The sweep had covered the
 English source and every identifier, but four values in
 [src/lang/data/km/index.ts](../../src/lang/data/km/index.ts) still say `បញ្ជីចាក់`
 ("playlist") where the rest of the file says `តារាងកម្មវិធី` — lines **81**
 (`This item is disabled in this presenting flow`, the tooltip on every parked row),
 **288** (`Presenting Flow Archive URL:`), **726** (`Export Presenting Flow`, the title of
-the export password dialog) and **727** (`Import Presenting Flow`). So "the old word
-appears nowhere" is true of the code, NOT of the translations — an English-only grep
-cannot see this.
+the export password dialog) and **727** (`Import Presenting Flow`). All four now read
+`តារាងកម្មវិធី`.
+
+**The lesson outlives the fix:** "the old word appears nowhere" was true of the code and
+false of the translations, and an English-only grep cannot see the difference. Sweep
+`src/lang/data/*/index.ts` for the old TERM in the target language on any future rename.
 
 **Two survivors are NOT the subsystem and must never be renamed:**
 
