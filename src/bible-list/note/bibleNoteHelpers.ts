@@ -1,7 +1,5 @@
 import {
     BibleNote,
-    LocationsLookupManager,
-    NamesLookupManager,
     type BibleNoteProps,
     type FilePathResolver,
 } from 'bible-note';
@@ -23,6 +21,7 @@ import Note from './Note';
 import type NoteItem from './NoteItem';
 import {
     getAllLangsAsync,
+    getBibleNoteLookupData,
     getLangDataAsync,
     initAllLangCss,
 } from '../../lang/langHelpers';
@@ -238,14 +237,8 @@ export async function initBibleNote({
     if (!enLookupData) {
         throw new Error('Failed to load English lookup data');
     }
-    const namesLookupManager = NamesLookupManager.fromRawDataset(
-        { en: enLookupData.namesMap },
-        'en',
-    );
-    const locationsLookupManager = LocationsLookupManager.fromRawDataset(
-        { en: enLookupData.locationsMap },
-        'en',
-    );
+    const { namesLookupManager, locationsLookupManager } =
+        await getBibleNoteLookupData();
     const bibleNoteProps: BibleNoteProps = {
         namesLookupManager,
         locationsLookupManager,
