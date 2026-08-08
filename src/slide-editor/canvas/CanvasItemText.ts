@@ -1,4 +1,5 @@
 import { handleError } from '../../helper/errorHelpers';
+import type { AppColorType } from '../../others/color/colorHelpers';
 import { HEX_COLOR_WHITE } from '../../others/color/colorHelpers';
 import appProvider from '../../server/appProvider';
 import type { TextStylePropsType } from './canvasHelpers';
@@ -40,6 +41,23 @@ class CanvasItemText extends CanvasItem<CanvasItemTextPropsType> {
         return CanvasItemText.fromJson({
             ...genTextDefaultProps(),
             ...genTextDefaultBoxStyle(),
+            type: 'text',
+        }) as CanvasItemText;
+    }
+    // A plain colored rectangle — what dropping a color from the Background
+    // panel onto empty canvas produces. There is no "color" item kind, and
+    // there does not need to be: an empty text box already paints its
+    // `backgroundColor`, keeps the shape/rounding tooling, and stays editable
+    // by double-click if the operator then wants words in it.
+    static genColorBoxItem(x: number, y: number, color: AppColorType) {
+        const boxStyle = genTextDefaultBoxStyle();
+        return CanvasItemText.fromJson({
+            ...genTextDefaultProps(),
+            text: '',
+            ...boxStyle,
+            backgroundColor: color,
+            left: x - boxStyle.width / 2,
+            top: y - boxStyle.height / 2,
             type: 'text',
         }) as CanvasItemText;
     }

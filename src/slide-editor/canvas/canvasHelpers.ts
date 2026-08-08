@@ -81,7 +81,7 @@ export const WEBSITE_EMBED_HEIGHT = 600;
 // FIXED glyph size whatever the element's box is, so these are the unscaled
 // proportions and the renderer paints the whole control scaled up.
 export const AUDIO_CONTROL_WIDTH = 240;
-export const AUDIO_CONTROL_HEIGHT = 60;
+export const AUDIO_CONTROL_HEIGHT = 30;
 // The player is an operator affordance shown only in the presenter's mini
 // screen (it is preview-only, never projected), where the whole slide is
 // scaled down to a few hundred pixels — at 1x the control is too small to read

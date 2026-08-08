@@ -10,6 +10,7 @@ import type { CanvasItemBiblePropsType } from './CanvasItemBibleItem';
 import CanvasItemBibleItem from './CanvasItemBibleItem';
 import { genFittedHtmlBoxLayout } from './canvasBoxLayoutHelpers';
 import type BibleItem from '../../bible-list/BibleItem';
+import type { AppColorType } from '../../others/color/colorHelpers';
 import {
     checkIsMediaCanvasItemType,
     getRemoteMediaMimetypeName,
@@ -291,6 +292,16 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             handleError(error);
         }
         showSimpleToast(tran('Insert Website'), tran('Fail to insert website'));
+    }
+
+    genNewColorBoxItem(color: AppColorType, event?: any) {
+        try {
+            const { x, y } = this.getInsertPosition(event);
+            return CanvasItemText.genColorBoxItem(x, y, color);
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast(tran('New'), tran('Fail to insert medias'));
     }
 
     genNewCameraItem(camera: { deviceId: string; label: string }, event?: any) {

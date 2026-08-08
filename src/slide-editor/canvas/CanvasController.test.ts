@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
     fileSourceGetInstanceMock: vi.fn(),
     fromBibleItemMock: vi.fn(),
     genDefaultItemMock: vi.fn(),
+    genColorBoxItemMock: vi.fn(),
     genFromFileImageMock: vi.fn(),
     genFromFileVideoMock: vi.fn(),
     genFromFileAudioMock: vi.fn(),
@@ -38,6 +39,7 @@ vi.mock('../../helper/FileSource', () => ({
 vi.mock('./CanvasItemText', () => ({
     default: {
         genDefaultItem: mocks.genDefaultItemMock,
+        genColorBoxItem: mocks.genColorBoxItemMock,
     },
 }));
 
@@ -750,6 +752,38 @@ describe('CanvasController', () => {
         expect(mocks.genDefaultItemMock).toHaveBeenCalledTimes(1);
         expect(newTextItem.props.id).toBe(5);
         expect(canvas.canvasItems).toEqual([existingItem, newTextItem]);
+    });
+
+    test('creates a color box item at the cursor and reports failures', () => {
+        const { controller } = createController();
+        const colorBoxItem = createCanvasItem({ id: 1 });
+        const event = {
+            clientX: 110,
+            clientY: 220,
+            target: { getBoundingClientRect: () => ({ left: 10, top: 20 }) },
+        };
+        mocks.genColorBoxItemMock.mockReturnValue(colorBoxItem);
+
+        expect(controller.genNewColorBoxItem('#123456' as any, event)).toBe(
+            colorBoxItem,
+        );
+        expect(mocks.genColorBoxItemMock).toHaveBeenCalledWith(
+            100,
+            200,
+            '#123456',
+        );
+
+        expect(
+            controller.genNewColorBoxItem('#123456' as any, {
+                clientX: 0,
+                clientY: 0,
+                target: null,
+            }),
+        ).toBeUndefined();
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'New',
+            'Fail to insert medias',
+        );
     });
 
     test('creates YouTube and website items and reports failures', () => {

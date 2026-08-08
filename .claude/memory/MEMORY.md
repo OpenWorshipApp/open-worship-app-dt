@@ -73,3 +73,4 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Console design system tokens](console-design-system-tokens.md) — `--app-accent`/`--app-on-air`/`--app-text-*`/`.app-data` exist and are under-adopted; don't reach for `--bs-*` or raw px
 - [Presenting flow cue gutter](presenting-flow-cue-gutter.md) — one left column (number + rail + run cursor) shared by the tree and the preview; content-box and Enter-only are load-bearing
 - [Vite caches a failed import resolution](vite-caches-failed-import-resolution.md) — importing before the file exists 500s the importer forever; touch vite.config.ts, not the importer
+- [Drag-kind mime & dim target](drag-kind-mime-and-dim-target.md) — dragover gates on `application/x-owa-drag-<kind>`; `changeDragEventStyle` dims `event.target`, not `currentTarget`
