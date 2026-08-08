@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import { tran } from '../../../lang/langHelpers';
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import type { TextStylePropsType } from '../canvasHelpers';
 import type { CanvasItemPropsType } from '../CanvasItem';
@@ -27,7 +28,7 @@ export default function ToolsTextFontControlComp() {
     }, []);
 
     return (
-        <SlideEditorToolTitleComp title="Font">
+        <SlideEditorToolTitleComp title={tran('Font')}>
             <div className="d-flex flex-column gap-2">
                 <div className="d-flex">
                     <FontSizeControlComp

@@ -12,6 +12,7 @@ import {
 import LoadingComp from '../../others/LoadingComp';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
 
+import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { getChapterData } from '../../helper/bible-helpers/bibleInfoHelpers';
 import type { BibleChapterType } from '../../helper/bible-helpers/BibleDataReader';
@@ -160,7 +161,7 @@ async function handleSaving(
     const xmlBibleData = await getBibleXMLDataFromKey(bibleKey);
     if (!xmlBibleData) {
         showSimpleToast(
-            'Saving Bible Data',
+            tran('Saving Bible Data'),
             `Bible Data not found for key ${bibleKey}`,
         );
         return;
@@ -235,7 +236,7 @@ function EditorComp({
         return <LoadingComp />;
     }
     if (chapterData === null) {
-        return <div>Chapter data not found.</div>;
+        return <div>{tran('Chapter data not found.')}</div>;
     }
     return (
         <BibleXMLEditorComp
@@ -246,21 +247,21 @@ function EditorComp({
             save={(newJsonData: DataType) => {
                 if (newJsonData.bibleKey !== bibleKey) {
                     showSimpleToast(
-                        'Saving Bible Data',
+                        tran('Saving Bible Data'),
                         `Invalid Bible Key ${newJsonData.bibleKey}`,
                     );
                     return;
                 }
                 if (newJsonData.bookKey !== bookKey) {
                     showSimpleToast(
-                        'Saving Bible Data',
+                        tran('Saving Bible Data'),
                         `Invalid Book Key ${newJsonData.bookKey}`,
                     );
                     return;
                 }
                 if (newJsonData.chapter !== chapter) {
                     showSimpleToast(
-                        'Saving Bible Data',
+                        tran('Saving Bible Data'),
                         `Invalid Chapter Number ${newJsonData.chapter}`,
                     );
                     return;

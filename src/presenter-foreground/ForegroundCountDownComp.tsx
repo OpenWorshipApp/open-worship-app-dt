@@ -138,7 +138,7 @@ function CountDownOnDatetimeComp({
             </div>
             <div className="d-flex flex-wrap align-items-center gap-2">
                 <button
-                    title="Reset Date and Time to Now"
+                    title={tran('Reset Date and Time to Now')}
                     className="btn btn-outline-warning"
                     onClick={handleResetting}
                 >
@@ -277,7 +277,7 @@ function CountDownInSetComp({
                 <div
                     className="input-group"
                     style={{ width: '130px' }}
-                    title="Hours"
+                    title={tran('Hours')}
                 >
                     <span className="input-group-text">
                         <i className="bi bi-clock-history" />
@@ -294,7 +294,7 @@ function CountDownInSetComp({
                 <div
                     className="input-group"
                     style={{ width: '130px' }}
-                    title="Minutes"
+                    title={tran('Minutes')}
                 >
                     <input
                         className="form-control"

@@ -1,6 +1,7 @@
 import { attachBackgroundManager } from '../../others/AttachBackgroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 
 export async function applyAttachBackground(
     screenId: number,
@@ -17,7 +18,9 @@ export async function applyAttachBackground(
         ScreenBackgroundManager.getInstance(screenId);
     if (screenBackgroundManager === null) {
         showSimpleToast(
-            'Failed to apply to screen. Please make sure the screen is open.',
+            tran(
+                'Failed to apply to screen. Please make sure the screen is open.',
+            ),
             'error',
         );
         return;

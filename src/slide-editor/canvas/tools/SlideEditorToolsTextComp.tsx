@@ -1,3 +1,4 @@
+import { tran } from '../../../lang/langHelpers';
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import SlideEditorToolAlignComp from './SlideEditorToolAlignComp';
 import type { TextStylePropsType } from '../canvasHelpers';
@@ -30,7 +31,7 @@ export default function SlideEditorToolsTextComp({
                 minWidth: '200px',
             }}
         >
-            <SlideEditorToolTitleComp title="Color" isInline>
+            <SlideEditorToolTitleComp title={tran('Color')} isInline>
                 <SlideEditorToolsColorComp
                     color={props.color}
                     handleColorChanging={(newColor) => {
@@ -41,7 +42,10 @@ export default function SlideEditorToolsTextComp({
                 />
             </SlideEditorToolTitleComp>
             {isAlignmentEnabled ? (
-                <SlideEditorToolTitleComp title="Text Alignment" isInline>
+                <SlideEditorToolTitleComp
+                    title={tran('Text Alignment')}
+                    isInline
+                >
                     <SlideEditorToolAlignComp
                         isText
                         data={textAlignmentData}

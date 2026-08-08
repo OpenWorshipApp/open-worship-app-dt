@@ -28,6 +28,9 @@ const {
     showAppAlertMock: vi.fn(),
     appProviderMock: {
         isPagePresenter: false,
+        // `appHooks` (pulled in via the new `tran` import chain) reads
+        // `appProvider.systemUtils.isDev` at module load.
+        systemUtils: { isDev: false },
     },
     setThumbnailSizeScaleMock: vi.fn(),
     renderSlideIndexMock: vi.fn(),
@@ -102,6 +105,14 @@ vi.mock('../../helper/appHooks', async () => {
 
 vi.mock('../../server/appProvider', () => ({
     default: appProviderMock,
+}));
+
+// The footer now imports `tran`, whose `langHelpers` module reaches
+// `settingHelpers` -> `appLocalStorage` -> `fileHelpers` ->
+// `appProvider.pathUtils.sep` (unmocked here). Identity `tran` short-circuits
+// that chain and keeps the raw-string assertions intact.
+vi.mock('../../lang/langHelpers', () => ({
+    tran: (v: string) => v,
 }));
 
 vi.mock('../../popup-widget/popupWidgetHelpers', () => ({

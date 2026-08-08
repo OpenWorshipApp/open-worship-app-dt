@@ -168,7 +168,7 @@ function FilePreviewAppDocumentNormalComp({
         <div className="w-100 h-100 app-ellipsis">
             <i
                 className="bi bi-file-earmark-slides"
-                title="PowerPoint Document"
+                title={tran('PowerPoint Document')}
             />
             {fileSource.name}
             {canSave && <span style={{ color: 'red' }}>*</span>}
@@ -184,7 +184,7 @@ function FilePreviewPdfAppDocumentComp({
         <div className="w-100 h-100 app-ellipsis">
             <i
                 className="bi bi-file-earmark-pdf"
-                title="PDF Document"
+                title={tran('PDF Document')}
                 style={{ color: '#bd0b02' }}
             />
             {fileSource.name}
@@ -200,7 +200,7 @@ function FilePreviewPptxAppDocumentComp({
         <div className="w-100 h-100 app-ellipsis">
             <i
                 className="bi bi-file-earmark-ppt"
-                title="PowerPoint Document"
+                title={tran('PowerPoint Document')}
                 style={{
                     color: '#d24726',
                 }}
@@ -218,7 +218,7 @@ function FilePreviewDocxAppDocumentComp({
         <div className="w-100 h-100 app-ellipsis">
             <i
                 className="bi bi-file-earmark-word"
-                title="Word Document"
+                title={tran('Word Document')}
                 style={{ color: '#2b579a' }}
             />
             {fileSource.name}

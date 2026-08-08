@@ -445,10 +445,10 @@ function BibleBooksMapXMLInputComp({
                 <button
                     className="btn btn-sm btn-info ms-2"
                     onClick={handleChoosingBibleBooks}
-                    title="Choose Bible Books"
+                    title={tran('Choose Bible Books')}
                     type="button"
                 >
-                    <i className="bi bi-book" /> Guessing Names
+                    <i className="bi bi-book" /> {tran('Guessing Names')}
                 </button>
             </div>
         </div>
@@ -487,7 +487,7 @@ export function addMonacoBibleInfoActions(
     };
     editorInstance.addAction({
         id: 'edit-numbers-map',
-        label: '#️⃣ `Edit Numbers Map',
+        label: `#️⃣ ${tran('Edit Numbers Map')}`,
         contextMenuGroupId: 'navigation',
         run: async () => {
             const bibleInfo = getBibleInfo();
@@ -520,7 +520,7 @@ export function addMonacoBibleInfoActions(
     });
     editorInstance.addAction({
         id: 'choose-locale',
-        label: '🌎 `Choose Locale',
+        label: `🌎 ${tran('Choose Locale')}`,
         contextMenuGroupId: 'navigation',
         run: async () => {
             const contextMenuItems: ContextMenuItemType[] = Object.entries(
@@ -543,13 +543,13 @@ export function addMonacoBibleInfoActions(
     });
     editorInstance.addAction({
         id: 'edit-books-map',
-        label: '📚 `Edit Books Map',
+        label: `📚 ${tran('Edit Books Map')}`,
         contextMenuGroupId: 'navigation',
         run: async () => {
             const bibleInfo = getBibleInfo();
             let keyBookMap = Object.values(bibleInfo.keyBookMap);
             const isConfirmInput = await showAppInput(
-                'Books map',
+                tran('Books map'),
                 genBibleBooksMapXMLInput(
                     keyBookMap,
                     bibleInfo.locale,

@@ -8,7 +8,7 @@ import {
     extractDownloadedBible,
 } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import { getBibleInfo } from '../../helper/bible-helpers/bibleInfoHelpers';
-import { getLangDataAsync } from '../../lang/langHelpers';
+import { getLangDataAsync, tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
 
@@ -16,7 +16,7 @@ async function syncBibleLanguage(bibleKey: string) {
     const bibleInfo = await getBibleInfo(bibleKey, true);
     if (bibleInfo === null) {
         const message = 'Cannot get bible info';
-        showSimpleToast('Getting Bible Info', message);
+        showSimpleToast(tran('Getting Bible Info'), tran(message));
         throw new Error('Cannot get bible info');
     }
     await getLangDataAsync(bibleInfo.locale);
@@ -39,14 +39,17 @@ export function useDownloadBible(
             if (isSuccess) {
                 await syncBibleLanguage(bibleInfo.key);
             } else {
-                showSimpleToast('Extracting Bible', 'Fail to extract bible');
+                showSimpleToast(
+                    tran('Extracting Bible'),
+                    tran('Fail to extract bible'),
+                );
             }
             onDownloaded();
         } catch (error1) {
             handleError(error1);
             showSimpleToast(
-                BIBLE_DOWNLOAD_TOAST_TITLE,
-                'Error occurred during finishing bible download',
+                tran(BIBLE_DOWNLOAD_TOAST_TITLE),
+                tran('Error occurred during finishing bible download'),
             );
             onDownloaded();
         } finally {
@@ -62,7 +65,7 @@ export function useDownloadBible(
                 onStart: (total) => {
                     const fileSize = Number.parseInt(total.toFixed(2));
                     showSimpleToast(
-                        BIBLE_DOWNLOAD_TOAST_TITLE,
+                        tran(BIBLE_DOWNLOAD_TOAST_TITLE),
                         `Start downloading "${bibleInfo.key}". ` +
                             `File size ${fileSize}mb`,
                     );

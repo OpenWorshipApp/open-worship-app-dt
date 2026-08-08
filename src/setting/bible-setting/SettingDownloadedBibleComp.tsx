@@ -4,6 +4,7 @@ import type { BibleListType } from './bibleSettingHelpers';
 import OnlineBibleItemComp from './OnlineBibleItemComp';
 import LoadingComp from '../../others/LoadingComp';
 import type { LocaleType } from '../../lang/langHelpers';
+import { tran } from '../../lang/langHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 
 type DownloadingBibleInfoType = {
@@ -35,7 +36,7 @@ export default function SettingDownloadedBibleComp({
         return <LoadingComp />;
     }
     if (downloadedBibleInfoList === undefined) {
-        return <div>Unable to get downloaded bible list</div>;
+        return <div>{tran('Unable to get downloaded bible list')}</div>;
     }
     const bibleInfoList = downloadedBibleInfoList.map<DownloadingBibleInfoType>(
         (bibleInfo) => {
@@ -59,12 +60,12 @@ export default function SettingDownloadedBibleComp({
         <div className="w-100">
             <div>
                 <button className="btn btn-info" onClick={handleRefresh}>
-                    <i className="bi bi-arrow-clockwise" /> Refresh
+                    <i className="bi bi-arrow-clockwise" /> {tran('Refresh')}
                 </button>
             </div>
             <ul className="list-group d-flex flex-fill">
                 {bibleInfoList.length === 0 ? (
-                    <div>No bible downloaded</div>
+                    <div>{tran('No bible downloaded')}</div>
                 ) : (
                     <>
                         {bibleInfoList.map((bibleInfo, i) => {

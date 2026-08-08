@@ -5,7 +5,7 @@ import {
     fsWriteFile,
     pathJoin,
 } from '../../server/fileHelpers';
-import { DEFAULT_LOCALE, type LocaleType } from '../../lang/langHelpers';
+import { DEFAULT_LOCALE, tran, type LocaleType } from '../../lang/langHelpers';
 import { decrypt } from '../../_owa-crypto';
 import { handleError } from '../errorHelpers';
 import {
@@ -206,7 +206,7 @@ export default class BibleDataReader {
             } as BibleXMLJsonType);
             if (xmlText === null) {
                 showSimpleToast(
-                    'Failed to convert KJV Bible data to XML text.',
+                    tran('Failed to convert KJV Bible data to XML text.'),
                     'error',
                 );
                 return;

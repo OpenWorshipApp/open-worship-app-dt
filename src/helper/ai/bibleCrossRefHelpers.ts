@@ -14,6 +14,7 @@ import {
 } from '../../server/fileHelpers';
 import { ensureDataDirectory } from '../../setting/directory-setting/directoryHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
 import { useAppEffect, useAppEffectAsync } from '../appHooks';
@@ -75,8 +76,8 @@ export async function getBibleCrossRef(
         const baseDir = await ensureDataDirectory(dataDir);
         if (baseDir === null) {
             showSimpleToast(
-                'Bible Cross Reference',
-                'Fail to ensure data directory for AI data.',
+                tran('Bible Cross Reference'),
+                tran('Fail to ensure data directory for AI data.'),
             );
             return null;
         }

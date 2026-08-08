@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { fsCheckDirExist, fsDeleteDir } from '../../server/fileHelpers';
 import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
+import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import {
     hideProgressBar,
@@ -26,7 +27,7 @@ export default function DownloadedBibleItemComp({
     const onDeletedRef = useAppCurrentRef(onDeleted);
     const handleBibleDeleting = useCallback(async () => {
         const isOk = await showAppConfirm(
-            'Delete Bible',
+            tran('Delete Bible'),
             `Are you sure to delete bible "${titleRef.current}"?`,
             {
                 cancelButtonLabel: 'No',
@@ -52,7 +53,7 @@ export default function DownloadedBibleItemComp({
             hideProgressBar(progressKey);
             onDeletedRef.current();
         } catch (error: any) {
-            showSimpleToast('Deleting', error.message);
+            showSimpleToast(tran('Deleting'), error.message);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -73,14 +74,14 @@ export default function DownloadedBibleItemComp({
                             className="btn btn-danger"
                             onClick={handleBibleDeleting}
                         >
-                            Delete
+                            {tran('Delete')}
                         </button>
                         {bibleInfo.isUpdatable && (
                             <button
                                 className="btn btn-warning"
                                 onClick={handleUpdate}
                             >
-                                Update
+                                {tran('Update')}
                             </button>
                         )}
                     </div>

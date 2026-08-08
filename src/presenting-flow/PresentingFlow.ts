@@ -191,7 +191,7 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
                     return PresentingFlowItem.fromJson(this.filePath, json);
                 } catch (error: any) {
                     showSimpleToast(
-                        'Instantiating Presenting Flow Item',
+                        tran('Instantiating Presenting Flow Item'),
                         error.message,
                     );
                 }
@@ -292,7 +292,7 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
             return await this.insertItemJson(newItemJson, toIndex);
         } catch (error: any) {
             handleError(error);
-            showSimpleToast('Adding Presenting Flow Item', error.message);
+            showSimpleToast(tran('Adding Presenting Flow Item'), error.message);
         }
         return false;
     }
@@ -318,7 +318,10 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
             );
         } catch (error: any) {
             handleError(error);
-            showSimpleToast('Adding Presenting Flow Action', error.message);
+            showSimpleToast(
+                tran('Adding Presenting Flow Action'),
+                error.message,
+            );
         }
         return false;
     }
@@ -879,7 +882,7 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
             );
         } catch (error: any) {
             handleError(error);
-            showSimpleToast('Adding CC Element', error.message);
+            showSimpleToast(tran('Adding CC Element'), error.message);
         }
         return false;
     }
@@ -967,7 +970,7 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
             );
         } catch (error: any) {
             handleError(error);
-            showSimpleToast('Adding CC Element', error.message);
+            showSimpleToast(tran('Adding CC Element'), error.message);
         }
         return false;
     }

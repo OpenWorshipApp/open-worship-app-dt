@@ -65,7 +65,7 @@ export default function ShapePropertiesComp() {
                         value={roundSizePercentage}
                         title={
                             roundSizePixel > 0
-                                ? 'Set round size pixel to 0 to use this'
+                                ? tran('Set round size pixel to 0 to use this')
                                 : tran('Round (%)')
                         }
                         setValue={handleRoundPercentageChange}

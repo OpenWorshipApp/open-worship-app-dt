@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import AppRangeComp from '../AppRangeComp';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
+import { tran } from '../../lang/langHelpers';
 
 export default function OpacitySliderComp({
     value,
@@ -16,7 +17,7 @@ export default function OpacitySliderComp({
     return (
         <AppRangeComp
             value={localValue}
-            title="Opacity"
+            title={tran('Opacity')}
             setValue={(newValue) => {
                 setLocalValue(newValue);
                 attemptTimeout(() => {

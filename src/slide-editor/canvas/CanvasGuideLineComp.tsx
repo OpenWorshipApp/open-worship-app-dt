@@ -1,3 +1,4 @@
+import { tran } from '../../lang/langHelpers';
 import type { GuideLineType, SnapLinesType } from './canvasSnapGuideHelpers';
 
 export function CanvasGuideLineComp({
@@ -14,7 +15,7 @@ export function CanvasGuideLineComp({
         <div
             onPointerDown={onPointerDown}
             onDoubleClick={onRemove}
-            title="Drag to move, double-click to remove"
+            title={tran('Drag to move, double-click to remove')}
             style={{
                 position: 'absolute',
                 left: isH ? 0 : guide.pos - 3,

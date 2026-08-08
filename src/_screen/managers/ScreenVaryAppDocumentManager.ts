@@ -2,6 +2,7 @@ import type { MouseEvent, CSSProperties } from 'react';
 
 import type { DroppedDataType } from '../../helper/DragInf';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
+import { tran } from '../../lang/langHelpers';
 import type { SlidePropsType } from '../../app-document-list/Slide';
 import type { CanvasItemBiblePropsType } from '../../slide-editor/canvas/CanvasItemBibleItem';
 import { genPdfSlide } from '../../app-document-presenter/items/PdfSlideRenderComp';
@@ -582,7 +583,9 @@ class ScreenVaryAppDocumentManager
             const screenVaryAppDocumentManager = this.getInstance(screenId);
             if (screenVaryAppDocumentManager === null) {
                 showSimpleToast(
-                    'Failed to sync slide. Please make sure the screen is open.',
+                    tran(
+                        'Failed to sync slide. Please make sure the screen is open.',
+                    ),
                     'error',
                 );
                 continue;

@@ -23,9 +23,11 @@ export async function genContextMenuBibleKeys(
     let localeBibleInfoList = await getAllLocalBibleInfoList();
     if (localeBibleInfoList === null) {
         showAppAlert(
-            'Unable to get bible info list',
-            'We were sorry, but we are unable to get bible list at the moment' +
-                ' please try again later',
+            tran('Unable to get bible info list'),
+            tran(
+                'We were sorry, but we are unable to get bible list at the moment' +
+                    ' please try again later',
+            ),
         );
         return null;
     }

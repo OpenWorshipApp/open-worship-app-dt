@@ -190,8 +190,8 @@ export async function findOnline(
         loggerHelpers.appError(`Invalid bible find ${result}`);
     } catch (error) {
         showSimpleToast(
-            'Fetching Bible Finding Online',
-            'Fail to fetch bible online',
+            tran('Fetching Bible Finding Online'),
+            tran('Fail to fetch bible online'),
         );
         handleError(error);
     }

@@ -15,6 +15,7 @@ import appProvider from '../server/appProvider';
 import { handleAutoHide } from '../helper/domHelpers';
 import { useAppEffect } from '../helper/appHooks';
 import { showSimpleToast } from '../toast/toastHelpers';
+import { tran } from '../lang/langHelpers';
 import NewLineSettingComp from './NewLineSettingComp';
 import BibleModelInfoSettingComp from './BibleModelInfoSettingComp';
 
@@ -59,7 +60,10 @@ export default function BiblePreviewerRenderComp({
                     await document.exitFullscreen();
                 }
             } catch (error) {
-                showSimpleToast('Toggle full screen failed', `Error: ${error}`);
+                showSimpleToast(
+                    tran('Toggle full screen failed'),
+                    `Error: ${error}`,
+                );
             }
         },
         [],

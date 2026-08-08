@@ -461,8 +461,8 @@ class LookupBibleItemController extends BibleItemsViewController {
         const foundBibleItem = editingResult.result.bibleItem;
         if (foundBibleItem === null) {
             showSimpleToast(
-                'Jumping Chapter',
-                'Unable to find the target bible item',
+                tran('Jumping Chapter'),
+                tran('Unable to find the target bible item'),
             );
             return;
         }

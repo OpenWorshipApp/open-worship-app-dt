@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import { tran } from '../../../lang/langHelpers';
 import {
     defaultRangeSize,
     useCanvasControllerContext,
@@ -38,7 +39,7 @@ export default function SlideEditorCanvasScalingComp() {
                 <div style={{ maxWidth: '200px' }}>
                     <AppRangeComp
                         value={actualScale}
-                        title="Canvas Scale"
+                        title={tran('Canvas Scale')}
                         setValue={handleScaleChange}
                         defaultSize={defaultRangeSize}
                     />

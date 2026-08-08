@@ -7,7 +7,7 @@ import { handleError } from '../helper/errorHelpers';
 import { parseJsonSafely } from '../helper/helpers';
 import { setSetting } from '../helper/settingHelpers';
 import { genDerivedSettingReader } from '../helper/derivedSettingHelpers';
-import { checkIsValidLocale } from '../lang/langHelpers';
+import { checkIsValidLocale, tran } from '../lang/langHelpers';
 import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
 import { electronSendAsync } from '../server/appHelpers';
 import { getValidOnScreen } from './managers/screenManagerBaseHelpers';
@@ -309,7 +309,7 @@ export function addToTheTop(div: HTMLDivElement) {
     div.appendChild(style);
     const target = document.createElement('img');
     target.className = TO_THE_TOP_CLASSNAME;
-    target.title = 'Scroll to the top';
+    target.title = tran('Scroll to the top');
     target.src = getToTheTopImageDataUrl();
     target.style.position = 'fixed';
     target.style.bottom = '80px';
@@ -380,7 +380,7 @@ export function addPlayToBottom(div: HTMLDivElement) {
     div.appendChild(style);
     const target = document.createElement('img');
     target.className = PLAY_TO_BOTTOM_CLASSNAME;
-    target.title = 'Play to bottom';
+    target.title = tran('Play to bottom');
     const svgString = genChevronDoubleDownSVG(70);
     const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(svgBlob);

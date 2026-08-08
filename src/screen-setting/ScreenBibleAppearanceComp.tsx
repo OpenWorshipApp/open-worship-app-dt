@@ -1,6 +1,7 @@
 import { type ChangeEvent, useCallback } from 'react';
 
 import type { AppColorType } from '../others/color/colorHelpers';
+import { tran } from '../lang/langHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import AppRangeComp from '../others/AppRangeComp';
 import {
@@ -23,7 +24,7 @@ export default function ScreenBibleAppearanceComp() {
     return (
         <div>
             <span className="p-">
-                Font Size:{' '}
+                {tran('Font Size')}:{' '}
                 <span className="badge bg-success">({fontSize}px)</span>
             </span>
             <input
@@ -35,7 +36,7 @@ export default function ScreenBibleAppearanceComp() {
             <div>
                 <AppRangeComp
                     value={fontSize}
-                    title="Font Size"
+                    title={tran('Font Size')}
                     setValue={setFontSize}
                     defaultSize={{
                         size: fontSize,

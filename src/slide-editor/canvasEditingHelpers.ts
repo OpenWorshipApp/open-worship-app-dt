@@ -18,6 +18,7 @@ import { BibleLookupTogglePopupContext } from '../others/commonButtons';
 import { CanvasBibleItemEventListener } from './canvas/canvasBibleItemHelpers';
 import type BibleItem from '../bible-list/BibleItem';
 import { showSimpleToast } from '../toast/toastHelpers';
+import { tran } from '../lang/langHelpers';
 
 function useCanvasItemsData(canvasController: CanvasController) {
     const [canvasItems, setCanvasItems] = useState<CanvasItem<any>[]>([]);
@@ -172,8 +173,8 @@ export function useEditingCanvasContextValue() {
                 async (bibleItem: BibleItem) => {
                     await canvasController.addNewBibleItem(bibleItem);
                     showSimpleToast(
-                        'Insert Bible Item',
-                        'Bible item is inserted into the editing slide',
+                        tran('Insert Bible Item'),
+                        tran('Bible item is inserted into the editing slide'),
                     );
                 },
             );

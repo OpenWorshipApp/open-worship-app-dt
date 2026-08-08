@@ -188,7 +188,7 @@ export default class FileSource
                     this.fireUpdateEvent();
                     return true;
                 } catch (error: any) {
-                    showSimpleToast('Saving File', error.message);
+                    showSimpleToast(tran('Saving File'), error.message);
                 }
                 return false;
             },
@@ -325,7 +325,10 @@ export default class FileSource
         try {
             await this._duplicate();
         } catch (error) {
-            showSimpleToast('Duplicating File', 'Unable to duplicate file');
+            showSimpleToast(
+                tran('Duplicating File'),
+                tran('Unable to duplicate file'),
+            );
             handleError(error);
         }
     }

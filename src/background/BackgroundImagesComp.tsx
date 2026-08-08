@@ -91,7 +91,9 @@ async function genContextMenuItems(dirSource: DirSource) {
                     if (srcData === null) {
                         showSimpleToast(
                             pastImageTitle,
-                            'Error occurred during reading image data from clipboard',
+                            tran(
+                                'Error occurred during reading image data from clipboard',
+                            ),
                         );
                         continue;
                     }
@@ -99,7 +101,9 @@ async function genContextMenuItems(dirSource: DirSource) {
                     if (dotExt === null) {
                         showSimpleToast(
                             pastImageTitle,
-                            'Error occurred during getting image file extension',
+                            tran(
+                                'Error occurred during getting image file extension',
+                            ),
                         );
                         continue;
                     }
@@ -107,7 +111,7 @@ async function genContextMenuItems(dirSource: DirSource) {
                     if (filePath === null) {
                         showSimpleToast(
                             pastImageTitle,
-                            'Error occurred during generating file name',
+                            tran('Error occurred during generating file name'),
                         );
                         continue;
                     }
@@ -118,7 +122,7 @@ async function genContextMenuItems(dirSource: DirSource) {
                     if (!isSuccess) {
                         showSimpleToast(
                             pastImageTitle,
-                            'Error occurred during pasting image',
+                            tran('Error occurred during pasting image'),
                         );
                     }
                 }
@@ -164,7 +168,7 @@ async function genContextMenuItems(dirSource: DirSource) {
                     handleError(error);
                     showSimpleToast(
                         title,
-                        'Error occurred during downloading image',
+                        tran('Error occurred during downloading image'),
                     );
                 } finally {
                     hideProgressBar(imageUrl);

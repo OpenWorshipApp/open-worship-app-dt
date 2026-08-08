@@ -167,6 +167,14 @@ vi.mock('../../../server/appProvider', () => ({
     },
 }));
 
+// The error view now imports `tran`, which reaches `langHelpers` ->
+// `settingHelpers` -> `fileHelpers` -> `appProvider.pathUtils.sep` (unmocked
+// here). Identity `tran` short-circuits that chain and keeps the raw-string
+// assertions ('Error', 'Delete', 'Copy Error Json') intact.
+vi.mock('../../../lang/langHelpers', () => ({
+    tran: (v: string) => v,
+}));
+
 vi.mock('../../../helper/errorHelpers', () => ({
     handleError: handleErrorMock,
 }));

@@ -47,7 +47,10 @@ async function selectBookKeys(
 ) {
     const bookList = await genBookMatches(bibleKey);
     if (bookList === null) {
-        showSimpleToast('Getting bible list', 'Fail to get bible list');
+        showSimpleToast(
+            tran('Getting bible list'),
+            tran('Fail to get bible list'),
+        );
         return;
     }
     const oldBookList = bookList.filter((book) => {

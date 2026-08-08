@@ -1,3 +1,4 @@
+import { tran } from '../../../lang/langHelpers';
 import { showAppContextMenu } from '../../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../../context-menu/contextMenuIconHelpers';
 import appProvider from '../../../server/appProvider';
@@ -18,14 +19,14 @@ export default function BoxEditorNormalViewErrorComp() {
                         childBefore: genContextMenuItemIcon('trash3', {
                             color: 'var(--bs-danger)',
                         }),
-                        menuElement: 'Delete',
+                        menuElement: tran('Delete'),
                         onSelect: () => {
                             canvasController.deleteItems([canvasItem]);
                         },
                     },
                     {
                         childBefore: genContextMenuItemIcon('braces'),
-                        menuElement: 'Copy Error Json',
+                        menuElement: tran('Copy Error Json'),
                         onSelect: () => {
                             appProvider.systemUtils.copyToClipboard(
                                 JSON.stringify(canvasItem.props),
@@ -35,7 +36,7 @@ export default function BoxEditorNormalViewErrorComp() {
                 ]);
             }}
         >
-            Error
+            {tran('Error')}
         </BoxEditorNormalWrapperComp>
     );
 }
@@ -53,7 +54,7 @@ export function BoxEditorNormalViewErrorRenderComp() {
                 color: 'red',
             }}
         >
-            Error
+            {tran('Error')}
         </div>
     );
 }

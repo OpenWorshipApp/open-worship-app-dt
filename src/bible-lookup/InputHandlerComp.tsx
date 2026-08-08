@@ -30,6 +30,7 @@ import {
 } from '../setting/bible-setting/bibleXMLHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import { tran } from '../lang/langHelpers';
 
 export const InputTextContext = createContext<{
     inputText: string;
@@ -147,16 +148,16 @@ export default function InputHandlerComp({
             <button
                 className="btn btn-sm btn-outline-secondary"
                 data-previous-chapter-button="1"
-                title="Previous"
-                aria-label="Previous"
+                title={tran('Previous')}
+                aria-label={tran('Previous')}
                 onClick={handlePreviousChapter}
             >
                 <i className="bi bi-caret-left" />
             </button>
             <button
                 className="btn btn-sm btn-outline-secondary"
-                title="Next"
-                aria-label="Next"
+                title={tran('Next')}
+                aria-label={tran('Next')}
                 data-next-chapter-button="1"
                 onClick={handleNextChapter}
             >

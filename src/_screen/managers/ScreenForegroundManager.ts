@@ -2,6 +2,7 @@ import type { CSSProperties, MouseEvent } from 'react';
 
 import { setSetting } from '../../helper/settingHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 import {
     genHtmlForegroundCountdown,
     genHtmlForegroundMarquee,
@@ -264,7 +265,9 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             const screenForegroundManager = this.getInstance(screenId);
             if (screenForegroundManager === null) {
                 showSimpleToast(
-                    'Failed to apply to screen. Please make sure the screen is open.',
+                    tran(
+                        'Failed to apply to screen. Please make sure the screen is open.',
+                    ),
                     'error',
                 );
                 continue;

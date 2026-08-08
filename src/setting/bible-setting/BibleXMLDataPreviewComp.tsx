@@ -17,6 +17,7 @@ import {
     bibleInfoUri,
 } from './schemas/bibleEditorUriHelpers';
 import { getBibleXMLDataFromKey } from './bibleXMLHelpers';
+import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { warnIfBibleKeyDirty } from './bibleEditorDirtyHelpers';
@@ -141,19 +142,19 @@ export default function BibleXMLDataPreviewComp({
                 <div className="btn-group" role="group">
                     <RenderChoiceComp
                         setEditingType={handleSetEditingType}
-                        title="Info"
+                        title={tran('Info')}
                         targetEditingType="info"
                         editingType={editingType}
                     />
                     <RenderChoiceComp
                         setEditingType={handleSetEditingType}
-                        title="Extra"
+                        title={tran('Extra')}
                         targetEditingType="extra"
                         editingType={editingType}
                     />
                     <RenderChoiceComp
                         setEditingType={handleSetEditingType}
-                        title="Book Chapter"
+                        title={tran('Book Chapter')}
                         targetEditingType="book-chapter"
                         editingType={editingType}
                     />
@@ -165,7 +166,7 @@ export default function BibleXMLDataPreviewComp({
                         downloadBibleJSON(bibleKey);
                     }}
                 >
-                    Download
+                    {tran('Download')}
                     <i className="bi bi-download ms-1" />
                 </button>
             </div>

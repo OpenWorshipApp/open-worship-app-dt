@@ -1,4 +1,5 @@
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 import appProvider from '../../server/appProvider';
 import {
     getSetting,
@@ -664,7 +665,9 @@ export default class ScreenFocusManager
         const screenFocusManager = this.getInstance(screenId);
         if (screenFocusManager === null) {
             showSimpleToast(
-                'Failed to apply to screen. Please make sure the screen is open.',
+                tran(
+                    'Failed to apply to screen. Please make sure the screen is open.',
+                ),
                 'error',
             );
             return;

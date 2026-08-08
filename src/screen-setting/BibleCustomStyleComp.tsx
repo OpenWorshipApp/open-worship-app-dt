@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import ScreenBibleTextShadow from './ScreenBibleTextShadow';
 import ScreenBibleAppearanceComp from './ScreenBibleAppearanceComp';
 
@@ -29,10 +30,10 @@ export default function BibleCustomStyleComp() {
     return (
         <div className="card w-100 h-100">
             <div className="card-body">
-                <RenderCardComp title="Appearance">
+                <RenderCardComp title={tran('Appearance')}>
                     <ScreenBibleAppearanceComp />
                 </RenderCardComp>
-                <RenderCardComp title="Text Shadow">
+                <RenderCardComp title={tran('Text Shadow')}>
                     <ScreenBibleTextShadow />
                 </RenderCardComp>
             </div>

@@ -88,7 +88,7 @@ export default function SelectCustomColorComp({
             <span>{tran('Mix Color: ')}</span>
             <input
                 ref={inputRef}
-                title="Select custom color"
+                title={tran('Select custom color')}
                 className="pointer"
                 type="color"
                 value={localColor}

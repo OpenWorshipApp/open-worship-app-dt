@@ -22,7 +22,7 @@ export const ctrlEnterEventMapper: KeyboardEventMapper = {
 };
 
 export function showAddingBibleItemFail() {
-    showSimpleToast('Adding Bible Item', 'Fail to add bible item');
+    showSimpleToast(tran('Adding Bible Item'), tran('Fail to add bible item'));
 }
 
 export async function addBibleItemAndPresent(

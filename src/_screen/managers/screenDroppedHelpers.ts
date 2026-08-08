@@ -1,5 +1,6 @@
 import type { DroppedDataType } from '../../helper/DragInf';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 import ScreenEventHandler from './ScreenEventHandler';
 import type ScreenManager from './ScreenManager';
 import { getScreenManagerByScreenId } from './screenManagerHelpers';
@@ -74,7 +75,9 @@ export async function applyOnScreenIds(
             // An operator whose screen is closed has to be told, not left with
             // something that looks like it did nothing.
             showSimpleToast(
-                'Failed to apply to screen. Please make sure the screen is open.',
+                tran(
+                    'Failed to apply to screen. Please make sure the screen is open.',
+                ),
                 'error',
             );
             continue;

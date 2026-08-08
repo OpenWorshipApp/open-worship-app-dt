@@ -384,7 +384,7 @@ export default function FloatingWidgetComp({
                         onPointerDown={(event) =>
                             startInteraction(event, 'resize', handle)
                         }
-                        title="Drag to resize"
+                        title={tran('Drag to resize')}
                         aria-hidden="true"
                     />
                 ))}

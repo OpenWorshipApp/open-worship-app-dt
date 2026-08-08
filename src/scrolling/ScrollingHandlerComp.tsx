@@ -9,6 +9,7 @@ import {
     PLAY_TO_BOTTOM_CLASSNAME,
 } from './scrollingHandlerHelpers';
 import { HoverMotionHandler } from '../helper/domHelpers';
+import { tran } from '../lang/langHelpers';
 
 export default function ScrollingHandlerComp({
     style,
@@ -49,7 +50,7 @@ export default function ScrollingHandlerComp({
                     `${TO_THE_TOP_CLASSNAME} bi bi-arrow-up-circle ` +
                     `${HoverMotionHandler.lowVisibleClassname}-1`
                 }
-                title="Scroll to the top"
+                title={tran('Scroll to the top')}
                 style={{
                     width: '45px',
                     height: '45px',

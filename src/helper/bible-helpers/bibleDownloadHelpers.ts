@@ -19,6 +19,7 @@ import { writeStreamToFile } from './downloadHelpers';
 import { getBibleXMLCacheInfoList } from '../../setting/bible-setting/bibleXMLHelpers';
 import { bibleDataReader } from './BibleDataReader';
 import type { LocaleType } from '../../lang/langHelpers';
+import { tran } from '../../lang/langHelpers';
 import CacheManager from '../../others/CacheManager';
 
 export const BIBLE_DOWNLOAD_TOAST_TITLE = 'Bible Download';
@@ -107,7 +108,7 @@ export async function extractDownloadedBible(filePath: string) {
     let isExtracted = false;
     try {
         showSimpleToast(
-            BIBLE_DOWNLOAD_TOAST_TITLE,
+            tran(BIBLE_DOWNLOAD_TOAST_TITLE),
             `Start extracting bible from file "${filePath}"`,
         );
         const downloadPath = await bibleDataReader.getWritableBiblePath();
@@ -116,17 +117,23 @@ export async function extractDownloadedBible(filePath: string) {
         const fileName = getFileName(fileFullName);
         isExtracted = await fsCheckDirExist(pathJoin(downloadPath, fileName));
         if (isExtracted) {
-            showSimpleToast(BIBLE_DOWNLOAD_TOAST_TITLE, 'Bible extracted');
+            showSimpleToast(
+                tran(BIBLE_DOWNLOAD_TOAST_TITLE),
+                tran('Bible extracted'),
+            );
         }
     } catch (error: any) {
         handleError(error);
-        showSimpleToast(BIBLE_DOWNLOAD_TOAST_TITLE, 'Fail to extract bible');
+        showSimpleToast(
+            tran(BIBLE_DOWNLOAD_TOAST_TITLE),
+            tran('Fail to extract bible'),
+        );
     } finally {
         fsDeleteFile(filePath).catch((error) => {
             handleError(error);
             showSimpleToast(
-                BIBLE_DOWNLOAD_TOAST_TITLE,
-                'Fail to delete downloaded file',
+                tran(BIBLE_DOWNLOAD_TOAST_TITLE),
+                tran('Fail to delete downloaded file'),
             );
         });
     }

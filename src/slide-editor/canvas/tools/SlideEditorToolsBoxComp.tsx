@@ -38,7 +38,7 @@ function SizingComp() {
     }, []);
 
     return (
-        <SlideEditorToolTitleComp title="Size" isInline>
+        <SlideEditorToolTitleComp title={tran('Size')} isInline>
             <div
                 className="btn-group btn-group-sm"
                 role="group"
@@ -46,7 +46,7 @@ function SizingComp() {
             >
                 <button
                     className="btn btn-sm btn-outline-secondary"
-                    title="Fit to canvas"
+                    title={tran('Fit to canvas')}
                     onClick={() => {
                         return handleSizing('full');
                     }}
@@ -55,7 +55,7 @@ function SizingComp() {
                 </button>
                 <button
                     className="btn btn-sm btn-outline-secondary"
-                    title="Set to original size"
+                    title={tran('Set to original size')}
                     onClick={() => {
                         return handleSizing('original');
                     }}
@@ -97,7 +97,7 @@ function LayerComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <SlideEditorToolTitleComp title="Box Layer" isInline>
+        <SlideEditorToolTitleComp title={tran('Box Layer')} isInline>
             <div
                 className="btn-group btn-group-sm"
                 role="group"
@@ -147,7 +147,10 @@ export default function SlideEditorToolsBoxComp() {
             }}
         >
             {canShowBackgroundColor ? (
-                <SlideEditorToolTitleComp title="Background Color" isInline>
+                <SlideEditorToolTitleComp
+                    title={tran('Background Color')}
+                    isInline
+                >
                     <SlideEditorToolsColorComp
                         color={props.backgroundColor}
                         handleNoColoring={handleNoColoring}
@@ -155,13 +158,13 @@ export default function SlideEditorToolsBoxComp() {
                     />
                 </SlideEditorToolTitleComp>
             ) : null}
-            <SlideEditorToolTitleComp title="Position & Size">
+            <SlideEditorToolTitleComp title={tran('Position & Size')}>
                 <BoxPositionSizeComp />
             </SlideEditorToolTitleComp>
-            <SlideEditorToolTitleComp title="Box Alignment" isInline>
+            <SlideEditorToolTitleComp title={tran('Box Alignment')} isInline>
                 <SlideEditorToolAlignComp onData={setProps} />
             </SlideEditorToolTitleComp>
-            <SlideEditorToolTitleComp title="Shape Properties">
+            <SlideEditorToolTitleComp title={tran('Shape Properties')}>
                 <ShapePropertiesComp />
             </SlideEditorToolTitleComp>
             <div className="d-flex flex-wrap column-gap-3">

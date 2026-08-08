@@ -214,7 +214,10 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
             );
         } catch (error) {
             handleError(error);
-            showSimpleToast(title, 'Error occurred during downloading video');
+            showSimpleToast(
+                title,
+                tran('Error occurred during downloading video'),
+            );
         } finally {
             hideProgressBar(videoUrl);
         }

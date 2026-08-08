@@ -3,6 +3,7 @@ import { useState } from 'react';
 import appProvider from './appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
+import { tran } from '../lang/langHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import {
     fsCheckFileExist,
@@ -52,7 +53,7 @@ export function showFileOrDirExplorer(dir: string) {
 export function downloadImageBase64Data(srcData: SrcData) {
     const dotExtension = getDotExtensionFromBase64Data(srcData);
     if (dotExtension === null) {
-        showSimpleToast('Download', 'Unsupported image data');
+        showSimpleToast(tran('Download'), tran('Unsupported image data'));
         return null;
     }
     const filePath = pathJoin(
@@ -61,7 +62,7 @@ export function downloadImageBase64Data(srcData: SrcData) {
     );
     const fileSource = FileSource.getInstance(filePath);
     if (!fileSource.writeFileBase64DataSync(srcData)) {
-        showSimpleToast('Download', 'Failed to save image');
+        showSimpleToast(tran('Download'), tran('Failed to save image'));
         return null;
     }
     showSimpleToast('Download', `Image saved at: ${filePath}`);
@@ -169,7 +170,7 @@ export function checkIsEncryptedFile(filePath: string) {
 
 export function copyToClipboard(str: string) {
     appProvider.systemUtils.copyToClipboard(str);
-    showSimpleToast('Copy', 'Text has been copied to clip');
+    showSimpleToast(tran('Copy'), tran('Text has been copied to clip'));
     return true;
 }
 

@@ -64,7 +64,7 @@ function LyricFilePreviewComp({ lyric }: Readonly<{ lyric: Lyric }>) {
         <div className="w-100 h-100 app-ellipsis">
             <i
                 className="bi bi-music-note"
-                title="Lyric"
+                title={tran('Lyric')}
                 style={{ color: 'var(--bs-info)' }}
             />
             {fileSource.name}

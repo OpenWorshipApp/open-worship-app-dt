@@ -1,4 +1,5 @@
 import { handleAutoHide } from '../helper/domHelpers';
+import { tran } from '../lang/langHelpers';
 import AppRangeComp from '../others/AppRangeComp';
 import type { BackgroundViewModeType } from './BackgroundViewModeComp';
 import BackgroundViewModeComp from './BackgroundViewModeComp';
@@ -35,7 +36,7 @@ export default function BackgroundFooterComp({
                 <div>
                     <AppRangeComp
                         value={thumbnailWidth}
-                        title="Thumbnail Size"
+                        title={tran('Thumbnail Size')}
                         setValue={setThumbnailWidth}
                         defaultSize={defaultRangeSize}
                     />

@@ -8,6 +8,7 @@ import {
 import BibleXMLEditorComp from './BibleXMLEditorComp';
 import { useAppStateAsync, useAppCurrentRef } from '../../helper/appHooks';
 import type { BibleXMLExtraType } from './bibleXMLJsonDataHelpers';
+import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 
 import type { AnyObjectType } from '../../helper/typeHelpers';
@@ -23,7 +24,7 @@ async function handleSaving(bibleKey: string, newJsonData: BibleXMLExtraType) {
     const xmlBibleData = await getBibleXMLDataFromKey(bibleKey);
     if (!xmlBibleData) {
         showSimpleToast(
-            'Saving Bible Data',
+            tran('Saving Bible Data'),
             `Bible Data not found for key ${bibleKey}`,
         );
         return;
@@ -64,7 +65,7 @@ export default function BibleXMLExtraEditorComp({
     const handleSave = useCallback((newJsonData: DataType) => {
         if (newJsonData.bibleKey !== bibleKeyRef.current) {
             showSimpleToast(
-                'Saving Bible Data',
+                tran('Saving Bible Data'),
                 `Invalid Bible Key ${newJsonData.bibleKey}`,
             );
             return;

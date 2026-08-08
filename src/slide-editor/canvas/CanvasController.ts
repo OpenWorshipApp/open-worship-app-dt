@@ -21,6 +21,7 @@ import CanvasItemAudio from './CanvasItemAudio';
 import CanvasItemYouTube from './CanvasItemYouTube';
 import CanvasItemWebsite from './CanvasItemWebsite';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import { createContext, use } from 'react';
 import { showCanvasItemContextMenu } from './canvasContextMenuHelpers';
@@ -97,7 +98,10 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
         if (matchedCanvasItems.length === 0) {
             if (showNotFoundToast) {
-                showSimpleToast('Edit Canvas Item', 'Canvas item not found');
+                showSimpleToast(
+                    tran('Edit Canvas Item'),
+                    tran('Canvas item not found'),
+                );
             }
             return [];
         }
@@ -156,8 +160,8 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         });
         if (deletableCanvasItems.length < targetCanvasItems.length) {
             showSimpleToast(
-                'Delete Canvas Items',
-                'Locked items cannot be deleted',
+                tran('Delete Canvas Items'),
+                tran('Locked items cannot be deleted'),
             );
         }
         if (deletableCanvasItems.length === 0) {
@@ -203,8 +207,8 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
                 mediaType !== 'audio'
             ) {
                 showSimpleToast(
-                    'Insert Medias',
-                    'Only image, video and audio files are supported',
+                    tran('Insert Medias'),
+                    tran('Only image, video and audio files are supported'),
                 );
                 return;
             }
@@ -219,8 +223,8 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             handleError(error);
         }
         showSimpleToast(
-            'Insert Image, Video or Audio',
-            'Fail to insert medias',
+            tran('Insert Image, Video or Audio'),
+            tran('Fail to insert medias'),
         );
     }
 
@@ -232,8 +236,8 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             const mediaType = getRemoteMediaMimetypeName(url);
             if (mediaType === null) {
                 showSimpleToast(
-                    'Insert Media Link',
-                    'Only image, video and audio links are supported',
+                    tran('Insert Media Link'),
+                    tran('Only image, video and audio links are supported'),
                 );
                 return;
             }
@@ -247,7 +251,10 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         } catch (error) {
             handleError(error);
         }
-        showSimpleToast('Insert Media Link', 'Fail to insert media link');
+        showSimpleToast(
+            tran('Insert Media Link'),
+            tran('Fail to insert media link'),
+        );
     }
 
     genNewYouTubeItem(url: string, event: any) {
@@ -257,7 +264,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         } catch (error) {
             handleError(error);
         }
-        showSimpleToast('Insert YouTube', 'Fail to insert YouTube');
+        showSimpleToast(tran('Insert YouTube'), tran('Fail to insert YouTube'));
     }
 
     genNewWebsiteItem(url: string, event: any) {
@@ -267,7 +274,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         } catch (error) {
             handleError(error);
         }
-        showSimpleToast('Insert Website', 'Fail to insert website');
+        showSimpleToast(tran('Insert Website'), tran('Fail to insert website'));
     }
 
     async genNewImageItemFromFile(file: File | Blob, event: any) {
@@ -278,7 +285,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         } catch (error) {
             handleError(error);
         }
-        showSimpleToast('Pasting Image', 'Fail to insert image');
+        showSimpleToast(tran('Pasting Image'), tran('Fail to insert image'));
     }
 
     static async genMediaItemFromFile(x: number, y: number, file: File | Blob) {
@@ -304,8 +311,8 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             handleError(error);
         }
         showSimpleToast(
-            'Insert Image, Video or Audio',
-            'Fail to insert medias',
+            tran('Insert Image, Video or Audio'),
+            tran('Fail to insert medias'),
         );
     }
 

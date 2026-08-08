@@ -17,6 +17,7 @@ import { unlocking } from '../../server/unlockingHelpers';
 import { useAppEffectAsync, useAppStateAsync } from '../appHooks';
 import type BibleItem from '../../bible-list/BibleItem';
 import type { LocaleType } from '../../lang/langHelpers';
+import { tran } from '../../lang/langHelpers';
 import {
     checkIsAvailable,
     DATA_DIR_NAME,
@@ -64,7 +65,7 @@ export async function textToSpeech(
             return filePath;
         } catch (error) {
             showSimpleToast(
-                'Text to Speech',
+                tran('Text to Speech'),
                 'Fail to convert text to speech. Please check your OpenAI ' +
                     'API Key and network connection.',
             );
@@ -96,7 +97,7 @@ export async function bibleTextToSpeech(
     const bibleInfo = await getBibleInfo(bibleKey);
     if (bibleInfo === null) {
         showSimpleToast(
-            'Bible Text to Speech',
+            tran('Bible Text to Speech'),
             `Fail to get Bible info for bible key "${bibleKey}".`,
         );
         return null;
@@ -104,8 +105,8 @@ export async function bibleTextToSpeech(
     const baseDir = await ensureDataDirectory(DATA_DIR_NAME);
     if (baseDir === null) {
         showSimpleToast(
-            'Text to Speech',
-            'Fail to ensure data directory for AI data.',
+            tran('Text to Speech'),
+            tran('Fail to ensure data directory for AI data.'),
         );
         return null;
     }

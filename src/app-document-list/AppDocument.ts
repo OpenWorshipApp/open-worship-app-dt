@@ -102,7 +102,7 @@ export default class AppDocument
             try {
                 return Slide.fromJson(json, this.filePath);
             } catch (error: any) {
-                showSimpleToast('Instantiating Slide', error.message);
+                showSimpleToast(tran('Instantiating Slide'), error.message);
             }
             return Slide.fromJsonError(json, this.filePath);
         });
@@ -529,8 +529,8 @@ export async function checkIsAppDocumentSelected() {
         !varyAppDocument.isEditable
     ) {
         showAppAlert(
-            'No slide selected',
-            'Please select an Open Worship slide first',
+            tran('No slide selected'),
+            tran('Please select an Open Worship slide first'),
         );
         return false;
     }

@@ -117,12 +117,15 @@ function downloadXMLToFile(
                 },
                 onDone: (error, filePath) => {
                     if (error) {
-                        showSimpleToast('Download Error', `Error: ${error}`);
+                        showSimpleToast(
+                            tran('Download Error'),
+                            `Error: ${error}`,
+                        );
                         reject(error);
                         return;
                     }
                     showSimpleToast(
-                        'Download Completed',
+                        tran('Download Completed'),
                         `File saved at: ${filePath}`,
                     );
                     resolve();
@@ -439,7 +442,10 @@ export async function saveJsonDataToXMLfile(
     bibleKey = bibleKey ?? jsonData.info.key;
     const xmlText = jsonToXMLText(jsonData);
     if (xmlText === null) {
-        showSimpleToast('Error', 'Error occurred during saving to XML');
+        showSimpleToast(
+            tran('Error'),
+            tran('Error occurred during saving to XML'),
+        );
         return false;
     }
     await saveXMLText(bibleKey, xmlText);
@@ -474,7 +480,10 @@ export async function updateBibleXMLInfo(
 ) {
     const dataJson = await getBibleXMLDataFromKey(oldBibleInfo.key);
     if (dataJson === null) {
-        showSimpleToast('Error', 'Error occurred during reading file');
+        showSimpleToast(
+            tran('Error'),
+            tran('Error occurred during reading file'),
+        );
         return false;
     }
     newBibleInfo.keyBookMap = newBibleInfo.keyBookMap ?? getModelKeyBookMap();

@@ -122,6 +122,10 @@ vi.mock('./NoteItem', () => ({
     },
 }));
 
+vi.mock('../../lang/langHelpers', () => ({
+    tran: (v: string) => v,
+}));
+
 async function loadModule() {
     vi.resetModules();
     return await import('./bibleNoteItemArchiveHelpers');

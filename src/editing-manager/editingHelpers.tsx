@@ -167,7 +167,7 @@ export function FileEditingMenuComp({
             <button
                 className="btn btn-sm btn-info"
                 type="button"
-                title="Undo"
+                title={tran('Undo')}
                 aria-label={tran('Undo')}
                 disabled={!canUndo}
                 style={genDisabledStyle(!canUndo)}
@@ -178,7 +178,7 @@ export function FileEditingMenuComp({
             <button
                 className="btn btn-sm btn-info"
                 type="button"
-                title="Redo"
+                title={tran('Redo')}
                 aria-label={tran('Redo')}
                 disabled={!canRedo}
                 style={genDisabledStyle(!canRedo)}

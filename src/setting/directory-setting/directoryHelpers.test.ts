@@ -162,7 +162,7 @@ describe('directoryHelpers', () => {
             '/parent/lyrics',
         );
         expect(showAppConfirmMock).toHaveBeenLastCalledWith(
-            'Creating Default Folder',
+            'translated:Creating Default Folder',
             'translated:Fail to create folder "/parent/lyrics"',
         );
         expect(appProviderMock.reload).toHaveBeenCalledTimes(1);
@@ -176,7 +176,7 @@ describe('directoryHelpers', () => {
 
         expect(handleErrorMock).not.toHaveBeenCalled();
         expect(showSimpleToastMock).toHaveBeenCalledWith(
-            'Creating Default Folder',
+            'translated:Creating Default Folder',
             'translated:Fail to create folder "/parent"',
         );
     });
@@ -190,7 +190,7 @@ describe('directoryHelpers', () => {
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(showSimpleToastMock).toHaveBeenCalledWith(
-            'Creating Default Folder',
+            'translated:Creating Default Folder',
             'translated:Fail to create folder "/parent"',
         );
     });

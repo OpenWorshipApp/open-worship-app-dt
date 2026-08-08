@@ -67,7 +67,12 @@ vi.mock('../../server/appProvider', () => ({
         pathUtils: {
             join: mocks.pathJoinMock,
         },
+        systemUtils: { isDev: false },
     },
+}));
+
+vi.mock('../../lang/langHelpers', () => ({
+    tran: (value: string) => value,
 }));
 
 vi.mock('../../server/fileHelpers', () => ({

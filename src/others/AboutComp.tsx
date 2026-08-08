@@ -5,6 +5,7 @@ import { getDocxToHtmlsVersion } from '../server/docxHelpers';
 import { getPptxToHtmlsVersion } from '../server/pptxHelpers';
 import { useAppStateAsync } from '../helper/appHooks';
 import { useThemeSource } from './themeHelpers';
+import { tran } from '../lang/langHelpers';
 
 const { appInfo } = appProvider;
 const GITHUB_URL = appInfo.gitRepository;
@@ -107,7 +108,8 @@ export default function AboutComp() {
                             title={GITHUB_URL}
                             onClick={handleForkingOnGithub}
                         >
-                            <i className="bi bi-github" /> Fork me on GitHub
+                            <i className="bi bi-github" />{' '}
+                            {tran('Fork me on GitHub')}
                         </button>
                         <a
                             href={appInfo.homepage}

@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 
+import { tran } from '../../lang/langHelpers';
+
 export const RULER_THICKNESS = 18;
 
 const MINOR_TICKS_PER_MAJOR = 5;
@@ -115,7 +117,7 @@ export function CanvasRulerComp({
     return (
         <canvas
             ref={canvasRef}
-            title="Drag onto the canvas to add a guide line"
+            title={tran('Drag onto the canvas to add a guide line')}
             style={{
                 position: 'absolute',
                 top: isHorizontal ? -RULER_THICKNESS : 0,

@@ -485,7 +485,7 @@ export default function ForegroundMarqueeComp({
                         rows={50}
                         value={text}
                         onChange={handleTextChange}
-                        placeholder={config.placeholder}
+                        placeholder={tran(config.placeholder)}
                         style={editorStyle}
                     />
                     <label htmlFor={config.textareaId}>

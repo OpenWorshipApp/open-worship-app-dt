@@ -71,7 +71,7 @@ export async function askForURL(title: string, subTitle: string) {
         return null;
     }
     if (!url.trim().startsWith('http')) {
-        showSimpleToast(tran('Download From URL'), 'Invalid URL');
+        showSimpleToast(tran('Download From URL'), tran('Invalid URL'));
         return null;
     }
     return url;
@@ -157,13 +157,16 @@ export function streamDownloadFile(
                 onDone: (error) => {
                     globalThis.removeEventListener('beforeunload', blockUnload);
                     if (error) {
-                        showSimpleToast('Download Error', `Error: ${error}`);
+                        showSimpleToast(
+                            tran('Download Error'),
+                            `Error: ${error}`,
+                        );
                         reject(error);
                         return;
                     }
                     if (!isSilentSuccess) {
                         showSimpleToast(
-                            'Download Completed',
+                            tran('Download Completed'),
                             `File saved at: ${filePath}`,
                         );
                     }

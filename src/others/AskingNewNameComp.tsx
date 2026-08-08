@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { showSimpleToast } from '../toast/toastHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { tran } from '../lang/langHelpers';
 
 export default function AskingNewNameComp({
     defaultName,
@@ -41,7 +42,7 @@ export default function AskingNewNameComp({
     const handleApplyClick = useCallback(() => {
         if (!isValidRef.current) {
             showSimpleToast(
-                'Invalid file name',
+                tran('Invalid file name'),
                 'File name cannot contain any of the following ' +
                     'characters: \\ / : * ? " < > |',
             );
@@ -59,9 +60,9 @@ export default function AskingNewNameComp({
             <input
                 type="text"
                 className="form-control form-control-sm"
-                placeholder="title"
+                placeholder={tran('title')}
                 value={creatingNewName}
-                aria-label="file name"
+                aria-label={tran('file name')}
                 aria-describedby="button-addon2"
                 autoFocus
                 onKeyDown={handleKeyDown}

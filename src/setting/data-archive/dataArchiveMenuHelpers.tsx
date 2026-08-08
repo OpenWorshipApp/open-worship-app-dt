@@ -130,7 +130,7 @@ async function runMenuAction(title: string, run: () => Promise<void>) {
     try {
         await run();
     } catch (error: any) {
-        showSimpleToast(title, reportDataArchiveError(title, error));
+        showSimpleToast(tran(title), reportDataArchiveError(title, error));
     }
 }
 
@@ -139,7 +139,7 @@ async function handleExporting() {
         const folders = await getExportableDataFolders();
         if (folders.length === 0) {
             showSimpleToast(
-                EXPORT_TITLE,
+                tran(EXPORT_TITLE),
                 'No data folder is set up yet — choose them in Settings →' +
                     ' Path Settings first',
             );
@@ -168,7 +168,7 @@ async function handleExporting() {
         const archiveFilePath = await runWithProgress(EXPORT_TITLE, () => {
             return exportData(selectedFolders, password);
         });
-        showSimpleToast(EXPORT_TITLE, `Exported to ${archiveFilePath}`);
+        showSimpleToast(tran(EXPORT_TITLE), `Exported to ${archiveFilePath}`);
     });
 }
 
@@ -245,7 +245,7 @@ async function handleImporting(archiveFilePath?: string) {
                 },
             );
             showSimpleToast(
-                IMPORT_TITLE,
+                tran(IMPORT_TITLE),
                 `Imported ${copied} file(s); ${reused} already up to date`,
             );
         } finally {

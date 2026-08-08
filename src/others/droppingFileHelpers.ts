@@ -107,7 +107,10 @@ export function genOnDrop({
         changeDragEventStyle(event, 'opacity', '1');
         event.preventDefault();
         if (dirSource.dirPath === null) {
-            showSimpleToast('Open Folder', 'Please open a folder first');
+            showSimpleToast(
+                tran('Open Folder'),
+                tran('Please open a folder first'),
+            );
             return;
         }
         const promises = [];

@@ -512,8 +512,8 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
 
     seek(
         bibleItem: ReadIdOnlyBibleItem,
-        toastTitle: string = 'Seek Item',
-        toastMessage: string = 'Unable to seek bible item',
+        toastTitle: string = tran('Seek Item'),
+        toastMessage: string = tran('Unable to seek bible item'),
     ) {
         const nestedBibleItems = this.nestedBibleItems;
         const foundParent = seekParent(nestedBibleItems, bibleItem);

@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { getAISetting, useAISetting } from './aiHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 
 export const DATA_DIR_NAME = 'ai-anthropic-data';
 
@@ -10,8 +11,8 @@ export function getAnthropicInstance() {
     const { anthropicAPIKey } = getAISetting();
     if (!anthropicAPIKey) {
         showSimpleToast(
-            'Fail to get Anthropic instance',
-            'Missing Anthropic API Key.',
+            tran('Fail to get Anthropic instance'),
+            tran('Missing Anthropic API Key.'),
         );
         return null;
     }

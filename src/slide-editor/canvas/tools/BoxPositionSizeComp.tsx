@@ -80,7 +80,7 @@ export default function BoxPositionSizeComp() {
             </div>
             <div className="d-flex gap-1">
                 <PositionSizeFieldComp
-                    name="Rotate:"
+                    name={tran('Rotate:')}
                     value={props.rotate}
                     unit="deg"
                     onChange={(value) => {

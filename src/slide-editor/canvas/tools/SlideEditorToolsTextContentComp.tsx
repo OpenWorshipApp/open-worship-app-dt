@@ -1,6 +1,7 @@
 import type { ChangeEvent } from 'react';
 import { useCallback } from 'react';
 
+import { tran } from '../../../lang/langHelpers';
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import type { CanvasItemTextPropsType } from '../CanvasItemText';
 import { useCanvasItemPropsSetterContext } from '../CanvasItem';
@@ -18,13 +19,13 @@ export default function SlideEditorToolsTextContentComp() {
         [],
     );
     return (
-        <SlideEditorToolTitleComp title="Text">
+        <SlideEditorToolTitleComp title={tran('Text')}>
             <textarea
                 className="form-control"
                 rows={4}
                 value={props.text}
                 onChange={handleTextChange}
-                placeholder="Type the slide text here"
+                placeholder={tran('Type the slide text here')}
                 style={{
                     resize: 'vertical',
                     fontFamily: props.fontFamily || undefined,

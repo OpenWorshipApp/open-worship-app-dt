@@ -4,6 +4,7 @@ import {
     getLangCode,
     getLanguageTitle,
     reversedLocalesMap,
+    tran,
 } from '../lang/langHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -51,13 +52,13 @@ async function handleWikiDictionaryOpening(bibleKey: string, event: any) {
     showAppContextMenu(event, [
         {
             childBefore: genContextMenuItemIcon('journal-text'),
-            menuElement: 'Open Wiki Dictionary',
+            menuElement: tran('Open Wiki Dictionary'),
             disabled: true,
         },
         { menuElement: elementDivider },
         {
             childBefore: genContextMenuItemIcon('translate'),
-            menuElement: 'English',
+            menuElement: tran('English'),
             onSelect: () => {
                 const url = `https://en.wiktionary.org`;
                 appProvider.browserUtils.openExternalURL(url);
@@ -76,8 +77,8 @@ export default function RenderOpenWikiDictionaryComp() {
     return (
         <button
             className="btn btn-sm btn-secondary"
-            title="Wiki Dictionary"
-            aria-label="Wiki Dictionary"
+            title={tran('Wiki Dictionary')}
+            aria-label={tran('Wiki Dictionary')}
             onClick={handleWikiDictionaryOpening.bind(null, bibleKey)}
         >
             <i className="bi bi-journal-text" />

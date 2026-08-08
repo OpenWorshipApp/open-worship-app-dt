@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { tran } from '../../../lang/langHelpers';
 import { ExpandChevronComp, useExpandToggle } from './useExpandToggle';
 
 import SlideEditorToolsTextComp from './SlideEditorToolsTextComp';
@@ -106,7 +107,9 @@ export default function CanvasItemPropsEditorComp({
                         isExpanded={isExpanded}
                         style={{ fontSize: '0.8rem', opacity: 0.7 }}
                     />
-                    <strong>Item ID: {canvasItem.id}</strong>
+                    <strong>
+                        {tran('Item ID:')} {canvasItem.id}
+                    </strong>
                 </div>
                 {isExpanded ? (
                     <div
@@ -117,19 +120,22 @@ export default function CanvasItemPropsEditorComp({
                     >
                         {isLocked ? (
                             <div className="d-flex align-items-center gap-2 p-2">
-                                <span>🔒 This item is locked</span>
+                                <span>
+                                    {'🔒 '}
+                                    {tran('This item is locked')}
+                                </span>
                                 <button
                                     className="btn btn-sm btn-outline-warning"
                                     onClick={handleUnlocking}
                                 >
-                                    Unlock
+                                    {tran('Unlock')}
                                 </button>
                             </div>
                         ) : (
                             <CanvasItemContext value={canvasItem}>
                                 <div>
                                     <SlideEditorToolTitleComp
-                                        title="Box Properties"
+                                        title={tran('Box Properties')}
                                         isCollapsible
                                         isInitiallyExpanded={false}
                                     >
@@ -146,7 +152,9 @@ export default function CanvasItemPropsEditorComp({
                                             minWidth: 0,
                                         }}
                                     >
-                                        <SlideEditorToolTitleComp title="Text Properties">
+                                        <SlideEditorToolTitleComp
+                                            title={tran('Text Properties')}
+                                        >
                                             <SlideEditorToolsTextComp
                                                 isAlignmentEnabled={isPlainText}
                                                 isTextContentEnabled={

@@ -13,6 +13,7 @@ import {
 import { useAppEffect } from '../helper/appHooks';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useStylingColor } from '../_screen/preview/stylingHelpers';
+import { tran } from '../lang/langHelpers';
 
 function genShadowElement(style: CSSProperties, title: string) {
     return (
@@ -112,8 +113,8 @@ function genColorHTML({
 }) {
     let htmlText = `
     <div>
-        ${renderToStaticMarkup(genShadowElement({ color: HEX_COLOR_WHITE }, 'Reset White'))}
-        ${renderToStaticMarkup(genShadowElement({ color: HEX_COLOR_BLACK }, 'Reset Black'))}
+        ${renderToStaticMarkup(genShadowElement({ color: HEX_COLOR_WHITE }, tran('Reset White')))}
+        ${renderToStaticMarkup(genShadowElement({ color: HEX_COLOR_BLACK }, tran('Reset Black')))}
     </div>
     `;
 

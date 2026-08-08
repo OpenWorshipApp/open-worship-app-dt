@@ -9,6 +9,7 @@ import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { getSetting } from '../helper/settingHelpers';
 import BibleItem from './BibleItem';
 import { showSimpleToast } from '../toast/toastHelpers';
+import { tran } from '../lang/langHelpers';
 import type { BibleItemType } from './bibleItemHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import appProvider from '../server/appProvider';
@@ -62,7 +63,10 @@ export default class Bible
                 bibleItem.bible = this;
                 return bibleItem;
             } catch (error: any) {
-                showSimpleToast('Instantiating Bible Item', error.message);
+                showSimpleToast(
+                    tran('Instantiating Bible Item'),
+                    error.message,
+                );
             }
             return BibleItem.fromJsonError(json, this.filePath);
         });
@@ -220,7 +224,10 @@ export default class Bible
         try {
             const fromBible = await Bible.fromFilePath(filePath);
             if (!fromBible) {
-                showSimpleToast('Moving Bible Item', 'Cannot source Bible');
+                showSimpleToast(
+                    tran('Moving Bible Item'),
+                    tran('Cannot source Bible'),
+                );
                 return;
             }
             const backupBibleItems = fromBible.items;
@@ -234,8 +241,8 @@ export default class Bible
             if (index !== undefined) {
                 if (!backupBibleItems[index]) {
                     showSimpleToast(
-                        'Moving Bible Item',
-                        'Cannot find Bible Item',
+                        tran('Moving Bible Item'),
+                        tran('Cannot find Bible Item'),
                     );
                     return;
                 }
@@ -246,7 +253,7 @@ export default class Bible
                 await fromBible.deleteBibleItem(item);
             }
         } catch (error: any) {
-            showSimpleToast('Moving Bible Item', error.message);
+            showSimpleToast(tran('Moving Bible Item'), error.message);
         }
     }
 
@@ -274,8 +281,8 @@ export default class Bible
             : null;
         if (!defaultBible) {
             showSimpleToast(
-                'Getting Default Bible File',
-                'Fail to get default bible file',
+                tran('Getting Default Bible File'),
+                tran('Fail to get default bible file'),
             );
             return null;
         }

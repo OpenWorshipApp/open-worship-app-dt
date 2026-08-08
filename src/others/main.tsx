@@ -62,7 +62,7 @@ function useCheckSetting() {
 
 async function confirmLocalStorageErasing() {
     const isOk = await showAppConfirm(
-        'Unfixable Error',
+        tran('Unfixable Error'),
         'We were sorry, local settings are broken, we need to erase local' +
             ' storage and reload the app',
     );

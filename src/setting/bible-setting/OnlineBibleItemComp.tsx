@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
+import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { useDownloadBible } from './bibleDownloadingHelpers';
 import { getAllXMLFileKeys } from './bibleXMLJsonDataHelpers';
@@ -27,7 +28,10 @@ export default function OnlineBibleItemComp({
     const handleDownloadStarting = useCallback(async () => {
         const keysMap = await getAllXMLFileKeys();
         if (keysMap[bibleInfoRef.current.key]) {
-            showSimpleToast('Already in XML', 'This bible is already in XML');
+            showSimpleToast(
+                tran('Already in XML'),
+                tran('This bible is already in XML'),
+            );
             refreshRef.current?.();
             return;
         }
@@ -39,7 +43,7 @@ export default function OnlineBibleItemComp({
         <li className="list-group-item">
             <div
                 className="w-100"
-                title={isBibleXMLExist ? 'Already in XML' : ''}
+                title={isBibleXMLExist ? tran('Already in XML') : ''}
             >
                 <span>
                     {bibleInfo.title} ({bibleInfo.key})
@@ -51,7 +55,8 @@ export default function OnlineBibleItemComp({
                             disabled={isBibleXMLExist}
                             onClick={handleDownloadStarting}
                         >
-                            Download <i className="bi bi-cloud-arrow-down" />
+                            {tran('Download')}{' '}
+                            <i className="bi bi-cloud-arrow-down" />
                         </button>
                     </div>
                 ) : (

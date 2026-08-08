@@ -1,7 +1,7 @@
 import type { BibleNote } from 'bible-note';
 
 import appProvider from '../../server/appProvider';
-import { getAllLangsAsync } from '../../lang/langHelpers';
+import { getAllLangsAsync, tran } from '../../lang/langHelpers';
 import { useIsOnTop } from '../../server/appHelpers';
 import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
 import { useThemeSource } from '../../others/themeHelpers';
@@ -82,8 +82,8 @@ export function useBibleNoteControl({
                     onClick={() => {
                         setIsOnTop((prev) => !prev);
                     }}
-                    title="Toggle Always On Top"
-                    aria-label="Toggle Always On Top"
+                    title={tran('Toggle Always On Top')}
+                    aria-label={tran('Toggle Always On Top')}
                     aria-pressed={isOnTop}
                 >
                     <i

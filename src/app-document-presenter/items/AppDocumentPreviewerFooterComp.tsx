@@ -14,6 +14,7 @@ import AppRangeComp from '../../others/AppRangeComp';
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import appProvider from '../../server/appProvider';
 import { showAppAlert } from '../../popup-widget/popupWidgetHelpers';
+import { tran } from '../../lang/langHelpers';
 import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import {
@@ -120,8 +121,8 @@ export default function AppDocumentPreviewerFooterComp({
         );
         if (slide === null) {
             showAppAlert(
-                'No Slide Available',
-                'No other slide found in the slide directory',
+                tran('No Slide Available'),
+                tran('No other slide found in the slide directory'),
             );
         } else {
             setSelectedAppDocumentRef.current(slide);
@@ -139,7 +140,7 @@ export default function AppDocumentPreviewerFooterComp({
                 <div className="app-flex-item">
                     <AppRangeComp
                         value={thumbnailSizeScale}
-                        title="Slide Thumbnail Size Scale"
+                        title={tran('Slide Thumbnail Size Scale')}
                         setValue={setThumbnailSizeScale}
                         defaultSize={defaultRangeSize}
                     />

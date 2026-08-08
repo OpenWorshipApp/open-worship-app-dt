@@ -111,6 +111,10 @@ vi.mock('../../server/appProvider', () => ({
     default: appProviderMock,
 }));
 
+vi.mock('../../lang/langHelpers', () => ({
+    tran: (v: string) => v,
+}));
+
 vi.mock('../../others/AttachBackgroundManager', () => ({
     attachBackgroundManager: {
         getAttachedBackground: getAttachedBackgroundMock,

@@ -53,7 +53,7 @@ export default function BibleXMLInfoComp({
     const handleFileTrashing = useCallback(async (event: any) => {
         event.stopPropagation();
         const isConfirmed = await showAppConfirm(
-            'Delete Bible XML',
+            tran('Delete Bible XML'),
             `Are you sure to delete bible XML "${bibleKeyRef.current}"?`,
             {
                 cancelButtonLabel: 'No',

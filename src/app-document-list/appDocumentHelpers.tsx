@@ -338,7 +338,7 @@ function genAlertMessage() {
     );
 }
 
-const WIDGET_TITLE = 'Converting to PDF';
+const getWidgetTitle = () => tran('Converting to PDF');
 
 function showConfirmPdfConvert(dirPath: string, file: DroppedFileType) {
     const fileFullName = getFileFullName(file);
@@ -349,7 +349,7 @@ function showConfirmPdfConvert(dirPath: string, file: DroppedFileType) {
             <b>{dirPath}</b>
         </div>,
     );
-    return showAppConfirm(WIDGET_TITLE, confirmMessage);
+    return showAppConfirm(getWidgetTitle(), confirmMessage);
 }
 
 async function genTempFilePath(dotExt: string | null) {
@@ -402,7 +402,7 @@ async function startConvertingOfficeFile(
             dirSource.dirPath,
             getFileName(fileFullName),
         );
-        showProgressBar(WIDGET_TITLE);
+        showProgressBar(getWidgetTitle());
         const fileSource = FileSource.getInstance(tempFilePath);
         tempFilePath = await fsCopyFilePathToPath(
             file,
@@ -420,14 +420,14 @@ async function startConvertingOfficeFile(
             ? slidesCount + ' slides'
             : 'unknown slides count';
         showSimpleToast(
-            WIDGET_TITLE,
+            getWidgetTitle(),
             `Document with ${slideMessage} is being converted. ` +
                 'Do not close application',
         );
         const error = await convertToPdf(tempFilePath, targetPdfFilePath);
         if (error !== null) {
             showSimpleToast(
-                WIDGET_TITLE,
+                getWidgetTitle(),
                 `Failed to convert ${toHtmlBold(fileFullName)} to PDF. ` +
                     `Error: ${error.message}`,
             );
@@ -436,29 +436,32 @@ async function startConvertingOfficeFile(
         const pdfPagesCount = await getSlidesCount(targetPdfFilePath);
         if (slidesCount != null && pdfPagesCount !== slidesCount) {
             showSimpleToast(
-                WIDGET_TITLE,
+                getWidgetTitle(),
                 `Warning: Slides count mismatch. ` +
                     `Original: ${slidesCount}, Converted: ${pdfPagesCount}`,
             );
         }
         showSimpleToast(
-            WIDGET_TITLE,
+            getWidgetTitle(),
             `${toHtmlBold(fileFullName)} is converted to PDF ` +
                 `"${targetPdfFilePath}"`,
         );
     } catch (error: any) {
         const regex = /Could not find .+ binary/i;
         if (regex.test(error.message)) {
-            showAppAlert('LibreOffice is not installed', genAlertMessage());
+            showAppAlert(
+                tran('LibreOffice is not installed'),
+                genAlertMessage(),
+            );
         } else {
             handleError(error);
             showSimpleToast(
-                WIDGET_TITLE,
+                getWidgetTitle(),
                 tran('Something wrong during converting, please try again.'),
             );
         }
     }
-    hideProgressBar(WIDGET_TITLE);
+    hideProgressBar(getWidgetTitle());
 }
 
 export async function convertOfficeFile(

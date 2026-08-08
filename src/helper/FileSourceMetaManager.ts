@@ -9,6 +9,7 @@ import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
 import { isColor } from './helpers';
 import SettingManager from './SettingManager';
+import { tran } from '../lang/langHelpers';
 
 async function readJsonData(filePath: string) {
     const fileSource = FileSource.getInstance(filePath);
@@ -18,8 +19,8 @@ async function readJsonData(filePath: string) {
             new Error(`Unable to read data from ${filePath}}`),
         );
         ToastEventListener.showSimpleToast({
-            title: 'Color Note',
-            message: 'Unable to read file',
+            title: tran('Color Note'),
+            message: tran('Unable to read file'),
         });
     }
     return json;

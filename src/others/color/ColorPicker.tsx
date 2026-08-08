@@ -13,6 +13,7 @@ import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpe
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { copyToClipboard } from '../../server/appHelpers';
+import { tran } from '../../lang/langHelpers';
 
 freezeObject(colorList);
 
@@ -99,7 +100,7 @@ export default function ColorPickerComp({
             childBefore: genContextMenuItemIcon('clipboard', {
                 color: currentLocalColor,
             }),
-            menuElement: 'Copy Color',
+            menuElement: tran('Copy Color'),
             onSelect: () => {
                 copyToClipboard(currentLocalColor);
             },

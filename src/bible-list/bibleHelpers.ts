@@ -79,9 +79,12 @@ export async function genInputText(
 export async function saveBibleItem(bibleItem: BibleItem, onDone?: () => void) {
     const savedBibleItem = await Bible.addBibleItemToDefault(bibleItem);
     if (savedBibleItem === null) {
-        showSimpleToast('Adding bible', 'Fail to add bible to list');
+        showSimpleToast(
+            tran('Adding bible'),
+            tran('Fail to add bible to list'),
+        );
     } else {
-        showSimpleToast('Adding bible', 'Bible item is added');
+        showSimpleToast(tran('Adding bible'), tran('Bible item is added'));
         onDone?.();
         return savedBibleItem;
     }
@@ -138,7 +141,7 @@ export async function moveBibleItemTo(
             return name !== fileSource.name;
         });
     if (targetNames.length === 0) {
-        showSimpleToast('Move Bible Item', 'No other bibles found');
+        showSimpleToast(tran('Move Bible Item'), tran('No other bibles found'));
         return;
     }
     showAppContextMenu(
@@ -162,8 +165,8 @@ export async function moveBibleItemTo(
                     );
                     if (!targetBible) {
                         showSimpleToast(
-                            'Move Bible Item',
-                            'Target bible not found',
+                            tran('Move Bible Item'),
+                            tran('Target bible not found'),
                         );
                         return;
                     }
@@ -197,7 +200,7 @@ export async function openBibleItemContextMenu(
         }
         const freshBible = await Bible.fromFilePath(bible.filePath);
         if (freshBible === null) {
-            showSimpleToast('Bible Item', 'Unable to get bible');
+            showSimpleToast(tran('Bible Item'), tran('Unable to get bible'));
             return;
         }
         callback(freshBible);

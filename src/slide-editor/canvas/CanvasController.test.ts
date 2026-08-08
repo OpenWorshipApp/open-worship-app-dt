@@ -104,6 +104,13 @@ vi.mock('../../event/KeyboardEventListener', () => ({
     allArrows: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'],
 }));
 
+// `langHelpers` pulls in `appProvider`, which registers a `document`
+// listener at module load — absent in this node-environment test. Identity
+// `tran` keeps the raw-string assertions below intact.
+vi.mock('../../lang/langHelpers', () => ({
+    tran: (v: string) => v,
+}));
+
 // `canvasHelpers` pulls in `server/fileHelpers`, whose `appProvider` mock
 // needs a DOM this node-environment test doesn't have. `isSupportedExt` backs
 // the real `getRemoteMediaMimetypeName`, so it dispatches on the extension the

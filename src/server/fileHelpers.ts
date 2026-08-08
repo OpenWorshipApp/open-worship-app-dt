@@ -163,7 +163,7 @@ export const createNewFileDetail = async (
         const filePath = pathJoin(dir, fileFullName);
         return await fsCreateFile(filePath, content);
     } catch (error: any) {
-        showSimpleToast('Creating Presenting Flow', error.message);
+        showSimpleToast(tran('Creating Presenting Flow'), error.message);
     }
     return null;
 };

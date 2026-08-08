@@ -34,6 +34,7 @@ import {
     selectFiles,
 } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 import type Note from './Note';
 import NoteItem from './NoteItem';
 import { type NoteItemType } from './noteItemHelpers';
@@ -510,7 +511,9 @@ export async function importBibleNoteItemArchive(
 export async function exportBibleNoteItem(noteItem: NoteItem) {
     // One dialog, always — an empty answer writes exactly the bundle this
     // export has always written; cancelling backs out of the whole thing.
-    const password = await askForNewArchivePassword('Export Bible Note Item');
+    const password = await askForNewArchivePassword(
+        tran('Export Bible Note Item'),
+    );
     if (password === null) {
         return null;
     }
@@ -520,7 +523,7 @@ export async function exportBibleNoteItem(noteItem: NoteItem) {
             password || null,
         );
         showSimpleToast(
-            'Export Bible Note Item',
+            tran('Export Bible Note Item'),
             `Exported to ${archiveFilePath}`,
         );
         showFileOrDirExplorer(archiveFilePath);
@@ -528,8 +531,8 @@ export async function exportBibleNoteItem(noteItem: NoteItem) {
     } catch (error: any) {
         handleError(error);
         showSimpleToast(
-            'Export Bible Note Item',
-            error?.message ?? 'Unable to export BibleNote item',
+            tran('Export Bible Note Item'),
+            error?.message ?? tran('Unable to export BibleNote item'),
         );
         return null;
     }
@@ -557,13 +560,16 @@ export async function selectAndImportBibleNoteItemArchive(note: Note) {
         if (noteItem === null) {
             return null;
         }
-        showSimpleToast('Import Bible Note Item', `Imported ${noteItem.title}`);
+        showSimpleToast(
+            tran('Import Bible Note Item'),
+            `Imported ${noteItem.title}`,
+        );
         return noteItem;
     } catch (error: any) {
         handleError(error);
         showSimpleToast(
-            'Import Bible Note Item',
-            error?.message ?? 'Unable to import BibleNote item',
+            tran('Import Bible Note Item'),
+            error?.message ?? tran('Unable to import BibleNote item'),
         );
         return null;
     }

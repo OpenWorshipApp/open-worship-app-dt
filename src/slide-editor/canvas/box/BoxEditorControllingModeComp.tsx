@@ -1,5 +1,6 @@
 import { useCallback, type MouseEvent } from 'react';
 
+import { tran } from '../../../lang/langHelpers';
 import CanvasItem, {
     useCanvasItemContext,
     useCanvasItemPropsContext,
@@ -158,7 +159,7 @@ export default function BoxEditorControllingModeComp() {
             >
                 <BoxEditorCanvasItemRender />
                 {isLocked ? (
-                    <div className="locked-indicator" title="Locked">
+                    <div className="locked-indicator" title={tran('Locked')}>
                         🔒
                     </div>
                 ) : (

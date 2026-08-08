@@ -258,7 +258,7 @@ export default function ForegroundQuickTextComp() {
                         rows={20}
                         value={markdownText}
                         onChange={handleMarkdownTextChange}
-                        placeholder="Leave a markdown text here"
+                        placeholder={tran('Leave a markdown text here')}
                         style={{
                             fontFamily: fontFamily || undefined,
                             fontWeight: fontWeight || undefined,

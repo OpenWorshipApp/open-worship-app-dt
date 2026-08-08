@@ -17,6 +17,7 @@ import BibleViewTitleWrapperComp from '../bible-reader/view-extra/BibleViewTitle
 import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewExtraHelpers';
 import { HoverMotionHandler } from '../helper/domHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { tran } from '../lang/langHelpers';
 
 const LazyBiblePreviewerRenderComp = lazy(() => {
     return import('../bible-reader/BiblePreviewerRenderComp');
@@ -58,7 +59,9 @@ function RenderBodyEditingComp() {
                         >
                             <span
                                 className="app-caught-hover-pointer app-opacity-hover"
-                                title='Hit "Escape" to jump back to editing input'
+                                title={tran(
+                                    'Hit "Escape" to jump back to editing input',
+                                )}
                                 data-opacity-hover="0.2"
                                 onClick={handleFocusInput}
                             >
@@ -109,7 +112,7 @@ function RenderBodyComp({
                                 `pointer ${HoverMotionHandler.lowVisibleClassname}-0 ` +
                                 'app-caught-hover-pointer app-opacity-hover'
                             }
-                            title="Click to edit this section"
+                            title={tran('Click to edit this section')}
                             data-opacity-hover="0.2"
                             onClick={handleEditBibleItem}
                         >

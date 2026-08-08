@@ -31,7 +31,7 @@ export async function moveNoteItemTo(
             return name !== fileSource.name;
         });
     if (targetNames.length === 0) {
-        showSimpleToast('Move Note Item', 'No other notes found');
+        showSimpleToast(tran('Move Note Item'), tran('No other notes found'));
         return;
     }
     const menuItems: ContextMenuItemType[] = targetNames.map((name) => {
@@ -47,7 +47,10 @@ export async function moveNoteItemTo(
                 );
                 const targetNote = await Note.fromFilePath(fileSource.filePath);
                 if (!targetNote) {
-                    showSimpleToast('Move Note Item', 'Target note not found');
+                    showSimpleToast(
+                        tran('Move Note Item'),
+                        tran('Target note not found'),
+                    );
                     return;
                 }
                 targetNote.moveItemFrom(note.filePath, noteItem);
@@ -67,7 +70,10 @@ export async function openNoteItemContextMenu(
         ? await Note.fromFilePath(noteItem.filePath)
         : null;
     if (note === null) {
-        showSimpleToast('Open Note Item Context Menu', 'Unable to get note');
+        showSimpleToast(
+            tran('Open Note Item Context Menu'),
+            tran('Unable to get note'),
+        );
         return;
     }
     const menuItem: ContextMenuItemType[] = [

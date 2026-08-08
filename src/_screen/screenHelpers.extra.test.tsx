@@ -56,6 +56,7 @@ vi.mock('../helper/errorHelpers', () => ({
 
 vi.mock('../lang/langHelpers', () => ({
     checkIsValidLocale: vi.fn(() => true),
+    tran: (v: string) => v,
 }));
 
 vi.mock('../scrolling/scrollingHandlerHelpers', () => ({

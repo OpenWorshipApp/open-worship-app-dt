@@ -32,7 +32,12 @@ vi.mock('../server/appProvider', () => ({
         appUtils: {
             handleError: appHandleErrorMock,
         },
+        systemUtils: { isDev: false },
     },
+}));
+
+vi.mock('../lang/langHelpers', () => ({
+    tran: (value: string) => value,
 }));
 
 vi.mock('../server/fileHelpers', () => ({

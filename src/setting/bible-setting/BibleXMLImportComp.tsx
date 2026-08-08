@@ -55,14 +55,17 @@ export default function BibleXMLImportComp({
                         dataText = await readFromUrl(form, setLoadingMessage);
                     }
                     if (dataText === null) {
-                        showSimpleToast('No Data', 'No data to process');
+                        showSimpleToast(
+                            tran('No Data'),
+                            tran('No data to process'),
+                        );
                         return;
                     }
                     const dataJson = await xmlTextToJson(dataText);
                     if (dataJson === null) {
                         showSimpleToast(
-                            'Parsing XML',
-                            'Failed to parse XML data',
+                            tran('Parsing XML'),
+                            tran('Failed to parse XML data'),
                         );
                         return;
                     }
@@ -73,7 +76,10 @@ export default function BibleXMLImportComp({
                         loadBibleKeysRef.current();
                     }
                 } catch (error) {
-                    showSimpleToast('Format Submit Error', `Error: ${error}`);
+                    showSimpleToast(
+                        tran('Format Submit Error'),
+                        `Error: ${error}`,
+                    );
                 }
             });
         },
@@ -172,7 +178,7 @@ export default function BibleXMLImportComp({
                                         ? ''
                                         : ' is-invalid')
                                 }
-                                title={isValidUrl ? '' : 'Invalid URL'}
+                                title={isValidUrl ? '' : tran('Invalid URL')}
                                 type="text"
                                 name="url"
                                 placeholder="http://example.com/file.xml"
@@ -183,7 +189,7 @@ export default function BibleXMLImportComp({
                                 <button
                                     className="btn btn-sm btn-danger"
                                     type="button"
-                                    title="Clear url"
+                                    title={tran('Clear url')}
                                     onClick={handleClearUrl}
                                 >
                                     <i className="bi bi-x-lg" />

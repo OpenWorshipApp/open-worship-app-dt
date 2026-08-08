@@ -36,7 +36,7 @@ export async function removePathForChildDir() {
 
 export async function selectPathForChildDir(parentDirPath: string) {
     const isOk = await showAppConfirm(
-        'Set according paths',
+        tran('Set according paths'),
         `All child directories will be set under "${parentDirPath}"?`,
         {
             cancelButtonLabel: 'No',
@@ -56,7 +56,7 @@ export async function selectPathForChildDir(parentDirPath: string) {
                 setSetting(settingName, dirPath);
             } else {
                 await showAppConfirm(
-                    'Creating Default Folder',
+                    tran('Creating Default Folder'),
                     `${tran('Fail to create folder')} "${dirPath}"`,
                 );
             }
@@ -67,7 +67,7 @@ export async function selectPathForChildDir(parentDirPath: string) {
             handleError(error);
         }
         showSimpleToast(
-            'Creating Default Folder',
+            tran('Creating Default Folder'),
             `${tran('Fail to create folder')} "${parentDirPath}"`,
         );
         return;

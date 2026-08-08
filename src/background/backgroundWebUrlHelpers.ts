@@ -179,11 +179,11 @@ export async function promptBackgroundWebUrlSource(existingSrcList: string[]) {
     try {
         normalizedUrl = normalizeBackgroundWebUrl(url);
     } catch (_error) {
-        showSimpleToast(tran('Add URL'), 'Invalid URL');
+        showSimpleToast(tran('Add URL'), tran('Invalid URL'));
         return null;
     }
     if (existingSrcList.includes(normalizedUrl)) {
-        showSimpleToast(tran('Add URL'), 'URL already exists');
+        showSimpleToast(tran('Add URL'), tran('URL already exists'));
         return null;
     }
     return new BackgroundWebUrlSource({

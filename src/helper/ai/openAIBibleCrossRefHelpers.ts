@@ -1,6 +1,7 @@
 import type { ResponseFormatJSONSchema } from 'openai/resources/shared';
 import { handleError } from '../errorHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 
 import { DATA_DIR_NAME, getOpenAIInstance } from './openAIHelpers';
 import { bibleCrossRefSchemaJson } from './aiHelpers';
@@ -141,7 +142,7 @@ export async function getCrossRefs(
     } catch (error) {
         logError('Error in getCrossRefs:', error);
         showSimpleToast(
-            'Cross References',
+            tran('Cross References'),
             'Failed to get cross references. ' +
                 'Please check your OpenAI API Key and network connection.',
         );

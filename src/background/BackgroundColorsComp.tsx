@@ -6,6 +6,7 @@ import {
     type AppColorType,
 } from '../others/color/colorHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
+import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
@@ -27,7 +28,9 @@ function RenderColorPickerPerScreenComp({
             );
             if (screenBackgroundManager === null) {
                 showSimpleToast(
-                    'Failed to apply to screen. Please make sure the screen is open.',
+                    tran(
+                        'Failed to apply to screen. Please make sure the screen is open.',
+                    ),
                     'error',
                 );
                 return;

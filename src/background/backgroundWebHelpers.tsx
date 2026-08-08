@@ -90,8 +90,8 @@ export function genBackgroundWebContextMenuItems(
                         await dirSource.getAllFileFullNames();
                     if (existFileFullNames.includes(fileFullName)) {
                         showSimpleToast(
-                            'Create New Web File',
-                            'File already exists',
+                            tran('Create New Web File'),
+                            tran('File already exists'),
                         );
                         return;
                     }

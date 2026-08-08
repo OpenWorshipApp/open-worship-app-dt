@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { tran } from '../../lang/langHelpers';
 import { type SimpleNoteEditorStoreType } from '../../others/SimpleNoteEditorComp';
 import NoteEditorRenderComp from '../../others/NoteEditorRenderComp';
 import type PptxSlide from '../../app-document-list/PptxSlide';
@@ -18,7 +19,7 @@ class PptxSlideNoteStore implements SimpleNoteEditorStoreType {
 
 export default function PptxSlideNoteEditorComp({
     pptxSlide,
-    title = 'Slide Note',
+    title = tran('Slide Note'),
 }: Readonly<{
     pptxSlide: PptxSlide;
     title: string;

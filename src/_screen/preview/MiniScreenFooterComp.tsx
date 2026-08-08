@@ -1,4 +1,5 @@
 import { handleAutoHide } from '../../helper/domHelpers';
+import { tran } from '../../lang/langHelpers';
 import AppRangeComp from '../../others/AppRangeComp';
 import BibleCustomStyleFloatingToggleComp from '../../screen-setting/BibleCustomStyleFloatingToggleComp';
 
@@ -30,7 +31,7 @@ export default function MiniScreenFooterComp({
                     <div className="col-auto">
                         <AppRangeComp
                             value={previewSizeScale}
-                            title="Preview Size Scale"
+                            title={tran('Preview Size Scale')}
                             setValue={setPreviewSizeScale}
                             defaultSize={defaultRangeSize}
                         />

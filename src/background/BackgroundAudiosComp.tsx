@@ -61,7 +61,10 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
             );
         } catch (error) {
             handleError(error);
-            showSimpleToast(title, 'Error occurred during downloading audio');
+            showSimpleToast(
+                title,
+                tran('Error occurred during downloading audio'),
+            );
         } finally {
             hideProgressBar(audioUrl);
         }

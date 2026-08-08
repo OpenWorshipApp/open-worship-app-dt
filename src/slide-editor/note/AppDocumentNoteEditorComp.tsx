@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { tran } from '../../lang/langHelpers';
 import type AppDocument from '../../app-document-list/AppDocument';
 import { type SimpleNoteEditorStoreType } from '../../others/SimpleNoteEditorComp';
 import { useAppEffect, useAppEffectAsync } from '../../helper/appHooks';
@@ -60,5 +61,5 @@ export default function AppDocumentNoteEditorComp({
         appDocument.filePath,
     );
 
-    return <NoteEditorRenderComp store={store} title="Document Note" />;
+    return <NoteEditorRenderComp store={store} title={tran('Document Note')} />;
 }

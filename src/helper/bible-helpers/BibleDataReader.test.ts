@@ -73,6 +73,11 @@ vi.mock('../../server/appProvider', () => ({
     },
 }));
 
+vi.mock('../../lang/langHelpers', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../../lang/langHelpers')>()),
+    tran: (value: string) => value,
+}));
+
 vi.mock('../../setting/bible-setting/bibleXMLJsonDataHelpers', () => ({
     jsonToXMLText: mocks.jsonToXMLTextMock,
 }));

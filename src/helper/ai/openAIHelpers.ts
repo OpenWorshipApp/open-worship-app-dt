@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 
 import { getAISetting, useAISetting } from './aiHelpers';
 
@@ -17,8 +18,8 @@ export function getOpenAIInstance() {
     const { openAIAPIKey } = getAISetting();
     if (!openAIAPIKey) {
         showSimpleToast(
-            'Fail to get OpenAI instance',
-            'Missing OpenAI API Key.',
+            tran('Fail to get OpenAI instance'),
+            tran('Missing OpenAI API Key.'),
         );
         return null;
     }

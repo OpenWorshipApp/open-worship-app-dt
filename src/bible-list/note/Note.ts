@@ -14,6 +14,7 @@ import {
     createNewFileDetail,
 } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 import NoteItem from './NoteItem';
 import { type NoteItemType } from './noteItemHelpers';
 
@@ -54,7 +55,7 @@ export default class Note
                 noteItem.note = this;
                 return noteItem;
             } catch (error: any) {
-                showSimpleToast('Instantiating Note Item', error.message);
+                showSimpleToast(tran('Instantiating Note Item'), error.message);
             }
             return NoteItem.fromJsonError(json, this.filePath);
         });
@@ -232,7 +233,10 @@ export default class Note
         try {
             const fromNote = await Note.fromFilePath(filePath);
             if (!fromNote) {
-                showSimpleToast('Moving Note Item', 'Cannot source Note');
+                showSimpleToast(
+                    tran('Moving Note Item'),
+                    tran('Cannot source Note'),
+                );
                 return;
             }
             const backupNoteItems = fromNote.items;
@@ -246,8 +250,8 @@ export default class Note
             if (index !== undefined) {
                 if (!backupNoteItems[index]) {
                     showSimpleToast(
-                        'Moving Note Item',
-                        'Cannot find Note Item',
+                        tran('Moving Note Item'),
+                        tran('Cannot find Note Item'),
                     );
                     return;
                 }
@@ -258,7 +262,7 @@ export default class Note
                 await fromNote.deleteNoteItem(item);
             }
         } catch (error: any) {
-            showSimpleToast('Moving Note Item', error.message);
+            showSimpleToast(tran('Moving Note Item'), error.message);
         }
     }
 
@@ -284,8 +288,8 @@ export default class Note
         const defaultNote = filePath ? await Note.fromFilePath(filePath) : null;
         if (!defaultNote) {
             showSimpleToast(
-                'Getting Default Note File',
-                'Fail to get default note file',
+                tran('Getting Default Note File'),
+                tran('Fail to get default note file'),
             );
             return null;
         }

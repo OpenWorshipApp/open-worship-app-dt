@@ -45,7 +45,7 @@ export default function BibleXMLListComp({
     const buttons = (
         <>
             <button
-                title="Refresh"
+                title={tran('Refresh')}
                 className="btn btn-info"
                 onClick={handleRefresh}
             >

@@ -3,6 +3,7 @@ import type { CSSProperties, MouseEvent } from 'react';
 import type { DroppedDataType } from '../../helper/DragInf';
 import { DragTypeEnum } from '../../helper/DragInf';
 import { getImageDim, getVideoDim } from '../../helper/helpers';
+import { tran } from '../../lang/langHelpers';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { genHtmlBackground } from '../ScreenBackgroundComp';
 import { getBackgroundSrcListOnScreenSetting } from '../screenHelpers';
@@ -333,7 +334,9 @@ class ScreenBackgroundManager
             const screenBackgroundManager = this.getInstance(screenId);
             if (screenBackgroundManager === null) {
                 showSimpleToast(
-                    'Failed to apply to screen. Please make sure the screen is open.',
+                    tran(
+                        'Failed to apply to screen. Please make sure the screen is open.',
+                    ),
                     'error',
                 );
                 continue;

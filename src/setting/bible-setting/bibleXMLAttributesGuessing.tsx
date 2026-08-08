@@ -59,7 +59,7 @@ function BibleKeyXMLInputComp({
             </div>
             {guessingKeys !== undefined && guessingKeys.length > 0 ? (
                 <div className="w-100">
-                    <div>Guessing keys:</div>
+                    <div>{tran('Guessing keys:')}</div>
                     <div>
                         {guessingKeys.map((guessingKey) => {
                             if (

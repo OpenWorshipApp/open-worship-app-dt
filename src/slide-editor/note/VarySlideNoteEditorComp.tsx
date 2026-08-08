@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { tran } from '../../lang/langHelpers';
 import AppDocument from '../../app-document-list/AppDocument';
 import { type SimpleNoteEditorStoreType } from '../../others/SimpleNoteEditorComp';
 import { useAppEffect } from '../../helper/appHooks';
@@ -44,7 +45,7 @@ class VarySlideNoteStore implements SimpleNoteEditorStoreType {
 export default function VarySlideNoteEditorComp({
     appDocument,
     slide,
-    title = 'Slide Note',
+    title = tran('Slide Note'),
 }: Readonly<{
     appDocument: AppDocument;
     slide: VarySlideWithNoteType;

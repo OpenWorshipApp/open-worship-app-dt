@@ -225,12 +225,15 @@ async function genContextMenuItems(dirSource: DirSource) {
                     const fileSource = FileSource.getInstance(destFilePath);
                     const nextDestFilePath = await fileSource.genNextFilePath();
                     await fsMove(downloadDestFilePath, nextDestFilePath);
-                    showSimpleToast(title, 'Document downloaded successfully');
+                    showSimpleToast(
+                        title,
+                        tran('Document downloaded successfully'),
+                    );
                 } catch (error) {
                     handleError(error);
                     showSimpleToast(
                         title,
-                        'Error occurred during downloading document',
+                        tran('Error occurred during downloading document'),
                     );
                 } finally {
                     hideProgressBar(documentUrl);

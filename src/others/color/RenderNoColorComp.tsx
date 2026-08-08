@@ -1,5 +1,6 @@
 import { useCallback, type MouseEvent } from 'react';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { tran } from '../../lang/langHelpers';
 
 export default function RenderNoColorComp({
     isSelected,
@@ -15,7 +16,7 @@ export default function RenderNoColorComp({
     }, []);
     return (
         <div
-            title="No Color"
+            title={tran('No Color')}
             className="m-1 color-item app-caught-hover-pointer"
             style={{
                 width: '20px',

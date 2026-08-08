@@ -428,7 +428,9 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             const screenBibleManager = this.getInstance(screenId);
             if (screenBibleManager === null) {
                 showSimpleToast(
-                    'Failed to apply to screen. Please make sure the screen is open.',
+                    tran(
+                        'Failed to apply to screen. Please make sure the screen is open.',
+                    ),
                     'error',
                 );
                 continue;
