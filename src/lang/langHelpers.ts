@@ -6,7 +6,6 @@ import { globalCacheManager1M } from '../others/CacheManager';
 import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import { type LookupLangData } from 'bible-note';
 import type { Editor, OpenLyric, OpenLyricMarkdownManager } from 'open-lyric';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
@@ -465,7 +464,12 @@ export type LanguageDataType = {
     dictionary: AnyObjectType;
     name: string;
     flagSVG: string;
-    getLookupData?: (packageLocation: string) => Promise<LookupLangData | null>;
+    getLookupData?: (
+        packageLocation: string,
+    ) => Promise<{
+        namesMap: AnyObjectType;
+        locationsMap: AnyObjectType;
+    } | null>;
     sanitizeText: (text: string) => string;
     sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;
