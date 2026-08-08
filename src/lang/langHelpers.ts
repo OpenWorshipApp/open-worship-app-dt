@@ -464,9 +464,7 @@ export type LanguageDataType = {
     dictionary: AnyObjectType;
     name: string;
     flagSVG: string;
-    getLookupData?: (
-        packageLocation: string,
-    ) => Promise<{
+    getLookupData?: (packageLocation: string) => Promise<{
         namesMap: AnyObjectType;
         locationsMap: AnyObjectType;
     } | null>;

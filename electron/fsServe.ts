@@ -25,7 +25,7 @@ export const preloadFileMap = {
         htmlFiles.reader,
         htmlFiles.setting,
     ],
-    minimal: [htmlFiles.screen, htmlFiles.finder],
+    minimal: [htmlFiles.screen],
 };
 export const customScheme = 'owa';
 export const schemePrivileges = {

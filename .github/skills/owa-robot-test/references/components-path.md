@@ -94,7 +94,7 @@ live-on-screen = `.app-on-screen` (active background tab also gets a `*` prefix)
 | Slide / Doc Editor | `appDocumentEditor.html` → [appDocumentEditor.tsx](../../../../src/appDocumentEditor.tsx) | `AppLayoutComp` → `AppDocumentEditorComp` | main | ✅ |
 | Settings | `setting.html` → [setting.tsx](../../../../src/setting.tsx) | `SettingComp` | **popup** ⚠️ | ❌ |
 | Screen output | `screen.html` → [screen.tsx](../../../../src/screen.tsx) | `ScreenAppComp` | separate (when presenting) | ❌ |
-| Finder | `finder.html` → [finder.tsx](../../../../src/finder.tsx) | `FinderAppComp` | **popup** | ❌ |
+| Find bar | `finder.html` → [finder.tsx](../../../../src/finder.tsx) | `FinderAppComp` | **pinned `WebContentsView`** (not a window) | ❌ |
 | Lyric Editor | `lyricEditor.html` → [lyricEditor.tsx](../../../../src/lyricEditor.tsx) | `LyricEditorPopupComp` | **popup** | ❌ |
 | Bible Note | `bibleNote.html` → [bibleNote.tsx](../../../../src/bibleNote.tsx) | `NoteItemEditorPopupComp` | **popup** | ❌ |
 | Web Editor | `webEditor.html` → [webEditor.tsx](../../../../src/webEditor.tsx) | `WebEditorComp` | **popup** | ❌ |
@@ -302,7 +302,7 @@ check only (`#root` has children, no `img.loading`).
 
 | Page | Root component | Source | Interactions & expected result |
 |---|---|---|---|
-| Finder | `FinderAppComp` | [find/FinderAppComp.tsx](../../../../src/find/FinderAppComp.tsx) | ⌨️✎ search input; 🖱️ prev (`bi bi-arrow-left`) / next (`bi bi-arrow-right`); 🖱️ case-sensitive checkbox. ⌨️ `Enter` next match. |
+| Find bar | `FinderAppComp` | [find/FinderAppComp.tsx](../../../../src/find/FinderAppComp.tsx) | ⌨️✎ query; readonly `<current>/<total>` counter; 🖱️ prev / next chevrons; 🖱️ `Aa` case toggle; 🖱️ grip drag (x axis); 🖱️ close. ⌨️ `Enter` / `Shift+Enter` step, `Esc` closes. Controls are icon-only — labels live in `title`/`aria-label`. |
 | Lyric Editor | `LyricEditorPopupComp` | [lyric-list/LyricEditorPopupComp.tsx](../../../../src/lyric-list/LyricEditorPopupComp.tsx) | ⌨️✎ edit lyric text/chords; 🖱️ save; ⌨️ `Ctrl+S` save. |
 | Bible Note | `NoteItemEditorPopupComp` | [bible-list/note/NoteItemEditorPopupComp.tsx](../../../../src/bible-list/note/NoteItemEditorPopupComp.tsx) | ⌨️✎ note editor (renders into `#bible-note-root`); 🖱️/⌨️ save. |
 | Web Editor | `WebEditorComp` | [background/web/WebEditorComp.tsx](../../../../src/background/web/WebEditorComp.tsx) | ⌨️✎ web URL/title; 🖱️ save → adds a web-background item. |

@@ -18,7 +18,6 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import appInfo from '../package.json';
-import { htmlFiles } from './fsServe';
 
 export type OptionalPromise<T> = T | Promise<T>;
 
@@ -897,12 +896,4 @@ export function genTimeoutAttempt(
             func();
         }, timeMilliseconds);
     };
-}
-
-export function getAllNoneFinderWindows() {
-    const allWindows = BrowserWindow.getAllWindows();
-    return allWindows.filter((win) => {
-        const url = win.webContents.getURL();
-        return !url.includes(htmlFiles.finder);
-    });
 }

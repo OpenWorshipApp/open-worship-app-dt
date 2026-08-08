@@ -21,7 +21,12 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-08f** (new **W-28**: anything in the bottom **Background** panel
+**workflowsVersion: 2026-08-08g** (**W-17** rewritten: the Finder is no longer a separate
+popup window. **Ctrl/⌘+F** now drops a **Find bar** into the top-right of the window
+being searched — pinned inside that window rather than floating over it — with a
+`current/total` match counter, **Shift+Enter** for the previous match and a grip that
+drags it sideways. It is drawn as app chrome, so the query never matches itself.
+Previous: **2026-08-08f** (new **W-28**: anything in the bottom **Background** panel
 can now be **dragged straight onto the Slide Editor canvas** to become a box — an image,
 video, audio, web page, camera or colour. A colour dropped **on** an existing box recolours
 that box instead of covering it. **Driven live** (all six kinds dropped, each landing centred
@@ -651,13 +656,27 @@ _Verify: ED-01..11, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, PM-33._
 
 _Verify: ST-01..09, LT-02..04._
 
-### W-17 — Find text anywhere (Finder) & About
+### W-17 — Find text anywhere (Find bar) & About
 
-- **Finder:** opens in its own small window — type a query, jump between matches with
-  the prev/next arrows or **Enter**; toggle case-sensitivity with its checkbox. 📸
+- **Find bar:** press **Ctrl+F** (**⌘F** on macOS) or use **Edit → Find** in the app
+  menu bar. A slim bar drops in at the **top-right of the window itself** and searches
+  only that window. Presenter, Slide Editor, Bible Reader and Settings each have their
+  own; the screens, the bible note and the code editors do not (they have their own
+  search or nothing to find). 📸
+  - Type to search as you go; the counter shows **`<current>/<total>`**.
+  - **Enter** jumps to the next match, **Shift+Enter** to the previous one; the **⌃**
+    and **⌄** buttons do the same and wrap around.
+  - The **Aa** button toggles case-sensitivity. There is **no whole-word and no regex
+    option** — Chromium's find-in-page does not offer them.
+  - Drag the **grip** on the left to slide the bar **sideways** when it covers
+    something you need to read; it stays inside the window and never leaves the top.
+  - **Esc** or the **✕** button closes it and clears every highlight. Pressing
+    **Ctrl/⌘+F** again re-selects the previous query instead of opening a second bar.
+  - The bar is app chrome, not part of the page: it is drawn in its own view, so the
+    query you type is never found by your own search.
 - **About:** shows the app version and project links.
 
-_Verify: PU-01, PU-05._
+_Verify: PU-01, PU-05, PU-07._
 
 ### W-18 — Use more than one screen (multi-screen)
 

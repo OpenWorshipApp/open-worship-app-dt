@@ -194,7 +194,7 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 ### S12 — Popup windows `[PU-01..06]`
 - Each popup: open via its in-app trigger, `list_pages` → `select_page` the new target,
   generic readiness check, exercise, close the popup page.
-- **Finder**: query, prev/next, case-sensitive checkbox, `Enter`.
+- **Find bar** (`Ctrl/Cmd+F` or Edit → Find): query, `<current>/<total>` counter, prev/next (`Enter` / `Shift+Enter`), `Aa` case toggle, grip drag on the x axis, `Esc` to close. It is a `WebContentsView` PINNED into the searched window, so its own `finder.html` target has a 452×40 viewport and a probe string that exists only in its query box must report `0/0`.
 - **Lyric Editor** (from S3): edit → `Ctrl+S` → **restore the original text**.
 - **Bible Note** (from S4 Notes): type in `#bible-note-root`, save, restore.
 - **Web Editor** (from S6 `+`): URL + title → save → item appears → delete it (cleanup).

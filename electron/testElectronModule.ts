@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 
-import { createMockBrowserWindow } from './testUtils';
+import { createMockBrowserWindow, createMockWebContents } from './testUtils';
 
 type BrowserWindowFactory = () => any;
 
@@ -32,6 +32,20 @@ BrowserWindowMock.fromWebContents = vi.fn((webContents: any) => {
             return browserWindow.webContents === webContents;
         }) ?? null
     );
+});
+
+const webContentsViews: any[] = [];
+const WebContentsViewMock: any = vi.fn(function WebContentsViewMock(
+    options?: any,
+) {
+    const view = {
+        __options: options,
+        webContents: createMockWebContents(),
+        setBounds: vi.fn(),
+        setBackgroundColor: vi.fn(),
+    };
+    webContentsViews.push(view);
+    return view;
 });
 
 const menuBuildFromTemplate = vi.fn();
@@ -103,7 +117,10 @@ export const electronMockState = {
     systemPreferences: {
         askForMediaAccess: vi.fn(),
     },
+    webContentsViews,
+    WebContentsViewMock,
     screen: {
+        getCursorScreenPoint: vi.fn(() => ({ x: 0, y: 0 })),
         getAllDisplays: vi.fn(() => []),
         getPrimaryDisplay: vi.fn(() => ({
             id: 1,
@@ -118,6 +135,8 @@ export const electronMockState = {
     }),
     reset() {
         browserWindows.splice(0, browserWindows.length);
+        webContentsViews.splice(0, webContentsViews.length);
+        WebContentsViewMock.mockClear();
         browserWindowFactory = defaultBrowserWindowFactory;
         BrowserWindowMock.mockClear();
         BrowserWindowMock.getAllWindows.mockClear();
@@ -170,6 +189,7 @@ export function createElectronModuleMock() {
         shell: electronMockState.shell,
         clipboard: electronMockState.clipboard,
         BrowserWindow: electronMockState.BrowserWindowMock,
+        WebContentsView: electronMockState.WebContentsViewMock,
         protocol: electronMockState.protocol,
         session: electronMockState.session,
         net: electronMockState.net,

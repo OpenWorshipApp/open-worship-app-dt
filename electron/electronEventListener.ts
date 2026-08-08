@@ -6,6 +6,7 @@ import electron, {
     nativeTheme,
     shell,
     systemPreferences,
+    type WebContents,
 } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
@@ -17,7 +18,6 @@ import {
 import {
     attemptClosing,
     captureWebScreenShot,
-    getAllNoneFinderWindows,
     goDownload,
     isMac,
     messageChannels,
@@ -28,6 +28,13 @@ import {
     tarExtract,
 } from './electronHelpers';
 import type { CustomMenusDataType, OptionalPromise } from './electronHelpers';
+import {
+    closeFindOverlay,
+    getFindOverlayHostWebContents,
+    getFindOverlayWebContents,
+    startFindOverlayDragging,
+    stopFindOverlayDragging,
+} from './finderOverlayHelpers';
 import ElectronScreenController from './ElectronScreenController';
 import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
@@ -291,6 +298,30 @@ export function initEventScreen(appController: ElectronAppController) {
     );
 }
 
+// The find bar drives the page of the window it is pinned to -- never a fan-out
+// over every open window, which used to highlight matches in windows the
+// operator was not even looking at.
+const foundInPageTrackedContents = new WeakSet<WebContents>();
+
+function trackFoundInPage(hostWebContents: WebContents) {
+    if (foundInPageTrackedContents.has(hostWebContents)) {
+        return;
+    }
+    foundInPageTrackedContents.add(hostWebContents);
+    hostWebContents.on('found-in-page', (_event, result) => {
+        const overlayWebContents =
+            getFindOverlayWebContents(hostWebContents) ?? null;
+        if (overlayWebContents === null || overlayWebContents.isDestroyed()) {
+            return;
+        }
+        overlayWebContents.send('main:app:found-in-page', {
+            activeMatchOrdinal: result.activeMatchOrdinal,
+            matches: result.matches,
+            finalUpdate: result.finalUpdate,
+        });
+    });
+}
+
 export function initFinderEvent() {
     ipcMain.on(
         'finder:app:search-in-page',
@@ -303,22 +334,32 @@ export function initFinderEvent() {
                 matchCase?: boolean;
             } = {},
         ) => {
-            getAllNoneFinderWindows().forEach((win) => {
-                win.webContents.findInPage(searchText, options);
-            });
+            const hostWebContents = getFindOverlayHostWebContents(event.sender);
+            if (hostWebContents === null) {
+                return;
+            }
+            trackFoundInPage(hostWebContents);
+            hostWebContents.findInPage(searchText, options);
         },
     );
     ipcMain.on(
         'finder:app:stop-search-in-page',
         (
-            _,
+            event,
             action: 'clearSelection' | 'keepSelection' | 'activateSelection',
         ) => {
-            getAllNoneFinderWindows().forEach((win) => {
-                win.webContents.stopFindInPage(action);
-            });
+            getFindOverlayHostWebContents(event.sender)?.stopFindInPage(action);
         },
     );
+    ipcMain.on('finder:app:close', (event) => {
+        closeFindOverlay(event.sender);
+    });
+    ipcMain.on('finder:app:drag-start', (event, grabOffsetX: number) => {
+        startFindOverlayDragging(event.sender, grabOffsetX);
+    });
+    ipcMain.on('finder:app:drag-stop', (event) => {
+        stopFindOverlayDragging(event.sender);
+    });
 }
 
 export function initEventOther(appController: ElectronAppController) {

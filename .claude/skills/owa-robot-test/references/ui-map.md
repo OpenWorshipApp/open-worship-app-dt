@@ -16,7 +16,7 @@ Main window in dev loads `presenter.html`. Other windows open on demand.
 | Slide/Doc Editor | `https://localhost:3000/appDocumentEditor.html` | Opens when editing a doc |
 | Settings | `https://localhost:3000/setting.html` | Gear button |
 | Presentation output | `https://localhost:3000/screen.html?screenId=N` | **CDP target while showing** (toggle via `ShowHideScreen`/`F5`); target vanishes when hidden — hidden logs forward via `all:app:log` to the dev terminal |
-| Finder | `https://localhost:3000/finder.html` | |
+| Find bar | `https://localhost:3000/finder.html` | a `WebContentsView` pinned inside the searched window, NOT a popup window — opened only by `Ctrl/Cmd+F` / Edit → Find |
 | Lyric Editor | `https://localhost:3000/lyricEditor.html` | |
 | Bible Note | `https://localhost:3000/bibleNote.html` | |
 | Web Editor | `https://localhost:3000/webEditor.html` | |

@@ -22,7 +22,6 @@ vi.mock('tar', () => ({ c: tarC, x: tarX, r: tarR }));
 import {
     captureWebScreenShot,
     copyDebugInfoToClipboard,
-    getAllNoneFinderWindows,
     guardBrowsing,
     POPUP_FRAME_NAME_PREFIX,
     previewPrintCurrentWindow,
@@ -456,19 +455,5 @@ describe('electronHelpers coverage', () => {
             expect.any(Error),
         );
         expect(captureWin.close).toHaveBeenCalledTimes(2);
-    });
-
-    test('the finder window is excluded from in-page search targets', () => {
-        const finderWin = createWindowAt('https://localhost:3000/finder.html', {
-            x: 0,
-            y: 0,
-        });
-        const presenterWin = createWindowAt(
-            'https://localhost:3000/presenter.html',
-            { x: 0, y: 0 },
-        );
-        electronMockState.browserWindows.push(finderWin, presenterWin);
-
-        expect(getAllNoneFinderWindows()).toEqual([presenterWin]);
     });
 });

@@ -359,13 +359,14 @@
     },
     {
       "id": "W-17",
-      "title": "Find text anywhere (Finder) & About",
+      "title": "Find text anywhere (Find bar) & About",
       "section": "Configuration",
       "page": "manual-sources/configuration/w-17-find-text-anywhere-finder-about.md",
       "url": "/configuration/w-17-find-text-anywhere-finder-about",
       "verify": [
         "PU-01",
-        "PU-05"
+        "PU-05",
+        "PU-07"
       ],
       "screenshots": 1,
       "steps": []

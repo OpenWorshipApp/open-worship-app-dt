@@ -135,7 +135,6 @@ vi.mock('../server/appProvider', () => ({
     default: {
         POPUP_FRAME_NAME_PREFIX: 'owa-frame',
         aboutHomePage: 'https://app.local/about',
-        finderHomePage: 'https://app.local/find',
         messageUtils: {
             sendDataSync: sendDataSyncMock,
             listenForData: listenForDataMock,
@@ -389,14 +388,12 @@ describe('domHelpers', () => {
         expect(openCalls[2]?.features).toBe('popup');
     });
 
-    test('registers about/find page listeners and highlights newly added elements', async () => {
+    test('registers the about page listener and highlights newly added elements', async () => {
         listenerRegistry['main:app:open-about-page']?.();
-        listenerRegistry['main:app:open-find-page']?.();
-        expect(openCalls).toHaveLength(2);
+        expect(openCalls).toHaveLength(1);
         expect(openCalls[0]?.url).toContain(
             'https://app.local/about?uuid=about',
         );
-        expect(openCalls[1]?.url).toContain('https://app.local/find?uuid=find');
 
         let element: HTMLDivElement | null = null;
         const moveToView = vi.fn();

@@ -444,25 +444,6 @@ appProvider.messageUtils.listenForData('main:app:open-about-page', () => {
     openAboutPage();
 });
 
-function openFindPage() {
-    return openPopupWindow(
-        appProvider.finderHomePage,
-        `find_${Date.now()}`,
-        'find',
-        {
-            width: 270,
-            height: 80,
-            appAlignHorizontal: 'left',
-            appAlignVertical: 'top',
-            appFollowScale: true,
-            appTopToMain: true,
-        },
-    );
-}
-appProvider.messageUtils.listenForData('main:app:open-find-page', () => {
-    openFindPage();
-});
-
 function toURLObject(urlOrPathname: string) {
     return new URL(urlOrPathname, globalThis.location.href);
 }

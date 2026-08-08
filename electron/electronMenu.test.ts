@@ -8,16 +8,26 @@ vi.mock('electron', async () => {
 const {
     copyDebugInfoToClipboard,
     goDownload,
+    openFindOverlay,
     previewPrintCurrentWindow,
     printCurrentWindow,
     toShortcutKey,
 } = vi.hoisted(() => ({
     copyDebugInfoToClipboard: vi.fn(),
     goDownload: vi.fn(),
+    openFindOverlay: vi.fn(),
     previewPrintCurrentWindow: vi.fn(async () => undefined),
     printCurrentWindow: vi.fn(),
     toShortcutKey: vi.fn(() => 'CmdOrCtrl+F'),
 }));
+
+vi.mock('./finderOverlayHelpers', async (importOriginal) => {
+    // Only the opening is stubbed; the host test stays real so the routing
+    // decision itself is covered.
+    const actual =
+        await importOriginal<typeof import('./finderOverlayHelpers')>();
+    return { ...actual, openFindOverlay };
+});
 
 vi.mock('./electronHelpers', () => ({
     copyDebugInfoToClipboard,
@@ -42,6 +52,7 @@ describe('electronMenu', () => {
         electronMockState.reset();
         copyDebugInfoToClipboard.mockClear();
         goDownload.mockClear();
+        openFindOverlay.mockClear();
         previewPrintCurrentWindow.mockClear();
         printCurrentWindow.mockClear();
         toShortcutKey.mockClear();
@@ -171,11 +182,15 @@ describe('electronMenu', () => {
         setCustomMenusData('test', null);
     });
 
-    test('routes Find to the finder for the main window only', () => {
+    test('routes Find to the window the click targets', () => {
         const mainWin = createMockBrowserWindow();
+        // An app page gets the pinned find bar; anything else is asked to
+        // search in place.
+        mainWin.webContents.getURL.mockReturnValue(
+            'https://localhost:3000/presenter.html',
+        );
         const appController = {
             openAboutPage: vi.fn(),
-            openFindPage: vi.fn(),
             mainController: { gotoSettingHomePage: vi.fn() },
             lwShareController: { open: vi.fn() },
             mainWin,
@@ -192,25 +207,29 @@ describe('electronMenu', () => {
 
         findItem.click(undefined, mainWin);
 
-        expect(appController.openFindPage).toHaveBeenCalledTimes(1);
+        expect(openFindOverlay).toHaveBeenCalledWith(mainWin);
         expect(mainWin.webContents.send).not.toHaveBeenCalled();
 
-        // Any other window searches in place instead of opening the finder
-        // popup, which only the main window owns.
+        // The bible note has its own in-place search and only wants the
+        // request; it never gets a pinned bar.
         const popupWin = createMockBrowserWindow();
+        popupWin.webContents.getURL.mockReturnValue(
+            'https://localhost:3000/bibleNote.html',
+        );
         findItem.click(undefined, popupWin);
 
-        expect(appController.openFindPage).toHaveBeenCalledTimes(1);
+        expect(openFindOverlay).toHaveBeenCalledTimes(1);
         expect(popupWin.webContents.send).toHaveBeenCalledWith(
             'app:main:menu-item-clicked',
             { isOpenSearch: true },
         );
 
-        // No focused window at all (macOS with every window minimized) still
-        // falls back to the main window rather than dropping the click.
+        // No window handed to the click (macOS with every window minimized)
+        // falls back to the focused one rather than dropping the click.
+        electronMockState.browserWindows.push(mainWin);
         findItem.click(undefined, undefined);
 
-        expect(appController.openFindPage).toHaveBeenCalledTimes(2);
+        expect(openFindOverlay).toHaveBeenCalledTimes(2);
     });
 
     test('does not send menu clicks to a destroyed window', () => {

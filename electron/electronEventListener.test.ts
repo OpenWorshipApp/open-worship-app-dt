@@ -23,7 +23,6 @@ const {
     pdfToImages,
     getPagesCount,
     getPptxSlidesCount,
-    getAllNoneFinderWindows,
     previewPrintCurrentWindow,
     screenInstance,
 } = vi.hoisted(() => ({
@@ -44,7 +43,6 @@ const {
     pdfToImages: vi.fn(),
     getPagesCount: vi.fn(),
     getPptxSlidesCount: vi.fn(),
-    getAllNoneFinderWindows: vi.fn(() => []),
     previewPrintCurrentWindow: vi.fn(async () => undefined),
     screenInstance: {
         win: {
@@ -61,7 +59,6 @@ vi.mock('./electronHelpers', () => ({
     attemptClosing,
     captureWebScreenShot,
     goDownload,
-    getAllNoneFinderWindows,
     isMac: true,
     messageChannels: {
         screenMessage: 'app:screen:message',
@@ -71,6 +68,14 @@ vi.mock('./electronHelpers', () => ({
     tarCreate,
     tarExtract,
     toShortcutKey: () => 'CmdOrCtrl+F',
+}));
+
+vi.mock('./finderOverlayHelpers', () => ({
+    closeFindOverlay: vi.fn(),
+    getFindOverlayHostWebContents: (webContents: any) => webContents,
+    getFindOverlayWebContents: () => null,
+    startFindOverlayDragging: vi.fn(),
+    stopFindOverlayDragging: vi.fn(),
 }));
 
 vi.mock('./archiveCryptoHelpers', () => ({
@@ -379,10 +384,10 @@ describe('electronEventListener', () => {
         const searchWebContents = {
             findInPage: vi.fn(() => 11),
             stopFindInPage: vi.fn(),
+            isDestroyed: vi.fn(() => false),
+            on: vi.fn(),
+            send: vi.fn(),
         };
-        getAllNoneFinderWindows.mockReturnValue([
-            { webContents: searchWebContents },
-        ] as any);
         const appController = {
             mainWin: { webContents: mainWebContents },
             mainController: {
@@ -411,7 +416,10 @@ describe('electronEventListener', () => {
             ([eventName]) => eventName === 'main:app:set-theme',
         )?.[1];
 
-        const event = { returnValue: undefined as unknown };
+        const event = {
+            returnValue: undefined as unknown,
+            sender: searchWebContents,
+        };
         searchHandler(event, 'grace', { forward: true });
         expect(searchWebContents.findInPage).toHaveBeenCalledWith('grace', {
             forward: true,

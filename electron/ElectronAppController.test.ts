@@ -77,14 +77,10 @@ describe('ElectronAppController', () => {
         const controller = new Controller();
 
         controller.openAboutPage();
-        controller.openFindPage();
 
         expect(syncMainWindow).toHaveBeenCalledWith(mainWin);
         expect(mainController.sendMessage).toHaveBeenCalledWith(
             'main:app:open-about-page',
-        );
-        expect(mainController.sendMessage).toHaveBeenCalledWith(
-            'main:app:open-find-page',
         );
     });
 
