@@ -1,3 +1,28 @@
+.slide-editor-insert-toolbar {
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  min-height: 40px;
+  border-bottom: 1px solid var(--bs-border-color, #cccccc2f);
+  background: linear-gradient(
+    0deg,
+    rgba(var(--bs-info-rgb), 0.04),
+    rgba(var(--bs-info-rgb), 0)
+  );
+  // One row that scrolls rather than wrapping: the editor pane is resizable,
+  // and a wrapping toolbar would steal canvas height as it narrows.
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 4px 9px !important;
+  }
+}
+
 .slide-editor-canvas-footer {
   align-items: center;
   gap: 8px;

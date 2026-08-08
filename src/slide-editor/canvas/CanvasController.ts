@@ -198,7 +198,22 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         return { x, y };
     }
 
-    async genNewMediaItemFromFilePath(filePath: string, event: any) {
+    /**
+     * Where a newly inserted box should be CENTERED.
+     *
+     * The canvas context menu inserts at the cursor. The app's Insert menu (and
+     * anything else driven without a pointer) has no cursor, so the box lands in
+     * the middle of the slide instead — the same fallback `addNewBibleItem`
+     * already uses for a keyboard paste.
+     */
+    getInsertPosition(event?: any) {
+        if (event === undefined || event === null) {
+            return { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+        }
+        return this.getMousePosition(event);
+    }
+
+    async genNewMediaItemFromFilePath(filePath: string, event?: any) {
         try {
             const fileSource = FileSource.getInstance(filePath);
             const mediaType =
@@ -213,7 +228,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
                 );
                 return;
             }
-            const { x, y } = this.getMousePosition(event);
+            const { x, y } = this.getInsertPosition(event);
             const newItem = await (mediaType === 'image'
                 ? CanvasItemImage.genFromInsertion(x, y, filePath)
                 : mediaType === 'audio'
@@ -232,7 +247,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     // Insert a media item that points at a remote link instead of a local
     // file. The link is stored as the item's source, so the document stays
     // small and the media is only fetched when it is actually rendered.
-    async genNewMediaItemFromLink(url: string, event: any) {
+    async genNewMediaItemFromLink(url: string, event?: any) {
         try {
             const mediaType = getRemoteMediaMimetypeName(url);
             if (mediaType === null) {
@@ -242,7 +257,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
                 );
                 return;
             }
-            const { x, y } = this.getMousePosition(event);
+            const { x, y } = this.getInsertPosition(event);
             const newItem = await (mediaType === 'image'
                 ? CanvasItemImage.genCanvasItemFromLink(x, y, url)
                 : mediaType === 'audio'
@@ -258,9 +273,9 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         );
     }
 
-    genNewYouTubeItem(url: string, event: any) {
+    genNewYouTubeItem(url: string, event?: any) {
         try {
-            const { x, y } = this.getMousePosition(event);
+            const { x, y } = this.getInsertPosition(event);
             return CanvasItemYouTube.genFromUrl(x, y, url);
         } catch (error) {
             handleError(error);
@@ -268,9 +283,9 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         showSimpleToast(tran('Insert YouTube'), tran('Fail to insert YouTube'));
     }
 
-    genNewWebsiteItem(url: string, event: any) {
+    genNewWebsiteItem(url: string, event?: any) {
         try {
-            const { x, y } = this.getMousePosition(event);
+            const { x, y } = this.getInsertPosition(event);
             return CanvasItemWebsite.genFromUrl(x, y, url);
         } catch (error) {
             handleError(error);
@@ -278,9 +293,9 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         showSimpleToast(tran('Insert Website'), tran('Fail to insert website'));
     }
 
-    genNewCameraItem(camera: { deviceId: string; label: string }, event: any) {
+    genNewCameraItem(camera: { deviceId: string; label: string }, event?: any) {
         try {
-            const { x, y } = this.getMousePosition(event);
+            const { x, y } = this.getInsertPosition(event);
             return CanvasItemCamera.genFromDevice(
                 x,
                 y,
@@ -293,9 +308,9 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         showSimpleToast(tran('Insert Camera'), tran('Fail to insert camera'));
     }
 
-    async genNewImageItemFromFile(file: File | Blob, event: any) {
+    async genNewImageItemFromFile(file: File | Blob, event?: any) {
         try {
-            const { x, y } = this.getMousePosition(event);
+            const { x, y } = this.getInsertPosition(event);
             const newItem = CanvasItemImage.genFromFile(x, y, file);
             return newItem;
         } catch (error) {
@@ -316,7 +331,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
     async genNewMediaItemFromFile(file: File | Blob, event: any) {
         try {
-            const { x, y } = this.getMousePosition(event);
+            const { x, y } = this.getInsertPosition(event);
             const newItem = await CanvasController.genMediaItemFromFile(
                 x,
                 y,

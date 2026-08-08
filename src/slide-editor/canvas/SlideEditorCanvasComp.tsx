@@ -16,6 +16,7 @@ import CanvasNoteContainerHandlerComp from '../note/CanvasNoteContainerHandlerCo
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
 import CanvasContainerComp from './canvas-container/CanvasContainerComp';
 import { toWidgetLabel } from '../../others/labelIconHelpers';
+import SlideEditorInsertToolbarComp from './tools/SlideEditorInsertToolbarComp';
 
 function EditorComp({
     contextData,
@@ -127,6 +128,11 @@ export default function SlideEditorCanvasComp({
 
     return (
         <div className="card w-100 h-100 app-overflow-hidden">
+            <div className="card-header w-100 m-0 p-0">
+                <SlideEditorInsertToolbarComp
+                    canvasController={canvasController}
+                />
+            </div>
             <div
                 className={
                     'card-body w-100 m-0 p-0 editor-container app-focusable ' +

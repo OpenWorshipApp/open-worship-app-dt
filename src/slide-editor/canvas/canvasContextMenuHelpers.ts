@@ -1,5 +1,4 @@
 import { tran } from '../../lang/langHelpers';
-import { getMimetypeExtensions, selectFiles } from '../../server/fileHelpers';
 import type CanvasItem from './CanvasItem';
 import type CanvasController from './CanvasController';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -18,7 +17,6 @@ import {
     readBibleItemFromClipboard,
 } from './canvasBibleItemHelpers';
 import type { CanvasItemBiblePropsType } from './CanvasItemBibleItem';
-import { askForURL } from '../../background/downloadHelper';
 import { getMenuTitleRevealFile } from '../../helper/helpers';
 import {
     copyToClipboard,
@@ -28,7 +26,7 @@ import {
 import appProvider from '../../server/appProvider';
 import { checkIsFilePathCanvasItemType } from './canvasHelpers';
 import { checkIsRemoteMediaSource } from '../../helper/mediaSourceHelpers';
-import { getAllCameraDevices } from '../../helper/cameraHelpers';
+import { genCanvasInsertContextMenuItems } from './canvasInsertActionHelpers';
 
 export async function showCanvasContextMenu(
     event: any,
@@ -42,13 +40,9 @@ export async function showCanvasContextMenu(
             Canvas.getCopiedCanvasItems(),
         ]);
     showAppContextMenu(event, [
-        {
-            childBefore: genContextMenuItemIcon('plus-square'),
-            menuElement: tran('New'),
-            onSelect: () => {
-                canvasController.addNewTextItem();
-            },
-        },
+        // Everything a user can ADD, shared verbatim with the app's Insert
+        // menu so the two never drift.
+        ...genCanvasInsertContextMenuItems(canvasController, event),
         ...(copiedCanvasItems.length > 0
             ? [
                   {
@@ -62,136 +56,6 @@ export async function showCanvasContextMenu(
                   },
               ]
             : []),
-        {
-            childBefore: genContextMenuItemIcon('film'),
-            menuElement: tran('Insert Medias'),
-            onSelect: async () => {
-                const imageExtensions = getMimetypeExtensions('image');
-                const videoExtension = getMimetypeExtensions('video');
-                const audioExtensions = getMimetypeExtensions('audio');
-                const filePaths = await selectFiles([
-                    {
-                        name: tran('All Files'),
-                        extensions: [
-                            ...imageExtensions,
-                            ...videoExtension,
-                            ...audioExtensions,
-                        ],
-                    },
-                ]);
-                for (const filePath of filePaths) {
-                    canvasController
-                        .genNewMediaItemFromFilePath(filePath, event)
-                        .then((newCanvasItem) => {
-                            if (newCanvasItem) {
-                                canvasController.addNewItems([newCanvasItem]);
-                            }
-                        });
-                }
-            },
-        },
-        {
-            childBefore: genContextMenuItemIcon('link-45deg'),
-            menuElement: tran('Insert Media Link'),
-            onSelect: async () => {
-                const url = await askForURL(
-                    tran('Insert Media Link'),
-                    tran('Media URL:'),
-                );
-                if (url === null) {
-                    return;
-                }
-                const newCanvasItem =
-                    await canvasController.genNewMediaItemFromLink(url, event);
-                if (newCanvasItem) {
-                    canvasController.addNewItems([newCanvasItem]);
-                }
-            },
-        },
-        {
-            childBefore: genContextMenuItemIcon('youtube'),
-            menuElement: tran('Insert YouTube'),
-            onSelect: async () => {
-                const url = await askForURL(
-                    tran('Insert YouTube'),
-                    tran('YouTube URL:'),
-                );
-                if (url === null) {
-                    return;
-                }
-                const newCanvasItem = canvasController.genNewYouTubeItem(
-                    url,
-                    event,
-                );
-                if (newCanvasItem) {
-                    canvasController.addNewItems([newCanvasItem]);
-                }
-            },
-        },
-        {
-            childBefore: genContextMenuItemIcon('globe'),
-            menuElement: tran('Insert Website'),
-            onSelect: async () => {
-                const url = await askForURL(
-                    tran('Insert Website'),
-                    tran('Website URL:'),
-                );
-                if (url === null) {
-                    return;
-                }
-                const newCanvasItem = canvasController.genNewWebsiteItem(
-                    url,
-                    event,
-                );
-                if (newCanvasItem) {
-                    canvasController.addNewItems([newCanvasItem]);
-                }
-            },
-        },
-        {
-            childBefore: genContextMenuItemIcon('camera-video'),
-            menuElement: tran('Insert Camera'),
-            onSelect: async () => {
-                // Enumerated on select, not on menu open: `getAllCameraDevices`
-                // asks for camera access, and that must not fire on every
-                // right-click of the canvas.
-                const cameraList = await getAllCameraDevices();
-                if (cameraList.length === 0) {
-                    showSimpleToast(
-                        tran('Insert Camera'),
-                        tran('No camera found'),
-                    );
-                    return;
-                }
-                // There is no submenu support, so the device list is a second
-                // menu. The first one is already closed by now: the context
-                // menu calls `onClose` before `onSelect`, and this awaited an
-                // IPC round trip on top of that.
-                showAppContextMenu(
-                    event,
-                    cameraList.map((camera, index) => {
-                        return {
-                            childBefore: genContextMenuItemIcon('camera-video'),
-                            menuElement:
-                                camera.label ||
-                                `${tran('Camera')} ${index + 1}`,
-                            onSelect: () => {
-                                const newCanvasItem =
-                                    canvasController.genNewCameraItem(
-                                        camera,
-                                        event,
-                                    );
-                                if (newCanvasItem) {
-                                    canvasController.addNewItems([
-                                        newCanvasItem,
-                                    ]);
-                                }
-                            },
-                        };
-                    }),
-                );
-            },
-        },
         ...(isClipboardHasImage
             ? [
                   {

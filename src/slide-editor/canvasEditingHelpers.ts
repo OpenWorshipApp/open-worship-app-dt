@@ -19,6 +19,7 @@ import { CanvasBibleItemEventListener } from './canvas/canvasBibleItemHelpers';
 import type BibleItem from '../bible-list/BibleItem';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { tran } from '../lang/langHelpers';
+import { useCanvasInsertAppMenu } from './canvas/canvasInsertAppMenuHelpers';
 
 function useCanvasItemsData(canvasController: CanvasController) {
     const [canvasItems, setCanvasItems] = useState<CanvasItem<any>[]>([]);
@@ -184,6 +185,10 @@ export function useEditingCanvasContextValue() {
             );
         };
     }, [canvasController]);
+    // The app's Insert menu is registered here rather than from a component
+    // because this is the one place that owns the live controller — the native
+    // menu bar sits far outside every `CanvasControllerContext` provider.
+    useCanvasInsertAppMenu(canvasController);
     const {
         canvasItems,
         selectedCanvasItems,

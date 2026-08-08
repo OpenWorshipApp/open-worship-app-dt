@@ -159,20 +159,30 @@ describe('canvasContextMenuHelpers', () => {
         const menuItems = showAppContextMenuMock.mock.calls[0]?.[1] ?? [];
 
         expect(menuItems.map((item: any) => item.menuElement)).toEqual([
+            // The insert actions come first as one shared block (they are
+            // rendered from the same list the app's Insert menu uses), then the
+            // clipboard-conditional entries.
             'New',
-            'Paste',
             'Insert Medias',
             'Insert Media Link',
             'Insert YouTube',
             'Insert Website',
             'Insert Camera',
+            'Paste',
             'Paste Image',
         ]);
 
-        menuItems[0].onSelect();
+        // Looked up by label, not index: the insert block is shared with the
+        // app's Insert menu, so its length moves whenever an insertable type is
+        // added.
+        const menuByLabel = new Map<string, any>(
+            menuItems.map((item: any) => [item.menuElement, item]),
+        );
+
+        menuByLabel.get('New').onSelect();
         expect(canvasController.addNewTextItem).toHaveBeenCalledTimes(1);
 
-        menuItems[1].onSelect();
+        menuByLabel.get('Paste').onSelect();
         expect(canvasController.addNewItems).toHaveBeenNthCalledWith(1, [
             copiedCanvasItems[0],
         ]);
@@ -180,7 +190,7 @@ describe('canvasContextMenuHelpers', () => {
             copiedCanvasItems[1],
         ]);
 
-        await menuItems[2].onSelect();
+        await menuByLabel.get('Insert Medias').onSelect();
         await flushPromises();
         expect(selectFilesMock).toHaveBeenCalledWith([
             {
@@ -198,7 +208,7 @@ describe('canvasContextMenuHelpers', () => {
             addedCanvasItem,
         ]);
 
-        await menuItems[7].onSelect();
+        await menuByLabel.get('Paste Image').onSelect();
         expect(canvasController.genNewImageItemFromFile).toHaveBeenCalledWith(
             blob1,
             event,
@@ -368,7 +378,7 @@ describe('canvasContextMenuHelpers', () => {
             'Paste Bible Item',
         ]);
 
-        menuItems[6].onSelect();
+        menuItems[menuItems.length - 1].onSelect();
         expect(canvasController.addNewBibleItem).toHaveBeenCalledWith(
             bibleItem,
             event,

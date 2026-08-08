@@ -109,6 +109,7 @@ function getCustomMenuItems(key: string) {
 export function initMenu(appController: ElectronAppController) {
     const isMac = process.platform === 'darwin';
     const fileMenuItems = getCustomMenuItems('file');
+    const insertMenuItems = getCustomMenuItems('insert');
 
     const template: any[] = [
         // { role: 'appMenu' }
@@ -242,6 +243,12 @@ export function initMenu(appController: ElectronAppController) {
                       ]),
             ],
         },
+        // Entirely renderer-owned: the slide editor contributes what can be
+        // added to a canvas, so the whole menu is absent on pages that have no
+        // canvas rather than sitting there empty and dead.
+        ...(insertMenuItems.length === 0
+            ? []
+            : [{ label: 'Insert', submenu: insertMenuItems }]),
         // { role: 'viewMenu' }
         {
             label: 'View',

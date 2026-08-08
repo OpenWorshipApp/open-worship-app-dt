@@ -501,6 +501,9 @@ export type CustomMenusDataType = {
     // Renderer-contributed **File** menu entries (Export/Import Data). Same
     // mechanism as `tools`, so the label is translated where `tran` works.
     file?: CustomMenuItemType[];
+    // The top-level **Insert** menu, owned entirely by the slide editor. The
+    // menu itself only exists while something contributes to it.
+    insert?: CustomMenuItemType[];
 };
 
 export function checkIsValidLangCode(text: string) {
@@ -860,7 +863,18 @@ export function registerAppMenuClicked<T>(
     };
 }
 
-export function setAppMenuItems(key: string, menusData: CustomMenusDataType) {
+/**
+ * Contribute this window's items to the native menu, or pass `null` to withdraw
+ * them.
+ *
+ * Withdrawing matters for anything route-scoped: the native menu is global and
+ * outlives the page, so items left behind after a route change keep showing but
+ * their clicks land in a renderer that no longer listens.
+ */
+export function setAppMenuItems(
+    key: string,
+    menusData: CustomMenusDataType | null,
+) {
     appProvider.messageUtils.sendData('main:app:set-menu-items', {
         key,
         menusData,

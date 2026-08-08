@@ -315,6 +315,56 @@ describe('electronMenu', () => {
         });
     });
 
+    test('the Insert menu exists only while a renderer contributes to it', () => {
+        // Nothing registered: the whole top-level menu must be absent rather
+        // than present-but-empty, so pages with no canvas do not show a dead
+        // Insert menu.
+        initMenu(createAppController() as any);
+        let template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        expect(
+            template.find((item: any) => item.label === 'Insert'),
+        ).toBeUndefined();
+
+        const insertClick = vi.fn();
+        setCustomMenusData('canvas-insert', {
+            menusData: {
+                insert: [
+                    { label: 'New', clickData: { canvasInsert: 'text' } },
+                    {
+                        label: 'Insert Camera',
+                        clickData: { canvasInsert: 'camera' },
+                    },
+                ],
+            } as any,
+            clickMenu: insertClick,
+        });
+
+        try {
+            initMenu(createAppController() as any);
+            template =
+                electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+            const insertMenu = template.find(
+                (item: any) => item.label === 'Insert',
+            );
+            expect(insertMenu.submenu.map((item: any) => item.label)).toEqual([
+                'New',
+                'Insert Camera',
+            ]);
+            // It sits between Edit and View, where an Insert menu belongs.
+            const labels = template.map((item: any) => item.label ?? item.role);
+            expect(labels.indexOf('Insert')).toBe(labels.indexOf('Edit') + 1);
+            expect(labels.indexOf('View')).toBe(labels.indexOf('Insert') + 1);
+
+            clickItem(template, 'Insert', 'Insert Camera');
+            expect(insertClick).toHaveBeenCalledWith({
+                canvasInsert: 'camera',
+            });
+        } finally {
+            setCustomMenusData('canvas-insert', null);
+        }
+    });
+
     test('custom tool items from several renderers are ordered by owner key', () => {
         const firstClick = vi.fn();
         const secondClick = vi.fn();

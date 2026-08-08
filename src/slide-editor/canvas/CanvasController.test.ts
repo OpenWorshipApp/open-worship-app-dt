@@ -806,6 +806,44 @@ describe('CanvasController', () => {
         expect(mocks.handleErrorMock).toHaveBeenCalledTimes(2);
     });
 
+    test('inserts at the slide center when there is no pointer event', () => {
+        const { controller } = createController();
+        const youTubeItem = createCanvasItem({ id: 1 });
+        const cameraItem = createCanvasItem({ id: 2 });
+        mocks.genFromUrlYouTubeMock.mockReturnValue(youTubeItem);
+        mocks.genFromDeviceCameraMock.mockReturnValue(cameraItem);
+
+        // The app's Insert menu has no cursor to insert at, so the box lands in
+        // the middle of the 1280x720 canvas instead of throwing on `event`.
+        expect(controller.getInsertPosition()).toEqual({ x: 640, y: 360 });
+        expect(controller.getInsertPosition(null)).toEqual({ x: 640, y: 360 });
+
+        expect(controller.genNewYouTubeItem('https://youtu.be/x')).toBe(
+            youTubeItem,
+        );
+        expect(mocks.genFromUrlYouTubeMock).toHaveBeenCalledWith(
+            640,
+            360,
+            'https://youtu.be/x',
+        );
+
+        expect(
+            controller.genNewCameraItem({
+                deviceId: 'device-1',
+                label: 'HD Webcam',
+            }),
+        ).toBe(cameraItem);
+        expect(mocks.genFromDeviceCameraMock).toHaveBeenCalledWith(
+            640,
+            360,
+            'device-1',
+            'HD Webcam',
+        );
+
+        // A real pointer event still wins over the center fallback.
+        expect(mocks.showSimpleToastMock).not.toHaveBeenCalled();
+    });
+
     test('creates camera items and reports failures', () => {
         const { controller } = createController();
         const cameraItem = createCanvasItem({ id: 3 });

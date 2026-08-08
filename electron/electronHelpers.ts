@@ -29,6 +29,10 @@ export type CustomMenuItemType = {
 export type CustomMenusDataType = {
     tools?: CustomMenuItemType[];
     file?: CustomMenuItemType[];
+    // The top-level **Insert** menu. Unlike `file`/`tools` it has no built-in
+    // items of its own, so the whole menu disappears when nothing contributes —
+    // which is what keeps it off the pages that have no canvas to insert into.
+    insert?: CustomMenuItemType[];
 };
 
 function parseEnvContent(content: string) {
