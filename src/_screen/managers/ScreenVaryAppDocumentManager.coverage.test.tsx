@@ -475,6 +475,57 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         manager.div = null;
     });
 
+    test('a run sheet’s own media control stops on unselect instead of blocking', async () => {
+        const { applyScreenSlideMediaControl } =
+            await import('./screenSlideMediaControlHelpers');
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(73),
+            createEffectManager(),
+        );
+        const host = document.createElement('div');
+        manager.div = host;
+        const metadata = { width: 640, height: 360 };
+        manager.varySlideData = {
+            filePath: '/slides/a.slide',
+            itemJson: { id: 1, canvasItems: [], metadata },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+        // Appended AFTER the slide has landed: the render replaces the
+        // container's children, so this stands in for media the rendered slide
+        // itself holds.
+        const audio = createMedia('audio', { paused: false });
+        host.appendChild(audio);
+        // What a `Slide: Media Control` CC does once its host has resolved this
+        // screen: from here on, the media on it belongs to the run sheet.
+        applyScreenSlideMediaControl(manager, { mode: 'play' });
+        mocks.checkMediaPlaying.mockReturnValue(true);
+
+        manager.varySlideData = {
+            filePath: '/slides/b.slide',
+            itemJson: { id: 2, canvasItems: [], metadata },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+
+        // The swap goes through — a sheet that plays a slide's audio must be able
+        // to move on — and the audio it started is stopped rather than left
+        // running under the next line.
+        expect(manager.varySlideData?.filePath).toBe('/slides/b.slide');
+        expect(audio.pause).toHaveBeenCalled();
+        // Spent with the slide it was armed for: the next swap has no controller
+        // to lean on and is guarded exactly as the operator's own playback is.
+        manager.varySlideData = {
+            filePath: '/slides/c.slide',
+            itemJson: { id: 3, canvasItems: [], metadata },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+        expect(manager.varySlideData?.filePath).toBe('/slides/b.slide');
+
+        manager.div = null;
+    });
+
     test('exposes empty group membership by default', async () => {
         const manager = new ScreenVaryAppDocumentManager(
             createScreenManagerBase(66),

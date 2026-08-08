@@ -12,8 +12,11 @@ vi.mock('../../helper/mediaHelpers', () => ({
     }),
 }));
 
-const { applyScreenSlideMediaControl, cancelScreenSlideMediaControl } =
-    await import('./screenSlideMediaControlHelpers');
+const {
+    applyScreenSlideMediaControl,
+    cancelScreenSlideMediaControl,
+    stopScreenSlideMediaControl,
+} = await import('./screenSlideMediaControlHelpers');
 
 type FakeMediaType = {
     id: string;
@@ -275,6 +278,66 @@ describe('driving the media of a slide from a run sheet', () => {
         media.paused = false;
         vi.advanceTimersByTime(120_000);
         expect(media.paused).toBe(false);
+    });
+
+    test('unselecting the slide stops everything the controller started', () => {
+        const media = genFakeMedia();
+        const secondMedia = genFakeMedia('video-def');
+        const player = genFakePlayer();
+        const manager = genFakeManager([media, secondMedia], [player]);
+
+        applyScreenSlideMediaControl(manager, {
+            mode: 'play',
+            pauseAfterSecond: 60,
+        });
+        expect(media.paused).toBe(false);
+        expect(secondMedia.paused).toBe(false);
+        expect(player.isPlaying).toBe(true);
+
+        expect(stopScreenSlideMediaControl(manager)).toBe(true);
+
+        // EVERY media of the outgoing slide, in both flavours — the whole of what
+        // "all the media in this slide" means to an operator leaving the line.
+        expect(media.paused).toBe(true);
+        expect(secondMedia.paused).toBe(true);
+        expect(player.isPlaying).toBe(false);
+        // And the controller is disarmed with it: the queued `pauseAfterSecond`
+        // must not fire into whatever the operator put up in the meantime.
+        expect(media.listenerCount()).toBe(0);
+        media.paused = false;
+        vi.advanceTimersByTime(120_000);
+        expect(media.paused).toBe(false);
+    });
+
+    test('a delayed controller is stopped before it has played anything', () => {
+        const media = genFakeMedia();
+        const manager = genFakeManager([media]);
+
+        applyScreenSlideMediaControl(manager, { mode: 'play', delaySecond: 3 });
+        expect(media.paused).toBe(true);
+
+        expect(stopScreenSlideMediaControl(manager)).toBe(true);
+
+        // The delayed `run` would otherwise start the media playing INTO a slide
+        // that is already on its way out.
+        vi.advanceTimersByTime(10_000);
+        expect(media.paused).toBe(true);
+    });
+
+    test('a screen under no controller is left alone, and says so', () => {
+        const media = genFakeMedia();
+        const manager = genFakeManager([media]);
+        media.paused = false;
+
+        // Media the OPERATOR started by clicking the mini screen: not the sheet's
+        // to stop, and the caller needs the `false` to keep guarding it.
+        expect(stopScreenSlideMediaControl(manager)).toBe(false);
+        expect(media.paused).toBe(false);
+
+        // Nor is a controller that has already been cancelled.
+        applyScreenSlideMediaControl(manager, { mode: 'play' });
+        cancelScreenSlideMediaControl(manager.screenId);
+        expect(stopScreenSlideMediaControl(manager)).toBe(false);
     });
 
     test('a YouTube embed is seeked, played, and stopped on a derived timeout', () => {

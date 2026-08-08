@@ -59,7 +59,10 @@ import type {
 import type { VarySlideScreenDataType } from '../screenAppDocumentTypeHelpers';
 import { PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME } from '../screenAppDocumentTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
-import { cancelScreenSlideMediaControl } from './screenSlideMediaControlHelpers';
+import {
+    cancelScreenSlideMediaControl,
+    stopScreenSlideMediaControl,
+} from './screenSlideMediaControlHelpers';
 import PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -201,6 +204,21 @@ class ScreenVaryAppDocumentManager
         if (this.screenManagerBase.checkIsLockedWithMessage()) {
             return;
         }
+        // Past the lock check, so the slide this screen is showing IS about to be
+        // unselected — swapped for another or cleared away. A `Slide: Media
+        // Control` armed for this screen is the RUN SHEET holding that slide's
+        // media, so the sheet stops it here: every media of the outgoing slide is
+        // paused and the controller disarmed, on exactly the screens the
+        // controller's host resolved to (the slot map is keyed by screen).
+        //
+        // Asked BEFORE the guard below, and it is what makes a sheet that plays a
+        // slide's audio able to move on at all: that guard refuses to tear down
+        // playing media, which is right for media the OPERATOR started (there is a
+        // click to undo, and the toast says so) and wrong for media the sheet
+        // itself started on the line the operator is now leaving — the run would
+        // simply wedge on it.
+        const wasMediaControlled =
+            !appProvider.isPageScreen && stopScreenSlideMediaControl(this);
         // Block only a swap to a *different* slide that would tear down media
         // currently playing on the presenter's mini screen. Clearing (null) is
         // an explicit stop and must go through — otherwise ScreenManager.clear()
@@ -210,6 +228,7 @@ class ScreenVaryAppDocumentManager
         if (
             varySlideData !== null &&
             !appProvider.isPageScreen &&
+            !wasMediaControlled &&
             this.checkIsMediaPlaying()
         ) {
             return;
@@ -227,6 +246,11 @@ class ScreenVaryAppDocumentManager
         // would pause whatever the operator put up in the meantime, and a
         // `timeupdate` watcher on a replaced element would hold that element — and
         // the slide behind it — for as long as the app ran.
+        //
+        // The unselect above has already done this for the presenter, where the
+        // controllers live; this is what covers the projected screen, and it is
+        // the backstop that keeps the disarm true of EVERY path through here
+        // rather than of the one that also pauses.
         cancelScreenSlideMediaControl(this.screenId);
         this._varySlideData = varySlideData;
         unlocking(screenManagerSettingNames.VARY_APP_DOCUMENT, () => {

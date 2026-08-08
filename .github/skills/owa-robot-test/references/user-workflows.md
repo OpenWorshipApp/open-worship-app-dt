@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-08d** (**W-22** step 8: a **Next: Timeout** attached to a line
+**workflowsVersion: 2026-08-08e** (**W-22** step 5, **Media Control**: moving off the slide
+now STOPS what it started — putting another slide on that screen, or clearing it, pauses the
+slide's media and drops anything still waiting. A running order that plays a slide's audio
+could not move on before: the swap was refused with **Media is Playing**, which is still what
+a clip you started BY HAND gets. **Driven live** (slide 1's audio playing under a
+**Media Control (Play)**, slide 2 presented on the same screen: it landed, the audio paused,
+no toast). Previous: **2026-08-08d** (**W-22** step 8: a **Next: Timeout** attached to a line
 as a CC element can now be given **its own wait**, from the stopwatch at the right of that
 CC row or its **Change Timing** menu entry — the answer belongs to that attachment, so one
 timeout can hold one line for 4 seconds and another for 30. Filled stopwatch = its own
@@ -1085,8 +1091,15 @@ thing to another machine.
    Every video and audio clip in that slide is driven together. The sound comes out of the
    presenter machine, exactly as it does when you press play by hand, so the **Volume** is
    the level you hear at the desk; the projected screen stays silent and simply keeps in
-   step, at the same speed. Changing the slide cancels anything still waiting — a "stop at
-   1:10" never carries over to whatever you put up next.
+   step, at the same speed.
+
+   **Moving off the slide stops it.** When you put another slide on that screen — or clear
+   the screen — everything the Media Control started is stopped and anything still waiting
+   (a "stop at 1:10", a delayed start) is dropped, so nothing carries over to whatever you
+   put up next. This is what lets the running order carry on: a clip you started **by
+   hand** on the mini screen blocks the next slide until you pause it (the app says
+   **Media is Playing**), because there the app cannot know you meant to leave it — but a
+   clip the running order started is the running order's to stop. 📸
 
    This one is only ever attached to a slide: you will not find it under **Add Action** on
    the running order itself, because "start this video ten seconds in" is a sentence about

@@ -147,6 +147,41 @@ function pauseAll(manager: ScreenVaryAppDocumentManager) {
 }
 
 /**
+ * The slide a controller was armed for is being UNSELECTED — replaced by another
+ * or cleared away — so everything that controller had running STOPS with it.
+ *
+ * The wider half of `cancelScreenSlideMediaControl`: that one disarms what is
+ * still to COME (a delayed `run`, a "pause at 1:10" watcher), this one also
+ * silences what is already playing, across every media the outgoing slide holds —
+ * native elements and YouTube embeds alike. It must be called BEFORE the slide is
+ * swapped, while `manager.div` still holds that slide's elements.
+ *
+ * **Only where a controller was actually armed**, which is why the answer is the
+ * slot's presence rather than "did anything pause": media the RUN SHEET started is
+ * media the sheet owns, and unselecting the line that started it is the operator
+ * saying they are done with it. Media the operator started by clicking the mini
+ * screen is theirs and is left alone here — its own guard in
+ * `ScreenVaryAppDocumentManager` still refuses to swap the slide out from under
+ * it, which is the right answer when there IS a click to undo.
+ *
+ * Answers whether this screen was under a controller at all, so the caller can
+ * tell those two cases apart without reading the map itself.
+ */
+export function stopScreenSlideMediaControl(
+    manager: ScreenVaryAppDocumentManager,
+) {
+    if (!slotMap.has(manager.screenId)) {
+        return false;
+    }
+    // Disarmed FIRST: a `pauseAfterSecond` tick or a delayed `run` still queued
+    // would otherwise fire straight after this and start the media playing again
+    // — into a slide that is on its way out.
+    cancelScreenSlideMediaControl(manager.screenId);
+    pauseAll(manager);
+    return true;
+}
+
+/**
  * "Stop at 1:10" on a native element is WATCHED rather than timed: `timeupdate`
  * already fires for the sync wiring, so the media's own clock is free, and neither
  * a rate change nor a manual scrub mid-play can make it miss. One-shot — removed
