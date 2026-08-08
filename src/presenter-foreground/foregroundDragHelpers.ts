@@ -4,7 +4,7 @@ import { DragTypeEnum } from '../helper/DragInf';
 
 // Foregrounds used to travel to a screen ONLY through `dragStore.onDropped` — a
 // live closure that dies with the drag. That is enough to drop one on a screen,
-// but a playlist has to store a foreground and replay it days later, so every
+// but a presenting flow has to store a foreground and replay it days later, so every
 // foreground now also serializes itself into the drag payload. The closure is
 // still set as well: it stays the fallback for anything that reads it directly.
 export const foregroundDragTargetList = [
@@ -105,7 +105,7 @@ export function toForegroundDragLabel({
 
 // A countdown dragged from the "duration" form must count from the moment it is
 // SHOWN, not from the moment it was dragged — otherwise replaying it out of a
-// playlist next Sunday would start already expired. The absolute-date form keeps
+// presenting flow next Sunday would start already expired. The absolute-date form keeps
 // its date, which is exactly what that form means.
 function toCountdownDateTime(data: any) {
     if (typeof data.durationSecond === 'number') {
@@ -137,7 +137,7 @@ export async function applyForegroundDragData(
         screenForegroundManager.setMarqueeBottomData(data);
     } else if (target === 'quick-text') {
         // The markdown source travels, not the rendered html: the renderer is a
-        // heavy import and a stored playlist entry should re-render with the
+        // heavy import and a stored presenting flow entry should re-render with the
         // current markdown settings.
         const { renderMarkdown } =
             await import('../lyric-list/markdownHelpers');

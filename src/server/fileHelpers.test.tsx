@@ -187,7 +187,8 @@ describe('fileHelpers', () => {
     test('creates typed files and handles duplicate and override flows', async () => {
         const { fileHelpers } = await loadModules();
         const dirPath = '/browser-data/new';
-        const [playlistExt] = fileHelpers.getMimetypeExtensions('playlist');
+        const [presentingFlowExt] =
+            fileHelpers.getMimetypeExtensions('presentingFlow');
 
         await fileHelpers.fsCreateDir(dirPath);
         await expect(
@@ -195,29 +196,31 @@ describe('fileHelpers', () => {
                 dirPath,
                 'setlist',
                 '[]',
-                'playlist',
+                'presentingFlow',
             ),
-        ).resolves.toBe(`${dirPath}/setlist.${playlistExt}`);
+        ).resolves.toBe(`${dirPath}/setlist.${presentingFlowExt}`);
         await expect(
             fileHelpers.fsCreateFile(
-                `${dirPath}/setlist.${playlistExt}`,
+                `${dirPath}/setlist.${presentingFlowExt}`,
                 'updated',
                 true,
             ),
-        ).resolves.toBe(`${dirPath}/setlist.${playlistExt}`);
+        ).resolves.toBe(`${dirPath}/setlist.${presentingFlowExt}`);
         expect(
-            await fileHelpers.fsReadFile(`${dirPath}/setlist.${playlistExt}`),
+            await fileHelpers.fsReadFile(
+                `${dirPath}/setlist.${presentingFlowExt}`,
+            ),
         ).toBe('updated');
         await expect(
             fileHelpers.createNewFileDetail(
                 dirPath,
                 'setlist',
                 '[]',
-                'playlist',
+                'presentingFlow',
             ),
         ).resolves.toBeNull();
         expect(showSimpleToastMock).toHaveBeenCalledWith(
-            'Creating Playlist',
+            'Creating Presenting Flow',
             'File exist',
         );
         await expect(

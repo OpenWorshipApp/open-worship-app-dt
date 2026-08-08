@@ -1,6 +1,6 @@
 # Discovery inventory — AREA: presenter-lists
 
-Presenter LEFT column + document/lyric/playlist LIST surfaces, plus the generic
+Presenter LEFT column + document/lyric/presenting-flow LIST surfaces, plus the generic
 list infrastructure they all share (`FileListHandlerComp`, `FileItemHandlerComp`,
 `PathSelectorComp`/`PathEditorComp`, `droppingFileHelpers`).
 
@@ -9,7 +9,7 @@ Scope files swept:
 - `src/app-document-list/VaryAppDocumentListComp.tsx`, `VaryAppDocumentFileComp.tsx`,
   `appDocumentHelpers.tsx`, `AppDocument.ts`, `PdfAppDocument.ts`/`PptxAppDocument.ts`/`DocxAppDocument.ts`
 - `src/lyric-list/LyricListComp.tsx`, `LyricFileComp.tsx`, `LyricAppDocument.ts`
-- `src/playlist/PlaylistListComp.tsx`, `PlaylistFileComp.tsx`, `PlaylistSlideItemComp.tsx`
+- `src/presenting-flow/PresentingFlowListComp.tsx`, `PresentingFlowFileComp.tsx`, `PresentingFlowSlideItemComp.tsx`
 - `src/others/FileListHandlerComp.tsx`, `FileItemHandlerComp.tsx`, `RenderListComp.tsx`,
   `PathSelectorComp.tsx`, `PathEditorComp.tsx`, `RenderPathTitleComp.tsx`, `PathPreviewerComp.tsx`,
   `AskingNewNameComp.tsx`, `RenderRenamingComp.tsx`, `NoDirSelectedComp.tsx`, `FileReadErrorComp.tsx`,
@@ -22,7 +22,7 @@ Legend: 🖱️ click · 🖱️🖱️ double-click · 🖱️R right-click · 
 
 1. **No list item has a double-click handler.** `FileItemHandlerComp`'s `<li>` (line 225-238)
    binds only `onClick={handleClicking}`. There is **no `onDoubleClick`/`dblclick`** anywhere in
-   `app-document-list/`, `lyric-list/`, `playlist/`, or the shared infra (grep = 0 hits). A
+   `app-document-list/`, `lyric-list/`, `presenting-flow/`, or the shared infra (grep = 0 hits). A
    "double-click" nets to two `click`s.
 2. **Clicking a LEFT-list item only SELECTS + reveals its middle previewer tab — it does NOT
    present to the screen.** `VaryAppDocumentFileComp.handleClicking` (line 255-266) calls
@@ -33,7 +33,7 @@ Legend: 🖱️ click · 🖱️🖱️ double-click · 🖱️R right-click · 
 3. **The left lists have NO drag-reorder.** `FileItemHandlerComp`'s `<li>` has no `draggable`
    and no `onDragStart` (grep for `draggable|onDragStart` in these dirs = 0). Its
    `onDragOver/onDragLeave/onDrop` (line 190-210, 235-237) fire **only when an `onDrop` prop is
-   passed** (used solely by `PlaylistFileComp` to receive internal DnD data — not reorder).
+   passed** (used solely by `PresentingFlowFileComp` to receive internal DnD data — not reorder).
    Order comes from `sortFilePaths`/color-note grouping in `RenderListComp`, not user drag.
 
 ---
@@ -51,8 +51,8 @@ Legend: 🖱️ click · 🖱️🖱️ double-click · 🖱️R right-click · 
 | PL-07 | `LyricFileComp` list item | 🖱️ | — | Lyrics dir has ≥1 lyric | click the `li` (icon `bi-music-note`) | `li` gains `.active`; Lyrics previewer tab becomes shown (`getIsShowingLyricPreviewer`) | `LyricFileComp.tsx:58-92,41`; `FileItemHandlerComp.tsx:221` | COVERED |
 | PL-08 | `LyricFileComp` item | 🖱️🖱️ | — | a lyric listed | double-click | selects + reveals the Lyrics previewer; **does NOT put the lyric `.app-on-screen`** (sending to screen is done from middle verses, PM-11) | `LyricFileComp.tsx:83-92` (no dblclick / no screen call) | REFINE — row claims "lyric on screen (`.app-on-screen`)"; unsupported |
 | PL-09 | Lyric per-item context menu → Edit | 🖱️R | — | a lyric listed | right-click → **Edit** | Lyric Editor popup opens (`openPopupLyricEditorWindow`); full menu also has Copy Path, Reveal, Duplicate, Rename, Reload, Move to Trash | `LyricFileComp.tsx:20-34`; `FileItemHandlerComp.tsx:169-188` | COVERED |
-| PL-10 | `PlaylistFileComp` item (dev) | 🖱️ / ⇕ | — | dev build; Playlists dir has an item | click the item card header | click **toggles expand/collapse** (`isOpened`, chevron `bi-chevron-down`↔`bi-chevron-right`), it does NOT "select"; **no reorder** exists | `PlaylistFileComp.tsx:40-43,113-119` | REFINE — row says "select; ⇕ reorder"; actually open/close toggle, no reorder |
-| PL-11 | Header **New File** button | 🖱️ | — | list has a dir set + `onNewFile` supplied (docs/lyrics/playlists) | click the header `+` (`bi-file-earmark-plus`, `title="New File"`, float-end) | an inline `AskingNewNameComp` input row appears at the top of the `list-group` (`isCreatingNew=true`) | `FileListHandlerComp.tsx:66-78,215-219` | GAP |
+| PL-10 | `PresentingFlowFileComp` item (dev) | 🖱️ / ⇕ | — | dev build; Presenting Flows dir has an item | click the item card header | click **toggles expand/collapse** (`isOpened`, chevron `bi-chevron-down`↔`bi-chevron-right`), it does NOT "select"; **no reorder** exists | `PresentingFlowFileComp.tsx:40-43,113-119` | REFINE — row says "select; ⇕ reorder"; actually open/close toggle, no reorder |
+| PL-11 | Header **New File** button | 🖱️ | — | list has a dir set + `onNewFile` supplied (docs/lyrics/presenting-flows) | click the header `+` (`bi-file-earmark-plus`, `title="New File"`, float-end) | an inline `AskingNewNameComp` input row appears at the top of the `list-group` (`isCreatingNew=true`) | `FileListHandlerComp.tsx:66-78,215-219` | GAP |
 | PL-12 | `AskingNewNameComp` inline create input | ⌨️✎ / 🖱️ | Enter/Escape | new-file input showing | type an invalid char (`\ / : * ? " < > \|`) then click apply; also type valid + Enter | valid → apply button `btn-outline-success`; invalid → `btn-outline-danger` and apply pops toast "Invalid file name"; Enter applies, Escape cancels (input disappears) | `AskingNewNameComp.tsx:16-17,23-33,41-73` | GAP |
 | PL-13 | `PathSelectorComp` toggle | 🖱️ | — | any list with a dir set | click the path row (`.path-previewer`) | chevron flips `bi-chevron-down`↔`bi-chevron-right`; `PathEditorComp` shows/hides; `title` reads "Hide/Show path editor" | `PathSelectorComp.tsx:76-103` | GAP |
 | PL-14 | `RenderPathTitleComp` reload | 🖱️ | — | path collapsed (title shown) | click the reload icon (`bi-arrow-clockwise`, `title="Reload"`) | `dirSource.fireReloadEvent()` → list re-reads (LoadingComp flicker then items) | `RenderPathTitleComp.tsx:16-20,33-35` | GAP |
@@ -70,8 +70,8 @@ Legend: 🖱️ click · 🖱️🖱️ double-click · 🖱️R right-click · 
 | PL-26 | External-file drop (copy-in) | ⇕ | — | drop a supported file onto a list | drop a valid file; also drop while `dirPath===null` | valid file is copied into `dirSource.dirPath` (new `li` appears); drop with no dir pops toast "Open Folder / Please open a folder first". (Full drop pipeline needs the fiber-controller trick — CLAUDE.md) | `FileListHandlerComp.tsx:173-178`; `droppingFileHelpers.ts:88-128` | GAP |
 | PL-27 | Drop OFFICE file onto Documents → convert | ⇕ | — | drop a `.pptx`/`.doc`/office file onto the Documents list | drop the office file | confirm dialog "Converting to PDF" appears; on OK a progress bar (`WIDGET_TITLE`) shows during conversion (`.docx` is excluded → no-op) | `VaryAppDocumentListComp.tsx:70-90`; `appDocumentHelpers.tsx:313,357-383,436-445` | GAP |
 | PL-28 | Header title live indicator | observe | — | a list whose content is currently on a screen | present a doc/lyric from that list, observe the list header | the header `<strong>` gains `.app-on-screen` (driven by the list-level `checkIsOnScreen`) | `FileListHandlerComp.tsx:63,220-233`; `VaryAppDocumentListComp.tsx:108-118` | GAP |
-| PL-29 | Playlist item expand/collapse (dev) | 🖱️ | — | dev; a playlist listed | click the playlist card header | chevron toggles `bi-chevron-down`↔`bi-chevron-right`; body of `PlaylistItem`s shows/hides; `opened-<path>` setting persists | `PlaylistFileComp.tsx:40-43,101-135` | GAP (dev-only; else BLOCKED) |
-| PL-30 | Playlist item internal drop (dev) | ⇕ | — | dev; drag a slide/bible ref onto a playlist card | drop internal DnD data (dataTransfer `text`) onto the item | `playlist.addFromData(receivedData)` runs; new `PlaylistItem` row renders (bible/slide; lyric shows "Not Supported Item Type") | `PlaylistFileComp.tsx:45-51,138-162` | GAP (dev-only) |
+| PL-29 | Presenting Flow item expand/collapse (dev) | 🖱️ | — | dev; a presenting flow listed | click the presenting flow card header | chevron toggles `bi-chevron-down`↔`bi-chevron-right`; body of `PresentingFlowItem`s shows/hides; `opened-<path>` setting persists | `PresentingFlowFileComp.tsx:40-43,101-135` | GAP (dev-only; else BLOCKED) |
+| PL-30 | Presenting Flow item internal drop (dev) | ⇕ | — | dev; drag a slide/bible ref onto a presenting flow card | drop internal DnD data (dataTransfer `text`) onto the item | `presentingFlow.addFromData(receivedData)` runs; new `PresentingFlowItem` row renders (bible/slide; lyric shows "Not Supported Item Type") | `PresentingFlowFileComp.tsx:45-51,138-162` | GAP (dev-only) |
 | PL-31 | PDF item context menu | 🖱️R | — | a `.pdf` in Documents | right-click the PDF item | menu: **Preview PDF** (opens PDF popup window), **Refresh PDF Images** (+ common/trash items) | `VaryAppDocumentFileComp.tsx:33-56` | GAP (defer items; note trigger) |
 | PL-32 | PPTX item context menu | 🖱️R | — | a `.pptx` (not `~$…`) in Documents | right-click the PPTX item | menu: **Open PPTX** (system open), **Refresh PPTX Slides** (+ common/trash) | `VaryAppDocumentFileComp.tsx:57-74` | GAP (defer items) |
 | PL-33 | DOCX item context menu | 🖱️R | — | a `.docx` (not `~$…`) in Documents | right-click the DOCX item | menu: **Open DOCX** (system open), **Refresh DOCX Pages** (+ common/trash) | `VaryAppDocumentFileComp.tsx:75-92` | GAP (defer items) |
@@ -104,7 +104,7 @@ GAP + REFINE ids with 6-word hooks:
 - **PL-03** (REFINE): OWA-doc menu; enumerate eight items
 - **PL-04** (REFINE): left-list items are not reorderable
 - **PL-08** (REFINE): lyric double-click never reaches screen
-- **PL-10** (REFINE): playlist click toggles open, not select
+- **PL-10** (REFINE): presenting flow click toggles open, not select
 - **PL-11** (GAP): header plus opens new-file input
 - **PL-12** (GAP): new-name input validity, Enter/Escape, toast
 - **PL-13** (GAP): path-editor chevron show/hide toggle
@@ -123,8 +123,8 @@ GAP + REFINE ids with 6-word hooks:
 - **PL-26** (GAP): external file drop copies in
 - **PL-27** (GAP): office-file drop converts to PDF
 - **PL-28** (GAP): list header app-on-screen live indicator
-- **PL-29** (GAP): playlist expand/collapse chevron (dev)
-- **PL-30** (GAP): playlist internal drop adds item
+- **PL-29** (GAP): presenting flow expand/collapse chevron (dev)
+- **PL-30** (GAP): presenting flow internal drop adds item
 - **PL-31** (GAP): PDF item context-menu trigger
 - **PL-32** (GAP): PPTX item context-menu trigger
 - **PL-33** (GAP): DOCX item context-menu trigger

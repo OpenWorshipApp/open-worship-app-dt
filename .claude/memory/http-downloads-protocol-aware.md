@@ -8,9 +8,9 @@ metadata:
 `initHttpRequest` (`src/helper/bible-helpers/downloadHelpers.ts`) now picks
 `node:http` vs `node:https` from `url.protocol` and honours `url.port` — before
 2026-08-04 it hardcoded https + port 443, so plain `http://` and any non-443
-port were impossible for **every** download in the app. Added for the playlist
-[[playlist-archive-owapl]] **Import From URL** entry, which has to reach a LAN
-server like `http://<laptop>:8000/x.owapl.tar.gz`.
+port were impossible for **every** download in the app. Added for the presenting flow
+[[presenting-flow-archive-owapf]] **Import From URL** entry, which has to reach a LAN
+server like `http://<laptop>:8000/x.owapf.tar.gz`.
 
 **Why:** the preload exposes two functions now — `appProvider.httpUtils.request`
 is STILL `https.request` only, and `requestHttp` is the plain-http one. Only

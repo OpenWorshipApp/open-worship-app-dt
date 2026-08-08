@@ -5,7 +5,7 @@ metadata:
   type: project
 ---
 
-Every export (`.owadata.tar`, `.owadoc/.owapl/.owbible/.owabn.tar.gz`) asks for an
+Every export (`.owadata.tar`, `.owadoc/.owapf/.owbible/.owabn.tar.gz`) asks for an
 optional password first. Empty is the default answer and writes byte-for-byte the bundle
 that was always written; a password wraps that finished file whole in an `OWAENC`
 container (`electron/archiveCryptoHelpers.ts`) and writes `<name>.<kind>.enc` instead.
@@ -15,7 +15,7 @@ someone's disk still imports and an unprotected export is unchanged. Added 2026-
 
 **How to apply:**
 
-- **The kind stays in the extension** (`.owapl.enc`, not a shared `.enc`), because every
+- **The kind stays in the extension** (`.owapf.enc`, not a shared `.enc`), because every
   drop gate and file dialog decides where a bundle belongs from its NAME, synchronously,
   before any path is open. `checkIsArchiveFileFullName` accepts both shapes, so all three
   drop gates got the protected bundle for free.
@@ -58,5 +58,5 @@ file. Decrypt reads the tag out-of-band first, then streams
 `createReadStream(start: 64, end: size - 17)` — `end` is INCLUSIVE, and a zero-byte
 payload has no valid range at all and is handled separately.
 
-Related: [[data-archive-owadata]], [[playlist-archive-owapl]], [[document-archive-owadoc]],
+Related: [[data-archive-owadata]], [[presenting-flow-archive-owapf]], [[document-archive-owadoc]],
 [[tran-missing-key-throws-in-dev]].

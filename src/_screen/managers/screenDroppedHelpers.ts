@@ -34,7 +34,7 @@ export async function applyOnChosenScreens(
  * The CHOOSING half on its own — which screens the operator meant, with nothing
  * done to them.
  *
- * For the one caller that has followers but no content: a playlist's
+ * For the one caller that has followers but no content: a presenting flow's
  * `Keyboard Event` shows nothing itself, so unless it runs the resolution, the
  * CC elements riding on it are never told where to land (they read the answer off
  * `captureChosenScreenIds`, and only a resolution publishes one). Going through
@@ -56,7 +56,7 @@ export async function chooseScreenIdsOnEvent(
 /**
  * The doing half above, with the screens already decided.
  *
- * What a FOLLOWER uses — a playlist element's CC elements, which must land on
+ * What a FOLLOWER uses — a presenting flow element's CC elements, which must land on
  * the screens their host resolved to and may not raise a question of their own.
  * Going back through `applyOnChosenScreens` with those ids would only be safe
  * while the list is non-empty: an empty one falls straight through to the
@@ -84,7 +84,7 @@ export async function applyOnScreenIds(
     await Promise.all(applyingList);
 }
 
-// Clicking a playlist row and dropping the same row on a screen must do exactly
+// Clicking a presenting flow row and dropping the same row on a screen must do exactly
 // the same thing, so both go through `receiveScreenDropped`. Only the screen
 // choice differs: a drop names its screen, a click asks (or uses the selected
 // screens) via `chooseScreenIds`.

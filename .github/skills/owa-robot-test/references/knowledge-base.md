@@ -150,7 +150,7 @@ untranslated-string bug**. Always judge translation coverage *after* `Apply Sett
 | Lyrics | អក្សរភ្លេង | list + presenter tab |
 | Bibles | ព្រះគម្ពីរ | presenter/right tab |
 | Foreground | ផ្ទៃខាងមុខ | presenter tab |
-| Playlists | តារាងកម្មវិធី | left list (dev) |
+| Presenting Flows | តារាងកម្មវិធី | left list (dev) |
 | Bible Notes | កំណត់ត្រាព្រះគម្ពីរ | right tab |
 | Colors / Images / Videos / Cameras / Web(s) / Audios | ពណ៌ / រូបភាព / វីដេអូ / កាមេរ៉ា / វេបសាយ / សំលេង | background tabs |
 | Clear all/bg/slide/bible/fg (F6–F10) | លុបទាំងអស់ / លុបផ្ទៃខាងក្រោយ / លុបស្លាយ / លុបព្រះគម្ពីរ / លុបផ្ទៃខាងមុខ | mini-screen footer |
@@ -487,7 +487,7 @@ content-only edits / on some OSes (e.g. macOS needs a **recursive** watch to see
 unmounted or a filePath mismatch; the **2 s per-renderer cache** serving stale bytes to the
 reload; an **auto-reloading** consumer (center preview / list rows) that stopped subscribing;
 a regression in the reload wiring (e.g. the `VaryAppDocumentFileComp` / `LyricFileComp` /
-`PlaylistFileComp` `useFileSourceEvents` refactor). **Expected, NOT bugs:** (a) an **unsaved**
+`PresentingFlowFileComp` `useFileSourceEvents` refactor). **Expected, NOT bugs:** (a) an **unsaved**
 editor edit not showing in the Presenter — separate renderers sync via saved-on-disk state,
 so the Presenter shows the last **saved** version (confirm the change was actually **saved**
 before filing a FAIL); (b) a **saved** edit not auto-updating the **live screen** of a
@@ -591,14 +591,14 @@ Notes that save time on this subsystem:
 
 ---
 
-## 14. Playlists — the model behind every PL row ⚠️
+## 14. Presenting Flows — the model behind every PL row ⚠️
 
-The Playlists panel (`src/playlist/`) is the app's **run sheet**: one file per service,
+The Presenting Flows panel (`src/presenting-flow/`) is the app's **run sheet**: one file per service,
 holding everything that service will present, in order. It is small in code and dense in
 rules, and almost every one of those rules is a testable claim. Read **all of this**
 before driving PL-10 / PL-29 / PL-32..PL-76 / PL-81..PL-100 — it explains *why* each row's
 pass condition is what it is, and which "odd" behaviours are deliberate. It is also the
-required reading for **playlist deep mode** (SKILL.md §6f, recipe in test-plan §S20).
+required reading for **presenting flow deep mode** (SKILL.md §6f, recipe in test-plan §S20).
 
 A run sheet holds three kinds of thing now, and confusing them is the fastest way to
 mis-file a finding:
@@ -621,12 +621,12 @@ BLOCKED with the reason "dev-only".** (PL-49.)
 
 | stored as | kinds | why |
 | --- | --- | --- |
-| **reference** (`filePath` + `id`, `stage` for lyrics) | slide, lyric slide, PDF/PPTX/DOCX slide, app document | a playlist is built days before the service; a song edited in between must project its NEW words. A snapshot would silently project stale text. |
+| **reference** (`filePath` + `id`, `stage` for lyrics) | slide, lyric slide, PDF/PPTX/DOCX slide, app document | a presenting flow is built days before the service; a song edited in between must project its NEW words. A snapshot would silently project stale text. |
 | **preset** (drag payload stored verbatim in `data`) | background colour/image/video/camera/web, bible verse, foreground widget, audio | small, self-describing, and for a foreground the preset (the marquee text, the countdown duration, the styling) *is* the point. |
 
 Consequences to test against, not to "fix":
 
-- Editing a referenced document changes what the playlist projects. Editing the source of
+- Editing a referenced document changes what the presenting flow projects. Editing the source of
   a preset does **not**.
 - A countdown entry stores `durationSecond`, never a resolved date; quick text stores
   markdown, never rendered html. A stored preset replayed a week later must not show an
@@ -644,7 +644,7 @@ This panel is where a careless change becomes a visible stall on the target hard
 - **Rows are text-only.** No thumbnail per row — that would decode every referenced
   image/video just to draw a list. Rich previews live in the floating widget, on demand.
 - **Document slides load on expand and are released on collapse** (the component
-  unmounts). A long playlist must never hold every document's slides at once.
+  unmounts). A long presenting flow must never hold every document's slides at once.
 - **On-screen marking uses ONE shared subscription** for the whole tree
   (`useIsOnScreenChecking` + `onScreenSubscribers`), not `useScreenUpdateEvents` per row —
   that hook fans out into seven subscriptions each with its own `useState`, so a document
@@ -657,8 +657,8 @@ This panel is where a careless change becomes a visible stall on the target hard
   pass the same event already scheduled). Half a second of "did that work?" reads as a
   slow app.
 - **Idle costs four setting reads.** `checkIsAnythingOnScreen` short-circuits everything;
-  with nothing presenting, listing playlists opens no playlist files at all. If you ever
-  see the idle list reading `.owp` files, that gate is broken.
+  with nothing presenting, listing presenting flows opens no presenting flow files at all. If you ever
+  see the idle list reading `.owpf` files, that gate is broken.
 - **Icons come from the file extension**, never from instantiating the document
   (`toDocumentIcon`), and the on-screen check for a document matches on `filePath` only —
   never `getSlides()`.
@@ -668,31 +668,31 @@ This panel is where a careless change becomes a visible stall on the target hard
 
 ### 14.4 Drag rules (the source of most "it did nothing" reports)
 
-- A drag out of a playlist row sets `playlistDraggingStore`. While it is set, the playlist
+- A drag out of a presenting flow row sets `presentingFlowDraggingStore`. While it is set, the presenting flow
   CARD's add handler bails — that is what makes a drop back into the same list a
-  **reorder** rather than a duplicate add. The side effect: **dragging a row from playlist
-  A onto playlist B adds nothing at all** (PL-55). Known limitation; do not re-file.
+  **reorder** rather than a duplicate add. The side effect: **dragging a row from presenting flow
+  A onto presenting flow B adds nothing at all** (PL-55). Known limitation; do not re-file.
 - Rows go to a screen through `dragStore.onDropped`, NOT the synchronous `dataTransfer`
   payload: a stored slide must be re-read from its document first and `dragstart` cannot
   await. A slide CHILD row (under an expanded document) is already resolved, so it rides
   the ordinary synchronous path.
 - The accepted-type gate is `acceptedDragTypeList`; anything else toasts
-  *"This item type cannot be added to a playlist"*.
+  *"This item type cannot be added to a presenting flow"*.
 
 ### 14.5 Settings hygiene
 
 Settings are files named after their key, so a raw file path in a setting name would
-create directory separators and log an `ENOENT` on every read. Everything the playlist
-persists goes through `toPlaylistSettingName` (`/ \ : * ? " < > |` and dots → `_`):
-`playlist-opened-…`, `playlist-item-expanded-…`, `playlist-preview-collapsed-…`. The
+create directory separators and log an `ENOENT` on every read. Everything the presenting flow
+persists goes through `toPresentingFlowSettingName` (`/ \ : * ? " < > |` and dots → `_`):
+`presenting-flow-opened-…`, `presenting-flow-item-expanded-…`, `presenting-flow-preview-collapsed-…`. The
 preview's collapse setting stores **only the collapsed keys** and is **deleted** when
-everything is expanded — one file per playlist, and the common case writes nothing.
+everything is expanded — one file per presenting flow, and the common case writes nothing.
 PL-54 / PL-58.
 
 ### 14.6 The floating preview is a run-sheet player
 
 - Exactly ONE widget at a time (a shared store, not per-row state); opening another
-  playlist's preview replaces it and clears the remembered position.
+  presenting flow's preview replaces it and clears the remembered position.
 - **Space / ↓ / → / PageDown** step the run FORWARD only — no wrap, because wrapping
   round to element 1 mid-service would put the wrong thing on a live screen. The keys are
   gated on focus being inside the widget, since the presenter's slide list answers the very
@@ -720,7 +720,7 @@ PL-54 / PL-58.
   clock or a shortcut re-keys the line.
 - Slide cards inside the widget get a **restricted** right-click menu — the RUN-SHEET
   family only (**Reveal Original / Set Specific Screen / Disable / Add CC Elements**,
-  `genPlaylistVarySlideContextMenuItems`), caught on the way DOWN via
+  `genPresentingFlowVarySlideContextMenuItems`), caught on the way DOWN via
   `onContextMenuCapture` + `stopPropagation`. The previewer's colour-note/background/edit
   family acts on the document, not the run sheet, so none of it appears; note there is no
   **Show on Screens** either (a left-click presents the card). Verified live 2026-08-06 —
@@ -729,10 +729,10 @@ PL-54 / PL-58.
 - Bible entries render read-only: a verse in a run sheet is a stored preset, not a row of
   a bible file, so no retarget, no copy family, no colour note. PL-60.
 
-### 14.7 Export / import (`.owapl.tar.gz`)
+### 14.7 Export / import (`.owapf.tar.gz`)
 
 A tar.gz (`tarCreate`/`tarExtract`) — **not** a zip; the app has no zip dependency. Layout:
-`manifest.json` + `playlist.json` + `files/`. The bundle carries the **whole document**
+`manifest.json` + `presentingFlow.json` + `files/`. The bundle carries the **whole document**
 behind every slide reference (so the reference resolves after import), the media behind
 every background, and each document's `.bg.json` attached-background sidecar with its
 paths absolutised.
@@ -741,22 +741,22 @@ Import contract worth testing explicitly:
 
 1. **Every destination folder is resolved up front** — a list whose folder has not been
    chosen yet fails the import BEFORE a single file is written (PL-66). Discovering it
-   halfway would leave media imported and no playlist to show for it.
+   halfway would leave media imported and no presenting flow to show for it.
 2. Archive paths are validated (`..` / backslash refused) — a traversal entry landing
    outside the extract dir is a security-relevant FAIL.
 3. What happens on a name clash is decided **per destination folder**, by
    `collisionPolicyBySettingName` (`src/helper/appArchiveHelpers.ts`). **Media** is
    `reuse-if-same`: an identical file (by MD5) is reused, so re-importing the same bundle
    does not grow images/videos/audios/webs at all, and a same-name file with different
-   bytes lands beside it as `1 (1).jpg`. **Documents, playlists and bible notes are
+   bytes lands beside it as `1 (1).jpg`. **Documents, presenting flows and bible notes are
    `always-new`** — the operator's own authored work, where a namesake is not the same
    work and silently dropping an import is the one outcome that loses it — so a re-import
    DOES produce `a1 (Copy) (1).ows` even when the bytes match. An existing `.bg.json` is
-   never clobbered; the playlist file itself is de-duplicated as `<name> (1).owp` (PL-67).
+   never clobbered; the presenting flow file itself is de-duplicated as `<name> (1).owpf` (PL-67).
 4. Bible entries are re-created in the **Default** bible list (identical verse reused) and
    the entry re-pointed at it, which is what makes Reveal Original work afterwards
    (PL-68).
-5. A dropped `.owapl.tar.gz` is unpacked from **where it already sits** (`appFilePath`
+5. A dropped `.owapf.tar.gz` is unpacked from **where it already sits** (`appFilePath`
    stamped by the electron preload), never copied into the app folders first — bundles are
    big. Only if a drop carries no path is it staged in temp (PL-45).
 
@@ -765,24 +765,24 @@ a fabricated `dataTransfer` and stamp `appFilePath` on the `File` — see CLAUDE
 file-drop note. That exercises the whole import pipeline against a real file on disk.
 
 **The de-duplicated export name — FIXED 2026-08-06.** A second export used to be named
-`<name>.owapl.tar (1).gz` (`FileSource.genNextFilePath` splits on the LAST dot), which
-failed `checkIsPlaylistArchiveFileFullName` and made a dropped bundle do **nothing at all**
+`<name>.owapf.tar (1).gz` (`FileSource.genNextFilePath` splits on the LAST dot), which
+failed `checkIsPresentingFlowArchiveFileFullName` and made a dropped bundle do **nothing at all**
 — no import, no toast. Exports now go through `genNextArchiveFilePath`, which knows the
-whole extension and writes `<name> (1).owapl.tar.gz`; `checkIsArchiveFileFullName` and
+whole extension and writes `<name> (1).owapf.tar.gz`; `checkIsArchiveFileFullName` and
 `toArchiveBaseName` share one regex that still accepts the old shape, so bundles already in
 people's Downloads import (and are NAMED) correctly. The same fix covers `.owadoc.tar.gz`,
-`.owbible.tar.gz` and `.owadata.tar`. If you meet a `<name>.owapl.tar (n).gz` on disk it is
+`.owbible.tar.gz` and `.owadata.tar`. If you meet a `<name>.owapf.tar (n).gz` on disk it is
 an old file, not a new bug.
 
 ### 14.8 Failure surfaces that are easy to miss
 
 - A damaged entry becomes ONE error row (`Invalid item`) plus a toast — the rest of the
-  playlist must still render, and the bad entry must survive a later write of the file
+  presenting flow must still render, and the bad entry must survive a later write of the file
   (PL-51).
 - `tran()` throws in dev on a missing Khmer key and blanks the page, so the locale pass
-  (§6d / LT-01) MUST cover the playlist strings: `Drop items here`,
-  `No items in this playlist`, `No slides`, `Not Supported Item Type`, `Preview Playlist`,
-  `Open Preview`, `Remove from Playlist`, `Choose Color`, `Move up`, `Move down`,
+  (§6d / LT-01) MUST cover the presenting flow strings: `Drop items here`,
+  `No items in this presentingFlow`, `No slides`, `Not Supported Item Type`, `Preview PresentingFlow`,
+  `Open Preview`, `Remove from PresentingFlow`, `Choose Color`, `Move up`, `Move down`,
   `Collapse All`, `Expand All`, `Slide Thumbnail Size Scale`, `Import`, `Export`,
   `Fail to read file data` — plus everything the action families added since:
   `Add Action`, `Other Clear FG Items`, every action label, `Set Specific Screen`,
@@ -791,22 +791,22 @@ an old file, not a new bug.
   `Change Shortcut`, `Keyboard Event`, `Shortcut`, `Press a shortcut`,
   and each refusal toast (`This element takes only one CC element`,
   `This element does not accept CC element`, `The set time is already due`,
-  `This shortcut is already used in this playlist`,
+  `This shortcut is already used in this presentingFlow`,
   `Attach the elements to show as CC elements`,
-  `Open the playlist preview to use this action`). A menu that renders BLANK in Khmer is
+  `Open the presentingFlow preview to use this action`). A menu that renders BLANK in Khmer is
   this throw, not a styling bug — read the console for the key name.
 - **The action rows are the ones to re-check after any new label**: their text is built as
   `tran(label)` + the arming value appended AFTER translation, so a new action ships a new
   key every time.
-- There is **no save button** anywhere in this panel: every mutation writes the `.owp`
+- There is **no save button** anywhere in this panel: every mutation writes the `.owpf`
   through immediately. "Nothing happened" therefore means the write failed, not that a
   save is pending.
 
 ### 14.9 Actions — a run sheet holds things to DO (PL-71..PL-74, PL-95..PL-97)
 
 Added 2026-08-04. An action is stored as `{type:'action', data:<id>}` (+ its arming
-value) and resolved live against the registry in `playlistActionHelpers.ts`, so the row's
-label follows the locale and nothing is baked into the file. `PLAYLIST_ACTION_TYPE` is
+value) and resolved live against the registry in `presentingFlowActionHelpers.ts`, so the row's
+label follows the locale and nothing is baked into the file. `PRESENTING_FLOW_ACTION_TYPE` is
 deliberately **not** a `DragTypeEnum`: nothing but the **Add Action** menu can produce one,
 and `acceptedDragTypeList` must keep refusing it.
 
@@ -820,16 +820,16 @@ Two families, split by a `target` discriminant — the difference decides the wh
   clear on purpose — it drives the background manager, so `Clear Background` covers it.
   The last two are **`Screen: Show` / `Screen: Hide`** (below), which are about the
   WINDOW rather than about what is on it.
-- **`target: 'run'` (4)** — `start(playlistItem)`; drives the RUN, reaches no screen of its
+- **`target: 'run'` (4)** — `start(presentingFlowItem)`; drives the RUN, reaches no screen of its
   own. `Next: Interval`, `Next: Timeout` (§14.11), `Jump to` (§14.11), `Keyboard Event`
   (§14.12). Their menus must never offer **Show on Screens** / **Reveal Original**, and
   they must never appear in another row's **Add CC Elements** list — except the two that
   deliberately do (§14.10).
 
 **The menu is three levels** since 2026-08-06: the eight per-widget FG clears fold behind
-one **Other Clear FG Items** row with a chevron. `playlistActionMenuList` is the menu's
-SHAPE, `playlistActionList` the flat registry an id resolves against — only
-`PlaylistFileComp` reads the former, so a family added later folds itself away. Its
+one **Other Clear FG Items** row with a chevron. `presentingFlowActionMenuList` is the menu's
+SHAPE, `presentingFlowActionList` the flat registry an id resolves against — only
+`PresentingFlowFileComp` reads the former, so a family added later folds itself away. Its
 second level reads **clear something → clear one FG widget → put the screen up or down →
 move the run on**, twelve rows in that order.
 
@@ -909,8 +909,8 @@ The rules that get "fixed" by mistake:
   on time.
 - A **timeout may be a CC element and an interval may not** — a slide can carry "go on by
   yourself in N seconds"; nothing may carry a loop no input can stop.
-- With the preview closed, or open on ANOTHER playlist, firing any run action toasts
-  **Open the playlist preview to use this action** and does nothing else. That is why
+- With the preview closed, or open on ANOTHER presenting flow, firing any run action toasts
+  **Open the presenting flow preview to use this action** and does nothing else. That is why
   these rows can only be tested with the widget open.
 
 ### 14.12 `Keyboard Event` — the hotkey line (PL-97, PL-98)
@@ -926,7 +926,7 @@ attached to it on the screens.
 - The stored form is the canonical `Ctrl+Shift+A`, **not** the platform-formatted
   `⌃⇧ A` — and that string IS the row's label, so there is no prettier second form to
   drift.
-- **Unique per playlist**, enforced at the write funnel: a second line answering the same
+- **Unique per presenting flow**, enforced at the write funnel: a second line answering the same
   key is refused out loud, and a **Duplicate** keeps the CCs but comes back UNARMED rather
   than claiming the key.
 - It is **the only run action that resolves screens**, because its CCs are its whole
@@ -954,7 +954,7 @@ Three layers, one code path, all tar/tar.gz (no zip dependency anywhere):
 
 | file | holds |
 | --- | --- |
-| `.owapl.tar.gz` | a playlist + the whole document behind every slide reference + media + `.bg.json` sidecars |
+| `.owapf.tar.gz` | a presenting flow + the whole document behind every slide reference + media + `.bg.json` sidecars |
 | `.owadoc.tar.gz` / `.owbible.tar.gz` | ONE document (or bible list) + everything attached to it |
 | `.owadata.tar` | the whole data folder — File → Export/Import Data; uncompressed and with no staging copy, on purpose |
 
@@ -964,7 +964,7 @@ archive kind means adding a CONFIG, not copying the layer.
 
 ### 14.15 Driving this panel through CDP
 
-- **Read the `.owp` on disk to settle "did it save?"** — dev writes to
+- **Read the `.owpf` on disk to settle "did it save?"** — dev writes to
   `Desktop\open-worship-data-dev`, NOT the packaged data folder. A tree that looks wrong
   while the file is right is a stale HMR render: reload before filing.
 - **Never `import()` an app module inside `evaluate_script`.** It re-runs
@@ -972,7 +972,7 @@ archive kind means adding a CONFIG, not copying the layer.
   rest of the session — which then looks exactly like a broken hotkey feature.
 - Synthetic `press_key` DOES drive the run keys and the hotkeys (ordinary `keydown`
   listeners); only Monaco needs genuine OS foreground focus.
-- A real `.owapl.tar.gz` drop is drivable: dispatch a plain bubbling `Event('drop')` with a
+- A real `.owapf.tar.gz` drop is drivable: dispatch a plain bubbling `Event('drop')` with a
   fabricated `dataTransfer` and stamp `appFilePath` on the `File` (CLAUDE.md's file-drop
   note). That runs the whole import pipeline against a file on disk.
 - The floating preview's keys are focus-gated — if a press does nothing, check

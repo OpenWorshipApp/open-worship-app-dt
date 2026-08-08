@@ -129,7 +129,7 @@ export function getAvailableLyricStages() {
  * which handed back the very same cached instance stage 1 was already using —
  * so a second pane rendered a byte-identical clone under a label claiming it
  * was something else, and `genCacheKey`'s `stage:` part could not tell the two
- * apart either. Callers that resolve a PERSISTED stage (playlist items,
+ * apart either. Callers that resolve a PERSISTED stage (presenting flow items,
  * `lyricSlideScreenHelpers`) need this to stay total, so an out-of-range stage
  * clamps to the nearest registered one instead of failing.
  */

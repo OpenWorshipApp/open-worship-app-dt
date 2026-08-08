@@ -13,9 +13,9 @@ import ScreenVaryAppDocumentManager from './ScreenVaryAppDocumentManager';
  * global `update` event (`useScreenVaryAppDocumentManagerEvents(['update'])`),
  * which re-rendered EVERY preview on EVERY screen change even though at most
  * two of them change their highlight. Measured live on refactor23: one click
- * with a 89-slide document open cost 96 React commits, and with the playlist
+ * with a 89-slide document open cost 96 React commits, and with the presenting flow
  * preview open as well 205 commits / 204 `root.render()` calls into the
- * previews' shadow roots — the same for a playlist click and for a click on the
+ * previews' shadow roots — the same for a presenting flow click and for a click on the
  * previewer's own card, because the cost was never in the click path.
  *
  * Here the managers are subscribed ONCE for the whole window and every preview

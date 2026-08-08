@@ -74,45 +74,45 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
 ## Presenter window layout (3 resizable columns)
 
 ### Left column — lists
-Two widgets only, top to bottom: **Documents**, then **Playlists**. The separate
+Two widgets only, top to bottom: **Documents**, then **Presenting Flows**. The separate
 **Lyrics** list is gone — `.owl` lyrics live in the Documents list (icon
-`bi bi-music-note`) — and the Playlists panel took its slot (`203d35cc`, 2026-08-04).
+`bi bi-music-note`) — and the Presenting Flows panel took its slot (`203d35cc`, 2026-08-04).
 
 - **Documents** list: header text `Documents`; items are `li.list-group-item`
   (selected item has `.active`); icons `bi bi-file-earmark-slides` / `-pdf` /
   `-music-note` (lyric) etc.
-- **Playlists** list: header text `Playlists` (តារាងកម្មវិធី); present in **every**
+- **Presenting Flows** list: header text `PresentingFlows` (តារាងកម្មវិធី); present in **every**
   build — no longer dev-gated. Cards are `li.list-group-item`; inside an opened card the
-  elements are `.app-playlist-row` (`.app-playlist-row-error` for a damaged entry,
+  elements are `.app-presenting-flow-row` (`.app-presenting-flow-row-error` for a damaged entry,
   `.app-on-screen` on the label while live). Header icon `bi-window-stack` opens the
-  floating preview (`.app-playlist-preview`, portaled to `body`). See knowledge-base §14.
+  floating preview (`.app-presenting-flow-preview`, portaled to `body`). See knowledge-base §14.
 
-#### Playlist deep-mode selectors (the assertions PL-32..PL-99 are read from)
+#### Presenting Flow deep-mode selectors (the assertions PL-32..PL-99 are read from)
 
 Prefer these over text — the labels are translated, these are not. Component elements can
-also be found by `[data-react-comp-name="PlaylistRowComp"]` etc.
+also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
 
 | selector | means |
 |---|---|
-| `.app-playlist-row` | one element row in the tree |
-| `.app-playlist-row-index` / `.app-playlist-row-id` | its position number / its badge (`#3`, or an action's glyph — **tinted with the icon's colour for an action**) |
-| `.app-playlist-row-icon` | the kind icon; its inline `color` is the action's colour |
-| `.app-playlist-row-chevron` | the expand/collapse affordance (absent = nothing to expand) |
-| `.app-playlist-row-disabled` + `.app-playlist-row-disabled-icon` | **parked**; `…-icon-playlist` + `…-label-parked` + `bi-slash-circle` = parked by the RUN SHEET, plain `bi-eye-slash` = hidden by the document |
-| `.app-playlist-row-disabled-playlist` | the whole playlist card is parked |
-| `.app-playlist-row-screen-pin` | a **Set Specific Screen** pin is on this row (PL-81..85) |
-| `.app-playlist-row-color-note` | the colour dot (PL-52) |
-| `.app-playlist-cc-row` | a **CC element** row (PL-89..93) |
-| `.app-playlist-row-dragging-over` / `…-over-cc` | the drop target is a REORDER / an ATTACH-AS-CC — the two drops differ only by this class |
-| `.app-playlist-row-error` | a damaged entry (PL-51) |
-| `.app-playlist-preview` | the floating widget, portaled to `body` |
-| `.bi-window-stack.app-playlist-preview-showing` | on a playlist card's header icon: **this** is the playlist the one widget is showing (only ever one) |
-| `.app-playlist-preview-item` (`…-body`, `…-chevron`, `…-label`) | one element inside the widget; **the chevron's state is the fold memory** (PL-58) |
-| `.app-playlist-preview-item-selected` | **the run's cursor** — cyan `--bs-info` outline, on the label AND the slide card. Distinct from the magenta blinking `.app-highlight-selected`, which means "live on a screen" and can be on several cards at once |
-| `.app-playlist-preview-item-disabled` / `.app-playlist-preview-slide-disabled` (+ `…-icon`) | parked element / parked slide inside the widget |
-| `.app-playlist-preview-auto-next` (`…-interval`, `…-paused`, `…-button`) | the clock pill at the widget's top-right (PL-95) |
-| `.app-playlist-preview-cc-rows` | the CC rows under a slide card |
-| `.app-playlist-preview-collapsing-buttons` | **Collapse All** / **Expand All** (PL-47) |
+| `.app-presenting-flow-row` | one element row in the tree |
+| `.app-presenting-flow-row-index` / `.app-presenting-flow-row-id` | its position number / its badge (`#3`, or an action's glyph — **tinted with the icon's colour for an action**) |
+| `.app-presenting-flow-row-icon` | the kind icon; its inline `color` is the action's colour |
+| `.app-presenting-flow-row-chevron` | the expand/collapse affordance (absent = nothing to expand) |
+| `.app-presenting-flow-row-disabled` + `.app-presenting-flow-row-disabled-icon` | **parked**; `…-icon-presenting-flow` + `…-label-parked` + `bi-slash-circle` = parked by the RUN SHEET, plain `bi-eye-slash` = hidden by the document |
+| `.app-presenting-flow-row-disabled-presenting-flow` | the whole presenting flow card is parked |
+| `.app-presenting-flow-row-screen-pin` | a **Set Specific Screen** pin is on this row (PL-81..85) |
+| `.app-presenting-flow-row-color-note` | the colour dot (PL-52) |
+| `.app-presenting-flow-cc-row` | a **CC element** row (PL-89..93) |
+| `.app-presenting-flow-row-dragging-over` / `…-over-cc` | the drop target is a REORDER / an ATTACH-AS-CC — the two drops differ only by this class |
+| `.app-presenting-flow-row-error` | a damaged entry (PL-51) |
+| `.app-presenting-flow-preview` | the floating widget, portaled to `body` |
+| `.bi-window-stack.app-presenting-flow-preview-showing` | on a presenting flow card's header icon: **this** is the presenting flow the one widget is showing (only ever one) |
+| `.app-presenting-flow-preview-item` (`…-body`, `…-chevron`, `…-label`) | one element inside the widget; **the chevron's state is the fold memory** (PL-58) |
+| `.app-presenting-flow-preview-item-selected` | **the run's cursor** — cyan `--bs-info` outline, on the label AND the slide card. Distinct from the magenta blinking `.app-highlight-selected`, which means "live on a screen" and can be on several cards at once |
+| `.app-presenting-flow-preview-item-disabled` / `.app-presenting-flow-preview-slide-disabled` (+ `…-icon`) | parked element / parked slide inside the widget |
+| `.app-presenting-flow-preview-auto-next` (`…-interval`, `…-paused`, `…-button`) | the clock pill at the widget's top-right (PL-95) |
+| `.app-presenting-flow-preview-cc-rows` | the CC rows under a slide card |
+| `.app-presenting-flow-preview-collapsing-buttons` | **Collapse All** / **Expand All** (PL-47) |
 
 ### Middle column — presenter + background
 - **Presenter tabs** (`.nav.nav-tabs`): `Documents`, `Lyrics`, `Bibles`, `Foreground`.

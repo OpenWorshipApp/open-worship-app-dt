@@ -137,7 +137,7 @@ Use these when working against the running app via chrome-devtools:
   `dataTransfer` onto it — `{items: [{kind: 'file', webkitGetAsEntry: () => ({
   isFile: true }), getAsFile: () => file}]}` — since React only forwards the
   property. Stamp `appFilePath` on the `File` (the electron preload does this
-  for real drops) and handlers that resolve a real path, e.g. the playlist
+  for real drops) and handlers that resolve a real path, e.g. the presenting flow
   archive import, run end to end against a real file on disk.
 - **Never "Discard changed" during automated QA.** Only ever use Undo/Redo
   (non-destructive, reversible) to probe or restore editor state. The toolbar's
@@ -204,7 +204,7 @@ Use these when working against the running app via chrome-devtools:
   the consuming effect re-running; concentrated in
   `src/presenter-foreground/Foreground*.tsx`, `src/router/layoutHelpers.tsx`,
   `src/others/color/*`, `src/toast/ToastComp.tsx`), and render-prop callbacks
-  returning JSX (`src/playlist/PlaylistFileComp.tsx`,
+  returning JSX (`src/presenting-flow/PresentingFlowFileComp.tsx`,
   `src/setting/bible-setting/BibleXMLEditorComp.tsx`). `useAppEffect`/`useMemo`
   deps were left alone on purpose.
 - **Test-suite mock gotcha.** Many `*.test.tsx` still
@@ -232,11 +232,11 @@ already diverged once (the mirror was several revisions and seven memory files
 behind), so a mirror file that disagrees with its `.claude/` twin is stale by
 definition — re-copy it rather than reconciling the two by hand.
 
-**`playlist` is a tracked MODE, not a focus area.** `/owa-robot-test playlist` runs the
+**`presentingFlow` is a tracked MODE, not a focus area.** `/owa-robot-test presentingFlow` runs the
 11-phase deep pass (SKILL.md §6f, recipe test-plan §S20, model knowledge-base §14) over
 the 67 run-sheet rows `PL-10, PL-29, PL-32..76, PL-81..100` with coverage accounting on
-(`coverage-<runid>.json`, `"focus": "playlist"`), a scratch `zz-robot-<runid>` fixture that
-is torn down at the end, and the mandatory blocks ridden from the playlist itself. The
+(`coverage-<runid>.json`, `"focus": "presentingFlow"`), a scratch `zz-robot-<runid>` fixture that
+is torn down at the end, and the mandatory blocks ridden from the presenting flow itself. The
 other PL rows are the Documents/Lyrics lists — same prefix, different subsystem.
 
 **Screen controlling & presenting testing is mandatory in every run**, whatever

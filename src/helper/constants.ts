@@ -1,7 +1,7 @@
 const SELECT_DIR = 'select-dir';
 export const dirSourceSettingNames = {
     APP_DOCUMENT: `${SELECT_DIR}-app-document`,
-    PLAYLIST: `${SELECT_DIR}-playlist`,
+    PRESENTING_FLOW: `${SELECT_DIR}-presenting-flow`,
     BACKGROUND_IMAGE: `${SELECT_DIR}-image-bg`,
     BACKGROUND_VIDEO: `${SELECT_DIR}-video-bg`,
     BACKGROUND_WEB: `${SELECT_DIR}-web-bg`,
@@ -12,7 +12,7 @@ export const dirSourceSettingNames = {
 };
 export const defaultDataDirNames = {
     APP_DOCUMENT: 'documents',
-    PLAYLIST: 'playlists',
+    PRESENTING_FLOW: 'presenting-flows',
     BACKGROUND_IMAGE: 'images',
     BACKGROUND_VIDEO: 'videos',
     BACKGROUND_WEB: 'webs',
@@ -32,6 +32,14 @@ export const defaultDataDirNames = {
 export const appManagedDataDirNames = {
     BIBLE_DATA: 'bibles-data',
 };
+
+/**
+ * Marks the one-off rename migration (`presentingFlowRenameMigration`) as done.
+ * Held here, in a leaf module, so `init()` can check it without pulling the
+ * migration itself into the launch bundle.
+ */
+export const PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME =
+    'presenting-flow-rename-migrated';
 
 export const fontSizeSettingNames = {
     BIBLE_PRESENTER: 'bible-preview-font-size:presenter',

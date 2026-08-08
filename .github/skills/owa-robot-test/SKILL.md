@@ -1,7 +1,7 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the shipped prebuilt yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~645 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). The argument "playlist" (or "run sheet") selects PLAYLIST DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 67 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..100) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch playlist and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
-argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "playlist" for the tracked deep run-sheet pass — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the shipped prebuilt yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~645 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 67 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..100) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
 # OWA Robot Test — QA e2e via chrome-devtools-mcp
@@ -19,7 +19,7 @@ unit or Playwright tests.
 ## When to use
 
 - "Robot test the app", "QA the UI", "smoke test the running app", "find UI issues".
-- **"playlist" / "run sheet"** → **playlist deep mode** (§6f): the tracked, phase-by-phase
+- **"presenting flow" / "run sheet"** → **presenting flow deep mode** (§6f): the tracked, phase-by-phase
   pass over the whole run-sheet subsystem, with coverage accounting on.
 - After a feature/refactor, to verify nothing is visually or interactively broken.
 - To collect console errors, failed network requests, and accessibility gaps from the
@@ -166,7 +166,7 @@ over the pages — `presenter` → `reader` → `appDocumentEditor` → `setting
 each per step 5. **Whatever the focus, two blocks always run: the screen-controlling
 block (§6a) and the locale-switch block (§6d).**
 
-If the user named **"playlist"** / **"run sheet"**, run **playlist deep mode (§6f)** — a
+If the user named **"presenting flow"** / **"run sheet"**, run **presenting flow deep mode (§6f)** — a
 tracked mode, not a trimmed focus: coverage accounting is on, the phases run in order, and
 the mandatory blocks ride inside them.
 
@@ -303,7 +303,7 @@ single-window walkthrough that opens the editor **in-place** (the `Slide Editor`
 > *re-present* apply-path, not by expecting it to change on save. See KB §12.2 / §12.4.
 
 **Run scenario [test-plan.md §S18], rows `XW-01..07`, whenever the run touches the editor,
-the document/lyric/playlist lists, or the `useFileSourceEvents`/file-reload wiring** (a
+the document/lyric/presenting-flow lists, or the `useFileSourceEvents`/file-reload wiring** (a
 focused "test the editor" run included). In short (full recipe + why-CDP-can't-edit +
 CDP-drivable-edit techniques are in **KB §12** — read it first):
 
@@ -455,21 +455,21 @@ and the `(1)` de-duplication suffix are all documented in the matrix §MD — re
 reporting a download failure. A `(1)` on the run's *first* download means step 0 was
 skipped, not that the app misbehaved.
 
-### 6f. PLAYLIST DEEP MODE — the run sheet, exhaustively (argument `playlist`)
+### 6f. PRESENTING_FLOW DEEP MODE — the run sheet, exhaustively (argument `presentingFlow`)
 
-The Playlists panel is the app's **run sheet**: the one panel an operator looks at for the
+The Presenting Flows panel is the app's **run sheet**: the one panel an operator looks at for the
 whole service. It is also the subsystem that grew fastest (actions, CC elements, the two
 clocks, pinning, hotkeys, archives — all since 2026-08-04), so it carries the most rules
 per square centimetre in the app and the most ways to ship a silent regression.
 
-**Trigger.** The argument names the run sheet — `playlist`, `playlists`, `run sheet`,
-`.owp`. That is **not a focus area that trims the run**; it selects a MODE:
+**Trigger.** The argument names the run sheet — `presentingFlow`, `presentingFlows`, `run sheet`,
+`.owpf`. That is **not a focus area that trims the run**; it selects a MODE:
 
 - **Coverage accounting (§6b) is ON**, exactly as in full-coverage mode, with
-  `"focus": "playlist"` in `coverage-<runid>.json`. Every row in the scope set below ends
+  `"focus": "presentingFlow"` in `coverage-<runid>.json`. Every row in the scope set below ends
   the run with a status. Resume the newest matching state file rather than restarting.
 - **The three mandatory blocks still run** (§6a screen, §6d locale, §6e media) — and §6a
-  is ridden *from the playlist* (present a row, drive the `screen.html` target), so it
+  is ridden *from the presenting flow* (present a row, drive the `screen.html` target), so it
   costs almost nothing extra here.
 - **The phases below are run in order**, each with its own evidence. A phase that is
   skipped is reported as skipped, with its rows BLOCKED and the reason.
@@ -483,22 +483,22 @@ behind every PL row and says which "odd" behaviours are deliberate), the matrix'
 rows themselves (their `Expected` column is the assertion — do not re-invent it), and
 test-plan **§S20** for the recipe order.
 
-#### Scope set (66 playlist rows + adjacencies)
+#### Scope set (66 presenting flow rows + adjacencies)
 
 > **PL-10, PL-29, PL-32..PL-76, PL-81..PL-100** — the run sheet itself.
 >
 > **Adjacent, required when the run touches them:** `PL-77..PL-80` + `NAV-17/18` (the
 > single-document `.owadoc` and whole-data `.owadata` archives — the same three-layer
-> archive code the playlist bundle rides on), `XW-01..07` (§6c: a document edited in
+> archive code the presenting flow bundle rides on), `XW-01..07` (§6c: a document edited in
 > another window must reach the sheet's rows), `SP`/`SC`/`LT`/`MD` (mandatory core).
 >
 > `PL-01..PL-09`, `PL-11..PL-28`, `PL-30/31` are the **Documents/Lyrics lists and the
 > generic file-list chrome** — out of scope in this mode except where the fixture uses
-> them (creating the scratch playlist, dropping files in).
+> them (creating the scratch presenting flow, dropping files in).
 
 #### P0 — Fixture: build the sheet you are going to drive
 
-**Never test in the user's own playlists.** Create `zz-robot-<runid>` (list ⋮ → new) and
+**Never test in the user's own presenting flows.** Create `zz-robot-<runid>` (list ⋮ → new) and
 build it up by drop until it holds, at minimum, one of each thing the rest of the mode
 needs: a **document**, a **single slide** of a document, a **lyric slide** (proves the
 `stage` is carried — PL-64), a **background** image or colour, a **bible verse**, a
@@ -528,7 +528,7 @@ must be proved once per run, in the direction that can regress:
 Expansion, reorder, **Move up/down/to Top/to Bottom** with their edge gating, **Duplicate**
 (a copy that re-keys its uuid and drops an armed shortcut — PL-97), **Disable** (parked)
 including a parked document's slides, the on-screen indicator at **all three levels**
-(playlist card → element → slide), and expansion memory that follows the DOCUMENT rather
+(presenting flow card → element → slide), and expansion memory that follows the DOCUMENT rather
 than the position (PL-53).
 
 #### P3 — Actions, both families (PL-71..PL-74, PL-95, PL-96, PL-97)
@@ -538,7 +538,7 @@ behind **Other Clear FG Items** (PL-71). Two families, and the difference is the
 point:
 
 - **Screen actions** (13) — `apply(screenManager)`. **Fire every one of them at least
-  once against a real, showing screen** (PL-72, PL-74). They are the only playlist rows
+  once against a real, showing screen** (PL-72, PL-74). They are the only presenting flow rows
   that write to a screen while carrying no content; a mis-wired clear is invisible in the
   tree.
 - **Run actions** (4) — they drive the RUN, not a screen: `Next: Interval`,
@@ -578,39 +578,39 @@ ones that regressed most recently:
 
 #### P7 — Failure surfaces (PL-50, PL-51, PL-55, PL-56)
 
-Empty/unreadable placeholders; a hand-corrupted `.owp` entry that must become ONE error
+Empty/unreadable placeholders; a hand-corrupted `.owpf` entry that must become ONE error
 row without taking the list with it **and must survive the next write of the file**; the
-deliberate no-ops (cross-playlist drag adds nothing — PL-55) and the unsupported-payload
+deliberate no-ops (cross-presenting-flow drag adds nothing — PL-55) and the unsupported-payload
 toast (PL-56).
 
 #### P8 — Archives, on real files (PL-39, PL-40, PL-45, PL-65..PL-68, PL-76)
 
 Export → import round trip. The import contract is **all-or-nothing**: with a required
 folder unset it must fail **before writing anything** (PL-66). Re-importing the same
-bundle reuses same-named files and de-duplicates the playlist as `<name> (1).owp`
+bundle reuses same-named files and de-duplicates the presenting flow as `<name> (1).owpf`
 (PL-67); a bible entry is re-created in the **Default** list (PL-68). A CDP-driven drop of
-a real `.owapl.tar.gz` exercises the whole pipeline — fabricate the `dataTransfer` and
+a real `.owapf.tar.gz` exercises the whole pipeline — fabricate the `dataTransfer` and
 stamp `appFilePath` (KB §14.7).
 
 #### P9 — Performance guards (PL-63, PL-70) — the rows that only hurt on the target hardware
 
 Measure, do not eyeball: no `Maximum update depth exceeded` with a ~90-slide document
 expanded, the clicked row marks **immediately** (it bypasses the 500 ms debounce), an
-**idle** list opens no `.owp` files at all, a collapsed document's slides are **released**,
-and clicking a playlist row does not repaint every file row in the window (PL-63).
+**idle** list opens no `.owpf` files at all, a collapsed document's slides are **released**,
+and clicking a presenting flow row does not repaint every file row in the window (PL-63).
 
 #### P10 — Locale, then restore
 
-Run §6d over **this panel and its widget** — the playlist strings are listed in KB §14.8
+Run §6d over **this panel and its widget** — the presenting flow strings are listed in KB §14.8
 and a missing Khmer key **throws** and blanks the page. Then restore: delete the scratch
-playlist, remove what the import created (imported media, documents, the Default-list
+presenting flow, remove what the import created (imported media, documents, the Default-list
 verses), unpark anything you parked, unpin anything you pinned, stop any interval you
 armed, and hide the screen you showed. Anything you cannot remove goes in the report by
 name.
 
 #### Techniques this mode depends on
 
-- **Read the `.owp` on disk** to prove what was written (dev data lives in
+- **Read the `.owpf` on disk** to prove what was written (dev data lives in
   `Desktop\open-worship-data-dev`, **not** the packaged dir) — the tree can be a stale HMR
   render while the file is already correct.
 - **Never `import()` an app module inside `evaluate_script`** — it re-runs
@@ -641,7 +641,7 @@ name.
   no other row touches the shipped yt-dlp/ffmpeg/qjs, **plus `MD-04`** — how many
   leftovers the pre-download sweep found and the post-run listing showing both dirs clean.
   BLOCKED is acceptable only with no network, and must say so; `MD-04` is never BLOCKED.
-- In **playlist deep mode** (§6f) the report MUST additionally carry: the per-phase table
+- In **presenting flow deep mode** (§6f) the report MUST additionally carry: the per-phase table
   (P0..P10 → status), the coverage summary over the 67-row scope set, the fixture's name
   and **what was torn down vs. left behind**, and — because they are the rows most easily
   faked — an explicit line each for the **13 screen actions fired against a showing
@@ -662,7 +662,7 @@ name.
   media block's teardown actually happened (`MD-04`, §6e step 5): the videos and audios
   dirs hold no copy of the canonical title and no `temp-*.part`. This is the one block that writes
   ~100 MB per run, and the app suffixes duplicates instead of overwriting, so a missed
-  teardown compounds silently. The playlist fixture (`zz-robot-<runid>`, §6f) and any
+  teardown compounds silently. The presenting flow fixture (`zz-robot-<runid>`, §6f) and any
   scratch document/web item go the same way.
 - If YOU started `npm run dev` in step 2, **kill that terminal** to stop Vite + Electron
   (`concurrently -k` tears down both children).
@@ -790,5 +790,5 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
   checkpoints and EN/KM labels, each traceable to matrix rows; feeds tutorial mode (§9)
   and doc-verify mode (§10).
 - [references/test-plan.md](./references/test-plan.md) — scenario checklist, severity
-  scale, and the report template. **§S20** is the playlist deep mode's step-by-step
+  scale, and the report template. **§S20** is the presenting flow deep mode's step-by-step
   recipe; **KB §14** is its model.

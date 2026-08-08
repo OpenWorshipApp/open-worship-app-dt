@@ -11,7 +11,7 @@ import mimeLyricList from './mime/lyric-types.json';
 import mimeMarkdownList from './mime/markdown-types.json';
 import mimeAppDocumentList from './mime/app-document-types.json';
 import mimeImageList from './mime/image-types.json';
-import mimePlaylistList from './mime/playlist-types.json';
+import mimePresentingFlowList from './mime/presenting-flow-types.json';
 import mimeVideoList from './mime/video-types.json';
 import mimeAudioList from './mime/audio-types.json';
 import mimeWebList from './mime/web-types.json';
@@ -29,7 +29,7 @@ for (const ml of [
     mimeMarkdownList,
     mimeAppDocumentList,
     mimeImageList,
-    mimePlaylistList,
+    mimePresentingFlowList,
     mimeVideoList,
     mimeAudioList,
     mimeWebList,
@@ -93,7 +93,7 @@ const mimeTypesMapper = {
     pptx: [mimetypePptx],
     docx: [mimetypeDocx],
     image: mimeImageList,
-    playlist: mimePlaylistList,
+    presentingFlow: mimePresentingFlowList,
     video: mimeVideoList,
     web: mimeWebList,
     audio: mimeAudioList,
@@ -163,7 +163,7 @@ export const createNewFileDetail = async (
         const filePath = pathJoin(dir, fileFullName);
         return await fsCreateFile(filePath, content);
     } catch (error: any) {
-        showSimpleToast('Creating Playlist', error.message);
+        showSimpleToast('Creating Presenting Flow', error.message);
     }
     return null;
 };
@@ -175,7 +175,7 @@ export const mimetypeNameTypeList = [
     'pptx',
     'pdf',
     'docx',
-    'playlist',
+    'presentingFlow',
     'lyric',
     'lyricAppDocument',
     'markdown',

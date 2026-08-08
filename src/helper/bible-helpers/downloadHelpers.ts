@@ -32,7 +32,7 @@ const MAX_REDIRECTS = 5;
 export function initHttpRequest(url: URL, redirectCount = 0) {
     return new Promise<IncomingMessage>((resolve, reject) => {
         // `node:http` and `node:https` are separate modules, and the port is not
-        // always the protocol default: a playlist archive may be served off a
+        // always the protocol default: a presenting flow archive may be served off a
         // laptop on `http://<host>:8000` with no TLS. Hardcoding https/443 made
         // those URLs unreachable. A redirect recurses through here, so a
         // cross-protocol hop is picked up too.

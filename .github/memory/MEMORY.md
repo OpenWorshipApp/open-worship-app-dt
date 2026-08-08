@@ -35,34 +35,35 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Full view toggle collapses a widget](full-view-toggle-collapses-widget.md) — it persists a zero-height Background panel; several elements share the title "Full view"
 - [Lyrics live in the Documents list](lyric-in-documents-list.md) — merge finished on refactor24: ONE selection, ONE previewer whose body swaps; no `selected-lyric`, no Lyrics tab
 - [appDocumentHelpers ↛ LyricAppDocument](app-document-helpers-lyric-cycle.md) — importing it closes a cycle through `AppDocument` and throws `class extends undefined`
-- [Playlist: references vs presets](playlist-references-vs-presets.md) — slides/documents are file references, backgrounds/bible/foregrounds are verbatim presets; foreground buttons now serialize themselves
+- [Presenting Flow: references vs presets](presenting-flow-references-vs-presets.md) — slides/documents are file references, backgrounds/bible/foregrounds are verbatim presets; foreground buttons now serialize themselves
 - [Screen window had no app fonts — FIXED](screen-window-has-no-app-fonts.md) — `screen.tsx` skipped `init()` + `getAllLangsAsync` never registered CSS; stage-CSS fixes are inert against open-lyric's inline dump
 - [On-screen setting parse amplification — FIXED](onscreen-setting-parse-amplification.md) — readers memoized on the raw setting string; the getters MUST keep returning a copy or a present wipes the other screen
 - [Reveal Original is a context item](reveal-original-context-menu.md) — the 3-second hover-to-locate is gone; use `genRevealOriginal`, and note it can't open a closed panel yet
-- [Playlists panel is no longer dev-only](playlist-panel-no-longer-dev-only.md) — `203d35cc` dropped the `isDev` gate and took the Lyric List's slot; every "dev builds only" note is stale
-- [Playlist on-screen marking design](playlist-onscreen-marking-design.md) — ONE shared subscription + shared debounce for the whole tree; per-row screen hooks hit "Maximum update depth exceeded"
-- [Playlist preview is a run player](playlist-preview-run-player.md) — forward-only focus-gated keys; a document element is walked slide by slide before the run leaves it
-- [Playlist screen pinning](playlist-screen-pinning.md) — `Set Specific Screen` rides `chooseScreenIds`; `isForceChoosing` and a drag deliberately outrank a pin
-- [Playlist screen actions](playlist-screen-actions.md) — a run sheet can hold things to DO; two families now (screen vs run), extend `playlistActionList`, never `acceptedDragTypeList`
-- [Playlist `Screen: Show` / `Screen: Hide`](playlist-screen-show-hide.md) — the only actions that NAME their screens; asked at add time, stored in the ordinary pin, and no ambient fallback ever
-- [Playlist auto next](playlist-auto-next.md) — the run walks itself and jumps; the CURSOR MOVING cancels a timeout and restarts an interval, raw clicks/keys mean nothing; a timeout may also be armed with a time of day
-- [Playlist CC elements](playlist-cc-elements.md) — followers that ride a host's present; copies not links, and they may never raise a second "which screen?" menu
+- [Presenting Flows panel is no longer dev-only](presenting-flow-panel-no-longer-dev-only.md) — `203d35cc` dropped the `isDev` gate and took the Lyric List's slot; every "dev builds only" note is stale
+- [Presenting Flow on-screen marking design](presenting-flow-onscreen-marking-design.md) — ONE shared subscription + shared debounce for the whole tree; per-row screen hooks hit "Maximum update depth exceeded"
+- [Presenting Flow preview is a run player](presenting-flow-preview-run-player.md) — forward-only focus-gated keys; a document element is walked slide by slide before the run leaves it
+- [Presenting Flow screen pinning](presenting-flow-screen-pinning.md) — `Set Specific Screen` rides `chooseScreenIds`; `isForceChoosing` and a drag deliberately outrank a pin
+- [Presenting Flow screen actions](presenting-flow-screen-actions.md) — a run sheet can hold things to DO; two families now (screen vs run), extend `presentingFlowActionList`, never `acceptedDragTypeList`
+- [Presenting Flow `Screen: Show` / `Screen: Hide`](presenting-flow-screen-show-hide.md) — the only actions that NAME their screens; asked at add time, stored in the ordinary pin, and no ambient fallback ever
+- [Presenting Flow auto next](presenting-flow-auto-next.md) — the run walks itself and jumps; the CURSOR MOVING cancels a timeout and restarts an interval, raw clicks/keys mean nothing; a timeout may also be armed with a time of day
+- [Presenting Flow CC elements](presenting-flow-cc-elements.md) — followers that ride a host's present; copies not links, and they may never raise a second "which screen?" menu
 - [Downloads are protocol-aware now](http-downloads-protocol-aware.md) — only `initHttpRequest` speaks plain http; `httpUtils.request` is still https/443-only
-- [`.owapl.tar.gz` playlist archive](playlist-archive-owapl.md) — bundles the whole documents behind slide references; import resolves every destination folder before writing anything
+- [`.owapf.tar.gz` presenting flow archive](presenting-flow-archive-owapf.md) — bundles the whole documents behind slide references; import resolves every destination folder before writing anything
 - [Single-item archives (`.owadoc` / `.owbible`)](document-archive-owadoc.md) — one document, lyric or bible list + everything attached to it; three layers, add a config not a copy
 - [Whole-data archive (`.owadata.tar`)](data-archive-owadata.md) — File → Export/Import Data; uncompressed + no staging copy on purpose, and the File menu now takes renderer items
 - [Archive password protection](archive-password-protection.md) — every export asks; the kind stays in the `.enc` name but detection is by magic, and the dialog is loaded on demand
-- [Playlist drag & setting rules](playlist-drag-and-settings-rules.md) — `playlistDraggingStore` makes cross-playlist drag a silent no-op; setting names must be sanitized paths
+- [Presenting Flow drag & setting rules](presenting-flow-drag-and-settings-rules.md) — `presentingFlowDraggingStore` makes cross-presenting-flow drag a silent no-op; setting names must be sanitized paths
 - [Reader full ref not resolved](reader-full-ref-not-resolved.md) — typing `John 3:16` in the Bible Reader drops the chapter:verse; the five docs that claimed otherwise are now corrected
 - [PDF preload decodes all pages — FIXED](pdf-preload-decodes-all-pages.md) — presenter load turned a selected 88-page PDF into 162MB of bitmap; preload is now file-scoped and sizes come from the PNG header
 - [Dev Electron hardcodes port 3000](dev-electron-hardcodes-port-3000.md) — a stale Vite there gets silently attached while your own dev server sits on :3001
-- [Playlist Keyboard Event](playlist-keyboard-event.md) — the hotkey line: Ctrl/Shift only, unique per sheet, and the ONE run action that resolves screens because its CC elements are its whole payload
+- [Presenting Flow Keyboard Event](presenting-flow-keyboard-event.md) — the hotkey line: Ctrl/Shift only, unique per sheet, and the ONE run action that resolves screens because its CC elements are its whole payload
 - [`document` at module scope breaks node tests](appprovider-mock-node-env.md) — `appProvider` touches `document` on load, so ANY node-env test that reaches `langHelpers` dies while importing
 - [CacheManager expiry was sliding — FIXED](filesource-cache-sliding-ttl.md) — every read pushed the timestamp forward, so a frequently-read entry never expired; now absolute
-- [A playlist reads its editing-history HEAD](playlist-reads-editing-history-head.md) — not the `.owp`; hand-editing the `.owp` changes nothing the app reads, which once cost a wrong High finding
-- [Playlist lyric attachment slide — FIXED](playlist-lyric-slide-dead-row.md) — `getSlideById` only searched `getSlidesQuick()`, which never lists the appended attachment slides
-- [`/owa-robot-test playlist` is a MODE](owa-robot-test-playlist-mode.md) — tracked 11 phases over 66 run-sheet rows with coverage accounting on, not a focus area that trims the run
+- [A presenting flow reads its editing-history HEAD](presenting-flow-reads-editing-history-head.md) — not the `.owpf`; hand-editing the `.owpf` changes nothing the app reads, which once cost a wrong High finding
+- [Presenting Flow lyric attachment slide — FIXED](presenting-flow-lyric-slide-dead-row.md) — `getSlideById` only searched `getSlidesQuick()`, which never lists the appended attachment slides
+- [`/owa-robot-test presentingFlow` is a MODE](owa-robot-test-presenting-flow-mode.md) — tracked 11 phases over 66 run-sheet rows with coverage accounting on, not a focus area that trims the run
 - [Canvas audio & media links](canvas-audio-and-media-links.md) — the `audio` item is preview-only; a media source may be a link, and "is it remote?" (archive/menu) is NOT "is it already a URL?" (renderers); lyric attachments become such items
 - [Lyric passes the AppDocument type check](lyric-passes-appdocument-typecheck.md) — `checkIsThisType` is `instanceof`, so every editability gate must also test `isEditable`
 - [Settings write race corrupts the on-screen map](settings-write-race-corrupts-onscreen-map.md) — OPEN: `unlocking()` is per-renderer and the write is non-atomic, so showing a screen can blank every screen after the next reload
 - [Monaco `.css` test failure — FIXED](monaco-css-test-failure-local-open-lyric.md) — tests now mock open-lyric / bail before importing it; do NOT "fix" it by inlining the dep, that's strictly worse
+- [Presenting flow rename](presenting-flow-rename.md) — the old word is gone project-wide; `--no-playlist` (yt-dlp) and `displayListeners` are lookalikes, and the migration discovers the old name rather than holding one

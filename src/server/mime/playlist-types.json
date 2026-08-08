@@ -1,8 +1,0 @@
-[
-    {
-        "type": "OpenWorship Playlist",
-        "title": "Json file for OpenWorship playlist",
-        "mimetypeSignatures": ["application/json"],
-        "extensions": [".owp"]
-    }
-]

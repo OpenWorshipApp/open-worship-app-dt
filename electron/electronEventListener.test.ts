@@ -249,7 +249,7 @@ describe('electronEventListener', () => {
             {
                 replyEventName: 'reply:encrypt',
                 filePath: '/tmp/plain-archive.tmp',
-                outputFilePath: '/downloads/Service.owapl.enc',
+                outputFilePath: '/downloads/Service.owapf.enc',
                 password: 'In Jesus Christ',
             },
         );
@@ -257,7 +257,7 @@ describe('electronEventListener', () => {
             { sender },
             {
                 replyEventName: 'reply:decrypt',
-                filePath: '/downloads/Service.owapl.enc',
+                filePath: '/downloads/Service.owapf.enc',
                 outputFilePath: '/tmp/decrypted-archive',
                 password: 'In Jesus Christ',
             },
@@ -266,17 +266,17 @@ describe('electronEventListener', () => {
             { sender },
             {
                 replyEventName: 'reply:is-encrypted',
-                filePath: '/downloads/Service.owapl.enc',
+                filePath: '/downloads/Service.owapf.enc',
             },
         );
 
         expect(encryptFile).toHaveBeenCalledWith(
             '/tmp/plain-archive.tmp',
-            '/downloads/Service.owapl.enc',
+            '/downloads/Service.owapf.enc',
             'In Jesus Christ',
         );
         expect(decryptFile).toHaveBeenCalledWith(
-            '/downloads/Service.owapl.enc',
+            '/downloads/Service.owapf.enc',
             '/tmp/decrypted-archive',
             'In Jesus Christ',
         );

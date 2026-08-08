@@ -66,7 +66,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
  * Export/import ONE list-item file as a self-contained bundle — a document
  * (`src/app-document-list/appDocumentArchiveHelpers.ts`) or a bible list
  * (`src/bible-list/bibleArchiveHelpers.ts`). It is the single-item counterpart
- * of the playlist bundle and shares all of its machinery via
+ * of the presenting flow bundle and shares all of its machinery via
  * `appArchiveHelpers`, so the two can never disagree about how files are
  * collected, where they land, or when a local one is reused.
  *

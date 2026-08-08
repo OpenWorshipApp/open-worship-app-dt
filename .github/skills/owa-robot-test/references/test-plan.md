@@ -295,14 +295,14 @@ runtime could be found` is a real Critical. A failed attempt also leaves an orph
 `temp-*.part` behind (known app bug — the error path does not remove partials); step 5
 takes it.
 
-### S20 — Playlist deep pass `[PL-10, PL-29, PL-32..76, PL-81..100]` — the whole run sheet
+### S20 — Presenting Flow deep pass `[PL-10, PL-29, PL-32..76, PL-81..100]` — the whole run sheet
 
-The recipe for **playlist deep mode** (SKILL.md §6f), run whenever the argument is
-`playlist` / `run sheet`, and in its short form inside every full-coverage run. **Read
+The recipe for **presenting flow deep mode** (SKILL.md §6f), run whenever the argument is
+`presentingFlow` / `run sheet`, and in its short form inside every full-coverage run. **Read
 KB §14 in full first** — it is the model behind every row, and several of these rows exist
 because the behaviour they assert was once "fixed" the wrong way.
 
-Coverage accounting is ON in this mode: `coverage-<runid>.json` with `"focus":"playlist"`,
+Coverage accounting is ON in this mode: `coverage-<runid>.json` with `"focus":"presentingFlow"`,
 every scope row ending with a status.
 
 1. **P0 fixture** — create `zz-robot-<runid>` (never the user's own sheets) and drop in one
@@ -333,17 +333,17 @@ every scope row ending with a status.
    stepped over, that the landing UNFOLDS, and that a document is entered at its first
    slide; fold memory, restricted slide menu, widget frame, every menu mirroring the
    tree's, the clocks' pill. `[PL-38, PL-42, PL-46..48, PL-58..61, PL-94, PL-98, PL-99]`
-8. **P7 failure surfaces** — empty/unreadable placeholders; a hand-corrupted `.owp` entry
+8. **P7 failure surfaces** — empty/unreadable placeholders; a hand-corrupted `.owpf` entry
    becomes ONE error row, the rest still renders, and the bad entry **survives the next
    write**; the deliberate no-ops. `[PL-50, PL-51, PL-55, PL-56]`
 9. **P8 archives** — export → import round trip on real files; all-or-nothing failure with
    a folder unset; same-bundle re-import reuse + `(1)` de-duplication; a bible entry
-   re-created in the **Default** list; a CDP-driven drop of a real `.owapl.tar.gz`.
+   re-created in the **Default** list; a CDP-driven drop of a real `.owapf.tar.gz`.
    `[PL-39, PL-40, PL-45, PL-65..68, PL-76]` (+ `PL-77..80`, `NAV-17/18` when the run
    covers the document/whole-data archives too)
 10. **P9 performance** — measured, not eyeballed: no `Maximum update depth exceeded` with a
     ~90-slide document expanded, the clicked row marks immediately, an IDLE list opens no
-    `.owp` files, a collapsed document releases its slides, and a row click does not
+    `.owpf` files, a collapsed document releases its slides, and a row click does not
     repaint every file row in the window. `[PL-63, PL-70]`
 11. **P10 locale + restore** — §S15 over this panel and its widget (KB §14.8 lists the
     strings; a missing Khmer key blanks the menu). Then delete the fixture, remove what the
@@ -444,18 +444,18 @@ Write to `test-results/robot-test/report-<timestamp>.md`:
 - (If skipped: `BLOCKED` + "no network" — never skip silently; a 403 is a retry, not a
   skip. MD-04 is never BLOCKED: with nothing downloaded it is the sweep alone)
 
-## Playlist deep mode (required when the focus was `playlist` — S20)
+## PresentingFlow deep mode (required when the focus was `presentingFlow` — S20)
 
 - Fixture: `zz-robot-<runid>` · torn down: <yes / what was left behind and why>
 - Phases: P0 <status> · P1 <status> · P2 <status> · P3 <status> · P4 <status> ·
   P5 <status> · P6 <status> · P7 <status> · P8 <status> · P9 <status> · P10 <status>
 - Screen actions fired against a SHOWING screen: <n>/13 (PL-72/74)
 - Folded-sheet walk (PL-99): <lines visited> / <lines in sheet>, stepped over: <the parked ones>
-- Performance (PL-63/70): <the numbers — update-depth errors, idle `.owp` reads, row-click repaints>
+- Performance (PL-63/70): <the numbers — update-depth errors, idle `.owpf` reads, row-click repaints>
 
 ## Coverage (full-coverage runs — from coverage-<runid>.json)
 
-- Matrix version: <date> · rows total: 634 (or 66 in playlist deep mode — see its scope set)
+- Matrix version: <date> · rows total: 634 (or 66 in presentingFlow deep mode — see its scope set)
 - PASS <n> · FAIL <n> · PARTIAL <n> · BLOCKED <n> · EXCLUDED <n>
 - **Coverage: <exercised> / <in-scope> = <xx.x>%**  (exercised = PASS+FAIL;
   in-scope = total − EXCLUDED)

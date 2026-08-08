@@ -50,7 +50,7 @@ export function handleAppDocumentDragStart(event: any, filePath: string) {
 }
 
 // Split out of `extractDropData` so a caller that also needs the raw payload —
-// a playlist stores it verbatim — does not have to re-implement the parse.
+// a presenting flow stores it verbatim — does not have to re-implement the parse.
 export function extractDragData(event: any): DragDataType<any> | null {
     const data = event.dataTransfer.getData('text');
     if (!data) {

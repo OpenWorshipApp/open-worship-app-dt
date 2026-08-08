@@ -280,7 +280,7 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             // The quick list is `structure` alone, so it cannot see the slides
             // this stage APPENDS — the attachment slides (`genSlidesFromAttachments`)
             // and whatever `extendExtraSlide` adds, which are numbered after the
-            // structure's own. A playlist stores a lyric slide by id, and an id
+            // structure's own. A presenting flow stores a lyric slide by id, and an id
             // from up there missed here and left the entry unreadable: the row
             // previewed "Fail to read file data" and presented nothing at all.
             // Falling back to the full list is the slow path on purpose — it

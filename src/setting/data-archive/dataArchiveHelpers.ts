@@ -48,7 +48,7 @@ import {
 /**
  * Export/import the app's WHOLE data set — the folders listed on the Path
  * Settings page — as one `.owadata.tar`. This is the backup/move-machines
- * counterpart of the per-item bundles: a document or playlist bundle carries
+ * counterpart of the per-item bundles: a document or presenting flow bundle carries
  * one thing plus what it references, this carries the folders themselves.
  *
  * **Not gzipped, and written straight from the user's folders.** The data is

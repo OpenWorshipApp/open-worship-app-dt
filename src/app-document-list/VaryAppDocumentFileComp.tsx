@@ -334,7 +334,7 @@ export default function VaryAppDocumentFileComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // A document travels as a plain reference so a playlist can hold "open this
+    // A document travels as a plain reference so a presenting flow can hold "open this
     // document" without copying any of its slides.
     const handleDraggingStart = useCallback((event: any) => {
         handleAppDocumentDragStart(event, filePath);

@@ -126,7 +126,7 @@ export function genScreenMouseEvent(event?: any): MouseEvent {
 // (plus the screen-list setting, which `getValidOnScreen` filters against).
 // They are read from React render bodies and from `checkIsAnythingOnScreen`,
 // which asks all four at once — un-memoized that was eight full `JSON.parse`
-// passes per playlist row per screen event. Each getter still returns a COPY,
+// passes per presenting flow row per screen event. Each getter still returns a COPY,
 // because the persist paths read the map, add or delete their own screen's key
 // and write the whole thing back.
 const readForegroundDataListOnScreen =

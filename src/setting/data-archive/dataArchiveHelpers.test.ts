@@ -507,7 +507,7 @@ describe('readDataArchiveManifest', () => {
     });
 
     test('rejects a foreign archive', async () => {
-        mockManifest({ version: 1, kind: 'playlist' });
+        mockManifest({ version: 1, kind: 'presentingFlow' });
 
         const { readDataArchiveManifest } = await loadModule();
 

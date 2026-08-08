@@ -51,9 +51,9 @@ export function toFilePathSettingName(prefix: string, ...parts: string[]) {
  * Drop every setting whose key is `prefix` itself or starts with `prefix-`.
  *
  * For cleaning up after a file that is gone: settings are named after the thing
- * they belong to, so deleting a playlist otherwise leaves its
- * `playlist-opened-…`, `playlist-item-expanded-…-<doc>` and
- * `playlist-preview-collapsed-…` files behind forever, one per playlist per
+ * they belong to, so deleting a presenting flow otherwise leaves its
+ * `presenting-flow-opened-…`, `presenting-flow-item-expanded-…-<doc>` and
+ * `presenting-flow-preview-collapsed-…` files behind forever, one per presenting flow per
  * setting, on machines that are usually tight on disk.
  *
  * The `-` is required so a prefix cannot swallow a longer, unrelated key that

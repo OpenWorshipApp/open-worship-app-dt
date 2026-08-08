@@ -41,7 +41,7 @@ git diff --cached -M -C --find-renames --function-context
 ```
 
 For a large set (>40 files), do **not** dump the whole diff into context at once. Group
-the files by subsystem (`src/_screen`, `src/playlist`, `electron/`, `.claude/`, tests,
+the files by subsystem (`src/_screen`, `src/presenting-flow`, `electron/`, `.claude/`, tests,
 docs) and work group by group, keeping a running findings list. Report the grouping you
 used so coverage is auditable.
 

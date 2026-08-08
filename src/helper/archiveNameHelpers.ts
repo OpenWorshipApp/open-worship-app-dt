@@ -52,9 +52,9 @@ export function toArchiveFileName(
  * The next free path for an archive, de-duplicated as `<name> (1)<dotExtension>`.
  *
  * NOT `FileSource.genNextFilePath()`: that splits a name on its LAST dot, so a
- * multi-part archive extension came back as `service.owapl.tar (1).gz` — a name
- * that no longer ends in `.owapl.tar.gz`, which the drop-import gate then
- * refused. Exporting the same playlist twice therefore produced a bundle the app
+ * multi-part archive extension came back as `service.owapf.tar (1).gz` — a name
+ * that no longer ends in `.owapf.tar.gz`, which the drop-import gate then
+ * refused. Exporting the same presenting flow twice therefore produced a bundle the app
  * itself had written and would not take back, in silence. Every archive
  * extension is known at the call site, so it is kept whole here.
  */
@@ -93,11 +93,11 @@ export async function genNextArchiveFilePath(
  *
  * The canonical one is `<name><dotExtension>`. The other is what older builds
  * wrote for a second export: the de-duplicating suffix went in before the LAST
- * dot, giving `service.owapl.tar (1).gz`. Those bundles are already sitting in
+ * dot, giving `service.owapf.tar (1).gz`. Those bundles are already sitting in
  * people's Downloads folders, so every place that recognises an archive name has
  * to know the shape — refusing it is what made a dropped bundle do nothing at
- * all, and failing to strip it is what named the imported playlist
- * `service.owapl.tar (1)`.
+ * all, and failing to strip it is what named the imported presenting flow
+ * `service.owapf.tar (1)`.
  */
 function toArchiveFileNameRegex(dotExtension: string) {
     const escape = (text: string) =>
@@ -121,7 +121,7 @@ export const PLAIN_ARCHIVE_TEMP_NAME = 'plain-archive.tmp';
 
 /**
  * The name a password protected archive is written under: the compression tail
- * is swapped for `.enc`, so `.owapl.tar.gz` becomes `.owapl.enc`.
+ * is swapped for `.enc`, so `.owapf.tar.gz` becomes `.owapf.enc`.
  *
  * The KIND stays in the name deliberately. Every list recognises its own bundle
  * by name — that is what the drop gates and the file dialogs match on — and a
@@ -194,7 +194,7 @@ export function toArchiveFileNameFromUrl(
     );
     // A protected bundle keeps its own extension. Nothing reads the name to
     // decide how to open it — the container magic does that — but calling a
-    // file `.owapl.tar.gz` when it is not a tar at all sends the operator to a
+    // file `.owapf.tar.gz` when it is not a tar at all sends the operator to a
     // tool that cannot read it.
     const lowerFileFullName = fileFullName.toLocaleLowerCase();
     const encryptedDotExtension = toEncryptedDotExtension(dotExtension);

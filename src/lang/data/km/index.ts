@@ -77,7 +77,7 @@ const dictionary = {
         'តើអ្នកពិតជាចង់កំណត់ទិន្នន័យស្វែងរកឡើងវិញឬ? នេះនឹងចំណាយពេលមួយដើម្បីស្ដារឡើងវិញ',
     'This slide is disabled': 'ស្លាយនេះត្រូវបានបិទ',
     'This item is disabled': 'ធាតុនេះត្រូវបានបិទ',
-    'This item is disabled in this playlist':
+    'This item is disabled in this presenting flow':
         'ធាតុនេះត្រូវបានបិទនៅក្នុងបញ្ជីចាក់នេះ',
     'This item is disabled in its document':
         'ធាតុនេះត្រូវបានបិទនៅក្នុងឯកសាររបស់វា',
@@ -184,7 +184,7 @@ const dictionary = {
     'Bible and Notes': 'ព្រះគម្ពីរ និងកំណត់ត្រា',
     'Document List': 'បញ្ជីឯកសារ',
     'Lyric List': 'បញ្ជីអក្សរភ្លេង',
-    'Playlist List': 'បញ្ជីតារាងកម្មវិធី',
+    'Presenting Flow List': 'បញ្ជីតារាងកម្មវិធី',
     Previewer: 'កម្មវិធីមើលជាមុន',
     Slides: 'ស្លាយ',
     'Slide Editor Ground': 'តំបន់កែសម្រួលស្លាយ',
@@ -285,7 +285,7 @@ const dictionary = {
     'Image URL:': 'តំណរូបភាព៖',
     'Web URL:': 'តំណវេបសាយ៖',
     'Documents URL:': 'តំណឯកសារ៖',
-    'Playlist Archive URL:': 'តំណប័ណ្ណសារបញ្ជីចាក់៖',
+    'Presenting Flow Archive URL:': 'តំណប័ណ្ណសារបញ្ជីចាក់៖',
     'Open URL': 'បើកតំណ',
     'Copy URL': 'ចម្លងតំណ',
     New: 'ថ្មី',
@@ -340,9 +340,9 @@ const dictionary = {
     Documents: 'ឯកសារ',
     'Document Audios': 'សំលេងឯកសារ',
     Lyrics: 'អក្សរភ្លេង',
-    Playlists: 'តារាងកម្មវិធី',
-    Playlist: 'តារាងកម្មវិធី',
-    'Preview Playlist': 'មើលតារាងកម្មវិធីជាមុន',
+    'Presenting Flows': 'តារាងកម្មវិធី',
+    'Presenting Flow': 'តារាងកម្មវិធី',
+    'Preview Presenting Flow': 'មើលតារាងកម្មវិធីជាមុន',
     'Open Preview': 'បើកការមើលជាមុន',
     'Open Slides Preview': 'បើកការមើលស្លាយជាមុន',
     'Already showing in the main previewer': 'កំពុងបង្ហាញក្នុងកម្មវិធីមើលមេ',
@@ -377,7 +377,7 @@ const dictionary = {
     'Jump to': 'លោតទៅ',
     'Attach the element to jump to as a CC element':
         'សូមភ្ជាប់ធាតុដែលត្រូវលោតទៅ ជាធាតុ CC',
-    'The element to jump to is not in this playlist':
+    'The element to jump to is not in this presenting flow':
         'ធាតុដែលត្រូវលោតទៅ មិនមាននៅក្នុងតារាងកម្មវិធីនេះទេ',
     'Keyboard Event': 'ព្រឹត្តិការណ៍ក្តារចុច',
     Shortcut: 'ផ្លូវកាត់',
@@ -387,17 +387,17 @@ const dictionary = {
     'Hold Ctrl or Shift with the key': 'សូមចុច Ctrl ឬ Shift ជាមួយគ្រាប់ចុច',
     'Only Ctrl and Shift may be used': 'អាចប្រើបានតែ Ctrl និង Shift ប៉ុណ្ណោះ',
     'This key cannot be used': 'គ្រាប់ចុចនេះមិនអាចប្រើបានទេ',
-    'This shortcut is already used in this playlist':
+    'This shortcut is already used in this presenting flow':
         'ផ្លូវកាត់នេះត្រូវបានប្រើរួចហើយនៅក្នុងតារាងកម្មវិធីនេះ',
     'Attach the elements to show as CC elements':
         'សូមភ្ជាប់ធាតុដែលត្រូវបង្ហាញ ជាធាតុ CC',
     'This element takes only one CC element':
         'ធាតុនេះទទួលបានតែធាតុ CC មួយប៉ុណ្ណោះ',
     'This element does not accept CC element': 'ធាតុនេះមិនទទួលយកធាតុ CC ទេ',
-    'Open the playlist preview to use this action':
+    'Open the presenting flow preview to use this action':
         'សូមបើកការមើលតារាងកម្មវិធីជាមុន ដើម្បីប្រើសកម្មភាពនេះ',
     'Please enter a number greater than 0': 'សូមបញ្ចូលលេខធំជាង 0',
-    'Remove from Playlist': 'ដកចេញពីតារាងកម្មវិធី',
+    'Remove from Presenting Flow': 'ដកចេញពីតារាងកម្មវិធី',
     'Add CC Elements': 'បន្ថែមធាតុ CC',
     'Remove CC Element': 'ដកធាតុ CC ចេញ',
     'No other elements': 'គ្មានធាតុផ្សេងទៀតទេ',
@@ -407,13 +407,13 @@ const dictionary = {
     'Collapse floating widget': 'បង្រួមផ្ទាំងអណ្តែត',
     'Expand floating widget': 'ពង្រីកផ្ទាំងអណ្តែត',
     'Close floating widget': 'បិទផ្ទាំងអណ្តែត',
-    'Adding Playlist Item': 'កំពុងបន្ថែមធាតុតារាងកម្មវិធី',
-    'This item type cannot be added to a playlist':
+    'Adding Presenting Flow Item': 'កំពុងបន្ថែមធាតុតារាងកម្មវិធី',
+    'This item type cannot be added to a presenting flow':
         'ប្រភេទធាតុនេះមិនអាចបញ្ចូលទៅក្នុងតារាងកម្មវិធីបានទេ',
-    'Showing Playlist Item': 'កំពុងបង្ហាញធាតុតារាងកម្មវិធី',
+    'Showing Presenting Flow Item': 'កំពុងបង្ហាញធាតុតារាងកម្មវិធី',
     'CC element': 'ធាតុ CC',
     'Drop items here': 'ទម្លាក់ធាតុនៅទីនេះ',
-    'No items in this playlist': 'មិនមានធាតុក្នុងតារាងកម្មវិធីនេះទេ',
+    'No items in this presenting flow': 'មិនមានធាតុក្នុងតារាងកម្មវិធីនេះទេ',
     'No slides': 'មិនមានស្លាយទេ',
     'No slide selected': 'មិនបានជ្រើសរើសស្លាយទេ',
     'Add Local Files': 'បន្ថែមឯកសារក្នុងម៉ាស៊ីន',
@@ -695,8 +695,8 @@ const dictionary = {
     'Import Document': 'នាំចូលឯកសារ',
     'Export Bible List': 'នាំចេញបញ្ជីព្រះគម្ពីរ',
     'Import Bible List': 'នាំចូលបញ្ជីព្រះគម្ពីរ',
-    'Export Playlist': 'នាំចេញបញ្ជីចាក់',
-    'Import Playlist': 'នាំចូលបញ្ជីចាក់',
+    'Export Presenting Flow': 'នាំចេញបញ្ជីចាក់',
+    'Import Presenting Flow': 'នាំចូលបញ្ជីចាក់',
     'Export Bible Note Item': 'នាំចេញកំណត់ចំណាំព្រះគម្ពីរ',
     'Import Bible Note Item': 'នាំចូលកំណត់ចំណាំព្រះគម្ពីរ',
     // The optional password protection on every export.

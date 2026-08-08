@@ -74,18 +74,18 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
 ## Presenter window layout (3 resizable columns)
 
 ### Left column — lists
-Two widgets only, top to bottom: **Documents**, then **Playlists**. The separate
+Two widgets only, top to bottom: **Documents**, then **Presenting Flows**. The separate
 **Lyrics** list is gone — `.owl` lyrics live in the Documents list (icon
-`bi bi-music-note`) — and the Playlists panel took its slot (`203d35cc`, 2026-08-04).
+`bi bi-music-note`) — and the Presenting Flows panel took its slot (`203d35cc`, 2026-08-04).
 
 - **Documents** list: header text `Documents`; items are `li.list-group-item`
   (selected item has `.active`); icons `bi bi-file-earmark-slides` / `-pdf` /
   `-music-note` (lyric) etc.
-- **Playlists** list: header text `Playlists` (តារាងកម្មវិធី); present in **every**
+- **Presenting Flows** list: header text `PresentingFlows` (តារាងកម្មវិធី); present in **every**
   build — no longer dev-gated. Cards are `li.list-group-item`; inside an opened card the
-  elements are `.app-playlist-row` (`.app-playlist-row-error` for a damaged entry,
+  elements are `.app-presenting-flow-row` (`.app-presenting-flow-row-error` for a damaged entry,
   `.app-on-screen` on the label while live). Header icon `bi-window-stack` opens the
-  floating preview (`.app-playlist-preview`, portaled to `body`). See knowledge-base §14.
+  floating preview (`.app-presenting-flow-preview`, portaled to `body`). See knowledge-base §14.
 
 ### Middle column — presenter + background
 - **Presenter tabs** (`.nav.nav-tabs`): `Documents`, `Lyrics`, `Bibles`, `Foreground`.

@@ -160,7 +160,7 @@ export default abstract class ScreenEventHandler<
             isForceChoosing,
             presetScreenIds,
         );
-        // Published so a FOLLOWER of this same gesture — a playlist element's CC
+        // Published so a FOLLOWER of this same gesture — a presenting flow element's CC
         // elements — can land on exactly these screens without asking a second
         // question. Every exit above goes through here, the empty ones included:
         // a follower has to be told "nowhere" as plainly as it is told "screen 2",

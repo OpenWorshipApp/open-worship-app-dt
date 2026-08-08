@@ -128,7 +128,7 @@ export default function BackgroundComp() {
         setIsAudioTabActiveRef.current(newValue);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    // Somewhere else in the app is pointing at a track (a playlist entry), so
+    // Somewhere else in the app is pointing at a track (a presenting flow entry), so
     // the split has to be open before it can be scrolled to and flashed.
     useAppEffect(() => {
         const registeredEvent = EventHandler.registerEventListener(

@@ -112,7 +112,7 @@ export function genTrashContextMenu(
  *
  * Takes the whole reveal action rather than an element getter: some origins need
  * their panel opened before they have an element at all (see
- * `notifyPlaylistItemOrigin`), and a getter-only signature had no way to say so.
+ * `notifyPresentingFlowItemOrigin`), and a getter-only signature had no way to say so.
  */
 export function genRevealOriginal(reveal: () => void): ContextMenuItemType {
     return {
@@ -124,7 +124,7 @@ export function genRevealOriginal(reveal: () => void): ContextMenuItemType {
 
 /**
  * `label` is for the things that reach a screen without being SHOWN there — a
- * playlist's clear actions are run on it — so the menu says what will actually
+ * presenting flow's clear actions are run on it — so the menu says what will actually
  * happen while keeping one screen-choosing entry point.
  */
 export function genShowOnScreensContextMenu(
@@ -176,7 +176,7 @@ export default function FileItemHandlerComp({
     isSelected: boolean;
     renamedCallback?: (newFileSource: FileSource) => void;
     checkIsOnScreen?: (filePath: string) => Promise<boolean>;
-    // Set to make the row draggable (a document dragged into a playlist).
+    // Set to make the row draggable (a document dragged into a presenting flow).
     onDragStart?: (event: any) => void;
 }>) {
     const isOnScreen = useFileSourceIsOnScreen(

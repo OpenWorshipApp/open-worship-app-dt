@@ -164,7 +164,7 @@ describe('varyAppDocumentHelpers', () => {
         expect(notifyElementHighlightMock).toHaveBeenCalled();
 
         // A caller that has already decided which screens this slide belongs on
-        // (a playlist entry pinned to one) hands them straight down.
+        // (a presenting flow entry pinned to one) hands them straight down.
         handleSlideSelectingMock.mockClear();
         handleVarySlideSelecting(event, 2, varySlide, selectSelectedSlide, [3]);
         expect(handleSlideSelectingMock).toHaveBeenCalledWith(

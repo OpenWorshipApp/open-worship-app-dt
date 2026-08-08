@@ -83,12 +83,12 @@ describe('downloadHelpers', () => {
 
     test('honors an explicit port on either protocol', async () => {
         const { initHttpRequest } = await import('./downloadHelpers');
-        await initHttpRequest(new URL('http://localhost:8000/pl.owapl.tar.gz'));
+        await initHttpRequest(new URL('http://localhost:8000/pl.owapf.tar.gz'));
         await initHttpRequest(new URL('https://localhost:8443/file.bin'));
 
         expect(requestHttpMock.mock.calls[0][0].port).toBe(8000);
         expect(requestHttpMock.mock.calls[0][0].hostname).toBe('localhost');
-        expect(requestHttpMock.mock.calls[0][0].path).toBe('/pl.owapl.tar.gz');
+        expect(requestHttpMock.mock.calls[0][0].path).toBe('/pl.owapf.tar.gz');
         expect(requestMock.mock.calls[0][0].port).toBe(8443);
     });
 

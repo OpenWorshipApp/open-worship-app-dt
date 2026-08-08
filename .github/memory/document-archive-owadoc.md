@@ -8,14 +8,14 @@ metadata:
 Added 2026-08-05. **Three layers, do not add a fourth copy:**
 
 - `src/helper/appArchiveHelpers.ts` — collector/staging/import machinery, shared with
-  [[playlist-archive-owapl]].
+  [[presenting-flow-archive-owapf]].
 - `src/helper/singleItemArchiveHelpers.ts` — the whole single-item flow (create, import,
   file-picker/URL/drop entry points), driven by a `SingleItemArchiveConfigType`.
 - `src/app-document-list/appDocumentArchiveHelpers.ts` (`.owadoc.tar.gz`) and
   `src/bible-list/bibleArchiveHelpers.ts` (`.owbible.tar.gz`) — nothing but a config
   object and named re-exports. A new bundled item kind should be one more of these.
 
-Layout: `manifest.json` + `files/` (no `playlist.json`). The manifest's **`item`** field
+Layout: `manifest.json` + `files/` (no `presentingFlow.json`). The manifest's **`item`** field
 names the exporting machine's absolute path, and that same path is a `files` entry of the
 item's kind, so import finds the item exactly the way it finds every other bundled file.
 `itemKind` makes each list refuse the other's bundle (the drop gate gets it from the
@@ -26,10 +26,10 @@ before bible lists shared the format and is still read under that name.
 features share — `ArchiveFileCollector` (`addDocument` = file + `.bg.json` sidecar +
 canvas media), `stageArchiveFiles`, `resolveKindDirPaths`, `importArchiveFiles`
 (reuse-by-MD5), `applyImportedCanvasMedia`, `importBackgroundMetas`, the sanitizer and
-the temp work dirs. `playlistArchiveHelpers.ts` kept only playlist-specific parts
+the temp work dirs. `presentingFlowArchiveHelpers.ts` kept only presenting-flow-specific parts
 (`toItemPathRefs`, the bible-item re-creation, its manifest). Change a rule ONCE, there.
 Side effect: the archive-path guard now throws the generic `Invalid archive file path`,
-not `Invalid playlist archive file path`.
+not `Invalid presentingFlow archive file path`.
 
 Document-only additions:
 
@@ -44,7 +44,7 @@ Document-only additions:
   as an existing `.bg.json` is never clobbered.
 - UI: **Export** on every `VaryAppDocumentFileComp` row AND `LyricFileComp`;
   **Import** / **Import From URL** in the Documents list's **Add Items** submenu (that
-  list puts its actions there, unlike the Playlists list's top-level menu); a dropped
+  list puts its actions there, unlike the Presenting Flows list's top-level menu); a dropped
   `.owadoc.tar.gz` is taken by `handleFileTaking` before the office-convert branch.
 
 Per item kind:
@@ -61,7 +61,7 @@ Per item kind:
   `BIBLE_READ` on the reader), which is why `resolveKindDirPaths` takes a preset map and
   `kindDirSettingNameMap.bible` is only a fallback.
 
-Known wart, shared with playlists: a re-export collides to `<name>.owadoc.tar (1).gz`
+Known wart, shared with presenting flows: a re-export collides to `<name>.owadoc.tar (1).gz`
 (`genNextFilePath` splits at the LAST dot), which no longer matches the drop-gate suffix
 check — that copy must go through **Import** instead of being dragged in.
 

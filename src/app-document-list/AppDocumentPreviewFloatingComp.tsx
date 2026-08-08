@@ -30,7 +30,7 @@ export default function AppDocumentPreviewFloatingComp() {
 
     // A document is previewed in exactly ONE place. Enforced here rather than at
     // the row click, so it also holds when the selection changes from a drag, a
-    // playlist, or `previewingEventListener`.
+    // presenting flow, or `previewingEventListener`.
     useAppEffect(() => {
         if (selectedFilePath !== null) {
             closeAppDocumentPreviewFloating(selectedFilePath);

@@ -1,0 +1,8 @@
+[
+    {
+        "type": "OpenWorship Presenting Flow",
+        "title": "Json file for OpenWorship presenting flow",
+        "mimetypeSignatures": ["application/json"],
+        "extensions": [".owpf"]
+    }
+]

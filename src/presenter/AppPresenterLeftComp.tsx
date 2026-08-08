@@ -7,8 +7,8 @@ import { toWidgetLabel } from '../others/labelIconHelpers';
 const LazyAppDocumentListComp = lazy(() => {
     return import('../app-document-list/VaryAppDocumentListComp');
 });
-const LazyPlaylistListComp = lazy(() => {
-    return import('../playlist/PlaylistListComp');
+const LazyPresentingFlowListComp = lazy(() => {
+    return import('../presenting-flow/PresentingFlowListComp');
 });
 
 export default function AppPresenterLeftComp() {
@@ -28,9 +28,9 @@ export default function AppPresenterLeftComp() {
                     className: 'app-flex-item',
                 },
                 {
-                    children: LazyPlaylistListComp,
+                    children: LazyPresentingFlowListComp,
                     key: 'v2',
-                    ...toWidgetLabel('Playlist List'),
+                    ...toWidgetLabel('Presenting Flow List'),
                     className: 'app-flex-item',
                 },
             ]}

@@ -33,7 +33,7 @@ export const SlidesPreviewerScopeContext =
 
 /**
  * `null` wherever no previewer is above — a slide card also renders inside the
- * playlist preview and on the screen page — in which case every consumer keeps
+ * presenting flow preview and on the screen page — in which case every consumer keeps
  * its historical document-wide behaviour.
  */
 export function useSlidesPreviewerScope() {

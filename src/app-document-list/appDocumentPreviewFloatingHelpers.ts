@@ -13,7 +13,7 @@ import appProvider from '../server/appProvider';
 /**
  * Which documents have a floating slides preview open.
  *
- * Unlike the playlist preview — deliberately ONE widget wherever it is opened
+ * Unlike the presenting flow preview — deliberately ONE widget wherever it is opened
  * from — a document preview is per file: the whole point is looking at several
  * documents at once. Still at most one widget per file, because two previews of
  * one document would fight over the same persisted rect and the same zoom key.
@@ -111,7 +111,7 @@ export function toAppDocumentPreviewScaleSettingName(filePath: string) {
 // smallest thumbnail.
 export const DEFAULT_PREVIEW_THUMBNAIL_SCALE = MIN_THUMBNAIL_SCALE + 10;
 
-// Ctrl on Windows/Linux, ⌘ on mac — the same modifier pair the playlist drag
+// Ctrl on Windows/Linux, ⌘ on mac — the same modifier pair the presenting flow drag
 // rules read, so one habit works across the app.
 export const OPEN_SLIDES_PREVIEW_SHORTCUT_LABEL = appProvider.systemUtils.isMac
     ? '⌘ + Click'

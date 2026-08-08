@@ -20,7 +20,7 @@ export enum DragTypeEnum {
     APP_DOCUMENT = 'appDocument',
     // Any foreground widget (countdown/stopwatch/time/marquee/quick-text/
     // camera/web). The payload carries the widget target plus its own settings,
-    // so a foreground can be stored in a playlist and replayed later.
+    // so a foreground can be stored in a presenting flow and replayed later.
     FOREGROUND = 'foreground',
 }
 

@@ -28,7 +28,7 @@ already in the middle panel. **Driven live.** Earlier:
 **2026-08-07f** (new **W-27**: the middle **Documents** tab heading now
 carries a **pin** whenever a document is being previewed. Pinned, the previewer cannot be
 swapped by anything the operator clicks — another Documents/Lyrics row, a document inside a
-playlist, or the file name in the previewer footer — each one is refused with a toast and a
+presenting flow, or the file name in the previewer footer — each one is refused with a toast and a
 flash of the pin instead. A rename still follows, trashing the document unpins it, and the
 pin is remembered across a restart. **Driven live, in both locales.** Earlier:
 **2026-08-07e** (**W-26**: a Documents row's right-click menu now
@@ -45,7 +45,7 @@ Reset. The settings belong to the STAGE and apply to every song, so two stages c
 completely different; Custom CSS is added to the stage's built-in look rather than
 replacing it. A screen already showing a slide keeps it until the slide is presented
 again. **Driven live, in both locales.** Earlier: **2026-08-07c** (**every** export now opens a panel first, asking for an
-optional **Password** + **Confirm Password** — **W-22** step 10/10a (playlist), **W-23**
+optional **Password** + **Confirm Password** — **W-22** step 10/10a (presenting flow), **W-23**
 step 2 (document/lyric), **W-24** step 1 (bible list) and **W-25** step 2a (whole data).
 Leaving both empty writes exactly the bundle it always did; a password writes `.enc`
 instead of `.tar.gz`/`.tar` and import asks for it, with three tries. There is no password
@@ -66,7 +66,7 @@ nobody at the machine. They are the only actions that ask **which screen** when 
 them, and they go to those screens and only those: no falling back to whatever is selected
 and no stopping to ask, because there is nobody there to answer. Firing one twice is
 harmless. **Driven live.** Previous: **2026-08-06a** — **W-22** step 2: a fourth run action, **Keyboard Event**
-— a **shortcut you set by pressing it** (Ctrl/Shift only, at least one, unique per playlist)
+— a **shortcut you set by pressing it** (Ctrl/Shift only, at least one, unique per presenting flow)
 that sends the run to that line and puts **all** of its CC elements on the screens at once.
 **W-22** step 8: the run no longer steps over a **folded-away** element — it **opens** what
 it lands on, and **parked is now the only reason a line is passed by**; the preview panel
@@ -114,10 +114,10 @@ Timeout** (⏱) under the clears; each asks for a number of **seconds** when it 
 **timeout** counts that many seconds down and then moves the run on once — and any click
 or key you make cancels it, so taking over is simply taking over; an **interval** keeps
 moving it on every so many seconds and is stopped only by the pill it puts at the top of
-the preview panel. Both work only while that playlist's **preview panel** is open — it is
+the preview panel. Both work only while that presenting flow's **preview panel** is open — it is
 the panel that walks the run — and elsewhere they say so rather than pretend. **Driven
 live end to end** (armed, cancelled, handed an interval over to a timeout, stopped by the
-pill, and the toast with the panel closed; playlist restored afterwards) — see PL-95.
+pill, and the toast with the panel closed; presenting flow restored afterwards) — see PL-95.
 Previous: **W-22** step 9: the **preview panel's right-click menus
 are now the same as the list's**. Right-clicking a line in the floating preview used to
 offer only **Show on Screens** and **Disable** (and nothing at all on an audio line), so a
@@ -133,7 +133,7 @@ can now be attached to another line, and that line then brings it onto the scree
 One click puts verse 1 and the welcome marquee up together; a CC on a song's line rides with
 every slide of it. Attach by dropping onto the line, or from **Add CC Elements**; clicking a
 CC never projects it, it takes you to the element it is a copy of. **Dropping onto a LINE no
-longer adds an element to the playlist** — step 2 now says to drop onto the playlist's NAME
+longer adds an element to the presenting flow** — step 2 now says to drop onto the presenting flow's NAME
 row. **Driven live 2026-08-05**: attached a marquee to slide 1 of a song from the menu,
 clicked the slide and read BOTH the slide and the marquee off the real `screen.html?screenId=0`
 output, confirmed the preview's run cursor ignores a CC click, then removed it again.
@@ -153,15 +153,15 @@ duplicated a document line with parked slides, released the copy and confirmed t
 stayed parked, then removed the copy. Previous: **W-22** gained **Disable** / **Enable** — any line of a
 run sheet, or one slide of a document line, can be PARKED out of the running order without
 being deleted: it dims, its click and its drag stop projecting anything, and the
-arrow/Space keys step past it. Parking is stored per playlist, so the same song stays live
+arrow/Space keys step past it. Parking is stored per presenting flow, so the same song stays live
 in another service. **Driven live 2026-08-05**: parked and released an element, a document
 (its slides parked with it) and a single slide, in the tree and in the floating preview.
-Previous: **W-22** gained **Set Specific Screen** — a playlist
+Previous: **W-22** gained **Set Specific Screen** — a presenting flow
 line, a document line, or one slide of a document can be PINNED to particular screens, and
 every present from the panel then ignores which mini screens are selected. Drag-onto-a-mini-screen
 and **Show on Screens** still override a pin on purpose; a pinned screen that is gone
 toasts rather than projecting elsewhere. **Driven live end to end** on 2026-08-05 across
-three screens: pin persisted into the `.owp`, beat the selected screen from the tree row,
+three screens: pin persisted into the `.owpf`, beat the selected screen from the tree row,
 the preview thumbnail and the Space key, and a per-slide pin overrode its document's while
 its neighbours kept following it. Previous: new **W-24** — a **bible list** now exports/imports as
 a `.owbible.tar.gz` bundle, and W-23 gained a note that a **lyric** rides the document
@@ -172,7 +172,7 @@ exported with its attached bg-colour sidecar and re-imported into the bibles fol
 Previous: new **W-23** — one document (slides, lyric, PDF, PPTX
 or DOCX) can now be exported and imported on its own as a `.owadoc.tar.gz` bundle,
 carrying its attached background and that background's media, any video inside its
-slides, and its colour note. It behaves exactly like the playlist bundle in W-22 because
+slides, and its colour note. It behaves exactly like the presenting flow bundle in W-22 because
 it runs the same code. **Driven live end to end** on 2026-08-05: exported an `.ows` and a
 PDF (the PDF's attached background video and its green colour note both landed in the
 manifest), then dropped a bundle back onto the Documents list — the document was written,
@@ -189,7 +189,7 @@ local copy — it used to arrive as an empty box. **Driven live end to end** (ro
 a fixture bundle: differing `1.jpg` landed as `1 (1).jpg` with the original untouched,
 the slide's video was bundled and re-pointed, and re-exporting carried it again) — see
 PL-67 / PL-76. Previously: **W-22** gained
-step 11: the Playlists list menu now also offers **Import From URL** (នាំចូលពី URL), so a
+step 11: the Presenting Flows list menu now also offers **Import From URL** (នាំចូលពី URL), so a
 bundle published on a web server — or shared off another laptop over the local network —
 is imported by pasting its link instead of copying the file across. The download lands in
 a temporary folder, is imported exactly like a picked or dropped bundle, and is deleted
@@ -203,16 +203,16 @@ Slide Show** has no action of its own (it is a background — **Clear Background
 Driven live: the 13-item menu in both locales, and `Clear FG Marquee Top` then
 `Clear FG Stopwatch` on a real `screen.html` output, each taking only its own widget while
 the bible verse stayed up. Previously: **W-22** gained
-**screen actions**: a playlist can now hold something to _do_ as well as things to show.
+**screen actions**: a presenting flow can now hold something to _do_ as well as things to show.
 Its step 2 covers **Add Action** (បន្ថែមសកម្មភាព) and the five clears it offers, step 4
 that an action is _run_ on a screen (click / drag onto one mini screen / **Apply on
 Screens**) rather than shown on one — and so never lights up as live — and step 8 that the
 floating preview's next-key stops on an action and fires it, so a **Clear All** dropped
 between the last song and the sermon blanks the screen at exactly that point.
-**Driven live end to end** (both locales, real `screen.html` output, playlist restored
+**Driven live end to end** (both locales, real `screen.html` output, presenting flow restored
 afterwards) — see PL-71..73. Previously: **W-22 is no longer
 a development-only workflow**: commit `203d35cc` removed the `isDev` gate, so the
-**Playlists** panel ships in packaged builds too (it took the slot the separate **Lyrics**
+**Presenting Flows** panel ships in packaged builds too (it took the slot the separate **Lyrics**
 list used to hold — lyrics are rows of the **Documents** list now). The warning at the top
 of W-22 is gone, its step 1 says where the panel actually sits, and steps 5/8 gained the
 colour stripe, the per-element fold memory and the "no save button" note. **Source-verified
@@ -228,9 +228,9 @@ bottom-right, which fold or unfold the whole running order in one click (PL-47).
 covered running the service from the floating preview with the keyboard: click
 anywhere on an element to mark where you are (its preview, or the title line of a
 folded one), then **Space / ↓ / → / PageDown** moves to and shows the next element
-(PL-46). Previously: the playlist
-sharing workflow's import step now also accepts the `.owapl.tar.gz` **dropped straight
-onto the Playlists list** (PL-45), not only the list menu's **Import** entry.
+(PL-46). Previously: the presenting flow
+sharing workflow's import step now also accepts the `.owapf.tar.gz` **dropped straight
+onto the Presenting Flows list** (PL-45), not only the list menu's **Import** entry.
 Previously: **every file list
 now has one button, a gray ⋮ (More Options)**, opening the same menu as right-clicking
 the empty list body; the old **↻ Reload** and **+ Add items** icons next to the folder
@@ -239,7 +239,7 @@ there; the background / foreground-web tabs put it in the path row. **W-15** gai
 lyric/document _creation_ step — the Documents list offers **New App Document** and
 **New Lyric** as two direct entries (all observed live, English and Khmer); W-08's Web
 tab step now points at the ⋮ instead of the `+`. Previously: new **W-22** (build a
-service playlist and export/import it as a `.owapl.tar.gz` bundle); its step 7 now says
+service presenting flow and export/import it as a `.owapf.tar.gz` bundle); its step 7 now says
 **right-click → Reveal Original** (the 3-second hover-to-locate it described was replaced
 by that context-menu item, PL-37 / PL-34) — source-verified, not yet driven live;
 dev-builds only, and
@@ -277,7 +277,7 @@ The Presenter has a header and three resizable columns:
   **Slide Editor** (កែសម្រួលស្លាយ) — the **Bible Lookup** (ស្វែងរកព្រះគម្ពីរ) button
   (center, `Ctrl+B`), and the **Settings** gear (ការកំណត់) + Help buttons (right). 📸
 - **Left column:** your content libraries — the **Documents** (ឯកសារ) list (songs live
-  here too, marked with a music note) and **Playlists**.
+  here too, marked with a music note) and **Presenting Flows**.
 - **Middle column:** the working area — **Documents / Bibles** preview tabs plus the
   **Foreground** button on top, and the collapsible **Background** panel at the bottom.
   The Documents tab shows whatever kind of file you picked: slides for a slide document,
@@ -751,28 +751,28 @@ _Verify: MD-01..03, CM-24, PM-102._
 
 ---
 
-### W-22 — Build a service playlist (and share it)
+### W-22 — Build a service presenting flow (and share it)
 
 **Goal:** collect everything one service needs — songs, slides, verses, backgrounds and
 foreground presets — into one running order you can work down live, and hand the whole
 thing to another machine.
 
-1. Find the **Playlists** (តារាងកម្មវិធី) panel — it is the lower of the two lists on the
+1. Find the **Presenting Flows** (តារាងកម្មវិធី) panel — it is the lower of the two lists on the
    left, under **Documents** (ឯកសារ). If the list is empty, right-click its empty area (or
    use the **⋮ More Options** button in its title bar) → **New File** to create one. 📸
-2. **Drag things onto the playlist's NAME row to add them.** (Dropping onto a _line_ of an
-   open playlist does something else — see step 5.) Anything you can present can go in:
+2. **Drag things onto the presenting flow's NAME row to add them.** (Dropping onto a _line_ of an
+   open presenting flow does something else — see step 5.) Anything you can present can go in:
    - a **background** — a colour, image, video, camera or website;
    - a **document** — drag its row out of the Documents list;
-   - a **single slide** — from the previewer, or from a document already in the playlist;
+   - a **single slide** — from the previewer, or from a document already in the presenting flow;
    - a **Bible verse** — from the Bible list;
    - a **foreground preset** — drag the blue **Show Marquee Top** / **Start Countdown** /
      **Show Time** button itself. Whatever you typed and styled travels with it, so the
-     playlist remembers _that_ announcement, not just "a marquee". 📸
+     presenting flow remembers _that_ announcement, not just "a marquee". 📸
    - an **audio track** — drag it out of the **♫Audios♫** (សំលេង) split.
 
    **Add a screen action.** A running order can also hold something to _do_ rather than
-   something to show. Right-click the playlist → **Add Action** (បន្ថែមសកម្មភាព) and pick
+   something to show. Right-click the presenting flow → **Add Action** (បន្ថែមសកម្មភាព) and pick
    one of **Clear All** (លុបទាំងអស់), **Clear Background** (លុបផ្ទៃខាងក្រោយ), **Clear
    Slide** (លុបស្លាយ), **Clear Bible** (លុបព្រះគម្ពីរ) or **Clear Foreground**
    (លុបផ្ទៃខាងមុខ) — the same five clears as the buttons on each mini screen, and the line
@@ -826,9 +826,9 @@ thing to another machine.
      the same colour as the line that started it). Closing the panel stops it too, as does
      reaching the end of the sheet.
 
-   Both only mean something while that playlist's **preview panel** is open (step 8) —
+   Both only mean something while that presenting flow's **preview panel** is open (step 8) —
    that panel is what walks the running order. Click one with the panel closed and the app
-   says so (**Open the playlist preview to use this action**) rather than looking as
+   says so (**Open the presenting flow preview to use this action**) rather than looking as
    though it did something. They never go to a screen, so they have no **Apply on
    Screens** and no **Set Specific Screen**, and nothing can be attached to them.
 
@@ -847,7 +847,7 @@ thing to another machine.
    **Go back, not just forward.** The third one, **Jump to** (លោតទៅ), is how a running
    order reaches a line that is not the next one. Add it, then right-click it →
    **Add CC Elements** and pick the line it should go to — its list is everything in the
-   playlist, **a whole song included**, because here the attached line is not something
+   presenting flow, **a whole song included**, because here the attached line is not something
    that rides along, it is the destination. It takes exactly one, so once you have picked
    the **Add CC Elements** entry is gone; to re-aim it, remove the CC and pick another. 📸
 
@@ -905,12 +905,12 @@ thing to another machine.
    **Other Clear FG Items** — one row that opens the eight per-widget foreground clears —
    then **Screen: Show** / **Screen: Hide**, then the four that drive the run.
 
-3. Click the playlist name to **open it**. Each element is one short line: an icon for
+3. Click the presenting flow name to **open it**. Each element is one short line: an icon for
    what it is, its id, and its name. A **document** line has its own arrow — open it to
    see that document's slides underneath. 📸
 4. **Click an element to put it on the screen** (a document opens its previewer instead;
    an **audio track** opens the **♫Audios♫** split and flashes the track there — the
-   playlist never plays audio itself, so that you keep the panel's safeguards like
+   presenting flow never plays audio itself, so that you keep the panel's safeguards like
    "one track at a time").
    You can also **drag an element onto a mini screen**, or **right-click → Show on
    Screens** (បង្ហាញលើអេក្រង់) to pick the screen.
@@ -954,7 +954,7 @@ thing to another machine.
      out of its own panel and drop it _on the line it belongs to_ (the line outlines in
      dashed amber as you hover it). Dropping onto a **document's slide** attaches it to
      that one slide; dropping onto the document's own line attaches it to the whole song.
-     You can also drag a line **already in the playlist** — a clear action included — onto
+     You can also drag a line **already in the presenting flow** — a clear action included — onto
      another line.
 
      **Aim at the middle of a line to attach, at its top or bottom edge to move.** A line
@@ -969,11 +969,11 @@ thing to another machine.
      it, so you can see what the drop will do before you let go. (Holding both, the place
      wins.) For a line of this running order "takes that place" means it MOVES there; for
      something dragged in from another panel it means it is INSERTED there — which is the
-     only way to put it anywhere but the end of the list, since dropping on the playlist's
+     only way to put it anywhere but the end of the list, since dropping on the presenting flow's
      name adds to the end.
 
    - **right-click the line → Add CC Elements** (បន្ថែមធាតុ CC) and pick from the other
-     lines already in this playlist. 📸
+     lines already in this presenting flow. 📸
 
    A CC element shows as a `↳` line just under the one it rides with. From then on,
    **clicking that line — or reaching it with the arrow/Space keys in the preview — puts
@@ -987,7 +987,7 @@ thing to another machine.
      somewhere else while its line goes to the usual place. **No Specific Screen** hands it
      back to following the line.
    - **Clicking a CC line never projects it.** It scrolls the element it is a copy of into
-     view and flashes it — in the playlist and in the preview window at once — so you can
+     view and flashes it — in the presenting flow and in the preview window at once — so you can
      always find what a short label refers to.
    - Right-click a CC line for **Remove CC Element** (ដកធាតុ CC ចេញ). There is no
      **Disable** on a CC: parking takes a _line_ out of the running order, and a CC is not
@@ -1020,10 +1020,10 @@ thing to another machine.
    You can park **one slide of a document** the same way: open the document's arrow and
    right-click the slide. Park the **document itself** and every slide under it is parked
    with it. A parked line can still be dragged up and down to tidy your running order, and
-   parking is remembered in that playlist only — the same song stays live in your other
+   parking is remembered in that presenting flow only — the same song stays live in your other
    services.
    **Two kinds of greyed-out line, and they now look different.** A line YOU parked here is
-   crossed out and carries the amber 🚫 ("This item is disabled in this playlist"). A slide
+   crossed out and carries the amber 🚫 ("This item is disabled in this presenting flow"). A slide
    that is greyed out because the **document itself** hides it is _not_ crossed out and
    carries a plain grey 👁‍🗨 ("This item is disabled in its document") — right-clicking that
    one will not bring it back, because a running order cannot re-enable what the document
@@ -1031,7 +1031,7 @@ thing to another machine.
    two marks sit in the **bottom-left corner** of each dimmed thumbnail. 📸
 
 6. Right-click an element for **Move up** / **Move down**, **Choose Color** (ជ្រើសរើសពណ៌)
-   to group your running order by colour, or **Remove from Playlist**. To move a line a long
+   to group your running order by colour, or **Remove from Presenting Flow**. To move a line a long
    way, use **Move to Top** (ផ្លាស់ទីទៅលើគេ) or **Move to Bottom** (ផ្លាស់ទីទៅក្រោមគេ) instead of
    clicking **Move up** over and over — the line jumps straight to that end and everything
    else keeps its order. (A line that is already at the top is not offered **Move up** or
@@ -1041,29 +1041,29 @@ thing to another machine.
    way to sing a song twice in one service, then change only the second one. The two copies
    are separate from then on: parking or recolouring one leaves the other alone. 📸
    You can also drag a
-   line up or down **inside the same playlist** (dragging a line into a _different_
-   playlist does nothing — add it there from its own list instead). A colour shows as a
+   line up or down **inside the same presenting flow** (dragging a line into a _different_
+   presenting flow does nothing — add it there from its own list instead). A colour shows as a
    stripe down the left edge of the line and a dot at its right end; the lines stay in
    your running order — they are never re-sorted into colour groups, because the order
-   _is_ the meaning here. The colour belongs to that playlist alone, so the same song can
+   _is_ the meaning here. The colour belongs to that presenting flow alone, so the same song can
    be marked differently in two services. Changes are saved as you make them — there is
    **no save button** anywhere in this panel.
 7. Whatever is **live on the screen right now** is marked with a green `*` — on the
-   element itself, on the document it belongs to, on the playlist, and on the
-   **Playlists** heading — so you can see at a glance where you are in the running order.
+   element itself, on the document it belongs to, on the presenting flow, and on the
+   **Presenting Flows** heading — so you can see at a glance where you are in the running order.
 8. Not sure which "5.jpg" a line means? Right-click it → **Reveal Original**
    (បង្ហាញកន្លែងដើម) — the app scrolls to the real item elsewhere in the window and
    flashes it. This works on the slides inside an opened document too. A colour or a
    camera has no original to point at, and the panel holding the original has to be
    open already.
-9. To see the whole service at a glance, click the **window** icon on the playlist row (or
+9. To see the whole service at a glance, click the **window** icon on the presenting flow row (or
    right-click → **Open Preview**). A floating panel shows every element with its real
    preview — slides look exactly as they will project, and a document shows all of its
    slides. Collapse the ones you are not working on — or fold the whole running order
    away at once with the **Collapse All** (បង្រួមទាំងអស់) icon at the bottom-right of the
    panel, and open it all again with **Expand All** (ពង្រីកទាំងអស់) beside it. Whichever
    of the two has nothing left to do fades out. Whatever you folded away is remembered for
-   that playlist, so a running order trimmed down to the few things you are working on
+   that presenting flow, so a running order trimmed down to the few things you are working on
    comes back that way next time — and it follows the element, not its position, so
    reordering the list does not shuffle what is folded. 📸
    To make the thumbnails bigger or smaller, use the zoom slider in the panel's footer
@@ -1105,7 +1105,7 @@ thing to another machine.
    empty part of its box) and you get its full menu: **Reveal Original**, **Show on
    Screens** / **Apply on Screens**, **Set Specific Screen**, **Add CC Elements**, the four
    moves, **Duplicate**, **Choose Color**, **Disable** / **Enable** and **Remove from
-   Playlist**, gated exactly as they are in the list. So you can tidy and re-order the
+   Presenting Flow**, gated exactly as they are in the list. So you can tidy and re-order the
    running order from the panel you are actually watching during the service, without
    going back to the list — and the list behind it follows immediately. 📸
    Two things inside a box keep menus of their own, because they are not the element:
@@ -1115,16 +1115,16 @@ thing to another machine.
 
 **Sharing it with another machine**
 
-10. Right-click the playlist → **Export** (នាំចេញ). A small panel asks for a
+10. Right-click the presenting flow → **Export** (នាំចេញ). A small panel asks for a
     **Password** (ពាក្យសម្ងាត់) and a **Confirm Password** (បញ្ជាក់ពាក្យសម្ងាត់).
     **Leave both empty and press Ok** for the ordinary bundle: one
-    `<name>.owapl.tar.gz` file in your **Downloads** folder, and the folder opens. It
-    contains the playlist _and every file it needs_ — the full documents behind your
+    `<name>.owapf.tar.gz` file in your **Downloads** folder, and the folder opens. It
+    contains the presenting flow _and every file it needs_ — the full documents behind your
     slides, the images and videos, and any background attached to those documents.
     (See step 10a to put a password on it instead.)
     10a. **To protect it with a password**, type the same password in both fields and press
     **Ok**. **Show Password** (បង្ហាញពាក្យសម្ងាត់) reveals what you typed if you want to
-    check it. You get `<name>.owapl.enc` instead — the same bundle, locked. If the two
+    check it. You get `<name>.owapf.enc` instead — the same bundle, locked. If the two
     fields do not match the panel says **Passwords do not match**
     (ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ) and asks again rather than exporting.
 
@@ -1133,30 +1133,30 @@ thing to another machine.
     > somewhere safe before you hand the file over, and send it by a different route than
     > the file itself.
 
-11. On the other machine, right-click an empty part of the **Playlists** list → **Import**
-    (នាំចូល) and pick that file — or just **drag the `.owapl.tar.gz` (or `.owapl.enc`)
-    file from your file manager onto the Playlists list**, which imports it the same way.
+11. On the other machine, right-click an empty part of the **Presenting Flows** list → **Import**
+    (នាំចូល) and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
+    file from your file manager onto the Presenting Flows list**, which imports it the same way.
     A protected bundle asks for its password first, saying **This archive is password
     protected** (ឯកសារបណ្ណសារនេះត្រូវបានការពារដោយពាក្យសម្ងាត់); get it wrong and it says
     **Wrong password, try again** (ពាក្យសម្ងាត់មិនត្រឹមត្រូវ សូមព្យាយាមម្តងទៀត) and lets
     you retype it, up to three tries. An ordinary bundle never asks. The songs, documents
     and media are re-created in that machine's own folders, Bible verses are added to the
-    **Default** list, and every link inside the playlist is re-pointed at the local
+    **Default** list, and every link inside the presenting flow is re-pointed at the local
     copies. 📸
 12. If the bundle is on a web server or a machine sharing it over the local network,
-    you can skip copying the file about: right-click the **Playlists** list →
+    you can skip copying the file about: right-click the **Presenting Flows** list →
     **Import From URL** (នាំចូលពី URL), paste the link and press **Ok**. (If the link is
     already on your clipboard it is filled in for you.) The app downloads the bundle to a
     temporary folder, imports it exactly as above and then deletes the download — you end
-    up with the playlist and nothing else left over. A plain `http://…` address with a
+    up with the presenting flow and nothing else left over. A plain `http://…` address with a
     port, such as one served off another laptop, works as well as `https://`. 📸
 
 > Notes: a file that is already there **with the same contents** is reused rather than
 > duplicated, so importing the same bundle twice is safe. If a file of the same NAME is
 > already there but is actually a different file — your own `a.mp4` is not the `a.mp4`
 > in the bundle — yours is left untouched and the bundled one is added beside it as
-> `a (1).mp4`, with the playlist pointed at that copy. Slides and documents are
-> stored as _references_, so editing a song later means the playlist projects the new
+> `a (1).mp4`, with the presenting flow pointed at that copy. Slides and documents are
+> stored as _references_, so editing a song later means the presenting flow projects the new
 > words. Colours and cameras carry no file, so there is nothing to bundle for them.
 >
 > A video placed **inside a slide** travels too: the bundle carries the video file and
@@ -1166,7 +1166,7 @@ thing to another machine.
 > Importing needs the folders it will write into to be **chosen already** — if, say, no
 > Videos folder has been picked yet and the bundle carries a video, the import stops
 > before it copies anything and tells you which folder to choose first. Nothing is
-> half-imported. And if a line in a playlist ever shows a warning triangle reading
+> half-imported. And if a line in a presenting flow ever shows a warning triangle reading
 > **Invalid item**, that one entry is damaged (usually a hand-edited file) — the rest of
 > the running order still works; remove that line and re-add it.
 
@@ -1204,7 +1204,7 @@ travels as its own bundle, with everything attached to it.
    download goes to a temporary folder, is imported exactly as above, and is then
    deleted.
 
-> Notes: the same rules as a playlist bundle apply. A file already there **with the same
+> Notes: the same rules as a presenting flow bundle apply. A file already there **with the same
 > contents** is reused rather than duplicated, so importing twice is safe; a file of the
 > same NAME that is actually a different file is left untouched and the bundled one lands
 > beside it as `a (1).pdf`. A document that already has a background attached keeps its
@@ -1267,7 +1267,7 @@ or to set up a second machine — use the app's **File** menu.
 
 1. Open the **File** menu at the top of the window and choose **Export Data**
    (នាំចេញទិន្នន័យ). 📸
-2. A panel lists every data folder you have set up — Documents, Playlists, Background
+2. A panel lists every data folder you have set up — Documents, Presenting Flows, Background
    Images, Videos, Audios and Webs, Bible Present, Bible Reader, Notes, and **Bibles XML**
    — with the folder each one points at. **They all start ticked.** Untick anything you do
    not want (the videos folder is usually the big one), or use **Select All** /
@@ -1381,7 +1381,7 @@ half-way through.
    another one* (ឯកសារត្រូវបានខ្ទាស់), and the pin flashes so you can see what stopped
    it. 📸
 4. The same protection covers every way of swapping the document: a song row, a document
-   inside a **playlist**, and clicking the file name in the previewer's own footer (which
+   inside a **presenting flow**, and clicking the file name in the previewer's own footer (which
    normally opens a list of the other documents in the folder — while pinned it does not
    even open).
 5. Click the pin again to unpin. The clicks from step 3 now work normally.

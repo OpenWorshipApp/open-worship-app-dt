@@ -65,8 +65,8 @@ export default class CacheManager<T> {
             // read must never move it: refreshing it here made the expiry
             // SLIDING, so anything asked for more often than `expirationSecond`
             // never expired at all. `FileSource`'s 2s file-data cache is re-read
-            // constantly by the playlist's on-screen pass, and the result was a
-            // playlist tree serving bytes from disk that the file had long since
+            // constantly by the presenting flow's on-screen pass, and the result was a
+            // presenting flow tree serving bytes from disk that the file had long since
             // moved past — through `fs.watch`, through Reload, through a whole
             // window reload. An expiry has to be measured from the write.
             return cacheItem.value;

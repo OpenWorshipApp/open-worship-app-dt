@@ -68,7 +68,7 @@ export default function VarySlideRenderWrapperComp({
     const setSelectedVarySlide = useSelectedEditingSlideSetterContext();
     const setSelectedVarySlideRef = useAppCurrentRef(setSelectedVarySlide);
     // Empty everywhere but inside something that has already decided which
-    // screens its content belongs on (a playlist entry pinned to a screen).
+    // screens its content belongs on (a presenting flow entry pinned to a screen).
     const presetScreenIds = usePresetScreenIds();
     const presetScreenIdsRef = useAppCurrentRef(presetScreenIds);
     const handleClicking = useCallback(

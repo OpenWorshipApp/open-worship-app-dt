@@ -53,8 +53,8 @@ describe('CacheManager', () => {
 
         cache.setSync('alpha', 1);
         // Read it more often than the TTL. A sliding expiry would keep this
-        // entry alive for ever, which is what let the playlist tree serve a
-        // stale `.owp` through fs.watch, Reload and a full window reload.
+        // entry alive for ever, which is what let the presenting flow tree serve a
+        // stale `.owpf` through fs.watch, Reload and a full window reload.
         for (let index = 0; index < 5; index++) {
             vi.advanceTimersByTime(1000);
             cache.getSync('alpha');

@@ -3,7 +3,7 @@
  * consumer that asks for it and torn down again when the last one leaves.
  *
  * Both on-screen stores in the app (a slide preview's "which screens am I on",
- * a playlist row's "is this element live") need the same thing: subscribe once
+ * a presenting flow row's "is this element live") need the same thing: subscribe once
  * per window rather than once per row — a document expanded to ~90 rows would
  * otherwise register ~90 listener sets for the identical event — and unregister
  * as soon as nothing is mounted, so an idle window holds no screen listeners at

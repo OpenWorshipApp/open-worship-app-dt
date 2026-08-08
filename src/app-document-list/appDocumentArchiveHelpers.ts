@@ -14,7 +14,7 @@ import type { DroppedFileType } from '../others/droppingFileHelpers';
  * A whole document — an Open Worship `.ows`, a lyric, or a PDF/PPTX/DOCX — as a
  * self-contained `.owadoc.tar.gz` bundle. Everything below is the generic
  * single-item bundle (`src/helper/singleItemArchiveHelpers.ts`), which in turn
- * shares all of its machinery with the playlist bundle; this file is only the
+ * shares all of its machinery with the presenting flow bundle; this file is only the
  * documents list's configuration of it.
  *
  * Any document kind works because the file is copied verbatim and only the JSON

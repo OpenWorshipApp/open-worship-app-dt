@@ -24,7 +24,7 @@ import { checkIsRemoteMediaSource } from './mediaSourceHelpers';
 
 /**
  * The machinery shared by every "bundle this thing with everything it needs"
- * archive — a playlist (`src/playlist/playlistArchiveHelpers.ts`) and a single
+ * archive — a presenting flow (`src/presenting-flow/presentingFlowArchiveHelpers.ts`) and a single
  * document (`src/app-document-list/appDocumentArchiveHelpers.ts`). Both produce
  * a `.tar.gz` holding `manifest.json` + `files/`, and both have to re-create the
  * same native files on the other machine, so the collecting and the re-pointing
@@ -85,7 +85,7 @@ export type ArchiveBackgroundMetaType = {
 
 /**
  * Which folder a media entry belongs in, by drag type. Used for both halves of
- * the job — a playlist entry's own payload and the entries inside a document's
+ * the job — a presenting flow entry's own payload and the entries inside a document's
  * background sidecar — so the two can never disagree about where a file goes.
  * (A sidecar never holds audio; listing it costs nothing and keeps one map.)
  */
@@ -331,7 +331,7 @@ export class ArchiveFileCollector {
 /**
  * Lay the collected files out in the staging directory. Returns the archive
  * entry names to hand to `tarCreate`, with `extraEntries` (the caller's own
- * `playlist.json` and the like) first.
+ * `presentingFlow.json` and the like) first.
  */
 export async function stageArchiveFiles(
     collector: ArchiveFileCollector,
@@ -385,7 +385,7 @@ export async function writeArchiveManifest(
  * `invalidMessage` is required because a bundle with NO `manifest.json` is the
  * ordinary way a wrong file gets dropped in, and it must read as "this is not
  * one of ours" rather than as a crash. Reading first and validating later let
- * `fsReadFile` throw its own `ENOENT: … \owapl-import-<uuid>\manifest.json`
+ * `fsReadFile` throw its own `ENOENT: … \owapf-import-<uuid>\manifest.json`
  * straight at the operator — a developer string naming a temp folder that no
  * longer exists by the time they read it.
  */
@@ -545,7 +545,7 @@ const collisionPolicyBySettingName: {
     // `name (1).ows`, because sharing a name is not being the same work — and
     // quietly dropping an imported document is the one outcome that loses it.
     [dirSourceSettingNames.APP_DOCUMENT]: 'always-new',
-    [dirSourceSettingNames.PLAYLIST]: 'always-new',
+    [dirSourceSettingNames.PRESENTING_FLOW]: 'always-new',
     [dirSourceSettingNames.BIBLE_NOTES]: 'always-new',
     // A bible list is a LIST of verse references, so two of the same name
     // become one rather than two: verses the local list is missing are appended

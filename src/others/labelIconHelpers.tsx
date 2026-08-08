@@ -49,8 +49,8 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     Presenter: 'display',
     Foreground: 'layers',
     'Mini Screen': 'aspect-ratio',
-    Playlists: 'collection-play',
-    'Playlist List': 'collection-play',
+    'Presenting Flows': 'collection-play',
+    'Presenting Flow List': 'collection-play',
     // -- editors / tools
     Editor: 'code-square',
     Previewer: 'eye',

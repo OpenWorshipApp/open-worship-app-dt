@@ -58,7 +58,7 @@ export function genScreenIdMenuItems(
  * Ride the answer a screen resolution is ABOUT to give, without asking a second
  * question.
  *
- * A playlist element that carries CC elements has to put them on the very
+ * A presenting flow element that carries CC elements has to put them on the very
  * screens its host just reached — and it cannot ask for itself: the resolution
  * may end in the "which screen?" menu, and one click may only ever raise one
  * menu. So the resolution publishes its answer here and the follower reads it.
@@ -124,7 +124,7 @@ export function notifyChosenScreenIds(event: unknown, screenIds: number[]) {
 /**
  * The screens a subtree must present onto instead of the selected ones.
  *
- * Deliberately generic — it says nothing about playlists. Slide cards are drawn
+ * Deliberately generic — it says nothing about presenting flows. Slide cards are drawn
  * by the presenter's own components, shared with the documents previewer, so a
  * caller that has already decided which screens its content belongs on cannot
  * reach the click handler by props without teaching that component who its

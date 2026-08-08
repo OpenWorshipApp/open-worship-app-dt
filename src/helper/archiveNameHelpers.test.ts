@@ -22,12 +22,12 @@ import {
     toEncryptedDotExtension,
 } from './archiveNameHelpers';
 
-const PLAYLIST = '.owapl.tar.gz';
+const PRESENTING_FLOW = '.owapf.tar.gz';
 const DATA = '.owadata.tar';
 
 describe('the name a protected archive takes', () => {
     test('swaps the compression tail for `.enc`', () => {
-        expect(toEncryptedDotExtension(PLAYLIST)).toBe('.owapl.enc');
+        expect(toEncryptedDotExtension(PRESENTING_FLOW)).toBe('.owapf.enc');
         expect(toEncryptedDotExtension(DATA)).toBe('.owadata.enc');
         expect(toEncryptedDotExtension('.owadoc.tar.gz')).toBe('.owadoc.enc');
         expect(toEncryptedDotExtension('.owbible.tar.gz')).toBe('.owbible.enc');
@@ -37,95 +37,108 @@ describe('the name a protected archive takes', () => {
     // The kind stays in the name so every drop gate keeps routing by name
     // alone, with no need to open the file to learn where it belongs.
     test('keeps the kind in the extension', () => {
-        expect(toEncryptedDotExtension(PLAYLIST)).toContain('owapl');
+        expect(toEncryptedDotExtension(PRESENTING_FLOW)).toContain('owapf');
     });
 
     test('is only used when there is a password', () => {
-        expect(toArchiveDotExtension(PLAYLIST, null)).toBe(PLAYLIST);
-        expect(toArchiveDotExtension(PLAYLIST, '')).toBe(PLAYLIST);
-        expect(toArchiveDotExtension(PLAYLIST, 'secret')).toBe('.owapl.enc');
+        expect(toArchiveDotExtension(PRESENTING_FLOW, null)).toBe(
+            PRESENTING_FLOW,
+        );
+        expect(toArchiveDotExtension(PRESENTING_FLOW, '')).toBe(
+            PRESENTING_FLOW,
+        );
+        expect(toArchiveDotExtension(PRESENTING_FLOW, 'secret')).toBe(
+            '.owapf.enc',
+        );
     });
 });
 
 describe('recognising an archive by name', () => {
     test.each([
-        'Service.owapl.tar.gz',
-        'Service (1).owapl.tar.gz',
+        'Service.owapf.tar.gz',
+        'Service (1).owapf.tar.gz',
         // What older builds wrote for a second export.
-        'Service.owapl.tar (1).gz',
-        'Service.owapl.enc',
-        'Service (1).owapl.enc',
-        'Service.owapl (2).enc',
+        'Service.owapf.tar (1).gz',
+        'Service.owapf.enc',
+        'Service (1).owapf.enc',
+        'Service.owapf (2).enc',
     ])('takes %s', (fileFullName) => {
-        expect(checkIsArchiveFileFullName(fileFullName, PLAYLIST)).toBe(true);
+        expect(checkIsArchiveFileFullName(fileFullName, PRESENTING_FLOW)).toBe(
+            true,
+        );
     });
 
     test.each([
         'holiday-photos.gz',
         'Service.owadoc.tar.gz',
         'Service.owadoc.enc',
-        'Service.owp',
+        'Service.owpf',
         'Service.enc',
     ])('refuses %s', (fileFullName) => {
-        expect(checkIsArchiveFileFullName(fileFullName, PLAYLIST)).toBe(false);
+        expect(checkIsArchiveFileFullName(fileFullName, PRESENTING_FLOW)).toBe(
+            false,
+        );
     });
 
     test('tells a protected one from a plain one', () => {
         expect(
-            checkIsEncryptedArchiveFileFullName('Service.owapl.enc', PLAYLIST),
+            checkIsEncryptedArchiveFileFullName(
+                'Service.owapf.enc',
+                PRESENTING_FLOW,
+            ),
         ).toBe(true);
         expect(
             checkIsEncryptedArchiveFileFullName(
-                'Service.owapl.tar.gz',
-                PLAYLIST,
+                'Service.owapf.tar.gz',
+                PRESENTING_FLOW,
             ),
         ).toBe(false);
     });
 
-    // The imported playlist is named after the archive, so the extension has to
+    // The imported presenting flow is named after the archive, so the extension has to
     // come off in every shape — including the protected one.
     test.each([
-        ['Service.owapl.tar.gz', 'Service'],
-        ['Service (1).owapl.tar.gz', 'Service (1)'],
-        ['Service.owapl.tar (3).gz', 'Service'],
-        ['Service.owapl.enc', 'Service'],
-        ['Service (2).owapl.enc', 'Service (2)'],
+        ['Service.owapf.tar.gz', 'Service'],
+        ['Service (1).owapf.tar.gz', 'Service (1)'],
+        ['Service.owapf.tar (3).gz', 'Service'],
+        ['Service.owapf.enc', 'Service'],
+        ['Service (2).owapf.enc', 'Service (2)'],
     ])('strips %s down to %s', (fileFullName, expected) => {
-        expect(toArchiveBaseName(fileFullName, PLAYLIST)).toBe(expected);
+        expect(toArchiveBaseName(fileFullName, PRESENTING_FLOW)).toBe(expected);
     });
 });
 
 describe('naming a downloaded archive', () => {
     test('keeps a protected URL name protected', () => {
-        // Renaming it to `.owapl.tar.gz` would put a tar's name on a file that
+        // Renaming it to `.owapf.tar.gz` would put a tar's name on a file that
         // is not one, and send the operator to a tool that cannot read it.
         expect(
             toArchiveFileNameFromUrl(
-                'https://example.com/service.owapl.enc',
-                PLAYLIST,
-                'Playlist',
+                'https://example.com/service.owapf.enc',
+                PRESENTING_FLOW,
+                'PresentingFlow',
             ),
-        ).toBe('service.owapl.enc');
+        ).toBe('service.owapf.enc');
     });
 
     test('keeps a plain URL name plain', () => {
         expect(
             toArchiveFileNameFromUrl(
-                'https://example.com/service.owapl.tar.gz',
-                PLAYLIST,
-                'Playlist',
+                'https://example.com/service.owapf.tar.gz',
+                PRESENTING_FLOW,
+                'PresentingFlow',
             ),
-        ).toBe('service.owapl.tar.gz');
+        ).toBe('service.owapf.tar.gz');
     });
 
     test('falls back to the plain extension for anything else', () => {
         expect(
             toArchiveFileNameFromUrl(
                 'https://example.com/download.bin',
-                PLAYLIST,
-                'Playlist',
+                PRESENTING_FLOW,
+                'PresentingFlow',
             ),
-        ).toBe('download.owapl.tar.gz');
+        ).toBe('download.owapf.tar.gz');
     });
 });
 
@@ -136,8 +149,8 @@ describe('finding a free path', () => {
 
     test('keeps the whole extension when it counts up', async () => {
         const taken = new Set([
-            '/downloads/Service.owapl.enc',
-            '/downloads/Service (1).owapl.enc',
+            '/downloads/Service.owapf.enc',
+            '/downloads/Service (1).owapf.enc',
         ]);
         fsCheckFileExistMock.mockImplementation(async (filePath: string) => {
             return taken.has(filePath);
@@ -146,10 +159,10 @@ describe('finding a free path', () => {
         expect(
             await genNextArchiveFilePath(
                 '/downloads',
-                'Service.owapl.enc',
-                '.owapl.enc',
+                'Service.owapf.enc',
+                '.owapf.enc',
             ),
-        ).toBe('/downloads/Service (2).owapl.enc');
+        ).toBe('/downloads/Service (2).owapf.enc');
     });
 
     // A folder that answers "taken" to everything used to spin here forever,
@@ -160,8 +173,8 @@ describe('finding a free path', () => {
         await expect(
             genNextArchiveFilePath(
                 '/downloads',
-                'Service.owapl.enc',
-                '.owapl.enc',
+                'Service.owapf.enc',
+                '.owapf.enc',
             ),
         ).rejects.toThrow('Unable to find a free name');
     });

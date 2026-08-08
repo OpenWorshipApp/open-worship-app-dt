@@ -60,7 +60,7 @@ invisible on a dev box makes the app unusable there.
   logged unless caught.
 - **Search scope of ID lookups.** Precedent: `getSlideById` searched only
   `getSlidesQuick()`, which never lists appended attachment slides — the row was dead.
-- **A playlist reads its editing-history HEAD**, not the `.owp` on disk. Any finding
+- **A presenting flow reads its editing-history HEAD**, not the `.owpf` on disk. Any finding
   premised on hand-edited on-disk state is likely wrong.
 
 ## §3 Project conventions

@@ -48,5 +48,5 @@ it synchronous also keeps a song's slide build free of network I/O. An
 attachment whose link is unusable (the `pdf` branch, or open-lyric's `other`
 fallback that carries raw text) still yields its slide, just with no item.
 
-Related: [[playlist-references-vs-presets]], [[document-archive-owadoc]],
+Related: [[presenting-flow-references-vs-presets]], [[document-archive-owadoc]],
 [[lyric-subsystem-architecture]].

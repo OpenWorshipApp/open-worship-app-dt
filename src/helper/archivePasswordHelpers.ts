@@ -74,8 +74,8 @@ export type ReadableArchiveType = {
  * simply imports, with no prompt at all.
  *
  * IMPORTANT for callers: an import that names what it created after the archive
- * FILE NAME (`importPlaylistArchive` does) must keep reading the ORIGINAL path
- * for that name, not this one — otherwise every protected playlist comes in
+ * FILE NAME (`importPresentingFlowArchive` does) must keep reading the ORIGINAL path
+ * for that name, not this one — otherwise every protected presenting flow comes in
  * named after a temp file.
  */
 export async function openArchiveForReading(

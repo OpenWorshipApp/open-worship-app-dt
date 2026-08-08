@@ -147,7 +147,7 @@ export default function LyricFileComp({
         return <LyricFilePreviewComp lyric={lyric as Lyric} />;
     }, []);
     // Same reference-only payload as any other document, so a lyric can be
-    // dropped into a playlist too.
+    // dropped into a presenting flow too.
     const handleDraggingStart = useCallback((event: any) => {
         handleAppDocumentDragStart(event, filePath);
         // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -50,7 +50,7 @@ git diff -M -C --find-renames --function-context
 Untracked files have no diff — read them whole.
 
 For a large set (>40 files), do not dump everything into context at once. Group by
-subsystem (`src/_screen`, `src/playlist`, `electron/`, tests, docs) and work group by
+subsystem (`src/_screen`, `src/presenting-flow`, `electron/`, tests, docs) and work group by
 group, keeping a running findings list. Report the grouping so coverage is auditable.
 
 ## 1. Read enough to be right

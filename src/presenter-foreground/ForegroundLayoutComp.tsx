@@ -37,7 +37,7 @@ export default function ForegroundLayoutComp({
     }, []);
     return (
         // The target is exposed so anything referencing this foreground (a
-        // playlist row) can find and highlight the panel it came from.
+        // presenting flow row) can find and highlight the panel it came from.
         <div className="card m-2" data-foreground-target={target}>
             <div
                 className={'card-header d-flex' + (extraHeaderClassName ?? '')}

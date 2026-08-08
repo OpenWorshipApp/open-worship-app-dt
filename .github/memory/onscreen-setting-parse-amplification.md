@@ -43,7 +43,7 @@ string while expecting a different parse is not served a stale entry.
 
 Cheap reads were not enough — the previews still re-rendered wholesale. One
 click cost **97 React commits and 184 shadow-root `root.render()` calls** with
-an 89-slide document open, identical for a playlist click and for the
+an 89-slide document open, identical for a presenting flow click and for the
 previewer's own card. Two causes, both now fixed by
 `src/_screen/managers/varySlideOnScreenHelpers.ts`:
 
@@ -62,7 +62,7 @@ previewer's own card. Two causes, both now fixed by
 `useVarySlideOnScreenList` MUST return the previous array instance when the
 screen-id set is unchanged — `useSyncExternalStore` compares by identity, and a
 fresh-but-equal array re-renders everything again. Compare screen IDS ONLY: the
-payload is rewritten on every present. Result: **9 commits, playlist click and
+payload is rewritten on every present. Result: **9 commits, presenting flow click and
 preview click identical.**
 
 See [[lyric-subsystem-architecture]], [[screen-window-has-no-app-fonts]],

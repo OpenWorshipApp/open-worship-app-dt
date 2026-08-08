@@ -182,7 +182,7 @@ export async function openBibleItemContextMenu(
     extraMenuItems: ContextMenuItemType[],
 ) {
     // A bible item does not have to belong to a file — one dragged out of the
-    // lookup window into a playlist has no `filePath`. Only the file-editing
+    // lookup window into a presenting flow has no `filePath`. Only the file-editing
     // entries need the bible; bailing out here took the whole menu away from
     // such an item, "Show on Screens" included, leaving a dead-end toast.
     const bible = bibleItem.filePath

@@ -34,7 +34,7 @@ const listeners = new Set<() => void>();
 
 // `null` until first use. Lazily, never at module scope: reading a setting
 // touches the local storage directory, and this module is imported by the
-// layout, by every document row and by the playlist.
+// layout, by every document row and by the presenting flow.
 let isPinned: boolean | null = null;
 
 function ensureIsPinnedRead() {

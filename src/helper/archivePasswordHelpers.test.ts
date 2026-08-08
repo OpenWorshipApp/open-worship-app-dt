@@ -39,8 +39,8 @@ import {
     protectArchiveFile,
 } from './archivePasswordHelpers';
 
-const ARCHIVE = '/downloads/Service.owapl.enc';
-const WORK_DIR = '/system-temp/owapl-import-run-id';
+const ARCHIVE = '/downloads/Service.owapf.enc';
+const WORK_DIR = '/system-temp/owapf-import-run-id';
 const PLAIN = `${WORK_DIR}/decrypted-archive`;
 
 beforeEach(() => {
@@ -80,12 +80,12 @@ describe('opening an archive for reading', () => {
         checkIsEncryptedFileMock.mockResolvedValue(false);
 
         const readable = await openArchiveForReading(
-            '/downloads/Service.owapl.tar.gz',
+            '/downloads/Service.owapf.tar.gz',
             WORK_DIR,
-            'Import Playlist',
+            'Import Presenting Flow',
         );
 
-        expect(readable?.filePath).toBe('/downloads/Service.owapl.tar.gz');
+        expect(readable?.filePath).toBe('/downloads/Service.owapf.tar.gz');
         // No prompt, no decrypt: an unprotected import costs exactly one
         // header read more than it did before this feature existed.
         expect(askForArchivePasswordMock).not.toHaveBeenCalled();
@@ -98,7 +98,7 @@ describe('opening an archive for reading', () => {
         const readable = await openArchiveForReading(
             ARCHIVE,
             WORK_DIR,
-            'Import Playlist',
+            'Import Presenting Flow',
         );
 
         expect(readable?.filePath).toBe(PLAIN);
@@ -113,7 +113,7 @@ describe('opening an archive for reading', () => {
         });
 
         await expect(
-            openArchiveForReading(ARCHIVE, WORK_DIR, 'Import Playlist'),
+            openArchiveForReading(ARCHIVE, WORK_DIR, 'Import Presenting Flow'),
         ).rejects.toThrow('Wrong password');
 
         expect(askForArchivePasswordMock).toHaveBeenCalledTimes(3);
@@ -137,7 +137,7 @@ describe('opening an archive for reading', () => {
         const readable = await openArchiveForReading(
             ARCHIVE,
             WORK_DIR,
-            'Import Playlist',
+            'Import Presenting Flow',
         );
 
         expect(readable?.filePath).toBe(PLAIN);
@@ -150,7 +150,11 @@ describe('opening an archive for reading', () => {
         askForArchivePasswordMock.mockResolvedValue(null);
 
         expect(
-            await openArchiveForReading(ARCHIVE, WORK_DIR, 'Import Playlist'),
+            await openArchiveForReading(
+                ARCHIVE,
+                WORK_DIR,
+                'Import Presenting Flow',
+            ),
         ).toBeNull();
         expect(decryptFileMock).not.toHaveBeenCalled();
     });
@@ -163,7 +167,7 @@ describe('opening an archive for reading', () => {
         });
 
         await expect(
-            openArchiveForReading(ARCHIVE, WORK_DIR, 'Import Playlist'),
+            openArchiveForReading(ARCHIVE, WORK_DIR, 'Import Presenting Flow'),
         ).rejects.toThrow('cannot be opened by this version');
 
         expect(askForArchivePasswordMock).toHaveBeenCalledTimes(1);

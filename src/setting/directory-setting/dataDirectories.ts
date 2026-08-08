@@ -47,9 +47,9 @@ export const dataDirectories: DataDirectoryType[] = [
         iconClassName: 'bi-file-earmark-text',
     },
     {
-        title: 'Playlists',
-        settingName: dirSourceSettingNames.PLAYLIST,
-        defaultDirName: defaultDataDirNames.PLAYLIST,
+        title: 'Presenting Flows',
+        settingName: dirSourceSettingNames.PRESENTING_FLOW,
+        defaultDirName: defaultDataDirNames.PRESENTING_FLOW,
         iconClassName: 'bi-collection-play',
     },
     {
