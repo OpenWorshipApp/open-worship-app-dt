@@ -98,6 +98,10 @@ describe('Khmer language data', () => {
             'Please enter a number that is 0 or greater',
             'Please enter a volume between 0 and 100',
             'The stop point must be after the start point',
+            // Handing a `Next: Timeout` follower back to the element it points
+            // at — the one new string of the per-attachment clock, the question
+            // itself reusing `Change Timing` from the element's own menu.
+            'Use Element Timing',
         ]) {
             expect(lang.dictionary[lang.sanitizeTranKey(key)]).toBeDefined();
         }

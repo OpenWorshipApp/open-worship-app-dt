@@ -31,6 +31,7 @@ import type { PresentingFlowCcItemType } from './presentingFlowCcHelpers';
 import {
     checkIsValidPresentingFlowItemUuid,
     genPresentingFlowItemUuid,
+    toPresentingFlowCcActionArming,
 } from './presentingFlowCcHelpers';
 import type { PresentingFlowMediaControlType } from './presentingFlowMediaControlHelpers';
 import {
@@ -178,10 +179,50 @@ function toScreenIds(value: any): number[] {
     });
 }
 
+/**
+ * Write what a run action is armed with, DELETING whatever it was armed with
+ * before: the three fields are alternatives, so a timeout re-armed with 7:05
+ * that kept its old `30` would be one hand-edit away from silently counting
+ * seconds again — and `PresentingFlowItem.actionTime` wins, so the stale one
+ * would be the one that stopped mattering without ever being removed.
+ *
+ * Lives here rather than beside its first caller because there are now two: the
+ * ELEMENT is re-armed by `PresentingFlow.setItemActionArming`, and a resolved CC
+ * has its host's own arming overlaid by `buildCcItems`. Two copies of the
+ * delete-the-others rule is exactly one copy too many.
+ */
+export function applyPresentingFlowActionArming(
+    itemJson: PresentingFlowItemType,
+    { actionNumber, actionTime, actionKey }: PresentingFlowActionArmingType,
+) {
+    delete itemJson.actionNumber;
+    delete itemJson.actionTime;
+    delete itemJson.actionKey;
+    if (actionKey !== undefined) {
+        itemJson.actionKey = actionKey;
+    } else if (actionTime !== undefined) {
+        itemJson.actionTime = actionTime;
+    } else if (actionNumber !== undefined) {
+        itemJson.actionNumber = actionNumber;
+    }
+}
+
 export default class PresentingFlowItem {
     private readonly originalJson: Readonly<PresentingFlowItemType>;
     filePath: string;
     jsonError: any;
+    // CC ELEMENTS ONLY, both written by `buildCcItems` where the overlay happens
+    // and false for everything else — a LISTED element is re-armed through its own
+    // row, which re-arms every follower of it at once, and that is still what
+    // absence means here.
+    //
+    // Two booleans rather than one because the row asks two questions: whether to
+    // OFFER this follower a clock of its own at all, and whether it is already
+    // holding one (a filled glyph, and the entry that hands it back to the
+    // element). Neither can be re-derived from the resolved json — an overlaid
+    // arming is indistinguishable from the element's own.
+    canBeCcArmed = false;
+    hasOwnActionArming = false;
     // Built on first ask and dying with this instance — an item is rebuilt
     // every time the file is re-read, so this can never outlive the json it
     // came from. Deliberately not a module map: that is the kind of cache that
@@ -451,7 +492,27 @@ export default class PresentingFlowItem {
             if (mediaControl !== null) {
                 ccJson.mediaControl = mediaControl;
             }
-            items.push(new PresentingFlowItem(this.filePath, ccJson));
+            // The third, and the only one written OVER what the element says: a
+            // `Next: Timeout` follower may hold its own clock, so "show this and
+            // go on four seconds later" and "show that and go on in thirty" are
+            // one timeout element attached twice rather than two elements. A
+            // TARGET is left out — a `Jump to`'s pointer is never fired, so a
+            // clock on it would be a row promising a duration nothing counts; the
+            // run lands on the ELEMENT and fires what the element is armed with.
+            // Answered from json once, here, rather than in each of the row, the
+            // menu and the clock.
+            const canBeCcArmed =
+                !isTarget && PresentingFlowItem.checkCanBeCcArmed(ccJson);
+            const actionArming = canBeCcArmed
+                ? toPresentingFlowCcActionArming(raw?.actionArming)
+                : null;
+            if (actionArming !== null) {
+                applyPresentingFlowActionArming(ccJson, actionArming);
+            }
+            const ccItem = new PresentingFlowItem(this.filePath, ccJson);
+            ccItem.canBeCcArmed = canBeCcArmed;
+            ccItem.hasOwnActionArming = actionArming !== null;
+            items.push(ccItem);
         }
         return items;
     }
@@ -970,6 +1031,29 @@ export default class PresentingFlowItem {
         }
         const action = findPresentingFlowAction(hostItemJson.data);
         return action?.target === 'run' && action.ccItemsAreTargets;
+    }
+
+    /**
+     * Whether a FOLLOWER of this element may be armed with a clock of its own,
+     * from json alone so the overlay can ask before anything is built.
+     *
+     * The three conditions are one sentence: it has to be a run action (a screen
+     * action is not armed with anything), one that may follow a line at all
+     * (`canBeCcItem`), and one armed with a NUMBER — which as things stand is the
+     * `Next: Timeout` and nothing else. `Next: Clear Interval` is a follower too
+     * and is armed with nothing, so there is no per-attachment answer to give;
+     * a later clock that means something else by its number gets this for free.
+     */
+    static checkCanBeCcArmed(itemJson: PresentingFlowItemType) {
+        if (itemJson.type !== PRESENTING_FLOW_ACTION_TYPE) {
+            return false;
+        }
+        const action = findPresentingFlowAction(itemJson.data);
+        return (
+            action?.target === 'run' &&
+            action.canBeCcItem &&
+            action.number !== null
+        );
     }
 
     /**

@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-08c** (**W-22** step 9: the running-order preview panel is no
+**workflowsVersion: 2026-08-08d** (**W-22** step 8: a **Next: Timeout** attached to a line
+as a CC element can now be given **its own wait**, from the stopwatch at the right of that
+CC row or its **Change Timing** menu entry — the answer belongs to that attachment, so one
+timeout can hold one line for 4 seconds and another for 30. Filled stopwatch = its own
+wait, hollow = still following the element; **Use Element Timing** hands it back. **Driven
+live** (4s override counted 4→3→2→1 while the element stayed at 10, then reset).
+Previous: **2026-08-08c** (**W-22** step 9: the running-order preview panel is no
 longer one-at-a-time — **several may be open together, one per running order**, each with
 its own place on screen, its own folding, its own marker and its own countdown, and each
 closed on its own. Opening a second used to close the first and lose where its run had got
@@ -873,9 +879,19 @@ thing to another machine.
    and go on by yourself N seconds later". Add the **Next: Timeout** once, right-click the
    line you want it on → **Add CC Elements** and pick it, and then you can delete the
    `Next: Timeout` line itself if you only wanted the follower: a CC is a copy. Attached to
-   a whole SONG it rides every slide of it, which is how a song advances by itself. Change
-   the wait from the CC's own **Change Timing** — seconds or a time of day, exactly as on a
-   line of its own. 📸
+   a whole SONG it rides every slide of it, which is how a song advances by itself. 📸
+
+   **Each line may wait for its own length.** A CC element normally reads whatever the
+   `Next: Timeout` line is set to, so re-arming that one line re-arms every follower of it
+   at once. When one line needs a different wait, click the small **stopwatch** at the
+   right of that CC row (or right-click it → **Change Timing** / ផ្លាស់ប្តូរការកំណត់ពេល) and
+   answer with seconds or a time of day, exactly as on a line of its own. That answer
+   belongs to **that attachment only**: the same `Next: Timeout` can hold the welcome slide
+   for 4 seconds and the notice slide for 30, with one timeout in the running order instead
+   of one per length. A row holding its own wait shows the stopwatch **filled** and reads
+   its own number; one still following the element shows it hollow. To hand a row back,
+   right-click it → **Use Element Timing** (ប្រើការកំណត់ពេលរបស់ធាតុ) — it goes back to the
+   element's number and moves with it again. 📸
    **A Next: Interval cannot be attached to anything** and is simply not in that list —
    an interval is not stopped by anything you do, so one riding a slide would keep moving
    the running order on with nothing to call it off but the panel's own pill. A

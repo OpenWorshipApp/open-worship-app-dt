@@ -415,6 +415,7 @@ const dictionary = {
     'At Time': 'នៅម៉ោង',
     Timing: 'ការកំណត់ពេល',
     'Change Timing': 'ផ្លាស់ប្តូរការកំណត់ពេល',
+    'Use Element Timing': 'ប្រើការកំណត់ពេលរបស់ធាតុ',
     'Please enter a valid time': 'សូមបញ្ចូលម៉ោងឲ្យបានត្រឹមត្រូវ',
     'The set time is already due': 'ម៉ោងដែលបានកំណត់ បានផុតកំណត់ហើយ',
     'Jump to': 'លោតទៅ',

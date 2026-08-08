@@ -12,6 +12,7 @@ import { tran } from '../lang/langHelpers';
 import { genRevealOriginal } from '../others/FileItemHandlerComp';
 import type PresentingFlow from './PresentingFlow';
 import PresentingFlowItem from './PresentingFlowItem';
+import { askForPresentingFlowActionArming } from './presentingFlowActionArmingHelpers';
 import {
     extractDropPayload,
     presentingFlowDraggingStore,
@@ -137,6 +138,51 @@ export function genAddMediaControlContextMenu(
     ];
 }
 
+/**
+ * What the arming question is CALLED for this follower — the same split the
+ * element's own menu makes, so the two doors to one question read alike: the
+ * timeout asks the wider one (seconds OR a time of day), anything armed with a
+ * plain count says so.
+ */
+function toCcArmingLabel(ccItem: PresentingFlowItem) {
+    return ccItem.runAction?.canBeTimeArmed === true
+        ? 'Change Timing'
+        : 'Change Seconds';
+}
+
+/**
+ * Arm ONE follower with a clock of its own, leaving the element — and every other
+ * follower of it — exactly as they were.
+ *
+ * The question opens on what this follower counts RIGHT NOW, which for one that
+ * has never been given its own is the element's: customising starts from what the
+ * row already says rather than from the default the element was added with.
+ */
+function editCcItemActionArming(
+    host: PresentingFlowCcHostType,
+    ccItem: PresentingFlowItem,
+    ccIndex: number,
+) {
+    const { runAction } = ccItem;
+    if (runAction === null) {
+        return;
+    }
+    const { presentingFlow, index, slideId } = host;
+    askForPresentingFlowActionArming(runAction, ccItem.actionArming)
+        .then((arming) => {
+            if (arming === null) {
+                return;
+            }
+            return presentingFlow.setItemCcItemActionArming(
+                index,
+                slideId,
+                ccIndex,
+                arming,
+            );
+        })
+        .catch(handleError);
+}
+
 /** Reopen the panel of an attached controller and write the answer back. */
 function editCcItemMediaControl(
     host: PresentingFlowCcHostType,
@@ -233,12 +279,17 @@ async function showAddCcElementsMenu(
  * nothing else, and an entry that presented it on its own would quietly turn it
  * into an ordinary element by another door. Without `Disable` either — parking
  * takes a LINE out of the run, and a CC is not a line of the run; a follower
- * that is not wanted is removed. And without `Change Seconds`: what a
- * `Next: Timeout` is armed with belongs to the ELEMENT now, so it is re-armed
- * there and every CC of it is re-armed at once — `Reveal Original` is one click
- * away, and it is the first entry here.
+ * that is not wanted is removed.
  *
- * `Set Specific Screen` stays, the one thing a CC says for itself, and its
+ * `Change Timing` DOES appear, on a `Next: Timeout` follower alone: what the
+ * element is armed with is still the default for every follower of it, but "show
+ * this slide and go on four seconds later" and "show that one and go on in
+ * thirty" are one timeout attached twice, and until this they were two timeout
+ * elements. `Use Element Timing` undoes it — the row goes back to reading, and
+ * re-arming with, whatever the element says, which is what `Reveal Original` (the
+ * first entry here) is one click away from showing.
+ *
+ * `Set Specific Screen` stays, the other thing a CC says for itself, and its
  * clearing row means "follow the element, then the host" — the same reading a
  * slide's cleared pin has against the document above it.
  */
@@ -266,6 +317,37 @@ export function genCcItemContextMenuItems(
                 editCcItemMediaControl(host, ccItem, ccIndex);
             },
         });
+    }
+    // The right-click route to the hourglass on the row, for the same reason the
+    // gear above it has one: an 11px target is a poor thing to aim at mid-service.
+    if (ccItem.canBeCcArmed) {
+        menuItems.push({
+            childBefore: genContextMenuItemIcon('pencil-square', {
+                color: 'var(--bs-warning)',
+            }),
+            menuElement: tran(toCcArmingLabel(ccItem)),
+            onSelect: () => {
+                editCcItemActionArming(host, ccItem, ccIndex);
+            },
+        });
+        // Only once there is something to undo: on a follower that is already
+        // reading the element's clock this would be a row that did nothing.
+        if (ccItem.hasOwnActionArming) {
+            menuItems.push({
+                childBefore: genContextMenuItemIcon('arrow-counterclockwise'),
+                menuElement: tran('Use Element Timing'),
+                onSelect: () => {
+                    presentingFlow
+                        .setItemCcItemActionArming(
+                            index,
+                            slideId,
+                            ccIndex,
+                            null,
+                        )
+                        .catch(handleError);
+                },
+            });
+        }
     }
     if (ccItem.isScreenPinnable) {
         menuItems.push(
@@ -379,6 +461,16 @@ function PresentingFlowCcRowComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handleActionArmingEditing = useCallback((event: any) => {
+        // Mandatory for the same reason as the gear's above.
+        event.stopPropagation();
+        editCcItemActionArming(
+            hostRef.current,
+            ccItemRef.current,
+            ccIndexRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const isOnScreen = useIsOnScreenChecking(() => {
         return checkIsPresentingFlowItemOnScreen(ccItemRef.current);
     }, toPresentingFlowItemOnScreenKey(ccItem));
@@ -449,18 +541,42 @@ function PresentingFlowCcRowComp({
                     : '')
             }
             extraStyle={{ ...ccItem.extraStyle }}
-            // The gear first, then its OWN pin: a CC with no pin follows its host,
-            // whose row right above it already carries that badge.
+            // The gear (or the stopwatch — no row can carry both, a media
+            // controller having no clock and a clock no settings), then its OWN
+            // pin: a CC with no pin follows its host, whose row right above it
+            // already carries that badge.
+            //
+            // A stopwatch rather than the timeout's own hourglass, which is
+            // already the row's leading icon: two of one glyph on one row reads as
+            // a repeat rather than as a control. It is FILLED once this follower
+            // holds a clock of its own and hollow while it is reading the
+            // element's, the same way the mini screen's indicator says live and
+            // dark — the number in the label alone cannot tell the operator
+            // whether re-arming the element will move this row with it.
             extraChild={
                 <>
                     {isMediaControl ? (
                         <i
                             className={
                                 'bi bi-gear-fill app-caught-hover-pointer' +
-                                ' app-presenting-flow-row-media-control-gear'
+                                ' app-presenting-flow-row-settings-icon'
                             }
+                            style={{ color: 'var(--bs-cyan)' }}
                             title={tran('Media Control Settings')}
                             onClick={handleMediaControlEditing}
+                        />
+                    ) : null}
+                    {ccItem.canBeCcArmed ? (
+                        <i
+                            className={
+                                `bi bi-stopwatch${
+                                    ccItem.hasOwnActionArming ? '-fill' : ''
+                                } app-caught-hover-pointer` +
+                                ' app-presenting-flow-row-settings-icon'
+                            }
+                            style={{ color: 'var(--bs-warning)' }}
+                            title={tran(toCcArmingLabel(ccItem))}
+                            onClick={handleActionArmingEditing}
                         />
                     ) : null}
                     {ccItem.screenIds.length > 0 ? (

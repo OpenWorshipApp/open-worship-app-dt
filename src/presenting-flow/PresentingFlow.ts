@@ -20,35 +20,14 @@ import {
 } from './presentingFlowCcHelpers';
 import type { PresentingFlowMediaControlType } from './presentingFlowMediaControlHelpers';
 import type { PresentingFlowItemType } from './PresentingFlowItem';
-import PresentingFlowItem from './PresentingFlowItem';
+import PresentingFlowItem, {
+    applyPresentingFlowActionArming,
+} from './PresentingFlowItem';
 
 export type PresentingFlowType = {
     items: PresentingFlowItemType[];
     metadata: AppDocumentMetadataType;
 };
-
-/**
- * Write what a run action is armed with, DELETING whatever it was armed with
- * before: the three fields are alternatives, so a timeout re-armed with 7:05
- * that kept its old `30` would be one hand-edit away from silently counting
- * seconds again — and `PresentingFlowItem.actionTime` wins, so the stale one would be
- * the one that stopped mattering without ever being removed.
- */
-function applyPresentingFlowActionArming(
-    itemJson: PresentingFlowItemType,
-    { actionNumber, actionTime, actionKey }: PresentingFlowActionArmingType,
-) {
-    delete itemJson.actionNumber;
-    delete itemJson.actionTime;
-    delete itemJson.actionKey;
-    if (actionKey !== undefined) {
-        itemJson.actionKey = actionKey;
-    } else if (actionTime !== undefined) {
-        itemJson.actionTime = actionTime;
-    } else if (actionNumber !== undefined) {
-        itemJson.actionNumber = actionNumber;
-    }
-}
 
 /**
  * Whether a keyboard shortcut is still FREE in this sheet — the one uniqueness
@@ -841,6 +820,43 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
                     delete ccItemRef.screenIds;
                 } else {
                     ccItemRef.screenIds = screenIds;
+                }
+            },
+        );
+    }
+
+    /**
+     * Arm ONE `Next: Timeout` follower with a clock of its own — the hourglass on
+     * its row, and the second thing (after the pin) a CC may say for itself
+     * against the element it points at.
+     *
+     * What the element is armed with stays the DEFAULT: every follower with no
+     * arming of its own still reads it, so re-arming the element still re-arms
+     * them all at once. This is the per-line exception to that, and it is the
+     * whole reason it exists — one timeout element held for four seconds under one
+     * slide and for thirty under another, instead of a timeout element per
+     * duration cluttering the sheet.
+     *
+     * A null answer DELETES the key, handing that follower back to the element,
+     * which is exactly what "absence means the element's" already meant — the row
+     * then re-arms with the element and no stale number is left behind to come
+     * back the next time the element is re-armed.
+     */
+    async setItemCcItemActionArming(
+        index: number,
+        slideId: number | null,
+        ccIndex: number,
+        arming: PresentingFlowActionArmingType | null,
+    ) {
+        return await this.updateItemCcItemRef(
+            index,
+            slideId,
+            ccIndex,
+            (ccItemRef) => {
+                if (arming === null) {
+                    delete ccItemRef.actionArming;
+                } else {
+                    ccItemRef.actionArming = arming;
                 }
             },
         );

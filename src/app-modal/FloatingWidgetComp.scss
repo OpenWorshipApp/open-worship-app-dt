@@ -23,9 +23,9 @@ $resize-corner-size: 16px;
   color: var(--bs-body-color, #212529);
   border-radius: 8px;
   box-shadow: 2px 5px 16px 0px rgba(0, 0, 0, 0.7);
-  border: 2px double rgba(var(--bs-secondary-rgb), 0.6);
+  border: 1px inset rgba(var(--bs-secondary-rgb), 0.6);
   &[data-has-onscreen-child='true'] {
-    border-color: rgba(var(--bs-success-rgb), 0.6) !important;
+    border-color: var(--app-on-air) !important;
   }
 }
 

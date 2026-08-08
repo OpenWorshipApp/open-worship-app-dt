@@ -7,6 +7,8 @@
  * Nothing translated, nothing that reads a file, no React.
  */
 
+import type { PresentingFlowActionArmingType } from './presentingFlowActionHelpers';
+import { checkIsValidPresentingFlowActionTime } from './presentingFlowActionTimeHelpers';
 import type { PresentingFlowMediaControlType } from './presentingFlowMediaControlHelpers';
 
 /**
@@ -36,12 +38,52 @@ import type { PresentingFlowMediaControlType } from './presentingFlowMediaContro
  * is a thing an operator means about one slide, so the same controller attached to
  * two slides must be able to mean two different things — which is exactly what a
  * value read off the shared element could never do.
+ *
+ * `actionArming` is the third, and the only one that OVERRIDES what the element
+ * says rather than adding to it: the clock a `Next: Timeout` follower counts. The
+ * element's own arming is still the default — absent here means "whatever the
+ * element is armed with", so re-arming the element still re-arms every CC of it —
+ * but one line of the sheet may now hold that timeout for four seconds where
+ * another holds it for thirty, without a second timeout element per duration.
+ * Stored as the whole answer rather than as a loose number so the "seconds OR a
+ * time of day, never both" rule lives in one object; `actionKey` is never written
+ * here, a key-armed action being one the operator presses and never a follower.
  */
 export type PresentingFlowCcItemType = {
     uuid: string;
     screenIds?: number[];
     mediaControl?: PresentingFlowMediaControlType;
+    actionArming?: PresentingFlowActionArmingType;
 };
+
+/**
+ * Read a CC's own arming defensively — a hand-edited file, or one written by a
+ * later version, must never turn a follower into an error row mid-service, and
+ * anything that is not plainly one of the two answers simply means "follow the
+ * element".
+ *
+ * A TIME wins over a number for the same reason `PresentingFlowItem.actionTime`
+ * does: a record carrying both was written by something that did not obey the
+ * alternation, and the time is the more specific of the two. A number that is not
+ * above 0 is refused rather than clamped — it is the same answer the question
+ * itself refuses, and a `0` overlaid on the element would be a follower that fires
+ * its clock instantly.
+ */
+export function toPresentingFlowCcActionArming(
+    value: any,
+): PresentingFlowActionArmingType | null {
+    if (value === null || typeof value !== 'object') {
+        return null;
+    }
+    const { actionTime, actionNumber } = value;
+    if (checkIsValidPresentingFlowActionTime(actionTime)) {
+        return { actionTime };
+    }
+    if (typeof actionNumber === 'number' && actionNumber > 0) {
+        return { actionNumber };
+    }
+    return null;
+}
 
 /**
  * A presenting flow entry's identity, stable for as long as the entry is in the sheet.

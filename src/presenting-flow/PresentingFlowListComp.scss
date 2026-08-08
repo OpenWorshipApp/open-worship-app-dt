@@ -157,15 +157,16 @@
   }
 }
 
-// The one CLICKABLE trailing icon a row carries: the settings of a
-// `Slide: Media Control` CC. Sized like the pin beside it so the two read as one
-// group, and tinted with the action's own cyan so it is findable at a glance in a
-// sheet of otherwise grey trailing marks.
-.app-presenting-flow-row-media-control-gear {
+// The CLICKABLE trailing icons a CC row carries: the settings of a
+// `Slide: Media Control`, and the clock of a `Next: Timeout` armed for this one
+// attachment. Sized like the pin beside them so the group reads as one, and each
+// tinted with its OWN action's colour — set inline, since the colour is the
+// action's rather than this class's — so it is findable at a glance in a sheet of
+// otherwise grey trailing marks.
+.app-presenting-flow-row-settings-icon {
   flex: 0 0 auto;
   font-size: 11px;
   padding: 0 3px;
-  color: var(--bs-cyan);
 
   &:hover {
     filter: brightness(1.3);
