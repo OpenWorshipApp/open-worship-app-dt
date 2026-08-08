@@ -17,6 +17,7 @@ const {
     showFileOrDirExplorerMock,
     showSimpleToastMock,
     getAllCameraDevicesMock,
+    refreshWebCapturingMock,
 } = vi.hoisted(() => ({
     askForURLMock: vi.fn(),
     checkIsImagesInClipboardMock: vi.fn(),
@@ -34,6 +35,7 @@ const {
     showFileOrDirExplorerMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
     getAllCameraDevicesMock: vi.fn(),
+    refreshWebCapturingMock: vi.fn(),
 }));
 
 vi.mock('../../helper/cameraHelpers', () => ({
@@ -74,7 +76,15 @@ vi.mock('../../server/appProvider', () => ({
         browserUtils: {
             openExternalURL: openExternalURLMock,
         },
+        // `appHooks` reads this at MODULE LOAD (reached here through
+        // `capturingHelpers`, which owns `refreshWebCapturing`), so a mock
+        // without it fails the whole suite while importing.
+        systemUtils: { isDev: false },
     },
+}));
+
+vi.mock('../../helper/capturingHelpers', () => ({
+    refreshWebCapturing: refreshWebCapturingMock,
 }));
 
 vi.mock('../../helper/helpers', () => ({
@@ -589,6 +599,10 @@ describe('canvasContextMenuHelpers', () => {
                 'Duplicate',
                 'Open URL',
                 'Copy URL',
+                // A website renders as a screenshot that never self-
+                // invalidates, so only it gets a way to force a re-capture. A
+                // youtube item shares the `url` prop but renders a real embed.
+                ...(type === 'website' ? ['Refresh Preview'] : []),
                 'Delete',
             ]);
 
@@ -603,6 +617,12 @@ describe('canvasContextMenuHelpers', () => {
             expect(copyToClipboardMock).toHaveBeenLastCalledWith(
                 `https://example.com/${type}`,
             );
+            if (type === 'website') {
+                menuByLabel.get('Refresh Preview').onSelect();
+                expect(refreshWebCapturingMock).toHaveBeenLastCalledWith(
+                    `https://example.com/${type}`,
+                );
+            }
         }
 
         // Items without a URL never show the URL actions.
@@ -618,6 +638,7 @@ describe('canvasContextMenuHelpers', () => {
         ).map((item: any) => item.menuElement);
         expect(videoLabels).not.toContain('Open URL');
         expect(videoLabels).not.toContain('Copy URL');
+        expect(videoLabels).not.toContain('Refresh Preview');
     });
 
     test('offers download for image items with embedded data', () => {

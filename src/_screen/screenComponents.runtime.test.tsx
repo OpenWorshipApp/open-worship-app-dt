@@ -79,6 +79,17 @@ vi.mock('./managers/screenManagerBaseHelpers', () => ({
     getScreenManagerBase: getScreenManagerBaseMock,
 }));
 
+// A web background renders as a screenshot on the mini screen; keep that off
+// the real IPC. Both of these are reached through a dynamic `import()`, so the
+// shot lands a macrotask later rather than a microtask.
+vi.mock('../helper/capturingHelpers', () => ({
+    captureWebScreenShot: vi.fn(async () => 'data:image/png;base64,bg-shot'),
+}));
+
+vi.mock('./managers/screenHelpers', () => ({
+    getDefaultScreenDisplay: () => ({ bounds: { width: 1280, height: 720 } }),
+}));
+
 vi.mock('../helper/cameraHelpers', () => ({
     getCameraStream: getCameraStreamMock,
 }));
@@ -395,6 +406,29 @@ describe('screen component runtime behavior', () => {
             ),
         ).toContain('data-background="color"');
 
+        // The presenter's mini screen gets a screenshot, never a live page: a
+        // background covers the whole output, so it is the most expensive page
+        // in the app to load into a preview nobody presents from.
+        const webPreviewBackground = genHtmlBackground(5, {
+            type: 'web',
+            src: 'https://example.com/embed',
+            extraStyle: { opacity: '0.6' },
+        } as any);
+        expect(webPreviewBackground.newDiv.tagName).toBe('DIV');
+        expect(webPreviewBackground.newDiv.querySelector('iframe')).toBeNull();
+        expect(webPreviewBackground.newDiv.style.opacity).toBe('0.6');
+        // A real macrotask, not a microtask flush: the capture helper is
+        // imported on demand, so the screenshot lands a dynamic `import()`
+        // later (see CLAUDE.md on flushing in these suites).
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        expect(
+            webPreviewBackground.newDiv
+                .querySelector('img')
+                ?.getAttribute('src'),
+        ).toBe('data:image/png;base64,bg-shot');
+
+        // The projected screen still gets the live page.
+        appProviderMock.isPageScreen = true;
         const webBackground = genHtmlBackground(5, {
             type: 'web',
             src: 'https://example.com/embed',
@@ -405,6 +439,7 @@ describe('screen component runtime behavior', () => {
             'https://example.com/embed',
         );
         expect(webBackground.newDiv.style.opacity).toBe('0.6');
+        appProviderMock.isPageScreen = false;
 
         const stopTrack = vi.fn();
         getCameraStreamMock.mockResolvedValue({

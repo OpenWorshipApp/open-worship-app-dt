@@ -26,6 +26,7 @@ import {
 import appProvider from '../../server/appProvider';
 import { checkIsFilePathCanvasItemType } from './canvasHelpers';
 import { checkIsRemoteMediaSource } from '../../helper/mediaSourceHelpers';
+import { refreshWebCapturing } from '../../helper/capturingHelpers';
 import { genCanvasInsertContextMenuItems } from './canvasInsertActionHelpers';
 
 export async function showCanvasContextMenu(
@@ -137,6 +138,11 @@ export function showCanvasItemContextMenu(
               ? mediaSource
               : null;
     const hasUrl = itemUrl !== null;
+    // A website item shows a screenshot that never self-invalidates, so a clock
+    // or a scoreboard page stays frozen until the cache TTL lapses AND the
+    // component remounts. This is the only way to force a re-capture. A YouTube
+    // item shares the `url` prop but renders a real embed, so it is excluded.
+    const isRefreshable = hasUrl && canvasItem.type === 'website';
     // An inlined image carries its pixels rather than referencing a file, so
     // the file-oriented reveal doesn't apply; offer to save it to disk instead.
     // A linked image has nothing to write out — it is offered its URL above.
@@ -224,6 +230,17 @@ export function showCanvasItemContextMenu(
                       menuElement: tran('Copy URL'),
                       onSelect: () => {
                           copyToClipboard(itemUrl);
+                      },
+                  },
+              ]
+            : []),
+        ...(isRefreshable
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon('arrow-clockwise'),
+                      menuElement: tran('Refresh Preview'),
+                      onSelect: () => {
+                          refreshWebCapturing(itemUrl as string);
                       },
                   },
               ]

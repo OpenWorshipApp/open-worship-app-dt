@@ -12,7 +12,9 @@ import { genSlideHtml } from '../../app-document-presenter/items/SlideRendererCo
 import {
     screenManagerSettingNames,
     PREVIEW_ONLY_ATTR,
+    WEBSITE_ITEM_ATTR,
 } from '../../helper/constants';
+import { hydrateWebsiteFrames } from './screenWebsiteHelpers';
 import { playMediaElement } from '../../helper/mediaHelpers';
 import {
     checkMediaPlaying,
@@ -1040,12 +1042,15 @@ class ScreenVaryAppDocumentManager
                 );
             }
         }
-        // Embedded YouTube/website items (iframes) render non-interactive so
-        // the slide editor can still drag their box. A YouTube embed is wired
-        // for group-sync (play from the mini screen, follow on the projected
-        // screen); a plain website iframe just becomes interactive on the mini
-        // screen. The big screen holds both non-interactive, the same way a
-        // slide video is controlled from the mini screen and not the output.
+        // Embedded YouTube items and PPTX/DOCX embedded content (iframes)
+        // render non-interactive so the slide editor can still drag their box.
+        // A YouTube embed is wired for group-sync (play from the mini screen,
+        // follow on the projected screen); any other iframe just becomes
+        // interactive on the mini screen. The big screen holds both
+        // non-interactive, the same way a slide video is controlled from the
+        // mini screen and not the output. NOTE: a website CANVAS item no longer
+        // ships an iframe at all — it arrives as a screenshot placeholder and
+        // is hydrated by the loop below.
         for (const iframe of queryAllDeep(content, 'iframe')) {
             if (iframe instanceof HTMLIFrameElement === false) {
                 continue;
@@ -1059,6 +1064,16 @@ class ScreenVaryAppDocumentManager
                 iframe.style.pointerEvents = 'auto';
             }
         }
+        // A website canvas item arrives as a STATIC screenshot placeholder and
+        // becomes a live page only here — see `hydrateWebsiteFrames`. Runs
+        // AFTER the iframe loop deliberately: what it creates is ours and must
+        // not be re-visited by it, or a website item whose url happens to be a
+        // `youtube.com/embed/...&enablejsapi=1` link would be silently dragged
+        // into the group-sync path.
+        hydrateWebsiteFrames(
+            queryAllDeep(content, `[${WEBSITE_ITEM_ATTR}]`),
+            appProvider.isPageScreen,
+        );
     }
 
     async getRenderingItemJson(

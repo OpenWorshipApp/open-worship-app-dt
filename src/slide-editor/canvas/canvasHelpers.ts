@@ -76,6 +76,11 @@ export const YOUTUBE_EMBED_HEIGHT = 315;
 export const WEBSITE_EMBED_WIDTH = 800;
 export const WEBSITE_EMBED_HEIGHT = 600;
 
+// The website screenshot sizing rules live in
+// `src/helper/websiteCaptureHelpers.ts` — a leaf module, so the screen managers
+// and the print helper can size a capture without eagerly importing everything
+// this file pulls in.
+
 // An audio item is just a player control, drawn at roughly the native
 // `<audio controls>` proportions. Chromium draws that control chrome at a
 // FIXED glyph size whatever the element's box is, so these are the unscaled

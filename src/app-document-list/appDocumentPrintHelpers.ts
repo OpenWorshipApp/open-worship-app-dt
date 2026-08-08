@@ -9,6 +9,14 @@ import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import { collectFontFaceCss } from '../helper/printCssHelpers';
 import type { DroppedDataType } from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
+import { parseWebsiteCaptureSize } from '../helper/websiteCaptureHelpers';
+import { captureWebScreenShot } from '../helper/capturingHelpers';
+import {
+    PREVIEW_ONLY_ATTR,
+    WEBSITE_CAPTURE_SIZE_ATTR,
+    WEBSITE_ITEM_ATTR,
+    WEBSITE_URL_ATTR,
+} from '../helper/constants';
 
 function toPageName(slide: Slide) {
     return `page-${slide.width}x${slide.height}`;
@@ -132,13 +140,71 @@ async function genBackgroundHtml(
         backgroundDiv.appendChild(image);
         return backgroundDiv.outerHTML;
     }
-    // Camera and web backgrounds are live content and cannot be printed.
+    // Camera and web BACKGROUNDS are live content and cannot be printed. (A
+    // website canvas ITEM can — it prints the screenshot it already shows
+    // everywhere else; see `fillWebsiteScreenShots`.)
     return '';
+}
+
+// A website canvas item renders as a screenshot placeholder, but `genSlideHtml`
+// runs the React tree through `renderToStaticMarkup`, which runs no effects —
+// so the hook that normally fetches that screenshot never fires here. Fill them
+// in afterwards, the same way a video background's poster frame is resolved
+// above (and sharing that pass's per-document cache shape, so a url repeated
+// across slides is captured once).
+//
+// Unlike a web BACKGROUND, which is genuinely live content and cannot print, a
+// website ITEM is a still image by design and prints fine.
+async function fillWebsiteScreenShots(
+    slideDiv: HTMLDivElement,
+    webScreenShotCache: Map<string, Promise<string | null>>,
+) {
+    const frames = Array.from(
+        slideDiv.querySelectorAll(`[${WEBSITE_ITEM_ATTR}]`),
+    );
+    await Promise.all(
+        frames.map(async (frame) => {
+            const url = frame.getAttribute(WEBSITE_URL_ATTR) ?? '';
+            const placeholder = frame.querySelector(`[${PREVIEW_ONLY_ATTR}]`);
+            // The size is stamped into the markup because `slideDiv` is
+            // detached — every `offsetWidth` on it is 0 — and because asking
+            // for the same size the editor asked for reuses its cached shot.
+            const size = parseWebsiteCaptureSize(
+                frame.getAttribute(WEBSITE_CAPTURE_SIZE_ATTR),
+            );
+            if (url === '' || placeholder === null || size === null) {
+                return;
+            }
+            if (!webScreenShotCache.has(url)) {
+                webScreenShotCache.set(
+                    url,
+                    captureWebScreenShot(url, { ...size, delay: 3000 }),
+                );
+            }
+            const imageData = await webScreenShotCache.get(url);
+            if (!imageData) {
+                // Leave the globe-and-url fallback in place rather than
+                // printing an empty box.
+                return;
+            }
+            const image = document.createElement('img');
+            image.alt = '';
+            image.src = imageData;
+            Object.assign(image.style, {
+                width: '100%',
+                height: '100%',
+                objectFit: 'fill',
+                display: 'block',
+            });
+            placeholder.replaceChildren(image);
+        }),
+    );
 }
 
 async function genSlidePageHtml(
     slide: Slide,
     videoFrameCache: Map<string, Promise<string | null>>,
+    webScreenShotCache: Map<string, Promise<string | null>>,
 ) {
     // Same fallback as showing on a screen: the slide's own attachment
     // wins over the document-level one.
@@ -153,6 +219,7 @@ async function genSlidePageHtml(
         videoFrameCache,
     );
     const slideDiv = genSlideHtml(slide.canvasItemsJson);
+    await fillWebsiteScreenShots(slideDiv, webScreenShotCache);
     Object.assign(slideDiv.style, {
         position: 'absolute',
         top: '0',
@@ -182,10 +249,15 @@ export async function printAppDocument(appDocument: AppDocument) {
     try {
         const slides = await appDocument.getSlides();
         const videoFrameCache = new Map<string, Promise<string | null>>();
+        const webScreenShotCache = new Map<string, Promise<string | null>>();
         const pagesHtml = (
             await Promise.all(
                 slides.map((slide) => {
-                    return genSlidePageHtml(slide, videoFrameCache);
+                    return genSlidePageHtml(
+                        slide,
+                        videoFrameCache,
+                        webScreenShotCache,
+                    );
                 }),
             )
         ).join('');

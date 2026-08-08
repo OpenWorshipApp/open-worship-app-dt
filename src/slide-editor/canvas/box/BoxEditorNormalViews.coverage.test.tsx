@@ -27,6 +27,9 @@ const {
     videoValidateMock,
     cameraValidateMock,
     audioValidateMock,
+    websiteValidateMock,
+    useWebCapturingMock,
+    webCapturingState,
 } = vi.hoisted(() => {
     const defaultContextMenuHandlerMock = vi.fn();
     const genHandleContextMenuOpeningMock = vi.fn(
@@ -38,7 +41,13 @@ const {
         width: '240px',
         height: '120px',
     }));
+    const webCapturingState = { imageData: undefined as string | undefined };
     return {
+        webCapturingState,
+        useWebCapturingMock: vi.fn(() => {
+            return webCapturingState.imageData;
+        }),
+        websiteValidateMock: vi.fn(),
         bibleGenStyleMock: vi.fn(() => ({ color: 'navy' })),
         bibleValidateMock: vi.fn(),
         canvasControllerState: {
@@ -167,6 +176,16 @@ vi.mock('../CanvasItemAudio', () => ({
     },
 }));
 
+vi.mock('../CanvasItemWebsite', () => ({
+    default: {
+        validate: websiteValidateMock,
+    },
+}));
+
+vi.mock('../../../helper/capturingHelpers', () => ({
+    useWebCapturing: useWebCapturingMock,
+}));
+
 vi.mock('../../../context-menu/appContextMenuHelpers', () => ({
     showAppContextMenu: showAppContextMenuMock,
 }));
@@ -233,7 +252,32 @@ import BoxEditorNormalViewCameraModeComp, {
 import BoxEditorNormalViewAudioModeComp, {
     BoxEditorNormalAudioRender,
 } from './BoxEditorNormalViewAudioModeComp';
+import BoxEditorNormalViewWebsiteModeComp, {
+    BoxEditorNormalWebsiteRender,
+} from './BoxEditorNormalViewWebsiteModeComp';
 import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
+import { CanvasControllerContext } from '../CanvasController';
+
+// jsdom ships no `IntersectionObserver`, and the website view uses one to hold
+// off capturing until the box is actually on screen. `isIntersecting` here is
+// what lets a test choose between "scrolled into view" and "still off screen".
+const intersectionState = { isIntersecting: true };
+class FakeIntersectionObserver {
+    private readonly callback: IntersectionObserverCallback;
+    constructor(callback: IntersectionObserverCallback) {
+        this.callback = callback;
+    }
+    observe() {
+        if (intersectionState.isIntersecting) {
+            this.callback([{ isIntersecting: true }] as any, this as any);
+        }
+    }
+    disconnect() {}
+    unobserve() {}
+    takeRecords() {
+        return [];
+    }
+}
 
 describe('BoxEditor normal view components', () => {
     let container: HTMLDivElement | null = null;
@@ -241,6 +285,9 @@ describe('BoxEditor normal view components', () => {
 
     beforeEach(() => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        (globalThis as any).IntersectionObserver = FakeIntersectionObserver;
+        intersectionState.isIntersecting = true;
+        webCapturingState.imageData = undefined;
         vi.clearAllMocks();
         canvasItemPropsState.value = {
             id: 11,
@@ -654,6 +701,314 @@ describe('BoxEditor normal view components', () => {
         expect(badges.length).toBe(1);
         expect(badges[0].parentElement).toBe(video?.parentElement);
         expect(container?.textContent).toContain('HD Webcam');
+    });
+
+    test('renders a website as a screenshot placeholder, never an iframe', async () => {
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            id: 42,
+            type: 'website',
+            url: 'https://example.com/clock',
+            width: 800,
+            height: 600,
+        };
+
+        await render(
+            <BoxEditorNormalViewWebsiteModeComp
+                style={{ backgroundColor: 'aliceblue' }}
+            />,
+        );
+
+        expect(websiteValidateMock).toHaveBeenCalledWith(
+            canvasItemPropsState.value,
+        );
+        // The whole point: the editor, the item list, slide thumbnails and
+        // print must never load the page. Only the screen manager hydrates it,
+        // and these marks are how it finds the box.
+        expect(container?.querySelector('iframe')).toBeNull();
+        const frame = container?.querySelector<HTMLDivElement>(
+            '[data-website-item]',
+        );
+        expect(frame).not.toBeNull();
+        expect(frame?.getAttribute('data-website-url')).toBe(
+            'https://example.com/clock',
+        );
+        // The mini screen and print fill their own screenshot off a DETACHED
+        // div, where no element has a layout box; this is how they learn the
+        // size, and how they end up on the same cache entry as the editor.
+        expect(frame?.getAttribute('data-website-capture-size')).toBe(
+            '800x600',
+        );
+        // The frame has to stay a hit target or the hover handlers never fire.
+        expect(frame?.style.pointerEvents).toBe('');
+        // Exactly one preview-only placeholder, and it must be a CHILD of the
+        // frame so the hydration can hide it by `frame.querySelector(...)`.
+        const placeholders =
+            container?.querySelectorAll('[data-preview-only]') ?? [];
+        expect(placeholders.length).toBe(1);
+        expect(placeholders[0].parentElement).toBe(frame);
+        expect((placeholders[0] as HTMLElement).style.pointerEvents).toBe(
+            'none',
+        );
+        // Captured at the item's OWN box size, so every surface shares one
+        // cache key and the png stays small.
+        expect(useWebCapturingMock).toHaveBeenCalledWith(
+            'https://example.com/clock',
+            { width: 800, height: 600, isEnabled: true },
+        );
+    });
+
+    test('clamps the capture to the long side of the box', async () => {
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            type: 'website',
+            url: 'https://example.com/wide',
+            width: 1920,
+            height: 1080,
+        };
+
+        await render(<BoxEditorNormalWebsiteRender />);
+
+        expect(useWebCapturingMock).toHaveBeenCalledWith(
+            'https://example.com/wide',
+            { width: 960, height: 540, isEnabled: true },
+        );
+    });
+
+    test('holds off capturing until the box is scrolled into view', async () => {
+        // A document's slide list mounts EVERY slide at once; a capture opens a
+        // hidden BrowserWindow and sleeps for seconds, so an off-screen
+        // thumbnail must not start one.
+        intersectionState.isIntersecting = false;
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            type: 'website',
+            url: 'https://example.com/offscreen',
+            width: 800,
+            height: 600,
+        };
+
+        await render(<BoxEditorNormalWebsiteRender />);
+
+        expect(useWebCapturingMock).toHaveBeenCalledWith(
+            'https://example.com/offscreen',
+            { width: 800, height: 600, isEnabled: false },
+        );
+    });
+
+    test('falls back to an inline svg and the url with no screenshot', async () => {
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            type: 'website',
+            url: 'https://example.com/pending',
+            width: 800,
+            height: 600,
+        };
+
+        await render(<BoxEditorNormalWebsiteRender />);
+
+        expect(container?.querySelector('img')).toBeNull();
+        // Inline svg, NOT the `bi` icon font: this markup also has to survive
+        // `renderToStaticMarkup` into the screen window and the print document,
+        // neither of which loads that font.
+        expect(container?.querySelector('svg')).not.toBeNull();
+        expect(container?.querySelector('i.bi')).toBeNull();
+        expect(container?.textContent).toContain('https://example.com/pending');
+    });
+
+    test('shows the screenshot once it has been captured', async () => {
+        webCapturingState.imageData = 'data:image/png;base64,shot';
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            type: 'website',
+            url: 'https://example.com/shot',
+            width: 800,
+            height: 600,
+        };
+
+        await render(<BoxEditorNormalWebsiteRender />);
+
+        const image = container?.querySelector<HTMLImageElement>('img');
+        expect(image?.getAttribute('src')).toBe('data:image/png;base64,shot');
+        expect(container?.querySelector('iframe')).toBeNull();
+    });
+
+    async function renderWebsiteInEditor() {
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            id: 7,
+            type: 'website',
+            url: 'https://example.com/live',
+            width: 800,
+            height: 600,
+        };
+        await render(
+            <CanvasControllerContext value={canvasControllerState.value}>
+                <BoxEditorNormalWebsiteRender />
+            </CanvasControllerContext>,
+        );
+        return container?.querySelector<HTMLDivElement>('[data-website-item]');
+    }
+
+    async function dispatchOnFrame(
+        frame: HTMLElement | null | undefined,
+        type: string,
+    ) {
+        await act(async () => {
+            // Bubbling `mouseover`/`mouseout`, never enter/leave: both the
+            // editor canvas and slide previews live in a shadow root, where
+            // React cannot synthesize the enter/leave pair.
+            frame?.dispatchEvent(
+                type === 'pointerdown'
+                    ? new MouseEvent('pointerdown', { bubbles: true })
+                    : new MouseEvent(type, { bubbles: true }),
+            );
+        });
+    }
+
+    test('goes live on hover in the editor and tears down on leave', async () => {
+        vi.useFakeTimers();
+        try {
+            const frame = await renderWebsiteInEditor();
+
+            await dispatchOnFrame(frame, 'mouseover');
+            // Trailing edge only: dragging the pointer across the canvas must
+            // not load a page for every box it crosses.
+            expect(container?.querySelector('iframe')).toBeNull();
+
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(1000);
+            });
+            const iframe =
+                container?.querySelector<HTMLIFrameElement>('iframe');
+            expect(iframe?.getAttribute('src')).toBe(
+                'https://example.com/live',
+            );
+            expect(iframe?.getAttribute('sandbox')).toBe(
+                'allow-scripts allow-same-origin allow-forms allow-popups',
+            );
+            expect(iframe?.getAttribute('referrerpolicy')).toBe(
+                'strict-origin-when-cross-origin',
+            );
+            // An iframe swallows every pointer event; without this the box
+            // stops dragging and the frame fires a spurious `mouseout`.
+            expect(iframe?.style.pointerEvents).toBe('none');
+
+            // Teardown is immediate, no timer advance.
+            await dispatchOnFrame(frame, 'mouseout');
+            expect(container?.querySelector('iframe')).toBeNull();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('a hover cancelled before the debounce never loads the page', async () => {
+        vi.useFakeTimers();
+        try {
+            const frame = await renderWebsiteInEditor();
+
+            await dispatchOnFrame(frame, 'mouseover');
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(500);
+            });
+            await dispatchOnFrame(frame, 'mouseout');
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(2000);
+            });
+
+            expect(container?.querySelector('iframe')).toBeNull();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('a pointerdown cancels a pending hover so a drag never pops one', async () => {
+        vi.useFakeTimers();
+        try {
+            const frame = await renderWebsiteInEditor();
+
+            await dispatchOnFrame(frame, 'mouseover');
+            // A drag keeps the pointer inside the box, so no `mouseout` ever
+            // arrives; without this the iframe appears mid-gesture.
+            await dispatchOnFrame(frame, 'pointerdown');
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(2000);
+            });
+
+            expect(container?.querySelector('iframe')).toBeNull();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('never goes live on hover outside the editor', async () => {
+        vi.useFakeTimers();
+        try {
+            // No `CanvasControllerContext`: this is the presenter's slide list,
+            // which renders one of these per slide. Hovering a thumbnail there
+            // must never start loading a page.
+            canvasItemPropsState.value = {
+                ...canvasItemPropsState.value,
+                type: 'website',
+                url: 'https://example.com/thumb',
+                width: 800,
+                height: 600,
+            };
+            await render(<BoxEditorNormalWebsiteRender />);
+            const frame = container?.querySelector<HTMLDivElement>(
+                '[data-website-item]',
+            );
+
+            await dispatchOnFrame(frame ?? null, 'mouseover');
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(2000);
+            });
+
+            expect(container?.querySelector('iframe')).toBeNull();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('ships no iframe through renderToStaticMarkup', async () => {
+        // `genSlideHtml` runs this very tree through `renderToStaticMarkup` for
+        // BOTH the screen window and the print document. Effects never run
+        // there, so this is the markup the screen manager hydrates and the
+        // printer lays out — it must carry the marks and no live page.
+        const { renderToStaticMarkup } = await import('react-dom/server');
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            type: 'website',
+            url: 'https://example.com/static',
+            width: 800,
+            height: 600,
+        };
+
+        const markup = renderToStaticMarkup(<BoxEditorNormalWebsiteRender />);
+
+        expect(markup).toContain('data-website-item');
+        expect(markup).toContain(
+            'data-website-url="https://example.com/static"',
+        );
+        expect(markup).toContain('data-preview-only');
+        expect(markup).not.toContain('<iframe');
+        // The icon font is not loaded in either destination.
+        expect(markup).toContain('<svg');
+        expect(markup).not.toContain('class="bi');
+    });
+
+    test('falls back to the error view when website props are invalid', async () => {
+        const error = new Error('bad website');
+        websiteValidateMock.mockImplementation(() => {
+            throw error;
+        });
+
+        await render(<BoxEditorNormalWebsiteRender />);
+
+        expect(handleErrorMock).toHaveBeenCalledWith(error);
+        expect(container?.textContent).toContain('Error');
+        // An invalid item must not trigger a capture.
+        expect(useWebCapturingMock).not.toHaveBeenCalled();
     });
 
     test('falls back to the error view when camera props are invalid', async () => {

@@ -21,11 +21,18 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-08g** (**W-17** rewritten: the Finder is no longer a separate
+**workflowsVersion: 2026-08-08h** (**W-24** gains step 5 and **W-28**'s table is
+reworded: a **website box now shows a screenshot of the page, not the running page**,
+everywhere you edit and preview. Hover it for ~1s to see it live; right-click →
+**Refresh Preview** to re-take the picture (it never updates itself). The audience
+screen still shows the real live page. Same rule for a **web background**: a picture on
+the presenter's mini screen, the live page on the projected screen — with no
+hover-to-live there, because the background layer never receives the pointer.
+Previous: **2026-08-08g** (**W-17** rewritten: the Finder is no longer a separate
 popup window. **Ctrl/⌘+F** now drops a **Find bar** into the top-right of the window
 being searched — pinned inside that window rather than floating over it — with a
 `current/total` match counter, **Shift+Enter** for the previous match and a grip that
-drags it sideways. It is drawn as app chrome, so the query never matches itself.
+drags it sideways. It is drawn as app chrome, so the query never matches itself.)
 Previous: **2026-08-08f** (new **W-28**: anything in the bottom **Background** panel
 can now be **dragged straight onto the Slide Editor canvas** to become a box — an image,
 video, audio, web page, camera or colour. A colour dropped **on** an existing box recolours
@@ -619,7 +626,17 @@ in the same documents folder. 📸
    the same list from a right-click on the canvas. (The right-hand **Canvas Items** tab
    is a preview/select list, not a place to drag boxes from.) You can also **drag items
    in from the Background panel** — see W-28.
-5. Save with **Ctrl+S**.
+5. **A website box shows a picture of the page, not the running page.** Open Worship
+   takes a screenshot and shows that everywhere you edit, so a service order full of
+   web slides stays fast even on an old machine. Two things follow:
+   - **Hover the box for about a second** to see the page live; move away and the
+     picture comes back. 📸
+   - The picture does not update itself. If the page changes (a clock, a countdown, a
+     scoreboard), right-click the box → **Refresh Preview**.
+
+   When you actually present the slide, the audience screen shows the **real, live
+   page** — only your editing and preview views use the picture.
+6. Save with **Ctrl+S**.
 
 **Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
@@ -627,7 +644,7 @@ in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 **Web backgrounds:** Background panel → **Web** tab → **+** — the Web Editor opens;
 enter the URL and title, save, and the new item appears in the Web tab.
 
-_Verify: ED-01..11, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, PM-33._
+_Verify: ED-01..11, ED-45, ED-46, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124._
 
 ---
 
@@ -1563,8 +1580,8 @@ walking the Insert menu — just drag it out of the panel you are already browsi
    | Images | an image box |
    | Videos | a video box |
    | Audios | an audio player box |
-   | Webs — a local page | a website box showing that file |
-   | Webs — a saved URL | a website box; a **YouTube** link becomes a real YouTube box |
+   | Webs — a local page | a website box showing a **screenshot** of that page (see W-24 step 4) |
+   | Webs — a saved URL | a website box showing a **screenshot**; a **YouTube** link becomes a real YouTube box |
    | Cameras | a camera box, labelled with that camera |
    | Colors | a plain coloured box (see step 4) |
 
