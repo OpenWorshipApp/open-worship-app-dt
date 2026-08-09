@@ -1,6 +1,10 @@
-import 'bible-note/styles.css';
-
+// Must come before `bible-note/styles.css`: bootstrap defines a same-specificity
+// `.dropdown { position: relative }` that otherwise beats the editor's
+// `.dropdown { position: fixed }` on source order and makes every editor
+// dropdown render as a full-window block.
 import './bootstrapCss';
+
+import 'bible-note/styles.css';
 import { init } from './boot';
 import { run } from './others/main';
 import NoteItemEditorPopupComp from './bible-list/note/NoteItemEditorPopupComp';
