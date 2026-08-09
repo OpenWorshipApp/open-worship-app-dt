@@ -112,6 +112,11 @@ describe('Khmer language data', () => {
             'Previous match',
             'Close find',
             'Drag to move the find panel',
+            // The canvas item preview section in the slide editor's properties
+            // panel, plus its camera item's opt-in live feed button.
+            'Preview',
+            'Start Camera',
+            'Stop Camera',
         ]) {
             expect(lang.dictionary[lang.sanitizeTranKey(key)]).toBeDefined();
         }

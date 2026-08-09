@@ -6,6 +6,7 @@ import { ExpandChevronComp, useExpandToggle } from './useExpandToggle';
 import SlideEditorToolsTextComp from './SlideEditorToolsTextComp';
 import SlideEditorToolsBoxComp from './SlideEditorToolsBoxComp';
 import SlideEditorToolsCameraComp from './SlideEditorToolsCameraComp';
+import CanvasItemPreviewComp from './CanvasItemPreviewComp';
 import type CanvasItem from '../CanvasItem';
 import {
     CanvasItemContext,
@@ -174,7 +175,19 @@ export default function CanvasItemPropsEditorComp({
                                         </SlideEditorToolTitleComp>
                                     </div>
                                 ) : null}
-                                <div />
+                                {canvasItem.type === 'error' ? null : (
+                                    <div
+                                        // Full panel row, like the text content
+                                        // above: the preview scales to whatever
+                                        // width the tools pane is given.
+                                        style={{
+                                            flexBasis: '100%',
+                                            minWidth: 0,
+                                        }}
+                                    >
+                                        <CanvasItemPreviewComp />
+                                    </div>
+                                )}
                             </CanvasItemContext>
                         )}
                     </div>
