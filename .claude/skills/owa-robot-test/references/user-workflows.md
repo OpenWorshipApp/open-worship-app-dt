@@ -21,7 +21,15 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-08i** (**new W-29 — the Names & locations lookup**: the
+**workflowsVersion: 2026-08-09** (**every floating window maximizes on a double-click of
+its title bar**, and goes back to the size and place it had on a second one. Added to
+**W-26** step 3 and **W-19** step 1 (the two places that teach the floating-window chrome)
+and to **W-29** step 1. Observed live on the Names & locations lookup: a 377×560 window at
+the right edge filled the whole app window, and the next double-click put it back exactly.
+The maximized size is deliberately NOT remembered — a window closed while maximized
+reopens at the size you last dragged it to — and resizing it by an edge ends the
+maximized state.)
+Previous: **2026-08-08i** (**new W-29 — the Names & locations lookup**: the
 person-and-pin button at the end of the Bible reference box opens a searchable browser
 over the biblical names and places, with per-record windows, reference chasing between
 them, verse text, a map for places that have coordinates, and a copy button. Every step
@@ -729,8 +737,9 @@ this is the same pair of tools pointed at the app.
 
 1. Open the **Tools** menu → **Start Controlling** (**Ctrl+Shift+P**, **⌘+Shift+P** on
    Mac). A floating **Presenting Control** panel appears — drag it by its title bar,
-   resize it from any edge or corner, and collapse it with the chevron; it reopens where
-   and how you last left it. 📸
+   resize it from any edge or corner, double-click the title bar to fill the window (and
+   again to put it back), and collapse it with the chevron; it reopens where and how you
+   last left it. 📸
 2. The **title bar** carries everything you reach for mid-presentation: the four tools on
    the left, then the **keyboard screencast** switch (W-20) and **Undo** / **Redo** /
    **Clear** on the right. Only the settings live in the body, so collapsing the panel
@@ -1508,6 +1517,9 @@ as well, give it a window of its own.
    video onto it, right-click a slide for its menu.
 3. Drag the window by its title bar to move it, drag any edge or corner to resize it, and
    use the **chevron** to fold it away to just its title. The **✕** closes it.
+   **Double-click the title bar** to blow the window up to the whole app window;
+   double-click it again to drop it back to the exact size and place it had. Every
+   floating window in the app works this way.
 4. Repeat step 1 on a second document. You get a **second** window — one per document, as
    many as you need, each opening slightly offset from the last. 📸
 5. Zoom one window with its slider (or hold **Ctrl** and scroll over it). Only that
@@ -1529,7 +1541,7 @@ Tips:
 - Windows are **not** reopened when you restart the app; you start with a clean screen.
 - Renaming or trashing a document closes its window.
 
-_Verify: PM-118, PM-119, PM-120, PL-01, CM-06._
+_Verify: PM-118, PM-119, PM-120, PM-126, PL-01, CM-06._
 
 ### W-27 — Pin the document you are presenting from
 
@@ -1621,7 +1633,10 @@ your Bible reading.
    right-hand end of the reference box, click the person-and-pin button
    **Names and locations lookup** (ការស្វែងរកឈ្មោះ និងទីកន្លែង). A small floating
    window opens. The first open takes a few seconds while the dictionary loads — after
-   that it is instant. 📸
+   that it is instant. It is a floating window like any other: drag it by its title bar,
+   resize it from any edge, and **double-click the title bar** to make it fill the app
+   window when you want to read a long list — double-click again to put it back where
+   it was. 📸
 2. Use the **Names** (ឈ្មោះ) and **Locations** (ទីកន្លែង) tabs to choose what you are
    looking for, and type in the search box. Each tab remembers what you typed, so you
    can switch back and forth. The list updates as you type.
@@ -1659,7 +1674,7 @@ your Bible reading.
 slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
 
 _Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
-RD-64._
+RD-64, PM-126._
 
 ---
 

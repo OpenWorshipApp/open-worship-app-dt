@@ -273,6 +273,51 @@ export function getInitialWidgetRect(options: FloatingWidgetOptions) {
     );
 }
 
+// "Maximized" is the whole viewport minus the same padding every other rect is
+// clamped to. It deliberately ignores `options.maxWidth`/`maxHeight`: those caps
+// exist to keep a widget's DEFAULT size sane, and an explicit "fill the screen"
+// gesture outranks them.
+export function getMaximizedWidgetRect(): WidgetRect {
+    const viewportSize = getViewportSize();
+
+    return {
+        left: VIEWPORT_PADDING,
+        top: VIEWPORT_PADDING,
+        width: Math.max(
+            VIEWPORT_PADDING,
+            viewportSize.width - VIEWPORT_PADDING * 2,
+        ),
+        height: Math.max(
+            VIEWPORT_PADDING,
+            viewportSize.height - VIEWPORT_PADDING * 2,
+        ),
+    };
+}
+
+/**
+ * One double-click on the header: fill the viewport, or put back what was there
+ * before.
+ *
+ * `restoreRect` is BOTH the flag and the payload — non-null means "currently
+ * maximized, and this is the rect to go back to" — so the two can never
+ * disagree. The way back is clamped again because the viewport may well have
+ * changed size while the widget was maximized.
+ */
+export function toggleMaximizedWidgetRect(
+    currentRect: WidgetRect,
+    restoreRect: WidgetRect | null,
+    options: FloatingWidgetOptions,
+    isCollapsed = false,
+): { rect: WidgetRect; restoreRect: WidgetRect | null } {
+    if (restoreRect === null) {
+        return { rect: getMaximizedWidgetRect(), restoreRect: currentRect };
+    }
+    return {
+        rect: clampWidgetRect(restoreRect, options, isCollapsed),
+        restoreRect: null,
+    };
+}
+
 // Persisted rect lets a widget come back at the size/location the user last
 // left it. Kept as a tiny JSON blob in the shared setting store; written only
 // once per drag/resize gesture (on pointer-up), never on every pointer move.

@@ -17,12 +17,14 @@ import {
     bringFloatingWidgetToFront,
     clampWidgetRect,
     getInitialWidgetRect,
+    getMaximizedWidgetRect,
     isBlankDragArea,
     isIgnored,
     isOnScrollbar,
     readPersistedRect,
     registerFloatingWidget,
     resizeWidgetRect,
+    toggleMaximizedWidgetRect,
     writePersistedRect,
 } from './floatingWidgetHelpers';
 import type {
@@ -30,7 +32,18 @@ import type {
     InteractionMode,
     InteractionState,
     ResizeHandle,
+    WidgetRect,
 } from './floatingWidgetHelpers';
+
+// The header's maximize gesture is detected from the presses themselves rather
+// than from a `dblclick` event, because there IS no `dblclick` here: pressing
+// the header starts a move and `startInteraction` cancels the `pointerdown`,
+// which makes Chromium drop the whole compatibility sequence after it —
+// `mousedown`, `mouseup`, `click` and `dblclick` all included. Verified live.
+const DOUBLE_PRESS_MILLISECOND = 400;
+// A second press this far from the first is a new gesture somewhere else, not
+// the other half of a double-click.
+const DOUBLE_PRESS_SLOP_PIXEL = 6;
 
 interface MyProps {
     children?: ReactNode;
@@ -83,6 +96,13 @@ export default function FloatingWidgetComp({
 }: PropsWithChildren<MyProps>) {
     const widgetRef = useRef<HTMLDivElement>(null);
     const interactionRef = useRef<InteractionState | null>(null);
+    // The previous press on the header, kept only long enough to recognize the
+    // next one as its double-click partner.
+    const lastHeaderPressRef = useRef<{
+        timeStamp: number;
+        clientX: number;
+        clientY: number;
+    } | null>(null);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [activeMode, setActiveMode] = useState<InteractionMode | null>(null);
     // A widget that just opened is the one the user asked for, so it starts on
@@ -104,7 +124,15 @@ export default function FloatingWidgetComp({
         }
         return getInitialWidgetRect(options);
     });
+    // Non-null ONLY while maximized, and it holds the rect to go back to — the
+    // flag and its payload are the same value, so they cannot drift apart. Not
+    // persisted on purpose: filling the viewport is a look-at-this-now gesture,
+    // and saving it would reopen the widget maximized with nothing to restore.
+    const [restoreRect, setRestoreRect] = useState<WidgetRect | null>(null);
+    const isMaximized = restoreRect !== null;
     const widgetRectRef = useAppCurrentRef(widgetRect);
+    const restoreRectRef = useAppCurrentRef(restoreRect);
+    const isMaximizedRef = useAppCurrentRef(isMaximized);
     const persistKeyRef = useAppCurrentRef(persistKey);
     const optionsRef = useAppCurrentRef(options);
     const isCollapsedRef = useAppCurrentRef(isCollapsed);
@@ -136,6 +164,14 @@ export default function FloatingWidgetComp({
     }, [raiseToken]);
 
     useEffect(() => {
+        // A maximized widget owns its rect until the user puts it back — the
+        // option size and the caps around it are exactly what the gesture
+        // overrode. Read through a ref, NOT a dependency: as a dep this would
+        // re-run on the way back down and snap a hand-resized non-persisted
+        // widget to the option size instead of to what it had before.
+        if (isMaximizedRef.current) {
+            return;
+        }
         const sizingOptions = {
             height: optionHeight,
             maxHeight: optionMaxHeight,
@@ -165,6 +201,7 @@ export default function FloatingWidgetComp({
         );
     }, [
         isCollapsed,
+        isMaximizedRef,
         optionHeight,
         optionMaxHeight,
         optionMaxWidth,
@@ -184,6 +221,12 @@ export default function FloatingWidgetComp({
             width: optionWidth,
         };
         const handleViewportResize = () => {
+            // Maximized means "the whole viewport", so a viewport that grew has
+            // to be filled again; clamping alone would only ever shrink it.
+            if (isMaximizedRef.current) {
+                setWidgetRect(getMaximizedWidgetRect());
+                return;
+            }
             setWidgetRect((prev) =>
                 clampWidgetRect(prev, sizingOptions, isCollapsed),
             );
@@ -198,6 +241,7 @@ export default function FloatingWidgetComp({
         };
     }, [
         isCollapsed,
+        isMaximizedRef,
         optionHeight,
         optionMaxHeight,
         optionMaxWidth,
@@ -214,6 +258,16 @@ export default function FloatingWidgetComp({
         ) => {
             if (event.button !== 0) {
                 return;
+            }
+
+            // Dragging a resize handle makes the widget whatever size the user
+            // dragged it to, so it is no longer "maximized" and the remembered
+            // rect would be a surprise to jump back to. NOT done for `move`: a
+            // double-click on the header is two full press/release pairs, so
+            // clearing here would undo the maximize before the second click
+            // even lands.
+            if (mode === 'resize' && isMaximizedRef.current) {
+                setRestoreRect(null);
             }
 
             interactionRef.current = {
@@ -331,6 +385,63 @@ export default function FloatingWidgetComp({
         [],
     );
 
+    // Double-pressing the header is the quick "fill the viewport" gesture, and
+    // doing it again puts the widget back at the size and place it had.
+    const handleHeaderPointerDown = useCallback(
+        (event: ReactPointerEvent<HTMLDivElement>) => {
+            const target = event.target;
+            // The same surface that can be dragged by, so double-clicking the
+            // collapse/close/extra buttons keeps meaning what it always did.
+            if (
+                event.button !== 0 ||
+                !(target instanceof Element) ||
+                !isBlankDragArea(target) ||
+                isIgnored(target)
+            ) {
+                return;
+            }
+
+            const previousPress = lastHeaderPressRef.current;
+            const isDoublePress =
+                previousPress !== null &&
+                event.timeStamp - previousPress.timeStamp <=
+                    DOUBLE_PRESS_MILLISECOND &&
+                Math.abs(event.clientX - previousPress.clientX) <=
+                    DOUBLE_PRESS_SLOP_PIXEL &&
+                Math.abs(event.clientY - previousPress.clientY) <=
+                    DOUBLE_PRESS_SLOP_PIXEL;
+            if (!isDoublePress) {
+                lastHeaderPressRef.current = {
+                    timeStamp: event.timeStamp,
+                    clientX: event.clientX,
+                    clientY: event.clientY,
+                };
+                return;
+            }
+
+            // Cleared so a third press starts counting again instead of undoing
+            // what the second one just did.
+            lastHeaderPressRef.current = null;
+            const next = toggleMaximizedWidgetRect(
+                widgetRectRef.current,
+                restoreRectRef.current,
+                optionsRef.current,
+                isCollapsedRef.current,
+            );
+            // Kept in step synchronously, the way a drag does: a press landing
+            // before React re-renders must not resize from the stale rect.
+            widgetRectRef.current = next.rect;
+            setWidgetRect(next.rect);
+            setRestoreRect(next.restoreRect);
+            // Held back from the widget's own handler so this press starts no
+            // move gesture — the widget just jumped somewhere else, and a drag
+            // from the old grab point would fight it.
+            event.stopPropagation();
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+
     const { theme } = useThemeSource();
 
     const collapseLabel = isCollapsed
@@ -396,7 +507,10 @@ export default function FloatingWidgetComp({
             {title == null ? (
                 <div className="floating-widget__toolbar">{actionButtons}</div>
             ) : (
-                <div className="floating-widget__header">
+                <div
+                    className="floating-widget__header"
+                    onPointerDown={handleHeaderPointerDown}
+                >
                     <div className="floating-widget__title">{title}</div>
                     {actionButtons}
                 </div>

@@ -74,4 +74,5 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Presenting flow cue gutter](presenting-flow-cue-gutter.md) — one left column (number + rail + run cursor) shared by the tree and the preview; content-box and Enter-only are load-bearing
 - [Vite caches a failed import resolution](vite-caches-failed-import-resolution.md) — importing before the file exists 500s the importer forever; touch vite.config.ts, not the importer
 - [Drag-kind mime & dim target](drag-kind-mime-and-dim-target.md) — dragover gates on `application/x-owa-drag-<kind>`; `changeDragEventStyle` dims `event.target`, not `currentTarget`
+- [Canceled pointerdown kills click](canceled-pointerdown-kills-click.md) — a drag surface gets no mousedown/click/dblclick, so `onDoubleClick` there never fires; time the presses instead
 - [Website items are screenshots, not iframes](website-screenshot-not-iframe.md) — live only on the projected screen; the capture size rides the markup because both fill-in points run on a detached div
