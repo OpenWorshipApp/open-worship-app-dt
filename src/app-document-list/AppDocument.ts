@@ -315,8 +315,8 @@ export default class AppDocument
             canvasItems: [], // TODO: add default canvas item
             type: 'slide',
         };
-        const newSlide = new Slide(this.filePath, json);
-        return newSlide;
+        const slide = new Slide(this.filePath, json);
+        return slide;
     }
 
     async addNewSlide() {
