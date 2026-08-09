@@ -6,6 +6,7 @@ import {
     useAppEffect,
     useAppStateAsync,
 } from '../helper/appHooks';
+import { mapInYieldingBatches } from '../helper/helpers';
 import { tran } from '../lang/langHelpers';
 import { openDetailPanel } from './detailPanelHelpers';
 import { useLookupManagersContext } from './lookupManagersContext';
@@ -344,13 +345,25 @@ export function OptionalLocationListRowComp({
     );
 }
 
+// One commit of ~700 rows is a stall in its own right, separate from the reads,
+// and nobody scrolls a 700-row list inside a 360px widget. A page at a time
+// keeps the section instant to open; the reads below still resolve EVERY title,
+// so what Copy puts on the clipboard is unaffected by how far the user paged.
+const VERSE_PAGE_SIZE = 50;
+
 /**
  * The Verses section: collapsed by default, and resolved only once opened.
  *
  * Turning a short reference into a readable title costs one bible read each, and
- * records carry far more of them than anything else here — Egypt lists 558. So
- * nothing is read until the user opens the section, and even then the list
- * renders immediately with the raw references while the titles fill in behind it.
+ * records carry far more of them than anything else here — Egypt lists 558,
+ * Jerusalem 712. So nothing is read until the user opens the section, and even
+ * then the list renders immediately with the raw references while the titles
+ * fill in behind it.
+ *
+ * The reads go through `mapInYieldingBatches` rather than one `Promise.all`:
+ * each title ends in synchronous work, so resolving them all in a single chain
+ * drained the microtask queue for 4.2 seconds without ever letting the renderer
+ * paint or answer a click.
  */
 export function OptionalVerseListRowComp({
     values,
@@ -360,19 +373,21 @@ export function OptionalVerseListRowComp({
     onResolved?: (titles: string[]) => void;
 }>) {
     const [hasBeenExpanded, setHasBeenExpanded] = useState(false);
+    const [shownCount, setShownCount] = useState(VERSE_PAGE_SIZE);
     const [titleMap] = useAppStateAsync(async () => {
         if (!hasBeenExpanded) {
             return null;
         }
-        const entries = await Promise.all(
-            values.map(async (shortVerse) => {
+        const entries = await mapInYieldingBatches(
+            values,
+            async (shortVerse) => {
                 try {
                     const title = await shortToVerseTitle(shortVerse);
                     return [shortVerse, title ?? shortVerse] as const;
                 } catch {
                     return [shortVerse, shortVerse] as const;
                 }
-            }),
+            },
         );
         return Object.fromEntries(entries) as { [key: string]: string };
     }, [hasBeenExpanded, values]);
@@ -389,6 +404,7 @@ export function OptionalVerseListRowComp({
     if (values.length === 0) {
         return null;
     }
+    const remainingCount = values.length - shownCount;
     return (
         <CollapsibleRowComp
             label={tran('Verses')}
@@ -399,7 +415,7 @@ export function OptionalVerseListRowComp({
             }}
         >
             <ul className="location-name-lookup__detail-list">
-                {values.map((shortVerse) => {
+                {values.slice(0, shownCount).map((shortVerse) => {
                     const verseTitle = titleMap?.[shortVerse] ?? shortVerse;
                     return (
                         <li key={shortVerse}>
@@ -420,6 +436,19 @@ export function OptionalVerseListRowComp({
                     );
                 })}
             </ul>
+            {remainingCount > 0 ? (
+                <button
+                    className="location-name-lookup__show-more"
+                    type="button"
+                    onClick={() => {
+                        setShownCount((oldCount) => {
+                            return oldCount + VERSE_PAGE_SIZE;
+                        });
+                    }}
+                >
+                    {`${tran('Show more')} (${remainingCount})`}
+                </button>
+            ) : null}
         </CollapsibleRowComp>
     );
 }

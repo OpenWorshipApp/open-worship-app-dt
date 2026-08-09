@@ -49,6 +49,24 @@ describe('opening a detail panel', () => {
         openDetailPanel({ kind: 'name', target: 'n-1', name: 'Moses' });
 
         expect(readPanels().map((panel) => panel.key)).toEqual(['name:n-1']);
+        // Deduplicating alone left the widget wherever it was in the stack,
+        // which for a cascade only 28px apart meant re-opening a record looked
+        // like a dead click. The bump is what the widget watches.
+        expect(readPanels()[0].raiseCount).toBe(1);
+    });
+
+    test('re-opening bumps only that panel, and keeps its position', () => {
+        openDetailPanel({ kind: 'name', target: 'n-1', name: 'Moses' });
+        openDetailPanel({ kind: 'name', target: 'n-2', name: 'Aaron' });
+
+        openDetailPanel({ kind: 'name', target: 'n-1', name: 'Moses' });
+
+        // A reorder here would jump every later widget's cascade offset.
+        expect(readPanels().map((panel) => panel.target)).toEqual([
+            'n-1',
+            'n-2',
+        ]);
+        expect(readPanels().map((panel) => panel.raiseCount)).toEqual([1, 0]);
     });
 
     // Ids are only unique within their own dataset, and a verse key is not an
@@ -88,14 +106,17 @@ describe('opening a detail panel', () => {
         unsubscribe();
     });
 
-    test('a duplicate notifies nobody', () => {
+    // The opposite of what this store used to do. Staying silent on a duplicate
+    // is precisely what made re-opening an already-open record do nothing at
+    // all: the widget never heard about the request, so it never came forward.
+    test('a duplicate notifies, so the widget can come to the front', () => {
         openDetailPanel({ kind: 'name', target: 'n-1', name: 'Moses' });
         const listener = vi.fn();
         const unsubscribe = subscribe(listener);
 
         openDetailPanel({ kind: 'name', target: 'n-1', name: 'Moses' });
 
-        expect(listener).not.toHaveBeenCalled();
+        expect(listener).toHaveBeenCalledTimes(1);
         unsubscribe();
     });
 });

@@ -11,6 +11,12 @@ export type DetailPanelType = {
     target: string;
     // What to show in the title bar until the record resolves.
     name: string;
+    // Bumped every time an already-open record is opened again, which is what
+    // the widget watches to pull itself back to the front. Deduplicating alone
+    // was not enough: panels cascade only 28px apart, so an earlier one sits
+    // almost entirely behind the later ones and re-clicking its name looked
+    // like a dead control.
+    raiseCount: number;
 };
 
 // Panels are deliberately window-scoped rather than owned by the lookup panel:
@@ -25,12 +31,23 @@ function notify() {
     }
 }
 
-export function openDetailPanel(panel: Omit<DetailPanelType, 'key'>) {
+export function openDetailPanel(
+    panel: Omit<DetailPanelType, 'key' | 'raiseCount'>,
+) {
     const key = `${panel.kind}:${panel.target}`;
     if (openPanels.some((item) => item.key === key)) {
+        // Keep the position — only ask the existing widget to come forward, so
+        // following a reference back to a record already on screen shows it
+        // rather than doing nothing at all.
+        openPanels = openPanels.map((item) => {
+            return item.key === key
+                ? { ...item, raiseCount: item.raiseCount + 1 }
+                : item;
+        });
+        notify();
         return;
     }
-    openPanels = [...openPanels, { ...panel, key }];
+    openPanels = [...openPanels, { ...panel, key, raiseCount: 0 }];
     notify();
 }
 

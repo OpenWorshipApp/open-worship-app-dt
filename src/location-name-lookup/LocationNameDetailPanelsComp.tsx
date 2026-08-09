@@ -245,7 +245,7 @@ function RenderDetailPanelComp({
                     // Zoomed with the SAME factor as the body, so the record's
                     // name in the title bar reads at the bible text's size too
                     // rather than staying at the widget chrome's default.
-                    style={{ cursor: 'text', zoom: textScale }}
+                    style={{ cursor: 'text', fontSize: `${textScale}em` }}
                 >
                     <i className={getPanelIconClass(panel, managers)} />
                     <span className="text-truncate">{title}</span>
@@ -259,6 +259,7 @@ function RenderDetailPanelComp({
             onClose={() => {
                 closeDetailPanel(panel.key);
             }}
+            raiseToken={panel.raiseCount}
             options={{
                 width: DETAIL_PANEL_WIDTH,
                 height: 420,

@@ -1192,6 +1192,7 @@ const dictionary = {
         'ទីតាំងប្រហាក់ប្រហែល សញ្ញាសម្គាល់ជាចំណុចប៉ាន់ស្មាន',
     'Open in Google Maps': 'បើកក្នុង Google Maps',
     'Open in bible lookup': 'បើកក្នុងការស្វែងរកព្រះគម្ពីរ',
+    'Show more': 'បង្ហាញបន្ថែម',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

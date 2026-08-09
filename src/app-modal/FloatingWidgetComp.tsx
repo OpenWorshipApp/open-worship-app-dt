@@ -43,6 +43,11 @@ interface MyProps {
     // When set, the widget's size and location are saved under this setting key
     // and restored the next time it opens.
     persistKey?: string;
+    // Bump this to pull the widget back to the front. For hosts whose "open"
+    // gesture can land on a widget that is ALREADY open: pressing inside a
+    // widget raises it, but a request coming from anywhere else in the app has
+    // no other way to say "this one, now".
+    raiseToken?: number;
     options: FloatingWidgetOptions;
 }
 
@@ -73,6 +78,7 @@ export default function FloatingWidgetComp({
     extraActionButtons = null,
     options = {},
     persistKey,
+    raiseToken,
     onClose,
 }: PropsWithChildren<MyProps>) {
     const widgetRef = useRef<HTMLDivElement>(null);
@@ -119,6 +125,15 @@ export default function FloatingWidgetComp({
     const handleBringToFront = useCallback(() => {
         bringFloatingWidgetToFront(stackListenerRef.current);
     }, []);
+
+    useEffect(() => {
+        // Skipped on mount: a widget that just opened already starts on top,
+        // and raising it here would reorder the registry for nothing.
+        if (raiseToken === undefined || raiseToken === 0) {
+            return;
+        }
+        bringFloatingWidgetToFront(stackListenerRef.current);
+    }, [raiseToken]);
 
     useEffect(() => {
         const sizingOptions = {

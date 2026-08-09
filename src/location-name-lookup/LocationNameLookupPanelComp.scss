@@ -10,24 +10,48 @@
     min-height: 0;
   }
 
-  // Same reason, horizontally: lets the long titles and the type filter
-  // ellipsize rather than widening the panel.
-  .location-name-lookup__text,
-  .location-name-lookup__filter {
+  // Same reason, horizontally: lets the long titles ellipsize rather than
+  // widening the panel.
+  .location-name-lookup__text {
     min-width: 0;
   }
 
+  // The tab buttons and the type filter share one row. Letting the filter
+  // shrink freely ellipsized its SELECTED option down to a couple of glyphs —
+  // "All types" fits, its Khmer equivalent does not, which left the app's
+  // primary audience unable to read what the list was filtered by. Wrapping the
+  // row keeps the filter readable without ever widening the panel: it drops to
+  // its own full-width line when it cannot sit beside the tabs.
+  .location-name-lookup__controls {
+    flex-wrap: wrap;
+  }
+
   .location-name-lookup__filter {
+    flex: 1 1 auto;
+    min-width: 8rem;
     text-overflow: ellipsis;
   }
 
   // Titles run to a sentence or two; two lines is enough to identify a record
   // without letting one row dominate the list.
   .location-name-lookup__title {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    min-width: 0;
+
+    // The row is a Bootstrap `.btn`, which sets `white-space: nowrap` — and
+    // that inherits. A clamp cannot work against text that refuses to wrap.
+    white-space: normal;
+
+    // The clamp lives on an INNER box on purpose. This element is a flex item
+    // (its parent is `d-flex flex-column`), and a flex item's `display` is
+    // blockified, so `-webkit-box` never survives on it: the clamp silently
+    // stopped applying and the description was cut mid-word with no ellipsis
+    // to show anything was missing.
+    > span {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
   }
 }
 
@@ -227,6 +251,23 @@
   color: var(--bs-link-color);
   text-decoration: underline;
   text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--bs-link-hover-color);
+  }
+}
+
+// Pages through a long Verses list. Set apart from the references above it so
+// it does not read as one more verse in the list.
+.location-name-lookup__show-more {
+  margin-top: 0.25rem;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--bs-secondary-color);
+  font-size: 0.85em;
+  text-decoration: underline;
   cursor: pointer;
 
   &:hover {

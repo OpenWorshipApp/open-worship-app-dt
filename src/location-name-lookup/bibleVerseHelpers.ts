@@ -18,15 +18,40 @@ export type VerseDataType = {
 const LOOKUP_BIBLE_KEY = BIBLE_KJV_KEY;
 
 /**
+ * Resolves one stored reference to a bible item.
+ *
+ * The dataset stores CANONICAL verse keys — `GEN 41:1`, occasionally a range —
+ * and `fromVerseKey` is the parser for exactly that shape: it defaults
+ * `verseEnd` to `verseStart`, so a cited verse stays one verse.
+ *
+ * `fromTitleText` is deliberately NOT used here. That one drives the lookup
+ * INPUT, where a half-typed `GEN 41:1` still means "verse 1 onwards" and so
+ * comes back widened to the end of the chapter. Routing citations through it
+ * turned every one of them into `Genesis 41:1-57`, made a click open the rest
+ * of the chapter instead of the verse that was cited, and put those same wrong
+ * ranges on the clipboard via Copy — while costing a whole chapter's worth of
+ * bible reads and DOM per citation.
+ */
+async function shortToBibleItem(shortVerse: string) {
+    const bibleItem = await BibleItem.fromVerseKey(
+        LOOKUP_BIBLE_KEY,
+        shortVerse,
+    );
+    if (bibleItem !== null) {
+        return bibleItem;
+    }
+    // Anything outside the canonical form still gets the lenient parser rather
+    // than being dropped from the list.
+    return await BibleItem.fromTitleText(LOOKUP_BIBLE_KEY, shortVerse);
+}
+
+/**
  * `EXO 6:23` -> `{ title: 'Exodus 6:23', fullText: '(23): And Aaron took…' }`.
  */
 export async function shortToVerseData(
     shortVerse: string,
 ): Promise<VerseDataType | null> {
-    const bibleItem = await BibleItem.fromTitleText(
-        LOOKUP_BIBLE_KEY,
-        shortVerse,
-    );
+    const bibleItem = await shortToBibleItem(shortVerse);
     if (bibleItem === null) {
         return null;
     }
@@ -47,10 +72,7 @@ export async function shortToVerseData(
 export async function shortToVerseTitle(
     shortVerse: string,
 ): Promise<string | null> {
-    const bibleItem = await BibleItem.fromTitleText(
-        LOOKUP_BIBLE_KEY,
-        shortVerse,
-    );
+    const bibleItem = await shortToBibleItem(shortVerse);
     if (bibleItem === null) {
         return null;
     }
@@ -70,10 +92,7 @@ export async function openVerseInBibleLookup(
     viewController: LookupBibleItemController,
     shortVerse: string,
 ) {
-    const bibleItem = await BibleItem.fromTitleText(
-        LOOKUP_BIBLE_KEY,
-        shortVerse,
-    );
+    const bibleItem = await shortToBibleItem(shortVerse);
     if (bibleItem === null) {
         return false;
     }

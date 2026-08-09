@@ -76,7 +76,7 @@ function RenderLookupItemComp({
                     </span>
                     {record.title ? (
                         <span className="small text-secondary location-name-lookup__title">
-                            {record.title}
+                            <span>{record.title}</span>
                         </span>
                     ) : null}
                 </span>
@@ -377,7 +377,7 @@ function RenderLookupBodyComp({
             // Tracks the bible text zoom. `zoom` rather than `transform: scale`
             // so the content keeps a real layout box and still scrolls inside
             // the widget instead of being painted outside it.
-            style={{ zoom: textScale }}
+            style={{ fontSize: `${textScale}em` }}
         >
             <div className="input-group input-group-sm p-2 pb-1">
                 <span className="input-group-text">
@@ -410,8 +410,12 @@ function RenderLookupBodyComp({
                     </button>
                 )}
             </div>
-            <div className="d-flex gap-1 px-2 pb-2">
-                <div className="btn-group btn-group-sm" role="tablist">
+            <div
+                className={
+                    'd-flex gap-1 px-2 pb-2 location-name-lookup__controls'
+                }
+            >
+                <div className="btn-group btn-group-sm w-100" role="tablist">
                     <button
                         className={`btn btn-${
                             isOnNameTab ? 'primary' : 'outline-secondary'
@@ -438,35 +442,42 @@ function RenderLookupBodyComp({
                     >
                         <i className="bi bi-geo-alt-fill" /> {tran('Locations')}
                     </button>
+                    <select
+                        className="form-select form-select-sm location-name-lookup__filter"
+                        aria-label={tran('Filter by name type')}
+                        title={
+                            isOnNameTab
+                                ? tran('Filter by name type')
+                                : tran('Type filter applies to names only')
+                        }
+                        value={
+                            isOnNameTab ? nameTypeFilter : TYPE_FILTER_NA_VALUE
+                        }
+                        // Names carry a type; locations do not, so the filter is
+                        // inert there and shows a placeholder instead.
+                        disabled={!isOnNameTab}
+                        onChange={(event) => {
+                            setNameTypeFilter(event.target.value);
+                        }}
+                    >
+                        {isOnNameTab ? (
+                            nameTypeOptions.map((option) => {
+                                return (
+                                    <option
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </option>
+                                );
+                            })
+                        ) : (
+                            <option value={TYPE_FILTER_NA_VALUE}>
+                                {'----'}
+                            </option>
+                        )}
+                    </select>
                 </div>
-                <select
-                    className="form-select form-select-sm location-name-lookup__filter"
-                    aria-label={tran('Filter by name type')}
-                    title={
-                        isOnNameTab
-                            ? tran('Filter by name type')
-                            : tran('Type filter applies to names only')
-                    }
-                    value={isOnNameTab ? nameTypeFilter : TYPE_FILTER_NA_VALUE}
-                    // Names carry a type; locations do not, so the filter is
-                    // inert there and shows a placeholder instead.
-                    disabled={!isOnNameTab}
-                    onChange={(event) => {
-                        setNameTypeFilter(event.target.value);
-                    }}
-                >
-                    {isOnNameTab ? (
-                        nameTypeOptions.map((option) => {
-                            return (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            );
-                        })
-                    ) : (
-                        <option value={TYPE_FILTER_NA_VALUE}>{'----'}</option>
-                    )}
-                </select>
             </div>
             {/* Keyed per tab so each one keeps its own page while the other's
                 state is discarded rather than bleeding across. */}
