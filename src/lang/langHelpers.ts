@@ -7,7 +7,6 @@ import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import type { Editor, OpenLyric, OpenLyricMarkdownManager } from 'open-lyric';
-import { LocationsLookupManager, NamesLookupManager } from 'bible-note';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
@@ -937,36 +936,4 @@ export function genOpenLyricFontFaces(
     return newFontFacesList.sort((a, b) => {
         return a.indexRange - b.indexRange;
     });
-}
-
-export async function getBibleNoteLookupData() {
-    const enLangData = await getLangDataAsync('en-US');
-    if (enLangData === null) {
-        throw new Error('Failed to load English language data');
-    }
-    const langDataList = await getAllLangsAsync();
-    const namesData: { [key: string]: AnyObjectType } = {};
-    const locationsData: { [key: string]: AnyObjectType } = {};
-    for (const langData of langDataList) {
-        if (langData.getLookupData === undefined) {
-            continue;
-        }
-        const lookupData = await langData.getLookupData('');
-        if (lookupData !== null) {
-            locationsData[langData.langCode] = lookupData.locationsMap;
-            namesData[langData.langCode] = lookupData.namesMap;
-        }
-    }
-    const namesLookupManager = NamesLookupManager.fromRawDataset(
-        namesData,
-        'en',
-    );
-    const locationsLookupManager = LocationsLookupManager.fromRawDataset(
-        locationsData,
-        'en',
-    );
-    return {
-        namesLookupManager,
-        locationsLookupManager,
-    };
 }

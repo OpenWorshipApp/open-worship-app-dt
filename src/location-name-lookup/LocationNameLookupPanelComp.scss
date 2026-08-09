@@ -1,0 +1,235 @@
+// Everything is scoped under the panel root so this module adds no app-wide
+// utility classes. Bootstrap covers the rest of the styling.
+.location-name-lookup {
+  // A flex child defaults to `min-height: auto`, which refuses to shrink below
+  // its content — the result list would then push the panel taller than the
+  // floating widget instead of scrolling inside it.
+  min-height: 0;
+
+  .location-name-lookup__list {
+    min-height: 0;
+  }
+
+  // Same reason, horizontally: lets the long titles and the type filter
+  // ellipsize rather than widening the panel.
+  .location-name-lookup__text,
+  .location-name-lookup__filter {
+    min-width: 0;
+  }
+
+  .location-name-lookup__filter {
+    text-overflow: ellipsis;
+  }
+
+  // Titles run to a sentence or two; two lines is enough to identify a record
+  // without letting one row dominate the list.
+  .location-name-lookup__title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+// A record's detail panel. It lives in its own floating widget, so only the
+// body is styled here — the chrome comes from `FloatingWidgetComp`.
+.location-name-lookup-detail-widget .floating-widget__content {
+  overflow-y: auto;
+}
+
+.location-name-lookup__detail {
+  padding: 8px 10px 12px 10px;
+  font-size: 13.5px;
+
+  .location-name-lookup__basic-title {
+    font-weight: 600;
+    line-height: 1.35;
+    margin-bottom: 4px;
+  }
+
+  .location-name-lookup__basic-description {
+    margin: 0 0 6px 0;
+    line-height: 1.45;
+    color: var(--bs-secondary-color);
+  }
+
+  .location-name-lookup__verse-text {
+    margin: 0;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  // Chips for the always-short facts (type / gender / age).
+  .location-name-lookup__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 6px;
+
+    > span {
+      padding: 1px 7px;
+      border: 1px solid var(--bs-border-color);
+      border-radius: 10px;
+      font-size: 12px;
+      color: var(--bs-secondary-color);
+      text-transform: capitalize;
+    }
+  }
+
+  .location-name-lookup__details-summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 4px 0;
+    border: none;
+    border-top: 1px solid var(--bs-border-color-translucent);
+    background-color: transparent;
+    color: var(--bs-body-color);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .location-name-lookup__grid {
+    margin: 4px 0 0 0;
+  }
+
+  .location-name-lookup__row {
+    // A label column wide enough for "Modern identification" would starve the
+    // values, so labels sit on their own line and only the short inline rows
+    // share one.
+    display: grid;
+    grid-template-columns: 1fr;
+    margin-bottom: 6px;
+
+    > dt {
+      font-weight: 600;
+      font-size: 11.5px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--bs-secondary-color);
+    }
+
+    > dd {
+      margin: 0;
+    }
+  }
+
+  .location-name-lookup__row--inline {
+    // Label and value flow as ONE wrapped paragraph rather than two grid
+    // columns. Sizing a column to the label starves the value on a panel this
+    // narrow — "Modern identification:" alone eats most of the width — and the
+    // value ends up dumped on its own line under the label.
+    display: block;
+    margin-bottom: 3px;
+
+    > dt {
+      display: inline;
+      // JSX leaves no whitespace between the two elements.
+      margin-right: 0.35em;
+      text-transform: none;
+      letter-spacing: normal;
+      font-size: 13.5px;
+      color: var(--bs-body-color);
+    }
+
+    > dd {
+      display: inline;
+    }
+  }
+
+  // A foldable section: its label is the toggle, with the entry count beside it
+  // so a closed section still says how much it is hiding.
+  .location-name-lookup__row--collapsible {
+    margin-bottom: 4px;
+
+    > dt {
+      font-size: inherit;
+      letter-spacing: normal;
+      text-transform: none;
+    }
+
+    > dd {
+      margin-top: 2px;
+    }
+  }
+
+  .location-name-lookup__section-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    padding: 1px 0;
+    border: none;
+    background-color: transparent;
+    color: var(--bs-secondary-color);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--bs-body-color);
+    }
+  }
+
+  .location-name-lookup__section-count {
+    padding: 0 5px;
+    border-radius: 8px;
+    background-color: var(--bs-tertiary-bg);
+    font-size: 10.5px;
+    letter-spacing: normal;
+  }
+
+  // Reference lists wrap as a run of inline chips rather than one item per
+  // line: a record like Moses lists about twenty cousins.
+  .location-name-lookup__detail-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .location-name-lookup__map {
+    margin-top: 8px;
+
+    .location-name-lookup__map-note {
+      margin: 0 0 4px 0;
+      font-size: 11.5px;
+      color: var(--bs-secondary-color);
+    }
+
+    .location-name-lookup__map-frame {
+      width: 100%;
+      height: 190px;
+      border: 1px solid var(--bs-border-color);
+      border-radius: 6px;
+    }
+  }
+}
+
+// Sits inside the widget's title, which is marked no-drag and shows a text
+// cursor; the button has to say it is clickable again.
+.location-name-lookup__title-button {
+  cursor: pointer;
+}
+
+// Every clickable reference — inline tokens inside a title as well as the list
+// chips — reads as a link, not as a button.
+.location-name-lookup__ref-link {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--bs-link-color);
+  text-decoration: underline;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--bs-link-hover-color);
+  }
+}

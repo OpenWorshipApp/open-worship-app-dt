@@ -14,6 +14,11 @@ import RenderOpenWikiDictionaryComp from './RenderOpenWikiDictionaryComp';
 import RenderExportWordComp from './RenderExportWordComp';
 import { useAppCurrentRef } from '../helper/appHooks';
 
+// The history strip beside the input group is sized against half of this, and
+// `.app-input-group-header` in `BibleReaderComp.scss` caps it at the same value
+// — change all three together.
+const INPUT_GROUP_WIDTH = 395;
+
 export default function RenderBibleLookupHeaderComp({
     setIsAdvanceLookupOpened,
     isAdvanceLookupOpened,
@@ -48,7 +53,7 @@ export default function RenderBibleLookupHeaderComp({
                 <div
                     className="app-flex-item h-100 overflow-hidden d-flex align-items-center"
                     style={{
-                        width: 'calc(50% - 175px)',
+                        width: `calc(50% - ${INPUT_GROUP_WIDTH / 2}px)`,
                     }}
                 >
                     <BibleLookupInputHistoryComp />
@@ -56,7 +61,7 @@ export default function RenderBibleLookupHeaderComp({
             )}
             <div
                 className="app-flex-item input-group app-input-group-header"
-                style={{ width: 350 }}
+                style={{ width: INPUT_GROUP_WIDTH }}
             >
                 <InputHandlerComp onBibleKeyChange={handleBibleKeyChanging} />
             </div>

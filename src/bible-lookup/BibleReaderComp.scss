@@ -1,7 +1,9 @@
 #bible-lookup-container {
   .app-input-group-header {
     margin: auto;
-    max-width: 350px;
+    // Keep in sync with the inline width in `RenderBibleLookupHeaderComp`, and
+    // with the `calc(50% - <half>px)` the history strip beside it uses.
+    max-width: 395px;
   }
 
   .app-chapter-select {

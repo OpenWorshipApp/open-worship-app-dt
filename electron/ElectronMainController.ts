@@ -61,7 +61,26 @@ function isSupportedMainNavigation(targetUrl: string) {
 }
 
 function guardMainNavigation(win: BrowserWindow) {
-    const handleNavigation = (event: Electron.Event, targetUrl: string) => {
+    const handleNavigation = (
+        event: Electron.Event<
+            | Electron.WebContentsWillNavigateEventParams
+            | Electron.WebContentsWillRedirectEventParams
+        >,
+        targetUrl: string,
+    ) => {
+        // Only the MAIN frame. These events also fire for sub-frames, and this
+        // guard is about the window not replacing itself with a foreign page —
+        // an <iframe> is embedded content, not a navigation away.
+        //
+        // Without this, any embedded page that answers with a redirect got its
+        // final URL treated as a main-window navigation: cancelled, and opened
+        // in the system browser instead. The Google Maps embed in the names &
+        // locations panel does exactly that (`maps.google.com/maps?…` ->
+        // `www.google.com/maps/embed?…`), so the map stayed blank and a browser
+        // window popped up saying it "must be used in an iframe".
+        if (event.isMainFrame === false) {
+            return;
+        }
         if (isSupportedMainNavigation(targetUrl)) {
             return;
         }

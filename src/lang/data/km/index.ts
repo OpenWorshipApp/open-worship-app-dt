@@ -1139,6 +1139,57 @@ const dictionary = {
     'URL already exists': 'URL មានរួចហើយ',
     'Wiki Dictionary': 'វចនានុក្រម Wiki',
     'Word Document': 'ឯកសារ Word',
+    // --- Names & locations lookup panel (`src/location-name-lookup`).
+    // Machine-authored Khmer following the dictionary's existing conventions;
+    // a native speaker should review the phrasing. Note `All Types` above
+    // already covers the panel's "All types" option after key sanitization.
+    'Names and locations lookup': 'ការស្វែងរកឈ្មោះ និងទីកន្លែង',
+    Names: 'ឈ្មោះ',
+    Locations: 'ទីកន្លែង',
+    'Search names': 'ស្វែងរកឈ្មោះ',
+    'Search locations': 'ស្វែងរកទីកន្លែង',
+    'Clear search': 'សម្អាតការស្វែងរក',
+    'Filter by name type': 'ត្រងតាមប្រភេទឈ្មោះ',
+    'Type filter applies to names only':
+        'ការត្រងប្រភេទអនុវត្តចំពោះឈ្មោះតែប៉ុណ្ណោះ',
+    'No matches': 'រកមិនឃើញ',
+    'Jump to page': 'ទៅកាន់ទំព័រ',
+    'Type a page number and press Enter': 'វាយលេខទំព័រ រួចចុច Enter',
+    'Loading lookup data': 'កំពុងផ្ទុកទិន្នន័យស្វែងរក',
+    'Failed to load lookup data': 'មិនអាចផ្ទុកទិន្នន័យស្វែងរកបានទេ',
+    // Name-type filter options.
+    Concepts: 'គំនិត',
+    Deities: 'ព្រះ',
+    Groups: 'ក្រុម',
+    Life: 'ជីវិត',
+    Months: 'ខែ',
+    People: 'មនុស្ស',
+    Places: 'ទីកន្លែង',
+    Supernatural: 'អធិធម្មជាតិ',
+    Unknown: 'មិនស្គាល់',
+    // Record detail panel. `Title`, `Type`, `Copy` and `Copied` already exist
+    // above and resolve after key sanitization, so they are not repeated here —
+    // a duplicate would throw when this module loads.
+    'Record not found': 'រកមិនឃើញកំណត់ត្រា',
+    Details: 'ព័ត៌មានលម្អិត',
+    'Also called': 'ហៅផងដែរថា',
+    Gender: 'ភេទ',
+    Age: 'អាយុ',
+    Years: 'ឆ្នាំ',
+    Parents: 'ឪពុកម្ដាយ',
+    Spouses: 'ប្ដីប្រពន្ធ',
+    Children: 'កូន',
+    Siblings: 'បងប្អូន',
+    Cousins: 'បងប្អូនជីដូនមួយ',
+    Verses: 'ខគម្ពីរ',
+    Links: 'តំណភ្ជាប់',
+    'Modern identification': 'ការកំណត់អត្តសញ្ញាណសម័យទំនើប',
+    'Related locations': 'ទីកន្លែងពាក់ព័ន្ធ',
+    Coordinates: 'កូអរដោនេ',
+    'Approximate location, the marker is an estimated point':
+        'ទីតាំងប្រហាក់ប្រហែល សញ្ញាសម្គាល់ជាចំណុចប៉ាន់ស្មាន',
+    'Open in Google Maps': 'បើកក្នុង Google Maps',
+    'Open in bible lookup': 'បើកក្នុងការស្វែងរកព្រះគម្ពីរ',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

@@ -19,12 +19,8 @@ import {
 } from '../../helper/localFileHelpers';
 import Note from './Note';
 import type NoteItem from './NoteItem';
-import {
-    getAllLangsAsync,
-    getBibleNoteLookupData,
-    getLangDataAsync,
-    initAllLangCss,
-} from '../../lang/langHelpers';
+import { getAllLangsAsync, initAllLangCss } from '../../lang/langHelpers';
+import { getLookupDataCached } from '../../location-name-lookup/lookupDataHelpers';
 import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import BibleItem from '../BibleItem';
@@ -229,16 +225,8 @@ export async function initBibleNote({
         appProvider.messageUtils.sendData('all:app:print');
     };
 
-    const enLangData = await getLangDataAsync('en-US');
-    if (enLangData === null) {
-        throw new Error('Failed to load English language data');
-    }
-    const enLookupData = await enLangData.getLookupData?.('');
-    if (!enLookupData) {
-        throw new Error('Failed to load English lookup data');
-    }
     const { namesLookupManager, locationsLookupManager } =
-        await getBibleNoteLookupData();
+        await getLookupDataCached();
     const bibleNoteProps: BibleNoteProps = {
         namesLookupManager,
         locationsLookupManager,

@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-08h** (**W-24** gains step 5 and **W-28**'s table is
+**workflowsVersion: 2026-08-08i** (**new W-29 — the Names & locations lookup**: the
+person-and-pin button at the end of the Bible reference box opens a searchable browser
+over the biblical names and places, with per-record windows, reference chasing between
+them, verse text, a map for places that have coordinates, and a copy button. Every step
+was observed on the live app in BOTH locales; the Khmer labels quoted in the recipe are
+the ones the app actually rendered.)
+Previous: **2026-08-08h** (**W-24** gains step 5 and **W-28**'s table is
 reworded: a **website box now shows a screenshot of the page, not the running page**,
 everywhere you edit and preview. Hover it for ~1s to see it live; right-click →
 **Refresh Preview** to re-take the picture (it never updates itself). The audience
@@ -1603,6 +1609,57 @@ Tips:
   right device after a restart.
 
 _Verify: ED-40, ED-41, ED-42, ED-43, ED-44, ED-21, ED-37, PM-06._
+
+---
+
+### W-29 — Look up a Bible name or place (people, tribes, cities, maps)
+
+**Goal:** find out who someone in the Bible was, or where a place is, without leaving
+your Bible reading.
+
+1. Open the **Bible Reader**, or the **Bible Lookup** popup in the Presenter. At the
+   right-hand end of the reference box, click the person-and-pin button
+   **Names and locations lookup** (ការស្វែងរកឈ្មោះ និងទីកន្លែង). A small floating
+   window opens. The first open takes a few seconds while the dictionary loads — after
+   that it is instant. 📸
+2. Use the **Names** (ឈ្មោះ) and **Locations** (ទីកន្លែង) tabs to choose what you are
+   looking for, and type in the search box. Each tab remembers what you typed, so you
+   can switch back and forth. The list updates as you type.
+3. On the **Names** tab the dropdown beside the tabs narrows the list by kind —
+   **All types** (គ្រប់ប្រភេទ), **People** (មនុស្ស), **Groups** (ក្រុម),
+   **Places** (ទីកន្លែង) and so on. It is greyed out on the **Locations** tab, where
+   there is nothing to filter.
+4. Use the arrows at the bottom to page through results, or type a page number in the
+   little box and press **Enter**. Starting a new search always takes you back to
+   page 1. 📸
+5. Click a result to open it in its own small window: a short description, then a
+   **Details** (ព័ត៌មានលម្អិត) section with things like **Also called**, **Type**,
+   **Gender**, **Parents**, **Children** and **Verses** (ខគម្ពីរ). 📸
+6. **Verses** starts closed and shows how many there are — some entries have hundreds
+   (Jerusalem has 712). Click it to open, and the references turn into readable
+   titles like *Joshua 10:1-43*.
+7. Any underlined name or place — in the description or in a list — opens as another
+   small window **beside** the one you are reading, so you can follow a family or a
+   journey without losing your place. Clicking the same entry twice just brings its
+   window back to the front.
+8. Click a verse reference to read it (King James text). The eye button in that
+   window's title bar, **Open in bible lookup** (បើកក្នុងការស្វែងរកព្រះគម្ពីរ), loads
+   that passage into the reference box behind it. 📸
+9. For a place that has coordinates, a map appears at the bottom of its window under
+   **Approximate location, the marker is an estimated point**, with an **Open in
+   Google Maps** link. The map needs an internet connection; places without
+   coordinates (Egypt, for example) simply show no map. 📸
+10. The copy button in a record window's title bar copies the whole entry — including
+    all of its verse references, whether or not you opened the **Verses** section —
+    ready to paste into a note or a document.
+11. Closing the lookup window leaves the record windows you opened where they are.
+    Each has its own **×**.
+
+**Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
+slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
+
+_Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
+RD-64._
 
 ---
 

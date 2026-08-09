@@ -36,6 +36,9 @@ interface MyProps {
     children?: ReactNode;
     collapsedChildren?: ReactNode | null;
     title?: ReactNode;
+    // Widget-specific buttons placed before the collapse/close pair. They share
+    // the actions container, so they are excluded from the drag surface too.
+    extraActionButtons?: ReactNode;
     onClose: () => void;
     // When set, the widget's size and location are saved under this setting key
     // and restored the next time it opens.
@@ -67,6 +70,7 @@ export default function FloatingWidgetComp({
     children,
     collapsedChildren = null,
     title,
+    extraActionButtons = null,
     options = {},
     persistKey,
     onClose,
@@ -322,6 +326,7 @@ export default function FloatingWidgetComp({
             className="floating-widget__actions"
             onPointerDown={(event) => event.stopPropagation()}
         >
+            {extraActionButtons}
             <button
                 type="button"
                 className="floating-widget__button"

@@ -1,19 +1,17 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 
-import { useStateSettingNumber } from '../helper/settingHelpers';
 import BibleViewSettingComp, { defaultRangeSize } from './BibleViewSettingComp';
 import { useBibleItemViewControllerUpdateEvent } from './BibleItemsViewController';
 import BibleViewRendererComp from './BibleViewRendererComp';
 import {
     BibleViewFontSizeContext,
-    DEFAULT_BIBLE_TEXT_FONT_SIZE,
+    setBibleViewFontSize,
+    useBibleViewFontSize,
 } from '../helper/bibleViewHelpers';
 import FullScreenButtonComp from './FullScreenButtonComp';
-import { fontSizeSettingNames } from '../helper/constants';
 import { useZoomingRegistering } from '../others/AppRangeComp';
-import appProvider from '../server/appProvider';
 import { handleAutoHide } from '../helper/domHelpers';
-import { useAppEffect } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { tran } from '../lang/langHelpers';
 import NewLineSettingComp from './NewLineSettingComp';
@@ -44,12 +42,20 @@ export default function BiblePreviewerRenderComp({
             );
         };
     }, []);
-    const fontSizeSettingName = appProvider.isPageReader
-        ? fontSizeSettingNames.BIBLE_READING
-        : fontSizeSettingNames.BIBLE_PRESENTER;
-    const [fontSize, setFontSize] = useStateSettingNumber(
-        fontSizeSettingName,
-        DEFAULT_BIBLE_TEXT_FONT_SIZE,
+    // Setting-backed as before, but through the shared store so UI outside this
+    // subtree — the names & locations panels — can scale with the same zoom.
+    const fontSize = useBibleViewFontSize();
+    const fontSizeRef = useAppCurrentRef(fontSize);
+    const setFontSize = useCallback(
+        (value: number | ((oldFontSize: number) => number)) => {
+            setBibleViewFontSize(
+                typeof value === 'function'
+                    ? value(fontSizeRef.current)
+                    : value,
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleFullScreenToggling = useCallback(
         async (isToFullScreen: boolean) => {
