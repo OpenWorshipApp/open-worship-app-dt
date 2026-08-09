@@ -48,11 +48,7 @@ export default function AskingNewNameComp({
             );
             return;
         }
-        applyNameRef.current(creatingNewNameRef.current || null);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-    const handleCanceling = useCallback(() => {
-        applyNameRef.current(null);
+        applyNameRef.current(creatingNewNameRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
@@ -67,7 +63,6 @@ export default function AskingNewNameComp({
                 autoFocus
                 onKeyDown={handleKeyDown}
                 onChange={handleInputChange}
-                onBlur={handleCanceling}
             />
             <button
                 id="button-addon2"
