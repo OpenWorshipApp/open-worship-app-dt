@@ -31,6 +31,9 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Clear All Settings': 'លុបការកំណត់ទាំងអស់',
+    'Are you sure you want to clear all settings?':
+        'តើអ្នកពិតជាចង់លុបការកំណត់ទាំងអស់ឬ?',
     'Reveal Original': 'បង្ហាញកន្លែងដើម',
     Sort: 'តម្រៀប',
     Type: 'ប្រភេទ',

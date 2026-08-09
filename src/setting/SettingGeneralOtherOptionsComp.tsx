@@ -5,6 +5,7 @@ import { clearWidgetSizeSetting } from '../resize-actor/flexSizeHelpers';
 import { appLocalStorage } from './directory-setting/appLocalStorage';
 import { applyStore } from './SettingApplyComp';
 import SettingCardHeaderComp from './SettingCardHeaderComp';
+import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 
 export default function SettingGeneralOtherOptionsComp() {
     const handleResetWidgetSize = useCallback(() => {
@@ -12,6 +13,13 @@ export default function SettingGeneralOtherOptionsComp() {
         applyStore.pendingApply();
     }, []);
     const handleClearSettings = useCallback(async () => {
+        const isOk = await showAppConfirm(
+            tran('Clear All Settings'),
+            tran('Are you sure you want to clear all settings?'),
+        );
+        if (!isOk) {
+            return;
+        }
         await appLocalStorage.clear();
         applyStore.pendingApply();
     }, []);

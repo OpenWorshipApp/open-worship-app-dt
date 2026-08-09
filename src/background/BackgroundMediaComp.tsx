@@ -26,7 +26,7 @@ import { useBackgroundViewModeSetting } from './BackgroundViewModeComp';
 export function useThumbnailWidthSetting() {
     const [thumbnailWidth, setThumbnailWidth] = useStateSettingNumber(
         'bg-thumbnail-width',
-        defaultRangeSize.min,
+        defaultRangeSize.size,
     );
     return [thumbnailWidth, setThumbnailWidth] as const;
 }
