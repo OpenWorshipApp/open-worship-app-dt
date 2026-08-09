@@ -1,4 +1,8 @@
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
+import {
+    appDocumentFlexSizeNames,
+    toAppDocumentFlexSizeName,
+} from '../../resize-actor/flexSizeHelpers';
 import type Slide from '../../app-document-list/Slide';
 import type AppDocument from '../../app-document-list/AppDocument';
 import AppDocumentNoteEditorComp from './AppDocumentNoteEditorComp';
@@ -8,10 +12,13 @@ export default function CanvasNoteContainerHandlerComp({
     appDocument,
     slide,
 }: Readonly<{ appDocument: AppDocument; slide: Slide }>) {
-    const fileFullName = appDocument.fileSource.fullName;
+    const { fullName: fileFullName, filePath } = appDocument.fileSource;
     return (
         <ResizeActorComp
-            flexSizeName={fileFullName}
+            flexSizeName={toAppDocumentFlexSizeName(
+                appDocumentFlexSizeNames.slideEditorNote,
+                filePath,
+            )}
             isHorizontal
             flexSizeDefault={{
                 h1: ['1'],

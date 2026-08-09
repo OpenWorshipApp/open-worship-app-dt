@@ -20,6 +20,13 @@ const { settingStore, getSettingMock, setSettingMock, handleErrorMock } =
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     setSetting: setSettingMock,
+    // Mirrors the real sanitizer; the module itself pulls in appProvider and
+    // the file helpers, which this jsdom suite deliberately does not load.
+    toFilePathSettingName: (prefix: string, ...parts: string[]) =>
+        `${prefix}-${parts
+            .join('-')
+            .replace(/[\\/:*?"<>|.]/g, '_')
+            .replace(/\s+/g, '_')}`,
 }));
 
 vi.mock('../helper/errorHelpers', () => ({
@@ -27,6 +34,8 @@ vi.mock('../helper/errorHelpers', () => ({
 }));
 
 import {
+    appDocumentFlexSizeNames,
+    toAppDocumentFlexSizeName,
     calcShowingHiddenWidget,
     checkIsThereNotHiddenWidget,
     clearFlexSizeSetting,
@@ -350,5 +359,90 @@ describe('resize-actor flexSizeHelpers', () => {
         );
         // 10 - 100 = -90 which is < 10/10 so keep original 10
         expect(prev.style.flexGrow).toBe('10');
+    });
+
+    describe('toAppDocumentFlexSizeName', () => {
+        const FILE_PATH = '/data/documents/a.ows';
+
+        test('drops path separators so the setting stays one file', () => {
+            const name = toAppDocumentFlexSizeName(
+                appDocumentFlexSizeNames.presenterNote,
+                FILE_PATH,
+            );
+            expect(name).not.toMatch(/[\\/.]/);
+        });
+
+        test('the same document keeps every pane apart', () => {
+            const names = Object.values(appDocumentFlexSizeNames).map(
+                (flexSizeName) => {
+                    return toAppDocumentFlexSizeName(flexSizeName, FILE_PATH);
+                },
+            );
+            expect(new Set(names).size).toBe(names.length);
+            // A prefix match is enough for `genFlexSizeSetting`'s
+            // `[data-fs^="…"]` selector to pick up a sibling actor's items.
+            for (const name of names) {
+                for (const otherName of names) {
+                    if (name === otherName) {
+                        continue;
+                    }
+                    expect(otherName.startsWith(name)).toBe(false);
+                }
+            }
+        });
+
+        test('same file name in another folder is another document', () => {
+            expect(
+                toAppDocumentFlexSizeName(
+                    appDocumentFlexSizeNames.presenterPreviewer,
+                    '/data/documents/a.ows',
+                ),
+            ).not.toBe(
+                toAppDocumentFlexSizeName(
+                    appDocumentFlexSizeNames.presenterPreviewer,
+                    '/data/archive/a.ows',
+                ),
+            );
+        });
+
+        test('the name prefix separates a second copy of the same pane', () => {
+            expect(
+                toAppDocumentFlexSizeName(
+                    appDocumentFlexSizeNames.presenterPreviewer,
+                    FILE_PATH,
+                    'floating-preview-',
+                ),
+            ).not.toBe(
+                toAppDocumentFlexSizeName(
+                    appDocumentFlexSizeNames.presenterPreviewer,
+                    FILE_PATH,
+                ),
+            );
+        });
+
+        test('collapsing one pane leaves the other pane untouched', () => {
+            const previewerName = toAppDocumentFlexSizeName(
+                appDocumentFlexSizeNames.presenterPreviewer,
+                FILE_PATH,
+            );
+            const noteName = toAppDocumentFlexSizeName(
+                appDocumentFlexSizeNames.presenterNote,
+                FILE_PATH,
+            );
+            const previewerDefault: FlexSizeType = { v1: ['6'], v2: ['1'] };
+            const noteDefault: FlexSizeType = { h1: ['1'], h2: ['1'] };
+
+            setDisablingSetting(
+                previewerName,
+                previewerDefault,
+                keyToDataFlexSizeKey(previewerName, 'v2'),
+                ['second', 1],
+            );
+            getFlexSizeSetting(noteName, noteDefault);
+
+            expect(
+                getFlexSizeSetting(previewerName, previewerDefault).v2[1],
+            ).toEqual(['second', 1]);
+        });
     });
 });

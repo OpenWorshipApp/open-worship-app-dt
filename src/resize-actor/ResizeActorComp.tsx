@@ -40,6 +40,17 @@ export default function ResizeActorComp({
         ? flexSizeDefault
         : getFlexSizeSetting(flexSizeName, flexSizeDefault, dataInput);
     const [flexSize, setFlexSize] = useState(restoreFlexSize);
+    // The previewer keeps this very actor mounted while the selected document
+    // changes under it, so a new `flexSizeName` alone would leave the state
+    // holding the PREVIOUS document's layout — which is what made a collapsed
+    // note pane look like one global setting shared by every file. Re-read
+    // during render (not in an effect) so the new document never paints with
+    // the old document's panes.
+    const [readFlexSizeName, setReadFlexSizeName] = useState(flexSizeName);
+    if (readFlexSizeName !== flexSizeName) {
+        setReadFlexSizeName(flexSizeName);
+        setFlexSize(restoreFlexSize);
+    }
     const setFlexSize1 = (newFlexSize: FlexSizeType) => {
         if (!isNotSaveSetting) {
             setFlexSizeSetting(flexSizeName, newFlexSize);

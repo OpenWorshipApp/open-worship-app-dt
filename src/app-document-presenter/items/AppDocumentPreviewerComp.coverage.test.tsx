@@ -82,6 +82,10 @@ vi.mock('../../helper/settingHelpers', () => ({
         defaultString,
         vi.fn(),
     ],
+    // Reached through `flexSizeHelpers`, which names the note pane's setting
+    // after the document's file path.
+    toFilePathSettingName: (prefix: string, ...parts: string[]) =>
+        `${prefix}-${parts.join('-')}`,
 }));
 
 vi.mock('./slideItemRenderHelpers', () => ({

@@ -2,7 +2,11 @@ import type { ReactNode, CSSProperties, LazyExoticComponent } from 'react';
 
 import { handleError } from '../helper/errorHelpers';
 import { parseJsonSafely } from '../helper/helpers';
-import { setSetting, getSetting } from '../helper/settingHelpers';
+import {
+    setSetting,
+    getSetting,
+    toFilePathSettingName,
+} from '../helper/settingHelpers';
 
 export const settingPrefix = 'widget-size';
 export const disablingTargetTypeList = ['first', 'second'] as const;
@@ -44,6 +48,38 @@ export const resizeSettingNames = {
     presenterBiblePreviewer: 'presenter-bible-previewer',
     bibleReadingLeft: 'bible-reading-left',
 };
+
+/**
+ * One prefix per ResizeActor that is keyed to a document file.
+ *
+ * Two actors must never share a `flexSizeName`: `getFlexSizeSetting` rejects a
+ * stored blob whose keys don't match its own defaults and immediately rewrites
+ * it with them, so the note pane (`v1`/`v2`) and the note split inside it
+ * (`h1`/`h2`) — both keyed by the file's full name before — wiped each other's
+ * collapsed state on every mount, and the pane could never stay closed.
+ */
+export const appDocumentFlexSizeNames = {
+    presenterPreviewer: 'app-document-previewer',
+    presenterNote: 'app-document-presenter-note',
+    slideEditorCanvas: 'slide-editor-canvas',
+    slideEditorNote: 'slide-editor-note',
+};
+
+/**
+ * Per FILE PATH, not per file name: two documents of the same name in
+ * different folders are different documents and remember their own layout.
+ *
+ * `namePrefix` separates a second live copy of the same pane over the same
+ * document (a floating preview beside the main panel), which would otherwise
+ * fight over one key while both are on screen.
+ */
+export function toAppDocumentFlexSizeName(
+    flexSizeName: string,
+    filePath: string,
+    namePrefix = '',
+) {
+    return toFilePathSettingName(`${namePrefix}${flexSizeName}`, filePath);
+}
 
 export function clearWidgetSizeSetting() {
     for (const name of Object.values(resizeSettingNames)) {

@@ -14,6 +14,10 @@ import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
 import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import CanvasNoteContainerHandlerComp from '../note/CanvasNoteContainerHandlerComp';
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
+import {
+    appDocumentFlexSizeNames,
+    toAppDocumentFlexSizeName,
+} from '../../resize-actor/flexSizeHelpers';
 import CanvasContainerComp from './canvas-container/CanvasContainerComp';
 import { toWidgetLabel } from '../../others/labelIconHelpers';
 import SlideEditorInsertToolbarComp from './tools/SlideEditorInsertToolbarComp';
@@ -29,7 +33,10 @@ function EditorComp({
     const { slide } = canvas;
     return (
         <ResizeActorComp
-            flexSizeName={fileSource.fullName}
+            flexSizeName={toAppDocumentFlexSizeName(
+                appDocumentFlexSizeNames.slideEditorCanvas,
+                fileSource.filePath,
+            )}
             isHorizontal={false}
             flexSizeDefault={{
                 v1: ['6'],
