@@ -21,7 +21,15 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-09** (**every floating window maximizes on a double-click of
+**workflowsVersion: 2026-08-09b** (**new W-30 — "See who and where is in the passage you
+are reading"**, the `Location-Name (KJV)` tab added beside **Find** and **Cross Reference**
+in the advanced bible-lookup panel. It lists every person and place the Bible names in the
+verses currently open, one block per passage, and each row opens the same record window
+W-29 teaches. Observed live on KJV Luke 13:1-35 + a Khmer Genesis 3:5-9 side by side:
+Names (6) / Locations (2) for Luke, Names (1) for Genesis, and clicking **Pilate** opened
+his record. The list also carries people the verse means without naming — Satan in
+Luke 13:16, which reads "the devil".)
+Previous: **2026-08-09** (**every floating window maximizes on a double-click of
 its title bar**, and goes back to the size and place it had on a second one. Added to
 **W-26** step 3 and **W-19** step 1 (the two places that teach the floating-window chrome)
 and to **W-29** step 1. Observed live on the Names & locations lookup: a 377×560 window at
@@ -1675,6 +1683,42 @@ slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
 
 _Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
 RD-64, PM-126._
+
+### W-30 — See who and where is in the passage you are reading
+
+**Goal:** while you read, get the list of every person and place the Bible names in
+those exact verses — without searching for them one by one.
+
+1. Open the **Bible Reader** (or the **Bible Lookup** popup in the Presenter) and read
+   a passage. At the top right, click **Advance Bible Lookup** (the magnifier). A panel
+   opens on the right with three tabs: **Find** (ស្វែងរក), **Cross Reference**
+   (ខគម្ពីរយោង) and **Location-Name (KJV)** (ទីកន្លែង-ឈ្មោះ (KJV)). Click the third
+   one. 📸
+   _If the last tab looks cut off, the tab strip scrolls sideways — or drag the divider
+   between the reading area and the panel to widen it._
+2. Under the heading **Names and locations in your reading (KJV)** you get **one block
+   per passage you have open**. Each block is titled with the passage it belongs to,
+   e.g. `(KJV) LUK 13:1-35`, and lists **Names** (ឈ្មោះ) first, then **Locations**
+   (ទីកន្លែង), with a count beside each. 📸
+3. Every row shows the person or place, the verses of that passage where it comes up
+   (`13:4, 13:22, 13:33, 13:34`), and a one-line description. A name that appears in
+   several verses is listed **once**, with all of its verses on the row.
+4. Open a second passage (split the reading area, or open another reference) and the
+   panel grows a second block for it — so you can see the people of two passages at
+   once. A passage with nobody in it says **No matches** (រកមិនឃើញ).
+5. Type a different reference into the box at the top and the list follows along as
+   soon as the reference is complete. 📸
+6. Click any row to open that person or place in its own small window — the same record
+   window as **W-29**, with the full description, family, verses and map. From there you
+   can chase references, copy the entry, or send a verse back to your reading. 📸
+
+**Good to know:** the list is built from the King James text, which is what the
+names dictionary was made from — that is what the **(KJV)** in the tab name means. You
+can be reading any version, or Khmer; the panel still tells you who is in those verses.
+It also includes people the verse means without naming — Luke 13:16 lists **Satan**,
+which the verse calls "the devil".
+
+_Verify: RD-72, RD-73, RD-74, RD-75, RD-76, RD-57._
 
 ---
 

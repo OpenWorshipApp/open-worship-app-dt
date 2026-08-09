@@ -3,7 +3,6 @@ import './LocationNameLookupPanelComp.scss';
 import { useMemo, useRef, useState } from 'react';
 import type { MentionNameType } from 'bible-note';
 
-import { useBibleViewTextScale } from '../helper/bibleViewHelpers';
 import { useAppEffect } from '../helper/appHooks';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import LoadingComp from '../others/LoadingComp';
@@ -18,8 +17,9 @@ import {
 } from './lookupPresentationHelpers';
 import type { LookupManagersType } from './lookupDataHelpers';
 import { useLookupManagers } from './lookupManagersContext';
-import { openDetailPanel } from './detailPanelHelpers';
 import type { DetailPanelKindType } from './detailPanelHelpers';
+import type { LookupRecordItemType } from './RenderLookupRecordItemComp';
+import RenderLookupRecordItemComp from './RenderLookupRecordItemComp';
 
 type LookupTabType = 'name' | 'location';
 
@@ -31,59 +31,12 @@ const TYPE_FILTER_NA_VALUE = '__na__';
 // enough to still feel live.
 const SEARCH_DEBOUNCE_MILLISECOND = 300;
 
-type LookupRecordType = {
-    id: string;
-    name: string;
-    title: string;
-    iconClass: string;
-};
-
 type LookupPageType = {
     page: number;
     totalPages: number;
     totalRecords: number;
-    records: LookupRecordType[];
+    records: LookupRecordItemType[];
 };
-
-function RenderLookupItemComp({
-    kind,
-    record,
-}: Readonly<{
-    kind: DetailPanelKindType;
-    record: LookupRecordType;
-}>) {
-    return (
-        <li className="list-group-item p-0 bg-transparent">
-            <button
-                className={
-                    'btn btn-sm w-100 text-start d-flex align-items-start' +
-                    ' gap-2 px-2 py-1 rounded-0'
-                }
-                type="button"
-                title={record.title || record.name}
-                onClick={() => {
-                    openDetailPanel({
-                        kind,
-                        target: record.id,
-                        name: record.name,
-                    });
-                }}
-            >
-                <i className={`${record.iconClass} mt-1 text-secondary`} />
-                <span className="d-flex flex-column location-name-lookup__text">
-                    <span className="fw-semibold text-truncate">
-                        {record.name}
-                    </span>
-                    {record.title ? (
-                        <span className="small text-secondary location-name-lookup__title">
-                            <span>{record.title}</span>
-                        </span>
-                    ) : null}
-                </span>
-            </button>
-        </li>
-    );
-}
 
 function RenderPaginationComp({
     safePage,
@@ -117,7 +70,7 @@ function RenderPaginationComp({
         <div
             className={
                 'd-flex align-items-center justify-content-between gap-2' +
-                ' px-2 py-1 border-top'
+                ' p-0 px-1 border-top'
             }
         >
             <button
@@ -249,7 +202,7 @@ function RenderResultListComp({
             >
                 {result.records.map((record) => {
                     return (
-                        <RenderLookupItemComp
+                        <RenderLookupRecordItemComp
                             key={record.id}
                             kind={kind}
                             record={record}
@@ -293,7 +246,6 @@ function RenderLookupBodyComp({
         return genTimeoutAttempt(SEARCH_DEBOUNCE_MILLISECOND);
     }, []);
 
-    const textScale = useBibleViewTextScale();
     const isOnNameTab = activeTab === 'name';
     const typedQuery = isOnNameTab ? typedNameQuery : typedLocationQuery;
     const handleQueryChange = (value: string, isImmediate = false) => {
@@ -377,7 +329,6 @@ function RenderLookupBodyComp({
             // Tracks the bible text zoom. `zoom` rather than `transform: scale`
             // so the content keeps a real layout box and still scrolls inside
             // the widget instead of being painted outside it.
-            style={{ fontSize: `${textScale}em` }}
         >
             <div className="input-group input-group-sm p-2 pb-1">
                 <span className="input-group-text">

@@ -1,6 +1,10 @@
 import type { AnyObjectType } from '../helper/typeHelpers';
 import { getAllLangsAsync } from '../lang/langHelpers';
-import type { LookupTextIndexType } from './verseTextIndexTypes';
+import { getPlainReferenceText } from './lookupPresentationHelpers';
+import type {
+    LookupRecordLabelsType,
+    LookupTextIndexType,
+} from './verseTextIndexTypes';
 import { LOOKUP_TEXT_INDEX_VERSION } from './verseTextIndexTypes';
 
 /**
@@ -8,8 +12,11 @@ import { LOOKUP_TEXT_INDEX_VERSION } from './verseTextIndexTypes';
  *
  * This module is imported DYNAMICALLY and only on a cache miss, because running
  * it is the one moment the app pays for the full ~35MB dataset: it is read,
- * reduced to surface forms plus verse evidence, and dropped again. The result is
- * written to the data folder so no later run repeats any of it.
+ * reduced to surface forms plus verse evidence, and dropped again. The results
+ * are written to the data folder so no later run repeats any of it.
+ *
+ * ONE pass produces BOTH output files — the index and its labels sidecar — so
+ * the dataset is never read twice even though the two are loaded independently.
  */
 
 // A record's `name` doubles as its display label, so ambiguous people carry a
@@ -25,6 +32,22 @@ const DISAMBIGUATOR_PATTERN =
 const MINIMUM_NEEDLE_LENGTH = 3;
 
 const DEFAULT_LOOKUP_LANG_CODE = 'en';
+
+// One line under a name in a list, nothing more. The raw descriptions run to
+// paragraphs, and carrying them whole would roughly double the sidecar for text
+// no row ever shows.
+const MAXIMUM_TITLE_LENGTH = 120;
+
+function toShortTitle(rawTitle: unknown): string {
+    if (typeof rawTitle !== 'string' || rawTitle.trim() === '') {
+        return '';
+    }
+    const plainTitle = getPlainReferenceText(rawTitle).trim();
+    if (plainTitle.length <= MAXIMUM_TITLE_LENGTH) {
+        return plainTitle;
+    }
+    return plainTitle.slice(0, MAXIMUM_TITLE_LENGTH).trimEnd() + '...';
+}
 
 function deriveNeedleList(rawName: unknown): string[] {
     if (typeof rawName !== 'string') {
@@ -66,7 +89,12 @@ async function readRawLookupData() {
     return null;
 }
 
-export async function buildLookupTextIndex(): Promise<LookupTextIndexType | null> {
+export type BuiltLookupDataType = {
+    index: LookupTextIndexType;
+    recordLabels: LookupRecordLabelsType;
+};
+
+export async function buildLookupTextIndex(): Promise<BuiltLookupDataType | null> {
     const rawLookupData = await readRawLookupData();
     if (rawLookupData === null) {
         return null;
@@ -130,7 +158,33 @@ export async function buildLookupTextIndex(): Promise<LookupTextIndexType | null
         return verseMap;
     };
 
-    return {
+    // Display data for EVERY record, so a record reachable only through the
+    // verse maps (never spelled out in the text) still gets a label. Held as a
+    // map because interning order is not known until all four maps are built.
+    const displayMap = new Map<string, { label: string; type: string }>();
+    const collectDisplay = (
+        recordList: AnyObjectType[],
+        isKeepingType: boolean,
+    ) => {
+        for (const record of recordList) {
+            if (typeof record.id !== 'string') {
+                continue;
+            }
+            const rawType = record.type;
+            displayMap.set(record.id, {
+                label: typeof record.name === 'string' ? record.name : '',
+                type:
+                    isKeepingType && typeof rawType === 'string' ? rawType : '',
+            });
+        }
+    };
+    collectDisplay(nameRecordList, true);
+    // Locations carry a `type` of their own, but their icon is fixed and the
+    // kind is already known from which verse map a record came out of, so
+    // keeping it would only cost bytes.
+    collectDisplay(locationRecordList, false);
+
+    const index: LookupTextIndexType = {
         version: LOOKUP_TEXT_INDEX_VERSION,
         ids: idList,
         names: buildNeedleMap(nameRecordList),
@@ -138,4 +192,20 @@ export async function buildLookupTextIndex(): Promise<LookupTextIndexType | null
         verseNames: buildVerseMap(namesFile.versePersonsMap),
         verseLocations: buildVerseMap(locationsFile.verseLocationsMap),
     };
+
+    // Titles are read straight off the source records here rather than kept in
+    // `displayMap`, so the truncated strings are the only ones retained.
+    const titleMap = new Map<string, string>();
+    for (const record of [...nameRecordList, ...locationRecordList]) {
+        if (typeof record.id === 'string') {
+            titleMap.set(record.id, toShortTitle(record.title));
+        }
+    }
+    const recordLabels: LookupRecordLabelsType = {
+        version: LOOKUP_TEXT_INDEX_VERSION,
+        labels: idList.map((id) => displayMap.get(id)?.label ?? ''),
+        types: idList.map((id) => displayMap.get(id)?.type ?? ''),
+        titles: idList.map((id) => titleMap.get(id) ?? ''),
+    };
+    return { index, recordLabels };
 }

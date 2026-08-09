@@ -1,22 +1,10 @@
-import { useSyncExternalStore } from 'react';
-
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
-import { appManagedDataDirNames } from '../helper/constants';
-import { handleError } from '../helper/errorHelpers';
 import appProvider from '../server/appProvider';
 import {
-    fsCheckFileExist,
-    fsCreateDir,
-    fsReadFile,
-    fsWriteFile,
-    pathJoin,
-} from '../server/fileHelpers';
-import { unlocking } from '../server/unlockingHelpers';
-import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
-import {
-    LOOKUP_TEXT_INDEX_VERSION,
-    type LookupTextIndexType,
-} from './verseTextIndexTypes';
+    genLookupFileStore,
+    loadLookupTextIndexFile,
+} from './lookupIndexFileHelpers';
+import { type LookupTextIndexType } from './verseTextIndexTypes';
 
 /**
  * The slim index that makes names and locations clickable inside verse text.
@@ -28,6 +16,9 @@ import {
  * app data folder, exactly the way bible XML is cached beside its source, and
  * every later run reads only that. The full dataset is still loaded lazily, and
  * only when a user actually clicks through to a detail panel.
+ *
+ * Reading, building and holding the file live in `lookupIndexFileHelpers`, which
+ * the labels sidecar shares. This module is the index's own matching logic.
  */
 
 export type LookupTextMatchType = {
@@ -38,9 +29,6 @@ export type LookupTextMatchType = {
     kind: 'name' | 'location';
     recordId: string;
 };
-
-const INDEX_FILE_NAME = 'verse-text-index.json';
-const INDEX_LOCK_KEY = 'lookup-verse-text-index';
 
 // Longest multi-word surface form worth probing ("Mary Magdalene", "Valley of
 // the Son of Hinnom"). Every extra word costs one map probe per token.
@@ -53,149 +41,13 @@ const TOKEN_PATTERN = /[A-Za-z][A-Za-z'’-]*/g;
 
 const POSSESSIVE_PATTERN = /['’]s?$/;
 
-type IndexEnvelopeType = {
-    _cachingTime: number;
-    // The shipped dataset only ever changes with the app itself, so the app
-    // version is what tells a cache built by an earlier install apart.
-    _appVersion: string;
-    value: LookupTextIndexType;
-};
-
-async function getIndexFilePath() {
-    const dirPath = pathJoin(
-        appLocalStorage.defaultStorage,
-        appManagedDataDirNames.LOOKUP_DATA,
-    );
-    try {
-        await fsCreateDir(dirPath);
-    } catch (error: any) {
-        if (
-            error.code !== 'EEXIST' &&
-            !error.message?.includes('file already exists')
-        ) {
-            handleError(error);
-            return null;
-        }
-    }
-    return pathJoin(dirPath, INDEX_FILE_NAME);
-}
-
-async function readCachedIndex(filePath: string) {
-    if (!(await fsCheckFileExist(filePath))) {
-        return null;
-    }
-    try {
-        const jsonText = await fsReadFile(filePath);
-        if (jsonText === null) {
-            return null;
-        }
-        const envelope = JSON.parse(jsonText) as IndexEnvelopeType;
-        if (
-            envelope._appVersion !== appProvider.appInfo.version ||
-            envelope.value?.version !== LOOKUP_TEXT_INDEX_VERSION ||
-            !Array.isArray(envelope.value.ids)
-        ) {
-            return null;
-        }
-        return envelope.value;
-    } catch (error) {
-        handleError(error);
-        return null;
-    }
-}
-
-async function writeCachedIndex(filePath: string, index: LookupTextIndexType) {
-    try {
-        const envelope: IndexEnvelopeType = {
-            _cachingTime: Date.now(),
-            _appVersion: appProvider.appInfo.version,
-            value: index,
-        };
-        await fsWriteFile(filePath, JSON.stringify(envelope));
-    } catch (error) {
-        handleError(error);
-    }
-}
-
-async function loadLookupTextIndex(): Promise<LookupTextIndexType | null> {
-    return await unlocking(INDEX_LOCK_KEY, async () => {
-        const filePath = await getIndexFilePath();
-        if (filePath === null) {
-            return null;
-        }
-        const cachedIndex = await readCachedIndex(filePath);
-        if (cachedIndex !== null) {
-            return cachedIndex;
-        }
-        // DYNAMIC on purpose: this is the only path that reads the full ~35MB
-        // dataset, and it runs at most once per app version.
-        const { buildLookupTextIndex } =
-            await import('./verseTextIndexBuilder');
-        const builtIndex = await buildLookupTextIndex();
-        if (builtIndex === null) {
-            return null;
-        }
-        await writeCachedIndex(filePath, builtIndex);
-        return builtIndex;
-    });
-}
-
-let loadedIndex: LookupTextIndexType | null = null;
-let isLoading = false;
-const listeners = new Set<() => void>();
-
-function notify() {
-    for (const listener of listeners) {
-        listener();
-    }
-}
-
-function startLoading() {
-    if (loadedIndex !== null || isLoading) {
-        return;
-    }
-    isLoading = true;
-    loadLookupTextIndex()
-        .then((index) => {
-            isLoading = false;
-            // Everything may have unmounted while this was in flight; then there
-            // is nothing to hold it for and it must not be retained.
-            if (listeners.size > 0 && index !== null) {
-                loadedIndex = index;
-                notify();
-            }
-        })
-        .catch((error) => {
-            isLoading = false;
-            handleError(error);
-        });
-}
-
-function subscribe(listener: () => void) {
-    listeners.add(listener);
-    startLoading();
-    return () => {
-        listeners.delete(listener);
-        // Dropped as soon as the last verse view goes away rather than parked in
-        // a cache: re-reading a ~0.5MB local file is far cheaper than holding it
-        // resident for a reader the user has navigated away from.
-        if (listeners.size === 0) {
-            loadedIndex = null;
-        }
-    };
-}
-
-function getSnapshot() {
-    return loadedIndex;
-}
-
 /**
  * The index, or null while it is still loading. Subscribing is what triggers the
  * single shared load, and unsubscribing the last consumer releases it.
  */
-export function useLookupTextIndex() {
-    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
+export const useLookupTextIndex = genLookupFileStore<LookupTextIndexType>(
+    loadLookupTextIndexFile,
+);
 
 /**
  * Whether verse text in this bible may be decorated at all.

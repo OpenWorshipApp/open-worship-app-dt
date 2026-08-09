@@ -167,23 +167,12 @@ export async function getBibleInfoIsRtl(bibleKey: string) {
     return isRtl;
 }
 
-export function toChapterFullKeyFormat(
-    bookKey: string,
-    chapter: string | number,
-) {
-    return `${bookKey} ${chapter}`;
-}
-
-export function toVerseFullKeyFormat(
-    bookKey: string,
-    chapter: string | number,
-    verseStart: string | number,
-    verseEnd?: string | number,
-) {
-    verseEnd ??= verseStart;
-    verseEnd = verseEnd === verseStart ? '' : '-' + verseEnd;
-    return `${toChapterFullKeyFormat(bookKey, chapter)}:${verseStart}${verseEnd}`;
-}
+// Re-exported from a leaf module so a caller that only needs to spell a
+// reference does not have to import this one and its bible-database graph.
+export {
+    toChapterFullKeyFormat,
+    toVerseFullKeyFormat,
+} from './bibleKeyFormatHelpers';
 
 // JHN 18:33- or JHN 18:33-35, 2SA 1:1, 2SA 1:1-2, 2SA 1:1-
 const regex = /^([A-Z123][A-Z]{2}) (\d+):(\d+)(-(\d+))?$/;

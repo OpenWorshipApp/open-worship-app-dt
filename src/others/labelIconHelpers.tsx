@@ -36,6 +36,7 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     Lookup: 'search',
     Find: 'search',
     'Cross Reference': 'signpost-split',
+    'Location-Name (KJV)': 'geo-alt-fill',
     // -- backgrounds
     Background: 'card-image',
     'Background Audio': 'file-earmark-music',

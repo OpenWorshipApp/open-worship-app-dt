@@ -136,19 +136,30 @@ class LookupBibleItemController extends BibleItemsViewController {
         this.forceReloadEditingResult();
     }
 
-    async getStraightBibleItemsForExportingMSWord() {
-        const editingResult = await this.getEditingResult();
-        const resultBibleItem = editingResult.result.bibleItem;
+    /**
+     * The open bible items with the editing one — whose `target` deliberately
+     * throws — swapped for whatever the lookup input currently resolves to.
+     *
+     * Synchronous, so a consumer already holding the editing result (through
+     * `EditingResultContext`) can use it during render instead of awaiting a
+     * lookup it has in hand.
+     */
+    resolveStraightBibleItems(foundBibleItem: ReadIdOnlyBibleItem | null) {
         return this.straightBibleItems
             .map((bibleItem) => {
                 if (bibleItem instanceof EditingBibleItem) {
-                    return resultBibleItem;
+                    return foundBibleItem;
                 }
                 return bibleItem;
             })
             .filter((bibleItem): bibleItem is ReadIdOnlyBibleItem => {
                 return bibleItem !== null;
             });
+    }
+
+    async getStraightBibleItemsForExportingMSWord() {
+        const editingResult = await this.getEditingResult();
+        return this.resolveStraightBibleItems(editingResult.result.bibleItem);
     }
 
     get selectedBibleItem() {

@@ -1159,6 +1159,10 @@ const dictionary = {
     'Type a page number and press Enter': 'វាយលេខទំព័រ រួចចុច Enter',
     'Loading lookup data': 'កំពុងផ្ទុកទិន្នន័យស្វែងរក',
     'Failed to load lookup data': 'មិនអាចផ្ទុកទិន្នន័យស្វែងរកបានទេ',
+    // The bible lookup side-panel tab listing what is in the verses on screen.
+    'Location-Name (KJV)': 'ទីកន្លែង-ឈ្មោះ (KJV)',
+    'Names and locations in your reading':
+        'ឈ្មោះ និងទីកន្លែងក្នុងខគម្ពីរដែលអ្នកកំពុងអាន',
     // Name-type filter options.
     Concepts: 'គំនិត',
     Deities: 'ព្រះ',
