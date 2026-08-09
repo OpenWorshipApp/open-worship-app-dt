@@ -1,4 +1,4 @@
-import type { CSSProperties, MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
 import { use, useCallback, useMemo, useRef, useState } from 'react';
 
 import type { CanvasItemWebsitePropsType } from '../CanvasItemWebsite';
@@ -6,7 +6,6 @@ import CanvasItemWebsite from '../CanvasItemWebsite';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
 import BoxEditorNormalWebsitePlaceHolderComp from './BoxEditorNormalWebsitePlaceHolderComp';
 import { CanvasControllerContext } from '../CanvasController';
 import { useWebCapturing } from '../../../helper/capturingHelpers';
@@ -20,18 +19,6 @@ import {
     WEBSITE_ITEM_ATTR,
     WEBSITE_URL_ATTR,
 } from '../../../helper/constants';
-
-export default function BoxEditorNormalViewWebsiteModeComp({
-    style,
-}: Readonly<{
-    style: CSSProperties;
-}>) {
-    return (
-        <BoxEditorNormalWrapperComp style={style}>
-            <BoxEditorNormalWebsiteRender />
-        </BoxEditorNormalWrapperComp>
-    );
-}
 
 function BoxEditorNormalWebsiteFrameComp({
     itemProps,

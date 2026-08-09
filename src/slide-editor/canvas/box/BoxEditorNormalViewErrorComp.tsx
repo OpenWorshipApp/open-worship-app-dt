@@ -2,43 +2,36 @@ import { tran } from '../../../lang/langHelpers';
 import { showAppContextMenu } from '../../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../../context-menu/contextMenuIconHelpers';
 import appProvider from '../../../server/appProvider';
-import { useCanvasControllerContext } from '../CanvasController';
-import { useCanvasItemContext } from '../CanvasItem';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
+import type CanvasController from '../CanvasController';
+import type CanvasItem from '../CanvasItem';
 
-export default function BoxEditorNormalViewErrorComp() {
-    const canvasController = useCanvasControllerContext();
-    const canvasItem = useCanvasItemContext();
-    return (
-        <BoxEditorNormalWrapperComp
-            style={canvasItem.getBoxStyle()}
-            onContextMenu={async (event) => {
-                event.stopPropagation();
-                showAppContextMenu(event, [
-                    {
-                        childBefore: genContextMenuItemIcon('trash3', {
-                            color: 'var(--bs-danger)',
-                        }),
-                        menuElement: tran('Delete'),
-                        onSelect: () => {
-                            canvasController.deleteItems([canvasItem]);
-                        },
-                    },
-                    {
-                        childBefore: genContextMenuItemIcon('braces'),
-                        menuElement: tran('Copy Error Json'),
-                        onSelect: () => {
-                            appProvider.systemUtils.copyToClipboard(
-                                JSON.stringify(canvasItem.props),
-                            );
-                        },
-                    },
-                ]);
-            }}
-        >
-            {tran('Error')}
-        </BoxEditorNormalWrapperComp>
-    );
+export function genErrorContextMenuHandler(
+    canvasController: CanvasController,
+    canvasItem: CanvasItem<any>,
+) {
+    return (event: any) => {
+        event.stopPropagation();
+        showAppContextMenu(event, [
+            {
+                childBefore: genContextMenuItemIcon('trash3', {
+                    color: 'var(--bs-danger)',
+                }),
+                menuElement: tran('Delete'),
+                onSelect: () => {
+                    canvasController.deleteItems([canvasItem]);
+                },
+            },
+            {
+                childBefore: genContextMenuItemIcon('braces'),
+                menuElement: tran('Copy Error Json'),
+                onSelect: () => {
+                    appProvider.systemUtils.copyToClipboard(
+                        JSON.stringify(canvasItem.props),
+                    );
+                },
+            },
+        ]);
+    };
 }
 
 export function BoxEditorNormalViewErrorRenderComp() {

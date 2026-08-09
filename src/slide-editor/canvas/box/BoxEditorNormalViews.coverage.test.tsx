@@ -11,10 +11,7 @@ const {
     canvasItemPropsState,
     canvasItemState,
     copyToClipboardMock,
-    defaultContextMenuHandlerMock,
     deleteItemsMock,
-    genHandleContextMenuOpeningMock,
-    getBoxStyleMock,
     handleErrorMock,
     htmlGenStyleMock,
     htmlValidateMock,
@@ -36,11 +33,6 @@ const {
         () => defaultContextMenuHandlerMock,
     );
     const deleteItemsMock = vi.fn();
-    const getBoxStyleMock = vi.fn(() => ({
-        border: '1px solid rgb(255, 0, 0)',
-        width: '240px',
-        height: '120px',
-    }));
     const webCapturingState = { imageData: undefined as string | undefined };
     return {
         webCapturingState,
@@ -83,14 +75,10 @@ const {
                     type: 'error',
                     reason: 'broken',
                 },
-                getBoxStyle: getBoxStyleMock,
             } as any,
         },
         copyToClipboardMock: vi.fn(),
-        defaultContextMenuHandlerMock,
         deleteItemsMock,
-        genHandleContextMenuOpeningMock,
-        getBoxStyleMock,
         handleErrorMock: vi.fn(),
         htmlGenStyleMock: vi.fn(() => ({ fontSize: '20px' })),
         htmlValidateMock: vi.fn(),
@@ -228,34 +216,18 @@ vi.mock('../../../server/calcHelpers', () => ({
     pathToFileURL: (filePath: string) => `file://${filePath}`,
 }));
 
-import BoxEditorNormalViewBibleModeComp, {
-    BoxEditorNormalBibleRender,
-} from './BoxEditorNormalViewBibleModeComp';
-import BoxEditorNormalViewErrorComp, {
+import { BoxEditorNormalBibleRender } from './BoxEditorNormalViewBibleModeComp';
+import {
     BoxEditorNormalViewErrorRenderComp,
+    genErrorContextMenuHandler,
 } from './BoxEditorNormalViewErrorComp';
-import BoxEditorNormalViewHtmlModeComp, {
-    BoxEditorNormalHtmlRenderComp,
-} from './BoxEditorNormalViewHtmlModeComp';
-import BoxEditorNormalViewImageModeComp, {
-    BoxEditorNormalImageRenderComp,
-} from './BoxEditorNormalViewImageModeComp';
-import BoxEditorNormalViewTextModeComp, {
-    BoxEditorNormalTextRender,
-} from './BoxEditorNormalViewTextModeComp';
-import BoxEditorNormalViewVideoModeComp, {
-    BoxEditorNormalVideoRender,
-} from './BoxEditorNormalViewVideoModeComp';
-import BoxEditorNormalViewCameraModeComp, {
-    BoxEditorNormalCameraRender,
-} from './BoxEditorNormalViewCameraModeComp';
-import BoxEditorNormalViewAudioModeComp, {
-    BoxEditorNormalAudioRender,
-} from './BoxEditorNormalViewAudioModeComp';
-import BoxEditorNormalViewWebsiteModeComp, {
-    BoxEditorNormalWebsiteRender,
-} from './BoxEditorNormalViewWebsiteModeComp';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
+import { BoxEditorNormalHtmlRenderComp } from './BoxEditorNormalViewHtmlModeComp';
+import { BoxEditorNormalImageRenderComp } from './BoxEditorNormalViewImageModeComp';
+import { BoxEditorNormalTextRender } from './BoxEditorNormalViewTextModeComp';
+import { BoxEditorNormalVideoRender } from './BoxEditorNormalViewVideoModeComp';
+import { BoxEditorNormalCameraRender } from './BoxEditorNormalViewCameraModeComp';
+import { BoxEditorNormalAudioRender } from './BoxEditorNormalViewAudioModeComp';
+import { BoxEditorNormalWebsiteRender } from './BoxEditorNormalViewWebsiteModeComp';
 import { CanvasControllerContext } from '../CanvasController';
 
 // jsdom ships no `IntersectionObserver`, and the website view uses one to hold
@@ -316,7 +288,6 @@ describe('BoxEditor normal view components', () => {
                 type: 'error',
                 reason: 'broken',
             },
-            getBoxStyle: getBoxStyleMock,
         };
         container = document.createElement('div');
         document.body.appendChild(container);
@@ -345,111 +316,21 @@ describe('BoxEditor normal view components', () => {
         });
     }
 
-    test('uses custom wrapper handlers and selects the canvas item on click', async () => {
-        const customContextMenuMock = vi.fn();
-        const customDoubleClickMock = vi.fn();
-
-        await render(
-            <BoxEditorNormalWrapperComp
-                style={{ border: '2px solid blue', width: '50px' }}
-                onContextMenu={customContextMenuMock}
-                onDoubleClick={customDoubleClickMock}
-            >
-                <span className="wrapper-child">child</span>
-            </BoxEditorNormalWrapperComp>,
-        );
-
-        const wrapper =
-            container?.querySelector<HTMLDivElement>('.app-box-editor');
-
-        expect(wrapper?.dataset.appBoxEditorId).toBe('99');
-        expect(wrapper?.style.border).toBe('2px solid blue');
-        expect(container?.textContent).toContain('child');
-
-        await act(async () => {
-            wrapper?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-            wrapper?.dispatchEvent(
-                new MouseEvent('contextmenu', {
-                    bubbles: true,
-                    cancelable: true,
-                }),
-            );
-            wrapper?.dispatchEvent(
-                new MouseEvent('dblclick', {
-                    bubbles: true,
-                    cancelable: true,
-                }),
-            );
-        });
-
-        expect(setSelectedCanvasItemsMock).toHaveBeenCalledWith(
-            canvasItemState.value,
-            { isAppend: false },
-        );
-        expect(customContextMenuMock).toHaveBeenCalledTimes(1);
-        expect(customDoubleClickMock).toHaveBeenCalledTimes(1);
-        expect(genHandleContextMenuOpeningMock).not.toHaveBeenCalled();
-    });
-
-    test('uses the default wrapper context menu handler when no override is provided', async () => {
-        await render(
-            <BoxEditorNormalWrapperComp style={{ width: '40px' }}>
-                <span>default-context</span>
-            </BoxEditorNormalWrapperComp>,
-        );
-
-        const wrapper =
-            container?.querySelector<HTMLDivElement>('.app-box-editor');
-        expect(genHandleContextMenuOpeningMock).toHaveBeenCalledWith(
-            canvasItemState.value,
-            expect.any(Function),
-            false,
-            null,
-        );
-
-        const editHandler = (
-            genHandleContextMenuOpeningMock.mock.calls[0] as any
-        )?.[1] as (() => void) | undefined;
-        editHandler?.();
-
-        await act(async () => {
-            wrapper?.dispatchEvent(
-                new MouseEvent('contextmenu', {
-                    bubbles: true,
-                    cancelable: true,
-                }),
-            );
-        });
-
-        expect(setEditingCanvasItemMock).toHaveBeenCalledWith(
-            canvasItemState.value,
-        );
-        expect(defaultContextMenuHandlerMock).toHaveBeenCalledTimes(1);
-    });
-
-    test('renders the error box and executes both error context menu actions', async () => {
+    test('executes both error context menu actions', async () => {
         canvasItemState.value.props = {
             id: 99,
             type: 'error',
             reason: 'bad-data',
         };
 
-        await render(<BoxEditorNormalViewErrorComp />);
+        const stopPropagationMock = vi.fn();
+        genErrorContextMenuHandler(
+            canvasControllerState.value,
+            canvasItemState.value,
+        )({ stopPropagation: stopPropagationMock });
 
-        const wrapper =
-            container?.querySelector<HTMLDivElement>('.app-box-editor');
-        expect(wrapper?.style.border).toBe('1px solid rgb(255, 0, 0)');
-        expect(container?.textContent).toContain('Error');
-
-        await act(async () => {
-            wrapper?.dispatchEvent(
-                new MouseEvent('contextmenu', {
-                    bubbles: true,
-                    cancelable: true,
-                }),
-            );
-        });
-
+        // The canvas below must not open its own menu on top of this one.
+        expect(stopPropagationMock).toHaveBeenCalledOnce();
         expect(showAppContextMenuMock).toHaveBeenCalledOnce();
         const menuItems = showAppContextMenuMock.mock.calls[0]?.[1] as any[];
         expect(menuItems.map((item) => item.menuElement)).toEqual([
@@ -476,7 +357,7 @@ describe('BoxEditor normal view components', () => {
         expect(placeholder?.style.display).toBe('flex');
     });
 
-    test('renders Bible content inside the normal wrapper', async () => {
+    test('renders Bible content', async () => {
         canvasItemPropsState.value = {
             ...canvasItemPropsState.value,
             html:
@@ -484,14 +365,8 @@ describe('BoxEditor normal view components', () => {
                 '<div><div>John 3:16</div>' +
                 '<div>For God so loved the world</div></div>',
         };
-        await render(
-            <BoxEditorNormalViewBibleModeComp
-                style={{ backgroundColor: 'lavender' }}
-            />,
-        );
+        await render(<BoxEditorNormalBibleRender />);
 
-        const wrapper =
-            container?.querySelector<HTMLDivElement>('.app-box-editor');
         const renderedBible =
             container?.querySelector<HTMLDivElement>('[title="11"]');
 
@@ -501,7 +376,6 @@ describe('BoxEditor normal view components', () => {
         expect(bibleGenStyleMock).toHaveBeenCalledWith(
             canvasItemPropsState.value,
         );
-        expect(wrapper?.style.backgroundColor).toBe('lavender');
         expect(renderedBible?.style.color).toBe('navy');
         expect(container?.textContent).toContain('Genesis 1:1');
         expect(container?.textContent).toContain('For God so loved the world');
@@ -520,14 +394,8 @@ describe('BoxEditor normal view components', () => {
     });
 
     test('renders text content with line breaks and HTML content separately', async () => {
-        await render(
-            <BoxEditorNormalViewTextModeComp
-                style={{ backgroundColor: 'beige' }}
-            />,
-        );
+        await render(<BoxEditorNormalTextRender />);
 
-        const wrapper =
-            container?.querySelector<HTMLDivElement>('.app-box-editor');
         const textNode =
             container?.querySelector<HTMLDivElement>('[title="11"]');
 
@@ -537,7 +405,6 @@ describe('BoxEditor normal view components', () => {
         expect(textGenStyleMock).toHaveBeenCalledWith(
             canvasItemPropsState.value,
         );
-        expect(wrapper?.style.backgroundColor).toBe('beige');
         expect(textNode?.innerHTML).toContain('Line 1<br');
 
         canvasItemPropsState.value = {
@@ -545,11 +412,7 @@ describe('BoxEditor normal view components', () => {
             id: 12,
             html: '<em>Inline html</em>',
         };
-        await render(
-            <BoxEditorNormalViewHtmlModeComp
-                style={{ backgroundColor: 'azure' }}
-            />,
-        );
+        await render(<BoxEditorNormalHtmlRenderComp />);
 
         const htmlNode =
             container?.querySelector<HTMLDivElement>('[title="12"]');
@@ -584,19 +447,12 @@ describe('BoxEditor normal view components', () => {
     });
 
     test('renders images filling the box and falls back to the 404 asset', async () => {
-        await render(
-            <BoxEditorNormalViewImageModeComp
-                style={{ backgroundColor: 'mintcream' }}
-            />,
-        );
+        await render(<BoxEditorNormalImageRenderComp />);
 
-        const wrapper =
-            container?.querySelector<HTMLDivElement>('.app-box-editor');
         const image = container?.querySelector<HTMLImageElement>('img');
         expect(imageValidateMock).toHaveBeenCalledWith(
             canvasItemPropsState.value,
         );
-        expect(wrapper?.style.backgroundColor).toBe('mintcream');
         expect(image?.style.width).toBe('100%');
         expect(image?.style.height).toBe('100%');
         expect(image?.style.objectFit).toBe('fill');
@@ -629,20 +485,13 @@ describe('BoxEditor normal view components', () => {
             ...canvasItemPropsState.value,
             filePath: '/videos/clip.mp4',
         };
-        await render(
-            <BoxEditorNormalViewVideoModeComp
-                style={{ backgroundColor: 'aliceblue' }}
-            />,
-        );
+        await render(<BoxEditorNormalVideoRender />);
 
-        const wrapper =
-            container?.querySelector<HTMLDivElement>('.app-box-editor');
         const video = container?.querySelector<HTMLVideoElement>('video');
         const playIcon = container?.querySelector<SVGSVGElement>('svg');
         expect(videoValidateMock).toHaveBeenCalledWith(
             canvasItemPropsState.value,
         );
-        expect(wrapper?.style.backgroundColor).toBe('aliceblue');
         // Video src is derived from the file path, not inlined base64 data.
         expect(video?.getAttribute('src')).toBe('file:///videos/clip.mp4');
         expect(video?.style.width).toBe('100%');
@@ -670,11 +519,7 @@ describe('BoxEditor normal view components', () => {
             objectFit: 'contain',
         };
 
-        await render(
-            <BoxEditorNormalViewCameraModeComp
-                style={{ backgroundColor: 'aliceblue' }}
-            />,
-        );
+        await render(<BoxEditorNormalCameraRender />);
 
         const video = container?.querySelector<HTMLVideoElement>('video');
         expect(cameraValidateMock).toHaveBeenCalledWith(
@@ -713,11 +558,7 @@ describe('BoxEditor normal view components', () => {
             height: 600,
         };
 
-        await render(
-            <BoxEditorNormalViewWebsiteModeComp
-                style={{ backgroundColor: 'aliceblue' }}
-            />,
-        );
+        await render(<BoxEditorNormalWebsiteRender />);
 
         expect(websiteValidateMock).toHaveBeenCalledWith(
             canvasItemPropsState.value,
@@ -1031,11 +872,7 @@ describe('BoxEditor normal view components', () => {
             height: 300,
         };
 
-        await render(
-            <BoxEditorNormalViewAudioModeComp
-                style={{ backgroundColor: 'aliceblue' }}
-            />,
-        );
+        await render(<BoxEditorNormalAudioRender />);
 
         const audio = container?.querySelector<HTMLAudioElement>('audio');
         expect(audioValidateMock).toHaveBeenCalledWith(

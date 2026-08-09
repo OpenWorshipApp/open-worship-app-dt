@@ -1,4 +1,3 @@
-import { createContext, use } from 'react';
 import { getRotationDeg, removePX } from '../helper/helpers';
 import type { OptionalPromise } from '../helper/typeHelpers';
 import type {
@@ -471,12 +470,13 @@ export default class BoxEditorController {
             ...this.getBoxSize(editor),
         };
     }
-    // Only a selected box is in controlling mode, so restricting to
-    // `.editor-controller-box-wrapper` children keeps this from matching the
-    // plain (unselected) rendering of a box, which carries the same id.
+    // Every box on the canvas carries the same wrapper now, so the
+    // `.controlling` modifier — added only to a selected, unlocked box — is
+    // what keeps this from matching a box that cannot be dragged.
     private resolveEditorElement(id: number) {
         const box = this.editor?.parentElement?.querySelector(
-            `.editor-controller-box-wrapper > [data-app-box-editor-id="${id}"]`,
+            '.editor-controller-box-wrapper.controlling > ' +
+                `[data-app-box-editor-id="${id}"]`,
         );
         const editor = box?.parentElement ?? null;
         return editor instanceof HTMLDivElement ? editor : null;
@@ -950,17 +950,4 @@ export default class BoxEditorController {
         info.left -= info.width / 2;
         return info;
     }
-}
-
-export const BoxEditorControllerContext =
-    createContext<BoxEditorController | null>(null);
-export function useBoxEditorControllerContext() {
-    const context = use(BoxEditorControllerContext);
-    if (context === null) {
-        throw new Error(
-            'useBoxEditorControllerContext must be used inside a ' +
-                'BoxEditorControllerContext',
-        );
-    }
-    return context;
 }

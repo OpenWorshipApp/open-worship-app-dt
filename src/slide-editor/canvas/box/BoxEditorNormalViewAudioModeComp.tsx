@@ -1,27 +1,12 @@
-import type { CSSProperties } from 'react';
-
 import type { CanvasItemAudioPropsType } from '../CanvasItemAudio';
 import CanvasItemAudio from '../CanvasItemAudio';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
 import { pathToFileURL } from '../../../server/calcHelpers';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
 import { PREVIEW_ONLY_ATTR } from '../../../helper/constants';
 import { checkIsUrlMediaSource } from '../../../helper/mediaSourceHelpers';
 import { calcAudioControlScale } from '../canvasHelpers';
-
-export default function BoxEditorNormalViewAudioModeComp({
-    style,
-}: Readonly<{
-    style: CSSProperties;
-}>) {
-    return (
-        <BoxEditorNormalWrapperComp style={style}>
-            <BoxEditorNormalAudioRender />
-        </BoxEditorNormalWrapperComp>
-    );
-}
 
 export function BoxEditorNormalAudioRender() {
     const props = useCanvasItemPropsContext<CanvasItemAudioPropsType>();

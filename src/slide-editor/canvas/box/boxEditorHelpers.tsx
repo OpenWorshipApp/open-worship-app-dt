@@ -42,10 +42,10 @@ export function getRotatedResizeCursor(
 
 // These boxes render inside a shadow root, so the app's global
 // `box-sizing: border-box` doesn't reach them: a border would grow the box
-// outward and shift its content by the border width. Since each mode wants a
+// outward and shift its content by the border width. Since each state wants a
 // different border, that made a box move as it was hovered/selected/edited.
 // `outline` paints the same chrome without taking any layout space, keeping
-// every mode pixel-identical to the screen output.
+// every state pixel-identical to the screen output.
 const editorStyle = `
 .app-box-editor {
   outline: 1px solid transparent;
@@ -98,9 +98,18 @@ const editorStyle = `
   }
 }
 
+/* Every box gets this wrapper, in every state: it owns the box's position and
+   rotation so the content element inside it is never re-created when a box is
+   selected or deselected. */
 .editor-controller-box-wrapper {
   position: absolute;
   transform-origin: top left;
+}
+/* Marks the boxes that are selected AND unlocked, i.e. the ones a drag can
+   move. BoxEditorController.resolveEditorElement uses this to pick the other
+   members of a group drag, now that the wrapper alone no longer means
+   "selected". */
+.editor-controller-box-wrapper.controlling {
   user-select: none;
 }
 .editor-controller-box-wrapper .object {
