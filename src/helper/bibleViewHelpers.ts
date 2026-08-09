@@ -77,16 +77,30 @@ export function useBibleViewFontSize() {
     );
 }
 
-// How far the bible text has been zoomed from its default, for chrome that
-// should track it. Clamped because the underlying range is 5..150 (0.14x..4.3x)
-// and a panel at either extreme would be unusable.
-const MIN_TEXT_SCALE = 0.7;
-const MAX_TEXT_SCALE = 2.5;
+// The lookup panels' own base font size (`LocationNameLookupPanelComp.scss`),
+// which everything inside them is sized against. Scaling by THIS rather than by
+// the bible's default is what makes their body text come out at the bible text's
+// size instead of merely moving in step with it: dividing by the bible default
+// yields 1x at the default setting, i.e. 13.5px body beside 35px scripture.
+const PANEL_BASE_FONT_SIZE = 13.5;
 
+// Clamped because the underlying range is 5..150px: unclamped, either end leaves
+// the panel unreadable or too large to show a record at all. The ceiling is the
+// bible default (35 / 13.5 ≈ 2.59) rounded up, so the normal setting is reached
+// exactly and only extreme zoom is capped.
+const MIN_TEXT_SCALE = 0.7;
+const MAX_TEXT_SCALE = 2.6;
+
+/**
+ * Zoom factor that renders panel text at the bible text's size.
+ *
+ * Applied as CSS `zoom` (not `transform: scale`) so the panel's layout box grows
+ * with it and its content keeps scrolling inside its own widget.
+ */
 export function useBibleViewTextScale() {
     const fontSize = useBibleViewFontSize();
     return Math.min(
         MAX_TEXT_SCALE,
-        Math.max(MIN_TEXT_SCALE, fontSize / DEFAULT_BIBLE_TEXT_FONT_SIZE),
+        Math.max(MIN_TEXT_SCALE, fontSize / PANEL_BASE_FONT_SIZE),
     );
 }

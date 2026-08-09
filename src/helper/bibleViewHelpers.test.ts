@@ -151,23 +151,35 @@ describe('writing the size', () => {
 });
 
 describe('the text scale chrome tracks', () => {
-    test('is 1 at the default size', () => {
+    // The panels' own base font size, which the scale is relative to so their
+    // body text lands ON the bible text's size rather than merely moving with
+    // it (dividing by the bible default would give 1x — 13.5px beside 35px).
+    const PANEL_BASE_FONT_SIZE = 13.5;
+
+    test('renders panel body text at the bible text size', () => {
         setBibleViewFontSize(DEFAULT_BIBLE_TEXT_FONT_SIZE);
-        expect(useBibleViewTextScale()).toBe(1);
+        const scale = useBibleViewTextScale();
+        expect(PANEL_BASE_FONT_SIZE * scale).toBeCloseTo(
+            DEFAULT_BIBLE_TEXT_FONT_SIZE,
+            1,
+        );
     });
 
     test('follows the size in between', () => {
-        setBibleViewFontSize(DEFAULT_BIBLE_TEXT_FONT_SIZE * 2);
-        expect(useBibleViewTextScale()).toBe(2);
+        setBibleViewFontSize(27);
+        expect(useBibleViewTextScale()).toBeCloseTo(
+            27 / PANEL_BASE_FONT_SIZE,
+            5,
+        );
     });
 
-    // The zoom range is 5..150 (0.14x..4.3x); a panel at either end would be
-    // unusable, so the scale is clamped even though the text is not.
+    // The font-size range is 5..150px; a panel at either end would be unusable,
+    // so the scale is clamped even though the bible text itself is not.
     test('is clamped at both ends', () => {
         setBibleViewFontSize(5);
         expect(useBibleViewTextScale()).toBe(0.7);
 
         setBibleViewFontSize(150);
-        expect(useBibleViewTextScale()).toBe(2.5);
+        expect(useBibleViewTextScale()).toBe(2.6);
     });
 });

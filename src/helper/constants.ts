@@ -31,6 +31,9 @@ export const defaultDataDirNames = {
  */
 export const appManagedDataDirNames = {
     BIBLE_DATA: 'bibles-data',
+    // Derived-once indexes over the shipped lookup dataset. Regenerated from
+    // that dataset whenever it is missing or stale, so it is safe to delete.
+    LOOKUP_DATA: 'lookup-data',
 };
 
 /**

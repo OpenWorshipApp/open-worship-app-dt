@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
-import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
+import { getCurrentLookupBibleItemController } from '../bible-reader/LookupBibleItemController';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useBibleViewTextScale } from '../helper/bibleViewHelpers';
 import { handleError } from '../helper/errorHelpers';
@@ -94,16 +94,22 @@ function RenderCopyButtonComp({
 /**
  * Loads the verse into the reader's lookup input behind the panel.
  *
- * The controller comes from the header this panel was opened from — the portal
- * keeps React context, and `LocationNameLookupToggleComp` only ever renders
- * inside `InputHandlerComp`, which requires the same controller itself.
+ * These panels are window-level widgets — a name clicked in any verse opens one
+ * from a tree with no lookup controller in scope — so the controller is taken
+ * from the module registry `BibleReaderComp` publishes, NOT from React context.
+ * Reading context here would throw and take the whole window down. When no
+ * reader is mounted there is nowhere to open the verse, so the button is simply
+ * not offered.
  */
 function RenderOpenInLookupButtonComp({
     shortVerse,
 }: Readonly<{ shortVerse: string }>) {
-    const viewController = useLookupBibleItemControllerContext();
+    const viewController = getCurrentLookupBibleItemController();
     const viewControllerRef = useAppCurrentRef(viewController);
     const label = tran('Open in bible lookup');
+    if (viewController === null) {
+        return null;
+    }
     return (
         <button
             type="button"
@@ -114,7 +120,11 @@ function RenderOpenInLookupButtonComp({
             title={label}
             aria-label={label}
             onClick={() => {
-                openVerseInBibleLookup(viewControllerRef.current, shortVerse)
+                const currentViewController = viewControllerRef.current;
+                if (currentViewController === null) {
+                    return;
+                }
+                openVerseInBibleLookup(currentViewController, shortVerse)
                     .then((isOpened) => {
                         if (!isOpened) {
                             showSimpleToast(
@@ -232,8 +242,10 @@ function RenderDetailPanelComp({
                         ' px-2 app-selectable-text'
                     }
                     data-no-widget-drag="true"
-                    // cursor text select
-                    style={{ cursor: 'text' }}
+                    // Zoomed with the SAME factor as the body, so the record's
+                    // name in the title bar reads at the bible text's size too
+                    // rather than staying at the widget chrome's default.
+                    style={{ cursor: 'text', zoom: textScale }}
                 >
                     <i className={getPanelIconClass(panel, managers)} />
                     <span className="text-truncate">{title}</span>

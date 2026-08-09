@@ -29,7 +29,7 @@ const h = vi.hoisted(() => ({
     setSettingMock: vi.fn(),
     getBibleFontFamilyMock: vi.fn(async () => 'FontFam'),
     getLangDataAsyncMock: vi.fn(),
-    getLookupDataCachedMock: vi.fn(async () => ({
+    acquireLookupDataMock: vi.fn(async () => ({
         namesLookupManager: {},
         locationsLookupManager: {},
     })),
@@ -105,8 +105,10 @@ vi.mock('../../lang/langHelpers', () => ({
 }));
 // Real implementation fetches ~34MB of lookup JSON and dynamically imports the
 // `bible-note` package; only the managers it hands to the editor matter here.
+// `acquireLookupData` (not `getLookupDataCached`) is what the editor takes, so
+// that its copy is the same one the lookup UI holds rather than a second one.
 vi.mock('../../location-name-lookup/lookupDataHelpers', () => ({
-    getLookupDataCached: h.getLookupDataCachedMock,
+    acquireLookupData: h.acquireLookupDataMock,
 }));
 vi.mock('../../server/appHelpers', () => ({
     showFileOrDirExplorer: h.showFileOrDirExplorerMock,

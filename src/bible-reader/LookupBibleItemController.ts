@@ -500,6 +500,30 @@ export function useLookupBibleItemControllerContext() {
     return viewController as LookupBibleItemController;
 }
 
+// The window's live lookup controller, reachable WITHOUT React context.
+//
+// The names & locations detail panels are window-level floating widgets (they
+// are opened by clicking a name in any verse, from trees that have no lookup
+// controller of their own), but one of their actions — "open in bible lookup" —
+// genuinely needs the controller. Rather than force the panels to live inside a
+// provider, the provider publishes itself here for as long as it is mounted.
+let currentLookupBibleItemController: LookupBibleItemController | null = null;
+
+export function registerLookupBibleItemController(
+    viewController: LookupBibleItemController,
+) {
+    currentLookupBibleItemController = viewController;
+    return () => {
+        if (currentLookupBibleItemController === viewController) {
+            currentLookupBibleItemController = null;
+        }
+    };
+}
+
+export function getCurrentLookupBibleItemController() {
+    return currentLookupBibleItemController;
+}
+
 export const EditingResultContext = createContext<EditingResultType | null>(
     null,
 );

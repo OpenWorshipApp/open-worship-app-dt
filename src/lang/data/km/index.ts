@@ -941,6 +941,8 @@ const dictionary = {
     'Adding Presenting Flow Action': 'កំពុងបន្ថែមសកម្មភាពតារាងកម្មវិធី',
     'Already in XML': 'មានក្នុង XML រួចហើយ',
     'Background Color': 'ពណ៌ផ្ទៃខាងក្រោយ',
+    'Hit "Escape" to jump back to editing input':
+        'ចុច "Escape" ដើម្បីត្រឡប់ទៅប្រអប់កែសម្រួលវិញ',
     'Bible Cross Reference': 'ឯកសារយោងព្រះគម្ពីរ',
     'Bible Download': 'ការទាញយកព្រះគម្ពីរ',
     'Bible extracted': 'បានស្រង់ព្រះគម្ពីរ',

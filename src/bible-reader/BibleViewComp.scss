@@ -101,6 +101,34 @@
           display: inline-block;
         }
       }
+
+      // Names and locations that resolve to exactly one record. Deliberately a
+      // plain `span` and NOT a button/[role=button]: `.app-selectable-text`
+      // forces `user-select: none` onto those, which would drop every name out
+      // of a copied verse. Styling stays subtractive (a faint underline that
+      // only strengthens on hover) so scripture still reads as scripture.
+      .verse-lookup-link {
+        cursor: pointer;
+        text-decoration: underline;
+        text-decoration-style: dotted;
+        text-underline-offset: 0.18em;
+        text-decoration-thickness: from-font;
+        text-decoration-color: rgba(125, 190, 255, 0.45);
+        transition: text-decoration-color 0.12s ease-in-out;
+
+        &.location {
+          text-decoration-color: rgba(120, 220, 170, 0.45);
+        }
+
+        &:hover {
+          text-decoration-style: solid;
+          text-decoration-color: rgba(125, 190, 255, 0.95);
+        }
+
+        &.location:hover {
+          text-decoration-color: rgba(120, 220, 170, 0.95);
+        }
+      }
     }
   }
 }

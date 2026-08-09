@@ -1,6 +1,6 @@
 import '../bible-lookup/BibleReaderComp.scss';
 
-import { lazy, useMemo } from 'react';
+import { lazy, useEffect, useMemo } from 'react';
 
 import type {
     DataInputType,
@@ -8,7 +8,9 @@ import type {
 } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { toWidgetLabel } from '../others/labelIconHelpers';
-import LookupBibleItemController from './LookupBibleItemController';
+import LookupBibleItemController, {
+    registerLookupBibleItemController,
+} from './LookupBibleItemController';
 import { BibleItemsViewControllerContext } from './BibleItemsViewController';
 
 const LazyBibleReadingLeftCom = lazy(() => {
@@ -57,6 +59,12 @@ export default function BibleReaderComp({
     const dataInput = useMemo(() => {
         return genDataInput();
     }, []);
+    // Published for the window-level names & locations detail panels, which sit
+    // outside this provider but still need a controller to open a verse in the
+    // bible lookup.
+    useEffect(() => {
+        return registerLookupBibleItemController(lookupBibleItemController);
+    }, [lookupBibleItemController]);
     return (
         <BibleItemsViewControllerContext value={lookupBibleItemController}>
             <ResizeActorComp

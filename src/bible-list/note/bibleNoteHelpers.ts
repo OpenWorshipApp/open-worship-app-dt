@@ -20,7 +20,7 @@ import {
 import Note from './Note';
 import type NoteItem from './NoteItem';
 import { getAllLangsAsync, initAllLangCss } from '../../lang/langHelpers';
-import { getLookupDataCached } from '../../location-name-lookup/lookupDataHelpers';
+import { acquireLookupData } from '../../location-name-lookup/lookupDataHelpers';
 import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import BibleItem from '../BibleItem';
@@ -225,8 +225,13 @@ export async function initBibleNote({
         appProvider.messageUtils.sendData('all:app:print');
     };
 
+    // `acquireLookupData`, NOT `getLookupDataCached`: the raw cache expires 60s
+    // after the write, so a note opened past that window used to build a SECOND
+    // ~34MB copy of the dataset while the lookup UI still held the first. The
+    // note editor needs the managers for as long as it is open, so it takes a
+    // reference and simply keeps it — the window closing is what frees it.
     const { namesLookupManager, locationsLookupManager } =
-        await getLookupDataCached();
+        await acquireLookupData();
     const bibleNoteProps: BibleNoteProps = {
         namesLookupManager,
         locationsLookupManager,
