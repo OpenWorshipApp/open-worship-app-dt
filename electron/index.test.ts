@@ -14,6 +14,10 @@ const initEventScreen = vi.fn();
 const initMenu = vi.fn();
 const initDevtools = vi.fn();
 const initDisplayMediaHandler = vi.fn();
+const findUserDataPathArg = vi.fn(() => null as string | null);
+const initAppUserModelId = vi.fn();
+const initSecondInstance = vi.fn();
+const initUserTasks = vi.fn();
 const getInstance = vi.fn(() => ({ id: 'app-controller' }));
 
 vi.mock('./fsServe', () => ({
@@ -29,6 +33,13 @@ vi.mock('./electronEventListener', () => ({
     initEventScreen,
 }));
 
+vi.mock('./taskbarHelpers', () => ({
+    findUserDataPathArg,
+    initAppUserModelId,
+    initSecondInstance,
+    initUserTasks,
+}));
+
 vi.mock('./electronMenu', () => ({ initMenu }));
 vi.mock('./devtools', () => ({ initDevtools }));
 vi.mock('./displayMediaHelpers', () => ({ initDisplayMediaHandler }));
@@ -37,6 +48,13 @@ vi.mock('./ElectronAppController', () => ({
         getInstance,
     },
 }));
+
+// Pins the electron mock: the factory runs on this first request and its result
+// is then cached past every `vi.resetModules()`. Requesting it here — before any
+// reset — makes it close over the same `testElectronModule` instance imported
+// below, so re-imported copies of `./index` act on the state asserted on here.
+import 'electron';
+import { electronMockState } from './testElectronModule';
 
 describe('electron index', () => {
     beforeEach(() => {
@@ -50,19 +68,22 @@ describe('electron index', () => {
         initMenu.mockClear();
         initDevtools.mockClear();
         initDisplayMediaHandler.mockClear();
+        findUserDataPathArg.mockClear();
+        findUserDataPathArg.mockReturnValue(null);
+        initAppUserModelId.mockClear();
+        initSecondInstance.mockClear();
+        initUserTasks.mockClear();
         getInstance.mockClear();
-    });
-
-    test('registers the custom scheme and initializes the Electron app', async () => {
+        electronMockState.reset();
+        electronMockState.app.whenReady.mockResolvedValue(undefined);
         vi.doMock('./electronHelpers', () => ({
             isDev: true,
             sweepStalePrintPreviewFiles,
         }));
-        const { electronMockState } = await import('./testElectronModule');
-        electronMockState.reset();
-        electronMockState.app.whenReady.mockResolvedValue(undefined);
-        // the mock grants the lock by default, as a first launch does
+    });
 
+    test('registers the custom scheme and initializes the Electron app', async () => {
+        // the mock grants the lock by default, as a first launch does
         await import('./index');
 
         expect(
@@ -90,5 +111,34 @@ describe('electron index', () => {
         expect(getInstance).toHaveBeenCalledTimes(1);
         expect(initMenu).toHaveBeenCalledWith({ id: 'app-controller' });
         expect(initDevtools).toHaveBeenCalledWith({ id: 'app-controller' });
+        expect(initAppUserModelId).toHaveBeenCalledTimes(1);
+        expect(initSecondInstance).toHaveBeenCalledWith({
+            id: 'app-controller',
+        });
+        expect(initUserTasks).toHaveBeenCalledTimes(1);
+    });
+
+    test('a relaunch may name the data dir, overriding the dev default', async () => {
+        findUserDataPathArg.mockReturnValue('/named-data');
+
+        await import('./index');
+
+        expect(electronMockState.app.setPath).toHaveBeenCalledWith(
+            'userData',
+            '/named-data',
+        );
+    });
+
+    test('a duplicate launch quits without ever starting Chromium', async () => {
+        electronMockState.app.requestSingleInstanceLock.mockReturnValueOnce(
+            false,
+        );
+
+        await import('./index');
+
+        expect(electronMockState.app.quit).toHaveBeenCalledTimes(1);
+        // the whole point of taking the lock before `whenReady()`
+        expect(electronMockState.app.whenReady).not.toHaveBeenCalled();
+        expect(getInstance).not.toHaveBeenCalled();
     });
 });

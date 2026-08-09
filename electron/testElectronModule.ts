@@ -73,6 +73,8 @@ export const electronMockState = {
         whenReady: vi.fn(),
         requestSingleInstanceLock: vi.fn(() => true),
         quit: vi.fn(),
+        setAppUserModelId: vi.fn(),
+        setUserTasks: vi.fn(),
         commandLine: {
             appendSwitch: vi.fn(),
         },
@@ -150,6 +152,8 @@ export const electronMockState = {
         this.app.whenReady.mockClear();
         this.app.requestSingleInstanceLock.mockClear();
         this.app.quit.mockClear();
+        this.app.setAppUserModelId.mockClear();
+        this.app.setUserTasks.mockClear();
         this.app.commandLine.appendSwitch.mockClear();
         this.shell.openExternal.mockClear();
         this.shell.showItemInFolder.mockClear();

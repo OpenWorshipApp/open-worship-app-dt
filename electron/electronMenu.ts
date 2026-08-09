@@ -21,6 +21,10 @@ import {
     checkIsFindOverlayHost,
     openFindOverlay,
 } from './finderOverlayHelpers';
+import {
+    RESET_WINDOW_BOUNDS_LABEL,
+    resetMainWindowBounds,
+} from './taskbarHelpers';
 
 import packageInfo from '../package.json';
 import appInfo from './client/appInfo';
@@ -317,11 +321,11 @@ export function initMenu(appController: ElectronAppController) {
                       ]
                     : [{ role: 'close' }]),
                 {
-                    label: 'Reset Position and Size',
+                    // shared with the taskbar jump list task so the two entries
+                    // can never drift apart
+                    label: RESET_WINDOW_BOUNDS_LABEL,
                     click: () => {
-                        appController.settingManager.restoreMainBounds(
-                            appController.mainWin,
-                        );
+                        resetMainWindowBounds(appController);
                     },
                 },
             ],

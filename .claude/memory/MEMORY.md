@@ -76,3 +76,5 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Drag-kind mime & dim target](drag-kind-mime-and-dim-target.md) — dragover gates on `application/x-owa-drag-<kind>`; `changeDragEventStyle` dims `event.target`, not `currentTarget`
 - [Canceled pointerdown kills click](canceled-pointerdown-kills-click.md) — a drag surface gets no mousedown/click/dblclick, so `onDoubleClick` there never fires; time the presses instead
 - [Website items are screenshots, not iframes](website-screenshot-not-iframe.md) — live only on the projected screen; the capture size rides the markup because both fill-in points run on a detached div
+- [vi.mock factory survives resetModules](vitest-mock-factory-survives-resetmodules.md) — the test and its module end up on different electron mocks; pin it with a top-level `import 'electron'`
+- [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) — it also kills the user's open-lyric dev app; filter processes by CommandLine
