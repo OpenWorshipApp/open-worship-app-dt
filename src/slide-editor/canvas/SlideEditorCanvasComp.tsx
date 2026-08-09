@@ -54,7 +54,7 @@ function EditorComp({
                         },
                     },
                     key: 'v1',
-                    ...toWidgetLabel('Document List'),
+                    ...toWidgetLabel('Canvas'),
                     className: 'app-flex-item',
                 },
                 {

@@ -1,7 +1,7 @@
 import {
-    BrowserWindow,
     screen,
     WebContentsView,
+    type BrowserWindow,
     type WebContents,
 } from 'electron';
 

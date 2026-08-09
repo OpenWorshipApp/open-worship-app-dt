@@ -75,7 +75,7 @@ function EditorComp({
                         },
                     },
                     key: 'v1',
-                    ...toWidgetLabel('Document List'),
+                    ...toWidgetLabel('Slides'),
                     className: 'app-flex-item',
                 },
                 {

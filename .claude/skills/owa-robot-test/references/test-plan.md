@@ -148,8 +148,10 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
   `setting.html` (popup trap — see [knowledge-base.md](./knowledge-base.md) §2–§3).
   Title matches `/Settings/`.
 - `General` + `Apply Settings` visible and clickable. (`Set Default Data` from older builds is
-  gone — the current General tab has `Reset All Child Directories` / `Reset Widgets Size` /
-  `Clear All Settings`; the `Khmer`/`English` language toggle lives here too.)
+  gone — the current General tab has `Reset All Child Directories` /
+  `Clear All Settings`; the `Khmer`/`English` language toggle lives here too.
+  `Reset Widgets Size` is **not** here any more — it is a native View-menu entry,
+  covered by NAV-20/NAV-21, so "Other General Options" must show a single button.)
 - Full coverage: theme + font pickers (restore after); destructive resets → confirm
   dialog → **Cancel** (EX-05); Bible tab search + enable/disable round-trip (EX-07 for
   downloads); `Apply Settings` **last** since it reloads windows.

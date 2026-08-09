@@ -624,6 +624,10 @@ const dictionary = {
     'Reset Black': 'កំណត់ពណ៌ខ្មៅឡើងវិញ',
     'Reset to default display dimension': 'កំណត់ទៅវិមាត្របង្ហាញលំនាំដើម',
     'Reset Widgets Size': 'កំណត់ទំហំ Widgets ឡើងវិញ',
+    'Are you sure to reset every widget size and reopen the widgets?':
+        'តើអ្នកពិតជាចង់កំណត់ទំហំ Widgets ទាំងអស់ឡើងវិញ ' +
+        'ហើយបើក Widgets ដែលបានបិទឡើងវិញឬ?',
+    Widgets: 'Widgets',
     'Round (%)': 'មូល (%)',
     'Round Size %:': 'ទំហំមូល %:',
     'Round Size Pixel:': 'ទំហំមូល Pixel:',

@@ -119,6 +119,7 @@ export function initMenu(appController: ElectronAppController) {
     const isMac = process.platform === 'darwin';
     const fileMenuItems = getCustomMenuItems('file');
     const insertMenuItems = getCustomMenuItems('insert');
+    const viewMenuItems = getCustomMenuItems('view');
 
     const template: any[] = [
         // { role: 'appMenu' }
@@ -272,6 +273,12 @@ export function initMenu(appController: ElectronAppController) {
                 { role: 'zoomOut' },
                 { type: 'separator' },
                 { role: 'togglefullscreen' },
+                // Renderer-owned entries (the widget open/close checkboxes and
+                // `Reset Widgets Size`). Same mechanism the File and Tools menus
+                // use, so the labels are translated where `tran` actually works.
+                ...(viewMenuItems.length === 0
+                    ? []
+                    : [{ type: 'separator' }, ...viewMenuItems]),
             ],
         },
         {

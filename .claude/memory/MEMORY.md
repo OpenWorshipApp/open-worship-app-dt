@@ -78,3 +78,4 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Website items are screenshots, not iframes](website-screenshot-not-iframe.md) — live only on the projected screen; the capture size rides the markup because both fill-in points run on a detached div
 - [vi.mock factory survives resetModules](vitest-mock-factory-survives-resetmodules.md) — the test and its module end up on different electron mocks; pin it with a top-level `import 'electron'`
 - [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) — it also kills the user's open-lyric dev app; filter processes by CommandLine
+- [View menu widget toggles](view-menu-widget-toggles.md) — View → Widgets ticks each pane open/closed and Reset Widgets Size applies live; blanking `flexGrow` and the `:scope >` query are load-bearing

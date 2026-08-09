@@ -5,6 +5,7 @@ import { parseJsonSafely } from '../helper/helpers';
 import {
     setSetting,
     getSetting,
+    removeSettingsByPrefix,
     toFilePathSettingName,
 } from '../helper/settingHelpers';
 
@@ -81,10 +82,19 @@ export function toAppDocumentFlexSizeName(
     return toFilePathSettingName(`${namePrefix}${flexSizeName}`, filePath);
 }
 
-export function clearWidgetSizeSetting() {
-    for (const name of Object.values(resizeSettingNames)) {
-        setSetting(`${toSettingString(name)}`, '');
-    }
+/**
+ * Every widget size the app has ever stored, not just the registered names.
+ *
+ * A name list can never be complete here: `ResizeActorDynamicComp` appends
+ * `-dyn-h`/`-dyn-v`, several actors pass an ad-hoc literal, and the
+ * document-keyed ones mint a name per file path. They all land under
+ * `settingPrefix` by construction (`toSettingString`), so sweeping the prefix is
+ * the only way to leave nothing behind. It also DELETES the keys rather than
+ * blanking them, which drops the `appLocalStorage` cache entry too — a blanked
+ * value keeps its cached string and its file on disk.
+ */
+export async function clearWidgetSizeSetting() {
+    return await removeSettingsByPrefix(settingPrefix);
 }
 export function toSettingString(flexSizeName: string) {
     return `${settingPrefix}-${flexSizeName}`;

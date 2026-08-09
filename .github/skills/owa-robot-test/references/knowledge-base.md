@@ -423,7 +423,9 @@ Use as a diff target for regressions:
   typed full reference — see §5; the older claim here was wrong.)
 - Settings: title `Settings`; `General`/`Bible` tabs; `Apply Settings`; Path/Language/Theme/Font
   sections. (Note: the old `Set Default Data` button is gone — has
-  `Reset All Child Directories` / `Reset Widgets Size` / `Clear All Settings` instead.)
+  `Reset All Child Directories` / `Clear All Settings` instead. `Reset Widgets Size`
+  left this window on 2026-08-09 for the native **View** menu, where it applies live
+  instead of only flagging the Apply button.)
 
 ---
 

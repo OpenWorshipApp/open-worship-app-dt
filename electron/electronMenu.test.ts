@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import type * as FinderOverlayHelpersType from './finderOverlayHelpers';
+
 vi.mock('electron', async () => {
     const mod = await import('./testElectronModule');
     return mod.createElectronModuleMock();
@@ -24,8 +26,7 @@ const {
 vi.mock('./finderOverlayHelpers', async (importOriginal) => {
     // Only the opening is stubbed; the host test stays real so the routing
     // decision itself is covered.
-    const actual =
-        await importOriginal<typeof import('./finderOverlayHelpers')>();
+    const actual = await importOriginal<typeof FinderOverlayHelpersType>();
     return { ...actual, openFindOverlay };
 });
 
@@ -381,6 +382,87 @@ describe('electronMenu', () => {
             });
         } finally {
             setCustomMenusData('canvas-insert', null);
+        }
+    });
+
+    test('the View menu keeps its roles and appends renderer widget items', () => {
+        // With nothing registered the menu must be untouched — the built-in
+        // roles are the whole View menu on every page that has no widgets.
+        initMenu(createAppController() as any);
+        let template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        let viewMenu = template.find((item: any) => item.label === 'View');
+        expect(viewMenu.submenu.at(-1)).toEqual({ role: 'togglefullscreen' });
+
+        const viewClick = vi.fn();
+        setCustomMenusData('view-widgets', {
+            menusData: {
+                view: [
+                    {
+                        label: 'Widgets',
+                        submenu: [
+                            {
+                                label: 'Document List',
+                                type: 'checkbox',
+                                checked: true,
+                                clickData: {
+                                    widgetToggle: 'app-presenter-left::v1',
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        label: 'Reset Widgets Size',
+                        clickData: { widgetReset: true },
+                    },
+                ],
+            } as any,
+            clickMenu: viewClick,
+        });
+
+        try {
+            initMenu(createAppController() as any);
+            template =
+                electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+            viewMenu = template.find((item: any) => item.label === 'View');
+            // Appended after a separator, leaving the built-in roles in place.
+            expect(
+                viewMenu.submenu.map((item: any) => item.label ?? item.role),
+            ).toEqual([
+                'reload',
+                'forceReload',
+                'toggleDevTools',
+                undefined,
+                'resetZoom',
+                'zoomIn',
+                'zoomOut',
+                undefined,
+                'togglefullscreen',
+                undefined,
+                'Widgets',
+                'Reset Widgets Size',
+            ]);
+
+            // `checkbox`/`checked` survive `formatMenuItems`, which is what
+            // makes the native menu draw the widget's open state.
+            const widgetsMenu = viewMenu.submenu.find(
+                (item: any) => item.label === 'Widgets',
+            );
+            expect(widgetsMenu.submenu[0]).toMatchObject({
+                label: 'Document List',
+                type: 'checkbox',
+                checked: true,
+            });
+
+            widgetsMenu.submenu[0].click();
+            expect(viewClick).toHaveBeenCalledWith({
+                widgetToggle: 'app-presenter-left::v1',
+            });
+
+            clickItem(template, 'View', 'Reset Widgets Size');
+            expect(viewClick).toHaveBeenCalledWith({ widgetReset: true });
+        } finally {
+            setCustomMenusData('view-widgets', null);
         }
     });
 

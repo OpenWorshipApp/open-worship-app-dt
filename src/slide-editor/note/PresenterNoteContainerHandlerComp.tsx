@@ -73,7 +73,7 @@ export default function PresenterNoteContainerHandlerComp({
                         },
                     },
                     key: 'h2',
-                    ...toWidgetLabel('Slides'),
+                    ...toWidgetLabel('Slide Notes'),
                     className: 'app-flex-item',
                 },
             ]}

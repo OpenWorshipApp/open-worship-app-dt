@@ -2,24 +2,39 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { settingStore, getSettingMock, setSettingMock, handleErrorMock } =
-    vi.hoisted(() => {
-        const store = new Map<string, string>();
-        return {
-            settingStore: store,
-            getSettingMock: vi.fn((key: string) =>
-                store.has(key) ? store.get(key) : null,
-            ),
-            setSettingMock: vi.fn((key: string, value: string | null) => {
-                store.set(key, value ?? '');
-            }),
-            handleErrorMock: vi.fn(),
-        };
-    });
+const {
+    settingStore,
+    getSettingMock,
+    setSettingMock,
+    removeSettingsByPrefixMock,
+    handleErrorMock,
+} = vi.hoisted(() => {
+    const store = new Map<string, string>();
+    return {
+        settingStore: store,
+        getSettingMock: vi.fn((key: string) =>
+            store.has(key) ? store.get(key) : null,
+        ),
+        setSettingMock: vi.fn((key: string, value: string | null) => {
+            store.set(key, value ?? '');
+        }),
+        removeSettingsByPrefixMock: vi.fn(async (prefix: string) => {
+            const removedKeys = Array.from(store.keys()).filter((key) => {
+                return key === prefix || key.startsWith(`${prefix}-`);
+            });
+            for (const key of removedKeys) {
+                store.delete(key);
+            }
+            return removedKeys;
+        }),
+        handleErrorMock: vi.fn(),
+    };
+});
 
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     setSetting: setSettingMock,
+    removeSettingsByPrefix: removeSettingsByPrefixMock,
     // Mirrors the real sanitizer; the module itself pulls in appProvider and
     // the file helpers, which this jsdom suite deliberately does not load.
     toFilePathSettingName: (prefix: string, ...parts: string[]) =>
@@ -75,12 +90,15 @@ describe('resize-actor flexSizeHelpers', () => {
         expect(setSettingMock).toHaveBeenLastCalledWith('widget-size-foo', '');
     });
 
-    test('clearWidgetSizeSetting empties every registered widget setting', () => {
-        clearWidgetSizeSetting();
+    test('clearWidgetSizeSetting sweeps the whole widget-size prefix', async () => {
+        // Deliberately NOT a list of `resizeSettingNames`: the dynamic actors
+        // (`-dyn-h`/`-dyn-v`), the ad-hoc literals and the document-keyed names
+        // are only reachable by prefix, and a name list silently misses them.
+        await clearWidgetSizeSetting();
+        expect(removeSettingsByPrefixMock).toHaveBeenCalledWith(settingPrefix);
         for (const name of Object.values(resizeSettingNames)) {
-            expect(setSettingMock).toHaveBeenCalledWith(
-                `${settingPrefix}-${name}`,
-                '',
+            expect(`${settingPrefix}-${name}`.startsWith(settingPrefix)).toBe(
+                true,
             );
         }
     });

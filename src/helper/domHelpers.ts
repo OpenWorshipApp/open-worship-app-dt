@@ -393,6 +393,18 @@ function toFeatureString(features: PopupWindowFeaturesType) {
     return featureString;
 }
 
+/**
+ * Whether THIS renderer is one of the app's popup windows.
+ *
+ * No `isPage*` flag can answer this: a reader popup and the main window on the
+ * reader route look identical to them. The frame name is the discriminator —
+ * `openPopupWindow` below stamps every popup with it, while the main window is
+ * loaded with `loadURL` and so has no name at all.
+ */
+export function checkIsPopupWindow() {
+    return window.name.startsWith(appProvider.POPUP_FRAME_NAME_PREFIX);
+}
+
 export function openPopupWindow(
     partialUrl: string,
     frameUUID: string,

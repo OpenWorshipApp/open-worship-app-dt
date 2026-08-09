@@ -497,6 +497,11 @@ type CustomMenuItemType = {
     clickData?: AnyObjectType;
     accelerator?: string;
     submenu?: CustomMenuItemType[];
+    // `formatMenuItems` spreads the item into the electron template, so the
+    // native checkbox rendering comes for free. `checked` is only read when
+    // `type` is `'checkbox'`.
+    type?: 'checkbox';
+    checked?: boolean;
 };
 export type CustomMenusDataType = {
     tools?: CustomMenuItemType[];
@@ -506,6 +511,9 @@ export type CustomMenusDataType = {
     // The top-level **Insert** menu, owned entirely by the slide editor. The
     // menu itself only exists while something contributes to it.
     insert?: CustomMenuItemType[];
+    // Renderer-contributed **View** entries: the per-widget open/close
+    // checkboxes and `Reset Widgets Size`. See `resize-actor/widgetAppMenuHelpers`.
+    view?: CustomMenuItemType[];
 };
 
 export function checkIsValidLangCode(text: string) {

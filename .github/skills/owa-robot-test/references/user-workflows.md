@@ -21,7 +21,17 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-09b** (**new W-30 — "See who and where is in the passage you
+**workflowsVersion: 2026-08-09c** (**new W-31 — "Hide, show, and reset the app's panels
+(View menu)"**. Every collapsible panel now registers itself into a native
+**View → Widgets** submenu as a tick-box that opens/closes it by name, and
+**Reset Widgets Size moved out of Settings onto the View menu**, where it applies
+immediately instead of waiting for an **Apply Settings** reload — and it also reopens
+every panel that was collapsed. Observed live on the reader (4 widgets: toggled
+`Bible Notes` open and `Bibles` closed with no reload) and on the presenter (13 widgets,
+15 with an `.ows` document selected); the reset restored all four reader panes to
+`1/1/1/4` and reopened the collapsed one. **W-16**'s reset-button bullet is corrected in
+the same pass. Driven live in both locales.)
+Previous: **2026-08-09b** (**new W-30 — "See who and where is in the passage you
 are reading"**, the `Location-Name (KJV)` tab added beside **Find** and **Cross Reference**
 in the advanced bible-lookup panel. It lists every person and place the Bible names in the
 verses currently open, one block per passage, and each row opens the same record window
@@ -686,9 +696,10 @@ _Verify: ED-01..11, ED-45, ED-46, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-4
    - **Font family:** the font used for on-screen text. A font marked `(Missing)` is
      configured but not installed on this computer.
    - **Directories:** where documents, lyrics, and bibles are stored on disk.
-   - **Reset buttons** (`Reset All Child Directories` / `Reset Widgets Size` /
-     `Clear All Settings`): each asks for confirmation first — **these erase
-     configuration; use with care.**
+   - **Reset buttons** (`Reset All Child Directories` / `Clear All Settings`):
+     **these erase configuration; use with care.** `Reset All Child Directories`
+     asks for confirmation first; `Clear All Settings` does **not**.
+   - Panel sizes are no longer reset from here — see **W-31**.
 3. **Bible** tab: search available Bible versions, download new ones, enable/disable
    downloaded ones. 📸
 4. Click **Apply Settings** (top-right) to apply — the app windows reload.
@@ -1745,3 +1756,40 @@ _Verify: RD-72, RD-73, RD-74, RD-75, RD-76, RD-57._
 | _every other key_                    | Nothing — swallowed by the overlay                                      | Presenting Control **armed**                                          |
 
 _Verify: KB-01..13, SC-03._
+
+### W-31 — Hide, show, and reset the app's panels (View menu)
+
+**Goal:** get a panel back after it collapsed, hide one you don't need, or put the
+whole layout back the way it shipped.
+
+Every resizable panel in the app is a **widget**. You can already collapse one by
+dragging its divider all the way to the edge — it shrinks to a thin green strip with
+its name on it, and clicking that strip brings it back. The **View** menu on the top
+menu bar does the same thing by name, which is easier when the strip is hard to find.
+
+1. Open **View** on the top menu bar → **Widgets** (Widgets). 📸
+   You get one tick-box per panel on the page you are looking at, e.g. on the
+   presenter: `App Presenter Left` / `App Presenter Middle` / `App Presenter Right`,
+   `Document List`, `Presenting Flow List`, `Presenter`, `Background`,
+   `Bible and Notes`, `Mini Screen`, `Bibles`, `Bible Notes`, `Previewer`, `Slides`.
+   - **Ticked** = the panel is open. **Unticked** = it is collapsed to its strip.
+2. Click a ticked one — that panel collapses to its green strip, and the space goes to
+   its neighbour. 📸
+3. Click it again — the panel comes straight back. Nothing reloads and nothing you
+   were doing is interrupted.
+4. Panels that the app does not let you collapse (the Background media/audio split,
+   the bible previewer, the lyric Stage Previewer) are simply not listed.
+
+**Put everything back:**
+
+5. **View → Reset Widgets Size** (កំណត់ទំហំ Widgets ឡើងវិញ). Answer **Yes** to
+   `Are you sure to reset every widget size and reopen the widgets?` 📸
+6. Every panel returns to the width and height it had when the app was installed, and
+   **any panel you had collapsed is reopened**. This happens immediately — no reload.
+   Answer **No** and nothing changes.
+
+> This used to be a button in Settings → General, where it did nothing until you also
+> clicked **Apply Settings** and the app reloaded. It is on the View menu now and takes
+> effect at once.
+
+_Verify: NAV-20, NAV-21, ST-22._
