@@ -39,6 +39,7 @@ const dictionary = {
     'Filter by name': 'ត្រងតាមឈ្មោះ',
     'Filter by Type': 'ត្រងតាមប្រភេទ',
     'No matching files': 'រកមិនឃើញឯកសារដែលត្រូវគ្នា',
+    'This folder is empty': 'ថតឯកសារនេះទទេ',
     Dimensions: 'វិមាត្រ',
     'Exporting DOCX Pages': 'កំពុងបម្លែងទំព័រ DOCX ទៅជា HTML',
     'Please wait while the DOCX pages are being exported...':

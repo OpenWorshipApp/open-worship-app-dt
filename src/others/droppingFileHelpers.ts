@@ -171,7 +171,9 @@ export async function handleFilesSelectionMenuItem(
     await Promise.all(promises);
 }
 
-export function genItemsAddingContextMenuItems(addItems?: () => void) {
+export function genItemsAddingContextMenuItems(
+    addItems?: (event: any) => void,
+) {
     if (addItems === undefined) {
         return [];
     }
@@ -179,62 +181,81 @@ export function genItemsAddingContextMenuItems(addItems?: () => void) {
         {
             childBefore: genContextMenuItemIcon('plus-lg'),
             menuElement: tran('Add Items'),
-            onSelect: addItems,
+            // The event of the click that selects the item, not of the one that
+            // opened the menu: this item opens a sub menu, which has to be
+            // positioned where it was asked for. Taking it here is also what
+            // lets the item list be built without any event at all.
+            onSelect: (event: any) => {
+                addItems(event);
+            },
         },
     ];
 }
 
-export function genDroppingFileOnContextMenu(
+export type DirSourceContextMenuOptionsType = {
+    contextMenuItems?: ContextMenuItemType[];
+    genContextMenuItems?: (
+        dirSource: DirSource,
+        event?: MouseEvent<HTMLElement>,
+    ) => OptionalPromise<ContextMenuItemType[]>;
+    addItems?: (event: any) => void;
+    // One entry per kind of file the list can create. The list owns the
+    // labels because a list holding more than one kind (documents + lyrics)
+    // names each one instead of a generic "New File". Generated per menu
+    // opening so the labels follow a locale switch, like every other item
+    // here does.
+    genNewFileMenuItems?: () => ContextMenuItemType[];
+};
+
+/**
+ * Every action a file list offers for its directory. Built on each use so
+ * `tran` runs after a locale switch. `event` is optional because the same items
+ * are also rendered as buttons in the body of an empty list, where there is no
+ * opening event to hand over — see `EmptyFileListComp`.
+ */
+export async function genDirSourceContextMenuItems(
     dirSource: DirSource,
     {
         contextMenuItems,
         genContextMenuItems,
         addItems,
         genNewFileMenuItems,
-    }: {
-        contextMenuItems?: ContextMenuItemType[];
-        genContextMenuItems?: (
-            dirSource: DirSource,
-            event: MouseEvent<HTMLElement>,
-        ) => OptionalPromise<ContextMenuItemType[]>;
-        addItems?: (event: any) => void;
-        // One entry per kind of file the list can create. The list owns the
-        // labels because a list holding more than one kind (documents + lyrics)
-        // names each one instead of a generic "New File". Generated per menu
-        // opening so the labels follow a locale switch, like every other item
-        // here does.
-        genNewFileMenuItems?: () => ContextMenuItemType[];
-    },
+    }: DirSourceContextMenuOptionsType,
+    event?: MouseEvent<HTMLElement>,
+) {
+    const menuItems: ContextMenuItemType[] = [
+        {
+            childBefore: genContextMenuItemIcon('arrow-clockwise'),
+            menuElement: tran('Reload'),
+            onSelect: () => {
+                dirSource.fireReloadEvent();
+            },
+        },
+        ...(contextMenuItems ?? []),
+    ];
+    menuItems.push(...genItemsAddingContextMenuItems(addItems));
+    if (genNewFileMenuItems !== undefined) {
+        menuItems.push(...genNewFileMenuItems());
+    }
+    if (genContextMenuItems !== undefined) {
+        menuItems.push(...(await genContextMenuItems(dirSource, event)));
+    }
+    return menuItems;
+}
+
+export function genDroppingFileOnContextMenu(
+    dirSource: DirSource,
+    options: DirSourceContextMenuOptionsType,
 ) {
     if (!dirSource.dirPath) {
         return;
     }
     return async (event: MouseEvent<any>) => {
-        const menuItems: ContextMenuItemType[] = [
-            {
-                childBefore: genContextMenuItemIcon('arrow-clockwise'),
-                menuElement: tran('Reload'),
-                onSelect: () => {
-                    dirSource.fireReloadEvent();
-                },
-            },
-            ...(contextMenuItems ?? []),
-        ];
-        if (addItems !== undefined) {
-            menuItems.push(
-                ...genItemsAddingContextMenuItems(addItems.bind(null, event)),
-            );
-        }
-        if (genNewFileMenuItems !== undefined) {
-            menuItems.push(...genNewFileMenuItems());
-        }
-        if (genContextMenuItems !== undefined) {
-            const subContextMenuItems = await genContextMenuItems(
-                dirSource,
-                event,
-            );
-            menuItems.push(...subContextMenuItems);
-        }
+        const menuItems = await genDirSourceContextMenuItems(
+            dirSource,
+            options,
+            event,
+        );
         showAppContextMenu(event as any, menuItems);
     };
 }

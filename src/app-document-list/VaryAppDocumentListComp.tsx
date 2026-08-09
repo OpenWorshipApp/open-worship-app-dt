@@ -185,64 +185,63 @@ async function genContextMenuItems(dirSource: DirSource) {
         },
     ];
     const title = tran('Download From URL');
-    contextMenuItems.push(
-        {
-            childBefore: genContextMenuItemIcon('download'),
-            menuElement: title,
-            onSelect: async () => {
-                const documentUrl = await askForURL(title, 'Documents URL:');
-                if (documentUrl === null) {
-                    return;
-                }
-                const downloadDirPath = getDownloadPath();
-                const downloadDestFilePath = pathJoin(
-                    downloadDirPath,
-                    `${crypto.randomUUID()}.owa-downloading`,
+    contextMenuItems.push({
+        childBefore: genContextMenuItemIcon('download'),
+        menuElement: title,
+        onSelect: async () => {
+            const documentUrl = await askForURL(title, 'Documents URL:');
+            if (documentUrl === null) {
+                return;
+            }
+            const downloadDirPath = getDownloadPath();
+            const downloadDestFilePath = pathJoin(
+                downloadDirPath,
+                `${crypto.randomUUID()}.owa-downloading`,
+            );
+            try {
+                showSimpleToast(
+                    title,
+                    `Downloading document from "${documentUrl}", please wait...`,
                 );
-                try {
-                    showSimpleToast(
-                        title,
-                        `Downloading document from "${documentUrl}", please wait...`,
-                    );
-                    showProgressBar(documentUrl);
-                    messageCallback('Downloading file...');
-                    const response = await initHttpRequest(
-                        new URL(documentUrl),
-                    );
-                    await streamDownloadFile(
-                        downloadDestFilePath,
-                        response,
-                        messageCallback,
-                    );
-                    let fileFullName = getFileFullName(documentUrl);
-                    if (!fileFullName) {
-                        fileFullName = `downloaded-document-${Date.now()}`;
-                    }
-                    const destFilePath = pathJoin(
-                        dirSource.dirPath,
-                        fileFullName,
-                    );
-                    const fileSource = FileSource.getInstance(destFilePath);
-                    const nextDestFilePath = await fileSource.genNextFilePath();
-                    await fsMove(downloadDestFilePath, nextDestFilePath);
-                    showSimpleToast(
-                        title,
-                        tran('Document downloaded successfully'),
-                    );
-                } catch (error) {
-                    handleError(error);
-                    showSimpleToast(
-                        title,
-                        tran('Error occurred during downloading document'),
-                    );
-                } finally {
-                    hideProgressBar(documentUrl);
+                showProgressBar(documentUrl);
+                messageCallback('Downloading file...');
+                const response = await initHttpRequest(new URL(documentUrl));
+                await streamDownloadFile(
+                    downloadDestFilePath,
+                    response,
+                    messageCallback,
+                );
+                let fileFullName = getFileFullName(documentUrl);
+                if (!fileFullName) {
+                    fileFullName = `downloaded-document-${Date.now()}`;
                 }
-            },
+                const destFilePath = pathJoin(dirSource.dirPath, fileFullName);
+                const fileSource = FileSource.getInstance(destFilePath);
+                const nextDestFilePath = await fileSource.genNextFilePath();
+                await fsMove(downloadDestFilePath, nextDestFilePath);
+                showSimpleToast(
+                    title,
+                    tran('Document downloaded successfully'),
+                );
+            } catch (error) {
+                handleError(error);
+                showSimpleToast(
+                    title,
+                    tran('Error occurred during downloading document'),
+                );
+            } finally {
+                hideProgressBar(documentUrl);
+            }
         },
-        getOpenSharedLinkMenuItem('slides'),
-    );
+    });
     return contextMenuItems;
+}
+
+// Kept out of the "Add Items" sub menu and given to the list itself: it is the
+// one entry here that adds nothing, it points at what is downloadable, so it
+// belongs where an empty folder can advertise it as its own row.
+function genSharedLinkContextMenuItems(): ContextMenuItemType[] {
+    return [getOpenSharedLinkMenuItem('slides')];
 }
 
 async function handleItemsAdding(
@@ -322,6 +321,7 @@ export default function VaryAppDocumentListComp() {
             bodyHandler={handleBodyRendering}
             checkIsOnScreen={checkIsOnScreen}
             fileSelectionOption={fileSelectionOption}
+            genContextMenuItems={genSharedLinkContextMenuItems}
             onItemsAdding={handleItemsAdding.bind(null, dirSource)}
         />
     );

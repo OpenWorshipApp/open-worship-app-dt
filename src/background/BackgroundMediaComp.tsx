@@ -46,7 +46,7 @@ type PropsType = {
     contextMenuItems?: ContextMenuItemType[];
     genContextMenuItems?: (
         dirSource: DirSource,
-        event: MouseEvent<HTMLElement>,
+        event?: MouseEvent<HTMLElement>,
     ) => OptionalPromise<ContextMenuItemType[]>;
     sortFilePaths?: (filePaths: string[]) => string[];
     onItemsAdding?: (

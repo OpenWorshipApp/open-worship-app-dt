@@ -25,6 +25,7 @@ import {
     importDroppedPresentingFlowArchive,
     selectAndImportPresentingFlowArchive,
 } from './presentingFlowArchiveHelpers';
+import { getOpenSharedLinkMenuItem } from '../background/downloadHelper';
 import { removePresentingFlowSettings } from './presentingFlowHelpers';
 import { checkIsAnyPresentingFlowOnScreen } from './presentingFlowOnScreenHelpers';
 import PresentingFlowPreviewFloatingComp from './PresentingFlowPreviewFloatingComp';
@@ -47,6 +48,7 @@ function genContextMenuItems(): ContextMenuItemType[] {
                 askAndImportPresentingFlowArchiveFromUrl();
             },
         },
+        getOpenSharedLinkMenuItem('presenting-flows'),
     ];
 }
 
