@@ -1,4 +1,4 @@
-import { Fragment, useCallback, type MouseEvent } from 'react';
+import { Fragment, useCallback, useRef, type MouseEvent } from 'react';
 
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
@@ -6,11 +6,20 @@ import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderCustomVerseComp from '../RenderCustomVerseComp';
 import { cleanupVerseNumberClicked } from './viewExtraHelpers';
 import RenderVerseTextDetailComp from './RenderVerseTextDetailComp';
-import { useAppCurrentRef } from '../../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
 import {
     revealBibleNoteRefs,
     useShortBibleNoteVerses,
 } from '../../bible-list/note/bibleNoteShortVerseHelpers';
+
+// The verse number carries BOTH gestures — one click reveals the verse's bible
+// notes, two selects the verse — so the reveal has to wait out the double-click
+// window. `stopPropagation` on the click is not enough: `dblclick` is its own
+// event and still reaches the wrapper, so a plain double-click used to fire the
+// reveal twice (two note-file opens, two multi-second highlight polls) and only
+// then select the verse. Same 400ms the floating widget's own double-press
+// detection uses.
+const DOUBLE_CLICK_MILLISECOND = 400;
 
 export default function RenderVerseTextComp({
     bibleItem,
@@ -30,8 +39,27 @@ export default function RenderVerseTextComp({
     const viewControllerRef = useAppCurrentRef(viewController);
     const bibleItemRef = useAppCurrentRef(bibleItem);
     const verseInfoRef = useAppCurrentRef(verseInfo);
+    // PER INSTANCE: one of these is mounted per verse, so a module-level timer
+    // would let one verse's pending reveal be cancelled by a click on another.
+    const revealTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(
+        null,
+    );
+    const cancelPendingReveal = useCallback(() => {
+        if (revealTimeoutIdRef.current !== null) {
+            clearTimeout(revealTimeoutIdRef.current);
+            revealTimeoutIdRef.current = null;
+        }
+    }, []);
+    // Nothing should reach into the notes list after this verse is gone.
+    useAppEffect(() => {
+        return cancelPendingReveal;
+    }, [cancelPendingReveal]);
+    const cancelPendingRevealRef = useAppCurrentRef(cancelPendingReveal);
     const handleDoubleClick = useCallback((event: MouseEvent) => {
         cleanupVerseNumberClicked(event);
+        // The first half of this gesture already scheduled a reveal; selecting
+        // the verse is what the user actually asked for.
+        cancelPendingRevealRef.current();
         viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
             target: {
                 ...bibleItemRef.current.target,
@@ -46,11 +74,18 @@ export default function RenderVerseTextComp({
     // attribute already holds the answer this click wants.
     const handleClick = useCallback((event: MouseEvent<HTMLSpanElement>) => {
         cleanupVerseNumberClicked(event);
+        // Read NOW: React nulls `currentTarget` once the handler returns, and
+        // the reveal below is deferred past that point.
         const bibleNoteRefs = event.currentTarget.dataset.bibleId;
+        cancelPendingRevealRef.current();
         if (!bibleNoteRefs) {
             return;
         }
-        revealBibleNoteRefs(bibleNoteRefs.split(','));
+        revealTimeoutIdRef.current = setTimeout(() => {
+            revealTimeoutIdRef.current = null;
+            revealBibleNoteRefs(bibleNoteRefs.split(','));
+        }, DOUBLE_CLICK_MILLISECOND);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const isExtraVerses = extraVerseInfoList.length > 0;
     const verseInfoList = [verseInfo, ...extraVerseInfoList];

@@ -547,10 +547,12 @@ describe('CanvasItem models', () => {
                 // Centered on the insertion point at the default player size,
                 // which is the control's own proportions 5x oversized so it
                 // stays usable in the presenter's scaled-down mini screen.
+                // 240x30 is the native `<audio controls>` box, so 5x is
+                // 1200x150 (see `AUDIO_CONTROL_*` in `canvasHelpers`).
                 left: -200,
-                top: 150,
+                top: 225,
                 width: 1200,
-                height: 300,
+                height: 150,
             }),
         );
 

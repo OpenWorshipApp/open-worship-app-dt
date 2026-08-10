@@ -20,9 +20,11 @@ export function toWidgetId(flexSizeName: string, key: string) {
     return `${flexSizeName}::${key}`;
 }
 
-// Keyed by `flexSizeName` so a whole actor's panes are replaced in one write and
-// an unmounting actor cannot leave half its entries behind. Insertion order is
-// mount order, which is close enough to top-to-bottom for the menu.
+// Keyed by REGISTRANT — in practice one `toWidgetId` per pane, since each pane
+// registers and unregisters on its own so an unmounting one cannot leave a dead
+// entry behind. A caller is free to write several entries under one key; what
+// matters is that the key it unregisters with is the key it registered with.
+// Insertion order is mount order, which `getWidgetEntries` re-sorts anyway.
 const widgetEntriesMap = new Map<string, WidgetEntryType[]>();
 const resetHandlerMap = new Map<string, () => void>();
 
@@ -51,19 +53,19 @@ export function subscribeWidgetsChanged(listener: () => void) {
 }
 
 export function registerWidgets(
-    flexSizeName: string,
+    registrantKey: string,
     entries: WidgetEntryType[],
 ) {
     if (entries.length === 0) {
-        widgetEntriesMap.delete(flexSizeName);
+        widgetEntriesMap.delete(registrantKey);
     } else {
-        widgetEntriesMap.set(flexSizeName, entries);
+        widgetEntriesMap.set(registrantKey, entries);
     }
     notifyChanged();
 }
 
-export function unregisterWidgets(flexSizeName: string) {
-    if (!widgetEntriesMap.delete(flexSizeName)) {
+export function unregisterWidgets(registrantKey: string) {
+    if (!widgetEntriesMap.delete(registrantKey)) {
         return;
     }
     notifyChanged();

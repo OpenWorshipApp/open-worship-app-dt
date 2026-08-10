@@ -175,13 +175,18 @@ async function fillWebsiteScreenShots(
             if (url === '' || placeholder === null || size === null) {
                 return;
             }
-            if (!webScreenShotCache.has(url)) {
+            // Keyed by url AND size, matching `captureWebScreenShot`'s own key:
+            // the same page can appear at two different box sizes in one
+            // document, and a url-only key served the first one's shot to both
+            // — stretched into the second by `objectFit: fill`.
+            const cacheKey = `${url}-${size.width}x${size.height}`;
+            if (!webScreenShotCache.has(cacheKey)) {
                 webScreenShotCache.set(
-                    url,
+                    cacheKey,
                     captureWebScreenShot(url, { ...size, delay: 3000 }),
                 );
             }
-            const imageData = await webScreenShotCache.get(url);
+            const imageData = await webScreenShotCache.get(cacheKey);
             if (!imageData) {
                 // Leave the globe-and-url fallback in place rather than
                 // printing an empty box.

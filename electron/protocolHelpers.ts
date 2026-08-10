@@ -18,8 +18,7 @@ export function genRouteUrl(htmlFileFullName: string, query: string = '') {
 export function genRoutProps(htmlFileFullName: string) {
     const preloadFilePath = join(__dirname, 'client', 'preloadProvider.js');
     const loadURL = (browserWindow: BrowserWindow, query: string = '') => {
-        const url = genRouteUrl(htmlFileFullName, query);
-        browserWindow.loadURL(url);
+        browserWindow.loadURL(genRouteUrl(htmlFileFullName, query));
     };
     return { loadURL, preloadFilePath };
 }

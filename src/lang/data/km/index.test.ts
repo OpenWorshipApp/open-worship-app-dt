@@ -47,6 +47,12 @@ describe('Khmer language data', () => {
             'Presenting Flow List',
             'Background',
             'Presenter',
+            // Both reached `toWidgetLabel` — and therefore `tran` — while the
+            // dictionary still only held the labels they REPLACED ('Document
+            // List' and 'Slides'), so a Khmer dev run blanked the slide editor
+            // and the presenter's note pane.
+            'Canvas',
+            'Slide Notes',
             'Enable',
             'Disable',
             'This item is disabled',

@@ -26,6 +26,20 @@ async function capCachedScreenshots(key: string, imageData: string | null) {
     // Re-insert so the freshest write moves to the end of the eviction order.
     cachedScreenshotSizeMap.delete(key);
     cachedScreenshotSizeMap.set(key, imageData?.length ?? 0);
+    // The cache expires entries on its OWN 5s sweep (`CacheManager` holds a 60s
+    // TTL), which this ledger never hears about. Without pruning, the budget
+    // keeps charging for screenshots that are already gone — so a cache well
+    // under the cap reports itself full and evicts live entries — and the map
+    // only ever shrinks while evicting, so with many small shots it grows
+    // without bound. `hasSync` is the cache's own expiry check.
+    for (const cachedKey of Array.from(cachedScreenshotSizeMap.keys())) {
+        if (
+            cachedKey !== key &&
+            !webScreenshotCacheManager.hasSync(cachedKey)
+        ) {
+            cachedScreenshotSizeMap.delete(cachedKey);
+        }
+    }
     let totalSize = 0;
     for (const size of cachedScreenshotSizeMap.values()) {
         totalSize += size;
@@ -87,6 +101,11 @@ function releaseCaptureSlot() {
 // url re-runs.
 const captureRefreshListenerMap = new Map<string, Set<() => void>>();
 
+// Keys whose in-flight capture was invalidated by `refreshWebCapturing` before
+// it finished. What it eventually returns is the very content the refresh was
+// asked to replace, so it must not be written to the cache.
+const staleCaptureKeySet = new Set<string>();
+
 export function refreshWebCapturing(src: string) {
     // Every size/delay variant of this url has to go, not just the default one.
     const keyPrefix = `${src}-`;
@@ -94,6 +113,17 @@ export function refreshWebCapturing(src: string) {
         if (key.startsWith(keyPrefix)) {
             cachedScreenshotSizeMap.delete(key);
             webScreenshotCacheManager.deleteSync(key);
+        }
+    }
+    // A capture that is STILL RUNNING was started before this refresh, and the
+    // re-render below would simply be handed that same promise — so Refresh
+    // Preview during a capture used to return exactly what it was asked to
+    // replace. Dropping the entry makes the next asker start a new capture, and
+    // the mark stops the abandoned one re-caching the old shot behind it.
+    for (const key of Array.from(inFlightCaptureMap.keys())) {
+        if (key.startsWith(keyPrefix)) {
+            inFlightCaptureMap.delete(key);
+            staleCaptureKeySet.add(key);
         }
     }
     const listenerSet = captureRefreshListenerMap.get(src);
@@ -154,6 +184,10 @@ export async function captureWebScreenShot(
         } finally {
             releaseCaptureSlot();
         }
+        if (staleCaptureKeySet.delete(key)) {
+            // Refreshed away mid-flight; a newer capture owns this key now.
+            return imageData;
+        }
         await webScreenshotCacheManager.set(key, imageData);
         await capCachedScreenshots(key, imageData);
         return imageData;
@@ -162,7 +196,12 @@ export async function captureWebScreenShot(
     try {
         return await capturePromise;
     } finally {
-        inFlightCaptureMap.delete(key);
+        // Only while the slot is still OURS: a `refreshWebCapturing` mid-flight
+        // drops this entry, and a newer capture may already have taken it —
+        // clearing that one would let a third caller start yet another.
+        if (inFlightCaptureMap.get(key) === capturePromise) {
+            inFlightCaptureMap.delete(key);
+        }
     }
 }
 

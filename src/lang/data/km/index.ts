@@ -194,6 +194,8 @@ const dictionary = {
     'Presenting Flow List': 'បញ្ជីតារាងកម្មវិធី',
     Previewer: 'កម្មវិធីមើលជាមុន',
     Slides: 'ស្លាយ',
+    'Slide Notes': 'កំណត់ត្រាស្លាយ',
+    Canvas: 'ផ្ទាំងក្រណាត់',
     'Slide Editor Ground': 'តំបន់កែសម្រួលស្លាយ',
     'Slide Editor Canvas': 'ផ្ទាំងកែសម្រួលស្លាយ',
     Tools: 'ឧបករណ៍',

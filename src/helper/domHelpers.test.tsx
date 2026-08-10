@@ -124,6 +124,13 @@ vi.mock('../others/CacheManager', () => ({
         private readonly store = new Map<string, T>();
 
         async has(key: string) {
+            return this.hasSync(key);
+        }
+
+        // The real one expires entries on its own timer, so the screenshot
+        // budget asks it which of its ledger rows still exist. No TTL here —
+        // whatever was set is still there.
+        hasSync(key: string) {
             return this.store.has(key);
         }
 

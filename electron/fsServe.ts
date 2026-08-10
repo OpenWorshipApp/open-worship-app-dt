@@ -18,15 +18,6 @@ export const htmlFiles = {
     bibleNote: 'bibleNote.html',
     webEditor: 'webEditor.html',
 };
-export const preloadFileMap = {
-    full: [
-        htmlFiles.appDocumentEditor,
-        htmlFiles.presenter,
-        htmlFiles.reader,
-        htmlFiles.setting,
-    ],
-    minimal: [htmlFiles.screen],
-};
 export const customScheme = 'owa';
 export const schemePrivileges = {
     standard: true,
