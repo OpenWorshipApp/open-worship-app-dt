@@ -1,7 +1,10 @@
 import type { VarySlideType } from '../app-document-list/appDocumentTypeHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import FileSource from '../helper/FileSource';
-import { notifyElementHighlight } from '../helper/domHelpers';
+import {
+    escapeSelectorValue,
+    notifyElementHighlight,
+} from '../helper/domHelpers';
 import { bringDomToTopView } from '../helper/helpers';
 import { openBackgroundAudioTab } from '../background/backgroundAudioTabHelpers';
 import { backgroundDragTypeList } from './PresentingFlowItem';
@@ -12,10 +15,6 @@ function toElementGetter(selector: string) {
     return () => {
         return document.querySelector(selector);
     };
-}
-
-export function escapeSelectorValue(value: string) {
-    return (globalThis.CSS?.escape ?? ((raw: string) => raw))(value);
 }
 
 /**

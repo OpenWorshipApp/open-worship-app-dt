@@ -1,5 +1,30 @@
 @use '../others/variables.scss' as *;
 
+// A verse a bible note talks about, calling for the eye across a wall of text.
+//
+// A cycling glow rather than a cycling colour: the number keeps the reader's own
+// verse-number colour, so the theme still reads as itself and the halo is plainly
+// a marking laid over it rather than a different kind of verse. `text-shadow`
+// repaints nothing but the two or three glyphs it surrounds, where a
+// `filter`/`background-position` shimmer would promote every marked number in the
+// chapter to its own composited layer — dozens of them, on the weak hardware this
+// app is for. Mid-lightness hues, legible against both the dark and light reader.
+@keyframes app-bible-note-verse-hint {
+  0%,
+  100% {
+    border-bottom: 0.1em solid hsl(170deg 70% 45%);
+  }
+  25% {
+    border-bottom: 0.1em solid hsl(265deg 70% 62%);
+  }
+  50% {
+    border-bottom: 0.1em solid hsl(35deg 90% 50%);
+  }
+  75% {
+    border-bottom: 0.1em solid hsl(330deg 75% 58%);
+  }
+}
+
 .bible-view {
   min-width: 200px;
   border: 1px solid transparent;
@@ -59,6 +84,25 @@
           padding: 0;
           margin: 0 2px;
           line-height: 0;
+        }
+        // A verse some bible note mentions. The attribute IS the marking: it
+        // carries the notes the click reveals, so a number without it is a
+        // verse with nothing to reveal, and cannot be styled as if it had.
+        .verse-number-text[data-bible-id] {
+          font-weight: bold;
+          text-decoration: underline dotted currentColor;
+          text-underline-offset: 0.25em;
+          text-decoration-thickness: 0.1em;
+          animation: app-bible-note-verse-hint 6s ease-in-out infinite;
+          &:hover {
+            text-decoration-style: solid;
+          }
+          // The marking must survive the animation being refused, so the glow
+          // cycle is the decoration and the underline is the statement.
+          @media (prefers-reduced-motion: reduce) {
+            animation: none;
+            text-shadow: 0 0 0.35rem var(--app-accent-halo);
+          }
         }
       }
     }

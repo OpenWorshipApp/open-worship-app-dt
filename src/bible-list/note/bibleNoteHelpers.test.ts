@@ -76,6 +76,9 @@ vi.mock('../../server/appProvider', () => ({
         windowTitle: 'OWA',
         messageUtils: { sendData: h.sendDataMock },
         fileUtils: { watch: h.watchMock },
+        // `appHooks` reads this at module load; without it any real import
+        // that reaches it dies while the suite is still being collected
+        systemUtils: { isDev: false },
     },
 }));
 vi.mock('../../server/appHomeStorage', () => ({

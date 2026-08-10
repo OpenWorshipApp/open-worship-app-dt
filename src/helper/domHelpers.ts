@@ -513,6 +513,10 @@ export function checkIsDisabled(element: Element) {
     return checkIsDisabled(element.parentElement);
 }
 
+export function escapeSelectorValue(value: string) {
+    return (globalThis.CSS?.escape ?? ((raw: string) => raw))(value);
+}
+
 const APP_NOTIFY_ELEMENT_HIGHLIGHT_CLASSNAME = 'app-notify-element-highlight';
 export async function notifyElementHighlight(
     elementGetter: () => Element | null,

@@ -7,6 +7,10 @@ import RenderCustomVerseComp from '../RenderCustomVerseComp';
 import { cleanupVerseNumberClicked } from './viewExtraHelpers';
 import RenderVerseTextDetailComp from './RenderVerseTextDetailComp';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import {
+    revealBibleNoteRefs,
+    useShortBibleNoteVerses,
+} from '../../bible-list/note/bibleNoteShortVerseHelpers';
 
 export default function RenderVerseTextComp({
     bibleItem,
@@ -21,6 +25,7 @@ export default function RenderVerseTextComp({
     extraVerseInfoList?: CompiledVerseType[];
     index: number;
 }>) {
+    const bibleNoteShortVerses = useShortBibleNoteVerses();
     const viewController = useBibleItemsViewControllerContext();
     const viewControllerRef = useAppCurrentRef(viewController);
     const bibleItemRef = useAppCurrentRef(bibleItem);
@@ -35,6 +40,17 @@ export default function RenderVerseTextComp({
             },
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // The notes are read back off the element rather than closed over: one span
+    // is drawn per compared bible, they are all this one handler, and the
+    // attribute already holds the answer this click wants.
+    const handleClick = useCallback((event: MouseEvent<HTMLSpanElement>) => {
+        cleanupVerseNumberClicked(event);
+        const bibleNoteRefs = event.currentTarget.dataset.bibleId;
+        if (!bibleNoteRefs) {
+            return;
+        }
+        revealBibleNoteRefs(bibleNoteRefs.split(','));
     }, []);
     const isExtraVerses = extraVerseInfoList.length > 0;
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
@@ -64,7 +80,10 @@ export default function RenderVerseTextComp({
                     'verse-number app-caught-hover-pointer' +
                     (isExtraVerses ? ' extra-verses' : '')
                 }
-                title={`Double click to select verse ${verseInfo.localeVerse}`}
+                title={
+                    'Click to reveal the bible notes of this verse,' +
+                    ` double click to select verse ${verseInfo.localeVerse}`
+                }
                 onDoubleClick={handleDoubleClick}
             >
                 <div>
@@ -74,7 +93,17 @@ export default function RenderVerseTextComp({
                     {verseInfoList.map((extraVerseInfo, i) => (
                         <Fragment key={extraVerseInfo.bibleKey}>
                             {i > 0 ? ', ' : null}
-                            <span style={extraVerseInfo.style}>
+                            <span
+                                className="verse-number-text"
+                                style={extraVerseInfo.style}
+                                // `<note file path>@<note item id>,...`, absent
+                                // when no note mentions this verse — the marking
+                                // and the click payload are the one attribute
+                                data-bible-id={bibleNoteShortVerses[
+                                    extraVerseInfo.kjvBibleVersesKey
+                                ]?.join(',')}
+                                onClick={handleClick}
+                            >
                                 {extraVerseInfo.localeVerse}
                             </span>
                         </Fragment>
