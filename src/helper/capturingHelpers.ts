@@ -4,7 +4,6 @@ import { electronSendAsync } from '../server/appHelpers';
 import { useAppEffect, useAppEffectAsync } from './appHooks';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import CacheManager from '../others/CacheManager';
-import { unlocking } from '../server/unlockingHelpers';
 
 const webScreenshotCacheManager = new CacheManager<string>(60 /* 1 minute */);
 
@@ -107,6 +106,16 @@ export function refreshWebCapturing(src: string) {
     }
 }
 
+// Same-key dedup, WITHOUT `unlocking`. `unlocking`'s waiters poll every 100ms
+// and warn at 50 attempts (5s): when several components ask for the SAME web
+// shot at once (a background thumbnail, the mini-screen preview, the live
+// preview window), the in-flight capture is itself a `delay`-ms render (up to
+// 3s) that may also be queued behind the 2-slot concurrency cap, so every
+// duplicate waiter blows past 5s and spams the warning. Sharing one in-flight
+// promise per key resolves them all together with no polling — the same
+// slot-handoff philosophy `acquireCaptureSlot` already uses.
+const inFlightCaptureMap = new Map<string, Promise<string | null>>();
+
 export async function captureWebScreenShot(
     url: string,
     {
@@ -120,11 +129,16 @@ export async function captureWebScreenShot(
     },
 ) {
     const key = `${url}-${width}-${height}-${delay}`;
-    return await unlocking(key, async () => {
-        if (await webScreenshotCacheManager.has(key)) {
-            const cachedData = await webScreenshotCacheManager.get(key);
-            return cachedData;
-        }
+    // Cache-first, before any slot/coalescing: an already-captured shot must
+    // never wait behind an unrelated in-flight capture.
+    if (await webScreenshotCacheManager.has(key)) {
+        return await webScreenshotCacheManager.get(key);
+    }
+    const inFlight = inFlightCaptureMap.get(key);
+    if (inFlight !== undefined) {
+        return await inFlight;
+    }
+    const capturePromise = (async () => {
         await acquireCaptureSlot();
         let imageData: string | null;
         try {
@@ -143,7 +157,13 @@ export async function captureWebScreenShot(
         await webScreenshotCacheManager.set(key, imageData);
         await capCachedScreenshots(key, imageData);
         return imageData;
-    });
+    })();
+    inFlightCaptureMap.set(key, capturePromise);
+    try {
+        return await capturePromise;
+    } finally {
+        inFlightCaptureMap.delete(key);
+    }
 }
 
 export function useWebCapturing(

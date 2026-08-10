@@ -188,6 +188,7 @@ const dictionary = {
     Note: 'កំណត់ត្រា',
     'Bible Notes': 'កំណត់ត្រាព្រះគម្ពីរ',
     'Bible and Notes': 'ព្រះគម្ពីរ និងកំណត់ត្រា',
+    'Bible and Notes (Lookup)': 'ព្រះគម្ពីរ និងកំណត់ត្រា (ស្វែងរក)',
     'Document List': 'បញ្ជីឯកសារ',
     'Lyric List': 'បញ្ជីអក្សរភ្លេង',
     'Presenting Flow List': 'បញ្ជីតារាងកម្មវិធី',
