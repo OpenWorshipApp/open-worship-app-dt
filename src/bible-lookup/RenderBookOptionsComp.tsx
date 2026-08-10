@@ -90,6 +90,8 @@ function genBookOption({
                     borderColor: '#00000000',
                     borderBottomColor: borderColor,
                     width: BOOK_OPTION_WIDTH,
+                    textAlign: 'left',
+                    fontSize: '1.01rem',
                 }}
                 type="button"
                 onClick={() => {
@@ -97,7 +99,10 @@ function genBookOption({
                 }}
             >
                 <div className="book-option-index">{index + 1}</div>
-                <div className="flex-fill" style={{ fontFamily }}>
+                <div
+                    className="flex-fill"
+                    style={{ fontFamily, paddingLeft: '0.5em' }}
+                >
                     {book}
                     {book === modelBook ? null : (
                         <small className="px-1">({modelBook})</small>

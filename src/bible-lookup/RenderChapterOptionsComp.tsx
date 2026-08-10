@@ -116,8 +116,12 @@ function genChapterOption({
                 onClick={() => {
                     onSelect(chapter);
                 }}
+                style={{
+                    textAlign: 'left',
+                    fontSize: '1.01rem',
+                }}
             >
-                <span>
+                <span style={{ paddingLeft: '0.5em' }}>
                     <span style={{ fontFamily }}>{chapterLocaleString}</span>
                     {isDiff ? (
                         <small className="px-1">({chapter})</small>
