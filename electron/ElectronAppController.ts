@@ -45,10 +45,6 @@ export default class ElectronAppController {
         this.mainController.sendMessage('main:app:open-about-page');
     }
 
-    openFindPage() {
-        this.mainController.sendMessage('main:app:open-find-page');
-    }
-
     static getInstance() {
         instance ??= new ElectronAppController();
         return instance;
@@ -70,7 +66,7 @@ export default class ElectronAppController {
     }
 
     // `allWindows()` only knows the main and LW-share windows. Popups (Settings,
-    // About, Finder, the document/lyric/bible-note/web editors) are created off
+    // About, the document/lyric/bible-note/web editors) are created off
     // `setWindowOpenHandler` in `createPopupWindow` and are registered nowhere,
     // so enumerate the live windows instead — otherwise `Apply Settings` leaves
     // every open popup on the old language, theme and directory paths.

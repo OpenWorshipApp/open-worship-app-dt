@@ -6,7 +6,6 @@ import { globalCacheManager1M } from '../others/CacheManager';
 import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import { type LookupLangData } from 'bible-note';
 import type { Editor, OpenLyric, OpenLyricMarkdownManager } from 'open-lyric';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
@@ -465,7 +464,10 @@ export type LanguageDataType = {
     dictionary: AnyObjectType;
     name: string;
     flagSVG: string;
-    getLookupData?: (packageLocation: string) => Promise<LookupLangData | null>;
+    getLookupData?: (packageLocation: string) => Promise<{
+        namesMap: AnyObjectType;
+        locationsMap: AnyObjectType;
+    } | null>;
     sanitizeText: (text: string) => string;
     sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;
@@ -495,6 +497,11 @@ type CustomMenuItemType = {
     clickData?: AnyObjectType;
     accelerator?: string;
     submenu?: CustomMenuItemType[];
+    // `formatMenuItems` spreads the item into the electron template, so the
+    // native checkbox rendering comes for free. `checked` is only read when
+    // `type` is `'checkbox'`.
+    type?: 'checkbox';
+    checked?: boolean;
 };
 export type CustomMenusDataType = {
     tools?: CustomMenuItemType[];
@@ -504,6 +511,9 @@ export type CustomMenusDataType = {
     // The top-level **Insert** menu, owned entirely by the slide editor. The
     // menu itself only exists while something contributes to it.
     insert?: CustomMenuItemType[];
+    // Renderer-contributed **View** entries: the per-widget open/close
+    // checkboxes and `Reset Widgets Size`. See `resize-actor/widgetAppMenuHelpers`.
+    view?: CustomMenuItemType[];
 };
 
 export function checkIsValidLangCode(text: string) {

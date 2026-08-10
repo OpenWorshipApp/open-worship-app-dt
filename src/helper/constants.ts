@@ -31,6 +31,9 @@ export const defaultDataDirNames = {
  */
 export const appManagedDataDirNames = {
     BIBLE_DATA: 'bibles-data',
+    // Derived-once indexes over the shipped lookup dataset. Regenerated from
+    // that dataset whenever it is missing or stale, so it is safe to delete.
+    LOOKUP_DATA: 'lookup-data',
 };
 
 /**
@@ -75,3 +78,52 @@ export const PREVIEW_ONLY_ATTR = 'data-preview-only';
 export const CAMERA_ITEM_ATTR = 'data-camera-item';
 export const CAMERA_DEVICE_ID_ATTR = 'data-camera-device-id';
 export const CAMERA_DEVICE_LABEL_ATTR = 'data-camera-device-label';
+
+/**
+ * A website canvas item renders as a STATIC screenshot everywhere — the editor
+ * canvas, the tool item list, slide thumbnails and print — and is hydrated into
+ * a live `<iframe>` only by
+ * `ScreenVaryAppDocumentManager.cleanupSlideContent`. Exactly the camera
+ * item's contract above, and for the same reason: an iframe keeps its page's
+ * scripts, timers, animations and video running for as long as it is in the
+ * DOM, so a 50-slide document would run 50 pages at once. A screenshot costs
+ * nothing once taken.
+ *
+ * That means the renderer and the screen manager only ever meet through static
+ * HTML (`genSlideHtml` runs the same React tree through `renderToStaticMarkup`),
+ * so these attributes are how the markup says "this box is a website, and here
+ * is its url". The screenshot itself deliberately gets no attribute of its own
+ * — it is a `PREVIEW_ONLY_ATTR` child that the hydration hides, so a page with
+ * a transparent body does not show the stale shot through.
+ *
+ * NOTE: `sanitizeHtml` (`./sanitizeHelpers.ts`) is still a no-op stub. When a
+ * real sanitizer lands it MUST allowlist `data-website-*` and `data-camera-*`,
+ * or both item kinds silently stop hydrating on the screen with no error
+ * anywhere.
+ *
+ * The editor additionally swaps the screenshot for a live iframe on hover; that
+ * path is pure React and needs no attribute.
+ */
+export const WEBSITE_ITEM_ATTR = 'data-website-item';
+export const WEBSITE_URL_ATTR = 'data-website-url';
+/**
+ * The already-clamped capture size, as `"<width>x<height>"`.
+ *
+ * It has to travel in the markup because the two consumers that fill the
+ * screenshot in — the mini screen and the print document — both work on a
+ * DETACHED div (`genSlideHtml` builds one, and `cleanupSlideContent` runs
+ * before it is appended), where every `offsetWidth` is 0. Carrying it also
+ * guarantees they ask for the exact size the editor already asked for, so all
+ * of them share one cache entry instead of each spawning a capture.
+ */
+export const WEBSITE_CAPTURE_SIZE_ATTR = 'data-website-capture-size';
+
+/**
+ * Shared by the editor's hover preview and the screen's hydrated iframe. They
+ * MUST agree: a preview under a tighter sandbox would show the operator a
+ * different page than the one that gets projected. `allow-same-origin` is what
+ * lets a local `webs/*.html` page read its own assets.
+ */
+export const WEBSITE_IFRAME_SANDBOX =
+    'allow-scripts allow-same-origin allow-forms allow-popups';
+export const WEBSITE_IFRAME_REFERRER_POLICY = 'strict-origin-when-cross-origin';

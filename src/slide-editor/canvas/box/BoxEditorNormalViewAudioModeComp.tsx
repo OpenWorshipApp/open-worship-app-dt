@@ -1,27 +1,12 @@
-import type { CSSProperties } from 'react';
-
 import type { CanvasItemAudioPropsType } from '../CanvasItemAudio';
 import CanvasItemAudio from '../CanvasItemAudio';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
 import { pathToFileURL } from '../../../server/calcHelpers';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
 import { PREVIEW_ONLY_ATTR } from '../../../helper/constants';
 import { checkIsUrlMediaSource } from '../../../helper/mediaSourceHelpers';
 import { calcAudioControlScale } from '../canvasHelpers';
-
-export default function BoxEditorNormalViewAudioModeComp({
-    style,
-}: Readonly<{
-    style: CSSProperties;
-}>) {
-    return (
-        <BoxEditorNormalWrapperComp style={style}>
-            <BoxEditorNormalAudioRender />
-        </BoxEditorNormalWrapperComp>
-    );
-}
 
 export function BoxEditorNormalAudioRender() {
     const props = useCanvasItemPropsContext<CanvasItemAudioPropsType>();
@@ -34,6 +19,7 @@ export function BoxEditorNormalAudioRender() {
     const audioSrc = checkIsUrlMediaSource(props.filePath)
         ? props.filePath
         : pathToFileURL(props.filePath);
+    const controlScale = calcAudioControlScale(props.width, props.height);
     return (
         <div
             title={props.filePath}
@@ -62,16 +48,26 @@ export function BoxEditorNormalAudioRender() {
                 preload="none"
                 controls
                 style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'block',
-                    cursor: 'pointer',
                     // A bigger box on its own only stretches the empty pill —
                     // the control chrome is drawn at a fixed glyph size — so
-                    // the box's size is turned into a `zoom` to actually grow
-                    // the player. Percentages resolve in the zoomed units, so
-                    // the player still fills the box exactly.
-                    zoom: calcAudioControlScale(props.width, props.height),
+                    // the box's size becomes a scale factor to actually grow
+                    // the player. The element is LAID OUT at the box divided by
+                    // that scale and then painted back up to full size, so the
+                    // player covers the box exactly (the wrapper centers it and
+                    // the default transform origin is its centre).
+                    //
+                    // `transform`, NOT `zoom`: Chromium positions the native
+                    // controls' "⋮" overflow popup — which is UA shadow DOM —
+                    // from `getBoundingClientRect()` pixels that then get
+                    // re-resolved inside a `zoom`ed subtree, so it landed far
+                    // outside the slide at several times its size. A transform
+                    // leaves that math alone and the popup anchors to the
+                    // control, which keeps the overflow menu usable.
+                    width: `${props.width / controlScale}px`,
+                    height: `${props.height / controlScale}px`,
+                    display: 'block',
+                    cursor: 'pointer',
+                    transform: `scale(${controlScale})`,
                 }}
             />
         </div>

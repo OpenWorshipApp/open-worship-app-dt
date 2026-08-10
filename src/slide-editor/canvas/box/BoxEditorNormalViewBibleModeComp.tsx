@@ -1,11 +1,10 @@
-import { use, type CSSProperties } from 'react';
+import { use } from 'react';
 
 import type { CanvasItemBiblePropsType } from '../CanvasItemBibleItem';
 import CanvasItemBibleItem from '../CanvasItemBibleItem';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
 import { CanvasControllerContext } from '../CanvasController';
 
 import type CanvasController from '../CanvasController';
@@ -61,18 +60,6 @@ export function formatBibleKeys(
             );
         };
     });
-}
-
-export default function BoxEditorNormalViewBibleModeComp({
-    style,
-}: Readonly<{
-    style: CSSProperties;
-}>) {
-    return (
-        <BoxEditorNormalWrapperComp style={style}>
-            <BoxEditorNormalBibleRender />
-        </BoxEditorNormalWrapperComp>
-    );
 }
 
 export function BoxEditorNormalBibleRender() {

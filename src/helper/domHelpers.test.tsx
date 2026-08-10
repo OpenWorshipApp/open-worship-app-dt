@@ -92,8 +92,14 @@ vi.mock('./helpers', () => ({
     checkIsVerticalAtBottom: checkIsVerticalAtBottomMock,
 }));
 
-vi.mock('./appHooks', () => {
+// Partial mock: only `useAppEffectAsync` is swapped for a plain `useEffect`.
+// A full replacement would drop sibling exports the module under test also
+// uses (`useAppEffect`), which fails as an undefined call rather than anything
+// legible.
+vi.mock('./appHooks', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./appHooks')>();
     return {
+        ...actual,
         useAppEffectAsync: (
             effectMethod: (methods: Record<string, unknown>) => Promise<void>,
             deps: readonly unknown[],
@@ -128,6 +134,14 @@ vi.mock('../others/CacheManager', () => ({
         async set(key: string, value: T) {
             this.store.set(key, value);
         }
+
+        async delete(key: string) {
+            this.store.delete(key);
+        }
+
+        deleteSync(key: string) {
+            this.store.delete(key);
+        }
     },
 }));
 
@@ -135,11 +149,14 @@ vi.mock('../server/appProvider', () => ({
     default: {
         POPUP_FRAME_NAME_PREFIX: 'owa-frame',
         aboutHomePage: 'https://app.local/about',
-        finderHomePage: 'https://app.local/find',
         messageUtils: {
             sendDataSync: sendDataSyncMock,
             listenForData: listenForDataMock,
         },
+        // `appHooks` reads this at MODULE LOAD to pick between its dev-only
+        // `useAppEffect` wrapper and the plain `useEffect`, so a mock without
+        // it throws while importing, not while running.
+        systemUtils: { isDev: false },
     },
 }));
 
@@ -163,7 +180,11 @@ import {
     removeDomChangeEventListener,
     removeDomTitle,
 } from './domHelpers';
-import { captureWebScreenShot, useWebCapturing } from './capturingHelpers';
+import {
+    captureWebScreenShot,
+    refreshWebCapturing,
+    useWebCapturing,
+} from './capturingHelpers';
 
 describe('domHelpers', () => {
     let container: HTMLDivElement | null = null;
@@ -389,14 +410,12 @@ describe('domHelpers', () => {
         expect(openCalls[2]?.features).toBe('popup');
     });
 
-    test('registers about/find page listeners and highlights newly added elements', async () => {
+    test('registers the about page listener and highlights newly added elements', async () => {
         listenerRegistry['main:app:open-about-page']?.();
-        listenerRegistry['main:app:open-find-page']?.();
-        expect(openCalls).toHaveLength(2);
+        expect(openCalls).toHaveLength(1);
         expect(openCalls[0]?.url).toContain(
             'https://app.local/about?uuid=about',
         );
-        expect(openCalls[1]?.url).toContain('https://app.local/find?uuid=find');
 
         let element: HTMLDivElement | null = null;
         const moveToView = vi.fn();
@@ -483,6 +502,154 @@ describe('domHelpers', () => {
             },
         );
     });
+
+    test('skips the blocking display lookup when the caller knows its size', async () => {
+        vi.useRealTimers();
+        electronSendAsyncMock.mockResolvedValue('sized-image');
+
+        function Probe() {
+            useWebCapturing('https://example.com/sized', {
+                width: 800,
+                height: 600,
+            });
+            return null;
+        }
+
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<Probe />);
+        });
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+
+        // `getDefaultScreenDisplay` is a BLOCKING sync IPC; a caller that
+        // supplies both dimensions must never pay for it.
+        expect(getDefaultScreenDisplayMock).not.toHaveBeenCalled();
+        expect(electronSendAsyncMock).toHaveBeenCalledWith(
+            'main:app:capture-web-screen-shot',
+            {
+                url: 'https://example.com/sized',
+                width: 800,
+                height: 600,
+                delay: 3000,
+            },
+        );
+    });
+
+    test('never captures while disabled', async () => {
+        vi.useRealTimers();
+        electronSendAsyncMock.mockResolvedValue('never');
+
+        function Probe() {
+            useWebCapturing('https://example.com/offscreen', {
+                width: 800,
+                height: 600,
+                isEnabled: false,
+            });
+            return null;
+        }
+
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<Probe />);
+        });
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+
+        expect(electronSendAsyncMock).not.toHaveBeenCalled();
+    });
+
+    test('runs at most two captures at a time', async () => {
+        vi.useRealTimers();
+        let inFlight = 0;
+        let peakInFlight = 0;
+        const releaseList: (() => void)[] = [];
+        electronSendAsyncMock.mockImplementation(() => {
+            inFlight++;
+            peakInFlight = Math.max(peakInFlight, inFlight);
+            return new Promise((resolve) => {
+                releaseList.push(() => {
+                    inFlight--;
+                    resolve('queued-image');
+                });
+            });
+        });
+
+        // Six DISTINCT urls, so the per-key dedup cannot collapse them: only
+        // the concurrency gate can. Each capture opens a hidden BrowserWindow,
+        // so an ungated slide list would run all six at once.
+        const captures = Array.from({ length: 6 }, (_unused, index) => {
+            return captureWebScreenShot(`https://example.com/q${index}`, {
+                width: 320,
+                height: 240,
+                delay: 0,
+            });
+        });
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(peakInFlight).toBe(2);
+
+        while (releaseList.length > 0) {
+            releaseList.shift()?.();
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+        await Promise.all(captures);
+        expect(peakInFlight).toBe(2);
+        expect(electronSendAsyncMock).toHaveBeenCalledTimes(6);
+    });
+
+    test('refreshWebCapturing drops the cached shot and re-captures', async () => {
+        vi.useRealTimers();
+        electronSendAsyncMock
+            .mockResolvedValueOnce('first-shot')
+            .mockResolvedValueOnce('second-shot');
+        const options = { width: 400, height: 300, delay: 0 };
+
+        expect(
+            await captureWebScreenShot('https://example.com/clock', options),
+        ).toBe('first-shot');
+        // Cached: no second trip.
+        expect(
+            await captureWebScreenShot('https://example.com/clock', options),
+        ).toBe('first-shot');
+        expect(electronSendAsyncMock).toHaveBeenCalledTimes(1);
+
+        // A clock page never self-invalidates, so this is the only way out.
+        refreshWebCapturing('https://example.com/clock');
+
+        expect(
+            await captureWebScreenShot('https://example.com/clock', options),
+        ).toBe('second-shot');
+        expect(electronSendAsyncMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('evicts old screenshots once the size budget is exceeded', async () => {
+        vi.useRealTimers();
+        // Two shots of ~4M chars each blow the ~6M budget, so writing the
+        // second must evict the first — a count-based cap would have kept both.
+        const bigImage = 'x'.repeat(4e6);
+        electronSendAsyncMock.mockResolvedValue(bigImage);
+        const options = { width: 128, height: 128, delay: 0 };
+
+        await captureWebScreenShot('https://example.com/big-a', options);
+        await captureWebScreenShot('https://example.com/big-b', options);
+        expect(electronSendAsyncMock).toHaveBeenCalledTimes(2);
+
+        // The newest survives...
+        await captureWebScreenShot('https://example.com/big-b', options);
+        expect(electronSendAsyncMock).toHaveBeenCalledTimes(2);
+        // ...the evicted one is re-captured.
+        await captureWebScreenShot('https://example.com/big-a', options);
+        expect(electronSendAsyncMock).toHaveBeenCalledTimes(3);
+    });
+
     test('url params round-trip while keeping the caller url shape', async () => {
         const {
             getParamFileFullName,

@@ -1,6 +1,6 @@
 import '../bible-lookup/BibleReaderComp.scss';
 
-import { lazy, useMemo } from 'react';
+import { lazy, useEffect, useMemo } from 'react';
 
 import type {
     DataInputType,
@@ -8,7 +8,9 @@ import type {
 } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { toWidgetLabel } from '../others/labelIconHelpers';
-import LookupBibleItemController from './LookupBibleItemController';
+import LookupBibleItemController, {
+    registerLookupBibleItemController,
+} from './LookupBibleItemController';
 import { BibleItemsViewControllerContext } from './BibleItemsViewController';
 
 const LazyBibleReadingLeftCom = lazy(() => {
@@ -25,12 +27,17 @@ const flexSizeDefault: FlexSizeType = {
 // Built per render, not once at module scope: `tran()` throws in dev when the
 // locale's language data has not been loaded into the cache yet, and module
 // evaluation happens well before that — which blanks the whole page in km.
-function genDataInput(): DataInputType[] {
+//
+// `bibleAndNotesLabel` is a parameter because the bible-lookup POPUP overlays
+// the presenter, whose right panel already owns a "Bible and Notes" widget:
+// two panes sharing that View-menu label on one page trips the widget
+// registry's uniqueness guard, so the popup passes a distinct label.
+function genDataInput(bibleAndNotesLabel: string): DataInputType[] {
     return [
         {
             children: LazyBibleReadingLeftCom,
             key: 'h1',
-            ...toWidgetLabel('Bible and Notes'),
+            ...toWidgetLabel(bibleAndNotesLabel),
         },
         {
             children: LazyRenderBibleLookupComp,
@@ -42,9 +49,11 @@ function genDataInput(): DataInputType[] {
 export default function BibleReaderComp({
     flexSizeName,
     onLookupSaveBibleItem,
+    bibleAndNotesLabel = 'Bible and Notes',
 }: Readonly<{
     flexSizeName: string;
     onLookupSaveBibleItem?: () => void;
+    bibleAndNotesLabel?: string;
 }>) {
     const lookupBibleItemController = useMemo(() => {
         const newLookupBibleItemController = new LookupBibleItemController();
@@ -55,8 +64,14 @@ export default function BibleReaderComp({
         return newLookupBibleItemController;
     }, [onLookupSaveBibleItem]);
     const dataInput = useMemo(() => {
-        return genDataInput();
-    }, []);
+        return genDataInput(bibleAndNotesLabel);
+    }, [bibleAndNotesLabel]);
+    // Published for the window-level names & locations detail panels, which sit
+    // outside this provider but still need a controller to open a verse in the
+    // bible lookup.
+    useEffect(() => {
+        return registerLookupBibleItemController(lookupBibleItemController);
+    }, [lookupBibleItemController]);
     return (
         <BibleItemsViewControllerContext value={lookupBibleItemController}>
             <ResizeActorComp

@@ -14,14 +14,27 @@ export type MockWebContents = {
     replaceMisspelling: ReturnType<typeof vi.fn>;
     findInPage: ReturnType<typeof vi.fn>;
     stopFindInPage: ReturnType<typeof vi.fn>;
+    isDestroyed: ReturnType<typeof vi.fn>;
+    close: ReturnType<typeof vi.fn>;
+    focus: ReturnType<typeof vi.fn>;
+    id: number;
     capturePage: ReturnType<typeof vi.fn>;
     print: ReturnType<typeof vi.fn>;
     printToPDF: ReturnType<typeof vi.fn>;
 };
 
 export type MockBrowserWindow = {
+    id: number;
     webContents: MockWebContents;
+    contentView: {
+        addChildView: ReturnType<typeof vi.fn>;
+        removeChildView: ReturnType<typeof vi.fn>;
+    };
     on: ReturnType<typeof vi.fn>;
+    off: ReturnType<typeof vi.fn>;
+    once: ReturnType<typeof vi.fn>;
+    getContentSize: ReturnType<typeof vi.fn>;
+    getContentBounds: ReturnType<typeof vi.fn>;
     setBounds: ReturnType<typeof vi.fn>;
     getBounds: ReturnType<typeof vi.fn>;
     getPosition: ReturnType<typeof vi.fn>;
@@ -43,6 +56,8 @@ export type MockBrowserWindow = {
     restore: ReturnType<typeof vi.fn>;
 };
 
+let lastMockWebContentsId = 0;
+
 export function createMockWebContents(
     overrides: Partial<MockWebContents> = {},
 ): MockWebContents {
@@ -60,6 +75,10 @@ export function createMockWebContents(
         replaceMisspelling: vi.fn(),
         findInPage: vi.fn(() => 1),
         stopFindInPage: vi.fn(),
+        isDestroyed: vi.fn(() => false),
+        close: vi.fn(),
+        focus: vi.fn(),
+        id: (lastMockWebContentsId += 1),
         capturePage: vi.fn(),
         print: vi.fn(),
         printToPDF: vi.fn(async () => Buffer.from('%PDF')),
@@ -67,12 +86,29 @@ export function createMockWebContents(
     };
 }
 
+let lastMockBrowserWindowId = 0;
+
 export function createMockBrowserWindow(
     overrides: Partial<MockBrowserWindow> = {},
 ): MockBrowserWindow {
     const webContents = overrides.webContents ?? createMockWebContents();
+    lastMockBrowserWindowId += 1;
     return {
+        id: lastMockBrowserWindowId,
+        contentView: {
+            addChildView: vi.fn(),
+            removeChildView: vi.fn(),
+        },
         on: vi.fn(),
+        off: vi.fn(),
+        once: vi.fn(),
+        getContentSize: vi.fn(() => [1200, 800]),
+        getContentBounds: vi.fn(() => ({
+            x: 10,
+            y: 20,
+            width: 1200,
+            height: 800,
+        })),
         setBounds: vi.fn(),
         getBounds: vi.fn(() => ({ x: 10, y: 20, width: 1200, height: 800 })),
         getPosition: vi.fn(() => [10, 20]),

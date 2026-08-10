@@ -51,6 +51,7 @@ import {
     PRESENTING_FLOW_CC_ROW_ATTR,
     PRESENTING_FLOW_ITEM_UUID_ATTR,
 } from './presentingFlowCcHelpers';
+import PresentingFlowRowGutterComp from './PresentingFlowRowGutterComp';
 import PresentingFlowScreenPinComp from './PresentingFlowScreenPinComp';
 import type { PresentingFlowPreviewChildSteppingType } from './presentingFlowPreviewFloatingHelpers';
 import {
@@ -228,6 +229,14 @@ function PreviewFrameComp({
                         : '') + presentingFlowItem.title
                 }
             >
+                {/* The very column the tree row is read down, in the very same
+                    order — gutter, then chevron, then the line itself. The two
+                    panels show one run sheet, so a number must sit at the same
+                    place in both or neither can be read against the other. */}
+                <PresentingFlowRowGutterComp
+                    lineNumber={index + 1}
+                    isCommand={presentingFlowItem.isAction}
+                />
                 <i
                     className={
                         'bi app-presenting-flow-preview-item-chevron' +
@@ -236,9 +245,6 @@ function PreviewFrameComp({
                     }
                     onClick={handleToggling}
                 />
-                <span className="app-presenting-flow-row-index px-1">
-                    {index + 1}
-                </span>
                 <i
                     className={`bi bi-${presentingFlowItem.iconName}`}
                     style={{ color: presentingFlowItem.iconColor }}

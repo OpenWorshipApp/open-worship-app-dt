@@ -2,7 +2,6 @@ import {
     useCallback,
     useRef,
     useState,
-    type CSSProperties,
     type MouseEvent,
     type KeyboardEvent,
 } from 'react';
@@ -18,11 +17,9 @@ import {
 import type { CanvasItemTextPropsType } from '../CanvasItemText';
 import { useAppCurrentRef } from '../../../helper/appHooks';
 
-export default function BoxEditorNormalTextEditModeComp({
-    style,
-}: Readonly<{
-    style: CSSProperties;
-}>) {
+// The box shell around this (class names, position, selection handlers) is
+// `BoxEditorComp`'s; this owns only the draft text and how an edit ends.
+export default function BoxEditorNormalTextEditModeComp() {
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext();
     const props = useCanvasItemPropsContext<CanvasItemTextPropsType>();
@@ -69,9 +66,6 @@ export default function BoxEditorNormalTextEditModeComp({
         [],
     );
 
-    const handleClick = useCallback((event: MouseEvent) => {
-        event.stopPropagation();
-    }, []);
     const closeTextEditorRef = useAppCurrentRef(closeTextEditor);
     const handleContextMenu = useCallback((event: MouseEvent) => {
         event.stopPropagation();
@@ -100,11 +94,11 @@ export default function BoxEditorNormalTextEditModeComp({
     }, []);
 
     return (
+        // Both handlers catch what bubbles up from the textarea, so they sit
+        // here rather than on the box shell — a right-click must commit the
+        // draft instead of opening the box's context menu.
         <div
-            className="app-box-editor shadow-caught-hover-pointer editable"
-            data-app-box-editor-id={canvasItem.id}
-            style={style}
-            onClick={handleClick}
+            style={{ width: '100%', height: '100%' }}
             onContextMenu={handleContextMenu}
             onKeyUp={handleKeyUp}
         >

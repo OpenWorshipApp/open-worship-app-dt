@@ -8,15 +8,37 @@ import {
 
 import { dirSourceSettingNames } from './helper/constants.ts';
 import DirSource from './helper/DirSource.ts';
-import { getParamFileFullName } from './helper/domHelpers.ts';
+import { getParamFileFullName, getParamIdNum } from './helper/domHelpers.ts';
 import Lyric from './lyric-list/Lyric.ts';
 import { pathJoin, fsExistSync } from './server/fileHelpers.ts';
 import appProvider from './server/appProvider.ts';
 import { getAllLangsAsync, initLangCss } from './lang/langHelpers.ts';
 import { applyOpenLyricTheme } from './lyric-list/lyricHelpers.ts';
 import { installOpenLyricPrintPopupHandler } from './lyric-list/lyricPrintHelpers.ts';
-import { THEME_CHANGE_EVENT } from './others/themeHelpers.tsx';
+import { checkIsDarkMode, THEME_CHANGE_EVENT } from './others/themeHelpers.tsx';
 import EventHandler from './event/EventHandler.ts';
+
+function setEditorVerticalLines(editor: Editor) {
+    const isDarkMode = checkIsDarkMode();
+    const color = isDarkMode
+        ? 'rgba(255, 255, 255, 0.1)'
+        : 'rgba(0, 0, 0, 0.1)';
+    editor.setVerticalLines([
+        {
+            characters: 40,
+            color,
+        },
+        {
+            characters: 60,
+            color,
+        },
+        {
+            width: 2,
+            characters: 70,
+            color,
+        },
+    ]);
+}
 
 export function getDashboardInstance() {
     installOpenLyricPrintPopupHandler();
@@ -39,10 +61,6 @@ export function getDashboardInstance() {
         isWeb: true,
     });
     dashboard.isWeb = false;
-    applyOpenLyricTheme(dashboard);
-    EventHandler.registerEventListener([THEME_CHANGE_EVENT], () => {
-        applyOpenLyricTheme(dashboard);
-    });
 
     const openLyric = new OpenLyric();
     dashboard.openLyric = openLyric;
@@ -65,11 +83,19 @@ export function getDashboardInstance() {
         }
     });
 
-    return dashboard;
+    applyOpenLyricTheme(dashboard);
+    setEditorVerticalLines(editor);
+    EventHandler.registerEventListener([THEME_CHANGE_EVENT], () => {
+        applyOpenLyricTheme(dashboard);
+        setEditorVerticalLines(editor);
+    });
+
+    return { dashboard, editor, openLyric, openLyricMarkdownManager };
 }
 
 export async function getLyric() {
-    const fileFullName = getParamFileFullName(globalThis.location.href);
+    const url = globalThis.location.href;
+    const fileFullName = getParamFileFullName(url);
     if (fileFullName === null) {
         throw new Error('Lyric file not specified');
     }
@@ -87,5 +113,6 @@ export async function getLyric() {
     const suffix = `(${lyric.fileSource.name})`;
     document.title = `${appProvider.windowTitle} - ${suffix}`;
     const content = await lyric.getContent();
-    return { lyric, content };
+    const slideId = getParamIdNum(url);
+    return { lyric, content, slideId };
 }

@@ -5,6 +5,9 @@ import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderCustomVerseComp from '../RenderCustomVerseComp';
 import AudioPlayerComp from './AudioPlayerComp';
 import { HoverMotionHandler } from '../../helper/domHelpers';
+import RenderVerseLookupTextComp from '../../location-name-lookup/RenderVerseLookupTextComp';
+import RenderCustomVerseLookupComp from '../../location-name-lookup/RenderCustomVerseLookupComp';
+import { checkCanLookupVerseText } from '../../location-name-lookup/verseTextIndexHelpers';
 
 export default function RenderVerseTextViewComp({
     bibleItem,
@@ -27,15 +30,37 @@ export default function RenderVerseTextViewComp({
 }>) {
     const { bibleKey, text, customText, bibleVersesKey, isRtl, style } =
         verseInfo;
-    const textElement =
-        customText === null ? (
-            text
+    // Only mounted when the text can actually carry matches: mounting it is what
+    // subscribes to — and therefore loads — the in-text lookup index. Keyed on
+    // THIS row's bible, so in a multi-version view only the KJV column decorates.
+    const canLookupText = checkCanLookupVerseText(bibleKey);
+    let textElement;
+    if (customText !== null) {
+        // Custom HTML still gets decorated — the words-of-Christ markup makes
+        // most gospel verses "custom", so skipping them would leave the feature
+        // absent exactly where the names are densest.
+        textElement = canLookupText ? (
+            <RenderCustomVerseLookupComp
+                bibleItem={bibleItem}
+                customHtml={customText}
+                kjvShortVerse={verseInfo.kjvBibleVersesKey}
+            />
         ) : (
             <RenderCustomVerseComp
                 bibleItem={bibleItem}
                 customHtml={customText}
             />
         );
+    } else if (canLookupText) {
+        textElement = (
+            <RenderVerseLookupTextComp
+                text={text}
+                kjvShortVerse={verseInfo.kjvBibleVersesKey}
+            />
+        );
+    } else {
+        textElement = text;
+    }
     return (
         <Fragment key={bibleKey}>
             {isAudioEnabled &&

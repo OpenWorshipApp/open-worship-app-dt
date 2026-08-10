@@ -95,6 +95,7 @@ const mocks = vi.hoisted(() => {
         docxCheckIsThisType: vi.fn(() => false),
         pptxGetInstance: vi.fn(),
         docxGetInstance: vi.fn(),
+        captureWebScreenShot: vi.fn(async () => 'data:image/png;base64,shot'),
         appProvider: {
             isPagePresenter: false,
             isPageScreen: false,
@@ -152,6 +153,20 @@ vi.mock('./slideYouTubeSyncHelpers', () => ({
     checkIsYouTubeSyncIframe: mocks.checkIsYouTubeSyncIframe,
     genYouTubeSyncId: mocks.genYouTubeSyncId,
     SlideYouTubePlayer: mocks.FakeSlideYouTubePlayer,
+}));
+
+// Keeps the mini screen's screenshot fill from reaching the real IPC (and
+// pulling `appHooks` in at module load).
+vi.mock('../../helper/capturingHelpers', () => ({
+    captureWebScreenShot: mocks.captureWebScreenShot,
+}));
+
+// `langHelpers` imports `bible-note`, whose Excalidraw chunk calls
+// `canvas.getContext` at MODULE LOAD — jsdom does not implement it, so merely
+// importing it takes the whole suite down. Identity `tran` bails before that,
+// the same way the other suites here dodge `open-lyric`.
+vi.mock('../../lang/langHelpers', () => ({
+    tran: (value: string) => value,
 }));
 
 vi.mock('../../helper/mediaHelpers', () => ({
@@ -280,6 +295,23 @@ function createIframe(src: string) {
     const iframe = document.createElement('iframe');
     iframe.setAttribute('src', src);
     return iframe;
+}
+
+// The static shape a website canvas item ships in: a marked frame wrapping a
+// preview-only screenshot placeholder, with NO iframe of its own.
+function createWebsiteFrame(url: string, captureSize?: string) {
+    const frame = document.createElement('div');
+    frame.setAttribute('data-website-item', '');
+    frame.setAttribute('data-website-url', url);
+    if (captureSize !== undefined) {
+        // Stamped by the renderer. The content div is DETACHED here, so this
+        // is the only way the screenshot fill can learn the size.
+        frame.setAttribute('data-website-capture-size', captureSize);
+    }
+    const placeholder = document.createElement('div');
+    placeholder.setAttribute('data-preview-only', '');
+    frame.appendChild(placeholder);
+    return { frame, placeholder };
 }
 
 function detachAllManagerDivs() {
@@ -471,6 +503,57 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         };
         await flushVarySlideData();
         expect(manager.varySlideData?.filePath).toBe('/slides/c.slide');
+
+        manager.div = null;
+    });
+
+    test('a run sheet’s own media control stops on unselect instead of blocking', async () => {
+        const { applyScreenSlideMediaControl } =
+            await import('./screenSlideMediaControlHelpers');
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(73),
+            createEffectManager(),
+        );
+        const host = document.createElement('div');
+        manager.div = host;
+        const metadata = { width: 640, height: 360 };
+        manager.varySlideData = {
+            filePath: '/slides/a.slide',
+            itemJson: { id: 1, canvasItems: [], metadata },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+        // Appended AFTER the slide has landed: the render replaces the
+        // container's children, so this stands in for media the rendered slide
+        // itself holds.
+        const audio = createMedia('audio', { paused: false });
+        host.appendChild(audio);
+        // What a `Slide: Media Control` CC does once its host has resolved this
+        // screen: from here on, the media on it belongs to the run sheet.
+        applyScreenSlideMediaControl(manager, { mode: 'play' });
+        mocks.checkMediaPlaying.mockReturnValue(true);
+
+        manager.varySlideData = {
+            filePath: '/slides/b.slide',
+            itemJson: { id: 2, canvasItems: [], metadata },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+
+        // The swap goes through — a sheet that plays a slide's audio must be able
+        // to move on — and the audio it started is stopped rather than left
+        // running under the next line.
+        expect(manager.varySlideData?.filePath).toBe('/slides/b.slide');
+        expect(audio.pause).toHaveBeenCalled();
+        // Spent with the slide it was armed for: the next swap has no controller
+        // to lean on and is guarded exactly as the operator's own playback is.
+        manager.varySlideData = {
+            filePath: '/slides/c.slide',
+            itemJson: { id: 3, canvasItems: [], metadata },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+        expect(manager.varySlideData?.filePath).toBe('/slides/b.slide');
 
         manager.div = null;
     });
@@ -953,7 +1036,10 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         manager.div = null;
     });
 
-    test('cleanupSlideContent wires iframes per window role', () => {
+    // This is the GENERIC iframe branch. A website canvas item no longer ships
+    // an iframe at all (see the hydration tests below), so what still arrives
+    // here is a YouTube embed or PPTX/DOCX embedded content.
+    test('cleanupSlideContent wires embedded iframes per window role', () => {
         const manager = new ScreenVaryAppDocumentManager(
             createScreenManagerBase(78),
             createEffectManager(),
@@ -961,7 +1047,7 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
 
         const presenterContent = document.createElement('div');
         const youTubeIframe = createIframe('https://www.youtube.com/embed/x');
-        const websiteIframe = createIframe('https://example.com/');
+        const embeddedIframe = createIframe('https://example.com/');
         const fakeIframe = document.createElementNS(
             'http://www.w3.org/2000/svg',
             'iframe',
@@ -969,14 +1055,14 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         const srcVideo = createMedia('video', { src: 'https://cdn/a.mp4' });
         presenterContent.append(
             youTubeIframe,
-            websiteIframe,
+            embeddedIframe,
             fakeIframe,
             srcVideo,
         );
 
         manager.cleanupSlideContent(presenterContent);
         expect(youTubeIframe.style.pointerEvents).toBe('auto');
-        expect(websiteIframe.style.pointerEvents).toBe('auto');
+        expect(embeddedIframe.style.pointerEvents).toBe('auto');
         expect(mocks.FakeSlideYouTubePlayer.instances).toHaveLength(1);
         // a media element with a direct `src` is keyed by that resolved source
         expect(mocks.genVideoIDFromSrc).toHaveBeenCalledWith(srcVideo.src);
@@ -986,16 +1072,171 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         const screenYouTubeIframe = createIframe(
             'https://www.youtube.com/embed/y',
         );
-        const screenWebsiteIframe = createIframe('https://example.com/');
-        screenContent.append(screenYouTubeIframe, screenWebsiteIframe);
+        const screenEmbeddedIframe = createIframe('https://example.com/');
+        screenContent.append(screenYouTubeIframe, screenEmbeddedIframe);
 
         manager.cleanupSlideContent(screenContent);
         expect(screenYouTubeIframe.style.pointerEvents).toBe('');
-        expect(screenWebsiteIframe.style.pointerEvents).toBe('');
+        expect(screenEmbeddedIframe.style.pointerEvents).toBe('');
         expect(mocks.FakeSlideYouTubePlayer.instances).toHaveLength(2);
         expect(mocks.FakeSlideYouTubePlayer.instances[1].options).toEqual({
             muteOnReady: true,
         });
+    });
+
+    test('a website placeholder goes live only on the projected screen', () => {
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(79),
+            createEffectManager(),
+        );
+        mocks.appProvider.isPageScreen = true;
+        const screenContent = document.createElement('div');
+        const { frame, placeholder } = createWebsiteFrame(
+            'https://example.com/clock',
+        );
+        screenContent.appendChild(frame);
+
+        manager.cleanupSlideContent(screenContent);
+
+        const iframes = frame.querySelectorAll('iframe');
+        expect(iframes).toHaveLength(1);
+        const iframe = iframes[0] as HTMLIFrameElement;
+        expect(iframe.getAttribute('src')).toBe('https://example.com/clock');
+        // The same sandbox the editor's hover preview uses, so the operator
+        // previewed exactly what gets projected.
+        expect(iframe.getAttribute('sandbox')).toBe(
+            'allow-scripts allow-same-origin allow-forms allow-popups',
+        );
+        expect(iframe.referrerPolicy).toBe('strict-origin-when-cross-origin');
+        // Held non-interactive on the projected output, like a slide video.
+        expect(iframe.style.pointerEvents).toBe('none');
+        // The stale screenshot is hidden, or a page with a transparent body
+        // would show it through.
+        expect(placeholder.style.display).toBe('none');
+
+        // Running again must not double-load the page.
+        manager.cleanupSlideContent(screenContent);
+        expect(frame.querySelectorAll('iframe')).toHaveLength(1);
+    });
+
+    test('the mini screen stays a screenshot until the operator hovers it', async () => {
+        // The mini screen is a PREVIEW: it renders whatever the operator
+        // scrolls past, so loading those pages eagerly costs exactly what the
+        // screenshot placeholder exists to avoid.
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(82),
+            createEffectManager(),
+        );
+        mocks.appProvider.isPageScreen = false;
+        const content = document.createElement('div');
+        const { frame, placeholder } = createWebsiteFrame(
+            'https://example.com/clock',
+            '800x600',
+        );
+        content.appendChild(frame);
+
+        manager.cleanupSlideContent(content);
+        expect(frame.querySelector('iframe')).toBeNull();
+        expect(placeholder.style.display).toBe('');
+
+        // `renderToStaticMarkup` runs no effects, so the screenshot the React
+        // renderer would have fetched has to be filled in here — at the STAMPED
+        // size, so it reuses the editor's cached shot instead of capturing
+        // again.
+        // A real macrotask: the capture helper is imported on demand, so the
+        // screenshot lands a dynamic `import()` later.
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        expect(mocks.captureWebScreenShot).toHaveBeenCalledWith(
+            'https://example.com/clock',
+            { width: 800, height: 600, delay: 3000 },
+        );
+        expect(placeholder.querySelector('img')?.getAttribute('src')).toBe(
+            'data:image/png;base64,shot',
+        );
+
+        // Trailing edge only: a pointer dragged across the list must not load
+        // a page for every box it crosses.
+        frame.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        expect(frame.querySelector('iframe')).toBeNull();
+
+        await new Promise((resolve) => setTimeout(resolve, 900));
+        const iframe = frame.querySelector('iframe');
+        expect(iframe?.getAttribute('src')).toBe('https://example.com/clock');
+        // Interactive here — this is where the operator drives the page.
+        expect(iframe?.style.pointerEvents).toBe('auto');
+        expect(placeholder.style.display).toBe('none');
+
+        // Moving ONTO the live iframe fires a bubbling `mouseout` on the frame.
+        // Tearing down on that would flicker forever.
+        frame.dispatchEvent(
+            new MouseEvent('mouseout', {
+                bubbles: true,
+                relatedTarget: iframe,
+            }),
+        );
+        expect(frame.querySelector('iframe')).not.toBeNull();
+
+        // Leaving the box for real puts the screenshot back immediately.
+        frame.dispatchEvent(
+            new MouseEvent('mouseout', {
+                bubbles: true,
+                relatedTarget: document.body,
+            }),
+        );
+        expect(frame.querySelector('iframe')).toBeNull();
+        expect(placeholder.style.display).toBe('');
+    });
+
+    test('a website item is never dragged into the youtube sync path', () => {
+        // Pins the hydration loop AFTER the generic iframe loop: were it
+        // before, a website item whose url happens to be a youtube embed link
+        // would get wired for group-sync.
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(80),
+            createEffectManager(),
+        );
+        mocks.appProvider.isPageScreen = true;
+        const content = document.createElement('div');
+        content.appendChild(
+            createWebsiteFrame('https://www.youtube.com/embed/z?enablejsapi=1')
+                .frame,
+        );
+
+        manager.cleanupSlideContent(content);
+
+        expect(content.querySelectorAll('iframe')).toHaveLength(1);
+        expect(mocks.FakeSlideYouTubePlayer.instances).toHaveLength(0);
+    });
+
+    test('a website frame with no url inserts nothing', async () => {
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(81),
+            createEffectManager(),
+        );
+        mocks.appProvider.isPageScreen = true;
+        const screenContent = document.createElement('div');
+        const screenFrame = createWebsiteFrame('').frame;
+        screenContent.appendChild(screenFrame);
+
+        manager.cleanupSlideContent(screenContent);
+        expect(screenFrame.querySelector('iframe')).toBeNull();
+
+        // On the mini screen the globe-and-url fallback stays visible rather
+        // than a blank box, and hovering an urlless frame loads nothing. (The
+        // projected screen instead hides it with every other preview-only
+        // element — the audience must never see a raw url.)
+        mocks.appProvider.isPageScreen = false;
+        const miniContent = document.createElement('div');
+        const { frame, placeholder } = createWebsiteFrame('');
+        miniContent.appendChild(frame);
+
+        manager.cleanupSlideContent(miniContent);
+        frame.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 1300));
+
+        expect(frame.querySelector('iframe')).toBeNull();
+        expect(placeholder.style.display).toBe('');
     });
 
     test('a camera item is hydrated and kept out of the media sync path', () => {

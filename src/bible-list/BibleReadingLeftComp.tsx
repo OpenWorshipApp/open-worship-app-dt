@@ -36,7 +36,7 @@ function genDataInput(keyPrefix: string): DataInputType[] {
         {
             children: LazyNoteComp,
             key: `${keyPrefix}2`,
-            ...toWidgetLabel('Notes'),
+            ...toWidgetLabel('Bible Notes'),
         },
     ];
 }

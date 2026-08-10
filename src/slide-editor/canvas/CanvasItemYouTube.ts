@@ -9,6 +9,7 @@ import type { CanvasItemBoxPropsType, CanvasItemPropsType } from './CanvasItem';
 import CanvasItem, { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
+import { extractYouTubeVideoId } from './youtubeUrlHelpers';
 
 export type CanvasItemYouTubePropsType = {
     type: 'youtube';
@@ -31,40 +32,14 @@ class CanvasItemYouTube extends CanvasItem<CanvasItemYouTubePropsType> {
     // live, embed) into an embeddable `/embed/<id>` URL. An unrecognized URL is
     // returned unchanged on the assumption it is already embeddable.
     static toEmbedUrl(url: string): string {
-        try {
-            const parsed = new URL(url);
-            const host = parsed.hostname.replace(/^www\./, '');
-            let videoId = '';
-            if (host === 'youtu.be') {
-                videoId = parsed.pathname.slice(1);
-            } else if (
-                host === 'youtube.com' ||
-                host.endsWith('.youtube.com')
-            ) {
-                if (parsed.pathname === '/watch') {
-                    videoId = parsed.searchParams.get('v') ?? '';
-                } else {
-                    const match = parsed.pathname.match(
-                        /^\/(?:embed|shorts|live|v)\/([^/?#]+)/,
-                    );
-                    if (match !== null) {
-                        videoId = match[1];
-                    }
-                }
-            }
-            if (videoId !== '') {
-                // `enablejsapi=1` lets the presenter/screen drive playback and
-                // read the current time over postMessage so a YouTube embed
-                // group-syncs the same way a slide video does.
-                return (
-                    `https://www.youtube.com/embed/${videoId}` +
-                    '?rel=0&enablejsapi=1'
-                );
-            }
-        } catch (error) {
-            handleError(error);
+        const videoId = extractYouTubeVideoId(url);
+        if (videoId === '') {
+            return url;
         }
-        return url;
+        // `enablejsapi=1` lets the presenter/screen drive playback and read the
+        // current time over postMessage so a YouTube embed group-syncs the same
+        // way a slide video does.
+        return `https://www.youtube.com/embed/${videoId}?rel=0&enablejsapi=1`;
     }
     get embedUrl() {
         return CanvasItemYouTube.toEmbedUrl(this.props.url);

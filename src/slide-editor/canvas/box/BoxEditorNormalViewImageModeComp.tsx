@@ -1,24 +1,9 @@
-import type { CSSProperties } from 'react';
-
 import type { CanvasItemImagePropsType } from '../CanvasItemImage';
 import CanvasItemImage from '../CanvasItemImage';
 import img404 from '../404.png';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
-
-export default function BoxEditorNormalViewImageModeComp({
-    style,
-}: Readonly<{
-    style: CSSProperties;
-}>) {
-    return (
-        <BoxEditorNormalWrapperComp style={style}>
-            <BoxEditorNormalImageRenderComp />
-        </BoxEditorNormalWrapperComp>
-    );
-}
 
 export function BoxEditorNormalImageRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemImagePropsType>();

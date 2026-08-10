@@ -44,6 +44,7 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             width: canvasItemBounds.width,
             height: canvasItemBounds.height,
             isShowingAttachments: false,
+            isShowingStrummingPatterns: false,
         };
         // `this.openLyric` is only ever assigned by `LyricSlidesPreviewerComp`,
         // so it is null in every renderer where that component has not mounted

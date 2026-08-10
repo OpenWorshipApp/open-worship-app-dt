@@ -2,7 +2,7 @@ import BibleItem from '../bible-list/BibleItem';
 import { colorDeserialize } from '../others/color/colorHelpers';
 import type { DragDataType, DroppedDataType } from './DragInf';
 import type DragInf from './DragInf';
-import { DragTypeEnum } from './DragInf';
+import { DragTypeEnum, genDragMimeType } from './DragInf';
 import FileSource from './FileSource';
 import PdfSlide from '../app-document-list/PdfSlide';
 import PptxSlide from '../app-document-list/PptxSlide';
@@ -34,6 +34,13 @@ export function handleDragStart(
 ) {
     const data = item.dragSerialize(type);
     event.dataTransfer.setData('text', JSON.stringify(data));
+    // A second, VALUELESS entry whose mime type names the kind. The payload
+    // above is unreadable during `dragover`, so this is what lets a drop target
+    // decide whether it accepts the drag while it is still hovering — see
+    // `genDragMimeType`.
+    if (data.type) {
+        event.dataTransfer.setData(genDragMimeType(data.type), '');
+    }
 }
 
 // A document travels as a plain reference: only the path goes with the drag.

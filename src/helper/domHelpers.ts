@@ -393,6 +393,18 @@ function toFeatureString(features: PopupWindowFeaturesType) {
     return featureString;
 }
 
+/**
+ * Whether THIS renderer is one of the app's popup windows.
+ *
+ * No `isPage*` flag can answer this: a reader popup and the main window on the
+ * reader route look identical to them. The frame name is the discriminator —
+ * `openPopupWindow` below stamps every popup with it, while the main window is
+ * loaded with `loadURL` and so has no name at all.
+ */
+export function checkIsPopupWindow() {
+    return window.name.startsWith(appProvider.POPUP_FRAME_NAME_PREFIX);
+}
+
 export function openPopupWindow(
     partialUrl: string,
     frameUUID: string,
@@ -442,25 +454,6 @@ function openAboutPage() {
 }
 appProvider.messageUtils.listenForData('main:app:open-about-page', () => {
     openAboutPage();
-});
-
-function openFindPage() {
-    return openPopupWindow(
-        appProvider.finderHomePage,
-        `find_${Date.now()}`,
-        'find',
-        {
-            width: 270,
-            height: 80,
-            appAlignHorizontal: 'left',
-            appAlignVertical: 'top',
-            appFollowScale: true,
-            appTopToMain: true,
-        },
-    );
-}
-appProvider.messageUtils.listenForData('main:app:open-find-page', () => {
-    openFindPage();
 });
 
 function toURLObject(urlOrPathname: string) {
@@ -518,6 +511,10 @@ export function checkIsDisabled(element: Element) {
         return false;
     }
     return checkIsDisabled(element.parentElement);
+}
+
+export function escapeSelectorValue(value: string) {
+    return (globalThis.CSS?.escape ?? ((raw: string) => raw))(value);
 }
 
 const APP_NOTIFY_ELEMENT_HIGHLIGHT_CLASSNAME = 'app-notify-element-highlight';

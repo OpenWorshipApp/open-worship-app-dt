@@ -67,8 +67,9 @@ export function applyDropped(
     bibleItemViewCtl: BibleItemsViewController,
     bibleItem: ReadIdOnlyBibleItem,
 ) {
-    const data = event.dataTransfer.getData('text');
     try {
+        const positions = removeDraggingClass(event);
+        const data = event.dataTransfer.getData('text');
         const json = JSON.parse(data);
         if (
             ![
@@ -82,7 +83,6 @@ export function applyDropped(
         if (json.type === DragTypeEnum.BIBLE_ITEM_TARGET_ONLY) {
             newBibleItem.bibleKey = bibleItem.bibleKey;
         }
-        const positions = removeDraggingClass(event);
         for (const position of positions) {
             if (position === DraggingPosEnum.CENTER) {
                 bibleItemViewCtl.applyTargetOrBibleKey(bibleItem, newBibleItem);

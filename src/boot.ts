@@ -1,4 +1,8 @@
-import { getCurrentLocale, getLangDataAsync } from './lang/langHelpers';
+import {
+    getCurrentLocale,
+    getLangCode,
+    getLangDataAsync,
+} from './lang/langHelpers';
 import { PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME } from './helper/constants';
 import { handleError } from './helper/errorHelpers';
 import { sanitizeCssValue } from './helper/sanitizeHelpers';
@@ -57,6 +61,11 @@ export async function init(callback: () => void = () => {}) {
     await initPresentingFlowRenameMigration();
     initFontFamily();
     const currentLocale = getCurrentLocale();
+    // Keep the document language in sync with the app locale so assistive tech
+    // and `:lang()` CSS see Khmer as Khmer; it otherwise stays the HTML default
+    // ("en") even in km mode. `init` re-runs on every window (re)load, including
+    // the reload `forceReloadAppWindows` triggers after an Apply Settings.
+    document.documentElement.lang = getLangCode(currentLocale) ?? 'en';
     await getLangDataAsync(currentLocale);
     callback();
 }

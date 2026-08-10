@@ -1,29 +1,14 @@
-import type { CSSProperties } from 'react';
-
 import type { CanvasItemCameraPropsType } from '../CanvasItemCamera';
 import CanvasItemCamera from '../CanvasItemCamera';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
 import {
     CAMERA_DEVICE_ID_ATTR,
     CAMERA_DEVICE_LABEL_ATTR,
     CAMERA_ITEM_ATTR,
     PREVIEW_ONLY_ATTR,
 } from '../../../helper/constants';
-
-export default function BoxEditorNormalViewCameraModeComp({
-    style,
-}: Readonly<{
-    style: CSSProperties;
-}>) {
-    return (
-        <BoxEditorNormalWrapperComp style={style}>
-            <BoxEditorNormalCameraRender />
-        </BoxEditorNormalWrapperComp>
-    );
-}
 
 // Inline svg rather than `<i className="bi bi-camera-video">`: the icon font is
 // not loaded in the print document, and this markup also has to survive

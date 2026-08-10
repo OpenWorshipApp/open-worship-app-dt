@@ -29,6 +29,10 @@ const h = vi.hoisted(() => ({
     setSettingMock: vi.fn(),
     getBibleFontFamilyMock: vi.fn(async () => 'FontFam'),
     getLangDataAsyncMock: vi.fn(),
+    acquireLookupDataMock: vi.fn(async () => ({
+        namesLookupManager: {},
+        locationsLookupManager: {},
+    })),
 }));
 
 // the real package drags lexical/excalidraw into jsdom (canvas getContext is
@@ -72,6 +76,9 @@ vi.mock('../../server/appProvider', () => ({
         windowTitle: 'OWA',
         messageUtils: { sendData: h.sendDataMock },
         fileUtils: { watch: h.watchMock },
+        // `appHooks` reads this at module load; without it any real import
+        // that reaches it dies while the suite is still being collected
+        systemUtils: { isDev: false },
     },
 }));
 vi.mock('../../server/appHomeStorage', () => ({
@@ -98,6 +105,13 @@ vi.mock('../../lang/langHelpers', () => ({
     getLangDataAsync: h.getLangDataAsyncMock,
     initLangCss: h.initLangCssMock,
     initAllLangCss: h.initAllLangCssMock,
+}));
+// Real implementation fetches ~34MB of lookup JSON and dynamically imports the
+// `bible-note` package; only the managers it hands to the editor matter here.
+// `acquireLookupData` (not `getLookupDataCached`) is what the editor takes, so
+// that its copy is the same one the lookup UI holds rather than a second one.
+vi.mock('../../location-name-lookup/lookupDataHelpers', () => ({
+    acquireLookupData: h.acquireLookupDataMock,
 }));
 vi.mock('../../server/appHelpers', () => ({
     showFileOrDirExplorer: h.showFileOrDirExplorerMock,

@@ -483,7 +483,10 @@ function PresentingFlowPreviewAutoNextComp({
                     'bi bi-' + (isInterval ? 'arrow-repeat' : 'hourglass-split')
                 }
             />
-            <span className="px-1">
+            {/* Tabular: this is the one number in the panel that ticks, and in
+                proportional figures every second nudged the two buttons either
+                side of it. */}
+            <span className="px-1 app-data">
                 {toPresentingFlowAutoNextCountdownLabel(remainingSeconds)}
             </span>
             <button

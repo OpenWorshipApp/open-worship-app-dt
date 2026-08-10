@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 
-import { createMockBrowserWindow } from './testUtils';
+import { createMockBrowserWindow, createMockWebContents } from './testUtils';
 
 type BrowserWindowFactory = () => any;
 
@@ -34,6 +34,20 @@ BrowserWindowMock.fromWebContents = vi.fn((webContents: any) => {
     );
 });
 
+const webContentsViews: any[] = [];
+const WebContentsViewMock: any = vi.fn(function WebContentsViewMock(
+    options?: any,
+) {
+    const view = {
+        __options: options,
+        webContents: createMockWebContents(),
+        setBounds: vi.fn(),
+        setBackgroundColor: vi.fn(),
+    };
+    webContentsViews.push(view);
+    return view;
+});
+
 const menuBuildFromTemplate = vi.fn();
 const menuSetApplicationMenu = vi.fn();
 const MenuMock: any = vi.fn(function MenuMock() {
@@ -59,6 +73,8 @@ export const electronMockState = {
         whenReady: vi.fn(),
         requestSingleInstanceLock: vi.fn(() => true),
         quit: vi.fn(),
+        setAppUserModelId: vi.fn(),
+        setUserTasks: vi.fn(),
         commandLine: {
             appendSwitch: vi.fn(),
         },
@@ -103,7 +119,10 @@ export const electronMockState = {
     systemPreferences: {
         askForMediaAccess: vi.fn(),
     },
+    webContentsViews,
+    WebContentsViewMock,
     screen: {
+        getCursorScreenPoint: vi.fn(() => ({ x: 0, y: 0 })),
         getAllDisplays: vi.fn(() => []),
         getPrimaryDisplay: vi.fn(() => ({
             id: 1,
@@ -118,6 +137,8 @@ export const electronMockState = {
     }),
     reset() {
         browserWindows.splice(0, browserWindows.length);
+        webContentsViews.splice(0, webContentsViews.length);
+        WebContentsViewMock.mockClear();
         browserWindowFactory = defaultBrowserWindowFactory;
         BrowserWindowMock.mockClear();
         BrowserWindowMock.getAllWindows.mockClear();
@@ -131,6 +152,8 @@ export const electronMockState = {
         this.app.whenReady.mockClear();
         this.app.requestSingleInstanceLock.mockClear();
         this.app.quit.mockClear();
+        this.app.setAppUserModelId.mockClear();
+        this.app.setUserTasks.mockClear();
         this.app.commandLine.appendSwitch.mockClear();
         this.shell.openExternal.mockClear();
         this.shell.showItemInFolder.mockClear();
@@ -170,6 +193,7 @@ export function createElectronModuleMock() {
         shell: electronMockState.shell,
         clipboard: electronMockState.clipboard,
         BrowserWindow: electronMockState.BrowserWindowMock,
+        WebContentsView: electronMockState.WebContentsViewMock,
         protocol: electronMockState.protocol,
         session: electronMockState.session,
         net: electronMockState.net,

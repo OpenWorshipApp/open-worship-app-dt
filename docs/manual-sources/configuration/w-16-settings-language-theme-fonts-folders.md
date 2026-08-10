@@ -18,9 +18,10 @@ workflowsVersion: "2026-07-16"
    - **Font family:** the font used for on-screen text. A font marked `(Missing)` is
      configured but not installed on this computer.
    - **Directories:** where documents, lyrics, and bibles are stored on disk.
-   - **Reset buttons** (`Reset All Child Directories` / `Reset Widgets Size` /
-     `Clear All Settings`): each asks for confirmation first — **these erase
-     configuration; use with care.**
+   - **Reset buttons** (`Reset All Child Directories` / `Clear All Settings`):
+     **these erase configuration; use with care.** `Reset All Child Directories`
+     asks for confirmation first; `Clear All Settings` does **not**.
+   - Panel sizes are no longer reset from here — see **W-31**.
 3. **Bible** tab: search available Bible versions, download new ones, enable/disable
    downloaded ones. 📸
 4. Click **Apply Settings** (top-right) to apply — the app windows reload.

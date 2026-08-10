@@ -20,6 +20,7 @@ import { getSetting, setSetting } from '../helper/settingHelpers';
 import { applyFontFamily } from './LanguageWrapper';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 import {
+    checkIsPopupWindow,
     handleClassNameAction,
     handleFullWidgetView,
     addDomChangeEventListener,
@@ -38,6 +39,7 @@ import { checkForAppUpdate } from '../server/updatingAppHelpers';
 import { initTitleSoundMeter } from '../helper/titleSoundMeterHelpers';
 import { initTouchDragAndDrop } from '../helper/touchDragHelpers';
 import { checkAreChildrenOnscreen } from '../app-modal/floatingWidgetHelpers';
+import { initWidgetAppMenu } from '../resize-actor/widgetAppMenuHelpers';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;
@@ -227,6 +229,12 @@ export async function run(children?: ReactNode) {
 
     if (appProvider.isPagePresenter || appProvider.isPageReader) {
         setTimeout(checkForAppUpdate, 6e4);
+    }
+    // View → Widgets. The main window is the only one with a visible menu bar
+    // (`createPopupWindow` hides it), and keeping it to a single registrant is
+    // what makes the main process route the clicks back here.
+    if (!checkIsPopupWindow()) {
+        initWidgetAppMenu();
     }
     if (children !== undefined) {
         const root = getReactRoot();

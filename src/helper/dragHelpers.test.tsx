@@ -197,6 +197,33 @@ describe('dragHelpers', () => {
             'text',
             JSON.stringify({ type: undefined, data: { id: 1 } }),
         );
+        // No kind => nothing to advertise during dragover.
+        expect(setData).toHaveBeenCalledTimes(1);
+    });
+
+    test('advertises the drag kind as its own lowercased mime type', async () => {
+        const { DragTypeEnum, genDragMimeType } = await import('./DragInf');
+        const { handleDragStart } = await import('./dragHelpers');
+        const setData = vi.fn();
+
+        handleDragStart(
+            { dataTransfer: { setData } },
+            { dragSerialize: (type?: any) => ({ type, data: 'a.png' }) } as any,
+            DragTypeEnum.BACKGROUND_IMAGE,
+        );
+
+        expect(setData).toHaveBeenCalledWith(
+            'application/x-owa-drag-bg-image',
+            '',
+        );
+        expect(genDragMimeType(DragTypeEnum.BACKGROUND_IMAGE)).toBe(
+            'application/x-owa-drag-bg-image',
+        );
+        // `setData` lowercases the format, so a mixed-case enum member must be
+        // lowercased up front or it could never be matched on read.
+        expect(genDragMimeType(DragTypeEnum.BIBLE_ITEM)).toBe(
+            'application/x-owa-drag-bibleitem',
+        );
     });
 
     test('deserializes supported drop types and ignores empty payloads', async () => {

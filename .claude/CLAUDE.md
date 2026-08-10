@@ -72,12 +72,13 @@ After any code change, also run `npm run lint`. It is the full gate: tests
 files — expect formatting diffs), eslint with `--max-warnings 0` (`lint:es`),
 and a production `build`.
 
-- **Known pre-existing lint failure:** `npm run lint` currently aborts at the
-  `test:electron` step on an unrelated test —
-  `electron/ElectronMainController.test.ts` asserts `windowOptions.icon`
-  `toContain('icon.png')` but dev builds use `icon-dev.png`. Because the `lint`
-  script is `&&`-chained, `lint:all:error`, `lint:pre`, `lint:es`, and `build`
-  never run after it. To validate your own change, run those stages directly.
+- The `lint` script is `&&`-chained, so the FIRST failing stage stops everything
+  after it — a `test:all` failure means `lint:all:error`, `lint:pre`, `lint:es`
+  and `build` never ran at all, not that they passed. When a stage fails on
+  something unrelated to your change, run the remaining stages directly rather
+  than assuming the gate is green. (The long-standing `test:electron` failure on
+  `windowOptions.icon` `toContain('icon.png')` vs dev's `icon-dev.png` is FIXED —
+  the assertion is now `toMatch(/icon(-dev)?\.png$/)`.)
 - Don't pipe `npm run lint` through `tee`/`grep` and trust the exit code — bash
   has no `pipefail`, so the pipeline reports the last command's status and masks
   the real failure. Check the log body, not just the exit code.

@@ -108,11 +108,7 @@ export default function RenderBibleLookupComp() {
             </div>
         );
     }
-    const lookupBody = (
-        <EditingResultContext value={editingResult ?? null}>
-            <BibleLookupBodyPreviewerComp />
-        </EditingResultContext>
-    );
+    const lookupBody = <BibleLookupBodyPreviewerComp />;
     const resizeData = [
         {
             children: {
@@ -141,6 +137,10 @@ export default function RenderBibleLookupComp() {
                     value: {
                         inputText,
                     },
+                },
+                {
+                    context: EditingResultContext,
+                    value: editingResult ?? null,
                 },
             ]}
         >

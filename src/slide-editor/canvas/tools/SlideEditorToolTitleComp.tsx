@@ -7,17 +7,22 @@ export default function SlideEditorToolTitleComp({
     isCollapsible = false,
     isInitiallyExpanded = true,
     isInline = false,
+    // Sections that mount something expensive (media, an iframe, a device) must
+    // NOT share the default key: expanding any other collapsible title would
+    // then restore them expanded on the next mount. Pass '' to not persist.
+    persistingKey = 'slide-editor-tool-title',
     children,
 }: Readonly<{
     title?: string;
     isCollapsible?: boolean;
     isInitiallyExpanded?: boolean;
     isInline?: boolean;
+    persistingKey?: string;
     children: any;
 }>) {
     const { isExpanded, headerProps } = useExpandToggle(
         isInitiallyExpanded,
-        'slide-editor-tool-title',
+        persistingKey,
     );
     if (!isCollapsible || !title) {
         return (

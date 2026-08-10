@@ -268,8 +268,8 @@ export default function FileItemHandlerComp({
             data-index={index + 1}
             data-file-item-file-src={fileSource.src}
             title={fileSource.fullName}
-            onContextMenu={handleContextMenuOpening}
-            draggable={onDragStart !== undefined}
+            onContextMenu={isRenaming ? undefined : handleContextMenuOpening}
+            draggable={!isRenaming && onDragStart !== undefined}
             onDragStart={onDragStart}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}

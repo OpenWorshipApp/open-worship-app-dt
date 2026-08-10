@@ -7,6 +7,8 @@ import { tran } from '../lang/langHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import {
     fsCheckFileExist,
+    fsDeleteFile,
+    fsListFiles,
     getDotExtensionFromBase64Data,
     getDownloadPath,
     isSupportedMimetype,
@@ -362,6 +364,25 @@ export function downloadVideoOrAudio(
                 const outputFormat = pathResolve(
                     `${outputDir}/${temptName}.%(ext)s`,
                 );
+                // A failed/aborted yt-dlp run leaves its staging artifacts
+                // behind — the merged output, the per-format streams, and
+                // `.part` fragments — all sharing the `temp-<ts>` prefix. Sweep
+                // them so a broken download does not silently accumulate (see
+                // the stale `temp-*.mp4` orphans found in the data dir).
+                const cleanupTempArtifacts = async () => {
+                    try {
+                        const fileNames = await fsListFiles(outputDir);
+                        await Promise.all(
+                            fileNames
+                                .filter((name) => name.startsWith(temptName))
+                                .map((name) =>
+                                    fsDeleteFile(pathJoin(outputDir, name)),
+                                ),
+                        );
+                    } catch (cleanupError) {
+                        handleError(cleanupError);
+                    }
+                };
                 const ytDlpWrap = await appProvider.ytUtils.getYTHelper();
                 let filePath: string | null = null;
                 const args = [videoOrAudioUrl, '-o', outputFormat];
@@ -418,14 +439,16 @@ export function downloadVideoOrAudio(
                         ) {
                             resolvedSuccess(filePath);
                         } else {
+                            await cleanupTempArtifacts();
                             reject(
                                 new Error('Download failed: ' + error.message),
                             );
                         }
                     })
-                    .on('close', () => {
+                    .on('close', async () => {
                         showProgressBarMessage('all done');
                         if (filePath === null) {
+                            await cleanupTempArtifacts();
                             reject(new Error('Unable to determine file path'));
                         } else {
                             resolvedSuccess(filePath);

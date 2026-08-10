@@ -1,23 +1,8 @@
-import type { CSSProperties } from 'react';
-
 import type { CanvasItemTextPropsType } from '../CanvasItemText';
 import CanvasItemText from '../CanvasItemText';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
-
-export default function BoxEditorNormalViewTextModeComp({
-    style,
-}: Readonly<{
-    style: CSSProperties;
-}>) {
-    return (
-        <BoxEditorNormalWrapperComp style={style}>
-            <BoxEditorNormalTextRender />
-        </BoxEditorNormalWrapperComp>
-    );
-}
 
 export function BoxEditorNormalTextRender() {
     const props = useCanvasItemPropsContext<CanvasItemTextPropsType>();

@@ -29,6 +29,7 @@ export default class LyricSlide extends Slide {
         super(filePath, json as any);
         (this._originalJson as any).type = LYRIC_SLIDE_TYPE_KEY;
         this.openLyricKey = openLyricKey;
+        this.name = openLyricKey;
     }
 
     get stage() {

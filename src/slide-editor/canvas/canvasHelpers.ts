@@ -76,12 +76,17 @@ export const YOUTUBE_EMBED_HEIGHT = 315;
 export const WEBSITE_EMBED_WIDTH = 800;
 export const WEBSITE_EMBED_HEIGHT = 600;
 
+// The website screenshot sizing rules live in
+// `src/helper/websiteCaptureHelpers.ts` — a leaf module, so the screen managers
+// and the print helper can size a capture without eagerly importing everything
+// this file pulls in.
+
 // An audio item is just a player control, drawn at roughly the native
 // `<audio controls>` proportions. Chromium draws that control chrome at a
 // FIXED glyph size whatever the element's box is, so these are the unscaled
-// proportions and the renderer scales the whole control with CSS `zoom`.
+// proportions and the renderer paints the whole control scaled up.
 export const AUDIO_CONTROL_WIDTH = 240;
-export const AUDIO_CONTROL_HEIGHT = 60;
+export const AUDIO_CONTROL_HEIGHT = 30;
 // The player is an operator affordance shown only in the presenter's mini
 // screen (it is preview-only, never projected), where the whole slide is
 // scaled down to a few hundred pixels — at 1x the control is too small to read
@@ -90,9 +95,9 @@ export const AUDIO_EMBED_SCALE = 5;
 export const AUDIO_EMBED_WIDTH = AUDIO_CONTROL_WIDTH * AUDIO_EMBED_SCALE;
 export const AUDIO_EMBED_HEIGHT = AUDIO_CONTROL_HEIGHT * AUDIO_EMBED_SCALE;
 
-// How much to `zoom` an audio item's player control for its box. The control
-// is laid out in `zoom`-divided units, so `width/height: 100%` still fills the
-// box exactly — only the glyphs, text and bar grow. Scaling by whichever axis
+// How much to scale an audio item's player control for its box. The control is
+// laid out at the box divided by this, so painting it back up fills the box
+// exactly — only the glyphs, text and bar grow. Scaling by whichever axis
 // fits worst keeps the control from ever being clipped, and the clamp keeps
 // both ends sane: never below 1x, so an item saved at the old control-sized
 // box looks exactly as it did, and never above the insert scale, so a

@@ -136,19 +136,30 @@ class LookupBibleItemController extends BibleItemsViewController {
         this.forceReloadEditingResult();
     }
 
-    async getStraightBibleItemsForExportingMSWord() {
-        const editingResult = await this.getEditingResult();
-        const resultBibleItem = editingResult.result.bibleItem;
+    /**
+     * The open bible items with the editing one — whose `target` deliberately
+     * throws — swapped for whatever the lookup input currently resolves to.
+     *
+     * Synchronous, so a consumer already holding the editing result (through
+     * `EditingResultContext`) can use it during render instead of awaiting a
+     * lookup it has in hand.
+     */
+    resolveStraightBibleItems(foundBibleItem: ReadIdOnlyBibleItem | null) {
         return this.straightBibleItems
             .map((bibleItem) => {
                 if (bibleItem instanceof EditingBibleItem) {
-                    return resultBibleItem;
+                    return foundBibleItem;
                 }
                 return bibleItem;
             })
             .filter((bibleItem): bibleItem is ReadIdOnlyBibleItem => {
                 return bibleItem !== null;
             });
+    }
+
+    async getStraightBibleItemsForExportingMSWord() {
+        const editingResult = await this.getEditingResult();
+        return this.resolveStraightBibleItems(editingResult.result.bibleItem);
     }
 
     get selectedBibleItem() {
@@ -498,6 +509,30 @@ export function useLookupBibleItemControllerContext() {
         );
     }
     return viewController as LookupBibleItemController;
+}
+
+// The window's live lookup controller, reachable WITHOUT React context.
+//
+// The names & locations detail panels are window-level floating widgets (they
+// are opened by clicking a name in any verse, from trees that have no lookup
+// controller of their own), but one of their actions — "open in bible lookup" —
+// genuinely needs the controller. Rather than force the panels to live inside a
+// provider, the provider publishes itself here for as long as it is mounted.
+let currentLookupBibleItemController: LookupBibleItemController | null = null;
+
+export function registerLookupBibleItemController(
+    viewController: LookupBibleItemController,
+) {
+    currentLookupBibleItemController = viewController;
+    return () => {
+        if (currentLookupBibleItemController === viewController) {
+            currentLookupBibleItemController = null;
+        }
+    };
+}
+
+export function getCurrentLookupBibleItemController() {
+    return currentLookupBibleItemController;
 }
 
 export const EditingResultContext = createContext<EditingResultType | null>(

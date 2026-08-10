@@ -21,7 +21,6 @@ import type {
     BackgroundSrcListType,
     BackgroundType,
 } from '../_screen/screenTypeHelpers';
-import appProvider from '../server/appProvider';
 import EventHandler from '../event/EventHandler';
 import { OPEN_BACKGROUND_AUDIO_TAB_EVENT } from './backgroundAudioTabHelpers';
 
@@ -173,15 +172,13 @@ export default function BackgroundComp() {
                     activeTabs={[tabKey]}
                     setActiveTab={(key) => setTabKey(key)}
                 />
-                {appProvider.isPagePresenter ? (
-                    <RenderAudiosTabComp
-                        isActive={isAudioTabActive}
-                        setIsActive={setIsAudioTabActive1}
-                    />
-                ) : null}
+                <RenderAudiosTabComp
+                    isActive={isAudioTabActive}
+                    setIsActive={setIsAudioTabActive1}
+                />
             </div>
             <div className="body flex-fill d-flex overflow-hidden">
-                {appProvider.isPagePresenter && isAudioTabActive ? (
+                {isAudioTabActive ? (
                     <ResizeActorComp
                         flexSizeName={'flex-size-background'}
                         isHorizontal

@@ -1,23 +1,8 @@
-import type { CSSProperties } from 'react';
-
 import type { CanvasItemYouTubePropsType } from '../CanvasItemYouTube';
 import CanvasItemYouTube from '../CanvasItemYouTube';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
-
-export default function BoxEditorNormalViewYouTubeModeComp({
-    style,
-}: Readonly<{
-    style: CSSProperties;
-}>) {
-    return (
-        <BoxEditorNormalWrapperComp style={style}>
-            <BoxEditorNormalYouTubeRender />
-        </BoxEditorNormalWrapperComp>
-    );
-}
 
 export function BoxEditorNormalYouTubeRender() {
     const props = useCanvasItemPropsContext<CanvasItemYouTubePropsType>();

@@ -1,5 +1,6 @@
 import type { DragEvent } from 'react';
 
+import type { OptionalPromise } from './typeHelpers';
 import { handleError } from './errorHelpers';
 import { appTrace } from './loggerHelpers';
 import appProvider from '../server/appProvider';
@@ -162,6 +163,47 @@ export function toMaxId(ids: number[]) {
         return 0;
     }
     return Math.max(...ids);
+}
+
+/**
+ * `Promise.all` over a long list, without freezing the window.
+ *
+ * When each task ends in synchronous work — parsing a bible book, building a
+ * title — handing the whole list to one `Promise.all` drains the microtask
+ * queue in a single uninterrupted run. Microtasks never yield to the event
+ * loop, so timers, painting and input all wait for the LAST item: measured on
+ * the names/locations lookup, resolving one record's 712 verse titles blocked
+ * the renderer for 4.2 seconds in one contiguous stall.
+ *
+ * Running a batch at a time with a real macrotask in between costs a few
+ * milliseconds and keeps the window answering the user throughout — which
+ * matters most on the low-spec machines this app targets. Results keep the
+ * order of `items`.
+ */
+export async function mapInYieldingBatches<TItem, TResult>(
+    items: TItem[],
+    callee: (item: TItem, index: number) => OptionalPromise<TResult>,
+    batchSize: number = 24,
+): Promise<TResult[]> {
+    const results: TResult[] = [];
+    for (let offset = 0; offset < items.length; offset += batchSize) {
+        const batchResults = await Promise.all(
+            items.slice(offset, offset + batchSize).map((item, index) => {
+                return callee(item, offset + index);
+            }),
+        );
+        for (const result of batchResults) {
+            results.push(result);
+        }
+        if (offset + batchSize < items.length) {
+            // A macrotask, NOT `Promise.resolve()`: only this lets the renderer
+            // paint and answer input between batches.
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        }
+    }
+    return results;
 }
 
 export function parseJsonSafely<T = any>(

@@ -102,6 +102,21 @@ describe('Khmer language data', () => {
             // at — the one new string of the per-attachment clock, the question
             // itself reusing `Change Timing` from the element's own menu.
             'Use Element Timing',
+            // Every control of the find bar: the whole panel is icon-only, so
+            // these live in `title`/`aria-label` and are the only strings a
+            // Khmer operator ever sees there.
+            'Find',
+            'Match case',
+            'Match count',
+            'Next match',
+            'Previous match',
+            'Close find',
+            'Drag to move the find panel',
+            // The canvas item preview section in the slide editor's properties
+            // panel, plus its camera item's opt-in live feed button.
+            'Preview',
+            'Start Camera',
+            'Stop Camera',
         ]) {
             expect(lang.dictionary[lang.sanitizeTranKey(key)]).toBeDefined();
         }

@@ -21,7 +21,64 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-08d** (**W-22** step 8: a **Next: Timeout** attached to a line
+**workflowsVersion: 2026-08-09c** (**new W-31 — "Hide, show, and reset the app's panels
+(View menu)"**. Every collapsible panel now registers itself into a native
+**View → Widgets** submenu as a tick-box that opens/closes it by name, and
+**Reset Widgets Size moved out of Settings onto the View menu**, where it applies
+immediately instead of waiting for an **Apply Settings** reload — and it also reopens
+every panel that was collapsed. Observed live on the reader (4 widgets: toggled
+`Bible Notes` open and `Bibles` closed with no reload) and on the presenter (13 widgets,
+15 with an `.ows` document selected); the reset restored all four reader panes to
+`1/1/1/4` and reopened the collapsed one. **W-16**'s reset-button bullet is corrected in
+the same pass. Driven live in both locales.)
+Previous: **2026-08-09b** (**new W-30 — "See who and where is in the passage you
+are reading"**, the `Location-Name (KJV)` tab added beside **Find** and **Cross Reference**
+in the advanced bible-lookup panel. It lists every person and place the Bible names in the
+verses currently open, one block per passage, and each row opens the same record window
+W-29 teaches. Observed live on KJV Luke 13:1-35 + a Khmer Genesis 3:5-9 side by side:
+Names (6) / Locations (2) for Luke, Names (1) for Genesis, and clicking **Pilate** opened
+his record. The list also carries people the verse means without naming — Satan in
+Luke 13:16, which reads "the devil".)
+Previous: **2026-08-09** (**every floating window maximizes on a double-click of
+its title bar**, and goes back to the size and place it had on a second one. Added to
+**W-26** step 3 and **W-19** step 1 (the two places that teach the floating-window chrome)
+and to **W-29** step 1. Observed live on the Names & locations lookup: a 377×560 window at
+the right edge filled the whole app window, and the next double-click put it back exactly.
+The maximized size is deliberately NOT remembered — a window closed while maximized
+reopens at the size you last dragged it to — and resizing it by an edge ends the
+maximized state.)
+Previous: **2026-08-08i** (**new W-29 — the Names & locations lookup**: the
+person-and-pin button at the end of the Bible reference box opens a searchable browser
+over the biblical names and places, with per-record windows, reference chasing between
+them, verse text, a map for places that have coordinates, and a copy button. Every step
+was observed on the live app in BOTH locales; the Khmer labels quoted in the recipe are
+the ones the app actually rendered.)
+Previous: **2026-08-08h** (**W-24** gains step 5 and **W-28**'s table is
+reworded: a **website box now shows a screenshot of the page, not the running page**,
+everywhere you edit and preview. Hover it for ~1s to see it live; right-click →
+**Refresh Preview** to re-take the picture (it never updates itself). The audience
+screen still shows the real live page. Same rule for a **web background**: a picture on
+the presenter's mini screen, the live page on the projected screen — with no
+hover-to-live there, because the background layer never receives the pointer.
+Previous: **2026-08-08g** (**W-17** rewritten: the Finder is no longer a separate
+popup window. **Ctrl/⌘+F** now drops a **Find bar** into the top-right of the window
+being searched — pinned inside that window rather than floating over it — with a
+`current/total` match counter, **Shift+Enter** for the previous match and a grip that
+drags it sideways. It is drawn as app chrome, so the query never matches itself.)
+Previous: **2026-08-08f** (new **W-28**: anything in the bottom **Background** panel
+can now be **dragged straight onto the Slide Editor canvas** to become a box — an image,
+video, audio, web page, camera or colour. A colour dropped **on** an existing box recolours
+that box instead of covering it. **Driven live** (all six kinds dropped, each landing centred
+on the cursor; the YouTube URL came in as a real YouTube box, the camera kept its device
+name, and Undo took every one of them back). **W-15** step 4 corrected with it: the tools
+panel is a select list, never a drag source. Previous: **2026-08-08e**
+(**W-22** step 5, **Media Control**: moving off the slide
+now STOPS what it started — putting another slide on that screen, or clearing it, pauses the
+slide's media and drops anything still waiting. A running order that plays a slide's audio
+could not move on before: the swap was refused with **Media is Playing**, which is still what
+a clip you started BY HAND gets. **Driven live** (slide 1's audio playing under a
+**Media Control (Play)**, slide 2 presented on the same screen: it landed, the audio paused,
+no toast). Previous: **2026-08-08d** (**W-22** step 8: a **Next: Timeout** attached to a line
 as a CC element can now be given **its own wait**, from the stopwatch at the right of that
 CC row or its **Change Timing** menu entry — the answer belongs to that attachment, so one
 timeout can hold one line for 4 seconds and another for 30. Filled stopwatch = its own
@@ -596,8 +653,22 @@ in the same documents folder. 📸
    **double-click a text box** to type into it; **Ctrl+Enter** focuses the canvas. 📸
    (From the **Presenter**, right-click a slide → **Edit ↗** opens this editor in its
    own window, focused on that slide.)
-4. Add new boxes/images from the tools panel (click, or drag onto the canvas).
-5. Save with **Ctrl+S**.
+4. Add new boxes with the toolbar above the canvas — **New**, **Insert Medias**,
+   **Insert Media Link**, **Insert YouTube**, **Insert Website**, **Insert Camera** — or
+   the same list from a right-click on the canvas. (The right-hand **Canvas Items** tab
+   is a preview/select list, not a place to drag boxes from.) You can also **drag items
+   in from the Background panel** — see W-28.
+5. **A website box shows a picture of the page, not the running page.** Open Worship
+   takes a screenshot and shows that everywhere you edit, so a service order full of
+   web slides stays fast even on an old machine. Two things follow:
+   - **Hover the box for about a second** to see the page live; move away and the
+     picture comes back. 📸
+   - The picture does not update itself. If the page changes (a clock, a countdown, a
+     scoreboard), right-click the box → **Refresh Preview**.
+
+   When you actually present the slide, the audience screen shows the **real, live
+   page** — only your editing and preview views use the picture.
+6. Save with **Ctrl+S**.
 
 **Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
@@ -605,7 +676,7 @@ in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 **Web backgrounds:** Background panel → **Web** tab → **+** — the Web Editor opens;
 enter the URL and title, save, and the new item appears in the Web tab.
 
-_Verify: ED-01..11, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, PM-33._
+_Verify: ED-01..11, ED-45, ED-46, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124._
 
 ---
 
@@ -625,22 +696,37 @@ _Verify: ED-01..11, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, PM-33._
    - **Font family:** the font used for on-screen text. A font marked `(Missing)` is
      configured but not installed on this computer.
    - **Directories:** where documents, lyrics, and bibles are stored on disk.
-   - **Reset buttons** (`Reset All Child Directories` / `Reset Widgets Size` /
-     `Clear All Settings`): each asks for confirmation first — **these erase
-     configuration; use with care.**
+   - **Reset buttons** (`Reset All Child Directories` / `Clear All Settings`):
+     **these erase configuration; use with care.** `Reset All Child Directories`
+     asks for confirmation first; `Clear All Settings` does **not**.
+   - Panel sizes are no longer reset from here — see **W-31**.
 3. **Bible** tab: search available Bible versions, download new ones, enable/disable
    downloaded ones. 📸
 4. Click **Apply Settings** (top-right) to apply — the app windows reload.
 
 _Verify: ST-01..09, LT-02..04._
 
-### W-17 — Find text anywhere (Finder) & About
+### W-17 — Find text anywhere (Find bar) & About
 
-- **Finder:** opens in its own small window — type a query, jump between matches with
-  the prev/next arrows or **Enter**; toggle case-sensitivity with its checkbox. 📸
+- **Find bar:** press **Ctrl+F** (**⌘F** on macOS) or use **Edit → Find** in the app
+  menu bar. A slim bar drops in at the **top-right of the window itself** and searches
+  only that window. Presenter, Slide Editor, Bible Reader and Settings each have their
+  own; the screens, the bible note and the code editors do not (they have their own
+  search or nothing to find). 📸
+  - Type to search as you go; the counter shows **`<current>/<total>`**.
+  - **Enter** jumps to the next match, **Shift+Enter** to the previous one; the **⌃**
+    and **⌄** buttons do the same and wrap around.
+  - The **Aa** button toggles case-sensitivity. There is **no whole-word and no regex
+    option** — Chromium's find-in-page does not offer them.
+  - Drag the **grip** on the left to slide the bar **sideways** when it covers
+    something you need to read; it stays inside the window and never leaves the top.
+  - **Esc** or the **✕** button closes it and clears every highlight. Pressing
+    **Ctrl/⌘+F** again re-selects the previous query instead of opening a second bar.
+  - The bar is app chrome, not part of the page: it is drawn in its own view, so the
+    query you type is never found by your own search.
 - **About:** shows the app version and project links.
 
-_Verify: PU-01, PU-05._
+_Verify: PU-01, PU-05, PU-07._
 
 ### W-18 — Use more than one screen (multi-screen)
 
@@ -670,8 +756,9 @@ this is the same pair of tools pointed at the app.
 
 1. Open the **Tools** menu → **Start Controlling** (**Ctrl+Shift+P**, **⌘+Shift+P** on
    Mac). A floating **Presenting Control** panel appears — drag it by its title bar,
-   resize it from any edge or corner, and collapse it with the chevron; it reopens where
-   and how you last left it. 📸
+   resize it from any edge or corner, double-click the title bar to fill the window (and
+   again to put it back), and collapse it with the chevron; it reopens where and how you
+   last left it. 📸
 2. The **title bar** carries everything you reach for mid-presentation: the four tools on
    the left, then the **keyboard screencast** switch (W-20) and **Undo** / **Redo** /
    **Clear** on the right. Only the settings live in the body, so collapsing the panel
@@ -1085,8 +1172,15 @@ thing to another machine.
    Every video and audio clip in that slide is driven together. The sound comes out of the
    presenter machine, exactly as it does when you press play by hand, so the **Volume** is
    the level you hear at the desk; the projected screen stays silent and simply keeps in
-   step, at the same speed. Changing the slide cancels anything still waiting — a "stop at
-   1:10" never carries over to whatever you put up next.
+   step, at the same speed.
+
+   **Moving off the slide stops it.** When you put another slide on that screen — or clear
+   the screen — everything the Media Control started is stopped and anything still waiting
+   (a "stop at 1:10", a delayed start) is dropped, so nothing carries over to whatever you
+   put up next. This is what lets the running order carry on: a clip you started **by
+   hand** on the mini screen blocks the next slide until you pause it (the app says
+   **Media is Playing**), because there the app cannot know you meant to leave it — but a
+   clip the running order started is the running order's to stop. 📸
 
    This one is only ever attached to a slide: you will not find it under **Add Action** on
    the running order itself, because "start this video ten seconds in" is a sentence about
@@ -1442,6 +1536,9 @@ as well, give it a window of its own.
    video onto it, right-click a slide for its menu.
 3. Drag the window by its title bar to move it, drag any edge or corner to resize it, and
    use the **chevron** to fold it away to just its title. The **✕** closes it.
+   **Double-click the title bar** to blow the window up to the whole app window;
+   double-click it again to drop it back to the exact size and place it had. Every
+   floating window in the app works this way.
 4. Repeat step 1 on a second document. You get a **second** window — one per document, as
    many as you need, each opening slightly offset from the last. 📸
 5. Zoom one window with its slider (or hold **Ctrl** and scroll over it). Only that
@@ -1463,7 +1560,7 @@ Tips:
 - Windows are **not** reopened when you restart the app; you start with a clean screen.
 - Renaming or trashing a document closes its window.
 
-_Verify: PM-118, PM-119, PM-120, PL-01, CM-06._
+_Verify: PM-118, PM-119, PM-120, PM-126, PL-01, CM-06._
 
 ### W-27 — Pin the document you are presenting from
 
@@ -1499,6 +1596,143 @@ _Verify: PM-121, PM-122, PM-123, PL-01._
 
 ---
 
+### W-28 — Build a slide by dragging from the Background panel
+
+**Goal:** put a picture, video, song, web page, camera or colour onto a slide without
+walking the Insert menu — just drag it out of the panel you are already browsing.
+
+**Preconditions:** a slide document open in the **Slide Editor**, and the bottom
+**Background** panel visible.
+
+1. Pick a tab in the bottom **Background** panel — **Colors** (ពណ៌), **Images** (រូបភាព),
+   **Videos** (វីដេអូ), **Cameras** (កាមេរ៉ា) or **Webs** (វេប). The presenter also has an
+   **Audios** pane. 📸
+2. Drag one item out of the panel and hold it over the canvas. The canvas **dims** to show
+   it will take the drop. (It stays bright for things it cannot use — a Bible verse, for
+   example.) 📸
+3. Let go. A box appears **centred on where you dropped it**:
+
+   | Dragged from | You get |
+   | --- | --- |
+   | Images | an image box |
+   | Videos | a video box |
+   | Audios | an audio player box |
+   | Webs — a local page | a website box showing a **screenshot** of that page (see W-24 step 4) |
+   | Webs — a saved URL | a website box showing a **screenshot**; a **YouTube** link becomes a real YouTube box |
+   | Cameras | a camera box, labelled with that camera |
+   | Colors | a plain coloured box (see step 4) |
+
+   📸
+4. **Colours are the special one.** Drop a colour **on top of an existing box** and it
+   **repaints that box** — no new box is added. Drop it on **empty canvas** and you get a
+   new coloured rectangle instead. That rectangle is an ordinary text box underneath, so
+   you can double-click it and type into it later. 📸
+5. Anything you drop in is an ordinary box: move it, resize it, reorder it, and **Undo**
+   (Ctrl+Z) takes it straight back out. Save with **Ctrl+S**.
+
+Tips:
+
+- Dropping onto a box only matters for **colours**. Every other kind lands as a new box
+  wherever the cursor was, on top of whatever is underneath.
+- This is the same drag that sets a screen background — the panel item is unchanged, you
+  are only making a copy of it on the slide.
+- A camera box remembers **which** camera by name as well as by id, so it still finds the
+  right device after a restart.
+
+_Verify: ED-40, ED-41, ED-42, ED-43, ED-44, ED-21, ED-37, PM-06._
+
+---
+
+### W-29 — Look up a Bible name or place (people, tribes, cities, maps)
+
+**Goal:** find out who someone in the Bible was, or where a place is, without leaving
+your Bible reading.
+
+1. Open the **Bible Reader**, or the **Bible Lookup** popup in the Presenter. At the
+   right-hand end of the reference box, click the person-and-pin button
+   **Names and locations lookup** (ការស្វែងរកឈ្មោះ និងទីកន្លែង). A small floating
+   window opens. The first open takes a few seconds while the dictionary loads — after
+   that it is instant. It is a floating window like any other: drag it by its title bar,
+   resize it from any edge, and **double-click the title bar** to make it fill the app
+   window when you want to read a long list — double-click again to put it back where
+   it was. 📸
+2. Use the **Names** (ឈ្មោះ) and **Locations** (ទីកន្លែង) tabs to choose what you are
+   looking for, and type in the search box. Each tab remembers what you typed, so you
+   can switch back and forth. The list updates as you type.
+3. On the **Names** tab the dropdown beside the tabs narrows the list by kind —
+   **All types** (គ្រប់ប្រភេទ), **People** (មនុស្ស), **Groups** (ក្រុម),
+   **Places** (ទីកន្លែង) and so on. It is greyed out on the **Locations** tab, where
+   there is nothing to filter.
+4. Use the arrows at the bottom to page through results, or type a page number in the
+   little box and press **Enter**. Starting a new search always takes you back to
+   page 1. 📸
+5. Click a result to open it in its own small window: a short description, then a
+   **Details** (ព័ត៌មានលម្អិត) section with things like **Also called**, **Type**,
+   **Gender**, **Parents**, **Children** and **Verses** (ខគម្ពីរ). 📸
+6. **Verses** starts closed and shows how many there are — some entries have hundreds
+   (Jerusalem has 712). Click it to open, and the references turn into readable
+   titles like *Joshua 10:1-43*.
+7. Any underlined name or place — in the description or in a list — opens as another
+   small window **beside** the one you are reading, so you can follow a family or a
+   journey without losing your place. Clicking the same entry twice just brings its
+   window back to the front.
+8. Click a verse reference to read it (King James text). The eye button in that
+   window's title bar, **Open in bible lookup** (បើកក្នុងការស្វែងរកព្រះគម្ពីរ), loads
+   that passage into the reference box behind it. 📸
+9. For a place that has coordinates, a map appears at the bottom of its window under
+   **Approximate location, the marker is an estimated point**, with an **Open in
+   Google Maps** link. The map needs an internet connection; places without
+   coordinates (Egypt, for example) simply show no map. 📸
+10. The copy button in a record window's title bar copies the whole entry — including
+    all of its verse references, whether or not you opened the **Verses** section —
+    ready to paste into a note or a document.
+11. Closing the lookup window leaves the record windows you opened where they are.
+    Each has its own **×**.
+
+**Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
+slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
+
+_Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
+RD-64, PM-126._
+
+### W-30 — See who and where is in the passage you are reading
+
+**Goal:** while you read, get the list of every person and place the Bible names in
+those exact verses — without searching for them one by one.
+
+1. Open the **Bible Reader** (or the **Bible Lookup** popup in the Presenter) and read
+   a passage. At the top right, click **Advance Bible Lookup** (the magnifier). A panel
+   opens on the right with three tabs: **Find** (ស្វែងរក), **Cross Reference**
+   (ខគម្ពីរយោង) and **Location-Name (KJV)** (ទីកន្លែង-ឈ្មោះ (KJV)). Click the third
+   one. 📸
+   _If the last tab looks cut off, the tab strip scrolls sideways — or drag the divider
+   between the reading area and the panel to widen it._
+2. Under the heading **Names and locations in your reading (KJV)** you get **one block
+   per passage you have open**. Each block is titled with the passage it belongs to,
+   e.g. `(KJV) LUK 13:1-35`, and lists **Names** (ឈ្មោះ) first, then **Locations**
+   (ទីកន្លែង), with a count beside each. 📸
+3. Every row shows the person or place, the verses of that passage where it comes up
+   (`13:4, 13:22, 13:33, 13:34`), and a one-line description. A name that appears in
+   several verses is listed **once**, with all of its verses on the row.
+4. Open a second passage (split the reading area, or open another reference) and the
+   panel grows a second block for it — so you can see the people of two passages at
+   once. A passage with nobody in it says **No matches** (រកមិនឃើញ).
+5. Type a different reference into the box at the top and the list follows along as
+   soon as the reference is complete. 📸
+6. Click any row to open that person or place in its own small window — the same record
+   window as **W-29**, with the full description, family, verses and map. From there you
+   can chase references, copy the entry, or send a verse back to your reading. 📸
+
+**Good to know:** the list is built from the King James text, which is what the
+names dictionary was made from — that is what the **(KJV)** in the tab name means. You
+can be reading any version, or Khmer; the panel still tells you who is in those verses.
+It also includes people the verse means without naming — Luke 13:16 lists **Satan**,
+which the verse calls "the devil".
+
+_Verify: RD-72, RD-73, RD-74, RD-75, RD-76, RD-57._
+
+---
+
 ## Keyboard shortcut reference (tutorial appendix)
 
 | Keys                                 | Does                                                                    | Where                                                                 |
@@ -1522,3 +1756,40 @@ _Verify: PM-121, PM-122, PM-123, PL-01._
 | _every other key_                    | Nothing — swallowed by the overlay                                      | Presenting Control **armed**                                          |
 
 _Verify: KB-01..13, SC-03._
+
+### W-31 — Hide, show, and reset the app's panels (View menu)
+
+**Goal:** get a panel back after it collapsed, hide one you don't need, or put the
+whole layout back the way it shipped.
+
+Every resizable panel in the app is a **widget**. You can already collapse one by
+dragging its divider all the way to the edge — it shrinks to a thin green strip with
+its name on it, and clicking that strip brings it back. The **View** menu on the top
+menu bar does the same thing by name, which is easier when the strip is hard to find.
+
+1. Open **View** on the top menu bar → **Widgets** (Widgets). 📸
+   You get one tick-box per panel on the page you are looking at, e.g. on the
+   presenter: `App Presenter Left` / `App Presenter Middle` / `App Presenter Right`,
+   `Document List`, `Presenting Flow List`, `Presenter`, `Background`,
+   `Bible and Notes`, `Mini Screen`, `Bibles`, `Bible Notes`, `Previewer`, `Slides`.
+   - **Ticked** = the panel is open. **Unticked** = it is collapsed to its strip.
+2. Click a ticked one — that panel collapses to its green strip, and the space goes to
+   its neighbour. 📸
+3. Click it again — the panel comes straight back. Nothing reloads and nothing you
+   were doing is interrupted.
+4. Panels that the app does not let you collapse (the Background media/audio split,
+   the bible previewer, the lyric Stage Previewer) are simply not listed.
+
+**Put everything back:**
+
+5. **View → Reset Widgets Size** (កំណត់ទំហំ Widgets ឡើងវិញ). Answer **Yes** to
+   `Are you sure to reset every widget size and reopen the widgets?` 📸
+6. Every panel returns to the width and height it had when the app was installed, and
+   **any panel you had collapsed is reopened**. This happens immediately — no reload.
+   Answer **No** and nothing changes.
+
+> This used to be a button in Settings → General, where it did nothing until you also
+> clicked **Apply Settings** and the app reloaded. It is on the View menu now and takes
+> effect at once.
+
+_Verify: NAV-20, NAV-21, ST-22._

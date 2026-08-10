@@ -26,7 +26,7 @@ import { useBackgroundViewModeSetting } from './BackgroundViewModeComp';
 export function useThumbnailWidthSetting() {
     const [thumbnailWidth, setThumbnailWidth] = useStateSettingNumber(
         'bg-thumbnail-width',
-        defaultRangeSize.min,
+        defaultRangeSize.size,
     );
     return [thumbnailWidth, setThumbnailWidth] as const;
 }
@@ -46,7 +46,7 @@ type PropsType = {
     contextMenuItems?: ContextMenuItemType[];
     genContextMenuItems?: (
         dirSource: DirSource,
-        event: MouseEvent<HTMLElement>,
+        event?: MouseEvent<HTMLElement>,
     ) => OptionalPromise<ContextMenuItemType[]>;
     sortFilePaths?: (filePaths: string[]) => string[];
     onItemsAdding?: (

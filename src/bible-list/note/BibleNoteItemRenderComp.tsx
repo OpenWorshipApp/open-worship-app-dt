@@ -183,13 +183,15 @@ export default function BibleNoteItemRenderComp({
             }}
             data-note-item-id={`${fileSource.name}-${noteItem.id}`}
             data-index={index + 1}
-            draggable
+            draggable={!isEditingTitle}
             onDragStart={handleDragStartEvent}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDataDropping}
-            onDoubleClick={handleBibleNoteOpening}
-            onContextMenu={handleContextMenuOpening}
+            onDoubleClick={isEditingTitle ? undefined : handleBibleNoteOpening}
+            onContextMenu={
+                isEditingTitle ? undefined : handleContextMenuOpening
+            }
         >
             <div className="d-flex ps-1">
                 <ItemColorNoteComp item={noteItem} />
@@ -199,19 +201,21 @@ export default function BibleNoteItemRenderComp({
                     onClick={handleBibleNoteOpening}
                 />
                 {isEditingTitle ? (
-                    <NoteTitleEditorComp
-                        note={note}
-                        noteItem={noteItem}
-                        onEscape={() => {
-                            setIsEditingTitle1(false);
-                        }}
-                        onEnter={() => {
-                            setIsEditingTitle1(false);
-                        }}
-                        onBlur={() => {
-                            setIsEditingTitle1(false);
-                        }}
-                    />
+                    <div className="flex-fill">
+                        <NoteTitleEditorComp
+                            note={note}
+                            noteItem={noteItem}
+                            onEscape={() => {
+                                setIsEditingTitle1(false);
+                            }}
+                            onEnter={() => {
+                                setIsEditingTitle1(false);
+                            }}
+                            onBlur={() => {
+                                setIsEditingTitle1(false);
+                            }}
+                        />
+                    </div>
                 ) : (
                     <div className="d-flex flex-fill app-ellipsis">
                         {noteItem.title ? (

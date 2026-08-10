@@ -28,6 +28,7 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     'Bible Reader': 'book',
     'Bible View': 'book-half',
     'Bible and Notes': 'journal-bookmark',
+    'Bible and Notes (Lookup)': 'journal-bookmark',
     'Bible Notes': 'journal-text',
     Notes: 'journal-text',
     Note: 'sticky',
@@ -36,6 +37,7 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     Lookup: 'search',
     Find: 'search',
     'Cross Reference': 'signpost-split',
+    'Location-Name (KJV)': 'geo-alt-fill',
     // -- backgrounds
     Background: 'card-image',
     'Background Audio': 'file-earmark-music',

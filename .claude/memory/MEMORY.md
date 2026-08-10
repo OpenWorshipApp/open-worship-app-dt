@@ -70,3 +70,12 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Presenting flow rename](presenting-flow-rename.md) — the four stale Khmer strings are fixed too now; `--no-playlist` (yt-dlp) and `displayListeners` are lookalikes, and the migration discovers the old name rather than holding one
 - [Expanded doc rows went stale — FIXED](presenting-flow-expanded-doc-stale.md) — the expanded document now re-subscribes; keep that timer PER-INSTANCE or one sheet listing a document twice goes stale again
 - [Expansion followed the position — FIXED](presenting-flow-expansion-follows-position.md) — run-sheet rows are keyed by uuid now; never key them by index again
+- [Console design system tokens](console-design-system-tokens.md) — `--app-accent`/`--app-on-air`/`--app-text-*`/`.app-data` exist and are under-adopted; don't reach for `--bs-*` or raw px
+- [Presenting flow cue gutter](presenting-flow-cue-gutter.md) — one left column (number + rail + run cursor) shared by the tree and the preview; content-box and Enter-only are load-bearing
+- [Vite caches a failed import resolution](vite-caches-failed-import-resolution.md) — importing before the file exists 500s the importer forever; touch vite.config.ts, not the importer
+- [Drag-kind mime & dim target](drag-kind-mime-and-dim-target.md) — dragover gates on `application/x-owa-drag-<kind>`; `changeDragEventStyle` dims `event.target`, not `currentTarget`
+- [Canceled pointerdown kills click](canceled-pointerdown-kills-click.md) — a drag surface gets no mousedown/click/dblclick, so `onDoubleClick` there never fires; time the presses instead
+- [Website items are screenshots, not iframes](website-screenshot-not-iframe.md) — live only on the projected screen; the capture size rides the markup because both fill-in points run on a detached div
+- [vi.mock factory survives resetModules](vitest-mock-factory-survives-resetmodules.md) — the test and its module end up on different electron mocks; pin it with a top-level `import 'electron'`
+- [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) — it also kills the user's open-lyric dev app; filter processes by CommandLine
+- [View menu widget toggles](view-menu-widget-toggles.md) — View → Widgets ticks each pane open/closed and Reset Widgets Size applies live; blanking `flexGrow` and the `:scope >` query are load-bearing

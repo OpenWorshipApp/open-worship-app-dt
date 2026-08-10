@@ -1,5 +1,8 @@
 import AppDocument from '../app-document-list/AppDocument';
-import { setLyricAppDocumentGetter } from '../app-document-list/appDocumentHelpers';
+import {
+    genEditSlideContextMenuItem,
+    setLyricAppDocumentGetter,
+} from '../app-document-list/appDocumentHelpers';
 import type Slide from '../app-document-list/Slide';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import type { MimetypeNameType } from '../server/fileHelpers';
@@ -23,6 +26,8 @@ import {
     type CanvasItemPropsType,
 } from '../slide-editor/canvas/CanvasItem';
 import { getLyricStageStyle } from './lyricStageStyleHelpers';
+import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
+import Lyric from './Lyric';
 
 export const OPEN_LYRIC_NONE_KEY = 'None';
 export const OPEN_LYRIC_FIRST_KEY = 'First';
@@ -240,7 +245,17 @@ export default class LyricAppDocument extends AppDocument {
                 true,
             );
         });
-        showAppContextMenu(event, [...menuItemOnScreens, ...extraMenuItems]);
+        const menuItems: ContextMenuItemType[] = [
+            genEditSlideContextMenuItem(() => {
+                openPopupLyricEditorWindow(
+                    Lyric.getInstance(slide.filePath),
+                    slide.id,
+                );
+            }),
+            ...menuItemOnScreens,
+            ...extraMenuItems,
+        ];
+        showAppContextMenu(event, menuItems);
     }
 
     async save(): Promise<boolean> {

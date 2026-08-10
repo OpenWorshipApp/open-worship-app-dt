@@ -16,6 +16,10 @@ import PageBaseAppearanceSettingComp from '../../screen-setting/PageBaseAppearan
 import PdfAppDocument from '../../app-document-list/PdfAppDocument';
 import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
+import {
+    appDocumentFlexSizeNames,
+    toAppDocumentFlexSizeName,
+} from '../../resize-actor/flexSizeHelpers';
 import appProvider from '../../server/appProvider';
 import PresenterNoteContainerHandlerComp from '../../slide-editor/note/PresenterNoteContainerHandlerComp';
 import { useStateSettingString } from '../../helper/settingHelpers';
@@ -40,8 +44,8 @@ function EditorComp({
 }: Readonly<{
     varyAppDocument: VaryAppDocumentType;
     // A floating preview shows the SAME document as the main panel may be
-    // showing, and the note split is remembered per document name — without a
-    // prefix the two panes would overwrite each other's size.
+    // showing, and the note pane is remembered per document — without a prefix
+    // the two panes would overwrite each other's size.
     flexSizeNamePrefix?: string;
 }>) {
     const fileSource = varyAppDocument.fileSource;
@@ -53,7 +57,11 @@ function EditorComp({
     }
     return (
         <ResizeActorComp
-            flexSizeName={`${flexSizeNamePrefix}${fileSource.fullName}`}
+            flexSizeName={toAppDocumentFlexSizeName(
+                appDocumentFlexSizeNames.presenterPreviewer,
+                fileSource.filePath,
+                flexSizeNamePrefix,
+            )}
             isHorizontal={false}
             flexSizeDefault={{
                 v1: ['6'],
@@ -67,7 +75,7 @@ function EditorComp({
                         },
                     },
                     key: 'v1',
-                    ...toWidgetLabel('Document List'),
+                    ...toWidgetLabel('Slides'),
                     className: 'app-flex-item',
                 },
                 {
@@ -76,6 +84,7 @@ function EditorComp({
                             return (
                                 <PresenterNoteContainerHandlerComp
                                     varyAppDocumentWithNote={varyAppDocument}
+                                    flexSizeNamePrefix={flexSizeNamePrefix}
                                 />
                             );
                         },

@@ -28,6 +28,10 @@ import {
     useIsOnScreenChecking,
 } from './presentingFlowOnScreenHelpers';
 import { notifyPresentingFlowItemOrigin } from './presentingFlowOriginHelpers';
+import {
+    toPresentingFlowPreviewItemKey,
+    usePresentingFlowPreviewIsItemSelected,
+} from './presentingFlowPreviewFloatingHelpers';
 import PresentingFlowRowComp from './PresentingFlowRowComp';
 import PresentingFlowScreenPinComp from './PresentingFlowScreenPinComp';
 
@@ -258,6 +262,25 @@ export default function PresentingFlowItemComp({
     const isOnScreen = useIsOnScreenChecking(() => {
         return checkIsPresentingFlowItemOnScreen(presentingFlowItemRef.current);
     }, toPresentingFlowItemOnScreenKey(presentingFlowItem));
+    // WHERE THE RUN IS, in the tree — until now it showed only inside the
+    // floating preview, so an operator who had not opened one (or had scrolled it
+    // away) had nothing on screen saying which line the next press would step
+    // from. The same cursor, read from the same store, so the two panels can
+    // never disagree about it.
+    //
+    // Cheap enough to ask per row: it is a `useSyncExternalStore` over a Map
+    // lookup, and the snapshot flips for exactly the two rows the cursor left and
+    // landed on — a step re-renders two rows, not the sheet. No debounce for the
+    // same reason; there is no expensive work behind it to collapse.
+    //
+    // Answers false whenever no preview is open on this sheet: the cursor lives
+    // and dies with a run, and marking a line while nothing is running would
+    // claim a position the next press would not honour.
+    const isRunCursor = usePresentingFlowPreviewIsItemSelected(
+        presentingFlow.filePath,
+        toPresentingFlowPreviewItemKey(presentingFlowItem),
+        index,
+    );
     const ccHost: PresentingFlowCcHostType = useMemo(() => {
         return { presentingFlow, index, slideId: null };
     }, [presentingFlow, index]);
@@ -274,7 +297,14 @@ export default function PresentingFlowItemComp({
                 not what rides with it. */}
             <div className="app-presenting-flow-row-group">
                 <PresentingFlowRowComp
-                    depth={1}
+                    depth={0}
+                    // The line this IS of the run sheet, which the floating
+                    // preview has always numbered and the tree never did — so the
+                    // two could not be read against each other, and an operator
+                    // had no handle to call a line by.
+                    lineNumber={index + 1}
+                    isCommand={presentingFlowItem.isAction}
+                    isRunCursor={isRunCursor}
                     // On the ROW rather than on a wrapper: the drop kind is
                     // decided from where the pointer sits WITHIN the row, so it
                     // has to be the row the rect is measured from.
@@ -332,14 +362,14 @@ export default function PresentingFlowItemComp({
                     <PresentingFlowCcRowsComp
                         host={ccHost}
                         ccItems={presentingFlowItem.ccItems}
-                        depth={2}
+                        depth={1}
                     />
                 ) : null}
             </div>
             {isDocument && isExpanded ? (
                 <PresentingFlowDocumentSlidesComp
                     filePath={presentingFlowItem.itemFilePath}
-                    depth={2}
+                    depth={1}
                     // A slide row follows its own pin if it has one, else the
                     // document's — and pinning one writes an exception onto
                     // this same entry, since a slide row is not a presenting flow

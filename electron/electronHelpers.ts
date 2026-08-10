@@ -18,7 +18,6 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import appInfo from '../package.json';
-import { htmlFiles } from './fsServe';
 
 export type OptionalPromise<T> = T | Promise<T>;
 
@@ -33,6 +32,11 @@ export type CustomMenusDataType = {
     // items of its own, so the whole menu disappears when nothing contributes —
     // which is what keeps it off the pages that have no canvas to insert into.
     insert?: CustomMenuItemType[];
+    // Renderer-contributed **View** entries: the per-widget open/close
+    // checkboxes and `Reset Widgets Size`. Only the main window contributes —
+    // popups hide their menu bar, and a single owner is what keeps the click
+    // routed back to the window whose widgets the items describe.
+    view?: CustomMenuItemType[];
 };
 
 function parseEnvContent(content: string) {
@@ -897,12 +901,4 @@ export function genTimeoutAttempt(
             func();
         }, timeMilliseconds);
     };
-}
-
-export function getAllNoneFinderWindows() {
-    const allWindows = BrowserWindow.getAllWindows();
-    return allWindows.filter((win) => {
-        const url = win.webContents.getURL();
-        return !url.includes(htmlFiles.finder);
-    });
 }

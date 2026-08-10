@@ -124,6 +124,32 @@ describe('ElectronMainController', () => {
         processExit.mockRestore();
     });
 
+    test('leaves sub-frame navigations to the frame itself', () => {
+        const processExit = vi
+            .spyOn(process, 'exit')
+            .mockImplementation((() => undefined) as any);
+        const controller = new ElectronMainController({
+            mainHtmlPath: 'presenter.html',
+        } as any);
+        const handleNavigation = getWillNavigateHandler(controller);
+        electronMockState.shell.openExternal.mockClear();
+
+        // An <iframe> loading external content — and, crucially, following the
+        // redirect that such an embed answers with — is not the window
+        // navigating away. Blocking it left the frame blank and popped the URL
+        // open in the system browser.
+        const event = { preventDefault: vi.fn(), isMainFrame: false };
+        handleNavigation?.(event as any, 'https://maps.google.com/maps?q=0,0');
+        handleNavigation?.(
+            event as any,
+            'https://www.google.com/maps/embed?pb=x',
+        );
+
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(electronMockState.shell.openExternal).not.toHaveBeenCalled();
+        processExit.mockRestore();
+    });
+
     test('sends screen messages over the configured channel', () => {
         const processExit = vi
             .spyOn(process, 'exit')

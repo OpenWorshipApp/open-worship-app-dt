@@ -1,7 +1,9 @@
-import { Fragment, useCallback, useMemo } from 'react';
+import { Fragment, useCallback, useMemo, useRef } from 'react';
 
 import AppSuspenseComp from '../others/AppSuspenseComp';
-import FlexResizeActorComp from './FlexResizeActorComp';
+import FlexResizeActorComp, {
+    ACTIVE_HIDDEN_WIDGET_CLASS,
+} from './FlexResizeActorComp';
 import type {
     DisabledType,
     DataInputType,
@@ -20,6 +22,12 @@ import {
     checkCanClose,
     reopenAnotherHiddenWidget,
 } from './dynamicFlexSizeHelpers';
+import { checkMediaPlaying } from '../helper/mediaControlHelpers';
+import {
+    registerWidgets,
+    toWidgetId,
+    unregisterWidgets,
+} from './widgetRegistry';
 
 export const renderResizerChildren = (Children: any) => {
     if (typeof Children === 'object' && 'render' in Children) {
@@ -126,6 +134,58 @@ export default function RenderResizeActorItemComp({
         defaultFlexSize,
         anotherDefaultFlexSize,
     ]);
+    // The pane itself, and the strip that replaces it once collapsed. Both open
+    // and close are DOM-relative operations — which sibling absorbs the grow —
+    // so the menu drives the very same nodes a pointer would.
+    const paneRef = useRef<HTMLDivElement | null>(null);
+    const hiddenTitleRef = useRef<HTMLDivElement | null>(null);
+    const handleReopeningRef = useAppCurrentRef(handleReopening);
+    const handleClosing = useCallback(() => {
+        const node = paneRef.current;
+        if (node === null) {
+            return;
+        }
+        // Same guard as `FlexResizeActorComp.close`: a pane playing media must
+        // not vanish under the operator. This is the discrete path, so it toasts.
+        if (checkMediaPlaying({ targetElement: node, includeYouTube: true })) {
+            return;
+        }
+        const findVisibleSibling = (isNext: boolean) => {
+            let sibling = (
+                isNext ? node.nextElementSibling : node.previousElementSibling
+            ) as HTMLDivElement | null;
+            while (
+                sibling !== null &&
+                (sibling.dataset['fs'] === undefined ||
+                    sibling.classList.contains(ACTIVE_HIDDEN_WIDGET_CLASS))
+            ) {
+                sibling = (
+                    isNext
+                        ? sibling.nextElementSibling
+                        : sibling.previousElementSibling
+                ) as HTMLDivElement | null;
+            }
+            return sibling;
+        };
+        // `'first'` means this pane sat BEFORE the sibling that takes its grow,
+        // which is how `calcShowingHiddenWidget` knows where to give it back.
+        const nextSibling = findVisibleSibling(true);
+        const isFirst = nextSibling !== null;
+        const target = isFirst ? nextSibling : findVisibleSibling(false);
+        const dataFlexSizeKey = node.dataset['fs'];
+        if (target === null || dataFlexSizeKey === undefined) {
+            // The last pane standing has nowhere to hand its space to.
+            return;
+        }
+        const ownGrow = Number(node.style.flexGrow || node.style.flex) || 0;
+        const targetGrow = Number(target.style.flexGrow || target.style.flex);
+        target.style.flexGrow = `${(Number.isNaN(targetGrow) ? 0 : targetGrow) + ownGrow}`;
+        handleDisabling(dataFlexSizeKey, [
+            isFirst ? 'first' : 'second',
+            ownGrow,
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const isShowingFlexSizeActor = useMemo(() => {
         if (
             index !== 0 &&
@@ -139,6 +199,38 @@ export default function RenderResizeActorItemComp({
     }, [index, handleReopening, dataInput, flexSize]);
     const type = isHorizontal ? 'h' : 'v';
     const isWidgetHidden = !isDisableQuickResize && handleReopening !== null;
+    // A group that cannot collapse has nothing for the menu to toggle, and a
+    // lone pane has no sibling to hand its space to.
+    const canMenuToggle = !isDisableQuickResize && dataInput.length > 1;
+    const widgetId = toWidgetId(flexSizeName, key);
+    useAppEffect(() => {
+        if (!canMenuToggle) {
+            return;
+        }
+        registerWidgets(widgetId, [
+            {
+                id: widgetId,
+                widgetName,
+                isHidden: isWidgetHidden,
+                toggle: () => {
+                    if (!isWidgetHidden) {
+                        handleClosing();
+                        return;
+                    }
+                    const element = hiddenTitleRef.current;
+                    if (element === null) {
+                        return;
+                    }
+                    // Reuse the strip's own click path verbatim: it already
+                    // settles the `-dyn-h`/`-dyn-v` sibling bookkeeping.
+                    handleReopeningRef.current?.({ currentTarget: element });
+                },
+            },
+        ]);
+        return () => {
+            unregisterWidgets(widgetId);
+        };
+    }, [widgetId, widgetName, isWidgetHidden, canMenuToggle]);
     return (
         <Fragment key={index}>
             {isShowingFlexSizeActor && (
@@ -157,6 +249,7 @@ export default function RenderResizeActorItemComp({
             )}
             {isWidgetHidden ? null : (
                 <div
+                    ref={paneRef}
                     data-fs={keyToDataFlexSizeKey(flexSizeName, key)}
                     data-fs-default={defaultFlexSize[key][0]}
                     data-min-size={50}
@@ -171,6 +264,7 @@ export default function RenderResizeActorItemComp({
             )}
             {isWidgetHidden ? (
                 <RenderHiddenWidgetTitleComp
+                    elementRef={hiddenTitleRef}
                     widgetName={widgetName}
                     widgetIconName={widgetIconName}
                     type={type}

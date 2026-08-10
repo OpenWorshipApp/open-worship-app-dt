@@ -18,6 +18,8 @@ import { handleError } from '../helper/errorHelpers';
 import { playMediaElement } from '../helper/mediaHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { tran } from '../lang/langHelpers';
+import appProvider from '../server/appProvider';
+import { genWebBackgroundElement } from './managers/screenWebsiteHelpers';
 
 export function genHtmlBackground(
     screenId: number,
@@ -60,15 +62,14 @@ export function genHtmlBackground(
                 });
         });
     } else if (backgroundSrc.type === 'web') {
-        const iframe = document.createElement('iframe');
-        Object.assign(iframe.style, {
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            backgroundColor: 'transparent',
-        });
-        iframe.src = backgroundSrc.src;
-        child = iframe;
+        // Live on the projected screen, a screenshot on the presenter's mini
+        // screen — a background covers the whole output, so it is the most
+        // expensive live page in the app to load into a preview nobody
+        // presents from.
+        child = genWebBackgroundElement(
+            backgroundSrc.src,
+            appProvider.isPageScreen,
+        ) as HTMLDivElement;
     } else {
         const div = document.createElement('div');
         const screenManagerBase = getScreenManagerBase(screenId);

@@ -110,7 +110,13 @@ const blockUnload = genBlockUnload(
 export function checkAudioPlaying() {
     return Array.from(document.querySelectorAll('audio')).some(
         (audioElement) => {
-            return !audioElement.paused;
+            // Honour the same opt-out `hasPlayingMediaDeep` does: a scratch
+            // player — the slide editor's canvas item preview — must not block
+            // leaving the page or closing the background audio tab.
+            return (
+                !audioElement.paused &&
+                audioElement.dataset.ignoreMediaGuarding !== 'true'
+            );
         },
     );
 }

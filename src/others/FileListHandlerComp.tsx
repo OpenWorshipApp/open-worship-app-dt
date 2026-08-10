@@ -35,6 +35,7 @@ import FileListFilterIconsComp, {
 import { useFileListFilterData } from './fileListFilterHelpers';
 import AskingNewNameComp from './AskingNewNameComp';
 import StickyAutoHideComp from './StickyAutoHideComp';
+import EmptyFileListComp from './EmptyFileListComp';
 
 export type FileListType = FileSource[] | null | undefined;
 
@@ -134,7 +135,7 @@ type PropsType = {
     contextMenuItems?: ContextMenuItemType[];
     genContextMenuItems?: (
         dirSource: DirSource,
-        event: MouseEvent<HTMLElement>,
+        event?: MouseEvent<HTMLElement>,
     ) => OptionalPromise<ContextMenuItemType[]>;
     checkExtraFile?: (filePath: string) => boolean;
     takeDroppedFile?: (file: DroppedFileType) => boolean;
@@ -246,12 +247,21 @@ export default function FileListHandlerComp({
         };
     }, [onItemsAdding, fileSelectionOption]);
     const noDirFolderName = dirSource.dirPath ? undefined : defaultFolderName;
-    const handleMenuShowing = genDroppingFileOnContextMenu(dirSource, {
+    const contextMenuOptions = {
         contextMenuItems,
         genContextMenuItems,
         addItems: handleItemsAdding,
         genNewFileMenuItems,
-    });
+    };
+    const handleMenuShowing = genDroppingFileOnContextMenu(
+        dirSource,
+        contextMenuOptions,
+    );
+    // A directory that holds nothing renders an empty card body, with the
+    // right-click menu as its only, invisible, way in. `undefined`/`null` are
+    // still loading and failed to read, both of which `RenderListComp` speaks
+    // to itself.
+    const isEmptyDir = !!dirSource.dirPath && filePaths?.length === 0;
     return (
         <DirSourceContext value={dirSource}>
             <div
@@ -328,6 +338,12 @@ export default function FileListHandlerComp({
                                     disableColorNoteGrouping
                                 }
                             />
+                            {isEmptyDir && !isCreatingNew ? (
+                                <EmptyFileListComp
+                                    dirSource={dirSource}
+                                    contextMenuOptions={contextMenuOptions}
+                                />
+                            ) : null}
                         </ul>
                     )}
                     <ScrollingHandlerComp shouldShowPlayToBottom={false} />

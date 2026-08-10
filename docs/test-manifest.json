@@ -352,20 +352,21 @@
       "screenshots": 2,
       "steps": [
         "Click the gear (ការកំណត់) in the header — Settings opens in its own window.",
-        "General tab: - Language: click Khmer or English — the whole UI switches immediately. - Theme: system / light / dark. - Font family: the font used for on-screen text. A font marked (Missing) is configured but not installed on this computer. - Directories: where documents, lyrics, and bibles are stored on disk. - Reset buttons (Reset All Child Directories / Reset Widgets Size / Clear All Settings): each asks for confirmation first — these erase configuration; use with care.",
+        "General tab: - Language: click Khmer or English — the whole UI switches immediately. - Theme: system / light / dark. - Font family: the font used for on-screen text. A font marked (Missing) is configured but not installed on this computer. - Directories: where documents, lyrics, and bibles are stored on disk. - Reset buttons (Reset All Child Directories / Clear All Settings): these erase configuration; use with care. Reset All Child Directories asks for confirmation first; Clear All Settings does not. - Panel sizes are no longer reset from here — see W-31.",
         "Bible tab: search available Bible versions, download new ones, enable/disable downloaded ones.",
         "Click Apply Settings (top-right) to apply — the app windows reload."
       ]
     },
     {
       "id": "W-17",
-      "title": "Find text anywhere (Finder) & About",
+      "title": "Find text anywhere (Find bar) & About",
       "section": "Configuration",
       "page": "manual-sources/configuration/w-17-find-text-anywhere-finder-about.md",
       "url": "/configuration/w-17-find-text-anywhere-finder-about",
       "verify": [
         "PU-01",
-        "PU-05"
+        "PU-05",
+        "PU-07"
       ],
       "screenshots": 1,
       "steps": []

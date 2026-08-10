@@ -24,6 +24,18 @@ export enum DragTypeEnum {
     FOREGROUND = 'foreground',
 }
 
+// Chromium puts a drag's `DataTransfer` in protected mode while it is in
+// flight: `getData` returns '' until the drop, but the mime TYPES stay
+// readable. Riding the drag KIND along as an empty entry under its own mime
+// type is therefore the only way a drop target can tell what it is hovering
+// over — and so whether to show its accept feedback — before the drop lands.
+//
+// `toLowerCase` is load-bearing: `DataTransfer.setData` ASCII-lowercases the
+// format, so `bibleItem`/`pdfSlide`/`appDocument` would never match on read.
+export function genDragMimeType(type: DragTypeEnum) {
+    return `application/x-owa-drag-${type}`.toLowerCase();
+}
+
 export type DragDataType<T> = {
     type: DragTypeEnum;
     data: T;

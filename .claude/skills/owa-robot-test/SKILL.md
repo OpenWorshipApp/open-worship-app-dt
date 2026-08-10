@@ -134,7 +134,8 @@ same window — do NOT open a brand-new tab):
 | Bible Reader | `https://localhost:3000/reader.html` |
 | Slide / Doc Editor | `https://localhost:3000/appDocumentEditor.html` |
 | Settings | ⚠️ **popup window — do NOT `navigate_page` the main window here** (see warning) |
-| Finder / Lyric Editor / Bible Note / Web Editor / About / Screen | popup windows — see [references/ui-map.md](./references/ui-map.md) |
+| Lyric Editor / Bible Note / Web Editor / About / Screen | popup windows — see [references/ui-map.md](./references/ui-map.md) |
+| Find bar | `finder.html`, pinned INSIDE the searched window as a `WebContentsView` — see [references/ui-map.md](./references/ui-map.md) |
 
 > ⚠️ **Popup-only pages (`setting.html`, `about.html`, finder, lyric/bible/web editors) must
 > NOT be loaded in the main window.** They open via `window.open` as separate windows. If you

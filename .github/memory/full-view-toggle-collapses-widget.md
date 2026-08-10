@@ -23,6 +23,9 @@ code under test, and survives reloads, so it can burn a lot of debugging time.
 **How to apply:** don't click "Full view" during QA. If a middle-column panel
 disappears, check that setting file before suspecting your change. Restore just
 that one key to the layout default from `AppPresenterMiddleComp.tsx`
-(`{"v1":["3"],"v2":["1"]}`) and reload — Settings → "Reset Widgets Size" works
-too but wipes every widget size the user customized. Related:
-[[dev-hmr-stale-state-qa]], [[cdp-dynamic-import-hijack]].
+(`{"v1":["3"],"v2":["1"]}`) and reload. Two cheaper recoveries exist since
+2026-08-09, both on the native **View** menu (NOT Settings any more): tick the
+one pane back open under **View → Widgets**, or **View → Reset Widgets Size**,
+which restores every pane live but wipes every size the user customized.
+Related: [[view-menu-widget-toggles]], [[dev-hmr-stale-state-qa]],
+[[cdp-dynamic-import-hijack]].

@@ -9,7 +9,6 @@ const {
     attemptClosing,
     captureWebScreenShot,
     docxToHtmls,
-    getAllNoneFinderWindows,
     getDocxToHtmlsVersion,
     getFonts,
     getPagesCount,
@@ -28,11 +27,14 @@ const {
     setCustomMenusData,
     tarCreate,
     tarExtract,
+    closeFindOverlayMock,
+    finderOverlayPairs,
+    startFindOverlayDraggingMock,
+    stopFindOverlayDraggingMock,
 } = vi.hoisted(() => ({
     attemptClosing: vi.fn(),
     captureWebScreenShot: vi.fn(),
     docxToHtmls: vi.fn(),
-    getAllNoneFinderWindows: vi.fn(() => [] as any[]),
     getDocxToHtmlsVersion: vi.fn(),
     getFonts: vi.fn(async () => ['Arial', 'Khmer OS']),
     getPagesCount: vi.fn(),
@@ -62,6 +64,10 @@ const {
     setCustomMenusData: vi.fn(),
     tarCreate: vi.fn(),
     tarExtract: vi.fn(),
+    closeFindOverlayMock: vi.fn(),
+    finderOverlayPairs: new Map<any, any>(),
+    startFindOverlayDraggingMock: vi.fn(),
+    stopFindOverlayDraggingMock: vi.fn(),
 }));
 
 vi.mock('font-list', () => ({
@@ -72,7 +78,6 @@ vi.mock('font-list', () => ({
 vi.mock('./electronHelpers', () => ({
     attemptClosing,
     captureWebScreenShot,
-    getAllNoneFinderWindows,
     goDownload,
     isMac: true,
     messageChannels: { screenMessage: 'app:screen:message' },
@@ -80,6 +85,25 @@ vi.mock('./electronHelpers', () => ({
     printHTMLContent,
     tarCreate,
     tarExtract,
+}));
+
+// The bar's own web contents is the IPC sender; main resolves it to the page
+// it searches. Here the fixture pairs them up directly.
+vi.mock('./finderOverlayHelpers', () => ({
+    closeFindOverlay: closeFindOverlayMock,
+    getFindOverlayHostWebContents: (webContents: any) => {
+        return finderOverlayPairs.get(webContents) ?? null;
+    },
+    getFindOverlayWebContents: (hostWebContents: any) => {
+        for (const [overlay, host] of finderOverlayPairs.entries()) {
+            if (host === hostWebContents) {
+                return overlay;
+            }
+        }
+        return null;
+    },
+    startFindOverlayDragging: startFindOverlayDraggingMock,
+    stopFindOverlayDragging: stopFindOverlayDraggingMock,
 }));
 
 vi.mock('./electronOfficeHelpers', () => ({ officeFileToPdf }));
@@ -168,7 +192,7 @@ describe('electronEventListener handlers', () => {
         screenControllerMocks.getInstance.mockReturnValue(screenInstance);
         screenControllerMocks.getAllIds.mockReturnValue([3, 4]);
         getFonts.mockResolvedValue(['Arial', 'Khmer OS']);
-        getAllNoneFinderWindows.mockReturnValue([]);
+        finderOverlayPairs.clear();
         consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
         consoleErrorSpy = vi
             .spyOn(console, 'error')
@@ -384,22 +408,96 @@ describe('electronEventListener handlers', () => {
         });
     });
 
-    test('finder handlers fan out to every non-finder window', () => {
+    test('finder handlers drive the page the bar is pinned to', () => {
         const targetWin = createMockBrowserWindow();
-        getAllNoneFinderWindows.mockReturnValue([targetWin] as any);
+        const otherWin = createMockBrowserWindow();
+        const overlayWebContents = { id: 99, send: vi.fn() };
+        finderOverlayPairs.set(overlayWebContents, targetWin.webContents);
+        electronMockState.browserWindows.push(targetWin, otherWin);
 
         initFinderEvent();
 
-        findOnHandler('finder:app:search-in-page')({}, 'grace');
+        findOnHandler('finder:app:search-in-page')(
+            { sender: overlayWebContents },
+            'grace',
+        );
         expect(targetWin.webContents.findInPage).toHaveBeenCalledWith(
             'grace',
             {},
         );
+        expect(otherWin.webContents.findInPage).not.toHaveBeenCalled();
 
-        findOnHandler('finder:app:stop-search-in-page')({}, 'clearSelection');
+        findOnHandler('finder:app:stop-search-in-page')(
+            { sender: overlayWebContents },
+            'clearSelection',
+        );
         expect(targetWin.webContents.stopFindInPage).toHaveBeenCalledWith(
             'clearSelection',
         );
+        expect(otherWin.webContents.stopFindInPage).not.toHaveBeenCalled();
+    });
+
+    test('a search from an unknown sender touches nothing', () => {
+        const targetWin = createMockBrowserWindow();
+        electronMockState.browserWindows.push(targetWin);
+
+        initFinderEvent();
+        findOnHandler('finder:app:search-in-page')(
+            { sender: { id: 1234 } },
+            'grace',
+        );
+
+        expect(targetWin.webContents.findInPage).not.toHaveBeenCalled();
+    });
+
+    test('forwards the match count back to the find bar once', () => {
+        const targetWin = createMockBrowserWindow();
+        const overlayWebContents = {
+            id: 98,
+            send: vi.fn(),
+            isDestroyed: () => false,
+        };
+        finderOverlayPairs.set(overlayWebContents, targetWin.webContents);
+
+        initFinderEvent();
+
+        const searchHandler = findOnHandler('finder:app:search-in-page');
+        searchHandler({ sender: overlayWebContents }, 'grace');
+        searchHandler({ sender: overlayWebContents }, 'grace', {
+            findNext: true,
+        });
+
+        // The `found-in-page` listener is attached once per web contents, not
+        // once per search -- otherwise every keystroke stacks another one.
+        const foundInPageCalls = targetWin.webContents.on.mock.calls.filter(
+            ([eventName]: [string]) => {
+                return eventName === 'found-in-page';
+            },
+        );
+        expect(foundInPageCalls).toHaveLength(1);
+
+        foundInPageCalls[0][1]({}, {
+            activeMatchOrdinal: 2,
+            matches: 7,
+            finalUpdate: true,
+        } as any);
+        expect(overlayWebContents.send).toHaveBeenCalledWith(
+            'main:app:found-in-page',
+            { activeMatchOrdinal: 2, matches: 7, finalUpdate: true },
+        );
+    });
+
+    test('close and drag requests reach the overlay helpers', () => {
+        initFinderEvent();
+        const sender = { id: 97 };
+
+        findOnHandler('finder:app:close')({ sender });
+        findOnHandler('finder:app:drag-start')({ sender }, 24);
+        findOnHandler('finder:app:drag-stop')({ sender });
+
+        expect(closeFindOverlayMock).toHaveBeenCalledWith(sender);
+        expect(startFindOverlayDraggingMock).toHaveBeenCalledWith(sender, 24);
+        expect(stopFindOverlayDraggingMock).toHaveBeenCalledWith(sender);
     });
 
     test('archive, conversion, and office handlers forward their payloads', async () => {

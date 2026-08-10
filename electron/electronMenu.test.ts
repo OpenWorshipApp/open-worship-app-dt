@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import type * as FinderOverlayHelpersType from './finderOverlayHelpers';
+
 vi.mock('electron', async () => {
     const mod = await import('./testElectronModule');
     return mod.createElectronModuleMock();
@@ -8,16 +10,25 @@ vi.mock('electron', async () => {
 const {
     copyDebugInfoToClipboard,
     goDownload,
+    openFindOverlay,
     previewPrintCurrentWindow,
     printCurrentWindow,
     toShortcutKey,
 } = vi.hoisted(() => ({
     copyDebugInfoToClipboard: vi.fn(),
     goDownload: vi.fn(),
+    openFindOverlay: vi.fn(),
     previewPrintCurrentWindow: vi.fn(async () => undefined),
     printCurrentWindow: vi.fn(),
     toShortcutKey: vi.fn(() => 'CmdOrCtrl+F'),
 }));
+
+vi.mock('./finderOverlayHelpers', async (importOriginal) => {
+    // Only the opening is stubbed; the host test stays real so the routing
+    // decision itself is covered.
+    const actual = await importOriginal<typeof FinderOverlayHelpersType>();
+    return { ...actual, openFindOverlay };
+});
 
 vi.mock('./electronHelpers', () => ({
     copyDebugInfoToClipboard,
@@ -42,6 +53,7 @@ describe('electronMenu', () => {
         electronMockState.reset();
         copyDebugInfoToClipboard.mockClear();
         goDownload.mockClear();
+        openFindOverlay.mockClear();
         previewPrintCurrentWindow.mockClear();
         printCurrentWindow.mockClear();
         toShortcutKey.mockClear();
@@ -171,11 +183,15 @@ describe('electronMenu', () => {
         setCustomMenusData('test', null);
     });
 
-    test('routes Find to the finder for the main window only', () => {
+    test('routes Find to the window the click targets', () => {
         const mainWin = createMockBrowserWindow();
+        // An app page gets the pinned find bar; anything else is asked to
+        // search in place.
+        mainWin.webContents.getURL.mockReturnValue(
+            'https://localhost:3000/presenter.html',
+        );
         const appController = {
             openAboutPage: vi.fn(),
-            openFindPage: vi.fn(),
             mainController: { gotoSettingHomePage: vi.fn() },
             lwShareController: { open: vi.fn() },
             mainWin,
@@ -192,25 +208,29 @@ describe('electronMenu', () => {
 
         findItem.click(undefined, mainWin);
 
-        expect(appController.openFindPage).toHaveBeenCalledTimes(1);
+        expect(openFindOverlay).toHaveBeenCalledWith(mainWin);
         expect(mainWin.webContents.send).not.toHaveBeenCalled();
 
-        // Any other window searches in place instead of opening the finder
-        // popup, which only the main window owns.
+        // The bible note has its own in-place search and only wants the
+        // request; it never gets a pinned bar.
         const popupWin = createMockBrowserWindow();
+        popupWin.webContents.getURL.mockReturnValue(
+            'https://localhost:3000/bibleNote.html',
+        );
         findItem.click(undefined, popupWin);
 
-        expect(appController.openFindPage).toHaveBeenCalledTimes(1);
+        expect(openFindOverlay).toHaveBeenCalledTimes(1);
         expect(popupWin.webContents.send).toHaveBeenCalledWith(
             'app:main:menu-item-clicked',
             { isOpenSearch: true },
         );
 
-        // No focused window at all (macOS with every window minimized) still
-        // falls back to the main window rather than dropping the click.
+        // No window handed to the click (macOS with every window minimized)
+        // falls back to the focused one rather than dropping the click.
+        electronMockState.browserWindows.push(mainWin);
         findItem.click(undefined, undefined);
 
-        expect(appController.openFindPage).toHaveBeenCalledTimes(2);
+        expect(openFindOverlay).toHaveBeenCalledTimes(2);
     });
 
     test('does not send menu clicks to a destroyed window', () => {
@@ -362,6 +382,87 @@ describe('electronMenu', () => {
             });
         } finally {
             setCustomMenusData('canvas-insert', null);
+        }
+    });
+
+    test('the View menu keeps its roles and appends renderer widget items', () => {
+        // With nothing registered the menu must be untouched — the built-in
+        // roles are the whole View menu on every page that has no widgets.
+        initMenu(createAppController() as any);
+        let template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        let viewMenu = template.find((item: any) => item.label === 'View');
+        expect(viewMenu.submenu.at(-1)).toEqual({ role: 'togglefullscreen' });
+
+        const viewClick = vi.fn();
+        setCustomMenusData('view-widgets', {
+            menusData: {
+                view: [
+                    {
+                        label: 'Widgets',
+                        submenu: [
+                            {
+                                label: 'Document List',
+                                type: 'checkbox',
+                                checked: true,
+                                clickData: {
+                                    widgetToggle: 'app-presenter-left::v1',
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        label: 'Reset Widgets Size',
+                        clickData: { widgetReset: true },
+                    },
+                ],
+            } as any,
+            clickMenu: viewClick,
+        });
+
+        try {
+            initMenu(createAppController() as any);
+            template =
+                electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+            viewMenu = template.find((item: any) => item.label === 'View');
+            // Appended after a separator, leaving the built-in roles in place.
+            expect(
+                viewMenu.submenu.map((item: any) => item.label ?? item.role),
+            ).toEqual([
+                'reload',
+                'forceReload',
+                'toggleDevTools',
+                undefined,
+                'resetZoom',
+                'zoomIn',
+                'zoomOut',
+                undefined,
+                'togglefullscreen',
+                undefined,
+                'Widgets',
+                'Reset Widgets Size',
+            ]);
+
+            // `checkbox`/`checked` survive `formatMenuItems`, which is what
+            // makes the native menu draw the widget's open state.
+            const widgetsMenu = viewMenu.submenu.find(
+                (item: any) => item.label === 'Widgets',
+            );
+            expect(widgetsMenu.submenu[0]).toMatchObject({
+                label: 'Document List',
+                type: 'checkbox',
+                checked: true,
+            });
+
+            widgetsMenu.submenu[0].click();
+            expect(viewClick).toHaveBeenCalledWith({
+                widgetToggle: 'app-presenter-left::v1',
+            });
+
+            clickItem(template, 'View', 'Reset Widgets Size');
+            expect(viewClick).toHaveBeenCalledWith({ widgetReset: true });
+        } finally {
+            setCustomMenusData('view-widgets', null);
         }
     });
 

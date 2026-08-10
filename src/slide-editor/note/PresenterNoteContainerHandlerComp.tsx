@@ -1,4 +1,8 @@
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
+import {
+    appDocumentFlexSizeNames,
+    toAppDocumentFlexSizeName,
+} from '../../resize-actor/flexSizeHelpers';
 import AppDocumentNoteEditorComp from './AppDocumentNoteEditorComp';
 import { useAppStateAsync } from '../../helper/appHooks';
 import SlidesNoteEditorComp from './SlidesNoteEditorComp';
@@ -13,8 +17,13 @@ import { toWidgetLabel } from '../../others/labelIconHelpers';
 
 export default function PresenterNoteContainerHandlerComp({
     varyAppDocumentWithNote,
-}: Readonly<{ varyAppDocumentWithNote: VaryAppDocumentWithNoteType }>) {
-    const fileFullName = varyAppDocumentWithNote.fileSource.fullName;
+    flexSizeNamePrefix,
+}: Readonly<{
+    varyAppDocumentWithNote: VaryAppDocumentWithNoteType;
+    flexSizeNamePrefix?: string;
+}>) {
+    const { fullName: fileFullName, filePath } =
+        varyAppDocumentWithNote.fileSource;
     const [varySlides] = useAppStateAsync(async () => {
         const varySlides = await varyAppDocumentWithNote.getSlides();
         return varySlides as VarySlideWithNoteType[];
@@ -26,7 +35,11 @@ export default function PresenterNoteContainerHandlerComp({
     }
     return (
         <ResizeActorComp
-            flexSizeName={fileFullName}
+            flexSizeName={toAppDocumentFlexSizeName(
+                appDocumentFlexSizeNames.presenterNote,
+                filePath,
+                flexSizeNamePrefix,
+            )}
             isHorizontal
             flexSizeDefault={{
                 h1: ['1'],
@@ -60,7 +73,7 @@ export default function PresenterNoteContainerHandlerComp({
                         },
                     },
                     key: 'h2',
-                    ...toWidgetLabel('Slides'),
+                    ...toWidgetLabel('Slide Notes'),
                     className: 'app-flex-item',
                 },
             ]}

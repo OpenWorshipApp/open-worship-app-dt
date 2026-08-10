@@ -94,7 +94,7 @@ live-on-screen = `.app-on-screen` (active background tab also gets a `*` prefix)
 | Slide / Doc Editor | `appDocumentEditor.html` → [appDocumentEditor.tsx](../../../../src/appDocumentEditor.tsx) | `AppLayoutComp` → `AppDocumentEditorComp` | main | ✅ |
 | Settings | `setting.html` → [setting.tsx](../../../../src/setting.tsx) | `SettingComp` | **popup** ⚠️ | ❌ |
 | Screen output | `screen.html` → [screen.tsx](../../../../src/screen.tsx) | `ScreenAppComp` | separate (when presenting) | ❌ |
-| Finder | `finder.html` → [finder.tsx](../../../../src/finder.tsx) | `FinderAppComp` | **popup** | ❌ |
+| Find bar | `finder.html` → [finder.tsx](../../../../src/finder.tsx) | `FinderAppComp` | **pinned `WebContentsView`** (not a window) | ❌ |
 | Lyric Editor | `lyricEditor.html` → [lyricEditor.tsx](../../../../src/lyricEditor.tsx) | `LyricEditorPopupComp` | **popup** | ❌ |
 | Bible Note | `bibleNote.html` → [bibleNote.tsx](../../../../src/bibleNote.tsx) | `NoteItemEditorPopupComp` | **popup** | ❌ |
 | Web Editor | `webEditor.html` → [webEditor.tsx](../../../../src/webEditor.tsx) | `WebEditorComp` | **popup** | ❌ |
@@ -268,7 +268,8 @@ Source: [setting/SettingComp.tsx](../../../../src/setting/SettingComp.tsx).
 | `SettingGeneralComp → SettingGeneralLanguageComp` | [setting/SettingGeneralLanguageComp.tsx](../../../../src/setting/SettingGeneralLanguageComp.tsx) | 🖱️ `Khmer` / `English` → switches locale, completed by `Apply Settings` (reloads every window). **This is the entry point for the mandatory locale block (LT-01..02, SKILL.md §6d)** — every run switches here and switches back. ⚠️ a switch you did NOT make may be the **user** — confirm before reporting (KB §1, §1.1, §3). |
 | `SettingGeneralComp → SettingGeneralThemeComp` | [setting/SettingGeneralThemeComp.tsx](../../../../src/setting/SettingGeneralThemeComp.tsx) | 🖱️ theme (system/light/dark). |
 | `SettingGeneralComp → SettingGeneralFontFamilyComp` | [setting/SettingGeneralFontFamilyComp.tsx](../../../../src/setting/SettingGeneralFontFamilyComp.tsx) | 🖱️ pick font. A configured-but-missing font shows `"Hanuman (Missing)"` — **informative, not a bug** (KB §9). |
-| `SettingGeneralComp → SettingGeneralOtherOptionsComp` | [setting/SettingGeneralOtherOptionsComp.tsx](../../../../src/setting/SettingGeneralOtherOptionsComp.tsx) | 🖱️ `Reset All Child Directories` / `Reset Widgets Size` / `Clear All Settings` (destructive — confirm dialogs). |
+| `SettingGeneralComp → SettingGeneralOtherOptionsComp` | [setting/SettingGeneralOtherOptionsComp.tsx](../../../../src/setting/SettingGeneralOtherOptionsComp.tsx) | 🖱️ `Clear All Settings` only (destructive, and it does **not** confirm). `Reset Widgets Size` moved to the native View menu on 2026-08-09. |
+| _(native View menu)_ `initWidgetAppMenu` | [resize-actor/widgetAppMenuHelpers.ts](../../../../src/resize-actor/widgetAppMenuHelpers.ts) · [resize-actor/widgetRegistry.ts](../../../../src/resize-actor/widgetRegistry.ts) | 🖱️ **View → Widgets** tick-box per collapsible pane (toggles it live) and **View → Reset Widgets Size** (confirm → restore defaults + reopen collapsed panes, live). Registered from `run()` for the main window only. Unreachable from CDP — drive `globalThis.getViewWidgetMenuItems()` / `tryToggleWidget(id)` / `tryResetWidgetsSize()` (dev only). |
 | `SettingComp → SettingBibleComp` (Bible tab) | [setting/bible-setting/SettingBibleComp.tsx](../../../../src/setting/bible-setting/SettingBibleComp.tsx) | 🖱️ download/enable/disable bible versions; ⌨️✎ search. A console `TypeError: Cannot get bible list` at `getOnlineBibleInfoList` is **intended** when the online list is unavailable — do not report (KB §7). |
 
 ---
@@ -302,7 +303,7 @@ check only (`#root` has children, no `img.loading`).
 
 | Page | Root component | Source | Interactions & expected result |
 |---|---|---|---|
-| Finder | `FinderAppComp` | [find/FinderAppComp.tsx](../../../../src/find/FinderAppComp.tsx) | ⌨️✎ search input; 🖱️ prev (`bi bi-arrow-left`) / next (`bi bi-arrow-right`); 🖱️ case-sensitive checkbox. ⌨️ `Enter` next match. |
+| Find bar | `FinderAppComp` | [find/FinderAppComp.tsx](../../../../src/find/FinderAppComp.tsx) | ⌨️✎ query; readonly `<current>/<total>` counter; 🖱️ prev / next chevrons; 🖱️ `Aa` case toggle; 🖱️ grip drag (x axis); 🖱️ close. ⌨️ `Enter` / `Shift+Enter` step, `Esc` closes. Controls are icon-only — labels live in `title`/`aria-label`. |
 | Lyric Editor | `LyricEditorPopupComp` | [lyric-list/LyricEditorPopupComp.tsx](../../../../src/lyric-list/LyricEditorPopupComp.tsx) | ⌨️✎ edit lyric text/chords; 🖱️ save; ⌨️ `Ctrl+S` save. |
 | Bible Note | `NoteItemEditorPopupComp` | [bible-list/note/NoteItemEditorPopupComp.tsx](../../../../src/bible-list/note/NoteItemEditorPopupComp.tsx) | ⌨️✎ note editor (renders into `#bible-note-root`); 🖱️/⌨️ save. |
 | Web Editor | `WebEditorComp` | [background/web/WebEditorComp.tsx](../../../../src/background/web/WebEditorComp.tsx) | ⌨️✎ web URL/title; 🖱️ save → adds a web-background item. |

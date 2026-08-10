@@ -1,10 +1,12 @@
 import type { CSSProperties, ReactNode } from 'react';
 
+import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
 import { tran } from '../lang/langHelpers';
 import {
     PRESENTING_FLOW_CC_ROW_ATTR,
     PRESENTING_FLOW_ITEM_UUID_ATTR,
 } from './presentingFlowCcHelpers';
+import PresentingFlowRowGutterComp from './PresentingFlowRowGutterComp';
 
 /**
  * One brief line in the presenting flow tree. Deliberately text-only: a presenting flow can
@@ -14,6 +16,9 @@ import {
  */
 export default function PresentingFlowRowComp({
     depth = 0,
+    lineNumber = null,
+    isCommand = false,
+    isRunCursor = false,
     idLabel,
     iconName,
     iconColor,
@@ -40,6 +45,15 @@ export default function PresentingFlowRowComp({
     extraStyle = {},
 }: Readonly<{
     depth?: number;
+    // WHICH line of the run sheet this is, 1-based, or null on a row that is not
+    // a line of it at all — a CC riding with one, a slide a document holds, a
+    // placeholder. The gutter draws its rail either way, so the column stays
+    // unbroken; only the lines the run can stop on are numbered.
+    lineNumber?: number | null;
+    // A line that DOES something rather than one that goes to a screen. Carried
+    // by the number's register, not by a colour of its own — see the gutter.
+    isCommand?: boolean;
+    isRunCursor?: boolean;
     idLabel?: string;
     iconName: string;
     iconColor?: string;
@@ -77,10 +91,14 @@ export default function PresentingFlowRowComp({
     // The flag alone means nothing on a row that is in play, and a caller that
     // only tracks where a park CAME from would otherwise mark a live row.
     const isParkedByPresentingFlow = isDisabled && isPresentingFlowDisabled;
+    // A parked row is deliberately still reachable — right-clicking it is the way
+    // back — but it fires nothing, so it is not offered as a button.
+    const isActivatable = onClick !== undefined && !isDisabled;
     return (
         <div
             className={
                 'app-presenting-flow-row d-flex align-items-center' +
+                (isRunCursor ? ' app-presenting-flow-row-run-cursor' : '') +
                 (isDisabled ? ' app-presenting-flow-row-disabled' : '') +
                 // Carries no style of its own — the strike is on the label and
                 // the tint on the glyph — but it is what tells the two parks
@@ -92,7 +110,12 @@ export default function PresentingFlowRowComp({
                 ` ${extraClassName}`
             }
             style={{
-                paddingLeft: `${depth * 12}px`,
+                // NOT padded by depth any more: the gutter below is a column the
+                // eye tracks straight down, and indenting the whole row would
+                // step it out of line on every nested row — which is most of a
+                // run sheet that lists a document. The indent is applied AFTER
+                // the gutter instead.
+                //
                 // Colour-grouped rows keep their presenting flow order — the running
                 // order IS the meaning here — so the group shows as a stripe
                 // rather than by re-sorting the list.
@@ -120,11 +143,48 @@ export default function PresentingFlowRowComp({
             onDrop={onDrop}
             onClick={onClick}
             onContextMenu={onContextMenu}
+            {...(isActivatable
+                ? {
+                      role: 'button',
+                      tabIndex: 0,
+                      // ENTER alone, deliberately not Space. Space is the run's
+                      // own next-key, registered on the window and gated on focus
+                      // being inside the floating preview — and CC rows are drawn
+                      // in there too, so a Space handler here would fire the row
+                      // AND step the run on one press. Enter is unclaimed.
+                      onKeyDown: (event: any) => {
+                          if (event.key !== 'Enter') {
+                              return;
+                          }
+                          event.preventDefault();
+                          // A keyboard event carries no coordinates, and what a
+                          // click reaches here may still have to ask WHICH screen
+                          // with a menu it positions from the event. Pointed at
+                          // the row instead, exactly as the preview widget aims
+                          // the same question (`toElementMouseEvent`).
+                          const rect =
+                              event.currentTarget.getBoundingClientRect();
+                          onClick(
+                              createMouseEvent(rect.left + 8, rect.top + 8),
+                          );
+                      },
+                  }
+                : {})}
             {...(itemUuid === undefined || itemUuid === null
                 ? {}
                 : { [PRESENTING_FLOW_ITEM_UUID_ATTR]: itemUuid })}
             {...(isCcRow ? { [PRESENTING_FLOW_CC_ROW_ATTR]: '' } : {})}
         >
+            <PresentingFlowRowGutterComp
+                lineNumber={lineNumber}
+                isCommand={isCommand}
+            />
+            {depth > 0 ? (
+                <span
+                    className="app-presenting-flow-row-indent"
+                    style={{ width: `${depth * 12}px` }}
+                />
+            ) : null}
             {isExpandable ? (
                 <i
                     className={

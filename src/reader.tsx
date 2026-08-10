@@ -9,6 +9,7 @@ import HandleAlertComp from './popup-widget/HandleAlertComp';
 import TopProgressBarComp from './progress-bar/TopProgressBarComp';
 import ToastComp from './toast/ToastComp';
 import PresentingControlComp from './presenting-control/PresentingControlComp';
+import LocationNameDetailPanelsHostComp from './location-name-lookup/LocationNameDetailPanelsHostComp';
 
 await init();
 run(
@@ -19,6 +20,7 @@ run(
         <AppContextMenuComp />
         <HandleAlertComp />
         <PresentingControlComp />
+        <LocationNameDetailPanelsHostComp />
     </>,
 );
 

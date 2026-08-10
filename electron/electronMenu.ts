@@ -17,6 +17,15 @@ import {
     type CustomMenuItemType,
 } from './electronHelpers';
 
+import {
+    checkIsFindOverlayHost,
+    openFindOverlay,
+} from './finderOverlayHelpers';
+import {
+    RESET_WINDOW_BOUNDS_LABEL,
+    resetMainWindowBounds,
+} from './taskbarHelpers';
+
 import packageInfo from '../package.json';
 import appInfo from './client/appInfo';
 
@@ -110,6 +119,7 @@ export function initMenu(appController: ElectronAppController) {
     const isMac = process.platform === 'darwin';
     const fileMenuItems = getCustomMenuItems('file');
     const insertMenuItems = getCustomMenuItems('insert');
+    const viewMenuItems = getCustomMenuItems('view');
 
     const template: any[] = [
         // { role: 'appMenu' }
@@ -192,22 +202,23 @@ export function initMenu(appController: ElectronAppController) {
                 { role: 'paste' },
                 {
                     label: `Find`,
-                    // The finder is a popup owned by the main window; any other
-                    // window (bible note, screens, ...) has to search in place,
-                    // so it gets an in-window request instead. Use the window
-                    // electron hands the click, not `getFocusedWindow()` — it is
-                    // the window the menu action actually targets.
+                    // Every window searches in place. App pages get the find
+                    // bar pinned into the window as its own `WebContentsView`
+                    // (`openFindOverlay`); the bible note has its own in-page
+                    // search and only wants the request. Use the window
+                    // electron hands the click, not `getFocusedWindow()` — it
+                    // is the window the menu action actually targets.
                     click: (
                         _menuItem: unknown,
                         browserWindow?: BrowserWindow,
                     ) => {
                         const targetWin =
                             browserWindow ?? BrowserWindow.getFocusedWindow();
-                        if (
-                            targetWin === null ||
-                            targetWin === appController.mainWin
-                        ) {
-                            appController.openFindPage();
+                        if (targetWin === null) {
+                            return;
+                        }
+                        if (checkIsFindOverlayHost(targetWin)) {
+                            openFindOverlay(targetWin);
                             return;
                         }
                         sendMenuClicked({ isOpenSearch: true }, targetWin);
@@ -262,6 +273,12 @@ export function initMenu(appController: ElectronAppController) {
                 { role: 'zoomOut' },
                 { type: 'separator' },
                 { role: 'togglefullscreen' },
+                // Renderer-owned entries (the widget open/close checkboxes and
+                // `Reset Widgets Size`). Same mechanism the File and Tools menus
+                // use, so the labels are translated where `tran` actually works.
+                ...(viewMenuItems.length === 0
+                    ? []
+                    : [{ type: 'separator' }, ...viewMenuItems]),
             ],
         },
         {
@@ -311,11 +328,11 @@ export function initMenu(appController: ElectronAppController) {
                       ]
                     : [{ role: 'close' }]),
                 {
-                    label: 'Reset Position and Size',
+                    // shared with the taskbar jump list task so the two entries
+                    // can never drift apart
+                    label: RESET_WINDOW_BOUNDS_LABEL,
                     click: () => {
-                        appController.settingManager.restoreMainBounds(
-                            appController.mainWin,
-                        );
+                        resetMainWindowBounds(appController);
                     },
                 },
             ],

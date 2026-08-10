@@ -1,5 +1,3 @@
-import type { CSSProperties } from 'react';
-
 import type { CanvasItemVideoPropsType } from '../CanvasItemVideo';
 import CanvasItemVideo from '../CanvasItemVideo';
 import img404 from '../404.png';
@@ -7,21 +5,8 @@ import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorCo
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
 import { pathToFileURL } from '../../../server/calcHelpers';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
 import { PREVIEW_ONLY_ATTR } from '../../../helper/constants';
 import { checkIsUrlMediaSource } from '../../../helper/mediaSourceHelpers';
-
-export default function BoxEditorNormalViewVideoModeComp({
-    style,
-}: Readonly<{
-    style: CSSProperties;
-}>) {
-    return (
-        <BoxEditorNormalWrapperComp style={style}>
-            <BoxEditorNormalVideoRender />
-        </BoxEditorNormalWrapperComp>
-    );
-}
 
 function genPlayIcon(width: number) {
     return (

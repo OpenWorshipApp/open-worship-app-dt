@@ -321,6 +321,32 @@ describe('bible-reader LookupBibleItemController', () => {
         await flush();
     });
 
+    test('resolveStraightBibleItems swaps the editing item for the found one', async () => {
+        const ctl = genController();
+        // Selecting is what turns the only open item into an EditingBibleItem.
+        ctl.selectedBibleItem;
+        const foundBibleItem = new FakeReadItem({
+            id: 99,
+            bibleKey: 'KJV',
+            target: { bookKey: 'LUK', chapter: 3, verseStart: 1, verseEnd: 3 },
+        }) as any;
+        const resolved = ctl.resolveStraightBibleItems(foundBibleItem);
+        expect(resolved).toHaveLength(1);
+        // Every returned item must expose a usable target: the editing one
+        // throws on `target`, which is the whole point of swapping it out.
+        expect(resolved[0].target).toEqual(foundBibleItem.target);
+        await flush();
+    });
+
+    test('resolveStraightBibleItems drops the editing item without a result', async () => {
+        const ctl = genController();
+        ctl.selectedBibleItem;
+        // An unparseable lookup input resolves to nothing; the pane then has no
+        // verses to report rather than an item that throws on `target`.
+        expect(ctl.resolveStraightBibleItems(null)).toEqual([]);
+        await flush();
+    });
+
     test('setLookupContentFromBibleItem applies target/key', async () => {
         const ctl = genController();
         const spy = vi.spyOn(ctl, 'applyTargetOrBibleKey');

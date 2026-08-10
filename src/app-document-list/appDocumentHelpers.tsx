@@ -130,6 +130,21 @@ const deleteShortcutMapper: EventMapperType = {
     key: 'Delete',
 };
 
+export function genEditSlideContextMenuItem(
+    onSelect: () => void,
+): ContextMenuItemType {
+    return {
+        childBefore: genContextMenuItemIcon('pencil-square'),
+        menuElement: (
+            <span className="m-0">
+                {tran('Edit')}
+                <i className="bi bi-box-arrow-up-right ms-2" />
+            </span>
+        ),
+        onSelect,
+    };
+}
+
 export function genSlideContextMenuItems(
     appDocument: AppDocument,
     slide: Slide,
@@ -183,22 +198,15 @@ export function genSlideContextMenuItems(
         },
     ];
     if (appProvider.isPagePresenter) {
-        menuItems.push({
-            childBefore: genContextMenuItemIcon('pencil-square'),
-            menuElement: (
-                <span className="m-0">
-                    {tran('Edit')}
-                    <i className="bi bi-box-arrow-up-right ms-2" />
-                </span>
-            ),
-            onSelect: () => {
+        menuItems.push(
+            genEditSlideContextMenuItem(() => {
                 if (appProvider.isPageAppDocumentEditor) {
                     AppDocumentListEventListener.selectVarySlide(slide);
                 } else {
                     openAppDocumentEditorExternal(appDocument, slide.id);
                 }
-            },
-        });
+            }),
+        );
     }
     const menuItemOnScreens = genShowOnScreensContextMenu((event) => {
         ScreenVaryAppDocumentManager.handleSlideSelecting(

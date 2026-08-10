@@ -89,7 +89,7 @@ export const dataDirectories: DataDirectoryType[] = [
         iconClassName: 'bi-book-half',
     },
     {
-        title: 'Notes',
+        title: 'Bible Notes',
         settingName: dirSourceSettingNames.BIBLE_NOTES,
         defaultDirName: defaultDataDirNames.BIBLE_NOTES,
         iconClassName: 'bi-journal-text',

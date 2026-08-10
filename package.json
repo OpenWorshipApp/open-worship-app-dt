@@ -8,6 +8,8 @@
     "type": "commonjs",
     "main": "./electron-build/electron/index.js",
     "scripts": {
+        "i:d": "npm cache clean --force && npm i --allow-git=root && npm run electron:install",
+        "electron:install": "node node_modules/electron/install.js",
         "dev": "concurrently -k \"npm run vite:dev\" \"npm run electron:build && npm run electron\"",
         "electron:build": "node extra-work/rmdir.mjs electron-build && tsc -p electron.tsconfig.json && node extra-work/copy-build.mjs && node extra-work/build-info.mjs",
         "electron:build:watch": "tsc -p electron.tsconfig.json -w",

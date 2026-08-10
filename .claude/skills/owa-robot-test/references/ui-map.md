@@ -16,7 +16,7 @@ Main window in dev loads `presenter.html`. Other windows open on demand.
 | Slide/Doc Editor | `https://localhost:3000/appDocumentEditor.html` | Opens when editing a doc |
 | Settings | `https://localhost:3000/setting.html` | Gear button |
 | Presentation output | `https://localhost:3000/screen.html?screenId=N` | **CDP target while showing** (toggle via `ShowHideScreen`/`F5`); target vanishes when hidden — hidden logs forward via `all:app:log` to the dev terminal |
-| Finder | `https://localhost:3000/finder.html` | |
+| Find bar | `https://localhost:3000/finder.html` | a `WebContentsView` pinned inside the searched window, NOT a popup window — opened only by `Ctrl/Cmd+F` / Edit → Find |
 | Lyric Editor | `https://localhost:3000/lyricEditor.html` | |
 | Bible Note | `https://localhost:3000/bibleNote.html` | |
 | Web Editor | `https://localhost:3000/webEditor.html` | |
@@ -181,7 +181,25 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
 Title matches `/Settings/`. Tabs `General` / `Bible`, plus a fixed `Apply Settings`
 button (top-right). The General tab holds: directory paths, `Khmer`/`English` language
 toggle, theme, font family, and the destructive resets (`Reset All Child Directories` /
-`Reset Widgets Size` / `Clear All Settings` — the old `Set Default Data` button is gone).
+`Clear All Settings` — the old `Set Default Data` button is gone, and since 2026-08-09
+so is `Reset Widgets Size`: it is a native **View** menu entry now, see below).
+
+## Native View menu (main window only)
+
+Beyond electron's own roles (`Reload` / `Force Reload` / `Toggle DevTools` / zoom /
+`Toggle Full Screen`) the View menu carries two renderer-contributed entries after a
+separator, registered by `initWidgetAppMenu` from `run()`:
+
+- **Widgets** — a tick-box per collapsible pane on the CURRENT page, checked when the
+  pane is open. Toggling opens/collapses it live. Panes belonging to an
+  `isDisableQuickResize` actor never appear.
+- **Reset Widgets Size** — confirm, then restore every pane to its default AND reopen
+  every collapsed one, live.
+
+Popup windows hide their menu bar (`createPopupWindow`), so only the main window
+contributes — which is also what keeps the click routed back to the right renderer.
+The OS menu is invisible to CDP: use the dev-only `globalThis.getViewWidgetMenuItems()`,
+`globalThis.tryToggleWidget(id)` and `globalThis.tryResetWidgetsSize()`.
 
 ## Keyboard shortcuts worth testing
 
