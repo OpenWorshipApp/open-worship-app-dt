@@ -169,12 +169,13 @@ export default function BibleLocationNamePreviewerComp() {
                     target,
                     kjvVerseMap,
                 );
+                const title = await bibleRenderHelper.toTitle('KJV', target);
                 newGroupList.push({
                     key: `${bibleItem.id}-${bibleKey}`,
                     // `(NIV) LUK 3:1-3`. The synchronous formatter on purpose:
                     // `toTitle` would read the bible's book names off disk for a
                     // header that only names the passage.
-                    title: bibleRenderHelper.toBibleVersesKey(bibleKey, target),
+                    title,
                     chapter: target.chapter,
                     names,
                     locations,

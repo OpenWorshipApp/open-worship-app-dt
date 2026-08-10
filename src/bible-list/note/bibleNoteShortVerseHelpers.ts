@@ -166,13 +166,17 @@ async function refreshShortVerseNoteRefs() {
     notifyListeners();
 }
 
-async function handleFileUpdating(filePath: string) {
+async function handleFileUpdating(filePath?: string) {
     const dirSource = await DirSource.getInstance(
         dirSourceSettingNames.BIBLE_NOTES,
     );
     const { dirPath } = dirSource;
     // `dirPath` is '' when the directory is not set, never null
-    if (!dirPath || !filePath.startsWith(dirPath + pathSeparator)) {
+    if (
+        !dirPath ||
+        !filePath ||
+        !filePath.startsWith(dirPath + pathSeparator)
+    ) {
         return;
     }
     attemptTimeout(() => {
