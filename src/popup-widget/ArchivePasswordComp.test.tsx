@@ -121,6 +121,44 @@ describe('the archive password fields', () => {
         expect(container.textContent).not.toContain('Passwords do not match');
     });
 
+    /**
+     * Found by the 2026-08-10 robot run.
+     *
+     * Clearing both fields IS an answer — "export without a password", which is
+     * exactly what the hint below the fields offers. Settling the re-ask's
+     * complaint only on a non-empty match left it showing over input that Ok
+     * would have accepted, which reads as a dialog that cannot be got out of.
+     */
+    test('drops the re-ask complaint once both fields are cleared', () => {
+        render(
+            <ArchivePasswordComp
+                isConfirming
+                invalidMessage="Passwords do not match"
+                onChange={vi.fn()}
+            />,
+        );
+        typeInto(0, 'secret');
+        typeInto(1, 'mistyped');
+        expect(container.textContent).toContain('Passwords do not match');
+
+        typeInto(0, '');
+        typeInto(1, '');
+
+        expect(container.textContent).not.toContain('Passwords do not match');
+    });
+
+    /**
+     * A password typed into the CONFIRMATION alone used to be silently read as
+     * "no password" — the fields disagreed, nothing said so, and Ok exported
+     * unprotected. They now simply have to agree.
+     */
+    test('flags a confirmation typed against an empty password', () => {
+        render(<ArchivePasswordComp isConfirming onChange={vi.fn()} />);
+        typeInto(1, 'secret');
+
+        expect(container.textContent).toContain('Passwords do not match');
+    });
+
     test('keeps a read complaint up while the password is retyped', () => {
         // An import has no confirmation to settle the complaint against, so
         // only a fresh attempt may clear it.

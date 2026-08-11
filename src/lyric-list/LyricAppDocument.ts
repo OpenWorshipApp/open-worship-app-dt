@@ -132,12 +132,15 @@ export default class LyricAppDocument extends AppDocument {
 
     // Single construction point for every LyricSlide. `displayDim` hits
     // `getDefaultScreenDisplay()` on each read, so callers building a whole song
-    // pass it in once instead of paying for it per slide.
+    // pass it in once instead of paying for it per slide. `openLyricIndex` is
+    // last because only the slides that stand for a verse of the song have one
+    // — everything else takes the `-1` default.
     genLyricSlide(
         id: number,
         openLyricKey: string,
         canvasItems: CanvasItemPropsType[],
         displayDim = this.displayDim,
+        openLyricIndex = -1,
     ) {
         return new LyricSlide(
             this.filePath,
@@ -152,6 +155,7 @@ export default class LyricAppDocument extends AppDocument {
                 stage: this.stage,
             },
             openLyricKey,
+            openLyricIndex,
         );
     }
 
@@ -160,13 +164,20 @@ export default class LyricAppDocument extends AppDocument {
         i: number,
         dataMap: Record<string, string>,
         displayDim = this.displayDim,
+        openLyricIndex = -1,
     ) {
         const srcData = dataMap[key];
         const canvasItemProps = this.genCanvasItemHtmlProps(
             i,
             typeof srcData === 'string' ? srcData : '',
         );
-        return this.genLyricSlide(i, key, [canvasItemProps], displayDim);
+        return this.genLyricSlide(
+            i,
+            key,
+            [canvasItemProps],
+            displayDim,
+            openLyricIndex,
+        );
     }
 
     extendExtraSlide(
@@ -212,7 +223,7 @@ export default class LyricAppDocument extends AppDocument {
         const structure = openLyricPreviewer.getStructure();
         const displayDim = this.displayDim;
         const slides = structure.map((key, i) => {
-            return this.genLyricSlide(i, key, [], displayDim);
+            return this.genLyricSlide(i, key, [], displayDim, i);
         });
         return this.extendExtraSlide(slides, {});
     }

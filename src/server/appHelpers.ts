@@ -19,6 +19,8 @@ import FileSource, { type SrcData } from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { appError as logError } from '../helper/loggerHelpers';
 import { useAppEffect } from '../helper/appHooks';
+import type { ExtraBinPathsType } from '../helper/extra-bin/extraBinHelpers';
+import { EXTRA_BIN_MISSING_ERROR_MESSAGE } from '../helper/extra-bin/extraBinErrors';
 
 export function genReturningEventName(eventName: string) {
     return `${eventName}-return-${crypto.randomUUID()}`;
@@ -294,19 +296,30 @@ export function downloadImage(targetUrl: string, outputDir: string) {
  * user happens to have installed. Shared by every yt-dlp call so a fix to one
  * of them cannot miss the other.
  */
-function toYtDlpRuntimeArgs() {
-    const { ytUtils } = appProvider;
+function toYtDlpRuntimeArgs(extraBinPaths: ExtraBinPathsType) {
     return [
         '--no-playlist',
         '--ffmpeg-location',
-        `${ytUtils.ffmpegBinPath}`,
+        `${extraBinPaths.ffmpegBinDirPath}`,
         // yt-dlp enables deno by default and prefers it over every other
         // runtime, so clear the defaults before pointing it at the QuickJS we
         // ship - otherwise a deno on the user's PATH silently wins.
         '--no-js-runtimes',
         '--js-runtimes',
-        `quickjs:${ytUtils.qjsBinPath}`,
+        `quickjs:${extraBinPaths.qjsBinPath}`,
     ];
+}
+
+/**
+ * The media helpers are installed on demand rather than bundled, so every
+ * yt-dlp caller has to go through this first. Imported lazily: this module is on
+ * the launch path and must not statically pull in the storage helpers and the
+ * confirm dialog the guard needs.
+ */
+async function requireExtraBinPathsLazily() {
+    const { requireExtraBinPaths } =
+        await import('../helper/extra-bin/extraBinHelpers');
+    return await requireExtraBinPaths();
 }
 
 /**
@@ -321,13 +334,19 @@ function toYtDlpRuntimeArgs() {
  * `crossOrigin="anonymous"` video stays canvas-readable.
  */
 export async function resolveMediaStreamUrl(targetUrl: string) {
-    const ytDlpWrap = await appProvider.ytUtils.getYTHelper();
+    const extraBinPaths = await requireExtraBinPathsLazily();
+    if (extraBinPaths === null) {
+        throw new Error(EXTRA_BIN_MISSING_ERROR_MESSAGE);
+    }
+    const ytDlpWrap = await appProvider.ytUtils.getYTHelper(
+        extraBinPaths.ytDlpBinPath,
+    );
     const output = await ytDlpWrap.execPromise([
         targetUrl.trim(),
         '-g',
         '-f',
         'b[ext=mp4]/b',
-        ...toYtDlpRuntimeArgs(),
+        ...toYtDlpRuntimeArgs(extraBinPaths),
     ]);
     const streamUrl = output
         .split('\n')
@@ -351,6 +370,14 @@ export function downloadVideoOrAudio(
     return new Promise<{ filePath: string; fileFullName: string }>(
         (resolve, reject) => {
             (async () => {
+                // Before `getPageTitle`, today's first network call: a user who
+                // has not installed the media pack should not wait on a request
+                // that cannot lead anywhere.
+                const extraBinPaths = await requireExtraBinPathsLazily();
+                if (extraBinPaths === null) {
+                    reject(new Error(EXTRA_BIN_MISSING_ERROR_MESSAGE));
+                    return;
+                }
                 const videoOrAudioUrl = targetUrl.trim();
                 const title = await getPageTitle(videoOrAudioUrl);
                 const resolvedSuccess = (resolvedFilePath: string) => {
@@ -383,10 +410,12 @@ export function downloadVideoOrAudio(
                         handleError(cleanupError);
                     }
                 };
-                const ytDlpWrap = await appProvider.ytUtils.getYTHelper();
+                const ytDlpWrap = await appProvider.ytUtils.getYTHelper(
+                    extraBinPaths.ytDlpBinPath,
+                );
                 let filePath: string | null = null;
                 const args = [videoOrAudioUrl, '-o', outputFormat];
-                args.push(...toYtDlpRuntimeArgs());
+                args.push(...toYtDlpRuntimeArgs(extraBinPaths));
                 if (!isVideo) {
                     args.push(
                         '-x',

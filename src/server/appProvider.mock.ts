@@ -1166,7 +1166,7 @@ const appProviderMock = {
         },
     },
     ytUtils: {
-        getYTHelper: async () => {
+        getYTHelper: async (_ytDlpBinPath: string) => {
             const helper = {
                 on: () => helper,
                 off: () => helper,
@@ -1176,8 +1176,6 @@ const appProviderMock = {
             };
             return helper;
         },
-        ffmpegBinPath: '',
-        qjsBinPath: '',
     },
     // Read defensively: this object is built at MODULE LOAD, and the module is
     // reached from NODE-environment tests too — anything under `helper/` that

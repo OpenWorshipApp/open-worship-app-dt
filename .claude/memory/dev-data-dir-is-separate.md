@@ -21,6 +21,10 @@ resolves to the non-dev `open-worship-data`, so a download in progress writes it
 succeeded, but polling `open-worship-data\videos` showed nothing and the run was nearly
 filed as a broken-binary failure. The binaries were fine.
 
+Since refactor27 the yt-dlp/ffmpeg/qjs **binaries** follow this directory too — they are
+installed into `<this dir>\extra-bin`, not shipped inside the app. See
+[[extra-bin-on-demand]].
+
 **How to apply:** read the real directory off the UI (`PathSelectorComp` text in the
 Background panel) or check `open-worship-data-dev` first when verifying anything that
 writes user files in dev. Related: [[build-kills-running-dev-app]],

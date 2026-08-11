@@ -336,7 +336,7 @@ const dictionary = {
     'Show Time': 'បង្ហាញម៉ោង',
     Loading: 'កំពុងផ្ទុក',
     'Reload is needed': 'ត្រូវការការផ្ទុកឡើងវិញ',
-    'We were sorry, Internal process error, you to refresh the app':
+    'Sorry, an internal process error occurred. Please refresh the app.':
         'យើងខ្ញុំសូមអភ័យទោស កំហុសក្នុងដំណើរការ ខ្ញុំសូមអញ្ជើញអ្នកធ្វើការផ្ទុកឡើងវិញនៃកម្មវិធី',
     Exporting: 'កំពុងបំលែង',
     'Export to MS Word': 'បំលែងទៅឯកសារ MS Word',
@@ -758,6 +758,20 @@ const dictionary = {
     'Import Presenting Flow': 'នាំចូលតារាងកម្មវិធី',
     'Export Bible Note Item': 'នាំចេញកំណត់ចំណាំព្រះគម្ពីរ',
     'Import Bible Note Item': 'នាំចូលកំណត់ចំណាំព្រះគម្ពីរ',
+    // The XML bibles of the Bible settings page, as their own bundle.
+    'Bible Data': 'ទិន្នន័យព្រះគម្ពីរ',
+    'Export Bible Data': 'នាំចេញទិន្នន័យព្រះគម្ពីរ',
+    'Import Bible Data': 'នាំចូលទិន្នន័យព្រះគម្ពីរ',
+    'Choose the bibles to export': 'ជ្រើសរើសព្រះគម្ពីរដែលត្រូវនាំចេញ',
+    'Choose the bibles to import': 'ជ្រើសរើសព្រះគម្ពីរដែលត្រូវនាំចូល',
+    'Drop an exported bible data file here to import':
+        'ទម្លាក់ឯកសារទិន្នន័យព្រះគម្ពីរដែលបាននាំចេញនៅទីនេះដើម្បីនាំចូល',
+    // Why a row of the import picker is red and cannot be taken. An existing
+    // bible is never overwritten and never duplicated beside itself.
+    'Bible key already exists': 'លេខកូដព្រះគម្ពីរនេះមានរួចហើយ',
+    'Unable to read this bible file': 'មិនអាចអានឯកសារព្រះគម្ពីរនេះបានទេ',
+    'Duplicate bible key in this archive':
+        'លេខកូដព្រះគម្ពីរស្ទួនក្នុងឯកសារបណ្ណសារនេះ',
     // The two bodies every export/import toast is built from. The path or the
     // name goes on AFTER the translation, never into the key.
     'Exported to': 'បាននាំចេញទៅ',
@@ -1070,6 +1084,8 @@ const dictionary = {
     'Item ID:': 'លេខសម្គាល់ធាតុ៖',
     'Jumping Chapter': 'កំពុងលោតទៅជំពូក',
     'Leave a markdown text here': 'សរសេរអក្សរ markdown នៅទីនេះ',
+    'Leave a marquee bottom text here': 'សរសេរអត្ថបទអក្សររត់ខាងក្រោមនៅទីនេះ',
+    'Leave a marquee top text here': 'សរសេរអត្ថបទអក្សររត់ខាងលើនៅទីនេះ',
     'LibreOffice is not installed': 'មិនបានដំឡើង LibreOffice',
     Locked: 'បានចាក់សោ',
     'Locked items cannot be deleted': 'ធាតុដែលបានចាក់សោមិនអាចលុបបានទេ',
@@ -1207,6 +1223,51 @@ const dictionary = {
     'Open in Google Maps': 'បើកក្នុង Google Maps',
     'Open in bible lookup': 'បើកក្នុងការស្វែងរកព្រះគម្ពីរ',
     'Show more': 'បង្ហាញបន្ថែម',
+    // The bible translation info popup, opened from the lookup pane header while
+    // no verse has resolved yet. `Title` already exists above and resolves after
+    // key sanitization, so it is not repeated here — a duplicate would throw
+    // when this module loads.
+    'Bible Information': 'ព័ត៌មានព្រះគម្ពីរ',
+    Key: 'កូនសោ',
+    Version: 'កំណែ',
+    Locale: 'ភាសា',
+    Publisher: 'អ្នកបោះពុម្ពផ្សាយ',
+    'Copy Rights': 'រក្សាសិទ្ធិ',
+    'Legal Note': 'កំណត់សម្គាល់ផ្លូវច្បាប់',
+    Description: 'ការពិពណ៌នា',
+    Books: 'គម្ពីរ',
+    // --- The on-demand media tools pack (Settings > Others > Extra Binaries),
+    // and the dialog that sends a user there when they try to download a video
+    // or audio without it (2026-08-10).
+    'Extra Binaries': 'កម្មវិធីបន្ថែម',
+    'The media tools used to download background video and audio. They are downloaded separately to keep the app small.':
+        'ឧបករណ៍មេឌាសម្រាប់ទាញយកវីដេអូ និងសំឡេងផ្ទៃខាងក្រោយ។ ' +
+        'វាត្រូវបានទាញយកដោយឡែក ដើម្បីឲ្យកម្មវិធីនៅតូច។',
+    'Media Tools Required': 'ត្រូវការឧបករណ៍មេឌា',
+    'Downloading video or audio needs the extra binaries, which are not installed yet.':
+        'ការទាញយកវីដេអូ ឬសំឡេង ត្រូវការកម្មវិធីបន្ថែម ' +
+        'ដែលមិនទាន់បានដំឡើងនៅឡើយ។',
+    'Would you like to open Settings to install them?':
+        'តើអ្នកចង់បើកការកំណត់ ដើម្បីដំឡើងវាឬ?',
+    Location: 'ទីតាំង',
+    'Installed version': 'កំណែដែលបានដំឡើង',
+    'Latest version': 'កំណែថ្មីបំផុត',
+    'Not installed': 'មិនទាន់បានដំឡើង',
+    Installed: 'បានដំឡើង',
+    'Checking...': 'កំពុងពិនិត្យ...',
+    'Could not check for updates': 'មិនអាចពិនិត្យរកកំណែថ្មីបានទេ',
+    Archive: 'ឯកសារបង្ហាប់',
+    'Kept on purpose, so the binaries can be extracted again without downloading.':
+        'ត្រូវបានរក្សាទុកដោយចេតនា ដើម្បីអាចពន្លាកម្មវិធីឡើងវិញ ' +
+        'ដោយមិនចាំបាច់ទាញយកម្តងទៀត។',
+    'Download and Install': 'ទាញយក និងដំឡើង',
+    'Update to': 'ធ្វើបច្ចុប្បន្នភាពទៅ',
+    Reinstall: 'ដំឡើងឡើងវិញ',
+    'Re-extract': 'ពន្លាឡើងវិញ',
+    'Reveal Folder': 'បង្ហាញថតឯកសារ',
+    'No pack is available for this app version':
+        'គ្មានកញ្ចប់សម្រាប់កំណែកម្មវិធីនេះទេ',
+    'No local pack was built yet': 'មិនទាន់បានបង្កើតកញ្ចប់ក្នុងម៉ាស៊ីននេះទេ',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

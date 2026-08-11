@@ -178,11 +178,24 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
 
 ## Settings window (`setting.html`)
 
-Title matches `/Settings/`. Tabs `General` / `Bible`, plus a fixed `Apply Settings`
-button (top-right). The General tab holds: directory paths, `Khmer`/`English` language
-toggle, theme, font family, and the destructive resets (`Reset All Child Directories` /
-`Clear All Settings` — the old `Set Default Data` button is gone, and since 2026-08-09
-so is `Reset Widgets Size`: it is a native **View** menu entry now, see below).
+Title matches `/Settings/`. **Three** tabs — `General` / `Bible` / `Others` — in a
+vertical left sidebar (`TabRenderComp` nav-links, not a top tab bar), plus a fixed
+`Apply Settings` button (bottom-left). The General tab holds: directory paths,
+`Khmer`/`English` language toggle, theme, font family, and the destructive resets
+(`Reset All Child Directories` / `Clear All Settings` — the old `Set Default Data` button
+is gone, and since 2026-08-09 so is `Reset Widgets Size`: it is a native **View** menu
+entry now, see below).
+
+The **`Others`** tab (verified live 2026-08-10) holds a single card, *Set AI API Key*
+(`SettingOthersAIComp`): an **OpenAI API Key** and an **Anthropic API Key** input, each
+with a 💡 hint icon, a `bi-check-circle-fill` tick once a key is stored, and an
+`API Key ↗` button opening the provider's key page externally (EX-04 — do not follow).
+Keys are saved **on blur**, not per keystroke, and then flag `pendingApply`. Two notes for
+a run: both inputs are `type="text"` (a plaintext-secret finding, filed 2026-08-10), and
+their two labels are hardcoded English so they do **not** translate in Khmer — that is
+untranslated UI, not the `tran()` throw, since neither string ever reaches `tran()`.
+`coverage-matrix.md` enumerates the tab in **ST-02** but has no row for this panel's
+contents.
 
 ## Native View menu (main window only)
 

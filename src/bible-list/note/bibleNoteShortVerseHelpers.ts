@@ -8,7 +8,9 @@ import {
     escapeSelectorValue,
     notifyElementHighlight,
 } from '../../helper/domHelpers';
-import FileSource from '../../helper/FileSource';
+import FileSource, {
+    type FileSourcePathEventDataType,
+} from '../../helper/FileSource';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import { pathSeparator } from '../../server/fileHelpers';
 import Note from './Note';
@@ -166,7 +168,17 @@ async function refreshShortVerseNoteRefs() {
     notifyListeners();
 }
 
-async function handleFileUpdating(filePath?: string) {
+/**
+ * The path comes off the `:with-path` channel, NOT off the listener's plain
+ * `data`: the unscoped `update` event hands on whatever the firing code passed,
+ * which is `undefined` for `writeFileData` and an `{isHistoryEditing}` object
+ * for an editing-history write. Reading a path out of that argument meant this
+ * filter never matched a note save (so the index never refreshed) and threw
+ * outright on the history payload.
+ */
+async function handleFileUpdating({
+    filePath,
+}: FileSourcePathEventDataType<unknown>) {
     const dirSource = await DirSource.getInstance(
         dirSourceSettingNames.BIBLE_NOTES,
     );
@@ -174,7 +186,7 @@ async function handleFileUpdating(filePath?: string) {
     // `dirPath` is '' when the directory is not set, never null
     if (
         !dirPath ||
-        !filePath ||
+        typeof filePath !== 'string' ||
         !filePath.startsWith(dirPath + pathSeparator)
     ) {
         return;
@@ -187,7 +199,7 @@ async function handleFileUpdating(filePath?: string) {
 function subscribe(listener: () => void) {
     listeners.add(listener);
     if (listeners.size === 1) {
-        const registeredEvents = FileSource.registerEventListener(
+        const registeredEvents = FileSource.registerFileSourcePathEventListener(
             ['update'],
             handleFileUpdating,
         );

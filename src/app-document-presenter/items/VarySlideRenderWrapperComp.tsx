@@ -4,7 +4,10 @@ import SlideRenderComp from './SlideRenderComp';
 import PdfSlideRenderComp from './PdfSlideRenderComp';
 import PptxSlideRenderComp from './PptxSlideRenderComp';
 import DocxSlideRenderComp from './DocxSlideRenderComp';
-import { handleVarySlideSelecting } from './varyAppDocumentHelpers';
+import {
+    fireOnSlideItemSelectedEvent,
+    handleVarySlideSelecting,
+} from './varyAppDocumentHelpers';
 import { usePresetScreenIds } from '../../_screen/managers/screenChoosingHelpers';
 import { useSelectedEditingSlideSetterContext } from '../../app-document-list/appDocumentHelpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
@@ -33,6 +36,7 @@ function selectVarySlide(
     },
     event: MouseEvent,
 ) {
+    fireOnSlideItemSelectedEvent(event);
     event.stopPropagation();
     setTimeout(() => {
         handleVarySlideSelecting(

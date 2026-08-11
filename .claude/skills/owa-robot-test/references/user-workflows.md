@@ -21,7 +21,51 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-09c** (**new W-31 — "Hide, show, and reset the app's panels
+**workflowsVersion: 2026-08-10d** (**new W-34 — "Add a Bible translation from the internet
+(XML), and make it read in its own language"**. W-33 moves translations you already have;
+this ADDS a new one from a link, entirely in the UI — the flow that produced `ពគប`. Driven
+live end to end on `github.com/Beblia/Holy-Bible-XML-Format/…/KhmerBFBSBible.xml`. Two halves
+are worth reading twice. (1) An XML from the internet usually carries no short code, so the
+app asks with a row of **Guessing keys** buttons built from the words in the file's own
+header — the Beblia files leave a bible.com address there ending in `…GEN.23.ពគប`, which is
+literally where that badge came from — and since the code is also the file name it has to be
+settled at import time. (2) A raw import lands on **English**: English book names, `1 2 3`,
+and the translation filed under English in the bible menu. The three right-click commands in
+the **Info** editor (**🌎 Choose Locale**, **#️⃣ Edit Numbers Map**, **📚 Edit Books Map**) fix
+that, **in that order** — the numbers and the book-name suggestions are both derived from the
+locale set first — and **📖 Guessing Names** fills all 66 Khmer book names from the sets the
+app ships. Proof it worked is in the reader: the translation leaves the English group and its
+references render `(ពគប) កិច្ចការ ២៨:១៥`.)
+Previous: **2026-08-10c** (**the mistyped-password panel now comes BACK holding what
+you typed and ticked.** W-33 step 3 and W-21 step 10a used to promise that a mismatch "can
+never quietly produce an unprotected file" — on Export Data and Export Bible Data it could,
+because the panel was re-opened through an alert that wiped both the password fields and the
+selection. Fixed 2026-08-10; the wording now says what the operator actually sees.)
+Previous: **2026-08-10b** (**new W-33 — "Share your Bible translations (XML) with
+another machine"**. W-24 already shared a bible LIST (verse references); this shares the
+translations themselves, which until now could only be moved by digging the files out of
+the app-managed bibles folder by hand. Settings → Bible grows a **Bible Data**
+(ទិន្នន័យព្រះគម្ពីរ) card under **Import XML File**, with the same picker + optional
+password every other export uses, and the whole Bible XML page accepts the bundle as a
+drop. Observed live in **both locales** on 20 installed translations — including the four
+Khmer-keyed ones (`គកស១៦`, `គខប`, `ពគប`, `អគត`), which is exactly the case a translated row
+label would have blanked the popup on. The part worth reading twice is step 6: an import
+never overwrites and never makes a second copy, so a bible it cannot take becomes a red,
+un-tickable row naming the reason — key already exists (upper/lower case are the same key),
+duplicate key inside the bundle, or a file whose key cannot be read.)
+Previous: **2026-08-10** (**new W-32 — "See who published a Bible translation
+(and its copyright)"**. The bible pane header now carries an **ⓘ Bible Information**
+button while no verse has resolved — in the book grid AND the chapter grid — opening a
+read-only card with the edition's title, key, version, locale, publisher, copyright,
+legal note, description and book count. It replaces the Settings → Bible → pencil →
+**Info** detour for reading (editing still lives there). Observed live on
+`Khmer BFBS (ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤)` in **both locales**: the button appears with an
+empty lookup box, survives picking a book, and disappears the moment a chapter resolves
+and the verse buttons take its slot; Escape and ✕ both close it without disturbing the
+grid. A web address inside any of those values (publishers put their site in the
+copyright or legal note) renders as a link and opens in the system browser, leaving the
+app where it is.)
+Previous: **2026-08-09c** (**new W-31 — "Hide, show, and reset the app's panels
 (View menu)"**. Every collapsible panel now registers itself into a native
 **View → Widgets** submenu as a tick-box that opens/closes it by name, and
 **Reset Widgets Size moved out of Settings onto the View menu**, where it applies
@@ -1320,7 +1364,9 @@ thing to another machine.
     **Ok**. **Show Password** (បង្ហាញពាក្យសម្ងាត់) reveals what you typed if you want to
     check it. You get `<name>.owapf.enc` instead — the same bundle, locked. If the two
     fields do not match the panel says **Passwords do not match**
-    (ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ) and asks again rather than exporting.
+    (ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ) and asks again rather than exporting, keeping what you
+    already typed so you only fix the half that is wrong. Clearing both fields is always
+    allowed — that just means "no password".
 
     > **There is no way to recover a forgotten password.** Nobody — not you, not the app,
     > not the person you send it to — can open the bundle without it. Write it down
@@ -1793,3 +1839,188 @@ menu bar does the same thing by name, which is easier when the strip is hard to 
 > effect at once.
 
 _Verify: NAV-20, NAV-21, ST-22._
+
+### W-32 — See who published a Bible translation (and its copyright)
+
+**Goal:** find out which edition of the Bible you are reading — its publisher,
+version, language and copyright notice — without leaving the reader.
+
+You do not need Settings for this. The information is one click away, but only while
+you are still choosing what to read: once a verse is on screen the header gives that
+space to the verse buttons instead.
+
+1. Open **Bible Reader** (see W-11) and make sure the lookup box at the top is
+   **empty**, so the pane shows the grid of book names (**លោកុប្បត្តិ (Genesis)**,
+   **និក្ខមនំ (Exodus)**, …). 📸
+2. Look at the **top-right corner of that pane**, on the same line as the small
+   version badge (e.g. `ពគប`). There is a round **ⓘ** button — hover it and the tip
+   reads **Bible Information** (ព័ត៌មានព្រះគម្ពីរ).
+3. Click **ⓘ**. A card opens in the middle of the window. 📸 It lists:
+   - **Title** (ចំណងជើង) — the edition's full name, e.g.
+     `Khmer BFBS (ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤)`
+   - **Key** (កូនសោ) — the short code shown on the badge, e.g. `ពគប`
+   - **Version** (កំណែ), **Locale** (ភាសា) — e.g. `Khmer (ភាសាខ្មែរ) (km-KH)`
+   - **Publisher** (អ្នកបោះពុម្ពផ្សាយ), **Copy Rights** (រក្សាសិទ្ធិ),
+     **Legal Note** (កំណត់សម្គាល់ផ្លូវច្បាប់) — e.g.
+     `© BFBS/UBS 1954, 1962. All Rights Reserved.`
+   - **Description** (ការពិពណ៌នា), **Books** (គម្ពីរ) — how many books this edition
+     contains, e.g. `66`
+   - Anything the edition does not record is simply left out of the list.
+4. If any of those lines mentions a **web address** — publishers often put their site
+   in the copyright or legal note — it is shown as a link. Click it and the page opens
+   in your normal web browser; the app itself stays where it is. 📸
+5. You can select and copy any of it — handy when a copyright line has to go on a
+   printed order of service.
+6. Close it with the **✕** in its corner, or press **Escape**. You come straight back
+   to the book grid exactly as you left it.
+7. Pick a book, then a chapter. As soon as the verses appear, the **ⓘ** is gone and the
+   verse buttons (copy, split, save, present…) take its place. Clear the box again and
+   it returns.
+
+> Want to change any of this rather than just read it? That is still
+> **Settings → Bible**, the pencil next to the translation, then the **Info** tab.
+
+_Verify: RD-77, RD-78, RD-11, LT-01._
+
+---
+
+### W-33 — Share your Bible translations (XML) with another machine
+
+W-24 shares a **bible list** — the verses you lined up. This shares the **translations
+themselves**: the XML bibles you added or edited under **Settings → Bible**, which
+until now could only be moved by digging the files out by hand.
+
+1. Open **Settings → Bible** (ព្រះគម្ពីរ). Under the **Import XML File**
+   (នាំចូលឯកសារ XML) box on the left there is a card headed **Bible Data**
+   (ទិន្នន័យព្រះគម្ពីរ). 📸
+2. Click **Export Bible Data** (នាំចេញទិន្នន័យព្រះគម្ពីរ). A panel opens listing every
+   translation you have, one row each, showing its short **key** (`KJV`, `GKHB`, `ពគប`…)
+   and its full title. Everything starts ticked. Untick the ones you do not want, or use
+   **Deselect All** (ដកការជ្រើសរើសទាំងអស់) and pick just a few. 📸
+3. Below the list, the same **Password** (ពាក្យសម្ងាត់) / **Confirm Password**
+   (បញ្ជាក់ពាក្យសម្ងាត់) pair as every other export: leave both empty for the ordinary
+   bundle, or type the same password in both to lock it. Type them differently and the
+   app tells you **Passwords do not match** in the panel itself and brings it straight
+   back — still holding the bibles you ticked and the password you typed — so a mistyped
+   password can never quietly produce an unprotected file, and you never have to pick your
+   translations a second time.
+4. Click **Ok**. You get one `Bible Data.owabdata.tar.gz` in your **Downloads** folder
+   (or `Bible Data.owabdata.enc` if you set a password), and the folder opens on it.
+   Bibles are big files — a couple of translations can run to tens of MB.
+5. On the other machine, open **Settings → Bible** and **drag the file anywhere onto
+   that page** — the whole Bible settings area accepts it, not just the small card. Or
+   click **Import Bible Data** (នាំចូលទិន្នន័យព្រះគម្ពីរ) and pick it. A protected
+   bundle asks for its password first, and says **Wrong password, try again** rather
+   than failing outright. 📸
+6. A panel lists what is inside. Anything that can come in is ticked. Anything that
+   **cannot** is shown as a **red row** you are not allowed to tick, with the reason on
+   the right:
+   - **Bible key already exists** (លេខកូដព្រះគម្ពីរនេះមានរួចហើយ) — you already have a
+     translation with that key. Upper and lower case count as the same key, so a `kjv`
+     in the bundle is refused against a `KJV` you already have.
+   - **Duplicate bible key in this archive** (លេខកូដព្រះគម្ពីរស្ទួនក្នុងឯកសារបណ្ណសារនេះ)
+     — two entries in the same bundle claim the same key; the first one is offered.
+   - **Unable to read this bible file** (មិនអាចអានឯកសារព្រះគម្ពីរនេះបានទេ) — the app
+     could not read a bible key out of that file, so it cannot check it and will not
+     touch it. 📸
+7. Click **Ok**. The ticked translations are added and the list on the right refreshes
+   to show them. A message tells you how many came in and how many were skipped.
+
+> Notes: an import **never replaces** a translation you already have, and never leaves
+> you with two copies of one. That is the whole point of the red rows — where documents
+> and backgrounds add a second copy as `a (1).mp4`, a bible is identified by its key,
+> and two bibles with the same key would be ambiguous everywhere else in the app. If you
+> genuinely want the incoming version, delete yours first (the 🗑 next to it) and import
+> again.
+>
+> Only the **XML** translations are in the bundle — the ones listed under **Bibles XML**.
+> Bible versions you downloaded inside the app are not: they are hundreds of MB and can
+> simply be downloaded again on the other machine.
+>
+> The check is done against the **file inside the bundle**, not against what the bundle
+> claims — so a hand-edited bundle cannot talk the app into overwriting a bible.
+
+_Verify: ST-34..ST-40, LT-01._
+
+---
+
+### W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
+
+W-33 moves translations you already have. This one **adds a new translation from a link** —
+the way `ពគប` (Khmer BFBS 1954) was added — with no file to download by hand and no file
+manager: every step is in the app.
+
+The example throughout is the free Beblia XML collection, whose Khmer edition lives at
+`https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSBible.xml`.
+Any XML in the app's format works the same way (**Import XML File → ?** shows the format).
+
+**Part 1 — bring the file in**
+
+1. Open **Settings** (Tools → Settings, or the ⚙ button) and pick the **Bible**
+   (ព្រះគម្ពីរ) tab. Top-left is the **Import XML File** (នាំចូលឯកសារ XML) box. 📸
+2. Leave **Choose File** alone and paste the link into the **URL:** box instead. As soon as
+   the link is a valid address the file row dims out and **Import** (នាំចូល) lights up.
+   (A malformed address turns the box red with the tip **Invalid URL**.)
+3. Click **Import**. A progress line walks through **Downloading file… → Reading file… →
+   Deleting file…** — the app fetches the file itself, reads it, and throws the download
+   away. Bibles are big; the Khmer one is about 14 MB, so give it a moment.
+   > A GitHub `…/raw/…` link is fine as-is — the app follows the redirect. So is any plain
+   > `http://` address, e.g. a file served off another laptop on your own network.
+
+**Part 2 — name it (the "Key is missing" question)**
+
+4. Most XML bibles on the internet carry no short code, so the app asks: a **Key is
+   missing** window with **Define a Bible key**, a **Key:** box, and a row of **Guessing
+   keys:** buttons. 📸
+   The buttons are every word the app could find in the file's own header, so one of them
+   is usually the right answer — for the Khmer file the publisher left a bible.com address
+   in the header ending in `…GEN.23.ពគប`, and **`ពគប` is offered as a button**. Click it and
+   the box fills in. Otherwise type your own short code; anything works, including Khmer.
+   > A code you already use is refused — the box turns red with **Key is already taken**.
+   > This code is the badge you will see everywhere in the app, and it also becomes the
+   > file name, so **choose it now**: changing it later in the editor renames the badge but
+   > not the file.
+5. Click **Ok**. The app asks once more — **Confirm Key for Bible**, *Do you want to
+   continue with key="ពគប"?* — click **Yes**. (**No** takes you back to the box; the way
+   out entirely is **Cancel** then **No**.)
+6. The new translation appears in the **Bibles XML** list on the right, badge on the left
+   and full title beside it. 📸 It works already — but if it is not an English bible, read on.
+
+**Part 3 — make it read in its own language**
+
+A file downloaded from the internet almost never says what language it is in, so the app
+assumes English: book names in English, `1 2 3` instead of `១ ២ ៣`, and the translation
+filed under **English** in the bible menu. Three settings fix that, and **the order
+matters** — the last two take their suggestions from the language you set first.
+
+7. Click the ✏️ **pencil** next to your new translation. The **Info** tab opens a text
+   editor holding the translation's settings. **Right-click inside it** — below the usual
+   editing commands are three of the app's own:
+   **🌎 Choose Locale**, **#️⃣ Edit Numbers Map**, **📚 Edit Books Map**. 📸
+8. **🌎 Choose Locale** first. Pick the language from the list — for Khmer that is
+   **km-KH (Khmer (ភាសាខ្មែរ))**. The `"locale"` line in the editor changes and the bar at
+   the bottom starts warning **Unsaved changes**.
+9. **#️⃣ Edit Numbers Map** next. The window is titled **Numbers map** and now says *Define
+   numbers map for km* — because of step 8. Click **Use ១ ២ ៣** to fill in that language's
+   own digits and click **Ok**. (There is also a **Translate** link to Google Translate if
+   your language is not one the app knows.) 📸
+10. **📚 Edit Books Map** last. This opens the 66 book names, one per line, with the
+    English name of each book shown down the left so you can never lose your place. Click
+    **📖 Guessing Names** — the app lists the book-name sets it ships for that language,
+    labelled by the translations that use them (for Khmer: `អគត`, `ពគប, គកស១៦, GKHB`,
+    `គខប`), with the set matching your code shown first and in bold. Pick one and all 66
+    lines fill in. Click **Ok**. 📸
+    > No set to pick from? Use **Translate** to translate the whole list in one go, paste
+    > it back, and — if what you paste comes back as web markup — **Parse Markup String**
+    > cleans it up. **Reset** puts the English names back.
+11. Click **Save**. The app reloads its windows, which is normal.
+12. Check it: in the **Bible Reader**, open the bible chooser. Your translation has moved
+    out of **English** and now sits under its own language heading, and its references read
+    in its own script and numerals — `(ពគប) កិច្ចការ ២៨:១៥` rather than `(ពគប) Acts 28:15`. 📸
+
+> **Removing one.** The 🗑 next to a translation asks *Are you sure to delete bible XML
+> "…"?* — **Yes** sends the file to the Recycle Bin. Its badge disappears from every bible
+> menu. (A small hidden `…​.xml.cache` folder is left beside it in the app's bible folder;
+> it is harmless, and reusing the same code later just refills it.)
+
+_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, RD-11, LT-01._

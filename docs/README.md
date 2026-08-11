@@ -36,9 +36,12 @@ npm run docs:preview  # serve the built site
 ```
 
 > VitePress was installed with `--ignore-scripts` back when this repo had an
-> `install` hook that downloaded yt-dlp/ffmpeg. That hook is gone — the media
-> helpers are now committed prebuilt binaries copied in at build time by
-> `extra-work/copy-build.mjs` — so the flag no longer matters here.
+> `install` hook that downloaded yt-dlp/ffmpeg. There is an `install` hook again
+> (`extra-work/build.sh` → `extra-work/build-extra-bin.mjs`), but it only packs
+> the already-committed binaries from `extra-work/experiment-building/` into
+> `release/bin-<ver>.tar.gz` and downloads nothing. `--ignore-scripts` skips it,
+> which costs you only the locally built pack the dev Settings → Others → Extra
+> Binaries panel installs from.
 
 ## Editing content
 

@@ -1,39 +1,66 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
-import { tran } from '../../lang/langHelpers';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
+import { tran } from '../lang/langHelpers';
 
-export type DataFolderChoiceType = {
+export type ArchiveItemChoiceType = {
     key: string;
+    /**
+     * Rendered RAW — the caller translates it. A bible row's title is its KEY
+     * (`KJV`, `GKHB`), which is user data and has no dictionary entry, and
+     * `tran()` THROWS on a missing key in dev rather than falling back. So a
+     * `tran(choice.title)` here would blank this popup the first time it was
+     * opened in Khmer.
+     */
     title: string;
     iconClassName: string;
     /** Shown after the title — the folder path, or how many files it holds. */
     detail?: string;
+    /**
+     * Non-empty ⇒ this row is RED, its checkbox is disabled, and it is never
+     * reported through `onChange`. It is what "we cannot take this one, and
+     * here is why" looks like: a bible whose key is already installed, or a
+     * file whose key could not be read at all. The row is still LISTED rather
+     * than filtered out — a bundle that silently came up two items short reads
+     * as a broken export, not as a refused import.
+     *
+     * Translated by the caller too, like `title`: these ARE fixed keys, but a
+     * `tran(<prop>)` sitting beside one that must never translate is a trap the
+     * next reader would have to re-derive.
+     */
+    invalidMessage?: string;
 };
 
 /**
- * The checked list both Export Data and Import Data put in front of the user.
- * Everything starts checked: the common case is "all of it", and a folder left
- * out of a backup by an unnoticed default is a bad surprise.
+ * The checked list every archive flow puts in front of the user — Export/Import
+ * Data picking folders, and Export/Import Bible Data picking bibles.
+ *
+ * Everything valid starts checked: the common case is "all of it", and an item
+ * left out of a backup by an unnoticed default is a bad surprise.
  *
  * The selection is reported through `onChange` rather than kept here, because
  * the popup this renders in (`showAppInput`) resolves only a boolean — the
  * caller holds the answer and reads it when the user presses Ok.
  */
-export default function DataFolderSelectorComp({
+export default function ArchiveItemSelectorComp({
     choices,
     onChange,
     message,
 }: Readonly<{
-    choices: DataFolderChoiceType[];
+    choices: ArchiveItemChoiceType[];
     onChange: (selectedKeys: string[]) => void;
     message: string;
 }>) {
-    const [selectedKeys, setSelectedKeys] = useState<string[]>(() => {
-        return choices.map((choice) => {
-            return choice.key;
-        });
-    });
+    const selectableKeys = useMemo(() => {
+        return choices
+            .filter((choice) => {
+                return !choice.invalidMessage;
+            })
+            .map((choice) => {
+                return choice.key;
+            });
+    }, [choices]);
+    const [selectedKeys, setSelectedKeys] = useState<string[]>(selectableKeys);
     // Every toggle computes from the list React hands it rather than from the
     // rendered value: two clicks in the same tick would otherwise both start
     // from the pre-click list, so the second silently undid the first.
@@ -46,14 +73,12 @@ export default function DataFolderSelectorComp({
                 : [...currentKeys, key];
         });
     }, []);
-    const choicesRef = useAppCurrentRef(choices);
+    const selectableKeysRef = useAppCurrentRef(selectableKeys);
     const handleAllToggling = useCallback(() => {
         setSelectedKeys((currentKeys) => {
-            return currentKeys.length === choicesRef.current.length
+            return currentKeys.length === selectableKeysRef.current.length
                 ? []
-                : choicesRef.current.map((choice) => {
-                      return choice.key;
-                  });
+                : [...selectableKeysRef.current];
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -70,13 +95,19 @@ export default function DataFolderSelectorComp({
     useAppEffect(() => {
         onChange(selectedKeys);
     }, [onChange, selectedKeys]);
-    const isAllSelected = selectedKeys.length === choices.length;
+    // Guarded against an all-invalid list: with nothing selectable, "all of
+    // them are selected" is vacuously true and the button would offer to
+    // deselect a selection that does not exist.
+    const isAllSelected =
+        selectableKeys.length > 0 &&
+        selectedKeys.length === selectableKeys.length;
     return (
-        <div className="app-data-folder-selector d-flex flex-column">
+        <div className="app-archive-item-selector d-flex flex-column">
             <div className="d-flex align-items-center mb-2">
                 <span className="flex-grow-1">{tran(message)}</span>
                 <button
                     className="btn btn-sm btn-outline-secondary"
+                    disabled={selectableKeys.length === 0}
                     onClick={handleAllToggling}
                 >
                     {tran(isAllSelected ? 'Deselect All' : 'Select All')}
@@ -87,29 +118,47 @@ export default function DataFolderSelectorComp({
                 style={{ maxHeight: '50vh' }}
             >
                 {choices.map((choice) => {
+                    const { invalidMessage } = choice;
                     const isSelected = selectedKeys.includes(choice.key);
                     return (
                         <li
                             key={choice.key}
                             className={
                                 'list-group-item d-flex align-items-center' +
-                                ' app-caught-hover-pointer'
+                                (invalidMessage
+                                    ? ' list-group-item-danger'
+                                    : ' app-caught-hover-pointer')
                             }
-                            onClick={() => {
-                                handleToggling(choice.key);
-                            }}
+                            onClick={
+                                invalidMessage
+                                    ? undefined
+                                    : () => {
+                                          handleToggling(choice.key);
+                                      }
+                            }
                         >
                             <input
                                 className="form-check-input m-0 me-2"
                                 type="checkbox"
                                 checked={isSelected}
+                                disabled={!!invalidMessage}
                                 readOnly
                             />
                             <i className={`bi ${choice.iconClassName} me-2`} />
-                            <span className="flex-grow-1">
-                                {tran(choice.title)}
-                            </span>
-                            {choice.detail ? (
+                            <span className="flex-grow-1">{choice.title}</span>
+                            {invalidMessage ? (
+                                <small
+                                    className="app-ellipsis ms-2"
+                                    style={{
+                                        color: 'var(--bs-danger)',
+                                        maxWidth: '55%',
+                                    }}
+                                    title={invalidMessage}
+                                >
+                                    <i className="bi bi-exclamation-triangle-fill me-1" />
+                                    {invalidMessage}
+                                </small>
+                            ) : choice.detail ? (
                                 <small
                                     className="app-ellipsis ms-2"
                                     style={{

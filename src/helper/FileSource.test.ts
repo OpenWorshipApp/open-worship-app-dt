@@ -587,6 +587,45 @@ describe('FileSource', () => {
         ]);
     });
 
+    test('tells an unscoped listener WHICH file moved, alongside the payload', async () => {
+        // The plain unscoped event carries the firing code's `data` and nothing
+        // else, so a listener that filters by path (the bible-note short-verse
+        // index) used to read a path out of an `{isHistoryEditing}` object and
+        // throw. Regression guard for that contract.
+        const { default: FileSource } = await loadFileSourceModule();
+        const pathListener = vi.fn();
+        const fileSource = FileSource.getInstance('/docs/item.txt');
+
+        const registered = FileSource.registerFileSourcePathEventListener(
+            ['update'],
+            pathListener,
+        );
+
+        fileSource.fireUpdateEvent({ isHistoryEditing: true });
+        fileSource.fireUpdateEvent();
+        await flushEvents();
+
+        expect(pathListener.mock.calls).toEqual([
+            [
+                {
+                    filePath: '/docs/item.txt',
+                    data: { isHistoryEditing: true },
+                },
+                expect.any(Number),
+            ],
+            [
+                { filePath: '/docs/item.txt', data: undefined },
+                expect.any(Number),
+            ],
+        ]);
+
+        FileSource.unregisterEventListener(registered);
+        fileSource.fireUpdateEvent();
+        await flushEvents();
+
+        expect(pathListener.mock.calls).toHaveLength(2);
+    });
+
     test('trashes files with progress feedback and delete events', async () => {
         const { default: FileSource } = await loadFileSourceModule();
         const deleteListener = vi.fn();

@@ -142,7 +142,7 @@ it started showing) and all changed state restored.
 saying the display is in live use — is excluded. In that case skip the show step,
 assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 
-### S8 — Settings `[ST-01..10]`
+### S8 — Settings `[ST-01..50]`
 - Open settings via the **gear button** (it opens a **popup window**); then `list_pages` →
   `select_page` the new `setting.html` target. Do **not** `navigate_page` the main window to
   `setting.html` (popup trap — see [knowledge-base.md](./knowledge-base.md) §2–§3).
@@ -155,6 +155,16 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - Full coverage: theme + font pickers (restore after); destructive resets → confirm
   dialog → **Cancel** (EX-05); Bible tab search + enable/disable round-trip (EX-07 for
   downloads); `Apply Settings` **last** since it reloads windows.
+- **Bible XML import from a URL `[ST-41..ST-50]`** — needs network; run it when the focus
+  touches Settings/Bible, or in any full-coverage run. Import the canonical **non-English**
+  link (matrix ST-41) under a scratch key `ZZ<runid>`, answer **Key is missing** +
+  **Confirm Key for Bible**, then fix the import up through the Info editor's three
+  right-click actions **in order** — Choose Locale → Edit Numbers Map → Edit Books Map —
+  and prove it in the reader's key menu (the bible must move out of the **English** group
+  and render its own script/numerals). An English XML cannot fail this block.
+  **Teardown:** 🗑 → **Yes**, then delete the `<key>.xml.cache` folder the trash leaves
+  behind. Recipe + CDP traps (F1 palette, not right-click):
+  [knowledge-base.md](./knowledge-base.md) §15; tutorial voice: W-34.
 
 ### S9 — Cross-cutting checks (do throughout) `[GL-02..05, GL-10, GL-11, GL-15, GL-23]`
 - **Toasts `[GL-10, GL-15, GL-23]`** — run once per session, no need to wait for an
@@ -252,14 +262,27 @@ Notes:
 screenshot presenter + settings, check contrast and that no text goes invisible, then
 **restore**.
 
-### S19 — Media download `[MD-01..04]` — **MANDATORY in every run** (needs network)
+### S19 — Media download `[MD-01..06]` — **MANDATORY in every run** (needs network)
 
-The only flow that runs the shipped prebuilt binaries (`bin-helper/yt/yt-dlp` +
-`bin-helper/ffmpeg/bin` + `bin-helper/qjs/qjs`, copied in by
+The only flow that runs the external binaries (`extra-bin/yt/yt-dlp` +
+`extra-bin/ffmpeg/bin` + `extra-bin/qjs/qjs`, installed on demand -- NOT copied in by
 `extra-work/copy-build.mjs`). Everything else in the matrix passes with them broken.
 
 Canonical link (always this one): `https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7rJs`
 
+0a. **MD-05 install the pack (before anything else)** — Settings → **Others** → **Extra
+Binaries**. Read the card: it names `<data parent>/extra-bin`, the installed version and
+the latest available one. If it says **Not installed**, press **Download and Install**;
+if it offers **Update to `<ver>`**, take it and confirm the superseded `bin-*.tar.gz` is
+gone. Then press **Re-extract** — it must succeed with no network, because the archive is
+kept on disk on purpose. In dev this copies
+`extra-work/experiment-building/release/bin-<ver>.tar.gz`, built by `npm i`; if it is
+missing, the panel names the command — run it rather than filing a bug.
+0b. **MD-06 the guard** — rename `<data parent>\extra-bin\yt` aside and start MD-01's
+**Download From URL**: a **Media Tools Required** confirm must appear naming the missing
+binaries, `No` must cancel with **no second "download failed" toast**, `Yes` must open
+Settings on **Others**, and **no yt-dlp process may spawn** either way. Restore the folder
+before continuing.
 0. **MD-04 sweep (before downloading anything)** — list the videos and audios dirs and
    delete leftovers from earlier runs: files carrying the **canonical video's page title**
    (`*Flowers by*Official Music Video - YouTube*`, including the ` (N)` copies) and any
@@ -275,7 +298,7 @@ Canonical link (always this one): `https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7r
 3. **MD-03** — reopen the popup, enter a non-`http` string → **Ok** → toast "Invalid URL",
    no download.
 4. Optional runtime proof: while yt-dlp runs, read its command line — it must carry
-   `--no-js-runtimes --js-runtimes quickjs:<…>\bin-helper\qjs\qjs.exe`.
+   `--no-js-runtimes --js-runtimes quickjs:<…>\extra-bin\qjs\qjs.exe`.
 5. **MD-04 teardown (right after step 3's evidence is captured)** — 🖱️R the new video row
    → **Move to Trash** → **Yes**; same for the new `.mp3`. The row must leave the tab
    without a manual reload (this also covers CM-06 on a background media row, against a
@@ -285,6 +308,9 @@ Canonical link (always this one): `https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7r
    of globbing: `Get-ChildItem -LiteralPath $dir | Where-Object { $_.Name -like '*Flowers
    by*Official Music Video - YouTube*' -or $_.Name -like 'temp-*' } | Remove-Item`. End
    state: both dirs hold neither. Runs even when MD-01/MD-02 failed or were BLOCKED.
+
+`extra-bin` itself is **not** teardown — it is the installed tool pack, not this run's
+garbage. Leave it in place.
 
 Evidence = the file on disk (or the refreshed panel), never the toast alone — and for
 MD-04 a **post-run listing of both dirs**. Each pass writes ~100 MB and the app
@@ -400,10 +426,16 @@ document/lyric lists, or the file-reload/`useFileSourceEvents` wiring.
    **W/H** (ED-17); or programmatic `CanvasController` mutation; or direct
    `fileSource.writeFileData(json)`. Then **Save** (green button / `Ctrl+S`).
 4. **Assert propagation** within ~3 s: Presenter `VarySlidesComp` reflects it (XW-01),
-   list-row thumbnail reflects it (XW-02). A stale **auto-reload** target after a **saved**
+   list-row thumbnail reflects it (XW-02 — Documents rows are text+icon only in the current
+   build, so this may be **N/A**, not PASS). A stale **auto-reload** target after a **saved**
    edit = **regression → FAIL + Finding** (name the broken hop from KB §12.2; e.g. watcher
-   never fired / bridge unmounted / stale 2 s cache / consumer not subscribed). An **unsaved**
-   edit not showing is **correct** (XW-04), not a bug.
+   never fired / bridge unmounted / stale 2 s cache / consumer not subscribed).
+   ⚠️ **XW-04 is the reverse of what this file said before 2026-08-10:** an **unsaved** edit
+   **does** propagate to the Presenter, because unsaved state is disk-backed in
+   `<file>.histories/<n>-head` and the Presenter renders the HEAD, not the saved `.ows`
+   (measured table in KB §12.2b). Assert that it appears; an unsaved edit that never shows is
+   the finding. Do **not** triage an XW failure with "was it saved?" — saving is not what the
+   Presenter reads.
    - **XW-03 — live `screen.html` of a presented slide:** staying stale after a saved edit is
      **expected, not a bug** — the presented slide is an intentional snapshot; the operator
      **applies** the change by **re-presenting**. Verify the apply path: **re-present** (clear

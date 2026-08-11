@@ -123,6 +123,19 @@ describe('Khmer language data', () => {
             'Preview',
             'Start Camera',
             'Stop Camera',
+            // The bible translation info popup opened from the lookup pane
+            // header. Every row label goes through `tran`, and `Title` must
+            // keep resolving through the pre-existing lowercase entry.
+            'Bible Information',
+            'Title',
+            'Key',
+            'Version',
+            'Locale',
+            'Publisher',
+            'Copy Rights',
+            'Legal Note',
+            'Description',
+            'Books',
         ]) {
             expect(lang.dictionary[lang.sanitizeTranKey(key)]).toBeDefined();
         }

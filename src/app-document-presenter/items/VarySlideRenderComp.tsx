@@ -331,7 +331,10 @@ export default function VarySlideRenderComp({
                 ` ${presenterClassName} ${activeClassName} ${holdingClassName}` +
                 (varySlide.isDisabled
                     ? ' disabled'
-                    : ' app-caught-hover-pointer')
+                    : ' app-caught-hover-pointer') +
+                (varySlide.extraClassnames
+                    ? ` ${varySlide.extraClassnames}`
+                    : '')
             }
             title={
                 varySlide.isDisabled

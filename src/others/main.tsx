@@ -118,7 +118,7 @@ async function confirmReloading() {
         const isOk = await showAppConfirm(
             tran('Reload is needed'),
             tran(
-                'We were sorry, Internal process error, you to refresh the app',
+                'Sorry, an internal process error occurred. Please refresh the app.',
             ),
         );
         if (isOk) {

@@ -75,4 +75,16 @@ export abstract class ItemBase implements ColorNoteInf {
 export abstract class ItemBaseFilePath extends ItemBase {
     abstract filePath: string;
     abstract getItemFilePath(): Promise<string | null>;
+
+    /**
+     * Extra classes stamped on this item's card by the vary-slide renderer.
+     *
+     * Defaulted here — the four vary-slide classes all extend this base, so a
+     * new slide kind cannot forget it, and only the kinds that actually need a
+     * hook in the DOM (`LyricSlide`, which the lyric previewer looks its cards
+     * up by) pay for one.
+     */
+    get extraClassnames(): string {
+        return '';
+    }
 }

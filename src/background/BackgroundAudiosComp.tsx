@@ -28,6 +28,7 @@ import VaryAppDocumentAudiosComp from './VaryAppDocumentAudiosComp';
 import { genAudioBodyChild } from './AudioBodyComp';
 import { useAppDocumentAudioData } from './backgroundHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
+import { checkIsExtraBinMissingError } from '../helper/extra-bin/extraBinErrors';
 
 async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
@@ -60,6 +61,10 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
                 `Audio downloaded successfully, file path: "${downloadedFilePath}"`,
             );
         } catch (error) {
+            // See BackgroundVideosComp: the guard's dialog is the message.
+            if (checkIsExtraBinMissingError(error)) {
+                return;
+            }
             handleError(error);
             showSimpleToast(
                 title,

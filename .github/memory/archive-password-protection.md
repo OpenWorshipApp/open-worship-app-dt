@@ -1,12 +1,15 @@
 ---
 name: archive-password-protection
-description: Optional password protection wraps a finished archive in an OWAENC container; the kind stays in the name, detection is by magic, and the dialog is loaded on demand
-metadata:
+description: "Optional password protection wraps a finished archive in an OWAENC container; the kind stays in the name, detection is by magic, and the dialog is loaded on demand"
+metadata: 
+  node_type: memory
   type: project
+  originSessionId: 5b0be001-2c0c-4811-87e4-07ab38bd842a
+  modified: 2026-08-10T17:40:33.438Z
 ---
 
-Every export (`.owadata.tar`, `.owadoc/.owapf/.owbible/.owabn.tar.gz`) asks for an
-optional password first. Empty is the default answer and writes byte-for-byte the bundle
+Every export (`.owadata.tar`, `.owadoc/.owapf/.owbible/.owabn/.owabdata.tar.gz`) asks for
+an optional password first. Empty is the default answer and writes byte-for-byte the bundle
 that was always written; a password wraps that finished file whole in an `OWAENC`
 container (`electron/archiveCryptoHelpers.ts`) and writes `<name>.<kind>.enc` instead.
 
@@ -38,8 +41,35 @@ dialog, which hands over a FRESH closure while React keeps the component mounted
 state. The reporting effect watched only the values, so it never fired again, the new
 closure was never told anything, and a second Ok read the password as empty — which means
 "no password" — and exported UNPROTECTED, silently. Fix: `onChange` is IN the effect's
-dependency list, in `ArchivePasswordComp` *and* in `DataFolderSelectorComp`, which the
+dependency list, in `ArchivePasswordComp` *and* in `ArchiveItemSelectorComp`, which the
 same recursive re-ask exposes. Do not "stabilise" either one back behind a ref.
+
+**That fix only held for three of the five kinds — the other half, found 2026-08-10 by the
+robot run and fixed the same day.** `askForFolders` (Export Data) and `askForBibles` (Export
+Bible Data) render the password fields INSIDE their own picker, and they answered a mismatch
+with `await showAppAlert(...)` and then recursed. **The alert unmounts the popup**, so both
+children were destroyed and remounted with fresh state — the deps fix above never got a
+chance to matter. Observed: the re-ask came back with the fields blank AND every item
+re-checked, so one more Ok wrote a plain `.tar.gz` of the WHOLE list (1-of-10 folders picked
+→ all 10, which on a real machine is a multi-GB unprotected archive). Both now run the same
+`MAX_PASSWORD_ATTEMPTS` loop `askForNewArchivePassword` always used, re-rendering the same
+popup with the complaint as `invalidMessage`. **Never put a popup between a re-ask and its
+retry** — the state you are relying on lives in the popup you just closed.
+
+Two smaller rules settled at the same time: the two fields simply have to AGREE (both empty
+is the valid "no password" and settles the complaint; a value typed into Confirm alone is
+flagged instead of silently exporting unprotected), and the bible import's `M skipped`
+counts everything the bundle held that did not come in, not just the importer's own skips.
+
+**The picker is `src/popup-widget/ArchiveItemSelectorComp.tsx`** (2026-08-10) — it was
+`src/setting/data-archive/DataFolderSelectorComp.tsx` until the bible-data bundle needed
+the same list, and it moved rather than being copied. It grew one field,
+`invalidMessage`: non-empty makes the row red, disables its checkbox and keeps it out of
+the reported selection. **It renders `title` and `invalidMessage` RAW** — the caller
+translates them — because a bible row's title is its KEY (`KJV`, `ពគប`), which is user
+data with no dictionary entry, and `tran()` THROWS on a missing key in dev. A
+`tran(choice.title)` there blanks the whole popup the first time it opens in Khmer. See
+[[tran-missing-key-throws-in-dev]] and [[bible-xml-archive-owabdata]].
 
 **Two costs worth knowing:**
 

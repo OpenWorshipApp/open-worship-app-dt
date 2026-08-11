@@ -33,6 +33,7 @@ import {
     setIsFadingAtTheEndSetting,
 } from './videoBackgroundHelpers';
 import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
+import { checkIsExtraBinMissingError } from '../helper/extra-bin/extraBinErrors';
 
 // Mounting every <video> in the folder at once spawns dozens of demuxers,
 // which kills low-spec machines. Render a same-size placeholder and only
@@ -213,6 +214,12 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
                 `Video downloaded successfully, file path: "${downloadedFilePath}"`,
             );
         } catch (error) {
+            // The media pack guard already put a dialog in front of the user;
+            // a "download failed" toast on top of the "No" they just gave is
+            // noise.
+            if (checkIsExtraBinMissingError(error)) {
+                return;
+            }
             handleError(error);
             showSimpleToast(
                 title,

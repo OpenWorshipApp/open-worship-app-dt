@@ -39,6 +39,28 @@ export type SrcData = `data:${string}`;
 
 export type FileSourceEventType = 'select' | 'update' | 'delete';
 
+/**
+ * What a `<event>:with-path` listener is handed.
+ *
+ * The unscoped `select`/`update`/`delete` events carry the FIRING CODE's `data`
+ * (`EditingHistoryManager` publishes `{isHistoryEditing, eventType}`, and
+ * `writeFileData` publishes nothing at all), so a listener that wants to know
+ * WHICH file moved cannot get it from there — `data` is whatever the caller
+ * chose, and is usually `undefined`. Anything that has to filter by path
+ * listens on this channel instead.
+ */
+export type FileSourcePathEventDataType<T = any> = {
+    filePath: string;
+    data?: T;
+};
+
+/**
+ * Kept out of `FileSourceEventType` on purpose: these names are derived, never
+ * fired by hand, and nothing may subscribe to them except through
+ * `registerFileSourcePathEventListener`.
+ */
+const PATH_EVENT_SUFFIX = ':with-path';
+
 const fileDataCacheManager = new CacheManager<string | null>(2);
 const instantCache = new Map<string, FileSource>();
 export default class FileSource
@@ -344,6 +366,24 @@ export default class FileSource
         return super.registerEventListener(newEvents, callback);
     }
 
+    /**
+     * Listen for an event on EVERY file and be told which one it was.
+     *
+     * The unscoped registration hands the listener the firing code's `data`, so
+     * a listener that filters by path (only the bible-note folder, say) cannot
+     * use it — see `FileSourcePathEventDataType`. Registering per file is not an
+     * answer either when the set of files is itself what changes.
+     */
+    static registerFileSourcePathEventListener<T>(
+        events: FileSourceEventType[],
+        callback: ListenerType<FileSourcePathEventDataType<T>>,
+    ) {
+        const newEvents = events.map((event) => {
+            return `${event}${PATH_EVENT_SUFFIX}`;
+        });
+        return super.registerEventListener(newEvents, callback);
+    }
+
     static addFileSourcePropEvent(
         eventName: FileSourceEventType,
         filePath: string,
@@ -352,6 +392,12 @@ export default class FileSource
         const newEventName = `${eventName}@${filePath}` as FileSourceEventType;
         super.addPropEvent(eventName, data);
         super.addPropEvent(newEventName, data);
+        // A third dispatch rather than a richer payload on the two above: their
+        // `data` is the caller's and is read by existing listeners as-is.
+        super.addPropEvent(
+            `${eventName}${PATH_EVENT_SUFFIX}` as FileSourceEventType,
+            { filePath, data } satisfies FileSourcePathEventDataType,
+        );
     }
 
     fireSelectEvent(data?: any) {

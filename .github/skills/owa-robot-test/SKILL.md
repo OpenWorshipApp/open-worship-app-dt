@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the shipped prebuilt yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~645 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 68 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..101) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~715 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..96, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the "Key is missing" guessing-key dialog, and the Info editor's Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 68 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..101) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
@@ -24,6 +24,10 @@ unit or Playwright tests.
 - After a feature/refactor, to verify nothing is visually or interactively broken.
 - To collect console errors, failed network requests, and accessibility gaps from the
   real renderer.
+- **"import a bible XML" / "add a bible from a link"** → **§6g** (`ST-41..ST-50`, model in
+  KB §15, tutorial voice in W-34): the URL import, the **Key is missing** guessing-key
+  dialog, and the three Info-editor actions that make a non-English translation actually
+  read in its own language.
 - "Write a tutorial / help page / user guide for the app" → **tutorial mode** (§9).
 - "Check this manual / tutorial / learning doc against the app" → **doc-verify mode**
   (§10). Both are grounded in
@@ -317,11 +321,16 @@ CDP-drivable-edit techniques are in **KB §12** — read it first):
    programmatic `CanvasController` mutation, or direct `fileSource.writeFileData(json)`; then
    **Save**.
 4. **Assert propagation** within ~3 s in the auto-reload targets: Presenter `VarySlidesComp`
-   (XW-01), list-row thumbnail (XW-02). A stale target after a **saved** edit = **regression
-   → FAIL + Finding** naming the broken hop. An **unsaved** edit not showing is **correct**
-   (XW-04). For the live `screen.html` of a **presented** slide (XW-03): staying stale after
-   a saved edit is **expected** (intentional snapshot) — verify by **re-presenting** and
-   confirming the screen *then* updates; only a broken re-present is a FAIL.
+   (XW-01), list-row thumbnail (XW-02 — **note:** Documents rows are text+icon only in the
+   current build, so there may be no thumbnail to go stale; record N/A rather than PASS).
+   A stale target after a **saved** edit = **regression → FAIL + Finding** naming the broken
+   hop. ⚠️ **An UNSAVED edit propagates too, and that is correct** — unsaved state is
+   disk-backed in `<file>.histories/<n>-head` and the Presenter reads the HEAD, not the
+   `.ows`, so XW-04's assertion is the reverse of what older revisions of this file said
+   (verified 2026-08-10, KB §12.2b). For the live `screen.html` of a **presented** slide
+   (XW-03): staying stale after an edit is **expected** (intentional snapshot) — verify by
+   **re-presenting** and confirming the screen *then* updates; only a broken re-present is a
+   FAIL. Re-presenting a dirty document projects its **unsaved** state.
 5. **Restore** with editor **Undo** (never *Discard*) + re-save; delete the scratch doc.
 
 Caveat: opening/closing the separate editor window can trigger a chrome-devtools-mcp "browser
@@ -374,14 +383,30 @@ Notes:
 
 ### 6e. MANDATORY: media download, video AND audio (every run, every focus)
 
-**Nothing else in the app runs the shipped external binaries.** `downloadVideoOrAudio`
+**Nothing else in the app runs the external binaries.** `downloadVideoOrAudio`
 ([src/server/appHelpers.ts](../../../src/server/appHelpers.ts)) is the only caller of
-`bin-helper/yt/yt-dlp`, and it is what points yt-dlp at `bin-helper/ffmpeg/bin` and
-`bin-helper/qjs/qjs`. All three are committed prebuilt per platform
-(`extra-work/experiment-building/<os><suffix>/`) and copied in by
-`extra-work/copy-build.mjs` — so a wrong/missing/stale binary passes typecheck, tests,
-build and every other matrix row, and only shows up here. Rows `MD-01..04`; recipe:
+`extra-bin/yt/yt-dlp`, and it is what points yt-dlp at `extra-bin/ffmpeg/bin` and
+`extra-bin/qjs/qjs` — so a wrong/missing/stale binary passes typecheck, tests, build and
+every other matrix row, and only shows up here. Rows `MD-01..06`; recipe:
 test-plan.md §S19.
+
+**The binaries are NOT in the app package.** They are installed on demand from
+**Settings → Others → Extra Binaries** into `<data parent dir>/extra-bin/`
+(dev: `Desktop\open-worship-data-dev\extra-bin`), which is why the block now starts at
+`MD-05`:
+
+- **`MD-05` runs first** whenever the panel says *Not installed* — press **Download and
+  Install**, then **Re-extract** (it must work with no network, because the
+  `bin-*.tar.gz` is kept on disk on purpose). If the panel offers **Update to `<ver>`**,
+  take it: the superseded archive must disappear.
+- **`MD-06`** proves the guard: with `extra-bin\yt` moved aside, a download raises a
+  **Media Tools Required** confirm that jumps to the panel, spawns no yt-dlp, and does
+  **not** stack a second "download failed" toast on a `No`. Restore the folder after.
+- In **dev the install is mocked** — it copies
+  `extra-work/experiment-building/release/bin-<ver>.tar.gz`, built by `npm i` (the
+  `install` lifecycle → `extra-work/build.sh` → `build-extra-bin.mjs`). If that file is
+  missing the panel says so and names the command; run it rather than filing a bug.
+- **`extra-bin` is not teardown.** The MD-04 sweep covers the downloaded media only.
 
 **The block owns its garbage (`MD-04`).** It is the only part of a run that writes ~100 MB
 of video plus an mp3 into the user's data dir, and the app **de-duplicates by suffixing,
@@ -417,7 +442,7 @@ sweep/teardown pair 0 + 5 is what keeps the block idempotent):
    and an **`.mp3`** in the audios dir, plus the new thumbnail/row in the panel.
 4. Optional but cheap — prove the JS runtime is really QuickJS by reading the spawned
    command line (`Get-CimInstance Win32_Process -Filter "Name='yt-dlp.exe'"`): it must
-   carry `--no-js-runtimes --js-runtimes quickjs:<…>\bin-helper\qjs\qjs.exe`.
+   carry `--no-js-runtimes --js-runtimes quickjs:<…>\extra-bin\qjs\qjs.exe`.
 5. **Delete both again (MD-04, part 2)** — once step 3's evidence (screenshot + on-disk
    listing) is captured. Prefer the app's own path: 🖱️R the new row → **Move to Trash** →
    **Yes**, for the video and then for the `.mp3`. That also covers `CM-06` on a background
@@ -628,6 +653,56 @@ name.
 - Synthetic `press_key` DOES drive the run keys and the `Keyboard Event` hotkey (they are
   ordinary `keydown` listeners); only Monaco needs real OS focus.
 
+### 6g. Bible XML import from a URL `[ST-41..ST-50]` — run it when the focus touches Settings / Bible, and in every full-coverage run
+
+Adding a translation from a link is how a real congregation gets its own bible in, and it is
+the **only** path that exercises `readFromUrl` → `guessingBibleKey` → the Info editor's three
+Monaco actions. It needs network. Model + CDP traps:
+[knowledge-base.md](./references/knowledge-base.md) §15. Tutorial voice: **W-34**.
+
+**Use the canonical NON-ENGLISH link.** An English XML structurally cannot fail this block,
+because everything an import falls back to is already English:
+
+```
+https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSBible.xml
+```
+
+1. **Scratch key.** Settings (gear → popup, never `navigate_page`) → **Bible**. Never reuse an
+   installed key — pick `ZZ<runid>`. Note the installed keys first: the **Guessing keys**
+   buttons in step 3 hide any key you already have, so `ពគប` will NOT be offered on a machine
+   that has it. That absence is correct, not a bug.
+2. **`[ST-41]`** Paste the link into `input[name=url]` (native-setter + `input` event), check
+   the file group dims and **Import** enables, submit. Watch `LoadingComp` walk
+   `Downloading file… → Reading file… → Deleting file…`; ~14 MB, allow a minute.
+3. **`[ST-42]`** The **Key is missing** popup: record the guessing-key buttons (they are every
+   root attribute split on `[.,\s]` minus taken keys), type the scratch key, and check a taken
+   key marks `is-invalid` / "Key is already taken".
+4. **`[ST-43]`** **Ok** → **Confirm Key for Bible** → **Yes**. Confirm on disk — and resolve
+   `bibles-data` first, it hangs off `appLocalStorage.defaultStorage` and is **not**
+   necessarily the `-dev` dir (KB §15.2). `saveJsonDataToXMLfile` reports success without
+   checking the write, so the toast is not evidence.
+5. **`[ST-44]`** Read the new `<key>.xml` head: it must show `locale="en-US"`, ASCII
+   `number-map` and English `book-map`. **This is the finding the block exists for** — if a
+   future build guesses the locale, that is a behaviour change to write up, not a pass.
+6. **`[ST-45..ST-48]`** Pencil → **Info** → fix it up **in this order**:
+   **🌎 Choose Locale** (`km-KH`) → **#️⃣ Edit Numbers Map** (**Use ១ ២ ៣**) → **📚 Edit Books
+   Map** (**📖 Guessing Names** → the set naming your locale's bibles). Steps 2 and 3 read the
+   locale out of the **editor buffer**, so out of order they silently offer English.
+   Drive them with `.native-edit-context` `.focus()` + `press_key F1` — a synthetic
+   `contextmenu` does not open Monaco's menu — and **match the palette row by label**, because
+   it re-sorts the last-used command to the top.
+7. **`[ST-49]`** **Save** (windows reload — expected), then open the reader's bible-key
+   selector: the bible must have moved out of the **English** group into its own locale
+   heading and render `(<key>) កិច្ចការ ២៨:១៥`. Screenshot that; it is the block's evidence.
+8. **`[ST-50]` Teardown, always.** 🗑 → **Yes** trashes `<key>.xml` but **leaves
+   `<key>.xml.cache`** (13 MB) — delete that folder yourself. Then restore anything the run
+   moved: the reader's bible key, and any lookup-history entry the key switch added
+   (`RendHistoryItemComp` → its red ✕).
+
+**Report line** (required whenever this block runs): the scratch key used, ST-41..ST-50
+statuses, the ST-44 defaults observed, and confirmation that both `<key>.xml` and
+`<key>.xml.cache` are gone.
+
 ### 7. Report
 
 - Write the full report to `test-results/robot-test/report-<timestamp>.md` (this folder
@@ -643,7 +718,7 @@ name.
   was restored.
 - **Every report** MUST also contain the **mandatory media block** (§6e): the
   `MD-01/MD-02` statuses with the on-disk evidence (the video file and the `.mp3`), since
-  no other row touches the shipped yt-dlp/ffmpeg/qjs, **plus `MD-04`** — how many
+  no other row touches the extra-bin yt-dlp/ffmpeg/qjs, **plus `MD-04`** — how many
   leftovers the pre-download sweep found and the post-run listing showing both dirs clean.
   BLOCKED is acceptable only with no network, and must say so; `MD-04` is never BLOCKED.
 - In **presenting flow deep mode** (§6f) the report MUST additionally carry: the per-phase table
@@ -731,10 +806,11 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - **Interaction**: a tab/button that doesn't respond or doesn't toggle its state
   (`.active` on nav tabs, `.app-on-screen` when content is sent to the screen); modal
   that won't open/close (`Ctrl+B` opens Bible lookup, `Ctrl+Q` closes modal).
-- **Cross-window propagation** (§6c / XW): a **saved** edit in one window that never
-  reaches another window (editor→Presenter preview / list-row / live `screen.html`) — the
-  regression class a one-window run structurally can't see. Confirm the edit was *saved*
-  (unsaved-not-showing is correct), then name the broken hop (KB §12.2).
+- **Cross-window propagation** (§6c / XW): an edit in one window that never reaches another
+  window (editor→Presenter preview / list-row) — the regression class a one-window run
+  structurally can't see. Saved and **unsaved** edits both must propagate (unsaved state is
+  disk-backed in `<file>.histories/<n>-head` — KB §12.2b); the live `screen.html` of an
+  already-presented slide is the one deliberate exception. Name the broken hop (KB §12.2).
 - **Visual**: clipped/overflowing text, overlapping elements, invisible or low-contrast
   text, broken/blank images, layout shift, a `loading.gif` that never disappears.
 - **Accessibility**: icon-only buttons with no accessible name, controls missing roles
@@ -776,7 +852,7 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
 - [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) — the
-  **coverage contract**: ~645 stable-ID rows over the whole UI surface — every interactive
+  **coverage contract**: ~715 stable-ID rows over the whole UI surface — every interactive
   path enumerated as a unit test with an observable pass condition and a `(src: file:line)`
   citation, including a complete keyboard-shortcut matrix (`KB-01..60`, every registered
   shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and

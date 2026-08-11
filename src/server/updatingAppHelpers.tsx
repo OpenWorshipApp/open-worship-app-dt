@@ -134,7 +134,7 @@ function checkIsVersionOverdue3Months(version: string) {
     return currentVersionDate < threeMonthsAgo;
 }
 
-function checkIsVersionOutdated(
+export function checkIsVersionOutdated(
     // 2025.06.25 vs 2025.06.26
     currentVersion: string,
     latestVersion: string,
@@ -231,7 +231,17 @@ export function checkIsItemMatch(item: DownloadInfoItemType) {
     return false;
 }
 
-async function getDownloadTargetUrl() {
+/**
+ * The per-platform `info.json` for THIS machine: the root index is a map keyed
+ * by platform folder name whose values are match predicates, so the folder is
+ * discovered rather than computed from `process.platform`/`arch`.
+ *
+ * Shared with the extra-bin installer (`src/helper/extra-bin/`), which reads its
+ * download map out of the very same file — the two must never drift apart on
+ * which platform a machine is. That caller passes `isSilent`, because its own
+ * failure message is about the media pack, not about an app update.
+ */
+export async function getDownloadTargetUrl(isSilent = false) {
     const jsonUrl = `${DOWNLOAD_BASE_URL}/info.json`;
     const downloadInfo = await fetch(jsonUrl, {
         method: 'GET',
@@ -250,7 +260,9 @@ async function getDownloadTargetUrl() {
             return null;
         });
     if (downloadInfo === null) {
-        showFail();
+        if (!isSilent) {
+            showFail();
+        }
         return null;
     }
     const targetInfo =
@@ -258,7 +270,9 @@ async function getDownloadTargetUrl() {
             return checkIsItemMatch(item);
         }) ?? null;
     if (targetInfo === null) {
-        showFail();
+        if (!isSilent) {
+            showFail();
+        }
         return null;
     }
     const url = addRootURL(DOWNLOAD_BASE_URL, `${targetInfo[0]}/info.json`);

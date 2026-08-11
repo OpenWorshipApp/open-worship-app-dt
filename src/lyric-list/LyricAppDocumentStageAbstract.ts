@@ -26,12 +26,64 @@ import { checkIsUrlMediaSource } from '../helper/mediaSourceHelpers';
 
 // Entries hold a whole song's rendered HTML, so keep the window short.
 const cacheManager = new CacheManager<any>(3 * 60); // 3 minutes
+
+/**
+ * The font rules that keep open-lyric's `<button>`s — the chord chips and the
+ * `{p: #2}` pattern references — readable once the HTML leaves open-lyric.
+ *
+ * `getElementMap({ type: 'html' })` does not answer with markup plus a
+ * stylesheet: it serializes the staged node with every computed style written
+ * INLINE, minus each inherited property whose value already equals the parent's
+ * — the parent is part of the returned string, so inheritance is expected to
+ * reproduce those. `<button>` is the one element where that premise is false:
+ * the UA sheet gives it `font: 400 13.333px Arial`, so a font the serializer
+ * left out comes back as 13px Arial next to 61px lyrics.
+ *
+ * open-lyric styles the pattern reference `font: inherit`, i.e. byte-identical
+ * to its parent, so BOTH its size and its family were dropped and `{p: #2}`
+ * rendered tiny and in the wrong face. The chords keep their size on their own
+ * (`.ol-preview-chord` is `.7em`, which differs from the parent) but lose the
+ * family the same way.
+ *
+ * So the values below are deliberately NOT equal to the inherited ones —
+ * `0.999em` rather than `1em` (0.1%, nothing can see it), and the family with a
+ * fallback appended. That inequality is the entire mechanism: `1em` and
+ * `inherit` compute to exactly the parent's value and get skipped again, which
+ * is why the obvious spelling of this rule is a silent no-op. The real fix
+ * belongs upstream — the serializer must not skip inherited properties on form
+ * controls, which do not inherit them.
+ */
+function genFormControlFontCss(fontFamily?: string) {
+    // open-lyric confines this sheet to its off-screen export stage
+    // (`attachScopedStyle`), so the bare tag selector cannot reach anything
+    // else — not the live preview, not another embed on the page.
+    const familyRule = fontFamily
+        ? `button {
+                    font-family: ${fontFamily}, sans-serif !important;
+                }`
+        : '';
+    return `${familyRule}
+
+                .ol-preview-directive .ol-preview-pattern-reference {
+                    font-size: 0.999em !important;
+                }`;
+}
 export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocument {
     get basicOpenLyricOptions() {
         const canvasItemBounds = this.canvasItemBounds;
         // Read ONCE for the whole options object: each access re-reads the
         // stage's setting, and this getter is on the per-slide path.
         const stageStyle = this.stageStyle;
+        // `this.openLyric` is only ever assigned by `LyricSlidesPreviewerComp`,
+        // so it is null in every renderer where that component has not mounted
+        // (the screen window, a stage instance built on demand). Falling back to
+        // the persisted setting keeps the projected slide at the same size as
+        // the previewer instead of open-lyric's 16px default. Resolved BEFORE
+        // the options below because the css has to NAME the family — see
+        // `genFormControlFontCss`.
+        const openLyric = this.openLyric;
+        const savedFont = getOpenLyricFontSetting();
+        const fontFamily = openLyric?.fontFamily || savedFont.fontFamily;
         const options: OpenLyricElementMapOptions = {
             type: 'html',
             isWithKeyNote: false,
@@ -45,14 +97,14 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             height: canvasItemBounds.height,
             isShowingAttachments: false,
             isShowingStrummingPatterns: false,
+            css: `
+                .ol-song-view__info-card .ol-song-view__title {
+                    font-size: 1.6em !important;
+                }
+
+                ${genFormControlFontCss(fontFamily)}
+            `,
         };
-        // `this.openLyric` is only ever assigned by `LyricSlidesPreviewerComp`,
-        // so it is null in every renderer where that component has not mounted
-        // (the screen window, a stage instance built on demand). Falling back to
-        // the persisted setting keeps the projected slide at the same size as
-        // the previewer instead of open-lyric's 16px default.
-        const openLyric = this.openLyric;
-        const savedFont = getOpenLyricFontSetting();
         const currentFontSize =
             openLyric === null
                 ? savedFont.fontSize
@@ -61,7 +113,6 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             (Number.isNaN(currentFontSize)
                 ? DEFAULT_OPEN_LYRIC_FONT_SIZE
                 : currentFontSize) + stageStyle.extraFontSize;
-        const fontFamily = openLyric?.fontFamily || savedFont.fontFamily;
         if (fontFamily) {
             options.fontFamily = fontFamily;
         }
@@ -94,9 +145,21 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
     }
 
     get allOpenLyricOptions() {
+        // Read ONCE each: both are getters that rebuild their object per access,
+        // and `basicOpenLyricOptions` re-parses the font setting while doing it.
+        const basicOptions = this.basicOpenLyricOptions;
+        const stageOptions = this.stageOpenLyricOptions;
+        // Only a side that HAS rules is joined. An empty one must not leave a
+        // stray newline behind: `genCacheKey` hashes this string, so a stage
+        // whose css is all on one side would otherwise get a different key —
+        // and a cold re-render of every song — for no difference in the output.
+        const css = [basicOptions.css, stageOptions.css]
+            .filter(Boolean)
+            .join('\n');
         return this.withCustomCss({
-            ...this.basicOpenLyricOptions,
-            ...this.stageOpenLyricOptions,
+            ...basicOptions,
+            ...stageOptions,
+            css,
         });
     }
 
@@ -248,7 +311,7 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         ]);
         const displayDim = this.displayDim;
         const slides = structure.map((key, i) => {
-            return this.genSlide(key, i, dataMap, displayDim);
+            return this.genSlide(key, i, dataMap, displayDim, i);
         });
         const newSlides = this.extendExtraSlide(
             slides,

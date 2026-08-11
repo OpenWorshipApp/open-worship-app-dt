@@ -293,7 +293,7 @@ describe('server appProvider.mock', () => {
         expect(db.getAll('x')).toEqual([]);
         db.close();
 
-        const yt = await appProviderMock.ytUtils.getYTHelper();
+        const yt = await appProviderMock.ytUtils.getYTHelper('/bin/yt-dlp');
         expect(yt.on('x', () => {})).toBe(yt);
         expect(yt.off('x', () => {})).toBe(yt);
         expect(yt.exec([])).toBe(yt);

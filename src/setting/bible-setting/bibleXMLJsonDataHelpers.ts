@@ -91,6 +91,45 @@ export async function getBibleKeyFromFile(filePath: string) {
     );
 }
 
+/**
+ * The bible key AND title of an XML file, from the same 4KB head read.
+ *
+ * For LISTING files — the export picker needs a label per row and must never
+ * reach `getBibleInfoJson`/`getBibleInfo`, which parse the whole multi-MB XML
+ * (and, for a file with no key attribute, `getBibleInfoJson` also opens a
+ * dialog asking the operator to name it — the last thing a list should do).
+ *
+ * The title is best-effort: absent from the head chunk it comes back `null` and
+ * the caller shows the key alone. Only the KEY is worth a full-file fallback,
+ * and `getBibleKeyFromFile` already does that one.
+ */
+export async function getBibleHeadInfoFromFile(filePath: string) {
+    // ONE head read and ONE parse for both attributes. The export picker lists
+    // every installed bible, so reading the file a second time just to fetch a
+    // label would double the I/O of opening that dialog.
+    const headText = readFileHeadText(filePath, BIBLE_KEY_HEAD_READ_BYTES);
+    const xmlElementBible =
+        headText === null
+            ? null
+            : xmlTextToBibleElement(headText, { keys: 'all' });
+    const headBibleKey =
+        xmlElementBible === null
+            ? null
+            : guessValue(xmlElementBible, attributesMap.bibleKey);
+    const title =
+        xmlElementBible === null
+            ? null
+            : guessValue(xmlElementBible, attributesMap.title);
+    // Only the KEY is worth a full-file fallback, for a root open tag that did
+    // not fit in the head chunk. `getBibleKeyFromFile` owns that path and its
+    // cache, so it is asked only when the cheap read came up empty.
+    const bibleKey = headBibleKey ?? (await getBibleKeyFromFile(filePath));
+    if (bibleKey === null) {
+        return null;
+    }
+    return { bibleKey, title };
+}
+
 export async function getAllXMLFileKeys() {
     const dirPath = await bibleDataReader.getWritableBiblePath();
     const files = await fsListFiles(dirPath);

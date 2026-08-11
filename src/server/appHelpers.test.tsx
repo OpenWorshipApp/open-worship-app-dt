@@ -21,14 +21,29 @@ const {
     showProgressBarMessageMock,
     logErrorMock,
     tranMock,
+    requireExtraBinPathsMock,
+    extraBinPathsMock,
 } = vi.hoisted(() => {
     const sendData = vi.fn();
     const sendDataSync = vi.fn();
     const listenOnceForData = vi.fn();
     const copyToClipboard = vi.fn();
     const getYTHelper = vi.fn();
+    const extraBinPaths = {
+        dirPath: '/extra-bin',
+        ytDlpBinPath: '/bin/yt-dlp',
+        ffmpegBinDirPath: '/bin/ffmpeg',
+        ffmpegBinPath: '/bin/ffmpeg/ffmpeg',
+        qjsBinPath: '/bin/qjs',
+    };
 
     return {
+        // `null` is the "not installed" answer the guard gives, so the mock has
+        // to admit it too.
+        requireExtraBinPathsMock: vi.fn<
+            () => Promise<typeof extraBinPaths | null>
+        >(async () => extraBinPaths),
+        extraBinPathsMock: extraBinPaths,
         appProviderMock: {
             isMainPage: true,
             isPageReader: false,
@@ -43,8 +58,6 @@ const {
                 listenOnceForData,
             },
             ytUtils: {
-                ffmpegBinPath: '/bin/ffmpeg',
-                qjsBinPath: '/bin/qjs',
                 getYTHelper,
             },
         },
@@ -140,6 +153,12 @@ vi.mock('../helper/debuggerHelpers', () => ({
     useAppEffect: useEffect,
 }));
 
+// The yt-dlp callers resolve the media pack through a dynamic import; `vi.mock`
+// intercepts that too.
+vi.mock('../helper/extra-bin/extraBinHelpers', () => ({
+    requireExtraBinPaths: requireExtraBinPathsMock,
+}));
+
 async function loadModule() {
     vi.resetModules();
     return await import('./appHelpers');
@@ -195,6 +214,8 @@ describe('appHelpers', () => {
         appProviderMock.messageUtils.listenOnceForData.mockReset();
         appProviderMock.systemUtils.copyToClipboard.mockReset();
         appProviderMock.ytUtils.getYTHelper.mockReset();
+        requireExtraBinPathsMock.mockReset();
+        requireExtraBinPathsMock.mockResolvedValue(extraBinPathsMock);
         pathJoinMock.mockImplementation((...parts: string[]) =>
             parts.join('/'),
         );
@@ -524,6 +545,33 @@ describe('appHelpers', () => {
             77,
         );
         expect(showProgressBarMessageMock).toHaveBeenCalledWith('all done');
+    });
+
+    test('points yt-dlp at the installed media pack', async () => {
+        const module = await loadModule();
+        appProviderMock.ytUtils.getYTHelper.mockResolvedValue({
+            execPromise: vi.fn().mockResolvedValue('https://stream/x.mp4\n'),
+        });
+
+        await module.resolveMediaStreamUrl('https://watch');
+
+        expect(appProviderMock.ytUtils.getYTHelper).toHaveBeenCalledWith(
+            '/bin/yt-dlp',
+        );
+    });
+
+    test('refuses to run yt-dlp when the media pack is not installed', async () => {
+        const module = await loadModule();
+        requireExtraBinPathsMock.mockResolvedValue(null);
+
+        await expect(
+            module.resolveMediaStreamUrl('https://watch'),
+        ).rejects.toThrow('extra-bin is not installed');
+        await expect(
+            module.downloadVideoOrAudio('https://video', '/out', true),
+        ).rejects.toThrow('extra-bin is not installed');
+
+        expect(appProviderMock.ytUtils.getYTHelper).not.toHaveBeenCalled();
     });
 
     test('resolves a direct stream URL and points yt-dlp at the shipped binaries', async () => {

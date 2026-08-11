@@ -1,5 +1,6 @@
 import { use, useCallback } from 'react';
 
+import BibleInfoButtonComp from './BibleInfoButtonComp';
 import RenderEditingActionButtonsComp from './RenderEditingActionButtonsComp';
 import { closeCurrentEditingBibleItem } from '../bible-reader/readBibleHelpers';
 import { toShortcutKey } from '../event/KeyboardEventListener';
@@ -53,7 +54,17 @@ export default function RenderBibleEditingHeaderComp() {
                     bibleItem={viewController.selectedBibleItem}
                     onBibleKeyChange={handleBibleKeyChange}
                 />
-                {foundBibleItem === null ? null : (
+                {foundBibleItem === null ? (
+                    // Nothing resolved yet, so the verse actions have nothing to
+                    // act on and this slot is free. Offer the translation's
+                    // information here instead of sending the user to
+                    // Settings -> Bible just to read it.
+                    <div className="d-flex align-items-center px-1">
+                        <BibleInfoButtonComp
+                            bibleKey={viewController.selectedBibleItem.bibleKey}
+                        />
+                    </div>
+                ) : (
                     <div
                         className={`${HoverMotionHandler.lowVisibleClassname}-0 app-opacity-hover`}
                         data-opacity-hover="0.1"

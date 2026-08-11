@@ -33,6 +33,8 @@ tmp_dir="./extra-work/tmp"
 bin_file_info="files.txt"
 sep="|"
 latest_commit=$(git rev-parse HEAD)
+extra_bin_dir_name="extra-bin"
+extra_bin_src_dir="./extra-work/experiment-building/release"
 
 is_linux_ubuntu() {
     if command -v lsb_release &> /dev/null; then
@@ -55,11 +57,29 @@ is_linux_fedora() {
 export RELEASE_LINUX_IS_UBUNTU=$(is_linux_ubuntu)
 export RELEASE_LINUX_IS_FEDORA=$(is_linux_fedora)
 
+# The media helpers are no longer inside the packages: `build-extra-bin.mjs`
+# writes one `bin-<version>.tar.gz` per platform into extra_bin_src_dir, and it
+# is picked up here right after the pack that produced it. Missing is a warning,
+# not a failure -- only some platforms have committed binaries.
+copy_extra_bin() {
+    shopt -s nullglob
+    tar_files=("$extra_bin_src_dir"/bin-*.tar.gz)
+    shopt -u nullglob
+    if [[ ${#tar_files[@]} -eq 0 ]]; then
+        echo "WARNING: no extra-bin pack for \"$1\" - it will not be published"
+        return
+    fi
+    mkdir -p "$1/$extra_bin_dir_name"
+    cp "${tar_files[0]}" "$1/$extra_bin_dir_name/"
+    cp "$extra_bin_src_dir/bin-info.json" "$1/$extra_bin_dir_name/"
+}
+
 start_prep() {
     mv $release_dir $1
     target_file="$1/$bin_file_info"
     rm -f "$target_file"
     touch "$target_file"
+    copy_extra_bin "$1"
 }
 
 append_file_info() {
@@ -104,19 +124,35 @@ linux_prep() {
     done
 }
 
+# `npm i` builds the pack once, for the HOST arch. A run that packs more than one
+# arch from the same tree (win x64 + win-ia32) has to rebuild it per arch, with
+# the same FORCE_ARCH_32 that `copy-build.mjs` will see, or the 32-bit build
+# would publish the 64-bit pack.
+build_extra_bin() {
+    if [[ "$1" == "32" ]]; then
+        FORCE_ARCH_32=true node ./extra-work/build-extra-bin.mjs
+    else
+        node ./extra-work/build-extra-bin.mjs
+    fi
+}
+
 build_release() {
     if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
         process=$(node -p "process.arch")
         if [[ "$process" == "arm64" ]]; then
+            build_extra_bin
             npm run pack:win
             win_prep "$tmp_dir/win-arm64"
         else
+            build_extra_bin
             npm run pack:win
             win_prep "$tmp_dir/win"
+            build_extra_bin 32
             npm run pack:win:32
             win_prep "$tmp_dir/win-ia32"
         fi
     elif [[ "$OSTYPE" == "darwin"* ]]; then
+        build_extra_bin
         if [[ "$(uname -m)" == "arm64" ]]; then
             npm run pack:mac
             mac_prep "$tmp_dir/mac"
@@ -125,6 +161,7 @@ build_release() {
             mac_prep "$tmp_dir/mac-intel"
         fi
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        build_extra_bin
         npm run pack:linux
         if [[ "$RELEASE_LINUX_IS_UBUNTU" == "true" ]]; then
             linux_prep "$tmp_dir/linux-ubuntu" "ubuntu"
@@ -165,6 +202,7 @@ export RELEASE_AWS_DISTRIBUTION_ID="${AWS_DISTRIBUTION_ID}"
 export RELEASE_STORAGE_DIR="$tmp_dir"
 export RELEASE_BIN_FILE_SEPARATOR="$sep"
 export RELEASE_BIN_FILE_INFO="$bin_file_info"
+export RELEASE_EXTRA_BIN_DIR_NAME="$extra_bin_dir_name"
 node ./extra-work/s3-push-release.js
 
 git pull

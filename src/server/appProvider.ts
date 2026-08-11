@@ -213,9 +213,10 @@ export type AppProviderType = Readonly<
         readerHomePage: string;
         currentHomePage: string;
         ytUtils: {
-            getYTHelper: () => Promise<YTHelper>;
-            ffmpegBinPath: string;
-            qjsBinPath: string;
+            // The path is passed in: the binaries live in the user's data
+            // directory now, which the preload cannot resolve. See
+            // `src/helper/extra-bin/extraBinHelpers.tsx`.
+            getYTHelper: (ytDlpBinPath: string) => Promise<YTHelper>;
         };
         windowTitle: string;
         POPUP_FRAME_NAME_PREFIX: string;

@@ -1,4 +1,7 @@
-import { type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import {
+    type KeyboardEvent as ReactKeyboardEvent,
+    type MouseEvent as ReactMouseEvent,
+} from 'react';
 
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import appProvider from '../../server/appProvider';
@@ -13,6 +16,7 @@ import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 import { notifyElementHighlight } from '../../helper/domHelpers';
 import Slide from '../../app-document-list/Slide';
 import PptxSlide from '../../app-document-list/PptxSlide';
+import EventHandler from '../../event/EventHandler';
 
 export function focusNoteEditor(varySlide: VarySlideType) {
     if (
@@ -30,6 +34,32 @@ export function focusNoteEditor(varySlide: VarySlideType) {
             shouldSkipHighlighting: true,
         });
     }
+}
+
+export const ON_SLIDE_ITEM_SELECTED_EVENT = 'on-slide-item-selected';
+export type OnSlideItemSelectedEventDataType = {
+    target: Element;
+};
+
+/**
+ * Announces "this slide card was clicked", carrying the card element itself.
+ *
+ * A card knows nothing about who is interested in it — the lyric previewer is,
+ * so that clicking a lyric slide scrolls its verse into view — so the element
+ * travels with the event and every listener decides for itself whether the
+ * click was inside its own subtree.
+ *
+ * `currentTarget` is read NOW because React nulls it the moment the handler
+ * returns; the dispatch itself is deferred a macrotask so the highlight lands
+ * after the selection has finished scrolling the card into view.
+ */
+export function fireOnSlideItemSelectedEvent(event: ReactMouseEvent<Element>) {
+    const data: OnSlideItemSelectedEventDataType = {
+        target: event.currentTarget,
+    };
+    setTimeout(() => {
+        EventHandler.addPropEvent(ON_SLIDE_ITEM_SELECTED_EVENT, data);
+    }, 0);
 }
 
 export function handleVarySlideSelecting(

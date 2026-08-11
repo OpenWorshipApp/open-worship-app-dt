@@ -5,11 +5,11 @@ import {
 } from '../../lang/langHelpers';
 import { createWorkDir, safeDeleteDir } from '../../helper/appArchiveHelpers';
 import { openArchiveForReading } from '../../helper/archivePasswordHelpers';
-import { ArchivePasswordComp } from '../../popup-widget/ArchivePasswordComp';
 import {
-    showAppAlert,
-    showAppInput,
-} from '../../popup-widget/popupWidgetHelpers';
+    ArchivePasswordComp,
+    MAX_PASSWORD_ATTEMPTS,
+} from '../../popup-widget/ArchivePasswordComp';
+import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
 import {
     hideProgressBar,
     showProgressBar,
@@ -18,9 +18,9 @@ import appProvider from '../../server/appProvider';
 import { selectFiles } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { getDataDirectoryBySettingName } from '../directory-setting/dataDirectories';
-import DataFolderSelectorComp, {
-    type DataFolderChoiceType,
-} from './DataFolderSelectorComp';
+import ArchiveItemSelectorComp, {
+    type ArchiveItemChoiceType,
+} from '../../popup-widget/ArchiveItemSelectorComp';
 import type { DataArchiveFolderType } from './dataArchiveHelpers';
 import {
     EXPORT_TITLE,
@@ -59,56 +59,59 @@ const IMPORT_CLICK = 'data-archive:import';
 async function askForFolders(
     title: string,
     message: string,
-    choices: DataFolderChoiceType[],
+    choices: ArchiveItemChoiceType[],
     isAskingNewPassword = false,
 ) {
-    let selectedKeys = choices.map((choice) => {
-        return choice.key;
-    });
-    let password = '';
-    let confirmedPassword = '';
-    const isOk = await showAppInput(
-        // The popup renders its title raw, so it is translated here.
-        tran(title),
-        <>
-            <DataFolderSelectorComp
-                choices={choices}
-                message={message}
-                onChange={(newSelectedKeys) => {
-                    selectedKeys = newSelectedKeys;
-                }}
-            />
-            {isAskingNewPassword ? (
-                <div className="mt-3 pt-3 border-top">
-                    <ArchivePasswordComp
-                        isConfirming
-                        onChange={(newPassword, newConfirmedPassword) => {
-                            password = newPassword;
-                            confirmedPassword = newConfirmedPassword;
-                        }}
-                    />
-                </div>
-            ) : null}
-        </>,
-        { escToCancel: true },
-    );
-    if (!isOk || selectedKeys.length === 0) {
-        return null;
-    }
-    // Ok cannot be vetoed from inside the popup (Enter confirms it outright), so
-    // a mistyped confirmation is caught here and the dialog is re-opened. A
-    // backup locked behind a password that was typed wrong once is a backup
-    // that is gone.
-    if (password !== '' && password !== confirmedPassword) {
-        await showAppAlert(tran(title), tran('Passwords do not match'));
-        return await askForFolders(
-            title,
-            message,
-            choices,
-            isAskingNewPassword,
+    let invalidMessage: string | undefined = undefined;
+    // A LOOP, and deliberately not `showAppAlert` + recursion — see the twin of
+    // this function in `bibleXMLArchiveMenuHelpers.tsx` for the whole story.
+    //
+    // Short version: an alert between the two `showAppInput` calls unmounts the
+    // popup and throws away both children's state, so the re-ask came back with
+    // the password fields blank and every folder re-checked. An operator who
+    // picked one small folder, mistyped the confirmation and pressed Ok again
+    // got their ENTIRE data directory, unprotected, with nothing said about it.
+    for (let attempt = 0; attempt < MAX_PASSWORD_ATTEMPTS; attempt++) {
+        let selectedKeys = choices.map((choice) => {
+            return choice.key;
+        });
+        let password = '';
+        let confirmedPassword = '';
+        const isOk = await showAppInput(
+            // The popup renders its title raw, so it is translated here.
+            tran(title),
+            <>
+                <ArchiveItemSelectorComp
+                    choices={choices}
+                    message={message}
+                    onChange={(newSelectedKeys) => {
+                        selectedKeys = newSelectedKeys;
+                    }}
+                />
+                {isAskingNewPassword ? (
+                    <div className="mt-3 pt-3 border-top">
+                        <ArchivePasswordComp
+                            isConfirming
+                            invalidMessage={invalidMessage}
+                            onChange={(newPassword, newConfirmedPassword) => {
+                                password = newPassword;
+                                confirmedPassword = newConfirmedPassword;
+                            }}
+                        />
+                    </div>
+                ) : null}
+            </>,
+            { escToCancel: true },
         );
+        if (!isOk || selectedKeys.length === 0) {
+            return null;
+        }
+        if (password === confirmedPassword) {
+            return { selectedKeys, password: password || null };
+        }
+        invalidMessage = 'Passwords do not match';
     }
-    return { selectedKeys, password: password || null };
+    return null;
 }
 
 /**
@@ -151,7 +154,10 @@ async function handleExporting() {
             folders.map(({ dataDirectory, dirPath }) => {
                 return {
                     key: dataDirectory.settingName,
-                    title: dataDirectory.title,
+                    // The selector renders titles raw — a bible row's title is
+                    // its key, which has no dictionary entry — so a fixed one
+                    // like this is translated here.
+                    title: tran(dataDirectory.title),
                     iconClassName: dataDirectory.iconClassName,
                     detail: dirPath,
                 };
@@ -176,7 +182,7 @@ async function handleExporting() {
 }
 
 function toImportChoices(folders: DataArchiveFolderType[]) {
-    const choices: DataFolderChoiceType[] = [];
+    const choices: ArchiveItemChoiceType[] = [];
     for (const folder of folders) {
         const dataDirectory = getDataDirectoryBySettingName(folder.settingName);
         if (dataDirectory === null) {
@@ -184,7 +190,7 @@ function toImportChoices(folders: DataArchiveFolderType[]) {
         }
         choices.push({
             key: folder.settingName,
-            title: dataDirectory.title,
+            title: tran(dataDirectory.title),
             iconClassName: dataDirectory.iconClassName,
             detail: folder.entry,
         });

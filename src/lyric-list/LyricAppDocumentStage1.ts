@@ -9,11 +9,6 @@ export default class LyricAppDocumentStage1 extends LyricAppDocumentStageAbstrac
         return {
             isWithKeyNote: true,
             isShowingCommentText: true,
-            css: `
-                .ol-song-view__info-card .ol-song-view__title {
-                    font-size: 1.6em !important; 
-                }
-            `,
         } as OpenLyricElementMapOptions;
     }
 

@@ -157,7 +157,8 @@ describe('appProvider.mock', () => {
         expect(database.getAll('select 1')).toEqual([]);
         expect(database.database.prepare('select 1').get()).toBeNull();
 
-        const ytHelper = await appProviderMock.ytUtils.getYTHelper();
+        const ytHelper =
+            await appProviderMock.ytUtils.getYTHelper('/bin/yt-dlp');
         expect(
             ytHelper
                 .exec([])

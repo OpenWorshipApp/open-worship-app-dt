@@ -261,6 +261,17 @@ Keep the main window on `presenter.html`.
   another slide was live, the first click replaces it and the second click clears the layer
   (this exact accident cleared the live slide during a run). Use `click` (no `dblClick`),
   then verify via `.app-on-screen` before proceeding.
+- ⚠️ **A bare synthetic `.click()` does NOT present a slide card** (verified 2026-08-10).
+  `VarySlideRenderComp` is a **drag surface**, and `element.click()` — which dispatches a
+  lone `click` with no pointer sequence — leaves it completely inert: no present, no
+  toggle, no console error, and the on-screen badge stays exactly as it was. It looks like
+  a dead card. Dispatch the **full sequence** instead —
+  `pointerdown → mousedown → pointerup → mouseup → click`, all with real `clientX/clientY`
+  — which presents it first time. (Ordinary `<button>`s and context-menu items are fine
+  with a bare `.click()`; this is specific to the draggable cards.) Related, but not the
+  same thing: a *real* canceled `pointerdown` suppressing `mousedown`/`click`/`dblclick`
+  on drag surfaces. **Never conclude "clicking a slide does nothing" from a bare
+  `.click()`** — re-drive it with the full sequence before filing anything.
 - **Toasts: fire them yourself, and don't measure too early.** `window.testSimpleToasts()`
   (dev-only, `src/toast/toastHelpers.ts`) is the cheapest way to cover `[GL-10, GL-15,
   GL-23]` — no organic trigger needed. It deliberately spaces its 3 toasts **~500 ms
@@ -489,12 +500,45 @@ content-only edits / on some OSes (e.g. macOS needs a **recursive** watch to see
 unmounted or a filePath mismatch; the **2 s per-renderer cache** serving stale bytes to the
 reload; an **auto-reloading** consumer (center preview / list rows) that stopped subscribing;
 a regression in the reload wiring (e.g. the `VaryAppDocumentFileComp` / `LyricFileComp` /
-`PresentingFlowFileComp` `useFileSourceEvents` refactor). **Expected, NOT bugs:** (a) an **unsaved**
-editor edit not showing in the Presenter — separate renderers sync via saved-on-disk state,
-so the Presenter shows the last **saved** version (confirm the change was actually **saved**
-before filing a FAIL); (b) a **saved** edit not auto-updating the **live screen** of a
-**presented** slide — the presented copy is an intentional snapshot; the operator applies it
-by **re-presenting** (§12.2 step 5). Only the center preview / list rows must auto-reload.
+`PresentingFlowFileComp` `useFileSourceEvents` refactor). **Expected, NOT bugs:** a **saved**
+edit not auto-updating the **live screen** of a **presented** slide — the presented copy is an
+intentional snapshot; the operator applies it by **re-presenting** (§12.2 step 5). Only the
+center preview / list rows must auto-reload.
+
+#### ⚠️ 12.2b UNSAVED edits DO propagate — the sync unit is the history HEAD, not the saved file
+
+**Corrected 2026-08-10 (run `20260810-1454`); earlier revisions of this file, `SKILL.md`
+§6c and `test-plan.md` §S18 all claimed the opposite — that "an unsaved edit not showing in
+the Presenter is correct (XW-04)". That was wrong, and it is the kind of wrong that makes a
+QA agent file a false FAIL (or wave through a real regression).**
+
+Unsaved editor state is **disk-backed the moment you make it**: `EditingHistoryManager`
+writes `<file>.histories/<n>-head`. The watcher→bridge→reload chain therefore fires on the
+*unsaved* edit too, and the Presenter reads through the **history HEAD**, not the `.ows`. The
+same architecture is already documented for the run sheet ("a presenting flow reads its
+editing-history HEAD, not the `.owpf`").
+
+Measured live on a scratch document, editor in its own window:
+
+| where | after editing X 356 → 100 and **saving** | after editing X 100 → 600 and **NOT saving** |
+| --- | --- | --- |
+| `<file>.histories/<n>-head` | 100 | **600** |
+| the saved `.ows` on disk | 100 | 100 |
+| Presenter centre preview (other renderer) | 100 | **600** |
+| live `screen.html` (already presenting) | 356 — stale **by design** | 600 — stale by design |
+| live `screen.html` **after re-presenting** | 100 | **600** |
+
+So **presenting projects the unsaved working state**, and the `*` suffix the list draws on a
+dirty document (`a2*`) is the operator's only warning. That is coherent — the preview and the
+projector agree, which is what an operator needs — but it means:
+
+- **XW-04 asserts the opposite of the truth.** The correct assertion is: an unsaved edit
+  **does** reach the Presenter preview within ~3 s, and a re-present pushes it to the screen.
+  A Presenter that *fails* to show an unsaved edit is the finding.
+- "Confirm the change was actually **saved** before filing a FAIL" is **not** valid triage
+  here. Saving changes what is in the `.ows`, not what the Presenter shows.
+- To prove where a value came from, read **both** `<file>.histories/<n>-head` and the saved
+  file — they disagree exactly while a document is dirty, and the head is what renders.
 
 ### 12.3 Why a CDP-only run can't see it — and how to test it anyway
 Three reasons earlier runs missed it, each with the fix:
@@ -1000,11 +1044,27 @@ Three layers, one code path, all tar/tar.gz (no zip dependency anywhere):
 | --- | --- |
 | `.owapf.tar.gz` | a presenting flow + the whole document behind every slide reference + media + `.bg.json` sidecars |
 | `.owadoc.tar.gz` / `.owbible.tar.gz` | ONE document (or bible list) + everything attached to it |
+| `.owabn.tar.gz` | one bible NOTE item + the media embedded in it |
 | `.owadata.tar` | the whole data folder — File → Export/Import Data; uncompressed and with no staging copy, on purpose |
+| `.owabdata.tar.gz` | the XML bibles of Settings → Bible (ST-34..ST-40) — MANY per bundle, and the only kind whose import can REFUSE an item |
+
+Every one of them also has a password-protected shape with the compression tail swapped
+for `.enc` (`.owapf.enc`, `.owabdata.enc`…): the kind stays in the name because that is
+what routes a drop, but what decides is the `OWAENC` container magic, never the name.
 
 The import contract is the thing to test: **every destination folder is resolved up front**,
 so an import with a folder unset fails BEFORE writing anything (§14.7). Adding a new
-archive kind means adding a CONFIG, not copying the layer.
+archive kind usually means adding a CONFIG, not copying the layer.
+
+`.owabdata` is the exception worth knowing, and NOT a config: its items are flat files in
+an **app-managed** folder (so there is no folder to resolve and no `kindDirSettingNameMap`
+entry), there are many per bundle, and identity is the bible KEY inside the XML rather than
+the file name. That last part is what makes its import the only one that can say no —
+where every other kind resolves a name collision by adding `a (1).mp4` beside yours, two
+bibles sharing a key would be ambiguous everywhere else in the app, so a colliding or
+unreadable item becomes a red un-tickable row and is skipped. Keys compare
+**case-insensitively**, and the key is re-read from the extracted FILE because the manifest
+is untrusted.
 
 ### 14.15 Driving this panel through CDP
 
@@ -1021,3 +1081,113 @@ archive kind means adding a CONFIG, not copying the layer.
   note). That runs the whole import pipeline against a file on disk.
 - The floating preview's keys are focus-gated — if a press does nothing, check
   `document.activeElement` is inside the widget before concluding anything.
+
+---
+
+## 15. Bible XML import — from a link to a usable translation ⚠️ (ST-41..ST-50, W-34)
+
+Everything in this section was driven live on 2026-08-10 against the canonical link
+`https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSBible.xml`,
+importing it a second time under a scratch key and then deleting it.
+
+**Use a NON-ENGLISH bible.** An English XML hides every bug in this area, because the
+defaults an import falls back to are the English ones. The canonical link is Khmer on
+purpose.
+
+### 15.1 The import is two questions, not one
+
+`BibleXMLImportComp` → `readFromUrl` → `xmlTextToJson` → `saveJsonDataToXMLfile`.
+
+- **Download.** `initHttpRequest` is protocol-aware AND **follows up to 5 redirects**, so a
+  `github.com/…/raw/…` link resolves to `raw.githubusercontent.com` on its own and a plain
+  `http://host:8000/…` works too. The body is streamed to
+  `<appLocalStorage.defaultStorage>/temp-xml/<basename>.xml`, read, then **deleted** — an
+  import that leaves anything in `temp-xml` failed partway.
+- **`Key is missing`.** Most published XMLs carry no `key`/`abbr`, so `guessingBibleKey`
+  loops a `showAppInput` until it has one. The **Guessing keys** buttons are
+  `getGuessingBibleKeys`: every attribute value **on the root element**, split on
+  `[.,\s]`, deduped, minus every key already installed (`getAllXMLFileKeys` + the
+  downloaded-bible list). That last filter is why re-importing the canonical file on a
+  machine that already has `ពគប` shows 15 buttons and **not** `ពគប` — on a fresh machine
+  the `link="https://www.bible.com/bible/1270/GEN.23.ពគប"` attribute hands the operator
+  that exact badge as a one-click button. That is where the user's `ពគប` came from.
+- **`Confirm Key for Bible`.** `No` loops back to the key input rather than aborting; the
+  way out of the loop entirely is `Cancel` then `No`.
+- The key is **also the file name** (`<key>.xml`). Renaming `key` later in the Info editor
+  does NOT rename the file — `updateBibleXMLInfo` saves through `oldBibleInfo.key`, so the
+  badge and the file name silently diverge. Settle the key at import time.
+
+### 15.2 Where the file lands (do not assume the `-dev` folder)
+
+`bibles-data` is app-managed and hangs off `appLocalStorage.defaultStorage`, **not** off any
+Path-Settings folder. On 2026-08-10 the running dev app wrote to
+`Desktop\open-worship-data\bibles-data` while its Bible-Reader folder was
+`Desktop\open-worship-data-dev\bibles-read` — so §14.15's "dev writes to `…-dev`" holds for
+the path-settings folders but **not** for `bibles-data`. Resolve it before declaring a write
+missing; a `Get-ChildItem -Recurse -Filter "<key>*"` over the profile settles it in seconds.
+
+### 15.3 A raw import is not finished — it lands on English
+
+Attribute aliases resolve (`translation`/`name` → `title`, `status` → `legalNote`,
+`abbr` → `key`), but every field the source omits falls back to a default:
+
+| what | default after import | what a Khmer bible needs |
+| --- | --- | --- |
+| `locale` | `en-US` | `km-KH` |
+| `number-map` | `0`…`9` | `០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩` |
+| `book-map` | `Genesis`, `Exodus`, `Psalm`… | `លោកុប្បត្តិ`, `និក្ខមនំ`, `ទំនុកដំកើង`… |
+
+The bible works — it is just filed under **English** in the reader's key menu (that menu is
+grouped by locale) and renders `(<key>) Acts 28:15` instead of `(<key>) កិច្ចការ ២៨:១៥`.
+**That difference is the pass/fail signal for ST-49**, and it is visible without opening a
+single file.
+
+### 15.4 The three Info-editor actions, and why the ORDER is load-bearing
+
+Pencil → **Info** → right-click inside Monaco. `addMonacoBibleInfoActions` adds:
+
+1. **🌎 Choose Locale** — 229-entry `AppContextMenu` of `<locale> (<Language name>)`.
+2. **#️⃣ Edit Numbers Map** — "Define numbers map for `<lang>`", with a **Translate** link and
+   a **Use ១ ២ ៣** button that fills the locale's own digits.
+3. **📚 Edit Books Map** — a second Monaco holding the 66 names, line-numbered with the model
+   book names (`Genesis (GEN) 01`), plus **Reset** / **Translate** / **Parse Markup String
+   (HTML\|XML)** / **📖 Guessing Names**. Guessing Names lists the locale's shipped sets
+   labelled by the bible keys that use them (km ships three: `អគត` · `ពគប, គកស១៦, GKHB` ·
+   `គខប`), **sorted so the set matching the current bible key is first and bold**.
+
+Actions 2 and 3 read `info.locale` **out of the editor buffer**, not out of the saved file —
+so running Choose Locale first is what makes "Use ១ ២ ៣" and the Khmer book sets appear at
+all. Run them in the other order and you get the English suggestions with no error message.
+
+Each action rewrites the buffer via `setPartialBibleInfo` and leaves the footer on **Unsaved
+changes**; nothing reaches disk until **Save**, which then fires `forceReloadAppWindows()`.
+
+### 15.5 Driving all of this through CDP
+
+- **A synthetic `contextmenu` event does NOT open Monaco's menu.** Verified against
+  `.monaco-editor`, `.overflow-guard`, `.monaco-scrollable-element`, `.lines-content`,
+  `.view-lines` and `.view-line`, with `pointerdown`/`mousedown` first — no menu in any case.
+- **Use the command palette instead**: `document.querySelector('.monaco-editor
+  .native-edit-context').focus()` then `press_key F1`. The three actions are listed above the
+  built-ins and the palette opens fine without OS foreground focus (it is a keybinding, not a
+  model mutation — CLAUDE.md's Monaco-focus rule bites typing, not commands).
+- **Match the palette row by LABEL, never by index.** It re-sorts the last-used command to
+  the top under "recently used", so a fixed arrow count runs the wrong action on the second
+  pass — that mistake silently re-opened the locale menu here.
+- **Filtering the palette programmatically does not work**: the native-setter `value` +
+  `input` trick empties the row list instead of filtering it. Read the rows, count
+  `ArrowDown`s to the one whose text matches, confirm `.focused` is on it, then `Enter`.
+- Everything else on this page is ordinary React: the URL box, the key input, the guessing-key
+  buttons, `Ok`/`Yes`, **Use ១ ២ ៣**, **Guessing Names** and its menu items all take a plain
+  `.click()` / native-setter `input` event.
+
+### 15.6 Cleanup — the trash leaves the cache behind
+
+🗑 → **Yes** trashes `<key>.xml`, but the sibling **`<key>.xml.cache` folder is left on
+disk** — 13 MB for the canonical file. A robot run that seeds a scratch bible must remove
+that folder itself, or every run adds another one (a stale `ZZTEST.xml.cache` from an earlier
+run was still there on 2026-08-10). Same discipline as the media block's MD-04.
+
+Also note `saveJsonDataToXMLfile` **returns `true` without checking the write** — it awaits
+`saveXMLText` and discards its boolean — so "the import said it worked" is not evidence the
+file exists. Confirm on disk, or confirm the row in the list.

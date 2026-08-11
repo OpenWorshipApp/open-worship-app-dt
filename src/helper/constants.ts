@@ -34,6 +34,14 @@ export const appManagedDataDirNames = {
     // Derived-once indexes over the shipped lookup dataset. Regenerated from
     // that dataset whenever it is missing or stale, so it is safe to delete.
     LOOKUP_DATA: 'lookup-data',
+    /**
+     * The media helpers (yt-dlp / ffmpeg / qjs) the user installs on demand from
+     * Settings > Others. Deliberately NOT registered in
+     * `setting/directory-setting/dataDirectories.ts`: the whole-data archive
+     * walks that list, and this is ~36MB of binaries that can be downloaded
+     * again — it must never be dragged into every backup.
+     */
+    EXTRA_BIN: 'extra-bin',
 };
 
 /**

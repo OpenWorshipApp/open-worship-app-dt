@@ -16,6 +16,7 @@
         "electron": "cross-env NODE_ENV=development electron . --remote-debugging-port=9223",
         "electron:watch": "nodemon --exec \"npm run electron\" --watch electron-build",
         "electron:dev": "npm run electron:build && concurrently -k \"npm run electron:build:watch\" \"npm run electron:watch\"",
+        "install": "bash extra-work/build.sh",
         "build": "npm run vite:build && npm run electron:build",
         "pack:mac": "npm run build && electron-builder build --mac",
         "pack:linux": "npm run build && electron-builder build --linux && npm run pack:linux:rpm",

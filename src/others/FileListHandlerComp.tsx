@@ -20,6 +20,7 @@ import {
 } from './droppingFileHelpers';
 import NoDirSelectedComp from './NoDirSelectedComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import type { OptionalPromise } from '../helper/typeHelpers';
@@ -80,20 +81,40 @@ function ListMenuButtonComp({
         onShowMenuRef.current?.(event);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // The menu positions itself from `clientX`/`clientY`, which a KeyboardEvent
+    // has not got — so open it at the button's own corner instead of handing on
+    // an event with undefined coordinates.
+    const handleKeyDowning = useCallback((event: any) => {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        const { left, bottom } = event.currentTarget.getBoundingClientRect();
+        onShowMenuRef.current?.(createMouseEvent(left, bottom));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (onShowMenu === undefined) {
         return null;
     }
+    // A `title` alone leaves an icon-only control nameless in the a11y tree (and
+    // unreachable by keyboard). Kept a `div` rather than a `button` so the
+    // surrounding path-row layout is untouched.
     return (
         <div
             className={`app-caught-hover-pointer ${className}`}
+            role="button"
+            tabIndex={0}
+            aria-label={tran('More Options')}
             title={tran('More Options')}
             onClick={handleClicking}
+            onKeyDown={handleKeyDowning}
             style={{
                 color: 'var(--bs-secondary-color)',
                 fontSize: '17px',
             }}
         >
-            <i className="bi bi-three-dots-vertical" />
+            <i className="bi bi-three-dots-vertical" aria-hidden="true" />
         </div>
     );
 }

@@ -25,6 +25,11 @@ export function openBibleSetting() {
     setSetting(SETTING_SETTING_NAME, 'b');
     openSettingPage();
 }
+
+export function openOthersSetting() {
+    setSetting(SETTING_SETTING_NAME, 'o');
+    openSettingPage();
+}
 appProvider.messageUtils.listenForData('app:main:go-to-setting-home', () => {
     openBibleSetting();
 });

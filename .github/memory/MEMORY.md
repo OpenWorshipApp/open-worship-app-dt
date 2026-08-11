@@ -53,6 +53,8 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Single-item archives (`.owadoc` / `.owbible`)](document-archive-owadoc.md) — one document, lyric or bible list + everything attached to it; three layers, add a config not a copy
 - [Whole-data archive (`.owadata.tar`)](data-archive-owadata.md) — File → Export/Import Data; uncompressed + no staging copy on purpose, and the File menu now takes renderer items
 - [Archive password protection](archive-password-protection.md) — every export asks; the kind stays in the `.enc` name but detection is by magic, and the dialog is loaded on demand
+- [Bible XML archive (`.owabdata`)](bible-xml-archive-owabdata.md) — the one archive whose import REFUSES an item instead of copying it beside yours; bible keys collide case-insensitively and are re-read from the file, not the manifest
+- [Bible XML import from a link](bible-xml-import-from-url.md) — the key is guessed out of the file's own attributes (that's where `ពគប` came from); a raw import lands on English until Choose Locale → Numbers Map → Books Map are run in that order
 - [Presenting Flow drag & setting rules](presenting-flow-drag-and-settings-rules.md) — `presentingFlowDraggingStore` makes cross-presenting-flow drag a silent no-op; setting names must be sanitized paths
 - [Reader full ref not resolved](reader-full-ref-not-resolved.md) — typing `John 3:16` in the Bible Reader drops the chapter:verse; the five docs that claimed otherwise are now corrected
 - [PDF preload decodes all pages — FIXED](pdf-preload-decodes-all-pages.md) — presenter load turned a selected 88-page PDF into 162MB of bitmap; preload is now file-scoped and sizes come from the PNG header
@@ -60,7 +62,7 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Presenting Flow Keyboard Event](presenting-flow-keyboard-event.md) — the hotkey line: Ctrl/Shift only, unique per sheet, and the ONE run action that resolves screens because its CC elements are its whole payload
 - [`document` at module scope breaks node tests](appprovider-mock-node-env.md) — `appProvider` touches `document` on load, so ANY node-env test that reaches `langHelpers` dies while importing
 - [CacheManager expiry was sliding — FIXED](filesource-cache-sliding-ttl.md) — every read pushed the timestamp forward, so a frequently-read entry never expired; now absolute
-- [A presenting flow reads its editing-history HEAD](presenting-flow-reads-editing-history-head.md) — not the `.owpf`; hand-editing the `.owpf` changes nothing the app reads, which once cost a wrong High finding
+- [Editable docs read their editing-history HEAD](presenting-flow-reads-editing-history-head.md) — not the saved `.owpf`/`.ows`; so hand-editing the saved file does nothing, and UNSAVED edits cross windows and reach the projector
 - [Presenting Flow lyric attachment slide — FIXED](presenting-flow-lyric-slide-dead-row.md) — `getSlideById` only searched `getSlidesQuick()`, which never lists the appended attachment slides
 - [`/owa-robot-test presentingFlow` is a MODE](owa-robot-test-presenting-flow-mode.md) — tracked 11 phases over 66 run-sheet rows with coverage accounting on, not a focus area that trims the run
 - [Canvas audio & media links](canvas-audio-and-media-links.md) — the `audio` item is preview-only; a media source may be a link, and "is it remote?" (archive/menu) is NOT "is it already a URL?" (renderers); lyric attachments become such items
@@ -79,3 +81,5 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [vi.mock factory survives resetModules](vitest-mock-factory-survives-resetmodules.md) — the test and its module end up on different electron mocks; pin it with a top-level `import 'electron'`
 - [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) — it also kills the user's open-lyric dev app; filter processes by CommandLine
 - [View menu widget toggles](view-menu-widget-toggles.md) — View → Widgets ticks each pane open/closed and Reset Widgets Size applies live; blanking `flexGrow` and the `:scope >` query are load-bearing
+- [`appFilePath` is a prototype getter](appfilepath-is-a-prototype-getter.md) — fabricating a CDP drop: plain assignment silently no-ops, so the drop dies with no error; use `Object.defineProperty`
+- [Media binaries install on demand](extra-bin-on-demand.md) — yt-dlp/ffmpeg/qjs left the package; they live in `<data parent>/extra-bin`, the archive is kept for offline re-extract, and the `extraBin` map is cumulative

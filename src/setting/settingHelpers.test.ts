@@ -61,6 +61,14 @@ describe('setting settingHelpers', () => {
         module.openSettingPage();
         module.openGeneralSetting();
         module.openBibleSetting();
+        // The tab the "media tools are missing" dialog jumps to.
+        module.openOthersSetting();
+
+        expect(setSettingMock).toHaveBeenNthCalledWith(
+            3,
+            module.SETTING_SETTING_NAME,
+            'o',
+        );
 
         expect(openPopupWindowMock).toHaveBeenNthCalledWith(
             1,

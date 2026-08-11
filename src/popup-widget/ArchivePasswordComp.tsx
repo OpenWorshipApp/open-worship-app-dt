@@ -24,8 +24,13 @@ import { showAppInput } from './popupWidgetHelpers';
  * How many times a wrong password may be retyped before the flow gives up. The
  * container's key check makes each rejection cost one derivation and no file
  * I/O, so retrying is cheap even against a multi-gigabyte archive.
+ *
+ * Exported because the two flows that render `ArchivePasswordComp` INSIDE their
+ * own picker (Export Data, Export Bible Data) run the same retry loop rather
+ * than calling `askForNewArchivePassword`, and three flows disagreeing about how
+ * many tries an operator gets would be the kind of difference nobody notices.
  */
-const MAX_PASSWORD_ATTEMPTS = 3;
+export const MAX_PASSWORD_ATTEMPTS = 3;
 
 function PasswordFieldComp({
     label,
@@ -62,7 +67,7 @@ function PasswordFieldComp({
  *
  * The value leaves through `onChange` rather than being read from here:
  * `showAppInput` resolves only Ok/Cancel, so the caller holds the answer. Same
- * arrangement as `DataFolderSelectorComp`.
+ * arrangement as `ArchiveItemSelectorComp`.
  */
 export function ArchivePasswordComp({
     isConfirming,
@@ -118,19 +123,23 @@ export function ArchivePasswordComp({
             return !isCurrentlyRevealed;
         });
     }, []);
-    const isMismatched =
-        isConfirming && password !== '' && confirmedPassword !== password;
-    // Once the two fields agree, the re-ask's `invalidMessage` is stale — it
-    // says the input is wrong while the operator is looking at input that is
-    // now right, which reads as the dialog being stuck. Only the confirming
-    // dialog can settle its own complaint that way: an import has nothing to
-    // compare against, so its "Wrong password, try again" must stay up while
-    // the password is retyped and only a fresh attempt can clear it.
-    const isConfirmed =
-        isConfirming && password !== '' && confirmedPassword === password;
+    // The two fields simply have to AGREE — including when both are empty,
+    // which is the "no password" answer the hint below invites.
+    //
+    // Demanding a non-empty password to settle the complaint left the re-ask's
+    // `invalidMessage` showing after the operator cleared both fields: the
+    // dialog said the input was wrong while Ok would have accepted it. The same
+    // gap let a password typed into the CONFIRMATION alone read as "no
+    // password" and export unprotected without a word; now the two disagree, so
+    // it is flagged and the callers below refuse it.
+    const isMismatched = isConfirming && password !== confirmedPassword;
+    // Only the confirming dialog can settle its own complaint that way: an
+    // import has nothing to compare against, so its "Wrong password, try again"
+    // must stay up while the password is retyped and only a fresh attempt can
+    // clear it.
     const message = isMismatched
         ? 'Passwords do not match'
-        : isConfirmed
+        : isConfirming
           ? undefined
           : invalidMessage;
     return (
@@ -205,7 +214,11 @@ export async function askForNewArchivePassword(
         if (!isOk) {
             return null;
         }
-        if (password === '' || password === confirmedPassword) {
+        // Agreement is the whole test, empty included — `''` on both sides is
+        // the "no password" answer. Accepting a `''` password against a filled
+        // confirmation, as this used to, exported unprotected while the dialog
+        // was showing the operator a mismatch.
+        if (password === confirmedPassword) {
             return password;
         }
         invalidMessage = 'Passwords do not match';

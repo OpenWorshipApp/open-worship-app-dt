@@ -28,9 +28,6 @@ export default class LyricAppDocumentStage0 extends LyricAppDocumentStageAbstrac
                     display: none;
                 }
 
-                .ol-song-view__info-card .ol-song-view__title {
-                    font-size: 1.6em !important; 
-                }
             `,
         } as OpenLyricElementMapOptions;
     }

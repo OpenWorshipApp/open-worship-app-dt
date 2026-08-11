@@ -248,12 +248,32 @@ is torn down at the end, and the mandatory blocks ridden from the presenting flo
 other PL rows are the Documents/Lyrics lists — same prefix, different subsystem.
 
 **Media download (video AND audio) is mandatory in every run too** (matrix rows
-`MD-01..04`, SKILL.md §6e). `downloadVideoOrAudio` is the only code path that
-runs the shipped prebuilt `yt-dlp`/`ffmpeg`/`qjs` binaries, so a missing or
-broken binary passes typecheck, tests, build and every other matrix row. The
-video half proves the ffmpeg merge, the audio half proves its mp3 encoder; both
-use the canonical link recorded in the matrix. (The matrix lives at
+`MD-01..06`, SKILL.md §6e). `downloadVideoOrAudio` is the only code path that
+runs the `yt-dlp`/`ffmpeg`/`qjs` binaries, so a missing or broken binary passes
+typecheck, tests, build and every other matrix row. The video half proves the
+ffmpeg merge, the audio half proves its mp3 encoder; both use the canonical link
+recorded in the matrix. (The matrix lives at
 `docs/test-paths/coverage-matrix.md`, not under the skill's `references/`.)
+
+**Those three binaries are NOT bundled with the app** (refactor27). They ship as
+a separate `bin-<ver>.tar.gz` the user installs from **Settings → Others → Extra
+Binaries** into `<data parent dir>/extra-bin/` (`yt/`, `ffmpeg/bin/`, `qjs/`,
+plus `info.json` and the archive itself, which is kept on purpose so a corrupted
+binary can be re-extracted offline). Consequences:
+
+- A run on a fresh machine must **install the pack first** (`MD-05`) — a media
+  download with it absent raises a confirm dialog that jumps to that panel
+  (`MD-06`), which is correct behaviour, not a bug.
+- In **dev the download is mocked**: it copies
+  `extra-work/experiment-building/release/bin-<ver>.tar.gz`, which
+  `extra-work/build-extra-bin.mjs` produces on `npm i` (the `install` npm
+  lifecycle → `extra-work/build.sh`). No local pack means nothing to install.
+- `electron/client/ytUtils.ts` no longer resolves any path; the renderer passes
+  the yt-dlp path in (`src/helper/extra-bin/`). `extra-work/copy-build.mjs`
+  still copies `eot2ttf` and `db-exts` — only the three media binaries moved.
+- `extra-bin` is deliberately absent from
+  `src/setting/directory-setting/dataDirectories.ts`, so it stays out of the
+  `.owadata` whole-data archive.
 
 **The media block deletes what it downloaded (`MD-04`).** It is the only part of
 a run that writes ~100 MB into the user's data dir, and the app de-duplicates by
