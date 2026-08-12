@@ -5,10 +5,8 @@ import { useAppEffect, useAppEffectAsync, useAppCurrentRef } from './appHooks';
 import DirSource from './DirSource';
 import type { FileSourceEventType } from './FileSource';
 import FileSource from './FileSource';
-import { fsCheckDirExist, type MimetypeNameType } from '../server/fileHelpers';
+import { type MimetypeNameType } from '../server/fileHelpers';
 import { checkAreArraysEqual } from '../server/comparisonHelpers';
-import appProvider from '../server/appProvider';
-import { handleError } from './errorHelpers';
 import { notifyElementHighlight } from './domHelpers';
 import { type ListenerType } from '../event/EventHandler';
 
@@ -193,84 +191,4 @@ export function useFileSourceEvents<T>(
             FileSource.unregisterEventListener(staticEvents);
         };
     }, [JSON.stringify(events), filePath, ...(deps ?? [])]);
-}
-
-async function handleFileEvent(dirSource: DirSource, ...args: any[]) {
-    const [eventType, fileFullName] = args as [string, string | null];
-    // A document edited in another window persists to a `<name>.histories/`
-    // editing-history subdirectory (only an explicit Save writes the `.ows`
-    // itself). macOS surfaces those subdirectory writes as a 'rename' with a
-    // sub-path filename (and only under a recursive watch — see watchDir),
-    // whereas Linux/Windows report a plain 'change'. Handle both so a slide
-    // edited in a separate editor window still notifies this window's
-    // FileSource listeners; without this the presenter's slide preview never
-    // reflects the edit on macOS.
-    if (
-        (eventType === 'change' || eventType === 'rename') &&
-        typeof fileFullName === 'string'
-    ) {
-        dirSource.alertFileChanging(fileFullName);
-        // A change inside a subdirectory (a history edit) can never alter this
-        // directory's own top-level file list, so skip the readdir diff below —
-        // it would be needless I/O on every history write.
-        if (fileFullName.includes('/') || fileFullName.includes('\\')) {
-            return;
-        }
-    }
-    try {
-        const mimetypeNames = Object.keys(
-            dirSource.filePathsMap,
-        ) as MimetypeNameType[];
-        if (mimetypeNames.length === 0) {
-            dirSource.fireRefreshEvent();
-        }
-        for (const mimetypeName of mimetypeNames) {
-            const oldFilePaths = dirSource.filePathsMap[mimetypeName];
-            const newFilePaths =
-                await dirSource.getFilePathsQuick(mimetypeName);
-            if (!checkAreArraysEqual(oldFilePaths, newFilePaths)) {
-                dirSource.fireRefreshEvent();
-            }
-        }
-    } catch (_error) {
-        dirSource.fireRefreshEvent();
-    }
-}
-async function watchDir(dirSource: DirSource, signal: AbortSignal) {
-    const isDirExist = await fsCheckDirExist(dirSource.dirPath);
-    if (!isDirExist) {
-        return;
-    }
-    try {
-        appProvider.fileUtils.watch(
-            dirSource.dirPath,
-            {
-                signal,
-                // Editing histories live in per-document `<name>.histories/`
-                // subdirectories of the watched dir. macOS's non-recursive
-                // fs.watch does not report writes inside subdirectories
-                // (Windows/Linux surface them on the parent watch), so
-                // cross-window edit refresh needs a recursive watch on macOS.
-                // Left non-recursive elsewhere to avoid watching large nested
-                // media trees.
-                recursive: appProvider.systemUtils.isMac,
-            },
-            handleFileEvent.bind(null, dirSource),
-        );
-    } catch (error) {
-        handleError(error);
-    }
-}
-
-export function useDirSourceWatching(dirSource: DirSource | null) {
-    useAppEffect(() => {
-        if (dirSource === null) {
-            return;
-        }
-        const abortController = new AbortController();
-        watchDir(dirSource, abortController.signal);
-        return () => {
-            abortController.abort();
-        };
-    }, [dirSource?.dirPath]);
 }

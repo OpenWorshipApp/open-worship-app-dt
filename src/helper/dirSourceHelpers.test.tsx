@@ -9,23 +9,17 @@ const {
     fileSourceGetInstanceMock,
     registerFileSourceEventListenerMock,
     unregisterFileSourceEventListenerMock,
-    fsCheckDirExistMock,
     checkAreArraysEqualMock,
-    watchMock,
-    handleErrorMock,
     notifyElementHighlightMock,
 } = vi.hoisted(() => ({
     dirSourceGetInstanceMock: vi.fn(),
     fileSourceGetInstanceMock: vi.fn(),
     registerFileSourceEventListenerMock: vi.fn(),
     unregisterFileSourceEventListenerMock: vi.fn(),
-    fsCheckDirExistMock: vi.fn(),
     checkAreArraysEqualMock: vi.fn(
         (left: unknown, right: unknown) =>
             JSON.stringify(left) === JSON.stringify(right),
     ),
-    watchMock: vi.fn(),
-    handleErrorMock: vi.fn(),
     notifyElementHighlightMock: vi.fn(),
 }));
 
@@ -74,27 +68,8 @@ vi.mock('./FileSource', () => ({
     },
 }));
 
-vi.mock('../server/fileHelpers', () => ({
-    fsCheckDirExist: fsCheckDirExistMock,
-}));
-
 vi.mock('../server/comparisonHelpers', () => ({
     checkAreArraysEqual: checkAreArraysEqualMock,
-}));
-
-vi.mock('../server/appProvider', () => ({
-    default: {
-        fileUtils: {
-            watch: watchMock,
-        },
-        systemUtils: {
-            isMac: false,
-        },
-    },
-}));
-
-vi.mock('./errorHelpers', () => ({
-    handleError: handleErrorMock,
 }));
 
 vi.mock('./domHelpers', () => ({
@@ -103,7 +78,6 @@ vi.mock('./domHelpers', () => ({
 
 import {
     FilePathLoadedContext,
-    useDirSourceWatching,
     useFilePaths,
     useFileSourceEvents,
     useFileSourceRefreshEvents,
@@ -120,7 +94,6 @@ describe('dirSourceHelpers', () => {
         vi.useFakeTimers();
         container = document.createElement('div');
         document.body.appendChild(container);
-        fsCheckDirExistMock.mockResolvedValue(true);
         fileSourceGetInstanceMock.mockImplementation((filePath: string) => ({
             src: `src:${filePath}`,
             colorNote: null,
@@ -502,139 +475,5 @@ describe('dirSourceHelpers', () => {
         });
 
         expect(observedPayloads).toEqual(['second:payload']);
-    });
-
-    test('watches directory changes and refreshes when files change', async () => {
-        const dirSource = {
-            dirPath: '/docs',
-            filePathsMap: {},
-            alertFileChanging: vi.fn(),
-            fireRefreshEvent: vi.fn(),
-            getFilePathsQuick: vi.fn(),
-        };
-        let watchCallback: ((...args: unknown[]) => void) | undefined;
-        watchMock.mockImplementation(
-            (
-                _dirPath: string,
-                _options: { signal: AbortSignal },
-                callback: (...args: unknown[]) => void,
-            ) => {
-                watchCallback = callback;
-            },
-        );
-
-        function Probe() {
-            useDirSourceWatching(dirSource as any);
-            return null;
-        }
-
-        await act(async () => {
-            if (!container) {
-                throw new Error('Missing test container');
-            }
-            root = createRoot(container);
-            root.render(<Probe />);
-        });
-        await act(async () => {
-            await Promise.resolve();
-        });
-
-        expect(watchMock).toHaveBeenCalledWith(
-            '/docs',
-            expect.objectContaining({
-                signal: expect.any(AbortSignal),
-                recursive: false,
-            }),
-            expect.any(Function),
-        );
-
-        // fs.watch reports filenames relative to the watched directory.
-        await act(async () => {
-            await watchCallback?.('change', 'new.owa');
-        });
-
-        expect(dirSource.alertFileChanging).toHaveBeenCalledWith('new.owa');
-        expect(dirSource.fireRefreshEvent).toHaveBeenCalledTimes(1);
-
-        dirSource.filePathsMap = { appDocument: ['/docs/a.owa'] };
-        dirSource.getFilePathsQuick.mockResolvedValue(['/docs/b.owa']);
-
-        await act(async () => {
-            await watchCallback?.('rename');
-        });
-
-        expect(dirSource.fireRefreshEvent).toHaveBeenCalledTimes(2);
-
-        // Windows/Linux surface a history edit as a 'change' on the
-        // `.histories` folder entry itself (a top-level name). handleFileEvent
-        // forwards the raw changed path as-is; mapping the `.histories` folder
-        // back to its document happens in useFilePaths.
-        await act(async () => {
-            await watchCallback?.('change', 'a1 (Copy).ows.histories');
-        });
-
-        expect(dirSource.alertFileChanging).toHaveBeenLastCalledWith(
-            'a1 (Copy).ows.histories',
-        );
-
-        // macOS's recursive watch reports the write as a sub-path inside the
-        // `.histories` folder. Such a change can never alter the directory's
-        // top-level file list, so the readdir diff is skipped.
-        dirSource.fireRefreshEvent.mockClear();
-        await act(async () => {
-            await watchCallback?.('rename', 'a1.ows.histories/5-head');
-        });
-
-        expect(dirSource.alertFileChanging).toHaveBeenLastCalledWith(
-            'a1.ows.histories/5-head',
-        );
-        expect(dirSource.fireRefreshEvent).not.toHaveBeenCalled();
-    });
-
-    test('skips or reports directory watch setup errors', async () => {
-        const dirSource = {
-            dirPath: '/docs',
-            filePathsMap: {},
-            alertFileChanging: vi.fn(),
-            fireRefreshEvent: vi.fn(),
-            getFilePathsQuick: vi.fn(),
-        };
-        fsCheckDirExistMock
-            .mockResolvedValueOnce(false)
-            .mockResolvedValueOnce(true);
-        watchMock.mockImplementationOnce(() => {
-            throw new Error('watch failed');
-        });
-
-        function Probe({ source }: { source: unknown }) {
-            useDirSourceWatching(source as any);
-            return null;
-        }
-
-        await act(async () => {
-            if (!container) {
-                throw new Error('Missing test container');
-            }
-            root = createRoot(container);
-            root.render(<Probe source={null} />);
-        });
-        expect(watchMock).not.toHaveBeenCalled();
-
-        await act(async () => {
-            root?.render(<Probe source={dirSource} />);
-            await Promise.resolve();
-        });
-        expect(watchMock).not.toHaveBeenCalled();
-
-        await act(async () => {
-            root?.render(
-                <Probe source={{ ...dirSource, dirPath: '/docs-2' }} />,
-            );
-            await Promise.resolve();
-        });
-
-        expect(handleErrorMock).toHaveBeenCalledWith(
-            expect.objectContaining({ message: 'watch failed' }),
-        );
     });
 });

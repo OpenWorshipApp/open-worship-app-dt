@@ -463,6 +463,19 @@ export type LanguageDataType = {
     numList: string[];
     dictionary: AnyObjectType;
     name: string;
+    /**
+     * The language's name written in ITS OWN language — `ខ្មែរ`, not `Khmer`.
+     *
+     * The language picker must stay legible to someone who cannot read the
+     * locale currently in force, which is exactly the person who needs it: a
+     * mis-click or a shared machine leaves them in a script they do not read,
+     * and a list translated into that script offers them no way back. So the
+     * picker renders THIS, never `tran(name)`.
+     *
+     * Optional so a language package that predates it still loads; the picker
+     * falls back to `name`, which is at least Latin script.
+     */
+    nativeName?: string;
     flagSVG: string;
     getLookupData?: (packageLocation: string) => Promise<{
         namesMap: AnyObjectType;

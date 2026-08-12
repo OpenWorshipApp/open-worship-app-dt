@@ -75,8 +75,7 @@ export default function LyricHandlerComp({
         const registered = lyricManager.fileSource.registerEventListener(
             ['update'],
             async () => {
-                const content = await lyricManager.lyric.getContent();
-                lyricManager.openLyricPreviewer.value = content;
+                await lyricManager.refreshOpenLyricContent();
             },
         );
         lyricManager.containerElement = containerRef.current;

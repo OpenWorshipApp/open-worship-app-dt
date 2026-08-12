@@ -62,12 +62,18 @@ anything abnormal using the severity scale and report template below.
 - Slide auto-play widget (stopwatch icon in the Documents footer): expand, set seconds,
   play → slides auto-advance, close.
 
-### S3 — Lyrics `[PL-07..09, PM-11]`
-- Select the `Lyrics` presenter tab; select a lyric in the left list.
-- Confirm the lyric renders; sending it "to screen" toggles `.app-on-screen` (restore
+### S3 — Lyrics `[PL-07..09, PM-11, PM-115..117, PM-127, XW-08]`
+- Lyrics live in the **Documents** list (there is no Lyrics tab): select a `.owl` row — it is
+  selected **solo**, and the Documents previewer swaps its BODY to the rendered song with the
+  **Stage Previewer** under it.
+- Confirm the song renders; sending a slide "to screen" toggles `.app-on-screen` (restore
   after).
 - Right-click a lyric → `edit` opens the **Lyric Editor popup** (S12 covers the editor
   itself).
+- **Stage Previewer:** `Add Stage` → a second pane; each chip's ⚙ opens the shared Stage Style
+  widget (PM-116/117); the header's **⋮ → Reload** re-renders every pane (PM-127).
+- **A content change must reach the stage panes on its own (XW-08)** — the panes carry a
+  3-minute slide cache and used to keep showing the pre-edit song. Recipe: S18 step 5.
 
 ### S4 — Bible lookup & Bibles tab `[NAV-06..08, PM-12..14, PR-01..03]`
 - Open lookup via `Bible Lookup` button and via **Ctrl+B**; `#modal-container` appears.
@@ -404,7 +410,7 @@ the wrong thing in front of a congregation. A stale label or an untranslated str
 - Destructive items (`Delete` / `Move to Trash` / `Empty` / reset): click → confirm dialog →
   **Cancel** (EX-05), or create a scratch item and delete THAT.
 
-### S18 — Cross-window edit→present propagation `[XW-01..07]` — the regression class one-window runs miss
+### S18 — Cross-window edit→present propagation `[XW-01..10]` — the regression class one-window runs miss
 
 Separate OWA windows are separate renderers that sync only via disk + `fs.watch`, so an
 edit in one window reaching another is emergent cross-process behavior a single-window pass
@@ -442,12 +448,36 @@ document/lyric lists, or the file-reload/`useFileSourceEvents` wiring.
      + present again, or click the slide) and confirm the `screen.html` output *then* reflects
      the edit. FAIL only if the screen stays stale **after re-present** (or the saved bytes on
      disk are wrong).
-5. **Restore:** editor **Undo** (`Ctrl+Z`, never *Discard*) + re-save (or write back original);
+5. **The lyric half `[XW-08..10]` — no editor window, no OS focus, driven from the shell.**
+   The event reaching a component is not the same thing as the component re-deriving: the Stage
+   Previewer panes used to re-render an edited song from a **3-minute** slide cache. So assert
+   the slides themselves, in **every** pane:
+   1. `cp` a real `.owl` to `zz-robot-<runid>.owl` in the documents dir, select it, and
+      **Add Stage** so two panes are shown. Put a unique ASCII marker in the song
+      (`ROBOT MARKER ALPHA`) and read it back out of each pane's **shadow root** (KB §12.5 has
+      both snippets — the `node -e` rewrite and the shadow-root reader).
+   2. Rewrite the `.owl` with `ROBOT MARKER BETA` → within ~3 s **every** pane and the rendered
+      song above them show BETA, untouched (**XW-08**). One pane refreshing and another not is
+      the finding, and is exactly what a single-stage check misses.
+   3. Write `zz-robot-<runid>.owl.histories/1-head` with `GAMMA` → same assertion; that is the
+      shape the Lyric Editor writes before Save, and it proves the sidecar→original mapping
+      (**XW-09**). Do the same with the Documents list widget hidden — propagation must not
+      depend on a mounted list.
+   4. `cp` a second scratch file in, then delete both → the list must add and drop the rows on
+      its own (**XW-10**). ⚠️ **Known FAIL on refactor28** — a deleted file stays listed even
+      through the list menu's **Reload**; check the matrix row before filing it as new.
+   5. **Teardown:** `rm -rf` both scratch `.owl`s and the `.histories` dir, re-select the
+      document that was selected before, and re-hide any widget you revealed.
+   Also exercise the header's **⋮ → Reload** (**PM-127**) *after* the assertions above — it is a
+   manual escape hatch, and using it first would mask exactly the bug XW-08 tests for.
+6. **Restore:** editor **Undo** (`Ctrl+Z`, never *Discard*) + re-save (or write back original);
    delete the scratch doc; restore any presented/shown state.
 
 **Severity guidance:** a saved edit that never reaches the Presenter **center preview / list
-rows** is **High** (the operator sees stale content). The live screen **not** auto-updating is
-**expected** (snapshot) — score it a FAIL only when **re-presenting** fails to apply the edit.
+rows** is **High** (the operator sees stale content); a lyric whose **Stage Previewer** keeps
+pre-edit slides is the same severity — the stage panes are what the musicians and the projector
+operator read. The live screen **not** auto-updating is **expected** (snapshot) — score it a
+FAIL only when **re-presenting** fails to apply the edit.
 
 ## Report template
 

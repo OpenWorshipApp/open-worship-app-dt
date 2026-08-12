@@ -135,6 +135,10 @@ export function pathBasename(filePath: string) {
     return appProvider.pathUtils.basename(filePath);
 }
 
+export function pathDirname(filePath: string) {
+    return appProvider.pathUtils.dirname(filePath);
+}
+
 export function getFileName(fileFullName: string) {
     return fileFullName.substring(0, fileFullName.lastIndexOf('.'));
 }

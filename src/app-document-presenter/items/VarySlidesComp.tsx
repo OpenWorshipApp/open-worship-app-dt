@@ -83,6 +83,7 @@ function useVarySlidesData() {
         selectedVaryAppDocument.filePath,
     );
 
+    const varySlidesRef = useAppCurrentRef(varySlides);
     // EVERY mounted previewer's listener fires on a key press, so each one must
     // ask about ITS OWN container — `handleSlideMoving` is what compares the
     // container against `document.activeElement` and lets only the focused one
@@ -94,11 +95,11 @@ function useVarySlidesData() {
         (event) => {
             handleSlideMoving(
                 event,
-                varySlides ?? [],
+                varySlidesRef.current ?? [],
                 scopeRef.current?.containerRef.current ?? null,
             );
         },
-        [varySlides],
+        [],
     );
 
     const isPDFAppDocument = useMemo(() => {
@@ -175,6 +176,51 @@ function useVarySlidesData() {
     };
 }
 
+/**
+ * Every "there is nothing to show, here is the button that might fix it" state:
+ * failed to load, and each document kind that can legitimately hold zero
+ * slides. They differ only in the sentence and the button, so they are one
+ * component — four copies of this markup drifted apart in padding once already.
+ *
+ * The `tran()` calls stay at the CALL SITES on purpose: a key reaching `tran()`
+ * only as a variable is invisible to a grep for it, and a key missing from the
+ * Khmer data throws and blanks the page.
+ */
+function NoSlidesToDisplayComp({
+    message,
+    actionLabel,
+    onAction,
+}: Readonly<{
+    message: string;
+    actionLabel: string;
+    onAction: () => void;
+}>) {
+    return (
+        <div
+            className={
+                'w-100 h-100 d-flex justify-content-center gap-2 ' +
+                'flex-column align-items-center p-2'
+            }
+        >
+            <p className="alert alert-warning text-center">{message}</p>
+            <button onClick={onAction} className="btn btn-primary">
+                {actionLabel}
+            </button>
+        </div>
+    );
+}
+
+function LoadingSlidesComp() {
+    return (
+        <div
+            className="w-100 d-flex justify-content-center align-items-center"
+            style={{ height: '100px' }}
+        >
+            <LoadingComp />
+        </div>
+    );
+}
+
 export default function VarySlidesComp() {
     const [thumbSizeScale] = useVarySlideThumbnailSizeScale(
         useThumbnailScaleSettingOptions({
@@ -211,95 +257,56 @@ export default function VarySlidesComp() {
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
     useAppEffect(() => {
-        if (varySlides?.length) {
-            notifyElementHighlight(() => {
-                const root = scopeRef.current?.containerRef.current ?? document;
-                return root.querySelector(
-                    `.${APP_DOCUMENT_ITEM_CLASS}.${HIGHLIGHT_SELECTED_CLASSNAME}.animation`,
-                );
-            });
+        if (!varySlides?.length) {
+            return;
         }
+        notifyElementHighlight(() => {
+            const root = scopeRef.current?.containerRef.current ?? document;
+            return root.querySelector(
+                `.${APP_DOCUMENT_ITEM_CLASS}.${HIGHLIGHT_SELECTED_CLASSNAME}.animation`,
+            );
+        });
     }, [varySlides]);
+
     if (varySlides === undefined) {
-        return (
-            <div
-                className="w-100 d-flex justify-content-center align-items-center"
-                style={{ height: '100px' }}
-            >
-                <LoadingComp />
-            </div>
-        );
+        return <LoadingSlidesComp />;
     }
     if (varySlides === null) {
         return (
-            <div
-                className={
-                    'w-100 h-100 d-flex justify-content-center ' +
-                    'flex-column align-items-center p-2'
-                }
-            >
-                <p className="alert alert-warning">
-                    {tran('Fail to load slides')}
-                </p>
-                <button onClick={startLoading} className="btn btn-primary">
-                    {tran('Reload')}
-                </button>
-            </div>
+            <NoSlidesToDisplayComp
+                message={tran('Fail to load slides')}
+                actionLabel={tran('Reload')}
+                onAction={startLoading}
+            />
         );
     }
     if (isPDFAppDocument && varySlides.length === 0) {
         return (
-            <div
-                className={
-                    'w-100 h-100 d-flex justify-content-center ' +
-                    'flex-column align-items-center p-2'
-                }
-            >
-                <p className="alert alert-warning text-center">
-                    {tran('No slides to display')}
-                </p>
-                <br />
-                <button onClick={refreshPDFImages} className="btn btn-primary">
-                    {tran('Refresh PDF Images')}
-                </button>
-            </div>
+            <NoSlidesToDisplayComp
+                message={tran('No slides to display')}
+                actionLabel={tran('Refresh PDF Images')}
+                onAction={refreshPDFImages}
+            />
         );
     }
     if (isPptxAppDocument && varySlides.length === 0) {
         return (
-            <div
-                className={
-                    'w-100 h-100 d-flex justify-content-center ' +
-                    'flex-column align-items-center p-2'
-                }
-            >
-                <p className="alert alert-warning text-center">
-                    {tran('No slides to display')}
-                </p>
-                <br />
-                <button onClick={refreshPptxSlides} className="btn btn-primary">
-                    {tran('Refresh PPTX Slides')}
-                </button>
-            </div>
+            <NoSlidesToDisplayComp
+                message={tran('No slides to display')}
+                actionLabel={tran('Refresh PPTX Slides')}
+                onAction={refreshPptxSlides}
+            />
         );
     }
     if (isDocxAppDocument && varySlides.length === 0) {
         return (
-            <div
-                className={
-                    'w-100 h-100 d-flex justify-content-center ' +
-                    'flex-column align-items-center p-2'
-                }
-            >
-                <p className="alert alert-warning text-center">
-                    {tran('No pages to display')}
-                </p>
-                <br />
-                <button onClick={refreshDocxSlides} className="btn btn-primary">
-                    {tran('Refresh DOCX Pages')}
-                </button>
-            </div>
+            <NoSlidesToDisplayComp
+                message={tran('No pages to display')}
+                actionLabel={tran('Refresh DOCX Pages')}
+                onAction={refreshDocxSlides}
+            />
         );
     }
     return (

@@ -119,7 +119,11 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         return options;
     }
 
-    abstract get stageOpenLyricOptions(): OpenLyricElementMapOptions;
+    // OVERRIDES over `basicOpenLyricOptions`, never a standalone options bag —
+    // `allOpenLyricOptions` spreads them on top of it. So every key is optional,
+    // `type` included: the basic options are what settle it, and a stage that
+    // had to restate it could silently ask for a form its slides cannot use.
+    abstract get stageOpenLyricOptions(): Partial<OpenLyricElementMapOptions>;
 
     /**
      * The stage's own `css` with the operator's custom rules APPENDED.
@@ -360,5 +364,19 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         }
         slide.id = slideQuick.id;
         return slide;
+    }
+
+    /**
+     * Drops the slides derived from THIS document, at every stage.
+     *
+     * `cacheManager` is module-level and shared by every stage of every lyric,
+     * so a plain `clear()` would make one song's edit throw away the derived
+     * slides of every other song too. The key carries the file path — see
+     * `genCacheKey`.
+     */
+    clearCache() {
+        cacheManager.deleteMatchedSync((key) => {
+            return key.includes(`|filePath:${this.filePath}|`);
+        });
     }
 }

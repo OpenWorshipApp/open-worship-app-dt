@@ -11,7 +11,10 @@ import {
     dirSourceSettingNames,
 } from '../helper/constants';
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import { genDownloadContextMenuItems } from './downloadHelper';
+import {
+    genDownloadContextMenuItems,
+    toDownloadFailureMessage,
+} from './downloadHelper';
 import { handleError } from '../helper/errorHelpers';
 import { playMediaElement } from '../helper/mediaHelpers';
 import { tran } from '../lang/langHelpers';
@@ -223,7 +226,10 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
             handleError(error);
             showSimpleToast(
                 title,
-                tran('Error occurred during downloading video'),
+                toDownloadFailureMessage(
+                    tran('Error occurred during downloading video'),
+                    error,
+                ),
             );
         } finally {
             hideProgressBar(videoUrl);

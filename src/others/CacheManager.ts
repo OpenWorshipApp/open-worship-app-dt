@@ -124,6 +124,25 @@ export default class CacheManager<T> {
         });
     }
 
+    /**
+     * Drops every entry whose key the predicate accepts.
+     *
+     * A module-level manager is shared by many owners, so "my data changed"
+     * must not mean "throw everyone else's away": `clear()` on one would evict
+     * entries the caller has nothing to do with, and each of those owners then
+     * pays to re-derive. Callers stamp what they own into the key.
+     */
+    deleteMatchedSync(checkIsMatched: (key: string) => boolean): void {
+        for (const key of this.cache.keys()) {
+            if (checkIsMatched(key)) {
+                this.cache.delete(key);
+            }
+        }
+        if (this.cache.size === 0) {
+            this.stopCleanup();
+        }
+    }
+
     clear(): void {
         this.cache.clear();
         this.stopCleanup();

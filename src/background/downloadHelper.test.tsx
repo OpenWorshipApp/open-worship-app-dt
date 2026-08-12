@@ -67,7 +67,87 @@ import {
     getOpenSharedLinkMenuItem,
     messageCallback,
     streamDownloadFile,
+    toDownloadFailureMessage,
+    toDownloadFailureReason,
 } from './downloadHelper';
+
+describe('toDownloadFailureReason', () => {
+    // The real rejection observed from a blocked run: yt-dlp emits its retry
+    // warnings first and the fatal reason last, and `downloadVideoOrAudio`
+    // wraps the whole transcript in `'Download failed: ' + message`.
+    const ytDlpError = new Error(
+        [
+            'Download failed: ',
+            'WARNING: [youtube] ZSsOrph7rJs: Unable to download webpage: ' +
+                'HTTP Error 429: Too Many Requests',
+            'WARNING: [youtube] No title found in player responses',
+            "ERROR: [youtube] ZSsOrph7rJs: Sign in to confirm you're not a bot.",
+        ].join('\n'),
+    );
+
+    test('takes the LAST ERROR line, not a preceding warning', () => {
+        expect(toDownloadFailureReason(ytDlpError)).toBe(
+            "Sign in to confirm you're not a bot.",
+        );
+    });
+
+    test('keeps the first ERROR line out when a later one supersedes it', () => {
+        const error = new Error(
+            ['ERROR: first thing went wrong', 'ERROR: the real cause'].join(
+                '\n',
+            ),
+        );
+
+        expect(toDownloadFailureReason(error)).toBe('the real cause');
+    });
+
+    test('falls back to the first line when there is no ERROR line', () => {
+        expect(toDownloadFailureReason(new Error('network unreachable'))).toBe(
+            'network unreachable',
+        );
+    });
+
+    test('does not stack the wrapper prefix the rejection already carries', () => {
+        // The non-yt-dlp rejections are a single line that already reads
+        // `Download failed: <cause>`; keeping that prefix would put it in front
+        // of the toast's own translated sentence a second time.
+        expect(
+            toDownloadFailureReason(
+                new Error('Download failed: Error: Failed to write image file'),
+            ),
+        ).toBe('Error: Failed to write image file');
+        expect(
+            toDownloadFailureMessage(
+                'Error occurred during downloading video',
+                new Error('Download failed: spawn ENOENT'),
+            ),
+        ).toBe('Error occurred during downloading video: spawn ENOENT');
+    });
+
+    test('is empty for an error carrying nothing to show', () => {
+        expect(toDownloadFailureReason(new Error(''))).toBe('');
+        expect(toDownloadFailureReason(undefined)).toBe('');
+        expect(toDownloadFailureReason(null)).toBe('');
+    });
+
+    test('truncates a runaway reason rather than flooding the toast', () => {
+        const reason = toDownloadFailureReason(
+            new Error(`ERROR: ${'x'.repeat(500)}`),
+        );
+
+        expect(reason).toHaveLength(201);
+        expect(reason.endsWith('…')).toBe(true);
+    });
+
+    test('appends the reason to the translated sentence, or leaves it alone', () => {
+        expect(toDownloadFailureMessage('Download failed', ytDlpError)).toBe(
+            "Download failed: Sign in to confirm you're not a bot.",
+        );
+        expect(toDownloadFailureMessage('Download failed', new Error(''))).toBe(
+            'Download failed',
+        );
+    });
+});
 
 describe('downloadHelper', () => {
     let promptContainer: HTMLDivElement | null = null;

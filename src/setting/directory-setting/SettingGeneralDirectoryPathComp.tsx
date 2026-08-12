@@ -23,6 +23,7 @@ import {
 } from './appLocalStorage';
 import { SelectDefaultDirButton } from '../../others/NoDirSelectedComp';
 import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
+import { unwatchDataDir, watchDataDir } from '../../helper/dirWatchingHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 import { type OptionalPromise } from '../../helper/typeHelpers';
 import SettingCardHeaderComp from '../SettingCardHeaderComp';
@@ -249,12 +250,18 @@ export default function SettingGeneralDirectoryPathComp() {
             return;
         }
         dirSource.setParentDirPath = async (dirPath: string) => {
+            // The recursive watch is keyed to the directory it was started on,
+            // so the OLD tree has to be released before the selection moves —
+            // nothing else can name it afterwards, and an orphaned watch keeps
+            // firing file events for a folder the app no longer uses.
+            unwatchDataDir();
             await appLocalStorage.setSelectedParentDirectory(dirPath);
             if (dirPath === '' || !(await fsCheckDirExist(dirPath))) {
                 await removePathForChildDir();
             } else {
                 await selectPathForChildDir(dirPath);
             }
+            await watchDataDir();
             const newDirSource = new ParentDirSource(dirPath);
             setDirSource(newDirSource);
         };

@@ -24,11 +24,7 @@ import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import type { OptionalPromise } from '../helper/typeHelpers';
-import {
-    DirSourceContext,
-    useDirSourceWatching,
-    useFilePaths,
-} from '../helper/dirSourceHelpers';
+import { DirSourceContext, useFilePaths } from '../helper/dirSourceHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import FileListFilterIconsComp, {
     FileListFilterInputComp,
@@ -237,7 +233,6 @@ export default function FileListHandlerComp({
             });
         };
     }, [onNewFile, newFileKinds]);
-    useDirSourceWatching(dirSource);
     // The file list is read here rather than inside `RenderListComp` because
     // the filter/sort icons live up in the path title row and need to know
     // which document types the directory actually holds.

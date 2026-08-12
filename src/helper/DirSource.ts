@@ -1,5 +1,4 @@
 import EventHandler from '../event/EventHandler';
-import { HISTORY_DIR_NAME_SUFFIX } from '../editing-manager/editingHistoryPathHelpers';
 import { tran } from '../lang/langHelpers';
 import type { FileMetadataType, MimetypeNameType } from '../server/fileHelpers';
 import {
@@ -9,7 +8,6 @@ import {
     fsCheckDirExist,
     pathResolve,
     fsCheckFileExist,
-    pathJoin,
 } from '../server/fileHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -19,12 +17,6 @@ import { getSetting, setSetting } from './settingHelpers';
 import { type OptionalPromise } from './typeHelpers';
 
 export type DirSourceEventType = 'refresh' | 'reload' | 'file-update';
-
-/**
- * The suffixes that make a path a SIDECAR of another file rather than a file of
- * its own — a change inside one is a change to the file it belongs to.
- */
-const fileExtraSuffixes = [HISTORY_DIR_NAME_SUFFIX, '-htmls', '-images'];
 
 const cache = new Map<string, DirSource>();
 const initPromises = new Map<string, Promise<void>>();
@@ -221,6 +213,19 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         return dirSource;
     }
 
+    /**
+     * Every directory a list is CURRENTLY mounted on, and nothing else.
+     *
+     * The watcher needs this for the one case where the filesystem reports a
+     * change without naming it (`fs.watch` may hand back a null filename): the
+     * change cannot be attributed to a directory, so every mounted list has to
+     * reconcile. Reading the cache is what makes that bounded — a directory
+     * nobody is looking at has no instance here and is correctly left alone.
+     */
+    static getAllInstances() {
+        return Array.from(cache.values());
+    }
+
     static getInstanceByDirPath(dirPath: string) {
         // resolved-path equality — substring matching returned the wrong
         // DirSource when one directory path was a substring of another
@@ -230,40 +235,5 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
             }
         }
         return null;
-    }
-
-    /**
-     * Something under this directory changed on disk.
-     *
-     * The changed path is told first, always. Then — and ONLY when the path is a
-     * SIDECAR of another file (`fileExtraSuffixes`, i.e. an editing-history
-     * folder) — the file it belongs to is told as well: a revision written into
-     * `song.ows.histories` IS a change to `song.ows`, and nothing else would ever
-     * say so.
-     *
-     * The suffix has to be PRESENT for that second half to run. `split` on a
-     * suffix that is not there answers with the whole path, so testing every
-     * change against the filesystem would spend one `fsCheckFileExist` and one
-     * duplicate dispatch on every ordinary file change in the app — the common
-     * case by far, and the one this must stay free for.
-     */
-    // TODO: support other events: 'rename', 'unlink', 'add'
-    async alertFileChanging(fileFullName: string) {
-        const dirPath = this.dirPath;
-        if (!dirPath) {
-            return;
-        }
-        const filePath = pathJoin(dirPath, fileFullName);
-        FileSource.getInstance(filePath).fireUpdateEvent();
-        const sidecarSuffix = fileExtraSuffixes.find((suffix) => {
-            return filePath.includes(suffix);
-        });
-        if (sidecarSuffix === undefined) {
-            return;
-        }
-        const originalFilePath = filePath.split(sidecarSuffix)[0];
-        if (await fsCheckFileExist(originalFilePath)) {
-            FileSource.getInstance(originalFilePath).fireUpdateEvent();
-        }
     }
 }

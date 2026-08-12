@@ -13,7 +13,6 @@ import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import LyricSlide, { LYRIC_SLIDE_TYPE_KEY } from './LyricSlide';
 import type { AppColorType } from '../others/color/colorHelpers';
 import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
-import { tran } from '../lang/langHelpers';
 import {
     genHtmlDefaultProps,
     type CanvasItemHtmlPropsType,
@@ -26,6 +25,7 @@ import {
     type CanvasItemPropsType,
 } from '../slide-editor/canvas/CanvasItem';
 import { getLyricStageStyle } from './lyricStageStyleHelpers';
+import { genLyricReloadContextMenuItem } from './lyricContextMenuHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
 import Lyric from './Lyric';
 
@@ -205,6 +205,13 @@ export default class LyricAppDocument extends AppDocument {
 
     async getOpenLyricPreviewer() {
         if (this.openLyric !== null) {
+            // Deliberately NOT re-read from disk here. This sits on the
+            // per-slide path (`getSlidesQuick` calls it on every render of
+            // every stage pane), and a re-read costs a history-head lookup, a
+            // `JSON.parse` of the whole document and — through the `value`
+            // setter — a full open-lyric re-parse. Whoever OWNS the shared
+            // instance keeps it current instead, on the file's `update` event:
+            // see `LyricManager.refreshOpenLyricContent`.
             return this.openLyric;
         }
         // Imported dynamically to keep this module out of the
@@ -233,12 +240,9 @@ export default class LyricAppDocument extends AppDocument {
 
     async showContextMenu(event: any) {
         const menuItems: ContextMenuItemType[] = [
-            {
-                menuElement: tran('Reload'),
-                onSelect: () => {
-                    this.fileSource.fireUpdateEvent();
-                },
-            },
+            genLyricReloadContextMenuItem(() => {
+                this.fileSource.fireUpdateEvent();
+            }),
         ];
         showAppContextMenu(event, menuItems);
     }
@@ -278,6 +282,14 @@ export default class LyricAppDocument extends AppDocument {
             return new this(filePath);
         });
     }
+
+    /**
+     * Nothing to drop: the derived-slide cache belongs to the STAGE subclass
+     * (`LyricAppDocumentStageAbstract`), which is what caches anything. Defined
+     * here so a caller holding the base type can say "this changed" without
+     * first asking which kind of lyric document it has.
+     */
+    clearCache() {}
 }
 
 // `appDocumentHelpers` cannot import this module (the `extends AppDocument`

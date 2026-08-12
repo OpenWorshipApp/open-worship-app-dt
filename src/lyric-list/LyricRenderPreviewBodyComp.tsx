@@ -1,3 +1,5 @@
+import './LyricRenderPreviewBodyComp.scss';
+
 import { useCallback } from 'react';
 import { useLyricManagerContext } from './LyricManager';
 import {
@@ -6,8 +8,7 @@ import {
 } from '../context-menu/appContextMenuHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
 import { genEditSlideContextMenuItem } from '../app-document-list/appDocumentHelpers';
-import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
-import { tran } from '../lang/langHelpers';
+import { genLyricReloadContextMenuItem } from './lyricContextMenuHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function LyricRenderPreviewBodyComp() {
@@ -17,13 +18,9 @@ export default function LyricRenderPreviewBodyComp() {
         (event: any) => {
             const currentLyricManager = lyricManagerRef.current;
             const menuItems: ContextMenuItemType[] = [
-                {
-                    childBefore: genContextMenuItemIcon('arrow-clockwise'),
-                    menuElement: tran('Reload'),
-                    onSelect: () => {
-                        currentLyricManager.openLyricPreviewer.reload();
-                    },
-                },
+                genLyricReloadContextMenuItem(() => {
+                    currentLyricManager.openLyricPreviewer.reload();
+                }),
                 genEditSlideContextMenuItem(() => {
                     openPopupLyricEditorWindow(currentLyricManager.lyric);
                 }),
@@ -43,7 +40,7 @@ export default function LyricRenderPreviewBodyComp() {
             onContextMenu={handleContextMenuHandling}
         >
             <div
-                className="w-100 p-2"
+                className="w-100 p-2 app-lyric-render-preview-body"
                 ref={(el) => {
                     const openLyric = lyricManager.openLyricPreviewer;
                     if (el === null || openLyric.container === el) {

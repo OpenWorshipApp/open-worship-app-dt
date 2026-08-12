@@ -14,6 +14,7 @@ const {
     hideProgressBarMock,
     pathToFileURLMock,
     unlockingMock,
+    watchDataDirMock,
 } = vi.hoisted(() => {
     return {
         state: {
@@ -43,6 +44,7 @@ const {
         hideProgressBarMock: vi.fn(),
         pathToFileURLMock: vi.fn(),
         unlockingMock: vi.fn(),
+        watchDataDirMock: vi.fn(),
     };
 });
 
@@ -238,6 +240,12 @@ vi.mock('./DirSource', () => ({
     default: {
         getInstanceByDirPath: dirSourceGetInstanceByDirPathMock,
     },
+}));
+
+// Registering a listener kicks off the data-dir watch, which reads the selected
+// parent directory through the real `appHomeStorage` IPC otherwise.
+vi.mock('./dirWatchingHelpers', () => ({
+    watchDataDir: watchDataDirMock,
 }));
 
 vi.mock('../toast/toastHelpers', () => ({

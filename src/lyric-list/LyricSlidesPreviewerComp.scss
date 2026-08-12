@@ -43,6 +43,19 @@
       padding: 1px 8px;
       line-height: 1.4;
     }
+
+    // Pinned to the right edge, away from the stage controls: it acts on the
+    // whole previewer, not on any one stage. The auto margin collapses on its
+    // own once the chips fill the header, so it never pushes anything out.
+    .stage-previewer-more {
+      flex: 0 0 auto;
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1px 4px;
+      line-height: 1.4;
+    }
   }
 
   // `--stage-accent` is set inline per stage and is what ties a chip to its

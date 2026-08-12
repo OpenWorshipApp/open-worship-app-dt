@@ -240,7 +240,7 @@ when hunting screen-only bugs while hidden (`SC-05`).
 ### 6b. Coverage accounting (full-coverage mode)
 
 The definition of "coverage" is the row inventory in
-[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~645 rows with stable
+[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~719 rows with stable
 IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..60`) and
 the context-menu-item matrix (`CM-01..92`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
@@ -307,10 +307,20 @@ single-window walkthrough that opens the editor **in-place** (the `Slide Editor`
 > Presenter **center preview** and **list rows** only; the live screen is verified via the
 > *re-present* apply-path, not by expecting it to change on save. See KB §12.2 / §12.4.
 
-**Run scenario [test-plan.md §S18], rows `XW-01..07`, whenever the run touches the editor,
+**Run scenario [test-plan.md §S18], rows `XW-01..10`, whenever the run touches the editor,
 the document/lyric/presenting-flow lists, or the `useFileSourceEvents`/file-reload wiring** (a
 focused "test the editor" run included). In short (full recipe + why-CDP-can't-edit +
 CDP-drivable-edit techniques are in **KB §12** — read it first):
+
+> ⚠️ **"The content changed on disk — did the SLIDES change?" is its own assertion.** Every
+> consumer that caches derived slides has to be checked in its own right, because the file
+> event reaching the component is not the same thing as the component re-deriving. The lyric
+> **Stage Previewer** is the standing example (`XW-08`): its panes re-rendered on every edit
+> while a 3-minute `CacheManager` handed them the pre-edit slides, so the rendered song above
+> them refreshed and the slides under it did not. Assert **each pane**, with **two stages
+> shown** — a per-file cache that only one consumer clears leaves the others stale, which is
+> exactly what a single-pane check cannot see. A disk write drives all of this without OS
+> focus (KB §12.4), so there is no excuse to skip it.
 
 1. Use a **scratch doc** shown in the Presenter (present slide 1 to also cover the screen).
 2. Open its editor as a **separate window** (NAV-21 `bi-box-arrow-up-right` external icon /
@@ -331,7 +341,20 @@ CDP-drivable-edit techniques are in **KB §12** — read it first):
    (XW-03): staying stale after an edit is **expected** (intentional snapshot) — verify by
    **re-presenting** and confirming the screen *then* updates; only a broken re-present is a
    FAIL. Re-presenting a dirty document projects its **unsaved** state.
-5. **Restore** with editor **Undo** (never *Discard*) + re-save; delete the scratch doc.
+5. **The lyric half (`XW-08`, `XW-09`, `XW-10`) — needs no editor window at all.** Copy a real
+   `.owl` to a scratch name in the documents dir, select it, **Add Stage** so two panes show,
+   and put a unique ASCII marker in the song. Then, from the shell:
+   - rewrite the scratch `.owl` with the marker changed → **every** stage pane and the rendered
+     song must show it within ~3 s, untouched (`XW-08`);
+   - write `<scratch>.owl.histories/1-head` with a third marker → same assertion, because that
+     is what the Lyric Editor writes before you ever press Save (`XW-09` sidecar mapping);
+   - copy a second scratch file in, then delete both → the list must add and drop the rows on
+     its own (`XW-10` — **known FAIL on refactor28**, see the matrix row before filing it new).
+
+   Read the markers out of the panes' **shadow roots** (`el.shadowRoot.textContent`), not the
+   light DOM. Then delete the scratch files and its `.histories` dir, and re-select whatever was
+   selected before.
+6. **Restore** with editor **Undo** (never *Discard*) + re-save; delete the scratch doc.
 
 Caveat: opening/closing the separate editor window can trigger a chrome-devtools-mcp "browser
 reconnected" — re-`list_pages`/`select_page` after each, and read screen visibility from

@@ -470,14 +470,41 @@ Editor saves a doc → the change must cross to the Presenter/Screen:
    fires `fireUpdateEvent()` in **only the editor's** renderer; writes the file
    (`src/helper/FileSource.ts:171`). *(This is why the editor itself updates but nothing
    else automatically does.)*
-2. The file on disk changes → **each other renderer's** per-directory `fs.watch`
-   (`watchDir`→`handleFileEvent`, `src/helper/dirSourceHelpers.ts:184,209`) fires.
-3. `handleFileEvent` → `alertFileChanging()` → DirSource **`file-update`** event
-   (`src/helper/DirSource.ts:225`). ⚠️ note it also only fires a `refresh` when the file
-   **list** changes (add/remove) — a pure **content** edit rides `file-update` alone.
-4. A file-list hook **bridges** DirSource `file-update` → `FileSource.fireUpdateEvent()`
-   in *that* renderer (`src/helper/dirSourceHelpers.ts:79-97`).
-5. `useFileSourceEvents(['update'], …)` consumers reload: Presenter **center preview**
+2. The file on disk changes → **each other renderer's** watch fires. ⚠️ **Rewritten
+   2026-08-11 (refactor28):** it is no longer one `fs.watch` per mounted `DirSource`
+   (`useDirSourceWatching` is gone). Each renderer now runs **ONE recursive watch on the whole
+   data parent dir**, started **lazily** by `watchDataDir()` the first time anything registers a
+   `FileSource` listener (`src/helper/dirWatchingHelpers.ts`, `FileSource.registerEventListener*`).
+   Consequence for testing: propagation no longer depends on which list is mounted — a document
+   previewed with its list hidden still refreshes. `watchDataDir()` is memoized, so the settled
+   case is a field read; the watch is released by `unwatchDataDir()`, whose ONE caller is the
+   data-directory setting (it aborts by the identity the watch STARTED on — after the selection
+   moves, nothing could name the old tree again).
+3. **`handleFileEvent` itself does no I/O.** It records the changed path and its parent
+   directory and arms a **500 ms trailing debounce** — a media download writes its file in
+   hundreds of chunks and every chunk is an event, so the filesystem work runs once per burst,
+   not once per chunk. ⚠️ **Testing consequence: allow ~1 s before reading the UI.** The paths
+   accumulate in sets, so two directories touched inside one window are both handled.
+4. The flush → `alertFileChanging()` → `FileSource.getInstance(<changed path>)`
+   `.fireUpdateEvent()` **directly** (the old DirSource `file-update` hop is gone). If the
+   changed path carries a **sidecar suffix** — `.histories`, `-htmls`, `-images` — the file it
+   belongs to is told as well, which is how an editor's history write becomes an `update` on the
+   `.ows`/`.owl` itself. The suffix is tested first on purpose: an ordinary file change must not
+   pay an `fsCheckFileExist` for an "original" that cannot exist.
+5. The OTHER half of the flush is the directory diff — readdir vs `dirSource.filePathsMap` →
+   `fireRefreshEvent()` — which is what makes an added/removed file appear/disappear in a list,
+   and the only thing that clears that map. A pure **content** edit never needs it. The
+   `DirSource` is resolved from **the changed file's own parent directory**
+   (`getInstanceByDirPath(pathDirname(filePath))`), NOT from the watch root — the root is the
+   data parent dir and owns no list. Two things follow: a directory no list is mounted on
+   resolves to `null` and is skipped, which is also what keeps an editing-history write free
+   (the parent of `<file>.histories/3` is the history folder, which owns no `DirSource`); and a
+   change the OS reports without naming it falls back to `DirSource.getAllInstances()`.
+   ⚠️ Both were broken when refactor28 landed (XW-10): the diff called
+   `DirSource.getInstance(dirPath)`, whose argument is a **setting name**, not a path — it built
+   a junk DirSource (`dirPath: ''`) and fired at nobody — and a deleted path returned early
+   before ever reaching the diff. Fixed in code, **not yet re-verified live.**
+6. `useFileSourceEvents(['update'], …)` consumers reload: Presenter **center preview**
    `VarySlidesComp` (`src/app-document-presenter/items/VarySlidesComp.tsx:84`) and the
    **list-row** thumbnails (`VaryAppDocumentFileComp`) — each re-reads `getSlides()`
    (debounced **500 ms**) **through a 2-second `fileDataCacheManager` cache**
@@ -495,9 +522,10 @@ Editor saves a doc → the change must cross to the Presenter/Screen:
      **expected, not a bug** (see §12.4 / XW-03).
 
 **Failure modes this hides (what a good XW test catches):** `fs.watch` not firing for
-content-only edits / on some OSes (e.g. macOS needs a **recursive** watch to see
-`<name>.histories/` sub-writes — `watchDir` sets `recursive: isMac`); the list-hook bridge
-unmounted or a filePath mismatch; the **2 s per-renderer cache** serving stale bytes to the
+content-only edits (the watch is `recursive: true` everywhere now, so `<name>.histories/`
+sub-writes are seen on every OS); the sidecar→original mapping dropping a suffix; a **consumer's
+own derived cache** never being invalidated (§12.5 — the lyric Stage Previewer's 3-minute slide
+cache, the bug XW-08 exists for); the **2 s per-renderer cache** serving stale bytes to the
 reload; an **auto-reloading** consumer (center preview / list rows) that stopped subscribing;
 a regression in the reload wiring (e.g. the `VaryAppDocumentFileComp` / `LyricFileComp` /
 `PresentingFlowFileComp` `useFileSourceEvents` refactor). **Expected, NOT bugs:** a **saved**
@@ -579,6 +607,57 @@ Three reasons earlier runs missed it, each with the fix:
      or the saved bytes wrong on disk — is a FAIL.
 5. **Restore:** in the editor, **Undo** (`Ctrl+Z`, never *Discard*) + re-save, or write back
    the original bytes; delete the scratch doc. Restore any presented/shown state (KB §10).
+
+### 12.5 The event arriving ≠ the slides changing — assert the DERIVED view (XW-08) ⚠️
+
+The chain in §12.2 ends at "the consumer re-renders". That is **not** the assertion. A consumer
+that derives slides from the file keeps its **own** cache, and a re-render that re-reads that
+cache shows the pre-edit content while every hop before it is healthy. The lyric **Stage
+Previewer** is the standing example, fixed 2026-08-11:
+
+- `LyricAppDocumentStageAbstract` memoizes its slides in a module-level `CacheManager` with a
+  **3-minute** TTL. The panes re-rendered on every `update` and re-derived the *same cached*
+  slides — so an edit showed up in the rendered song above them and not in the slides below,
+  for minutes at a time. `LyricSlidesPreviewerComp` now clears **every stage entry's** cache on
+  `update` (`useFileSourceEvents(['update'], …, lyricManager.filePath)`).
+- `LyricAppDocument.getOpenLyricPreviewer()` returned the cached `openLyric` instance built at
+  first render; it now re-feeds it `Lyric.getContent()` on each call.
+
+**So: always test with ≥2 stages shown, and read EVERY pane.** A cache one consumer clears and
+another does not is invisible with a single pane on screen — and per CLAUDE.md's debounce note,
+a hook mounted once per stage over the SAME `filePath` is exactly where a shared timer or a
+shared cache collapses N panes into one refresh.
+
+**How to drive it with no OS focus** (Monaco typing needs real foreground focus; this does not):
+
+```bash
+# marker in, then flip it — the whole watch→alert→cache→render chain, from the shell
+node -e "const fs=require('fs');const p='<data>/documents/zz-robot-<runid>.owl';
+const j=JSON.parse(fs.readFileSync(p,'utf8'));
+j.content=j.content.replace(/ROBOT MARKER \w+/g,'ROBOT MARKER BETA');
+fs.writeFileSync(p,JSON.stringify(j,null,2),'utf8')"
+```
+
+and to imitate an **unsaved** editor edit, write the same JSON to
+`zz-robot-<runid>.owl.histories/1-head` instead (§12.2b — the head is what renders; a scratch
+file with no `.histories` falls back to the file itself). Read the result back out of the panes'
+**shadow roots**, which is where the rendered lyric HTML lives:
+
+```js
+[...document.querySelectorAll('.stage-previewer-pane')].map((pane) => {
+    const out = [];
+    pane.querySelectorAll('*').forEach((el) => {
+        const m = el.shadowRoot?.textContent.match(/ROBOT MARKER (\w+)/);
+        if (m) out.push(m[1]);
+    });
+    return out;
+});
+```
+
+Measured 2026-08-11: both write shapes reached both panes **in under a second**. Teardown is
+`rm -rf` of the scratch `.owl` **and** its `.histories` dir, then re-selecting whatever document
+was selected before — and note XW-10: the deleted file's row does **not** currently leave the
+list on its own, nor on the list menu's **Reload**.
 
 ---
 

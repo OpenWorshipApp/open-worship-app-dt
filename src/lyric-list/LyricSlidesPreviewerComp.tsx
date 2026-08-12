@@ -17,6 +17,8 @@ import {
     getLyricAppDocumentStageByStage,
 } from './lyricHelpers';
 import { tran } from '../lang/langHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genLyricReloadContextMenuItem } from './lyricContextMenuHelpers';
 import { getLabelIconName, toIconedLabel } from '../others/labelIconHelpers';
 import { getStageAccentColor } from '../_screen/screenHelpers';
 import LyricStageStyleFloatingComp from './LyricStageStyleFloatingComp';
@@ -26,6 +28,7 @@ import {
     toggleLyricStageStyleFloatingStage,
     useLyricStageStyleFloatingStage,
 } from './lyricStageStyleFloatingHelpers';
+import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 
 function getLyricAppDocuments(
     stageSetting: string,
@@ -209,6 +212,24 @@ export default function LyricSlidesPreviewerComp() {
     const [stages, lyricAppDocumentEntries] = useMemo(() => {
         return getLyricAppDocuments(stageSetting, lyricManager);
     }, [stageSetting, lyricManager]);
+
+    // The file moved on disk, so the slides every pane derived from it are
+    // stale. ORDER IS LOAD-BEARING: the previewer is re-fed first and the
+    // caches dropped second — a pane that re-derives in between would re-fill
+    // its cache from the text the previewer still holds, and stay stale for the
+    // cache's full 3 minutes.
+    useFileSourceEvents(
+        ['update'],
+        async () => {
+            await lyricManager.refreshOpenLyricContent();
+            lyricAppDocumentEntries.forEach(([_, lyricAppDocument]) => {
+                lyricAppDocument.clearCache();
+            });
+        },
+        [lyricAppDocumentEntries],
+        lyricManager.filePath,
+    );
+
     const stagesRef = useAppCurrentRef(stages);
     // The lowest stage that has a layout and is not on screen yet. `null` once
     // every one of them is shown, which is what disables the add button —
@@ -240,6 +261,18 @@ export default function LyricSlidesPreviewerComp() {
     const lyricManagerRef = useAppCurrentRef(lyricManager);
     const handleStyleChanged = useCallback(() => {
         lyricManagerRef.current.fileSource.fireUpdateEvent();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // The same `Reload` a stage pane already offers on right-click, but reachable
+    // from the header: nothing on a pane says the menu is there, and one
+    // `fireUpdateEvent` on the lyric's own file source refreshes EVERY pane at
+    // once - so it belongs to the previewer rather than to any one stage.
+    const handleMoreOptions = useCallback((event: any) => {
+        showAppContextMenu(event, [
+            genLyricReloadContextMenuItem(() => {
+                lyricManagerRef.current.fileSource.fireUpdateEvent();
+            }),
+        ]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleStageRemoving = useCallback((targeStage: number) => {
@@ -302,6 +335,15 @@ export default function LyricSlidesPreviewerComp() {
                     <span className="stage-previewer-add-label">
                         {tran('Add Stage')}
                     </span>
+                </button>
+                <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary stage-previewer-more"
+                    title={tran('More Options')}
+                    aria-label={tran('More Options')}
+                    onClick={handleMoreOptions}
+                >
+                    <i className="bi bi-three-dots-vertical" />
                 </button>
             </div>
             <div className="w-100 card-body app-overflow-hidden">

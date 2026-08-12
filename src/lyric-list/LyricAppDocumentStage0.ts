@@ -5,6 +5,7 @@ import { type AnyObjectType } from '../helper/typeHelpers';
 export default class LyricAppDocumentStage0 extends LyricAppDocumentStageAbstract {
     get stageOpenLyricOptions() {
         return {
+            isShowingIndex: false,
             css: `
                 .ol-song-view__section-body {
                     height: 100%;
@@ -12,24 +13,24 @@ export default class LyricAppDocumentStage0 extends LyricAppDocumentStageAbstrac
                     align-items: center;
                     justify-content: center;
                 }
-
                 .ol-preview-lines {
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     vertical-align: middle;
                 }
-
                 .ol-preview-lyric-segment__chord {
                     display: none;
                 }
-
                 .ol-song-view__section-title {
+                    display: none;
+                }
+                .ol-preview-line__content--progression {
                     display: none;
                 }
 
             `,
-        } as OpenLyricElementMapOptions;
+        } as Partial<OpenLyricElementMapOptions>;
     }
 
     static getInstance(filePath: string) {

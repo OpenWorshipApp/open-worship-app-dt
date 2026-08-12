@@ -3,8 +3,9 @@
  *
  * Deliberately a LEAF — no imports at all — because the three modules that need
  * it sit in three different graphs: `EditingHistoryManager` (which owns the
- * folder), `DirSource` (which has to recognize a change inside one and blame the
- * file it belongs to) and the data archive (which excludes them from an export).
+ * folder), `dirWatchingHelpers` (which has to recognize a change inside one and
+ * blame the file it belongs to) and the data archive (which excludes them from
+ * an export).
  *
  * Holding it in `DirSource` instead cost both of the others something real:
  * `EditingHistoryManager` is reachable from NODE-environment tests, and

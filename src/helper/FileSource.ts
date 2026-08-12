@@ -34,6 +34,7 @@ import {
     hideProgressBar,
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
+import { watchDataDir } from './dirWatchingHelpers';
 
 export type SrcData = `data:${string}`;
 
@@ -360,10 +361,19 @@ export default class FileSource
         callback: ListenerType<T>,
         filePath?: string,
     ) {
+        watchDataDir();
         const newEvents = events.map((event) => {
             return filePath ? `${event}@${filePath}` : event;
         });
         return super.registerEventListener(newEvents, callback);
+    }
+
+    registerEventListener<T>(
+        events: FileSourceEventType[],
+        callback: ListenerType<T>,
+    ) {
+        watchDataDir();
+        return super.registerEventListener(events, callback);
     }
 
     /**

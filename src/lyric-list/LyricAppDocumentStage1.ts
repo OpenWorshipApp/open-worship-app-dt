@@ -9,7 +9,13 @@ export default class LyricAppDocumentStage1 extends LyricAppDocumentStageAbstrac
         return {
             isWithKeyNote: true,
             isShowingCommentText: true,
-        } as OpenLyricElementMapOptions;
+            isShowingTotalIndex: true,
+            css: `
+                .ol-song-view__section-index {
+                    font-size: 0.8em !important;
+                }
+            `,
+        } as Partial<OpenLyricElementMapOptions>;
     }
 
     async getFirstCanvasItemProps() {

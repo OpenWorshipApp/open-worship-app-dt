@@ -21,7 +21,20 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-10d** (**new W-34 — "Add a Bible translation from the internet
+**workflowsVersion: 2026-08-11b** (**W-16's language step: each language is now listed under
+its OWN name (`English`, `ខ្មែរ`) instead of being translated into whatever locale is in
+force.** The person who needs the picker most is the one who cannot read the current script —
+a list translated into it offered them no way back. The button's `title` still carries the
+English name. NOT yet re-verified live; the previous entry's claims were.)
+Previous: **2026-08-11** (**W-05 gains the two steps an operator actually asks about
+while a song is on screen: edits made elsewhere show up by themselves, and where the manual
+**Reload** lives.** A song edited in the Lyric Editor — or in another window, or by anything
+that writes the file — now refreshes the **Stage Previewer** verses on its own, every stage,
+without re-picking the song; before, the rendered song at the top refreshed while the verses
+under it kept the pre-edit text for minutes. The Stage Previewer header also grew a **⋮** with
+**Reload** in it, which re-renders every stage at once. Verified live 2026-08-11 (XW-08,
+PM-127).)
+Previous: **2026-08-10d** (**new W-34 — "Add a Bible translation from the internet
 (XML), and make it read in its own language"**. W-33 moves translations you already have;
 this ADDS a new one from a link, entirely in the UI — the flow that produced `ពគប`. Driven
 live end to end on `github.com/Beblia/Holy-Bible-XML-Format/…/KhmerBFBSBible.xml`. Two halves
@@ -501,8 +514,17 @@ _Verify: PM-10._
 8. **Reset** puts that stage back to the defaults.
 9. A screen already showing a slide keeps it — present the slide again to push the new
    look out to it.
+10. **Edit the words while the song is open and the verses follow by themselves.** Change the
+    song in the **Lyric Editor** (right-click the song → **edit**) — or in any other window —
+    and within a second or two the rendered song **and every Stage Previewer pane** show the
+    new words. You do not have to re-pick the song, and you do not have to save first: the
+    editor keeps your unsaved work on disk, and that is what the verses render. 📸
+11. If you ever need to force it — a song changed by something outside the app, say — the
+    **⋮** at the right end of the Stage Previewer header holds **Reload**, which re-renders
+    every stage at once. The same **Reload** sits in the right-click menu of a stage pane and
+    of the rendered song above it.
 
-_Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117._
+_Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, XW-08._
 
 ### W-06 — Look up and present a Bible verse
 
@@ -732,7 +754,10 @@ _Verify: ED-01..11, ED-45, ED-46, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-4
 
 1. Click the **gear** (ការកំណត់) in the header — Settings opens in its own window. 📸
 2. **General** tab:
-   - **Language:** click **Khmer** (ភាសាខ្មែរ) or **English** (ភាសាអង់គ្លេស). Some
+   - **Language:** click **English** or **ខ្មែរ**. Each language is listed under its
+     OWN name, whatever locale you are currently in — so if a mis-click leaves you in
+     a script you cannot read, the way back is still legible. (Hover a button and its
+     `title` gives the English name.) Some
      labels change straight away, but the switch is only complete once you click
      **Apply Settings** (អនុវត្តការកំណត់) at the bottom-left — that reloads every open
      window. Unsaved edits in the Slide Editor are kept.

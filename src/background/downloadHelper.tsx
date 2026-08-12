@@ -77,6 +77,62 @@ export async function askForURL(title: string, subTitle: string) {
     return url;
 }
 
+// Long enough to carry a real reason, short enough that the toast stays a
+// toast — yt-dlp likes to append a wiki URL and a flag suggestion.
+const MAX_FAILURE_REASON_LENGTH = 200;
+
+/**
+ * The single line of a failed download worth putting in front of the operator.
+ *
+ * The failure toasts used to read only "Error occurred during downloading
+ * video", which is the same sentence for a typo'd URL, a private video and a
+ * temporary rate limit — three problems with three different responses. The
+ * real cause is already in the rejection: `downloadVideoOrAudio` rejects with
+ * `'Download failed: ' + error.message`, and for the yt-dlp path that message
+ * is the whole stderr transcript.
+ *
+ * yt-dlp prints its warnings first and the fatal reason last, so the LAST
+ * `ERROR:` line is the one that actually stopped the download — taking the
+ * first would surface a retry warning and hide the real answer. Non-yt-dlp
+ * callers have no such line and fall back to the message's first line.
+ *
+ * Returns `''` when there is nothing useful to add, so callers can keep their
+ * translated sentence exactly as it was.
+ */
+export function toDownloadFailureReason(error: any) {
+    const lines = `${error?.message ?? error ?? ''}`
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+    const errorLine = lines.filter((line) => line.startsWith('ERROR:')).pop();
+    const reason = (errorLine ?? lines[0] ?? '')
+        .replace(/^ERROR:\s*/, '')
+        // `downloadVideoOrAudio` already wraps its rejection in this, so the
+        // fallback line carries it. Left in, the toast reads "Error occurred
+        // during downloading video: Download failed: …" — two prefixes stacked
+        // in front of the one thing the operator wanted to read.
+        .replace(/^Download failed:\s*/, '')
+        // yt-dlp scopes its errors as `[youtube] <video id>: …`; the extractor
+        // and the id mean nothing to the person reading the toast.
+        .replace(/^\[[^\]]+\]\s*[^:]*:\s*/, '')
+        .trim();
+    if (reason.length <= MAX_FAILURE_REASON_LENGTH) {
+        return reason;
+    }
+    return `${reason.slice(0, MAX_FAILURE_REASON_LENGTH).trimEnd()}…`;
+}
+
+/**
+ * `<translated sentence>: <reason>`, or just the sentence when the error
+ * carries nothing worth showing. The reason stays untranslated on purpose — it
+ * is upstream tool output, and a half-translated sentence would be worse than
+ * an English one.
+ */
+export function toDownloadFailureMessage(message: string, error: any) {
+    const reason = toDownloadFailureReason(error);
+    return reason === '' ? message : `${message}: ${reason}`;
+}
+
 export function getOpenSharedLinkMenuItem(
     sharedKey: string,
 ): ContextMenuItemType {

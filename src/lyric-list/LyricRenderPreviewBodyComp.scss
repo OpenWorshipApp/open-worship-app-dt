@@ -1,0 +1,12 @@
+// Clicking a section brings its slide card into view - see
+// `LyricManager.initLyricPreviewEvent`. The affordance is a rule and not an
+// inline style because open-lyric replaces every node inside its container on
+// each render, and it exposes no post-render hook to write one back.
+//
+// Scoped to this body's own class: `.ol-song-view__sections` is open-lyric's,
+// and nothing else the app renders it in is clickable.
+.app-lyric-render-preview-body {
+  .ol-song-view__sections {
+    cursor: pointer;
+  }
+}

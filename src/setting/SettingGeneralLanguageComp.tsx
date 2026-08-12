@@ -37,7 +37,14 @@ function RenderLanguageButtonComp({
             className={`item btn ${btnType}`}
             title={langData.name}
         >
-            {tran(langData.name)}
+            {/*
+             * Deliberately NOT `tran(...)`: translating each language's name
+             * into the locale currently in force renders the whole list in one
+             * script, so a user who cannot read that script has no legible way
+             * back out of it. `title` still carries the English name for
+             * anyone hovering. See `LanguageDataType.nativeName`.
+             */}
+            {langData.nativeName ?? langData.name}
             <div
                 className="icon pe-1"
                 dangerouslySetInnerHTML={{

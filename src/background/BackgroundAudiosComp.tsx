@@ -20,7 +20,10 @@ import {
     hideProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { fsMove, getTempPath } from '../server/fileHelpers';
-import { genDownloadContextMenuItems } from './downloadHelper';
+import {
+    genDownloadContextMenuItems,
+    toDownloadFailureMessage,
+} from './downloadHelper';
 import { downloadVideoOrAudio } from '../server/appHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -68,7 +71,10 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
             handleError(error);
             showSimpleToast(
                 title,
-                tran('Error occurred during downloading audio'),
+                toDownloadFailureMessage(
+                    tran('Error occurred during downloading audio'),
+                    error,
+                ),
             );
         } finally {
             hideProgressBar(audioUrl);
