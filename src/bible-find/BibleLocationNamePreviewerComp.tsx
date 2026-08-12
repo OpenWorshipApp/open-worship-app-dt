@@ -23,7 +23,9 @@ import LoadingComp from '../others/LoadingComp';
 
 /**
  * Every biblical name and location the dataset attests in the verses currently
- * open in the reader — one section per open bible item.
+ * open in the reader — one section per distinct PASSAGE, not per pane: two
+ * panes reading one passage in two versions are one section, and color-note
+ * linked panes are always in exactly that state.
  *
  * The answer comes from the slim index's verse evidence and its labels sidecar —
  * already-resident integer maps — unioned with the in-text scan that draws the
@@ -150,8 +152,19 @@ export default function BibleLocationNamePreviewerComp() {
             const bibleItemList =
                 viewController.resolveStraightBibleItems(foundBibleItem);
             const newGroupList: BibleItemGroupType[] = [];
+            // What a group holds is KJV-derived and depends on the TARGET
+            // alone, never on the bible the pane displays — so the usual
+            // side-by-side of one passage in two versions would otherwise
+            // render the same section twice, byte for byte. Skipping the repeat
+            // skips its chapter read and its scan with it.
+            const seenTargetKeys = new Set<string>();
             for (const bibleItem of bibleItemList) {
-                const { bibleKey, target } = bibleItem;
+                const { target } = bibleItem;
+                const targetKey = bibleRenderHelper.toKJVBibleVersesKey(target);
+                if (seenTargetKeys.has(targetKey)) {
+                    continue;
+                }
+                seenTargetKeys.add(targetKey);
                 // The KJV wording, whatever bible this pane shows: the dataset
                 // was extracted from the KJV, and targets carry KJV numbering.
                 // One cached chapter read per pane, not one per verse.
@@ -171,7 +184,10 @@ export default function BibleLocationNamePreviewerComp() {
                 );
                 const title = await bibleRenderHelper.toTitle('KJV', target);
                 newGroupList.push({
-                    key: `${bibleItem.id}-${bibleKey}`,
+                    // The target, not the pane: panes come and go around a
+                    // passage that stays put, and the key is now unique by
+                    // construction.
+                    key: targetKey,
                     // `(NIV) LUK 3:1-3`. The synchronous formatter on purpose:
                     // `toTitle` would read the bible's book names off disk for a
                     // header that only names the passage.
