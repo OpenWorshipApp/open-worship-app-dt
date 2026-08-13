@@ -212,9 +212,10 @@ test-plan.md §S7. (The other always-on block is the locale switch — §6d.)
 
 Minimum pass (≈5 minutes, self-restoring):
 
-1. **Present something real** — single-click a slide thumbnail (present is a
-   single-click TOGGLE — KB §5) or double-click a bible verse. Verify `.app-on-screen`
-   appears and the mini-screen preview renders it (`PR-04`).
+1. **Present something real** — single-click a slide thumbnail (one click presents; a
+   second click on the same card only **re-applies** it, it does NOT clear — KB §5) or
+   double-click a bible verse. Verify `.app-on-screen` appears and the mini-screen
+   preview renders it (`PR-04`). Un-present with `F8`, never with a second click.
 2. **Check the clear-control states** — the matching `BG`/`SL`/`BB`/`FG` button in the
    previewer header flips from outline (disabled-look) to solid (`SP-02`).
 3. **Show the screen** — click `ShowHideScreen` (or ⌨️ `F5`). A

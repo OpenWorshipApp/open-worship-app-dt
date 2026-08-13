@@ -356,12 +356,66 @@ function _fsWriteFile(filePath: string, data: string | Buffer, options?: any) {
     );
 }
 
-export function fsMove(oldFullPath: string, newFullPath: string) {
-    return fsFilePromise<void>(
-        appProvider.fileUtils.rename,
-        oldFullPath,
-        newFullPath,
-    );
+// `rename` cannot cross a volume boundary — it fails with EXDEV. Media
+// downloads stage into the OS temp dir (`C:\...\Temp`) while the data dir often
+// lives on another drive (`D:\open-worship-data`), so those moves need a copy
+// followed by deleting the source. Only reached on EXDEV: a same-volume move
+// stays a cheap metadata-only rename with no bytes read or written.
+async function _fsMoveAcrossDevices(
+    oldFullPath: string,
+    newFullPath: string,
+    isDirectory: boolean,
+) {
+    if (!isDirectory) {
+        try {
+            // `copyFile` streams inside libuv — the file never lands in the
+            // renderer's memory, which matters for a ~100MB video.
+            await fsFilePromise<void>(
+                appProvider.fileUtils.copyFile,
+                oldFullPath,
+                newFullPath,
+            );
+        } catch (error) {
+            // A half-written destination is worse than none: everything
+            // downstream would read it as a finished file.
+            try {
+                await _fsUnlink(newFullPath);
+            } catch (_error) {}
+            throw error;
+        }
+        await _fsUnlink(oldFullPath);
+        return;
+    }
+    await _fsMkdir(newFullPath, true);
+    // One entry at a time: copying a whole directory in parallel would hold N
+    // file handles and N disk queues open at once on a weak machine.
+    for (const entry of await fsList(oldFullPath)) {
+        await _fsMoveAcrossDevices(
+            entry.filePath,
+            pathJoin(newFullPath, entry.name),
+            entry.isDirectory,
+        );
+    }
+    await _fsRmdir(oldFullPath);
+}
+
+export async function fsMove(oldFullPath: string, newFullPath: string) {
+    try {
+        await fsFilePromise<void>(
+            appProvider.fileUtils.rename,
+            oldFullPath,
+            newFullPath,
+        );
+    } catch (error: any) {
+        if (error?.code !== 'EXDEV') {
+            throw error;
+        }
+        await _fsMoveAcrossDevices(
+            oldFullPath,
+            newFullPath,
+            await fsCheckDirExist(oldFullPath),
+        );
+    }
 }
 
 function _fsUnlink(filePath: string) {

@@ -493,6 +493,91 @@ describe('fileHelpers', () => {
         expect(fileHelpers.fsExistSync(`${baseDir}/two.txt`)).toBe(false);
     });
 
+    test('falls back to copy + delete when a move crosses devices', async () => {
+        const { fileHelpers, appProvider } = await loadModules();
+        const tempDir = '/browser-data/temp';
+        const dataDir = '/browser-data/data';
+
+        await fileHelpers.fsCreateDir(tempDir);
+        await fileHelpers.fsCreateDir(dataDir);
+        await fileHelpers.fsCreateFile(`${tempDir}/temp-1.mp4`, 'video');
+        await fileHelpers.fsCreateDir(`${tempDir}/bundle/nested`);
+        await fileHelpers.fsCreateFile(`${tempDir}/bundle/a.txt`, 'a');
+        await fileHelpers.fsCreateFile(`${tempDir}/bundle/nested/b.txt`, 'b');
+
+        // what Windows raises when the source and destination are on different
+        // drives, e.g. `%TEMP%` on `C:` and the data dir on `D:`
+        const renameSpy = vi
+            .spyOn(appProvider.fileUtils, 'rename')
+            .mockImplementation(((
+                _oldPath: string,
+                _newPath: string,
+                callback: (error: any) => void,
+            ) => {
+                const error: any = new Error(
+                    'EXDEV: cross-device link not permitted, rename',
+                );
+                error.code = 'EXDEV';
+                callback(error);
+            }) as any);
+
+        await fileHelpers.fsMove(
+            `${tempDir}/temp-1.mp4`,
+            `${dataDir}/song.mp4`,
+        );
+        expect(await fileHelpers.fsReadFile(`${dataDir}/song.mp4`)).toBe(
+            'video',
+        );
+        expect(
+            await fileHelpers.fsCheckFileExist(`${tempDir}/temp-1.mp4`),
+        ).toBe(false);
+
+        await fileHelpers.fsMove(`${tempDir}/bundle`, `${dataDir}/bundle`);
+        expect(await fileHelpers.fsReadFile(`${dataDir}/bundle/a.txt`)).toBe(
+            'a',
+        );
+        expect(
+            await fileHelpers.fsReadFile(`${dataDir}/bundle/nested/b.txt`),
+        ).toBe('b');
+        expect(await fileHelpers.fsCheckDirExist(`${tempDir}/bundle`)).toBe(
+            false,
+        );
+
+        // a copy that dies halfway must not leave the half-written destination
+        // behind, and only EXDEV gets the fallback
+        await fileHelpers.fsCreateFile(`${tempDir}/temp-2.mp4`, 'video');
+        vi.spyOn(appProvider.fileUtils, 'copyFile').mockImplementation(((
+            _source: string,
+            dest: string,
+            callback: (error: any) => void,
+        ) => {
+            fileHelpers.fsWriteFileSync(dest, 'half');
+            callback(new Error('disk full'));
+        }) as any);
+        await expect(
+            fileHelpers.fsMove(`${tempDir}/temp-2.mp4`, `${dataDir}/half.mp4`),
+        ).rejects.toThrow('disk full');
+        expect(await fileHelpers.fsCheckFileExist(`${dataDir}/half.mp4`)).toBe(
+            false,
+        );
+        expect(
+            await fileHelpers.fsCheckFileExist(`${tempDir}/temp-2.mp4`),
+        ).toBe(true);
+
+        renameSpy.mockImplementation(((
+            _oldPath: string,
+            _newPath: string,
+            callback: (error: any) => void,
+        ) => {
+            const error: any = new Error('EPERM: operation not permitted');
+            error.code = 'EPERM';
+            callback(error);
+        }) as any);
+        await expect(
+            fileHelpers.fsMove(`${tempDir}/temp-2.mp4`, `${dataDir}/nope.mp4`),
+        ).rejects.toThrow('EPERM');
+    });
+
     test('copies an uploaded File using its own name', async () => {
         const { fileHelpers } = await loadModules();
         const copyDir = '/browser-data/uploads';

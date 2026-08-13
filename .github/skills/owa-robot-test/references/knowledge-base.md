@@ -272,13 +272,17 @@ Keep the main window on `presenter.html`.
   regression. **Pick step-by-step on both surfaces.**
   Also: a single `fill()` = one change event (test artifact); use char-by-char `type_text` to
   mimic a real user.
-- **Presenting is a SINGLE-CLICK TOGGLE, not double-click** (verified 2026-07-08 against
-  `ScreenVaryAppDocumentManager.handleSlideSelecting`): one click on a slide thumbnail (or a
-  background media item) presents it; clicking the **same** item again clears it. A
-  **double-click therefore nets to nothing** — present + immediately un-present — and if
-  another slide was live, the first click replaces it and the second click clears the layer
-  (this exact accident cleared the live slide during a run). Use `click` (no `dblClick`),
-  then verify via `.app-on-screen` before proceeding.
+- **Presenting a SLIDE is a single click, and re-clicking it does NOT clear it**
+  (corrected 2026-08-12; earlier revisions of this file said the click was a *toggle* and
+  that clicking the same slide again cleared the layer — that is stale). One click on a
+  slide thumbnail presents it; clicking the **same** card again simply **re-applies** it —
+  `SL` stays solid and the screen badge stays on the card. The repo's own test states the
+  rule outright: *"Re-selecting the same slide re-applies it (no toggle-off behavior)"*
+  (`src/_screen/managers/nonBibleManagers.coverage.test.tsx:946`). So **use `F8` (or the
+  `SL` clear button) to un-present a slide** — never a second click. Still use `click`
+  (no `dblClick`), and verify via `.app-on-screen` / the card's `data-screen-icon-id`
+  badge before proceeding. Background **media** items were not re-tested for toggling —
+  do not assume either behaviour there without checking.
 - ⚠️ **A bare synthetic `.click()` does NOT present a slide card** (verified 2026-08-10).
   `VarySlideRenderComp` is a **drag surface**, and `element.click()` — which dispatches a
   lone `click` with no pointer sequence — leaves it completely inert: no present, no
@@ -379,8 +383,9 @@ Keep the main window on `presenter.html`.
   loops) do NOT reproduce there. **That is why driving the real target once per run is
   mandatory** (SKILL §6a): screenshot the screen target itself and compare with the
   mini preview.
-- Presenting is a **single-click toggle** (§5) — present, verify, then clear with
-  `F6`–`F10`; end with the screen hidden unless it started showing.
+- Presenting a slide is a **single click, not a toggle** (§5) — present, verify, then
+  clear with `F6`–`F10` (a second click on the same card only re-applies it); end with the
+  screen hidden unless it started showing.
 
 ---
 
