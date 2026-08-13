@@ -83,4 +83,19 @@ export default class ElectronAppController {
             win.reload();
         }
     }
+
+    // Same enumeration as `reloadAll`, and for the same reason: popups are
+    // registered nowhere, so a message only `allWindows()` knows about would
+    // miss the Settings window — which is the one that needs most of them.
+    sendMessageToAll(channel: string, ...args: any[]) {
+        for (const win of BrowserWindow.getAllWindows()) {
+            if (
+                win.isDestroyed() ||
+                win.webContents.getURL().includes(htmlFiles.screen)
+            ) {
+                continue;
+            }
+            win.webContents.send(channel, ...args);
+        }
+    }
 }

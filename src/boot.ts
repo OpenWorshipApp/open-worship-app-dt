@@ -1,4 +1,5 @@
 import {
+    DEFAULT_LANG_CODE,
     getCurrentLocale,
     getLangCode,
     getLangDataAsync,
@@ -65,7 +66,8 @@ export async function init(callback: () => void = () => {}) {
     // and `:lang()` CSS see Khmer as Khmer; it otherwise stays the HTML default
     // ("en") even in km mode. `init` re-runs on every window (re)load, including
     // the reload `forceReloadAppWindows` triggers after an Apply Settings.
-    document.documentElement.lang = getLangCode(currentLocale) ?? 'en';
+    document.documentElement.lang =
+        getLangCode(currentLocale) ?? DEFAULT_LANG_CODE;
     await getLangDataAsync(currentLocale);
     callback();
 }

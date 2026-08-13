@@ -47,7 +47,8 @@
         "dc:err": "depcruise src --include-only \"^src\" --output-type err-html > dc-dependency-graph/errors.html",
         "release:version": "node extra-work/setTodayVersion.mjs && npm install",
         "release:tag": "bash extra-work/release-tag.sh",
-        "release": "bash extra-work/release.sh"
+        "release": "bash extra-work/release.sh",
+        "release:dry-run": "cross-env RELEASE_DRY_RUN=true bash extra-work/release.sh"
     },
     "browserslist": {
         "production": [

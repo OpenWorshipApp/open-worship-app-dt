@@ -1,7 +1,15 @@
 'use strict';
 /* eslint-disable */
 
-const { createReadStream, existsSync, readFileSync, readdirSync } = require('node:fs');
+const {
+    createReadStream,
+    createWriteStream,
+    existsSync,
+    readFileSync,
+    readdirSync,
+} = require('node:fs');
+const { mkdir, readFile, writeFile } = require('node:fs/promises');
+const { pipeline } = require('node:stream/promises');
 const {
     CloudFrontClient,
     CreateInvalidationCommand,
@@ -23,10 +31,24 @@ const instanceInitData = {
 
 const downloadInfo = require('./download-info.json');
 const { homepage } = require('../package.json');
-const { resolve } = require('node:path');
+const { dirname, resolve } = require('node:path');
 
 const PUBLIC_BASE_KEY_PREFIX = 'download';
 const BASE_KEY_PREFIX = 'www/download';
+
+// `npm run release:dry-run` sets this: everything runs as usual, but objects are
+// written under `fakeS3Dir` instead of the bucket and no cache is invalidated.
+const isDryRun = process.env.RELEASE_DRY_RUN === 'true';
+// The directory stands in for the BUCKET ROOT, so an object lands at its
+// verbatim S3 key. `RELEASE_FAKE_S3_DIR` is an override for testing; the release
+// script leaves it unset.
+const fakeS3Dir = process.env.RELEASE_FAKE_S3_DIR
+    ? resolve(process.env.RELEASE_FAKE_S3_DIR)
+    : resolve(__dirname, 'fake-s3');
+
+function genFakeS3FilePath(key) {
+    return resolve(fakeS3Dir, ...key.split('/'));
+}
 
 const isWindows = process.platform === 'win32';
 const isMac = process.platform === 'darwin';
@@ -221,6 +243,20 @@ function addContentType(putData) {
     }
 }
 
+async function writeToFakeS3(putData) {
+    const filePath = genFakeS3FilePath(putData.Key);
+    console.log(`Writing to "${filePath}" (${putData.ContentType})`);
+    await mkdir(dirname(filePath), { recursive: true });
+    if (typeof putData.Body === 'string') {
+        await writeFile(filePath, putData.Body, 'utf-8');
+    } else {
+        // Installers run to hundreds of MB - pipe the read stream `main()`
+        // already opened, never buffer it.
+        await pipeline(putData.Body, createWriteStream(filePath));
+    }
+    console.log(`*Written to "${filePath}"`);
+}
+
 async function uploadToS3(client, baseKey, body, optionalFileFullName) {
     const key = `${baseKey}${optionalFileFullName ? `/${optionalFileFullName}` : ''}`;
     const bucketName = process.env.RELEASE_AWS_BUCKET_NAME;
@@ -230,6 +266,10 @@ async function uploadToS3(client, baseKey, body, optionalFileFullName) {
         Body: body,
     };
     addContentType(putData);
+    if (isDryRun) {
+        await writeToFakeS3(putData);
+        return;
+    }
     const command = new PutObjectCommand(putData);
     const url = `s3://${bucketName}/${key}`;
     console.log(`Uploading to "${url}"`);
@@ -250,6 +290,10 @@ async function uploadToS3(client, baseKey, body, optionalFileFullName) {
 
 async function clearCache(key) {
     const item = `/${key}`;
+    if (isDryRun) {
+        console.log(`Dry run: skipping cache clearing for "${item}"`);
+        return;
+    }
     const cloudfront = new CloudFrontClient(instanceInitData);
     const command = new CreateInvalidationCommand({
         DistributionId: process.env.RELEASE_AWS_DISTRIBUTION_ID,
@@ -281,6 +325,21 @@ async function clearCache(key) {
  */
 async function readRemoteInfo(s3Client, prefix) {
     const key = `${BASE_KEY_PREFIX}/${prefix}/info.json`;
+    // The fake bucket is never wiped, so a dry run merges against whatever the
+    // previous dry runs wrote - the same cumulative merge, offline.
+    if (isDryRun) {
+        try {
+            return JSON.parse(await readFile(genFakeS3FilePath(key), 'utf-8'));
+        } catch (error) {
+            if (error.code === 'ENOENT') {
+                console.log(
+                    `No existing "${key}", first publish for this platform`,
+                );
+                return null;
+            }
+            throw error;
+        }
+    }
     try {
         const output = await s3Client.send(
             new GetObjectCommand({
@@ -321,7 +380,7 @@ async function genInfoBody(s3Client, item) {
 }
 
 async function main() {
-    const s3Client = new S3Client(instanceInitData);
+    const s3Client = isDryRun ? null : new S3Client(instanceInitData);
     const uploadList = getUploadList();
     for (const item of uploadList) {
         if (item.info) {
@@ -344,13 +403,14 @@ async function main() {
     await clearCache('download/*');
 }
 
-console.log('Pushing to S3...');
+const targetTitle = isDryRun ? `fake S3 "${fakeS3Dir}"` : 'S3';
+console.log(`Pushing to ${targetTitle}...`);
 main()
     .then(() => {
-        console.log('Done pushing to S3.');
+        console.log(`Done pushing to ${targetTitle}.`);
         process.exit(0);
     })
     .catch((err) => {
-        console.error('Error pushing to S3:', err);
+        console.error(`Error pushing to ${targetTitle}:`, err);
         process.exit(1);
     });

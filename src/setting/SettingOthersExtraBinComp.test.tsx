@@ -11,6 +11,7 @@ const {
     getExtraBinEntryMock,
     installExtraBinMock,
     showFileOrDirExplorerMock,
+    registerExtraBinChangedListenerMock,
 } = vi.hoisted(() => ({
     checkIsExtraBinInstalledMock: vi.fn(),
     getInstalledExtraBinVersionMock: vi.fn(),
@@ -18,6 +19,7 @@ const {
     getExtraBinEntryMock: vi.fn(),
     installExtraBinMock: vi.fn(),
     showFileOrDirExplorerMock: vi.fn(),
+    registerExtraBinChangedListenerMock: vi.fn(),
 }));
 
 vi.mock('../lang/langHelpers', () => ({ tran: (text: string) => text }));
@@ -31,6 +33,7 @@ vi.mock('../helper/extra-bin/extraBinHelpers', () => ({
     checkIsExtraBinInstalled: checkIsExtraBinInstalledMock,
     getExtraBinDirPath: () => '/data/extra-bin',
     getInstalledExtraBinVersion: getInstalledExtraBinVersionMock,
+    registerExtraBinChangedListener: registerExtraBinChangedListenerMock,
 }));
 
 vi.mock('../helper/extra-bin/extraBinInstallHelpers', () => ({
@@ -158,5 +161,38 @@ describe('setting SettingOthersExtraBinComp', () => {
             '/data/extra-bin',
         );
         expect(installExtraBinMock).not.toHaveBeenCalled();
+    });
+
+    // A download in ANOTHER window found the pack gone and is raising this one.
+    // Re-reading is what stops the panel contradicting that prompt -- and, since
+    // an "installed" answer hides the primary button, what stops it from being
+    // raised with no way to install.
+    test('re-reads the local state when told the pack changed', async () => {
+        await render();
+
+        expect(container.textContent).toContain('0.0.1');
+        expect(findButton('Download and Install')).toBeUndefined();
+
+        const [handleExtraBinChanging] =
+            registerExtraBinChangedListenerMock.mock.calls[0];
+
+        checkIsExtraBinInstalledMock.mockResolvedValue({
+            isInstalled: false,
+            missingNames: ['yt-dlp'],
+        });
+        getInstalledExtraBinVersionMock.mockResolvedValue(null);
+        await act(async () => {
+            handleExtraBinChanging();
+        });
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        expect(container.textContent).toContain('Not installed');
+        expect(container.textContent).toContain('yt-dlp');
+        expect(findButton('Download and Install')).toBeDefined();
+        // The online lookup is NOT part of this: it would be a network call
+        // every time another window nudged the panel.
+        expect(getExtraBinEntryMock).toHaveBeenCalledTimes(1);
     });
 });

@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-11b** (**W-16's language step: each language is now listed under
+**workflowsVersion: 2026-08-12** (**W-30 step 1: the advance-lookup panel's three tabs are
+now ONE drop-down.** **Find** / **Cross Reference** / **Location-Name (KJV)** never fitted the
+narrow panel — the third label sat permanently cut off as "Location-Name (K…" and the old step
+had to tell the reader the tab strip scrolls sideways. The header now holds a single `select`
+with the active view's icon beside it, so every name reads in full at any panel width. Nothing
+else about the panel changed. Verified live 2026-08-12 on the reader.)
+Previous: **2026-08-11b** (**W-16's language step: each language is now listed under
 its OWN name (`English`, `ខ្មែរ`) instead of being translated into whatever locale is in
 force.** The person who needs the picker most is the one who cannot read the current script —
 a list translated into it offered them no way back. The button's `title` still carries the
@@ -1773,11 +1779,12 @@ those exact verses — without searching for them one by one.
 
 1. Open the **Bible Reader** (or the **Bible Lookup** popup in the Presenter) and read
    a passage. At the top right, click **Advance Bible Lookup** (the magnifier). A panel
-   opens on the right with three tabs: **Find** (ស្វែងរក), **Cross Reference**
-   (ខគម្ពីរយោង) and **Location-Name (KJV)** (ទីកន្លែង-ឈ្មោះ (KJV)). Click the third
-   one. 📸
-   _If the last tab looks cut off, the tab strip scrolls sideways — or drag the divider
-   between the reading area and the panel to widen it._
+   opens on the right, its header a **drop-down** listing three views: **Find**
+   (ស្វែងរក), **Cross Reference** (ខគម្ពីរយោង) and **Location-Name (KJV)**
+   (ទីកន្លែង-ឈ្មោះ (KJV)). Pick the third one. 📸
+   _The icon to the left of the drop-down changes with your pick — a signpost for cross
+   references, a map pin for names and locations — so you can tell at a glance which
+   view the panel is showing._
 2. Under the heading **Names and locations in your reading (KJV)** you get **one block
    per passage you have open**. Each block is titled with the passage it belongs to,
    e.g. `(KJV) LUK 13:1-35`, and lists **Names** (ឈ្មោះ) first, then **Locations**
@@ -1795,7 +1802,7 @@ those exact verses — without searching for them one by one.
    can chase references, copy the entry, or send a verse back to your reading. 📸
 
 **Good to know:** the list is built from the King James text, which is what the
-names dictionary was made from — that is what the **(KJV)** in the tab name means. You
+names dictionary was made from — that is what the **(KJV)** in the view's name means. You
 can be reading any version, or Khmer; the panel still tells you who is in those verses.
 It also includes people the verse means without naming — Luke 13:16 lists **Satan**,
 which the verse calls "the devil".

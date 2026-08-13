@@ -1,5 +1,5 @@
 import type { AnyObjectType } from '../helper/typeHelpers';
-import { getAllLangsAsync } from '../lang/langHelpers';
+import { DEFAULT_LANG_CODE, getAllLangsAsync } from '../lang/langHelpers';
 import { getPlainReferenceText } from './lookupPresentationHelpers';
 import type {
     LookupRecordLabelsType,
@@ -30,8 +30,6 @@ const DISAMBIGUATOR_PATTERN =
 // Two characters is too short to be safe in running prose: the dataset's 2-char
 // entries ("Er", "Uz") would false-positive against ordinary words.
 const MINIMUM_NEEDLE_LENGTH = 3;
-
-const DEFAULT_LOOKUP_LANG_CODE = 'en';
 
 // One line under a name in a list, nothing more. The raw descriptions run to
 // paragraphs, and carrying them whole would roughly double the sidecar for text
@@ -76,7 +74,7 @@ async function readRawLookupData() {
     const langDataList = await getAllLangsAsync();
     for (const langData of langDataList) {
         if (
-            langData.langCode !== DEFAULT_LOOKUP_LANG_CODE ||
+            langData.langCode !== DEFAULT_LANG_CODE ||
             langData.getLookupData === undefined
         ) {
             continue;

@@ -1,11 +1,16 @@
 import type { ReactNode } from 'react';
 import { useCallback, useState } from 'react';
 
-import { useAppCurrentRef, useAppStateAsync } from '../helper/appHooks';
+import {
+    useAppCurrentRef,
+    useAppEffect,
+    useAppStateAsync,
+} from '../helper/appHooks';
 import {
     checkIsExtraBinInstalled,
     getExtraBinDirPath,
     getInstalledExtraBinVersion,
+    registerExtraBinChangedListener,
 } from '../helper/extra-bin/extraBinHelpers';
 import type { ExtraBinEntryType } from '../helper/extra-bin/extraBinInstallHelpers';
 import {
@@ -66,10 +71,18 @@ export default function SettingOthersExtraBinComp() {
     // Bumped by every action so both reads re-run. There is no polling and no
     // interval: this panel only looks when something actually happened.
     const [refreshCount, setRefreshCount] = useState(0);
+    // Bumped by the media download's own "not installed" prompt, which happens
+    // in ANOTHER renderer. Settings is its own window, so it can already be
+    // sitting on this tab showing the pre-existing "installed" answer when that
+    // prompt sends the user here -- which contradicts the prompt AND hides the
+    // `Download and Install` button that resolves it. Deliberately NOT wired to
+    // `refreshCount`: that one also re-runs the online lookup, and this needs
+    // only the three local file stats.
+    const [localRefreshCount, setLocalRefreshCount] = useState(0);
     const [isBusy, setIsBusy] = useState(false);
     const [localState] = useAppStateAsync<LocalStateType>(
         readExtraBinLocalState,
-        [refreshCount],
+        [refreshCount, localRefreshCount],
     );
     // `undefined` while the two small info.json reads are in flight, `null` when
     // they failed or this platform publishes no pack. Being offline is not an
@@ -80,6 +93,13 @@ export default function SettingOthersExtraBinComp() {
     );
     const localStateRef = useAppCurrentRef(localState);
     const onlineEntryRef = useAppCurrentRef(onlineEntry);
+    useAppEffect(() => {
+        return registerExtraBinChangedListener(() => {
+            setLocalRefreshCount((oldCount) => {
+                return oldCount + 1;
+            });
+        });
+    }, []);
 
     type InstallArgsType = [
         isForceDownload: boolean,

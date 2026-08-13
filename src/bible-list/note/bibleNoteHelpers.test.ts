@@ -100,6 +100,7 @@ vi.mock('./Note', () => ({
     default: { fromFilePath: h.noteFromFilePathMock },
 }));
 vi.mock('../../lang/langHelpers', () => ({
+    DEFAULT_LANG_CODE: 'en',
     getAllLangsAsync: h.getAllLangsAsyncMock,
     getCurrentLocale: h.getCurrentLocaleMock,
     getLangDataAsync: h.getLangDataAsyncMock,

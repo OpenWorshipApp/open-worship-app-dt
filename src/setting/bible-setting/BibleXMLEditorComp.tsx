@@ -4,6 +4,7 @@ import { Uri } from 'monaco-editor';
 
 import {
     allLocalesMap,
+    DEFAULT_LANG_CODE,
     getLangCode,
     getLangDataAsync,
     type LanguageDataType,
@@ -312,7 +313,7 @@ function BibleBooksMapXMLInputComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
-    const langCode = getLangCode(locale) ?? 'en';
+    const langCode = getLangCode(locale) ?? DEFAULT_LANG_CODE;
     const handleResetting = useCallback((event: MouseEvent) => {
         event.stopPropagation();
         editorStoreRef.current.replaceValue(

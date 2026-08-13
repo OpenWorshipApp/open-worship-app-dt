@@ -30,7 +30,9 @@ type FindOverlayType = {
     left: number | null;
     dragGrabOffsetX: number | null;
     dragTimer: NodeJS.Timeout | null;
+    isDestroyed: boolean;
     handleHostResizing: () => void;
+    handleHostClosing: () => void;
 };
 
 const overlayByHostWindowId = new Map<number, FindOverlayType>();
@@ -68,19 +70,37 @@ function stopDragging(overlay: FindOverlayType) {
     overlay.dragGrabOffsetX = null;
 }
 
+/**
+ * Idempotent on purpose: the find bar has two independent teardown triggers --
+ * the user closing the bar, and the host window closing -- and both can happen
+ * to the same overlay in that order. The second call used to crash the MAIN
+ * process on `overlay.view.webContents.id`, because closing a `WebContentsView`
+ * leaves its `webContents` undefined.
+ */
 function destroyOverlay(overlay: FindOverlayType) {
+    if (overlay.isDestroyed) {
+        return;
+    }
+    overlay.isDestroyed = true;
     stopDragging(overlay);
     overlayByHostWindowId.delete(overlay.hostWin.id);
-    overlayByViewWebContentsId.delete(overlay.view.webContents.id);
+    // May already be gone when the window close arrives after a bar close.
+    const viewWebContents = overlay.view.webContents;
+    if (viewWebContents !== undefined) {
+        overlayByViewWebContentsId.delete(viewWebContents.id);
+    }
     overlay.hostWin.off('resize', overlay.handleHostResizing);
+    // Named so it can be removed: a leaked `closed` listener is what kept the
+    // dead overlay reachable and re-entered this function.
+    overlay.hostWin.off('closed', overlay.handleHostClosing);
     if (!overlay.hostWin.isDestroyed()) {
         overlay.hostWin.contentView.removeChildView(overlay.view);
         if (!overlay.hostWin.webContents.isDestroyed()) {
             overlay.hostWin.webContents.stopFindInPage('clearSelection');
         }
     }
-    if (!overlay.view.webContents.isDestroyed()) {
-        overlay.view.webContents.close();
+    if (viewWebContents !== undefined && !viewWebContents.isDestroyed()) {
+        viewWebContents.close();
     }
 }
 
@@ -132,19 +152,22 @@ export function openFindOverlay(hostWin: BrowserWindow) {
         left: null,
         dragGrabOffsetX: null,
         dragTimer: null,
+        isDestroyed: false,
         handleHostResizing: () => {},
+        handleHostClosing: () => {},
     };
     overlay.handleHostResizing = () => {
         applyBounds(overlay);
+    };
+    overlay.handleHostClosing = () => {
+        destroyOverlay(overlay);
     };
     overlayByHostWindowId.set(hostWin.id, overlay);
     overlayByViewWebContentsId.set(view.webContents.id, overlay);
     hostWin.contentView.addChildView(view);
     applyBounds(overlay);
     hostWin.on('resize', overlay.handleHostResizing);
-    hostWin.once('closed', () => {
-        destroyOverlay(overlay);
-    });
+    hostWin.on('closed', overlay.handleHostClosing);
     view.webContents.loadURL(genRouteUrl(htmlFiles.finder));
     view.webContents.once('did-finish-load', () => {
         view.webContents.focus();
@@ -158,7 +181,9 @@ export function closeFindOverlay(webContents: WebContents) {
         return;
     }
     destroyOverlay(overlay);
-    overlay.hostWin.webContents.focus();
+    if (!overlay.hostWin.isDestroyed()) {
+        overlay.hostWin.webContents.focus();
+    }
 }
 
 /**

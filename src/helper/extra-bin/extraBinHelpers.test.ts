@@ -10,6 +10,7 @@ const {
 } = vi.hoisted(() => ({
     appProviderMock: {
         systemUtils: { isWindows: true },
+        messageUtils: { sendData: vi.fn() },
     },
     fsCheckFileExistMock: vi.fn(),
     fsReadFileMock: vi.fn(),
@@ -133,10 +134,17 @@ describe('extraBinHelpers', () => {
         showAppConfirmMock.mockResolvedValue(true);
         expect(await module.requireExtraBinPaths()).toBeNull();
         expect(openOthersSettingMock).toHaveBeenCalledTimes(1);
+        // The panel being raised lives in another renderer and may already be
+        // showing a stale "installed" answer, so it has to be told.
+        expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
+            'all:app:extra-bin-changed',
+        );
 
+        appProviderMock.messageUtils.sendData.mockClear();
         showAppConfirmMock.mockResolvedValue(false);
         expect(await module.requireExtraBinPaths()).toBeNull();
         // Declining must not open anything.
         expect(openOthersSettingMock).toHaveBeenCalledTimes(1);
+        expect(appProviderMock.messageUtils.sendData).not.toHaveBeenCalled();
     });
 });

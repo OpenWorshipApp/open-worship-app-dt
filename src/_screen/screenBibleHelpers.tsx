@@ -1,7 +1,7 @@
 import BibleItem from '../bible-list/BibleItem';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { tran } from '../lang/langHelpers';
+import { DEFAULT_LANG_CODE, tran } from '../lang/langHelpers';
 import type { BibleItemRenderingType } from './bibleScreenComps';
 import bibleScreenHelper from './bibleScreenHelpers';
 import type ScreenBibleManager from './managers/ScreenBibleManager';
@@ -200,7 +200,8 @@ export async function bibleItemToScreenViewData(
     const bibleRenderingList =
         await bibleScreenHelper.genBibleItemRenderList(bibleItems);
     const bibleKey = bibleItems[0].bibleKey || null;
-    const locale = bibleKey === null ? 'en' : await getBibleLocale(bibleKey);
+    const locale =
+        bibleKey === null ? DEFAULT_LANG_CODE : await getBibleLocale(bibleKey);
     return {
         type: 'bible-item',
         locale,

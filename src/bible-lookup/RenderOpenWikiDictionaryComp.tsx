@@ -5,6 +5,7 @@ import {
     getLanguageTitle,
     reversedLocalesMap,
     tran,
+    DEFAULT_LANG_CODE,
 } from '../lang/langHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -39,10 +40,10 @@ function genContextMenuItem(langCode: string): ContextMenuItemType {
 async function handleWikiDictionaryOpening(bibleKey: string, event: any) {
     const targetLocale = await getBibleLocale(bibleKey);
     let targetLangCode = getLangCode(targetLocale);
-    if (targetLangCode === 'en') {
+    if (targetLangCode === DEFAULT_LANG_CODE) {
         targetLangCode = null;
     }
-    const excludeLangCodes = ['en'];
+    const excludeLangCodes = [DEFAULT_LANG_CODE];
     if (targetLangCode !== null && !excludeLangCodes.includes(targetLangCode)) {
         excludeLangCodes.push(targetLangCode);
     }

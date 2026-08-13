@@ -2,6 +2,7 @@ import { type ChangeEvent, useCallback, useState } from 'react';
 
 import type { LocaleType } from '../../lang/langHelpers';
 import {
+    DEFAULT_LANG_CODE,
     getLangCode,
     getLangDataAsync,
     toLocaleNum,
@@ -148,7 +149,7 @@ function BibleNumbersMapXMLInputComp({
         setValue1Ref.current(e.target.value);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const langCode = getLangCode(locale) ?? 'en';
+    const langCode = getLangCode(locale) ?? DEFAULT_LANG_CODE;
     return (
         <div className="w-100 h-100">
             <div>Define numbers map for {langCode}</div>

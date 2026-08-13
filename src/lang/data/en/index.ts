@@ -1,4 +1,6 @@
 import {
+    DEFAULT_LANG_CODE,
+    DEFAULT_LOCALE,
     genOpenLyricFontFaces,
     type LanguageDataType,
 } from '../../langHelpers';
@@ -11,8 +13,8 @@ import { getFontFamilies } from '../../../server/fontHelpers';
 const lang: LanguageDataType = {
     packageDir: __dirname,
     version: '0.0.1',
-    locale: 'en-US',
-    langCode: 'en',
+    locale: DEFAULT_LOCALE,
+    langCode: DEFAULT_LANG_CODE,
     bibleBooks,
     checkIsThisLang: () => {
         return true;

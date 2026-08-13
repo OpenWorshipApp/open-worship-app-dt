@@ -9,8 +9,10 @@ import { getSetting, setSetting } from '../helper/settingHelpers';
 import type { Editor, OpenLyric, OpenLyricMarkdownManager } from 'open-lyric';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
+export const DEFAULT_LANG_CODE = 'en';
+export const supportedLangCodes = [DEFAULT_LANG_CODE, 'km'];
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
-const includedLangCodes = ['km', 'en'];
+export const supportedLocales = [DEFAULT_LOCALE, 'km-KH'];
 
 export const allLocalesMap = {
     arc: 'arc',
@@ -530,7 +532,7 @@ export type CustomMenusDataType = {
 };
 
 export function checkIsValidLangCode(text: string) {
-    return includedLangCodes.includes(text as any);
+    return supportedLangCodes.includes(text as any);
 }
 export function checkIsValidLocale(text: string) {
     return !!(allLocalesMap as any)[text];
@@ -567,7 +569,7 @@ export function initLangCss(langData: LanguageDataType) {
 }
 
 async function fetchLangData(langCode: string) {
-    if (!includedLangCodes.includes(langCode)) {
+    if (!supportedLangCodes.includes(langCode)) {
         // TODO: implement loading language data from server
         return null;
     }
@@ -598,7 +600,7 @@ export async function getLangDataAsync(
 
 export async function getAllLangsAsync() {
     const allLangData = await Promise.all(
-        includedLangCodes.map((langCode) => fetchLangData(langCode)),
+        supportedLangCodes.map((langCode) => fetchLangData(langCode)),
     );
     return allLangData.filter((data) => data !== null);
 }

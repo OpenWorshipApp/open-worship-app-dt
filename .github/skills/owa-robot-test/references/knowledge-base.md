@@ -236,6 +236,24 @@ Keep the main window on `presenter.html`.
   2026-08-07 — earlier revisions of this file said `role=group` with accessible names, which
   is stale). Their being unreachable by keyboard and unnamed to a screen reader is a standing
   **Info** a11y finding, not a new one — don't re-file it every run.
+- ⚠️ **The Audios tab is a SECOND pane, not a different list in the same one** (verified
+  2026-08-11). Clicking `Audios` leaves `Videos` active as well and splits the panel: there
+  are then **two** `BackgroundMediaComp` elements side by side (videos left, audios right).
+  So `document.querySelector('[data-react-comp-name="BackgroundMediaComp"]')` returns the
+  **videos** pane whichever tab you just clicked, and an "audio" download driven through it
+  runs as a **video** download — the popup says `Video URL:` and the toast
+  `Downloading video from …`. That looks exactly like an MD-02 regression and is not one.
+  Pick the pane by its path text:
+  `[...document.querySelectorAll('[data-react-comp-name="BackgroundMediaComp"]')]
+  .find((el) => el.innerText.includes('\\audios'))`, then assert the popup subtitle reads
+  `Audio URL:` **before** submitting.
+- **`list_pages` stays broken after the selected page closes; `select_page` recovers it.**
+  Closing the screen target (its ❌ button) or a popup leaves chrome-devtools-mcp erroring
+  `The selected page has been closed. Call list_pages to see open pages.` — from
+  `list_pages` itself, so the advice is circular. Call `select_page` with a known id (the
+  presenter is normally the lowest one) and it selects and re-lists fine. Confirm the app
+  is actually alive with `Invoke-RestMethod http://127.0.0.1:9223/json/list` before
+  assuming a crash.
 - **Contrast-aware dialog.** Choosing a background color that may clash with text pops a
   confirm: *"…text color may not be visible… change text color as well?"* (`Cancel`/`Ok`).
   Handle it. (This is **good UX**, not a bug.)

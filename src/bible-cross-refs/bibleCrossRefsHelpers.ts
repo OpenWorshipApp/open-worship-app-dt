@@ -8,7 +8,13 @@ import { globalCacheManager1M } from '../others/CacheManager';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { unlocking } from '../server/unlockingHelpers';
-import { getLangCode, getLocalBibleCrossRef } from '../lang/langHelpers';
+import {
+    DEFAULT_LANG_CODE,
+    DEFAULT_LOCALE,
+    getLangCode,
+    getLocalBibleCrossRef,
+    supportedLocales,
+} from '../lang/langHelpers';
 import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
 import { validateCrossReference } from '../helper/ai/bibleCrossRefHelpers';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
@@ -129,7 +135,10 @@ async function fetchBibleCrossRefAI(
     chapter: number,
     verseNum: number,
 ) {
-    const locale = await getBibleLocale(bibleKey);
+    let locale = await getBibleLocale(bibleKey);
+    if (supportedLocales.includes(locale) === false) {
+        locale = DEFAULT_LOCALE;
+    }
 
     const localData = await getLocalBibleCrossRef(locale, {
         bookKey,
@@ -146,7 +155,7 @@ async function fetchBibleCrossRefAI(
         chapter,
         verseNum,
     });
-    const langCode = getLangCode(locale) ?? 'en';
+    const langCode = getLangCode(locale) ?? DEFAULT_LANG_CODE;
     const params = {
         aiType,
         langCode,
@@ -155,10 +164,10 @@ async function fetchBibleCrossRefAI(
         verse: verseNum,
     };
     let data = await getBibleCrossRefAI(params);
-    if (data === null && langCode !== 'en') {
+    if (data === null && langCode !== DEFAULT_LANG_CODE) {
         data = await getBibleCrossRefAI({
             ...params,
-            langCode: 'en',
+            langCode: DEFAULT_LANG_CODE,
         });
     }
     return data;

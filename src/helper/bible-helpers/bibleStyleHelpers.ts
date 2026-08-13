@@ -12,7 +12,7 @@ import { getBibleInfo } from './bibleInfoHelpers';
 export async function getBibleLocale(bibleKey: string) {
     const bibleInfo = await getBibleInfo(bibleKey);
     if (bibleInfo === null) {
-        return 'en' as LocaleType;
+        return DEFAULT_LOCALE as LocaleType;
     }
     return bibleInfo.locale;
 }

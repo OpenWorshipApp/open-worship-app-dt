@@ -24,6 +24,7 @@ vi.mock('../server/appProvider', () => ({
     },
 }));
 vi.mock('../lang/langHelpers', () => ({
+    DEFAULT_LANG_CODE: 'en',
     getAllLangsAsync: async () => {
         h.loadCount += 1;
         return h.langDataList;

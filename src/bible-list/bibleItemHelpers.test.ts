@@ -40,10 +40,28 @@ describe('bible-list bibleItemHelpers', () => {
             verseStart: 1,
             verseEnd: 1,
         };
-        const list = [{ target } as any, { target: { ...target } } as any];
+        const list = [
+            { bibleKey: 'KJV', target } as any,
+            { bibleKey: 'KJV', target: { ...target } } as any,
+        ];
         expect(genDuplicatedMessage(list, list[1], 1)).toBe(
             'Duplicated with item number 1',
         );
+    });
+
+    test('genDuplicatedMessage allows the same passage in another translation', () => {
+        const target = {
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 1,
+            verseEnd: 36,
+        };
+        const list = [
+            { bibleKey: 'KJV', target } as any,
+            { bibleKey: 'LSG', target: { ...target } } as any,
+        ];
+        expect(genDuplicatedMessage(list, list[0], 0)).toBeUndefined();
+        expect(genDuplicatedMessage(list, list[1], 1)).toBeUndefined();
     });
 
     test('genDuplicatedMessage returns undefined without duplicates', () => {

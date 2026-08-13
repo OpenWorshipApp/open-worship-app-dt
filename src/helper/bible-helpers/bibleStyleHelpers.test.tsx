@@ -125,7 +125,8 @@ describe('bibleStyleHelpers', () => {
         const module = await loadModule();
 
         mocks.getBibleInfoMock.mockResolvedValueOnce(null);
-        expect(await module.getBibleLocale('missing')).toBe('en');
+        // The fallback is a LocaleType, not a lang code — `DEFAULT_LOCALE`.
+        expect(await module.getBibleLocale('missing')).toBe('en-US');
         expect(await module.getBibleLocale('KJV')).toBe('km-KH');
     });
 

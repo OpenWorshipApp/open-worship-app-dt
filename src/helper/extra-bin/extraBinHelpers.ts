@@ -12,6 +12,37 @@ import { appLocalStorage } from '../../setting/directory-setting/appLocalStorage
 export const EXTRA_BIN_INFO_FILE_NAME = 'info.json';
 export const EXTRA_BIN_ARCHIVE_REGEX = /^bin-.+\.tar\.gz$/;
 
+/**
+ * "What I just found on disk disagrees with what another window is showing."
+ *
+ * The Settings window is its own renderer, so the Extra Binaries panel cannot
+ * see what the gate below discovered. It reads once and re-reads only after one
+ * of its own buttons; being SENT here by the download prompt is not one of
+ * those, so without this it can greet the user with a stale `Installed 0.0.2`
+ * -- and, because that answer hides the primary button, with no way to install.
+ */
+const EXTRA_BIN_CHANGED_BROADCAST_CHANNEL = 'all:app:extra-bin-changed';
+const EXTRA_BIN_CHANGED_RENDERER_CHANNEL = 'main:app:extra-bin-changed';
+
+export function notifyExtraBinChanged() {
+    appProvider.messageUtils.sendData(EXTRA_BIN_CHANGED_BROADCAST_CHANNEL);
+}
+
+/** Returns the unregister function, so a component can hand it back as its
+ * effect cleanup without knowing the channel names. */
+export function registerExtraBinChangedListener(handler: () => void) {
+    appProvider.messageUtils.listenForData(
+        EXTRA_BIN_CHANGED_RENDERER_CHANNEL,
+        handler,
+    );
+    return () => {
+        appProvider.messageUtils.removeListener(
+            EXTRA_BIN_CHANGED_RENDERER_CHANNEL,
+            handler,
+        );
+    };
+}
+
 export type ExtraBinPathsType = {
     dirPath: string;
     ytDlpBinPath: string;
@@ -113,6 +144,9 @@ export async function requireExtraBinPaths() {
         },
     );
     if (isOk) {
+        // Before the window comes forward, so an already-open panel is
+        // re-reading while it is being raised rather than after.
+        notifyExtraBinChanged();
         // Dynamic so this module never drags the settings page's dependencies
         // into the media download path.
         const { openOthersSetting } =

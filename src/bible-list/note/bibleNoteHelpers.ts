@@ -19,7 +19,11 @@ import {
 } from '../../helper/localFileHelpers';
 import Note from './Note';
 import type NoteItem from './NoteItem';
-import { getAllLangsAsync, initAllLangCss } from '../../lang/langHelpers';
+import {
+    DEFAULT_LANG_CODE,
+    getAllLangsAsync,
+    initAllLangCss,
+} from '../../lang/langHelpers';
 import { acquireLookupData } from '../../location-name-lookup/lookupDataHelpers';
 import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
@@ -214,12 +218,12 @@ export async function initBibleNote({
 
     const getLangCode = (text: string) => {
         const currentLangData = langDataList.find((langData) => {
-            if (langData.langCode === 'en') {
+            if (langData.langCode === DEFAULT_LANG_CODE) {
                 return false;
             }
             return langData.checkIsThisLang(text);
         });
-        return currentLangData?.langCode ?? 'en';
+        return currentLangData?.langCode ?? DEFAULT_LANG_CODE;
     };
     const print = () => {
         appProvider.messageUtils.sendData('all:app:print');

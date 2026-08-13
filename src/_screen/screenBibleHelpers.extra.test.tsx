@@ -75,6 +75,7 @@ vi.mock('../context-menu/appContextMenuHelpers', () => ({
 }));
 
 vi.mock('../lang/langHelpers', () => ({
+    DEFAULT_LANG_CODE: 'en',
     tran: (value: string) => value,
 }));
 

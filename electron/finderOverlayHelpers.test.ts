@@ -180,4 +180,33 @@ describe('finderOverlayHelpers', () => {
 
         expect(view.setBounds).not.toHaveBeenCalled();
     });
+
+    // The find bar has two independent teardown triggers and both can fire for
+    // the same overlay: close the bar, then close the window. That crashed the
+    // MAIN process, because closing the view leaves its `webContents` behind.
+    test('the window closing after the bar was closed tears down only once', () => {
+        const hostWin = createHostWindow();
+        openFindOverlay(hostWin as any);
+        const view = getLastView();
+        const viewWebContents = view.webContents;
+        const closedCall = hostWin.on.mock.calls.find(([eventName]) => {
+            return eventName === 'closed';
+        });
+        expect(closedCall).toBeDefined();
+        const handleHostClosing = closedCall![1];
+
+        closeFindOverlay(viewWebContents);
+
+        expect(viewWebContents.close).toHaveBeenCalledTimes(1);
+        // The listener is removed, so it cannot keep the dead overlay alive.
+        expect(hostWin.off).toHaveBeenCalledWith('closed', handleHostClosing);
+
+        // Even so, a listener the platform still holds must be harmless.
+        (view as any).webContents = undefined;
+        hostWin.isDestroyed.mockReturnValue(true);
+        expect(() => {
+            handleHostClosing();
+        }).not.toThrow();
+        expect(viewWebContents.close).toHaveBeenCalledTimes(1);
+    });
 });

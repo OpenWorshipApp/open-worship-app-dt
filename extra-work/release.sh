@@ -1,44 +1,181 @@
 #!/bin/bash
-set -e
+# Publishes the packages for the CURRENT host platform: packs them, stages every
+# artifact under `extra-work/tmp/<platform prefix>` beside a `files.txt`
+# manifest, then hands the whole staging dir to `s3-push-release.js`.
+#
+#   npm run release          -- the real thing: resets to the release tag, uploads
+#                               to S3 and invalidates the CDN cache.
+#   npm run release:dry-run  -- same packs, but git is left alone and the push
+#                               writes into `extra-work/fake-s3` instead.
+#                               `RELEASE_SKIP_INSTALL=true` additionally skips the
+#                               (slow) dependency reinstall -- dry runs only.
+set -euo pipefail
 
 current_script_dir=$(dirname "$0")
 cd "$current_script_dir/.."
 pwd
 
-package_version=$(node -p "require('./package.json').version")
-# ask for confirmation for the version
-echo "Preparing release for version: $package_version"
-read -p "Do you want to continue? (y/n): " confirm
-if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    echo "Release process aborted."
-    exit 1
-fi
-release_tag="release-$package_version"
-
-git pull
-# reset main to release tag
-# check tag exists
-if ! git rev-parse "$release_tag" >/dev/null 2>&1; then
-    echo "Error: Tag '$release_tag' does not exist."
-    echo "Run \`npm run release:version\` then \`npm run release:tag\` to create the tag first."
-    exit 1
-fi
-commit_hash=$(git rev-list -n 1 "$release_tag")
-git reset --hard "$commit_hash"
-
-npm i
-
 release_dir="./release"
 tmp_dir="./extra-work/tmp"
+backup_dir="$tmp_dir/backup-release"
+failed_dir="$tmp_dir/failed-release"
+env_file="./extra-work/.env"
 bin_file_info="files.txt"
 sep="|"
-latest_commit=$(git rev-parse HEAD)
 extra_bin_dir_name="extra-bin"
 extra_bin_src_dir="./extra-work/experiment-building/release"
 
+is_dry_run=${RELEASE_DRY_RUN:-false}
+is_skipping_install=${RELEASE_SKIP_INSTALL:-false}
+start_seconds=$SECONDS
+# Filled in by `start_prep`, one entry per platform prefix, printed at the end.
+staged_dir_list=()
+# Resolved by `preflight`: coreutils on Windows/Linux, `shasum` on macOS.
+checksum_command=""
+
+log_step() {
+    local elapsed=$((SECONDS - start_seconds))
+    printf '\n=== [%02d:%02d] %s ===\n' $((elapsed / 60)) $((elapsed % 60)) "$1"
+}
+
+fail() {
+    echo "Error: $1" >&2
+    exit 1
+}
+
+abort() {
+    echo "Release process aborted."
+    exit 1
+}
+
+confirm() {
+    local answer=""
+    # A closed stdin (a non-interactive shell) must read as "no", not as an
+    # unexplained `set -e` abort.
+    if ! read -r -p "$1 (y/n): " answer; then
+        answer=""
+    fi
+    [[ "$answer" == "y" || "$answer" == "Y" ]]
+}
+
+gen_checksum() {
+    if [[ "$checksum_command" == "shasum" ]]; then
+        shasum -a 512 "$1" | awk '{print $1}'
+    else
+        sha512sum "$1" | awk '{print $1}'
+    fi
+}
+
+gen_size() {
+    du -sh "$1" 2>/dev/null | awk '{print $1}' || true
+}
+
+require_command() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        fail "the \"$1\" command is required but was not found."
+    fi
+}
+
+# The push needs the credentials, so they are read BEFORE anything expensive
+# runs: finding out that one is missing after a 20-minute pack throws the whole
+# build away. A dry run never reaches AWS, so there they are only a warning.
+load_env() {
+    if [[ ! -f "$env_file" ]]; then
+        if [[ "$is_dry_run" == "true" ]]; then
+            echo "WARNING: \"$env_file\" not found - a dry run never reaches AWS"
+            return
+        fi
+        fail "\"$env_file\" not found. Copy \"$env_file-example\" and fill it in."
+    fi
+    # shellcheck source=/dev/null
+    source "$env_file"
+    local missing_name_list=()
+    local name
+    for name in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION \
+        AWS_BUCKET_NAME AWS_DISTRIBUTION_ID; do
+        if [[ -z "${!name:-}" ]]; then
+            missing_name_list+=("$name")
+        fi
+    done
+    if [[ ${#missing_name_list[@]} -gt 0 ]]; then
+        local missing="${missing_name_list[*]}"
+        if [[ "$is_dry_run" == "true" ]]; then
+            echo "WARNING: empty in \"$env_file\": $missing"
+            return
+        fi
+        fail "empty in \"$env_file\": $missing"
+    fi
+}
+
+preflight() {
+    log_step "Preflight"
+    local command_name
+    for command_name in node npm git awk grep du; do
+        require_command "$command_name"
+    done
+    if command -v sha512sum >/dev/null 2>&1; then
+        checksum_command="sha512sum"
+    elif command -v shasum >/dev/null 2>&1; then
+        checksum_command="shasum"
+    else
+        fail "neither \"sha512sum\" nor \"shasum\" is available to checksum the artifacts."
+    fi
+    load_env
+    echo "Preflight passed."
+}
+
+# `git reset --hard` below is unrecoverable, so anything it would throw away is
+# shown and confirmed first. Untracked files survive a reset and are not asked
+# about.
+check_worktree_is_clean() {
+    local dirty
+    dirty=$(git status --porcelain --untracked-files=no)
+    if [[ -z "$dirty" ]]; then
+        return
+    fi
+    echo "The working tree has uncommitted changes:"
+    echo "$dirty"
+    echo "Resetting to the release tag will DISCARD them permanently."
+    if ! confirm "Continue anyway?"; then
+        abort
+    fi
+}
+
+reset_to_release_tag() {
+    local release_tag="release-$1"
+    git pull
+    # Ask for the tag ref explicitly -- a bare `git rev-parse` also answers for a
+    # branch or a raw sha that happens to carry the same name.
+    if ! git rev-parse --verify --quiet "refs/tags/$release_tag^{commit}" >/dev/null; then
+        echo "Error: Tag '$release_tag' does not exist."
+        echo "Run \`npm run release:version\` then \`npm run release:tag\` to create the tag first."
+        exit 1
+    fi
+    local commit_hash
+    commit_hash=$(git rev-parse "refs/tags/$release_tag^{commit}")
+    echo "Resetting to tag '$release_tag' ($commit_hash)."
+    git reset --hard "$commit_hash"
+}
+
+install_dependencies() {
+    log_step "Installing dependencies"
+    if [[ "$is_skipping_install" == "true" ]]; then
+        if [[ "$is_dry_run" == "true" ]]; then
+            echo "Skipping \`npm run i:d\` (RELEASE_SKIP_INSTALL=true)."
+            return
+        fi
+        # A published build has to come out of a clean install, whatever the
+        # environment says.
+        echo "WARNING: RELEASE_SKIP_INSTALL is honored on a dry run only; installing anyway."
+    fi
+    npm run i:d
+}
+
 is_linux_ubuntu() {
     if command -v lsb_release &> /dev/null; then
-        if [[ "$(lsb_release -is)" == "Ubuntu" || "$(lsb_release -is)" == "Linuxmint" ]]; then
+        local distro_id
+        distro_id=$(lsb_release -is)
+        if [[ "$distro_id" == "Ubuntu" || "$distro_id" == "Linuxmint" ]]; then
             echo "true"
         fi
     fi
@@ -46,8 +183,11 @@ is_linux_ubuntu() {
 
 is_linux_fedora() {
     if [[ -f /etc/os-release ]]; then
-        . /etc/os-release
-        distro_ids="${ID:-} ${ID_LIKE:-}"
+        # Sourced in a subshell: `/etc/os-release` defines a dozen generic names
+        # (`ID`, `NAME`, `VERSION`, ...) that have no business leaking into the
+        # rest of the release.
+        local distro_ids
+        distro_ids=$(. /etc/os-release; echo "${ID:-} ${ID_LIKE:-}")
         if [[ "$distro_ids" =~ (^|[[:space:]])(fedora|rhel|centos|rocky|almalinux)($|[[:space:]]) ]]; then
             echo "true"
         fi
@@ -62,66 +202,113 @@ export RELEASE_LINUX_IS_FEDORA=$(is_linux_fedora)
 # is picked up here right after the pack that produced it. Missing is a warning,
 # not a failure -- only some platforms have committed binaries.
 copy_extra_bin() {
-    shopt -s nullglob
-    tar_files=("$extra_bin_src_dir"/bin-*.tar.gz)
-    shopt -u nullglob
-    if [[ ${#tar_files[@]} -eq 0 ]]; then
-        echo "WARNING: no extra-bin pack for \"$1\" - it will not be published"
+    local target_dir="$1"
+    local info_file="$extra_bin_src_dir/bin-info.json"
+    if [[ ! -f "$info_file" ]]; then
+        echo "WARNING: no extra-bin pack for \"$target_dir\" - it will not be published"
         return
     fi
-    mkdir -p "$1/$extra_bin_dir_name"
-    cp "${tar_files[0]}" "$1/$extra_bin_dir_name/"
-    cp "$extra_bin_src_dir/bin-info.json" "$1/$extra_bin_dir_name/"
+    # Take the name from `bin-info.json` instead of globbing the dir: that file
+    # also carries the checksum the app verifies after downloading, so a pack the
+    # glob picked but the info file does not describe would publish a checksum
+    # that can never match and every install would fail the integrity check.
+    local tar_name
+    tar_name=$(node -p "require('$info_file').fileFullName ?? ''")
+    local tar_path="$extra_bin_src_dir/$tar_name"
+    if [[ -z "$tar_name" || ! -f "$tar_path" ]]; then
+        fail "\"$info_file\" names \"$tar_name\", which is not in \"$extra_bin_src_dir\"."
+    fi
+    local expected_checksum actual_checksum
+    expected_checksum=$(node -p "require('$info_file').checksum ?? ''")
+    actual_checksum=$(gen_checksum "$tar_path")
+    if [[ "$expected_checksum" != "$actual_checksum" ]]; then
+        fail "\"$tar_path\" does not match the checksum in \"$info_file\"; re-run \`node ./extra-work/build-extra-bin.mjs\`."
+    fi
+    mkdir -p "$target_dir/$extra_bin_dir_name"
+    cp "$tar_path" "$target_dir/$extra_bin_dir_name/"
+    cp "$info_file" "$target_dir/$extra_bin_dir_name/"
+    echo "  $tar_name ($(gen_size "$tar_path")) [extra-bin]"
 }
 
 start_prep() {
-    mv $release_dir $1
-    target_file="$1/$bin_file_info"
+    local target_dir="$1"
+    if [[ ! -d "$release_dir" ]]; then
+        fail "\"$release_dir\" does not exist - the pack for \"$target_dir\" produced nothing."
+    fi
+    mv "$release_dir" "$target_dir"
+    local target_file="$target_dir/$bin_file_info"
     rm -f "$target_file"
     touch "$target_file"
-    copy_extra_bin "$1"
+    copy_extra_bin "$target_dir"
+    staged_dir_list+=("$target_dir")
 }
 
 append_file_info() {
-    target_file="$1/$bin_file_info"
-    file_name=$(basename "$2")
-    version=$(grep 'version:' "$4" | awk '{print $2}' | tr -d "'")
+    local target_dir="$1" file_path="$2" checksum="$3" yml_file="$4"
+    if [[ ! -f "$yml_file" ]]; then
+        fail "\"$yml_file\" not found - electron-builder did not finish."
+    fi
+    local file_name version release_date
+    file_name=$(basename "$file_path")
+    version=$(grep -m1 -E '^version:' "$yml_file" | awk '{print $2}' | tr -d "'" || true)
+    release_date=$(grep -m1 -E '^releaseDate:' "$yml_file" | awk '{print $2}' | tr -d "'" || true)
+    if [[ -z "$version" || -z "$release_date" ]]; then
+        fail "no \"version\"/\"releaseDate\" in \"$yml_file\"."
+    fi
     # 2026.6.1 => 2026.06.01
     version=$(echo "$version" | awk -F. '{printf "%02d.%02d.%02d", $1, $2, $3}')
-    release_date=$(grep 'releaseDate:' "$4" | awk '{print $2}' | tr -d "'")
-    echo "${file_name}${sep}$3${sep}${release_date}${sep}${version}${sep}${latest_commit}" >> "$target_file"
+    echo "${file_name}${sep}${checksum}${sep}${release_date}${sep}${version}${sep}${latest_commit}" \
+        >> "$target_dir/$bin_file_info"
+}
+
+# Collected by glob, not by `ls | grep`: the names carry spaces ("Open Worship
+# app-2026.6.1-win.exe") and an empty result has to be an error here -- it would
+# otherwise reach the push script as an empty `files.txt`, whose first line it
+# reads for the version.
+collect_artifacts() {
+    local target_dir="$1" yml_file="$2"
+    shift 2
+    local extension file checksum
+    local count=0
+    shopt -s nullglob
+    for extension in "$@"; do
+        for file in "$target_dir"/*"$extension"; do
+            checksum=$(gen_checksum "$file")
+            append_file_info "$target_dir" "$file" "$checksum" "$yml_file"
+            echo "  $(basename "$file") ($(gen_size "$file"))"
+            count=$((count + 1))
+        done
+    done
+    shopt -u nullglob
+    if [[ $count -eq 0 ]]; then
+        fail "no \"$*\" artifact in \"$target_dir\"."
+    fi
+    echo "Staged $count artifact(s) in \"$target_dir\"."
 }
 
 win_prep() {
     start_prep "$1"
-    ls "$1" | grep -E '\.exe$|\.zip$' | while read -r file; do
-        checksum=$(sha512sum "$1/$file" | awk '{print $1}')
-        append_file_info "$1" "$file" "$checksum" "$1/latest.yml"
-    done
+    collect_artifacts "$1" "$1/latest.yml" '.exe' '.zip'
 }
 
 mac_prep() {
     start_prep "$1"
-    ls "$1" | grep -E "$2\.dmg$|$2\.zip$" | while read -r file; do
-        checksum=$(shasum -a 512 "$1/$file" | awk '{print $1}')
-        append_file_info "$1" "$file" "$checksum" "$1/latest-mac.yml"
-    done
+    collect_artifacts "$1" "$1/latest-mac.yml" '.dmg' '.zip'
 }
 
 linux_prep() {
     start_prep "$1"
+    local file
     shopt -s nullglob
-    chmod +x "$1"/*.AppImage "$1"/*.deb "$1"/*.rpm 2>/dev/null
+    for file in "$1"/*.AppImage "$1"/*.deb "$1"/*.rpm; do
+        chmod +x "$file"
+    done
     shopt -u nullglob
     if [[ "$2" == "fedora" ]]; then
-        file_pattern='\.rpm$|\.AppImage$'
+        collect_artifacts "$1" "$1/latest-linux.yml" '.rpm' '.AppImage'
     else
-        file_pattern='\.deb$|\.AppImage$'
+        collect_artifacts "$1" "$1/latest-linux.yml" '.deb' '.AppImage'
     fi
-    ls "$1" | grep -E "$file_pattern" | while read -r file; do
-        checksum=$(sha512sum "$1/$file" | awk '{print $1}')
-        append_file_info "$1" "$file" "$checksum" "$1/latest-linux.yml"
-    done
 }
 
 # `npm i` builds the pack once, for the HOST arch. A run that packs more than one
@@ -129,7 +316,7 @@ linux_prep() {
 # the same FORCE_ARCH_32 that `copy-build.mjs` will see, or the 32-bit build
 # would publish the 64-bit pack.
 build_extra_bin() {
-    if [[ "$1" == "32" ]]; then
+    if [[ "${1:-}" == "32" ]]; then
         FORCE_ARCH_32=true node ./extra-work/build-extra-bin.mjs
     else
         node ./extra-work/build-extra-bin.mjs
@@ -140,13 +327,16 @@ build_release() {
     if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
         process=$(node -p "process.arch")
         if [[ "$process" == "arm64" ]]; then
+            log_step "Packing win-arm64"
             build_extra_bin
             npm run pack:win
             win_prep "$tmp_dir/win-arm64"
         else
+            log_step "Packing win"
             build_extra_bin
             npm run pack:win
             win_prep "$tmp_dir/win"
+            log_step "Packing win-ia32"
             build_extra_bin 32
             npm run pack:win:32
             win_prep "$tmp_dir/win-ia32"
@@ -154,55 +344,119 @@ build_release() {
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         build_extra_bin
         if [[ "$(uname -m)" == "arm64" ]]; then
+            log_step "Packing mac"
             npm run pack:mac
             mac_prep "$tmp_dir/mac"
         else
+            log_step "Packing mac-intel"
             npm run pack:mac
             mac_prep "$tmp_dir/mac-intel"
         fi
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
         build_extra_bin
-        npm run pack:linux
         if [[ "$RELEASE_LINUX_IS_UBUNTU" == "true" ]]; then
+            log_step "Packing linux-ubuntu"
+            npm run pack:linux
             linux_prep "$tmp_dir/linux-ubuntu" "ubuntu"
         elif [[ "$RELEASE_LINUX_IS_FEDORA" == "true" ]]; then
+            log_step "Packing linux-fedora"
+            npm run pack:linux
             linux_prep "$tmp_dir/linux-fedora" "fedora"
         else
-            echo "Unsupported Linux distribution"
-            exit 1
+            fail "Unsupported Linux distribution"
         fi
     else
-        echo "Unsupported OS: $OSTYPE"
-        exit 1
+        fail "Unsupported OS: $OSTYPE"
     fi
 }
 
+# `./release` is moved aside for the whole pack so electron-builder starts from
+# an empty dir. Whatever ends the run in between -- a failed pack, Ctrl+C -- has
+# to put it back: the next run wipes `$tmp_dir`, and it would take the previous
+# release output with it.
+restore_release_dir() {
+    if [[ ! -d "$backup_dir" ]]; then
+        return
+    fi
+    if [[ -e "$release_dir" ]]; then
+        rm -rf "$failed_dir"
+        mv "$release_dir" "$failed_dir"
+        echo "Kept the unfinished pack in \"$failed_dir\"."
+    fi
+    mv "$backup_dir" "$release_dir"
+}
+
+package_version=$(node -p "require('./package.json').version")
+if [[ "$is_dry_run" == "true" ]]; then
+    echo "!!!Dry run mode!!!"
+fi
+
+preflight
+
+if [[ "$is_dry_run" == "true" ]]; then
+    target_title="fake S3 (\"./extra-work/fake-s3\")"
+else
+    target_title="S3 bucket \"${AWS_BUCKET_NAME:-}\""
+fi
+echo "Preparing release for version: $package_version"
+echo "  tag    : release-$package_version"
+echo "  target : $target_title"
+
+if [[ "$is_dry_run" != "true" ]]; then
+    check_worktree_is_clean
+    if ! confirm "Do you want to continue?"; then
+        abort
+    fi
+    reset_to_release_tag "$package_version"
+fi
+
+install_dependencies
+
+# After the reset, so it names the commit that is actually being published.
+latest_commit=$(git rev-parse HEAD)
+
+log_step "Preparing the staging dir"
+# A run that was killed outright (no trap) leaves the backup behind; recover it
+# rather than wiping it with the rest of the staging dir.
+if [[ -d "$backup_dir" && ! -e "$release_dir" ]]; then
+    echo "Recovering \"$release_dir\" from an interrupted run."
+    mv "$backup_dir" "$release_dir"
+fi
 rm -rf "$tmp_dir"
 mkdir -p "$tmp_dir"
 
 mkdir -p "$release_dir"
-mv "$release_dir" "$tmp_dir/backup-release"
+mv "$release_dir" "$backup_dir"
+trap restore_release_dir EXIT
 
 build_release
 
-mv "$tmp_dir/backup-release" "$release_dir"
+restore_release_dir
+trap - EXIT
 
-if [[ -f ./extra-work/.env ]]; then
-    source ./extra-work/.env
-else
-    echo "Error: .env file not found."
-    exit 1
-fi
-
-export RELEASE_AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
-export RELEASE_AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
-export RELEASE_AWS_REGION="${AWS_REGION}"
-export RELEASE_AWS_BUCKET_NAME="${AWS_BUCKET_NAME}"
-export RELEASE_AWS_DISTRIBUTION_ID="${AWS_DISTRIBUTION_ID}"
+log_step "Pushing to $target_title"
+export RELEASE_DRY_RUN="$is_dry_run"
+export RELEASE_AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-}"
+export RELEASE_AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-}"
+export RELEASE_AWS_REGION="${AWS_REGION:-}"
+export RELEASE_AWS_BUCKET_NAME="${AWS_BUCKET_NAME:-}"
+export RELEASE_AWS_DISTRIBUTION_ID="${AWS_DISTRIBUTION_ID:-}"
 export RELEASE_STORAGE_DIR="$tmp_dir"
 export RELEASE_BIN_FILE_SEPARATOR="$sep"
 export RELEASE_BIN_FILE_INFO="$bin_file_info"
 export RELEASE_EXTRA_BIN_DIR_NAME="$extra_bin_dir_name"
 node ./extra-work/s3-push-release.js
 
-git pull
+log_step "Published $package_version ($latest_commit) to $target_title"
+if [[ ${#staged_dir_list[@]} -gt 0 ]]; then
+    for staged_dir in "${staged_dir_list[@]}"; do
+        echo "  $staged_dir ($(gen_size "$staged_dir"))"
+    done
+fi
+
+if [[ "$is_dry_run" != "true" ]]; then
+    echo "Release process completed successfully."
+    git pull
+else
+    echo "Dry run completed successfully. No changes were made."
+fi

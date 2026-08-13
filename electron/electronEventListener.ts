@@ -547,6 +547,12 @@ export function initEventOther(appController: ElectronAppController) {
         appController.reloadAll();
     });
 
+    // The media download found the pack missing (or just installed it) in one
+    // renderer; the Settings window it is about to raise has to re-read.
+    ipcMain.on('all:app:extra-bin-changed', () => {
+        appController.sendMessageToAll('main:app:extra-bin-changed');
+    });
+
     ipcMain.on('all:app:print', (event, htmlText?: string) => {
         if (typeof htmlText === 'string') {
             void printHTMLContent(htmlText).catch((error) => {

@@ -3,16 +3,12 @@ import type { LocationsLookupManager, NamesLookupManager } from 'bible-note';
 import type { AnyObjectType } from '../helper/typeHelpers';
 import { globalCacheManager1M } from '../others/CacheManager';
 import { unlockingCacher } from '../server/unlockingHelpers';
-import { getAllLangsAsync } from '../lang/langHelpers';
+import { DEFAULT_LANG_CODE, getAllLangsAsync } from '../lang/langHelpers';
 
 export type LookupManagersType = {
     namesLookupManager: NamesLookupManager;
     locationsLookupManager: LocationsLookupManager;
 };
-
-// The dataset is keyed by lang code and English is the only complete one, so it
-// is both the fallback and the default the managers resolve against.
-const DEFAULT_LOOKUP_LANG_CODE = 'en';
 
 const LOOKUP_DATA_CACHE_KEY = 'LocationNameLookupData';
 
@@ -30,7 +26,7 @@ async function loadLookupData(): Promise<LookupManagersType> {
             namesData[langData.langCode] = lookupData.namesMap;
         }
     }
-    if (namesData[DEFAULT_LOOKUP_LANG_CODE] === undefined) {
+    if (namesData[DEFAULT_LANG_CODE] === undefined) {
         throw new Error('Failed to load English lookup data');
     }
     // DYNAMIC on purpose. `bible-note` is a ~46MB package (Lexical, Excalidraw,
@@ -44,11 +40,11 @@ async function loadLookupData(): Promise<LookupManagersType> {
     return {
         namesLookupManager: NamesLookupManager.fromRawDataset(
             namesData,
-            DEFAULT_LOOKUP_LANG_CODE,
+            DEFAULT_LANG_CODE,
         ),
         locationsLookupManager: LocationsLookupManager.fromRawDataset(
             locationsData,
-            DEFAULT_LOOKUP_LANG_CODE,
+            DEFAULT_LANG_CODE,
         ),
     };
 }
