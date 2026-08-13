@@ -311,16 +311,11 @@ linux_prep() {
     fi
 }
 
-# `npm i` builds the pack once, for the HOST arch. A run that packs more than one
-# arch from the same tree (win x64 + win-ia32) has to rebuild it per arch, with
-# the same FORCE_ARCH_32 that `copy-build.mjs` will see, or the 32-bit build
-# would publish the 64-bit pack.
+# `npm i` builds the pack once, for the HOST arch. Every packed arch is the host
+# arch now, so the pack is simply rebuilt right before each `electron-builder`
+# run to make sure it matches what `copy-build.mjs` copies in.
 build_extra_bin() {
-    if [[ "${1:-}" == "32" ]]; then
-        FORCE_ARCH_32=true node ./extra-work/build-extra-bin.mjs
-    else
-        node ./extra-work/build-extra-bin.mjs
-    fi
+    node ./extra-work/build-extra-bin.mjs
 }
 
 build_release() {
@@ -336,10 +331,6 @@ build_release() {
             build_extra_bin
             npm run pack:win
             win_prep "$tmp_dir/win"
-            log_step "Packing win-ia32"
-            build_extra_bin 32
-            npm run pack:win:32
-            win_prep "$tmp_dir/win-ia32"
         fi
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         build_extra_bin

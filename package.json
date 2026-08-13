@@ -23,7 +23,6 @@
         "pack:linux:rpm": "node extra-work/build-fedora-rpm.mjs",
         "pack:linux:32": "cross-env FORCE_ARCH_32=true npm run build && electron-builder build --linux --ia32",
         "pack:win": "npm run build && electron-builder build --win",
-        "pack:win:32": "cross-env FORCE_ARCH_32=true npm run build && electron-builder build --win --ia32",
         "test": "vitest run --config vitest.config.ts",
         "test:watch": "vitest --config vitest.config.ts",
         "test:electron": "vitest run --config vitest.electron.config.ts",
