@@ -677,10 +677,17 @@ file with no `.histories` falls back to the file itself). Read the result back o
 });
 ```
 
-Measured 2026-08-11: both write shapes reached both panes **in under a second**. Teardown is
-`rm -rf` of the scratch `.owl` **and** its `.histories` dir, then re-selecting whatever document
-was selected before — and note XW-10: the deleted file's row does **not** currently leave the
-list on its own, nor on the list menu's **Reload**.
+Measured 2026-08-11: both write shapes reached both panes **in under a second**. Re-measured
+2026-08-13 after the `globalCacheManager1M` → `globalCacheManager10Seconds` change (commit
+`fe741a52`): still ~0.5 s to BOTH panes, for the `.owl` write and the `.histories/0-head`
+write alike. Teardown is `rm -rf` of the scratch `.owl` **and** its `.histories` dir, then
+re-selecting whatever document was selected before.
+
+⚠️ **XW-10 is FIXED — corrected 2026-08-13.** Earlier revisions of this line said the deleted
+file's row does not leave the list on its own, nor on the list menu's **Reload**. That is
+stale: verified live in run `20260813-2138` that a scratch `.owl` copied in appeared as a row
+within 1.5 s and that deleting it removed the row within 3 s, neither needing a Reload. Do not
+plan a teardown around a row that "will not go away".
 
 ---
 
@@ -986,9 +993,13 @@ they were the menu). `presentingFlowActionMenuList` is the menu's SHAPE — a gr
 ENTRIES, so a family may hold a family — and `presentingFlowActionList` the flat registry an id
 resolves against; only `PresentingFlowFileComp` reads the former, and its `genMenuEntry` walks
 it recursively, so a family added later folds itself away. The stored ids did not change. The
-top level reads **clear something → put the screen up or down → move the run on**, seven rows
-in that order; **Clear Screen** opens the five whole-layer clears in the mini screen bar's own
-order plus the **Other Clear FG Items** row.
+top level reads **clear something → put the screen up or down → move the run on**, **eight**
+rows in that order (corrected 2026-08-13 — this said seven, which predates `Next: Clear
+Interval`/PL-101 joining the run family): `Clear Screen`, `Screen: Show`, `Screen: Hide`,
+`Next: Interval`, `Next: Clear Interval`, `Next: Timeout`, `Jump to`, `Keyboard Event`.
+**Clear Screen** opens the five whole-layer clears in the mini screen bar's own order plus the
+**Other Clear FG Items** row, which in turn holds the eight per-widget FG clears — all
+verified rendering non-blank in Khmer on 2026-08-13.
 
 **Three things are asked BEFORE a line is written**, and Cancel must add nothing in every
 case: how a clock is armed, what shortcut a `Keyboard Event` answers to, and — new

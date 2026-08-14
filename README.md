@@ -115,13 +115,14 @@ sudo dnf install libxcrypt-compat
 ### 1. Install Dependencies
 
 ```bash
-npm install --allow-git=all
+npm run i:d
 ```
 
 ### 2. Run Development Server
 
 ```bash
 npm run dev
+# for Ubuntu need `export ELECTRON_DISABLE_SANDBOX=1`
 ```
 
 The app will launch in development mode with hot reload enabled.
