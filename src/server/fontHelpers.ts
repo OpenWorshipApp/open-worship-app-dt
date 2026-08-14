@@ -7,7 +7,7 @@ import CacheManager from '../others/CacheManager';
 import { electronSendAsync } from './appHelpers';
 import { unlocking } from './unlockingHelpers';
 
-const cacheManager = new CacheManager<FontListType | null>(60 * 10); // 10 minutes
+const cacheManager = new CacheManager<FontListType | null>(10);
 export async function getFontFamilyMapByNodeFont() {
     return await unlocking('getFontFamilyMapByNodeFont', async () => {
         const cachedFontList = await cacheManager.get('fontList');

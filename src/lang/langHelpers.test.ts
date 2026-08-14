@@ -58,7 +58,7 @@ vi.mock('../others/CacheManager', async (importOriginal) => {
         await importOriginal<typeof import('../others/CacheManager')>();
     return {
         ...actual,
-        globalCacheManager1M: {
+        globalCacheManager10Seconds: {
             get: mocks.cacheGetMock,
             set: mocks.cacheSetMock,
         },

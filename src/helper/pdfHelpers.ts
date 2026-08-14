@@ -31,8 +31,8 @@ type PdfItemViewInfoType = {
 };
 
 const srcSizeCacheManager = new CacheManager<{ width: number; height: number }>(
-    60,
-); // 1 minute
+    10,
+);
 
 // A PNG stores its dimensions in the IHDR chunk: an 8-byte signature, then a
 // 4-byte length and the 4-byte type `IHDR`, then width and height as

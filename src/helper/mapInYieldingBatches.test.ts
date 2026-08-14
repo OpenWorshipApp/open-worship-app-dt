@@ -10,7 +10,7 @@ vi.mock('./errorHelpers', () => ({ handleError: vi.fn() }));
 vi.mock('./loggerHelpers', () => ({ appTrace: vi.fn() }));
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
 vi.mock('../server/unlockingHelpers', () => ({ unlocking: vi.fn() }));
-vi.mock('../others/CacheManager', () => ({ globalCacheManager1M: {} }));
+vi.mock('../others/CacheManager', () => ({ globalCacheManager10Seconds: {} }));
 
 import { mapInYieldingBatches } from './helpers';
 

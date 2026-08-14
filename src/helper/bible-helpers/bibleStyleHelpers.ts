@@ -4,7 +4,7 @@ import {
     DEFAULT_LOCALE,
     getFontFamilyByLocale,
 } from '../../lang/langHelpers';
-import { globalCacheManager1M } from '../../others/CacheManager';
+import { globalCacheManager10Seconds } from '../../others/CacheManager';
 import { unlocking } from '../../server/unlockingHelpers';
 import { useAppStateAsync } from '../appHooks';
 import { getBibleInfo } from './bibleInfoHelpers';
@@ -31,13 +31,13 @@ export async function getBibleFontFamily(bibleKey: string): Promise<string> {
     }
     const key = `FontFamilyBibleKey:${bibleKey}`;
     return await unlocking(key, async () => {
-        const cachedFontFamily = await globalCacheManager1M.get(key);
+        const cachedFontFamily = await globalCacheManager10Seconds.get(key);
         if (cachedFontFamily) {
             return cachedFontFamily;
         }
         const locale = await getBibleLocale(bibleKey);
         const fontFamily = getFontFamilyByLocale(locale);
-        await globalCacheManager1M.set(key, fontFamily);
+        await globalCacheManager10Seconds.set(key, fontFamily);
         return fontFamily;
     });
 }

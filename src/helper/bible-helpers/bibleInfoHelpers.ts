@@ -132,7 +132,7 @@ export function checkIsApocrypha(bookKey: string) {
     return apocryphalBooks.includes(bookKey);
 }
 
-const bibleInfoCache = new CacheManager<BibleInfoType>(60); // cache for 1 minutes
+const bibleInfoCache = new CacheManager<BibleInfoType>(10);
 // TODO: cache newLines and newLinesTitleMap instead of attaching to bibleInfo
 export async function getBibleInfo(
     bibleKey: string,

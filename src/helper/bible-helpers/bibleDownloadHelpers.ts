@@ -193,7 +193,7 @@ export async function getDownloadedBibleInfoList() {
     return null;
 }
 
-const allBibleInfoCache = new CacheManager<BibleMinimalInfoType[]>(60); // 1 minute
+const allBibleInfoCache = new CacheManager<BibleMinimalInfoType[]>(10);
 export async function getAllLocalBibleInfoList() {
     const cached = await allBibleInfoCache.get('allLocalBibleInfoList');
     if (cached !== null) {

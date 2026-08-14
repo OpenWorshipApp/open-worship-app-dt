@@ -6,7 +6,7 @@ import { appTrace } from './loggerHelpers';
 import appProvider from '../server/appProvider';
 import { tran } from '../lang/langHelpers';
 import { unlocking } from '../server/unlockingHelpers';
-import { globalCacheManager1M } from '../others/CacheManager';
+import { globalCacheManager10Seconds } from '../others/CacheManager';
 
 export type MutationType = 'added' | 'attr-modified' | 'removed';
 
@@ -133,7 +133,7 @@ export function getImageDim(src: string) {
 export function getVideoDim(src: string) {
     const key = `video-dim-${src}`;
     return unlocking(key, async () => {
-        const cachedDim = await globalCacheManager1M.get(key);
+        const cachedDim = await globalCacheManager10Seconds.get(key);
         if (cachedDim) {
             return cachedDim;
         }
@@ -153,7 +153,7 @@ export function getVideoDim(src: string) {
             };
             video.src = src;
         });
-        await globalCacheManager1M.set(key, dim);
+        await globalCacheManager10Seconds.set(key, dim);
         return dim;
     });
 }

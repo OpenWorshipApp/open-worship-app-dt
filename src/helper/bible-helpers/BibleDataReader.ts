@@ -68,7 +68,7 @@ export type BibleChapterType = {
     };
 };
 
-const bibleDataCacher = new CacheManager<BibleInfoType | BibleChapterType>(60); // 1 minute
+const bibleDataCacher = new CacheManager<BibleInfoType | BibleChapterType>(10);
 export default class BibleDataReader {
     private _writableBiblePath: string | null = null;
     private _dbController: BibleDatabaseController | null = null;

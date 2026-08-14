@@ -242,7 +242,7 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
 }
 
 const ALL_DATA_FILE_NAME = 'all';
-export const BIBLE_XML_CACHE_DURATION_SEC = 60; // 1 minute
+export const BIBLE_XML_CACHE_DURATION_SEC = 10;
 const bibleJSONCacheManager = new CacheManager<BibleXMLJsonType>(
     BIBLE_XML_CACHE_DURATION_SEC,
 );

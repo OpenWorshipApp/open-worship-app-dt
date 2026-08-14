@@ -1,3 +1,4 @@
+import { appWarning } from '../helper/loggerHelpers';
 import appProvider from '../server/appProvider';
 import { unlocking } from '../server/unlockingHelpers';
 
@@ -12,6 +13,17 @@ export default class CacheManager<T> {
         this.uuid = crypto.randomUUID();
         this.cache = new Map();
         this.expirationSecond = expirationSecond;
+        if (this.expirationSecond !== null) {
+            if (this.expirationSecond <= 0) {
+                throw new Error('expirationSecond must be greater than 0');
+            } else if (this.expirationSecond > 10) {
+                appWarning(
+                    `CacheManager expirationSecond is set to ${this.expirationSecond},` +
+                        ` which is greater than 10 seconds. This may cause ` +
+                        `memory issues if the cache grows too large.`,
+                );
+            }
+        }
     }
 
     // Lazy: only runs while there is something that can expire, so the many
@@ -156,5 +168,5 @@ export default class CacheManager<T> {
     }
 }
 
-// CacheManager instance with 1 minute expiration
-export const globalCacheManager1M = new CacheManager<any>(60);
+// CacheManager instance with 10 seconds expiration
+export const globalCacheManager10Seconds = new CacheManager<any>(10);

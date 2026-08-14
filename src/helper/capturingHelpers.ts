@@ -5,7 +5,7 @@ import { useAppEffect, useAppEffectAsync } from './appHooks';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import CacheManager from '../others/CacheManager';
 
-const webScreenshotCacheManager = new CacheManager<string>(60 /* 1 minute */);
+const webScreenshotCacheManager = new CacheManager<string>(10);
 
 // Budgeted by TOTAL SIZE, not by entry count. A count cap of 3 was the thrash
 // trigger once website canvas items started capturing too: a document with 5

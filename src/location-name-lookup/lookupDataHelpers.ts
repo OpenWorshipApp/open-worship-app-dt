@@ -1,7 +1,7 @@
 import type { LocationsLookupManager, NamesLookupManager } from 'bible-note';
 
 import type { AnyObjectType } from '../helper/typeHelpers';
-import { globalCacheManager1M } from '../others/CacheManager';
+import { globalCacheManager10Seconds } from '../others/CacheManager';
 import { unlockingCacher } from '../server/unlockingHelpers';
 import { DEFAULT_LANG_CODE, getAllLangsAsync } from '../lang/langHelpers';
 
@@ -55,17 +55,17 @@ async function loadLookupData(): Promise<LookupManagersType> {
  * outlive the UI that needs it.
  *
  * `unlockingCacher` serializes concurrent first-opens so that parse can never
- * run twice in parallel, and caches through `globalCacheManager1M`, which
- * expires the entry 60s after the WRITE (not the last read — see the comment on
- * `CacheManager.getSync`). That short window is only a convenience for a
- * close-then-reopen; what actually keeps ONE instance alive for as long as any
- * UI needs it is `acquireLookupData` below, NOT this cache.
+ * run twice in parallel, and caches through `globalCacheManager10Seconds`,
+ * which expires the entry 10s after the WRITE (not the last read — see the
+ * comment on `CacheManager.getSync`). That short window is only a convenience
+ * for a close-then-reopen; what actually keeps ONE instance alive for as long
+ * as any UI needs it is `acquireLookupData` below, NOT this cache.
  */
 export async function getLookupDataCached(): Promise<LookupManagersType> {
     return await unlockingCacher(
         LOOKUP_DATA_CACHE_KEY,
         loadLookupData,
-        globalCacheManager1M,
+        globalCacheManager10Seconds,
     );
 }
 

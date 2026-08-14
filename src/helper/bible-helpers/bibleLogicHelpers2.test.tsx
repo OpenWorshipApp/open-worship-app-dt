@@ -111,7 +111,7 @@ const mocks = vi.hoisted(() => {
         getModelChapterCountMock: vi.fn(),
         getSettingMock: vi.fn(),
         getVersesMock: vi.fn(),
-        globalCacheManager1M: {
+        globalCacheManager10Seconds: {
             get: vi.fn(async (key: string) => {
                 return globalCacheStore.has(key)
                     ? globalCacheStore.get(key)
@@ -203,7 +203,7 @@ vi.mock('./bibleLogicHelpers1', () => ({
 
 vi.mock('../../others/CacheManager', () => ({
     default: mocks.MockCacheManager,
-    globalCacheManager1M: mocks.globalCacheManager1M,
+    globalCacheManager10Seconds: mocks.globalCacheManager10Seconds,
 }));
 
 vi.mock('./bibleDownloadHelpers', () => ({

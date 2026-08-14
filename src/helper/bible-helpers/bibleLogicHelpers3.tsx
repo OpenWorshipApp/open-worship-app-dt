@@ -237,7 +237,7 @@ async function genTitleHtml(
             ${compiledTitle}
         </div>`;
 }
-const newLineTitleCache = new CacheManager<string>(60); // 1 minute
+const newLineTitleCache = new CacheManager<string>(10);
 export async function genNewLineTitlesHtmlText(
     bibleKey: string,
     titles: ContentTitleType[],

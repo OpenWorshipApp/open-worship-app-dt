@@ -64,7 +64,7 @@ export async function toInputText(
     return text;
 }
 
-const toLocaleNumCache = new CacheManager<string>(60); // 1 minute
+const toLocaleNumCache = new CacheManager<string>(10);
 export async function toLocaleNumBible(bibleKey: string, n: number | null) {
     const cacheKey = `${bibleKey}:${n}`;
     const cached = await toLocaleNumCache.get(cacheKey);
@@ -97,7 +97,7 @@ export function useToLocaleNumBible(bibleKey: string, nString: number | null) {
     return str;
 }
 
-const localeNumCache = new CacheManager<number | null>(60); // 1 minute
+const localeNumCache = new CacheManager<number | null>(10);
 export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
     const cacheKey = `${bibleKey}:${localeNum}`;
     if (await localeNumCache.has(cacheKey)) {
@@ -169,7 +169,7 @@ export async function parseChapterFromGuessing(
     return chapterNum;
 }
 
-const verseCountCacher = new CacheManager<number>(60); // 1 minute
+const verseCountCacher = new CacheManager<number>(10);
 export async function getVersesCount(
     bibleKey: string,
     bookKey: string,
@@ -454,7 +454,7 @@ async function checkExtractedAndReturn(bibleKey: string, inputText: string) {
 const attemptInputTextCache = new CacheManager<{
     bibleKey: string;
     inputText: string;
-} | null>(60); // 1 minute
+} | null>(10);
 async function attemptExtractBibleKey1(
     inputText: string,
     allLocalBibleInfoList: BibleMinimalInfoType[],

@@ -48,7 +48,7 @@ import {
     releaseLookupData,
     getLookupDataCached,
 } from './lookupDataHelpers';
-import { globalCacheManager1M } from '../others/CacheManager';
+import { globalCacheManager10Seconds } from '../others/CacheManager';
 
 function genEnglishLangData() {
     return {
@@ -62,7 +62,7 @@ beforeEach(async () => {
     h.fromRawDatasetCount = 0;
     h.langDataList = [genEnglishLangData()];
     // Both the 60s cache and the holder are module-level.
-    globalCacheManager1M.clear();
+    globalCacheManager10Seconds.clear();
     releaseLookupData();
     releaseLookupData();
     releaseLookupData();
@@ -75,7 +75,7 @@ describe('loading the dataset', () => {
             // No `getLookupData` at all — skipped, not treated as a failure.
             { langCode: 'xx' },
         ];
-        globalCacheManager1M.clear();
+        globalCacheManager10Seconds.clear();
 
         await expect(getLookupDataCached()).rejects.toThrow(
             'Failed to load English lookup data',
@@ -100,7 +100,7 @@ describe('the shared reference', () => {
     // re-materialization while the first copy was still held.
     test('two holders share one instance even with the cache gone', async () => {
         const forPanel = await acquireLookupData();
-        globalCacheManager1M.clear();
+        globalCacheManager10Seconds.clear();
         const forDetails = await acquireLookupData();
 
         expect(forDetails).toBe(forPanel);
@@ -129,7 +129,7 @@ describe('the shared reference', () => {
     test('drops the instance once the last holder leaves', async () => {
         await acquireLookupData();
         releaseLookupData();
-        globalCacheManager1M.clear();
+        globalCacheManager10Seconds.clear();
 
         await acquireLookupData();
 
@@ -141,7 +141,7 @@ describe('the shared reference', () => {
         const forPanel = await acquireLookupData();
         await acquireLookupData();
         releaseLookupData();
-        globalCacheManager1M.clear();
+        globalCacheManager10Seconds.clear();
 
         const forNextDetail = await acquireLookupData();
 
@@ -159,7 +159,7 @@ describe('the shared reference', () => {
         const first = await acquireLookupData();
         // With a negative count this second acquire would see count <= 0 and
         // refuse to hold, reloading for every consumer from then on.
-        globalCacheManager1M.clear();
+        globalCacheManager10Seconds.clear();
         const second = await acquireLookupData();
 
         expect(second).toBe(first);
@@ -169,7 +169,7 @@ describe('the shared reference', () => {
 
     test('a failed load is not cached as a holder', async () => {
         h.langDataList = [];
-        globalCacheManager1M.clear();
+        globalCacheManager10Seconds.clear();
 
         await expect(acquireLookupData()).rejects.toThrow();
         releaseLookupData();

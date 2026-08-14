@@ -4,7 +4,7 @@ import { decrypt, bible_ref } from '../_owa-crypto';
 import { handleError } from '../helper/errorHelpers';
 import { useAppEffectAsync } from '../helper/appHooks';
 import { appApiFetch } from '../helper/networkHelpers';
-import { globalCacheManager1M } from '../others/CacheManager';
+import { globalCacheManager10Seconds } from '../others/CacheManager';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { unlocking } from '../server/unlockingHelpers';
@@ -70,7 +70,7 @@ export async function getBibleCrossRef(
     const key = `bible-refs/${bibleTitle}`;
     return unlocking(key, async () => {
         if (!forceRefresh) {
-            const cachedData = await globalCacheManager1M.get(key);
+            const cachedData = await globalCacheManager10Seconds.get(key);
             if (cachedData !== null) {
                 return cachedData;
             }
@@ -84,7 +84,7 @@ export async function getBibleCrossRef(
             const json = JSON.parse(text);
             if (Array.isArray(json)) {
                 const data = transform(json);
-                await globalCacheManager1M.set(key, data);
+                await globalCacheManager10Seconds.set(key, data);
                 return data;
             }
         } catch (error) {

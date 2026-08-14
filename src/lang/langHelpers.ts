@@ -2,7 +2,7 @@ import type { AppProviderType, MessageEventType } from '../server/appProvider';
 import type { AnyObjectType } from '../helper/typeHelpers';
 import appProvider from '../server/appProvider';
 import { unlocking } from '../server/unlockingHelpers';
-import { globalCacheManager1M } from '../others/CacheManager';
+import { globalCacheManager10Seconds } from '../others/CacheManager';
 import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
 import { getSetting, setSetting } from '../helper/settingHelpers';
@@ -787,7 +787,7 @@ export function quickEndWord(locale: LocaleType, text: string) {
 export async function getFontFamilyByLocale(locale: LocaleType) {
     const key = `FontFamilyLocale:${locale}`;
     return await unlocking(key, async () => {
-        const cachedFontFamily = await globalCacheManager1M.get(key);
+        const cachedFontFamily = await globalCacheManager10Seconds.get(key);
         if (cachedFontFamily) {
             return cachedFontFamily;
         }
@@ -795,7 +795,7 @@ export async function getFontFamilyByLocale(locale: LocaleType) {
         if (langData === null) {
             return undefined;
         }
-        await globalCacheManager1M.set(key, langData.fontFamily);
+        await globalCacheManager10Seconds.set(key, langData.fontFamily);
         return langData.fontFamily;
     });
 }

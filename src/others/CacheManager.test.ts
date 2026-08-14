@@ -19,7 +19,7 @@ vi.mock('../server/unlockingHelpers', () => ({
     unlocking: unlockingMock,
 }));
 
-import CacheManager, { globalCacheManager1M } from './CacheManager';
+import CacheManager, { globalCacheManager10Seconds } from './CacheManager';
 
 describe('CacheManager', () => {
     beforeEach(() => {
@@ -29,7 +29,7 @@ describe('CacheManager', () => {
     });
 
     afterEach(() => {
-        globalCacheManager1M.stopCleanup();
+        globalCacheManager10Seconds.stopCleanup();
         vi.useRealTimers();
     });
 
@@ -106,6 +106,6 @@ describe('CacheManager', () => {
         cache.stopCleanup();
 
         expect((cache as any).intervalId).toBeNull();
-        expect(globalCacheManager1M).toBeInstanceOf(CacheManager);
+        expect(globalCacheManager10Seconds).toBeInstanceOf(CacheManager);
     });
 });

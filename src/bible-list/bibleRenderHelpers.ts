@@ -53,8 +53,8 @@ export type CompiledVerseType = {
     locale: LocaleType;
 };
 
-const titleCache = new CacheManager<string>(60); // 1 minute
-const compiledVerseListCache = new CacheManager<CompiledVerseType[]>(60); // 1 minute
+const titleCache = new CacheManager<string>(10);
+const compiledVerseListCache = new CacheManager<CompiledVerseType[]>(10);
 class BibleRenderHelper {
     toKJVBibleVersesKey(
         bibleTarget: BibleTargetType,

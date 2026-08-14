@@ -25,7 +25,7 @@ import CanvasItemWebsite from '../slide-editor/canvas/CanvasItemWebsite';
 import { checkIsUrlMediaSource } from '../helper/mediaSourceHelpers';
 
 // Entries hold a whole song's rendered HTML, so keep the window short.
-const cacheManager = new CacheManager<any>(3 * 60); // 3 minutes
+const cacheManager = new CacheManager<any>(10);
 
 /**
  * The font rules that keep open-lyric's `<button>`s — the chord chips and the

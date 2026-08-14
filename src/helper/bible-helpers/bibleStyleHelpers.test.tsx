@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => {
         getBibleInfoMock: vi.fn(),
         getFontFamilyByLocaleMock: vi.fn(),
         getLangDataAsyncMock: vi.fn(),
-        globalCacheManager1M: {
+        globalCacheManager10Seconds: {
             get: vi.fn(async (key: string) => {
                 return globalCacheStore.has(key)
                     ? globalCacheStore.get(key)
@@ -45,7 +45,7 @@ vi.mock('../../lang/langHelpers', () => ({
 }));
 
 vi.mock('../../others/CacheManager', () => ({
-    globalCacheManager1M: mocks.globalCacheManager1M,
+    globalCacheManager10Seconds: mocks.globalCacheManager10Seconds,
 }));
 
 vi.mock('../../server/unlockingHelpers', () => ({
@@ -149,12 +149,12 @@ describe('bibleStyleHelpers', () => {
         const module = await loadModule();
 
         expect(await module.getBibleFontFamily('')).toBe('font:en-US');
-        expect(mocks.globalCacheManager1M.set).not.toHaveBeenCalled();
+        expect(mocks.globalCacheManager10Seconds.set).not.toHaveBeenCalled();
 
         expect(await module.getBibleFontFamily('KJV')).toBe('font:km-KH');
         expect(await module.getBibleFontFamily('KJV')).toBe('font:km-KH');
         expect(mocks.getFontFamilyByLocaleMock).toHaveBeenCalledTimes(2);
-        expect(mocks.globalCacheManager1M.set).toHaveBeenCalledTimes(1);
+        expect(mocks.globalCacheManager10Seconds.set).toHaveBeenCalledTimes(1);
     });
 
     test('exposes the font family through useBibleFontFamily', async () => {
