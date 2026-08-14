@@ -13,6 +13,7 @@ set -euo pipefail
 
 current_script_dir=$(dirname "$0")
 cd "$current_script_dir/.."
+git pull
 pwd
 
 release_dir="./release"
@@ -143,7 +144,6 @@ check_worktree_is_clean() {
 
 reset_to_release_tag() {
     local release_tag="release-$1"
-    git pull
     # Ask for the tag ref explicitly -- a bare `git rev-parse` also answers for a
     # branch or a raw sha that happens to carry the same name.
     if ! git rev-parse --verify --quiet "refs/tags/$release_tag^{commit}" >/dev/null; then
