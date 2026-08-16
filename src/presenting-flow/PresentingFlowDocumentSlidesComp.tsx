@@ -313,16 +313,25 @@ export default function PresentingFlowDocumentSlidesComp({
     // captured at expand time, putting the OLD text on a live screen. Re-read on
     // the document's own `update`, debounced, so the rows and what they present
     // follow the file for as long as they are on screen.
-    useFileSourceEvents(
-        ['update'],
-        () => {
-            attemptTimeout(async () => {
-                setVarySlides(await loadVaryAppDocumentSlides(filePath));
-            });
-        },
-        [],
-        filePath,
-    );
+    const filePathRef = useAppCurrentRef(filePath);
+    const refresh = useCallback(() => {
+        attemptTimeout(async () => {
+            const readFilePath = filePathRef.current;
+            const newVarySlides = await loadVaryAppDocumentSlides(readFilePath);
+            // Re-pointing the element mid-read swaps the document under us, and
+            // these rows are what get PRESENTED — applying the old document's
+            // slides would put the previous song's words on a live screen. Read
+            // again rather than dropping the update: the read for the new file
+            // may have started before this file change landed.
+            if (readFilePath !== filePathRef.current) {
+                refresh();
+                return;
+            }
+            setVarySlides(newVarySlides);
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    useFileSourceEvents(['update'], refresh, [], filePath);
     // Asked ONCE for the whole document rather than once per row: a document of
     // ~90 slides is what this list is measured against, and the answer for the
     // overwhelmingly common case — no CC anywhere in it — is one key count.

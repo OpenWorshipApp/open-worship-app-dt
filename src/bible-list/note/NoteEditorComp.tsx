@@ -3,7 +3,7 @@ import { type CSSProperties, useMemo, useState } from 'react';
 import SimpleNoteEditorComp, {
     type SimpleNoteEditorStoreType,
 } from '../../others/SimpleNoteEditorComp';
-import { useAppEffect } from '../../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import type NoteItem from './NoteItem';
@@ -55,12 +55,28 @@ export function NoteTitleEditorComp({
     }, [store]);
 
     const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    // The closure below holds the item as it was when the event FIRED; these
+    // refs hold it as it is when the reload resolves. They differ only when the
+    // editor was re-fed mid-reload, which is what the guard checks.
+    const noteRef = useAppCurrentRef(note);
+    const noteItemRef = useAppCurrentRef(noteItem);
     useFileSourceEvents(
         ['update'],
         () => {
             attemptTimeout(async () => {
                 await note.reload();
                 const newNoteItem = note.getItemById(noteItem.id);
+                // Re-fed a different item mid-reload, this text belongs to the
+                // PREVIOUS one; applying it would show it under the new item's
+                // heading and the unmount `save()` would write it back there.
+                // The re-feed rebuilds the store from the new item anyway, so
+                // dropping this refresh costs nothing but a stale read.
+                if (
+                    note !== noteRef.current ||
+                    noteItem !== noteItemRef.current
+                ) {
+                    return;
+                }
                 if (
                     newNoteItem === null ||
                     newNoteItem.content === store.currentText
@@ -135,12 +151,28 @@ export default function NoteEditorComp({
     }, [store]);
 
     const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    // The closure below holds the item as it was when the event FIRED; these
+    // refs hold it as it is when the reload resolves. They differ only when the
+    // editor was re-fed mid-reload, which is what the guard checks.
+    const noteRef = useAppCurrentRef(note);
+    const noteItemRef = useAppCurrentRef(noteItem);
     useFileSourceEvents(
         ['update'],
         () => {
             attemptTimeout(async () => {
                 await note.reload();
                 const newNoteItem = note.getItemById(noteItem.id);
+                // Re-fed a different item mid-reload, this text belongs to the
+                // PREVIOUS one; applying it would show it under the new item's
+                // heading and the unmount `save()` would write it back there.
+                // The re-feed rebuilds the store from the new item anyway, so
+                // dropping this refresh costs nothing but a stale read.
+                if (
+                    note !== noteRef.current ||
+                    noteItem !== noteItemRef.current
+                ) {
+                    return;
+                }
                 if (
                     newNoteItem === null ||
                     newNoteItem.content === store.currentText

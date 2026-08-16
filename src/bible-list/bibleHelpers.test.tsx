@@ -41,8 +41,11 @@ const h = vi.hoisted(() => {
         ]),
         getAllScreenManagersMock: vi.fn((): any[] => []),
         bibleRenderToTitleMock: vi.fn(async () => 'rendered-title'),
-        useAppEffectAsyncMock: vi.fn((cb: any) => {
-            captured.effectCb = cb;
+        // Mirrors the real hook: the effect is handed a method context built
+        // from the setters passed alongside the deps, which is how a write is
+        // neutered once the effect is superseded.
+        useAppEffectAsyncMock: vi.fn((cb: any, _deps?: any, methods?: any) => {
+            captured.effectCb = () => cb({ ...methods });
         }),
         genTimeoutAttemptMock: vi.fn(() => (fn: any) => fn()),
         useScreenUpdateEventsMock: vi.fn((_a: any, cb: any) => {

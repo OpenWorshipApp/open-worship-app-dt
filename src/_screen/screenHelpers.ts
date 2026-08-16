@@ -20,7 +20,7 @@ import {
     applyToTheTop,
 } from '../scrolling/scrollingHandlerHelpers';
 import { unlocking } from '../server/unlockingHelpers';
-import { useAppStateAsync } from '../helper/appHooks';
+import { useAppCurrentRef, useAppStateAsync } from '../helper/appHooks';
 import { useScreenUpdateEvents } from './managers/screenManagerHooks';
 import type {
     ImageScaleType,
@@ -397,6 +397,10 @@ export function useFileSourceIsOnScreen(
     onUpdate?: (isOnScreen: boolean) => void,
 ) {
     const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    // Callers rebuild the array every render, so identity says nothing — the
+    // joined paths are what "same subject" means here.
+    const filePathsKey = filePaths.join('|');
+    const filePathsKeyRef = useAppCurrentRef(filePathsKey);
     const [isOnScreen, setIsOnScreen] = useAppStateAsync(async () => {
         if (filePaths.length === 0) {
             return false;
@@ -404,10 +408,17 @@ export function useFileSourceIsOnScreen(
         const isOnScreen = await checkIsOnScreen(filePaths);
         onUpdate?.(isOnScreen);
         return isOnScreen;
-    }, [filePaths.join('|')]);
-    useScreenUpdateEvents(undefined, async () => {
+    }, [filePathsKey]);
+    useScreenUpdateEvents(undefined, () => {
         attemptTimeout(async () => {
             const isOnScreen = await checkIsOnScreen(filePaths);
+            // Answered for the paths held when the event fired. Being re-fed
+            // different ones mid-check re-runs the guarded read above, so this
+            // answer is not just stale — `onUpdate` would leak it out of the
+            // hook to a caller now asking about another file.
+            if (filePathsKey !== filePathsKeyRef.current) {
+                return;
+            }
             onUpdate?.(isOnScreen);
             setIsOnScreen(isOnScreen);
         });

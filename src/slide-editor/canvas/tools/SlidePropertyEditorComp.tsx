@@ -36,10 +36,24 @@ function useIsDiffOtherSlides(slide: Slide, width: number, height: number) {
     const [isDiffOther, setIsDiffOther] = useAppStateAsync(() => {
         return checkIsDiffOtherSlides(slide, width, height);
     }, [slide, width, height]);
+    // The closure below holds the dimension as it was when the event FIRED;
+    // this ref holds it as it is when the read resolves.
+    const subjectRef = useAppCurrentRef({ slide, width, height });
     useFileSourceEvents(
         ['update'],
         async () => {
             const isDiff = await checkIsDiffOtherSlides(slide, width, height);
+            // Typing a new width/height (or moving to another slide) mid-read
+            // re-runs the guarded read above; letting this one land too would
+            // answer for the PREVIOUS size and flip the warning wrongly.
+            const subject = subjectRef.current;
+            if (
+                slide !== subject.slide ||
+                width !== subject.width ||
+                height !== subject.height
+            ) {
+                return;
+            }
             setIsDiffOther(isDiff);
         },
         [width, height, slide],

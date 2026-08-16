@@ -85,8 +85,12 @@ vi.mock('../bible-list/BibleItem', () => ({
     },
 }));
 
-vi.mock('../helper/appHooks', () => {
+// Partial mock: only `useAppStateAsync` is simplified here, and the module's
+// siblings (`useAppCurrentRef`) must survive or the hook under test throws.
+vi.mock('../helper/appHooks', async (importOriginal) => {
+    const actual = await importOriginal<object>();
     return {
+        ...actual,
         useAppStateAsync: function useAppStateAsync<T>(
             callee: () => Promise<T> | T,
             _deps: ReadonlyArray<unknown> = [],
