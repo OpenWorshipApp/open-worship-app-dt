@@ -27,6 +27,7 @@ import {
     toggleMaximizedWidgetRect,
     writePersistedRect,
 } from './floatingWidgetHelpers';
+import { useIsInModalLayer } from './modalLayerContext';
 import type {
     FloatingWidgetOptions,
     InteractionMode,
@@ -94,6 +95,10 @@ export default function FloatingWidgetComp({
     raiseToken,
     onClose,
 }: PropsWithChildren<MyProps>) {
+    // The widget portals to `document.body`, so only the React tree can tell it
+    // that a modal opened it and it therefore has to stack above that modal.
+    const isInModalLayer = useIsInModalLayer();
+    const isAboveModal = options.isAboveModal ?? isInModalLayer;
     const widgetRef = useRef<HTMLDivElement>(null);
     const interactionRef = useRef<InteractionState | null>(null);
     // The previous press on the header, kept only long enough to recognize the
@@ -480,6 +485,7 @@ export default function FloatingWidgetComp({
             data-bs-theme={theme}
             className={[
                 'floating-widget',
+                isAboveModal ? 'floating-widget--above-modal' : '',
                 isCollapsed ? 'floating-widget--collapsed' : '',
                 activeMode === 'move' ? 'floating-widget--moving' : '',
                 activeMode === 'resize' ? 'floating-widget--resizing' : '',

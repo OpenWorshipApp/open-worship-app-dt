@@ -267,6 +267,12 @@ function RenderDetailPanelComp({
                 minHeight: 180,
                 initialOffset: DETAIL_PANEL_BASE_OFFSET + index * CASCADE_STEP,
                 extraClassName: 'location-name-lookup-detail-widget',
+                // The host is a window singleton, so no modal is ever its
+                // ancestor — but the record it shows is opened from a name in
+                // verse text or from the lookup panel, and both of those live
+                // inside the Bible Lookup popup, which would bury the panel the
+                // click just asked for.
+                isAboveModal: true,
             }}
             extraActionButtons={<RenderCopyButtonComp onCopy={handleCopy} />}
         >
@@ -325,7 +331,7 @@ export default function LocationNameDetailPanelsComp() {
                     onClose={() => {
                         closeDetailPanel(openPanels[0].key);
                     }}
-                    options={{ width: 300, height: 160 }}
+                    options={{ width: 300, height: 160, isAboveModal: true }}
                 >
                     <LoadingComp />
                 </FloatingWidgetComp>

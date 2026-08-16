@@ -15,13 +15,26 @@ $base-z-index: 10;
 // reserved band: the widget the user last touched is raised within
 // `$z-index-floating-widget-band` levels of it (see `FloatingWidgetComp.scss` /
 // `FLOATING_WIDGET_MAX_Z_OFFSET`). The whole band still ends below every layer
-// listed after it here.
+// listed after it here — EXCEPT for a widget hosted inside a modal, which moves
+// to `$z-index-floating-widget-in-modal` (see there).
 $z-index-floating-widget: $base-z-index + 5;
 $z-index-floating-widget-band: 9;
 $z-index-bible-lookup: $base-z-index + 15;
 $z-index-popup-full-screen: $base-z-index + 20;
 $z-index-resize-actor-top: $base-z-index + 30;
 $z-index-widget-full-view: $base-z-index + 45;
+// A floating widget OPENED FROM INSIDE a modal (the names/locations lookup and
+// the bible custom style widget both live in the Bible Lookup popup's header)
+// gets its own band ABOVE the modal. The band above is deliberately the whole
+// modal stack, not just `$z-index-bible-lookup`: the modal's own content can
+// raise itself to `app-popup-full`, a resize actor or a full view, and a widget
+// the user opened from that modal has to stay reachable over all of them.
+$z-index-floating-widget-above-modal: $base-z-index + 46;
+// Alert/confirm/input popups interrupt whatever is on screen and must be
+// answered, so they outrank even an in-modal floating widget (the band above
+// tops out at
+// $z-index-floating-widget-above-modal + $z-index-floating-widget-band).
+$z-index-blocking-modal: $base-z-index + 56;
 $z-index-toast: $base-z-index + 60;
 $z-index-presenting-control: $base-z-index + 70;
 // The keyboard screencast renders INSIDE `#presenting-control`, so this only has
