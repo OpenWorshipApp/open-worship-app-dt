@@ -10,6 +10,7 @@ import TopProgressBarComp from './progress-bar/TopProgressBarComp';
 import ToastComp from './toast/ToastComp';
 import PresentingControlComp from './presenting-control/PresentingControlComp';
 import LocationNameDetailPanelsHostComp from './location-name-lookup/LocationNameDetailPanelsHostComp';
+import { getParamKeyValue } from './helper/domHelpers';
 
 await init();
 run(
@@ -24,4 +25,8 @@ run(
     </>,
 );
 
-hideAllScreens();
+const isPopup =
+    getParamKeyValue(globalThis.location.href, 'is-popup') === 'true';
+if (!isPopup) {
+    hideAllScreens();
+}

@@ -31,7 +31,7 @@ import { onSlideItemsKeyboardEvent } from '../slide-editor/slideEditingKeyboardE
 import { checkIsHistoryMovementEventType } from '../editing-manager/EditingHistoryManager';
 import { tran } from '../lang/langHelpers';
 import { genLabelIcon } from '../others/labelIconHelpers';
-import { openPopupWindow } from '../helper/domHelpers';
+import { openPopupWindow, setParamKeyValue } from '../helper/domHelpers';
 
 export function genLayoutTabs() {
     const presenterTab: TabOptionType = {
@@ -55,8 +55,13 @@ export function genLayoutTabs() {
                     onClick={async (event) => {
                         event.preventDefault();
                         event.stopPropagation();
-                        openPopupWindow(
+                        const pathname = setParamKeyValue(
                             appProvider.readerHomePage,
+                            'is-popup',
+                            'true',
+                        );
+                        openPopupWindow(
+                            pathname,
                             `reader_${Date.now()}`,
                             'reader',
                         );
