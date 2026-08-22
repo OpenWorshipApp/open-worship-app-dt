@@ -36,6 +36,7 @@ const mocks = vi.hoisted(() => {
         pathJoinMock: vi.fn((...parts: string[]) =>
             parts.join('/').replaceAll('//', '/'),
         ),
+        clearBibleXMLCacheMock: vi.fn(),
         readBibleXMLDataMock: vi.fn(),
         readFileDataMock: vi.fn(),
         jsonToXMLTextMock: vi.fn(),
@@ -137,6 +138,7 @@ vi.mock('./bibleInfoHelpers', () => ({
 }));
 
 vi.mock('../../setting/bible-setting/bibleXMLHelpers', () => ({
+    clearBibleXMLCache: mocks.clearBibleXMLCacheMock,
     readBibleXMLData: mocks.readBibleXMLDataMock,
 }));
 
@@ -305,6 +307,9 @@ describe('BibleDataReader', () => {
             '/storage/bibles-data/KJV.xml',
             '<bible />',
         );
+        // a KJV deleted earlier left its cache folder behind, and it would
+        // answer for this brand-new file
+        expect(mocks.clearBibleXMLCacheMock).toHaveBeenCalledWith('KJV');
         const [jsonData] = mocks.jsonToXMLTextMock.mock.calls[0];
         expect(jsonData.info.key).toBe('KJV');
         expect(jsonData.newLines).toEqual([]);

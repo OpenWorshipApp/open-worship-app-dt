@@ -73,7 +73,6 @@ const mocks = vi.hoisted(() => {
         getAllXMLFileKeysMock: vi.fn(),
         getBibleInfoJsonMock: vi.fn(),
         getBibleInfoMock: vi.fn(),
-        getFileMD5Mock: vi.fn(),
         getInstance,
         getMenuTitleRevealFileMock: vi.fn(() => 'Reveal in File Explorer'),
         genEmbeddedKJVBibleXMLTextMock: vi.fn(),
@@ -142,7 +141,6 @@ vi.mock('../../server/fileHelpers', () => ({
     fsCheckFileExist: mocks.fsCheckFileExistMock,
     fsDeleteDir: mocks.fsDeleteDirMock,
     fsDeleteFile: mocks.fsDeleteFileMock,
-    getFileMD5: mocks.getFileMD5Mock,
     pathJoin: mocks.pathJoinMock,
 }));
 
@@ -274,7 +272,6 @@ describe('bibleXMLHelpers', () => {
             key: 'KJV',
             title: 'Bible',
         });
-        mocks.getFileMD5Mock.mockResolvedValue('abc123');
         mocks.getModelKeyBookMapMock.mockReturnValue({
             EXO: 'Exodus',
             GEN: 'Genesis',
@@ -447,8 +444,14 @@ describe('bibleXMLHelpers', () => {
         mocks.bibleKeyToXMLFilePathMock.mockResolvedValueOnce(null);
         expect(await saveXMLText('MISSING', '<bible />')).toBe(false);
 
+        mocks.files.set('/bibles/KJV.xml.cache/all', '{}');
         await deleteBibleXML('KJV');
         expect(mocks.trashedFiles).toContain('/bibles/KJV.xml');
+        // the parsed copies sit BESIDE the file, so trashing it leaves them
+        expect(mocks.fsDeleteDirMock).toHaveBeenCalledWith(
+            '/bibles/KJV.xml.cache',
+        );
+        expect(mocks.files.has('/bibles/KJV.xml.cache/all')).toBe(false);
     });
 
     test('opens context menu actions and invalidates bible XML cache folders', async () => {
@@ -637,10 +640,6 @@ describe('bibleXMLHelpers', () => {
         expect(mocks.fsDeleteDirMock).toHaveBeenCalledWith(
             '/bibles/KJV.xml.cache',
         );
-        expect(mocks.ensureDirectoryMock).toHaveBeenCalledWith(
-            '/bibles/KJV.xml.cache',
-        );
-        expect(mocks.files.has('/bibles/KJV.xml.cache/abc123')).toBe(true);
 
         mocks.files.set('/bibles/KJV.xml', '<bible key="KJV" />');
         mocks.xmlTextToJsonMock.mockResolvedValueOnce(jsonData);
@@ -690,7 +689,35 @@ describe('bibleXMLHelpers', () => {
                 }),
             }),
         );
+        // a renamed key answers out of a folder the save never touched
+        expect(mocks.fsDeleteDirMock).toHaveBeenCalledWith(
+            '/bibles/NEW.xml.cache',
+        );
     });
+
+    test('saving drops the in-memory parsed copy, not only the folder', async () => {
+        const { getBibleXMLDataFromKeyCaching, saveJsonDataToXMLfile } =
+            await loadModule();
+
+        mocks.files.set('/bibles/KJV.xml', '<bible key="KJV" />');
+        mocks.xmlTextToJsonMock.mockResolvedValue({ info: { key: 'STALE' } });
+        expect(await getBibleXMLDataFromKeyCaching('KJV')).toEqual({
+            info: { key: 'STALE' },
+        });
+
+        mocks.jsonToXMLTextMock.mockReturnValue('<bible key="KJV" />');
+        expect(
+            await saveJsonDataToXMLfile({ info: { key: 'KJV' } } as any),
+        ).toBe(true);
+
+        // left in memory, this copy would be written straight back into a fresh
+        // `all` blob that then stands for a week
+        mocks.xmlTextToJsonMock.mockResolvedValue({ info: { key: 'SAVED' } });
+        expect(await getBibleXMLDataFromKeyCaching('KJV')).toEqual({
+            info: { key: 'SAVED' },
+        });
+    });
+
     test('the XML info and key-list hooks load on mount', async () => {
         const { act } = await import('react');
         const { createRoot } = await import('react-dom/client');

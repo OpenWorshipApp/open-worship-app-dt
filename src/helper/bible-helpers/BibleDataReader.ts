@@ -18,7 +18,10 @@ import CacheManager from '../../others/CacheManager';
 import { appLocalStorage } from '../../setting/directory-setting/appLocalStorage';
 import { unlocking } from '../../server/unlockingHelpers';
 import { checkIsBibleXML } from './bibleInfoHelpers';
-import { readBibleXMLData } from '../../setting/bible-setting/bibleXMLHelpers';
+import {
+    clearBibleXMLCache,
+    readBibleXMLData,
+} from '../../setting/bible-setting/bibleXMLHelpers';
 import { BIBLE_KJV_KEY } from './bibleModelHelpers';
 import { genEmbeddedKJVBibleXMLText } from './kjvBibleXMLTextHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -185,6 +188,9 @@ export default class BibleDataReader {
                 return;
             }
             await fsWriteFile(kjvFilePath, xmlText);
+            // A KJV that was deleted earlier left its `KJV.xml.cache` folder
+            // behind, and it would answer for this brand-new file.
+            await clearBibleXMLCache(BIBLE_KJV_KEY);
         });
     }
 

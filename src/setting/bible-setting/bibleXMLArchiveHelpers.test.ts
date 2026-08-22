@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => {
         bibleKeyByFilePath: new Map<string, string | null>(),
         installedBibleKeys: {} as { [bibleKey: string]: string },
         clonedFiles: [] as { source: string; destination: string }[],
+        deletedDirs: [] as string[],
         writtenManifests: [] as { stagingDir: string; manifest: any }[],
         tarCreateMock: vi.fn(),
         tarExtractMock: vi.fn(),
@@ -19,6 +20,7 @@ const mocks = vi.hoisted(() => {
             mocks.bibleKeyByFilePath.clear();
             mocks.installedBibleKeys = {};
             mocks.clonedFiles = [];
+            mocks.deletedDirs = [];
             mocks.writtenManifests = [];
         },
     };
@@ -54,6 +56,9 @@ vi.mock('../../server/fileHelpers', () => ({
     fsCloneFile: vi.fn(async (source: string, destination: string) => {
         mocks.clonedFiles.push({ source, destination });
         mocks.existingFilePaths.add(destination);
+    }),
+    fsDeleteDir: vi.fn(async (dirPath: string) => {
+        mocks.deletedDirs.push(dirPath);
     }),
     getDownloadPath: () => '/downloads',
     pathBasename: (filePath: string) => filePath.split('/').pop() ?? '',
@@ -367,6 +372,10 @@ describe('bibleXMLArchiveHelpers', () => {
                 destination: '/bibles/KJV.xml',
             },
         ]);
+        // the key was free, a `<KEY>.xml.cache` folder from whatever bible last
+        // held it may not have been
+        expect(mocks.deletedDirs).toContain('/bibles/KJV.xml.cache');
+        expect(mocks.deletedDirs).not.toContain('/bibles/ASV.xml.cache');
     });
 
     test('skips a key whose destination file is already on disk', async () => {

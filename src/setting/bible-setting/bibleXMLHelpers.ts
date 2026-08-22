@@ -15,7 +15,6 @@ import {
     fsCheckFileExist,
     fsDeleteDir,
     fsDeleteFile,
-    getFileMD5,
     pathJoin,
 } from '../../server/fileHelpers';
 import { tran } from '../../lang/langHelpers';
@@ -238,7 +237,7 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
             childBefore: genContextMenuItemIcon('eraser'),
             menuElement: tran('Clear Cache'),
             onSelect: () => {
-                invalidateBibleXMLCachedFolder(bibleKey);
+                clearBibleXMLCache(bibleKey);
             },
         },
     ];
@@ -278,34 +277,56 @@ export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
     });
 }
 
-export async function ensureBibleXMLCachedBasePath(bibleKey: string) {
+/**
+ * Where the parsed copies of a bible live: `<biblesDir>/<KEY>.xml.cache`.
+ *
+ * Derived from the KEY, never from the file's actual name, so a bible kept as
+ * `my-kjv.xml` still caches under `KJV.xml.cache` — and, more to the point, so
+ * this path can be resolved without the `getAllXMLFileKeys` folder scan, which
+ * reads the head of every installed XML.
+ */
+async function getBibleXMLCachedBasePath(bibleKey: string) {
     const filePath = await bibleKeyToXMLFilePath(bibleKey, true);
     if (filePath === null) {
         return null;
     }
-    const dirPath = `${filePath}.cache`;
+    return `${filePath}.cache`;
+}
+
+export async function ensureBibleXMLCachedBasePath(bibleKey: string) {
+    const dirPath = await getBibleXMLCachedBasePath(bibleKey);
+    if (dirPath === null) {
+        return null;
+    }
     await ensureDirectory(dirPath);
     return dirPath;
 }
 
-async function invalidateBibleXMLCachedFolder(bibleKey: string) {
-    const xmlFilePath = await bibleKeyToXMLFilePath(bibleKey);
-    if (xmlFilePath === null) {
-        return;
-    }
-    const md5Hash = await getFileMD5(xmlFilePath);
-    if (md5Hash === null) {
-        return;
-    }
-    const basePath = await ensureBibleXMLCachedBasePath(bibleKey);
+/**
+ * Drop every parsed copy of a bible: this window's in-memory JSON and the whole
+ * `<KEY>.xml.cache` folder — the `all` blob, the per-chapter blobs and the find
+ * database. Call it whenever the XML behind the key is created, updated,
+ * deleted or reset; a cached blob is only ever a re-parse away.
+ *
+ * The in-memory drop is NOT optional: that entry outlives the folder, and the
+ * next read would write the very same stale JSON straight back into a fresh
+ * `all` blob that then stands for a week.
+ *
+ * The folder is left deleted rather than re-created: every writer goes through
+ * `ensureBibleXMLCachedBasePath`, so a still-installed bible rebuilds it on its
+ * next cached write, and a deleted one leaves nothing behind.
+ */
+export async function clearBibleXMLCache(bibleKey: string) {
+    await bibleJSONCacheManager.delete(bibleKey);
+    const basePath = await getBibleXMLCachedBasePath(bibleKey);
     if (basePath === null) {
         return;
     }
-    const md5FilePath = pathJoin(basePath, md5Hash);
-    await fsDeleteDir(basePath);
-    await ensureDirectory(basePath);
-    const fileSource = FileSource.getInstance(md5FilePath);
-    await fileSource.writeFileData(Date.now().toString());
+    try {
+        await fsDeleteDir(basePath);
+    } catch (error) {
+        handleError(error);
+    }
 }
 
 async function getBackupBibleXMLData(
@@ -313,7 +334,9 @@ async function getBackupBibleXMLData(
     fileName: string,
     validateData: SchemaNode | null = null,
 ) {
-    const basePath = await ensureBibleXMLCachedBasePath(bibleKey);
+    // A read has no business creating the folder — that would litter one back
+    // beside a bible that was just deleted, and costs a syscall per lookup.
+    const basePath = await getBibleXMLCachedBasePath(bibleKey);
     if (basePath === null) {
         return null;
     }
@@ -453,7 +476,7 @@ export async function saveJsonDataToXMLfile(
         return false;
     }
     await saveXMLText(bibleKey, xmlText);
-    await invalidateBibleXMLCachedFolder(bibleKey);
+    await clearBibleXMLCache(bibleKey);
     return true;
 }
 
@@ -484,8 +507,7 @@ export async function resetBibleXMLToEmbeddedKJV(filePath: string) {
         // The parsed copies outlive the file itself: the `.cache` folder beside
         // it is on disk, and this key may already sit in the in-memory map.
         // Left alone, both would keep serving the data just replaced.
-        await invalidateBibleXMLCachedFolder(BIBLE_KJV_KEY);
-        await bibleJSONCacheManager.delete(BIBLE_KJV_KEY);
+        await clearBibleXMLCache(BIBLE_KJV_KEY);
         return true;
     });
 }
@@ -497,6 +519,10 @@ export async function deleteBibleXML(bibleKey: string) {
     }
     const fileSource = FileSource.getInstance(filePath);
     await fileSource.trash();
+    // The folder sits BESIDE the file, so trashing the XML leaves it behind.
+    // Left there it would still answer for this key the moment a bible with the
+    // same key is imported or re-created.
+    await clearBibleXMLCache(bibleKey);
 }
 
 export async function getBibleXMLDataFromKey(bibleKey: string) {
@@ -526,6 +552,12 @@ export async function updateBibleXMLInfo(
     newBibleInfo.keyBookMap = newBibleInfo.keyBookMap ?? getModelKeyBookMap();
     const newJsonData = { ...dataJson, info: newBibleInfo };
     await saveJsonDataToXMLfile(newJsonData, oldBibleInfo.key);
+    // The save clears the OLD key's folder, the one named after the file it
+    // wrote. A renamed key answers out of `<NEW KEY>.xml.cache` from here on,
+    // which may still hold whatever bible last carried that key.
+    if (newBibleInfo.key !== oldBibleInfo.key) {
+        await clearBibleXMLCache(newBibleInfo.key);
+    }
     return true;
 }
 
