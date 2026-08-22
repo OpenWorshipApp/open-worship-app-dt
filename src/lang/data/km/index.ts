@@ -645,6 +645,9 @@ const dictionary = {
     'Save or discard unsaved Bible changes before refreshing.':
         'សូមរក្សាទុក ឬបោះបង់ការផ្លាស់ប្តូរព្រះគម្ពីរដែលមិនទាន់រក្សាទុក ' +
         'មុនពេលផ្ទុកឡើងវិញ។',
+    'Save or discard unsaved Bible changes before resetting.':
+        'សូមរក្សាទុក ឬបោះបង់ការផ្លាស់ប្តូរព្រះគម្ពីរដែលមិនទាន់រក្សាទុក ' +
+        'មុនពេលកំណត់ឡើងវិញ។',
     'Save or discard unsaved Bible changes before switching tabs.':
         'សូមរក្សាទុក ឬបោះបង់ការផ្លាស់ប្តូរព្រះគម្ពីរដែលមិនទាន់រក្សាទុក ' +
         'មុនពេលប្តូរផ្ទាំង។',
@@ -998,6 +1001,11 @@ const dictionary = {
     'Creating Presenting Flow': 'កំពុងបង្កើតតារាងកម្មវិធី',
     'Delete Bible': 'លុបព្រះគម្ពីរ',
     'Delete Bible XML': 'លុប XML ព្រះគម្ពីរ',
+    'Reset Bible XML': 'កំណត់ XML ព្រះគម្ពីរឡើងវិញ',
+    'Reset this bible XML with the app embedded KJV?':
+        'កំណត់ XML ព្រះគម្ពីរនេះឡើងវិញដោយ KJV ដែលភ្ជាប់មកជាមួយកម្មវិធី?',
+    'All your changes will be lost.':
+        'ការផ្លាស់ប្តូរទាំងអស់របស់អ្នកនឹងត្រូវបាត់បង់។',
     'Delete Canvas Items': 'លុបធាតុផ្ទាំងក្រណាត់',
     Deleting: 'កំពុងលុប',
     'Document downloaded successfully': 'បានទាញយកឯកសារដោយជោគជ័យ',

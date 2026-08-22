@@ -5,7 +5,7 @@ import {
     fsWriteFile,
     pathJoin,
 } from '../../server/fileHelpers';
-import { DEFAULT_LOCALE, tran, type LocaleType } from '../../lang/langHelpers';
+import { tran, type LocaleType } from '../../lang/langHelpers';
 import { decrypt } from '../../_owa-crypto';
 import { handleError } from '../errorHelpers';
 import {
@@ -19,12 +19,8 @@ import { appLocalStorage } from '../../setting/directory-setting/appLocalStorage
 import { unlocking } from '../../server/unlockingHelpers';
 import { checkIsBibleXML } from './bibleInfoHelpers';
 import { readBibleXMLData } from '../../setting/bible-setting/bibleXMLHelpers';
-import { BIBLE_KJV_KEY, kjvBibleModelInfo } from './bibleModelHelpers';
-import {
-    type BibleXMLExtraType,
-    type BibleXMLJsonType,
-    jsonToXMLText,
-} from '../../setting/bible-setting/bibleXMLJsonDataHelpers';
+import { BIBLE_KJV_KEY } from './bibleModelHelpers';
+import { genEmbeddedKJVBibleXMLText } from './kjvBibleXMLTextHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { appManagedDataDirNames } from '../constants';
 
@@ -180,30 +176,7 @@ export default class BibleDataReader {
             if (await fsCheckFileExist(kjvFilePath)) {
                 return;
             }
-            const { basicKJVBibleData } =
-                await import('./bible-data/kjvBibleHelpers');
-            basicKJVBibleData.info = {
-                ...basicKJVBibleData.info,
-                key: BIBLE_KJV_KEY,
-                version: 1,
-                locale: DEFAULT_LOCALE,
-                numbersMap: Object.fromEntries(
-                    Array.from({ length: 10 }, (_, i) => [
-                        i.toString(),
-                        i.toString(),
-                    ]),
-                ),
-                keyBookMap: kjvBibleModelInfo.keyBookMap,
-            };
-            const extraData: BibleXMLExtraType = {
-                newLines: [],
-                newLinesTitleMap: {},
-                customVersesMap: {},
-            };
-            const xmlText = jsonToXMLText({
-                ...basicKJVBibleData,
-                ...extraData,
-            } as BibleXMLJsonType);
+            const xmlText = await genEmbeddedKJVBibleXMLText();
             if (xmlText === null) {
                 showSimpleToast(
                     tran('Failed to convert KJV Bible data to XML text.'),

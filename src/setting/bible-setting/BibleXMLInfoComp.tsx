@@ -4,6 +4,7 @@ import { tran } from '../../lang/langHelpers';
 import {
     handBibleKeyContextMenuOpening,
     deleteBibleXML,
+    resetBibleXMLToEmbeddedKJV,
     useBibleXMLInfo,
 } from './bibleXMLHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
@@ -11,6 +12,8 @@ import { useStateSettingBoolean } from '../../helper/settingHelpers';
 import AppSuspenseComp from '../../others/AppSuspenseComp';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { warnIfBibleKeyDirty } from './bibleEditorDirtyHelpers';
+import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
+import { forceReloadAppWindows } from '../settingHelpers';
 
 const BibleXMLDataPreviewCompLazy = lazy(
     () => import('./BibleXMLDataPreviewComp'),
@@ -50,6 +53,41 @@ export default function BibleXMLInfoComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const loadBibleKeysRef = useAppCurrentRef(loadBibleKeys);
+    const filePathRef = useAppCurrentRef(filePath);
+    const handleResetting = useCallback(async (event: any) => {
+        event.stopPropagation();
+        // The reset discards the file, so an open editor's unsaved changes
+        // would go with it.
+        if (
+            warnIfBibleKeyDirty(
+                bibleKeyRef.current,
+                'Save or discard unsaved Bible changes before resetting.',
+            )
+        ) {
+            return;
+        }
+        const isConfirmed = await showAppConfirm(
+            tran('Reset Bible XML'),
+            tran('Reset this bible XML with the app embedded KJV?') +
+                ' ' +
+                tran('All your changes will be lost.'),
+            {
+                cancelButtonLabel: 'No',
+                confirmButtonLabel: 'Yes',
+            },
+        );
+        if (!isConfirmed) {
+            return;
+        }
+        if (!(await resetBibleXMLToEmbeddedKJV(filePathRef.current))) {
+            return;
+        }
+        loadBibleKeysRef.current();
+        // Every window holds its own parsed copy of this bible, so the
+        // replacement only reaches the reader and the screens after a reload.
+        forceReloadAppWindows();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleFileTrashing = useCallback(async (event: any) => {
         event.stopPropagation();
         const isConfirmed = await showAppConfirm(
@@ -93,6 +131,15 @@ export default function BibleXMLInfoComp({
                 </div>
                 <div>
                     <div className="btn-group">
+                        {bibleKey === BIBLE_KJV_KEY ? (
+                            <button
+                                className="btn btn-sm btn-warning"
+                                title={tran('Reset Bible XML')}
+                                onClick={handleResetting}
+                            >
+                                <i className="bi bi-arrow-counterclockwise" />
+                            </button>
+                        ) : null}
                         <button
                             className={`btn btn-${isShowing ? '' : 'outline-'}primary`}
                             title={

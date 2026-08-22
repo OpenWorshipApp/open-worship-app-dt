@@ -20,6 +20,10 @@ const mocks = vi.hoisted(() => {
         async set(key: string, value: T) {
             this.store.set(key, value);
         }
+
+        async delete(key: string) {
+            this.store.delete(key);
+        }
     }
 
     const getInstance = (filePath: string) => {
@@ -72,6 +76,7 @@ const mocks = vi.hoisted(() => {
         getFileMD5Mock: vi.fn(),
         getInstance,
         getMenuTitleRevealFileMock: vi.fn(() => 'Reveal in File Explorer'),
+        genEmbeddedKJVBibleXMLTextMock: vi.fn(),
         getModelKeyBookMapMock: vi.fn(),
         getBibleModelInfoSettingMock: vi.fn(),
         handleErrorMock: vi.fn(),
@@ -225,7 +230,12 @@ vi.mock('./schemas/bibleSchemaHelpers', () => ({
 }));
 
 vi.mock('../../helper/bible-helpers/bibleModelHelpers', () => ({
+    BIBLE_KJV_KEY: 'KJV',
     getBibleModelInfoSetting: mocks.getBibleModelInfoSettingMock,
+}));
+
+vi.mock('../../helper/bible-helpers/kjvBibleXMLTextHelpers', () => ({
+    genEmbeddedKJVBibleXMLText: mocks.genEmbeddedKJVBibleXMLTextMock,
 }));
 
 async function loadModule() {
@@ -460,6 +470,43 @@ describe('bibleXMLHelpers', () => {
         items[1]?.onSelect();
         await Promise.resolve();
         await Promise.resolve();
+    });
+
+    test('resetting a KJV overwrites its own file and drops both caches', async () => {
+        const { getBibleXMLDataFromKeyCaching, resetBibleXMLToEmbeddedKJV } =
+            await loadModule();
+
+        // warm both caches so the reset has something stale to drop
+        mocks.files.set('/bibles/KJV.xml', '<bible key="KJV" />');
+        mocks.files.set('/bibles/my-kjv.xml', '<bible key="KJV" />');
+        mocks.xmlTextToJsonMock.mockResolvedValue({ info: { key: 'KJV' } });
+        expect(await getBibleXMLDataFromKeyCaching('KJV')).toEqual({
+            info: { key: 'KJV' },
+        });
+
+        mocks.genEmbeddedKJVBibleXMLTextMock.mockResolvedValue('<kjv />');
+        expect(await resetBibleXMLToEmbeddedKJV('/bibles/my-kjv.xml')).toBe(
+            true,
+        );
+        // the row's OWN file, not `<dir>/KJV.xml`
+        expect(mocks.files.get('/bibles/my-kjv.xml')).toBe('<kjv />');
+        expect(mocks.files.has('/bibles/KJV.xml.cache/all')).toBe(false);
+
+        mocks.xmlTextToJsonMock.mockResolvedValue({ info: { key: 'RESET' } });
+        expect(await getBibleXMLDataFromKeyCaching('KJV')).toEqual({
+            info: { key: 'RESET' },
+        });
+
+        // an unserializable bible leaves the file alone
+        mocks.genEmbeddedKJVBibleXMLTextMock.mockResolvedValue(null);
+        expect(await resetBibleXMLToEmbeddedKJV('/bibles/my-kjv.xml')).toBe(
+            false,
+        );
+        expect(mocks.files.get('/bibles/my-kjv.xml')).toBe('<kjv />');
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Reset Bible XML',
+            'Failed to convert KJV Bible data to XML text.',
+        );
     });
 
     test('uses backup and fresh cache paths when reading cached XML data and chapter data', async () => {

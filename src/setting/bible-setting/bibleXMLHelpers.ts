@@ -56,7 +56,11 @@ import {
     infoEditorSchemaHandler,
     bookChapterEditorSchemaHandler,
 } from './schemas/bibleSchemaHelpers';
-import { getBibleModelInfoSetting } from '../../helper/bible-helpers/bibleModelHelpers';
+import {
+    BIBLE_KJV_KEY,
+    getBibleModelInfoSetting,
+} from '../../helper/bible-helpers/bibleModelHelpers';
+import { genEmbeddedKJVBibleXMLText } from '../../helper/bible-helpers/kjvBibleXMLTextHelpers';
 
 export function getInputByName(form: HTMLFormElement, name: string) {
     const inputFile = form.querySelector(`input[name="${name}"]`);
@@ -451,6 +455,39 @@ export async function saveJsonDataToXMLfile(
     await saveXMLText(bibleKey, xmlText);
     await invalidateBibleXMLCachedFolder(bibleKey);
     return true;
+}
+
+/**
+ * Overwrite an installed KJV XML file with the app-embedded copy, discarding
+ * whatever the operator had edited into it.
+ *
+ * Takes the row's own `filePath` rather than resolving the key: a KJV kept
+ * under a different file name must be replaced IN PLACE, otherwise the write
+ * would land on `<dir>/KJV.xml` and leave two files claiming the same key.
+ * Shares `initKJVBible`'s lock so a first-run creation and a reset can never
+ * write the same data at once.
+ */
+export async function resetBibleXMLToEmbeddedKJV(filePath: string) {
+    return await unlocking('init-kjv-xml-file', async () => {
+        const xmlText = await genEmbeddedKJVBibleXMLText();
+        if (xmlText === null) {
+            showSimpleToast(
+                tran('Reset Bible XML'),
+                tran('Failed to convert KJV Bible data to XML text.'),
+            );
+            return false;
+        }
+        const fileSource = FileSource.getInstance(filePath);
+        if (!(await fileSource.writeFileData(xmlText))) {
+            return false;
+        }
+        // The parsed copies outlive the file itself: the `.cache` folder beside
+        // it is on disk, and this key may already sit in the in-memory map.
+        // Left alone, both would keep serving the data just replaced.
+        await invalidateBibleXMLCachedFolder(BIBLE_KJV_KEY);
+        await bibleJSONCacheManager.delete(BIBLE_KJV_KEY);
+        return true;
+    });
 }
 
 export async function deleteBibleXML(bibleKey: string) {

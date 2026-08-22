@@ -21,7 +21,19 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-12** (**W-30 step 1: the advance-lookup panel's three tabs are
+**workflowsVersion: 2026-08-22** (**W-34 gains the "Putting the KJV back" note — the
+KJV row now has a Reset Bible XML button.** Only the row whose code is `KJV` shows it; it
+replaces that translation with the copy embedded in the app, the same data the empty-state
+**Create KJV Bible XML** writes, and it is destructive with no undo. Verified live
+2026-08-22 in the Setting window: present on KJV and on none of the other 20 installed
+bibles, confirm wording as quoted, file replaced, reader re-read from it. The same note
+gained a "Deleted it by mistake?" half: **Create KJV Bible XML** is no longer only the
+first-run empty-state offer — it is the FIRST ROW of the **Bibles XML** list whenever that
+list has no KJV, so a trashed KJV is one click from coming back. Verified live 2026-08-22
+with the KJV trashed: the list led with the row, the click rebuilt the translation, the row
+then went away.
+New matrix row ST-51; ST-28 rewritten.)
+Previous: **2026-08-12** (**W-30 step 1: the advance-lookup panel's three tabs are
 now ONE drop-down.** **Find** / **Cross Reference** / **Location-Name (KJV)** never fitted the
 narrow panel — the third label sat permanently cut off as "Location-Name (K…" and the old step
 had to tell the reader the tab strip scrolls sideways. The header now holds a single `select`
@@ -2055,4 +2067,21 @@ matters** — the last two take their suggestions from the language you set firs
 > menu. (A small hidden `…​.xml.cache` folder is left beside it in the app's bible folder;
 > it is harmless, and reusing the same code later just refills it.)
 
-_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, RD-11, LT-01._
+> **Putting the KJV back.** The **KJV** row — and only that row — carries an extra
+> orange ↺ button, **Reset Bible XML** (កំណត់ XML ព្រះគម្ពីរឡើងវិញ), to the LEFT of the ✏️ pencil.
+> It asks *Reset this bible XML with the app embedded KJV? All your changes will be
+> lost.* — **Yes** throws away the KJV file you have and writes the copy that ships inside
+> the app (the same copy the **Create KJV Bible XML** row below writes),
+> then reloads the windows. Use it when your KJV has been edited into a state you no longer
+> want, or looks broken; there is no undo, so export it first (W-33) if you want it back.
+> If the KJV editor is open with unsaved changes the button refuses and warns
+> **Unsaved Bible Data** — save or discard first.
+>
+> **Deleted it by mistake?** The KJV is the one translation the app carries inside
+> itself, so it can always be rebuilt. Whenever your list has no **KJV**, a green
+> **+ Create KJV Bible XML** (បង្កើតឯកសារ XML ព្រះគម្ពីរ KJV) row sits at the TOP
+> of the **Bibles XML** list, above the translations — not only on a brand-new install
+> with nothing in the list. Click it and the KJV comes back; the button then disappears
+> because there is nothing left to create.
+
+_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, RD-11, LT-01._
