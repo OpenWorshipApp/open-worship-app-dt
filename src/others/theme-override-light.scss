@@ -302,6 +302,16 @@ $resizer-color: rgb(123, 173, 205);
   }
 
   #app-setting {
+    // See the matching block in `theme-override-dark.scss` for why the Others
+    // tab's state hue is set per theme rather than from one shared token.
+    .app-setting-others-ready {
+      --app-setting-others-state: #146c43;
+    }
+
+    .app-setting-others-attention {
+      --app-setting-others-state: #997404;
+    }
+
     .lang {
       .options {
         background-color: var(--bs-gray-200);

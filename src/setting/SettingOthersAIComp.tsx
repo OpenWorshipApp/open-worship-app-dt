@@ -1,4 +1,3 @@
-import type { FocusEvent } from 'react';
 import { useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -10,7 +9,9 @@ import {
 } from '../helper/ai/aiHelpers';
 import appProvider from '../server/appProvider';
 import { applyStore } from './SettingApplyComp';
-import SettingCardHeaderComp from './SettingCardHeaderComp';
+import SettingOthersFieldComp from './SettingOthersFieldComp';
+import SettingOthersSecureStorageWarningComp from './SettingOthersSecureStorageWarningComp';
+import SettingOthersSectionComp from './SettingOthersSectionComp';
 
 type APIKeyNameType = 'openAIAPIKey' | 'anthropicAPIKey';
 
@@ -31,8 +32,7 @@ function RenderAPIKeyComp({
     // Written on blur, not per keystroke: every save is a sync IPC round trip
     // to the home storage file.
     const handleSaving = useCallback(
-        (event: FocusEvent<HTMLInputElement>) => {
-            const value = event.target.value.trim();
+        (value: string) => {
             const setting: AISettingType = getAISetting();
             if (setting[keyName] === value) {
                 return;
@@ -48,48 +48,44 @@ function RenderAPIKeyComp({
         appProvider.browserUtils.openExternalURL(createKeyURL);
     }, [createKeyURL]);
     return (
-        <div className="d-flex flex-column w-100">
-            <div>
-                {label}{' '}
-                <i
-                    className="bi bi-lightbulb"
-                    title={tran(hintKey)}
-                    style={{
-                        color: 'var(--bs-info-text-emphasis)',
-                    }}
-                />
-                {aiSetting[keyName] ? (
-                    <i className="bi bi-check-circle-fill ms-1 text-success" />
-                ) : null}
-                :
-            </div>
-            <div className="d-flex align-items-center">
-                <input
-                    className="form-control form-control-sm flex-fill me-2"
-                    type="text"
-                    defaultValue={aiSetting[keyName]}
-                    onBlur={handleSaving}
-                />
-                <button
-                    className="btn btn-sm btn-secondary text-nowrap"
-                    title={tran(createKeyTitleKey)}
-                    onClick={handleOpeningAPIKeyPage}
-                >
-                    API Key <i className="bi bi-box-arrow-up-right ms-1" />
-                </button>
-            </div>
-        </div>
+        <SettingOthersFieldComp
+            label={label}
+            hintKey={hintKey}
+            value={aiSetting[keyName]}
+            isSecret
+            onSave={handleSaving}
+        >
+            <button
+                className="btn btn-sm btn-secondary text-nowrap"
+                type="button"
+                title={tran(createKeyTitleKey)}
+                onClick={handleOpeningAPIKeyPage}
+            >
+                {tran('Get key')}
+                <i className="bi bi-box-arrow-up-right ms-1" />
+            </button>
+        </SettingOthersFieldComp>
     );
 }
 
 export default function SettingOthersAIComp() {
+    const aiSetting = useAISetting();
+    // Either provider on its own is enough to make the features work, so one
+    // key is a working row.
+    const isAnyKeySet = !!aiSetting.openAIAPIKey || !!aiSetting.anthropicAPIKey;
     return (
-        <div className="card m-1">
-            <SettingCardHeaderComp
-                iconClassName="bi-robot"
-                title="Set AI API Key"
-            />
-            <div className="card-body">
+        <SettingOthersSectionComp
+            iconClassName="bi-robot"
+            title="AI Providers"
+            description={
+                'Add a key from either provider to use custom Bible Cross Ref' +
+                ' and Bible Audio.'
+            }
+            state={isAnyKeySet ? 'ready' : 'idle'}
+            stateLabel={isAnyKeySet ? 'Key set' : 'No key set'}
+        >
+            <SettingOthersSecureStorageWarningComp />
+            <div className="app-setting-others-fields">
                 <RenderAPIKeyComp
                     keyName="openAIAPIKey"
                     label="OpenAI API Key"
@@ -97,7 +93,6 @@ export default function SettingOthersAIComp() {
                     createKeyTitleKey="Create OpenAI api key"
                     createKeyURL="https://platform.openai.com/api-keys"
                 />
-                <hr />
                 <RenderAPIKeyComp
                     keyName="anthropicAPIKey"
                     label="Anthropic API Key"
@@ -106,6 +101,6 @@ export default function SettingOthersAIComp() {
                     createKeyURL="https://console.anthropic.com/settings/keys"
                 />
             </div>
-        </div>
+        </SettingOthersSectionComp>
     );
 }

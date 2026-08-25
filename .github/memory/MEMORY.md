@@ -68,7 +68,7 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Canvas audio & media links](canvas-audio-and-media-links.md) — the `audio` item is preview-only; a media source may be a link, and "is it remote?" (archive/menu) is NOT "is it already a URL?" (renderers); lyric attachments become such items
 - [Lyric passes the AppDocument type check](lyric-passes-appdocument-typecheck.md) — `checkIsThisType` is `instanceof`, so every editability gate must also test `isEditable`
 - [Settings write race corrupts the on-screen map](settings-write-race-corrupts-onscreen-map.md) — OPEN: `unlocking()` is per-renderer and the write is non-atomic, so showing a screen can blank every screen after the next reload
-- [Monaco `.css` test failure — FIXED](monaco-css-test-failure-local-open-lyric.md) — tests now mock open-lyric / bail before importing it; do NOT "fix" it by inlining the dep, that's strictly worse
+- [Monaco `.css` test failure — importable now](monaco-css-test-failure-local-open-lyric.md) — `server.deps.inline` + a jsdom patch lets ONE test import the real open-lyric as an oracle; everyone else still mocks it
 - [Presenting flow rename](presenting-flow-rename.md) — the four stale Khmer strings are fixed too now; `--no-playlist` (yt-dlp) and `displayListeners` are lookalikes, and the migration discovers the old name rather than holding one
 - [Expanded doc rows went stale — FIXED](presenting-flow-expanded-doc-stale.md) — the expanded document now re-subscribes; keep that timer PER-INSTANCE or one sheet listing a document twice goes stale again
 - [Expansion followed the position — FIXED](presenting-flow-expansion-follows-position.md) — run-sheet rows are keyed by uuid now; never key them by index again
@@ -83,3 +83,7 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [View menu widget toggles](view-menu-widget-toggles.md) — View → Widgets ticks each pane open/closed and Reset Widgets Size applies live; blanking `flexGrow` and the `:scope >` query are load-bearing
 - [`appFilePath` is a prototype getter](appfilepath-is-a-prototype-getter.md) — fabricating a CDP drop: plain assignment silently no-ops, so the drop dies with no error; use `Object.defineProperty`
 - [Media binaries install on demand](extra-bin-on-demand.md) — yt-dlp/ffmpeg/qjs left the package; they live in `<data parent>/extra-bin`, the archive is kept for offline re-extract, and the `extraBin` map is cumulative
+- [SongSelect plugin](song-select-plugin.md) — all frontend in src/plugins/song-select by user request; one-time-use refresh tokens single-flighted; real-credential path UNVERIFIED (mocks only)
+- [Public Domain Songs plugin](public-domain-songs-plugin.md) — separate plugin embedding 36 PD hymns (JSON), no sign-in; Structure codes may repeat, and each record's source link becomes an open-lyric attachment slide
+- [open-lyric fence ground truth](open-lyric-fence-ground-truth.md) — probed structure codes (P not PC, IS/S split), required Config fields, Instrumental/Interlude fences reject plain text
+- [Credentials use safeStorage](secure-storage-safestorage.md) — secrets sit in a SECOND `-secret` store keyed field-by-field; legacy cleartext is scrubbed on launch, never migrated

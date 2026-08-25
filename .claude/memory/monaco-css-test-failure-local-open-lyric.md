@@ -1,32 +1,35 @@
 ---
 name: monaco-css-test-failure-local-open-lyric
-description: FIXED 2026-08-07 — the `Unknown file extension ".css"` failure from the local file: open-lyric dep is gone; tests now mock open-lyric / bail before importing it
+description: open-lyric IS now importable in vitest — server.deps.inline landed 2026-08-24 with a jsdom recipe; tests that don't want it must still mock it, never import it in node env
 metadata:
   type: project
 ---
 
-`package.json` points `open-lyric` at
-`file:../open-lyric/packages/open-lyric-0.1.42.tar.gz` instead of the git dist.
-A `file:` dependency is not externalized/prebundled the way the git dep is, so
-its transitive monaco CSS import used to reach node's ESM loader raw and fail
-`src/lyric-list/Lyric.test.ts` + `src/server/appProvider.mock.test.ts` with
-`TypeError: Unknown file extension ".css" for …/inlineProgressWidget.css`.
+History: the local `file:` open-lyric dep used to fail tests with
+`Unknown file extension ".css"` (monaco css reaching node's ESM loader raw);
+fixed 2026-08-07 by mocking open-lyric in `Lyric.test.ts` and moving
+`initLyricMock`'s early return above its dynamic imports. Back then
+`test.server.deps.inline: ['open-lyric']` was tried and rejected because tests
+were importing open-lyric incidentally and its browser code died in the node
+environment.
 
-**FIXED 2026-08-07** (uncommitted at time of writing) — two changes, no config
-change:
+**Changed 2026-08-24 (SongSelect integration):** `vitest.config.ts` now DOES
+carry `test.server.deps.inline: ['open-lyric', /monaco-editor/]`, and the full
+suite is green. It is safe now because inlining only affects modules a test
+actually imports — and the only test that imports the real open-lyric does it
+deliberately, to use `checkOLMarkdown` as a validation oracle.
 
-- `Lyric.test.ts` now `vi.mock('open-lyric', () => ({ MARCH_OF_GRACE_EXAMPLE:
-  … }))`, the same pattern `lyricHelpers.test.ts` already used.
-- `initLyricMock` in `src/server/appProvider.mock.ts` moved its
-  `location.pathname.includes('lyricEditor.html')` early return ABOVE its five
-  dynamic imports, one of which is `../lyric-list/Lyric`. It was importing the
-  whole lyric+monaco chain and then discarding it on every non-lyric page.
+**Why:** the real validator catches mapping bugs (structure codes, fence
+rules) that a mocked open-lyric would wave through.
 
-**How to apply:** do NOT "fix" this by inlining the dep
-(`test.server.deps.inline: ['open-lyric']`). That was tried and is strictly
-worse: Vite then executes open-lyric's browser code in the node environment, so
-`Lyric.test.ts` dies on `document is not defined` and monaco's clipboard module
-dies on `document.queryCommandSupported is not a function`. The dep must stay
-externalized and simply not be loaded by tests. See
-[[open-lyric-subtree-branch-dep]] for how the dep is normally consumed, and
-[[vitest-env-leak-flakes]] for the unrelated whole-suite flakes.
+**How to apply:** to import the REAL open-lyric in a test, copy
+`src/plugins/song-select/songSelectLyricHelpers.test.ts`:
+`// @vitest-environment jsdom`, then patch
+`document.queryCommandSupported ??= () => false` and
+`document.execCommand ??= () => false` (monaco's clipboard contrib probes both
+at module-eval time; jsdom has neither), then **dynamic-import** the module
+under test AFTER the patch (static imports hoist above it). Tests that do NOT
+want open-lyric must keep mocking it (`vi.mock('open-lyric', …)`) — and a
+node-env test must never import it at all ([[appprovider-mock-node-env]]).
+See [[open-lyric-fence-ground-truth]] for what the real API exposes and
+[[open-lyric-subtree-branch-dep]] for how the dep is consumed.

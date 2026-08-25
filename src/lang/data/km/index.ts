@@ -476,7 +476,6 @@ const dictionary = {
     Bibles: 'ព្រះគម្ពីរ',
     'Full Text': 'បង្ហាញពេញ',
     'Add Extra Bible': 'បន្ថែមព្រះគម្ពីរ',
-    'Add Items': 'បន្ថែម',
     'Add Time': 'បន្ថែមម៉ោង',
     'Advance Bible Lookup': 'ស្វែងរកព្រះគម្ពីរកម្រិតខ្ពស់',
     'Apply All Slides': 'អនុវត្តទៅកាន់គ្រប់ស្លាយ',
@@ -1247,6 +1246,17 @@ const dictionary = {
     // --- The on-demand media tools pack (Settings > Others > Extra Binaries),
     // and the dialog that sends a user there when they try to download a video
     // or audio without it (2026-08-10).
+    // --- Settings > Others, reworked into three service rows (2026-08-24).
+    // The state pill of each row speaks that service's own vocabulary rather
+    // than one shared word, so the label matches the button that changes it.
+    'AI Providers': 'អ្នកផ្តល់សេវា AI',
+    'Add a key from either provider to use custom Bible Cross Ref and Bible Audio.':
+        'បញ្ចូល key ពីអ្នកផ្តល់សេវាណាមួយ ដើម្បីប្រើ Bible Cross Ref ' +
+        'និង Bible Audio តាមបំណង។',
+    'Key set': 'មាន key ហើយ',
+    'No key set': 'មិនទាន់មាន key',
+    'Get key': 'យក key',
+    Hide: 'លាក់',
     'Extra Binaries': 'កម្មវិធីបន្ថែម',
     'The media tools used to download background video and audio. They are downloaded separately to keep the app small.':
         'ឧបករណ៍មេឌាសម្រាប់ទាញយកវីដេអូ និងសំឡេងផ្ទៃខាងក្រោយ។ ' +
@@ -1276,6 +1286,60 @@ const dictionary = {
     'No pack is available for this app version':
         'គ្មានកញ្ចប់សម្រាប់កំណែកម្មវិធីនេះទេ',
     'No local pack was built yet': 'មិនទាន់បានបង្កើតកញ្ចប់ក្នុងម៉ាស៊ីននេះទេ',
+    // Shown in both credential cards of Settings > Others when the OS has no
+    // usable credential store, so nothing can be encrypted at rest (2026-08-24).
+    'This system has no secure credential store, so keys are kept only until the app closes':
+        'ប្រព័ន្ធនេះគ្មានកន្លែងរក្សាទុកព័ត៌មានសម្ងាត់ដោយសុវត្ថិភាពទេ ' +
+        'ដូច្នេះកូនសោនឹងត្រូវរក្សាទុករហូតដល់ពេលបិទកម្មវិធីប៉ុណ្ណោះ',
+    // --- CCLI SongSelect integration: the Settings > Others credential
+    // section with its OAuth sign-in, the documents list's "Import From
+    // SongSelect" item, and the search/download popup (2026-08-24).
+    'SongSelect Integration': 'ការភ្ជាប់ SongSelect',
+    'Import song lyrics from CCLI SongSelect':
+        'នាំចូលអត្ថបទចម្រៀងពី CCLI SongSelect',
+    'The OAuth client ID of your CCLI API application':
+        'OAuth client ID នៃកម្មវិធី CCLI API របស់អ្នក',
+    'Leave empty for a public client': 'ទុកឲ្យទទេ សម្រាប់ public client',
+    'The subscription key from the CCLI developer portal':
+        'Subscription key ពី CCLI developer portal',
+    'Must exactly match the redirect URI registered with CCLI':
+        'ត្រូវតែដូចគ្នានឹង redirect URI ដែលបានចុះឈ្មោះជាមួយ CCLI',
+    'Open CCLI SongSelect website': 'បើកគេហទំព័រ CCLI SongSelect',
+    'Sign In': 'ចូលគណនី',
+    'Sign Out': 'ចាកចេញពីគណនី',
+    'Signed in': 'បានចូលគណនី',
+    'Not signed in': 'មិនទាន់ចូលគណនីទេ',
+    'Signing in...': 'កំពុងចូលគណនី...',
+    'Set Client ID, Subscription Key and Redirect URI first':
+        'សូមបំពេញ Client ID, Subscription Key និង Redirect URI ជាមុនសិន',
+    'Signed in to SongSelect successfully': 'បានចូលគណនី SongSelect ដោយជោគជ័យ',
+    'Signed out from SongSelect': 'បានចាកចេញពីគណនី SongSelect',
+    'Sign in failed': 'ការចូលគណនីបរាជ័យ',
+    'Sign in was canceled': 'ការចូលគណនីត្រូវបានបោះបង់',
+    'Import From SongSelect': 'នាំចូលពី SongSelect',
+    'Search songs': 'ស្វែងរកចម្រៀង',
+    'Type to search': 'វាយអក្សរដើម្បីស្វែងរក',
+    'Lyrics not available for this song': 'មិនមានអត្ថបទចម្រៀងសម្រាប់បទនេះទេ',
+    'Not authorized for these lyrics': 'មិនមានសិទ្ធិប្រើអត្ថបទចម្រៀងនេះទេ',
+    'Public Domain': 'កម្មសិទ្ធិសាធារណៈ',
+    'SongSelect sign-in expired, please sign in again in Settings':
+        'ការចូលគណនី SongSelect បានផុតកំណត់ ' +
+        'សូមចូលគណនីម្តងទៀតនៅក្នុងការកំណត់',
+    'Your account is not licensed for this content':
+        'គណនីរបស់អ្នកមិនមានអាជ្ញាបណ្ណសម្រាប់មាតិកានេះទេ',
+    'Too many requests, please wait a moment': 'សំណើច្រើនពេក សូមរង់ចាំបន្តិច',
+    'Could not reach SongSelect': 'មិនអាចភ្ជាប់ទៅ SongSelect បានទេ',
+    'SongSelect request failed': 'សំណើទៅ SongSelect បរាជ័យ',
+    'Lyric document created successfully':
+        'បានបង្កើតឯកសារអត្ថបទចម្រៀងដោយជោគជ័យ',
+    'This song has no lyrics to import':
+        'បទចម្រៀងនេះមិនមានអត្ថបទសម្រាប់នាំចូលទេ',
+    '(dev) Use Mock Data': '(dev) ប្រើទិន្នន័យសាកល្បង',
+    '(mock)': '(សាកល្បង)',
+    // --- Public Domain Songs plugin: embedded hymn catalog importable as
+    // lyric documents with no sign-in (2026-08-24).
+    'Import From Public Domain Songs': 'នាំចូលពីចម្រៀងកម្មសិទ្ធិសាធារណៈ',
+    'Failed to create lyric document': 'បរាជ័យក្នុងការបង្កើតឯកសារអត្ថបទចម្រៀង',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

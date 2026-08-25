@@ -9,12 +9,12 @@ metadata:
 per-file with a `// @vitest-environment jsdom` first line. Workers are reused
 across files, so jsdom globals **leak** into later node-env files in the same
 worker. A test that transitively imports `src/server/appProvider.ts` (which does
-`document.addEventListener(...)` at module scope, and whose `appProvider.mock.ts`
-reads `globalThis.document.title` at module scope) therefore passes or fails
+`document.addEventListener(...)` at module scope) therefore passes or fails
 depending on file scheduling. Seen 2026-07-26: `src/toast/toastHelpers.test.ts`
 passed for several runs, then failed with `ReferenceError: document is not
-defined` — fix is the jsdom pragma on the test file, not a guard in
-`appProvider.mock.ts` (appProvider itself needs a DOM regardless).
+defined` — the fix is the jsdom pragma on the test file; appProvider needs a DOM
+regardless. Since 2026-08-24 it needs a `vi.mock` too — there is no provider mock
+left to fall back on, see [[appprovider-mock-node-env]].
 
 **Why:** looks like a random/unrelated break in an untouched file; the real cause
 is missing-pragma + worker reuse.

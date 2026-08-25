@@ -174,6 +174,11 @@ function createAppController(overrides: Record<string, any> = {}) {
             deleteClientSetting: vi.fn(),
             getAllClientSettingKeys: vi.fn(() => ['a', 'b']),
             clearClientSettings: vi.fn(),
+            getSecureSetting: vi.fn(() => 'stored-secret'),
+            setSecureSetting: vi.fn(),
+            deleteSecureSetting: vi.fn(),
+            clearSecureSettings: vi.fn(),
+            checkIsSecureStorageAvailable: vi.fn(() => true),
         },
         resetThemeBackgroundColor: vi.fn(),
         reloadAll: vi.fn(),
@@ -808,6 +813,34 @@ describe('electronEventListener handlers', () => {
         expect(call({ key: 'a', type: 'delete' })).toBe(true);
         expect(call({ key: '', type: 'get-all-keys' })).toBe('["a","b"]');
         expect(call({ key: '', type: 'clear' })).toBe(true);
+        // an unknown operation returns nothing rather than throwing
+        expect(call({ key: 'a', type: 'unknown' as any })).toBeNull();
+    });
+
+    test('secure settings are read, written, deleted, cleared, and probed', () => {
+        const appController = createAppController();
+        initEventOther(appController);
+        const secureSetting = findOnHandler('main:app:secure-setting');
+        const call = (data: Record<string, any>) => {
+            const event: any = {};
+            secureSetting(event, data);
+            return event.returnValue;
+        };
+
+        expect(call({ key: 'a', type: 'get' })).toBe('stored-secret');
+        expect(call({ key: 'a', type: 'set', value: 'sk-key' })).toBe(true);
+        expect(
+            appController.settingManager.setSecureSetting,
+        ).toHaveBeenCalledWith('a', 'sk-key');
+        expect(call({ key: 'a', type: 'delete' })).toBe(true);
+        expect(
+            appController.settingManager.deleteSecureSetting,
+        ).toHaveBeenCalledWith('a');
+        expect(call({ key: '', type: 'clear' })).toBe(true);
+        expect(
+            appController.settingManager.clearSecureSettings,
+        ).toHaveBeenCalled();
+        expect(call({ key: '', type: 'is-available' })).toBe(true);
         // an unknown operation returns nothing rather than throwing
         expect(call({ key: 'a', type: 'unknown' as any })).toBeNull();
     });

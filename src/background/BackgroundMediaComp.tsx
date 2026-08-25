@@ -49,11 +49,6 @@ type PropsType = {
         event?: MouseEvent<HTMLElement>,
     ) => OptionalPromise<ContextMenuItemType[]>;
     sortFilePaths?: (filePaths: string[]) => string[];
-    onItemsAdding?: (
-        dirSource: DirSource,
-        contextMenuItems: ContextMenuItemType[],
-        event: any,
-    ) => void;
     genExtraItemContextMenuItems?: (filePath: string) => ContextMenuItemType[];
     itemFillingClassname?: string;
 };
@@ -166,11 +161,6 @@ export default function BackgroundMediaComp(props: Readonly<PropsType>) {
                                       extensions:
                                           getMimetypeExtensions(backgroundType),
                                   }
-                        }
-                        onItemsAdding={
-                            props.onItemsAdding === undefined
-                                ? undefined
-                                : props.onItemsAdding.bind(null, dirSource)
                         }
                     />
                 )}

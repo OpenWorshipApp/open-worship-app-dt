@@ -229,6 +229,131 @@ describe('ElectronSettingManager', () => {
         expect(manager.getAllClientSettingKeys()).toEqual([]);
     });
 
+    test('encrypts secure settings and never writes the plaintext', () => {
+        readFileSync.mockReturnValue('{}');
+        const manager = new ElectronSettingManager();
+
+        manager.setSecureSetting('ai-setting-secret', 'sk-openai');
+
+        expect(manager.getSecureSetting('ai-setting-secret')).toBe('sk-openai');
+        const written = writeFileSync.mock.calls.at(-1)?.[1] as string;
+        expect(written).not.toContain('sk-openai');
+        expect(JSON.parse(written).secureSetting['ai-setting-secret']).toBe(
+            Buffer.from('enc:sk-openai', 'utf8').toString('base64'),
+        );
+        // not the coerce-to-null of `setClientSetting`: a non-string must not
+        // overwrite a real credential
+        manager.setSecureSetting('ai-setting-secret', 12);
+        expect(manager.getSecureSetting('ai-setting-secret')).toBe('sk-openai');
+        expect(manager.getSecureSetting('missing')).toBeNull();
+
+        manager.deleteSecureSetting('ai-setting-secret');
+        expect(manager.getSecureSetting('ai-setting-secret')).toBeNull();
+    });
+
+    test('reads back an encrypted value written by an earlier run', () => {
+        readFileSync.mockReturnValue(
+            JSON.stringify({
+                secureSetting: {
+                    'ai-setting-secret': Buffer.from(
+                        'enc:sk-openai',
+                        'utf8',
+                    ).toString('base64'),
+                },
+            }),
+        );
+        const manager = new ElectronSettingManager();
+
+        expect(manager.getSecureSetting('ai-setting-secret')).toBe('sk-openai');
+        // the second read is served from the cache, so the OS is hit once
+        expect(manager.getSecureSetting('ai-setting-secret')).toBe('sk-openai');
+        expect(
+            electronMockState.safeStorage.decryptString,
+        ).toHaveBeenCalledTimes(1);
+
+        manager.clearSecureSettings();
+        expect(manager.getSecureSetting('ai-setting-secret')).toBeNull();
+    });
+
+    test('drops a blob it cannot decrypt, e.g. a profile copied between users', () => {
+        const consoleLogSpy = vi
+            .spyOn(console, 'log')
+            .mockImplementation(() => {});
+        try {
+            readFileSync.mockReturnValue(
+                JSON.stringify({
+                    secureSetting: {
+                        'ai-setting-secret':
+                            Buffer.from('from-another-user').toString('base64'),
+                    },
+                }),
+            );
+            const manager = new ElectronSettingManager();
+
+            expect(manager.getSecureSetting('ai-setting-secret')).toBeNull();
+            // dropped, so the UI reads "not set" rather than showing a saved
+            // credential nothing can use
+            expect(manager.settingObject.secureSetting).toEqual({});
+        } finally {
+            consoleLogSpy.mockRestore();
+        }
+    });
+
+    test('keeps credentials for the session but off disk with no OS store', () => {
+        electronMockState.safeStorage.isEncryptionAvailable.mockReturnValue(
+            false,
+        );
+        readFileSync.mockReturnValue(
+            JSON.stringify({
+                secureSetting: { 'ai-setting-secret': 'c3RhbGU=' },
+            }),
+        );
+        const manager = new ElectronSettingManager();
+
+        manager.setSecureSetting('ai-setting-secret', 'sk-openai');
+
+        expect(manager.getSecureSetting('ai-setting-secret')).toBe('sk-openai');
+        // usable now, but nothing was written, and the stale blob is gone so it
+        // cannot resurrect once the keyring unlocks
+        expect(manager.settingObject.secureSetting).toEqual({});
+        expect(
+            electronMockState.safeStorage.encryptString,
+        ).not.toHaveBeenCalled();
+    });
+
+    test('strips legacy cleartext credentials on load, exactly once', () => {
+        readFileSync.mockReturnValue(
+            JSON.stringify({
+                clientSetting: {
+                    'ai-setting': JSON.stringify({
+                        openAIAPIKey: 'sk-openai',
+                        isAutoPlay: true,
+                    }),
+                    'selected-parent-dir': 'C:\data',
+                },
+            }),
+        );
+        const manager = new ElectronSettingManager();
+
+        expect(writeFileSync).toHaveBeenCalledTimes(1);
+        const written = writeFileSync.mock.calls[0][1] as string;
+        expect(written).not.toContain('sk-openai');
+        expect(manager.getClientSetting('ai-setting')).toBe(
+            JSON.stringify({ isAutoPlay: false }),
+        );
+        expect(manager.getClientSetting('selected-parent-dir')).toBe('C:\data');
+
+        // an already clean file must not be rewritten on the next launch
+        writeFileSync.mockClear();
+        readFileSync.mockReturnValue(
+            JSON.stringify({
+                clientSetting: { 'ai-setting': JSON.stringify({}) },
+            }),
+        );
+        new ElectronSettingManager();
+        expect(writeFileSync).not.toHaveBeenCalled();
+    });
+
     test('a failed write is logged instead of crashing the app', () => {
         const consoleLogSpy = vi
             .spyOn(console, 'log')

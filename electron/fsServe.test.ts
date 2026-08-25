@@ -180,6 +180,7 @@ describe('fsServe', () => {
                     'content-type',
                     'x-api-key',
                     'x-goog-api-key',
+                    'ocp-apim-subscription-key',
                 ],
                 'access-control-allow-methods': [
                     'GET',

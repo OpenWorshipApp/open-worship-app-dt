@@ -48,6 +48,7 @@ import {
     type PptxToHtmlsParamsType,
 } from './msHelpers';
 import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
+import { captureOAuthRedirectUrl } from './oauthHelpers';
 
 const { dialog, ipcMain, app } = electron;
 
@@ -363,6 +364,17 @@ export function initFinderEvent() {
 }
 
 export function initEventOther(appController: ElectronAppController) {
+    // OAuth sign-in (e.g. CCLI SongSelect): the consent page must live in a
+    // real window the main process controls, so the renderer only receives
+    // the captured redirect URL back.
+    onAsync(
+        ipcMain,
+        'main:app:oauth-authorize',
+        (data: { authorizeUrl: string; redirectUriPrefix: string }) => {
+            return captureOAuthRedirectUrl(data);
+        },
+    );
+
     onAsync(
         ipcMain,
         'main:app:tar-extract',
@@ -700,6 +712,40 @@ export function initEventOther(appController: ElectronAppController) {
             } else if (type === 'clear') {
                 appController.settingManager.clearClientSettings();
                 returnValue = true;
+            }
+            event.returnValue = returnValue;
+        },
+    );
+
+    // Sibling of `main:app:client-setting` for credentials. Same shape, but the
+    // values are encrypted at rest by `safeStorage`. There is deliberately no
+    // `get-all-keys`: enumerating secret key names buys nothing.
+    ipcMain.on(
+        'main:app:secure-setting',
+        (
+            event,
+            data: {
+                key: string;
+                type: 'get' | 'set' | 'delete' | 'clear' | 'is-available';
+                value?: any;
+            },
+        ) => {
+            const { key, type, value } = data;
+            const { settingManager } = appController;
+            let returnValue: any = null;
+            if (type === 'get') {
+                returnValue = settingManager.getSecureSetting(key);
+            } else if (type === 'set') {
+                settingManager.setSecureSetting(key, value);
+                returnValue = true;
+            } else if (type === 'delete') {
+                settingManager.deleteSecureSetting(key);
+                returnValue = true;
+            } else if (type === 'clear') {
+                settingManager.clearSecureSettings();
+                returnValue = true;
+            } else if (type === 'is-available') {
+                returnValue = settingManager.checkIsSecureStorageAvailable();
             }
             event.returnValue = returnValue;
         },

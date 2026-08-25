@@ -2,7 +2,7 @@ import { type SyntheticEvent, useCallback } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import LoadingComp from '../../others/LoadingComp';
-import { getAISetting } from '../../helper/ai/aiHelpers';
+import { getAIIsAutoPlay } from '../../helper/ai/aiHelpers';
 import { playMediaElement } from '../../helper/mediaHelpers';
 import appProvider from '../../server/appProvider';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
@@ -73,10 +73,9 @@ export default function AudioPlayerComp({
         <audio
             className="verse-audio"
             ref={(element) => {
-                const openAISetting = getAISetting();
                 if (
                     appProvider.isPageReader &&
-                    openAISetting.isAutoPlay &&
+                    getAIIsAutoPlay() &&
                     element?.checkVisibility()
                 ) {
                     playMediaElement(element);

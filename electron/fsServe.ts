@@ -201,6 +201,7 @@ export function initCustomSchemeHandler() {
                           'content-type',
                           'x-api-key',
                           'x-goog-api-key',
+                          'ocp-apim-subscription-key',
                       ],
             );
             setResponseHeader(

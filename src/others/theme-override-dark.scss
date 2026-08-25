@@ -311,6 +311,19 @@ $resizer-color: rgb(73, 103, 123);
   }
 
   #app-setting {
+    // Others tab service rows: the hue of the state rail and its pill. These
+    // need a value per theme -- Bootstrap's mid-tone success/warning read on a
+    // light shell but sink into this one, and the `-text-emphasis` pair does
+    // the reverse. Neither is `--app-on-air`: nothing in Settings is live on a
+    // congregation screen.
+    .app-setting-others-ready {
+      --app-setting-others-state: #75b798;
+    }
+
+    .app-setting-others-attention {
+      --app-setting-others-state: #ffda6a;
+    }
+
     .lang {
       .options {
         background-color: var(--bs-gray-800);

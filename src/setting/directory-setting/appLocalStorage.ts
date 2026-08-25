@@ -1,6 +1,7 @@
 import { handleError } from '../../helper/errorHelpers';
 import CacheManager from '../../others/CacheManager';
 import { appHomeStorage } from '../../server/appHomeStorage';
+import { appSecureStorage } from '../../server/appSecureStorage';
 import {
     fsCheckDirExist,
     fsDeleteFile,
@@ -182,6 +183,11 @@ class AppLocalStorage {
                 }),
             );
             appHomeStorage.clear();
+            // Credentials live in their own store; leaving them behind after a
+            // "Clear All Settings" strands the app half configured -- e.g.
+            // `clientId` gone but the refresh token alive, so SongSelect still
+            // reports signed in against credentials that no longer exist.
+            appSecureStorage.clear();
         } catch (error) {
             handleError(error);
         }

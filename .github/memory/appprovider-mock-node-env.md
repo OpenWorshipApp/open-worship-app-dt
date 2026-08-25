@@ -1,35 +1,49 @@
 ---
 name: appprovider-mock-node-env
-description: appProvider touches `document` at module scope, so any NODE-env test whose import chain reaches langHelpers dies while the file is still being imported
+description: There is NO appProvider mock any more — a test that reaches it must `vi.mock` it in its own file, and it still touches `document` at module scope
 metadata:
   type: project
 ---
 
-`src/server/appProvider.ts` runs `document.addEventListener('mouseenter', …)` at module
-scope, and `appProvider.mock.ts` read `globalThis.document.title` the same way. Both are
-reached from `src/lang/langHelpers.ts`, which nearly every `helper/` module imports for
-`tran`.
+`src/server/appProvider.ts` reads the Electron preload bridge off `globalThis.provider` and
+runs `document.addEventListener('mouseenter', …)` at module scope. It is reached from
+`src/lang/langHelpers.ts`, which nearly every `helper/` module imports for `tran`, so it
+lands in test files that never mention it.
 
-**Why it matters:** a NODE-environment test (`vitest.config.ts` picks the environment per
-file; `EditingHistoryManager.test.ts`, `dataArchiveHelpers.test.ts` and friends are node)
-that gains ONE new import reaching `langHelpers` does not fail an assertion — it throws
-`ReferenceError: document is not defined` while the file is still being IMPORTED, so every
-test in it fails at once and the stack points at `appProvider`, not at the import that
-reached it. Adding `import { X } from '../helper/DirSource'` to `EditingHistoryManager` for
-a single string constant took 32 tests down this way on 2026-08-06.
+**There is no shared mock and no fallback (2026-08-24, by the user's explicit decision).**
+`appProvider.mock.ts` — a 1200-line browser fake with a virtual fs, path/crypto helpers and
+a message bus — was deleted in `3154830e` so it stops shipping in the renderer bundle. A
+test-only revival (moved to `src/test-setup/` and injected through a `setupFiles` entry) was
+then removed too: *"remove all mock for app-provider, I don't need mocking anymore."*
+**64 test files were deleted with it** — everything that only passed because that fake
+existed: `appLocalStorage`, `fileHelpers`, `langHelpers`, `bibleXML*`, `dataArchiveHelpers`,
+`documentVariants`, every `presentingFlow*` unit test, the toast/popup/canvas suites. Do not
+re-add it in any form.
+
+**Why it matters:** with nothing on `globalThis.provider`, the module throws
+`TypeError: Cannot read properties of undefined (reading 'isPageReader')` at line 239 while
+the test file is still being IMPORTED. Every test in that file dies at once and the stack
+points at `appProvider`, not at the import that reached it. A node-env test hits the same
+wall one step earlier with `ReferenceError: document is not defined`.
 
 **How to apply:**
 
-- The mock now reads `globalThis.document?.title ?? ''` / `?.hasFocus() ?? false`, so IT is
-  safe. `appProvider.ts` itself is NOT guarded — the real module is browser-only by design.
-- So the rule stands: **do not add an import that reaches `langHelpers` to a module a
-  node-env test loads.** Put shared constants in a LEAF instead — that is why
-  `src/editing-manager/editingHistoryPathHelpers.ts` (`HISTORY_DIR_NAME_SUFFIX`,
-  `toEditingHistoryFolderPath`) exists rather than exporting them from `DirSource`.
-- The same leaf fixes a second trap: `dataArchiveHelpers.test.ts` mocks `DirSource`
-  wholesale, so a constant imported THROUGH it came back `undefined` and was baked silently
-  into a regex. A mocked module's named exports are `undefined` unless the mock lists them —
-  import shared values from a module nobody mocks.
+- A new test whose import graph reaches `appProvider` must stub it in its own file:
+  `vi.mock('../server/appProvider', () => ({ default: { …only what it calls… } }))`.
+  ~95 surviving test files do exactly this — copy the nearest one rather than inventing a
+  shape. `src/others/CacheManager.test.ts` (hoisted, mutable flags) and
+  `src/bible-list/Bible.test.ts` are good models.
+- `src/server/appProvider.test.ts` is the exception that must NOT mock it: it sets
+  `globalThis.provider` by hand to prove the real injection path, and asserts the module
+  deletes the global afterwards.
+- Prefer keeping shared constants in a LEAF module so node-env tests never reach
+  `langHelpers` at all — that is why `src/editing-manager/editingHistoryPathHelpers.ts`
+  (`HISTORY_DIR_NAME_SUFFIX`, `toEditingHistoryFolderPath`) exists rather than exporting
+  them from `DirSource`. Adding one such import to `EditingHistoryManager` took 32 tests
+  down on 2026-08-06.
+- A mocked module's named exports are `undefined` unless the mock lists them: import shared
+  values from a module nobody mocks. `dataArchiveHelpers.test.ts` baked an `undefined`
+  constant silently into a regex this way.
 - Symptom to recognize: a whole test FILE failing with one error whose stack is
   `appProvider.ts` → `langHelpers.ts` → <the module you just touched>. Check the newest
-  import, not the assertion.
+  import, not the assertion. See [[vitest-env-leak-flakes]].

@@ -21,7 +21,43 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-22** (**W-34 gains the "Putting the KJV back" note — the
+**workflowsVersion: 2026-08-24** (**new W-35 — bring a song in from CCLI SongSelect.**
+Settings → Others gains a **SongSelect Integration** card (credentials saved on blur, OAuth
+**Sign In** opening a real CCLI window, **Sign Out**), and while signed in the Documents
+list menu carries **Import From SongSelect**: a floating search panel that
+downloads a song's lyrics and lands them as a ready-to-present `.owl` lyric document.
+Driven live 2026-08-24 against a stand-in SongSelect server (CCLI retired new partner
+signups, so no real credentials): card + saves + Sign-In gating, the canceled-sign-in toast,
+the gated menu entry following the signed-in state with no reload, debounced search with
+pagination and disabled unauthorized rows, an import previewing slide-per-part, and
+duplicate-import suffixing. The completed hand-off on CCLI's real consent page is
+source-verified only, and W-35 says so.
+**Same-day addendum: new W-36 — import a public domain song, no account needed.** The
+Documents list menu now always carries **Import From Public Domain Songs**:
+a floating panel over a 36-hymn catalog embedded in the app (texts fetched from
+hymnary.org / The Cyber Hymnal and validated against open-lyric), browsable with no typing,
+filtered as you type, one click to land a ready-to-present `.owl` whose slides follow the
+real singing order (chorus repeated after every verse). Driven live 2026-08-24: menu entry
+present with SongSelect signed out and in, all 36 rows with count badge, instant filter,
+Blessed Assurance imported (`Structure: V1CV2CV3C`) and previewing Verse 1 → Chorus →
+Verse 2 → Chorus → Verse 3 → Chorus.
+New matrix rows ST-52, PL-103, PL-104, PL-105.
+**Same-day addendum: the `Add Items` sub menu is gone.** Every way of filling a file list —
+**Add Local Files**, **Import**, **Import From URL**, **Download From URL**,
+**Import From Public Domain Songs**, **Import From SongSelect**, **Paste Image**,
+**Add URL** — now sits directly in the list menu (**⋮ More Options**, or a right-click on
+the empty list body) instead of one step down, so every one of them is a single click and an
+empty folder advertises all of them as its own buttons. Nothing was added or removed, only
+un-nested; the background tabs also stop listing their download entries twice. Every
+`Add Items → X` step below is now just `X`. Driven live 2026-08-24 over the Documents list
+and the Colors/Images/Videos/Webs/Audios background tabs.
+**Same-day addendum: an imported public domain song keeps a link to where its words came
+from — W-36 step 4 rewritten.** Every hymn in the catalog now stores the hymnary.org page
+its text was transcribed from, and the import saves that link with the document, so the
+song ends with one extra slide named **Hymnary.org** showing that page. Driven live
+2026-08-24: an imported Amazing Grace previewed Info → Verse 1-4 → **Hymnary.org**, the
+slide showing hymnary.org's "Amazing grace! (how sweet the sound)" page.)
+Previous: **2026-08-22** (**W-34 gains the "Putting the KJV back" note — the
 KJV row now has a Reset Bible XML button.** Only the row whose code is `KJV` shows it; it
 replaces that translation with the copy embedded in the app, the same data the empty-state
 **Create KJV Bible XML** writes, and it is destructive with no undo. Verified live
@@ -1475,7 +1511,7 @@ travels as its own bundle, with everything attached to it.
    (and that background's image or video file), any video placed inside its slides, and
    its colour note.
 4. On the other machine, right-click an empty part of the **Documents** list →
-   **Add Items** → **Import** (នាំចូល) and pick that file — or just **drag the
+   **Import** (នាំចូល) and pick that file — or just **drag the
    `.owadoc.tar.gz` (or `.owadoc.enc`) file from your file manager onto the Documents
    list**, which imports it the same way. A protected bundle asks for its password
    first; an ordinary one never does. 📸
@@ -1483,7 +1519,7 @@ travels as its own bundle, with everything attached to it.
    its background re-attached and its colour note restored, so it is ready to present
    straight away.
 6. If the bundle is on a web server or a machine sharing it over the local network, use
-   **Add Items** → **Import From URL** (នាំចូលពី URL) instead and paste the link. The
+   **Import From URL** (នាំចូលពី URL) instead and paste the link. The
    download goes to a temporary folder, is imported exactly as above, and is then
    deleted.
 
@@ -1498,7 +1534,7 @@ travels as its own bundle, with everything attached to it.
 >
 > If you export the same document twice, the second file is named
 > `<name>.owadoc.tar (1).gz`. That name no longer ends in `.owadoc.tar.gz`, so dragging
-> _that_ copy onto the list will not import it — use **Add Items → Import** and pick it
+> _that_ copy onto the list will not import it — use **Import** and pick it
 > instead (or rename it first).
 
 _Verify: PL-77..PL-80, CM-36, CM-37._
@@ -2085,3 +2121,84 @@ matters** — the last two take their suggestions from the language you set firs
 > because there is nothing left to create.
 
 _Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, RD-11, LT-01._
+
+### W-35 — Bring a song in from CCLI SongSelect
+
+If your church has CCLI **SongSelect Partner API** access, the app can search SongSelect
+and turn a song straight into a lyric document — no retyping. You need the API
+credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
+**Redirect URI** you registered; some clients also have a **Client Secret**).
+
+> CCLI has retired new partner signups, so this only works with credentials you already
+> hold. Everything below was driven live against a stand-in SongSelect server; the final
+> sign-in hand-off to CCLI's real consent page is source-verified but **not observed**
+> end-to-end, for want of real credentials.
+
+1. Open **Settings → Others** (ផ្សេងៗ). Between the AI-key card and **Extra Binaries**
+   there is a card headed **SongSelect Integration** (ការភ្ជាប់ SongSelect), with a
+   **SongSelect ↗** button that opens songselect.ccli.com in your browser. 📸
+2. Fill **Client ID**, **Subscription Key** and **Redirect URI** (and **Client Secret**
+   if you have one). Each field saves the moment you click away from it and gains a
+   green ✓. Until all three are filled, **Sign In** (ចូលគណនី) stays grey — hovering it
+   tells you what is missing.
+3. Click **Sign In**. A CCLI window opens for you to log in and approve. If you close
+   it instead, the app says **Sign in failed — Sign in was canceled**
+   (ការចូលគណនីត្រូវបានបោះបង់) and nothing changes. Once signed in, the card shows a
+   green **Signed in** (បានចូលគណនី) with a **Sign Out** (ចាកចេញពីគណនី) button, and the
+   app keeps the session refreshed by itself.
+4. Back in the presenter, open the **Documents** list's **⋮ More Options**. A new entry,
+   **Import From SongSelect** (នាំចូលពី SongSelect), now sits under
+   **Download From URL** — it is only there while you are signed in. 📸
+5. Click it. A floating **Import From SongSelect** panel opens (drag it anywhere; the
+   app remembers where you put it). Type in **Search songs** (ស្វែងរកចម្រៀង) — results
+   appear as you pause, with the writers, the CCLI song number, a line of the lyrics,
+   and a **Public Domain** (កម្មសិទ្ធិសាធារណៈ) badge where it applies. Page through
+   long result lists with the ‹ › arrows at the bottom. A song your account is not
+   licensed to take has its download button greyed out. 📸
+6. Click a song's ☁⬇ download button. A moment later the app confirms **Lyric document
+   created successfully** (បានបង្កើតឯកសារអត្ថបទចម្រៀងដោយជោគជ័យ) and the song appears
+   in your **Documents** list as a lyric (♪), named after its title. The panel stays
+   open, so you can keep downloading; pulling the same song twice keeps both —
+   the second becomes `<Title> (1)`. 📸
+7. Click the new row: it previews slide by slide — an **Info** slide with the title,
+   writers and the `CCLI Song #` copyright line, then one slide per part (**Verse 1**,
+   **Chorus**, …). Present it like any other lyric (W-04), or polish the wording in the
+   lyric editor first. 📸
+
+> **If a search or download fails**, the reason shows right in the panel or as a toast:
+> too many requests in a row asks you to wait a moment; a lapsed session says
+> **SongSelect sign-in expired, please sign in again in Settings**; no internet says
+> **Could not reach SongSelect**.
+
+_Verify: ST-52, PL-103, PL-104._
+
+### W-36 — Import a public domain song (no account needed)
+
+The app ships with a small hymnal of classic English public-domain songs — Amazing Grace,
+It Is Well with My Soul, Holy Holy Holy, and some three dozen more. They import as lyric
+documents with **no sign-in, no credentials and no internet**, so this works on a fresh
+install anywhere.
+
+1. In the presenter, open the **Documents** list's **⋮ More Options** →
+   **Import From Public Domain Songs**
+   (នាំចូលពីចម្រៀងកម្មសិទ្ធិសាធារណៈ). Unlike the SongSelect entry above it is
+   *always* there. 📸
+2. A floating panel opens listing the whole catalog straight away — each row shows the
+   title, the writers, the year, and the first line, with a count at the top right of the
+   search box (36 at the time of writing). Scroll to browse, or type in **Search songs**
+   (ស្វែងរកចម្រៀង) to filter instantly by title or writer — the count follows. 📸
+3. Click a song's ☁⬇ download button. The app confirms **Lyric document created
+   successfully** (បានបង្កើតឯកសារអត្ថបទចម្រៀងដោយជោគជ័យ) and the song appears in your
+   **Documents** list as a lyric (♪) named after its title. The panel stays open so you
+   can keep importing.
+4. Click the new row: it previews an **Info** slide (title, writer, `Public Domain` with
+   the year) and then the song in **real singing order** — a hymn with a refrain repeats
+   its **Chorus** slide after every verse (Blessed Assurance previews Verse 1, Chorus,
+   Verse 2, Chorus, Verse 3, Chorus). Present it like any other lyric (W-04), or adjust
+   the words in the lyric editor first — they are ordinary editable lyric documents. 📸
+5. Scroll to the **end** of that preview: after the last verse sits one more slide named
+   **Hymnary.org** — the page the song's words were taken from, kept with the document as
+   an attachment so you can always check the wording against the source. It behaves like
+   any other slide (you can present it, or simply leave it at the end). 📸
+
+_Verify: PL-105._
