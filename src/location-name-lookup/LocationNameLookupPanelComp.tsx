@@ -15,6 +15,7 @@ import {
     PAGE_SIZE,
     getNameTypeIconClass,
     getPlainReferenceText,
+    getRecordKjvName,
 } from './lookupPresentationHelpers';
 import type { LookupManagersType } from './lookupDataHelpers';
 import { useLookupLangPresentation } from './lookupLangHelpers';
@@ -192,6 +193,7 @@ function RenderLookupBodyComp({
                     return {
                         id: record.id,
                         name: record.name,
+                        kjvName: getRecordKjvName(record),
                         title: getPlainReferenceText(record.title),
                         iconClass: getNameTypeIconClass(record.type),
                     };
@@ -215,6 +217,7 @@ function RenderLookupBodyComp({
                     return {
                         id: record.id,
                         name: record.name,
+                        kjvName: getRecordKjvName(record),
                         title: getPlainReferenceText(record.title),
                         iconClass: LOCATION_ICON_CLASS,
                     };

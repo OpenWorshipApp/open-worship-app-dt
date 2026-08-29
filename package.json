@@ -147,7 +147,7 @@
         "@vitejs/plugin-basic-ssl": "^2.3.0",
         "@vitejs/plugin-react-swc": "^4.3.3",
         "@vitest/coverage-v8": "^4.1.10",
-        "bible-note": "https://github.com/raksa/bible-note-dist#0.2.2-dev",
+        "bible-note": "https://github.com/raksa/bible-note-dist#0.4.0-dev",
         "bootstrap": "^5.3.8",
         "bootstrap-icons": "^1.13.1",
         "chrome-devtools-mcp": "^1.6.0",

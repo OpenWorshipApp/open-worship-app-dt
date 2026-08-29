@@ -29,6 +29,12 @@ export type LookupRecordLabelsType = {
     version: number;
     // The record's display name.
     labels: string[];
+    // The record's ENGLISH name, shown beside a translated label the way a
+    // bible book reads `លោកុប្បត្តិ (Genesis)`. Empty for every record when the
+    // sidecar is the English one — its labels already ARE the English names —
+    // and for a record the translation does not cover, whose label stayed
+    // English. Still written in full so the array can never mis-index.
+    kjvNames: string[];
     // `MentionNameType` for a name record, '' for a location.
     types: string[];
     // One-line description, reference tokens stripped and truncated.
@@ -38,4 +44,4 @@ export type LookupRecordLabelsType = {
 // Bumped whenever the generated shape or the needle derivation changes, so a
 // cache written by an older build is rejected instead of silently misused.
 // Shared by BOTH files: they are written together and expire together.
-export const LOOKUP_TEXT_INDEX_VERSION = 2;
+export const LOOKUP_TEXT_INDEX_VERSION = 3;

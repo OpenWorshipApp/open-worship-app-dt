@@ -79,6 +79,7 @@ function RenderRecordListComp({
                             record={{
                                 id: record.recordId,
                                 name: record.label,
+                                kjvName: record.kjvName,
                                 title: record.title,
                                 iconClass: record.iconClass,
                             }}

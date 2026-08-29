@@ -12,6 +12,8 @@ import {
     getNameTypeIconClass,
     getNameTypeSingularLabel,
     getPlainReferenceText,
+    getRecordDisplayName,
+    getRecordKjvName,
 } from './lookupPresentationHelpers';
 
 describe('name-type presentation', () => {
@@ -145,6 +147,31 @@ describe('stripping inline reference tokens for a one-line summary', () => {
     test('leaves non-reference links alone', () => {
         expect(getPlainReferenceText('[Wiki](https://example.com)')).toBe(
             '[Wiki](https://example.com)',
+        );
+    });
+});
+
+describe('the English name beside a translated one', () => {
+    test('shows the KJV name of a translated record', () => {
+        expect(
+            getRecordKjvName({ name: 'លោកុប្បត្តិ', kjvName: 'Genesis' }),
+        ).toBe('Genesis');
+        expect(
+            getRecordDisplayName({ name: 'លោកុប្បត្តិ', kjvName: 'Genesis' }),
+        ).toBe('លោកុប្បត្តិ (Genesis)');
+    });
+
+    // The KJV dataset itself carries none: its `name` already IS the English
+    // one, and a `Moses (Moses)` row says nothing twice over.
+    test('adds nothing when the record carries no other name', () => {
+        expect(getRecordKjvName({ name: 'Moses', kjvName: null })).toBe('');
+        expect(getRecordKjvName({ name: 'Moses' })).toBe('');
+        expect(getRecordKjvName({ name: 'Moses', kjvName: '  ' })).toBe('');
+        expect(getRecordKjvName({ name: 'Moses', kjvName: ' Moses ' })).toBe(
+            '',
+        );
+        expect(getRecordDisplayName({ name: 'Moses', kjvName: null })).toBe(
+            'Moses',
         );
     });
 });

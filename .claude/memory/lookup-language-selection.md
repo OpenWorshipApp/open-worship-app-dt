@@ -1,6 +1,6 @@
 ---
 name: lookup-language-selection
-description: The names/locations lookup has its own language setting; the in-text index stays English forever and only ONE language's dataset is ever loaded
+description: The names/locations lookup has its own language setting; the in-text index stays English forever, only ONE language's dataset is ever loaded, and a translated record shows and is searchable by its English name
 metadata:
   type: project
 ---
@@ -29,6 +29,27 @@ Three things about it are easy to get wrong:
   the change and the next `acquireLookupData` there may be no consumer left to
   ask. Both it and `genLookupFileStore` carry a generation counter so a load
   already in flight cannot install itself afterwards.
+
+**A translated record carries its ENGLISH name (`kjvName`), added 2026-08-29.**
+`bible-note` 0.4.0-dev parses it and folds it into the same `searchText` as
+`name`/`oldName` (ranked `min(rank(name), rank(kjvName))`), so **searching in
+either language is the DEP's job, not the app's** — do not build a second index
+for it. The app only RENDERS it, `ម៉ូសេ (Moses)`, through one helper:
+
+- `getRecordKjvName` / `getRecordDisplayName` live in `lookupPresentationHelpers`
+  and deliberately REIMPLEMENT `bible-note`'s `getMentionKjvName` rather than
+  import it — a value import would put that ~46MB graph in the eager chunk of
+  every surface that renders before the dataset loads. Same reason as
+  `normalizeNameType` right above them.
+- Both return nothing when `kjvName` is empty or equals `name`, which is what
+  keeps the English dataset from printing `Moses (Moses)`.
+- The "in your reading" list has no manager, so it reads a `kjvNames` array in
+  the labels sidecar. `verseTextIndexBuilder` fills it from the ENGLISH label the
+  first pass already wrote, NOT from the translated package's `kjvName` field —
+  that covers a record the translation misses too. `LOOKUP_TEXT_INDEX_VERSION`
+  went to 3 for it, and `checkIsRecordLabelsValid` length-checks it like the
+  other arrays.
+- The in-text underlines are untouched: they match KJV wording, already English.
 
 The language also decides how the records are WRITTEN, not only their words
 (`useLookupLangPresentation`): the three surfaces take its `fontFamily`

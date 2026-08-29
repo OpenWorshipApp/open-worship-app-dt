@@ -55,6 +55,16 @@
   }
 }
 
+// The English name beside a translated one. Dimmed rather than smaller: the
+// name it follows is already at the surface's base size, and shrinking a Latin
+// gloss under a Khmer name made it unreadable at the app's default zoom.
+//
+// NOT nested under `.location-name-lookup`: a detail panel shows it in the
+// floating widget's TITLE BAR, which is chrome outside that root.
+.location-name-lookup__kjv-name {
+  opacity: 0.75;
+}
+
 // A record's detail panel. It lives in its own floating widget, so only the
 // body is styled here — the chrome comes from `FloatingWidgetComp`.
 .location-name-lookup-detail-widget .floating-widget__content {

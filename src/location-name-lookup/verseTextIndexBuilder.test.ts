@@ -75,6 +75,10 @@ describe('building the derived lookup files', () => {
         const built = await buildLookupTextIndex('en');
 
         expect(h.readLangCodes).toStrictEqual(['en']);
+        // Nothing to gloss: an English label already IS the English name.
+        expect(built!.recordLabels.kjvNames).toStrictEqual(
+            built!.index.ids.map(() => ''),
+        );
         const labelByIdMap = new Map(
             built!.index.ids.map((id, idIndex) => {
                 return [id, built!.recordLabels.labels[idIndex]];
@@ -158,6 +162,26 @@ describe('building the derived lookup files', () => {
             expect(built!.recordLabels.labels).toHaveLength(
                 built!.index.ids.length,
             );
+        });
+
+        // Shown beside the translated label the way a bible book reads
+        // `លោកុប្បត្តិ (Genesis)`.
+        test('keeps the English name of every relabelled record', async () => {
+            const built = await buildLookupTextIndex('km');
+
+            const { ids } = built!.index;
+            expect(built!.recordLabels.kjvNames[ids.indexOf('id-abram')]).toBe(
+                'Abram',
+            );
+            expect(built!.recordLabels.kjvNames[ids.indexOf('id-haran')]).toBe(
+                'Haran',
+            );
+            // Untranslated: its label already IS the English name, and
+            // repeating it would print `Satan (Satan)`.
+            expect(built!.recordLabels.kjvNames[ids.indexOf('id-satan')]).toBe(
+                '',
+            );
+            expect(built!.recordLabels.kjvNames).toHaveLength(ids.length);
         });
 
         // The index matches KJV wording in rendered verse text, so its surface

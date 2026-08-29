@@ -202,7 +202,8 @@ function checkIsRecordLabelsValid(value: LookupRecordLabelsType) {
     return (
         Array.isArray(value.labels) &&
         value.types?.length === value.labels.length &&
-        value.titles?.length === value.labels.length
+        value.titles?.length === value.labels.length &&
+        value.kjvNames?.length === value.labels.length
     );
 }
 

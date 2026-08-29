@@ -29,6 +29,7 @@ import {
 import {
     LOCATION_ICON_CLASS,
     getNameTypeIconClass,
+    getRecordKjvName,
 } from './lookupPresentationHelpers';
 import {
     buildLocationSummary,
@@ -201,6 +202,9 @@ function RenderDetailPanelComp({
     const record = nameRecord ?? locationRecord;
     // `panel.name` stays the provisional title until the body has resolved.
     const title = record?.name ?? resolvedVerseTitle ?? panel.name;
+    // A verse panel's title is a reference, not a record name, so there is
+    // never an English one to add to it.
+    const kjvName = record === null ? '' : getRecordKjvName(record);
     const handleCopy = async () => {
         if (panel.kind === 'verse') {
             const verseText = verseTextRef.current;
@@ -282,6 +286,16 @@ function RenderDetailPanelComp({
                 >
                     <i className={getPanelIconClass(panel, managers)} />
                     <span className="text-truncate">{title}</span>
+                    {kjvName === '' ? null : (
+                        <span
+                            className={
+                                'text-truncate' +
+                                ' location-name-lookup__kjv-name'
+                            }
+                        >
+                            ({kjvName})
+                        </span>
+                    )}
                     {panel.kind === 'verse' ? (
                         <RenderOpenInLookupButtonComp
                             shortVerse={panel.target}

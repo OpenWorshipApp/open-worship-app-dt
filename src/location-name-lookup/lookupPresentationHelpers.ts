@@ -115,3 +115,33 @@ const MENTION_REFERENCE_TOKEN_REGEX = new RegExp(
 export function getPlainReferenceText(value: string): string {
     return value.replace(MENTION_REFERENCE_TOKEN_REGEX, '$1');
 }
+
+/**
+ * The English name worth showing beside a record's own name, or `''` when there
+ * is nothing to add — the KJV dataset itself, whose `name` already IS the
+ * English one, or a translated record that spells it identically.
+ *
+ * Shown the way a bible book reads in a translated UI: `លោកុប្បត្តិ (Genesis)`.
+ *
+ * Mirrors `bible-note`'s own `getMentionKjvName`, reimplemented here for the
+ * same reason as `normalizeNameType` above: this module is imported by surfaces
+ * that render before — and without — that ~46MB package, and a value import
+ * would put its whole graph in their eager chunk.
+ */
+export function getRecordKjvName(
+    record: Readonly<{ name: string; kjvName?: string | null }>,
+): string {
+    const kjvName = (record.kjvName ?? '').trim();
+    return kjvName === '' || kjvName === record.name.trim() ? '' : kjvName;
+}
+
+/**
+ * `name (KjvName)` as ONE string, for the places that cannot render two
+ * elements — a `title` tooltip, a clipboard summary.
+ */
+export function getRecordDisplayName(
+    record: Readonly<{ name: string; kjvName?: string | null }>,
+): string {
+    const kjvName = getRecordKjvName(record);
+    return kjvName === '' ? record.name : `${record.name} (${kjvName})`;
+}

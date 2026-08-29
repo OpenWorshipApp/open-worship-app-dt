@@ -2,6 +2,7 @@ import './LocationNameLookupPanelComp.scss';
 
 import type { DetailPanelKindType } from './detailPanelHelpers';
 import { openDetailPanel } from './detailPanelHelpers';
+import { getRecordDisplayName } from './lookupPresentationHelpers';
 
 /**
  * One record row — icon, name, one-line description — shared by the floating
@@ -15,6 +16,10 @@ import { openDetailPanel } from './detailPanelHelpers';
 export type LookupRecordItemType = {
     id: string;
     name: string;
+    // The record's English (KJV) name when the lookup language is not English,
+    // shown beside the translated one the way a bible book reads
+    // `លោកុប្បត្តិ (Genesis)`. Empty whenever there is nothing to add.
+    kjvName: string;
     title: string;
     iconClass: string;
 };
@@ -37,7 +42,7 @@ export default function RenderLookupRecordItemComp({
                     ' gap-2 px-2 py-1 rounded-0'
                 }
                 type="button"
-                title={record.title || record.name}
+                title={record.title || getRecordDisplayName(record)}
                 onClick={() => {
                     openDetailPanel({
                         kind,
@@ -50,6 +55,16 @@ export default function RenderLookupRecordItemComp({
                 <span className="d-flex flex-column location-name-lookup__text">
                     <span className="fw-semibold text-truncate">
                         {record.name}
+                        {record.kjvName ? (
+                            <span
+                                className={
+                                    'ms-1 fw-normal' +
+                                    ' location-name-lookup__kjv-name'
+                                }
+                            >
+                                ({record.kjvName})
+                            </span>
+                        ) : null}
                         {extraLabel ? (
                             <span className="ms-2 small fw-normal text-secondary">
                                 {extraLabel}

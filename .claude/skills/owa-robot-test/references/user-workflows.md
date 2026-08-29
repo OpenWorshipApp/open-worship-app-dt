@@ -21,7 +21,16 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-29n** (**W-13 rewritten: the Cross Reference view is
+**workflowsVersion: 2026-08-29o** (**W-29 steps 2 and 3, and W-30 step 3: a
+translated name now carries its English name beside it, and you can search in either
+language.** A Khmer record reads *ម៉ូសេ (Moses)* the way a Bible book reads *លោកុប្បត្តិ
+(Genesis)* — in the lookup list, in the "in your reading" panel, across the top of a record
+window, and in what the copy button copies — so a name you only know in English is still
+recognizable. Typing `Moses` finds him with Khmer records on screen, and typing `ម៉ូសេ` still
+does; the same holds for places. With **English** chosen nothing is added, because the name
+already is the English one. Verified live 2026-08-29, km and en, names and locations.)
+
+Previous: **2026-08-29n** (**W-13 rewritten: the Cross Reference view is
 restyled and now says what it holds.** The wall of bordered boxes is gone — references are
 grouped under their theme, hanging off one vertical rail, in reflowing columns, with a
 **7 Themes · 35 Verses** count above them; pointing at a verse lights its segment of the
@@ -1941,10 +1950,14 @@ your Bible reading.
    script and font** — the name across the top of a record window included — and the
    kind of each record — **People** (មនុស្ស), **Groups**
    (ក្រុម), **Places** (ទីកន្លែង) — is named in it too, in the filter and on each
-   record. 📸
+   record. Every record also carries its **English name in brackets** beside its own —
+   *ម៉ូសេ (Moses)*, *យេរូសាឡិម (Jerusalem)* — the way a Bible book reads
+   *លោកុប្បត្តិ (Genesis)*, so a name you only know in English is still recognizable.
+   With `en` chosen nothing is added: the name already is the English one. 📸
 3. Use the **Names** (ឈ្មោះ) and **Locations** (ទីកន្លែង) tabs to choose what you are
    looking for, and type in the search box. Each tab remembers what you typed, so you
-   can switch back and forth. The list updates as you type.
+   can switch back and forth. The list updates as you type. You may type in **either
+   language** — with Khmer records on screen, `Moses` and `ម៉ូសេ` both find him.
 4. On the **Names** tab the dropdown beside the tabs narrows the list by kind —
    **All types** (គ្រប់ប្រភេទ), **People** (មនុស្ស), **Groups** (ក្រុម),
    **Places** (ទីកន្លែង) and so on. These follow the **lookup** language from step 2,
@@ -1979,9 +1992,9 @@ your Bible reading.
     **Approximate location, the marker is an estimated point**, with an **Open in
     Google Maps** link. The map needs an internet connection; places without
     coordinates (Egypt, for example) simply show no map. 📸
-11. The copy button in a record window's title bar copies the whole entry — including
-    all of its verse references, whether or not you opened the **Verses** section —
-    ready to paste into a note or a document.
+11. The copy button in a record window's title bar copies the whole entry — its name
+    with the English one in brackets, and all of its verse references whether or not you
+    opened the **Verses** section — ready to paste into a note or a document.
 12. Closing the lookup window leaves the record windows you opened where they are.
     Each has its own **×**.
 
@@ -1993,7 +2006,7 @@ slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
 fixed set of nine, so only that one can be said in another language.
 
 _Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
-RD-64, RD-80, PM-126._
+RD-64, RD-80, RD-91, PM-126._
 
 ### W-30 — See who and where is in the passage you are reading
 
@@ -2016,7 +2029,9 @@ those exact verses — without searching for them one by one.
    (ទីកន្លែង), with a count beside each. 📸
 3. Every row shows the person or place, the verses of that passage where it comes up
    (`13:4, 13:22, 13:33, 13:34`), and a one-line description. A name that appears in
-   several verses is listed **once**, with all of its verses on the row.
+   several verses is listed **once**, with all of its verses on the row. Reading the
+   records in a language other than English, each row carries its **English name in
+   brackets** too — *យ៉ូហាន (John)* — exactly as the lookup list does.
 4. Open a second passage (split the reading area, or open another reference) and the
    panel grows a second block for it — so you can see the people of two passages at
    once. A passage with nobody in it says **No matches** (រកមិនឃើញ).
@@ -2039,7 +2054,7 @@ Bible** names it, and the **(KJV)** note beside the title only appears while tha
 still a King James one. What the list FINDS is always read from the King James text, and the
 underlined names in the verses themselves stay King James whatever you pick.
 
-_Verify: RD-72, RD-73, RD-74, RD-75, RD-76, RD-57, RD-80._
+_Verify: RD-72, RD-73, RD-74, RD-75, RD-76, RD-57, RD-80, RD-91._
 
 ---
 

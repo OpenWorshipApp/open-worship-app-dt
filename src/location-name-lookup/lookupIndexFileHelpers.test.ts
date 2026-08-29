@@ -90,6 +90,7 @@ vi.mock('./verseTextIndexBuilder', async () => {
                     labels: [label],
                     types: ['person'],
                     titles: ['a title'],
+                    kjvNames: [''],
                 },
             };
         },

@@ -76,6 +76,19 @@ function genRecordLabels(): LookupRecordLabelsType {
             'Ituraea',
         ],
         types: ['person', 'person', 'person', '', '', 'person', 'person', ''],
+        // A Khmer sidecar: the English name is kept beside the translated
+        // label. `Jordan` stands for a record the translation does not cover,
+        // whose label stayed English and so has nothing to add.
+        kjvNames: [
+            'Tiberius Caesar',
+            'Pontius Pilate',
+            'John the Baptist',
+            'Judaea',
+            '',
+            '',
+            'Herod the Tetrarch',
+            'Ituraea',
+        ],
         titles: [
             'Roman emperor',
             'governor of Judaea',
@@ -143,6 +156,19 @@ describe('collectVerseRecords', () => {
         expect(names[0].kind).toBe('name');
         expect(locations[0].iconClass).toBe('bi bi-geo-alt-fill');
         expect(locations[0].kind).toBe('location');
+    });
+
+    test('carries the English name beside a translated label', () => {
+        const { names, locations } = collectVerseRecords(
+            genIndex(),
+            genRecordLabels(),
+            LUKE_3_1_TO_3,
+            null,
+        );
+        expect(names[0].kjvName).toBe('Tiberius Caesar');
+        expect(locations[0].kjvName).toBe('Judaea');
+        // Untranslated: the label already IS the English name.
+        expect(locations[1].kjvName).toBe('');
     });
 
     test('drops a record the sidecar has no name for', () => {

@@ -87,5 +87,5 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Public Domain Songs plugin](public-domain-songs-plugin.md) — separate plugin embedding 36 PD hymns (JSON), no sign-in; Structure codes may repeat, and each record's source link becomes an open-lyric attachment slide
 - [open-lyric fence ground truth](open-lyric-fence-ground-truth.md) — probed structure codes (P not PC, IS/S split), required Config fields, Instrumental/Interlude fences reject plain text
 - [Credentials use safeStorage](secure-storage-safestorage.md) — secrets sit in a SECOND `-secret` store keyed field-by-field; legacy cleartext is scrubbed on launch, never migrated
-- [Lookup has its own language](lookup-language-selection.md) — one dataset loaded at a time; the in-text index stays English while only the labels sidecar is per-language
+- [Lookup has its own language](lookup-language-selection.md) — one dataset loaded at a time; the in-text index stays English while only the labels sidecar is per-language; a translated record reads `ម៉ូសេ (Moses)` and answers to either name
 - [Bible view controller hands out live arrays](bible-view-controller-live-arrays.md) — it splices them in place before the update event; memoizing on their identity threw `key v3 not found in flexSizeDefault`

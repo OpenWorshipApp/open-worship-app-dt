@@ -94,7 +94,15 @@ function toRecordList(rawMap: unknown): AnyObjectType[] {
     return Object.values((rawMap ?? {}) as AnyObjectType);
 }
 
-type RecordDisplayType = { label: string; type: string; title: string };
+type RecordDisplayType = {
+    label: string;
+    type: string;
+    title: string;
+    // Filled in by the translated pass only, from the English label this pass
+    // wrote — never read out of the translated package's own `kjvName`, which a
+    // partially updated dataset can be missing.
+    kjvName: string;
+};
 
 export type BuiltLookupDataType = {
     index: LookupTextIndexType;
@@ -188,6 +196,7 @@ async function buildEnglishPass() {
                 // Truncated here rather than kept whole, so the raw paragraphs
                 // are the only thing this pass lets go of.
                 title: toShortTitle(record.title),
+                kjvName: '',
             });
         }
     };
@@ -244,6 +253,14 @@ async function applyTranslatedLabels(
             continue;
         }
         if (typeof record.name === 'string' && record.name.trim() !== '') {
+            // The English label is worth keeping beside the translated one, the
+            // way a bible book reads `លោកុប្បត្តិ (Genesis)` — but only when the
+            // two actually differ, so a record the translation spells
+            // identically does not gain a row saying its own name twice.
+            display.kjvName =
+                display.label.trim() === record.name.trim()
+                    ? ''
+                    : display.label;
             display.label = record.name;
         }
         const translatedTitle = toShortTitle(record.title);
@@ -273,6 +290,7 @@ export async function buildLookupTextIndex(
         labels: index.ids.map((id) => displayMap.get(id)?.label ?? ''),
         types: index.ids.map((id) => displayMap.get(id)?.type ?? ''),
         titles: index.ids.map((id) => displayMap.get(id)?.title ?? ''),
+        kjvNames: index.ids.map((id) => displayMap.get(id)?.kjvName ?? ''),
     };
     return { index, recordLabels };
 }

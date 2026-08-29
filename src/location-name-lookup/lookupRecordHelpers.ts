@@ -9,7 +9,10 @@ import type {
 } from 'bible-note';
 
 import { tran } from '../lang/langHelpers';
-import { getPlainReferenceText } from './lookupPresentationHelpers';
+import {
+    getPlainReferenceText,
+    getRecordDisplayName,
+} from './lookupPresentationHelpers';
 
 type LinkType = { type: string; url: string };
 
@@ -232,7 +235,9 @@ export function buildNameSummary(
         ]);
     }
     return toSummary(
-        record.name,
+        // `name (KjvName)`, so a record pasted into a sermon note still
+        // identifies itself to a reader who only knows the English name.
+        getRecordDisplayName(record),
         getPlainReferenceText(record.title),
         getPlainReferenceText(record.description),
         basicFacts,
@@ -289,7 +294,9 @@ export function buildLocationSummary(
         ]);
     }
     return toSummary(
-        record.name,
+        // `name (KjvName)`, so a record pasted into a sermon note still
+        // identifies itself to a reader who only knows the English name.
+        getRecordDisplayName(record),
         getPlainReferenceText(record.title),
         getPlainReferenceText(record.description),
         basicFacts,
