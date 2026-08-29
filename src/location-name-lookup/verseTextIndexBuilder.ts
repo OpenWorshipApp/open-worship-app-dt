@@ -1,5 +1,6 @@
 import type { AnyObjectType } from '../helper/typeHelpers';
 import { DEFAULT_LANG_CODE, getAllLangsAsync } from '../lang/langHelpers';
+import { readJsonFile } from '../lang/lookupDataVersionHelpers';
 import { getPlainReferenceText } from './lookupPresentationHelpers';
 import type {
     LookupRecordLabelsType,
@@ -79,7 +80,10 @@ async function readRawLookupData() {
         ) {
             continue;
         }
-        const lookupData = await langData.getLookupData('');
+        const lookupData = await langData.getLookupData({
+            packageDir: langData.packageDir,
+            readJsonFile,
+        });
         if (lookupData !== null) {
             return lookupData;
         }

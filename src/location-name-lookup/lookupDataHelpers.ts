@@ -4,6 +4,7 @@ import type { AnyObjectType } from '../helper/typeHelpers';
 import { globalCacheManager10Seconds } from '../others/CacheManager';
 import { unlockingCacher } from '../server/unlockingHelpers';
 import { DEFAULT_LANG_CODE, getAllLangsAsync } from '../lang/langHelpers';
+import { readJsonFile } from '../lang/lookupDataVersionHelpers';
 
 export type LookupManagersType = {
     namesLookupManager: NamesLookupManager;
@@ -20,7 +21,10 @@ async function loadLookupData(): Promise<LookupManagersType> {
         if (langData.getLookupData === undefined) {
             continue;
         }
-        const lookupData = await langData.getLookupData('');
+        const lookupData = await langData.getLookupData({
+            packageDir: langData.packageDir,
+            readJsonFile,
+        });
         if (lookupData !== null) {
             locationsData[langData.langCode] = lookupData.locationsMap;
             namesData[langData.langCode] = lookupData.namesMap;
