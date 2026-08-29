@@ -29,6 +29,17 @@ vi.mock('../bible-list/BibleItem', () => ({
         },
     },
 }));
+vi.mock('../bible-list/bibleRenderHelpers', () => ({
+    bibleRenderHelper: {
+        toLocaleBook: async (bibleKey: string, bookKey: string) => {
+            h.askedBibleKeys.push(bibleKey);
+            if (bookKey === 'ZZZ') {
+                return undefined;
+            }
+            return bibleKey === 'KHOV' ? `${bookKey} in Khmer` : bookKey;
+        },
+    },
+}));
 vi.mock('../bible-reader/LookupBibleItemController', () => ({
     getCurrentLookupBibleItemController: () => {
         if (h.currentBibleKey === null) {
@@ -38,6 +49,11 @@ vi.mock('../bible-reader/LookupBibleItemController', () => ({
     },
 }));
 vi.mock('../helper/appHooks', () => ({ useAppEffect: () => undefined }));
+vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
+    toLocaleNumBible: async (bibleKey: string, n: number) => {
+        return bibleKey === 'KHOV' ? `[${n}]` : `${n}`;
+    },
+}));
 vi.mock('../helper/bible-helpers/bibleModelHelpers', () => ({
     BIBLE_KJV_KEY: 'KJV',
 }));
@@ -53,6 +69,7 @@ vi.mock('./lookupLangHelpers', () => ({
 
 import {
     openVerseInBibleLookup,
+    shortToReferenceTitle,
     shortToVerseTitle,
     toLookupVerseBibleKey,
 } from './bibleVerseHelpers';
@@ -138,5 +155,38 @@ describe('opening a citation in the reader', () => {
             await openVerseInBibleLookup(genViewController('KJV'), 'BAD'),
         ).toBe(false);
         expect(h.appliedList).toHaveLength(0);
+    });
+});
+
+describe('naming a book or a chapter in the bible behind it', () => {
+    // The datasets are written against the KJV, so `[Acts](book-key://ACT)`
+    // ships an English label whatever language the record itself is in.
+    test('names a book from that bible own book map', async () => {
+        expect(await shortToReferenceTitle('KHOV', 'book', 'ACT')).toBe(
+            'ACT in Khmer',
+        );
+    });
+
+    // The chapter goes through that bible numeral list, exactly as a verse
+    // title does — a Khmer bible writes `14` as `១៤`.
+    test('numbers a chapter the way that bible numbers it', async () => {
+        expect(await shortToReferenceTitle('KHOV', 'chapter', 'GEN 14')).toBe(
+            'GEN in Khmer [14]',
+        );
+    });
+
+    test('routes a verse through the verse resolver', async () => {
+        expect(await shortToReferenceTitle('KHOV', 'verse', 'EZK 27:11')).toBe(
+            'title in KHOV',
+        );
+    });
+
+    // Null, not a blank: the caller falls back to the label the dataset
+    // shipped rather than dropping the reference out of the sentence.
+    test('gives back nothing for a key that bible does not know', async () => {
+        expect(await shortToReferenceTitle('KHOV', 'book', 'ZZZ')).toBeNull();
+        expect(
+            await shortToReferenceTitle('KHOV', 'chapter', 'GEN'),
+        ).toBeNull();
     });
 });

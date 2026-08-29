@@ -109,6 +109,18 @@ describe('stripping inline reference tokens for a one-line summary', () => {
         ).toBe('Moses went to Egypt in Exodus 1:1');
     });
 
+    // The datasets grew these two after the first three; a stripper that does
+    // not know a scheme leaves its whole `[label](scheme://key)` markup in the
+    // summary line.
+    test('handles the book and chapter schemes too', () => {
+        expect(
+            getPlainReferenceText(
+                'remembered in [Acts](book-key://ACT) and ' +
+                    '[2 Samuel 20](chapter-key://2SA 20)',
+            ),
+        ).toBe('remembered in Acts and 2 Samuel 20');
+    });
+
     test('replaces every token, not just the first', () => {
         expect(
             getPlainReferenceText('[A](name-id://1) and [B](name-id://2)'),

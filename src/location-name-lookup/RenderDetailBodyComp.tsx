@@ -68,6 +68,7 @@ export function RenderNameDetailComp({
     return (
         <div className="location-name-lookup__detail" style={{ fontFamily }}>
             <BasicInfoComp
+                bibleKey={verseBibleKey}
                 title={record.title}
                 description={record.description}
                 facts={facts}
@@ -75,7 +76,10 @@ export function RenderNameDetailComp({
             <DetailsSectionComp>
                 {record.description ? (
                     <p className="location-name-lookup__basic-description">
-                        <ReferenceTextComp value={record.description} />
+                        <ReferenceTextComp
+                            bibleKey={verseBibleKey}
+                            value={record.description}
+                        />
                     </p>
                 ) : null}
                 <dl className="location-name-lookup__grid">
@@ -83,7 +87,12 @@ export function RenderNameDetailComp({
                         <DetailRowComp
                             isInline
                             label={tran('Title')}
-                            value={<ReferenceTextComp value={record.title} />}
+                            value={
+                                <ReferenceTextComp
+                                    bibleKey={verseBibleKey}
+                                    value={record.title}
+                                />
+                            }
                         />
                     ) : null}
                     <OptionalTextRowComp
@@ -205,6 +214,7 @@ export function RenderLocationDetailComp({
     return (
         <div className="location-name-lookup__detail" style={{ fontFamily }}>
             <BasicInfoComp
+                bibleKey={verseBibleKey}
                 title={record.title}
                 description={record.description}
                 facts={facts}
@@ -212,7 +222,10 @@ export function RenderLocationDetailComp({
             <DetailsSectionComp>
                 {record.description ? (
                     <p className="location-name-lookup__basic-description">
-                        <ReferenceTextComp value={record.description} />
+                        <ReferenceTextComp
+                            bibleKey={verseBibleKey}
+                            value={record.description}
+                        />
                     </p>
                 ) : null}
                 <dl className="location-name-lookup__grid">
@@ -220,7 +233,12 @@ export function RenderLocationDetailComp({
                         <DetailRowComp
                             isInline
                             label={tran('Title')}
-                            value={<ReferenceTextComp value={record.title} />}
+                            value={
+                                <ReferenceTextComp
+                                    bibleKey={verseBibleKey}
+                                    value={record.title}
+                                />
+                            }
                         />
                     ) : null}
                     <OptionalTextRowComp

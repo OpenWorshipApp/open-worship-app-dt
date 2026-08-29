@@ -9,6 +9,7 @@
     "main": "./electron-build/electron/index.js",
     "scripts": {
         "i:d": "npm cache clean --force && npm i --allow-git=root && npm run electron:install",
+        "i:d:a": "npm cache clean --force && npm i --allow-git=all && npm run electron:install",
         "electron:install": "node node_modules/electron/install.js",
         "dev": "concurrently -k \"npm run vite:dev\" \"npm run electron:build && npm run electron\"",
         "electron:build": "node extra-work/rmdir.mjs electron-build && tsc -p electron.tsconfig.json && node extra-work/copy-build.mjs && node extra-work/build-info.mjs",
@@ -146,7 +147,7 @@
         "@vitejs/plugin-basic-ssl": "^2.3.0",
         "@vitejs/plugin-react-swc": "^4.3.3",
         "@vitest/coverage-v8": "^4.1.10",
-        "bible-note": "https://github.com/raksa/bible-note-dist#0.2.0-dev",
+        "bible-note": "https://github.com/raksa/bible-note-dist#0.2.2-dev",
         "bootstrap": "^5.3.8",
         "bootstrap-icons": "^1.13.1",
         "chrome-devtools-mcp": "^1.6.0",

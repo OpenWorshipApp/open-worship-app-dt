@@ -6,27 +6,94 @@ import {
     useAppEffect,
     useAppStateAsync,
 } from '../helper/appHooks';
+import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 import { mapInYieldingBatches } from '../helper/helpers';
 import { tran } from '../lang/langHelpers';
+import type { BibleReferenceKindType } from './bibleVerseHelpers';
+import {
+    BIBLE_REFERENCE_KIND_BY_SCHEME,
+    shortToReferenceTitle,
+    shortToVerseTitle,
+} from './bibleVerseHelpers';
+import type { DetailPanelKindType } from './detailPanelHelpers';
 import { openDetailPanel } from './detailPanelHelpers';
 import { useLookupManagersContext } from './lookupManagersContext';
+import {
+    getPlainReferenceText,
+    REFERENCE_TOKEN_SCHEME_LIST,
+} from './lookupPresentationHelpers';
 import {
     checkHasDetailValue,
     getFormattedDetailValue,
     getFormattedLinkType,
     resolveLocationReference,
 } from './lookupRecordHelpers';
-import { getPlainReferenceText } from './lookupPresentationHelpers';
-import { shortToVerseTitle } from './bibleVerseHelpers';
 
-// Same tokens as `getPlainReferenceText` strips, but with the scheme and target
-// captured so each one becomes a button that opens the referenced record.
-const REFERENCE_TOKEN_PARSE_REGEX =
-    /\[([^\]]+)\]\((name-id|location-id|verse-key):\/\/([^)]*)\)/g;
+// Same tokens as `getPlainReferenceText` strips — one shared scheme list, so a
+// scheme the datasets start emitting cannot be renderable in one place and raw
+// markup in the other — but with the scheme and target captured so each one can
+// become a button, or be re-titled in the reader's bible.
+const REFERENCE_TOKEN_PARSE_REGEX = new RegExp(
+    String.raw`\[([^\]]+)\]\((` +
+        REFERENCE_TOKEN_SCHEME_LIST.join('|') +
+        String.raw`):\/\/([^)]*)\)`,
+    'g',
+);
 
 type ReferenceSegmentType =
     | { kind: 'text'; text: string }
-    | { kind: 'name' | 'location' | 'verse'; label: string; target: string };
+    | { kind: 'name' | 'location'; label: string; target: string }
+    | {
+          kind: 'bible';
+          bibleKind: BibleReferenceKindType;
+          label: string;
+          target: string;
+      };
+
+// `book:GEN` and `verse:GEN 1:1` cite the same book differently, so the kind is
+// part of what identifies a reference.
+function toBibleSegmentKey(segment: {
+    bibleKind: BibleReferenceKindType;
+    target: string;
+}) {
+    return `${segment.bibleKind}:${segment.target}`;
+}
+
+function checkIsBibleSegment(
+    segment: ReferenceSegmentType,
+): segment is Extract<ReferenceSegmentType, { kind: 'bible' }> {
+    return segment.kind === 'bible';
+}
+
+/**
+ * The one button a reference token becomes: a person, a place, or a cited
+ * verse, each opening its own detail panel.
+ */
+function RenderReferenceButtonComp({
+    kind,
+    label,
+    name,
+    target,
+}: Readonly<{
+    kind: DetailPanelKindType;
+    label: string;
+    name: string;
+    target: string;
+}>) {
+    return (
+        <button
+            className="location-name-lookup__ref-link"
+            type="button"
+            onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                openDetailPanel({ kind, target, name });
+            }}
+        >
+            {label}
+        </button>
+    );
+}
 
 function parseReferenceSegments(value: string): ReferenceSegmentType[] {
     const segments: ReferenceSegmentType[] = [];
@@ -44,12 +111,17 @@ function parseReferenceSegments(value: string): ReferenceSegmentType[] {
         const target = rawTarget.trim();
         if (target === '') {
             segments.push({ kind: 'text', text: label });
-        } else if (scheme === 'name-id') {
-            segments.push({ kind: 'name', label, target });
-        } else if (scheme === 'location-id') {
-            segments.push({ kind: 'location', label, target });
         } else {
-            segments.push({ kind: 'verse', label, target });
+            const bibleKind = BIBLE_REFERENCE_KIND_BY_SCHEME[scheme];
+            if (bibleKind !== undefined) {
+                segments.push({ kind: 'bible', bibleKind, label, target });
+            } else {
+                segments.push({
+                    kind: scheme === 'name-id' ? 'name' : 'location',
+                    label,
+                    target,
+                });
+            }
         }
         lastIndex = regex.lastIndex;
         match = regex.exec(value);
@@ -62,14 +134,52 @@ function parseReferenceSegments(value: string): ReferenceSegmentType[] {
 
 /**
  * Renders a title/description, turning its inline reference tokens — e.g.
- * `[Moses](name-id://<id>)` — into buttons that open the referenced record.
+ * `[Moses](name-id://<id>)` — into buttons that open the referenced record, and
+ * naming its bible references the way the bible behind them names them.
+ *
+ * `bibleKey` is handed DOWN rather than resolved here: a detail body renders
+ * this twice (title and description), and `useLookupVerseBibleKey` subscribes
+ * to the reader once per call.
  */
-export function ReferenceTextComp({ value }: Readonly<{ value: string }>) {
+export function ReferenceTextComp({
+    bibleKey,
+    value,
+}: Readonly<{ bibleKey: string; value: string }>) {
     const { namesLookupManager, locationsLookupManager } =
         useLookupManagersContext();
     const segments = useMemo(() => {
         return parseReferenceSegments(value);
     }, [value]);
+    const [bibleTitleMap] = useAppStateAsync(async () => {
+        // The labels were written from the KJV, so while that is the bible they
+        // are read in — every English record, and any other language whose
+        // reader happens to sit on the KJV — nothing is read at all.
+        const bibleSegments =
+            bibleKey === BIBLE_KJV_KEY
+                ? []
+                : segments.filter(checkIsBibleSegment);
+        if (bibleSegments.length === 0) {
+            return null;
+        }
+        // One `Promise.all` rather than `mapInYieldingBatches`: a sentence
+        // carries a handful of these, not the hundreds a Verses section lists.
+        const entries = await Promise.all(
+            bibleSegments.map(async (segment) => {
+                const key = toBibleSegmentKey(segment);
+                try {
+                    const title = await shortToReferenceTitle(
+                        bibleKey,
+                        segment.bibleKind,
+                        segment.target,
+                    );
+                    return [key, title ?? segment.label] as const;
+                } catch {
+                    return [key, segment.label] as const;
+                }
+            }),
+        );
+        return Object.fromEntries(entries) as { [key: string]: string };
+    }, [segments, bibleKey]);
     // The label is what the author typed into the token; the canonical record
     // name is preferred whenever the id still resolves.
     const resolveName = (segment: ReferenceSegmentType) => {
@@ -94,23 +204,35 @@ export function ReferenceTextComp({ value }: Readonly<{ value: string }>) {
                 if (segment.kind === 'text') {
                     return <Fragment key={key}>{segment.text}</Fragment>;
                 }
+                if (segment.kind === 'bible') {
+                    const label =
+                        bibleTitleMap?.[toBibleSegmentKey(segment)] ??
+                        segment.label;
+                    // A book or a chapter names itself inside the sentence and
+                    // has no verse text of its own to show, so it stays prose —
+                    // only re-worded by the bible behind it. A cited VERSE is
+                    // still a reference the user can open.
+                    if (segment.bibleKind !== 'verse') {
+                        return <Fragment key={key}>{label}</Fragment>;
+                    }
+                    return (
+                        <RenderReferenceButtonComp
+                            key={key}
+                            kind="verse"
+                            label={label}
+                            name={label}
+                            target={segment.target}
+                        />
+                    );
+                }
                 return (
-                    <button
+                    <RenderReferenceButtonComp
                         key={key}
-                        className="location-name-lookup__ref-link"
-                        type="button"
-                        onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            openDetailPanel({
-                                kind: segment.kind,
-                                target: segment.target,
-                                name: resolveName(segment),
-                            });
-                        }}
-                    >
-                        {segment.label}
-                    </button>
+                        kind={segment.kind}
+                        label={segment.label}
+                        name={resolveName(segment)}
+                        target={segment.target}
+                    />
                 );
             })}
         </>
@@ -489,20 +611,29 @@ export function DetailsSectionComp({
 }
 
 export function BasicInfoComp({
+    bibleKey,
     description,
     facts,
     title,
-}: Readonly<{ description: string; facts: string[]; title: string }>) {
+}: Readonly<{
+    bibleKey: string;
+    description: string;
+    facts: string[];
+    title: string;
+}>) {
     return (
         <div className="location-name-lookup__basic-info">
             {title ? (
                 <div className="location-name-lookup__basic-title">
-                    <ReferenceTextComp value={title} />
+                    <ReferenceTextComp bibleKey={bibleKey} value={title} />
                 </div>
             ) : null}
             {description ? (
                 <p className="location-name-lookup__basic-description">
-                    <ReferenceTextComp value={description} />
+                    <ReferenceTextComp
+                        bibleKey={bibleKey}
+                        value={description}
+                    />
                 </p>
             ) : null}
             {facts.length > 0 ? (

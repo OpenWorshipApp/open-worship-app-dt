@@ -83,12 +83,34 @@ export function getNameTypeSingularLabel(
     return NAME_TYPE_SINGULAR_LABEL[normalizeNameType(type)];
 }
 
+/**
+ * Every inline reference scheme the datasets emit.
+ *
+ * Kept in ONE place because two modules must agree on it: this stripper and the
+ * renderer in `LookupDetailPartsComp`. When the datasets grew `book-key` and
+ * `chapter-key` tokens, a list that knew only the older three left the raw
+ * `[Acts](book-key://ACT)` markup showing through as text.
+ */
+export const REFERENCE_TOKEN_SCHEME_LIST = [
+    'name-id',
+    'location-id',
+    'book-key',
+    'chapter-key',
+    'verse-key',
+] as const;
+
+const REFERENCE_TOKEN_SCHEME_PATTERN = REFERENCE_TOKEN_SCHEME_LIST.join('|');
+
 // Titles and descriptions carry inline reference tokens, e.g.
 // "[Jesus](name-id://<id>)" or "[John 3:16](verse-key://<verse>)". Only the
 // readable label belongs in a one-line summary; without this the raw markup
 // shows through.
-const MENTION_REFERENCE_TOKEN_REGEX =
-    /\[([^\]]+)\]\((?:name-id|location-id|verse-key):\/\/[^)]*\)/g;
+const MENTION_REFERENCE_TOKEN_REGEX = new RegExp(
+    String.raw`\[([^\]]+)\]\((?:` +
+        REFERENCE_TOKEN_SCHEME_PATTERN +
+        String.raw`):\/\/[^)]*\)`,
+    'g',
+);
 
 export function getPlainReferenceText(value: string): string {
     return value.replace(MENTION_REFERENCE_TOKEN_REGEX, '$1');

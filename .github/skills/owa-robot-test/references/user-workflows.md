@@ -21,7 +21,12 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-29d** (**W-29 steps 2 and 9, and W-30's note: with a non-English
+**workflowsVersion: 2026-08-29e** (**W-29 step 8: a record that names a book, a chapter or a
+verse in its description now names it the way YOUR Bible does.** Those mentions ship written in
+English whatever language the record is in, so a Khmer sentence used to strand `Genesis 14` in the
+middle of it; under any language but English they are now re-read from the Bible on screen —
+*លោកុប្បត្តិ ១៤* — with book and chapter mentions staying part of the sentence and a cited verse still
+opening like any other reference. Verified live 2026-08-29 in Khmer and English. Previous: **W-29 steps 2 and 9, and W-30's note: with a non-English
 lookup language the verse references now read in YOUR Bible.** A Khmer record citing
 `Genesis 10:4` in English beside its own Khmer prose was unreadable to exactly the person who
 chose Khmer; a record's citations, the verse window it opens, the passage heading in
@@ -1847,6 +1852,12 @@ your Bible reading.
    small window **beside** the one you are reading, so you can follow a family or a
    journey without losing your place. Clicking the same entry twice just brings its
    window back to the front.
+   Where a description names a book, a chapter or a single verse — *Acts*,
+   *Genesis 14*, *Acts 28:15* — it is written the way **your own Bible** writes it
+   once you have picked a language other than English in step 2, so a Khmer sentence
+   reads *លោកុប្បត្តិ ១៤* instead of stranding one English name in the middle of it. A
+   book or a chapter is simply part of the sentence; a single verse is underlined and
+   opens like any other reference.
 9. Click a verse reference to read it. With **English** chosen in step 2 you get the
    King James text, because that is the Bible these records were built from; with any
    other language you get the Bible you are currently reading, and the eye button

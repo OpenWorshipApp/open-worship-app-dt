@@ -65,6 +65,20 @@ always KJV. Watch out for:
   language's — two independent settings.
 - The ` (KJV)` suffix on "names and locations in your reading" is shown only
   while the heading is actually a KJV title.
+- A record's PROSE cites the bible in three schemes, not one — `book-key://ACT`,
+  `chapter-key://GEN 14`, `verse-key://ACT 28:15` (dataset version 71 added the
+  first two) — and every one of them is re-titled the same way
+  (`shortToReferenceTitle`): book from that bible's book map, chapter through its
+  numerals. A book or a chapter renders as PROSE, not a button — there is no verse
+  text behind it to open. Resolution is SKIPPED while the bible is the KJV, which
+  is what keeps English free.
+- The scheme list lives in ONE place (`REFERENCE_TOKEN_SCHEME_LIST`) because two
+  regexes consume it — the renderer's and `getPlainReferenceText`'s stripper. A
+  scheme missing from either shows its raw `[label](scheme://key)` markup on
+  screen, which is exactly how `book-key` arrived.
+- The list SUMMARIES (search rows, "in your reading", hover titles) go through the
+  stripper, so a token there keeps its stored English label whatever the lookup
+  language is. Only a detail BODY re-reads them.
 
 Related: [[onscreen-setting-parse-amplification]], [[filesource-cache-sliding-ttl]],
 [[tran-missing-key-throws-in-dev]].

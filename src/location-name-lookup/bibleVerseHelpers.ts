@@ -2,9 +2,12 @@ import type { CSSProperties } from 'react';
 import { useState } from 'react';
 
 import BibleItem from '../bible-list/BibleItem';
+import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { getCurrentLookupBibleItemController } from '../bible-reader/LookupBibleItemController';
 import { useAppEffect, useAppStateAsync } from '../helper/appHooks';
+import { toChapterFullKeyFormat } from '../helper/bible-helpers/bibleKeyFormatHelpers';
+import { toLocaleNumBible } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { cloneJson } from '../helper/helpers';
@@ -157,6 +160,62 @@ export async function shortToVerseTitle(
         return null;
     }
     return await bibleItem.toTitle();
+}
+
+/**
+ * The three shapes of bible reference a record's prose can carry, as the
+ * dataset stores them: `book-key://ACT`, `chapter-key://GEN 14` and
+ * `verse-key://ACT 28:15`.
+ */
+export type BibleReferenceKindType = 'book' | 'chapter' | 'verse';
+
+export const BIBLE_REFERENCE_KIND_BY_SCHEME: {
+    [scheme: string]: BibleReferenceKindType;
+} = {
+    'book-key': 'book',
+    'chapter-key': 'chapter',
+    'verse-key': 'verse',
+};
+
+/**
+ * One inline reference as the READER's bible names it.
+ *
+ * The datasets are written against the KJV, so a token's label is always its
+ * English wording — a Khmer record reads `...ក្នុងកណ្ឌ [Acts](book-key://ACT)`,
+ * one English word stranded in Khmer prose. Only the stored KEY is canonical,
+ * so the label is re-derived here per bible: the book name comes from that
+ * bible's own book map and the chapter number through its numeral list, exactly
+ * as `bibleRenderHelper.toTitle` writes a verse title.
+ *
+ * Returns null when the key names nothing that bible knows, so a caller can
+ * fall back to the label the dataset shipped rather than showing a blank.
+ */
+export async function shortToReferenceTitle(
+    bibleKey: string,
+    kind: BibleReferenceKindType,
+    target: string,
+): Promise<string | null> {
+    if (kind === 'verse') {
+        return await shortToVerseTitle(bibleKey, target);
+    }
+    // `GEN` for a book, `GEN 14` for a chapter — book keys never hold a space.
+    const [bookKey, chapterText] = target.split(' ');
+    const localeBook = await bibleRenderHelper.toLocaleBook(bibleKey, bookKey);
+    if (!localeBook) {
+        return null;
+    }
+    if (kind === 'book') {
+        return localeBook;
+    }
+    const chapter = Number.parseInt(chapterText ?? '', 10);
+    if (Number.isNaN(chapter)) {
+        return null;
+    }
+    const localeChapter = await toLocaleNumBible(bibleKey, chapter);
+    if (localeChapter === null) {
+        return null;
+    }
+    return toChapterFullKeyFormat(localeBook, localeChapter);
 }
 
 /**
