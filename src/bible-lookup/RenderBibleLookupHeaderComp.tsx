@@ -82,19 +82,17 @@ export default function RenderBibleLookupHeaderComp({
                     <div
                         className={
                             'app-flex-item flex-fill justify-content-end' +
+                            ' align-items-center' +
                             (appProvider.isPageReader ? '' : ' pe-5')
                         }
                     >
-                        <RenderExportWordComp />
-                        <RenderOpenWikiDictionaryComp />
-                        <div className="float-start">
-                            <RenderExtraButtonsRightComp
-                                setIsAdvanceLookupOpened={
-                                    setIsAdvanceLookupOpened
-                                }
-                                isAdvanceLookupOpened={isAdvanceLookupOpened}
-                            />
-                        </div>
+                        <RenderExtraButtonsRightComp
+                            setIsAdvanceLookupOpened={setIsAdvanceLookupOpened}
+                            isAdvanceLookupOpened={isAdvanceLookupOpened}
+                        >
+                            <RenderExportWordComp />
+                            <RenderOpenWikiDictionaryComp />
+                        </RenderExtraButtonsRightComp>
                     </div>
                     {hideBibleLookupPopup === null ? null : (
                         <ModalCloseButtonComp
