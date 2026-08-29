@@ -51,14 +51,25 @@ async function loadLookupData(langCode: string): Promise<LookupManagersType> {
     // a user who actually opens the lookup panel ever downloads.
     const { NamesLookupManager, LocationsLookupManager } =
         await import('bible-note');
+    // `bible-note` renders these records in its OWN surfaces — the mention
+    // popup, the hover card, the advanced panel, the lookup list — with the
+    // editor's font, which does not cover every script. A package that names a
+    // font gets it applied there too; English names none, and then the records
+    // keep the app's own font. One object for both managers: nothing mutates it.
+    // Optional chaining only to satisfy the compiler: the guard above already
+    // threw for a package this could not read the dataset out of.
+    const fontFamily = langData?.fontFamily;
+    const style = fontFamily === undefined ? undefined : { fontFamily };
     return {
         namesLookupManager: NamesLookupManager.fromRawDataset(
             { [langCode]: lookupData.namesMap },
             langCode,
+            style,
         ),
         locationsLookupManager: LocationsLookupManager.fromRawDataset(
             { [langCode]: lookupData.locationsMap },
             langCode,
+            style,
         ),
     };
 }

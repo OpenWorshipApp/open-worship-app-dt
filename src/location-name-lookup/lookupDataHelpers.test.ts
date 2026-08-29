@@ -10,8 +10,9 @@ const h = vi.hoisted(() => ({
     selectedLangCode: 'en',
     langCodeListeners: new Set<() => void>(),
     // What `fromRawDataset` was handed, so a test can assert that ONLY the
-    // selected language's data ever reaches it.
+    // selected language's data ever reaches it, and with which style.
     lastDataMapKeys: [] as string[],
+    lastStyle: undefined as any,
 }));
 
 // `CacheManager` and `loggerHelpers` both read `appProvider` at module scope,
@@ -49,9 +50,14 @@ vi.mock('./lookupLangHelpers', () => ({
 }));
 vi.mock('bible-note', () => {
     class FakeManager {
-        static fromRawDataset(rawDataMap: { [langCode: string]: unknown }) {
+        static fromRawDataset(
+            rawDataMap: { [langCode: string]: unknown },
+            _defaultLang: string,
+            style?: any,
+        ) {
             h.fromRawDatasetCount += 1;
             h.lastDataMapKeys = Object.keys(rawDataMap);
+            h.lastStyle = style;
             return new FakeManager();
         }
     }
@@ -68,9 +74,10 @@ import {
 } from './lookupDataHelpers';
 import { globalCacheManager10Seconds } from '../others/CacheManager';
 
-function genLangData(langCode: string) {
+function genLangData(langCode: string, fontFamily?: string) {
     return {
         langCode,
+        fontFamily,
         packageDir: `/lang/${langCode}`,
         getLookupData: async () => ({ namesMap: {}, locationsMap: {} }),
     };
@@ -87,8 +94,12 @@ beforeEach(async () => {
     h.loadCount = 0;
     h.fromRawDatasetCount = 0;
     h.lastDataMapKeys = [];
+    h.lastStyle = undefined;
     h.selectedLangCode = 'en';
-    h.langDataMap = { en: genLangData('en'), km: genLangData('km') };
+    h.langDataMap = {
+        en: genLangData('en'),
+        km: genLangData('km', 'app-Battambang'),
+    };
     // Both the 60s cache and the holder are module-level.
     globalCacheManager10Seconds.clear();
     releaseLookupData();
@@ -125,6 +136,25 @@ describe('loading the dataset', () => {
         await getLookupDataCached();
 
         expect(h.lastDataMapKeys).toStrictEqual(['km']);
+    });
+
+    // The managers carry the style into `bible-note`'s OWN surfaces — the
+    // mention popup, the hover card, the advanced panel — which otherwise
+    // render Khmer records in the editor's Latin font.
+    test('gives the managers the language package font', async () => {
+        selectLangCode('km');
+
+        await getLookupDataCached();
+
+        expect(h.lastStyle).toStrictEqual({ fontFamily: 'app-Battambang' });
+    });
+
+    // English names no font, and then the records must keep the app's own
+    // rather than being forced into one.
+    test('gives no style for a package naming no font', async () => {
+        await getLookupDataCached();
+
+        expect(h.lastStyle).toBeUndefined();
     });
 
     test('serializes concurrent first-opens into one load', async () => {
