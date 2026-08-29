@@ -31,7 +31,6 @@ import {
 import { pasteTextToInput } from '../server/appHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { tran } from '../lang/langHelpers';
-import LocationNameLookupToggleComp from '../location-name-lookup/LocationNameLookupToggleComp';
 
 export const InputTextContext = createContext<{
     inputText: string;
@@ -164,7 +163,6 @@ export default function InputHandlerComp({
             >
                 <i className="bi bi-caret-right" />
             </button>
-            <LocationNameLookupToggleComp />
         </Fragment>
     );
 }
