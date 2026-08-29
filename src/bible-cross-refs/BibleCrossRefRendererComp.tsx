@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { Fragment } from 'react/jsx-runtime';
 
 import type BibleItem from '../bible-list/BibleItem';
-import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
+import SelectedBibleVerseHeaderComp from '../bible-reader/SelectedBibleVerseHeaderComp';
 import BibleCrossRefOpenAIItemRendererBodyComp from './BibleCrossRefOpenAIItemRendererBodyComp';
 import BibleCrossRefWrapperComp from './BibleCrossRefWrapperComp';
 import BibleCrossRefAnthropicItemRendererBodyComp from './BibleCrossRefAnthropicItemRendererBodyComp';
@@ -15,33 +15,8 @@ import {
 } from '../helper/ai/bibleCrossRefHelpers';
 import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHelpers';
 import { tran } from '../lang/langHelpers';
-import { useAppStateAsync } from '../helper/appHooks';
-import { BibleKeySelectionMiniComp } from '../bible-lookup/BibleKeySelectionComp';
 import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
 import appProvider from '../server/appProvider';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
-
-function RenderVerseTextComp({
-    bibleItem,
-}: Readonly<{ bibleItem: BibleItem }>) {
-    const [text] = useAppStateAsync(() => {
-        return bibleItem.toText();
-    }, [bibleItem]);
-    const { bibleKey } = bibleItem;
-    const fontFamily = useBibleFontFamily(bibleKey);
-    return (
-        <div
-            className="p-1"
-            style={{
-                maxHeight: '75px',
-                overflow: 'auto',
-                fontFamily,
-            }}
-        >
-            {text}
-        </div>
-    );
-}
 
 function genAiVigilant() {
     return (
@@ -89,7 +64,6 @@ export default function BibleCrossRefRendererComp({
         [],
     );
     const bibleKey = bibleItem.bibleKey;
-    const fontFamily = useBibleFontFamily(bibleKey);
     return (
         <BibleKeyContext.Provider value={bibleKey}>
             {verses.map((verse, i) => {
@@ -98,40 +72,18 @@ export default function BibleCrossRefRendererComp({
                 cloneBibleItem.target.verseEnd = verse;
                 return (
                     <Fragment key={verse}>
-                        <div
-                            className="m-1 p-1"
-                            style={{
-                                fontFamily,
+                        <SelectedBibleVerseHeaderComp
+                            bibleItem={cloneBibleItem}
+                            onBibleKeyChange={(newBibleKey) => {
+                                const newBibleItem = bibleItem.clone();
+                                newBibleItem.bibleKey = newBibleKey;
+                                setBibleItem(newBibleItem);
                             }}
-                        >
-                            <div
-                                className="alert alert-info p-0 px-1 m-0"
-                                style={{ verticalAlign: 'center' }}
-                            >
-                                <BibleKeySelectionMiniComp
-                                    bibleKey={bibleItem.bibleKey}
-                                    onBibleKeyChange={(
-                                        _isContextMenu,
-                                        _oldValue,
-                                        newValue,
-                                    ) => {
-                                        const newBibleItem = bibleItem.clone();
-                                        newBibleItem.bibleKey = newValue;
-                                        setBibleItem(newBibleItem);
-                                    }}
-                                />
-                                <BibleViewTitleEditorComp
-                                    bibleItem={cloneBibleItem}
-                                    isOneVerse
-                                    onTargetChange={(newBibleTarget) => {
-                                        cloneBibleItem.target = newBibleTarget;
-                                        setBibleItem(cloneBibleItem);
-                                    }}
-                                    waitUntilGotVerseStart
-                                />
-                            </div>
-                            <RenderVerseTextComp bibleItem={cloneBibleItem} />
-                        </div>
+                            onTargetChange={(newBibleTarget) => {
+                                cloneBibleItem.target = newBibleTarget;
+                                setBibleItem(cloneBibleItem);
+                            }}
+                        />
                         <hr />
                         <div className="d-flex flex-wrap">
                             <BibleCrossRefWrapperComp

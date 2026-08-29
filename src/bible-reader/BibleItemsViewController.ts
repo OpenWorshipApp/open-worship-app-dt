@@ -256,6 +256,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     _nestedBibleItems: NestedBibleItemsType = [];
     private readonly _settingNameSuffix: string;
     setBibleVerseKey = (_verseKey: string) => {};
+    setResourcesVerseKey = (_verseKey: string) => {};
     handleScreenBibleVersesHighlighting = (
         _verseKey: string,
         _isToTop: boolean,
@@ -308,7 +309,17 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         this.fireUpdateEvent();
     }
 
-    get bibleCrossReferenceVerseKey() {
+    /**
+     * The one verse every panel that follows the selection is looking at.
+     *
+     * ONE setting, not one per panel. A verse click is the most frequent action
+     * in the reader and each `setSetting` is a file write, so a second key for
+     * a value that is identical by definition would double that write rate for
+     * nothing. It would also drift: only the ACTIVE tab is mounted, so a panel
+     * that was not on screen when the verse changed would never have received
+     * the update and would show a stale verse when the user switched back.
+     */
+    get selectedVerseKey() {
         const verseKey =
             getSetting(this.toSettingName('-bible-verse-key')) ?? '';
         // (KJV) GEN 1:2-3
@@ -318,9 +329,20 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         return '';
     }
 
-    set bibleCrossReferenceVerseKey(bibleVerseKey: string) {
+    set selectedVerseKey(bibleVerseKey: string) {
         setSetting(this.toSettingName('-bible-verse-key'), bibleVerseKey);
         this.setBibleVerseKey(bibleVerseKey);
+        this.setResourcesVerseKey(bibleVerseKey);
+    }
+
+    /** @deprecated Alias of `selectedVerseKey`, which is what this always was:
+     * the selected verse, not something owned by cross references. */
+    get bibleCrossReferenceVerseKey() {
+        return this.selectedVerseKey;
+    }
+
+    set bibleCrossReferenceVerseKey(bibleVerseKey: string) {
+        this.selectedVerseKey = bibleVerseKey;
     }
 
     bibleItemFromJson(json: any): ReadIdOnlyBibleItem {
@@ -833,7 +855,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         if (bibleItem === undefined) {
             return;
         }
-        this.bibleCrossReferenceVerseKey = targetDom.dataset.verseKey ?? '';
+        this.selectedVerseKey = targetDom.dataset.verseKey ?? '';
         const kjvBibleVerseKey = targetDom.dataset.kjvVerseKey;
         if (kjvBibleVerseKey === undefined) {
             return;

@@ -240,6 +240,32 @@ describe('bible-reader BibleItemsViewController', () => {
             ctl.bibleCrossReferenceVerseKey = 'no-paren';
             expect(ctl.bibleCrossReferenceVerseKey).toBe('');
         });
+
+        test('selectedVerseKey notifies every panel slot', () => {
+            const ctl = genController();
+            const setBibleVerseKey = vi.fn();
+            const setResourcesVerseKey = vi.fn();
+            ctl.setBibleVerseKey = setBibleVerseKey;
+            ctl.setResourcesVerseKey = setResourcesVerseKey;
+            ctl.selectedVerseKey = '(KJV) GEN 1:1';
+            // One setting, both panels: a second key would double the write
+            // rate of the reader's most frequent action and go stale in
+            // whichever panel was not the mounted tab at the time.
+            expect(setBibleVerseKey).toHaveBeenCalledWith('(KJV) GEN 1:1');
+            expect(setResourcesVerseKey).toHaveBeenCalledWith('(KJV) GEN 1:1');
+            expect(ctl.selectedVerseKey).toBe('(KJV) GEN 1:1');
+        });
+
+        test('bibleCrossReferenceVerseKey aliases selectedVerseKey', () => {
+            const ctl = genController();
+            const setResourcesVerseKey = vi.fn();
+            ctl.setResourcesVerseKey = setResourcesVerseKey;
+            ctl.bibleCrossReferenceVerseKey = '(KJV) GEN 1:1';
+            expect(ctl.selectedVerseKey).toBe('(KJV) GEN 1:1');
+            expect(setResourcesVerseKey).toHaveBeenCalledWith('(KJV) GEN 1:1');
+            ctl.selectedVerseKey = '(KJV) EXO 2:2';
+            expect(ctl.bibleCrossReferenceVerseKey).toBe('(KJV) EXO 2:2');
+        });
     });
 
     describe('parsing and loading', () => {
@@ -583,8 +609,11 @@ describe('bible-reader BibleItemsViewController', () => {
             ctl.setColorNote(items[1], 'red');
             const { target } = makeVerseDom('GEN.1.1', '(KJV) GEN 1:1');
             const syncSpy = vi.spyOn(ctl, 'syncBibleVerseSelection');
+            const setResourcesVerseKey = vi.fn();
+            ctl.setResourcesVerseKey = setResourcesVerseKey;
             ctl.handleVersesSelecting(target, false, true, items[0]);
-            expect(ctl.bibleCrossReferenceVerseKey).toBe('(KJV) GEN 1:1');
+            expect(ctl.selectedVerseKey).toBe('(KJV) GEN 1:1');
+            expect(setResourcesVerseKey).toHaveBeenCalledWith('(KJV) GEN 1:1');
             expect(syncSpy).toHaveBeenCalled();
             target.remove();
         });

@@ -1,4 +1,4 @@
-import { type Stats } from 'node:fs';
+import { type Dirent, type Stats } from 'node:fs';
 
 import appProvider from './appProvider';
 import FileSource from '../helper/FileSource';
@@ -534,6 +534,52 @@ export async function fsList(dir: string) {
         } catch (_error) {}
     }
     return fileList;
+}
+
+export type DirentResultType = {
+    name: string;
+    isFile: boolean;
+    isDirectory: boolean;
+};
+
+/**
+ * The entries of one directory, WITHOUT a `stat` per entry.
+ *
+ * `fsList` costs one `readdir` plus one `stat` for every entry it returns;
+ * `readdir(…, { withFileTypes: true })` answers the same is-it-a-file question
+ * from the single directory read the kernel already did. On a weak disk that is
+ * the difference between one syscall and one-plus-N for a folder the user only
+ * wants NAMES from -- which is what a recursive name-match search wants.
+ *
+ * Two ways this deliberately differs from `fsList`, because a `Dirent` does not
+ * follow links the way `stat` does:
+ * - A SYMLINK is neither `isFile` nor `isDirectory` here. Callers that must
+ *   resolve links want `fsList`.
+ * - Nothing is skipped or sorted. Hidden names are the caller's to filter
+ *   (`checkIsHiddenName`).
+ *
+ * Rejects rather than swallowing: a caller walking a tree has to tell "this
+ * folder is unreadable" (EACCES) from "this folder is gone" (ENOENT) to say
+ * anything useful, and `fsList`'s per-entry `catch` cannot.
+ */
+export async function fsListDirents(
+    dirPath: string,
+): Promise<DirentResultType[]> {
+    if (!dirPath) {
+        return [];
+    }
+    const direntList = await fsFilePromise<Dirent[]>(
+        appProvider.fileUtils.readdir,
+        dirPath,
+        { withFileTypes: true },
+    );
+    return direntList.map((dirent) => {
+        return {
+            name: dirent.name,
+            isFile: dirent.isFile(),
+            isDirectory: dirent.isDirectory(),
+        };
+    });
 }
 
 export async function fsListFiles(dirPath: string) {

@@ -23,10 +23,11 @@ import { setSetting } from '../helper/settingHelpers';
 
 export const BIBLE_SEARCH_SETTING_NAME = 'bible-search-tab';
 
-// The tabs of the advanced bible lookup panel: find, cross reference, and the
-// names & locations of the verses being read. Named so the previewer, the
-// controller slot and this setter cannot drift apart.
-export type BibleSearchTabType = 's' | 'c' | 'l';
+// The tabs of the advanced bible lookup panel: find, cross reference, the
+// names & locations of the verses being read, and the user's own resource
+// folders. Named so the previewer, the controller slot and this setter cannot
+// drift apart.
+export type BibleSearchTabType = 's' | 'c' | 'l' | 'r';
 
 export function setBibleSearchingTabType(tabType: BibleSearchTabType) {
     setSetting(BIBLE_SEARCH_SETTING_NAME, tabType);

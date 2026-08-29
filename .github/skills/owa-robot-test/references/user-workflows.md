@@ -21,12 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-29e** (**W-29 step 8: a record that names a book, a chapter or a
+**workflowsVersion: 2026-08-29j** (**W-29 step 8: a record that names a book, a chapter or a
 verse in its description now names it the way YOUR Bible does.** Those mentions ship written in
 English whatever language the record is in, so a Khmer sentence used to strand `Genesis 14` in the
 middle of it; under any language but English they are now re-read from the Bible on screen —
 *លោកុប្បត្តិ ១៤* — with book and chapter mentions staying part of the sentence and a cited verse still
-opening like any other reference. Verified live 2026-08-29 in Khmer and English. Previous: **W-29 steps 2 and 9, and W-30's note: with a non-English
+opening like any other reference. Verified live 2026-08-29 in Khmer and English.)
+Previous: **2026-08-29i** (**W-29 steps 2 and 9, and W-30's note: with a non-English
 lookup language the verse references now read in YOUR Bible.** A Khmer record citing
 `Genesis 10:4` in English beside its own Khmer prose was unreadable to exactly the person who
 chose Khmer; a record's citations, the verse window it opens, the passage heading in
@@ -34,7 +35,39 @@ chose Khmer; a record's citations, the verse window it opens, the passage headin
 Bible on screen does, and the **(KJV)** note on that heading is dropped when it would no longer
 be true. English still means King James, which is the Bible these records were built from. What
 the lists FIND is read from the King James text either way. Verified live 2026-08-29, Khmer and
-English both ways round. Previous: **W-29 step 2: the name across the top of a record window
+English both ways round.)
+Previous: **2026-08-29h** (**W-37 new step 5: search your folders by file name.**
+The magnifier at the right of the pattern line opens a box; type any part of a name and every
+matching file in your folders is listed under the verse's own files, marked `*what you typed*`.
+Your verse files stay where they were. `abc*` and `abc` do the same thing, and at most 200
+extra files per folder are listed. Verified live 2026-08-29. New matrix rows RD-89, RD-90.)
+Previous: **2026-08-29g** (**W-37 steps 3 and 6: the Resources view gains
+**Reload**, and its whole body is right-clickable.** Reload re-reads your folder list and
+every folder's files in one go — the per-folder **Refresh** is still there for one folder.
+The `⋮` button is now titled **More Options**, and a right-click in the empty space below
+the folder boxes opens that menu too, where before it did nothing.
+New matrix row RD-88; RD-82 updated.)
+Previous: **2026-08-29f** (**W-37: chapter `0` means the whole BOOK.** `PSA.0.pdf` is
+your introduction to the Psalms and is now listed for every chapter of the Psalms, above that
+chapter's own files; `-1`, `-2` … count as book-level too, for a second or third such
+document. The pattern the panel prints names both halves now (`PSA.1.* · PSA.0.*`) and says
+why on hover. Re-verified live 2026-08-29 across Psalm 1, Psalm 119 and 1 Chronicles 1 —
+each shows its book's intro and its own chapter, and nothing from another book. Matrix row
+RD-84 rewritten, RD-81 hint updated.)
+Previous: **2026-08-29e** (**W-37 corrected: Resources matches by BOOK AND CHAPTER,
+`<book key>.<chapter>.*`, not by verse.** Material is filed one file per chapter
+(`PSA.1.pdf`, `PSA.119.pdf`), so every verse of a chapter shows the same files and the verse
+only decides the heading. The numbering note is rewritten around the collision that actually
+bites — Psalm 1 must not also list `PSA.10.pdf` and `PSA.100…149.pdf`. Re-verified live
+2026-08-29. Matrix row RD-84 rewritten, RD-81 hint updated.)
+Previous: **2026-08-29d** (**new W-37 — keep your own files beside the verse.**
+If you already file sermon material on disk named after the verse it belongs to
+(`PSA.1.pdf`), the new **Resources** view in the advanced bible lookup shows exactly those
+files for whatever verse you are on, from as many folders as you care to add, and opens one in
+its own application with a click. Verified live 2026-08-29 against a real 1255-file library —
+(the match rule that shipped is the corrected one in 29e above). New matrix rows
+RD-81..RD-87 and CM-93; RD-41 updated.)
+Previous: **2026-08-29c** (**W-29 step 2: the name across the top of a record window
 follows the lookup font too.** That title sits in the window's frame rather than its body, so
 it was the one place a Khmer record name still came out in a fallback face. Verified live
 2026-08-29. Previous: **W-29 step 2 and step 4 say more: the lookup language
@@ -2275,3 +2308,80 @@ install anywhere.
    any other slide (you can present it, or simply leave it at the end). 📸
 
 _Verify: PL-105._
+
+### W-37 — Keep your own files beside the verse (Resources)
+
+If you already keep study material on disk named after the verse it belongs to —
+`PSA.1.pdf`, `GEN.49.pptx` — **Resources** (ឯកសារពាក់ព័ន្ធ) puts those files
+right beside whatever verse you are reading, from as many folders as you like.
+
+The name has to follow one pattern: **`<book key>.<chapter>.<anything>`**. The book key is
+the three-character one the app uses (Psalm is `PSA`, Genesis `GEN`, 1 Chronicles `1CH`), so
+anywhere in Psalm 1 looks for `PSA.1.*` — `PSA.1.pdf`, `PSA.1.outline.docx`. Any file type
+at all. It is the **chapter** that decides, not the verse, so every verse of a chapter shows
+you the same files.
+
+**Files for the whole book** get chapter number **0**: `PSA.0.pdf` is your introduction to
+the Psalms, and it is listed for *every* chapter of the Psalms, above that chapter's own
+files. If you have more than one such document, keep going downwards — `-1`, `-2` and so on
+all count as book-level too.
+
+1. In the bible lookup, click **Advance Bible Lookup** (`bi-search`, top right) to open
+   the side panel, then pick **Resources** from the panel's dropdown — the fourth entry
+   after **Find**, **Cross Reference** and **Location-Name (KJV)**. 📸
+   You can also get here from the verse itself: right-click any verse in the lookup body
+   and choose **Open in Resources** (បើកនៅក្នុងឯកសារពាក់ព័ន្ធ), just under **Open in
+   Cross Reference**. That opens the panel on this view AND on that verse.
+2. The top of the view shows the verse it is working from — its version, its reference and
+   its text, exactly as **Cross Reference** shows it. Click the reference to move to
+   another verse, or the version chip to read it in another translation. Under it sits the
+   file-name pattern being looked for, so you can always see what it
+   is matching — `PSA.1.* · PSA.0.*` for anywhere in Psalm 1: the chapter's own files and
+   the book's. Moving to another verse of the same chapter changes the heading but not the
+   files. 📸
+3. The first time, the body holds a single **Add Folder** (បន្ថែមថត) button. Click it and
+   pick the folder your files are in. You can add as many as you want — the **⋮ More
+   Options** button, or a right-click anywhere in the view including the empty space below
+   the folders, offers **Add Folder** again. Adding the same folder twice does nothing. 📸
+   That same menu has **Reload** (ផ្ទុកឡើងវិញ), which re-reads everything at once: your
+   folder list, and the files inside every folder. Use it after adding files on disk while
+   the app is open, or after changing the list from another window. 📸
+4. Each folder becomes its own box, named after the folder, with the full path shown if
+   you hover it. Inside are the matching files — **from that folder and every folder
+   inside it** — sorted by file type, each with its own icon (PDF, Word, PowerPoint,
+   video, image, bible note). Hover a file to see where it actually lives. 📸
+   A box with nothing for this verse says **No matching files**.
+5. Sometimes you want a file that is *not* named after this verse. Click the **magnifier**
+   (`bi-search`) at the right-hand end of the pattern line and a search box opens under it.
+   Type any part of a file's name — `abc`, `baptism`, `PSA.11` — and every file in your
+   folders whose name contains it is listed too, added below that folder's verse files under
+   a `*abc*` heading so you can tell the two apart. Your verse files stay exactly where they
+   were. 📸
+   Upper and lower case do not matter, and it looks anywhere in the name, not just at the
+   start — searching `abc` finds `abc.pdf` and `01-abc-notes.docx` alike. If you are used to
+   writing `abc*`, that works too; the `*` is simply ignored.
+   Click the magnifier again to close the box and put the lists back as they were. If a
+   folder has hundreds of matches only the first 200 are shown, and the box says **Too many
+   matching files** — type a bit more to narrow it down.
+6. Click a file to open it in whatever application your computer normally uses for it — a
+   PDF in your PDF reader, a PowerPoint in PowerPoint. Right-click one for **Open**,
+   **Copy Path to Clipboard**, or **Reveal in Finder** / **Reveal in File Explorer**.
+7. Click a box's header to fold it away; it stays folded next time. Right-click a header
+   for **Refresh** (re-reads that one folder — **Reload** in step 3 does all of them),
+   **Add Folder**, **Reveal in Finder**/**File Explorer**, and **Remove Folder**,
+   which asks you to confirm and then only removes it from this list — nothing on disk is
+   touched. 📸
+
+> **Watch the numbering.** The chapter number has to stand on its own between two dots. For
+> Psalm 1 that means `PSA.1.pdf` is found while `PSA.10.pdf`, `PSA.100.pdf` and `PSA.149.pdf`
+> are left alone — which is exactly what you want, since a full set of the Psalms has all of
+> them in one folder. Write the numbers plainly: no leading zeros (`PSA.01.pdf` is not
+> found), and `-0` is not a number. Upper and lower case do not matter.
+
+> **If a box shows a warning** instead of files: **Folder not found** means the folder was
+> moved, renamed or deleted since you added it (remove it and add it again);
+> **Cannot read folder** means the app is not allowed to read it. **Too many folders to
+> search** means the folder tree was too large to finish — point Resources at the folder
+> your material is actually in rather than at a whole drive.
+
+_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, CM-93._
