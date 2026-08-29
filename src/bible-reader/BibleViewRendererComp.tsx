@@ -27,16 +27,28 @@ export default function BibleViewRendererComp({
     const viewController = useBibleItemsViewControllerContext();
     const typeText = isHorizontal ? 'h' : 'v';
     const fullClassPrefix = classPrefix + typeText;
+    // `nestedBibleItems` is the view controller's LIVE array: `addBibleItem`
+    // splices it in place BEFORE the (microtask-async) update event lands, so
+    // any render happening in that window — closing the bible-key popup of
+    // `Split Horizontal/Vertical to` is the usual one — re-renders this
+    // component with the SAME array reference but a new length. Keying the
+    // memo on that reference kept the old pane count while `dataInput` below
+    // already had the new one, which is what made `ResizeActorComp` throw
+    // `key v3 not found in flexSizeDefault:{"v1":["1"],"v2":["1"]}`. Key it on
+    // the count instead so the two can never disagree.
+    const itemCount = Array.isArray(nestedBibleItems)
+        ? nestedBibleItems.length
+        : 0;
     const flexSizeDefault = useMemo(() => {
-        if (!Array.isArray(nestedBibleItems) || nestedBibleItems.length <= 1) {
+        if (itemCount <= 1) {
             return {} as FlexSizeType;
         }
         return Object.fromEntries(
-            nestedBibleItems.map((_, i) => {
+            Array.from({ length: itemCount }, (_, i) => {
                 return [`${typeText}${i + 1}`, ['1']];
             }),
         ) as FlexSizeType;
-    }, [nestedBibleItems, typeText]);
+    }, [itemCount, typeText]);
     if (!Array.isArray(nestedBibleItems)) {
         return viewController.finalRenderer(nestedBibleItems);
     }
