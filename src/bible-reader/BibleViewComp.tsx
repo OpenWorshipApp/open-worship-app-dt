@@ -233,7 +233,11 @@ export default function BibleViewComp({
                     <BibleViewTextComp bibleItem={bibleItem} />
                 )}
                 <ScrollingHandlerComp
-                    style={{ bottom: '60px' }}
+                    // Both buttons stack in the bottom-right corner, 30px
+                    // apart. Kept low so the pair hugs the card's foot rather
+                    // than floating up over the verse text.
+                    style={{ bottom: '30px' }}
+                    playToBottomStyle={{ bottom: 0 }}
                     shouldShowPlayToBottom
                     movedCheck={{
                         check: (container: HTMLElement) => {

@@ -13,11 +13,16 @@ import { tran } from '../lang/langHelpers';
 
 export default function ScrollingHandlerComp({
     style,
+    playToBottomStyle,
     shouldShowPlayToBottom = false,
     movedCheck,
     scrollingContainerSelector,
 }: Readonly<{
+    // Positions the to-the-top button only. When both buttons show they are a
+    // stack in the same corner, so a host that moves one must move the other
+    // with `playToBottomStyle` or the two glyphs land on top of each other.
     style?: CSSProperties;
+    playToBottomStyle?: CSSProperties;
     shouldShowPlayToBottom?: boolean;
     movedCheck?: MoveCheckType;
     // For hosts where the scroller is not this handler's own parent — see
@@ -37,6 +42,7 @@ export default function ScrollingHandlerComp({
                     style={{
                         width: '45px',
                         height: '45px',
+                        ...playToBottomStyle,
                     }}
                     ref={(element) => {
                         if (element) {
