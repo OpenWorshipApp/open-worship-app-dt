@@ -18,6 +18,7 @@ import {
     type LookupRecordLabelsType,
     type LookupTextIndexType,
 } from './verseTextIndexTypes';
+import { readJsonFileVersion } from '../lang/lookupDataVersionHelpers';
 
 /**
  * Reading and writing the derived lookup files, and holding them in memory only
@@ -64,7 +65,10 @@ async function readLookupDataVersion() {
     if (langData?.getLookupDataVersion === undefined) {
         return UNKNOWN_DATA_VERSION;
     }
-    const dataVersion = await langData.getLookupDataVersion('');
+    const dataVersion = await langData.getLookupDataVersion({
+        packageDir: langData.packageDir,
+        readJsonFileVersion,
+    });
     if (dataVersion === null) {
         return UNKNOWN_DATA_VERSION;
     }

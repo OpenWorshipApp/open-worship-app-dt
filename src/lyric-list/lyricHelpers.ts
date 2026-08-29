@@ -4,7 +4,7 @@ import type { OpenLyricTheme, OpenLyricPreviewSetting } from 'open-lyric';
 import Lyric from './Lyric';
 import LyricAppDocumentStage0 from './LyricAppDocumentStage0';
 import LyricAppDocumentStage1 from './LyricAppDocumentStage1';
-import { getAllLangsAsync } from '../lang/langHelpers';
+import { genOpenLyricFontFaces, getAllLangsAsync } from '../lang/langHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import FileSource from '../helper/FileSource';
 import type LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
@@ -94,6 +94,7 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
         for (const langData of langDataList) {
             langData.initOpenLyricPlugins?.({
                 openLyric: openLyricPreviewer,
+                genOpenLyricFontFaces,
             });
         }
     }

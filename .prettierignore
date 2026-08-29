@@ -1,0 +1,4 @@
+# Generated lookup datasets: ~35MB of JSON per language package. They are
+# produced by a generator, never hand-edited, and formatting them adds minutes
+# to every `lint:pre` run (the `src/**/*.json` glob would otherwise match them).
+src/lang/data/*/location-name-map-data/

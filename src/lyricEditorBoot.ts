@@ -12,7 +12,11 @@ import { getParamFileFullName, getParamIdNum } from './helper/domHelpers.ts';
 import Lyric from './lyric-list/Lyric.ts';
 import { pathJoin, fsExistSync } from './server/fileHelpers.ts';
 import appProvider from './server/appProvider.ts';
-import { getAllLangsAsync, initLangCss } from './lang/langHelpers.ts';
+import {
+    genOpenLyricFontFaces,
+    getAllLangsAsync,
+    initLangCss,
+} from './lang/langHelpers.ts';
 import { applyOpenLyricTheme } from './lyric-list/lyricHelpers.ts';
 import { installOpenLyricPrintPopupHandler } from './lyric-list/lyricPrintHelpers.ts';
 import { checkIsDarkMode, THEME_CHANGE_EVENT } from './others/themeHelpers.tsx';
@@ -78,6 +82,7 @@ export function getDashboardInstance() {
                 editor: editor,
                 openLyric: openLyric,
                 openLyricMarkdownManager: openLyricMarkdownManager,
+                genOpenLyricFontFaces,
             });
             initLangCss(langData);
         }

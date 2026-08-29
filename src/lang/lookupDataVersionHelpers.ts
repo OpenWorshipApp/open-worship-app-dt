@@ -48,3 +48,14 @@ export async function readJsonFileVersion(url: string): Promise<number | null> {
         return null;
     }
 }
+
+export async function readJsonFile(url: string) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch "${url}": ${response.status}`);
+    }
+    // A missing asset is served as the presenter page with a 200 rather than a
+    // 404 (see `genFilePathUrl` in `electron/fsServe.ts`), so a bad URL surfaces
+    // here as a parse error, not as a status.
+    return await response.json();
+}

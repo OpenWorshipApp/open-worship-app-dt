@@ -4,12 +4,13 @@ import {
     genOpenLyricFontFaces,
     type LanguageDataType,
 } from '../../langHelpers';
-import { resolveGzBundleFilePath } from '../../gzBundleFilePath';
-import { readJsonFileVersion } from '../../lookupDataVersionHelpers';
 
 import bibleBooks from './bibleBooks.json';
 import bbCR from './bb-cr.gz.bundle';
+import locationsMapUrl from './location-name-map-data/locationsMap.json?url';
+import namesMapUrl from './location-name-map-data/namesMap.json?url';
 import { getFontFamilies } from '../../../server/fontHelpers';
+import { handleError } from '../../../helper/errorHelpers';
 
 const lang: LanguageDataType = {
     packageDir: __dirname,
@@ -94,31 +95,28 @@ const lang: LanguageDataType = {
     transformBibleBookName(bookName: string) {
         return [bookName];
     },
-    getBibleCrossRefBundleFilePath() {
+    getBibleCrossRefBundleFilePath(resolveGzBundleFilePath) {
         return resolveGzBundleFilePath(bbCR);
     },
-    async getLookupDataVersion() {
+    async getLookupDataVersion({ readJsonFileVersion }) {
         const [namesMap, locationsMap] = await Promise.all([
-            readJsonFileVersion('data/namesMap.json'),
-            readJsonFileVersion('data/locationsMap.json'),
+            readJsonFileVersion(namesMapUrl),
+            readJsonFileVersion(locationsMapUrl),
         ]);
         if (namesMap === null || locationsMap === null) {
             return null;
         }
         return { namesMap, locationsMap };
     },
-    async getLookupData() {
-        const namesMap = await fetch('data/namesMap.json').then((res) =>
-            res.json(),
-        );
-        const locationsMap = await fetch('data/locationsMap.json').then((res) =>
-            res.json(),
-        );
-
-        return {
-            namesMap,
-            locationsMap,
-        };
+    async getLookupData({ readJsonFile }) {
+        try {
+            const namesMap = await readJsonFile(namesMapUrl);
+            const locationsMap = await readJsonFile(locationsMapUrl);
+            return { namesMap, locationsMap };
+        } catch (error) {
+            handleError(error);
+            return null;
+        }
     },
     initOpenLyricPlugins: ({ openLyric, openLyricMarkdownManager }) => {
         getFontFamilies().then((fontFamilies) => {

@@ -7,6 +7,7 @@ import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import type { Editor, OpenLyric, OpenLyricMarkdownManager } from 'open-lyric';
+import { resolveGzBundleFilePath } from './gzBundleFilePath';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LANG_CODE = 'en';
@@ -479,7 +480,10 @@ export type LanguageDataType = {
      */
     nativeName?: string;
     flagSVG: string;
-    getLookupData?: (packageLocation: string) => Promise<{
+    getLookupData?: (_args: {
+        readJsonFile: (url: string) => Promise<any>;
+        packageDir: string;
+    }) => Promise<{
         namesMap: AnyObjectType;
         locationsMap: AnyObjectType;
     } | null>;
@@ -491,7 +495,10 @@ export type LanguageDataType = {
      * maps are stamped with. A package that cannot answer (or predates this)
      * leaves the cache keyed on the app version alone.
      */
-    getLookupDataVersion?: (packageLocation: string) => Promise<{
+    getLookupDataVersion?: (_args: {
+        readJsonFileVersion: (url: string) => Promise<number | null>;
+        packageDir: string;
+    }) => Promise<{
         namesMap: number;
         locationsMap: number;
     } | null>;
@@ -508,11 +515,28 @@ export type LanguageDataType = {
     bibleAudioAvailable: boolean;
     sanitizeTranKey: (key: string) => string;
     transformBibleBookName: (bookName: string) => string[];
-    getBibleCrossRefBundleFilePath: () => string;
+    getBibleCrossRefBundleFilePath: (
+        resolveGzBundleFilePath: (bundle: {
+            filePath: string;
+            fileName: string | null;
+        }) => string,
+    ) => string;
     initOpenLyricPlugins?: (data: {
         editor?: Editor;
         openLyric?: OpenLyric;
         openLyricMarkdownManager?: OpenLyricMarkdownManager;
+        genOpenLyricFontFaces: (
+            fontFacesList: OpenLyricFontFace,
+            fontFaceData: {
+                title: string;
+                fontFaces: string[];
+                indexRange: number;
+            },
+        ) => {
+            title: string;
+            fontFaces: string[];
+            indexRange: number;
+        }[];
     }) => void;
 };
 
@@ -876,7 +900,9 @@ export async function getLocalBibleCrossRef(
     if (langData === null) {
         return null;
     }
-    const bundleFilePath = langData.getBibleCrossRefBundleFilePath();
+    const bundleFilePath = langData.getBibleCrossRefBundleFilePath(
+        resolveGzBundleFilePath,
+    );
     const db = getBibleCrossRefBundleReader(bundleFilePath);
     return db.getVerse(
         targetVerse.bookKey,

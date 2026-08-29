@@ -1,10 +1,6 @@
 import { EditorPluginKmKh } from 'open-lyric-plugin-km-kh';
 
-import {
-    genOpenLyricFontFaces,
-    type LanguageDataType,
-} from '../../langHelpers';
-import { resolveGzBundleFilePath } from '../../gzBundleFilePath';
+import { type LanguageDataType } from '../../langHelpers';
 
 import btbBlack from './fonts/Battambang/Battambang-Black.ttf';
 import btbBold from './fonts/Battambang/Battambang-Bold.ttf';
@@ -1670,10 +1666,15 @@ const lang: LanguageDataType = {
         }
         return [bookName];
     },
-    getBibleCrossRefBundleFilePath() {
+    getBibleCrossRefBundleFilePath(resolveGzBundleFilePath) {
         return resolveGzBundleFilePath(bbCR);
     },
-    initOpenLyricPlugins: ({ editor, openLyric, openLyricMarkdownManager }) => {
+    initOpenLyricPlugins: ({
+        editor,
+        openLyric,
+        openLyricMarkdownManager,
+        genOpenLyricFontFaces,
+    }) => {
         editor?.addPlugin('km-KH', new EditorPluginKmKh());
         const option = {
             title: 'Khmer',
