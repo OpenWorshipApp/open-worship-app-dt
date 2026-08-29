@@ -483,6 +483,18 @@ export type LanguageDataType = {
         namesMap: AnyObjectType;
         locationsMap: AnyObjectType;
     } | null>;
+    /**
+     * The dataset's own version numbers, read WITHOUT loading the dataset.
+     *
+     * The derived lookup index is cached on disk, and the only cheap way to tell
+     * a cache built from an older dataset apart is to ask the package what its
+     * maps are stamped with. A package that cannot answer (or predates this)
+     * leaves the cache keyed on the app version alone.
+     */
+    getLookupDataVersion?: (packageLocation: string) => Promise<{
+        namesMap: number;
+        locationsMap: number;
+    } | null>;
     sanitizeText: (text: string) => string;
     sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;

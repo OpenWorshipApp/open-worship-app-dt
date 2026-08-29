@@ -5,6 +5,7 @@ import {
     type LanguageDataType,
 } from '../../langHelpers';
 import { resolveGzBundleFilePath } from '../../gzBundleFilePath';
+import { readJsonFileVersion } from '../../lookupDataVersionHelpers';
 
 import bibleBooks from './bibleBooks.json';
 import bbCR from './bb-cr.gz.bundle';
@@ -95,6 +96,16 @@ const lang: LanguageDataType = {
     },
     getBibleCrossRefBundleFilePath() {
         return resolveGzBundleFilePath(bbCR);
+    },
+    async getLookupDataVersion() {
+        const [namesMap, locationsMap] = await Promise.all([
+            readJsonFileVersion('data/namesMap.json'),
+            readJsonFileVersion('data/locationsMap.json'),
+        ]);
+        if (namesMap === null || locationsMap === null) {
+            return null;
+        }
+        return { namesMap, locationsMap };
     },
     async getLookupData() {
         const namesMap = await fetch('data/namesMap.json').then((res) =>

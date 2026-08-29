@@ -10,6 +10,7 @@ import {
     fsWriteFile,
     pathJoin,
 } from '../server/fileHelpers';
+import { DEFAULT_LOCALE, getLangDataAsync } from '../lang/langHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import {
@@ -38,11 +39,49 @@ const BUILD_LOCK_KEY = 'lookup-verse-text-index';
 
 type FileEnvelopeType<T> = {
     _cachingTime: number;
-    // The shipped dataset only ever changes with the app itself, so the app
-    // version is what tells a cache built by an earlier install apart.
+    // The app version tells a cache built by an earlier install apart.
     _appVersion: string;
+    // ...and this tells apart a cache built from an OLDER DATASET within the
+    // same install: the two map files carry their own version numbers now, so a
+    // corrected name or place must expire the derived files even though the app
+    // around them did not change.
+    _dataVersion: string;
     value: T;
 };
+
+// What a dataset that cannot report a version is stored as. It must round-trip
+// equal to itself, so such a package keeps the app-version-only behaviour rather
+// than rebuilding the ~34MB dataset on every launch.
+const UNKNOWN_DATA_VERSION = '';
+
+let dataVersionPromise: Promise<string> | null = null;
+
+async function readLookupDataVersion() {
+    // The default language package is the only one the derived files are built
+    // from, so it is the only one asked — `getAllLangsAsync` would pull every
+    // other language's chunk in for nothing.
+    const langData = await getLangDataAsync(DEFAULT_LOCALE);
+    if (langData?.getLookupDataVersion === undefined) {
+        return UNKNOWN_DATA_VERSION;
+    }
+    const dataVersion = await langData.getLookupDataVersion('');
+    if (dataVersion === null) {
+        return UNKNOWN_DATA_VERSION;
+    }
+    return `${dataVersion.namesMap}-${dataVersion.locationsMap}`;
+}
+
+/**
+ * Memoized for the session: the shipped files cannot change under a running app,
+ * and both derived files ask for this on every load.
+ */
+function getLookupDataVersionCached() {
+    dataVersionPromise ??= readLookupDataVersion().catch((error) => {
+        handleError(error);
+        return UNKNOWN_DATA_VERSION;
+    });
+    return dataVersionPromise;
+}
 
 async function getLookupDataDirPath() {
     const dirPath = pathJoin(
@@ -65,6 +104,7 @@ async function getLookupDataDirPath() {
 
 async function readCachedFile<T extends { version: number }>(
     filePath: string,
+    dataVersion: string,
     checkIsValid: (value: T) => boolean,
 ) {
     if (!(await fsCheckFileExist(filePath))) {
@@ -78,6 +118,7 @@ async function readCachedFile<T extends { version: number }>(
         const envelope = JSON.parse(jsonText) as FileEnvelopeType<T>;
         if (
             envelope._appVersion !== appProvider.appInfo.version ||
+            envelope._dataVersion !== dataVersion ||
             envelope.value?.version !== LOOKUP_TEXT_INDEX_VERSION ||
             !checkIsValid(envelope.value)
         ) {
@@ -90,11 +131,16 @@ async function readCachedFile<T extends { version: number }>(
     }
 }
 
-async function writeCachedFile<T>(filePath: string, value: T) {
+async function writeCachedFile<T>(
+    filePath: string,
+    dataVersion: string,
+    value: T,
+) {
     try {
         const envelope: FileEnvelopeType<T> = {
             _cachingTime: Date.now(),
             _appVersion: appProvider.appInfo.version,
+            _dataVersion: dataVersion,
             value,
         };
         await fsWriteFile(filePath, JSON.stringify(envelope));
@@ -117,7 +163,7 @@ function checkIsRecordLabelsValid(value: LookupRecordLabelsType) {
 
 /**
  * Reads one of the two derived files, building BOTH of them if it is missing or
- * was written by an older app version.
+ * was written by an older app version or from an older dataset.
  *
  * The re-read inside the lock is what keeps a cold start from paying for the
  * dataset twice: the index and the labels can be requested at the same moment,
@@ -136,17 +182,26 @@ async function loadDerivedFile<T extends { version: number }>(
         return null;
     }
     const filePath = pathJoin(dirPath, fileName);
-    const cachedValue = await readCachedFile<T>(filePath, checkIsValid);
+    const dataVersion = await getLookupDataVersionCached();
+    const cachedValue = await readCachedFile<T>(
+        filePath,
+        dataVersion,
+        checkIsValid,
+    );
     if (cachedValue !== null) {
         return cachedValue;
     }
     return await unlocking(BUILD_LOCK_KEY, async () => {
-        const rebuiltValue = await readCachedFile<T>(filePath, checkIsValid);
+        const rebuiltValue = await readCachedFile<T>(
+            filePath,
+            dataVersion,
+            checkIsValid,
+        );
         if (rebuiltValue !== null) {
             return rebuiltValue;
         }
         // DYNAMIC on purpose: this is the only path that reads the full ~35MB
-        // dataset, and it runs at most once per app version.
+        // dataset, and it runs at most once per app version per dataset version.
         const { buildLookupTextIndex } =
             await import('./verseTextIndexBuilder');
         const built = await buildLookupTextIndex();
@@ -155,9 +210,14 @@ async function loadDerivedFile<T extends { version: number }>(
         }
         // Written together so the two can never drift apart in a way the
         // consumers would have to reconcile.
-        await writeCachedFile(pathJoin(dirPath, INDEX_FILE_NAME), built.index);
+        await writeCachedFile(
+            pathJoin(dirPath, INDEX_FILE_NAME),
+            dataVersion,
+            built.index,
+        );
         await writeCachedFile(
             pathJoin(dirPath, RECORD_LABELS_FILE_NAME),
+            dataVersion,
             built.recordLabels,
         );
         return pickBuilt(built);
