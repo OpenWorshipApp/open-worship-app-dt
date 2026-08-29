@@ -40,6 +40,12 @@ vi.mock('../../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     setSetting: setSettingMock,
 }));
+vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: getSettingMock,
+        setItem: setSettingMock,
+    },
+}));
 
 vi.mock('../../server/unlockingHelpers', () => ({
     unlocking: vi.fn((_key: string, callback: () => unknown) => callback()),

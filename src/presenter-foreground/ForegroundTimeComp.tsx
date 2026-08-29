@@ -4,12 +4,11 @@ import { tz } from 'moment-timezone';
 
 import { tran } from '../lang/langHelpers';
 import {
-    getSetting,
-    setSetting,
     useStateSettingBoolean,
     useStateSettingNumber,
     useStateSettingString,
 } from '../helper/settingHelpers';
+import { genStringListSettingManager } from '../helper/SettingManager';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
     getScreenForegroundManagerInstances,
@@ -24,7 +23,6 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
-import { handleError } from '../helper/errorHelpers';
 import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
@@ -397,22 +395,20 @@ function RenderShownMiniComp() {
     );
 }
 
-const ID_LIST_SETTING_NAME = 'foreground-time-id-list';
+const idListSettingManager = genStringListSettingManager(
+    'foreground-time-id-list',
+);
 function useIdList() {
     const [idList, setIdList] = useState<string[]>([]);
     const setIdList1 = (newIdList: string[]) => {
         setIdList(newIdList);
-        setSetting(ID_LIST_SETTING_NAME, JSON.stringify(newIdList));
+        idListSettingManager.setSetting(newIdList);
     };
     useAppEffect(() => {
-        const settingString = getSetting(ID_LIST_SETTING_NAME) ?? '';
-        try {
-            if (settingString.trim() !== '') {
-                setIdList(JSON.parse(settingString));
-                return;
-            }
-        } catch (error) {
-            handleError(error);
+        const storedIdList = idListSettingManager.getSetting();
+        if (storedIdList.length > 0) {
+            setIdList(storedIdList);
+            return;
         }
         setIdList1([crypto.randomUUID()]);
     }, []);

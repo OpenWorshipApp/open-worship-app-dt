@@ -40,7 +40,7 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { cumulativeOffset } from '../helper/helpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
-import { getSetting, setSetting } from '../helper/settingHelpers';
+import { genStringListSettingManager } from '../helper/SettingManager';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { appLog } from '../helper/loggerHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
@@ -266,7 +266,9 @@ class DatabaseFindingHandler {
     }
 }
 
-const BIBLE_FIND_SELECTED_BOOK_SETTING_NAME = 'bible-find-selected-book-key';
+const selectedBookSettingManager = genStringListSettingManager(
+    'bible-find-selected-book-key',
+);
 
 const instanceCache: Record<string, BibleFindController | null> = {};
 const VERSIONS = ['', '1', '2'];
@@ -290,18 +292,10 @@ export default class BibleFindController {
     }
 
     get selectedBookKeys() {
-        const settingStr =
-            getSetting(BIBLE_FIND_SELECTED_BOOK_SETTING_NAME) ?? '[]';
-        try {
-            return JSON.parse(settingStr) as string[];
-        } catch (_error) {}
-        return [];
+        return selectedBookSettingManager.getSetting();
     }
     set selectedBookKeys(bookKeys: string[]) {
-        setSetting(
-            BIBLE_FIND_SELECTED_BOOK_SETTING_NAME,
-            JSON.stringify(bookKeys),
-        );
+        selectedBookSettingManager.setSetting(bookKeys);
     }
 
     async getSelectedBooks() {

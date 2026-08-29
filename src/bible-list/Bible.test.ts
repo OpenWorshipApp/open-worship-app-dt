@@ -147,6 +147,13 @@ vi.mock('../helper/settingHelpers', () => ({
     getSetting: mocks.getSettingMock,
 }));
 
+vi.mock('../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: mocks.getSettingMock,
+        setItem: vi.fn(),
+    },
+}));
+
 vi.mock('./BibleItem', () => ({
     default: mocks.MockBibleItem,
 }));

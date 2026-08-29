@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
-import { getSetting, setSetting } from '../helper/settingHelpers';
+import { genStringListSettingManager } from '../helper/SettingManager';
 import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
@@ -16,20 +16,15 @@ import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
-const HISTORY_TEXT_LIST_SETTING_NAME = 'history-text-list';
+const historyTextListSettingManager =
+    genStringListSettingManager('history-text-list');
 function useHistoryTextList(maxHistoryCount: number) {
-    const historyTextListJson =
-        getSetting(HISTORY_TEXT_LIST_SETTING_NAME) ?? '[]';
-    const defaultHistoryTextList = JSON.parse(historyTextListJson) as string[];
-    const [historyTextList, setHistoryTextList] = useState<string[]>(
-        defaultHistoryTextList,
-    );
+    const [historyTextList, setHistoryTextList] = useState<string[]>(() => {
+        return historyTextListSettingManager.getSetting();
+    });
     const setHistoryTextList1 = (newHistoryTextList: string[]) => {
         setHistoryTextList(newHistoryTextList);
-        setSetting(
-            HISTORY_TEXT_LIST_SETTING_NAME,
-            JSON.stringify(newHistoryTextList),
-        );
+        historyTextListSettingManager.setSetting(newHistoryTextList);
     };
     useAppEffect(() => {
         bibleHistoryStore.addBibleItemHistory = (text: string) => {

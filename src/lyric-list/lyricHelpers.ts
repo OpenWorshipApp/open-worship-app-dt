@@ -5,7 +5,7 @@ import Lyric from './Lyric';
 import LyricAppDocumentStage0 from './LyricAppDocumentStage0';
 import LyricAppDocumentStage1 from './LyricAppDocumentStage1';
 import { genOpenLyricFontFaces, getAllLangsAsync } from '../lang/langHelpers';
-import { getSetting, setSetting } from '../helper/settingHelpers';
+import SettingManager from '../helper/SettingManager';
 import FileSource from '../helper/FileSource';
 import type LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
 import { checkIsDarkMode } from '../others/themeHelpers';
@@ -26,24 +26,27 @@ export function applyOpenLyricTheme(
     target.theme = isDarkMode ? 'dark-bs' : 'light-bs';
 }
 
-const OPEN_LYRIC_PREVIEWER_SETTING_NAME = 'open-lyric-previewer-setting';
 export const DEFAULT_OPEN_LYRIC_FONT_SIZE = 16;
+const openLyricPreviewerSettingManager =
+    new SettingManager<OpenLyricPreviewSetting>({
+        settingName: 'open-lyric-previewer-setting',
+        defaultValue: {},
+        isErrorToDefault: true,
+        validate: (jsonString) => {
+            try {
+                return JSON.parse(jsonString) instanceof Object;
+            } catch (_error) {
+                return false;
+            }
+        },
+        serialize: (setting) => JSON.stringify(setting),
+        deserialize: (jsonString) => JSON.parse(jsonString),
+    });
 function loadOpenLyricSetting() {
-    const settingStr = getSetting(OPEN_LYRIC_PREVIEWER_SETTING_NAME);
-    if (settingStr === null) {
-        return null;
-    }
-    try {
-        const setting = JSON.parse(settingStr);
-        return setting;
-    } catch (err) {
-        console.error('Failed to parse OpenLyric previewer setting', err);
-        return null;
-    }
+    return openLyricPreviewerSettingManager.getSetting();
 }
 function saveOpenLyricSetting(setting: OpenLyricPreviewSetting) {
-    const settingStr = JSON.stringify(setting);
-    setSetting(OPEN_LYRIC_PREVIEWER_SETTING_NAME, settingStr);
+    openLyricPreviewerSettingManager.setSetting(setting);
 }
 
 /**
@@ -58,7 +61,7 @@ export function getOpenLyricFontSetting(): {
     fontSize: number;
     fontFamily?: string;
 } {
-    const setting: OpenLyricPreviewSetting = loadOpenLyricSetting() ?? {};
+    const setting: OpenLyricPreviewSetting = loadOpenLyricSetting();
     return {
         fontSize: setting.fontSize ?? DEFAULT_OPEN_LYRIC_FONT_SIZE,
         fontFamily: setting.fontFamily,

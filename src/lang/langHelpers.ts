@@ -5,11 +5,10 @@ import { unlocking } from '../server/unlockingHelpers';
 import { globalCacheManager10Seconds } from '../others/CacheManager';
 import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
-import { getSetting, setSetting } from '../helper/settingHelpers';
+import SettingManager from '../helper/SettingManager';
 import type { Editor, OpenLyric, OpenLyricMarkdownManager } from 'open-lyric';
 import { resolveGzBundleFilePath } from './gzBundleFilePath';
 
-const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LANG_CODE = 'en';
 export const supportedLangCodes = [DEFAULT_LANG_CODE, 'km'];
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
@@ -574,18 +573,35 @@ export function checkIsValidLocale(text: string) {
     return !!(allLocalesMap as any)[text];
 }
 
+let localeSettingManager: SettingManager<LocaleType> | null = null;
+/**
+ * Built on first use, NOT at module load. This module sits inside the
+ * `SettingManager` -> `appLocalStorage` -> `fileHelpers` -> `FileSource` ->
+ * `FileSourceMetaManager` -> `langHelpers` import cycle, so when
+ * `SettingManager` is the module that starts the cycle, a top-level `new` here
+ * reaches the class while it is still in its temporal dead zone and throws
+ * "default is not a constructor".
+ */
+function getLocaleSettingManager() {
+    localeSettingManager ??= new SettingManager<LocaleType>({
+        settingName: 'language-locale',
+        defaultValue: DEFAULT_LOCALE,
+        isErrorToDefault: true,
+        validate: checkIsValidLocale,
+    });
+    return localeSettingManager;
+}
 export function getCurrentLocale(): LocaleType {
-    const locale = getSetting(LANGUAGE_LOCALE_SETTING_NAME) ?? DEFAULT_LOCALE;
-    if (checkIsValidLocale(locale)) {
-        return locale as LocaleType;
-    }
-    return DEFAULT_LOCALE;
+    return getLocaleSettingManager().getSetting();
 }
 export function setCurrentLocale(locale: LocaleType) {
+    // Coerced BEFORE the manager sees it: `setSetting` throws on an invalid
+    // value, and this is called from the language picker, which has always
+    // silently fallen back rather than failing.
     if (!checkIsValidLocale(locale)) {
         locale = DEFAULT_LOCALE;
     }
-    setSetting(LANGUAGE_LOCALE_SETTING_NAME, locale);
+    getLocaleSettingManager().setSetting(locale);
 }
 
 const langCache = new Map<string, LanguageDataType>();

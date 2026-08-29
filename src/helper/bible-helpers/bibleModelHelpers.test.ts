@@ -2,17 +2,19 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
     freezeObjectMock: vi.fn((value: object) => Object.freeze(value)),
-    getSettingMock: vi.fn(),
-    setSettingMock: vi.fn(),
+    getItemMock: vi.fn(),
+    setItemMock: vi.fn(),
 }));
 
 vi.mock('../helpers', () => ({
     freezeObject: mocks.freezeObjectMock,
 }));
 
-vi.mock('../settingHelpers', () => ({
-    getSetting: mocks.getSettingMock,
-    setSetting: mocks.setSettingMock,
+vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: mocks.getItemMock,
+        setItem: mocks.setItemMock,
+    },
 }));
 
 import {
@@ -27,7 +29,7 @@ import {
 describe('bibleModelHelpers', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mocks.getSettingMock.mockReturnValue(undefined);
+        mocks.getItemMock.mockReturnValue(null);
         mocks.freezeObjectMock.mockImplementation((value: object) =>
             Object.freeze(value),
         );
@@ -40,7 +42,7 @@ describe('bibleModelHelpers', () => {
         expect(bibleModelInfoTitleMap[BibleModelInfoEnum.KJVD]).toBeTruthy();
         expect(bibleModelInfoTitleMap[BibleModelInfoEnum.DR]).toBeTruthy();
 
-        mocks.getSettingMock.mockReturnValue('INVALID');
+        mocks.getItemMock.mockReturnValue('INVALID');
         expect(getBibleModelInfoSetting()).toBe(BibleModelInfoEnum.KJV);
 
         const model = getBibleModelInfo();
@@ -52,13 +54,13 @@ describe('bibleModelHelpers', () => {
     });
 
     test('returns the configured model variants and persists the setting', () => {
-        mocks.getSettingMock.mockReturnValue(BibleModelInfoEnum.KJVD);
+        mocks.getItemMock.mockReturnValue(BibleModelInfoEnum.KJVD);
         expect(getBibleModelInfoSetting()).toBe(BibleModelInfoEnum.KJVD);
         expect(getBibleModelInfo().title).toBe(
             bibleModelInfoTitleMap[BibleModelInfoEnum.KJVD],
         );
 
-        mocks.getSettingMock.mockReturnValue(BibleModelInfoEnum.DR);
+        mocks.getItemMock.mockReturnValue(BibleModelInfoEnum.DR);
         expect(getBibleModelInfoSetting()).toBe(BibleModelInfoEnum.DR);
         const drModel = getBibleModelInfo();
         expect(drModel.title).toBe(
@@ -67,7 +69,7 @@ describe('bibleModelHelpers', () => {
         expect(drModel.bookKeysOrder.length).toBeGreaterThan(0);
 
         setBibleModelInfoSetting(BibleModelInfoEnum.DR);
-        expect(mocks.setSettingMock).toHaveBeenCalledWith(
+        expect(mocks.setItemMock).toHaveBeenCalledWith(
             'model-bible-info',
             BibleModelInfoEnum.DR,
         );

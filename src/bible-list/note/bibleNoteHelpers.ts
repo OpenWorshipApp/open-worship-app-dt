@@ -29,7 +29,8 @@ import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import BibleItem from '../BibleItem';
 import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
+import { getSetting } from '../../helper/settingHelpers';
+import { genStringListSettingManager } from '../../helper/SettingManager';
 import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
 import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
@@ -156,23 +157,11 @@ async function changeBibleKey(
     };
 }
 
+const excalidrawLibrariesSettingManager = genStringListSettingManager(
+    'excalidraw-libraries',
+);
 function excalidrawLoadLibrariesFileList() {
-    const libraries = getSetting('excalidraw-libraries');
-    if (libraries === null) {
-        return [];
-    }
-
-    try {
-        const parsedLibraries = JSON.parse(libraries);
-        return Array.isArray(parsedLibraries)
-            ? parsedLibraries.filter(
-                  (librariesFile): librariesFile is string =>
-                      typeof librariesFile === 'string',
-              )
-            : [];
-    } catch {
-        return [];
-    }
+    return excalidrawLibrariesSettingManager.getSetting();
 }
 function excalidrawSaveLibrariesFile(librariesFile: string) {
     const existingLibrariesFileList = excalidrawLoadLibrariesFileList();
@@ -184,10 +173,10 @@ function excalidrawSaveLibrariesFile(librariesFile: string) {
         librariesFile,
         ...existingLibrariesFileList,
     ];
-    setSetting('excalidraw-libraries', JSON.stringify(mergedLibrariesFileList));
+    excalidrawLibrariesSettingManager.setSetting(mergedLibrariesFileList);
 }
 function excalidrawClearLibrariesFileList() {
-    setSetting('excalidraw-libraries', null);
+    excalidrawLibrariesSettingManager.setSetting([]);
 }
 
 export async function initBibleNote({

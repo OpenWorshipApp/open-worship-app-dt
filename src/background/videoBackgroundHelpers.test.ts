@@ -13,9 +13,11 @@ vi.mock('../helper/FileSource', () => ({
     },
 }));
 
-vi.mock('../helper/settingHelpers', () => ({
-    getSetting: getSettingMock,
-    setSetting: setSettingMock,
+vi.mock('../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: getSettingMock,
+        setItem: setSettingMock,
+    },
 }));
 
 import {

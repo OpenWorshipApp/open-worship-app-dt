@@ -1,18 +1,25 @@
 import FileSource from '../helper/FileSource';
-import { getSetting, setSetting } from '../helper/settingHelpers';
+import SettingManager from '../helper/SettingManager';
 
-const FADING_AT_THE_END_SETTING_NAME = 'video-fading-at-the-end';
-function getIsFadingAtTheEndSettingData() {
-    const setting = getSetting(FADING_AT_THE_END_SETTING_NAME);
-    try {
-        const settingData = JSON.parse(setting ?? '{}');
-        return settingData;
-    } catch (_error) {}
-    return {};
-}
+const fadingAtTheEndSettingManager = new SettingManager<{
+    [key: string]: boolean;
+}>({
+    settingName: 'video-fading-at-the-end',
+    defaultValue: {},
+    isErrorToDefault: true,
+    validate: (jsonString) => {
+        try {
+            return JSON.parse(jsonString) instanceof Object;
+        } catch (_error) {
+            return false;
+        }
+    },
+    serialize: (json) => JSON.stringify(json),
+    deserialize: (jsonString) => JSON.parse(jsonString),
+});
 
 export function getIsFadingAtTheEndSetting(src: string) {
-    const settingData = getIsFadingAtTheEndSettingData();
+    const settingData = fadingAtTheEndSettingManager.getSetting();
     if (settingData[src] !== undefined) {
         return settingData[src];
     }
@@ -28,8 +35,7 @@ export const methodMapIsFadingAtTheEnd: {
 } = {};
 export function setIsFadingAtTheEndSetting(src: string, value: boolean) {
     methodMapIsFadingAtTheEnd[src]?.(value);
-    const settingData = getIsFadingAtTheEndSettingData();
+    const settingData = fadingAtTheEndSettingManager.getSetting();
     settingData[src] = value;
-    const settingString = JSON.stringify(settingData);
-    setSetting(FADING_AT_THE_END_SETTING_NAME, settingString);
+    fadingAtTheEndSettingManager.setSetting(settingData);
 }

@@ -1,6 +1,6 @@
-import { cloneJson, parseJsonSafely } from '../helper/helpers';
+import { cloneJson } from '../helper/helpers';
 import { ItemBase } from '../helper/ItemBase';
-import { setSetting, getSetting } from '../helper/settingHelpers';
+import SettingManager from '../helper/SettingManager';
 import type DragInf from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
 import { handleError } from '../helper/errorHelpers';
@@ -19,7 +19,20 @@ import {
     toVerseFullKeyFormat,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 
-const BIBLE_PRESENT_SETTING_NAME = 'bible-presenter';
+const biblePresenterSettingManager = new SettingManager<AnyObjectType[]>({
+    settingName: 'bible-presenter',
+    defaultValue: [],
+    isErrorToDefault: true,
+    validate: (jsonString) => {
+        try {
+            return Array.isArray(JSON.parse(jsonString));
+        } catch (_error) {
+            return false;
+        }
+    },
+    serialize: (jsonData) => JSON.stringify(jsonData),
+    deserialize: (jsonString) => JSON.parse(jsonString),
+});
 
 export default class BibleItem
     extends ItemBase
@@ -234,17 +247,15 @@ export default class BibleItem
         const jsonData = bibleItems.map((bibleItem) => {
             return bibleItem.toJson();
         });
-        setSetting(BIBLE_PRESENT_SETTING_NAME, JSON.stringify(jsonData));
+        biblePresenterSettingManager.setSetting(jsonData);
     }
     static getBiblePresenterSetting() {
+        // The manager guarantees an array; `fromJson` validates each ENTRY and
+        // still throws on a bad one, so the catch stays.
         try {
-            const str = getSetting(BIBLE_PRESENT_SETTING_NAME) ?? '';
-            const jsonData = parseJsonSafely(str, true);
-            if (jsonData !== null) {
-                return jsonData.map((item: any) => {
-                    return this.fromJson(item);
-                }) as BibleItem[];
-            }
+            return biblePresenterSettingManager.getSetting().map((item) => {
+                return this.fromJson(item as any);
+            });
         } catch (error) {
             handleError(error);
         }

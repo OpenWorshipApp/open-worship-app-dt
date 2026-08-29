@@ -26,22 +26,34 @@ async function readJsonData(filePath: string) {
     return json;
 }
 
-const settingManager = new SettingManager<{ [key: string]: string }>({
-    settingName: 'itemSourcesMeta',
-    defaultValue: {},
-    isErrorToDefault: true,
-    validate: (jsonString) => {
-        try {
-            const json = JSON.parse(jsonString);
-            return json instanceof Object;
-        } catch (error) {
-            handleError(error);
-        }
-        return false;
-    },
-    serialize: (json) => JSON.stringify(json),
-    deserialize: (jsonString) => JSON.parse(jsonString),
-});
+let settingManagerInstance: SettingManager<{ [key: string]: string }> | null =
+    null;
+/**
+ * Built on first use, NOT at module load. This module is reached from
+ * `SettingManager`'s OWN import subtree (`SettingManager` -> `appLocalStorage`
+ * -> `fileHelpers` -> `FileSource` -> here), so a top-level `new` runs while
+ * the class is still in its temporal dead zone and throws "default is not a
+ * constructor" for whichever entry point happens to start the cycle.
+ */
+function getSettingManager() {
+    settingManagerInstance ??= new SettingManager<{ [key: string]: string }>({
+        settingName: 'itemSourcesMeta',
+        defaultValue: {},
+        isErrorToDefault: true,
+        validate: (jsonString) => {
+            try {
+                const json = JSON.parse(jsonString);
+                return json instanceof Object;
+            } catch (error) {
+                handleError(error);
+            }
+            return false;
+        },
+        serialize: (json) => JSON.stringify(json),
+        deserialize: (jsonString) => JSON.parse(jsonString),
+    });
+    return settingManagerInstance;
+}
 
 function toKey(filePath: string, id: string | number | null) {
     let key = filePath;
@@ -54,7 +66,7 @@ export function getColorNoteFilePathSetting(
     filePath: string,
     id: string | number | null,
 ): string | null {
-    const setting = settingManager.getSetting();
+    const setting = getSettingManager().getSetting();
     const key = toKey(filePath, id);
     const color = setting[key];
     if (isColor(color)) {
@@ -67,14 +79,14 @@ export function setColorNoteFilePathSetting(
     id: string | number | null,
     color: string | null,
 ) {
-    const setting = settingManager.getSetting();
+    const setting = getSettingManager().getSetting();
     const key = toKey(filePath, id);
     if (color === null) {
         delete setting[key];
     } else if (isColor(color)) {
         setting[key] = color;
     }
-    settingManager.setSetting(setting);
+    getSettingManager().setSetting(setting);
 }
 
 /**
@@ -87,7 +99,7 @@ export function setColorNoteFilePathSetting(
 export const COLOR_NOTE_SELF_KEY = 'self';
 
 export function getColorNoteFilePathSettings(filePath: string) {
-    const setting = settingManager.getSetting();
+    const setting = getSettingManager().getSetting();
     const prefix = filePath + KEY_SEPARATOR;
     const colorNotes: { [key: string]: string } = {};
     for (const [key, color] of Object.entries(setting)) {
@@ -110,7 +122,7 @@ export function setColorNoteFilePathSettings(
     filePath: string,
     colorNotes: { [key: string]: unknown },
 ) {
-    const setting = settingManager.getSetting();
+    const setting = getSettingManager().getSetting();
     let isChanged = false;
     for (const [key, color] of Object.entries(colorNotes)) {
         if (typeof color !== 'string' || !isColor(color)) {
@@ -121,7 +133,7 @@ export function setColorNoteFilePathSettings(
         isChanged = true;
     }
     if (isChanged) {
-        settingManager.setSetting(setting);
+        getSettingManager().setSetting(setting);
     }
 }
 
@@ -164,7 +176,7 @@ export default class FileSourceMetaManager {
         return fileSource.writeFileData(JSON.stringify(json));
     }
     static async checkAllColorNotes() {
-        const setting = settingManager.getSetting();
+        const setting = getSettingManager().getSetting();
         for (const key in setting) {
             let filePath = key;
             if (key.includes(KEY_SEPARATOR)) {
@@ -183,6 +195,6 @@ export default class FileSourceMetaManager {
             }
             delete setting[key];
         }
-        settingManager.setSetting(setting);
+        getSettingManager().setSetting(setting);
     }
 }
