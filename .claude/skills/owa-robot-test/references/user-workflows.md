@@ -21,7 +21,15 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-29j** (**W-29 step 8: a record that names a book, a chapter or a
+**workflowsVersion: 2026-08-29k** (**W-37 steps 2, 4 and 7 restyled: the Resources
+view is now a list, not a stack of boxes.** Each folder is a header line with the folder it
+lives in shown beside its name — two shelves both called `pdf` can finally be told apart —
+and its files hang off a single vertical rail instead of each sitting in its own outlined
+box. The pattern line is now two readable chips: the chapter you are on, and the dashed
+book-level one. A file that matched the book-level half carries a dashed **Introduction**
+(សេចក្ដីផ្ដើម) tag, so a `1CH.0.pdf` listed under chapter 1 explains itself. Nothing moved
+and no control changed. Verified live 2026-08-29, dark and light.)
+Previous: **2026-08-29j** (**W-29 step 8: a record that names a book, a chapter or a
 verse in its description now names it the way YOUR Bible does.** Those mentions ship written in
 English whatever language the record is in, so a Khmer sentence used to strand `Genesis 14` in the
 middle of it; under any language but English they are now re-read from the Bible on screen —
@@ -2334,11 +2342,11 @@ all count as book-level too.
    Cross Reference**. That opens the panel on this view AND on that verse.
 2. The top of the view shows the verse it is working from — its version, its reference and
    its text, exactly as **Cross Reference** shows it. Click the reference to move to
-   another verse, or the version chip to read it in another translation. Under it sits the
-   file-name pattern being looked for, so you can always see what it
-   is matching — `PSA.1.* · PSA.0.*` for anywhere in Psalm 1: the chapter's own files and
-   the book's. Moving to another verse of the same chapter changes the heading but not the
-   files. 📸
+   another verse, or the version chip to read it in another translation. Under it sit the
+   file-name patterns being looked for, so you can always see what it is matching — for
+   anywhere in Psalm 1, a solid `PSA.1.*` for the chapter's own files and a dashed
+   `PSA.0.*` for the book's. Moving to another verse of the same chapter changes the
+   heading but not the files. 📸
 3. The first time, the body holds a single **Add Folder** (បន្ថែមថត) button. Click it and
    pick the folder your files are in. You can add as many as you want — the **⋮ More
    Options** button, or a right-click anywhere in the view including the empty space below
@@ -2346,11 +2354,15 @@ all count as book-level too.
    That same menu has **Reload** (ផ្ទុកឡើងវិញ), which re-reads everything at once: your
    folder list, and the files inside every folder. Use it after adding files on disk while
    the app is open, or after changing the list from another window. 📸
-4. Each folder becomes its own box, named after the folder, with the full path shown if
-   you hover it. Inside are the matching files — **from that folder and every folder
+4. Each folder becomes its own group, named after the folder, with the folder it lives in
+   shown beside the name and the full path if you hover it. Under the name, hanging off a
+   single vertical line, are the matching files — **from that folder and every folder
    inside it** — sorted by file type, each with its own icon (PDF, Word, PowerPoint,
-   video, image, bible note). Hover a file to see where it actually lives. 📸
-   A box with nothing for this verse says **No matching files**.
+   video, image, bible note). The extension is set quieter than the rest of the name so the
+   reference reads first. Hover a file to see where it actually lives. 📸
+   A file that matched the book-level pattern rather than this chapter's carries a dashed
+   **Introduction** (សេចក្ដីផ្ដើម) tag, so a `PSA.0.pdf` listed under Psalm 1 says why it
+   is there. A group with nothing for this verse says **No matching files**.
 5. Sometimes you want a file that is *not* named after this verse. Click the **magnifier**
    (`bi-search`) at the right-hand end of the pattern line and a search box opens under it.
    Type any part of a file's name — `abc`, `baptism`, `PSA.11` — and every file in your
@@ -2366,7 +2378,7 @@ all count as book-level too.
 6. Click a file to open it in whatever application your computer normally uses for it — a
    PDF in your PDF reader, a PowerPoint in PowerPoint. Right-click one for **Open**,
    **Copy Path to Clipboard**, or **Reveal in Finder** / **Reveal in File Explorer**.
-7. Click a box's header to fold it away; it stays folded next time. Right-click a header
+7. Click a group's header to fold it away; it stays folded next time. Right-click a header
    for **Refresh** (re-reads that one folder — **Reload** in step 3 does all of them),
    **Add Folder**, **Reveal in Finder**/**File Explorer**, and **Remove Folder**,
    which asks you to confirm and then only removes it from this list — nothing on disk is
@@ -2378,7 +2390,7 @@ all count as book-level too.
 > them in one folder. Write the numbers plainly: no leading zeros (`PSA.01.pdf` is not
 > found), and `-0` is not a number. Upper and lower case do not matter.
 
-> **If a box shows a warning** instead of files: **Folder not found** means the folder was
+> **If a group shows a warning** instead of files: **Folder not found** means the folder was
 > moved, renamed or deleted since you added it (remove it and add it again);
 > **Cannot read folder** means the app is not allowed to read it. **Too many folders to
 > search** means the folder tree was too large to finish — point Resources at the folder

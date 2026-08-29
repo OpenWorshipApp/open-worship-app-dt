@@ -48,6 +48,7 @@ const dictionary = {
     'Search file name': 'ស្វែងរកឈ្មោះឯកសារ',
     'Book-level files are shown in every chapter':
         'ឯកសារកម្រិតកណ្ឌគម្ពីរ ត្រូវបានបង្ហាញនៅគ្រប់ជំពូក',
+    Introduction: 'សេចក្ដីផ្ដើម',
     'This folder is empty': 'ថតឯកសារនេះទទេ',
     Dimensions: 'វិមាត្រ',
     'Exporting DOCX Pages': 'កំពុងបម្លែងទំព័រ DOCX ទៅជា HTML',

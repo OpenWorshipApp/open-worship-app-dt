@@ -9,7 +9,7 @@ import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
 import { showFileOrDirExplorer } from '../server/appHelpers';
-import { pathBasename } from '../server/fileHelpers';
+import { pathBasename, pathDirname } from '../server/fileHelpers';
 import ResourcesFileRowComp from './ResourcesFileRowComp';
 import { toResourcesFolderExpandedSettingName } from './resourcesFolderHelpers';
 import type { ResourcesScanResultType } from './resourcesScanHelpers';
@@ -17,6 +17,19 @@ import {
     invalidateResourcesScanCache,
     scanResourceFiles,
 } from './resourcesScanHelpers';
+
+/**
+ * The parent folder, as a trail rather than an absolute path.
+ *
+ * The leading separator is dropped because `app-ellipsis-left` renders in
+ * `direction: rtl`, which walks a leading `/` around to the far end and prints
+ * `Users/raksa/Downloads/` -- a slash the path does not have, in the one place
+ * the eye checks for one. It carries no information here either: what
+ * identifies a shelf is the tail of the trail, never its root.
+ */
+function toParentPathLabel(dirPath: string) {
+    return pathDirname(dirPath).replace(/^[/\\]+/, '');
+}
 
 function toErrorMessageKey(error: any) {
     // The two things the box has to be able to say apart. `ENOTDIR` lands here
@@ -113,24 +126,35 @@ export default function ResourcesDirBoxComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div
-            className="card w-100 my-1"
-            style={{
-                border: '1px dotted var(--bs-info-text-emphasis)',
-            }}
-        >
+        <div className="app-resources-group w-100">
             <div
-                className="card-header app-ellipsis p-1 app-caught-hover-pointer"
-                style={{ height: '2rem' }}
+                className={
+                    'app-resources-group-header app-caught-hover-pointer'
+                }
                 title={dirPath}
                 onClick={handleToggleShowing}
                 onContextMenu={handleContextMenuOpening}
             >
                 <i
-                    className={`bi bi-chevron-${isShowing ? 'down' : 'right'}`}
+                    className={
+                        'app-resources-group-chevron bi bi-chevron-' +
+                        (isShowing ? 'down' : 'right')
+                    }
                 />
-                <i className="bi bi-folder2-open px-1" />
-                {pathBasename(dirPath)}
+                <i className="app-resources-group-icon bi bi-folder2-open" />
+                <span className="app-resources-group-name app-ellipsis">
+                    {pathBasename(dirPath)}
+                </span>
+                {/*
+                 * The basename alone identifies nothing -- a shelf called `pdf`
+                 * next to one called `test` says only that someone named their
+                 * folders in a hurry. The tail of the parent path is what says
+                 * WHICH library this is, and `app-ellipsis-left` drops the head
+                 * of it rather than the end when it will not fit.
+                 */}
+                <span className="app-resources-group-path app-ellipsis-left">
+                    {toParentPathLabel(dirPath)}
+                </span>
             </div>
             {isShowing ? (
                 <ResourcesDirBoxBodyComp
@@ -194,8 +218,11 @@ function ResourcesDirBoxBodyComp({
     }, [dirPath, bookKey, chapter, searchText, refreshCount]);
     if (errorMessageKey !== null) {
         return (
-            <div className="card-body app-inner-shadow px-1 py-0">
-                <div className="text-danger app-ellipsis" title={dirPath}>
+            <div className="app-resources-body">
+                <div
+                    className="app-resources-note text-danger app-ellipsis"
+                    title={dirPath}
+                >
                     <i className="bi bi-exclamation-triangle pe-1" />
                     {tran(errorMessageKey)}
                 </div>
@@ -204,7 +231,7 @@ function ResourcesDirBoxBodyComp({
     }
     if (scanResult === null) {
         return (
-            <div className="card-body app-inner-shadow px-1 py-0">
+            <div className="app-resources-body">
                 <LoadingComp style={{ height: '2rem' }} />
             </div>
         );
@@ -212,9 +239,9 @@ function ResourcesDirBoxBodyComp({
     const { filePaths, searchedFilePaths, isTruncated, isSearchTruncated } =
         scanResult;
     return (
-        <div className="card-body app-inner-shadow px-1 py-0">
+        <div className="app-resources-body">
             {filePaths.length === 0 && searchedFilePaths.length === 0 ? (
-                <div style={{ opacity: '0.5' }}>
+                <div className="app-resources-note">
                     {tran('No matching files')}
                 </div>
             ) : (
@@ -223,6 +250,7 @@ function ResourcesDirBoxBodyComp({
                         <ResourcesFileRowComp
                             key={filePath}
                             filePath={filePath}
+                            bookKey={bookKey}
                         />
                     );
                 })
@@ -235,25 +263,27 @@ function ResourcesDirBoxBodyComp({
                      * to do with the verse on screen.
                      */}
                     <div
-                        className="app-ellipsis"
-                        style={{ opacity: '0.5' }}
+                        className="app-resources-found-label app-ellipsis"
                         title={searchText}
                     >
-                        <i className="bi bi-search pe-1" />
-                        {`*${searchText}*`}
+                        <i className="bi bi-search" />
+                        <span className="app-ellipsis app-data">
+                            {`*${searchText}*`}
+                        </span>
                     </div>
                     {searchedFilePaths.map((filePath) => {
                         return (
                             <ResourcesFileRowComp
                                 key={filePath}
                                 filePath={filePath}
+                                bookKey={bookKey}
                             />
                         );
                     })}
                 </>
             ) : null}
             {isSearchTruncated ? (
-                <div className="text-warning app-ellipsis">
+                <div className="app-resources-note text-warning app-ellipsis">
                     <i className="bi bi-exclamation-triangle pe-1" />
                     {tran('Too many matching files')}
                 </div>
@@ -261,7 +291,7 @@ function ResourcesDirBoxBodyComp({
             {isTruncated ? (
                 // A silently short list reads as a broken feature, and nothing
                 // else on screen could ever explain it.
-                <div className="text-warning app-ellipsis">
+                <div className="app-resources-note text-warning app-ellipsis">
                     <i className="bi bi-exclamation-triangle pe-1" />
                     {tran('Too many folders to search')}
                 </div>

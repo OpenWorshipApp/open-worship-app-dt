@@ -1,3 +1,5 @@
+import './ResourcesComp.scss';
+
 import { useCallback, useMemo, useState } from 'react';
 
 import type BibleItem from '../bible-list/BibleItem';
@@ -20,7 +22,7 @@ import {
 } from './resourcesFolderHelpers';
 import {
     invalidateResourcesScanCache,
-    toResourceMatchHint,
+    toResourceMatchPatterns,
 } from './resourcesScanHelpers';
 
 export default function ResourcesRendererComp({
@@ -163,9 +165,10 @@ export default function ResourcesRendererComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const matchPatterns = toResourceMatchPatterns(bookKey, chapter);
     return (
         <div
-            className="w-100"
+            className="app-resources w-100"
             // Fills the panel even when the folder boxes do not, so a
             // right-click in the empty space BELOW them still lands on this
             // view rather than on the bare tab body. `minHeight` rather than
@@ -190,12 +193,9 @@ export default function ResourcesRendererComp({
                 }}
             />
             <hr className="m-0" />
-            <div className="d-flex align-items-center px-1">
+            <div className="app-resources-toolbar">
                 <button
-                    className={
-                        'btn btn-sm btn-outline-secondary flex-shrink-0' +
-                        ' me-1 px-1 py-0'
-                    }
+                    className="app-resources-icon-button"
                     type="button"
                     title={tran('More Options')}
                     aria-label={tran('More Options')}
@@ -203,18 +203,34 @@ export default function ResourcesRendererComp({
                 >
                     <i className="bi bi-three-dots-vertical" />
                 </button>
+                {/*
+                 * The patterns are what this panel IS -- "your files named
+                 * after this verse" -- so they are set to be read, and drawn as
+                 * the two different things they are: the chapter that is open,
+                 * solid; the book-level catch-all, dashed, the same dashed
+                 * outline a row carries when it matched that half.
+                 */}
                 <span
-                    className="app-ellipsis flex-fill"
-                    style={{ opacity: '0.5' }}
+                    className="app-resources-patterns"
                     title={tran('Book-level files are shown in every chapter')}
                 >
-                    {toResourceMatchHint(bookKey, chapter)}
+                    {matchPatterns.map((matchPattern, index) => {
+                        return (
+                            <span
+                                key={matchPattern}
+                                className={
+                                    'app-resources-pattern app-ellipsis' +
+                                    ' app-data' +
+                                    (index === 0 ? '' : ' is-book-level')
+                                }
+                            >
+                                {matchPattern}
+                            </span>
+                        );
+                    })}
                 </span>
                 <button
-                    className={
-                        'btn btn-sm flex-shrink-0 ms-1 px-1 py-0 btn-' +
-                        (isSearchShowing ? 'info' : 'outline-secondary')
-                    }
+                    className="app-resources-icon-button"
                     type="button"
                     title={tran('Search file name')}
                     aria-label={tran('Search file name')}
@@ -225,7 +241,7 @@ export default function ResourcesRendererComp({
                 </button>
             </div>
             {isSearchShowing ? (
-                <div className="px-1">
+                <div className="app-resources-search">
                     <input
                         className="form-control form-control-sm"
                         // `search` so Chromium draws its own clear button and
@@ -238,7 +254,6 @@ export default function ResourcesRendererComp({
                     />
                 </div>
             ) : null}
-            <hr className="my-1" />
             {dirPathList.length === 0 ? (
                 // A visible way in. An empty list whose only entry point is the
                 // three-dots menu or a right-click is invisible to anyone who

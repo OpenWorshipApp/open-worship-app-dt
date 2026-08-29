@@ -29,11 +29,19 @@ vi.mock('../helper/settingHelpers', async (importOriginal) => {
     };
 });
 
-vi.mock('./resourcesScanHelpers', () => ({
-    scanResourceFiles: scanResourceFilesMock,
-    invalidateResourcesScanCache: invalidateMock,
-    toResourceIcon: () => ['file-earmark-pdf', '#bd0b02'],
-}));
+vi.mock('./resourcesScanHelpers', async (importOriginal) => {
+    // Partial: the row below splits a name and tags the book-level ones with
+    // the REAL helpers, so those stay as shipped -- only the disk walk and the
+    // icon table are stubbed.
+    const original =
+        await importOriginal<typeof import('./resourcesScanHelpers')>();
+    return {
+        ...original,
+        scanResourceFiles: scanResourceFilesMock,
+        invalidateResourcesScanCache: invalidateMock,
+        toResourceIcon: () => ['file-earmark-pdf', '#bd0b02'],
+    };
+});
 
 function genScanResult(overrides: any = {}) {
     return {
@@ -63,6 +71,8 @@ vi.mock('../server/appProvider', () => ({
         pathUtils: {
             basename: (filePath: string) =>
                 filePath.slice(filePath.lastIndexOf('/') + 1),
+            dirname: (filePath: string) =>
+                filePath.slice(0, filePath.lastIndexOf('/')) || '/',
         },
     },
 }));

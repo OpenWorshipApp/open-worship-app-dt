@@ -1,0 +1,273 @@
+// The Resources panel: the shelf of files a user keeps for the verse on screen.
+//
+// ONE structural device carries the grouping -- a vertical rail per folder,
+// with every file hanging off it by a short tick -- in place of a card per
+// folder and an outlined button per file. That is not only quieter. The dark
+// theme gives every `.btn` a `1px solid var(--bs-gray-600)`, so a folder of
+// twenty files was twenty boxes, and the borders rather than the names were
+// what the eye landed on. A rail costs one painted line per folder instead of
+// four borders per row, which is also the cheaper thing to paint on the
+// machines this app targets.
+//
+// Every colour comes from the app's own `--app-*` semantics. The dotted
+// `--bs-info-text-emphasis` borders this replaces were a second accent hue
+// competing with `--app-accent` -- the one colour allowed to mean "this is
+// what you are pointing at".
+//
+// DASHED means book-level, and nothing else: the `<BOOK>.0.*` pattern chip in
+// the toolbar and the tag on a row that matched it are drawn the same way, so
+// the rule is learnable from either end. Solid means the chapter actually open
+// -- which is why the ticks joining rows to the rail, the free-text divider
+// included, are all solid however different the rows they hold.
+.app {
+  .app-resources {
+    // Where the rail sits inside a folder body, and how far the rows clear it.
+    --app-resources-rail-x: 0.5rem;
+    --app-resources-tick-w: 0.55rem;
+  }
+
+  .app-resources-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.375rem 0.25rem;
+    border-bottom: 1px solid var(--app-line);
+  }
+
+  // Icon-only controls: no box until they are pointed at. Bootstrap's outline
+  // variants plus the theme's global `.btn` border made these read as heavy as
+  // the content below them.
+  .app-resources-icon-button {
+    flex: 0 0 auto;
+    padding: 0 0.3rem;
+    line-height: 1.35rem;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background-color: transparent;
+    color: var(--app-muted);
+    &:hover {
+      color: var(--app-ink);
+      background-color: var(--app-surface);
+      border-color: var(--app-line);
+    }
+    &[aria-pressed='true'] {
+      color: var(--app-accent);
+      background-color: var(--app-accent-halo);
+      border-color: transparent;
+    }
+  }
+
+  .app-resources-patterns {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  // The thesis of the whole panel, so it is set to be READ -- it used to be the
+  // most informative string on screen and the faintest thing on it.
+  .app-resources-pattern {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 0 0.35rem;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.3rem;
+    color: var(--app-accent);
+    background-color: var(--app-accent-halo);
+    &.is-book-level {
+      font-weight: 500;
+      color: var(--app-muted);
+      background-color: transparent;
+      border-color: var(--app-line);
+      border-style: dashed;
+    }
+  }
+
+  .app-resources-search {
+    padding: 0.25rem 0.375rem;
+    border-bottom: 1px solid var(--app-line);
+
+    // Sized to the panel, not to the app shell. At the inherited body size an
+    // empty text field was the tallest and loudest thing on screen -- louder
+    // than the files it exists to filter.
+    .form-control {
+      padding: 0.1rem 0.4rem;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+  }
+
+  .app-resources-group {
+    margin: 0.25rem 0 0.5rem;
+  }
+
+  // A header LINE, not a card header: the rail below it does the grouping, so
+  // the folder only has to name itself.
+  .app-resources-group-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    min-width: 0;
+    padding: 0.15rem 0.25rem;
+    border-bottom: 1px solid var(--app-line);
+    &:hover .app-resources-group-name {
+      color: var(--app-accent);
+    }
+  }
+
+  .app-resources-group-chevron {
+    flex: 0 0 auto;
+    font-size: 0.65rem;
+    color: var(--app-muted);
+  }
+
+  .app-resources-group-icon {
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    color: var(--app-muted);
+  }
+
+  // Does not shrink for the path beside it: the name is what the user chose to
+  // call this shelf, so it truncates last and only past the halfway mark.
+  // Letting both flex collapsed a folder next to a long path to `p...`.
+  .app-resources-group-name {
+    flex: 0 0 auto;
+    max-width: 55%;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--app-ink);
+  }
+
+  // The basename alone is usually meaningless -- two folders called `pdf` and
+  // `test` say nothing about which library they are. The tail of the parent
+  // path does, and `app-ellipsis-left` keeps the END of it when it will not
+  // fit, which is the half that identifies the folder.
+  .app-resources-group-path {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.68rem;
+    color: var(--app-muted);
+    opacity: 0.85;
+  }
+
+  .app-resources-body {
+    position: relative;
+    padding: 0.25rem 0 0.125rem
+      calc(var(--app-resources-rail-x) + var(--app-resources-tick-w));
+    &::before {
+      content: '';
+      position: absolute;
+      left: var(--app-resources-rail-x);
+      top: 0;
+      bottom: 0.35rem;
+      width: 1px;
+      background-color: var(--app-line);
+    }
+  }
+
+  .app-resources-file {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    // No gap: the stem and the extension are ONE file name, and a space
+    // between them reads as a typo. Weight and colour separate them instead.
+    gap: 0;
+    width: 100%;
+    padding: 0.1rem 0.3rem;
+    border: 0;
+    border-radius: 3px;
+    background-color: transparent;
+    color: var(--app-ink);
+    text-align: left;
+    // The tick that joins this row to its folder's rail.
+    &::before {
+      content: '';
+      position: absolute;
+      left: calc(var(--app-resources-tick-w) * -1);
+      top: 0.6em;
+      width: var(--app-resources-tick-w);
+      height: 1px;
+      background-color: var(--app-line);
+    }
+    &:hover {
+      background-color: var(--app-surface);
+      &::before {
+        background-color: var(--app-accent);
+      }
+    }
+  }
+
+  .app-resources-file-icon {
+    flex: 0 0 auto;
+    margin-right: 0.35rem;
+    font-size: 0.85rem;
+  }
+
+  // Stem first, extension after: the stem is the reference the user is looking
+  // for, and a column of identical `.pdf`s should not be competing with it.
+  .app-resources-file-stem {
+    flex: 0 1 auto;
+    min-width: 0;
+    font-size: 0.8rem;
+  }
+
+  .app-resources-file-extension {
+    flex: 0 0 auto;
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+    color: var(--app-muted);
+  }
+
+  // Answers the question a book-level file raises on its own: "why is this
+  // listed when I am on chapter 1?".
+  // Against the name it belongs to, not pinned to the far edge -- out there it
+  // read as a column of its own with no relationship to the row.
+  .app-resources-file-tag {
+    flex: 0 0 auto;
+    margin-left: 0.45rem;
+    padding: 0 0.25rem;
+    border: 1px dashed var(--app-line);
+    border-radius: 2px;
+    font-size: 0.62rem;
+    letter-spacing: 0.05em;
+    line-height: 1.15;
+    color: var(--app-muted);
+  }
+
+  // The labelled break between verse matches and free-text hits. It sits ON the
+  // rail rather than beside it, so the tail below still reads as part of this
+  // folder while clearly not being more verse matches.
+  .app-resources-found-label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+    margin: 0.35rem 0 0.15rem;
+    padding: 0 0.3rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    color: var(--app-muted);
+    &::before {
+      content: '';
+      position: absolute;
+      left: calc(var(--app-resources-tick-w) * -1);
+      top: 0.6em;
+      width: var(--app-resources-tick-w);
+      height: 1px;
+      background-color: var(--app-line);
+    }
+  }
+
+  .app-resources-note {
+    padding: 0.1rem 0.3rem;
+    font-size: 0.72rem;
+    color: var(--app-muted);
+  }
+}

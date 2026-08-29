@@ -155,16 +155,44 @@ export function checkIsSearchedName(
 }
 
 /**
- * What the panel says it is looking for, e.g. `PSA.1.* · PSA.0.*`. The
- * book-level half is dropped when the chapter IS book-level, so it is never
- * printed twice.
+ * Is this file one of the book-level ones -- `PSA.0.pdf` rather than
+ * `PSA.1.pdf`? The panel tags these, because a file for the whole book showing
+ * up under chapter 1 otherwise looks like a mismatch.
  */
-export function toResourceMatchHint(bookKey: string, chapter: number) {
-    const chapterHint = `${bookKey}.${chapter}.*`;
+export function checkIsBookLevelName(fileFullName: string, bookKey: string) {
+    const fileChapter = toChapterNumber(fileFullName, bookKey);
+    return fileChapter !== null && fileChapter < 1;
+}
+
+/**
+ * What the panel says it is looking for, as its two halves: the chapter that is
+ * open, then the book-level catch-all. The second is dropped when the chapter
+ * IS book-level, so it is never printed twice.
+ *
+ * Two strings rather than one so the panel can draw them as what they are --
+ * the chapter pattern solid, the book-level one dashed -- instead of a single
+ * run of grey text the user has to parse a separator out of.
+ */
+export function toResourceMatchPatterns(bookKey: string, chapter: number) {
+    const chapterPattern = `${bookKey}.${chapter}.*`;
     if (chapter < 1) {
-        return chapterHint;
+        return [chapterPattern];
     }
-    return `${chapterHint} · ${bookKey}.0.*`;
+    return [chapterPattern, `${bookKey}.0.*`];
+}
+
+/**
+ * A file name split into the part worth reading and the part that is only
+ * noise once a hundred rows share it: `['PSA.1', '.pdf']`. An extensionless
+ * name keeps its whole self as the stem.
+ */
+export function toResourceNameParts(fileFullName: string): [string, string] {
+    const dotIndex = fileFullName.lastIndexOf('.');
+    // `<= 0` keeps a dotfile whole: `.gitignore` is a name, not an extension.
+    if (dotIndex <= 0) {
+        return [fileFullName, ''];
+    }
+    return [fileFullName.slice(0, dotIndex), fileFullName.slice(dotIndex)];
 }
 
 function toDotExtension(fileFullName: string) {

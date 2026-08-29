@@ -8,15 +8,23 @@ import { getMenuTitleRevealFile } from '../helper/helpers';
 import appProvider from '../server/appProvider';
 import { copyToClipboard, showFileOrDirExplorer } from '../server/appHelpers';
 import { pathBasename } from '../server/fileHelpers';
-import { toResourceIcon } from './resourcesScanHelpers';
+import {
+    checkIsBookLevelName,
+    toResourceIcon,
+    toResourceNameParts,
+} from './resourcesScanHelpers';
 
 export default function ResourcesFileRowComp({
     filePath,
+    bookKey,
 }: Readonly<{
     filePath: string;
+    bookKey: string;
 }>) {
     const fileFullName = pathBasename(filePath);
     const [iconName, color] = toResourceIcon(fileFullName);
+    const [nameStem, dotExtension] = toResourceNameParts(fileFullName);
+    const isBookLevel = checkIsBookLevelName(fileFullName, bookKey);
     const filePathRef = useAppCurrentRef(filePath);
     const handleOpening = useCallback(() => {
         appProvider.systemUtils.openFile(filePathRef.current);
@@ -55,10 +63,7 @@ export default function ResourcesFileRowComp({
     }, []);
     return (
         <button
-            className={
-                'btn btn-sm text-start w-100 app-ellipsis px-1 py-0' +
-                ' app-caught-hover-pointer'
-            }
+            className="app-resources-file app-caught-hover-pointer"
             type="button"
             // The whole path, because the name alone cannot tell two matches in
             // two subfolders apart -- and the folder it sits in is usually what
@@ -67,8 +72,33 @@ export default function ResourcesFileRowComp({
             onClick={handleOpening}
             onContextMenu={handleContextMenuOpening}
         >
-            <i className={`bi bi-${iconName} pe-1`} style={{ color }} />
-            {fileFullName}
+            <i
+                className={`bi bi-${iconName} app-resources-file-icon`}
+                style={{ color }}
+            />
+            {/*
+             * Split, not styled as one string: the stem is the reference the
+             * user came here for, and a column of identical `.pdf`s should not
+             * be competing with it for the same weight. `app-data` because
+             * these names are mostly numbers -- tabular figures keep a column
+             * of chapter numbers from shifting as it scrolls.
+             */}
+            <span className="app-resources-file-stem app-ellipsis app-data">
+                {nameStem}
+            </span>
+            {dotExtension ? (
+                <span className="app-resources-file-extension">
+                    {dotExtension}
+                </span>
+            ) : null}
+            {isBookLevel ? (
+                <span
+                    className="app-resources-file-tag"
+                    title={tran('Book-level files are shown in every chapter')}
+                >
+                    {tran('Introduction')}
+                </span>
+            ) : null}
         </button>
     );
 }

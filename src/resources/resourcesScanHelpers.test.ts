@@ -28,7 +28,9 @@ import {
     normalizeResourceSearchText,
     scanResourceFiles,
     toResourceIcon,
-    toResourceMatchHint,
+    toResourceMatchPatterns,
+    toResourceNameParts,
+    checkIsBookLevelName,
 } from './resourcesScanHelpers';
 
 type FakeTreeType = { [dirPath: string]: string[] | Error };
@@ -60,14 +62,43 @@ function installTree(tree: FakeTreeType) {
     );
 }
 
-describe('toResourceMatchHint', () => {
+describe('toResourceMatchPatterns', () => {
     test('names both halves of what is searched', () => {
-        expect(toResourceMatchHint('PSA', 1)).toBe('PSA.1.* \u00b7 PSA.0.*');
+        expect(toResourceMatchPatterns('PSA', 1)).toEqual([
+            'PSA.1.*',
+            'PSA.0.*',
+        ]);
     });
 
     test('does not print the book-level half twice', () => {
-        expect(toResourceMatchHint('PSA', 0)).toBe('PSA.0.*');
-        expect(toResourceMatchHint('PSA', -1)).toBe('PSA.-1.*');
+        expect(toResourceMatchPatterns('PSA', 0)).toEqual(['PSA.0.*']);
+        expect(toResourceMatchPatterns('PSA', -1)).toEqual(['PSA.-1.*']);
+    });
+});
+
+describe('checkIsBookLevelName', () => {
+    test.each([
+        ['PSA.0.pdf', true],
+        ['PSA.-1.pdf', true],
+        ['psa.0.PDF', true],
+        ['PSA.1.pdf', false],
+        // Not one of this book's files at all, so not book-level either.
+        ['GEN.0.pdf', false],
+        ['notes.pdf', false],
+    ])('%s -> %s', (fileFullName, expected) => {
+        expect(checkIsBookLevelName(fileFullName, 'PSA')).toBe(expected);
+    });
+});
+
+describe('toResourceNameParts', () => {
+    test.each([
+        ['PSA.1.pdf', ['PSA.1', '.pdf']],
+        ['PSA.1.notes.docx', ['PSA.1.notes', '.docx']],
+        // No extension to peel off, and a dotfile is a name, not an extension.
+        ['README', ['README', '']],
+        ['.gitignore', ['.gitignore', '']],
+    ])('%s -> %s', (fileFullName, expected) => {
+        expect(toResourceNameParts(fileFullName)).toEqual(expected);
     });
 });
 
