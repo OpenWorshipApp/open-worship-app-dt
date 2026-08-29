@@ -21,7 +21,18 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-24** (**new W-35 — bring a song in from CCLI SongSelect.**
+**workflowsVersion: 2026-08-29** (**W-29 gains step 2, and W-30 a note: the
+names-and-locations lookup now has a LANGUAGE of its own.** The person-and-pin button grew a
+second half showing the lookup dataset's language code (`en`); clicking it lists every
+language the app ships records in and picking one switches the floating panel, every record
+window already open, and the "in your reading" list at once, with nothing to reload. It is
+remembered, and it is a SEPARATE choice from the app's own language (W-16) — an English
+interface with Khmer names is normal. The underlined names inside the King James verses do
+NOT follow it: those match King James wording, which is what makes them findable. Verified
+live 2026-08-29 on the reader — en→km→en with a record window open the whole time, the
+underlines unchanged throughout. W-29's old steps 2..11 are now 3..12; the IDs are stable.
+New matrix row RD-80; RD-53 updated.)
+Previous: **2026-08-24** (**new W-35 — bring a song in from CCLI SongSelect.**
 Settings → Others gains a **SongSelect Integration** card (credentials saved on blur, OAuth
 **Sign In** opening a real CCLI window, **Sign Out**), and while signed in the Documents
 list menu carries **Import From SongSelect**: a floating search panel that
@@ -1781,44 +1792,52 @@ your Bible reading.
    resize it from any edge, and **double-click the title bar** to make it fill the app
    window when you want to read a long list — double-click again to put it back where
    it was. 📸
-2. Use the **Names** (ឈ្មោះ) and **Locations** (ទីកន្លែង) tabs to choose what you are
+2. The small **language code** beside that button (`en`) is the language the names and
+   places themselves are written in. Click it and pick another — `km - Khmer
+   (ភាសាខ្មែរ)` — and every list, every record window already open, and the
+   "in your reading" panel switch to it at once, with nothing to reload. The choice is
+   remembered for next time, and it is **separate** from the app's own language
+   (**W-16**): an English menu with Khmer names is a perfectly normal combination. The
+   underlined names inside the King James verses themselves do not change — those follow
+   the King James wording, which is what makes them findable at all. 📸
+3. Use the **Names** (ឈ្មោះ) and **Locations** (ទីកន្លែង) tabs to choose what you are
    looking for, and type in the search box. Each tab remembers what you typed, so you
    can switch back and forth. The list updates as you type.
-3. On the **Names** tab the dropdown beside the tabs narrows the list by kind —
+4. On the **Names** tab the dropdown beside the tabs narrows the list by kind —
    **All types** (គ្រប់ប្រភេទ), **People** (មនុស្ស), **Groups** (ក្រុម),
    **Places** (ទីកន្លែង) and so on. It is greyed out on the **Locations** tab, where
    there is nothing to filter.
-4. Use the arrows at the bottom to page through results, or type a page number in the
+5. Use the arrows at the bottom to page through results, or type a page number in the
    little box and press **Enter**. Starting a new search always takes you back to
    page 1. 📸
-5. Click a result to open it in its own small window: a short description, then a
+6. Click a result to open it in its own small window: a short description, then a
    **Details** (ព័ត៌មានលម្អិត) section with things like **Also called**, **Type**,
    **Gender**, **Parents**, **Children** and **Verses** (ខគម្ពីរ). 📸
-6. **Verses** starts closed and shows how many there are — some entries have hundreds
+7. **Verses** starts closed and shows how many there are — some entries have hundreds
    (Jerusalem has 712). Click it to open, and the references turn into readable
    titles like *Joshua 10:1-43*.
-7. Any underlined name or place — in the description or in a list — opens as another
+8. Any underlined name or place — in the description or in a list — opens as another
    small window **beside** the one you are reading, so you can follow a family or a
    journey without losing your place. Clicking the same entry twice just brings its
    window back to the front.
-8. Click a verse reference to read it (King James text). The eye button in that
+9. Click a verse reference to read it (King James text). The eye button in that
    window's title bar, **Open in bible lookup** (បើកក្នុងការស្វែងរកព្រះគម្ពីរ), loads
    that passage into the reference box behind it. 📸
-9. For a place that has coordinates, a map appears at the bottom of its window under
-   **Approximate location, the marker is an estimated point**, with an **Open in
-   Google Maps** link. The map needs an internet connection; places without
-   coordinates (Egypt, for example) simply show no map. 📸
-10. The copy button in a record window's title bar copies the whole entry — including
+10. For a place that has coordinates, a map appears at the bottom of its window under
+    **Approximate location, the marker is an estimated point**, with an **Open in
+    Google Maps** link. The map needs an internet connection; places without
+    coordinates (Egypt, for example) simply show no map. 📸
+11. The copy button in a record window's title bar copies the whole entry — including
     all of its verse references, whether or not you opened the **Verses** section —
     ready to paste into a note or a document.
-11. Closing the lookup window leaves the record windows you opened where they are.
+12. Closing the lookup window leaves the record windows you opened where they are.
     Each has its own **×**.
 
 **Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
 slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
 
 _Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
-RD-64, PM-126._
+RD-64, RD-80, PM-126._
 
 ### W-30 — See who and where is in the passage you are reading
 
@@ -1855,7 +1874,11 @@ can be reading any version, or Khmer; the panel still tells you who is in those 
 It also includes people the verse means without naming — Luke 13:16 lists **Satan**,
 which the verse calls "the devil".
 
-_Verify: RD-72, RD-73, RD-74, RD-75, RD-76, RD-57._
+**The names in this list follow the lookup language** — the little language code beside
+the person-and-pin button (**W-29** step 2), not the language of the app. The underlined
+names in the verses themselves stay King James whatever you pick.
+
+_Verify: RD-72, RD-73, RD-74, RD-75, RD-76, RD-57, RD-80._
 
 ---
 

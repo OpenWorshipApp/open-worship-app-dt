@@ -39,6 +39,9 @@ import type {
  */
 export const useLookupRecordLabels = genLookupFileStore<LookupRecordLabelsType>(
     loadLookupRecordLabelsFile,
+    // One sidecar per lookup language: a change means the OTHER file, not the
+    // one already resident.
+    true,
 );
 
 export type VerseRecordType = {

@@ -1,5 +1,5 @@
 import type { AnyObjectType } from '../helper/typeHelpers';
-import { DEFAULT_LANG_CODE, getAllLangsAsync } from '../lang/langHelpers';
+import { DEFAULT_LANG_CODE, getLangDataByCodeAsync } from '../lang/langHelpers';
 import { readJsonFile } from '../lang/lookupDataVersionHelpers';
 import { getPlainReferenceText } from './lookupPresentationHelpers';
 import type {
@@ -18,6 +18,12 @@ import { LOOKUP_TEXT_INDEX_VERSION } from './verseTextIndexTypes';
  *
  * ONE pass produces BOTH output files — the index and its labels sidecar — so
  * the dataset is never read twice even though the two are loaded independently.
+ *
+ * The INDEX is always built from English and only from English: it exists to
+ * match KJV wording in rendered verse text, so its surface forms have to be the
+ * KJV's. Only the LABELS sidecar follows the user's lookup language, and it is
+ * aligned to the English record ids, so a translated package is read purely to
+ * relabel records the English pass already identified.
  */
 
 // A record's `name` doubles as its display label, so ambiguous people carry a
@@ -71,45 +77,47 @@ function deriveNeedleList(rawName: unknown): string[] {
     return Array.from(needleSet);
 }
 
-async function readRawLookupData() {
-    const langDataList = await getAllLangsAsync();
-    for (const langData of langDataList) {
-        if (
-            langData.langCode !== DEFAULT_LANG_CODE ||
-            langData.getLookupData === undefined
-        ) {
-            continue;
-        }
-        const lookupData = await langData.getLookupData({
-            packageDir: langData.packageDir,
-            readJsonFile,
-        });
-        if (lookupData !== null) {
-            return lookupData;
-        }
+async function readRawLookupData(langCode: string) {
+    const langData = await getLangDataByCodeAsync(langCode);
+    if (langData?.getLookupData === undefined) {
+        return null;
     }
-    return null;
+    return await langData.getLookupData({
+        packageDir: langData.packageDir,
+        readJsonFile,
+    });
 }
+
+// Names are an id-keyed object and locations have been both an array and an
+// id-keyed object across dataset versions; `Object.values` reads either.
+function toRecordList(rawMap: unknown): AnyObjectType[] {
+    return Object.values((rawMap ?? {}) as AnyObjectType);
+}
+
+type RecordDisplayType = { label: string; type: string; title: string };
 
 export type BuiltLookupDataType = {
     index: LookupTextIndexType;
     recordLabels: LookupRecordLabelsType;
 };
 
-export async function buildLookupTextIndex(): Promise<BuiltLookupDataType | null> {
-    const rawLookupData = await readRawLookupData();
+/**
+ * The English pass: the index itself plus a display record per id.
+ *
+ * Kept in its own function so the ~35MB of raw English JSON and the record
+ * arrays over it become unreachable the moment it returns. A translated pass
+ * reads another ~35MB right after, and holding both at once is exactly the
+ * doubled peak this app cannot afford.
+ */
+async function buildEnglishPass() {
+    const rawLookupData = await readRawLookupData(DEFAULT_LANG_CODE);
     if (rawLookupData === null) {
         return null;
     }
     const namesFile = rawLookupData.namesMap as AnyObjectType;
     const locationsFile = rawLookupData.locationsMap as AnyObjectType;
-    const nameRecordList: AnyObjectType[] = Object.values(
-        namesFile.namesMap ?? {},
-    );
-    const rawLocationsMap = locationsFile.locationsMap ?? [];
-    const locationRecordList: AnyObjectType[] = Array.isArray(rawLocationsMap)
-        ? rawLocationsMap
-        : Object.values(rawLocationsMap);
+    const nameRecordList = toRecordList(namesFile.namesMap);
+    const locationRecordList = toRecordList(locationsFile.locationsMap);
 
     // Record ids are 36-char UUIDs and each would otherwise be repeated in the
     // needle map and again in the verse map. Interning them into one list and
@@ -163,7 +171,7 @@ export async function buildLookupTextIndex(): Promise<BuiltLookupDataType | null
     // Display data for EVERY record, so a record reachable only through the
     // verse maps (never spelled out in the text) still gets a label. Held as a
     // map because interning order is not known until all four maps are built.
-    const displayMap = new Map<string, { label: string; type: string }>();
+    const displayMap = new Map<string, RecordDisplayType>();
     const collectDisplay = (
         recordList: AnyObjectType[],
         isKeepingType: boolean,
@@ -177,6 +185,9 @@ export async function buildLookupTextIndex(): Promise<BuiltLookupDataType | null
                 label: typeof record.name === 'string' ? record.name : '',
                 type:
                     isKeepingType && typeof rawType === 'string' ? rawType : '',
+                // Truncated here rather than kept whole, so the raw paragraphs
+                // are the only thing this pass lets go of.
+                title: toShortTitle(record.title),
             });
         }
     };
@@ -194,20 +205,74 @@ export async function buildLookupTextIndex(): Promise<BuiltLookupDataType | null
         verseNames: buildVerseMap(namesFile.versePersonsMap),
         verseLocations: buildVerseMap(locationsFile.verseLocationsMap),
     };
+    return { index, displayMap };
+}
 
-    // Titles are read straight off the source records here rather than kept in
-    // `displayMap`, so the truncated strings are the only ones retained.
-    const titleMap = new Map<string, string>();
-    for (const record of [...nameRecordList, ...locationRecordList]) {
-        if (typeof record.id === 'string') {
-            titleMap.set(record.id, toShortTitle(record.title));
+/**
+ * Overwrites the English label and title of every record the translated package
+ * also carries, IN PLACE.
+ *
+ * Records it does not carry keep their English text: a partially translated
+ * package must leave a readable row rather than an empty one, which
+ * `toVerseRecord` would drop from the list altogether.
+ *
+ * `type` is deliberately not touched — it is an enum the icon map is keyed on,
+ * not prose, and a translated package spelling it differently would silently
+ * cost every one of those records its icon.
+ */
+async function applyTranslatedLabels(
+    langCode: string,
+    displayMap: Map<string, RecordDisplayType>,
+) {
+    const rawLookupData = await readRawLookupData(langCode);
+    if (rawLookupData === null) {
+        return;
+    }
+    const namesFile = rawLookupData.namesMap as AnyObjectType;
+    const locationsFile = rawLookupData.locationsMap as AnyObjectType;
+    for (const record of [
+        ...toRecordList(namesFile.namesMap),
+        ...toRecordList(locationsFile.locationsMap),
+    ]) {
+        if (typeof record.id !== 'string') {
+            continue;
         }
+        const display = displayMap.get(record.id);
+        if (display === undefined) {
+            // Known to the translated package but not to the English one, so no
+            // id was interned for it and nothing can ever reference it.
+            continue;
+        }
+        if (typeof record.name === 'string' && record.name.trim() !== '') {
+            display.label = record.name;
+        }
+        const translatedTitle = toShortTitle(record.title);
+        if (translatedTitle !== '') {
+            display.title = translatedTitle;
+        }
+    }
+}
+
+/**
+ * @param labelsLangCode which language the labels sidecar is written in. The
+ * index is English whatever this says.
+ */
+export async function buildLookupTextIndex(
+    labelsLangCode: string = DEFAULT_LANG_CODE,
+): Promise<BuiltLookupDataType | null> {
+    const englishPass = await buildEnglishPass();
+    if (englishPass === null) {
+        return null;
+    }
+    const { index, displayMap } = englishPass;
+    if (labelsLangCode !== DEFAULT_LANG_CODE) {
+        await applyTranslatedLabels(labelsLangCode, displayMap);
     }
     const recordLabels: LookupRecordLabelsType = {
         version: LOOKUP_TEXT_INDEX_VERSION,
-        labels: idList.map((id) => displayMap.get(id)?.label ?? ''),
-        types: idList.map((id) => displayMap.get(id)?.type ?? ''),
-        titles: idList.map((id) => titleMap.get(id) ?? ''),
+        labels: index.ids.map((id) => displayMap.get(id)?.label ?? ''),
+        types: index.ids.map((id) => displayMap.get(id)?.type ?? ''),
+        titles: index.ids.map((id) => displayMap.get(id)?.title ?? ''),
     };
     return { index, recordLabels };
 }

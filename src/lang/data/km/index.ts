@@ -11,6 +11,8 @@ import fhRegular from './fonts/Fasthand/Fasthand-Regular.ttf';
 
 import bibleBooks from './bibleBooks.json';
 import bbCR from './bb-cr.gz.bundle';
+import locationsMapUrl from './location-name-map-data/locationsMap.json?url';
+import namesMapUrl from './location-name-map-data/namesMap.json?url';
 
 const numMap = {
     '០': '0',
@@ -1175,6 +1177,9 @@ const dictionary = {
     // a native speaker should review the phrasing. Note `All Types` above
     // already covers the panel's "All types" option after key sanitization.
     'Names and locations lookup': 'ការស្វែងរកឈ្មោះ និងទីកន្លែង',
+    // The language the lookup DATASET is read in, which is a separate
+    // choice from the language of the interface.
+    'Names and locations language': 'ភាសាឈ្មោះ និងទីកន្លែង',
     Names: 'ឈ្មោះ',
     Locations: 'ទីកន្លែង',
     'Search names': 'ស្វែងរកឈ្មោះ',
@@ -1668,6 +1673,26 @@ const lang: LanguageDataType = {
     },
     getBibleCrossRefBundleFilePath(resolveGzBundleFilePath) {
         return resolveGzBundleFilePath(bbCR);
+    },
+    async getLookupDataVersion({ readJsonFileVersion }) {
+        const [namesMap, locationsMap] = await Promise.all([
+            readJsonFileVersion(namesMapUrl),
+            readJsonFileVersion(locationsMapUrl),
+        ]);
+        if (namesMap === null || locationsMap === null) {
+            return null;
+        }
+        return { namesMap, locationsMap };
+    },
+    async getLookupData({ readJsonFile }) {
+        try {
+            const namesMap = await readJsonFile(namesMapUrl);
+            const locationsMap = await readJsonFile(locationsMapUrl);
+            return { namesMap, locationsMap };
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
     },
     initOpenLyricPlugins: ({
         editor,

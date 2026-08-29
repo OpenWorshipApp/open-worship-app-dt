@@ -6,11 +6,12 @@ import appProvider from '../server/appProvider';
 import {
     fsCheckFileExist,
     fsCreateDir,
+    fsDeleteFile,
     fsReadFile,
     fsWriteFile,
     pathJoin,
 } from '../server/fileHelpers';
-import { DEFAULT_LOCALE, getLangDataAsync } from '../lang/langHelpers';
+import { DEFAULT_LANG_CODE, getLangDataByCodeAsync } from '../lang/langHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import {
@@ -19,6 +20,10 @@ import {
     type LookupTextIndexType,
 } from './verseTextIndexTypes';
 import { readJsonFileVersion } from '../lang/lookupDataVersionHelpers';
+import {
+    getSelectedLookupLangCode,
+    subscribeLookupLangCode,
+} from './lookupLangHelpers';
 
 /**
  * Reading and writing the derived lookup files, and holding them in memory only
@@ -32,11 +37,39 @@ import { readJsonFileVersion } from '../lang/lookupDataVersionHelpers';
  * They are still BUILT together. Building is the one moment the app pays for the
  * full ~35MB dataset, so a missing file rebuilds both under a single lock and
  * whichever loader lost the race just re-reads the file the winner wrote.
+ *
+ * The index is English and unversioned by language — it matches KJV wording, so
+ * there is only ever one of it. The labels are what the user reads, so there is
+ * one sidecar PER LOOKUP LANGUAGE, each aligned to the same English id list.
  */
 
 const INDEX_FILE_NAME = 'verse-text-index.json';
-const RECORD_LABELS_FILE_NAME = 'verse-record-labels.json';
 const BUILD_LOCK_KEY = 'lookup-verse-text-index';
+
+function genRecordLabelsFileName(langCode: string) {
+    return `verse-record-labels-${langCode}.json`;
+}
+
+// Before the sidecar was one-per-language it had no suffix. Nothing will ever
+// read that file again, and it is a quarter of a megabyte in a data folder on
+// machines that are usually tight on disk.
+const LEGACY_RECORD_LABELS_FILE_NAME = 'verse-record-labels.json';
+let isLegacyFileSwept = false;
+
+function sweepLegacyRecordLabelsFile(dirPath: string) {
+    if (isLegacyFileSwept) {
+        return;
+    }
+    isLegacyFileSwept = true;
+    const filePath = pathJoin(dirPath, LEGACY_RECORD_LABELS_FILE_NAME);
+    // Fire and forget: nothing waits on a tidy-up, and a folder that never had
+    // the old file is the normal case.
+    fsCheckFileExist(filePath)
+        .then((isExisting) => {
+            return isExisting ? fsDeleteFile(filePath) : undefined;
+        })
+        .catch(handleError);
+}
 
 type FileEnvelopeType<T> = {
     _cachingTime: number;
@@ -55,13 +88,12 @@ type FileEnvelopeType<T> = {
 // than rebuilding the ~34MB dataset on every launch.
 const UNKNOWN_DATA_VERSION = '';
 
-let dataVersionPromise: Promise<string> | null = null;
+const dataVersionPromiseMap = new Map<string, Promise<string>>();
 
-async function readLookupDataVersion() {
-    // The default language package is the only one the derived files are built
-    // from, so it is the only one asked — `getAllLangsAsync` would pull every
-    // other language's chunk in for nothing.
-    const langData = await getLangDataAsync(DEFAULT_LOCALE);
+async function readLookupDataVersion(langCode: string) {
+    // ONE language package, addressed by code — `getAllLangsAsync` would pull
+    // every other language's chunk in for nothing.
+    const langData = await getLangDataByCodeAsync(langCode);
     if (langData?.getLookupDataVersion === undefined) {
         return UNKNOWN_DATA_VERSION;
     }
@@ -78,12 +110,21 @@ async function readLookupDataVersion() {
 /**
  * Memoized for the session: the shipped files cannot change under a running app,
  * and both derived files ask for this on every load.
+ *
+ * Per language, because the index is stamped with English's version while a
+ * labels sidecar is stamped with the version of the package it was written from
+ * — a corrected Khmer name has to expire the Khmer sidecar and nothing else.
+ * The map is bounded by the number of shipped languages.
  */
-function getLookupDataVersionCached() {
-    dataVersionPromise ??= readLookupDataVersion().catch((error) => {
-        handleError(error);
-        return UNKNOWN_DATA_VERSION;
-    });
+function getLookupDataVersionCached(langCode: string) {
+    let dataVersionPromise = dataVersionPromiseMap.get(langCode);
+    if (dataVersionPromise === undefined) {
+        dataVersionPromise = readLookupDataVersion(langCode).catch((error) => {
+            handleError(error);
+            return UNKNOWN_DATA_VERSION;
+        });
+        dataVersionPromiseMap.set(langCode, dataVersionPromise);
+    }
     return dataVersionPromise;
 }
 
@@ -172,9 +213,14 @@ function checkIsRecordLabelsValid(value: LookupRecordLabelsType) {
  * The re-read inside the lock is what keeps a cold start from paying for the
  * dataset twice: the index and the labels can be requested at the same moment,
  * and the second one through finds the file already on disk.
+ *
+ * `labelsLangCode` decides which sidecar the build writes, so asking for either
+ * file always produces the pair the current selection needs.
  */
 async function loadDerivedFile<T extends { version: number }>(
     fileName: string,
+    dataVersionLangCode: string,
+    labelsLangCode: string,
     checkIsValid: (value: T) => boolean,
     pickBuilt: (built: {
         index: LookupTextIndexType;
@@ -185,8 +231,9 @@ async function loadDerivedFile<T extends { version: number }>(
     if (dirPath === null) {
         return null;
     }
+    sweepLegacyRecordLabelsFile(dirPath);
     const filePath = pathJoin(dirPath, fileName);
-    const dataVersion = await getLookupDataVersionCached();
+    const dataVersion = await getLookupDataVersionCached(dataVersionLangCode);
     const cachedValue = await readCachedFile<T>(
         filePath,
         dataVersion,
@@ -205,23 +252,31 @@ async function loadDerivedFile<T extends { version: number }>(
             return rebuiltValue;
         }
         // DYNAMIC on purpose: this is the only path that reads the full ~35MB
-        // dataset, and it runs at most once per app version per dataset version.
+        // dataset, and it runs at most once per app version per dataset version
+        // per lookup language.
         const { buildLookupTextIndex } =
             await import('./verseTextIndexBuilder');
-        const built = await buildLookupTextIndex();
+        const built = await buildLookupTextIndex(labelsLangCode);
         if (built === null) {
             return null;
         }
+        // Each file carries the version of the package it was actually built
+        // from: the index is always English, the sidecar is whatever language it
+        // was written in.
+        const [indexDataVersion, labelsDataVersion] = await Promise.all([
+            getLookupDataVersionCached(DEFAULT_LANG_CODE),
+            getLookupDataVersionCached(labelsLangCode),
+        ]);
         // Written together so the two can never drift apart in a way the
         // consumers would have to reconcile.
         await writeCachedFile(
             pathJoin(dirPath, INDEX_FILE_NAME),
-            dataVersion,
+            indexDataVersion,
             built.index,
         );
         await writeCachedFile(
-            pathJoin(dirPath, RECORD_LABELS_FILE_NAME),
-            dataVersion,
+            pathJoin(dirPath, genRecordLabelsFileName(labelsLangCode)),
+            labelsDataVersion,
             built.recordLabels,
         );
         return pickBuilt(built);
@@ -231,14 +286,21 @@ async function loadDerivedFile<T extends { version: number }>(
 export async function loadLookupTextIndexFile() {
     return await loadDerivedFile<LookupTextIndexType>(
         INDEX_FILE_NAME,
+        // The index is built from English and matched against KJV wording, so it
+        // is stamped with English's version whatever the user reads records in.
+        DEFAULT_LANG_CODE,
+        getSelectedLookupLangCode(),
         checkIsIndexValid,
         (built) => built.index,
     );
 }
 
 export async function loadLookupRecordLabelsFile() {
+    const langCode = getSelectedLookupLangCode();
     return await loadDerivedFile<LookupRecordLabelsType>(
-        RECORD_LABELS_FILE_NAME,
+        genRecordLabelsFileName(langCode),
+        langCode,
+        langCode,
         checkIsRecordLabelsValid,
         (built) => built.recordLabels,
     );
@@ -250,10 +312,21 @@ export async function loadLookupRecordLabelsFile() {
  * The value is dropped as soon as the last consumer unsubscribes rather than
  * parked in a cache: re-reading a local file is far cheaper than holding it
  * resident for a view the user has navigated away from.
+ *
+ * `isLangDependent` marks a store whose file is one-per-lookup-language, so a
+ * language change has to throw the resident copy away and read the other file.
+ * The index store is NOT one of those: it is English by construction.
  */
-export function genLookupFileStore<T>(load: () => Promise<T | null>) {
+export function genLookupFileStore<T>(
+    load: () => Promise<T | null>,
+    isLangDependent = false,
+) {
     let loadedValue: T | null = null;
     let isLoading = false;
+    // Bumped when what is in flight stops being what is wanted, so a read of the
+    // previous language's file cannot install itself once it lands.
+    let loadGeneration = 0;
+    let unsubscribeLangCode: (() => void) | null = null;
     const listeners = new Set<() => void>();
 
     const notify = () => {
@@ -266,8 +339,12 @@ export function genLookupFileStore<T>(load: () => Promise<T | null>) {
             return;
         }
         isLoading = true;
+        const generation = loadGeneration;
         load()
             .then((value) => {
+                if (generation !== loadGeneration) {
+                    return;
+                }
                 isLoading = false;
                 // Everything may have unmounted while this was in flight; then
                 // there is nothing to hold it for and it must not be retained.
@@ -277,17 +354,34 @@ export function genLookupFileStore<T>(load: () => Promise<T | null>) {
                 }
             })
             .catch((error) => {
-                isLoading = false;
+                if (generation === loadGeneration) {
+                    isLoading = false;
+                }
                 handleError(error);
             });
     };
     const subscribe = (listener: () => void) => {
         listeners.add(listener);
+        // Only while something is actually rendering this: a store nobody reads
+        // has nothing to invalidate, and the subscription would outlive it.
+        if (isLangDependent && unsubscribeLangCode === null) {
+            unsubscribeLangCode = subscribeLookupLangCode(() => {
+                loadGeneration += 1;
+                isLoading = false;
+                loadedValue = null;
+                // Renders the loading state rather than the previous language's
+                // labels while the other file is read.
+                notify();
+                startLoading();
+            });
+        }
         startLoading();
         return () => {
             listeners.delete(listener);
             if (listeners.size === 0) {
                 loadedValue = null;
+                unsubscribeLangCode?.();
+                unsubscribeLangCode = null;
             }
         };
     };

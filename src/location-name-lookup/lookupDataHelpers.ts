@@ -1,37 +1,47 @@
 import type { LocationsLookupManager, NamesLookupManager } from 'bible-note';
 
-import type { AnyObjectType } from '../helper/typeHelpers';
 import { globalCacheManager10Seconds } from '../others/CacheManager';
 import { unlockingCacher } from '../server/unlockingHelpers';
-import { DEFAULT_LANG_CODE, getAllLangsAsync } from '../lang/langHelpers';
+import { getLangDataByCodeAsync } from '../lang/langHelpers';
 import { readJsonFile } from '../lang/lookupDataVersionHelpers';
+import {
+    getSelectedLookupLangCode,
+    subscribeLookupLangCode,
+} from './lookupLangHelpers';
 
 export type LookupManagersType = {
     namesLookupManager: NamesLookupManager;
     locationsLookupManager: LocationsLookupManager;
 };
 
-const LOOKUP_DATA_CACHE_KEY = 'LocationNameLookupData';
+const LOOKUP_DATA_CACHE_KEY_PREFIX = 'LocationNameLookupData';
 
-async function loadLookupData(): Promise<LookupManagersType> {
-    const langDataList = await getAllLangsAsync();
-    const namesData: { [key: string]: AnyObjectType } = {};
-    const locationsData: { [key: string]: AnyObjectType } = {};
-    for (const langData of langDataList) {
-        if (langData.getLookupData === undefined) {
-            continue;
-        }
-        const lookupData = await langData.getLookupData({
-            packageDir: langData.packageDir,
-            readJsonFile,
-        });
-        if (lookupData !== null) {
-            locationsData[langData.langCode] = lookupData.locationsMap;
-            namesData[langData.langCode] = lookupData.namesMap;
-        }
-    }
-    if (namesData[DEFAULT_LANG_CODE] === undefined) {
-        throw new Error('Failed to load English lookup data');
+function genCacheKey(langCode: string) {
+    return `${LOOKUP_DATA_CACHE_KEY_PREFIX}-${langCode}`;
+}
+
+/**
+ * ONE language's dataset, never every shipped language's.
+ *
+ * `fromRawDataset` normalizes every entry of the map it is handed, eagerly — so
+ * passing it both packages meant reading ~70MB of JSON and materializing two
+ * full sets of records to serve one. The manager is rebuilt when the selection
+ * changes instead, which costs a load the user asked for rather than a resident
+ * copy nobody looks at.
+ */
+async function loadLookupData(langCode: string): Promise<LookupManagersType> {
+    const langData = await getLangDataByCodeAsync(langCode);
+    const lookupData =
+        langData?.getLookupData === undefined
+            ? null
+            : await langData.getLookupData({
+                  packageDir: langData.packageDir,
+                  readJsonFile,
+              });
+    if (lookupData === null) {
+        throw new Error(
+            `Failed to load lookup data for language code: ${langCode}`,
+        );
     }
     // DYNAMIC on purpose. `bible-note` is a ~46MB package (Lexical, Excalidraw,
     // the whole note editor) and this is the only reason anything outside the
@@ -43,12 +53,12 @@ async function loadLookupData(): Promise<LookupManagersType> {
         await import('bible-note');
     return {
         namesLookupManager: NamesLookupManager.fromRawDataset(
-            namesData,
-            DEFAULT_LANG_CODE,
+            { [langCode]: lookupData.namesMap },
+            langCode,
         ),
         locationsLookupManager: LocationsLookupManager.fromRawDataset(
-            locationsData,
-            DEFAULT_LANG_CODE,
+            { [langCode]: lookupData.locationsMap },
+            langCode,
         ),
     };
 }
@@ -64,11 +74,19 @@ async function loadLookupData(): Promise<LookupManagersType> {
  * comment on `CacheManager.getSync`). That short window is only a convenience
  * for a close-then-reopen; what actually keeps ONE instance alive for as long
  * as any UI needs it is `acquireLookupData` below, NOT this cache.
+ *
+ * Keyed by language so a switch can never be served the previous one out of
+ * that window.
  */
-export async function getLookupDataCached(): Promise<LookupManagersType> {
+export async function getLookupDataCached(
+    langCode: string = getSelectedLookupLangCode(),
+): Promise<LookupManagersType> {
+    const cacheKey = genCacheKey(langCode);
     return await unlockingCacher(
-        LOOKUP_DATA_CACHE_KEY,
-        loadLookupData,
+        cacheKey,
+        () => {
+            return loadLookupData(langCode);
+        },
         globalCacheManager10Seconds,
     );
 }
@@ -81,17 +99,59 @@ export async function getLookupDataCached(): Promise<LookupManagersType> {
 // resolved value while ANY consumer is mounted removes both. The value is
 // dropped the moment the last one unmounts, so nothing outlives the UI.
 let heldManagers: LookupManagersType | null = null;
+let heldLangCode: string | null = null;
 let pendingManagers: Promise<LookupManagersType> | null = null;
 let holderCount = 0;
+// Bumped whenever what is in flight stops being what is wanted, so a load that
+// was already running cannot install itself as the held value afterwards.
+let loadGeneration = 0;
+
+function dropHeldManagers() {
+    heldManagers = null;
+    heldLangCode = null;
+    pendingManagers = null;
+    loadGeneration += 1;
+}
+
+function dropEveryLanguage() {
+    dropHeldManagers();
+    // Not just the holder: the 10s window behind it would otherwise keep the
+    // previous language's ~34MB resident right while the new one is being
+    // built, which is the one moment the app can least afford a second copy.
+    globalCacheManager10Seconds.deleteMatchedSync((key) => {
+        return key.startsWith(LOOKUP_DATA_CACHE_KEY_PREFIX);
+    });
+}
+
+// Subscribed at module load, which only happens once something actually uses
+// the dataset — i.e. exactly when there is something to throw away. Eviction has
+// to be driven by the CHANGE rather than by the next `acquireLookupData`,
+// because between the two there may be no consumer left to ask, and the copy
+// would sit in the cache regardless.
+subscribeLookupLangCode(dropEveryLanguage);
 
 export function acquireLookupData(): Promise<LookupManagersType> {
+    const langCode = getSelectedLookupLangCode();
     holderCount += 1;
+    // Belt and braces for a selection that changed before this module was even
+    // loaded, and therefore before the subscription above existed.
+    if (heldLangCode !== null && heldLangCode !== langCode) {
+        dropEveryLanguage();
+    }
     if (heldManagers !== null) {
         return Promise.resolve(heldManagers);
     }
     if (pendingManagers === null) {
-        pendingManagers = getLookupDataCached()
+        const generation = loadGeneration;
+        heldLangCode = langCode;
+        pendingManagers = getLookupDataCached(langCode)
             .then((data) => {
+                // Superseded by a language change while this was in flight: the
+                // consumers have already asked again for the new one, and this
+                // must not overwrite it.
+                if (generation !== loadGeneration) {
+                    return data;
+                }
                 pendingManagers = null;
                 // Everyone may have unmounted while this was in flight; then
                 // there is nothing to hold it for and it must not be retained.
@@ -101,7 +161,10 @@ export function acquireLookupData(): Promise<LookupManagersType> {
                 return data;
             })
             .catch((error) => {
-                pendingManagers = null;
+                if (generation === loadGeneration) {
+                    pendingManagers = null;
+                    heldLangCode = null;
+                }
                 throw error;
             });
     }
@@ -112,5 +175,11 @@ export function releaseLookupData() {
     holderCount = Math.max(0, holderCount - 1);
     if (holderCount === 0) {
         heldManagers = null;
+        // Only when nothing is in flight: while a load is still running this
+        // names ITS language, and clearing it would hide a language change from
+        // the next acquire, which would then join a load for the old one.
+        if (pendingManagers === null) {
+            heldLangCode = null;
+        }
     }
 }

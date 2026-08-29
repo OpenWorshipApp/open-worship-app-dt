@@ -4,13 +4,13 @@ import {
     genOpenLyricFontFaces,
     type LanguageDataType,
 } from '../../langHelpers';
+import { getFontFamilies } from '../../../server/fontHelpers';
+import { handleError } from '../../../helper/errorHelpers';
 
 import bibleBooks from './bibleBooks.json';
 import bbCR from './bb-cr.gz.bundle';
 import locationsMapUrl from './location-name-map-data/locationsMap.json?url';
 import namesMapUrl from './location-name-map-data/namesMap.json?url';
-import { getFontFamilies } from '../../../server/fontHelpers';
-import { handleError } from '../../../helper/errorHelpers';
 
 const lang: LanguageDataType = {
     packageDir: __dirname,

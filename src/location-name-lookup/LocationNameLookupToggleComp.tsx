@@ -5,6 +5,7 @@ import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import { useThemeSource } from '../others/themeHelpers';
 import { tran } from '../lang/langHelpers';
+import LookupLangCodeButtonComp from './LookupLangCodeButtonComp';
 
 // Lazy so neither the panel nor — through it — the `bible-note` chunk and the
 // ~34MB lookup dataset are touched until the user actually opens the panel.
@@ -26,23 +27,28 @@ export default function LocationNameLookupToggleComp() {
     const label = tran('Names and locations lookup');
     return (
         <>
-            <button
-                type="button"
-                className={`btn btn-sm btn-${
-                    isShowing ? 'info' : 'outline-secondary'
-                }`}
-                title={label}
-                aria-label={label}
-                aria-pressed={isShowing}
-                onClick={() => {
-                    setIsShowing((oldIsShowing) => {
-                        return !oldIsShowing;
-                    });
-                }}
-            >
-                <i className="bi bi-person-fill" />
-                <i className="bi bi-geo-alt-fill ms-1" />
-            </button>
+            {/* A group, not one button: the language code has to be clickable
+                on its own, and a button cannot be nested inside another. */}
+            <div className="btn-group btn-group-sm" role="group">
+                <button
+                    type="button"
+                    className={`btn btn-${
+                        isShowing ? 'info' : 'outline-secondary'
+                    }`}
+                    title={label}
+                    aria-label={label}
+                    aria-pressed={isShowing}
+                    onClick={() => {
+                        setIsShowing((oldIsShowing) => {
+                            return !oldIsShowing;
+                        });
+                    }}
+                >
+                    <i className="bi bi-person-fill" />
+                    <i className="bi bi-geo-alt-fill ms-1" />
+                </button>
+                <LookupLangCodeButtonComp />
+            </div>
             {!isShowing
                 ? null
                 : createPortal(

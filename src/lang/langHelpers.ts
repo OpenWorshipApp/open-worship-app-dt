@@ -613,6 +613,31 @@ async function fetchLangData(langCode: string) {
     return module.default as LanguageDataType;
 }
 
+/**
+ * ONE language package, addressed by its code.
+ *
+ * The point of not going through `getAllLangsAsync` is that this imports a
+ * single language chunk: anything that only needs, say, the lookup dataset of
+ * the language the user picked must not pay to import every other language's
+ * module for nothing.
+ */
+export async function getLangDataByCodeAsync(
+    langCode: string,
+): Promise<LanguageDataType | null> {
+    const cachedLangData = langCache.get(langCode);
+    if (cachedLangData !== undefined) {
+        return cachedLangData;
+    }
+    const langData = await fetchLangData(langCode);
+    if (langData === null) {
+        return null;
+    }
+    langCache.set(langData.locale, langData);
+    langCache.set(langCode, langData);
+    initLangCss(langData);
+    return langData;
+}
+
 export async function getLangDataAsync(
     locale: LocaleType,
 ): Promise<LanguageDataType | null> {
@@ -624,13 +649,14 @@ export async function getLangDataAsync(
     if (langCode === null) {
         return null;
     }
-    const langData = await fetchLangData(langCode);
+    const langData = await getLangDataByCodeAsync(langCode);
     if (langData === null) {
         return null;
     }
+    // The REQUESTED locale, which is not necessarily the package's own: every
+    // `en-*` resolves to the same English package, and each has to hit the cache
+    // under the key it was asked for.
     langCache.set(locale, langData);
-    langCache.set(langCode, langData);
-    initLangCss(langData);
     return langData;
 }
 
