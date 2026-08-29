@@ -252,6 +252,14 @@ const dictionary = {
     'Cross Reference': 'ខគម្ពីរយោង',
     Resources: 'ឯកសារពាក់ព័ន្ធ',
     'Cross References': 'ខគម្ពីរយោង',
+    // --- Cross Reference panel (2026-08-29 redesign).
+    Themes: 'ប្រធានបទ',
+    'No cross references for this verse': 'គ្មានខគម្ពីរយោងសម្រាប់ខនេះទេ',
+    'Open beside the current verse': 'បើកនៅក្បែរខបច្ចុប្បន្ន',
+    'No verse selected': 'មិនបានជ្រើសរើសខគម្ពីរទេ',
+    'Choose a verse in the reader to see what else in scripture speaks to it.':
+        'ជ្រើសរើសខគម្ពីរនៅក្នុងកម្មវិធីអាន ដើម្បីមើលខផ្សេងទៀត' +
+        'ក្នុងព្រះគម្ពីរដែលពាក់ព័ន្ធនឹងខនោះ។',
     'Reveal in File Explorer': 'បើកក្នុងកម្មវិធីរុករកឯកសារ',
     'Saving note': 'កំពុងរក្សាទុកកំណត់សម្គាល់',
     'Please wait while the note is being saved.':

@@ -269,6 +269,23 @@ export function fromBibleCrossRefText(text: string): BibleCrossRefType {
     };
 }
 
+// The preview of a verse shown under a cross reference. Cut to a word, and
+// marked as cut only when it actually was: `substring(150) + '...'` appended an
+// ellipsis to every verse whether or not anything had been removed, so a short
+// one ended "living soul...." -- four dots promising a rest of the verse that
+// did not exist. Cutting here rather than in CSS is deliberate; the panel can
+// hold a hundred of these and the tail is memory nobody reads.
+const PREVIEW_MAX_LENGTH = 150;
+function toPreviewText(text: string) {
+    if (text.length <= PREVIEW_MAX_LENGTH) {
+        return text;
+    }
+    const cut = text.substring(0, PREVIEW_MAX_LENGTH);
+    const lastSpaceIndex = cut.lastIndexOf(' ');
+    const head = lastSpaceIndex > 0 ? cut.substring(0, lastSpaceIndex) : cut;
+    return head.replace(/[\s,;:]+$/, '') + '\u2026';
+}
+
 export async function breakItem(bibleKey: string, bibleVerseKey: string) {
     const extracted = bibleRenderHelper.fromKJVBibleVersesKey(bibleVerseKey);
     const bibleModelInfo = getBibleModelInfo();
@@ -290,7 +307,7 @@ export async function breakItem(bibleKey: string, bibleVerseKey: string) {
     await bibleItem.toTitle();
     const bibleText = await bibleItem.toText();
     return {
-        htmlText: bibleText.substring(0, 150) + '...',
+        htmlText: toPreviewText(bibleText),
         bibleItem,
         bibleText,
     };

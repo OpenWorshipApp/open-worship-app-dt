@@ -2,6 +2,8 @@ import { useCallback, type RefObject } from 'react';
 import { useRef } from 'react';
 import { Fragment } from 'react/jsx-runtime';
 
+import './BibleCrossRefComp.scss';
+
 import type BibleItem from '../bible-list/BibleItem';
 import SelectedBibleVerseHeaderComp from '../bible-reader/SelectedBibleVerseHeaderComp';
 import BibleCrossRefOpenAIItemRendererBodyComp from './BibleCrossRefOpenAIItemRendererBodyComp';
@@ -18,18 +20,20 @@ import { tran } from '../lang/langHelpers';
 import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
 import appProvider from '../server/appProvider';
 
+// Says a model wrote the text below, and opens the page that explains what that
+// means for accuracy. `bi-cpu` rather than the lightbulb it shared with the
+// translation note: one glyph cannot carry two different claims.
 function genAiVigilant() {
+    const label =
+        tran('Generated using AI technology.') +
+        ' Results may vary and may not be ' +
+        'accurate. Please use with caution.';
     return (
-        <i
-            className="bi bi-lightbulb app-caught-hover-pointer"
-            title={
-                tran('Generated using AI technology.') +
-                ' Results may vary and may not be ' +
-                'accurate. Please use with caution.'
-            }
-            style={{
-                color: 'var(--bs-info-text-emphasis)',
-            }}
+        <button
+            type="button"
+            className="app-xref-note bi bi-cpu"
+            title={label}
+            aria-label={label}
             onClick={(event) => {
                 event.stopPropagation();
                 appProvider.browserUtils.openExternalURL(
@@ -84,15 +88,10 @@ export default function BibleCrossRefRendererComp({
                                 setBibleItem(cloneBibleItem);
                             }}
                         />
-                        <hr />
-                        <div className="d-flex flex-wrap">
+                        <div className="app-xref-panel">
                             <BibleCrossRefWrapperComp
-                                title={
-                                    <>
-                                        {genAiVigilant()}
-                                        AI {tran('Cross References')}
-                                    </>
-                                }
+                                title={`AI ${tran('Cross References')}`}
+                                note={genAiVigilant()}
                                 settingName="show-standard-bible-ref"
                                 onRefresh={handleRefreshing.bind(
                                     null,
@@ -111,12 +110,8 @@ export default function BibleCrossRefRendererComp({
                             </BibleCrossRefWrapperComp>
                             {isOpenAIAvailable ? (
                                 <BibleCrossRefWrapperComp
-                                    title={
-                                        <>
-                                            <i className="bi bi-robot" /> Custom
-                                            OpenAI
-                                        </>
-                                    }
+                                    title="Custom OpenAI"
+                                    note={genAiVigilant()}
                                     settingName="show-ai-bible-ref"
                                     onRefresh={handleRefreshing.bind(
                                         null,
@@ -134,12 +129,8 @@ export default function BibleCrossRefRendererComp({
                             ) : null}
                             {isAnthropicAvailable ? (
                                 <BibleCrossRefWrapperComp
-                                    title={
-                                        <>
-                                            <i className="bi bi-robot" /> Custom
-                                            Anthropic
-                                        </>
-                                    }
+                                    title="Custom Anthropic"
+                                    note={genAiVigilant()}
                                     settingName="show-ai-bible-ref"
                                     onRefresh={handleRefreshing.bind(
                                         null,

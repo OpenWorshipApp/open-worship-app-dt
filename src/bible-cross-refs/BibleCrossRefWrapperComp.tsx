@@ -8,13 +8,24 @@ import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
+/**
+ * One source of cross references -- the bundled set, or a user's own OpenAI /
+ * Anthropic key -- as a collapsible section.
+ *
+ * `note` is kept out of `title` on purpose: it is a control (it opens the page
+ * explaining what the source's text costs you in accuracy), and a control
+ * nested inside the collapse button could neither be reached by keyboard nor
+ * clicked without swallowing the click.
+ */
 export default function BibleCrossRefWrapperComp({
     title,
+    note,
     children,
     settingName,
     onRefresh,
 }: Readonly<{
     title: ReactNode;
+    note?: ReactNode;
     children: ReactNode;
     settingName: string;
     onRefresh: () => void;
@@ -43,29 +54,35 @@ export default function BibleCrossRefWrapperComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div
-            className="card w-100 my-1"
-            style={{
-                border: '1px dotted var(--bs-info-text-emphasis)',
-            }}
-        >
+        <div className="app-xref-card">
             <div
-                className="card-header app-ellipsis p-1 app-caught-hover-pointer"
-                style={{
-                    height: '2rem',
-                }}
-                onClick={handleToggleShowing}
+                className="app-xref-card-header"
                 onContextMenu={handleContextMenuOpening}
             >
-                <i
-                    className={`bi bi-chevron-${isShowing ? 'down' : 'right'}`}
-                />
-                {title} (<span style={{ fontFamily }}>{bibleKey}</span>)
+                <button
+                    type="button"
+                    className="app-xref-card-toggle"
+                    aria-expanded={isShowing}
+                    onClick={handleToggleShowing}
+                >
+                    <i
+                        className={
+                            'app-xref-card-chevron bi bi-chevron-' +
+                            (isShowing ? 'down' : 'right')
+                        }
+                    />
+                    <span className="app-xref-card-title">{title}</span>
+                </button>
+                <span
+                    className="app-xref-card-key app-data"
+                    style={{ fontFamily }}
+                >
+                    {bibleKey}
+                </span>
+                {note}
             </div>
             {isShowing ? (
-                <div className="card-body app-inner-shadow px-1 d-flex flex-wrap gap-1">
-                    {children}
-                </div>
+                <div className="app-xref-card-body">{children}</div>
             ) : null}
         </div>
     );

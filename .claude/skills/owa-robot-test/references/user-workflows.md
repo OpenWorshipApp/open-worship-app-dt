@@ -21,7 +21,18 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-29m** (**W-12 rewritten: Bible Find tells you how many
+**workflowsVersion: 2026-08-29n** (**W-13 rewritten: the Cross Reference view is
+restyled and now says what it holds.** The wall of bordered boxes is gone — references are
+grouped under their theme, hanging off one vertical rail, in reflowing columns, with a
+**7 Themes · 35 Verses** count above them; pointing at a verse lights its segment of the
+rail. The heading's lightbulb split into `bi-cpu` (a model wrote this) on the section and
+`bi-translate` (this heading was machine-translated) on the headings that really were —
+it used to show on every heading in every language, English included. Verse previews cut at
+a word with one `…` instead of always appending `...`. The empty view says **No verse
+selected** and what to do, and the row tooltip says **Open beside the current verse**, which
+is what a click has always actually done. Rows take the keyboard. Verified live
+2026-08-29, dark and light, English and Khmer.)
+Previous: **2026-08-29m** (**W-12 rewritten: Bible Find tells you how many
 verses it found, and marks the word it found.** The matched word is now highlighted in the
 app's accent with an underline, so you can see at a glance WHY each verse is listed; the
 reference beside it steps back to a quiet marker. The footer leads with **N verses found** and
@@ -841,14 +852,40 @@ _Verify: RD-08, RD-09, RD-45, RD-46._
 
 ### W-13 — Cross references
 
-**Goal:** see related verses.
+**Goal:** see what else in scripture speaks to the verse you are reading.
 
-1. With a verse open, open its **cross references** view — related passages are
-   listed; click one to read it. 📸
-2. AI-generated cross references require an API key configured in Settings; without
-   one, only the built-in references appear.
+1. In the bible lookup, click **Advance Bible Lookup** (`bi-search`, top right) to open
+   the side panel, then pick **Cross Reference** (ខគម្ពីរយោង) from the panel's dropdown —
+   the second entry, after **Find**. 📸
+   You can also get here from the verse itself: right-click any verse in the lookup body
+   and choose **Open in Cross Reference**. That opens the panel on this view AND on that
+   verse.
+   Until you have picked a verse the view says **No verse selected** and tells you what to
+   do about it.
+2. The top of the view shows the verse it is working from — its version, its reference and
+   its text, exactly as **Resources** shows it. Click the reference to move to another
+   verse, or the version chip to read the references in another translation. 📸
+3. Under it, **AI Cross References** with the version it is quoting on the right, and a
+   line saying how much there is: **7 Themes · 35 Verses**. Click the title to collapse the
+   whole section; right-click it for **Refresh** (ផ្ទុកឡើងវិញ), which re-fetches.
+4. The references are grouped by **theme** — a sentence such as *Genealogy from Adam to
+   Noah* — set flush left, with that theme's verses hanging off a single vertical line
+   beneath it. 📸 Each verse gives its reference on its own line and the opening of the
+   verse under it, cut at a word with a single `…` when there is more.
+   Themes set in columns and reflow to one column when the panel is narrow.
+5. Point at any verse and the line beside it lights up, along with its reference: click to
+   open it beside the verse you are on, drag it into a list, or right-click it for the
+   usual verse menu. The keyboard reaches the same rows — **Tab** to one and press
+   **Enter**.
+6. The **`bi-cpu`** button on the section title says a model wrote these; click it for the
+   page explaining what that costs you in accuracy. On a translation whose theme headings
+   were machine-translated, each heading carries its own **`bi-translate`** button saying
+   so — on an English bible nothing was translated and the mark is absent.
+7. If you have put your own OpenAI or Anthropic key in Settings, **Custom OpenAI** and
+   **Custom Anthropic** appear as their own sections below, each collapsing and refreshing
+   the same way. The section above them needs no key.
 
-_Verify: RD-10._
+_Verify: RD-10, RD-49, RD-50, RD-51, RD-52._
 
 ### W-14 — Keep Bible notes
 
