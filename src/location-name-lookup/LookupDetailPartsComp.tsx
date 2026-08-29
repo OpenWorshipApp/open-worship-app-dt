@@ -366,9 +366,13 @@ const VERSE_PAGE_SIZE = 50;
  * paint or answer a click.
  */
 export function OptionalVerseListRowComp({
+    bibleKey,
     values,
     onResolved,
 }: Readonly<{
+    // Resolved ONCE per detail panel body and handed down, so a record listing
+    // hundreds of verses subscribes to the reader once, not once per row.
+    bibleKey: string;
     values: string[];
     onResolved?: (titles: string[]) => void;
 }>) {
@@ -382,7 +386,7 @@ export function OptionalVerseListRowComp({
             values,
             async (shortVerse) => {
                 try {
-                    const title = await shortToVerseTitle(shortVerse);
+                    const title = await shortToVerseTitle(bibleKey, shortVerse);
                     return [shortVerse, title ?? shortVerse] as const;
                 } catch {
                     return [shortVerse, shortVerse] as const;
@@ -390,7 +394,9 @@ export function OptionalVerseListRowComp({
             },
         );
         return Object.fromEntries(entries) as { [key: string]: string };
-    }, [hasBeenExpanded, values]);
+        // `bibleKey`: switching bibles in the reader has to re-title what is
+        // already on screen, not leave the previous translation's wording.
+    }, [hasBeenExpanded, values, bibleKey]);
     const onResolvedRef = useAppCurrentRef(onResolved);
     useAppEffect(() => {
         if (titleMap != null) {

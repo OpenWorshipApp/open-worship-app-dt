@@ -50,5 +50,21 @@ Two traps there:
   translating first gives an untyped record a `មិនស្គាល់` chip it does not have
   in English.
 
+A non-English lookup language also re-reads the stored VERSE references in the
+bible the reader is showing (`toLookupVerseBibleKey` in `bibleVerseHelpers`).
+Safe because the dataset's keys and the app's targets are both canonical —
+`bibleRenderHelper.toTitle` localizes book name and numerals per bible key
+without renumbering — so it is a rendering choice only. English stays KJV (the
+dataset was extracted from it), and the chapter READ behind the in-text scan is
+always KJV. Watch out for:
+
+- A verse panel's TITLE came from `panel.name`, frozen when the panel opened, so
+  a language change re-titled the body and left the chrome on the old bible. It
+  is driven by what the body resolved now.
+- That title takes the BIBLE's font (`useLookupVerseFontFamily`), not the lookup
+  language's — two independent settings.
+- The ` (KJV)` suffix on "names and locations in your reading" is shown only
+  while the heading is actually a KJV title.
+
 Related: [[onscreen-setting-parse-amplification]], [[filesource-cache-sliding-ttl]],
 [[tran-missing-key-throws-in-dev]].

@@ -21,7 +21,15 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-29c** (**W-29 step 2: the name across the top of a record window
+**workflowsVersion: 2026-08-29d** (**W-29 steps 2 and 9, and W-30's note: with a non-English
+lookup language the verse references now read in YOUR Bible.** A Khmer record citing
+`Genesis 10:4` in English beside its own Khmer prose was unreadable to exactly the person who
+chose Khmer; a record's citations, the verse window it opens, the passage heading in
+"in your reading" and the reference the eye button loads now all name the passage the way the
+Bible on screen does, and the **(KJV)** note on that heading is dropped when it would no longer
+be true. English still means King James, which is the Bible these records were built from. What
+the lists FIND is read from the King James text either way. Verified live 2026-08-29, Khmer and
+English both ways round. Previous: **W-29 step 2: the name across the top of a record window
 follows the lookup font too.** That title sits in the window's frame rather than its body, so
 it was the one place a Khmer record name still came out in a fallback face. Verified live
 2026-08-29. Previous: **W-29 step 2 and step 4 say more: the lookup language
@@ -1809,8 +1817,10 @@ your Bible reading.
    "in your reading" panel switch to it at once, with nothing to reload. The choice is
    remembered for next time, and it is **separate** from the app's own language
    (**W-16**): an English menu with Khmer names is a perfectly normal combination. The
-   underlined names inside the King James verses themselves do not change — those follow
-   the King James wording, which is what makes them findable at all. The lists, the record
+   verse references a record cites are read back in **the Bible you are reading**, so
+   they name the passage the way your own Bible does. Only the underlined names inside
+   the King James verses themselves do not change — those follow the King James
+   wording, which is what makes them findable at all. The lists, the record
    windows and the "in your reading" panel are also **typed in that language's own
    script and font** — the name across the top of a record window included — and the
    kind of each record — **People** (មនុស្ស), **Groups**
@@ -1837,7 +1847,10 @@ your Bible reading.
    small window **beside** the one you are reading, so you can follow a family or a
    journey without losing your place. Clicking the same entry twice just brings its
    window back to the front.
-9. Click a verse reference to read it (King James text). The eye button in that
+9. Click a verse reference to read it. With **English** chosen in step 2 you get the
+   King James text, because that is the Bible these records were built from; with any
+   other language you get the Bible you are currently reading, and the eye button
+   below leaves you in it rather than switching you to the King James. The eye button in that
    window's title bar, **Open in bible lookup** (បើកក្នុងការស្វែងរកព្រះគម្ពីរ), loads
    that passage into the reference box behind it. 📸
 10. For a place that has coordinates, a map appears at the bottom of its window under
@@ -1873,7 +1886,9 @@ those exact verses — without searching for them one by one.
    _The icon to the left of the drop-down changes with your pick — a signpost for cross
    references, a map pin for names and locations — so you can tell at a glance which
    view the panel is showing._
-2. Under the heading **Names and locations in your reading (KJV)** you get **one block
+2. Under the heading **Names and locations in your reading** — it says **(KJV)** too
+   while you are reading these records in English; see the note at the end — you get
+   **one block
    per passage you have open**. Each block is titled with the passage it belongs to,
    e.g. `(KJV) LUK 13:1-35`, and lists **Names** (ឈ្មោះ) first, then **Locations**
    (ទីកន្លែង), with a count beside each. 📸
@@ -1897,8 +1912,10 @@ which the verse calls "the devil".
 
 **The names in this list follow the lookup language** — the little language code beside
 the person-and-pin button (**W-29** step 2), not the language of the app, and they are set
-in that language's own font. The underlined names in the verses themselves stay King James
-whatever you pick.
+in that language's own font. The passage heading above each block is named the way **your
+Bible** names it, and the **(KJV)** note beside the title only appears while that heading is
+still a King James one. What the list FINDS is always read from the King James text, and the
+underlined names in the verses themselves stay King James whatever you pick.
 
 _Verify: RD-72, RD-73, RD-74, RD-75, RD-76, RD-57, RD-80._
 

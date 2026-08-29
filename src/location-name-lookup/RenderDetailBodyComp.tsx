@@ -6,7 +6,7 @@ import {
 import { WEBSITE_IFRAME_REFERRER_POLICY } from '../helper/constants';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
-import { shortToVerseData } from './bibleVerseHelpers';
+import { shortToVerseData, useLookupVerseBibleKey } from './bibleVerseHelpers';
 import {
     BasicInfoComp,
     DetailsSectionComp,
@@ -45,6 +45,7 @@ export function RenderNameDetailComp({
 }>) {
     const { namesLookupManager } = useLookupManagersContext();
     const { fontFamily, translate } = useLookupLangPresentation();
+    const verseBibleKey = useLookupVerseBibleKey();
     const record = namesLookupManager.getRecordById(recordId);
     if (record === null) {
         return <RenderMissingRecordComp />;
@@ -130,6 +131,7 @@ export function RenderNameDetailComp({
                         ids={record.cousin}
                     />
                     <OptionalVerseListRowComp
+                        bibleKey={verseBibleKey}
                         values={record.verses}
                         onResolved={onVersesResolved}
                     />
@@ -190,6 +192,7 @@ export function RenderLocationDetailComp({
 }>) {
     const { locationsLookupManager } = useLookupManagersContext();
     const { fontFamily } = useLookupLangPresentation();
+    const verseBibleKey = useLookupVerseBibleKey();
     const record = locationsLookupManager.getRecordById(recordId);
     if (record === null) {
         return <RenderMissingRecordComp />;
@@ -237,6 +240,7 @@ export function RenderLocationDetailComp({
                         values={record.relatedLocations}
                     />
                     <OptionalVerseListRowComp
+                        bibleKey={verseBibleKey}
                         values={record.verses}
                         onResolved={onVersesResolved}
                     />
@@ -261,13 +265,14 @@ export function RenderVerseDetailComp({
     shortVerse: string;
     onResolved: (title: string, fullText: string) => void;
 }>) {
+    const verseBibleKey = useLookupVerseBibleKey();
     const [verseData] = useAppStateAsync(async () => {
         try {
-            return await shortToVerseData(shortVerse);
+            return await shortToVerseData(verseBibleKey, shortVerse);
         } catch {
             return null;
         }
-    }, [shortVerse]);
+    }, [verseBibleKey, shortVerse]);
     const onResolvedRef = useAppCurrentRef(onResolved);
     useAppEffect(() => {
         if (verseData != null) {

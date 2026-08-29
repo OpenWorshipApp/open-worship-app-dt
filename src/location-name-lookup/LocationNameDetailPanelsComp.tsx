@@ -14,7 +14,10 @@ import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { useThemeSource } from '../others/themeHelpers';
-import { openVerseInBibleLookup } from './bibleVerseHelpers';
+import {
+    openVerseInBibleLookup,
+    useLookupVerseFontFamily,
+} from './bibleVerseHelpers';
 import type { DetailPanelType } from './detailPanelHelpers';
 import { closeDetailPanel, useOpenDetailPanels } from './detailPanelHelpers';
 import type { LookupManagersType } from './lookupDataHelpers';
@@ -170,8 +173,18 @@ function RenderDetailPanelComp({
     // references rather than blocking on dozens of bible reads.
     const textScale = useBibleViewTextScale();
     const { fontFamily } = useLookupLangPresentation();
+    const verseFontFamily = useLookupVerseFontFamily();
     const resolvedVersesRef = useRef<string[]>([]);
     const verseTextRef = useRef<{ title: string; fullText: string } | null>(
+        null,
+    );
+    // A verse panel has no record to name it, so `panel.name` — the reference as
+    // it read the moment the panel was opened — used to be its title for good.
+    // It goes stale the moment the bible behind it changes: switching the lookup
+    // language re-titles the BODY (`Genesis 10:4`) and left the title bar
+    // showing the previous bible's wording (`លោកុប្បត្តិ ១០:៤`). The body
+    // resolves the reference anyway, so its answer is the title.
+    const [resolvedVerseTitle, setResolvedVerseTitle] = useState<string | null>(
         null,
     );
     // Resolved into two separately TYPED locals rather than one union: a single
@@ -186,7 +199,8 @@ function RenderDetailPanelComp({
             ? managers.locationsLookupManager.getRecordById(panel.target)
             : null;
     const record = nameRecord ?? locationRecord;
-    const title = record?.name ?? panel.name;
+    // `panel.name` stays the provisional title until the body has resolved.
+    const title = record?.name ?? resolvedVerseTitle ?? panel.name;
     const handleCopy = async () => {
         if (panel.kind === 'verse') {
             const verseText = verseTextRef.current;
@@ -251,14 +265,19 @@ function RenderDetailPanelComp({
                     // record's own name, but it renders in the widget CHROME,
                     // which is outside the body that carries that font.
                     //
-                    // A verse panel is the exception: its title is a KJV
-                    // reference, so it keeps the app's own font whatever
-                    // language the records are read in.
+                    // A verse panel is the exception: its title is a
+                    // reference written by a BIBLE, not a record name, so it
+                    // takes that bible's font. Those two settings are
+                    // independent — and under an English lookup language the
+                    // reference is a KJV one, which normally names no font at
+                    // all and so leaves the chrome exactly as it was.
                     style={{
                         cursor: 'text',
                         fontSize: `${textScale}em`,
                         fontFamily:
-                            panel.kind === 'verse' ? undefined : fontFamily,
+                            panel.kind === 'verse'
+                                ? verseFontFamily
+                                : fontFamily,
                     }}
                 >
                     <i className={getPanelIconClass(panel, managers)} />
@@ -318,6 +337,7 @@ function RenderDetailPanelComp({
                                 title: verseTitle,
                                 fullText,
                             };
+                            setResolvedVerseTitle(verseTitle);
                         }}
                     />
                 ) : null}

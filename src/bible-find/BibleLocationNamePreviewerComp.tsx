@@ -11,6 +11,7 @@ import { getVerses } from '../helper/bible-helpers/bibleInfoHelpers';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { tran } from '../lang/langHelpers';
+import { toLookupVerseBibleKey } from '../location-name-lookup/bibleVerseHelpers';
 import { useLookupLangPresentation } from '../location-name-lookup/lookupLangHelpers';
 import RenderLookupRecordItemComp from '../location-name-lookup/RenderLookupRecordItemComp';
 import type { VerseRecordType } from '../location-name-lookup/verseRecordListHelpers';
@@ -134,6 +135,13 @@ export default function BibleLocationNamePreviewerComp() {
     const index = useLookupTextIndex();
     const recordLabels = useLookupRecordLabels();
     const { fontFamily } = useLookupLangPresentation();
+    // Which bible NAMES the passage — KJV under an English lookup language,
+    // otherwise the reader's own, so the heading reads in the same script as the
+    // rows under it. `useBibleItemViewControllerUpdateEvent` above already
+    // re-renders this component when the reader's bible key changes.
+    const verseBibleKey = toLookupVerseBibleKey(
+        viewController.selectedBibleItem.bibleKey,
+    );
     const [groupList, setGroupList] = useState<BibleItemGroupType[] | null>(
         null,
     );
@@ -184,7 +192,13 @@ export default function BibleLocationNamePreviewerComp() {
                     target,
                     kjvVerseMap,
                 );
-                const title = await bibleRenderHelper.toTitle('KJV', target);
+                // The TITLE only. The chapter read above stays KJV whatever
+                // this says — the scan needs the KJV's wording — so this
+                // renames the passage without changing what is found in it.
+                const title = await bibleRenderHelper.toTitle(
+                    verseBibleKey,
+                    target,
+                );
                 newGroupList.push({
                     // The target, not the pane: panes come and go around a
                     // passage that stays put, and the key is now unique by
@@ -204,7 +218,7 @@ export default function BibleLocationNamePreviewerComp() {
         return () => {
             isCancelled = true;
         };
-    }, [index, recordLabels, foundBibleItem, nestedBibleItems]);
+    }, [index, recordLabels, foundBibleItem, nestedBibleItems, verseBibleKey]);
 
     if (index === null || recordLabels === null || groupList === null) {
         return <LoadingComp message={tran('Loading lookup data')} />;
@@ -223,7 +237,13 @@ export default function BibleLocationNamePreviewerComp() {
             <div className="px-2 py-1 small text-secondary border-bottom">
                 <i className="bi bi-geo-alt-fill" />
                 {` ${tran('Names and locations in your reading')}`}
-                {` (${BIBLE_KJV_KEY})`}
+                {/*
+                 * Only while the passage below is actually NAMED in the KJV.
+                 * Once a non-English lookup language re-titles it in the
+                 * reader's own bible, the suffix would be claiming a
+                 * translation that is no longer on screen.
+                 */}
+                {verseBibleKey === BIBLE_KJV_KEY ? ` (${BIBLE_KJV_KEY})` : ''}
             </div>
             <div className="flex-fill overflow-y-auto">
                 {groupList.map((group) => {
