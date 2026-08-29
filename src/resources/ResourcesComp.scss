@@ -34,29 +34,6 @@
     border-bottom: 1px solid var(--app-line);
   }
 
-  // Icon-only controls: no box until they are pointed at. Bootstrap's outline
-  // variants plus the theme's global `.btn` border made these read as heavy as
-  // the content below them.
-  .app-resources-icon-button {
-    flex: 0 0 auto;
-    padding: 0 0.3rem;
-    line-height: 1.35rem;
-    border: 1px solid transparent;
-    border-radius: 3px;
-    background-color: transparent;
-    color: var(--app-muted);
-    &:hover {
-      color: var(--app-ink);
-      background-color: var(--app-surface);
-      border-color: var(--app-line);
-    }
-    &[aria-pressed='true'] {
-      color: var(--app-accent);
-      background-color: var(--app-accent-halo);
-      border-color: transparent;
-    }
-  }
-
   .app-resources-patterns {
     display: flex;
     align-items: center;

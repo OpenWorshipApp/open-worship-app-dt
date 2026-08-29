@@ -1,10 +1,26 @@
-import type { FindDataType } from './bibleFindHelpers';
+import { useState } from 'react';
+
+import type { FindDataType, FindPageRangeType } from './bibleFindHelpers';
+import {
+    toFindChunkRange,
+    toFindPageWindow,
+    toFoundVerseCount,
+} from './bibleFindHelpers';
 import BibleFindRenderPerPageComp from './BibleFindRenderPerPageComp';
 import { useBibleFindController } from './BibleFindController';
 import { ShowFindingComp } from './ShowFindingComp';
 import RenderPageNumberComp from './RenderPageNumberComp';
 import { tran } from '../lang/langHelpers';
 
+/**
+ * How far through the result set you are, and how to move.
+ *
+ * The strip used to draw EVERY chunk number -- 1556 buttons in a 10000px-tall
+ * grid for a common word, laid out and painted on every result render to fill a
+ * 100px sliver. It now draws a window (see `toFindPageWindow`), which is around
+ * a dozen buttons whatever the find returns, and leads with the figure that
+ * actually helps: how many verses matched.
+ */
 function RenderFooterComp({
     data,
     findFor,
@@ -12,23 +28,70 @@ function RenderFooterComp({
     data: FindDataType;
     findFor: (page: string) => void;
 }>) {
-    const pages = data.pagingData.pages;
+    // The gaps the user has opened. Held here rather than in the window helper
+    // so it stays a pure function, and dropped on a new find by the `key` this
+    // component is given below.
+    const [expandedRanges, setExpandedRanges] = useState<FindPageRangeType[]>(
+        [],
+    );
+    const { pages, currentPage } = data.pagingData;
+    const loadedPages = pages.filter((pageNumber) => {
+        return !!data.foundData[pageNumber];
+    });
+    const windowedPages = toFindPageWindow(
+        pages.length,
+        Number.parseInt(currentPage),
+        loadedPages.map((pageNumber) => {
+            return Number.parseInt(pageNumber);
+        }),
+        expandedRanges,
+    );
+    const verseCount = toFoundVerseCount(data);
     return (
-        <nav>
-            <ul className="pagination flex-wrap">
-                {pages.map((pageNumber) => {
-                    const isActive = !!data.foundData[pageNumber];
+        <div className="app-find-footer">
+            <span className="app-find-count app-ellipsis app-data">
+                {verseCount === null
+                    ? null
+                    : `${verseCount.toLocaleString()} ${tran('verses found')}`}
+            </span>
+            <nav className="app-find-pages" aria-label={tran('Find')}>
+                {windowedPages.map((item) => {
+                    if (item.type === 'gap') {
+                        const { fromPage, toPage } = item;
+                        return (
+                            <button
+                                key={`gap-${fromPage}`}
+                                className="app-find-page-gap"
+                                type="button"
+                                // A number nobody can reach is worse than a
+                                // number nobody wants to see: the gap says
+                                // which chunks it is holding and opens them.
+                                title={`${tran('Show pages')} ${fromPage.toLocaleString()}\u2013${toPage.toLocaleString()}`}
+                                onClick={() => {
+                                    setExpandedRanges((oldRanges) => {
+                                        return [
+                                            ...oldRanges,
+                                            [fromPage, toPage],
+                                        ];
+                                    });
+                                }}
+                            >
+                                {'\u2026'}
+                            </button>
+                        );
+                    }
+                    const page = `${item.page}`;
                     return (
                         <RenderPageNumberComp
-                            key={pageNumber}
-                            pageNumber={pageNumber}
-                            isActive={isActive}
+                            key={page}
+                            pageNumber={page}
+                            isLoaded={!!data.foundData[page]}
                             handleFinding={findFor}
                         />
                     );
                 })}
-            </ul>
-        </nav>
+            </nav>
+        </div>
     );
 }
 
@@ -42,6 +105,7 @@ function RenderFoundComp({
     const bibleFindController = useBibleFindController();
     const { pagingData, foundData: found } = data;
     const { bibleKey } = bibleFindController;
+    const verseCount = toFoundVerseCount(data);
     return pagingData.pages.map((pageNumber) => {
         const data = found[pageNumber];
         if (data === null) {
@@ -50,11 +114,18 @@ function RenderFoundComp({
         if (data === undefined) {
             return <ShowFindingComp key={pageNumber} />;
         }
+        const [fromNumber, toNumber] = toFindChunkRange(
+            Number.parseInt(pageNumber),
+            pagingData.perPage,
+            verseCount,
+        );
         return (
             <BibleFindRenderPerPageComp
                 key={pageNumber}
                 findText={findText}
                 items={data.content}
+                fromNumber={fromNumber}
+                toNumber={toNumber}
                 page={pageNumber}
                 bibleKey={bibleKey}
             />
@@ -96,7 +167,7 @@ export default function BibleFindRenderDataComp({
                 }}
             >
                 <div
-                    className="w-100 px-1"
+                    className="w-100 app-find-results"
                     style={{ overflowY: 'auto', height: 'calc(100% - 42px)' }}
                 >
                     <RenderFoundComp findText={findText} data={data} />
@@ -107,10 +178,16 @@ export default function BibleFindRenderDataComp({
                         minHeight: 42,
                         maxHeight: 100,
                         overflowY: 'auto',
-                        borderTop: '2px solid var(--bs-border-color)',
+                        borderTop: '1px solid var(--app-line)',
                     }}
                 >
-                    <RenderFooterComp data={data} findFor={findFor} />
+                    <RenderFooterComp
+                        // A new find is a new set of chunks, so the gaps
+                        // opened against the old one go with it.
+                        key={`${findText}-${data.pagingData.pages.length}`}
+                        data={data}
+                        findFor={findFor}
+                    />
                 </div>
             </div>
         </div>

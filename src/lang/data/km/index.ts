@@ -46,6 +46,12 @@ const dictionary = {
     'Too many folders to search': 'ថតច្រើនពេកមិនអាចស្វែងរកអស់បានទេ',
     'Too many matching files': 'ឯកសារដែលត្រូវគ្នាច្រើនពេក',
     'Search file name': 'ស្វែងរកឈ្មោះឯកសារ',
+    // --- Bible Find: the results list and its chunk footer.
+    'verses found': 'ខគម្ពីរដែលរកឃើញ',
+    Results: 'លទ្ធផល',
+    'Go to results': 'ទៅកាន់លទ្ធផល',
+    'Load more results': 'ផ្ទុកលទ្ធផលបន្ថែម',
+    'Show pages': 'បង្ហាញទំព័រ',
     'Book-level files are shown in every chapter':
         'ឯកសារកម្រិតកណ្ឌគម្ពីរ ត្រូវបានបង្ហាញនៅគ្រប់ជំពូក',
     Introduction: 'សេចក្ដីផ្ដើម',

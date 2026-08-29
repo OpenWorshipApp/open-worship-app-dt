@@ -118,6 +118,178 @@ export function calcPaging(data: BibleFindResultType | null): PagingDataTye {
     return { pages, currentPage, perPage };
 }
 
+/**
+ * The reason a row is on screen, counted: how many verses the find actually
+ * matched. `maxLineNumber` is the whole result set, not the loaded slice, and
+ * every loaded chunk carries the same figure -- so the first one that has
+ * landed answers it, and `null` means nothing has come back yet.
+ */
+export function toFoundVerseCount(data: FindDataType) {
+    for (const pageNumber of data.pagingData.pages) {
+        const pageData = data.foundData[pageNumber];
+        if (pageData) {
+            return pageData.maxLineNumber;
+        }
+    }
+    return null;
+}
+
+/**
+ * Which verses of the whole result a chunk holds, counted from ONE.
+ *
+ * Derived from the page rather than read off `fromLineNumber`/`toLineNumber`,
+ * which come back zero-based for the first chunk and would print
+ * `Results 0-19` under a footer that calls the same chunk `1`. The page number
+ * and `perPage` are the values the footer is already built on, so counting from
+ * them is the only way the two readouts agree.
+ *
+ * `totalCount` clamps the last chunk, which is short unless the find divides
+ * exactly.
+ */
+export function toFindChunkRange(
+    page: number,
+    perPage: number,
+    totalCount: number | null,
+): [number, number] {
+    const fromNumber = (page - 1) * perPage + 1;
+    const toNumber = page * perPage;
+    if (totalCount === null) {
+        return [fromNumber, toNumber];
+    }
+    return [fromNumber, Math.min(toNumber, totalCount)];
+}
+
+/**
+ * How many chunk numbers to draw either side of the one being read.
+ */
+const FIND_PAGE_NEIGHBOUR_RADIUS = 2;
+
+/**
+ * How many ALREADY-LOADED chunks to keep a jump-back chip for. Loaded chunks
+ * only accumulate by the user clicking, so this is generous in practice; it is
+ * capped anyway because nothing else bounds it, and an unbounded strip of
+ * buttons is the thing this window exists to stop.
+ */
+const FIND_PAGE_LOADED_LIMIT = 8;
+
+/**
+ * The most numbers ONE opened gap may add.
+ *
+ * Opening a gap is the user asking for those numbers, so it is generous -- a
+ * find of a few hundred chunks opens whole. Past this the gap opens as evenly
+ * spaced STEPS across itself instead, and the shorter gaps between those steps
+ * open the same way, so every chunk of a 1556-chunk find is two clicks away and
+ * the strip never grows back into the thousand-button grid this replaced.
+ */
+const FIND_PAGE_EXPAND_LIMIT = 200;
+
+/** A number to click, or the gap between two of them. */
+export type FindPageItemType =
+    | { type: 'page'; page: number }
+    | { type: 'gap'; fromPage: number; toPage: number };
+
+/** A gap the user has opened, as the inclusive range it covered. */
+export type FindPageRangeType = [number, number];
+
+function addExpandedPages(
+    kept: Set<number>,
+    [fromPage, toPage]: FindPageRangeType,
+    pageCount: number,
+) {
+    const from = Math.max(1, fromPage);
+    const to = Math.min(pageCount, toPage);
+    const size = to - from + 1;
+    if (size < 1) {
+        return;
+    }
+    // `ceil` so the step is never 0 and never overshoots the limit.
+    const step =
+        size <= FIND_PAGE_EXPAND_LIMIT
+            ? 1
+            : Math.ceil(size / FIND_PAGE_EXPAND_LIMIT);
+    for (let page = from; page <= to; page += step) {
+        kept.add(page);
+    }
+}
+
+/**
+ * Which chunk numbers the footer draws, and where it puts a gap instead.
+ *
+ * A find over a whole bible pages into the THOUSANDS -- 1556 chunks for a
+ * common word -- and drawing every number cost 1556 buttons in a 10000px-tall
+ * grid, laid out and painted on every result render to fill a 100px strip. So
+ * the default is a window: the first, the last, the neighbours of the chunk
+ * being read, and the chunks already loaded (nearest first, capped).
+ *
+ * Everything else sits behind a gap the user can OPEN -- `expandedRanges` are
+ * the gaps already opened -- because a number nobody can reach is worse than a
+ * number nobody wants to see. See `FIND_PAGE_EXPAND_LIMIT` for what stops an
+ * opened gap growing the strip back.
+ *
+ * Items come back ascending, de-duplicated, with a `gap` between any two
+ * numbers that are not consecutive.
+ */
+export function toFindPageWindow(
+    pageCount: number,
+    currentPage: number,
+    loadedPages: number[],
+    expandedRanges: FindPageRangeType[] = [],
+): FindPageItemType[] {
+    if (pageCount < 1) {
+        return [];
+    }
+    const kept = new Set<number>([1, pageCount]);
+    for (
+        let page = currentPage - FIND_PAGE_NEIGHBOUR_RADIUS;
+        page <= currentPage + FIND_PAGE_NEIGHBOUR_RADIUS;
+        page += 1
+    ) {
+        if (page >= 1 && page <= pageCount) {
+            kept.add(page);
+        }
+    }
+    const nearestLoaded = [...loadedPages]
+        .filter((page) => {
+            return page >= 1 && page <= pageCount;
+        })
+        .sort((pageA, pageB) => {
+            return (
+                Math.abs(pageA - currentPage) - Math.abs(pageB - currentPage)
+            );
+        })
+        .slice(0, FIND_PAGE_LOADED_LIMIT);
+    for (const page of nearestLoaded) {
+        kept.add(page);
+    }
+    for (const range of expandedRanges) {
+        addExpandedPages(kept, range, pageCount);
+    }
+    const sortedPages = [...kept].sort((pageA, pageB) => {
+        return pageA - pageB;
+    });
+    const windowed: FindPageItemType[] = [];
+    let previousPage: number | null = null;
+    for (const page of sortedPages) {
+        if (previousPage !== null) {
+            const skipped = page - previousPage - 1;
+            if (skipped === 1) {
+                // A gap of exactly one is not a gap: `1 2 3 … 5` hides a
+                // number behind a marker that is wider than the number.
+                windowed.push({ type: 'page', page: page - 1 });
+            } else if (skipped > 1) {
+                windowed.push({
+                    type: 'gap',
+                    fromPage: previousPage + 1,
+                    toPage: page - 1,
+                });
+            }
+        }
+        windowed.push({ type: 'page', page });
+        previousPage = page;
+    }
+    return windowed;
+}
+
 export async function breakItem(
     locale: LocaleType,
     text: string,
@@ -137,7 +309,7 @@ export async function breakItem(
     for (const subText of sanitizedFindText.split(' ')) {
         fullVerseText = fullVerseText.replaceAll(
             new RegExp(`(${subText})`, 'ig'),
-            '<span class="app-found-highlight">$1</span>',
+            '<span class="app-found-match">$1</span>',
         );
     }
     const [bookKey, chapter] = bookKeyChapter.split('.');

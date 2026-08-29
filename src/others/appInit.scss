@@ -383,6 +383,32 @@ body {
     }
   }
 
+  // A control that only draws a box when you point at it. Icon-only buttons in
+  // the side panels used Bootstrap's outline variants, which -- on top of the
+  // themes' global `.btn` border -- made a 16px glyph read as heavy as the
+  // content it sits above. Shared, because the Find and Resources tabs of the
+  // one panel must not drift apart. `aria-pressed` carries the on state, so a
+  // plain button never picks it up.
+  .app-ghost-button {
+    flex: 0 0 auto;
+    padding: 0 0.3rem;
+    line-height: 1.35rem;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background-color: transparent;
+    color: var(--app-muted);
+    &:hover {
+      color: var(--app-ink);
+      background-color: var(--app-surface);
+      border-color: var(--app-line);
+    }
+    &[aria-pressed='true'] {
+      color: var(--app-accent);
+      background-color: var(--app-accent-halo);
+      border-color: transparent;
+    }
+  }
+
   .app-inner-shadow {
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
   }

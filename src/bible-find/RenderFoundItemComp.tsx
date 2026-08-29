@@ -60,7 +60,7 @@ export default function RenderFoundItemComp({
     const { newItem, bibleItem } = data;
     return (
         <div
-            className="w-100 app-border-white-round my-2 p-2 app-caught-hover-pointer"
+            className="w-100 app-find-item app-caught-hover-pointer"
             draggable
             onDragStart={handleDragStart}
             onContextMenu={handleContextMenuOpening}

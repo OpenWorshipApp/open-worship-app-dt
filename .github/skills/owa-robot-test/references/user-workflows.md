@@ -21,7 +21,17 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-29k** (**W-37 steps 2, 4 and 7 restyled: the Resources
+**workflowsVersion: 2026-08-29m** (**W-12 rewritten: Bible Find tells you how many
+verses it found, and marks the word it found.** The matched word is now highlighted in the
+app's accent with an underline, so you can see at a glance WHY each verse is listed; the
+reference beside it steps back to a quiet marker. The footer leads with **N verses found** and
+no longer prints a button for every page — a common word runs to 1500-odd pages, and all of
+them were drawn at once. The book filter is plain while it says **All Books** and only lights
+up, with a funnel, once you have narrowed the search. Verified live 2026-08-29, dark and
+light. Revised the same day: the **…** in the block numbers is clickable and opens the
+blocks it hides, and a result's reference is set at full contrast — it is the column the eye
+runs down, so it has to be read, not glanced past.)
+Previous: **2026-08-29k** (**W-37 steps 2, 4 and 7 restyled: the Resources
 view is now a list, not a stack of boxes.** Each folder is a header line with the folder it
 lives in shown beside its name — two shelves both called `pdf` can finally be told apart —
 and its files hang off a single vertical rail instead of each sitting in its own outlined
@@ -799,12 +809,35 @@ _Verify: RD-01..07, RD-11._
 **Goal:** find verses by words, not reference.
 
 1. In the Bible Reader (or the lookup dialog), open the **advanced lookup** toggle —
-   a second panel ("Bible Online Lookup") appears beside the picker. 📸
-2. Type your search words. Matching verses list page by page; click the **page
-   numbers** to browse. 📸
-3. Click a result to open that verse.
+   a second panel ("Bible Online Lookup") appears beside the picker, with **Find**
+   (ស្វែងរក) chosen in its dropdown. 📸
+2. Type your search words. Every verse containing them is listed, with **the word you
+   searched for marked** in each one, so you can see at a glance why a verse is there.
+   The reference — *Psalm 23:1* — leads each result; clicking anywhere on the result
+   opens that verse. 📸
+3. The bar under the search box says how many verses matched — **74 verses found**.
+   Use it to judge whether to narrow the search: a common word runs to tens of
+   thousands. 📸
+4. Results arrive in blocks of twenty, each headed **Results 1–20**, **Results 21–40**
+   and so on. The numbers at the bottom right move you through them: a **filled** number
+   is a block already on screen, so clicking it scrolls straight there; a **plain**
+   number has not been fetched yet, and clicking it loads that block in below. Only the
+   numbers near where you are, plus the first, the last, and the blocks you have
+   loaded, are listed — the rest sit behind **…**, which is a button: it names the
+   blocks it is holding (*Show pages 4–139*) and clicking it lists them all. On a find
+   big enough to run to thousands of blocks it opens in steps instead, and clicking a
+   **…** between two steps opens that stretch — so any block is a click or two away
+   without the app ever drawing a thousand numbers at once. 📸
+5. To search part of the Bible only, click the **All Books** (គ្រប់កណ្ឌគម្ពីរ) button
+   and pick a book — **Shift**-click to pick several, or choose **Old Testament** /
+   **New Testament** for a whole half. Once a filter is on, the button shows a funnel
+   and the books you chose; while it says **All Books** it stays plain, so a narrowed
+   search never hides in plain sight. 📸
+   The **⋮ More Options** button beside it offers **Reset Selected Books** to go back
+   to the whole Bible, and **Reset Search Data**, which rebuilds the search index —
+   that one takes a moment and reloads the app.
 
-_Verify: RD-08..09._
+_Verify: RD-08, RD-09, RD-45, RD-46._
 
 ### W-13 — Cross references
 

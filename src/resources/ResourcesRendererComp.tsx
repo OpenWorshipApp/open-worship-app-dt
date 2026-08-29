@@ -195,7 +195,7 @@ export default function ResourcesRendererComp({
             <hr className="m-0" />
             <div className="app-resources-toolbar">
                 <button
-                    className="app-resources-icon-button"
+                    className="app-ghost-button"
                     type="button"
                     title={tran('More Options')}
                     aria-label={tran('More Options')}
@@ -230,7 +230,7 @@ export default function ResourcesRendererComp({
                     })}
                 </span>
                 <button
-                    className="app-resources-icon-button"
+                    className="app-ghost-button"
                     type="button"
                     title={tran('Search file name')}
                     aria-label={tran('Search file name')}

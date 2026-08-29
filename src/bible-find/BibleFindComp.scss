@@ -1,0 +1,199 @@
+// The Find results list.
+//
+// A find over a whole bible returns tens of thousands of verses, and the panel
+// is 350px wide. Everything below is in service of ONE job: scanning that list
+// for the verse you half-remember.
+//
+// So the match itself is the only thing allowed to be loud. It used to share
+// `app-found-highlight` with the reference pill beside it and the chunk marker
+// above it -- one class doing three jobs, painting all three the same blue --
+// which meant the single thing that explains why a row is on screen was
+// camouflaged by the furniture around it. The match now has its own mark in
+// `--app-accent`, and everything else steps back: rows lose their borders, the
+// reference becomes a quiet marker leading the line.
+//
+// Colours come only from the app's `--app-*` semantics, the same vocabulary the
+// Resources tab beside this one uses, because they are the same panel.
+.app {
+  .app-find-results {
+    padding: 0 0.375rem;
+  }
+
+  // THE mark. Accent text on its halo with a solid accent underline -- the
+  // underline is what survives when a Khmer or a serif bible face makes the
+  // tinted ground hard to read at 12px.
+  .app-found-match {
+    border-radius: 2px;
+    padding: 0 0.05em;
+    color: var(--app-accent);
+    background-color: var(--app-accent-halo);
+    box-shadow: inset 0 -2px 0 var(--app-accent);
+  }
+
+  // A row, not a card. The old `app-border-white-round my-2 p-2` drew a
+  // full-height rounded box per verse, so a screen of results was a wall of
+  // boxes with the borders reading louder than the words inside them.
+  .app-find-item {
+    padding: 0.35rem 0.4rem;
+    border-bottom: 1px solid var(--app-line);
+    border-radius: 3px;
+    &:hover {
+      background-color: var(--app-surface);
+    }
+
+    // The reference, scoped to this list only -- `BibleDirectViewTitleComp` is
+    // shared with the three cross-reference views, which have no match to
+    // compete with and are left exactly as they are. Here it loses the bordered
+    // blue pill: the whole row is clickable, so the pill was advertising an
+    // affordance that was never its own, in the one colour the match needs for
+    // itself.
+    //
+    // It keeps full `--app-ink` contrast though. This is the column the eye
+    // runs down to find the passage it wants, so it has to be READ, not
+    // glanced past -- muted it was the quietest thing in the row, which is
+    // wrong for the one part of a result that says WHERE you are. It stays
+    // distinct from the verse beside it on weight and size, not on contrast.
+    .title {
+      display: inline;
+      margin: 0 0.4rem 0 0 !important;
+      padding: 0 !important;
+      // The pill's outline goes with its ground: what is left is a marker.
+      border: 0;
+      border-radius: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: var(--app-ink);
+      background-color: transparent;
+      white-space: nowrap;
+    }
+  }
+
+  // Where one loaded chunk of results ends and the next begins. Real
+  // information -- it is what the footer's numbers jump to -- so it is labelled
+  // rather than left as a bare digit against a dotted rule.
+  .app-find-chunk-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.75rem 0 0.15rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--app-muted);
+    &::after {
+      content: '';
+      flex: 1 1 auto;
+      height: 1px;
+      background-color: var(--app-line);
+    }
+  }
+
+  .app-find-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.375rem;
+    border-bottom: 1px solid var(--app-line);
+  }
+
+  // Quiet while it says "All Books", accent once a filter is on.
+  //
+  // It shipped as a solid `btn-info` either way, which put the loudest chip in
+  // the panel on the state that means "no filter" -- and in a colour close
+  // enough to the match accent to compete with it. Reversing that makes the
+  // chip say something: searching only part of the bible is the state worth
+  // noticing, because it is the one that can hide the verse you are after.
+  .app-find-filter {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 0 0.4rem;
+    border: 1px solid var(--app-line);
+    border-radius: 3px;
+    background-color: transparent;
+    color: var(--app-muted);
+    font-size: 0.76rem;
+    line-height: 1.35rem;
+    text-align: left;
+    &:hover {
+      color: var(--app-ink);
+      border-color: var(--app-accent);
+    }
+    &.is-filtered {
+      color: var(--app-accent);
+      border-color: transparent;
+      background-color: var(--app-accent-halo);
+      font-weight: 600;
+    }
+  }
+
+  .app-find-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding: 0.3rem 0.4rem;
+  }
+
+  // The one number worth reading before any of the buttons: 31,120 verses says
+  // "narrow it down" in a way a strip of page numbers never could.
+  .app-find-count {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.72rem;
+    color: var(--app-muted);
+  }
+
+  .app-find-pages {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+  }
+
+  .app-find-page {
+    min-width: 1.5rem;
+    padding: 0 0.3rem;
+    border: 1px solid var(--app-line);
+    border-radius: 3px;
+    background-color: transparent;
+    color: var(--app-muted);
+    font-size: 0.72rem;
+    line-height: 1.4rem;
+    text-align: center;
+    &:hover:not(:disabled) {
+      color: var(--app-ink);
+      border-color: var(--app-accent);
+    }
+    &:disabled {
+      opacity: 0.35;
+    }
+    // Loaded, i.e. already on screen above -- clicking scrolls to it rather
+    // than fetching it. That distinction is the only state this strip has ever
+    // carried, and Bootstrap's `.active` said "you are here" instead.
+    &.is-loaded {
+      color: var(--app-accent);
+      border-color: transparent;
+      background-color: var(--app-accent-halo);
+      font-weight: 600;
+    }
+  }
+
+  // Not a label -- a control. It holds the chunks the window left out, and
+  // says which ones in its tooltip, so nothing in the find is unreachable.
+  .app-find-page-gap {
+    min-width: 1.5rem;
+    padding: 0 0.3rem;
+    border: 1px dashed var(--app-line);
+    border-radius: 3px;
+    background-color: transparent;
+    color: var(--app-muted);
+    font-size: 0.72rem;
+    line-height: 1.4rem;
+    &:hover {
+      color: var(--app-ink);
+      border-style: solid;
+      border-color: var(--app-accent);
+    }
+  }
+}
