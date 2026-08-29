@@ -19,6 +19,18 @@ vi.mock('../lang/langHelpers', () => ({
         h.getAllLangsCount += 1;
         return h.langDataList;
     },
+    getLangDataByCodeAsync: async (langCode: string) => {
+        return h.langDataList.find((langData) => {
+            return langData.langCode === langCode;
+        });
+    },
+    tranByLangData: (_langData: any, text: string) => text,
+}));
+// Only `useLookupLangPresentation` uses it, and that is a hook — but the real
+// module reaches `appProvider`, which touches `document` at load. See the
+// `appprovider-mock-node-env` note.
+vi.mock('../helper/appHooks', () => ({
+    useAppStateAsync: () => [null],
 }));
 
 // The selection is memoized at module scope, so a case that needs a different

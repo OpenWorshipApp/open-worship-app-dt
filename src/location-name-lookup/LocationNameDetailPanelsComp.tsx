@@ -18,6 +18,7 @@ import { openVerseInBibleLookup } from './bibleVerseHelpers';
 import type { DetailPanelType } from './detailPanelHelpers';
 import { closeDetailPanel, useOpenDetailPanels } from './detailPanelHelpers';
 import type { LookupManagersType } from './lookupDataHelpers';
+import { useLookupLangPresentation } from './lookupLangHelpers';
 import {
     LookupManagersContext,
     useLookupManagers,
@@ -168,6 +169,7 @@ function RenderDetailPanelComp({
     // record whose verse titles have not been read yet copies the raw
     // references rather than blocking on dozens of bible reads.
     const textScale = useBibleViewTextScale();
+    const { fontFamily } = useLookupLangPresentation();
     const resolvedVersesRef = useRef<string[]>([]);
     const verseTextRef = useRef<{ title: string; fullText: string } | null>(
         null,
@@ -244,8 +246,20 @@ function RenderDetailPanelComp({
                     data-no-widget-drag="true"
                     // Zoomed with the SAME factor as the body, so the record's
                     // name in the title bar reads at the bible text's size too
-                    // rather than staying at the widget chrome's default.
-                    style={{ cursor: 'text', fontSize: `${textScale}em` }}
+                    // rather than staying at the widget chrome's default — and
+                    // set in the same font for the same reason. The title is the
+                    // record's own name, but it renders in the widget CHROME,
+                    // which is outside the body that carries that font.
+                    //
+                    // A verse panel is the exception: its title is a KJV
+                    // reference, so it keeps the app's own font whatever
+                    // language the records are read in.
+                    style={{
+                        cursor: 'text',
+                        fontSize: `${textScale}em`,
+                        fontFamily:
+                            panel.kind === 'verse' ? undefined : fontFamily,
+                    }}
                 >
                     <i className={getPanelIconClass(panel, managers)} />
                     <span className="text-truncate">{title}</span>

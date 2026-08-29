@@ -756,6 +756,34 @@ export function tran(...args: any[]): string {
     return value;
 }
 
+/**
+ * `tran`, but into a NAMED language instead of the interface locale.
+ *
+ * For text that describes CONTENT the user chose a language for separately from
+ * the UI — the names-and-locations lookup is the case this exists for: its
+ * records may be Khmer while the menus around them are English, and a record's
+ * category then has to read in the language of the record, not of the menu.
+ *
+ * Unlike `tran` it does NOT throw on a missing key in dev. The interface locale
+ * is guaranteed to translate every string the app renders; a language picked for
+ * its DATA is not, and a package that ships a dataset without a complete UI
+ * dictionary must degrade to English rather than blank the panel.
+ */
+export function tranByLangData(
+    langData: LanguageDataType | null | undefined,
+    text: string,
+): string {
+    if (
+        langData === null ||
+        langData === undefined ||
+        langData.langCode === DEFAULT_LANG_CODE
+    ) {
+        return text;
+    }
+    const sanitizedKey = langData.sanitizeTranKey(text);
+    return langData.dictionary[sanitizedKey] ?? text;
+}
+
 export function toStringNum(numList: string[], n: number): string {
     return `${n}`
         .split('')

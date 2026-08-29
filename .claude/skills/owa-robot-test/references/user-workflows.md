@@ -21,7 +21,18 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-29** (**W-29 gains step 2, and W-30 a note: the
+**workflowsVersion: 2026-08-29c** (**W-29 step 2: the name across the top of a record window
+follows the lookup font too.** That title sits in the window's frame rather than its body, so
+it was the one place a Khmer record name still came out in a fallback face. Verified live
+2026-08-29. Previous: **W-29 step 2 and step 4 say more: the lookup language
+now decides the SCRIPT and FONT the records are set in, and names each record's kind in it.**
+Khmer records were being rendered in whatever font the system fell back to rather than the
+app's own Khmer face, and the kind of a record — People / Groups / Places — stayed English in
+the filter and on the record even with Khmer records on screen, because the datasets keep that
+field in English in every language. Both now follow the lookup language. A new closing note
+says what is NOT translated and why: Gender, Age and a place's Type are free-form dataset text,
+not a fixed set. Verified live 2026-08-29 with km under an English interface. Previous:
+**W-29 gains step 2, and W-30 a note: the
 names-and-locations lookup now has a LANGUAGE of its own.** The person-and-pin button grew a
 second half showing the lookup dataset's language code (`en`); clicking it lists every
 language the app ships records in and picking one switches the floating panel, every record
@@ -1799,14 +1810,20 @@ your Bible reading.
    remembered for next time, and it is **separate** from the app's own language
    (**W-16**): an English menu with Khmer names is a perfectly normal combination. The
    underlined names inside the King James verses themselves do not change — those follow
-   the King James wording, which is what makes them findable at all. 📸
+   the King James wording, which is what makes them findable at all. The lists, the record
+   windows and the "in your reading" panel are also **typed in that language's own
+   script and font** — the name across the top of a record window included — and the
+   kind of each record — **People** (មនុស្ស), **Groups**
+   (ក្រុម), **Places** (ទីកន្លែង) — is named in it too, in the filter and on each
+   record. 📸
 3. Use the **Names** (ឈ្មោះ) and **Locations** (ទីកន្លែង) tabs to choose what you are
    looking for, and type in the search box. Each tab remembers what you typed, so you
    can switch back and forth. The list updates as you type.
 4. On the **Names** tab the dropdown beside the tabs narrows the list by kind —
    **All types** (គ្រប់ប្រភេទ), **People** (មនុស្ស), **Groups** (ក្រុម),
-   **Places** (ទីកន្លែង) and so on. It is greyed out on the **Locations** tab, where
-   there is nothing to filter.
+   **Places** (ទីកន្លែង) and so on. These follow the **lookup** language from step 2,
+   not the app's, so they read the same way as the records they filter. It is greyed
+   out on the **Locations** tab, where there is nothing to filter.
 5. Use the arrows at the bottom to page through results, or type a page number in the
    little box and press **Enter**. Starting a new search always takes you back to
    page 1. 📸
@@ -1835,6 +1852,10 @@ your Bible reading.
 
 **Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
 slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
+
+**A note on what is not translated:** a person's **Gender** and **Age**, and a place's
+**Type**, are shown exactly as the dataset wrote them. Only a person's kind is one of a
+fixed set of nine, so only that one can be said in another language.
 
 _Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
 RD-64, RD-80, PM-126._
@@ -1875,8 +1896,9 @@ It also includes people the verse means without naming — Luke 13:16 lists **Sa
 which the verse calls "the devil".
 
 **The names in this list follow the lookup language** — the little language code beside
-the person-and-pin button (**W-29** step 2), not the language of the app. The underlined
-names in the verses themselves stay King James whatever you pick.
+the person-and-pin button (**W-29** step 2), not the language of the app, and they are set
+in that language's own font. The underlined names in the verses themselves stay King James
+whatever you pick.
 
 _Verify: RD-72, RD-73, RD-74, RD-75, RD-76, RD-57, RD-80._
 

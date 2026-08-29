@@ -35,6 +35,21 @@ export const NAME_TYPE_LABEL: { [key in MentionNameType]: string } = {
     unknown: 'Unknown',
 };
 
+// The same nine types named one at a time, for the places that label a SINGLE
+// record rather than a filter over many — the detail panel's fact chip and its
+// `Type` row. Bare English literals for the same reason as above.
+export const NAME_TYPE_SINGULAR_LABEL: { [key in MentionNameType]: string } = {
+    concept: 'Concept',
+    deity: 'Deity',
+    group: 'Group',
+    life: 'Life',
+    month: 'Month',
+    person: 'Person',
+    place: 'Place',
+    supernatural: 'Supernatural',
+    unknown: 'Unknown',
+};
+
 // Mirrors `bible-note`'s own `normalizeMentionNameType`, including its fallback
 // to `person` for an unrecognized value. Reimplemented rather than imported so
 // this module — and therefore the panel that renders before the dataset has
@@ -49,6 +64,23 @@ function normalizeNameType(type: string | null | undefined): MentionNameType {
 
 export function getNameTypeIconClass(type: string | null | undefined): string {
     return `bi ${NAME_TYPE_ICON_CLASS[normalizeNameType(type)]}`;
+}
+
+/**
+ * A name record's raw `type` as a readable label, ready for translation.
+ *
+ * The datasets keep this field in English whatever language the records
+ * themselves are in (`"gender": "male"` sits beside a Khmer name), so it is a
+ * key, not text to show. An empty type has nothing to label and stays empty
+ * rather than becoming "Person" out of nowhere.
+ */
+export function getNameTypeSingularLabel(
+    type: string | null | undefined,
+): string {
+    if (typeof type !== 'string' || type.trim() === '') {
+        return '';
+    }
+    return NAME_TYPE_SINGULAR_LABEL[normalizeNameType(type)];
 }
 
 // Titles and descriptions carry inline reference tokens, e.g.

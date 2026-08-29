@@ -7,8 +7,10 @@ import {
     ALL_TYPES,
     LOCATION_ICON_CLASS,
     NAME_TYPE_LABEL,
+    NAME_TYPE_SINGULAR_LABEL,
     PAGE_SIZE,
     getNameTypeIconClass,
+    getNameTypeSingularLabel,
     getPlainReferenceText,
 } from './lookupPresentationHelpers';
 
@@ -49,13 +51,41 @@ describe('name-type presentation', () => {
     // THROWS and blanks the page. Bare English literals are what makes the
     // dictionary check possible at all.
     test('labels are plain English literals, not pre-translated', () => {
-        for (const label of Object.values(NAME_TYPE_LABEL)) {
+        const everyLabel = [
+            ...Object.values(NAME_TYPE_LABEL),
+            ...Object.values(NAME_TYPE_SINGULAR_LABEL),
+        ];
+        for (const label of everyLabel) {
             expect(label).toMatch(/^[A-Z][A-Za-z ]*$/);
         }
     });
 
+    test('every type has a singular label as well as a plural one', () => {
+        expect(Object.keys(NAME_TYPE_SINGULAR_LABEL)).toStrictEqual(
+            Object.keys(NAME_TYPE_LABEL),
+        );
+    });
+
     test('the "all types" sentinel cannot collide with a real type', () => {
         expect(Object.keys(NAME_TYPE_LABEL)).not.toContain(ALL_TYPES);
+    });
+
+    // The datasets keep `type` in English whatever language the record is in, so
+    // it reaches the panel as a key. The unknown-type fallback has to match the
+    // icon's, or a record would show one type and wear another's icon.
+    test('resolves a raw dataset type to its singular label', () => {
+        expect(getNameTypeSingularLabel('group')).toBe('Group');
+        expect(getNameTypeSingularLabel('  DEITY ')).toBe('Deity');
+        expect(getNameTypeSingularLabel('pharaoh')).toBe('Person');
+    });
+
+    // An absent type has nothing to label; inventing "Person" would put a fact
+    // chip on a record the dataset never typed.
+    test('leaves a missing type empty rather than guessing', () => {
+        expect(getNameTypeSingularLabel('')).toBe('');
+        expect(getNameTypeSingularLabel('   ')).toBe('');
+        expect(getNameTypeSingularLabel(null)).toBe('');
+        expect(getNameTypeSingularLabel(undefined)).toBe('');
     });
 
     test('a page holds a sane number of records', () => {

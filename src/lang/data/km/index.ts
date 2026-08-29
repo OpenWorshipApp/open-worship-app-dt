@@ -1207,6 +1207,15 @@ const dictionary = {
     Places: 'ទីកន្លែង',
     Supernatural: 'អធិធម្មជាតិ',
     Unknown: 'មិនស្គាល់',
+    // The same nine types named ONE at a time, for a single record's `Type` row
+    // and its fact chip. `Life`, `Supernatural` and `Unknown` read the same
+    // either way and are not repeated — a duplicate key throws on module load.
+    Concept: 'គំនិត',
+    Deity: 'ព្រះ',
+    Group: 'ក្រុម',
+    Month: 'ខែ',
+    Person: 'មនុស្ស',
+    Place: 'ទីកន្លែង',
     // Record detail panel. `Title`, `Type`, `Copy` and `Copied` already exist
     // above and resolve after key sanitization, so they are not repeated here —
     // a duplicate would throw when this module loads.

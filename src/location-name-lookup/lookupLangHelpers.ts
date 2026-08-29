@@ -1,10 +1,13 @@
-import { useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 
+import { useAppStateAsync } from '../helper/appHooks';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import {
     DEFAULT_LANG_CODE,
     checkIsValidLangCode,
     getAllLangsAsync,
+    getLangDataByCodeAsync,
+    tranByLangData,
 } from '../lang/langHelpers';
 
 /**
@@ -73,6 +76,40 @@ export function useSelectedLookupLangCode() {
         getSelectedLookupLangCode,
         getSelectedLookupLangCode,
     );
+}
+
+export type LookupLangPresentationType = {
+    // `undefined` for a package that names no font — English does not, and then
+    // the content keeps the app's own font rather than being forced into one.
+    fontFamily: string | undefined;
+    translate: (text: string) => string;
+};
+
+/**
+ * How to WRITE the lookup language: its font, and its dictionary.
+ *
+ * The records are in a language the user chose separately from the interface, so
+ * anything that labels them has to follow the records — a Khmer list whose
+ * category filter reads `People` in the app's Latin font is the mismatch this
+ * removes. Until the package resolves, both fall back to the app's own
+ * rendering, which is what the panel showed before it loaded anyway.
+ *
+ * The language module is already resident whenever records are on screen (the
+ * dataset came out of it), so this costs a cache hit, not a load.
+ */
+export function useLookupLangPresentation(): LookupLangPresentationType {
+    const langCode = useSelectedLookupLangCode();
+    const [langData] = useAppStateAsync(() => {
+        return getLangDataByCodeAsync(langCode);
+    }, [langCode]);
+    return useMemo(() => {
+        return {
+            fontFamily: langData?.fontFamily,
+            translate: (text: string) => {
+                return tranByLangData(langData, text);
+            },
+        };
+    }, [langData]);
 }
 
 // The shipped language packages cannot change under a running app, so this is

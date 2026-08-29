@@ -30,4 +30,25 @@ Three things about it are easy to get wrong:
   ask. Both it and `genLookupFileStore` carry a generation counter so a load
   already in flight cannot install itself afterwards.
 
-Related: [[onscreen-setting-parse-amplification]], [[filesource-cache-sliding-ttl]].
+The language also decides how the records are WRITTEN, not only their words
+(`useLookupLangPresentation`): the three surfaces take its `fontFamily`
+(`app-Battambang` for km; English names none, so nothing is forced) — the detail
+widget's TITLE BAR separately, since it renders in `FloatingWidgetComp` chrome
+OUTSIDE the body, and NOT for a verse panel, whose title is a KJV reference —
+and the
+name TYPE is translated through `tranByLangData` — the datasets keep `type`,
+`gender` and `age` in English in EVERY language, so `type` reaches the panel as
+a key. Only `type` is translatable: it is one of nine enum values, while `age`
+is free text ("123 years") and a LOCATION's type is open-ended prose.
+Two traps there:
+
+- `tranByLangData` must NOT throw on a missing key the way `tran` does. The
+  interface locale is guaranteed complete; a language picked for its DATA is
+  not, and blanking the panel over one category label is the worse failure.
+- Guard `unknown` on the ENGLISH key and translate afterwards. Both the fact-chip
+  filter and `checkHasDetailValue` compare the string to `'unknown'`, so
+  translating first gives an untyped record a `មិនស្គាល់` chip it does not have
+  in English.
+
+Related: [[onscreen-setting-parse-amplification]], [[filesource-cache-sliding-ttl]],
+[[tran-missing-key-throws-in-dev]].

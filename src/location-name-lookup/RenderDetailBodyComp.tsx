@@ -19,7 +19,9 @@ import {
     OptionalVerseListRowComp,
     ReferenceTextComp,
 } from './LookupDetailPartsComp';
+import { useLookupLangPresentation } from './lookupLangHelpers';
 import { useLookupManagersContext } from './lookupManagersContext';
+import { getNameTypeSingularLabel } from './lookupPresentationHelpers';
 import {
     checkHasDetailValue,
     getDisplayLinks,
@@ -42,15 +44,28 @@ export function RenderNameDetailComp({
     onVersesResolved: (titles: string[]) => void;
 }>) {
     const { namesLookupManager } = useLookupManagersContext();
+    const { fontFamily, translate } = useLookupLangPresentation();
     const record = namesLookupManager.getRecordById(recordId);
     if (record === null) {
         return <RenderMissingRecordComp />;
     }
-    const facts = [record.type, record.gender, record.age].filter((value) => {
+    // The datasets keep `type` in English whatever language the record itself is
+    // in, so it is a key to translate rather than text to show. `gender` and
+    // `age` are left alone: age is free-form ("123 years"), not an enum.
+    const nameTypeKey = getNameTypeSingularLabel(record.type);
+    // Decided on the ENGLISH key and only THEN translated. Both this guard and
+    // `checkHasDetailValue` inside the row below drop an `unknown` type by
+    // comparing the string to `'unknown'`, and neither would recognize it once
+    // it reads `មិនស្គាល់` — an untyped record would grow a chip in Khmer that it
+    // does not have in English.
+    const isNameTypeShown =
+        nameTypeKey !== '' && nameTypeKey.toLowerCase() !== 'unknown';
+    const nameTypeLabel = isNameTypeShown ? translate(nameTypeKey) : '';
+    const facts = [nameTypeLabel, record.gender, record.age].filter((value) => {
         return value !== '' && value.toLowerCase() !== 'unknown';
     });
     return (
-        <div className="location-name-lookup__detail">
+        <div className="location-name-lookup__detail" style={{ fontFamily }}>
             <BasicInfoComp
                 title={record.title}
                 description={record.description}
@@ -76,7 +91,7 @@ export function RenderNameDetailComp({
                     />
                     <OptionalTextRowComp
                         label={tran('Type')}
-                        value={record.type}
+                        value={nameTypeLabel}
                     />
                     <OptionalTextRowComp
                         label={tran('Gender')}
@@ -174,15 +189,18 @@ export function RenderLocationDetailComp({
     onVersesResolved: (titles: string[]) => void;
 }>) {
     const { locationsLookupManager } = useLookupManagersContext();
+    const { fontFamily } = useLookupLangPresentation();
     const record = locationsLookupManager.getRecordById(recordId);
     if (record === null) {
         return <RenderMissingRecordComp />;
     }
+    // NOT translated the way a name's type is: a location's `type` is free-form
+    // dataset prose ("city", "region", "mountain range"), not one of nine keys.
     const facts = [record.type].filter((value) => {
         return value !== '' && value.toLowerCase() !== 'unknown';
     });
     return (
-        <div className="location-name-lookup__detail">
+        <div className="location-name-lookup__detail" style={{ fontFamily }}>
             <BasicInfoComp
                 title={record.title}
                 description={record.description}

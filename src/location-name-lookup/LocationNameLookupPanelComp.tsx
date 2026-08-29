@@ -17,6 +17,7 @@ import {
     getPlainReferenceText,
 } from './lookupPresentationHelpers';
 import type { LookupManagersType } from './lookupDataHelpers';
+import { useLookupLangPresentation } from './lookupLangHelpers';
 import { useLookupManagers } from './lookupManagersContext';
 import type { DetailPanelKindType } from './detailPanelHelpers';
 import type { LookupRecordItemType } from './RenderLookupRecordItemComp';
@@ -141,6 +142,9 @@ function RenderLookupBodyComp({
     const attemptLocationTimeout = useMemo(() => {
         return genTimeoutAttempt(SEARCH_DEBOUNCE_MILLISECOND);
     }, []);
+    // The records are in the LOOKUP language, not the interface locale, so what
+    // labels them follows the records — see `useLookupLangPresentation`.
+    const { fontFamily, translate } = useLookupLangPresentation();
 
     const isOnNameTab = activeTab === 'name';
     const typedQuery = isOnNameTab ? typedNameQuery : typedLocationQuery;
@@ -162,12 +166,12 @@ function RenderLookupBodyComp({
     // types that would return results. "All types" always leads.
     const nameTypeOptions = useMemo(() => {
         return [
-            { value: ALL_TYPES, label: tran('All types') },
+            { value: ALL_TYPES, label: translate('All types') },
             ...namesLookupManager.nameTypes.map(({ type }) => {
-                return { value: type, label: tran(NAME_TYPE_LABEL[type]) };
+                return { value: type, label: translate(NAME_TYPE_LABEL[type]) };
             }),
         ];
-    }, [namesLookupManager]);
+    }, [namesLookupManager, translate]);
 
     const searchNames = useMemo(() => {
         return (searchQuery: string, page: number): LookupPageType => {
@@ -225,6 +229,14 @@ function RenderLookupBodyComp({
             // Tracks the bible text zoom. `zoom` rather than `transform: scale`
             // so the content keeps a real layout box and still scrolls inside
             // the widget instead of being painted outside it.
+            //
+            // The whole panel takes the lookup language's font, not just the
+            // record rows: the query is typed in that language and the filter
+            // names its categories in it, so anything less leaves one control
+            // per row falling back to whatever the system happens to have. A
+            // package that names no font (English) leaves this undefined and
+            // nothing changes.
+            style={{ fontFamily }}
         >
             <div className="input-group input-group-sm p-2 pb-1">
                 <span className="input-group-text">

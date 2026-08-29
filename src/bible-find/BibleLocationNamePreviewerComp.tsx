@@ -11,6 +11,7 @@ import { getVerses } from '../helper/bible-helpers/bibleInfoHelpers';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { tran } from '../lang/langHelpers';
+import { useLookupLangPresentation } from '../location-name-lookup/lookupLangHelpers';
 import RenderLookupRecordItemComp from '../location-name-lookup/RenderLookupRecordItemComp';
 import type { VerseRecordType } from '../location-name-lookup/verseRecordListHelpers';
 import {
@@ -132,6 +133,7 @@ export default function BibleLocationNamePreviewerComp() {
     const nestedBibleItems = useBibleItemViewControllerUpdateEvent();
     const index = useLookupTextIndex();
     const recordLabels = useLookupRecordLabels();
+    const { fontFamily } = useLookupLangPresentation();
     const [groupList, setGroupList] = useState<BibleItemGroupType[] | null>(
         null,
     );
@@ -211,6 +213,12 @@ export default function BibleLocationNamePreviewerComp() {
         <div
             className="location-name-lookup w-100 h-100 d-flex flex-column"
             // Tracks the bible text zoom, like the floating lookup panel.
+            //
+            // ...and its font, for the same reason: every row below is a record
+            // name written in the LOOKUP language, which the user picks
+            // separately from the interface locale. A package that names no font
+            // (English) leaves this undefined and nothing changes.
+            style={{ fontFamily }}
         >
             <div className="px-2 py-1 small text-secondary border-bottom">
                 <i className="bi bi-geo-alt-fill" />
