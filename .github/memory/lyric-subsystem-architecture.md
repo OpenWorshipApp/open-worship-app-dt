@@ -28,9 +28,12 @@ Things that bite:
   (`getOpenLyricFontSetting()` in `lyricHelpers.ts`). This caused the projected
   lyric to render at open-lyric's 16px default while the operator's previewer
   showed the configured 61px.
-- **`getOpenLyricPreviewer()` is expensive and uncached** — it re-reads the lyric
-  file *and* `getAllLangsAsync()` on every call. Keep it inside a cache-miss
-  callback, never before a cache check.
+- **`getOpenLyricPreviewer()` returns the SHARED instance when one is set**
+  (`LyricAppDocument.ts:206`) and only falls back to `initOpenLyric`
+  (history-head read + JSON.parse + full open-lyric re-parse) on a cold miss.
+  Do NOT re-read from disk here — it sits on the per-slide path
+  (`getSlidesQuick` calls it per render per stage pane). The owner keeps it
+  current on the file's `update` event (`LyricManager.refreshOpenLyricContent`).
 - **Stages are separate document instances.** `getLyricAppDocumentStageByStage()`
   returns a different `LyricAppDocumentStage0/1` per stage, each with its own
   `openLyric` field and its own cache entries. Stage 0's

@@ -13,8 +13,9 @@ plus the preload scripts live there. The build pulls the running app's own code 
 under it; observed 2026-07-29, the dev stack exited (`npm run electron` → code 0, then
 `concurrently -k` SIGTERM'd vite) within seconds of the final `npm run build`.
 
-The collision has a **second outcome**, seen 2026-08-12: on Windows the delete can simply
-FAIL —
+The collision has a **second outcome — Windows only** (file locking; on macOS unlink on an
+open file succeeds, so the delete wins and the first outcome is what you get), seen
+2026-08-12: on Windows the delete can simply FAIL —
 `Error: EPERM: operation not permitted, unlink 'electron-build\db-exts\fts5.dll'` — because
 the live app has that native module loaded and the OS locks the file. Then `rmdir.mjs` throws,
 `electron:build` aborts, and it is the BUILD that dies while the app keeps running (CDP still
@@ -32,7 +33,8 @@ run the build/lint stages last, and read the log BODY: an EPERM on a `db-exts/*.
 holding its own file, not a broken build, and re-running it needs the app closed rather than
 any code fix. If you must build mid-session, expect to relaunch with
 `env -u ELECTRON_RUN_AS_NODE npm run dev` afterwards and re-verify. Also check for a competing
-stack before relaunching: `Get-CimInstance Win32_Process` sorted by `CreationDate` shows
+stack before relaunching: `Get-CimInstance Win32_Process` sorted by `CreationDate` (Windows
+only; macOS: `lsof +D electron-build` / `ps -o pid,lstart,args`) shows
 whether someone else started `npm run dev`, and a fresh `local-storage` mtime (e.g.
 `screen-ft-manager`) means the app is being actively driven — don't "restore" state on top of
 a live session. Related: [[dev-hmr-stale-state-qa]].

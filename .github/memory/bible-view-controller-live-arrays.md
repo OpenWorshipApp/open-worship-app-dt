@@ -22,4 +22,5 @@ but repeat the split a few times and it hits.
 **How to apply:** derive anything memoized from these arrays off a *value*
 (the length, ids), never off the array reference; a regression test lives in
 `src/bible-reader/BibleViewRendererComp.test.tsx`. Same caution for any new
-consumer of `nestedBibleItems`. Related: [[eventhandler-sync-dispatch]].
+consumer of `nestedBibleItems`. (Event-dispatch semantics: see CLAUDE.md's
+"Event dispatch is microtask-async" section.)

@@ -26,4 +26,4 @@ claimed.
 `performance.getEntriesByType('navigation')` / `performance.now()` for a recent
 reload. If one happened, `navigate_page` reload and re-run the whole
 open-then-drive sequence in ONE `evaluate_script` call. Related:
-[[screen-draw-feature]], [[eventhandler-sync-dispatch]].
+[[screen-draw-feature]].

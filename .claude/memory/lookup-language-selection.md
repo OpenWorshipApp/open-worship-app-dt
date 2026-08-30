@@ -10,7 +10,7 @@ The location/name lookup picks its dataset language from
 chosen from the `en` / `km` button in the bible-lookup header — **not** from the
 app locale. Added 2026-08-29.
 
-Three things about it are easy to get wrong:
+Four things about it are easy to get wrong:
 
 - **`fromRawDataset` normalizes EVERY language in the map it is handed, eagerly.**
   So `loadLookupData` must build `{[langCode]: data}` with exactly one entry.
@@ -29,6 +29,15 @@ Three things about it are easy to get wrong:
   the change and the next `acquireLookupData` there may be no consumer left to
   ask. Both it and `genLookupFileStore` carry a generation counter so a load
   already in flight cannot install itself afterwards.
+- **Derived files are dataset-version-stamped without draining the dataset**
+  (`610445fe`, 2026-08-29). `readJsonFileVersion` in
+  `src/lang/lookupDataVersionHelpers.ts` fetches the ~34MB dataset JSON but
+  reads at most 1024 bytes of the streamed body looking for
+  `"version": <n>`, then ABORTS the request — never drain it. The derived-file
+  envelope (`lookupIndexFileHelpers.ts`) carries `_dataVersion` beside
+  `_appVersion`, with a session-memoized promise and an
+  `UNKNOWN_DATA_VERSION = ''` sentinel that must round-trip equal to itself —
+  break that and the 34MB dataset rebuilds on every launch.
 
 **A translated record carries its ENGLISH name (`kjvName`), added 2026-08-29.**
 `bible-note` 0.4.0-dev parses it and folds it into the same `searchText` as
@@ -50,6 +59,14 @@ for it. The app only RENDERS it, `ម៉ូសេ (Moses)`, through one helper:
   went to 3 for it, and `checkIsRecordLabelsValid` length-checks it like the
   other arrays.
 - The in-text underlines are untouched: they match KJV wording, already English.
+
+The dep's OWN surfaces get the font too (`0440f106`): `lookupDataHelpers`
+passes a `{ fontFamily }` style object into
+`NamesLookupManager.fromRawDataset` / `LocationsLookupManager.fromRawDataset`,
+so the mention popup, hover card and advanced panel render Khmer correctly —
+the app-side hook below does not reach them. (The map data itself moved out of
+`public/data/` into `src/lang/data/<code>/location-name-map-data/`, with
+`.prettierignore` entries — `e2acb3c0`.)
 
 The language also decides how the records are WRITTEN, not only their words
 (`useLookupLangPresentation`): the three surfaces take its `fontFamily`

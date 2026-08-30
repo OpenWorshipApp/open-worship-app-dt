@@ -1,25 +1,22 @@
 ---
 name: bible-note-floating-toolbar-width
-description: Bible Note's selection format popup only exists above ~1025px window width; the default note window (870px) never shows it
+description: The Bible Note selection-format popup no longer exists — the note editor is a plain textarea now; note windows still open at 870px and CDP resize_page still can't resize popups
 metadata:
   type: project
 ---
 
-The Bible Note editor's floating text-format popup (`.floating-text-format-popup`,
-from the vendored Lexical build in `public/modules/bible-note/`) is gated behind
-the playground's `!isSmallWidthViewport` check — `window.matchMedia('(max-width:
-1025px)')`. Below that width the plugin is not rendered at all, so no amount of
-selecting text produces the popup.
+**The Lexical toolbar era is over.** The vendored Lexical build
+(`public/modules/`) and its `.floating-text-format-popup` no longer exist
+anywhere in the repo — the note editor is now
+`src/others/SimpleNoteEditorComp.tsx`, a plain `<textarea>` (line ~176), reached
+via `src/bible-list/note/NoteEditorComp.tsx`. There is no selection-format popup
+at ANY window width, so any "widen the window to see the format popup" advice is
+obsolete.
 
-`handleOpening` in `src/bible-list/note/BibleNoteItemRenderComp.tsx` opens the
-note popup window at `width: 870`, i.e. BELOW the threshold — a freshly opened
-note window never shows the popup until the user widens it.
+Still true, and what this note is now about:
 
-**Why:** cost me a long detour while verifying a popup fix — a reopened note
-window "reproduced" a dead toolbar that was really just absent by design.
-
-**How to apply:** when testing anything about that popup, first widen the window
-(`window.resizeTo(1500, 950)` via CDP works; `resize_page` does NOT — Electron
-has no `Browser.getWindowForTarget`), then confirm
-`document.querySelector('.floating-text-format-popup')` exists before drawing
-conclusions. See also [[cdp-dynamic-import-hijack]].
+- The Bible Note popup window opens at `width: 870`
+  (`src/bible-list/note/BibleNoteItemRenderComp.tsx:46`).
+- CDP `resize_page` does NOT work on popups — Electron has no
+  `Browser.getWindowForTarget`. Resize with `window.resizeTo(1500, 950)` via
+  `evaluate_script` instead. See also [[cdp-dynamic-import-hijack]].

@@ -72,7 +72,8 @@ as two clicks is exactly what an operator cannot spare mid-service.
   if both). `position` means MOVE for a row of this presenting flow and INSERT AT THAT INDEX for
   anything else, which is the only way to land an outside payload anywhere but the end of
   the sheet. The whole rule is `toPresentingFlowRowDropKind` in `presentingFlowHelpers`, pure and
-  tested; the component only says whether the BANDS mean anything (they are a
+  WAS tested (`presentingFlowReorder.test.ts`, deleted 2026-08-24 — now
+  unguarded); the component only says whether the BANDS mean anything (they are a
   same-presenting-flow affordance — an outside payload has no "between two lines" reading to
   discover by accident, so it attaches unless Ctrl is held). The handlers live on `PresentingFlowRowComp`, NOT
   on `PresentingFlowItemComp`'s wrapper — `event.currentTarget` has to be the row for the rect to

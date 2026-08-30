@@ -101,7 +101,10 @@ if (lastSeen) {
 } else {
     process.stderr.write(
         'The CDP endpoint never responded. Is "npm run dev" running and did ' +
-            'Electron launch with --remote-debugging-port?\n',
+            'Electron launch with --remote-debugging-port?\n' +
+            'Most likely cause in an agent harness: ELECTRON_RUN_AS_NODE=1 ' +
+            'inherited from VS Code makes Electron run as plain Node — ' +
+            'launch with `env -u ELECTRON_RUN_AS_NODE npm run dev`.\n',
     );
 }
 process.exit(1);

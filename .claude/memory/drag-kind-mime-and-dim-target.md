@@ -34,7 +34,8 @@ item inserted somewhere unexpected.
 
 **How to apply:** when adding a drop target, gate `dragover` on the kind mime
 (never on `text/plain`, which every internal drag carries), and never assume
-`target === currentTarget`. Related: [[eventhandler-sync-dispatch]].
+`target === currentTarget`. (Event-dispatch semantics: see CLAUDE.md's
+"Event dispatch is microtask-async" section.)
 
 Also: `.every()` on an empty `dataTransfer.items` is vacuously true — a
 mimetype gate needs an explicit `length > 0`.

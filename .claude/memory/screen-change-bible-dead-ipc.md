@@ -21,8 +21,11 @@ holds the authoritative screen managers. `MiniScreenComp` is the only non-screen
 `initReceiveScreenMessage`, so a bible presented from the **reader** still cannot be stepped;
 that is a pre-existing architectural limit, not a regression.
 
-**How to apply:** verify live, not by unit test — `electronEventListener.coverage.test.ts`
-only asserts the main-process hop. Present a verse, `F5`, `select_page` the
-`screen.html?screenId=N` target, `press_key Control+ArrowRight`, then read the new target out
-of `<data-dir>/local-storage/screen-ft-manager`. Stepping keeps the verse-window size and
-rolls over chapters via `getJumpingChapter`. Related: [[apply-settings-skips-popups]].
+**How to apply:** unit coverage now exists on both sides —
+`src/_screen/screenBibleSteppingHelpers.test.ts` for the receiver and payload guard,
+`src/_screen/managers/ScreenManager.runtime.test.tsx` for the subscription,
+`electron/electronEventListener.coverage.test.ts` for the main hop. What they can't prove is
+the end-to-end key → output round trip, so still verify live: present a verse, `F5`,
+`select_page` the `screen.html?screenId=N` target, `press_key Control+ArrowRight`, then read
+the new target out of `<data dir>/local-storage/screen-ft-manager`. Stepping keeps the
+verse-window size and rolls over chapters via `getJumpingChapter`. Related: [[apply-settings-skips-popups]].

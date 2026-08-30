@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~715 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..96, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the "Key is missing" guessing-key dialog, and the Info editor's Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 68 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..101) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~752 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..97, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the "Key is missing" guessing-key dialog, and the Info editor's Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-104, W-35), Public Domain Songs import (PL-105, W-36), and the app-wide ⋮ button (GL-24, W-01b).'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
@@ -241,9 +241,9 @@ when hunting screen-only bugs while hidden (`SC-05`).
 ### 6b. Coverage accounting (full-coverage mode)
 
 The definition of "coverage" is the row inventory in
-[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~719 rows with stable
+[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~752 rows with stable
 IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..60`) and
-the context-menu-item matrix (`CM-01..92`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
+the context-menu-item matrix (`CM-01..97`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
 counts as exercised only with evidence (screenshot, asserted `evaluate_script` result, or
 console/network diff) — see the matrix's "Evidence rule".
@@ -407,11 +407,14 @@ Notes:
 
 ### 6e. MANDATORY: media download, video AND audio (every run, every focus)
 
-**Nothing else in the app runs the external binaries.** `downloadVideoOrAudio`
-([src/server/appHelpers.ts](../../../src/server/appHelpers.ts)) is the only caller of
-`extra-bin/yt/yt-dlp`, and it is what points yt-dlp at `extra-bin/ffmpeg/bin` and
-`extra-bin/qjs/qjs` — so a wrong/missing/stale binary passes typecheck, tests, build and
-every other matrix row, and only shows up here. Rows `MD-01..06`; recipe:
+**No other product flow runs the external binaries.** `downloadVideoOrAudio`
+([src/server/appHelpers.ts](../../../src/server/appHelpers.ts)) is the only product
+caller of `extra-bin/yt/yt-dlp` — `resolveMediaStreamUrl` in the same file
+(appHelpers.ts:336) also runs it, but only from the dev-only experiments page
+(`src/experiments/html-in-canvas/youtubeDemo.tsx`), and `checkIsExtraBinInstalled` only
+checks file existence, never executes — and `downloadVideoOrAudio` is what points yt-dlp
+at `extra-bin/ffmpeg/bin` and `extra-bin/qjs/qjs` — so a wrong/missing/stale binary
+passes typecheck, tests, build and every other matrix row, and only shows up here. Rows `MD-01..06`; recipe:
 test-plan.md §S19.
 
 **The binaries are NOT in the app package.** They are installed on demand from
@@ -533,7 +536,7 @@ behind every PL row and says which "odd" behaviours are deliberate), the matrix'
 rows themselves (their `Expected` column is the assertion — do not re-invent it), and
 test-plan **§S20** for the recipe order.
 
-#### Scope set (66 presenting flow rows + adjacencies)
+#### Scope set (69 presenting flow rows + adjacencies)
 
 > **PL-10, PL-29, PL-32..PL-76, PL-81..PL-102** — the run sheet itself.
 >
@@ -876,11 +879,11 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
 - [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) — the
-  **coverage contract**: ~715 stable-ID rows over the whole UI surface — every interactive
+  **coverage contract**: ~752 stable-ID rows over the whole UI surface — every interactive
   path enumerated as a unit test with an observable pass condition and a `(src: file:line)`
   citation, including a complete keyboard-shortcut matrix (`KB-01..60`, every registered
   shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and
-  a context-menu-item matrix (`CM-01..92`). Screen controlling & presenting rows
+  a context-menu-item matrix (`CM-01..97`). Screen controlling & presenting rows
   (`SP`/`SC`) and the locale-switch rows (`LT-01..02`) are mandatory in every run; the
   file also carries the policy-exclusion table, statuses, evidence rule, and the coverage
   formula for full-coverage runs. **Note:** this file lives under `docs/test-paths/`, not

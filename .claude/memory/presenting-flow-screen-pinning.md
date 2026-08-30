@@ -52,6 +52,8 @@ Things that will bite whoever touches this next:
   `'Failed to apply to screen. Please make sure the screen is open.'` toast and projects
   nowhere — never a silent fallback to the selected screens.
 
-Covered by matrix rows PL-81..PL-85 and W-22; unit tests in
-`src/presenting-flow/presentingFlowScreenIds.test.ts`. See [[presenting-flow-references-vs-presets]],
+Covered by matrix rows PL-81..PL-85 and W-22. Its unit test was deleted
+2026-08-24; the only test still guarding this area is
+`src/_screen/managers/managerHelpers.extra.test.tsx`, which is what breaks if
+`screenChoosingHelpers.ts` stops being a leaf. See [[presenting-flow-references-vs-presets]],
 [[presenting-flow-preview-run-player]], [[presenting-flow-screen-actions]].

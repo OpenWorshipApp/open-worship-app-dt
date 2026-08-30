@@ -37,8 +37,8 @@ Two more consequences of the same split, both easy to mistake for bugs:
 
 Export/import (`presentingFlowArchiveHelpers.ts`) follows the bible-note archive pattern:
 `.owapf.tar.gz` via `tarCreate`/`tarExtract`, NOT a real zip — the app has no zip
-dependency and this matches [[bible-note-archive]]-style code already shipped. Details in
-[[presenting-flow-archive-owapf]].
+dependency and this matches archive code already shipped (see
+[[document-archive-owadoc]]). Details in [[presenting-flow-archive-owapf]].
 
 See also [[onscreen-check-must-not-parse]] and [[presenting-flow-onscreen-marking-design]] for why
 presenting flow rows avoid per-row screen checks, [[presenting-flow-drag-and-settings-rules]] for the

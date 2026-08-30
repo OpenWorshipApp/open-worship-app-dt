@@ -129,10 +129,15 @@ closed while a Drawing panel reopened.
   back — `isSpotlighting` stays false, so a restart never restores a dimmed
   screen. Verified live across real reloads (enable focus → reload → panel open,
   screen undimmed; paint-enabled → switch to focus → reload → focus panel open;
-  off → reload → stays off). Tests: `ScreenFocusManager.test.tsx` "the panel-open
-  toggle persists and reopens, but never the spotlight" and
-  `preview.runtime.test.tsx` "the footer reopens the panel of the mode that was
-  left enabled" (confirmed to fail against the old seed).
+  off → reload → stays off). Tests:
+  `src/_screen/managers/ScreenFocusManager.test.tsx` "the panel-open toggle
+  persists and reopens, but never the spotlight". The footer-level regressions
+  ("the footer reopens the panel of the mode that was left enabled",
+  "switching to Focusing keeps the on/off state and still disables drawing
+  when turned off") lived in `preview.runtime.test.tsx`, deleted in the
+  2026-08-24 test prune — the `applyEnabledState` invariants in
+  `ScreenPreviewerFooterComp` are now UNCOVERED; re-verify them live before
+  touching that function.
 
 **Panel:** Size (40..1200 native px), Dim colour swatch, Dim (10..100%), Edge
 blur (0..100%, 0 = hard), Contrast toggle, Reset. `resetSettings()` assigns all
@@ -174,8 +179,10 @@ a trap).
   output with no control left to clear them (the focus panel has no Clear) and
   the panel even reopened on next launch. Only the ENABLE edge is mode-gated
   now — arming the draw canvas in focus mode would fight the focus overlay for
-  pointer input. Regression test: `preview.runtime.test.tsx`, "switching to
-  Focusing keeps the on/off state and still disables drawing when turned off".
+  pointer input. Its regression test ("switching to Focusing keeps the on/off
+  state and still disables drawing when turned off") lived in
+  `preview.runtime.test.tsx`, deleted in the 2026-08-24 test prune — now
+  UNCOVERED, see the Tests note above.
 
 **Verified live** on the presenter, a sync-group member and the real
 `screen.html?screenId=0` output window: dim + hole, cursor follow, undim on

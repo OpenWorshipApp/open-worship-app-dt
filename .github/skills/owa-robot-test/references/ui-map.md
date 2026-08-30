@@ -1,5 +1,7 @@
 # OWA UI Map (for robot testing)
 
+docVersion: 2026-08-30
+
 The app uses **Bootstrap semantic classes + accessibility roles + button text**, with
 very few `data-testid`s in production code. So target elements by **visible text /
 role / icon** in the `take_snapshot` output. Use CSS classes only with
@@ -21,6 +23,8 @@ Main window in dev loads `presenter.html`. Other windows open on demand.
 | Bible Note | `https://localhost:3000/bibleNote.html` | |
 | Web Editor | `https://localhost:3000/webEditor.html` | |
 | About | `https://localhost:3000/about.html` | |
+| LW Share | `https://localhost:3000/lwShare.html` | |
+| (dev) Experiment | `https://localhost:3000/experiment.html` | dev-only; excluded from production builds |
 
 ## Changing pages (routing)
 
@@ -58,7 +62,9 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
   - `reader.html`: renders `BibleReaderComp` directly — NO `#app-header`; wait for the
     bible reader content, not the header.
   - `setting.html`: title matches `/Settings/`; `General` + `Apply Settings` buttons.
-  - popups (`lyricEditor` / `bibleNote` / `webEditor`): generic check only.
+  - popups (`bibleNote` / `webEditor`): generic check only. ⚠️ `lyricEditor.html` has
+    **NO `#root`** (the only page without one) — the generic probe returns false
+    forever; ready = `#appLoading` gone/settled AND `[data-ol-ref="app"]` populated.
 
 ## Top app header (`#app-header`)
 
@@ -87,7 +93,7 @@ Two widgets only, top to bottom: **Documents**, then **Presenting Flows**. The s
   `.app-on-screen` on the label while live). Header icon `bi-window-stack` opens the
   floating preview (`.app-presenting-flow-preview`, portaled to `body`). See knowledge-base §14.
 
-#### Presenting Flow deep-mode selectors (the assertions PL-32..PL-99 are read from)
+#### Presenting Flow deep-mode selectors (the assertions PL-32..PL-102 are read from)
 
 Prefer these over text — the labels are translated, these are not. Component elements can
 also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
@@ -115,9 +121,10 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
 | `.app-presenting-flow-preview-collapsing-buttons` | **Collapse All** / **Expand All** (PL-47) |
 
 ### Middle column — presenter + background
-- **Presenter tabs** (`.nav.nav-tabs`): `Documents`, `Lyrics`, `Bibles`, `Foreground`.
-  Active tab has `.active`; a tab shows `.app-on-screen` when its content is live on the
-  presentation screen.
+- **Presenter tabs** (`.nav.nav-tabs`): `Documents`, `Bibles` — **2 tabs only**
+  (there is no Lyrics tab — lyrics are Documents-list rows — and Foreground is a
+  floating widget, below). Active tab has `.active`; a tab shows `.app-on-screen`
+  when its content is live on the presentation screen.
   - ⚠️ **This group is multi-select** — several tabs can be `.active` simultaneously and they
     split the middle column (verified 2026-07-26). A per-group
     `querySelector('.nav-link.active')` returns only the **first** active tab, so it will
@@ -125,12 +132,14 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
     `.nav-link`, and diff the baseline screenshot when restoring state.
   - Documents tab: slide thumbnails container; footer has a size range slider
     (`.app-range`) and the current document path.
-  - Foreground tab: countdowns, marquee top/bottom, clocks/timers, web overlays, cameras, image
-    slideshows.
+  - Foreground **floating widget** (`ForegroundFloatingComp`,
+    `persistKey="floating-widget-rect-foreground"`): countdowns, marquee top/bottom,
+    clocks/timers, web overlays, cameras, image slideshows.
 - **Fullscreen toggle** (presenter header, top-right): icon `bi bi-fullscreen` /
   `bi bi-fullscreen-exit`.
 - **Background tabs** (`.nav.nav-tabs`): `Colors`, `Images`, `Videos`, `Cameras`,
-  `Web`, `Audios`. The Audios tab shows `.app-on-screen` while audio plays.
+  `Webs`. `Audios` is a separate toggle (`RenderAudiosTabComp`), not a tab-bar
+  member; it shows `.app-on-screen` while audio plays.
 
 ### Right column — bible + mini screen
 - **Bibles / Notes** sub-tabs: headers `Bibles` and `Notes`; lists are
@@ -186,16 +195,20 @@ vertical left sidebar (`TabRenderComp` nav-links, not a top tab bar), plus a fix
 is gone, and since 2026-08-09 so is `Reset Widgets Size`: it is a native **View** menu
 entry now, see below).
 
-The **`Others`** tab (verified live 2026-08-10) holds a single card, *Set AI API Key*
-(`SettingOthersAIComp`): an **OpenAI API Key** and an **Anthropic API Key** input, each
-with a 💡 hint icon, a `bi-check-circle-fill` tick once a key is stored, and an
-`API Key ↗` button opening the provider's key page externally (EX-04 — do not follow).
-Keys are saved **on blur**, not per keystroke, and then flag `pendingApply`. Two notes for
-a run: both inputs are `type="text"` (a plaintext-secret finding, filed 2026-08-10), and
-their two labels are hardcoded English so they do **not** translate in Khmer — that is
-untranslated UI, not the `tran()` throw, since neither string ever reaches `tran()`.
-`coverage-matrix.md` enumerates the tab in **ST-02** but has no row for this panel's
-contents.
+The **`Others`** tab now holds **three cards**, in order
+(`src/setting/SettingOthersComp.tsx`): *Set AI API Key* (`SettingOthersAIComp`),
+*SongSelect* (`SettingOthersSongSelectComp`, from `src/plugins/song-select/` — CCLI
+sign-in; dev builds add a `(dev) Use Mock Data` toggle), and **Extra Binaries**
+(`SettingOthersExtraBinComp` — the target of the mandatory `MD-05`/`MD-06` block).
+`SettingOthersSecureStorageWarningComp` renders on the credential cards when OS
+secure storage is unavailable; credentials live in a separate `-secret` store via
+`safeStorage` (memory `secure-storage-safestorage`). On the AI card: each key input
+has a 💡 hint icon, a `bi-check-circle-fill` tick once a key is stored, and an
+`API Key ↗` button opening the provider's key page externally (EX-04 — do not
+follow). Keys are saved **on blur**, not per keystroke, and then flag
+`pendingApply`. The AI card's two labels are hardcoded English so they do **not**
+translate in Khmer — untranslated UI, not the `tran()` throw. The ST section now
+runs to **ST-51** and covers this tab's contents — route from the matrix.
 
 ## Native View menu (main window only)
 
@@ -228,11 +241,28 @@ The OS menu is invisible to CDP: use the dev-only `globalThis.getViewWidgetMenuI
 > This is the short list. The **complete** shortcut set — every registered in-app shortcut
 > plus electron application-menu accelerators — is enumerated as unit tests in
 > [coverage-matrix.md](../../../../docs/test-paths/coverage-matrix.md) §KB (`KB-01..60`); right-click menu items are
-> §CM (`CM-01..92`).
+> §CM (`CM-01..97`).
 
 ## Stable ids present in production
 
-`#root`, `#app-header`, `#app-body`, `#modal-container`, `#app-custom-style`.
+`#root`, `#app-header`, `#app-body`, `#modal-container`, `#app-custom-style`
+(+ `#presenting-control` — the Presenting Control overlay, mounted on five pages).
+
+## Newer areas — selectors
+
+- **App-wide `⋮` button** (`ContextMenuDotsButtonComp`, `.app-context-menu-dots`):
+  opens the same menu the host's right-click would (GL-24, W-01b) — present on most
+  list/panel headers.
+- **Resources panel** (4th entry of the Bible Find select): folder boxes are
+  `.app-resources-group` (RD-83); file rows are plain rows whose `title` attr is the
+  full path — two identical labels from different subfolders differ only by `title`.
+- **Connection Graph** (`src/graph-view/graphView.scss`): nodes are
+  `.graph-view__node` (`--collapsed` modifier); the panel host is
+  `GraphViewPanelsHostComp` (target by `[data-react-comp-name]` in dev).
+- **Location-Name lookup**: the `Location-Name (KJV)` entry of the same select;
+  detail panels are floating widgets (`LocationNameDetailPanelsHostComp`).
+- **Presenting Control overlay**: `#presenting-control` (draw/spotlight + keyboard
+  screencast; W-19/W-20).
 
 ## Targeting tips for chrome-devtools-mcp
 

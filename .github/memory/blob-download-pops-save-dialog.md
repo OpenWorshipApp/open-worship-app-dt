@@ -32,8 +32,9 @@ renderer and hand it to the browser; it silently produced nothing but a `.tmp`.
 
 **How to apply:** to write a generated file from the renderer, use the app's own
 fs helpers — `fsWriteFile(pathJoin(getDownloadPath(), name), Buffer.from(bytes))`
-(exemplar: `exportBibleMSWord` in `src/ms-office/docxHelpers.ts`, and
-`downloadImageBase64Data` in `src/server/appHelpers.ts`). That keeps the real
+(exemplars: `exportBibleMSWord` in `src/ms-office/docxHelpers.ts`,
+`downloadImageBase64Data` in `src/server/appHelpers.ts`, and
+`src/graph-view/graphExportHelpers.ts:210`). That keeps the real
 path, so `showFileOrDirExplorer` can reveal the file. Pass it the **file**, never
 the directory — `shell.showItemInFolder` on a directory selects it inside its
 parent instead of opening it. See [[tran-missing-key-throws-in-dev]] for the

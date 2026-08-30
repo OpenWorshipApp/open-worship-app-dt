@@ -120,6 +120,7 @@ itself. See [[presenting-flow-cc-elements]].
   that quietly stopped mattering. `PresentingFlowItem.actionTime` also answers null for an action
   that may not carry one, so a hand-edited interval is ignored in the row, the question and
   the clock at once.
-- Unit tests: `src/presenting-flow/presentingFlowAutoNext.test.ts` (fake timers),
-  `presentingFlowActionTime.test.ts` (the clock-time half, `vi.setSystemTime`) +
-  `presentingFlowCcPropagation.test.ts` (the CC half).
+- **No unit tests.** `presentingFlowAutoNext.test.ts`, `presentingFlowActionTime.test.ts`
+  and `presentingFlowCcPropagation.test.ts` were ALL deleted on 2026-08-24
+  (47053c9d). The clock, time-of-day arming and CC half are covered only by
+  matrix rows PL-95/PL-96/PL-101 — treat any change here as untested.

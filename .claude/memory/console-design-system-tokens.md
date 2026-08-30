@@ -30,8 +30,11 @@ shouting hue). On 2026-08-30 `src/bible-list/` followed: the Bibles and Bible
 Notes panels share `src/bible-list/cueList.scss`, scoped to a new `app-cue-list`
 class on each panel root, and reuse presenting-flow's rail/gutter language —
 a 2px left rail (`--app-line` at rest → `--app-accent` open → `--app-on-air`
-live) plus an in-flow tabular index column. Remaining subsystems have **not**
-been swept.
+live) plus an in-flow tabular index column. Adoption has since spread across
+`src/app-modal`, `bible-cross-refs`, `bible-find`, `bible-list`, `bible-reader`,
+`find`, `graph-view`, `others`, `presenting-control`, `presenting-flow`,
+`progress-bar`, `resources` and `setting`; the slide-editor, background and
+`_screen` sheets are the main hold-outs.
 
 Two things that sheet had to solve, and will bite the next sweep too:
 

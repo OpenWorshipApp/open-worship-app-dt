@@ -5,29 +5,31 @@ metadata:
   type: feedback
 ---
 
-`taskkill //IM electron.exe //F` is **not** "restart the app" — the user runs
-other Electron projects from source on this machine, notably `open-lyric` at
-`C:\Users\racky\Desktop\dev\open-lyric` (its own dev app, CDP on port **9224**,
-userData `%APPDATA%\test-l…`). Its processes are also named `electron.exe`, so a
-blanket kill takes it down too. Doing this on 2026-08-09 killed their
-open-lyric session mid-work.
+A blanket kill by Electron image name is **not** "restart the app" — the user
+runs other Electron projects from source on this machine, notably `open-lyric`
+at `/Users/raksa/Desktop/dev/open-lyric` (its own dev app, CDP on port **9224**
+vs this repo's 9223). Its processes carry the same image names, so a blanket
+kill takes it down too. Doing this on 2026-08-09 (on the old Windows box, with
+`taskkill //IM electron.exe //F`) killed their open-lyric session mid-work.
 
-**Why:** every dev-mode Electron app shares the `electron.exe` image name from
-`node_modules/electron/dist/`. Only the command line distinguishes them, and a
-packaged Open Worship build is a *different* name again (`Open Worship app.exe`),
-so image-name matching is wrong in both directions.
+**Why:** every dev-mode Electron app shares the same image names from
+`node_modules/electron/dist/` — `Electron`/`Electron Helper` on macOS,
+`electron.exe` on Windows. Only the command line distinguishes them, and a
+packaged Open Worship build is a *different* name again, so image-name matching
+is wrong in both directions.
 
 **How to apply:** target this repo only —
 
-```powershell
-Get-CimInstance Win32_Process -Filter "Name='electron.exe'" |
-    Where-Object { $_.CommandLine -like '*open-worship-app-dt*' } |
-    ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+```bash
+pkill -f 'open-worship-app-dt.*[Ee]lectron'   # this repo only
+pgrep -fl 'open-lyric.*[Ee]lectron' | wc -l   # verify open-lyric untouched
 ```
 
-Verify afterwards that the open-lyric count is still 5 before moving on. The same
-filter identifies the **main** process (add `-and $_.CommandLine -notlike '*--type=*'`)
-when a window handle is needed for Win32 calls.
+(Windows alternative: `Get-CimInstance Win32_Process -Filter "Name='electron.exe'"`
+filtered on `CommandLine -like '*open-worship-app-dt*'`, then `Stop-Process`.)
+
+Verify afterwards that the open-lyric process count is unchanged before moving
+on. The main process is the one whose command line has no `--type=` flag.
 
 Restart caveats seen the same day: kill leftovers and wait for BOTH port 3000
 (Vite) and 9223 (CDP) to be free before relaunching, or Vite silently moves to

@@ -32,14 +32,14 @@ anything abnormal using the severity scale and report template below.
 > "Change to the page / route under test"). After every navigation, re-run the readiness
 > check and reset the console/network baseline before running that page's scenarios.
 
-### S0 — Load & baseline (always run) `[GL-01..05]`
+### S0 — Load & baseline (always run) `[GL-01..24]`
 - App reaches ready state (page-agnostic ready check passes; on `presenter.html`,
   `#app-header` present); `.loading` image gone.
 - No uncaught console errors/warnings at load.
 - No failed network requests (`4xx`/`5xx`) at load.
 - Baseline screenshot captured.
 
-### S1 — Top navigation & routing `[NAV-01..11]`
+### S1 — Top navigation & routing `[NAV-01..21]`
 - Click each header tab: `Presenter`, `Bible Reader`, `Slide Editor` (if enabled) and
   verify the window URL changes to the matching `.html` (navigation uses `location.href`).
 - `Slide Editor` with no document selected: expect the "No slide selected" alert, not a
@@ -104,7 +104,7 @@ anything abnormal using the severity scale and report template below.
 - `Web` tab `+` opens the **Web Editor popup** (S12).
 - Right-click background items → context menu.
 
-### S7 — Screen controlling & presenting `[PR-04..07, SP-01..12, SC-01..05]` — **MANDATORY, every run**
+### S7 — Screen controlling & presenting `[PR-04..07, SP-01..22, SC-01..08]` — **MANDATORY, every run**
 
 This is the app's core flow and runs in **every** session, whatever the focus area
 (SKILL.md §6a). Everything here is self-restoring — end with the screen hidden (unless
@@ -148,7 +148,7 @@ it started showing) and all changed state restored.
 saying the display is in live use — is excluded. In that case skip the show step,
 assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 
-### S8 — Settings `[ST-01..50]`
+### S8 — Settings `[ST-01..51]`
 - Open settings via the **gear button** (it opens a **popup window**); then `list_pages` →
   `select_page` the new `setting.html` target. Do **not** `navigate_page` the main window to
   `setting.html` (popup trap — see [knowledge-base.md](./knowledge-base.md) §2–§3).
@@ -187,7 +187,7 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - No clipped/overflowing text, overlapping controls, or broken images in screenshots.
 - Optional: performance trace around a heavy action (document load) — flag long tasks.
 
-### S10 — Slide / Doc Editor deep-dive `[ED-01..12]`
+### S10 — Slide / Doc Editor deep-dive `[ED-01..46]`
 - Select an Open-Worship document, enter the editor (header tab or double-click).
 - Slide list: select / duplicate via context menu / delete the duplicate / drag-reorder.
 - Canvas: select a box, drag-move, resize by handle, `Shift`/`Ctrl` multi-select.
@@ -198,18 +198,24 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - Tools: add a new box / drag a tool onto the canvas — then delete the added item.
 - Bottom Background panel behaves as in S6.
 
-### S11 — Bible Reader deep-dive `[RD-01..12]`
+### S11 — Bible Reader deep-dive `[RD-01..107]`
 - Incremental picker: char-by-char book → chapter → verse; `Tab` completes, `Escape`
   clears, `Ctrl+Escape` clears a chunk; extra buttons mirror the keys.
 - Full ref `John 3:16` does **not** resolve here either — the reader book-filters exactly
   like the modal (both share `InputHandlerComp`). Known Low; assert the book-filter
   behaviour, not a resolved verse (KB §5).
 - History entry re-runs a lookup; bible-version switch re-renders the verse.
-- **Advance lookup toggle** opens the **Bible Find** split: type a find query, results
-  paginate via the page-number buttons.
+- **Advance lookup toggle** opens the **Bible Find** previewer — now a 4-way
+  select: **Find** / **Cross Reference** / **Location-Name (KJV)** / **Resources**
+  (`src/bible-find/BibleFindPreviewerComp.tsx`, setting `bible-search-tab`). Find:
+  type a query, results paginate via the page-number buttons.
 - Cross-references view renders for a verse (AI providers BLOCKED without API keys).
+- **Resources** rows are `RD-81..90` (+ `CM-93` Open in Resources) and the
+  **Connection Graph** rows are `RD-92..106` — route them from the matrix rows
+  themselves; the observed recipes live in `user-workflows.md` **W-37** / **W-38**.
+  Do not improvise steps here: recipes are only authored from live observation.
 
-### S12 — Popup windows `[PU-01..06]`
+### S12 — Popup windows `[PU-01..20]`
 - Each popup: open via its in-app trigger, `list_pages` → `select_page` the new target,
   generic readiness check, exercise, close the popup page.
 - **Find bar** (`Ctrl/Cmd+F` or Edit → Find): query, `<current>/<total>` counter, prev/next (`Enter` / `Shift+Enter`), `Aa` case toggle, grip drag on the x axis, `Esc` to close. It is a `WebContentsView` PINNED into the searched window, so its own `finder.html` target has a 452×40 viewport and a probe string that exists only in its query box must report `0/0`.
@@ -329,7 +335,7 @@ runtime could be found` is a real Critical. A failed attempt also leaves an orph
 `temp-*.part` behind (known app bug — the error path does not remove partials); step 5
 takes it.
 
-### S20 — Presenting Flow deep pass `[PL-10, PL-29, PL-32..76, PL-81..101]` — the whole run sheet
+### S20 — Presenting Flow deep pass `[PL-10, PL-29, PL-32..76, PL-81..102]` — the whole run sheet
 
 The recipe for **presenting flow deep mode** (SKILL.md §6f), run whenever the argument is
 `presentingFlow` / `run sheet`, and in its short form inside every full-coverage run. **Read
@@ -337,7 +343,9 @@ KB §14 in full first** — it is the model behind every row, and several of the
 because the behaviour they assert was once "fixed" the wrong way.
 
 Coverage accounting is ON in this mode: `coverage-<runid>.json` with `"focus":"presentingFlow"`,
-every scope row ending with a status.
+every scope row ending with a status. Out-of-scope neighbours worth knowing exist:
+`PL-104` (Import From SongSelect) and `PL-105` (Import From Public Domain Songs) are
+Documents-list rows outside deep-mode scope, and `GL-24` is the app-wide `⋮` button.
 
 1. **P0 fixture** — create `zz-robot-<runid>` (never the user's own sheets) and drop in one
    of each kind: document, single slide, lyric slide (carries its `stage` — PL-64),
@@ -400,7 +408,7 @@ the wrong thing in front of a congregation. A stale label or an untranslated str
 - Bible key not downloaded → `BibleNotAvailableComp` renders instead of a crash.
 - Empty find query / no find results → sane empty state, no console errors.
 
-### S17 — Context-menu items `[CM-01..92]`
+### S17 — Context-menu items `[CM-01..97]`
 - For each host that opens a right-click menu (document / lyric / bible / background / note
   items, slide thumbnails, editor slide list, mini-screen previewer card, display / stage /
   transition controls, generic file lists), 🖱️R to open it and assert the item set via
@@ -524,7 +532,7 @@ Write to `test-results/robot-test/report-<timestamp>.md`:
 
 ## Coverage (full-coverage runs — from coverage-<runid>.json)
 
-- Matrix version: <date> · rows total: 634 (or 66 in presentingFlow deep mode — see its scope set)
+- Matrix version: <date> · rows total: 752 − EXCLUDED (or 69 − EXCLUDED in presentingFlow deep mode — see its scope set)
 - PASS <n> · FAIL <n> · PARTIAL <n> · BLOCKED <n> · EXCLUDED <n>
 - **Coverage: <exercised> / <in-scope> = <xx.x>%**  (exercised = PASS+FAIL;
   in-scope = total − EXCLUDED)

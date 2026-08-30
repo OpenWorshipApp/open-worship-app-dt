@@ -90,5 +90,7 @@ keep getting "fixed" by mistake:
   container: that container is the full height of the run sheet (the floating widget's body
   is what scrolls), so asking it always answers "not off the bottom".
 
-Covered by matrix rows PL-38, PL-42, PL-46..PL-48, PL-58..PL-61; unit tests live in
-`presentingFlowPreviewFloatingHelpers.test.ts`. See [[presenting-flow-references-vs-presets]].
+Covered by matrix rows PL-38, PL-42, PL-46..PL-48, PL-58..PL-61; its unit test
+(`presentingFlowPreviewFloatingHelpers.test.ts`) was deleted 2026-08-24
+(47053c9d) — the matrix rows are the only coverage now.
+See [[presenting-flow-references-vs-presets]].

@@ -16,14 +16,20 @@ environment.
 **Changed 2026-08-24 (SongSelect integration):** `vitest.config.ts` now DOES
 carry `test.server.deps.inline: ['open-lyric', /monaco-editor/]`, and the full
 suite is green. It is safe now because inlining only affects modules a test
-actually imports — and the only test that imports the real open-lyric does it
-deliberately, to use `checkOLMarkdown` as a validation oracle.
+actually imports — and only two tests import the real open-lyric, both
+deliberately: `src/plugins/song-select/songSelectLyricHelpers.test.ts` (via the
+app wrapper `checkOpenLyricMarkdown`, which wraps `api.document.checkMarkdown`,
+transitively) and
+`src/plugins/public-domain-songs/publicDomainSongsHelpers.test.ts:20-24`
+(direct `await import('open-lyric')`, also driving `new OpenLyric()` for
+attachment parsing) — both as validation oracles.
 
 **Why:** the real validator catches mapping bugs (structure codes, fence
 rules) that a mocked open-lyric would wave through.
 
 **How to apply:** to import the REAL open-lyric in a test, copy
-`src/plugins/song-select/songSelectLyricHelpers.test.ts`:
+`src/plugins/public-domain-songs/publicDomainSongsHelpers.test.ts:17-24`
+(the cleaner copy-source for this recipe):
 `// @vitest-environment jsdom`, then patch
 `document.queryCommandSupported ??= () => false` and
 `document.execCommand ??= () => false` (monaco's clipboard contrib probes both

@@ -54,11 +54,15 @@ Every React function component must have a name ending in `Comp`
   undefined"). Launch with `env -u ELECTRON_RUN_AS_NODE npm run dev`. This looks
   like the dev script being broken; it isn't.
 - Dev runs its own profile: `applyLaunchOverrides()` in `electron/index.ts`
-  redirects dev's `userData`/`sessionData` to `%APPDATA%\open-worship-app-dev`
-  (packaged keeps `%APPDATA%\open-worship-app`), so dev and packaged builds hold
-  separate single-instance locks and run side by side. Dev app data (settings,
-  bibles, IndexedDB) lives in the `-dev` dir — NOT `%APPDATA%\open-worship-app`.
-  Only two same-kind instances (dev+dev or prod+prod) still conflict.
+  redirects dev's `userData`/`sessionData` to `<userData>-dev` — on Windows
+  `%APPDATA%\open-worship-app-dev`, on macOS
+  `~/Library/Application Support/open-worship-app-dev` (packaged keeps the
+  un-suffixed dir) — so dev and packaged builds hold separate single-instance
+  locks and run side by side. Dev app data (settings, bibles, IndexedDB) lives
+  in the `-dev` dir, NOT the packaged one. Two higher-precedence overrides
+  exist: the `OWA_USER_DATA_PATH` env var and an `--owa-user-data-path=` argv
+  value (`findUserDataPathArg`, used by taskbar jump-list relaunch). Only two
+  same-kind instances (dev+dev or prod+prod) still conflict.
 
 ## Verifying code changes
 
@@ -167,7 +171,9 @@ Use these when working against the running app via chrome-devtools:
   never swallowed). Some flows still hop a real macrotask for other reasons
   (`sendSyncScrollPercentage`'s `setTimeout(0)`, `genTimeoutAttempt` call
   sites), so in jsdom/vitest tests that drive UI through events (e.g.
-  open/close via `openSlideQuickEdit`), flushing microtasks may not be enough —
+  open/close via `openAppDocumentEditorExternal` in
+  `src/app-document-list/AppDocument.ts`), flushing microtasks may not be
+  enough —
   when in doubt wait a real macrotask:
   `await new Promise((r) => setTimeout(r, 25))` inside `act(...)`.
 
@@ -182,8 +188,9 @@ Use these when working against the running app via chrome-devtools:
   `url()` absolutized (`collectFontFaceCss`) and the electron side must await
   `document.fonts.ready` before `printToPDF`, or glyphs rasterize as fallback.
 - Layout: one slide per PDF page, page size == slide px size via
-  `@page page-WxH { size: Wpx Hpx; margin: 0 }` + `break-after: page`, with
-  `preferCSSPageSize: true`. Slides render UNSCALED.
+  `@page page-WxH { size: Wpx Hpx; margin: 0 }` + the inline style
+  `breakAfter: 'page'` (`appDocumentPrintHelpers.ts:245`, not a raw CSS rule),
+  with `preferCSSPageSize: true`. Slides render UNSCALED.
 - **If slide HTML ever needs scaling for print, use CSS `zoom`, not
   `transform: scale()`.** Transform only scales painting; the element keeps its
   full-size layout box, and print fragmentation works on layout coordinates, so
@@ -206,15 +213,24 @@ Use these when working against the running app via chrome-devtools:
   `src/presenter-foreground/Foreground*.tsx`, `src/router/layoutHelpers.tsx`,
   `src/others/color/*`, `src/toast/ToastComp.tsx`), and render-prop callbacks
   returning JSX (`src/presenting-flow/PresentingFlowFileComp.tsx`,
-  `src/setting/bible-setting/BibleXMLEditorComp.tsx`). `useAppEffect`/`useMemo`
-  deps were left alone on purpose.
-- **Test-suite mock gotcha.** Many `*.test.tsx` still
+  `src/setting/bible-setting/BibleXMLEditorComp.tsx` — both now PARTLY
+  converted: only specific callbacks in them remain deliberately unconverted,
+  not the whole files). `useAppEffect`/`useMemo` deps were left alone on
+  purpose. The hook also has a second, semantically different use as a
+  **staleness oracle** for post-`await` state — see the memory
+  `useappcurrentref-race-guard`; do not "clean up" such refs as redundant.
+- **Test-suite mock gotcha.** Four test files still
   `vi.mock('.../debuggerHelpers')` — a dead path since that module became
-  `appHooks`; inert but confusing, and it silently fails to stub `useAppEffect`.
-  Repoint them to `appHooks` via a partial mock (`importOriginal`) so
-  `useAppEffect` is overridden to plain `useEffect` while sibling exports like
-  `useAppCurrentRef` (used by `useWindowEvent`) survive. `appProvider` mocks need
-  `systemUtils.isDev` because `appHooks` reads it at module load.
+  `appHooks`; inert but confusing, and it silently fails to stub `useAppEffect`:
+  `src/_screen/screenInfrastructure.test.tsx`,
+  `src/app-document-editor/AppDocumentEditorComp.test.tsx`,
+  `src/server/appHelpers.test.tsx`, `src/event/KeyboardEventListener.test.tsx`
+  (plus a stale `describe('debuggerHelpers')` label in
+  `src/helper/appHooks.test.tsx`). Repoint them to `appHooks` via a partial mock
+  (`importOriginal`) so `useAppEffect` is overridden to plain `useEffect` while
+  sibling exports like `useAppCurrentRef` (used by `useWindowEvent`) survive.
+  `appProvider` mocks need `systemUtils.isDev` because `appHooks` reads it at
+  module load.
 
 ## owa-robot-test skill
 
@@ -226,12 +242,15 @@ recipes). When app UI behavior changes, update `user-workflows.md` +
 `coverage-matrix.md` in the same change and bump their version dates; never
 publish a tutorial step not observed working live.
 
-`.github/skills/owa-robot-test` and `.github/memory/` are the Copilot MIRROR of
-this skill and of `.claude/memory/`. `.claude/` is the source of truth: edit
-here first, then copy across in the SAME change. They have already diverged once
-(the mirror was several revisions and seven memory files behind), so a mirror
-file that disagrees with its `.claude/` twin is stale by definition — re-copy it
-rather than reconciling the two by hand.
+`.github/skills/owa-robot-test`, `.github/memory/` and
+`.github/copilot-instructions.md` are the Copilot MIRROR of this skill, of
+`.claude/memory/` and of this file (`.claude/CLAUDE.md`). `.claude/` is the
+source of truth: edit here first, then copy across in the SAME change. They have
+already diverged more than once (the skill mirror was several revisions and
+seven memory files behind; `copilot-instructions.md` missed two CLAUDE.md
+updates before being re-synced), so a mirror file that disagrees with its
+`.claude/` twin is stale by definition — re-copy it rather than reconciling the
+two by hand.
 
 **Screen controlling & presenting testing is mandatory in every run**, whatever
 the focus area — presenting to a screen is the app's core purpose and screen-only
@@ -245,12 +264,16 @@ taken over or touching a display the user says is in live use.
 the 69 run-sheet rows `PL-10, PL-29, PL-32..76, PL-81..102` with coverage accounting on
 (`coverage-<runid>.json`, `"focus": "presentingFlow"`), a scratch `zz-robot-<runid>` fixture that
 is torn down at the end, and the mandatory blocks ridden from the presenting flow itself. The
-other PL rows are the Documents/Lyrics lists — same prefix, different subsystem.
+other PL rows are the Documents/Lyrics lists — same prefix, different subsystem — including
+the newer `PL-104` (Import From SongSelect) and `PL-105` (Import From Public Domain Songs).
 
 **Media download (video AND audio) is mandatory in every run too** (matrix rows
-`MD-01..06`, SKILL.md §6e). `downloadVideoOrAudio` is the only code path that
-runs the `yt-dlp`/`ffmpeg`/`qjs` binaries, so a missing or broken binary passes
-typecheck, tests, build and every other matrix row. The video half proves the
+`MD-01..06`, SKILL.md §6e). `downloadVideoOrAudio` is the only **product** code
+path that runs the `yt-dlp`/`ffmpeg`/`qjs` binaries (the dev-only experiments
+page `src/experiments/html-in-canvas/youtubeDemo.tsx` also runs yt-dlp via
+`resolveMediaStreamUrl` in `src/server/appHelpers.ts`), so a missing or broken
+binary passes typecheck, tests, build and every other matrix row —
+`checkIsExtraBinInstalled` only checks file existence, never executes. The video half proves the
 ffmpeg merge, the audio half proves its mp3 encoder; both use the canonical link
 recorded in the matrix. (The matrix lives at
 `docs/test-paths/coverage-matrix.md`, not under the skill's `references/`.)

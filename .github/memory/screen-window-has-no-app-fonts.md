@@ -12,16 +12,21 @@ that measures ~14–24% wider. Text reflowed, overflowed the heights open-lyric
 freezes inline, and rendered clipped/one-word-per-line **with scrollbars** on the
 live output, while the operator's preview looked perfect.
 
-Both fixed 2026-08-04 (uncommitted on refactor23):
+Both fixed 2026-08-04 (`b32e9e0c`), in the shape the code still has:
 
-1. `src/screen.tsx` never called `init()` from `src/boot.ts` — the only entry
-   point that didn't. That is what runs `initFontFamily()` and
-   `getLangDataAsync(locale)` → `initLangCss()`. Now `await init()` before `main()`.
-2. `getAllLangsAsync()` loaded every language module but bypassed
-   `getLangDataAsync`, so it never called `initLangCss`. It now registers each
-   language's CSS. This is the half that matters when the **UI locale differs
-   from the content locale** (English UI + Khmer lyric) — the state the bug was
-   found in.
+1. `src/screen.tsx` deliberately does NOT run `boot.ts`'s `init()` — it is the
+   one entry point that loads no locale of its own. It calls
+   `void initAllLangCss()` after `main()` instead (`src/screen.tsx:53`).
+2. `initAllLangCss()` (`src/lang/langHelpers.ts:694`) loads every language
+   module via `getAllLangsAsync()` and runs `initLangCss` on each, so EVERY
+   language's `@font-face` is registered regardless of UI locale.
+   `getAllLangsAsync()` itself only fetches — do not expect it to register CSS.
+
+Because `init()` never runs there, `initFontFamily()`'s user `app-custom-style`
+(`* { font-family/font-weight }` from Settings) is NOT applied in `screen.html`
+— consistent with the design (the projector renders open-lyric's frozen inline
+styles) — so "the screen ignores my app font setting" is expected behaviour,
+not this bug.
 
 **How to apply:** measure `document.fonts.size` on the real `screen.html` CDP
 target, never by eye and never in the mini preview (same renderer as the

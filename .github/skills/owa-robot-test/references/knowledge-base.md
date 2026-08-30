@@ -1,5 +1,7 @@
 # OWA Robot Test — Observation Knowledge Base
 
+docVersion: 2026-08-30
+
 Field notes for agents/skills doing black-box QA of the **running** Open Worship App.
 Everything here was **verified against the live app**, not inferred. Read this before a run
 so you (a) know what a real bug looks like vs. expected noise, and (b) avoid the traps that
@@ -358,8 +360,8 @@ Keep the main window on `presenter.html`.
   reading the header (`.app-popup-widget .app-popup-header-title`) between clicks. All five
   titles must appear **in order** and the stack must be empty after the 5th — a popup that
   never appears (torn down by the previous popup's async close, especially `Alert`→`Alert`)
-  is a **High** finding. Jsdom coverage of the same invariant:
-  [src/popup-widget/HandleAlertComp.test.tsx](../../../../src/popup-widget/HandleAlertComp.test.tsx).
+  is a **High** finding. (Its jsdom twin `HandleAlertComp.test.tsx` was deleted in the
+  2026-08-24 test prune — the live `window.tryPopup()` probe is now the only coverage.)
 
 ---
 
@@ -1294,13 +1296,66 @@ changes**; nothing reaches disk until **Save**, which then fires `forceReloadApp
   buttons, `Ok`/`Yes`, **Use ១ ២ ៣**, **Guessing Names** and its menu items all take a plain
   `.click()` / native-setter `input` event.
 
-### 15.6 Cleanup — the trash leaves the cache behind
+### 15.6 Cleanup — the cache is cleared with the trash now (fixed 2026-08-22)
 
-🗑 → **Yes** trashes `<key>.xml`, but the sibling **`<key>.xml.cache` folder is left on
-disk** — 13 MB for the canonical file. A robot run that seeds a scratch bible must remove
-that folder itself, or every run adds another one (a stale `ZZTEST.xml.cache` from an earlier
-run was still there on 2026-08-10). Same discipline as the media block's MD-04.
+🗑 → **Yes** trashes `<key>.xml` **and clears the sibling `<key>.xml.cache` folder**
+(`clearBibleXMLCache`, commit `3a97acc4`; pinned by `bibleXMLHelpers.test.tsx`). On
+builds before 2026-08-22 the folder was left behind — if a stale `ZZTEST.xml.cache`
+from an earlier run is still on disk, remove it once and stop expecting new ones.
+Note the cache folder is named after the **KEY, not the file** — a bible saved as
+`my-kjv.xml` caches under `KJV.xml.cache`.
 
 Also note `saveJsonDataToXMLfile` **returns `true` without checking the write** — it awaits
 `saveXMLText` and discards its boolean — so "the import said it worked" is not evidence the
 file exists. Confirm on disk, or confirm the row in the list.
+
+---
+
+## 16. Resources — the user's own files beside the verse (RD-81..90, CM-93, W-37)
+
+The 4th entry of the Bible Find previewer's 4-way select
+([bible-find/BibleFindPreviewerComp.tsx](../../../../src/bible-find/BibleFindPreviewerComp.tsx)
+— Find / Cross Reference / Location-Name (KJV) / **Resources**; setting
+`bible-search-tab`). Facts that shape a run:
+
+- **File pattern is chapter-level:** `<bookKey>.<chapter>.<anything>` (`PSA.1.pdf`,
+  `GEN.49.outline.docx`). `<bookKey>.0.*` (chapter < 1) = whole-book file, listed under
+  EVERY chapter, tagged `Introduction`. `PSA.01.pdf` deliberately matches nothing —
+  canonical spelling only. Free-text search hits append below the verse matches,
+  capped at 200 (surfaced as "Too many matching files", never silent).
+- **No watcher, by design.** A file added while the app is open appears after the
+  10-second scan-cache TTL, or on box **Refresh** / panel **Reload**. Not a bug.
+- **A collapsed folder box never touches the disk**; only the active select entry is
+  mounted at all. The scan is breadth-first and budgeted (depth 8, 1500 dirs, 20000
+  entries) — a drive root degrades with a visible "Too many folders to search",
+  never a hang.
+- **A row is a single click** → opens in the OS default app. No drag, no
+  double-click-present, no screen integration. Row menu: Open / Copy Path /
+  Reveal. Folder-header menu: Refresh / Add Folder / Reveal / Remove Folder (red,
+  confirm with Yes/No).
+- **Empty states are correct behaviour:** no folders → a single **Add Folder**
+  button; no verse selected → "Please select any bible verse."; a saved path that
+  is now a file → "Folder not found" (`ENOTDIR`).
+- Second entry point: verse context menu → **Open in Resources** (`CM-93`) — forces
+  the advanced panel open on the Resources entry.
+
+## 17. Connection Graph — people/places relations (RD-92..106, W-38)
+
+Opened from a Location-Name record's **Open Graph Preview** button
+([location-name-lookup/LocationNameDetailPanelsComp.tsx](../../../../src/location-name-lookup/LocationNameDetailPanelsComp.tsx));
+host `GraphViewPanelsHostComp` is mounted on the reader AND the main layout
+([graph-view/](../../../../src/graph-view/)). Facts that shape a run:
+
+- **Opening a record always starts FRESH** (RD-105) — no state leaks between graphs
+  of different records.
+- ⇕ drag boxes, wheel-zoom; **Ctrl+Z / Ctrl+Y walk every move** (drag, zoom,
+  expand — RD-102). The ✨ dock button re-lays-out both shapes (RD-103).
+- 🖱️R a box → menu differs for root / non-root / collapsed boxes (RD-101), and
+  carries **Set as centre** / **Use as root** (RD-106).
+- The panel is written in the record's lookup language (RD-104), and a box's verse
+  list is titled by YOUR bible (RD-100) — two independent language settings.
+- Export goes through `graphExportHelpers` (a correct `fsWriteFile` exemplar — no
+  blob `<a download>`).
+- The core under `graph-view/core/` is pure non-React; geometry constants are
+  load-bearing (see memory `graph-view-connection-graph`). Route rows from the
+  matrix (`RD-92..106`); the observed recipe is `W-38`.

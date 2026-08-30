@@ -9,17 +9,17 @@ metadata:
 ---
 
 Traced to source during the 2026-07-29 robot run. Each looks like a defect on screen; all
-three are deliberate. Don't file them again.
+four are deliberate. Don't file them again.
 
 1. **PPTX documents show a blank first slide card.** A 5-slide `.pptx` renders **6** cards
    in the presenter, card #1 empty. `PptxAppDocument.getSlides()`
-   (`src/app-document-list/PptxAppDocument.ts:95-139`) prepends `slide0` with
+   (`src/app-document-list/PptxAppDocument.ts:76-141`) prepends `slide0` with
    `htmlFilePath: BLANK_HTML_SLIDE_SRC` and returns `[slide0, ...dataList]`. So the real
    slide *n* is card *n+1* — matters when restoring a presented slide.
 2. **Presenting a bible item replaces the live background.** `applyNewBibleItemJson` calls
-   `applyAttachBackground(...)` (`src/_screen/managers/ScreenBibleManager.ts:385` →
-   `screenBackgroundHelpers.ts:5-25`); each bible item carries an *attached background*.
-   Presenting one therefore also clears the Slide layer and swaps `BG`. To QA the screen
+   `applyAttachBackground(...)` (`src/_screen/managers/ScreenBibleManager.ts:387`, the call
+   at `:405` → `screenBackgroundHelpers.ts:6-28`); each bible item carries an *attached
+   background*. Presenting one therefore also clears the Slide layer and swaps `BG`. To QA the screen
    block without disturbing a live setup, present onto an **empty** layer and note that the
    background will still change.
 3. **`Syncing video time (from screen)` flooding the console at ~4 Hz** is a startup

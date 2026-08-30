@@ -32,8 +32,12 @@ Load-bearing invariants — breaking any of these is silent data loss:
   (wrote `scroll` into `_screenViewData`, which is seeded from the getter — on
   every scroll frame). The last one also now debounces its persist with a
   per-instance `genTimeoutAttempt(500)`.
-- **No TTL-only cache is acceptable.** `preview.runtime.test.tsx` drives four
-  synchronous reads with four different payloads in one test body.
+- **No TTL-only cache is acceptable.** The test that pinned this
+  (`preview.runtime.test.tsx`, four synchronous reads with four different
+  payloads in one test body) was deleted 2026-08-24 — the invariant now rests
+  on `src/helper/derivedSettingHelpers.test.ts` and the global `beforeEach` in
+  `src/test-setup/localStoragePolyfill.ts` alone. Re-add a payload-switching
+  test before touching the memoization.
 
 `releaseAllDerivedSettings()` (`derivedSettingRegistry.ts`, import-free on
 purpose) runs in the global test `beforeEach`, so a test reusing a setting

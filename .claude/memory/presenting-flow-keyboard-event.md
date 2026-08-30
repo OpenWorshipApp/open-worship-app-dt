@@ -64,4 +64,6 @@ line names). This is the one thing the operator aims themselves, mid-service, wi
   eight per-widget FG clears behind `Other Clear FG Items` inside it.
   `presentingFlowActionMenuList` (shape, nestable) is separate from `presentingFlowActionList`
   (flat registry, what an id resolves against) — only the component reads the former.
-- Unit tests: `src/presenting-flow/presentingFlowActionKey.test.ts`.
+- **No unit tests.** `presentingFlowActionKey.test.ts` was deleted with the whole
+  src/presenting-flow suite on 2026-08-24 (47053c9d); the only live coverage is
+  matrix rows PL-97/PL-98.

@@ -9,7 +9,8 @@ metadata:
 ---
 
 **Status: OPEN bug, observed live 2026-08-07** (robot run `20260807-1412`; report and the
-corrupt/repaired file pair are in `test-results/robot-test/`).
+corrupt/repaired file pair were in `test-results/robot-test/` and have since been pruned —
+the source evidence is the in-tree code below, all still verifiable).
 
 Showing a screen (an ordinary `F5`) left
 `open-worship-data-dev\local-storage\screen-vary-app-document-manager` structurally corrupt:
@@ -24,10 +25,10 @@ Two defects compound:
    module-level `const lockSet = new Set<string>()`. The presenter and every
    `screen.html?screenId=N` are separate processes, and each runs the same
    read-modify-write on the same file in `set_varySlideData`
-   (`src/_screen/managers/ScreenVaryAppDocumentManager.ts` ~line 202): read map → add own
+   (`src/_screen/managers/ScreenVaryAppDocumentManager.ts` ~line 258): read map → add own
    key → `JSON.stringify` → write back. Nothing serialises that across processes.
 2. **The write is non-atomic.** `appLocalStorage.setItem` → `fsWriteFileSync`
-   (`src/server/fileHelpers.ts` ~line 559) writes in place with `flag: 'w'` — no
+   (`src/server/fileHelpers.ts:663-668`) writes in place with `flag: 'w'` — no
    write-to-temp + rename. A concurrent reader sees a partial file (the observed
    `Unterminated string in JSON at position 8192`); two concurrent writers interleave.
 
@@ -37,6 +38,9 @@ that `{}` plus its own key, deleting every other screen's entry. Observed end st
 the next reload all three mini screens blank, every `SL` clear-button outline, zero
 `.app-on-screen` elements. Lyric slides make it easy to hit because the setting string is
 ~185 KB per presented lyric instead of ~835 bytes.
+`getAppDocumentListOnScreenSetting()` now returns a shallow copy each call
+(`screenPreviewerHelpers.ts:148-150`, with a why-comment) — hardens the in-process case
+but does nothing about the cross-process race, which is this note's point.
 
 **How to apply:** don't treat a `SyntaxError` from `parseJsonSafely` in a screen or
 presenter console as noise — it means the on-screen map is unreadable app-wide and the next
