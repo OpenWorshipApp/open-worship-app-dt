@@ -1,0 +1,99 @@
+@use '../others/variables.scss' as *;
+
+// Both of these are portalled to `document.body` and positioned from a
+// `DOMRect`, so they are `fixed` and their own stacking context. They sit just
+// under the bible-lookup band: above the verse text they point at, below the
+// modals and the floating widgets that the comment button opens.
+%app-verse-floating-surface {
+  position: fixed;
+  z-index: $z-index-bible-lookup - 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 6px;
+  // Every token here comes from the theme rather than from a hardcoded dark
+  // value: both surfaces portal to `document.body` and carry their own
+  // `data-bs-theme`, so they have to read correctly on the light shell too.
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 45%);
+}
+
+.app-verse-selection-toolbar {
+  @extend %app-verse-floating-surface;
+
+  // Anchored to the middle of the selection's top edge and lifted clear of it,
+  // so the toolbar never covers the words it is about to mark.
+  transform: translate(-50%, -100%);
+
+  &__swatch {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    // A translucent wash needs a ring to read as a colour chip at all, and a
+    // white one disappears on the light shell.
+    border: 1px solid var(--bs-border-color);
+    border-radius: 50%;
+    cursor: pointer;
+
+    &:hover {
+      transform: scale(1.15);
+    }
+  }
+
+  &__divider {
+    width: 1px;
+    height: 18px;
+    margin: 0 2px;
+    background-color: var(--bs-border-color, rgb(255 255 255 / 25%));
+  }
+
+  &__button {
+    padding: 0 6px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--bs-body-color);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--bs-tertiary-bg);
+    }
+  }
+}
+
+.app-verse-comment-hover {
+  @extend %app-verse-floating-surface;
+
+  // Hangs below the underlined words rather than above them, so it does not
+  // cover the text the comment is about while it is being read.
+  align-items: flex-start;
+  max-width: 320px;
+
+  &__text {
+    padding: 2px 4px;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  &__actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 2px;
+  }
+
+  &__button {
+    padding: 0 6px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--bs-body-color);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--bs-tertiary-bg);
+    }
+  }
+}

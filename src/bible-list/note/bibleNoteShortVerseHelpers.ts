@@ -14,7 +14,17 @@ import FileSource, {
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import { pathSeparator } from '../../server/fileHelpers';
 import Note from './Note';
-import { type NoteItemType } from './noteItemHelpers';
+import {
+    type NoteItemType,
+    type VerseCommentType,
+    type VerseHighlightType,
+    toValidVerseComments,
+    toValidVerseHighlights,
+} from './noteItemHelpers';
+import type {
+    VerseAnnotationsMapType,
+    VerseAnnotationsType,
+} from './verseAnnotationHelpers';
 
 export type NoteItemShortVersesType = {
     id: number;
@@ -23,6 +33,36 @@ export type NoteItemShortVersesType = {
 
 /** `"GEN 3:3": ["<note file path>@<note item id>", ...]` */
 export type ShortVerseNoteRefsType = Record<string, string[]>;
+
+type NoteVerseItemType = {
+    id: number;
+    verseKey: string;
+    highlights: VerseHighlightType[];
+    comments: VerseCommentType[];
+};
+
+/** What ONE pass over one note file yields — enough for both indexes. */
+type NoteFileScanType = {
+    shortVersesList: NoteItemShortVersesType[];
+    verseItems: NoteVerseItemType[];
+};
+
+const EMPTY_NOTE_FILE_SCAN: NoteFileScanType = {
+    shortVersesList: [],
+    verseItems: [],
+};
+
+/**
+ * `"(KJV) GEN 22:1"` → `"GEN 22:1"`.
+ *
+ * A pure slice, not a lookup: `bibleRenderHelper.toBibleVersesKey` builds the
+ * key as `` `(${bibleKey}) ${kjvVersesKey}` ``, so the verse half is already KJV
+ * coordinates whatever the bible key is.
+ */
+function toShortVerseFromVerseKey(verseKey: string) {
+    const index = verseKey.indexOf(') ');
+    return index === -1 ? null : verseKey.slice(index + 2);
+}
 
 /**
  * `bible-note` is resolved ON DEMAND, and only once something is actually going
@@ -39,40 +79,67 @@ function getBibleNoteModule() {
 }
 
 /**
- * The note file is read RAW instead of through `Note.fromFilePath`: only
- * `content` and the item id are wanted here, and instantiating every `NoteItem`
- * of every note file would build a whole object graph just to throw it away.
+ * The note file is read RAW instead of through `Note.fromFilePath`: only the
+ * item id, its `content` and — for a verse item — its marks are wanted here, and
+ * instantiating every `NoteItem` of every note file would build a whole object
+ * graph just to throw it away.
+ *
+ * ONE pass feeds BOTH indexes, because they come from the same bytes and reading
+ * every note file twice is the one thing worth not doing here.
  */
-async function readNoteShortVerses(filePath: string) {
+async function readNoteFileScan(filePath: string): Promise<NoteFileScanType> {
     const fileSource = FileSource.getInstance(filePath);
     const data = await fileSource.readFileJsonData();
     const items = data?.items;
     if (!Array.isArray(items)) {
-        return [];
+        return EMPTY_NOTE_FILE_SCAN;
     }
-    const validItems = items.filter((item: NoteItemType) => {
-        return (
-            typeof item?.content === 'string' &&
-            typeof item.metadata?.id === 'number'
-        );
-    });
-    if (validItems.length === 0) {
-        return [];
+    const verseItems: NoteVerseItemType[] = [];
+    const plainNoteItems: NoteItemType[] = [];
+    for (const item of items as NoteItemType[]) {
+        if (typeof item?.metadata?.id !== 'number') {
+            continue;
+        }
+        // Identified by its own `verseKey`, never by an empty `content`: a
+        // brand-new ordinary note item is empty too.
+        if (typeof item.verseKey === 'string' && item.verseKey !== '') {
+            verseItems.push({
+                id: item.metadata.id,
+                verseKey: item.verseKey,
+                highlights: toValidVerseHighlights(item.highlights),
+                comments: toValidVerseComments(item.comments),
+            });
+        } else if (typeof item.content === 'string') {
+            plainNoteItems.push(item);
+        }
     }
-    const { BibleNote } = await getBibleNoteModule();
-    return validItems.map((item: NoteItemType): NoteItemShortVersesType => {
-        return {
-            id: item.metadata.id,
-            shortVerses: BibleNote.getAllShortVersesFromText(item.content),
-        };
-    });
+    const shortVersesList: NoteItemShortVersesType[] = [];
+    for (const verseItem of verseItems) {
+        const shortVerse = toShortVerseFromVerseKey(verseItem.verseKey);
+        if (shortVerse !== null) {
+            shortVersesList.push({
+                id: verseItem.id,
+                shortVerses: [shortVerse],
+            });
+        }
+    }
+    // The guard is load-bearing, and it is now on the TEXT items alone: a verse
+    // item names its verse outright, so a note directory holding only verse
+    // items must still never resolve `bible-note`.
+    if (plainNoteItems.length > 0) {
+        const { BibleNote } = await getBibleNoteModule();
+        for (const item of plainNoteItems) {
+            shortVersesList.push({
+                id: item.metadata.id,
+                shortVerses: BibleNote.getAllShortVersesFromText(item.content),
+            });
+        }
+    }
+    return { shortVersesList, verseItems };
 }
 
-/**
- * Every short verse reference (`GEN 1:1`) the bible notes mention, keyed by note
- * file path, then listed per note item id.
- */
-export async function getShortVerses() {
+/** One raw pass over every note file, keyed by note file path. */
+async function scanNoteFiles() {
     const dirSource = await DirSource.getInstance(
         dirSourceSettingNames.BIBLE_NOTES,
     );
@@ -80,7 +147,7 @@ export async function getShortVerses() {
         (await dirSource.getFilePaths(Note.mimetypeName)) ?? [];
     const noteEntries = await Promise.all(
         bibleNoteFilePaths.map(async (filePath) => {
-            return [filePath, await readNoteShortVerses(filePath)] as const;
+            return [filePath, await readNoteFileScan(filePath)] as const;
         }),
     );
     return Object.fromEntries(noteEntries);
@@ -116,14 +183,10 @@ export function fromBibleNoteRef(bibleNoteRef: string) {
  * That is the question the reader asks — once per verse on screen, dozens of
  * times per chapter — and the raw map answers it only by walking all of it.
  */
-export function toShortVerseNoteRefs(
-    shortVersesMap: Record<string, NoteItemShortVersesType[]>,
-) {
+function toShortVerseNoteRefs(scanMap: Record<string, NoteFileScanType>) {
     const shortVerseNoteRefs: ShortVerseNoteRefsType = {};
-    for (const [filePath, noteItemShortVersesList] of Object.entries(
-        shortVersesMap,
-    )) {
-        for (const { id, shortVerses } of noteItemShortVersesList) {
+    for (const [filePath, { shortVersesList }] of Object.entries(scanMap)) {
+        for (const { id, shortVerses } of shortVersesList) {
             const bibleNoteRef = toBibleNoteRef(filePath, id);
             for (const shortVerse of shortVerses) {
                 shortVerseNoteRefs[shortVerse] ??= [];
@@ -132,6 +195,43 @@ export function toShortVerseNoteRefs(
         }
     }
     return shortVerseNoteRefs;
+}
+
+/**
+ * Turn the same scan into "what is marked on this verse?", which is what the
+ * reader paints.
+ *
+ * Keyed by the FULL `bibleVersesKey` (`(KJV) GEN 22:1`) rather than by the
+ * translation-independent short verse: a mark is a character range in one
+ * translation's text, so a KJV mark must never be painted over a Khmer verse.
+ */
+function toVerseAnnotationsMap(scanMap: Record<string, NoteFileScanType>) {
+    const verseAnnotationsMap: VerseAnnotationsMapType = {};
+    for (const [filePath, { verseItems }] of Object.entries(scanMap)) {
+        for (const { id, verseKey, highlights, comments } of verseItems) {
+            if (highlights.length === 0 && comments.length === 0) {
+                continue;
+            }
+            const annotations: VerseAnnotationsType = (verseAnnotationsMap[
+                verseKey
+            ] ??= { highlights: [], comments: [] });
+            for (const highlight of highlights) {
+                annotations.highlights.push({
+                    filePath,
+                    noteItemId: id,
+                    highlight,
+                });
+            }
+            for (const comment of comments) {
+                annotations.comments.push({
+                    filePath,
+                    noteItemId: id,
+                    comment,
+                });
+            }
+        }
+    }
+    return verseAnnotationsMap;
 }
 
 /**
@@ -148,7 +248,9 @@ export function toShortVerseNoteRefs(
  * screen is currently showing, and a fresh one is a single read away.
  */
 const EMPTY_SHORT_VERSE_NOTE_REFS: ShortVerseNoteRefsType = {};
+const EMPTY_VERSE_ANNOTATIONS_MAP: VerseAnnotationsMapType = {};
 let shortVerseNoteRefs = EMPTY_SHORT_VERSE_NOTE_REFS;
+let verseAnnotationsMap = EMPTY_VERSE_ANNOTATIONS_MAP;
 const listeners = new Set<() => void>();
 let unregisterFileUpdates: (() => void) | null = null;
 const attemptTimeout = genTimeoutAttempt(500);
@@ -159,12 +261,15 @@ function notifyListeners() {
     }
 }
 
-async function refreshShortVerseNoteRefs() {
-    const newShortVerseNoteRefs = toShortVerseNoteRefs(await getShortVerses());
+async function refreshNoteIndexes() {
+    const scanMap = await scanNoteFiles();
+    const newShortVerseNoteRefs = toShortVerseNoteRefs(scanMap);
+    const newVerseAnnotationsMap = toVerseAnnotationsMap(scanMap);
     if (listeners.size === 0) {
         return;
     }
     shortVerseNoteRefs = newShortVerseNoteRefs;
+    verseAnnotationsMap = newVerseAnnotationsMap;
     notifyListeners();
 }
 
@@ -192,7 +297,7 @@ async function handleFileUpdating({
         return;
     }
     attemptTimeout(() => {
-        refreshShortVerseNoteRefs();
+        refreshNoteIndexes();
     });
 }
 
@@ -206,7 +311,7 @@ function subscribe(listener: () => void) {
         unregisterFileUpdates = () => {
             FileSource.unregisterEventListener(registeredEvents);
         };
-        refreshShortVerseNoteRefs();
+        refreshNoteIndexes();
     }
     return () => {
         listeners.delete(listener);
@@ -216,16 +321,37 @@ function subscribe(listener: () => void) {
         unregisterFileUpdates?.();
         unregisterFileUpdates = null;
         shortVerseNoteRefs = EMPTY_SHORT_VERSE_NOTE_REFS;
+        verseAnnotationsMap = EMPTY_VERSE_ANNOTATIONS_MAP;
     };
 }
 
-function getSnapshot() {
+// Both snapshots hand back the module-level reference itself. Building the
+// object here instead would hand `useSyncExternalStore` a new identity on every
+// read and loop forever.
+function getShortVerseNoteRefsSnapshot() {
     return shortVerseNoteRefs;
+}
+
+function getVerseAnnotationsMapSnapshot() {
+    return verseAnnotationsMap;
 }
 
 /** `"GEN 3:3": ["<note file path>@<note item id>", ...]` for every verse. */
 export function useShortBibleNoteVerses() {
-    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+    return useSyncExternalStore(
+        subscribe,
+        getShortVerseNoteRefsSnapshot,
+        getShortVerseNoteRefsSnapshot,
+    );
+}
+
+/** `"(KJV) GEN 22:1": { highlights, comments }` for every marked verse. */
+export function useBibleVerseAnnotations() {
+    return useSyncExternalStore(
+        subscribe,
+        getVerseAnnotationsMapSnapshot,
+        getVerseAnnotationsMapSnapshot,
+    );
 }
 
 // Flashes the element where it is instead of scrolling to it: everything after

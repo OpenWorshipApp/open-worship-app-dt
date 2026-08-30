@@ -656,3 +656,54 @@ $app-context-menu-dots-opacity: 0.1;
     color: rgb(255, 42, 166);
   }
 }
+
+// The verse marks, painted through the CSS Custom Highlight API. Each palette
+// colour needs its own registered name and its own rule here — that pairing is
+// the whole reason the palette is fixed rather than a free colour picker.
+//
+// Only `background-color` is set, never `color`: a translucent wash over the
+// text the theme already chose reads correctly on both the dark and the light
+// reader, where a hardcoded ink colour would go invisible on one of them.
+// `::highlight()` also accepts only a small property set — background, colour,
+// text-decoration, text-shadow — so nothing structural can be expressed here,
+// which is exactly why marks cost no layout.
+//
+// Declared as custom properties so the swatches in the selection toolbar can
+// paint themselves from the SAME values the marks are painted with — the palette
+// is defined once, here, and never restated in TypeScript.
+:root {
+  --owa-verse-hl-yellow: rgb(255 214 0 / 35%);
+  --owa-verse-hl-green: rgb(64 220 120 / 32%);
+  --owa-verse-hl-blue: rgb(90 170 255 / 35%);
+  --owa-verse-hl-pink: rgb(255 120 190 / 32%);
+  --owa-verse-hl-orange: rgb(255 150 60 / 35%);
+  --owa-verse-hl-purple: rgb(180 130 255 / 35%);
+  --owa-verse-comment: rgb(125 190 255 / 85%);
+}
+
+::highlight(owa-verse-hl-yellow) {
+  background-color: var(--owa-verse-hl-yellow);
+}
+::highlight(owa-verse-hl-green) {
+  background-color: var(--owa-verse-hl-green);
+}
+::highlight(owa-verse-hl-blue) {
+  background-color: var(--owa-verse-hl-blue);
+}
+::highlight(owa-verse-hl-pink) {
+  background-color: var(--owa-verse-hl-pink);
+}
+::highlight(owa-verse-hl-orange) {
+  background-color: var(--owa-verse-hl-orange);
+}
+::highlight(owa-verse-hl-purple) {
+  background-color: var(--owa-verse-hl-purple);
+}
+
+// Commented words are underlined rather than washed, so a comment and a
+// highlight on the same words stay tellable apart.
+::highlight(owa-verse-comment) {
+  background-color: rgb(125 190 255 / 14%);
+  text-decoration: underline wavy var(--owa-verse-comment);
+  text-underline-offset: 0.2em;
+}

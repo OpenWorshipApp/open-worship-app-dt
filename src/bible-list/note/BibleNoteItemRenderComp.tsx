@@ -6,7 +6,7 @@ import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelper
 import { useFileSourceRefreshEvents } from '../../helper/dirSourceHelpers';
 import {
     genRemovingAttachedBackgroundMenu,
-    extractDropData,
+    extractDropDataOfType,
     handleAttachBackgroundDrop,
     handleDragStart as handleDragStartHelper,
 } from '../../helper/dragHelpers';
@@ -127,8 +127,13 @@ export default function BibleNoteItemRenderComp({
     );
     const handleDataDropping = useCallback(async (event: any) => {
         changeDragEventStyle(event, 'opacity', '1');
-        const droppedData = extractDropData(event);
-        if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
+        // Typed: a verse row carries a bible-item payload in `text` as well, and
+        // dropped inside this list it is the note item that is meant.
+        const droppedData = extractDropDataOfType(
+            event,
+            DragTypeEnum.NOTE_ITEM,
+        );
+        if (droppedData !== null) {
             const note = await Note.fromFilePath(filePathRef.current);
             if (note === null) {
                 return;

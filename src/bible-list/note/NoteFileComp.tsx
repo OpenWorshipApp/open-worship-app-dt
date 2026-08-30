@@ -8,7 +8,7 @@ import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import {
     genRemovingAttachedBackgroundMenu,
     useAttachedBackgroundData,
-    extractDropData,
+    extractDropDataOfType,
     handleAttachBackgroundDrop,
 } from '../../helper/dragHelpers';
 import { DragTypeEnum } from '../../helper/DragInf';
@@ -240,8 +240,14 @@ export default function NoteFileComp({
     const noteRef = useAppCurrentRef(note);
     const filePathRef = useAppCurrentRef(filePath);
     const handleDataDropping = useCallback((event: any) => {
-        const droppedData = extractDropData(event);
-        if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
+        // Typed rather than `extractDropData`: a verse row drags as a bible item
+        // AND as a note item at once, so the note file has to ask for its own
+        // kind instead of reading whatever the `text` payload happens to be.
+        const droppedData = extractDropDataOfType(
+            event,
+            DragTypeEnum.NOTE_ITEM,
+        );
+        if (droppedData !== null) {
             stopDraggingState(event);
             const noteItem = droppedData.item as NoteItem;
             if (noteItem.filePath === undefined) {

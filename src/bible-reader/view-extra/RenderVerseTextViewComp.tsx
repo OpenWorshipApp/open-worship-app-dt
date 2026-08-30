@@ -8,6 +8,7 @@ import { HoverMotionHandler } from '../../helper/domHelpers';
 import RenderVerseLookupTextComp from '../../location-name-lookup/RenderVerseLookupTextComp';
 import RenderCustomVerseLookupComp from '../../location-name-lookup/RenderCustomVerseLookupComp';
 import { checkCanLookupVerseText } from '../../location-name-lookup/verseTextIndexHelpers';
+import { VERSE_ANNOTATION_ANCHOR_ATTR } from '../bibleVerseAnnotationHelpers';
 
 export default function RenderVerseTextViewComp({
     bibleItem,
@@ -30,6 +31,10 @@ export default function RenderVerseTextViewComp({
 }>) {
     const { bibleKey, text, customText, bibleVersesKey, isRtl, style } =
         verseInfo;
+    // The verse's mark anchor. Per BIBLE key, not per verse: a mark is a
+    // character range in one translation's text, so each comparison column
+    // carries its own marks and never the neighbouring column's.
+    const verseKey = bibleVersesKey;
     // Only mounted when the text can actually carry matches: mounting it is what
     // subscribes to — and therefore loads — the in-text lookup index. Keyed on
     // THIS row's bible, so in a multi-version view only the KJV column decorates.
@@ -84,7 +89,13 @@ export default function RenderVerseTextViewComp({
                             (isRtl ? ' rtl' : '')
                         }
                     >
-                        {textElement}
+                        {/* Its own wrapper here, unlike the single-version
+                            branch below: the marks are character offsets into
+                            this element's text, and the muted bible-key label
+                            after it would otherwise count as verse text. */}
+                        <span {...{ [VERSE_ANNOTATION_ANCHOR_ATTR]: verseKey }}>
+                            {textElement}
+                        </span>
                         <span
                             className={
                                 `text-muted px-1 ` +
@@ -100,7 +111,11 @@ export default function RenderVerseTextViewComp({
                     </div>
                 </div>
             ) : (
-                <span style={style} data-dict-locale={verseInfo.locale}>
+                <span
+                    style={style}
+                    data-dict-locale={verseInfo.locale}
+                    {...{ [VERSE_ANNOTATION_ANCHOR_ATTR]: verseKey }}
+                >
                     {textElement}
                 </span>
             )}

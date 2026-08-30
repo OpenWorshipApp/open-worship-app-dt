@@ -21,7 +21,15 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-30e** (**new W-39 — the passage can scroll itself, and now says how.** The double chevron under a long passage has always taken four different mouse actions - click, double-click, right-click, Alt + right-click - and named them only in a tooltip that vanishes the moment it starts moving. A **⋯** now appears beside it while it is scrolling and lists all four with the action written next to each, so they can be found, and used on a touch screen. Verified live 2026-08-30.)
+**workflowsVersion: 2026-08-30i** (**W-40 steps 7-9: a mark takes you to its verse now, and a verse row can be filed somewhere else.** Clicking a mark opens the verse beside what you are reading instead of only flashing it, so you keep your place; editing a comment moved onto the mark's own `⋮`. A verse row can be dragged onto another **Bible Notes** file to move it there, marks and all — the same drag still adds the verse to **Bibles** if you drop it there instead. Everything about a marked verse is now lettered in that bible's own font, and the little panel that appears over commented words waits much longer before it goes. Verified live 2026-08-30.)
+
+Previous: **2026-08-30h** (**W-40 step 4: the marks list wears its own marks.** A highlight under a verse row used to be a grey dot beside the words in quotes; the words themselves now carry the same wash they carry in the passage, and a commented phrase carries the same wavy underline, so the panel reads as a miniature of the page and needs no key. The verse row is led by a highlighter pen instead of a bookmark, and its count steps aside once the row is open, where the marks are already on screen. Verified live 2026-08-30, dark and light.)
+
+Previous: **2026-08-30g** (**W-40 steps 7-10: a verse row can do more than hold marks.** It now has a `⋮` of its own, and so does every mark under it, so nothing needs a right-click to be found. Its menu adds the verse to the **Bibles** list or moves the whole row to another note file, and the row can simply be dragged onto a bible file instead. “Move To” had never worked anywhere in Bible Notes — it always said `No other notes found` — and does now. The marking toolbar also follows the app's dark/light setting; it used to come up white on the dark reader. Verified live 2026-08-30.)
+
+Previous: **2026-08-30f** (**new W-40 — mark up a passage while you study it.** Selecting words in a passage now raises a small toolbar: six highlighter colours, a comment button and an eraser. What you mark is kept in your own **Bible Notes**, under a row for that verse, so it is there next time you open the app and travels with your notes when you back them up. Hovering commented words shows the note with buttons to edit or delete it. Verified live 2026-08-30 on the reader, Genesis 22:1.)
+
+Previous: **2026-08-30e** (**new W-39 — the passage can scroll itself, and now says how.** The double chevron under a long passage has always taken four different mouse actions - click, double-click, right-click, Alt + right-click - and named them only in a tooltip that vanishes the moment it starts moving. A **⋯** now appears beside it while it is scrolling and lists all four with the action written next to each, so they can be found, and used on a touch screen. Verified live 2026-08-30.)
 
 Previous: **2026-08-30d** (**W-01b step 1: the `⋮` rests much quieter.** It now sits at the same near-silent alpha as the colour note beside it and comes to full strength on hover, so a long list reads as its names rather than as a column of buttons. Verified live 2026-08-30.)
 
@@ -2669,3 +2677,65 @@ wheel — the app can scroll it for you, at whatever pace you set.
    > so they work on a touch screen, where there is no right-click at all.
 
 _Verify: RD-107._
+
+---
+
+### W-40 — Mark up a passage while you study it
+
+**Goal:** highlight words in a passage in colour, and attach a note to a phrase, so both
+are still there the next time you open the app.
+
+1. Open the **Reader** (📖) and bring up a passage — say `Genesis 22:1-24`.
+2. Drag across a few words inside a verse, the way you would to copy them. A small
+   toolbar appears just above what you selected. 📸
+   It has six coloured dots, then a **speech bubble** and an **eraser**.
+3. Click the **yellow** dot. The words you selected — and only those — take on a soft
+   yellow wash, and the toolbar goes away.
+   > The colours are a fixed set of six. They are meant to read like a highlighter pen
+   > over the text, so the verse still reads as scripture underneath.
+4. Look at the left panel and open **Bible Notes** (កណ្ណត់ត្រាព្រះគម្ពៀរ). Under
+   **Default** there is now a new row named after the verse — `(KJV) Genesis 22:1` — with a
+   highlighter pen in front of it and a small number on the right saying how many marks it
+   holds. Click it to fold it open. 📸
+   Inside are the words you marked, wearing the very colour you gave them — the panel shows
+   the mark rather than describing it, so the number on the right steps aside while the row
+   is open.
+   > This row lives in the same note file as your ordinary bible notes, so it is saved,
+   > backed up and exported along with them. You never have to put it anywhere.
+5. Back in the passage, select a different phrase and click the **speech bubble**. 📸
+   The phrase gets a wavy underline instead of a wash, and a small window opens with the
+   verse's name at the top and an empty box. Type your note into it.
+   Close the window with the **✕**. Nothing else to press — it saves as you type.
+6. Now move the mouse over those underlined words. 📸
+   A little panel appears under them showing what you wrote, with two buttons: a **pencil**
+   to open the note again, and a **bin** to delete it.
+   > Move the pointer straight down onto the panel to use its buttons — it waits for you.
+7. Each mark under the verse has a **⋮** at its right end (right-clicking the mark does
+   the same). Its menu offers the five other colours, so you can recolour a highlight,
+   **Edit Comment** on a comment, and **Delete**.
+8. Click any mark in that list. 📸 The verse it belongs to opens as a new passage
+   beside the one you are reading — the passage you were in stays where it is — and it
+   flashes if it happens to be on screen already.
+   > A mark is a place you kept inside something you were reading. Reaching it should not
+   > cost you your place, which is why it opens beside rather than on top.
+9. The verse row itself has a **⋮** too. 📸 It can do three things:
+   - **Add to Bible List** (បន្ថែមទៅបញ្ជីព្រះគម្ពីរ) — puts that verse in your **Bibles**
+     list, ready to present, without going and looking it up again.
+   - **Move To** (ផ្លាស់ទីទៅ) — moves the whole row, marks and all, into one of your other
+     note files.
+   - **Delete** (លុប) — removes the verse and everything marked on it, after asking.
+   > You can also just **drag the verse row and let go**. Dropped on a file in the
+   > **Bibles** panel it arrives as an ordinary bible item, the same as if you had looked
+   > it up; dropped on another file in **Bible Notes** it moves there instead, marks and
+   > all. One drag, and where you let go decides which it means.
+10. Delete the last mark on a verse and the verse's row disappears from **Bible Notes**
+   too — an empty row would only be something else to tidy up later.
+   > Marks belong to the translation you made them in, because they remember which words
+   > they cover and every translation words a verse differently. A mark made on KJV is not
+   > painted over a Khmer column of the same verse. That is also why a verse row, its
+   > marks, your comments and the comment window are all lettered in the font that bible
+   > is read in rather than the app's own.
+   > They also stay in the app: what you highlight here is never shown on the screen your
+   > congregation sees.
+
+_Verify: RD-108, RD-109, RD-110, RD-111, RD-112._

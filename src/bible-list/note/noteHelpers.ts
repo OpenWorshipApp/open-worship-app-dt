@@ -3,7 +3,7 @@ import {
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
-import { defaultDataDirNames } from '../../helper/constants';
+import { dirSourceSettingNames } from '../../helper/constants';
 import DirSource from '../../helper/DirSource';
 import FileSource from '../../helper/FileSource';
 import { tran } from '../../lang/langHelpers';
@@ -18,8 +18,13 @@ export async function moveNoteItemTo(
     note: Note,
     noteItem?: NoteItem,
 ) {
+    // The SETTING name (`select-dir-bible-notes`), not the folder name.
+    // `DirSource.getInstance` looks its argument up as a setting, so passing
+    // `defaultDataDirNames.BIBLE_NOTES` read a setting that has never existed:
+    // every "Move To" and "Move All Items To" answered `No other notes found`
+    // however many note files were sitting right there in the list.
     const dirSource = await DirSource.getInstance(
-        defaultDataDirNames.BIBLE_NOTES,
+        dirSourceSettingNames.BIBLE_NOTES,
     );
     const filePaths = await dirSource.getFilePaths('note');
     const targetNames = (filePaths ?? [])

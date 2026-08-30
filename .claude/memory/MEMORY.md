@@ -93,3 +93,4 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Modal layer & above-modal widgets](modal-layer-above-modal.md) — ModalLayerContext for widgets in the modal's React tree, explicit `isAboveModal` for window-level hosts; z-index bands in variables.scss
 - [Bible-XML cache is key-scoped](bible-xml-cache-key-scoped.md) — every writer must call `clearBibleXMLCache` (memory + folder) or a re-imported key serves the OLD bible; embedded-KJV reset takes filePath, not key
 - [experiments/html-in-canvas is dev-only](experiments-html-in-canvas.md) — build-excluded scratch harness (vite `exclude-experiments` plugin throws on product imports); second runner of the yt-dlp binaries
+- [Verse marks are note items](verse-marks-note-items.md) — highlights/comments live in `.note` files as a second item kind; `toJson` must spread or a save erases them
