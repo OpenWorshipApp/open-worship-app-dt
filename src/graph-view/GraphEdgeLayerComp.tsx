@@ -7,10 +7,13 @@ import type {
     GraphRelationDefType,
 } from './core';
 import {
+    EDGE_ARROW_PATH_D,
     GRAPH_GEOMETRY,
     getEdgeBowIndexMap,
+    getEdgeDrawing,
     getEdgeLabelPoint,
-    getEdgePathD,
+    getNodeAnchor,
+    getNodeRect,
 } from './core';
 
 export type GraphEdgeLabelResolverType = (edge: GraphEdgeType) => {
@@ -75,19 +78,6 @@ function GraphEdgeLayerComp({
             style={{ left: bounds.left, top: bounds.top }}
             aria-hidden="true"
         >
-            <defs>
-                <marker
-                    id="graph-view-arrow"
-                    viewBox="0 0 8 8"
-                    refX="7"
-                    refY="4"
-                    markerWidth="6"
-                    markerHeight="6"
-                    orient="auto-start-reverse"
-                >
-                    <path d="M 0 0 L 8 4 L 0 8 z" />
-                </marker>
-            </defs>
             {edgeList.map((edge) => {
                 const from = pointByKey.get(edge.fromKey);
                 const to = pointByKey.get(edge.toKey);
@@ -99,15 +89,41 @@ function GraphEdgeLayerComp({
                     styleKeyByRelation.get(edge.relation) ?? 'default';
                 const isOnPath = pathEdgeKeySet.has(edge.key);
                 const bow = bowByKey.get(edge.key) ?? 0;
-                const length = Math.hypot(to.x - from.x, to.y - from.y);
                 // Computed straight from the stored positions — no DOM
                 // measurement, so this stays cheap while a drag repaints.
+                const fromAnchor = getNodeAnchor(from, from.isCollapsed);
+                const toAnchor = getNodeAnchor(to, to.isCollapsed);
+                const length = Math.hypot(
+                    toAnchor.x - fromAnchor.x,
+                    toAnchor.y - fromAnchor.y,
+                );
                 const localFrom = {
-                    x: from.x - bounds.left,
-                    y: from.y - bounds.top,
+                    x: fromAnchor.x - bounds.left,
+                    y: fromAnchor.y - bounds.top,
                 };
-                const localTo = { x: to.x - bounds.left, y: to.y - bounds.top };
+                const localTo = {
+                    x: toAnchor.x - bounds.left,
+                    y: toAnchor.y - bounds.top,
+                };
                 const labelPoint = getEdgeLabelPoint(localFrom, localTo, bow);
+                // The line is trimmed to the two boxes' borders, so it meets
+                // them instead of running on underneath — and so a directed
+                // edge's arrowhead has somewhere visible to land.
+                const fromRect = getNodeRect(
+                    { x: from.x - bounds.left, y: from.y - bounds.top },
+                    from.isCollapsed,
+                );
+                const toRect = getNodeRect(
+                    { x: to.x - bounds.left, y: to.y - bounds.top },
+                    to.isCollapsed,
+                );
+                const drawing = getEdgeDrawing(
+                    localFrom,
+                    localTo,
+                    bow,
+                    fromRect,
+                    toRect,
+                );
                 const isLabelVisible =
                     !isLabelHidden &&
                     label !== '' &&
@@ -128,13 +144,23 @@ function GraphEdgeLayerComp({
                             data-edge-key={edge.key}
                             data-edge-from={edge.fromKey}
                             data-edge-to={edge.toKey}
-                            d={getEdgePathD(localFrom, localTo, bow)}
-                            markerEnd={
-                                isDirected
-                                    ? 'url(#graph-view-arrow)'
-                                    : undefined
-                            }
+                            d={drawing.d}
                         />
+                        {isDirected ? (
+                            // Its own element rather than a `marker-end`,
+                            // which would inherit neither the line's colour
+                            // nor its scale — the old marker was styled by a
+                            // rule that matched nothing and painted black
+                            // arrowheads onto a dark canvas. Drawn whatever
+                            // the zoom, since which way a relation runs
+                            // matters more than what it is called.
+                            <path
+                                className="graph-view__edge-arrow"
+                                data-edge-arrow-for={edge.key}
+                                d={EDGE_ARROW_PATH_D}
+                                transform={drawing.arrowTransform}
+                            />
+                        ) : null}
                         {isLabelVisible ? (
                             <text
                                 className="graph-view__edge-label"

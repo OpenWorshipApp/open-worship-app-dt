@@ -20,6 +20,8 @@ import type {
     GraphBoundsType,
     GraphNeighbourType,
     GraphNodeViewType,
+    GraphPointType,
+    GraphRectType,
     GraphSourceType,
     GraphViewType,
 } from './core';
@@ -30,8 +32,10 @@ import {
     centreGraphInViewport,
     fitGraphToViewport,
     getEdgeBowIndexMap,
+    getEdgeDrawing,
     getEdgeLabelPoint,
-    getEdgePathD,
+    getNodeAnchor,
+    getNodeRect,
     getPathEdgeKeySet,
     getVisibleGraph,
     getWheelZoomPercent,
@@ -73,11 +77,17 @@ type DragStateType = {
 
 type DragEdgeEntryType = {
     isFrom: boolean;
-    otherX: number;
-    otherY: number;
+    // The fixed end's DRAWN point, which is the box's centre rather than the
+    // node's own when that box is collapsed.
+    otherAnchor: GraphPointType;
+    // The fixed end's box, for the border trim. Its shape cannot change
+    // mid-gesture, so it is built once with the rest of the cache.
+    otherRect: GraphRectType;
     bow: number;
     path: SVGPathElement;
     label: SVGTextElement | null;
+    // Only a DIRECTED edge draws one, so this is null for most of them.
+    arrow: SVGPathElement | null;
 };
 
 type DragCacheType = {
@@ -85,6 +95,7 @@ type DragCacheType = {
     // cached elements would be dead — a mismatch here rebuilds instead.
     graph: GraphViewType;
     nodeKey: string;
+    isNodeCollapsed: boolean;
     element: HTMLElement | null;
     bounds: GraphBoundsType;
     entryList: DragEdgeEntryType[];
@@ -124,18 +135,22 @@ function buildDragCache(
         }
         entryList.push({
             isFrom: edge.fromKey === nodeKey,
-            otherX: other.x,
-            otherY: other.y,
+            otherAnchor: getNodeAnchor(other, other.isCollapsed),
+            otherRect: getNodeRect(other, other.isCollapsed),
             bow: bowByKey.get(edge.key) ?? 0,
             path,
             label: world.querySelector<SVGTextElement>(
                 `[data-edge-label-for="${CSS.escape(edge.key)}"]`,
+            ),
+            arrow: world.querySelector<SVGPathElement>(
+                `[data-edge-arrow-for="${CSS.escape(edge.key)}"]`,
             ),
         });
     }
     return {
         graph,
         nodeKey,
+        isNodeCollapsed: nodeByKey.get(nodeKey)?.isCollapsed ?? false,
         element: world.querySelector<HTMLElement>(
             `[data-node-key="${CSS.escape(nodeKey)}"]`,
         ),
@@ -300,24 +315,48 @@ export default function GraphSurfaceComp<TContext>({
             cache.element.style.left = `${drag.startX - GRAPH_GEOMETRY.NODE_WIDTH / 2}px`;
             cache.element.style.top = `${drag.startY - GRAPH_GEOMETRY.NODE_HEIGHT / 2}px`;
         }
-        const moved = {
+        const movedCentre = {
             x: drag.startX - cache.bounds.left,
             y: drag.startY - cache.bounds.top,
         };
+        const moved = getNodeAnchor(movedCentre, cache.isNodeCollapsed);
+        const movedRect = getNodeRect(movedCentre, cache.isNodeCollapsed);
+        const otherOffset = {
+            x: -cache.bounds.left,
+            y: -cache.bounds.top,
+        };
         for (const entry of cache.entryList) {
             const fixed = {
-                x: entry.otherX - cache.bounds.left,
-                y: entry.otherY - cache.bounds.top,
+                x: entry.otherAnchor.x + otherOffset.x,
+                y: entry.otherAnchor.y + otherOffset.y,
+            };
+            const fixedRect = {
+                left: entry.otherRect.left + otherOffset.x,
+                right: entry.otherRect.right + otherOffset.x,
+                top: entry.otherRect.top + otherOffset.y,
+                bottom: entry.otherRect.bottom + otherOffset.y,
             };
             const start = entry.isFrom ? moved : fixed;
             const end = entry.isFrom ? fixed : moved;
-            // The SAME curve AND bow the renderer draws, or the edge would
-            // snap to a different line the moment a drag started.
-            entry.path.setAttribute('d', getEdgePathD(start, end, entry.bow));
+            const startRect = entry.isFrom ? movedRect : fixedRect;
+            const endRect = entry.isFrom ? fixedRect : movedRect;
+            // The SAME curve, bow AND border trim the renderer draws, or the
+            // edge would snap to a different line the moment a drag started.
+            const drawing = getEdgeDrawing(
+                start,
+                end,
+                entry.bow,
+                startRect,
+                endRect,
+            );
+            entry.path.setAttribute('d', drawing.d);
             if (entry.label !== null) {
                 const point = getEdgeLabelPoint(start, end, entry.bow);
                 entry.label.setAttribute('x', `${point.x}`);
                 entry.label.setAttribute('y', `${point.y}`);
+            }
+            if (entry.arrow !== null) {
+                entry.arrow.setAttribute('transform', drawing.arrowTransform);
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1194,8 +1233,9 @@ export default function GraphSurfaceComp<TContext>({
                     };
                 }),
                 edgeList: visible.edgeList,
-                resolveEdgeLabel: (edge) => {
-                    return resolveEdgeLabel(edge).label;
+                resolveEdge: (edge) => {
+                    const { label, isDirected } = resolveEdgeLabel(edge);
+                    return { label, isDirected };
                 },
                 pathEdgeKeySet: getPathEdgeKeySet(currentGraph),
                 palette: isForPrint

@@ -325,36 +325,52 @@
   pointer-events: none;
 }
 
+// One colour token per relation, so the line and its direction arrowhead can
+// never drift apart — the arrow is a FILLED shape and the line a STROKED one,
+// which is exactly how the old `marker` rule ended up styling nothing and
+// leaving black arrowheads invisible on the dark canvas.
+.graph-view__edge-group {
+  --graph-edge-color: var(--graph-edge-default);
+}
+.graph-view__edge-group--parentage {
+  --graph-edge-color: var(--graph-edge-parentage);
+}
+.graph-view__edge-group--spouse {
+  --graph-edge-color: var(--graph-edge-spouse);
+}
+.graph-view__edge-group--sibling {
+  --graph-edge-color: var(--graph-edge-sibling);
+}
+.graph-view__edge-group--cousin {
+  --graph-edge-color: var(--graph-edge-cousin);
+}
+.graph-view__edge-group--placement {
+  --graph-edge-color: var(--graph-edge-placement);
+}
+
 .graph-view__edge {
   fill: none;
-  stroke: var(--graph-edge-default);
+  stroke: var(--graph-edge-color);
   stroke-width: 1.5;
   opacity: 0.75;
 }
 
-.graph-view__edge-group--parentage .graph-view__edge {
-  stroke: var(--graph-edge-parentage);
-}
-.graph-view__edge-group--spouse .graph-view__edge {
-  stroke: var(--graph-edge-spouse);
-}
-.graph-view__edge-group--sibling .graph-view__edge {
-  stroke: var(--graph-edge-sibling);
+.graph-view__edge-group--sibling .graph-view__edge,
+.graph-view__edge-group--cousin .graph-view__edge,
+.graph-view__edge-group--placement .graph-view__edge {
   stroke-width: 1.25;
 }
 .graph-view__edge-group--cousin .graph-view__edge {
-  stroke: var(--graph-edge-cousin);
-  stroke-width: 1.25;
   stroke-dasharray: 2 4;
 }
 .graph-view__edge-group--placement .graph-view__edge {
-  stroke: var(--graph-edge-placement);
-  stroke-width: 1.25;
   stroke-dasharray: 6 4;
 }
 
-.graph-view__edge-group marker path {
-  fill: var(--graph-edge-parentage);
+// Which way a relation runs. Fully opaque even where the line is not: it is a
+// few pixels of glyph and it is the whole point of a directed edge.
+.graph-view__edge-arrow {
+  fill: var(--graph-edge-color);
 }
 
 // The canvas takes focus so the undo keys reach the panel the user is working
@@ -395,8 +411,11 @@
   opacity: 0.3;
 }
 
+.graph-view__edge-group--on-path {
+  --graph-edge-color: var(--app-accent, #6ea8fe);
+}
+
 .graph-view__edge-group--on-path .graph-view__edge {
-  stroke: var(--app-accent, #6ea8fe);
   stroke-width: 2.5;
   opacity: 1;
 }
@@ -432,7 +451,11 @@
 }
 
 .graph-view__node--collapsed {
-  height: auto;
+  // Pinned to GRAPH_GEOMETRY.NODE_COLLAPSED_HEIGHT, the same way the full box
+  // is pinned to NODE_HEIGHT: edges are drawn to the BORDER of the box they
+  // join, so a height the geometry does not know about would leave the line
+  // short of it or running under it.
+  height: 32px;
 }
 
 @each $key in person, deity, group, concept, supernatural, month, life, place,

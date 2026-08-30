@@ -48,6 +48,11 @@ export const resizeSettingNames = {
     bibleLookupPopup: 'bible-lookup-popup',
     presenterBiblePreviewer: 'presenter-bible-previewer',
     bibleReadingLeft: 'bible-reading-left',
+    // The bible-lookup popup overlays the presenter, whose right column already
+    // mounts a `BibleReadingLeftComp` under the name above. Two actors sharing a
+    // name is exactly what the note below forbids, and here it also collides in
+    // the widget registry, which is keyed by `flexSizeName::key`.
+    bibleReadingLeftLookup: 'bible-reading-left-lookup',
 };
 
 /**

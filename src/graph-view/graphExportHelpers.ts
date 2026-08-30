@@ -7,10 +7,13 @@ import { downloadImageBase64Data } from '../server/appHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { GraphEdgeType, GraphNodeType, GraphNodeViewType } from './core';
 import {
+    EDGE_ARROW_PATH_D,
     GRAPH_GEOMETRY,
     getEdgeBowIndexMap,
+    getEdgeDrawing,
     getEdgeLabelPoint,
-    getEdgePathD,
+    getNodeAnchor,
+    getNodeRect,
 } from './core';
 
 /**
@@ -31,7 +34,13 @@ export type GraphExportOptionsType = {
     title: string;
     nodeList: GraphExportNodeType[];
     edgeList: GraphEdgeType[];
-    resolveEdgeLabel: (edge: GraphEdgeType) => string;
+    // Label AND direction: a saved or printed picture that dropped the
+    // arrowheads would leave `child` sitting between two boxes with no way to
+    // tell which of them is the child.
+    resolveEdge: (edge: GraphEdgeType) => {
+        label: string;
+        isDirected: boolean;
+    };
     pathEdgeKeySet: Set<string>;
     // Read off the live panel so the export matches what is on screen in both
     // themes rather than guessing at colours.
@@ -90,7 +99,7 @@ export function buildGraphSvg({
     title,
     nodeList,
     edgeList,
-    resolveEdgeLabel,
+    resolveEdge,
     pathEdgeKeySet,
     palette,
     fontFamily,
@@ -136,17 +145,41 @@ export function buildGraphSvg({
             if (from === undefined || to === undefined) {
                 return '';
             }
+            const fromAnchor = getNodeAnchor(from, from.isCollapsed);
+            const toAnchor = getNodeAnchor(to, to.isCollapsed);
             const localFrom = {
-                x: from.x - bounds.left,
-                y: from.y - bounds.top,
+                x: fromAnchor.x - bounds.left,
+                y: fromAnchor.y - bounds.top,
             };
-            const localTo = { x: to.x - bounds.left, y: to.y - bounds.top };
+            const localTo = {
+                x: toAnchor.x - bounds.left,
+                y: toAnchor.y - bounds.top,
+            };
             const bow = bowByKey.get(edge.key) ?? 0;
+            const fromRect = getNodeRect(
+                { x: from.x - bounds.left, y: from.y - bounds.top },
+                from.isCollapsed,
+            );
+            const toRect = getNodeRect(
+                { x: to.x - bounds.left, y: to.y - bounds.top },
+                to.isCollapsed,
+            );
             const isOnPath = pathEdgeKeySet.has(edge.key);
             const stroke = isOnPath ? palette.accent : palette.line;
-            const label = resolveEdgeLabel(edge);
+            const { label, isDirected } = resolveEdge(edge);
             const length = Math.hypot(to.x - from.x, to.y - from.y);
             const point = getEdgeLabelPoint(localFrom, localTo, bow);
+            const drawing = getEdgeDrawing(
+                localFrom,
+                localTo,
+                bow,
+                fromRect,
+                toRect,
+            );
+            const arrowMarkup = isDirected
+                ? `<path d="${EDGE_ARROW_PATH_D}" fill="${stroke}"` +
+                  ` transform="${drawing.arrowTransform}"/>`
+                : '';
             const labelMarkup =
                 label === '' || length < GRAPH_GEOMETRY.EDGE_LABEL_MIN_LENGTH
                     ? ''
@@ -156,9 +189,9 @@ export function buildGraphSvg({
                       ` stroke="${palette.background}" stroke-width="3"` +
                       ` paint-order="stroke">${escapeXml(label)}</text>`;
             return (
-                `<path d="${getEdgePathD(localFrom, localTo, bow)}" fill="none"` +
+                `<path d="${drawing.d}" fill="none"` +
                 ` stroke="${stroke}" stroke-width="${isOnPath ? 2.5 : 1.4}"` +
-                ` opacity="${isOnPath ? 1 : 0.7}"/>${labelMarkup}`
+                ` opacity="${isOnPath ? 1 : 0.7}"/>${arrowMarkup}${labelMarkup}`
             );
         })
         .join('');

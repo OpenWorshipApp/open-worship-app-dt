@@ -89,6 +89,26 @@ and everything downstream leans on that:
 - Edge labels use `paint-order="stroke"` for their halo; a background `<rect>`
   would need a `getBBox()` per label, which is exactly the layout thrash to
   avoid.
+- **Edges are STORED centre to centre and DRAWN border to border.**
+  `getEdgeCurve` clips the cubic to both `getNodeRect`s (coarse scan +
+  bisection, `EDGE_BOX_GAP` 9) by De Casteljau, so the clipped line is a piece
+  of exactly the curve the full one drew — recomputing handles from the trimmed
+  ends re-bends the line every time a box changes size. Two traps this exists
+  to fix, both invisible until you look for them: a `marker-end` arrowhead
+  lands on the target box's CENTRE, underneath the box; and a `<marker>` lives
+  in `<defs>` at the SVG root, so `.graph-view__edge-group marker path` matched
+  NOTHING and every arrowhead was default black on a dark canvas. The arrow is
+  now an ordinary `<path>` (`EDGE_ARROW_PATH_D`) placed by `getEdgeDrawing`,
+  which returns the `d` and the arrow transform together — asking for them
+  separately ran the trim scan twice per directed edge, per render and per drag
+  frame. Its fill and the line's stroke both read one `--graph-edge-color` set
+  per relation group, so they cannot drift apart again.
+- **A collapsed box is NOT centred on its node point.** It keeps the full box's
+  top and stops at `NODE_COLLAPSED_HEIGHT`, so drawing to `node.x/y` sails past
+  it and parks an arrowhead in empty space below. `getNodeAnchor` gives the
+  point to DRAW to; layout still works in stored coordinates. That constant is
+  now pinned by the stylesheet the way `NODE_HEIGHT` is — it was dead (and 4px
+  wrong) until the border trim started reading it.
 - **Zoom is an INTEGER PERCENT**, and the wheel/pinch handling is hand-rolled
   rather than `useZoomingRegistering`: a graph wants a PLAIN wheel to zoom,
   anchored on the cursor, with a multiplicative step. The shared hook is
