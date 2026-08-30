@@ -237,8 +237,7 @@ export function BibleKeySelectionMiniComp({
                 (hasContextMenu ? ' bible-selector-with-menu' : '')
             }
             style={{
-                paddingLeft: isMinimal ? '2px' : '6px',
-                paddingRight: isMinimal ? '2px' : '6px',
+                padding: '1px 2px',
                 ...extraStyle,
             }}
             onClick={isHandleClickEvent ? handleClickEvent : undefined}

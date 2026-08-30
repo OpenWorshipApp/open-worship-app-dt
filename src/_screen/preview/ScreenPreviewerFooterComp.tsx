@@ -228,7 +228,7 @@ function DrawSwitchComp({
         ` ${tran(drawModeInfo.title)}`;
     const optionsTitle = tran('Choose Drawing or Focusing');
     return (
-        <div className="btn-group">
+        <div className="btn-group" onContextMenu={handleShowDrawOptions}>
             <button
                 className={`btn btn-sm btn-${isDrawHandlersVisible ? 'primary' : 'outline-secondary'}`}
                 style={{
