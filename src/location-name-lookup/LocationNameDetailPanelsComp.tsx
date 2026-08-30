@@ -27,11 +27,7 @@ import {
     LookupManagersContext,
     useLookupManagers,
 } from './lookupManagersContext';
-import {
-    LOCATION_ICON_CLASS,
-    getNameTypeIconClass,
-    getRecordKjvName,
-} from './lookupPresentationHelpers';
+import { getRecordKjvName } from './lookupPresentationHelpers';
 import {
     buildLocationSummary,
     buildNameSummary,
@@ -145,20 +141,6 @@ function RenderOpenInLookupButtonComp({
             <i className="bi bi-eye" />
         </button>
     );
-}
-
-function getPanelIconClass(
-    panel: DetailPanelType,
-    managers: LookupManagersType,
-) {
-    if (panel.kind === 'verse') {
-        return 'bi bi-book-half';
-    }
-    if (panel.kind === 'location') {
-        return LOCATION_ICON_CLASS;
-    }
-    const record = managers.namesLookupManager.getRecordById(panel.target);
-    return getNameTypeIconClass(record?.type);
 }
 
 function RenderDetailPanelComp({
@@ -285,7 +267,6 @@ function RenderDetailPanelComp({
                                 : fontFamily,
                     }}
                 >
-                    <i className={getPanelIconClass(panel, managers)} />
                     {panel.kind === 'verse' ? null : (
                         <OpenGraphPreviewButtonComp
                             kind={panel.kind}

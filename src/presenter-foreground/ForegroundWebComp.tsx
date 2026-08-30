@@ -1,6 +1,7 @@
 import { useCallback, type CSSProperties, type MouseEvent } from 'react';
 import { useMemo, useRef, useState } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import type { ForegroundWebDataType } from '../_screen/screenTypeHelpers';
@@ -202,10 +203,16 @@ function RenderWebInfoComp({
     return (
         <div className="card m-1" style={{ width: `${width}px` }}>
             <div
-                className="card-header app-ellipsis"
+                className="card-header app-ellipsis d-flex align-items-center"
                 title={fileSource.filePath}
             >
-                {fileSource.fullName}
+                <span className="flex-fill app-ellipsis">
+                    {fileSource.fullName}
+                </span>
+                <ContextMenuDotsButtonComp
+                    label={tran('Show on Screens')}
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
             <div
                 className={

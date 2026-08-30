@@ -48,6 +48,35 @@ Two more traps that cost real debugging:
 - `NODE_HEIGHT` must match what the box actually renders at; the stylesheet
   pins `.graph-view__node { height: 88px }` so the two cannot drift.
 
+### Viewport-tick isolation (perf pass 2026-08-30)
+
+A pan or zoom commit replaces the GRAPH OBJECT but not `nodeList`/`edgeList`,
+and everything downstream leans on that:
+
+- `GraphSurfaceComp`'s `getVisibleGraph` and `getPathEdgeKeySet` memos key on
+  the STRUCTURAL fields (`nodeList`, `edgeList`, `hiddenRelationList`,
+  `rootKey`, `pathNodeKeyList`), never on `graph` — `[graph]` handed the edge
+  layer and every box a fresh identity per wheel tick.
+- `viewByKey` is built over the FULL node list and `resolveEdgeLabel` reads it
+  through a ref; it must NOT go back to a per-edge `nodeList.find` +
+  `getNodeView` (O(edges x nodes) plus an allocation per edge, per render).
+- Wheel ticks are coalesced to one `setViewport` per rAF inside the wheel
+  effect; the multiplicative step composes over the summed delta so the result
+  is identical (verified 128 -> 425 -> 128 against `exp(±8·60/400)`).
+- `RenderGraphPanelComp` is memoized: the engine replaces only the changed
+  graph, so other open panels bail on prop identity.
+- A node drag builds `buildDragCache` once per gesture (elements, incident
+  edges, other endpoints, bows, bounds), guarded by graph identity so a
+  mid-drag store commit rebuilds it. It also passes the BOW, so multi-edges no
+  longer snap straight while dragging.
+- `lookupGraphSource.countNeighbours` for a LOCATION reads
+  `getMentionCountMap` — ONE scan over all name records builds every
+  location's mentioned-by count, weakly keyed by the managers object so it
+  dies with the refcounted dataset (id -> number only). Ten location boxes in
+  one expansion used to pay ten full scans inside a single render.
+  `getNeighbours` still scans per call on purpose: it needs records, is
+  user-initiated and sits behind the spinner.
+
 ### Rendering and gesture rules
 
 - **Dragging writes straight to the DOM** (`left`/`top`, and the incident edges'

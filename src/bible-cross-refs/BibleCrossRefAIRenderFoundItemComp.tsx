@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { useCallback } from 'react';
 
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
@@ -108,7 +109,14 @@ export default function BibleCrossRefAIRenderFoundItemComp({
             onClick={handleClicking}
             onKeyDown={handleKeyingDown}
         >
-            <BibleDirectViewTitleComp bibleItem={bibleItem} />
+            <div className="d-flex align-items-start">
+                <div className="flex-fill app-overflow-hidden">
+                    <BibleDirectViewTitleComp bibleItem={bibleItem} />
+                </div>
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
+            </div>
             <RenderVerseTextComp
                 bibleKey={bibleItem.bibleKey}
                 bibleText={bibleText}

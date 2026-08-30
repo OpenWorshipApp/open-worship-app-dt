@@ -148,6 +148,22 @@
     }
   }
 
+  // Holds the file button and its ⋮ side by side. The tick that joins a row
+  // to its folder's rail is drawn by the BUTTON, so the wrapper must not shift
+  // it: it adds no padding of its own.
+  .app-resources-file-row {
+    display: flex;
+    align-items: center;
+
+    // The button is `width: 100%` on its own; as a flex child that would push
+    // the ⋮ off the end instead of sharing the row with it.
+    > .app-resources-file {
+      flex: 1 1 auto;
+      width: auto;
+      min-width: 0;
+    }
+  }
+
   .app-resources-file {
     position: relative;
     display: flex;

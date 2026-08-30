@@ -1,3 +1,5 @@
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
+
 export default function ItemReadErrorComp({
     onContextMenu,
 }: Readonly<{
@@ -8,6 +10,9 @@ export default function ItemReadErrorComp({
             className="card app-caught-hover-pointer"
             onContextMenu={onContextMenu}
         >
+            {onContextMenu === undefined ? null : (
+                <ContextMenuDotsButtonComp isCorner onOpening={onContextMenu} />
+            )}
             <div className="card-header">Item data error</div>
         </div>
     );

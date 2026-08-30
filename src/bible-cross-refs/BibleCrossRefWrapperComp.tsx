@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { useCallback, type ReactNode } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -80,6 +81,9 @@ export default function BibleCrossRefWrapperComp({
                     {bibleKey}
                 </span>
                 {note}
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
             {isShowing ? (
                 <div className="app-xref-card-body">{children}</div>

@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
@@ -155,6 +156,9 @@ export default function ResourcesDirBoxComp({
                 <span className="app-resources-group-path app-ellipsis-left">
                     {toParentPathLabel(dirPath)}
                 </span>
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
             {isShowing ? (
                 <ResourcesDirBoxBodyComp

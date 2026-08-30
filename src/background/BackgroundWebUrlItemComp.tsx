@@ -9,6 +9,7 @@ import { tran } from '../lang/langHelpers';
 import { genBackgroundMediaItemData } from './backgroundHelpers';
 import { type BackgroundWebUrlSource } from './backgroundWebUrlHelpers';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { copyToClipboard } from '../server/appHelpers';
 import { RenderWebChildComp } from './BackgroundWebChildComp';
@@ -146,12 +147,17 @@ export default function BackgroundWebUrlItemComp({
                 isUrl
                 extraChild={
                     <div
+                        className="d-flex align-items-start"
                         style={{
                             position: 'absolute',
                             top: 0,
                             right: 0,
+                            zIndex: 2,
                         }}
                     >
+                        <ContextMenuDotsButtonComp
+                            onOpening={handleContextMenuOpening}
+                        />
                         <ItemColorNoteComp
                             item={urlSource}
                             onChange={onColorNoteChange}

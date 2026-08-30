@@ -21,7 +21,12 @@ import {
 } from './LookupDetailPartsComp';
 import { useLookupLangPresentation } from './lookupLangHelpers';
 import { useLookupManagersContext } from './lookupManagersContext';
-import { getNameTypeSingularLabel } from './lookupPresentationHelpers';
+import {
+    LOCATION_ICON_CLASS,
+    VERSE_ICON_CLASS,
+    getNameTypeIconClass,
+    getNameTypeSingularLabel,
+} from './lookupPresentationHelpers';
 import {
     checkHasDetailValue,
     getDisplayLinks,
@@ -69,6 +74,7 @@ export function RenderNameDetailComp({
         <div className="location-name-lookup__detail" style={{ fontFamily }}>
             <BasicInfoComp
                 bibleKey={verseBibleKey}
+                iconClassName={getNameTypeIconClass(record.type)}
                 title={record.title}
                 description={record.description}
                 facts={facts}
@@ -215,6 +221,7 @@ export function RenderLocationDetailComp({
         <div className="location-name-lookup__detail" style={{ fontFamily }}>
             <BasicInfoComp
                 bibleKey={verseBibleKey}
+                iconClassName={LOCATION_ICON_CLASS}
                 title={record.title}
                 description={record.description}
                 facts={facts}
@@ -306,6 +313,9 @@ export function RenderVerseDetailComp({
     return (
         <div className="location-name-lookup__detail" style={verseData.style}>
             <div className="location-name-lookup__basic-title">
+                <i
+                    className={`${VERSE_ICON_CLASS} location-name-lookup__basic-icon`}
+                />
                 {verseData.title}
             </div>
             <p className="location-name-lookup__verse-text">

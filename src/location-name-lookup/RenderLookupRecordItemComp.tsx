@@ -1,5 +1,8 @@
 import './LocationNameLookupPanelComp.scss';
 
+import type { MouseEvent } from 'react';
+
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { showGraphPreviewContextMenu } from '../graph-view/graphContextMenuHelpers';
 import type { DetailPanelKindType } from './detailPanelHelpers';
 import { openDetailPanel } from './detailPanelHelpers';
@@ -35,12 +38,29 @@ export default function RenderLookupRecordItemComp({
     // Where the record was found, e.g. the verses of the passage attesting it.
     extraLabel?: string;
 }>) {
+    const showContextMenu = (event: MouseEvent) => {
+        showGraphPreviewContextMenu(event.nativeEvent, {
+            kind,
+            recordId: record.id,
+            name: record.name,
+        });
+    };
     return (
-        <li className="list-group-item p-0 bg-transparent">
+        // The row is a flex ROW of two siblings rather than one button with the
+        // menu nested inside it: a button inside a button is invalid markup and
+        // the inner one's clicks would still open the detail panel behind the
+        // menu.
+        <li
+            className={
+                'list-group-item p-0 bg-transparent d-flex align-items-start' +
+                ' location-name-lookup__record-row'
+            }
+        >
             <button
                 className={
-                    'btn btn-sm w-100 text-start d-flex align-items-start' +
-                    ' gap-2 px-2 py-1 rounded-0'
+                    'btn btn-sm text-start d-flex align-items-start' +
+                    ' gap-2 px-2 py-1 rounded-0' +
+                    ' location-name-lookup__record-button'
                 }
                 type="button"
                 title={record.title || getRecordDisplayName(record)}
@@ -51,13 +71,7 @@ export default function RenderLookupRecordItemComp({
                         name: record.name,
                     });
                 }}
-                onContextMenu={(event) => {
-                    showGraphPreviewContextMenu(event.nativeEvent, {
-                        kind,
-                        recordId: record.id,
-                        name: record.name,
-                    });
-                }}
+                onContextMenu={showContextMenu}
             >
                 <i className={`${record.iconClass} mt-1 text-secondary`} />
                 <span className="d-flex flex-column location-name-lookup__text">
@@ -86,6 +100,13 @@ export default function RenderLookupRecordItemComp({
                     ) : null}
                 </span>
             </button>
+            {/* Right-clicking the row opens the same menu; this makes it
+                reachable without a right button — and visible at all, which a
+                context menu on a plain-looking list row is not. */}
+            <ContextMenuDotsButtonComp
+                className="location-name-lookup__record-menu"
+                onOpening={showContextMenu}
+            />
         </li>
     );
 }

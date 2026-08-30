@@ -1,5 +1,6 @@
 import { type ChangeEvent, useCallback, type CSSProperties } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import {
     useStateSettingNumber,
@@ -281,6 +282,10 @@ export default function ForegroundQuickTextComp() {
                         <i className="bi bi-display" />{' '}
                         {tran('Show Quick Text')}
                     </button>
+                    <ContextMenuDotsButtonComp
+                        label={tran('Show on Screens')}
+                        onOpening={handleContextMenuOpening}
+                    />
                 </div>
             </div>
             <div>{genHidingElement(false)}</div>

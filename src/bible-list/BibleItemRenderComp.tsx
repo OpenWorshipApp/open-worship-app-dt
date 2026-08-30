@@ -11,6 +11,7 @@ import {
     handleAttachBackgroundDrop,
     extractDropData,
 } from '../helper/dragHelpers';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { BibleKeySelectionMiniComp } from '../bible-lookup/BibleKeySelectionComp';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
@@ -207,7 +208,10 @@ export default function BibleItemRenderComp({
     const fileSource = FileSource.getInstance(filePath);
     return (
         <li
-            className="list-group-item item app-caught-hover-pointer px-3"
+            className={
+                'list-group-item item app-caught-hover-pointer px-3' +
+                ' app-has-action-rail-2'
+            }
             ref={improveBibleItemTitleOnHover.bind(
                 null,
                 bibleItem.bibleKey,
@@ -269,12 +273,18 @@ export default function BibleItemRenderComp({
                         </span>
                     )}
                 </div>
-                <div className="float-end">
-                    <AttachBackgroundIconComp
-                        filePath={filePath}
-                        id={bibleItem.id}
-                    />
-                </div>
+            </div>
+            {/* Pinned to the row's border edge, outside the content's own
+                padding: that is what puts this rail at the same x as every
+                other list's, which is the whole point of having one. */}
+            <div className="app-action-rail app-action-rail--pinned">
+                <AttachBackgroundIconComp
+                    filePath={filePath}
+                    id={bibleItem.id}
+                />
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
         </li>
     );

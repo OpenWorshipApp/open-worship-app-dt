@@ -1,6 +1,7 @@
 import { type ChangeEvent, type CSSProperties } from 'react';
 import { useCallback } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
@@ -180,6 +181,10 @@ function CountDownOnDatetimeComp({
                     <i className="bi bi-play-fill" />{' '}
                     {tran('Start Countdown to DateTime')}
                 </button>
+                <ContextMenuDotsButtonComp
+                    label={tran('Show on Screens')}
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
         </div>
     );
@@ -316,6 +321,10 @@ function CountDownInSetComp({
                 >
                     <i className="bi bi-play-fill" /> {tran('Start Countdown')}
                 </button>
+                <ContextMenuDotsButtonComp
+                    label={tran('Show on Screens')}
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
         </div>
     );

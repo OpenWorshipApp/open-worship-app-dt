@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 
 import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import {
     PRESENTING_FLOW_CC_ROW_ATTR,
@@ -254,6 +255,12 @@ export default function PresentingFlowRowComp({
                 />
             ) : null}
             {extraChild}
+            {/* Everything a run-sheet line can be told to do lives in its menu —
+                a parked row's only way back included, and that row is
+                deliberately not a button. */}
+            {onContextMenu === undefined ? null : (
+                <ContextMenuDotsButtonComp onOpening={onContextMenu} />
+            )}
         </div>
     );
 }

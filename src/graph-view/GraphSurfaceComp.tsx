@@ -17,6 +17,7 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type {
+    GraphBoundsType,
     GraphNeighbourType,
     GraphNodeViewType,
     GraphSourceType,
@@ -28,6 +29,7 @@ import {
     GRAPH_ZOOM_RANGE,
     centreGraphInViewport,
     fitGraphToViewport,
+    getEdgeBowIndexMap,
     getEdgeLabelPoint,
     getEdgePathD,
     getPathEdgeKeySet,
@@ -69,6 +71,79 @@ type DragStateType = {
     startY: number;
 };
 
+type DragEdgeEntryType = {
+    isFrom: boolean;
+    otherX: number;
+    otherY: number;
+    bow: number;
+    path: SVGPathElement;
+    label: SVGTextElement | null;
+};
+
+type DragCacheType = {
+    // Identity guard: a store commit mid-drag re-renders the canvas, so the
+    // cached elements would be dead — a mismatch here rebuilds instead.
+    graph: GraphViewType;
+    nodeKey: string;
+    element: HTMLElement | null;
+    bounds: GraphBoundsType;
+    entryList: DragEdgeEntryType[];
+};
+
+/**
+ * Everything a node-drag frame needs, resolved ONCE per gesture instead of per
+ * rAF: the box element, the incident edges' DOM nodes, the fixed endpoints'
+ * positions, the bows and the world bounds are identical for every frame of
+ * one drag, and re-deriving them each frame made the hot path
+ * O(edges x nodes) with a DOM query per incident edge on top.
+ */
+function buildDragCache(
+    world: HTMLElement,
+    graph: GraphViewType,
+    nodeKey: string,
+): DragCacheType {
+    const nodeByKey = new Map(
+        graph.nodeList.map((node) => {
+            return [node.key, node];
+        }),
+    );
+    const bowByKey = getEdgeBowIndexMap(graph.edgeList);
+    const entryList: DragEdgeEntryType[] = [];
+    for (const edge of graph.edgeList) {
+        if (edge.fromKey !== nodeKey && edge.toKey !== nodeKey) {
+            continue;
+        }
+        const path = world.querySelector<SVGPathElement>(
+            `[data-edge-key="${CSS.escape(edge.key)}"]`,
+        );
+        const other = nodeByKey.get(
+            edge.fromKey === nodeKey ? edge.toKey : edge.fromKey,
+        );
+        if (path === null || other === undefined) {
+            continue;
+        }
+        entryList.push({
+            isFrom: edge.fromKey === nodeKey,
+            otherX: other.x,
+            otherY: other.y,
+            bow: bowByKey.get(edge.key) ?? 0,
+            path,
+            label: world.querySelector<SVGTextElement>(
+                `[data-edge-label-for="${CSS.escape(edge.key)}"]`,
+            ),
+        });
+    }
+    return {
+        graph,
+        nodeKey,
+        element: world.querySelector<HTMLElement>(
+            `[data-node-key="${CSS.escape(nodeKey)}"]`,
+        ),
+        bounds: getWorldBounds(graph.nodeList),
+        entryList,
+    };
+}
+
 /**
  * The interactive graph surface: pan, zoom, node drag, expansion and the
  * toolbar above it.
@@ -102,6 +177,7 @@ export default function GraphSurfaceComp<TContext>({
     const worldRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
     const dragRef = useRef<DragStateType | null>(null);
+    const dragCacheRef = useRef<DragCacheType | null>(null);
     const frameRef = useRef<number | null>(null);
     const [busyNodeKey, setBusyNodeKey] = useState<string | null>(null);
     const graphRef = useAppCurrentRef(graph);
@@ -110,7 +186,18 @@ export default function GraphSurfaceComp<TContext>({
     const verseFontFamilyRef = useAppCurrentRef(verseFontFamily);
     const { nodeList, edgeList } = useMemo(() => {
         return getVisibleGraph(graph);
-    }, [graph]);
+        // The STRUCTURAL fields, not the graph object: a pan or zoom commit
+        // replaces the graph, and recomputing visibility then would hand every
+        // box and edge a fresh identity — re-rendering the whole canvas per
+        // wheel tick whenever a relation filter is active.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        graph.nodeList,
+        graph.edgeList,
+        graph.hiddenRelationList,
+        graph.rootKey,
+        graph.pathNodeKeyList,
+    ]);
 
     /**
      * Node views, resolved once per render pass rather than per box.
@@ -118,14 +205,19 @@ export default function GraphSurfaceComp<TContext>({
      * These are Map lookups into the already-loaded dataset, and the result
      * holds only the small view objects — never the records themselves, which
      * belong to the reference-counted managers.
+     *
+     * The FULL node list rather than the visible one, so the edge-label
+     * resolver below can read a view for any endpoint instead of paying a
+     * per-edge record lookup of its own.
      */
     const viewByKey = useMemo(() => {
         const result = new Map<string, GraphNodeViewType | null>();
-        for (const node of nodeList) {
+        for (const node of graph.nodeList) {
             result.set(node.key, source.getNodeView(context, node));
         }
         return result;
-    }, [nodeList, source, context]);
+    }, [graph.nodeList, source, context]);
+    const viewByKeyRef = useAppCurrentRef(viewByKey);
 
     /**
      * Neighbour counts for the expand badges.
@@ -160,7 +252,11 @@ export default function GraphSurfaceComp<TContext>({
     }, [nodeList]);
     const pathEdgeKeySet = useMemo(() => {
         return getPathEdgeKeySet(graph);
-    }, [graph]);
+        // Structural fields only, same as `getVisibleGraph` above: a new Set
+        // per viewport commit broke the edge layer's memo and re-rendered
+        // every edge on every wheel tick.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [graph.edgeList, graph.pathNodeKeyList]);
     const pathNodeKeySet = useMemo(() => {
         return new Set(graph.pathNodeKeyList);
     }, [graph.pathNodeKeyList]);
@@ -188,57 +284,40 @@ export default function GraphSurfaceComp<TContext>({
         if (drag.nodeKey === null) {
             return;
         }
+        const currentGraph = graphRef.current;
+        let cache = dragCacheRef.current;
+        if (
+            cache === null ||
+            cache.graph !== currentGraph ||
+            cache.nodeKey !== drag.nodeKey
+        ) {
+            cache = buildDragCache(world, currentGraph, drag.nodeKey);
+            dragCacheRef.current = cache;
+        }
         // Written straight to the DOM: committing to the store per pointer
         // frame would re-render every box sixty times a second.
-        const element = world.querySelector<HTMLElement>(
-            `[data-node-key="${CSS.escape(drag.nodeKey)}"]`,
-        );
-        if (element !== null) {
-            element.style.left = `${drag.startX - GRAPH_GEOMETRY.NODE_WIDTH / 2}px`;
-            element.style.top = `${drag.startY - GRAPH_GEOMETRY.NODE_HEIGHT / 2}px`;
+        if (cache.element !== null) {
+            cache.element.style.left = `${drag.startX - GRAPH_GEOMETRY.NODE_WIDTH / 2}px`;
+            cache.element.style.top = `${drag.startY - GRAPH_GEOMETRY.NODE_HEIGHT / 2}px`;
         }
-        const currentGraph = graphRef.current;
-        const worldBounds = getWorldBounds(currentGraph.nodeList);
-        for (const edge of currentGraph.edgeList) {
-            if (edge.fromKey !== drag.nodeKey && edge.toKey !== drag.nodeKey) {
-                continue;
-            }
-            const path = world.querySelector<SVGPathElement>(
-                `[data-edge-key="${CSS.escape(edge.key)}"]`,
-            );
-            if (path === null) {
-                continue;
-            }
-            const other = currentGraph.nodeList.find((node) => {
-                return (
-                    node.key ===
-                    (edge.fromKey === drag.nodeKey ? edge.toKey : edge.fromKey)
-                );
-            });
-            if (other === undefined) {
-                continue;
-            }
-            const moved = {
-                x: drag.startX - worldBounds.left,
-                y: drag.startY - worldBounds.top,
-            };
+        const moved = {
+            x: drag.startX - cache.bounds.left,
+            y: drag.startY - cache.bounds.top,
+        };
+        for (const entry of cache.entryList) {
             const fixed = {
-                x: other.x - worldBounds.left,
-                y: other.y - worldBounds.top,
+                x: entry.otherX - cache.bounds.left,
+                y: entry.otherY - cache.bounds.top,
             };
-            const isFrom = edge.fromKey === drag.nodeKey;
-            const start = isFrom ? moved : fixed;
-            const end = isFrom ? fixed : moved;
-            // The SAME curve the renderer draws, or the edge would snap from a
-            // curve to a straight line the moment a drag started.
-            path.setAttribute('d', getEdgePathD(start, end));
-            const label = world.querySelector<SVGTextElement>(
-                `[data-edge-label-for="${CSS.escape(edge.key)}"]`,
-            );
-            if (label !== null) {
-                const point = getEdgeLabelPoint(start, end);
-                label.setAttribute('x', `${point.x}`);
-                label.setAttribute('y', `${point.y}`);
+            const start = entry.isFrom ? moved : fixed;
+            const end = entry.isFrom ? fixed : moved;
+            // The SAME curve AND bow the renderer draws, or the edge would
+            // snap to a different line the moment a drag started.
+            entry.path.setAttribute('d', getEdgePathD(start, end, entry.bow));
+            if (entry.label !== null) {
+                const point = getEdgeLabelPoint(start, end, entry.bow);
+                entry.label.setAttribute('x', `${point.x}`);
+                entry.label.setAttribute('y', `${point.y}`);
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -271,6 +350,7 @@ export default function GraphSurfaceComp<TContext>({
             }
             // Focus follows the press so the undo keys land on THIS panel.
             viewportRef.current?.focus({ preventScroll: true });
+            dragCacheRef.current = null;
             dragRef.current = {
                 mode: 'node',
                 pointerId: event.pointerId,
@@ -367,6 +447,7 @@ export default function GraphSurfaceComp<TContext>({
                 return;
             }
             dragRef.current = null;
+            dragCacheRef.current = null;
             if (frameRef.current !== null) {
                 globalThis.cancelAnimationFrame(frameRef.current);
                 frameRef.current = null;
@@ -430,17 +511,47 @@ export default function GraphSurfaceComp<TContext>({
             const rect = viewport.getBoundingClientRect();
             return { x: clientX - rect.left, y: clientY - rect.top };
         };
-        const handleWheel = (event: WheelEvent) => {
-            event.preventDefault();
+        // Wheel ticks are coalesced to ONE store commit per animation frame: a
+        // trackpad fires several events per frame, and every commit re-renders
+        // the surface and re-lays-out the whole CSS-zoomed canvas. The
+        // exponential step composes over the summed delta, so the zoom lands
+        // where per-tick commits would have put it.
+        let pendingWheel: {
+            deltaY: number;
+            clientX: number;
+            clientY: number;
+        } | null = null;
+        let wheelFrame: number | null = null;
+        const applyWheel = () => {
+            wheelFrame = null;
+            const pending = pendingWheel;
+            pendingWheel = null;
+            if (pending === null) {
+                return;
+            }
             const currentGraph = graphRef.current;
             getGraphEngine().setViewport(
                 currentGraph.key,
                 zoomAtPoint(
                     currentGraph,
-                    getWheelZoomPercent(currentGraph.zoomPercent, event.deltaY),
-                    getAnchor(event.clientX, event.clientY),
+                    getWheelZoomPercent(
+                        currentGraph.zoomPercent,
+                        pending.deltaY,
+                    ),
+                    getAnchor(pending.clientX, pending.clientY),
                 ),
             );
+        };
+        const handleWheel = (event: WheelEvent) => {
+            event.preventDefault();
+            pendingWheel = {
+                deltaY: (pendingWheel?.deltaY ?? 0) + event.deltaY,
+                clientX: event.clientX,
+                clientY: event.clientY,
+            };
+            if (wheelFrame === null) {
+                wheelFrame = globalThis.requestAnimationFrame(applyWheel);
+            }
         };
         let pinchDistance = 0;
         const getDistance = (touchList: TouchList) => {
@@ -488,6 +599,9 @@ export default function GraphSurfaceComp<TContext>({
         viewport.addEventListener('touchend', handleTouchEnd);
         viewport.addEventListener('touchcancel', handleTouchEnd);
         return () => {
+            if (wheelFrame !== null) {
+                globalThis.cancelAnimationFrame(wheelFrame);
+            }
             viewport.removeEventListener('wheel', handleWheel);
             viewport.removeEventListener('touchstart', handleTouchStart);
             viewport.removeEventListener('touchmove', handleTouchMove);
@@ -1022,13 +1136,11 @@ export default function GraphSurfaceComp<TContext>({
                     return item.canonicalKind === edge.relation;
                 },
             );
-            const node = graphRef.current.nodeList.find((item) => {
-                return item.key === edge.toKey;
-            });
-            const view =
-                node === undefined
-                    ? null
-                    : sourceRef.current.getNodeView(contextRef.current, node);
+            // The views already resolved for the boxes, reused. A per-edge
+            // `nodeList.find` plus a fresh `getNodeView` here cost
+            // O(edges x nodes) with an allocation per edge, every time the
+            // edge layer rendered.
+            const view = viewByKeyRef.current.get(edge.toKey) ?? null;
             const rawLabel = sourceRef.current.getRelationLabel(
                 edge.relation,
                 view,

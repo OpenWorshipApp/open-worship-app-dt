@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import {
@@ -75,20 +76,32 @@ export function PathPreviewerComp({
         ? 'text-muted'
         : 'text-danger-emphasis bg-danger-subtle border-danger fw-bold';
     return (
-        <div
-            className={
-                'app-ellipsis-left app-border-white-round px-1 flex-fill' +
-                ` ${onClick ? 'pointer' : ''}` +
-                ` ${stateClassName}`
-            }
-            onClick={onClick}
-            title={isValidPath ? cleanedDirectoryPath : tran('Invalid Path')}
-            style={{
-                fontSize: '0.9rem',
-            }}
-            onContextMenu={handleContextMenuOpening}
-        >
-            {directoryPath}
+        // The ⋮ is a SIBLING of the path, never a child of it: the label is
+        // `app-ellipsis-left`, which is `direction: rtl`, and anything nested in
+        // it is re-ordered by that too.
+        <div className="d-flex align-items-center flex-fill">
+            <div
+                className={
+                    'app-ellipsis-left app-border-white-round px-1 flex-fill' +
+                    ` ${onClick ? 'pointer' : ''}` +
+                    ` ${stateClassName}`
+                }
+                onClick={onClick}
+                title={
+                    isValidPath ? cleanedDirectoryPath : tran('Invalid Path')
+                }
+                style={{
+                    fontSize: '0.9rem',
+                }}
+                onContextMenu={handleContextMenuOpening}
+            >
+                {directoryPath}
+            </div>
+            {canOpenFileExplorer ? (
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
+            ) : null}
         </div>
     );
 }

@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 
+import { CONTEXT_MENU_DOTS_CLASSNAME } from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { genStringListSettingManager } from '../helper/SettingManager';
@@ -198,6 +199,23 @@ function RendHistoryItemComp({
                 <i className="bi bi-x" />
             </small>
             <small className="flex-fill app-ellipsis">{historyText}</small>
+            {/* A `span`, not the shared button component: this row IS a
+                `<button>` and may not hold another one. Everything else about it
+                — class, label, the press it swallows — is the same. */}
+            <span
+                role="button"
+                tabIndex={-1}
+                className={CONTEXT_MENU_DOTS_CLASSNAME}
+                title={tran('More Options')}
+                aria-label={tran('More Options')}
+                onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleContextMenuOpening(historyText, event);
+                }}
+            >
+                <i className="bi bi-three-dots-vertical" />
+            </span>
         </button>
     );
 }

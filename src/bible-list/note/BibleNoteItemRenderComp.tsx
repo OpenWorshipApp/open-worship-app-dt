@@ -14,6 +14,7 @@ import { DragTypeEnum } from '../../helper/DragInf';
 import FileSource from '../../helper/FileSource';
 import { changeDragEventStyle, stopDraggingState } from '../../helper/helpers';
 import { attachBackgroundManager } from '../../others/AttachBackgroundManager';
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
 import ItemReadErrorComp from '../../others/ItemReadErrorComp';
 import Note from './Note';
@@ -176,7 +177,7 @@ export default function BibleNoteItemRenderComp({
     const fileSource = FileSource.getInstance(filePath);
     return (
         <li
-            className="list-group-item item ps-2 pe-1"
+            className="list-group-item item ps-2 pe-1 app-has-action-rail"
             title={tran('Double click to open note')}
             style={{
                 height: 28,
@@ -228,6 +229,13 @@ export default function BibleNoteItemRenderComp({
                     </div>
                 )}
             </div>
+            {isEditingTitle ? null : (
+                <div className="app-action-rail app-action-rail--pinned">
+                    <ContextMenuDotsButtonComp
+                        onOpening={handleContextMenuOpening}
+                    />
+                </div>
+            )}
         </li>
     );
 }

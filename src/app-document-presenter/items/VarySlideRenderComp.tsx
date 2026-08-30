@@ -13,6 +13,7 @@ import {
     useAttachedBackgroundData,
     extractDropData,
 } from '../../helper/dragHelpers';
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import ShowingScreenIconComp from '../../_screen/preview/ShowingScreenIcon';
 import appProvider from '../../server/appProvider';
 import { changeDragEventStyle } from '../../helper/helpers';
@@ -134,6 +135,13 @@ function VarySlideHeaderComp({
                         />
                     </span>
                     {isChanged && <span style={{ color: 'red' }}>*</span>}
+                    {/* Everything a slide can do — attach a background, colour
+                        note it, disable it, present it — lives in the menu the
+                        header ends with. It carries no handler on purpose: a
+                        presenting flow's preview wraps this card and CAPTURES
+                        `contextmenu` to answer with the run's menu instead, so
+                        the button has to ask the same way a right-click does. */}
+                    <ContextMenuDotsButtonComp />
                 </div>
             </div>
         </div>

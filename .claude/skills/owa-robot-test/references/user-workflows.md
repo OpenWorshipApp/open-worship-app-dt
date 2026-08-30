@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-29t** (**W-38 steps 5 and 10: opening a record always starts
+**workflowsVersion: 2026-08-30c** (**W-01b step 1: the `⋮` buttons line up.** They now share one size and one column down a list, each level with its own row, and a folder's own `⋮` stays on its name rather than drifting down among the files it holds. Verified live 2026-08-30.)
+
+Previous: **2026-08-30b** (**new W-01b — the `⋮` button, app-wide.** Every surface whose extra actions were reachable only by right-clicking it now carries a visible `⋮` that opens the same menu — file rows, bible items and notes, lookup records and history, bible views, slide previews, background cards and rows, presenting flow lines and preview frames, screen previews, graph boxes, Resources folders and files, cross-reference cards, the foreground buttons' choose-a-screen menu, the verse audio player and canvas item cards. Right-click is unchanged. W-29 step 6 and W-38 step 2 now point at it rather than describing a right-click as the only way in. Verified live 2026-08-30 on the reader.)
+
+Previous: **2026-08-30a** (**W-38 step 2 and W-29 step 6: a lookup row's menu has a button now, and a record window shows its kind in the body.** **Open Graph Preview** was reachable only by right-clicking the row — invisible unless you knew to try it, and out of reach without a right mouse button; every row in the lookup list and in the **names and locations in your reading** panel now carries a **⋮** that opens the same menu. The person/place/book icon that used to sit in a record window's title bar, crowded against its buttons, now leads the description it describes. Verified live 2026-08-30, km.)
+
+Previous: **2026-08-29t** (**W-38 steps 5 and 10: opening a record always starts
 fresh, and a box can be made the centre or the new starting point.** The graph no longer
 resumes an invisible "last session" — clicking `David` gave you back whatever that window
 had drifted into, which after a path or a re-root was somebody else's family under David's
@@ -630,6 +636,32 @@ The Presenter has a header and three resizable columns:
 Drag any divider between panels to resize them; the size is remembered. 📸
 
 _Verify: GL-12, NAV-01..02, PL-01, PR-04._
+
+### W-01b — The `⋮` button: everything a thing can do
+
+**Goal:** find the actions that used to be hidden behind a right-click.
+
+Almost everything in the app — a file in a list, a Bible verse in your reading list, a
+note, a slide, a background, a line of a presenting flow, a screen preview, a folder in
+**Resources**, a box in a connection graph — has more it can do than the click on it
+does. Those extras live in a small menu.
+
+1. Look at the right-hand end of the row, or the top-right of the card. There is a
+   faint **`⋮`** there, always — you do not have to hover to find it. In a list they
+   line up in a straight column down the right edge, each one level with the row it
+   belongs to; a folder keeps its own `⋮` up on its name, beside the ones belonging to
+   the files inside it. 📸
+2. **Click it.** The menu opens right at the button — the same menu you get by
+   **right-clicking** the row itself, which still works exactly as before.
+   > Clicking `⋮` does NOT also do what clicking the row does: a document you open the
+   > menu on is not selected, and a slide is not sent to a screen.
+3. Pick an entry, or click anywhere else to close the menu without choosing.
+
+> **Why it is there.** A right-click cannot be done on a touch screen, and some
+> machines and browsers keep that button for a menu of their own. The `⋮` is the same
+> menu with a button you can see.
+
+_Verify: GL-24, GL-06._
 
 ### W-02 — Switch between the main pages
 
@@ -2005,9 +2037,14 @@ your Bible reading.
 5. Use the arrows at the bottom to page through results, or type a page number in the
    little box and press **Enter**. Starting a new search always takes you back to
    page 1. 📸
-6. Click a result to open it in its own small window: a short description, then a
-   **Details** (ព័ត៌មានលម្អិត) section with things like **Also called**, **Type**,
+6. Click a result to open it in its own small window: a small icon for what kind of
+   record it is — a person, a place, a book for a verse — then a short description, then
+   a **Details** (ព័ត៌មានលម្អិត) section with things like **Also called**, **Type**,
    **Gender**, **Parents**, **Children** and **Verses** (ខគម្ពីរ). 📸
+   > Every row in the list — and in the **names and locations in your reading** panel —
+   > also carries a **⋮** button at its right end. It opens the same short menu that
+   > right-clicking the row gives you, so you never need a right mouse button
+   > (see **W-38**).
 7. **Verses** starts closed and shows how many there are — some entries have hundreds
    (Jerusalem has 712). Click it to open, and the references turn into readable
    titles like *Joshua 10:1-43*.
@@ -2531,12 +2568,14 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
 
 1. Open the **Names and locations lookup** (`👤📍`) from the Bible Lookup header and find
    a person — try **Jacob** (យ៉ាកុប). 📸
-2. **Right-click** the row and choose **Open Graph Preview** (បើកមើលក្រាបទំនាក់ទំនង). A
-   floating window opens with that person in the middle.
+2. Click the **⋮** at the right end of the row — or **right-click** the row — and
+   choose **Open Graph Preview** (បើកមើលក្រាបទំនាក់ទំនង). A floating window opens with
+   that person in the middle.
    > You can right-click a name anywhere it is already clickable — in the list, in the
    > **names and locations in your reading** panel, underlined inside a verse, or in the
-   > related-names list of a record window. A record window also has a `⛶`-style graph
-   > icon beside its title.
+   > related-names list of a record window. The **⋮** is on the rows of the first two,
+   > which is where you would go looking for it; a record window also has a `⛶`-style
+   > graph icon beside its title.
 3. Each box shows a number next to a small diagram icon — that is how many related
    records it has. **Click the number.** A menu opens listing **All (44)** first, then
    only the kinds this record actually has: *Parents (2)*, *Spouses (4)*, *Siblings (2)*,

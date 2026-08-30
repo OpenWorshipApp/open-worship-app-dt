@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import RenderActionButtonsComp from '../../bible-lookup/RenderActionButtonsComp';
 import { HoverMotionHandler } from '../../helper/domHelpers';
@@ -64,6 +65,9 @@ export default function BibleViewRenderHeaderComp({
                     onClick={handleDelete}
                 />
             </div>
+            {/* The view's own menu. No handler: the bible view around this
+                header owns it. */}
+            <ContextMenuDotsButtonComp />
         </div>
     );
 }

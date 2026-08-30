@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8c7dbfa0-0489-4c4c-899b-1ef4e06fc0df
-  modified: 2026-08-24T20:12:00.000Z
+  modified: 2026-08-30T04:25:40.287Z
 ---
 
 If you edit a module to `import './NewComp'` **before** the file exists, the dev
@@ -32,9 +32,33 @@ shows the export is right there. Confirm with
 with only a sourcemap comment is the cached truncation. Same fix: touch
 `vite.config.ts`.
 
-**Why:** it looks like a code bug and sends you auditing a correct file.
+**Sibling case (2026-08-30): a stale transform that serves an OLD, VALID version
+— the dangerous one, because nothing errors.** During QA of `src/graph-view/`
+the dev server (started 17:26) kept serving the **pre-feature** transform of
+`LocationNameDetailPanelsComp.tsx`, a file written at 19:52 and never
+hot-updated. The served module had **0 occurrences** of
+`OpenGraphPreviewButtonComp` while disk had 2, so the detail panel's
+`bi-diagram-3` button was genuinely absent from the DOM. No 500, no empty
+module, no console error — just an earlier working version of the component.
+It **survived a full page reload** (the transform cache is server-side), and it
+nearly went into a report as a Critical "feature not implemented".
+
+Unlike the two cases above, `touch`ing the *source file itself* DID clear this
+one (0 → 3 occurrences immediately, no dev-server restart needed) — worth trying
+before `vite.config.ts`, since it does not disturb a user who is mid-edit.
+
+Confirm from inside the page rather than with curl (no cert hassle):
+`await (await fetch('/src/<path>.tsx?t=' + Date.now())).text()` then grep the
+symbol you expect. A cache-busting query busts the BROWSER cache only, so a hit
+here really is what the server holds.
+
+**Why:** it looks like a code bug and sends you auditing a correct file — or, in
+the silent variant, like an unimplemented feature.
 
 **How to apply:** create the new file first, then add the import — or, once
-stuck, touch `vite.config.ts` and reload. Same family as
+stuck, touch `vite.config.ts` and reload. **When a feature that exists on disk
+appears missing in the running app, fetch the SERVED module and grep it before
+concluding anything** — especially after HMR delivered a feature into a renderer
+that was loaded at an older commit. Same family as
 [[vite-dep-optimizer-504-restart]] (a 504 on a `.vite/deps` chunk), and the
 reload it forces is the kind described in [[dev-hmr-stale-state-qa]].

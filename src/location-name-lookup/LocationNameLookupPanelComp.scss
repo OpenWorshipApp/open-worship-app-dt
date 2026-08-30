@@ -32,6 +32,23 @@
     text-overflow: ellipsis;
   }
 
+  // The record button and its menu button share the row. The record button must
+  // be able to shrink below its content or a long title widens the whole list
+  // instead of ellipsizing (a flex child defaults to `min-width: auto`).
+  .location-name-lookup__record-button {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  // Centred on the row, not top-aligned with the record's icon: the row is two
+  // lines and the ⋮ acts on both. The row itself is `align-items: start`
+  // because the kind icon has to sit on the name's line. Everything else about
+  // the button — its box, its dimming, its hover — is the app-wide
+  // `.app-context-menu-dots`.
+  .location-name-lookup__record-menu {
+    align-self: center;
+  }
+
   // Titles run to a sentence or two; two lines is enough to identify a record
   // without letting one row dominate the list.
   .location-name-lookup__title {
@@ -74,6 +91,15 @@
 .location-name-lookup__detail {
   padding: 8px 10px 12px 10px;
   font-size: 13.5px;
+
+  // The record's kind icon — it used to live in the floating widget's title bar,
+  // where it fought the copy/collapse/close chrome for room. INLINE on the
+  // summary's first line, not in a column of its own: a column would indent
+  // every following line by its width, and this panel is 360px wide.
+  .location-name-lookup__basic-icon {
+    margin-right: 6px;
+    color: var(--bs-secondary-color);
+  }
 
   .location-name-lookup__basic-title {
     font-weight: 600;

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import type { CameraInfoType } from '../helper/cameraHelpers';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -77,10 +78,15 @@ export default function BackgroundCameraItemComp({
             onContextMenu={handleContextMenuOpening}
             onClick={handleClicking}
         >
+            <ContextMenuDotsButtonComp
+                isCorner
+                onOpening={handleContextMenuOpening}
+            />
             <div
                 className="card-header w-100 app-ellipsis p-0 px-1"
                 style={{
                     height: `${TITLE_HEIGHT}px`,
+                    paddingRight: '18px',
                 }}
                 title={cameraInfo.label}
             >

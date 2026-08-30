@@ -1,6 +1,6 @@
 import './graphView.scss';
 
-import { lazy } from 'react';
+import { lazy, memo } from 'react';
 import { createPortal } from 'react-dom';
 
 import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
@@ -80,7 +80,12 @@ function RenderLookupGraphTitleComp({
     return <RenderGraphTitleComp graph={graph} fontFamily={fontFamily} />;
 }
 
-function RenderGraphPanelComp({
+/**
+ * Memoized so a change to ONE graph — every zoom or pan commit replaces that
+ * graph's object in the engine — does not re-render every other open panel's
+ * whole widget tree: the unchanged graphs keep their identity and bail here.
+ */
+const RenderGraphPanelComp = memo(function RenderGraphPanelComp({
     graph,
     index,
 }: Readonly<{ graph: GraphViewType; index: number }>) {
@@ -117,7 +122,7 @@ function RenderGraphPanelComp({
             <RenderGraphBodyComp graph={graph} />
         </FloatingWidgetComp>
     );
-}
+});
 
 export default function GraphViewPanelsComp() {
     const graphList = useOpenGraphList();

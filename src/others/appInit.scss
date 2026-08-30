@@ -14,6 +14,15 @@ body {
 }
 
 .app {
+  // The right-hand strip of a row where its controls live — the colour note
+  // that says something ABOUT the row, and the ⋮ that ACTS on it. One width
+  // for the whole app, so a column of them down a list is a straight rail
+  // rather than three insets that wander with whatever flex parent each button
+  // landed in.
+  --app-action-rail: 22px;
+  // The tallest a row's own line gets. Past it, the row is holding other rows.
+  --app-action-rail-line: 34px;
+
   &:not(.app-floating-widget-portal) {
     width: 100vw !important;
     height: 100vh !important;
@@ -286,6 +295,109 @@ body {
     width: 100vw;
     height: 100vh;
     z-index: $z-index-popup-full-screen;
+  }
+
+  // The `⋮` that opens a surface's context menu — see
+  // `ContextMenuDotsButtonComp`. Global rather than per-feature: it is the SAME
+  // affordance on a file row, a background card and a screen preview, and a
+  // reader who learns it in one list must recognize it in the next.
+  .app-context-menu-dots {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    // ONE box, everywhere. Left to the flex parent it landed in, the same
+    // button came out 18×24px in one list and 18×17px in the next — same
+    // control, two hit targets, and a ragged column down the panel.
+    width: var(--app-action-rail);
+    height: var(--app-action-rail);
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    background-color: transparent;
+    color: inherit;
+    line-height: 1;
+    // Visible without shouting: one of these sits on every row of a long list.
+    opacity: 0.55;
+    cursor: pointer;
+
+    // Set here rather than inherited: these sit in headers and rows whose own
+    // font-size ranges from 10.5px to the bible text's, and the glyph is a
+    // control, not part of that text.
+    > i {
+      font-size: 0.95rem;
+    }
+
+    &:hover,
+    &:focus-visible {
+      opacity: 1;
+      background-color: var(--bs-tertiary-bg);
+    }
+  }
+
+  // The strip itself. Absolute against the row so it never takes width from a
+  // title, and centred on the row's full height — a control that acts on the
+  // whole row has no business hanging off its first line.
+  .app-action-rail {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    padding-right: 2px;
+  }
+
+  // Centred on the row's own LINE, not on its full height. A file row grows to
+  // hold the items inside it, and a rail centred on all of that parks the
+  // file's own ⋮ halfway down its children, level with one of THEIR ⋮ —
+  // two controls on one line belonging to different rows.
+  //
+  // So it stretches, and stops at one line: any row taller than this is holding
+  // something, and the rail stays up on the header where the row's own name is.
+  // Top-aligning instead was worse in the common case — on a folder row it left
+  // the ⋮ hovering above the label it belongs to.
+  .app-action-rail--pinned {
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    right: 0;
+    max-height: var(--app-action-rail-line);
+  }
+
+  // Rows that carry a pinned rail hold that width open, so a long title
+  // ellipsizes at the rail instead of running underneath it. Pinned rails only
+  // — an inline one already takes its width in the flow, and padding there just
+  // pushes the button in off the edge, which is the ragged column this whole
+  // rail exists to fix.
+  //
+  // Nothing here arms the button on ROW hover, deliberately: the glyph is
+  // already legible at rest, the arming would reach only the rows that carry
+  // this class, and a touch screen — the reason these buttons exist at all —
+  // never hovers anything.
+  .app-has-action-rail {
+    padding-right: calc(var(--app-action-rail) + 6px) !important;
+  }
+
+  // A rail may hold more than the ⋮ — a bible item's attached-background
+  // badge is an action on the row too, and belongs in the same strip.
+  .app-has-action-rail-2 {
+    padding-right: calc(var(--app-action-rail) * 2 + 6px) !important;
+  }
+
+  // For cards and previews, where the content fills the box and an inline
+  // button would take a bite out of it. Needs a positioned host.
+  .app-context-menu-dots--corner {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    z-index: 2;
+    // The card underneath is usually an image or a rendered slide, so the
+    // button carries its own ground rather than trusting the contrast.
+    background-color: rgba(0, 0, 0, 0.45);
+    color: #fff;
+
+    &:hover,
+    &:focus-visible {
+      background-color: rgba(0, 0, 0, 0.75);
+    }
   }
 
   .app-round-icon {

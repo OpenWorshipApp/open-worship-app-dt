@@ -1,5 +1,6 @@
 import { lazy, useCallback } from 'react';
 
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../../lang/langHelpers';
 import {
     handBibleKeyContextMenuOpening,
@@ -160,6 +161,8 @@ export default function BibleXMLInfoComp({
                         </button>
                     </div>
                 </div>
+                {/* No handler: the row around it owns the menu. */}
+                <ContextMenuDotsButtonComp />
             </div>
             {isShowing ? (
                 <AppSuspenseComp>

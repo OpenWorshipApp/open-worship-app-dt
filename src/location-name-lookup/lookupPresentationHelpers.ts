@@ -8,6 +8,10 @@ export const ALL_TYPES = 'all';
 
 export const LOCATION_ICON_CLASS = 'bi bi-geo-alt-fill';
 
+// A verse panel has no record behind it, so it names its own icon
+// rather than reading one off a record's `type`.
+export const VERSE_ICON_CLASS = 'bi bi-book-half';
+
 const NAME_TYPE_ICON_CLASS: { [key in MentionNameType]: string } = {
     concept: 'bi-lightbulb-fill',
     deity: 'bi-brightness-high-fill',

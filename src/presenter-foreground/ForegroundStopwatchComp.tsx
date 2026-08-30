@@ -1,5 +1,6 @@
 import { useCallback, type CSSProperties } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
@@ -146,6 +147,10 @@ export default function ForegroundStopwatchComp() {
                         <i className="bi bi-play-fill" />{' '}
                         {tran('Start Stopwatch')}
                     </button>
+                    <ContextMenuDotsButtonComp
+                        label={tran('Show on Screens')}
+                        onOpening={handleContextMenuOpening}
+                    />
                 </div>
             </div>
             <div className="mt-2">{genHidingElement(false)}</div>

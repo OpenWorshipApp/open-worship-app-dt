@@ -245,6 +245,61 @@ export function findNamesMentioningLocation(
     return resultList;
 }
 
+/**
+ * Mentioned-by counts for EVERY location, built in ONE pass on first use.
+ *
+ * A location's count badge needs "how many names list this place", and the
+ * dataset has no location-to-name array — so counting one location means the
+ * same full scan `findNamesMentioningLocation` does. A graph that gains ten
+ * location boxes in one expansion used to pay ten of those scans inside a
+ * single render pass; one pass over the names builds every location's count at
+ * the cost of ONE scan, and each badge becomes a Map lookup.
+ *
+ * This is a cache, but not the kind the adjacency comment below forbids: it is
+ * WEAKLY keyed by the managers object the reference count in
+ * `lookupDataHelpers` hands out, so it can never outlive the dataset it
+ * describes — and it holds only `id -> number`, never a record.
+ */
+const mentionCountMapCache = new WeakMap<
+    LookupManagersType,
+    Map<string, number>
+>();
+
+function getMentionCountMap(managers: LookupManagersType) {
+    const cached = mentionCountMapCache.get(managers);
+    if (cached !== undefined) {
+        return cached;
+    }
+    const { namesLookupManager, locationsLookupManager } = managers;
+    const countMap = new Map<string, number>();
+    for (const record of namesLookupManager.getAllRecords()) {
+        // A record listing the same location twice still counts once — the
+        // same per-record dedup `findNamesMentioningLocation` gets from its
+        // early `break`. The Set is only allocated for the rare multi-entry
+        // record.
+        let seenIdSet: Set<string> | null = null;
+        for (const entry of record.locations) {
+            const resolved = resolveLocationReference(
+                locationsLookupManager,
+                entry,
+            );
+            if (resolved === null) {
+                continue;
+            }
+            if (record.locations.length > 1) {
+                seenIdSet ??= new Set();
+                if (seenIdSet.has(resolved.id)) {
+                    continue;
+                }
+                seenIdSet.add(resolved.id);
+            }
+            countMap.set(resolved.id, (countMap.get(resolved.id) ?? 0) + 1);
+        }
+    }
+    mentionCountMapCache.set(managers, countMap);
+    return countMap;
+}
+
 function getNameNeighbours(
     managers: LookupManagersType,
     record: Readonly<MentionNameMatch>,
@@ -488,6 +543,29 @@ export const lookupGraphSource: GraphSourceType<LookupManagersType> = {
     },
 
     countNeighbours(managers, node) {
+        // A location's count would otherwise scan every name record — see
+        // `getMentionCountMap`. Same arithmetic as `getLocationNeighbours`:
+        // resolvable related locations plus the names that mention it.
+        if (node.kind === LOOKUP_NODE_KIND.LOCATION) {
+            const record = managers.locationsLookupManager.getRecordById(
+                node.recordId,
+            );
+            if (record === null) {
+                return 0;
+            }
+            let count = getMentionCountMap(managers).get(record.id) ?? 0;
+            for (const entry of record.relatedLocations) {
+                if (
+                    resolveLocationReference(
+                        managers.locationsLookupManager,
+                        entry,
+                    ) !== null
+                ) {
+                    count += 1;
+                }
+            }
+            return count;
+        }
         return this.getNeighbours(managers, node).length;
     },
 

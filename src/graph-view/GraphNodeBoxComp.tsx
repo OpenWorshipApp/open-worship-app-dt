@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import type { GraphNodeType, GraphNodeViewType } from './core';
 import { GRAPH_GEOMETRY } from './core';
@@ -100,6 +101,14 @@ function GraphNodeBoxComp({
                         </span>
                     ) : null}
                 </span>
+                {/* In the HEAD, which a collapsed box still draws — that is the
+                    box with no action buttons at all, and the one whose menu is
+                    hardest to reach without a right button. */}
+                <ContextMenuDotsButtonComp
+                    onOpening={(event) => {
+                        callbacks.onContextMenu(event.nativeEvent, node.key);
+                    }}
+                />
             </div>
             {node.isCollapsed ? null : (
                 <>

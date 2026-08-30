@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import './ColorPicker.scss';
 
 import { useCallback, useState } from 'react';
@@ -131,6 +132,9 @@ export default function ColorPickerComp({
                 >
                     {color}
                 </div>
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
         );
     }
@@ -145,6 +149,10 @@ export default function ColorPickerComp({
                     onClick={handleClose}
                 />
             ) : null}
+            <ContextMenuDotsButtonComp
+                className="float-end"
+                onOpening={handleContextMenuOpening}
+            />
             <div className="p-1 app-overflow-hidden">
                 <RenderColorsComp
                     colors={colorList.main}

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, type CSSProperties } from 'react';
 import { useRef } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import { useAppEffectAsync, useAppCurrentRef } from '../helper/appHooks';
 import LoadingComp from '../others/LoadingComp';
@@ -97,8 +98,17 @@ function RenderCameraInfoComp({
     }, []);
     return (
         <div className="card m-1" style={{ width: `${width}px` }}>
-            <div className="card-header app-ellipsis" title={cameraInfo.label}>
-                {cameraInfo.label}
+            <div
+                className="card-header app-ellipsis d-flex align-items-center"
+                title={cameraInfo.label}
+            >
+                <span className="flex-fill app-ellipsis">
+                    {cameraInfo.label}
+                </span>
+                <ContextMenuDotsButtonComp
+                    label={tran('Show on Screens')}
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
             <div
                 className={

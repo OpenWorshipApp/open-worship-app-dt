@@ -638,32 +638,54 @@ export function DetailsSectionComp({
     );
 }
 
+/**
+ * The record's kind icon, leading its summary.
+ *
+ * It used to sit in the floating widget's TITLE BAR, where it competed with the
+ * copy/collapse/close chrome and was clipped by the title's truncation on a
+ * narrow panel. In the body it leads the text it describes and is zoomed with
+ * it.
+ *
+ * INLINE on the first line rather than in a column of its own: a column indents
+ * every line under it, and on a 360px panel that gutter costs the description
+ * and the fact chips a character of width on every row for nothing. It leads
+ * whichever line comes first, since a record may carry a description with no
+ * title.
+ */
 export function BasicInfoComp({
     bibleKey,
     description,
     facts,
+    iconClassName,
     title,
 }: Readonly<{
     bibleKey: string;
     description: string;
     facts: string[];
+    iconClassName: string;
     title: string;
 }>) {
+    const iconElement = (
+        <i className={`${iconClassName} location-name-lookup__basic-icon`} />
+    );
     return (
         <div className="location-name-lookup__basic-info">
             {title ? (
                 <div className="location-name-lookup__basic-title">
+                    {iconElement}
                     <ReferenceTextComp bibleKey={bibleKey} value={title} />
                 </div>
             ) : null}
             {description ? (
                 <p className="location-name-lookup__basic-description">
+                    {title ? null : iconElement}
                     <ReferenceTextComp
                         bibleKey={bibleKey}
                         value={description}
                     />
                 </p>
             ) : null}
+            {!title && !description ? iconElement : null}
             {facts.length > 0 ? (
                 <div className="location-name-lookup__facts">
                     {facts.map((fact) => {

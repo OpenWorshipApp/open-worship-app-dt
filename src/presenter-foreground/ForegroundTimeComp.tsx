@@ -1,5 +1,6 @@
 import { type ChangeEvent, useCallback, type CSSProperties } from 'react';
 import { useMemo, useState } from 'react';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tz } from 'moment-timezone';
 
 import { tran } from '../lang/langHelpers';
@@ -273,6 +274,10 @@ function TimeInSetComp({
                 >
                     <i className="bi bi-display" /> {tran('Show Time')}
                 </button>
+                <ContextMenuDotsButtonComp
+                    label={tran('Show on Screens')}
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
         </div>
     );

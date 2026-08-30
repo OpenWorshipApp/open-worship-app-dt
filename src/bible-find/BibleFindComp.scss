@@ -42,20 +42,24 @@
     }
 
     // The reference, scoped to this list only -- `BibleDirectViewTitleComp` is
-    // shared with the three cross-reference views, which have no match to
-    // compete with and are left exactly as they are. Here it loses the bordered
-    // blue pill: the whole row is clickable, so the pill was advertising an
-    // affordance that was never its own, in the one colour the match needs for
-    // itself.
+    // shared with the cross-reference views and with Resources, so it is
+    // overridden here, never edited there. It loses the bordered blue pill: the
+    // whole row is clickable, so the pill was advertising an affordance that was
+    // never its own, in the one colour the match needs for itself.
     //
-    // It keeps full `--app-ink` contrast though. This is the column the eye
-    // runs down to find the passage it wants, so it has to be READ, not
-    // glanced past -- muted it was the quietest thing in the row, which is
-    // wrong for the one part of a result that says WHERE you are. It stays
-    // distinct from the verse beside it on weight and size, not on contrast.
+    // On its OWN LINE, the same way the cross-reference list sets it. Inline it
+    // ate the first line of every result -- "1 Corinthians 15:45" is most of a
+    // 350px measure -- so the verse began mid-line at a different x on every
+    // row, and the one column the eye runs down to find its passage never
+    // formed. Stacked, the references line up flush left and the verse under
+    // each one starts where the last one did.
+    //
+    // It keeps full `--app-ink` contrast: this is what says WHERE you are, so
+    // it has to be READ, not glanced past. It stays distinct from the verse
+    // below it on weight and colour, not on size.
     .title {
-      display: inline;
-      margin: 0 0.4rem 0 0 !important;
+      display: block;
+      margin: 0 !important;
       padding: 0 !important;
       // The pill's outline goes with its ground: what is left is a marker.
       border: 0;
@@ -65,8 +69,25 @@
       letter-spacing: 0.01em;
       color: var(--app-ink);
       background-color: transparent;
+      // One line, always: a reference that wrapped would break the column the
+      // stacking exists to make. Its flex parent clips, this names the clip.
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+  }
+
+  // The verse itself, under the reference that names it.
+  //
+  // A rank below the reference in colour, and with a leading wide enough for a
+  // Khmer or Devanagari face at this size -- the match inside it is already the
+  // loudest thing in the panel, so the words around it are the ground that
+  // match is read against, not a second thing competing for attention.
+  .app-find-text {
+    display: block;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--app-muted);
   }
 
   // Where one loaded chunk of results ends and the next begins. Real

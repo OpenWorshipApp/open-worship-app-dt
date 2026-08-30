@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';
@@ -66,8 +67,16 @@ export default function RenderFoundItemComp({
             onContextMenu={handleContextMenuOpening}
             onClick={handleClicking}
         >
-            <BibleDirectViewTitleComp bibleItem={bibleItem} />
+            <div className="d-flex align-items-start">
+                <div className="flex-fill app-overflow-hidden">
+                    <BibleDirectViewTitleComp bibleItem={bibleItem} />
+                </div>
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
+            </div>
             <span
+                className="app-find-text"
                 style={{ fontFamily }}
                 dangerouslySetInnerHTML={{
                     __html: sanitizeHtml(newItem),

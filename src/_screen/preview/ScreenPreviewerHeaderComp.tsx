@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import ShowHideScreen from './ShowHideScreen';
 import MiniScreenClearControlComp from './MiniScreenClearControlComp';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
@@ -86,6 +87,12 @@ export default function ScreenPreviewerHeaderComp({
                             aria-label={fullViewLabel}
                             onClick={handleToggleFullView}
                         />
+                    </div>
+                    {/* The screen's own menu — the one a right-click anywhere on
+                        the preview gives. No handler: the card around this
+                        header owns it. */}
+                    <div className="ms-2">
+                        <ContextMenuDotsButtonComp />
                     </div>
                 </div>
             </div>

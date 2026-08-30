@@ -49,6 +49,11 @@ function RendItemComp({
             className="btn btn-secondary btn-sm p-0 mx-1"
             title={title}
             aria-label={title}
+            // A plain click opens the same menu the right-click does. This
+            // button has never done anything else, and a right-click is not
+            // something a touch screen — or a browser that keeps its own menu on
+            // that button — can offer at all.
+            onClick={handleContextMenu}
             onContextMenu={handleContextMenu}
         >
             <i className={`bi bi-${iType}`} style={iStyle} />
