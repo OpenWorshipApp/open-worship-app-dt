@@ -6,6 +6,7 @@ import { genRoutProps, genRouteUrl } from './protocolHelpers';
 import type ElectronSettingManager from './ElectronSettingManager';
 import { htmlFiles } from './fsServe';
 import {
+    applyRendererRecovery,
     attemptClosing,
     genWebPreferences,
     getAppThemeBackgroundColor,
@@ -135,6 +136,15 @@ export default class ElectronMainController {
         });
         guardBrowsing(win, webPreferences);
         guardMainNavigation(win);
+        applyRendererRecovery(win, () => {
+            // Re-resolved at crash time: the window may have navigated to
+            // another main page since boot, and that navigation is what
+            // `mainHtmlPath` records.
+            const currentHtmlPath = toAllowedMainHtmlPath(
+                settingManager.mainHtmlPath,
+            );
+            genRoutProps(currentHtmlPath).loadURL(win);
+        });
         win.on('closed', () => {
             process.exit(0);
         });

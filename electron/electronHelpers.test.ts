@@ -20,6 +20,7 @@ vi.mock('node:fs/promises', () => ({
 }));
 
 import {
+    applyRendererRecovery,
     attemptClosing,
     genCenterSubDisplay,
     genParentWinCenterPosition,
@@ -64,6 +65,58 @@ describe('electronHelpers', () => {
         });
         expect(() => attemptClosing({ close })).not.toThrow();
         expect(close).toHaveBeenCalled();
+    });
+
+    test('reloads a gone renderer, capping the crash-loop', () => {
+        const webContents = createMockWebContents();
+        const win = createMockBrowserWindow({ webContents } as any);
+        const reloadContent = vi.fn();
+        applyRendererRecovery(win as any, reloadContent);
+
+        const goneHandler = webContents.on.mock.calls.find(
+            ([eventName]: any[]) => eventName === 'render-process-gone',
+        )?.[1] as (event: unknown, details: { reason: string }) => void;
+        expect(goneHandler).toBeDefined();
+
+        goneHandler(null, { reason: 'clean-exit' });
+        expect(reloadContent).not.toHaveBeenCalled();
+
+        goneHandler(null, { reason: 'crashed' });
+        goneHandler(null, { reason: 'oom' });
+        goneHandler(null, { reason: 'killed' });
+        expect(reloadContent).toHaveBeenCalledTimes(3);
+
+        // The 4th death inside the window is a crash-loop — stop reloading.
+        goneHandler(null, { reason: 'crashed' });
+        expect(reloadContent).toHaveBeenCalledTimes(3);
+    });
+
+    test('offers Reload on an unresponsive renderer and force-kills on accept', async () => {
+        const forcefullyCrashRenderer = vi.fn();
+        const webContents = createMockWebContents({
+            forcefullyCrashRenderer,
+        } as any);
+        const win = createMockBrowserWindow({
+            webContents,
+            isDestroyed: vi.fn(() => false),
+        } as any);
+        applyRendererRecovery(win as any, vi.fn());
+
+        const unresponsiveHandler = (win.on as any).mock.calls.find(
+            ([eventName]: any[]) => eventName === 'unresponsive',
+        )?.[1] as () => Promise<void>;
+        expect(unresponsiveHandler).toBeDefined();
+
+        // Default mock answer is 1 (Wait) — nothing is killed.
+        await unresponsiveHandler();
+        expect(forcefullyCrashRenderer).not.toHaveBeenCalled();
+
+        // Reload (0) force-kills; `render-process-gone` then does the reload.
+        electronMockState.dialog.showMessageBox.mockResolvedValueOnce({
+            response: 0,
+        } as any);
+        await unresponsiveHandler();
+        expect(forcefullyCrashRenderer).toHaveBeenCalledOnce();
     });
 
     test('formats shortcut keys and capitalizes single-letter key', () => {

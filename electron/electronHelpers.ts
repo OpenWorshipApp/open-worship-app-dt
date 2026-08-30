@@ -1,5 +1,6 @@
 import {
     app,
+    dialog,
     nativeTheme,
     shell,
     clipboard,
@@ -192,6 +193,55 @@ export function attemptClosing(target?: ClosableInt | null) {
     try {
         target?.close();
     } catch (_error) {}
+}
+
+/**
+ * A renderer that dies (`render-process-gone`) leaves its BrowserWindow as a
+ * dead shell nothing revives — no navigation, no reload, only an app restart.
+ * A renderer that HANGS (`unresponsive`) is worse: the window silently ignores
+ * every click, and on the operator's machine mid-service that reads as "the
+ * app is gone". Both get one recovery path here: reload the content, by force
+ * (`forcefullyCrashRenderer` -> `render-process-gone` -> reload) when the
+ * renderer cannot cooperate.
+ *
+ * The timestamp window caps a crash-loop: content that dies on every boot
+ * would otherwise reload forever, burning the low-spec target machine.
+ */
+export function applyRendererRecovery(
+    win: BrowserWindow,
+    reloadContent: () => void,
+) {
+    const MAX_RELOADS = 3;
+    const WINDOW_MILLIS = 30 * 1000;
+    let reloadTimes: number[] = [];
+    win.webContents.on('render-process-gone', (_event, details) => {
+        if (details.reason === 'clean-exit') {
+            return;
+        }
+        const now = Date.now();
+        reloadTimes = reloadTimes.filter((time) => {
+            return now - time < WINDOW_MILLIS;
+        });
+        if (reloadTimes.length >= MAX_RELOADS) {
+            return;
+        }
+        reloadTimes.push(now);
+        reloadContent();
+    });
+    win.on('unresponsive', async () => {
+        const { response } = await dialog.showMessageBox(win, {
+            type: 'warning',
+            title: 'Window Not Responding',
+            message: 'This window has stopped responding.',
+            buttons: ['Reload', 'Wait'],
+            defaultId: 0,
+            cancelId: 1,
+        });
+        if (response === 0 && !win.isDestroyed()) {
+            // The gone-handler above performs the actual reload.
+            win.webContents.forcefullyCrashRenderer();
+        }
+    });
 }
 
 // src/event/KeyboardEventListener.ts

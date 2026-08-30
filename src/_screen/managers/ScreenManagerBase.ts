@@ -133,6 +133,17 @@ export default class ScreenManagerBase
                 scroll.x * (element.scrollWidth - element.clientWidth);
             const scrollTop =
                 scroll.y * (element.scrollHeight - element.clientHeight);
+            // Stamped so the scroll event this scrollTo fires is recognized
+            // as remote-applied and NOT re-broadcast
+            // (`registerScrollingSyncEvent`). The focused/mouse-over guard on
+            // the send side is not enough: `document.hasFocus()` reports true
+            // under an attached DevTools/CDP session, at which point a
+            // re-broadcast echoes between windows forever and floods the IPC
+            // channel until the renderer starves.
+            (element as any)._remoteAppliedScroll = {
+                left: scrollLeft,
+                top: scrollTop,
+            };
             element.scrollTo({
                 left: scrollLeft,
                 top: scrollTop,

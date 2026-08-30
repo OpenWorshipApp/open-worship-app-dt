@@ -207,8 +207,20 @@ Keep the main window on `presenter.html`.
   `mainHtmlPath` back to `"presenter.html"` in `setting.json` (keep the other keys), (3)
   relaunch. The window will open on the Presenter. Locale (`localStorage['language-locale']`)
   is stored separately and is preserved.
-- **Optional app hardening to suggest:** validate `mainHtmlPath` on load — only accept
-  main-window pages, else fall back to `htmlFiles.presenter`.
+- The `mainHtmlPath` validation IS implemented (`toAllowedMainHtmlPath` in
+  `electron/ElectronMainController.ts`): only presenter/reader/appDocumentEditor are
+  accepted at boot, anything else falls back to `htmlFiles.reader`. Note it does NOT
+  protect against a legitimate main page that hangs at boot (run `20260830-1407`:
+  `mainHtmlPath:"reader.html"` + a reader-boot hang re-armed itself on every launch —
+  hand-editing `setting.json` was still the way out).
+- **Renderer crash/hang recovery exists since 2026-08-30** (`applyRendererRecovery`,
+  `electron/electronHelpers.ts`, wired into the main window and every screen window):
+  a dead renderer (`render-process-gone`) auto-reloads its content, capped at 3
+  reloads per 30 s so a boot-crashing page cannot reload-loop; a hung renderer
+  (`unresponsive`) raises a native **Reload / Wait** dialog whose Reload force-kills
+  the renderer and lets the gone-handler reload it. QA implication: a killed/hung
+  window healing itself (or that dialog appearing) is the FEATURE working — but more
+  than 3 heals in quick succession means a crash-loop upstream; report THAT.
 
 ---
 
@@ -296,6 +308,25 @@ Keep the main window on `presenter.html`.
   same thing: a *real* canceled `pointerdown` suppressing `mousedown`/`click`/`dblclick`
   on drag surfaces. **Never conclude "clicking a slide does nothing" from a bare
   `.click()`** — re-drive it with the full sequence before filing anything.
+- ⚠️ **`document.hasFocus()` lies under CDP/DevTools attachment** (verified 2026-08-30:
+  it returned `true` on an app window while OS focus was on the terminal). Consequences:
+  (a) never assert "window is focused/unfocused" from `document.hasFocus()` during a
+  driven run; (b) the cross-window scroll-sync send guard
+  (`sendSyncScrollPercentage`) leans on it, so with DevTools open BOTH windows may
+  pass the guard — the echo loop that allowed is now structurally suppressed
+  (`syncScrollPercentage` stamps `_remoteAppliedScroll` on the element it scrolls and
+  `registerScrollingSyncEvent` swallows that one position-matched event). A scroll in
+  one window reflecting in the other exactly ONCE per gesture is correct; a
+  self-sustaining scroll oscillation between windows is a regression on that stamp.
+- ⚠️ **Bible screen text color is a persisted STYLE, not inheritance** — measure
+  `#bible-screen-view td span` / `tr`, never a container (verified 2026-08-30, cost a
+  false High). The `screen-bible-style-text` setting (color/text-shadow/font-size) is
+  injected as `#bible-screen-view tr {…}` by `ScreenBibleComp` in every window
+  (default color WHITE when unset), so preview and screen agree by construction. A
+  container element inherits the page theme instead (`rgb(222,226,230)` in the
+  presenter's dark theme vs black on the screen window) — comparing containers across
+  windows fabricates a mismatch. Black-with-white-outline at 100px is a legitimate
+  operator configuration, readable over the white background it was set against.
 - **Toasts: fire them yourself, and don't measure too early.** `window.testSimpleToasts()`
   (dev-only, `src/toast/toastHelpers.ts`) is the cheapest way to cover `[GL-10, GL-15,
   GL-23]` — no organic trigger needed. It deliberately spaces its 3 toasts **~500 ms

@@ -137,6 +137,21 @@ export function registerScrollingSyncEvent(
     });
     divHaftScale.addEventListener('scroll', (event) => {
         event.preventDefault();
+        // A scroll applied FROM a sync message (`syncScrollPercentage` stamps
+        // the element) must not be broadcast back, or two windows echo each
+        // other's scroll forever. Only the one event the remote scrollTo fires
+        // is swallowed: a genuine user scroll lands on a different position,
+        // fails the tolerance check and goes through.
+        const remoteApplied = (divHaftScale as any)._remoteAppliedScroll;
+        if (remoteApplied !== undefined) {
+            delete (divHaftScale as any)._remoteAppliedScroll;
+            if (
+                Math.abs(divHaftScale.scrollLeft - remoteApplied.left) < 2 &&
+                Math.abs(divHaftScale.scrollTop - remoteApplied.top) < 2
+            ) {
+                return;
+            }
+        }
         callback({
             x:
                 divHaftScale.scrollLeft /
