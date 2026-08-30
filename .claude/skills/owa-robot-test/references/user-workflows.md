@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-30c** (**W-01b step 1: the `⋮` buttons line up.** They now share one size and one column down a list, each level with its own row, and a folder's own `⋮` stays on its name rather than drifting down among the files it holds. Verified live 2026-08-30.)
+**workflowsVersion: 2026-08-30d** (**W-01b step 1: the `⋮` rests much quieter.** It now sits at the same near-silent alpha as the colour note beside it and comes to full strength on hover, so a long list reads as its names rather than as a column of buttons. Verified live 2026-08-30.)
+
+Previous: **2026-08-30c** (**W-01b step 1: the `⋮` buttons line up.** They now share one size and one column down a list, each level with its own row, and a folder's own `⋮` stays on its name rather than drifting down among the files it holds. Verified live 2026-08-30.)
 
 Previous: **2026-08-30b** (**new W-01b — the `⋮` button, app-wide.** Every surface whose extra actions were reachable only by right-clicking it now carries a visible `⋮` that opens the same menu — file rows, bible items and notes, lookup records and history, bible views, slide previews, background cards and rows, presenting flow lines and preview frames, screen previews, graph boxes, Resources folders and files, cross-reference cards, the foreground buttons' choose-a-screen menu, the verse audio player and canvas item cards. Right-click is unchanged. W-29 step 6 and W-38 step 2 now point at it rather than describing a right-click as the only way in. Verified live 2026-08-30 on the reader.)
 
@@ -39,9 +41,9 @@ brings it into view instead of throwing it into the top-left corner. Verified li
 
 Previous: **2026-08-29s** (**W-38 step 8: Find Connection asks for ONE name, not
 two.** The path always starts at the graph's own centre box — shown as a chip you cannot
-type over — so you only say where you want to get to; the *Path from* field and the swap
+type over — so you only say where you want to get to; the _Path from_ field and the swap
 button are gone. Every name the picker offers now carries its English name beside it
-(*ដាវីឌ (David)*), the way the lookup list and the boxes already did — eight Khmer names
+(_ដាវីឌ (David)_), the way the lookup list and the boxes already did — eight Khmer names
 beginning alike were unpickable. Step 10: reopening a record whose window you ran a path in
 now starts you back at that record instead of at somebody else's family line. Verified live
 2026-08-29, km.)
@@ -58,18 +60,18 @@ path or a re-root changes it, and you can now zoom to 500%. Verified live 2026-0
 
 Previous: **2026-08-29q** (**W-38 step 5: a box in the Connection Graph now has
 a right-click menu, and its verse list reads in your own Bible.** The menu carries what the
-box's own small buttons carry — *Open detail*, *Verses*, *Open all Related*, *Collapse*,
-*Set as centre*, *Remove* — reachable from anywhere on the box, including a collapsed one,
+box's own small buttons carry — _Open detail_, _Verses_, _Open all Related_, _Collapse_,
+_Set as centre_, _Remove_ — reachable from anywhere on the box, including a collapsed one,
 which draws no buttons at all; rows that would do nothing are left out rather than greyed,
 and the press starts neither a box drag nor a canvas pan. The 📖 count beside it used to
 list raw keys like `GEN 24:29-30`; it now names each verse the way the Bible you are reading
-names it, *លោកុប្បត្តិ ២៤:២៩-៣០*, ranges and all. Previous entry: **W-38: a new Connection Graph shows a person or place and
+names it, _លោកុប្បត្តិ ២៤:២៩-៣០_, ranges and all. Previous entry: **W-38: a new Connection Graph shows a person or place and
 everything it is related to as boxes you can explore.** Verified live 2026-08-29, km.)
 
 Previous: **2026-08-29p** (**W-38: a new Connection Graph shows a person or place and everything it is related to as boxes you can explore, and can find the line between two people.** Previous entry: **W-29 steps 2 and 3, and W-30 step 3: a
 translated name now carries its English name beside it, and you can search in either
-language.** A Khmer record reads *ម៉ូសេ (Moses)* the way a Bible book reads *លោកុប្បត្តិ
-(Genesis)* — in the lookup list, in the "in your reading" panel, across the top of a record
+language.** A Khmer record reads _ម៉ូសេ (Moses)_ the way a Bible book reads _លោកុប្បត្តិ
+(Genesis)_ — in the lookup list, in the "in your reading" panel, across the top of a record
 window, and in what the copy button copies — so a name you only know in English is still
 recognizable. Typing `Moses` finds him with Khmer records on screen, and typing `ម៉ូសេ` still
 does; the same holds for places. With **English** chosen nothing is added, because the name
@@ -108,7 +110,7 @@ Previous: **2026-08-29j** (**W-29 step 8: a record that names a book, a chapter 
 verse in its description now names it the way YOUR Bible does.** Those mentions ship written in
 English whatever language the record is in, so a Khmer sentence used to strand `Genesis 14` in the
 middle of it; under any language but English they are now re-read from the Bible on screen —
-*លោកុប្បត្តិ ១៤* — with book and chapter mentions staying part of the sentence and a cited verse still
+_លោកុប្បត្តិ ១៤_ — with book and chapter mentions staying part of the sentence and a cited verse still
 opening like any other reference. Verified live 2026-08-29 in Khmer and English.)
 Previous: **2026-08-29i** (**W-29 steps 2 and 9, and W-30's note: with a non-English
 lookup language the verse references now read in YOUR Bible.** A Khmer record citing
@@ -353,7 +355,7 @@ closed on its own. Opening a second used to close the first and lose where its r
 to. The thumbnail zoom stays shared across them. **Driven live** (two panels open side by
 side, independent markers, independent rects, one closed while the other stayed).
 Previous: **2026-08-08b** (**W-22** step 5 gained **Media Control** — a
-running order can now play, pause or stop the video or song *inside* a slide by itself:
+running order can now play, pause or stop the video or song _inside_ a slide by itself:
 wait N seconds, start at a point of the clip, stop after a while or at a point of the clip,
 at a volume and a speed. It is attached to the slide it controls (**Add Media Control**,
 beside **Add CC Elements**) rather than added to the sheet, its settings belong to that one
@@ -647,7 +649,8 @@ note, a slide, a background, a line of a presenting flow, a screen preview, a fo
 does. Those extras live in a small menu.
 
 1. Look at the right-hand end of the row, or the top-right of the card. There is a
-   faint **`⋮`** there, always — you do not have to hover to find it. In a list they
+   very faint **`⋮`** there — as quiet as the colour-note dot beside it, and it comes up to full
+   strength as soon as you point at it. In a list they
    line up in a straight column down the right edge, each one level with the row it
    belongs to; a folder keeps its own `⋮` up on its name, beside the ones belonging to
    the files inside it. 📸
@@ -904,7 +907,7 @@ _Verify: RD-01..07, RD-11._
    (ស្វែងរក) chosen in its dropdown. 📸
 2. Type your search words. Every verse containing them is listed, with **the word you
    searched for marked** in each one, so you can see at a glance why a verse is there.
-   The reference — *Psalm 23:1* — leads each result; clicking anywhere on the result
+   The reference — _Psalm 23:1_ — leads each result; clicking anywhere on the result
    opens that verse. 📸
 3. The bar under the search box says how many verses matched — **74 verses found**.
    Use it to judge whether to narrow the search: a common word runs to tens of
@@ -915,7 +918,7 @@ _Verify: RD-01..07, RD-11._
    number has not been fetched yet, and clicking it loads that block in below. Only the
    numbers near where you are, plus the first, the last, and the blocks you have
    loaded, are listed — the rest sit behind **…**, which is a button: it names the
-   blocks it is holding (*Show pages 4–139*) and clicking it lists them all. On a find
+   blocks it is holding (_Show pages 4–139_) and clicking it lists them all. On a find
    big enough to run to thousands of blocks it opens in steps instead, and clicking a
    **…** between two steps opens that stretch — so any block is a click or two away
    without the app ever drawing a thousand numbers at once. 📸
@@ -948,8 +951,8 @@ _Verify: RD-08, RD-09, RD-45, RD-46._
 3. Under it, **AI Cross References** with the version it is quoting on the right, and a
    line saying how much there is: **7 Themes · 35 Verses**. Click the title to collapse the
    whole section; right-click it for **Refresh** (ផ្ទុកឡើងវិញ), which re-fetches.
-4. The references are grouped by **theme** — a sentence such as *Genealogy from Adam to
-   Noah* — set flush left, with that theme's verses hanging off a single vertical line
+4. The references are grouped by **theme** — a sentence such as _Genealogy from Adam to
+   Noah_ — set flush left, with that theme's verses hanging off a single vertical line
    beneath it. 📸 Each verse gives its reference on its own line and the opening of the
    verse under it, cut at a word with a single `…` when there is more.
    Themes set in columns and reflow to one column when the panel is narrow.
@@ -1014,6 +1017,7 @@ in the same documents folder. 📸
 
    When you actually present the slide, the audience screen shows the **real, live
    page** — only your editing and preview views use the picture.
+
 6. Save with **Ctrl+S**.
 
 **Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
@@ -1925,8 +1929,8 @@ half-way through.
 2. Click the pin. It fills in and turns amber: the document is now **pinned**. Hovering it
    reads **Unpin document** (ដោះខ្ទាស់ឯកសារ). 📸
 3. Click a different document in the left list. **Nothing changes** — the previewer keeps
-   your document. A message says **Document is pinned** / *Unpin the document to preview
-   another one* (ឯកសារត្រូវបានខ្ទាស់), and the pin flashes so you can see what stopped
+   your document. A message says **Document is pinned** / _Unpin the document to preview
+   another one_ (ឯកសារត្រូវបានខ្ទាស់), and the pin flashes so you can see what stopped
    it. 📸
 4. The same protection covers every way of swapping the document: a song row, a document
    inside a **presenting flow**, and clicking the file name in the previewer's own footer (which
@@ -1963,17 +1967,18 @@ walking the Insert menu — just drag it out of the panel you are already browsi
    example.) 📸
 3. Let go. A box appears **centred on where you dropped it**:
 
-   | Dragged from | You get |
-   | --- | --- |
-   | Images | an image box |
-   | Videos | a video box |
-   | Audios | an audio player box |
-   | Webs — a local page | a website box showing a **screenshot** of that page (see W-24 step 4) |
-   | Webs — a saved URL | a website box showing a **screenshot**; a **YouTube** link becomes a real YouTube box |
-   | Cameras | a camera box, labelled with that camera |
-   | Colors | a plain coloured box (see step 4) |
+   | Dragged from        | You get                                                                               |
+   | ------------------- | ------------------------------------------------------------------------------------- |
+   | Images              | an image box                                                                          |
+   | Videos              | a video box                                                                           |
+   | Audios              | an audio player box                                                                   |
+   | Webs — a local page | a website box showing a **screenshot** of that page (see W-24 step 4)                 |
+   | Webs — a saved URL  | a website box showing a **screenshot**; a **YouTube** link becomes a real YouTube box |
+   | Cameras             | a camera box, labelled with that camera                                               |
+   | Colors              | a plain coloured box (see step 4)                                                     |
 
    📸
+
 4. **Colours are the special one.** Drop a colour **on top of an existing box** and it
    **repaints that box** — no new box is added. Drop it on **empty canvas** and you get a
    new coloured rectangle instead. That rectangle is an ordinary text box underneath, so
@@ -2009,7 +2014,7 @@ your Bible reading.
    it was. 📸
 2. The small **language code** beside that button (`en`) is the language the names and
    places themselves are written in. Click it and pick another — `km - Khmer
-   (ភាសាខ្មែរ)` — and every list, every record window already open, and the
+(ភាសាខ្មែរ)` — and every list, every record window already open, and the
    "in your reading" panel switch to it at once, with nothing to reload. The choice is
    remembered for next time, and it is **separate** from the app's own language
    (**W-16**): an English menu with Khmer names is a perfectly normal combination. The
@@ -2022,8 +2027,8 @@ your Bible reading.
    kind of each record — **People** (មនុស្ស), **Groups**
    (ក្រុម), **Places** (ទីកន្លែង) — is named in it too, in the filter and on each
    record. Every record also carries its **English name in brackets** beside its own —
-   *ម៉ូសេ (Moses)*, *យេរូសាឡិម (Jerusalem)* — the way a Bible book reads
-   *លោកុប្បត្តិ (Genesis)*, so a name you only know in English is still recognizable.
+   _ម៉ូសេ (Moses)_, _យេរូសាឡិម (Jerusalem)_ — the way a Bible book reads
+   _លោកុប្បត្តិ (Genesis)_, so a name you only know in English is still recognizable.
    With `en` chosen nothing is added: the name already is the English one. 📸
 3. Use the **Names** (ឈ្មោះ) and **Locations** (ទីកន្លែង) tabs to choose what you are
    looking for, and type in the search box. Each tab remembers what you typed, so you
@@ -2047,15 +2052,15 @@ your Bible reading.
    > (see **W-38**).
 7. **Verses** starts closed and shows how many there are — some entries have hundreds
    (Jerusalem has 712). Click it to open, and the references turn into readable
-   titles like *Joshua 10:1-43*.
+   titles like _Joshua 10:1-43_.
 8. Any underlined name or place — in the description or in a list — opens as another
    small window **beside** the one you are reading, so you can follow a family or a
    journey without losing your place. Clicking the same entry twice just brings its
    window back to the front.
-   Where a description names a book, a chapter or a single verse — *Acts*,
-   *Genesis 14*, *Acts 28:15* — it is written the way **your own Bible** writes it
+   Where a description names a book, a chapter or a single verse — _Acts_,
+   _Genesis 14_, _Acts 28:15_ — it is written the way **your own Bible** writes it
    once you have picked a language other than English in step 2, so a Khmer sentence
-   reads *លោកុប្បត្តិ ១៤* instead of stranding one English name in the middle of it. A
+   reads _លោកុប្បត្តិ ១៤_ instead of stranding one English name in the middle of it. A
    book or a chapter is simply part of the sentence; a single verse is underlined and
    opens like any other reference.
 9. Click a verse reference to read it. With **English** chosen in step 2 you get the
@@ -2107,7 +2112,7 @@ those exact verses — without searching for them one by one.
    (`13:4, 13:22, 13:33, 13:34`), and a one-line description. A name that appears in
    several verses is listed **once**, with all of its verses on the row. Reading the
    records in a language other than English, each row carries its **English name in
-   brackets** too — *យ៉ូហាន (John)* — exactly as the lookup list does.
+   brackets** too — _យ៉ូហាន (John)_ — exactly as the lookup list does.
 4. Open a second passage (split the reading area, or open another reference) and the
    panel grows a second block for it — so you can see the people of two passages at
    once. A passage with nobody in it says **No matches** (រកមិនឃើញ).
@@ -2335,8 +2340,8 @@ Any XML in the app's format works the same way (**Import XML File → ?** shows 
    > This code is the badge you will see everywhere in the app, and it also becomes the
    > file name, so **choose it now**: changing it later in the editor renames the badge but
    > not the file.
-5. Click **Ok**. The app asks once more — **Confirm Key for Bible**, *Do you want to
-   continue with key="ពគប"?* — click **Yes**. (**No** takes you back to the box; the way
+5. Click **Ok**. The app asks once more — **Confirm Key for Bible**, _Do you want to
+   continue with key="ពគប"?_ — click **Yes**. (**No** takes you back to the box; the way
    out entirely is **Cancel** then **No**.)
 6. The new translation appears in the **Bibles XML** list on the right, badge on the left
    and full title beside it. 📸 It works already — but if it is not an English bible, read on.
@@ -2355,8 +2360,8 @@ matters** — the last two take their suggestions from the language you set firs
 8. **🌎 Choose Locale** first. Pick the language from the list — for Khmer that is
    **km-KH (Khmer (ភាសាខ្មែរ))**. The `"locale"` line in the editor changes and the bar at
    the bottom starts warning **Unsaved changes**.
-9. **#️⃣ Edit Numbers Map** next. The window is titled **Numbers map** and now says *Define
-   numbers map for km* — because of step 8. Click **Use ១ ២ ៣** to fill in that language's
+9. **#️⃣ Edit Numbers Map** next. The window is titled **Numbers map** and now says _Define
+   numbers map for km_ — because of step 8. Click **Use ១ ២ ៣** to fill in that language's
    own digits and click **Ok**. (There is also a **Translate** link to Google Translate if
    your language is not one the app knows.) 📸
 10. **📚 Edit Books Map** last. This opens the 66 book names, one per line, with the
@@ -2373,15 +2378,15 @@ matters** — the last two take their suggestions from the language you set firs
     out of **English** and now sits under its own language heading, and its references read
     in its own script and numerals — `(ពគប) កិច្ចការ ២៨:១៥` rather than `(ពគប) Acts 28:15`. 📸
 
-> **Removing one.** The 🗑 next to a translation asks *Are you sure to delete bible XML
-> "…"?* — **Yes** sends the file to the Recycle Bin. Its badge disappears from every bible
+> **Removing one.** The 🗑 next to a translation asks _Are you sure to delete bible XML
+> "…"?_ — **Yes** sends the file to the Recycle Bin. Its badge disappears from every bible
 > menu. (A small hidden `…​.xml.cache` folder is left beside it in the app's bible folder;
 > it is harmless, and reusing the same code later just refills it.)
 
 > **Putting the KJV back.** The **KJV** row — and only that row — carries an extra
 > orange ↺ button, **Reset Bible XML** (កំណត់ XML ព្រះគម្ពីរឡើងវិញ), to the LEFT of the ✏️ pencil.
-> It asks *Reset this bible XML with the app embedded KJV? All your changes will be
-> lost.* — **Yes** throws away the KJV file you have and writes the copy that ships inside
+> It asks _Reset this bible XML with the app embedded KJV? All your changes will be
+> lost._ — **Yes** throws away the KJV file you have and writes the copy that ships inside
 > the app (the same copy the **Create KJV Bible XML** row below writes),
 > then reloads the windows. Use it when your KJV has been edited into a state you no longer
 > want, or looks broken; there is no undo, so export it first (W-33) if you want it back.
@@ -2457,7 +2462,7 @@ install anywhere.
 1. In the presenter, open the **Documents** list's **⋮ More Options** →
    **Import From Public Domain Songs**
    (នាំចូលពីចម្រៀងកម្មសិទ្ធិសាធារណៈ). Unlike the SongSelect entry above it is
-   *always* there. 📸
+   _always_ there. 📸
 2. A floating panel opens listing the whole catalog straight away — each row shows the
    title, the writers, the year, and the first line, with a count at the top right of the
    search box (36 at the time of writing). Scroll to browse, or type in **Search songs**
@@ -2491,7 +2496,7 @@ at all. It is the **chapter** that decides, not the verse, so every verse of a c
 you the same files.
 
 **Files for the whole book** get chapter number **0**: `PSA.0.pdf` is your introduction to
-the Psalms, and it is listed for *every* chapter of the Psalms, above that chapter's own
+the Psalms, and it is listed for _every_ chapter of the Psalms, above that chapter's own
 files. If you have more than one such document, keep going downwards — `-1`, `-2` and so on
 all count as book-level too.
 
@@ -2524,7 +2529,7 @@ all count as book-level too.
    A file that matched the book-level pattern rather than this chapter's carries a dashed
    **Introduction** (សេចក្ដីផ្ដើម) tag, so a `PSA.0.pdf` listed under Psalm 1 says why it
    is there. A group with nothing for this verse says **No matching files**.
-5. Sometimes you want a file that is *not* named after this verse. Click the **magnifier**
+5. Sometimes you want a file that is _not_ named after this verse. Click the **magnifier**
    (`bi-search`) at the right-hand end of the pattern line and a search box opens under it.
    Type any part of a file's name — `abc`, `baptism`, `PSA.11` — and every file in your
    folders whose name contains it is listed too, added below that folder's verse files under
@@ -2563,7 +2568,7 @@ _Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, C
 
 ### W-38 — See how people and places connect (Connection Graph)
 
-The record window tells you *who* someone is. The graph shows you *how they connect* —
+The record window tells you _who_ someone is. The graph shows you _how they connect_ —
 parents, spouses, children, cousins and places, all on one canvas you can explore.
 
 1. Open the **Names and locations lookup** (`👤📍`) from the Bible Lookup header and find
@@ -2578,11 +2583,11 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    > graph icon beside its title.
 3. Each box shows a number next to a small diagram icon — that is how many related
    records it has. **Click the number.** A menu opens listing **All (44)** first, then
-   only the kinds this record actually has: *Parents (2)*, *Spouses (4)*, *Siblings (2)*,
-   *Children (13)*, *Cousins (22)*, *Locations (1)*. 📸
+   only the kinds this record actually has: _Parents (2)_, _Spouses (4)_, _Siblings (2)_,
+   _Children (13)_, _Cousins (22)_, _Locations (1)_. 📸
 4. Pick one kind — say **Children** — and just those boxes appear, ringed around the
    person and joined by curved lines. Each line is labelled with the relationship as you
-   would say it: *son*, *daughter*, *wife*, *father*, *located at*.
+   would say it: _son_, _daughter_, _wife_, _father_, _located at_.
    > Choosing **All** on a record with many relations asks you to confirm first, because
    > forty-odd boxes at once is a lot to read.
 5. Explore: **drag** any box to move it (it stays where you put it), **drag the empty
@@ -2590,17 +2595,17 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    **Double-click** a box to make it the new centre.
    > **Right-click a box** for a menu of everything that box can do: **Open detail**,
    > **Verses (8)**, **Open all Related (23)**, **Collapse**, **Set as centre**,
-   > **Use as root** and **Remove**. *Set as centre* re-arranges the whole graph around
-   > that box; *Use as root* clears everything else away and leaves just it, so you can
+   > **Use as root** and **Remove**. _Set as centre_ re-arranges the whole graph around
+   > that box; _Use as root_ clears everything else away and leaves just it, so you can
    > start exploring again from a record already in front of you. It is the same set as the small buttons along the bottom of the box, but
    > it also works on a box you have collapsed, which shows no buttons at all. Rows you
-   > could not use are simply absent — the centre box offers no *Remove*, and a record
-   > with no relations offers no *Open all Related*.
+   > could not use are simply absent — the centre box offers no _Remove_, and a record
+   > with no relations offers no _Open all Related_.
    > The **Verses** list names each verse the way YOUR Bible names it —
-   > *លោកុប្បត្តិ ២៤:២៩-៣០*, not `GEN 24:29-30` — and picking one opens it.
+   > _លោកុប្បត្តិ ២៤:២៩-៣០_, not `GEN 24:29-30` — and picking one opens it.
 6. Too busy? The coloured chips along the top switch each kind of connection on and off —
    turning **Cousins** off is usually the difference between a tangle and a family tree.
-   **Right-click a chip** to show *only* that kind, and right-click it again to bring
+   **Right-click a chip** to show _only_ that kind, and right-click it again to bring
    everything back. 📸
 7. Bottom-right: **↺ Undo** and **↻ Redo** step through everything you have done to the
    graph — a box you dragged, a zoom, an expansion, a filter — and **Ctrl+Z** / **Ctrl+Y**

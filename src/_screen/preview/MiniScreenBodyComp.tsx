@@ -23,6 +23,7 @@ import {
     genColorMap,
     genColorNoteDataList,
 } from '../../helper/colorNoteHelpers';
+import { setIsBibleCustomStyleFloatingShowing } from '../../screen-setting/bibleCustomStyleFloatingHelpers';
 
 // Also opened by the floating ⋮ that `MiniScreenComp` parks at the bottom-right
 // of the card, so the menu is reachable without a right-click.
@@ -42,6 +43,16 @@ export function openMiniScreenContextMenu(event: any) {
                 for (const screenManager of getAllScreenManagers()) {
                     screenManager.fireRefreshEvent();
                 }
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('book'),
+            menuElement: tran('Bible Properties'),
+            // Opens, never toggles: the footer button that owns the toggle
+            // auto-hides, so reaching this menu with the panel already open must
+            // not close it.
+            onSelect() {
+                setIsBibleCustomStyleFloatingShowing(true);
             },
         },
     ]);

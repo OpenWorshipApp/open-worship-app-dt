@@ -1,3 +1,5 @@
+import '../cueList.scss';
+
 import { useCallback } from 'react';
 
 import {
@@ -27,7 +29,7 @@ export default function BibleNoteListComp() {
     Note.getDefault();
     return (
         <FileListHandlerComp
-            className="note-list"
+            className="note-list app-cue-list"
             mimetypeName="note"
             defaultFolderName={defaultDataDirNames.BIBLE_NOTES}
             dirSource={dirSource}

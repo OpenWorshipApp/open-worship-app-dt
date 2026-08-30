@@ -750,4 +750,8 @@ export function initEventOther(appController: ElectronAppController) {
             event.returnValue = returnValue;
         },
     );
+
+    ipcMain.on('all:app:check-is-main-window', (event) => {
+        event.returnValue = event.sender === appController.mainWin.webContents;
+    });
 }

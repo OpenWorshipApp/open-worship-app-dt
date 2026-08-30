@@ -14,7 +14,6 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     Documents: 'file-earmark-text',
     'Document List': 'list-ul',
     Slides: 'collection',
-    'Slide Editor': 'pencil-square',
     'Slide Editor Canvas': 'bounding-box-circles',
     'Slide Editor Ground': 'bounding-box',
     // -- lyrics
@@ -25,7 +24,6 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     // -- bible
     Bible: 'book',
     Bibles: 'book',
-    'Bible Reader': 'book',
     'Bible View': 'book-half',
     'Bible and Notes': 'journal-bookmark',
     'Bible and Notes (Lookup)': 'journal-bookmark',

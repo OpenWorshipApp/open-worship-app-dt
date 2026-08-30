@@ -76,13 +76,13 @@ export default function AppLayoutComp({
                 >
                     <BibleLookupButtonComp />
                 </div>
-                {isInjectedAppDocumentFilePath ? null : (
-                    <div className="app-highlight-border-bottom">
-                        <SettingButtonComp />
-                    </div>
-                )}
                 <div className="app-highlight-border-bottom">
-                    <HelpButtonComp />
+                    <div className="btn-group" role="group">
+                        {isInjectedAppDocumentFilePath ? null : (
+                            <SettingButtonComp />
+                        )}
+                        <HelpButtonComp />
+                    </div>
                 </div>
             </div>
             <div id="app-body">{children}</div>

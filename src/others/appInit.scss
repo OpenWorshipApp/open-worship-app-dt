@@ -13,6 +13,11 @@ body {
   overflow: hidden;
 }
 
+// One resting alpha for every ⋮ in the app, wherever it is drawn. The same
+// value the colour note beside it rests at (`bootstrap-override.scss`), so the
+// two marks a row carries are equally quiet until the row is approached.
+$app-context-menu-dots-opacity: 0.1;
+
 .app {
   // The right-hand strip of a row where its controls live — the colour note
   // that says something ABOUT the row, and the ⋮ that ACTS on it. One width
@@ -317,8 +322,10 @@ body {
     background-color: transparent;
     color: inherit;
     line-height: 1;
-    // Visible without shouting: one of these sits on every row of a long list.
-    opacity: 0.55;
+    // Near-silent at rest, full under the pointer. One of these sits on every
+    // row of a long list, so it stays out of the way of the names being read
+    // down that column.
+    opacity: $app-context-menu-dots-opacity;
     cursor: pointer;
 
     // Set here rather than inherited: these sit in headers and rows whose own
@@ -380,6 +387,22 @@ body {
   // badge is an action on the row too, and belongs in the same strip.
   .app-has-action-rail-2 {
     padding-right: calc(var(--app-action-rail) * 2 + 6px) !important;
+  }
+
+  // Every other ⋮ in the app predates `ContextMenuDotsButtonComp` and carries
+  // chrome of its own — a ghost button, an outline button, a bare round icon.
+  // Only the ALPHA is unified here: a menu button should read at one weight
+  // wherever it is, and it was jarring to have the panel header shouting over
+  // the quiet column of row buttons underneath it.
+  :not(.app-context-menu-dots) > .bi-three-dots-vertical {
+    opacity: $app-context-menu-dots-opacity;
+  }
+
+  // Armed from whatever holds the glyph, since these are icons INSIDE their
+  // button rather than the button itself.
+  *:hover > .bi-three-dots-vertical,
+  *:focus-visible > .bi-three-dots-vertical {
+    opacity: 1;
   }
 
   // For cards and previews, where the content fills the box and an inline

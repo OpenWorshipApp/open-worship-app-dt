@@ -12,6 +12,8 @@ import {
 } from '../../helper/ai/openAIAudioHelpers';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderVerseTextDetailListComp from './RenderVerseTextDetailListComp';
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
+import appProvider from '../../server/appProvider';
 
 export default function RenderVerseTextDetailComp({
     bibleItem,
@@ -126,6 +128,17 @@ export default function RenderVerseTextDetailComp({
             onClick={handleVerseClicking}
             onDoubleClick={handleVerseDBClicking}
         >
+            {/* This verse's ⋮ — the menu a right-click on the verse already
+                opens, made reachable for a touch screen and for anyone who
+                never learned that the menu was there at all. No handler: the
+                bible view around this verse owns that menu, and a dispatched
+                `contextmenu` reaches it from here exactly as a real one would.
+
+                FIRST child, and absolutely positioned by the stylesheet: with
+                no `top`, an out-of-flow box falls back to its static position,
+                so being first is what puts it on THIS verse's own line while
+                costing the verse no reflow. See `BibleViewComp.scss`. */}
+            {appProvider.readerHomePage ? <ContextMenuDotsButtonComp /> : null}
             <RenderVerseTextDetailListComp
                 bibleItem={bibleItem}
                 verseInfo={verseInfo}

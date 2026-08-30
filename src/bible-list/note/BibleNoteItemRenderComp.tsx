@@ -177,11 +177,8 @@ export default function BibleNoteItemRenderComp({
     const fileSource = FileSource.getInstance(filePath);
     return (
         <li
-            className="list-group-item item ps-2 pe-1 app-has-action-rail"
+            className="list-group-item item app-has-action-rail"
             title={tran('Double click to open note')}
-            style={{
-                height: 28,
-            }}
             data-note-item-id={`${fileSource.name}-${noteItem.id}`}
             data-index={index + 1}
             draggable={!isEditingTitle}

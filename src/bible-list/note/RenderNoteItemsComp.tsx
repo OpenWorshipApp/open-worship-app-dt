@@ -8,13 +8,7 @@ export default function RenderNoteItemsComp({
 }>) {
     const items = note.items;
     return (
-        <ul
-            className="list-group"
-            style={{
-                minWidth: '220px',
-                maxWidth: '420px',
-            }}
-        >
+        <ul className="list-group">
             {items.map((noteItem, i1) => {
                 return (
                     <BibleNoteItemRenderComp

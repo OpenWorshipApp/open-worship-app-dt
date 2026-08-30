@@ -1,0 +1,277 @@
+// The Bibles and Bible Notes panels, drawn as ONE cue sheet.
+//
+// Both panels are an operator's index during a live service, read at a glance
+// from a dark booth, so the whole sheet answers one question per row: what is
+// this, where am I, and what can the congregation see right now. Three ranks,
+// carried by a 2px rail down the left edge and by the hairline beside each
+// row's number:
+//
+//   `--app-line`     at rest
+//   `--app-accent`   the open folder -- WHERE YOU ARE
+//   `--app-on-air`   live on a congregation screen -- the reserved hue
+//
+// The rail is not a new invention: it is the cue-gutter language
+// `PresentingFlowListComp.scss` already established, so the panels of one
+// console read as one console. No colour here is mixed locally except the
+// hover wash below, and no size is a fresh magic number -- everything comes
+// from the `--app-*` tokens in `theme-override-{dark,light}.scss` and
+// `interaction.scss`.
+//
+// SCOPE: everything hangs off `.app-cue-list`, worn only by these two panels
+// (`BibleListComp` / `BibleNoteListComp`). The `list-group-item` primitive and
+// `FileListHandlerComp` are shared with seven other lists, none of which may
+// move.
+//
+// Why the selectors carry `[data-bs-theme]`: the theme sheets paint these same
+// rows from `.app[data-bs-theme='dark'] .list-group-item…`, and that attribute
+// counts toward their specificity. Matching it here (any value -- this sheet is
+// token-based and says nothing about which theme is on) is what lets these
+// rules land without reaching for `!important`.
+
+// The one grey this sheet mixes for itself, copied deliberately from
+// `PresentingFlowListComp.scss` rather than re-picked: a hover has to lift a row
+// on the dark shell and the light one alike, neither theme publishes a token for
+// it, and two sibling panels that lift a row by different amounts read as two
+// apps. If one of these ever moves, move both.
+$row-hover-wash: rgba(127, 127, 127, 0.25);
+// And for the same reason, the bible-key chip's ground. `--app-surface` cannot
+// do this job: it is #2b3035 on the dark shell and #ffffff on the light one,
+// which measure 1.16:1 and 1.19:1 against the shells they sit on -- a chip with
+// no chip. A neutral wash reads on both.
+$chip-wash: rgba(127, 127, 127, 0.22);
+
+.app[data-bs-theme] .app-cue-list {
+  // -- Panel header ----------------------------------------------------------
+  // 26px, down from the 40px `bootstrap-override.scss` gives every card and the
+  // 30px `RenderHeaderComp` caps it to. A panel title is a label, not a banner,
+  // and on a booth laptop those 4px are a row.
+  .card-header {
+    height: 26px;
+    padding: 2px 4px 2px 6px;
+    border-bottom: 1px solid var(--app-line);
+    font-size: var(--app-text-md);
+
+    > strong {
+      font-weight: 600;
+      // The two panel titles sit one above the other in the same rail; a hair
+      // of tracking is what separates a title from the folder names below it
+      // once both are the same size.
+      letter-spacing: 0.02em;
+    }
+  }
+
+  // -- Path bar --------------------------------------------------------------
+  // Secondary information about where the list is reading from, so it drops a
+  // step below the rows it introduces. `0.9rem` was a magic number; this is the
+  // scale's caption tier.
+  .path-selector {
+    font-size: var(--app-text-sm);
+
+    // The path row is a flex line whose middle child is `flex-fill` with no
+    // `min-width: 0`, so a long directory refused to shrink and pushed the row
+    // 150px past the panel — a horizontal scrollbar under a vertical list, and
+    // a row's worth of height spent on it. `app-ellipsis-left` was already there
+    // to truncate the head of the path; this is what lets it.
+    .path-previewer > .d-flex,
+    .app-ellipsis-left {
+      min-width: 0;
+    }
+
+    // The pill around the path was a second box inside a card that is already a
+    // box. One rule under it does the same job and gives the width back to the
+    // path, which is the part that gets truncated.
+    .app-border-white-round {
+      border: none;
+      border-radius: 0;
+    }
+  }
+
+  // -- Rows ------------------------------------------------------------------
+  // Flush and borderless. The capsule -- 1px border, 6px radius, 0.15rem margin
+  // -- is what made a folder, its items and the panel itself three drawings of
+  // one shape, and it is why the rail could not read as a rail. Rows now sit
+  // against each other so the rail is continuous down the sheet, which is also
+  // ~5px per row back.
+  //
+  // `padding-right` is deliberately NOT set: `.app-has-action-rail{,-2}` owns it
+  // (with `!important`) to hold the ⋮ column open, and a title that ellipsized
+  // under the button is exactly the bug that class exists to fix.
+  .list-group-item {
+    margin: 0;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 0;
+    border: 0;
+    border-radius: 0;
+    // THE RAIL. A border rather than an element: free, and unbroken because the
+    // rows sit flush against each other.
+    border-left: 2px solid transparent;
+    background-color: transparent;
+    // The only motion in this sheet. Colour and background alone -- no
+    // transform, no shadow -- because every row of a long list would pay for it
+    // on the hardware this app is built for.
+    transition:
+      background-color 90ms linear,
+      color 90ms linear;
+
+    &:hover {
+      background-color: $row-hover-wash;
+    }
+  }
+
+  // -- The folder row --------------------------------------------------------
+  // Its rail runs the row's whole height, which on an open folder is the height
+  // of everything inside it: one unbroken accent stripe saying "this is the one
+  // you have open", readable without reading a single word.
+  .bible-file,
+  .note-file {
+    border-left-color: var(--app-line);
+    // `app-has-action-rail` holds the ⋮ column open, but it is padding on the
+    // whole `li` — so on an OPEN folder it also inset every item nested inside,
+    // spending 28px of a 276px panel to avoid a button that is only ever level
+    // with the folder's own name. The reservation moves onto the header line
+    // below, where the button actually is, and the items get the width back.
+    padding-right: 0 !important;
+
+    &.active {
+      border-left-color: var(--app-accent);
+      // `theme-override-*.scss` fills an `.active` row with `--bs-gray-800` on a
+      // shell that is already `--bs-gray-800`. The rail says "open" now, so the
+      // fill only cost contrast against the rows inside it.
+      background-color: transparent;
+    }
+  }
+
+  // The folder's own line. Held apart from its items by weight, not by another
+  // colour or another indent.
+  .app-cue-group {
+    padding: 1px 0;
+    padding-right: calc(var(--app-action-rail) + 6px);
+    font-size: var(--app-text-md);
+    font-weight: 500;
+    color: var(--app-muted);
+
+    // The name, its chevron and its icon on one line. `min-width: 0` is what
+    // lets `.app-ellipsis` truncate a long folder name instead of wrapping it
+    // under its own icon and doubling the row.
+    > .flex-fill {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    > .flex-fill > .bi {
+      // The chevron and the book/journal glyph are wayfinding, not content.
+      flex: 0 0 auto;
+      opacity: 0.7;
+    }
+  }
+
+  .active .app-cue-group {
+    color: var(--app-ink);
+    font-weight: 600;
+
+    > .flex-fill > .bi {
+      opacity: 1;
+    }
+  }
+
+  // -- The item row ----------------------------------------------------------
+  // `--app-text-md`, down from the inherited 16px. These rows are a dense index
+  // scanned by shape, not prose read line by line.
+  .list-group-item.item {
+    display: flex;
+    align-items: center;
+    min-height: 22px;
+    font-size: var(--app-text-md);
+    // Tighter than the 1.5 a body paragraph wants, looser than the type can
+    // take: these rows are single-line labels in an index, and the line box was
+    // the whole difference between 15 and 17 passages on screen at once.
+    line-height: 1.4;
+
+    // THE INDEX GUTTER. `bootstrap-override.scss` floats this number outside the
+    // row at `translate(-12px, 2px)`, where it overlaps whatever is to its left
+    // and cannot align with anything. Here it is a real, in-flow column.
+    &::before {
+      position: static;
+      transform: none;
+      // Two tabular digits exactly -- `ch` IS the digit advance once the figures
+      // are pinned (`interaction.scss` pins them for `.list-group-item:before`),
+      // so this is "room for 10..99" in the only unit that stays true if the
+      // type scale moves.
+      //
+      // `content-box` is load-bearing, not tidiness: the app is border-box
+      // throughout, and under that the padding eats the 2ch, so a one-digit row
+      // measures narrower than a two-digit one and the column steps sideways at
+      // row 10 -- the exact raggedness a number column exists to prevent, and
+      // invisible on any list shorter than ten rows.
+      box-sizing: content-box;
+      flex: 0 0 auto;
+      min-width: 2ch;
+      width: auto;
+      padding: 0 5px 0 4px;
+      // Full row height, which is what lets the rule below read as a continuous
+      // line down the list rather than as a mark per row.
+      align-self: stretch;
+      border-right: 1px solid var(--app-line);
+      opacity: 1;
+      color: var(--app-muted);
+      font-size: var(--app-text-xs);
+      text-align: right;
+    }
+
+    // The row's content, next to the gutter rather than under it. `min-width: 0`
+    // is what keeps `.app-ellipsis` inside working now that its parent is a flex
+    // item: without it a long verse title refuses to shrink and pushes the ⋮ off
+    // the row.
+    > .d-flex {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding-left: 4px;
+    }
+  }
+
+  // ON AIR. The one row the congregation can see. The `●` in front of the title
+  // already comes from `.app-on-screen` in `appInit.scss`; this puts the same
+  // fact in the rail, so the row is findable by colour from across a booth
+  // without reading the line. Nothing else in this sheet may be this hue.
+  .list-group-item.item.app-cue-on-air {
+    border-left-color: var(--app-on-air);
+
+    &::before {
+      border-right-color: var(--app-on-air);
+      color: var(--app-ink);
+    }
+  }
+
+  // -- The bible-key chip ----------------------------------------------------
+  // `KJV` / `LSG` is a code, not a word: small caps-height type, pinned figures,
+  // and a quiet chip rather than a filled badge. It labels the row; it does not
+  // compete with the passage.
+  //
+  // `!important` is load-bearing and is the narrowest tool that works:
+  // `BibleKeySelectionMiniComp` puts Bootstrap's `.bg-info` utility on this
+  // span, and every Bootstrap utility ships `!important`, so no amount of
+  // specificity reaches the background. This replaces an inline
+  // `background: … !important` blob on the call site, two thirds of which React
+  // silently dropped.
+  .bible-selector {
+    padding: 0 4px !important;
+    border-radius: 3px;
+    background-color: $chip-wash !important;
+    color: var(--app-muted);
+    font-size: var(--app-text-xs);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+    line-height: 1.5;
+  }
+
+  // -- The note's "new item" affordance --------------------------------------
+  // Was an inline `color: green; font-size: 20px` -- a hue with no rank in a
+  // console where colour means something, and a glyph bigger than the folder
+  // name it sat beside. `app-ghost-button` is the app's own icon-button role and
+  // brings the focus ring with it.
+  .app-cue-add {
+    font-size: var(--app-text-md);
+  }
+}

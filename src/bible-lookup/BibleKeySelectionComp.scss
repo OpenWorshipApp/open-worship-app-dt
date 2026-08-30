@@ -2,3 +2,32 @@
   font-size: 12px;
   border-radius: 3px;
 }
+
+// The chip that carries its own ⋮ — the reader header's `KJV`, where a click
+// SWAPS the translation and the ⋮ ADDS a second one to read alongside. Only
+// that chip: every other `.bible-selector` in the app answers a right-click
+// with the same list a click gives, so only this one has a second door to show.
+//
+// The button is a fixed 22px box everywhere else in the app, which is a LIST
+// ROW's control size; inside a 12px pill it is the tallest thing there, so the
+// pill would grow to fit it and the key would slide off its own centre line.
+// Shrinking the BOX rather than the glyph is what keeps a chip a chip — the
+// mark stays the mark the reader learned on every other row.
+.bible-selector-with-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  > .app-context-menu-dots {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    // The app-wide 0.1 is calibrated for a quiet column down a long list. On a
+    // filled `bg-info` pill, at this size, it is simply not there.
+    opacity: 0.55;
+
+    > i {
+      font-size: 0.72rem;
+    }
+  }
+}

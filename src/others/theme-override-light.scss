@@ -371,16 +371,6 @@ $resizer-color: rgb(123, 173, 205);
     }
   }
 
-  #bible-list {
-    .item {
-      .bible {
-        &:hover {
-          border-color: var(--bs-gray-400);
-        }
-      }
-    }
-  }
-
   .presenter-foreground {
     background-color: var(--bs-gray-200);
   }

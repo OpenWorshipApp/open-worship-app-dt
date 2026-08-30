@@ -11,6 +11,7 @@ import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
 import { openSettingPage } from '../setting/settingHelpers';
 import appProvider from '../server/appProvider';
+import { checkIsMainWindow } from '../server/appHelpers';
 
 export function QuitCurrentPageComp({
     title,
@@ -24,6 +25,10 @@ export function QuitCurrentPageComp({
         goToPath(pathnameRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const isMainWindow = checkIsMainWindow();
+    if (!isMainWindow) {
+        return null;
+    }
     return (
         <button
             className="btn btn-sm btn-outline-warning"
@@ -31,6 +36,7 @@ export function QuitCurrentPageComp({
             aria-label={title}
             onClick={handleClick}
         >
+            🖥️
             <i className="bi bi-escape" />
         </button>
     );

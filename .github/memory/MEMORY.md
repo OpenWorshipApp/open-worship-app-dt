@@ -72,7 +72,7 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Presenting flow rename](presenting-flow-rename.md) — the four stale Khmer strings are fixed too now; `--no-playlist` (yt-dlp) and `displayListeners` are lookalikes, and the migration discovers the old name rather than holding one
 - [Expanded doc rows went stale — FIXED](presenting-flow-expanded-doc-stale.md) — the expanded document now re-subscribes; keep that timer PER-INSTANCE or one sheet listing a document twice goes stale again
 - [Expansion followed the position — FIXED](presenting-flow-expansion-follows-position.md) — run-sheet rows are keyed by uuid now; never key them by index again
-- [Console design system tokens](console-design-system-tokens.md) — `--app-accent`/`--app-on-air`/`--app-text-*`/`.app-data` exist and are under-adopted; don't reach for `--bs-*` or raw px
+- [Console design system tokens](console-design-system-tokens.md) — `--app-accent`/`--app-on-air`/`--app-text-*`/`.app-data`, swept onto presenting-flow + bible-list; a panel sheet must out-specify `[data-bs-theme]`, and Bootstrap utilities need `!important`
 - [Presenting flow cue gutter](presenting-flow-cue-gutter.md) — one left column (number + rail + run cursor) shared by the tree and the preview; content-box and Enter-only are load-bearing
 - [Vite caches a failed import resolution](vite-caches-failed-import-resolution.md) — three staleness cases; the silent one serves an OLD valid module and survives a reload, so grep the SERVED module before calling a feature missing
 - [Drag-kind mime & dim target](drag-kind-mime-and-dim-target.md) — dragover gates on `application/x-owa-drag-<kind>`; `changeDragEventStyle` dims `event.target`, not `currentTarget`

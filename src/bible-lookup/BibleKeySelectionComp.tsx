@@ -15,6 +15,7 @@ import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { openBibleSetting } from '../setting/settingHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 
 export async function genContextMenuBibleKeys(
     onSelect: (event: any, bibleKey: string) => void,
@@ -227,11 +228,13 @@ export function BibleKeySelectionMiniComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const hasContextMenu = isHandleClickEvent && contextMenuTitle !== undefined;
     return (
         <span
             className={
                 `bible-selector ${isHandleClickEvent ? 'pointer' : ''} ` +
-                (isMinimal ? ' bg-info' : 'badge rounded-pill text-bg-info')
+                (isMinimal ? ' bg-info' : 'badge rounded-pill text-bg-info') +
+                (hasContextMenu ? ' bible-selector-with-menu' : '')
             }
             style={{
                 paddingLeft: isMinimal ? '2px' : '6px',
@@ -244,6 +247,28 @@ export function BibleKeySelectionMiniComp({
             }
         >
             <BibleKeyWithTileComp bibleKey={bibleKey} />
+            {/* This chip is the one control in the app whose right-click is not
+                its left-click: a click REPLACES the bible, a right-click ADDS an
+                extra one to compare against. Nothing on the chip said so, and a
+                touch screen cannot right-click at all.
+
+                It rides INSIDE the chip, so the pill reads as one control with
+                two doors rather than as a chip with a loose button beside it.
+                Its own press never reaches the chip's `onClick` —
+                `ContextMenuDotsButtonComp` stops the press — so the click that
+                REPLACES the bible cannot fire from the button that ADDS one.
+
+                Gated on `contextMenuTitle` rather than on a new flag, because
+                that title IS the second menu's name and only the caller that has
+                a second menu passes one. Every other site here answers a
+                right-click with the same list a click gives, and a button for a
+                duplicate would only crowd the chip. */}
+            {hasContextMenu ? (
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuEvent}
+                    label={contextMenuTitle}
+                />
+            ) : null}
         </span>
     );
 }

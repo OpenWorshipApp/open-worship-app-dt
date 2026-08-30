@@ -125,10 +125,11 @@ function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="w-100 accordion accordion-flush py-1">
+        <div className="w-100 accordion accordion-flush">
             <div
                 className={
                     'accordion-header d-flex app-caught-hover-pointer' +
+                    ' app-cue-group' +
                     ` ${isOnScreen ? 'app-on-screen' : ''}`
                 }
                 onClick={handleToggleOpened}
@@ -141,14 +142,12 @@ function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
                                 : 'bi-chevron-right'
                         }`}
                     />
-                    <span className="w-100 text-center">
-                        <i
-                            className={`bi bi-book${
-                                bible.isOpened ? '-fill' : ''
-                            } px-1`}
-                        />
-                        {fileSource.name}
-                    </span>
+                    <i
+                        className={`bi bi-book${
+                            bible.isOpened ? '-fill' : ''
+                        } px-1`}
+                    />
+                    <span className="app-ellipsis">{fileSource.name}</span>
                 </div>
                 <div className="float-end">
                     <AttachBackgroundIconComp filePath={bible.filePath} />

@@ -30,8 +30,7 @@ import { type AllControlType as KeyboardControlType } from '../event/KeyboardEve
 import { onSlideItemsKeyboardEvent } from '../slide-editor/slideEditingKeyboardEventHelpers';
 import { checkIsHistoryMovementEventType } from '../editing-manager/EditingHistoryManager';
 import { tran } from '../lang/langHelpers';
-import { genLabelIcon } from '../others/labelIconHelpers';
-import { openPopupWindow, setParamKeyValue } from '../helper/domHelpers';
+import { openPopupWindow } from '../helper/domHelpers';
 
 export function genLayoutTabs() {
     const presenterTab: TabOptionType = {
@@ -45,7 +44,7 @@ export function genLayoutTabs() {
         title: (
             <>
                 <span style={{ color: 'var(--app-color-reader)' }}>
-                    {genLabelIcon('Bible Reader')}
+                    📖
                     {tran('Bible Reader') + ' '}
                 </span>
                 <span
@@ -55,13 +54,8 @@ export function genLayoutTabs() {
                     onClick={async (event) => {
                         event.preventDefault();
                         event.stopPropagation();
-                        const pathname = setParamKeyValue(
-                            appProvider.readerHomePage,
-                            'is-popup',
-                            'true',
-                        );
                         openPopupWindow(
-                            pathname,
+                            appProvider.readerHomePage,
                             `reader_${Date.now()}`,
                             'reader',
                         );
@@ -100,7 +94,7 @@ export function genLayoutTabs() {
         title: (
             <>
                 <span>
-                    {genLabelIcon('Slide Editor')}
+                    🖥️✏️
                     {tran('Slide Editor') + ' '}
                 </span>
                 <span

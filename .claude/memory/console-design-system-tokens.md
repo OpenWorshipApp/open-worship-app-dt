@@ -26,7 +26,25 @@ reworked UI:
 
 As of 2026-08-08 `src/presenting-flow/` was reworked onto all of this (it had used
 zero `--app-*` tokens, a 10/11/12/13px ladder, and `--bs-info` cyan as a third
-shouting hue). Other subsystems have **not** been swept.
+shouting hue). On 2026-08-30 `src/bible-list/` followed: the Bibles and Bible
+Notes panels share `src/bible-list/cueList.scss`, scoped to a new `app-cue-list`
+class on each panel root, and reuse presenting-flow's rail/gutter language —
+a 2px left rail (`--app-line` at rest → `--app-accent` open → `--app-on-air`
+live) plus an in-flow tabular index column. Remaining subsystems have **not**
+been swept.
+
+Two things that sheet had to solve, and will bite the next sweep too:
+
+- **Specificity.** The theme sheets paint rows from
+  `.app[data-bs-theme='dark'] .list-group-item…`, so a panel sheet written
+  `.app .my-panel .list-group-item:hover` (0,4,0) LOSES to their
+  `:not(.active):hover` (0,5,0) and lands only by import order. Matching
+  `[data-bs-theme]` (any value) in the panel selector buys the level back
+  without `!important`.
+- **Bootstrap utilities beat specificity outright.** `.bg-info` and friends ship
+  `!important` from Bootstrap's utility API, so a background under one is
+  reachable only with `!important` of your own — that, not tidiness, is why the
+  bible-key chip carries one.
 
 **Why:** `--bs-*` and raw px look harmless but quietly add a hue with no rank, or
 a ragged number column, in an app read at a glance in a dark booth.

@@ -11,7 +11,7 @@ import ToastComp from './toast/ToastComp';
 import PresentingControlComp from './presenting-control/PresentingControlComp';
 import GraphViewPanelsHostComp from './graph-view/GraphViewPanelsHostComp';
 import LocationNameDetailPanelsHostComp from './location-name-lookup/LocationNameDetailPanelsHostComp';
-import { getParamKeyValue } from './helper/domHelpers';
+import { checkIsMainWindow } from './server/appHelpers';
 
 await init();
 run(
@@ -27,8 +27,9 @@ run(
     </>,
 );
 
-const isPopup =
-    getParamKeyValue(globalThis.location.href, 'is-popup') === 'true';
-if (!isPopup) {
-    hideAllScreens();
-}
+setTimeout(() => {
+    const isMainWindow = checkIsMainWindow();
+    if (isMainWindow) {
+        hideAllScreens();
+    }
+}, 1000);

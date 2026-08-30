@@ -21,13 +21,7 @@ export default function RenderBibleItemsComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <ul
-            className="list-group"
-            style={{
-                minWidth: '220px',
-                maxWidth: '420px',
-            }}
-        >
+        <ul className="list-group">
             {items.map((bibleItem, i1) => {
                 return (
                     <BibleItemRenderComp

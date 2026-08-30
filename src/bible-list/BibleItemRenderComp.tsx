@@ -209,8 +209,9 @@ export default function BibleItemRenderComp({
     return (
         <li
             className={
-                'list-group-item item app-caught-hover-pointer px-3' +
-                ' app-has-action-rail-2'
+                'list-group-item item app-caught-hover-pointer' +
+                ' app-has-action-rail-2' +
+                (isOnScreen ? ' app-cue-on-air' : '')
             }
             ref={improveBibleItemTitleOnHover.bind(
                 null,
@@ -241,11 +242,6 @@ export default function BibleItemRenderComp({
                                 changeBible(newBibleKey);
                             }}
                             isMinimal
-                            extraStyle={{
-                                background: 'var(--bs-secondary) !important',
-                                padding: '0px !important',
-                                fontSize: '0.8rem !important',
-                            }}
                         />
                     </div>
                     <span

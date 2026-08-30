@@ -64,6 +64,11 @@
   }
 
   .bible-view-text {
+    // Containing block for the selected verse's ⋮ (see `.verse-text` below).
+    // It has to be INSIDE the scroller: positioned against the card, that button
+    // would sit still while the verses scrolled out from under it.
+    position: relative;
+
     .verse-number,
     .verse-text {
       display: inline;
@@ -108,6 +113,44 @@
     }
 
     .verse-text {
+      // The selected verse's ⋮, floated to the right edge of the text column.
+      //
+      // `top` is deliberately left `auto`. An absolutely positioned box with no
+      // `top` falls back to its STATIC position — where it would have sat in
+      // the flow — and this button is the verse's FIRST child, so that is the
+      // verse's own first line. WHICH verse it belongs to is the one thing no
+      // selector here could otherwise say, and it costs no script.
+      //
+      // It brings NO ground of its own — no slab, no lift, and the app-wide
+      // 0.1 alpha it inherits from `.app-context-menu-dots`. Ragged-right prose
+      // does reach this column, and a filled box there covers the words it is
+      // meant to serve; a glyph at 0.1 lets them through and comes up to full
+      // strength under the pointer, which is the same bargain every other ⋮ in
+      // the app makes.
+      //
+      // Every verse carries one and only the selected verse draws it:
+      // `selected` is a class `handleVersesSelecting` toggles straight onto the
+      // element, which React never sees, so CSS is the only thing that can
+      // answer this. A `display: none` button costs no layout and no paint —
+      // the same trick `.verse-audio` below has always used — so a 176-verse
+      // psalm pays nothing for the 175 it is not showing.
+      > .app-context-menu-dots {
+        display: none;
+      }
+
+      &.selected > .app-context-menu-dots {
+        display: inline-flex;
+        // Out of flow, which is the whole point: in flow, the button appeared
+        // and vanished with the selection and shoved the verse sideways under
+        // the reader's eye each time.
+        position: absolute;
+        // Hard against the text column's right edge, clear of the words.
+        right: 4px;
+        // Above the verse it floats over, so the glyph is never half-painted.
+        z-index: 1;
+        padding: 0;
+      }
+
       &.extra-verses {
         display: inline-block;
         &.selected {

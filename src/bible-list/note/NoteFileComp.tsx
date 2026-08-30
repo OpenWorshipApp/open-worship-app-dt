@@ -126,9 +126,12 @@ function NotePreview({ note }: Readonly<{ note: Note }>) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="w-100 accordion accordion-flush py-1">
+        <div className="w-100 accordion accordion-flush">
             <div
-                className={'accordion-header d-flex app-caught-hover-pointer'}
+                className={
+                    'accordion-header d-flex app-caught-hover-pointer' +
+                    ' app-cue-group'
+                }
                 onClick={handleToggleOpened}
             >
                 <div className="flex-fill">
@@ -139,21 +142,36 @@ function NotePreview({ note }: Readonly<{ note: Note }>) {
                                 : 'bi-chevron-right'
                         }`}
                     />
-                    <span className="w-100 text-center">
-                        <i
-                            className={`bi bi-book${
-                                note.isOpened ? '-fill' : ''
-                            } px-1`}
-                        />
-                        {fileSource.name}
-                    </span>
+                    <i
+                        className={`bi bi-journal${
+                            note.isOpened ? '-text' : 's'
+                        } px-1`}
+                    />
+                    <span className="app-ellipsis">{fileSource.name}</span>
                 </div>
                 {note.isOpened ? (
                     <div className="me-2">
                         <i
-                            className="bi bi-plus app-caught-hover-pointer"
-                            style={{ color: 'green', fontSize: '20px' }}
+                            className="bi bi-plus app-ghost-button app-cue-add"
+                            role="button"
+                            tabIndex={0}
+                            aria-label={tran('New Note Item')}
+                            title={tran('New Note Item')}
                             onClick={(event) => {
+                                event.stopPropagation();
+                                createNewNoteItem(note);
+                            }}
+                            onKeyDown={(event) => {
+                                if (
+                                    event.key !== 'Enter' &&
+                                    event.key !== ' '
+                                ) {
+                                    return;
+                                }
+                                // Otherwise Space scrolls the panel and Enter
+                                // reaches the header behind, which toggles the
+                                // folder shut on the item just added.
+                                event.preventDefault();
                                 event.stopPropagation();
                                 createNewNoteItem(note);
                             }}
