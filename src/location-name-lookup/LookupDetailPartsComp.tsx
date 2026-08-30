@@ -16,6 +16,7 @@ import {
     shortToVerseTitle,
 } from './bibleVerseHelpers';
 import type { DetailPanelKindType } from './detailPanelHelpers';
+import { showGraphPreviewContextMenu } from '../graph-view/graphContextMenuHelpers';
 import { openDetailPanel } from './detailPanelHelpers';
 import { useLookupManagersContext } from './lookupManagersContext';
 import {
@@ -88,6 +89,13 @@ function RenderReferenceButtonComp({
                 event.preventDefault();
                 event.stopPropagation();
                 openDetailPanel({ kind, target, name });
+            }}
+            onContextMenu={(event) => {
+                showGraphPreviewContextMenu(event.nativeEvent, {
+                    kind,
+                    recordId: target,
+                    name,
+                });
             }}
         >
             {label}
@@ -410,6 +418,16 @@ export function OptionalNameListRowComp({
                                         name: record.name,
                                     });
                                 }}
+                                onContextMenu={(event) => {
+                                    showGraphPreviewContextMenu(
+                                        event.nativeEvent,
+                                        {
+                                            kind: 'name',
+                                            recordId: record.id,
+                                            name: record.name,
+                                        },
+                                    );
+                                }}
                             >
                                 {record.name}
                             </button>
@@ -455,6 +473,16 @@ export function OptionalLocationListRowComp({
                                         target: record.id,
                                         name: record.name,
                                     });
+                                }}
+                                onContextMenu={(event) => {
+                                    showGraphPreviewContextMenu(
+                                        event.nativeEvent,
+                                        {
+                                            kind: 'location',
+                                            recordId: record.id,
+                                            name: record.name,
+                                        },
+                                    );
                                 }}
                             >
                                 {record.name}

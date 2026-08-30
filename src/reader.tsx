@@ -9,6 +9,7 @@ import HandleAlertComp from './popup-widget/HandleAlertComp';
 import TopProgressBarComp from './progress-bar/TopProgressBarComp';
 import ToastComp from './toast/ToastComp';
 import PresentingControlComp from './presenting-control/PresentingControlComp';
+import GraphViewPanelsHostComp from './graph-view/GraphViewPanelsHostComp';
 import LocationNameDetailPanelsHostComp from './location-name-lookup/LocationNameDetailPanelsHostComp';
 import { getParamKeyValue } from './helper/domHelpers';
 
@@ -22,6 +23,7 @@ run(
         <HandleAlertComp />
         <PresentingControlComp />
         <LocationNameDetailPanelsHostComp />
+        <GraphViewPanelsHostComp />
     </>,
 );
 

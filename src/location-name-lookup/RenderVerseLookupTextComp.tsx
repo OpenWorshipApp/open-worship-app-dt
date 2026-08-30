@@ -1,5 +1,6 @@
 import { Fragment, useMemo } from 'react';
 
+import { showGraphPreviewContextMenu } from '../graph-view/graphContextMenuHelpers';
 import { openDetailPanel } from './detailPanelHelpers';
 import {
     toVerseTextSegments,
@@ -66,6 +67,13 @@ export default function RenderVerseLookupTextComp({
                 title={match.text}
                 onClick={(event) => {
                     handleMatchClicking(event, match);
+                }}
+                onContextMenu={(event) => {
+                    showGraphPreviewContextMenu(event.nativeEvent, {
+                        kind: match.kind,
+                        recordId: match.recordId,
+                        name: match.text,
+                    });
                 }}
             >
                 {match.text}

@@ -21,7 +21,46 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-29o** (**W-29 steps 2 and 3, and W-30 step 3: a
+**workflowsVersion: 2026-08-29t** (**W-38 steps 5 and 10: opening a record always starts
+fresh, and a box can be made the centre or the new starting point.** The graph no longer
+resumes an invisible "last session" — clicking `David` gave you back whatever that window
+had drifted into, which after a path or a re-root was somebody else's family under David's
+name. It now opens one box, that record, every time; **Save preset** is how you keep an
+arrangement. A box's right-click menu gains **Use as root** (clear the rest away and carry
+on from this box) beside **Set as centre**, which now re-fans the graph around the box and
+brings it into view instead of throwing it into the top-left corner. Verified live
+2026-08-29, km.)
+
+Previous: **2026-08-29s** (**W-38 step 8: Find Connection asks for ONE name, not
+two.** The path always starts at the graph's own centre box — shown as a chip you cannot
+type over — so you only say where you want to get to; the *Path from* field and the swap
+button are gone. Every name the picker offers now carries its English name beside it
+(*ដាវីឌ (David)*), the way the lookup list and the boxes already did — eight Khmer names
+beginning alike were unpickable. Step 10: reopening a record whose window you ran a path in
+now starts you back at that record instead of at somebody else's family line. Verified live
+2026-08-29, km.)
+
+Previous: **2026-08-29r** (**W-38 step 7: the Connection Graph now has Undo and
+Redo, and Re-layout tidies a path properly.** Every move is reversible — a dragged box, a
+zoom, an expansion, a filter — from the two dock buttons or **Ctrl+Z** / **Ctrl+Y**, with a
+whole wheel gesture counting as one step. **Re-layout** (now a ✨ wand, which no longer
+reads as "reload") rebuilds a found path as its chain instead of spiralling 32 generations
+into rings, and always brings the result back into view; it used to leave the graph in the
+top-left corner. The panel is also written in the record's own language throughout — title
+bar, chips, boxes and the curved edge labels — the title follows the graph's centre when a
+path or a re-root changes it, and you can now zoom to 500%. Verified live 2026-08-29, km.)
+
+Previous: **2026-08-29q** (**W-38 step 5: a box in the Connection Graph now has
+a right-click menu, and its verse list reads in your own Bible.** The menu carries what the
+box's own small buttons carry — *Open detail*, *Verses*, *Open all Related*, *Collapse*,
+*Set as centre*, *Remove* — reachable from anywhere on the box, including a collapsed one,
+which draws no buttons at all; rows that would do nothing are left out rather than greyed,
+and the press starts neither a box drag nor a canvas pan. The 📖 count beside it used to
+list raw keys like `GEN 24:29-30`; it now names each verse the way the Bible you are reading
+names it, *លោកុប្បត្តិ ២៤:២៩-៣០*, ranges and all. Previous entry: **W-38: a new Connection Graph shows a person or place and
+everything it is related to as boxes you can explore.** Verified live 2026-08-29, km.)
+
+Previous: **2026-08-29p** (**W-38: a new Connection Graph shows a person or place and everything it is related to as boxes you can explore, and can find the line between two people.** Previous entry: **W-29 steps 2 and 3, and W-30 step 3: a
 translated name now carries its English name beside it, and you can search in either
 language.** A Khmer record reads *ម៉ូសេ (Moses)* the way a Bible book reads *លោកុប្បត្តិ
 (Genesis)* — in the lookup list, in the "in your reading" panel, across the top of a record
@@ -2482,3 +2521,76 @@ all count as book-level too.
 > your material is actually in rather than at a whole drive.
 
 _Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, CM-93._
+
+---
+
+### W-38 — See how people and places connect (Connection Graph)
+
+The record window tells you *who* someone is. The graph shows you *how they connect* —
+parents, spouses, children, cousins and places, all on one canvas you can explore.
+
+1. Open the **Names and locations lookup** (`👤📍`) from the Bible Lookup header and find
+   a person — try **Jacob** (យ៉ាកុប). 📸
+2. **Right-click** the row and choose **Open Graph Preview** (បើកមើលក្រាបទំនាក់ទំនង). A
+   floating window opens with that person in the middle.
+   > You can right-click a name anywhere it is already clickable — in the list, in the
+   > **names and locations in your reading** panel, underlined inside a verse, or in the
+   > related-names list of a record window. A record window also has a `⛶`-style graph
+   > icon beside its title.
+3. Each box shows a number next to a small diagram icon — that is how many related
+   records it has. **Click the number.** A menu opens listing **All (44)** first, then
+   only the kinds this record actually has: *Parents (2)*, *Spouses (4)*, *Siblings (2)*,
+   *Children (13)*, *Cousins (22)*, *Locations (1)*. 📸
+4. Pick one kind — say **Children** — and just those boxes appear, ringed around the
+   person and joined by curved lines. Each line is labelled with the relationship as you
+   would say it: *son*, *daughter*, *wife*, *father*, *located at*.
+   > Choosing **All** on a record with many relations asks you to confirm first, because
+   > forty-odd boxes at once is a lot to read.
+5. Explore: **drag** any box to move it (it stays where you put it), **drag the empty
+   canvas** to pan, and **scroll** to zoom in and out around your pointer.
+   **Double-click** a box to make it the new centre.
+   > **Right-click a box** for a menu of everything that box can do: **Open detail**,
+   > **Verses (8)**, **Open all Related (23)**, **Collapse**, **Set as centre**,
+   > **Use as root** and **Remove**. *Set as centre* re-arranges the whole graph around
+   > that box; *Use as root* clears everything else away and leaves just it, so you can
+   > start exploring again from a record already in front of you. It is the same set as the small buttons along the bottom of the box, but
+   > it also works on a box you have collapsed, which shows no buttons at all. Rows you
+   > could not use are simply absent — the centre box offers no *Remove*, and a record
+   > with no relations offers no *Open all Related*.
+   > The **Verses** list names each verse the way YOUR Bible names it —
+   > *លោកុប្បត្តិ ២៤:២៩-៣០*, not `GEN 24:29-30` — and picking one opens it.
+6. Too busy? The coloured chips along the top switch each kind of connection on and off —
+   turning **Cousins** off is usually the difference between a tangle and a family tree.
+   **Right-click a chip** to show *only* that kind, and right-click it again to bring
+   everything back. 📸
+7. Bottom-right: **↺ Undo** and **↻ Redo** step through everything you have done to the
+   graph — a box you dragged, a zoom, an expansion, a filter — and **Ctrl+Z** / **Ctrl+Y**
+   do the same. One wheel gesture is one step, however many notches it took.
+   **Fit to view** (`⛶`) brings every box back on screen, **Re-layout** (✨) tidies the
+   whole arrangement — a family fan back into rings, a found path back into its chain —
+   and the `^` button collapses every box to a single line so a big graph fits.
+   > Nothing here is one-way: if a tidy-up is not what you wanted, Undo puts every box
+   > back where it was.
+8. **Find the line from this person to another.** Click the signpost icon at the top
+   right. The graph's own centre is already the starting point — it sits there as a chip —
+   so you only say where you want to get TO: type **jesus**, pick **យេស៊ូវ (Jesus)** from
+   the list (every name is offered with its English name beside it), and press
+   **Find Connection** (រកទំនាក់ទំនង). The canvas fills with the generations from David
+   down to Jesus, the connecting line highlighted, and every box on it still expandable. 📸
+   > The panel takes the name of the person the chain STARTS from, and that first box
+   > becomes the graph's new centre.
+   > Paths run through people only. A place like Jerusalem touches almost everyone, so
+   > allowing places as stepping stones would "connect" any two people meaninglessly.
+   > If there is genuinely no link you will see **No connection found** — that is an
+   > answer, not an error.
+9. Keep it: the `⋯` menu at the top right offers **Save as image** (a PNG saved to your
+   Downloads folder and revealed for you), **Print** (which prints on white paper
+   whatever theme the app is using), and **Save preset** to name an arrangement and come
+   back to it later.
+10. Opening a record always starts you at that record, with one box — every time, however
+    you left the window last time. 📸
+    > If an arrangement is worth coming back to, say so: `⋯` → **Save preset**, name it,
+    > and it is waiting in that same menu next time.
+
+_Verify: RD-92, RD-93, RD-94, RD-95, RD-96, RD-97, RD-98, RD-99, RD-100, RD-101,
+RD-102, RD-103, RD-104, RD-105, RD-106._

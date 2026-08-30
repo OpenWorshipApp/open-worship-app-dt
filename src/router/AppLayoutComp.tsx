@@ -21,6 +21,7 @@ import {
 import LayoutTabRenderComp from './LayoutTabRenderComp';
 import { useAppDocumentContextValues } from './layoutHelpers';
 import AppDocumentPreviewFloatingComp from '../app-document-list/AppDocumentPreviewFloatingComp';
+import GraphViewPanelsHostComp from '../graph-view/GraphViewPanelsHostComp';
 import LocationNameDetailPanelsHostComp from '../location-name-lookup/LocationNameDetailPanelsHostComp';
 
 export default function AppLayoutComp({
@@ -92,6 +93,7 @@ export default function AppLayoutComp({
             <HandleAlertComp />
             <AppDocumentPreviewFloatingComp />
             <LocationNameDetailPanelsHostComp />
+            <GraphViewPanelsHostComp />
         </MultiContextRenderComp>
     );
 }

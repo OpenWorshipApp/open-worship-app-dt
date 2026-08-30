@@ -89,3 +89,4 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Credentials use safeStorage](secure-storage-safestorage.md) — secrets sit in a SECOND `-secret` store keyed field-by-field; legacy cleartext is scrubbed on launch, never migrated
 - [Lookup has its own language](lookup-language-selection.md) — one dataset loaded at a time; the in-text index stays English while only the labels sidecar is per-language; a translated record reads `ម៉ូសេ (Moses)` and answers to either name
 - [Bible view controller hands out live arrays](bible-view-controller-live-arrays.md) — it splices them in place before the update event; memoizing on their identity threw `key v3 not found in flexSizeDefault`
+- [Connection graph (graph-view)](graph-view-connection-graph.md) — pure non-React core + one `GraphSourceType` per dataset; elliptical ring clearances and arc-length spacing are load-bearing

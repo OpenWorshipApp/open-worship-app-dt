@@ -1376,6 +1376,61 @@ const dictionary = {
     // lyric documents with no sign-in (2026-08-24).
     'Import From Public Domain Songs': 'នាំចូលពីចម្រៀងកម្មសិទ្ធិសាធារណៈ',
     'Failed to create lyric document': 'បរាជ័យក្នុងការបង្កើតឯកសារអត្ថបទចម្រៀង',
+    // --- Connection graph (src/graph-view): a floating, pannable graph of a
+    // record and everything it is related to (2026-08-29). The plural relation
+    // labels the filter chips use (Parents, Children, Spouses, Siblings,
+    // Cousins, Locations, Related locations) are already in this file and are
+    // reused rather than repeated.
+    'Open Graph Preview': 'បើកមើលក្រាបទំនាក់ទំនង',
+    'Graph Preview': 'ក្រាបទំនាក់ទំនង',
+    'Open all Related': 'បើកអ្វីៗដែលពាក់ព័ន្ធទាំងអស់',
+    'No related records': 'គ្មានកំណត់ត្រាពាក់ព័ន្ធ',
+    'Open detail': 'បើកព័ត៌មានលម្អិត',
+    'Graph node limit reached': 'ដល់ដែនកំណត់ចំនួនប្រអប់ក្នុងក្រាបហើយ',
+    'This will add many boxes to the graph. Continue?':
+        'នេះនឹងបន្ថែមប្រអប់ច្រើនទៅក្នុងក្រាប។ បន្តទេ?',
+    'Use as root': 'ប្រើជាចំណុចចាប់ផ្ដើម',
+    'Set as centre': 'កំណត់ជាចំណុចកណ្ដាល',
+    'Fit to view': 'ធ្វើឱ្យសមនឹងអេក្រង់',
+    'Re-layout': 'រៀបចំជាថ្មី',
+    Fullscreen: 'ពេញអេក្រង់',
+    'Exit fullscreen': 'ចេញពីពេញអេក្រង់',
+    Zoom: 'ពង្រីក',
+    'Path from': 'ចាប់ពី',
+    'Path to': 'ទៅ',
+    Swap: 'ដូរ',
+    'Find Connection': 'រកទំនាក់ទំនង',
+    'No connection found': 'រកមិនឃើញទំនាក់ទំនង',
+    'A location cannot be a path endpoint':
+        'ទីតាំងមិនអាចជាចំណុចចាប់ផ្តើម ឬចុងបញ្ចប់បានទេ',
+    'Mentioned by': 'បានរៀបរាប់ដោយ',
+    'Save as image': 'រក្សាទុកជារូបភាព',
+    'Save preset': 'រក្សាទុកគំរូ',
+    'Delete preset': 'លុបគំរូ',
+    Presets: 'គំរូ',
+    'Right-click to show only this': 'ចុចខាងស្តាំដើម្បីបង្ហាញតែមួយនេះ',
+    All: 'ទាំងអស់',
+    // Relation labels drawn on the edges. Lowercase because each reads as a
+    // phrase sitting on a line ("son", "wife"), not as a heading — which is
+    // also what keeps them distinct from the plural chip keys above.
+    father: 'ឪពុក',
+    mother: 'ម្តាយ',
+    parent: 'ឪពុកម្តាយ',
+    son: 'កូនប្រុស',
+    daughter: 'កូនស្រី',
+    child: 'កូន',
+    husband: 'ប្តី',
+    wife: 'ប្រពន្ធ',
+    spouse: 'សហព័ទ្ធ',
+    brother: 'បងប្អូនប្រុស',
+    sister: 'បងប្អូនស្រី',
+    sibling: 'បងប្អូន',
+    cousin: 'ជីដូនមួយ',
+    'located at': 'ស្ថិតនៅ',
+    'related location': 'ទីតាំងពាក់ព័ន្ធ',
+    // No lowercase `mentioned by` twin: keys are matched case-insensitively,
+    // so it would collide with `Mentioned by` above and this module throws at
+    // load on a duplicate. The one entry serves the chip and any edge label.
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

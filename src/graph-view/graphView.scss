@@ -1,0 +1,542 @@
+// The connection graph. Everything is scoped under `.graph-view` (or the
+// widget class the panel adds) so this module publishes no app-wide utilities.
+
+// The floating widget's content box is `overflow: auto`. Left alone, the
+// absolutely positioned boxes would grow scrollbars and the user would scroll
+// the widget instead of panning the canvas.
+.graph-view-widget .floating-widget__content {
+  overflow: hidden;
+}
+
+// A widget taken fullscreen still carries the inline left/top/width/height of
+// its floating rect, which fights the fullscreen box.
+.floating-widget:fullscreen {
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+
+  // Nothing to drag against when the panel already fills the screen.
+  .floating-widget__resize-handle {
+    display: none;
+  }
+}
+
+.graph-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+
+  // Per node type. Scoped to this feature rather than added to the app-wide
+  // `--app-*` set: these are a categorical palette for one panel, not new
+  // ranked colours for the whole console. `--app-on-air` is deliberately
+  // absent — it is reserved for content live on a congregation screen.
+  --graph-type-person: #6ea8fe;
+  --graph-type-deity: #ffd479;
+  --graph-type-group: #8bd3a0;
+  --graph-type-concept: #c9a0ff;
+  --graph-type-supernatural: #f2a2d0;
+  --graph-type-month: #9fd0d8;
+  --graph-type-life: #f0b48a;
+  --graph-type-place: #a8b3c4;
+  --graph-type-settlement: #9ac6a0;
+  --graph-type-region: #b5c98e;
+  --graph-type-terrain: #c3ab8b;
+  --graph-type-water: #86c7d6;
+  --graph-type-structure: #b8a7bd;
+  --graph-type-unknown: var(--app-muted, #8d949e);
+
+  // Per relation FAMILY. Four, not one per relation: the label on the edge
+  // carries the precise meaning, so hue only has to separate the broad kinds.
+  --graph-edge-parentage: var(--app-ink, #dee2e6);
+  --graph-edge-spouse: var(--app-accent, #6ea8fe);
+  --graph-edge-sibling: var(--app-muted, #8d949e);
+  --graph-edge-cousin: var(--app-muted, #8d949e);
+  --graph-edge-placement: var(--app-line, #6c757d);
+  --graph-edge-default: var(--app-muted, #8d949e);
+
+  // Faint enough to read as texture rather than content. Checked against the
+  // surface in both themes rather than judged by eye.
+  --graph-grid-dot: rgb(255 255 255 / 9%);
+}
+
+.app[data-bs-theme='light'] .graph-view {
+  --graph-grid-dot: rgb(0 0 0 / 10%);
+}
+
+.graph-view__toolbar {
+  flex: 0 0 auto;
+  // The chips wrap freely while the corner actions stay put on the right, so a
+  // long chip list never pushes them off or wraps them onto their own line.
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  column-gap: 8px;
+  row-gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--app-line, var(--bs-border-color));
+}
+
+.graph-view__toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+// The path bar spans both columns, under the chips and the corner actions.
+.graph-view__path-bar {
+  grid-column: 1 / -1;
+}
+
+// The view controls, floating over the bottom-right of the canvas so the graph
+// keeps the panel's full height.
+.graph-view__dock {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 3;
+  // One inline row: count, the view buttons, then the zoom slider.
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border: 1px solid var(--app-line, var(--bs-border-color));
+  border-radius: 8px;
+  // Frosted glass: mostly transparent so the graph reads THROUGH it, with the
+  // blur and a saturation boost doing the work of separating the controls from
+  // whatever is behind them. A hairline top highlight is what stops it looking
+  // like a flat grey rectangle.
+  background: color-mix(in srgb, var(--bs-body-bg) 45%, transparent);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border-color: color-mix(in srgb, var(--app-ink, #fff) 18%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--app-ink, #fff) 12%, transparent),
+    0 6px 20px rgb(0 0 0 / 32%);
+  // The canvas owns pointer gestures; the dock must take its own presses back.
+  cursor: default;
+}
+
+.graph-view__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+// The chips are also the edge legend: one control that says both what is shown
+// and what each colour means, instead of a separate key taking more space.
+.graph-view__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border: 1px solid var(--app-line, var(--bs-border-color));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--app-ink, var(--bs-body-color));
+  font-size: var(--app-text-xs, 11px);
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.graph-view__chip-swatch {
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--graph-edge-default);
+}
+
+.graph-view__chip--parentage .graph-view__chip-swatch {
+  background: var(--graph-edge-parentage);
+}
+.graph-view__chip--spouse .graph-view__chip-swatch {
+  background: var(--graph-edge-spouse);
+}
+.graph-view__chip--sibling .graph-view__chip-swatch {
+  background: var(--graph-edge-sibling);
+}
+.graph-view__chip--cousin .graph-view__chip-swatch {
+  // Matches the dashed stroke its edges are drawn with, so the legend reads
+  // the same way the canvas does.
+  background: repeating-linear-gradient(
+    to right,
+    var(--graph-edge-cousin) 0 2px,
+    transparent 2px 4px
+  );
+}
+.graph-view__chip--placement .graph-view__chip-swatch {
+  background: repeating-linear-gradient(
+    to right,
+    var(--graph-edge-placement) 0 4px,
+    transparent 4px 7px
+  );
+}
+
+.graph-view__chip--off {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+.graph-view__tool-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 5px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--app-ink, var(--bs-body-color));
+
+  &:hover:not(:disabled) {
+    background: var(--bs-secondary-bg);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+
+  &[aria-pressed='true'] {
+    background: var(--app-accent-halo, rgba(110, 168, 254, 0.25));
+    color: var(--app-accent, var(--bs-body-color));
+  }
+}
+
+.graph-view__count {
+  font-size: var(--app-text-xs, 11px);
+  color: var(--app-muted, var(--bs-secondary-color));
+}
+
+.graph-view__zoom {
+  width: 168px;
+}
+
+.graph-view__path-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.graph-view__picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 130px;
+  max-width: 220px;
+}
+
+.graph-view__picker--chosen {
+  padding: 1px 4px 1px 8px;
+  border: 1px solid var(--app-line, var(--bs-border-color));
+  border-radius: 999px;
+  font-size: var(--app-text-sm, 12px);
+}
+
+.graph-view__picker-list {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  max-height: 190px;
+  overflow-y: auto;
+  background: var(--bs-body-bg);
+  border: 1px solid var(--app-line, var(--bs-border-color));
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 35%);
+
+  button {
+    display: block;
+    width: 100%;
+    padding: 3px 6px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--app-ink, var(--bs-body-color));
+    text-align: start;
+    font-size: var(--app-text-sm, 12px);
+
+    &:hover {
+      background: var(--app-accent-halo, rgba(110, 168, 254, 0.25));
+    }
+  }
+}
+
+.graph-view__path-message {
+  // A record with no connection is an ANSWER, not an error: no red, no icon.
+  color: var(--app-muted, var(--bs-secondary-color));
+  font-size: var(--app-text-sm, 12px);
+}
+
+.graph-view__viewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  // Pointer gestures own this surface; without it a touch drag scrolls.
+  touch-action: none;
+  cursor: grab;
+  background: var(--app-surface, var(--bs-body-bg));
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.graph-view__canvas {
+  position: absolute;
+  inset: 0;
+
+  // A dot grid, so panning and zooming read as movement over a surface rather
+  // than boxes drifting in a void. It lives INSIDE the zoom layer, so the
+  // spacing scales with the zoom for free; the pan is applied as a
+  // background-position from the same value that drives the world transform.
+  background-image: radial-gradient(
+    circle,
+    var(--graph-grid-dot) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+}
+
+.graph-view__world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
+
+.graph-view__edges {
+  position: absolute;
+  // A fan-out to the upper left lives at negative coordinates; the layer is
+  // positioned from the computed world bounds, and this covers the moment
+  // mid-drag before those bounds are recomputed.
+  overflow: visible;
+  pointer-events: none;
+}
+
+.graph-view__edge {
+  fill: none;
+  stroke: var(--graph-edge-default);
+  stroke-width: 1.5;
+  opacity: 0.75;
+}
+
+.graph-view__edge-group--parentage .graph-view__edge {
+  stroke: var(--graph-edge-parentage);
+}
+.graph-view__edge-group--spouse .graph-view__edge {
+  stroke: var(--graph-edge-spouse);
+}
+.graph-view__edge-group--sibling .graph-view__edge {
+  stroke: var(--graph-edge-sibling);
+  stroke-width: 1.25;
+}
+.graph-view__edge-group--cousin .graph-view__edge {
+  stroke: var(--graph-edge-cousin);
+  stroke-width: 1.25;
+  stroke-dasharray: 2 4;
+}
+.graph-view__edge-group--placement .graph-view__edge {
+  stroke: var(--graph-edge-placement);
+  stroke-width: 1.25;
+  stroke-dasharray: 6 4;
+}
+
+.graph-view__edge-group marker path {
+  fill: var(--graph-edge-parentage);
+}
+
+// The canvas takes focus so the undo keys reach the panel the user is working
+// in; it is not a control, so it must not draw a focus ring.
+.graph-view__viewport:focus,
+.graph-view__viewport:focus-visible {
+  outline: none;
+}
+
+// The path's fixed starting point: the same chip as a chosen record, minus the
+// clear button, so the two ends of the search read as one row.
+.graph-view__picker--fixed {
+  flex: 0 1 auto;
+  gap: 4px;
+  padding-right: 8px;
+  opacity: 0.85;
+}
+
+.graph-view__path-arrow {
+  flex: 0 0 auto;
+  color: var(--app-muted, var(--bs-secondary-color));
+}
+
+.graph-view__edge-label {
+  fill: var(--app-muted, var(--bs-secondary-color));
+  // The halo, painted under the fill so a label stays readable where lines
+  // cross behind it — and with no background rect, which would need a
+  // per-label measurement.
+  stroke: var(--app-surface, var(--bs-body-bg));
+  stroke-width: 3;
+  font-size: 10px;
+  paint-order: stroke;
+}
+
+// While a path is shown, everything not on it steps back.
+.graph-view__edges--has-path
+  .graph-view__edge-group:not(.graph-view__edge-group--on-path) {
+  opacity: 0.3;
+}
+
+.graph-view__edge-group--on-path .graph-view__edge {
+  stroke: var(--app-accent, #6ea8fe);
+  stroke-width: 2.5;
+  opacity: 1;
+}
+
+.graph-view__edge-group--on-path .graph-view__edge-label {
+  fill: var(--app-ink, var(--bs-body-color));
+  font-size: 11px;
+}
+
+.graph-view__node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px 7px;
+  border: 1px solid var(--app-line, var(--bs-border-color));
+  // The type colour rides the LEFT edge, leaving the full border free to show
+  // selection and path state without the two fighting.
+  border-left: 3px solid var(--graph-type-unknown);
+  border-radius: 6px;
+  background: var(--bs-body-bg);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 25%);
+  cursor: grab;
+  user-select: none;
+  // Pinned to GRAPH_GEOMETRY.NODE_HEIGHT: the layout reserves exactly this
+  // much room, so a box that grew past it would overlap its neighbours.
+  height: 88px;
+  overflow: hidden;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.graph-view__node--collapsed {
+  height: auto;
+}
+
+@each $key in person, deity, group, concept, supernatural, month, life, place,
+  settlement, region, terrain, water, structure, unknown
+{
+  .graph-view__node[data-type-key='#{$key}'] {
+    border-left-color: var(--graph-type-#{$key});
+  }
+}
+
+.graph-view__node--root {
+  border-color: var(--app-accent, #6ea8fe);
+  box-shadow: 0 0 0 2px var(--app-accent-halo, rgba(110, 168, 254, 0.3));
+}
+
+.graph-view__node--on-path {
+  border-color: var(--app-accent, #6ea8fe);
+}
+
+.graph-view__node--collapsed {
+  flex-direction: row;
+  align-items: center;
+  padding: 2px 4px 2px 7px;
+}
+
+.graph-view__node-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-size: var(--app-text-sm, 12px);
+  font-weight: 600;
+}
+
+.graph-view__node-icon {
+  flex: 0 0 auto;
+  color: var(--app-muted, var(--bs-secondary-color));
+}
+
+.graph-view__node-name {
+  min-width: 0;
+}
+
+.graph-view__node-title {
+  min-width: 0;
+  font-size: var(--app-text-xs, 11px);
+  color: var(--app-muted, var(--bs-secondary-color));
+
+  // The clamp sits on an inner box: this element is a flex item, whose display
+  // is blockified, so `-webkit-box` would never survive on it.
+  > span {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+.graph-view__node-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.graph-view__node-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 3px;
+  height: 18px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--app-muted, var(--bs-secondary-color));
+  font-size: var(--app-text-xs, 11px);
+
+  &:hover:not(:disabled) {
+    background: var(--bs-secondary-bg);
+    color: var(--app-ink, var(--bs-body-color));
+  }
+
+  &:disabled {
+    opacity: 0.35;
+  }
+}
+
+.graph-view__node-expand {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--app-muted, var(--bs-secondary-color));
+}
+
+.graph-view__spin {
+  animation: graph-view-spin 900ms linear infinite;
+}
+
+@keyframes graph-view-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .graph-view__spin {
+    animation: none;
+  }
+}

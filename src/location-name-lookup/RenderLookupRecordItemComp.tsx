@@ -1,5 +1,6 @@
 import './LocationNameLookupPanelComp.scss';
 
+import { showGraphPreviewContextMenu } from '../graph-view/graphContextMenuHelpers';
 import type { DetailPanelKindType } from './detailPanelHelpers';
 import { openDetailPanel } from './detailPanelHelpers';
 import { getRecordDisplayName } from './lookupPresentationHelpers';
@@ -47,6 +48,13 @@ export default function RenderLookupRecordItemComp({
                     openDetailPanel({
                         kind,
                         target: record.id,
+                        name: record.name,
+                    });
+                }}
+                onContextMenu={(event) => {
+                    showGraphPreviewContextMenu(event.nativeEvent, {
+                        kind,
+                        recordId: record.id,
                         name: record.name,
                     });
                 }}

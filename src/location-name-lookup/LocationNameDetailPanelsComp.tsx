@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
+import OpenGraphPreviewButtonComp from '../graph-view/OpenGraphPreviewButtonComp';
 import { getCurrentLookupBibleItemController } from '../bible-reader/LookupBibleItemController';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useBibleViewTextScale } from '../helper/bibleViewHelpers';
@@ -285,6 +286,13 @@ function RenderDetailPanelComp({
                     }}
                 >
                     <i className={getPanelIconClass(panel, managers)} />
+                    {panel.kind === 'verse' ? null : (
+                        <OpenGraphPreviewButtonComp
+                            kind={panel.kind}
+                            recordId={panel.target}
+                            name={title}
+                        />
+                    )}
                     <span className="text-truncate">{title}</span>
                     {kjvName === '' ? null : (
                         <span

@@ -46,7 +46,13 @@ export function toLookupVerseBibleKey(currentBibleKey: string | null) {
     return currentBibleKey ?? BIBLE_KJV_KEY;
 }
 
-function getLookupVerseBibleKey() {
+/**
+ * Which bible names a reference RIGHT NOW, for callers with no hook.
+ *
+ * The hook below is the one a panel wants; this is for one-shot reads outside
+ * React, such as labelling a context menu the moment it opens.
+ */
+export function getLookupVerseBibleKey() {
     const viewController = getCurrentLookupBibleItemController();
     return toLookupVerseBibleKey(
         viewController?.selectedBibleItem.bibleKey ?? null,
