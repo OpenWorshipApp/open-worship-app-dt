@@ -71,3 +71,32 @@
     font-size: 8px;
   }
 }
+
+// The mouse-gesture twin of `.context-menu-shortcut-key`, in the flow rather
+// than absolute over the label — see `genContextMenuItemGestureHint`.
+//
+// Written out under the full `#app-context-menu-container` path, not on its own:
+// the item's `span { margin-left: 10px }` above carries an id in its selector,
+// so a bare `.context-menu-gesture-hint span` would lose to it and the chip
+// would sit 10px off the item's right edge.
+#app-context-menu-container .app-context-menu .app-context-menu-item {
+  .context-menu-gesture-hint {
+    flex: 0 0 auto;
+    padding: 0;
+    margin: 0 0 0 6px;
+    opacity: 0.5;
+
+    span {
+      margin: 0;
+      padding: 0 3px;
+      background: #00000059;
+      border-radius: 4px;
+      font-size: 9px;
+      white-space: nowrap;
+    }
+  }
+
+  &:hover .context-menu-gesture-hint {
+    opacity: 1;
+  }
+}

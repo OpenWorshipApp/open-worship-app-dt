@@ -1,5 +1,6 @@
 export const TO_THE_TOP_CLASSNAME = 'app-to-the-top';
 export const PLAY_TO_BOTTOM_CLASSNAME = 'play-to-bottom';
+export const PLAY_TO_BOTTOM_MENU_CLASSNAME = 'play-to-bottom-menu';
 export const TO_THE_TOP_STYLE_STRING = `
 .${PLAY_TO_BOTTOM_CLASSNAME} {
     padding: 0;
@@ -18,6 +19,64 @@ export const TO_THE_TOP_STYLE_STRING = `
 }
 .${PLAY_TO_BOTTOM_CLASSNAME}:hover {
     opacity: 1;
+}
+/*
+ * The auto-scroll button's own menu button, which says out loud what the four
+ * mouse gestures on that button do.
+ *
+ * It has to dress itself here rather than lean on the shared
+ * ".app-context-menu-dots" chrome, because this sheet is also injected into the
+ * SCREEN's shadow root, where none of the app's stylesheets reach and the whole
+ * control is built by hand out of an img.
+ *
+ * In the app document those same declarations lose to the shared chrome, which
+ * is the intent - one look for every menu dots button in the app. Only "display"
+ * has to be fought for, and only there: the shared rule sets "inline-flex"
+ * unconditionally, so the two .app-qualified rules below out-specify it while
+ * the bare ones carry the shadow root.
+ */
+.${PLAY_TO_BOTTOM_MENU_CLASSNAME} {
+    display: none;
+    position: absolute;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    background-color: transparent;
+    color: inherit;
+    line-height: 1;
+    opacity: 0.1;
+    transition: opacity 0.3s ease-in-out;
+    cursor: pointer;
+}
+/*
+ * Shown only while auto-scroll is actually running. The speed data attribute is
+ * already the state of record - the rule above dims the chevron on it - so the
+ * whole visibility question is one sibling selector, with no React state, no
+ * subscription and no observer. It follows that the button must come AFTER the
+ * chevron, since the sibling combinator only reaches forward. It also inherits
+ * "hidden when the view cannot scroll" for free: a view that cannot scroll can
+ * never be scrolling.
+ */
+.${PLAY_TO_BOTTOM_CLASSNAME}[data-speed]:not([data-speed=""])
+    ~ .${PLAY_TO_BOTTOM_MENU_CLASSNAME} {
+    display: inline-flex;
+}
+.${PLAY_TO_BOTTOM_MENU_CLASSNAME}:hover,
+.${PLAY_TO_BOTTOM_MENU_CLASSNAME}:focus-visible {
+    opacity: 1;
+}
+.app .${PLAY_TO_BOTTOM_MENU_CLASSNAME}.app-context-menu-dots {
+    display: none;
+}
+.app
+    .${PLAY_TO_BOTTOM_CLASSNAME}[data-speed]:not([data-speed=""])
+    ~ .${PLAY_TO_BOTTOM_MENU_CLASSNAME}.app-context-menu-dots {
+    display: inline-flex;
 }
 .${TO_THE_TOP_CLASSNAME} {
     padding: 0;
@@ -104,13 +163,38 @@ export function applyToTheTop(
     checkElement(parent, element);
 }
 
+type PlayToBottomStoreType = {
+    speed: number;
+    scrollTop: number;
+    isRunning: boolean;
+};
+
+/**
+ * The auto-scroll state, hung off the button itself rather than held in the
+ * closure that set the handlers up.
+ *
+ * `applyPlayToBottom` runs from an inline `ref` callback, so React re-runs it on
+ * EVERY render of the host. A per-call `{ speed: 0 }` meant that after any
+ * re-render `store.speed` read 0 while `data-speed` still said `0.21` — so the
+ * next right-click computed `0 - 0.07`, clamped to zero and STOPPED the scroll
+ * instead of slowing it. The running latch lives here for the same reason: a
+ * re-render would otherwise arm a second animation loop over the same scroller
+ * and the page would run away at double speed.
+ */
+function getPlayToBottomStore(element: HTMLElement): PlayToBottomStoreType {
+    const anyElement = element as any;
+    anyElement._playToBottomStore ??= {
+        speed: 0,
+        scrollTop: 0,
+        isRunning: false,
+    };
+    return anyElement._playToBottomStore;
+}
+
 function startAnimToBottom(
     parent: HTMLElement,
     element: HTMLElement,
-    store: {
-        speed: number;
-        scrollTop: number;
-    },
+    store: PlayToBottomStoreType,
     options: {
         onMoved: () => void;
         onStop: () => void;
@@ -187,16 +271,14 @@ export function applyPlayToBottom(
     if (parent === null) {
         return;
     }
-    element.title = INIT_TITLE;
-    const store = {
-        speed: 0,
-        scrollTop: 0,
-    };
-    let start = () => {};
+    const store = getPlayToBottomStore(element);
     const resetSpeed = () => {
         const speed = Number.parseFloat(element.dataset['speed'] ?? '0');
         store.speed = Number.isNaN(speed) ? 0 : speed;
-        element.title = store.speed.toFixed(2);
+        // Standing still, the tooltip is the only place the gestures are
+        // written down; running, the menu button below says them instead and
+        // the number is the one thing it cannot show at a glance.
+        element.title = store.speed === 0 ? INIT_TITLE : store.speed.toFixed(2);
         start();
     };
     const setSpeed = (newSpeed: number) => {
@@ -204,11 +286,11 @@ export function applyPlayToBottom(
         element.dataset['speed'] = speed === 0 ? '' : speed.toString();
         resetSpeed();
     };
-    const realStart = (start = () => {
-        if (store.speed === 0) {
+    const start = () => {
+        if (store.speed === 0 || store.isRunning) {
             return;
         }
-        start = () => {};
+        store.isRunning = true;
         store.scrollTop = parent.scrollTop;
         const movedThreshold = movedCheck?.threshold ?? 0;
         let scrollTop = parent.scrollTop - movedThreshold;
@@ -225,12 +307,12 @@ export function applyPlayToBottom(
                   }
                 : () => {},
             onStop: () => {
-                start = realStart;
+                store.isRunning = false;
                 setSpeed(0);
                 element.title = INIT_TITLE;
             },
         });
-    });
+    };
     element.onclick = (event) => {
         preventEvent(event);
         setSpeed(store.speed + speedOffset);
@@ -250,11 +332,22 @@ export function applyPlayToBottom(
         preventEvent(event);
         setSpeed(store.speed + speedOffset * 3);
     };
-    const resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-            showOnScrollable(entry.target as HTMLElement, element);
-        }
-    });
+    // Same reason as the scroll listener in `applyToTheTop`: this runs again on
+    // every render of the host, and an observer per render would pile up on the
+    // scroller for the life of the view.
+    const anyElement = element as any;
+    (
+        anyElement._playToBottomResizeObserver as ResizeObserver | undefined
+    )?.disconnect();
+    const resizeObserver = (anyElement._playToBottomResizeObserver =
+        new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                showOnScrollable(entry.target as HTMLElement, element);
+            }
+        }));
     resizeObserver.observe(parent);
     showOnScrollable(parent, element);
+    // Last, so the title and any resumed animation reflect the speed the button
+    // was already carrying when this ran.
+    resetSpeed();
 }

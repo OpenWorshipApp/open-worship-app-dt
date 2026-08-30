@@ -118,3 +118,20 @@ export function genContextMenuItemShortcutKey(eventMapper: EventMapperType) {
         </div>
     );
 }
+
+/**
+ * The chip that says which MOUSE gesture does what this item does.
+ *
+ * Kept apart from `genContextMenuItemShortcutKey` above on purpose. That one is
+ * absolutely positioned over the item's right edge, which is fine for `Ctrl + S`
+ * but not for `Alt + Right Click` — and least of all in Khmer, where the label
+ * beneath it is far longer than its English key. This one stays in the flow and
+ * takes its own width, so the label ellipsizes at the chip instead of under it.
+ */
+export function genContextMenuItemGestureHint(text: string) {
+    return (
+        <div className="context-menu-gesture-hint">
+            <span>{text}</span>
+        </div>
+    );
+}

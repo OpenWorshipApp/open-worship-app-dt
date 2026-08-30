@@ -13,6 +13,7 @@ import {
 type ResizeObserverEntryType = {
     callback: ResizeObserverCallback;
     observe: ReturnType<typeof vi.fn>;
+    disconnect: ReturnType<typeof vi.fn>;
 };
 
 const resizeObserverEntries: ResizeObserverEntryType[] = [];
@@ -77,11 +78,13 @@ describe('scrollingHandlerHelpers', () => {
 
         class ResizeObserverMock {
             observe = vi.fn();
+            disconnect = vi.fn();
 
             constructor(callback: ResizeObserverCallback) {
                 resizeObserverEntries.push({
                     callback,
                     observe: this.observe,
+                    disconnect: this.disconnect,
                 });
             }
         }
@@ -287,5 +290,55 @@ describe('scrollingHandlerHelpers', () => {
         vi.advanceTimersByTime(2000);
         expect(topParent.classList.contains('asking-to-top')).toBe(false);
         expect(rafCallbacks.length).toBeGreaterThan(0);
+    });
+    // `applyPlayToBottom` is called from an inline `ref` callback, so React runs
+    // it again on every render of the host. Everything below used to be rebuilt
+    // from scratch each time.
+    test('survives a re-apply with one loop, one observer and its speed', () => {
+        const parent = document.createElement('div');
+        const play = document.createElement('i');
+        play.className = PLAY_TO_BOTTOM_CLASSNAME;
+        parent.append(play);
+
+        defineScrollMetrics(parent, {
+            clientHeight: 100,
+            scrollHeight: 400,
+            scrollTop: 0,
+        });
+
+        applyPlayToBottom(play);
+        play.onclick?.(createFakeEvent());
+        play.onclick?.(createFakeEvent());
+        expect(Number.parseFloat(play.dataset.speed ?? '0')).toBeCloseTo(
+            0.14,
+            3,
+        );
+        const framesWhileRunning = rafCallbacks.length;
+        expect(framesWhileRunning).toBeGreaterThan(0);
+
+        applyPlayToBottom(play);
+
+        // The speed the button is carrying survives the re-apply...
+        expect(Number.parseFloat(play.dataset.speed ?? '0')).toBeCloseTo(
+            0.14,
+            3,
+        );
+        expect(play.title).toBe('0.14');
+        // ...no second animation loop was armed over the same scroller...
+        expect(rafCallbacks.length).toBe(framesWhileRunning);
+        // ...and the observer from the first run was dropped rather than left
+        // on the scroller beside the new one.
+        expect(resizeObserverEntries).toHaveLength(2);
+        expect(resizeObserverEntries[0]?.disconnect).toHaveBeenCalledTimes(1);
+        expect(resizeObserverEntries[1]?.observe).toHaveBeenCalledWith(parent);
+
+        // Slowing down still SLOWS. With the speed rebuilt at 0 on every
+        // render, this computed `0 - 0.07`, clamped to zero, and stopped the
+        // scroll outright.
+        play.oncontextmenu?.(createFakeEvent());
+        expect(Number.parseFloat(play.dataset.speed ?? '0')).toBeCloseTo(
+            0.07,
+            3,
+        );
     });
 });

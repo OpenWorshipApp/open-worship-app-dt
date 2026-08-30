@@ -75,7 +75,10 @@ export function AdvanceLookupHandlerComp({
             aria-label={tran('Advance Bible Lookup')}
             onClick={handleToggleLookupOnline}
         >
-            <i className="bi bi-search" />
+            {/* Not a magnifier: the panel this toggles is a whole study
+                sidebar (Find, Cross Reference, Location-Name, Resources), so a
+                search glass would name only its first tab. */}
+            <i className="bi bi-binoculars" />
         </button>
     );
 }

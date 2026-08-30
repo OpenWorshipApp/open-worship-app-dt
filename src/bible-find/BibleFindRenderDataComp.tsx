@@ -10,6 +10,7 @@ import BibleFindRenderPerPageComp from './BibleFindRenderPerPageComp';
 import { useBibleFindController } from './BibleFindController';
 import { ShowFindingComp } from './ShowFindingComp';
 import RenderPageNumberComp from './RenderPageNumberComp';
+import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import { tran } from '../lang/langHelpers';
 
 /**
@@ -160,17 +161,32 @@ export default function BibleFindRenderDataComp({
             className="card-body w-100 overflow-hidden d-flex flex-column"
             style={{ height: 'calc(100% - 35px)' }}
         >
-            <div
-                className="w-100 h-100 d-flex flex-column overflow-hidden"
-                style={{
-                    position: 'relative',
-                }}
-            >
+            <div className="w-100 h-100 d-flex flex-column overflow-hidden">
+                {/*
+                 * The containing block for the to-the-top button, and it stops
+                 * at the results: anchored to the flex parent instead, the
+                 * button would sit on top of the chunk-number footer.
+                 */}
                 <div
-                    className="w-100 app-find-results"
-                    style={{ overflowY: 'auto', height: 'calc(100% - 42px)' }}
+                    className="w-100 overflow-hidden"
+                    style={{
+                        position: 'relative',
+                        height: 'calc(100% - 42px)',
+                    }}
                 >
-                    <RenderFoundComp findText={findText} data={data} />
+                    <div
+                        className="w-100 h-100 app-find-results"
+                        style={{ overflowY: 'auto' }}
+                    >
+                        <RenderFoundComp findText={findText} data={data} />
+                        {/*
+                         * A child of the scroller on purpose --
+                         * `applyToTheTop` binds to its own parent -- while the
+                         * wrapper above keeps it from scrolling away with the
+                         * verses.
+                         */}
+                        <ScrollingHandlerComp />
+                    </div>
                 </div>
                 <div
                     className="p-0"

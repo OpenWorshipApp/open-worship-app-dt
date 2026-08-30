@@ -61,6 +61,7 @@ vi.mock('../lang/langHelpers', () => ({
 
 vi.mock('../scrolling/scrollingHandlerHelpers', () => ({
     PLAY_TO_BOTTOM_CLASSNAME: 'play-to-bottom',
+    PLAY_TO_BOTTOM_MENU_CLASSNAME: 'play-to-bottom-menu',
     TO_THE_TOP_CLASSNAME: 'to-the-top',
     TO_THE_TOP_STYLE_STRING: '.floating-control { position: fixed; }',
     applyPlayToBottom: applyPlayToBottomMock,

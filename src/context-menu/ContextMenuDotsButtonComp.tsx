@@ -1,4 +1,4 @@
-import type { MouseEvent as ReactMouseEventType } from 'react';
+import type { CSSProperties, MouseEvent as ReactMouseEventType } from 'react';
 import { useRef } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -24,8 +24,10 @@ export const CONTEXT_MENU_DOTS_CLASSNAME = 'app-context-menu-dots';
 export default function ContextMenuDotsButtonComp({
     onOpening,
     isCorner = false,
+    isHorizontal = false,
     className = '',
     label,
+    style,
 }: Readonly<{
     // The menu to open. LEAVE IT OUT when the button sits INSIDE the element
     // that owns the menu: it then dispatches a real `contextmenu` on its parent
@@ -34,11 +36,19 @@ export default function ContextMenuDotsButtonComp({
     // over the slide card it wraps and answers with the RUN's menu; a button
     // that called the card's own handler would quietly serve the wrong one.
     onOpening?: (event: ReactMouseEventType) => void;
+    // Turns the glyph on its side. A vertical ⋮ reads as one more item in a
+    // stack of controls that is ALREADY vertical — the scrolling handler's
+    // buttons are a column in the corner — so there it lies flat instead.
+    isHorizontal?: boolean;
     // Pins the button to its host's top-right corner. The host must establish a
     // positioning context of its own; use it for cards and previews, where an
     // inline button would take a bite out of the content.
     isCorner?: boolean;
     className?: string;
+    // For a host that places the button itself. Prefer a class where the
+    // placement is fixed; this is for the cases where only the host knows where
+    // the button goes, such as a floating control it has to line up with.
+    style?: CSSProperties;
     // Only for a surface whose menu is NOT "this item's actions", e.g. a panel
     // header. Defaults to the same wording as every other ⋮ in the app.
     label?: string;
@@ -78,6 +88,7 @@ export default function ContextMenuDotsButtonComp({
                 `${isCorner ? ` ${CONTEXT_MENU_DOTS_CLASSNAME}--corner` : ''}` +
                 ` ${className}`
             }
+            style={style}
             title={title}
             aria-label={title}
             onClick={handleOpening}
@@ -93,7 +104,9 @@ export default function ContextMenuDotsButtonComp({
                 event.stopPropagation();
             }}
         >
-            <i className="bi bi-three-dots-vertical" />
+            <i
+                className={`bi bi-three-dots${isHorizontal ? '' : '-vertical'}`}
+            />
         </button>
     );
 }

@@ -14,11 +14,13 @@ import { getValidOnScreen } from './managers/screenManagerBaseHelpers';
 import appProvider from '../server/appProvider';
 import {
     PLAY_TO_BOTTOM_CLASSNAME,
+    PLAY_TO_BOTTOM_MENU_CLASSNAME,
     TO_THE_TOP_CLASSNAME,
     TO_THE_TOP_STYLE_STRING,
     applyPlayToBottom,
     applyToTheTop,
 } from '../scrolling/scrollingHandlerHelpers';
+import { showPlayToBottomContextMenu } from '../scrolling/playToBottomMenuHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { useAppCurrentRef, useAppStateAsync } from '../helper/appHooks';
 import { useScreenUpdateEvents } from './managers/screenManagerHooks';
@@ -370,6 +372,40 @@ function genChevronDoubleDownSVG(width = 16) {
     `;
 }
 
+// Same reason as `getToTheTopImageDataUrl`: this used to mint a
+// `URL.createObjectURL` blob per call, and the bible container is rebuilt on
+// every verse change, so nothing ever revoked them.
+let playToBottomImageDataUrl: string | null = null;
+function getPlayToBottomImageDataUrl() {
+    playToBottomImageDataUrl ??=
+        'data:image/svg+xml;charset=utf-8,' +
+        encodeURIComponent(genChevronDoubleDownSVG(70));
+    return playToBottomImageDataUrl;
+}
+
+function genThreeDotsSVG(width = 16) {
+    return `
+<svg
+   width="${width}"
+   height="${width}"
+   fill="#777777"
+   viewBox="0 0 16 16"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg">
+  <path
+     d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3" />
+</svg>
+    `;
+}
+
+let threeDotsImageDataUrl: string | null = null;
+function getThreeDotsImageDataUrl() {
+    threeDotsImageDataUrl ??=
+        'data:image/svg+xml;charset=utf-8,' +
+        encodeURIComponent(genThreeDotsSVG(44));
+    return threeDotsImageDataUrl;
+}
+
 export function addPlayToBottom(div: HTMLDivElement) {
     const oldIcon = div.querySelector(`.${PLAY_TO_BOTTOM_CLASSNAME}`);
     if (oldIcon !== null) {
@@ -381,14 +417,43 @@ export function addPlayToBottom(div: HTMLDivElement) {
     const target = document.createElement('img');
     target.className = PLAY_TO_BOTTOM_CLASSNAME;
     target.title = tran('Play to bottom');
-    const svgString = genChevronDoubleDownSVG(70);
-    const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(svgBlob);
-    target.src = url;
+    target.src = getPlayToBottomImageDataUrl();
     target.style.position = 'fixed';
     target.style.bottom = '0px';
     div.appendChild(target);
     applyPlayToBottom(target);
+    // The same menu the app's own auto-scroll button carries, for the copy of
+    // this DOM that the presenter's mini previewer renders and the operator
+    // actually clicks. Out there it is the only way the four gestures are ever
+    // stated: the control is a bare image with no tooltip anyone reads off a
+    // preview and no right-click anybody would think to try.
+    //
+    // NOT on the projected screen itself. That window mounts no context-menu
+    // host (`screen.tsx` renders `ScreenAppComp` alone), so the button would be
+    // dead there — and it would be dead in front of a congregation.
+    if (appProvider.isPageScreen) {
+        return;
+    }
+    // Appended AFTER the button it belongs to, which is what the stylesheet's
+    // sibling selector reveals it on.
+    const menuTarget = document.createElement('img');
+    menuTarget.className = PLAY_TO_BOTTOM_MENU_CLASSNAME;
+    menuTarget.title = tran('Auto Scroll Options');
+    menuTarget.src = getThreeDotsImageDataUrl();
+    Object.assign(menuTarget.style, {
+        position: 'fixed',
+        // Clear of the 70px chevron pinned at right: 5px, and centred on it.
+        right: '79px',
+        bottom: '13px',
+        width: '44px',
+        height: '44px',
+    });
+    menuTarget.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        showPlayToBottomContextMenu(event, target);
+    };
+    div.appendChild(menuTarget);
 }
 
 export function useFileSourceIsOnScreen(

@@ -15,6 +15,13 @@ const h = vi.hoisted(() => ({
         appInfo: { homepage: 'https://owa.app' },
         browserUtils: { openExternalURL: vi.fn() },
         systemUtils: { isDev: false },
+        // `commonButtons` reaches `appHelpers`, which reads this at module
+        // scope through `fileHelpers`; without it the file throws while it is
+        // still being imported and the whole suite reports zero tests.
+        pathUtils: { sep: '/', join: (...parts: string[]) => parts.join('/') },
+        // `QuitCurrentPageComp` renders nothing outside the main window, and
+        // `checkIsMainWindow` asks over this channel.
+        messageUtils: { sendDataSync: vi.fn(() => true) },
     },
 }));
 
