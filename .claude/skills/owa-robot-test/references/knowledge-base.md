@@ -1191,6 +1191,7 @@ Three layers, one code path, all tar/tar.gz (no zip dependency anywhere):
 | `.owapf.tar.gz` | a presenting flow + the whole document behind every slide reference + media + `.bg.json` sidecars |
 | `.owadoc.tar.gz` / `.owbible.tar.gz` | ONE document (or bible list) + everything attached to it |
 | `.owabn.tar.gz` | one bible NOTE item + the media embedded in it |
+| `.owanote.tar.gz` | one whole bible NOTE FILE — every item in it, the media those items embed (`note-asset`), and the background attached to the file. The embedded files land in the app's temp-files folder on import, not in a backgrounds folder |
 | `.owadata.tar` | the whole data folder — File → Export/Import Data; uncompressed and with no staging copy, on purpose |
 | `.owabdata.tar.gz` | the XML bibles of Settings → Bible (ST-34..ST-40) — MANY per bundle, and the only kind whose import can REFUSE an item |
 

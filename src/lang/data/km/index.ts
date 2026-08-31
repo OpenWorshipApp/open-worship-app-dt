@@ -356,6 +356,7 @@ const dictionary = {
     'Web URL:': 'តំណវេបសាយ៖',
     'Documents URL:': 'តំណឯកសារ៖',
     'Presenting Flow Archive URL:': 'តំណប័ណ្ណសារតារាងកម្មវិធី៖',
+    'Bible Note Archive URL:': 'តំណប័ណ្ណសារកំណត់ចំណាំព្រះគម្ពីរ៖',
     'Open URL': 'បើកតំណ',
     'Copy URL': 'ចម្លងតំណ',
     New: 'ថ្មី',
@@ -809,6 +810,9 @@ const dictionary = {
     'Import Presenting Flow': 'នាំចូលតារាងកម្មវិធី',
     'Export Bible Note Item': 'នាំចេញកំណត់ចំណាំព្រះគម្ពីរ',
     'Import Bible Note Item': 'នាំចូលកំណត់ចំណាំព្រះគម្ពីរ',
+    // The whole note FILE, as opposed to the two item keys above.
+    'Export Bible Note': 'នាំចេញឯកសារកំណត់ចំណាំព្រះគម្ពីរ',
+    'Import Bible Note': 'នាំចូលឯកសារកំណត់ចំណាំព្រះគម្ពីរ',
     // The XML bibles of the Bible settings page, as their own bundle.
     'Bible Data': 'ទិន្នន័យព្រះគម្ពីរ',
     'Export Bible Data': 'នាំចេញទិន្នន័យព្រះគម្ពីរ',

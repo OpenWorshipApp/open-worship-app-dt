@@ -22,6 +22,7 @@ import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { copyToClipboard } from '../../server/appHelpers';
 import Note from './Note';
 import NoteItem from './NoteItem';
+import { exportBibleNote } from './bibleNoteArchiveHelpers';
 import { selectAndImportBibleNoteItemArchive } from './bibleNoteItemArchiveHelpers';
 import { moveNoteItemTo } from './noteHelpers';
 
@@ -100,17 +101,22 @@ function genContextMenu(
                 createNewNoteItem(note);
             },
         },
-        ...(note.isDefault
-            ? [
-                  {
-                      childBefore: genContextMenuItemIcon('box-arrow-in-down'),
-                      menuElement: tran('Import'),
-                      onSelect: () => {
-                          selectAndImportBibleNoteItemArchive(note);
-                      },
-                  },
-              ]
-            : []),
+        {
+            // Every note file, not only `Default`: an item exported from one
+            // file has to be able to come back into any of them.
+            childBefore: genContextMenuItemIcon('box-arrow-in-down'),
+            menuElement: tran('Import'),
+            onSelect: () => {
+                selectAndImportBibleNoteItemArchive(note);
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('file-earmark-arrow-down'),
+            menuElement: tran('Export'),
+            onSelect: () => {
+                exportBibleNote(note.filePath);
+            },
+        },
         ...(isAttachedBackgroundElement
             ? genRemovingAttachedBackgroundMenu(note.filePath)
             : []),

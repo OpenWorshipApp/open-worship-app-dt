@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-30i** (**W-40 steps 7-9: a mark takes you to its verse now, and a verse row can be filed somewhere else.** Clicking a mark opens the verse beside what you are reading instead of only flashing it, so you keep your place; editing a comment moved onto the mark's own `⋮`. A verse row can be dragged onto another **Bible Notes** file to move it there, marks and all — the same drag still adds the verse to **Bibles** if you drop it there instead. Everything about a marked verse is now lettered in that bible's own font, and the little panel that appears over commented words waits much longer before it goes. Verified live 2026-08-30.)
+**workflowsVersion: 2026-08-30j** (**new W-41 — share a whole page of Bible Notes.** A note could only leave the app one item at a time; a whole note file — every note in it, the pictures, clips and sound files inside them, and the background attached to it — now exports as a single `.owanote.tar.gz` from the file's `⋮` and imports from the top of the **Bible Notes** panel, by dialog, by URL or by dropping the bundle on the panel. A name already in use is never overwritten: the arriving file lands beside yours as `name (1)`. W-41 step 6 also records that the single-note **Import** is no longer limited to the **Default** file — a note exported from anywhere can be imported into any note file. Verified live 2026-08-30 on the reader, plain and password-protected.)
+
+Previous: **2026-08-30i** (**W-40 steps 7-9: a mark takes you to its verse now, and a verse row can be filed somewhere else.** Clicking a mark opens the verse beside what you are reading instead of only flashing it, so you keep your place; editing a comment moved onto the mark's own `⋮`. A verse row can be dragged onto another **Bible Notes** file to move it there, marks and all — the same drag still adds the verse to **Bibles** if you drop it there instead. Everything about a marked verse is now lettered in that bible's own font, and the little panel that appears over commented words waits much longer before it goes. Verified live 2026-08-30.)
 
 Previous: **2026-08-30h** (**W-40 step 4: the marks list wears its own marks.** A highlight under a verse row used to be a grey dot beside the words in quotes; the words themselves now carry the same wash they carry in the passage, and a commented phrase carries the same wavy underline, so the panel reads as a miniature of the page and needs no key. The verse row is led by a highlighter pen instead of a bookmark, and its count steps aside once the row is open, where the marks are already on screen. Verified live 2026-08-30, dark and light.)
 
@@ -2739,3 +2741,37 @@ are still there the next time you open the app.
    > congregation sees.
 
 _Verify: RD-108, RD-109, RD-110, RD-111, RD-112._
+
+---
+
+### W-41 — Share a whole page of Bible Notes with another machine
+
+Until now a note could only leave the app **one item at a time**. A whole note file —
+every note in it, the pictures and clips inside them, and the background you attached
+to it — travels as one bundle.
+
+1. In the **Bible Notes** panel, click the `⋮` on the note file you want (or right-click
+   its name) and choose **Export** (នាំចេញ). It sits just under **Import**. 📸
+2. A small panel asks for a **Password** (ពាក្យសម្ងាត់) and a **Confirm Password**
+   (បញ្ជាក់ពាក្យសម្ងាត់). Leave both empty for an ordinary bundle, or type the same
+   password in both to lock it. Press **Ok** (យល់ព្រម).
+3. You get one `<name>.owanote.tar.gz` file in your **Downloads** folder —
+   `<name>.owanote.enc` if you set a password — and the app opens the folder on it. 📸
+
+   > Everything a note points at rides inside: a picture you pasted, a clip you inserted,
+   > the sound file you attached. That makes this bundle much larger than a bible list's,
+   > so give a note full of video a moment to finish.
+4. On the other machine, click the `⋮` at the top of the **Bible Notes** panel → **Import**
+   (នាំចូល) and pick the file — or **drag the `.owanote.tar.gz` (or `.owanote.enc`) onto
+   the Bible Notes panel**. A protected one asks for its password first.
+   **Import From URL** (នាំចូលពី URL) works here too if the bundle is on the web. 📸
+5. The note file appears in that machine's notes folder with all its notes, your
+   highlights and comments, and its pictures and clips playing from the local copies.
+
+   > If a note file of that name is already there, yours is never overwritten: the
+   > imported one arrives beside it as `name (1)`. Rename whichever you prefer.
+6. To move a **single note** instead of the whole page, use the `⋮` on that note →
+   **Export**, and **Import** on the note file you want it to land in — any note file,
+   not only **Default**.
+
+_Verify: PR-30, PR-31, CM-69, CM-98, CM-99._

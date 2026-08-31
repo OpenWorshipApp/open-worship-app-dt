@@ -48,7 +48,7 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Presenting Flow CC elements](presenting-flow-cc-elements.md) — followers that ride a host's present; UUID references, not copies, and they may never raise a second "which screen?" menu
 - [Downloads are protocol-aware now](http-downloads-protocol-aware.md) — only `initHttpRequest` speaks plain http; `httpUtils.request` is still https/443-only
 - [`.owapf.tar.gz` presenting flow archive](presenting-flow-archive-owapf.md) — bundles the whole documents behind slide references; import resolves every destination folder before writing anything
-- [Single-item archives (`.owadoc` / `.owbible`)](document-archive-owadoc.md) — one document, lyric or bible list + everything attached to it; three layers, add a config not a copy
+- [Single-item archives (`.owadoc` / `.owbible` / `.owanote`)](document-archive-owadoc.md) — one document, lyric, bible list or bible note file + everything attached to it; three layers, add a config not a copy
 - [Whole-data archive (`.owadata.tar`)](data-archive-owadata.md) — File → Export/Import Data; uncompressed + no staging copy on purpose, and the File menu now takes renderer items
 - [Archive password protection](archive-password-protection.md) — every export asks; the kind stays in the `.enc` name but detection is by magic, and the dialog is loaded on demand
 - [Bible XML archive (`.owabdata`)](bible-xml-archive-owabdata.md) — the one archive whose import REFUSES an item instead of copying it beside yours; bible keys collide case-insensitively and are re-read from the file, not the manifest
