@@ -83,6 +83,10 @@ anything abnormal using the severity scale and report template below.
   switch correctly.
 - The Bibles-tab split also hosts **bible appearance settings** (`Appearance` +
   `Text Shadow` cards): adjust one control each, confirm the preview restyles, restore.
+- **Notes** sub-tab: a note FILE's ⋮/🖱️R carries **Export** → `.owanote.tar.gz`
+  (PR-30, CM-98); the list body/header offers **Import** / **Import From URL** and takes
+  a dropped bundle (PR-31, CM-99). Recipe: **W-41**. The single-ITEM `.owabn` import
+  (CM-69) sits on a note file's own menu and is no longer gated on `Default`.
 
 ### S5 — Foreground `[PM-15..25]`
 - Presenter `Foreground` tab: exercise **all nine** widgets — marquee top, marquee bottom, quick text,
@@ -198,7 +202,7 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - Tools: add a new box / drag a tool onto the canvas — then delete the added item.
 - Bottom Background panel behaves as in S6.
 
-### S11 — Bible Reader deep-dive `[RD-01..107]`
+### S11 — Bible Reader deep-dive `[RD-01..112]`
 - Incremental picker: char-by-char book → chapter → verse; `Tab` completes, `Escape`
   clears, `Ctrl+Escape` clears a chunk; extra buttons mirror the keys.
 - Full ref `John 3:16` does **not** resolve here either — the reader book-filters exactly
@@ -214,6 +218,12 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
   **Connection Graph** rows are `RD-92..106` — route them from the matrix rows
   themselves; the observed recipes live in `user-workflows.md` **W-37** / **W-38**.
   Do not improvise steps here: recipes are only authored from live observation.
+- **Verse marks** are `RD-108..112`: drag-select words inside ONE verse → the floating
+  toolbar (`.app-verse-selection-toolbar`: six colour swatches / **Add Comment** /
+  **Remove Marks**); marks are kept in **Bible Notes** as a per-verse row
+  (`.app-verse-note-item`) whose words wear the wash/underline themselves. Route the
+  steps from the matrix rows; tutorial voice is **W-40**. Marks paint via
+  `CSS.highlights` — no DOM node per mark, so assert on painted text, not selectors.
 
 ### S12 — Popup windows `[PU-01..20]`
 - Each popup: open via its in-app trigger, `list_pages` → `select_page` the new target,
@@ -408,7 +418,7 @@ the wrong thing in front of a congregation. A stale label or an untranslated str
 - Bible key not downloaded → `BibleNotAvailableComp` renders instead of a crash.
 - Empty find query / no find results → sane empty state, no console errors.
 
-### S17 — Context-menu items `[CM-01..97]`
+### S17 — Context-menu items `[CM-01..99]`
 - For each host that opens a right-click menu (document / lyric / bible / background / note
   items, slide thumbnails, editor slide list, mini-screen previewer card, display / stage /
   transition controls, generic file lists), 🖱️R to open it and assert the item set via
@@ -532,7 +542,7 @@ Write to `test-results/robot-test/report-<timestamp>.md`:
 
 ## Coverage (full-coverage runs — from coverage-<runid>.json)
 
-- Matrix version: <date> · rows total: 752 − EXCLUDED (or 69 − EXCLUDED in presentingFlow deep mode — see its scope set)
+- Matrix version: <date> · rows total: 761 − EXCLUDED (or 69 − EXCLUDED in presentingFlow deep mode — see its scope set)
 - PASS <n> · FAIL <n> · PARTIAL <n> · BLOCKED <n> · EXCLUDED <n>
 - **Coverage: <exercised> / <in-scope> = <xx.x>%**  (exercised = PASS+FAIL;
   in-scope = total − EXCLUDED)

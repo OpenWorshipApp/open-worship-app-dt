@@ -241,7 +241,7 @@ The OS menu is invisible to CDP: use the dev-only `globalThis.getViewWidgetMenuI
 > This is the short list. The **complete** shortcut set — every registered in-app shortcut
 > plus electron application-menu accelerators — is enumerated as unit tests in
 > [coverage-matrix.md](../../../../docs/test-paths/coverage-matrix.md) §KB (`KB-01..60`); right-click menu items are
-> §CM (`CM-01..97`).
+> §CM (`CM-01..99`).
 
 ## Stable ids present in production
 
@@ -263,6 +263,17 @@ The OS menu is invisible to CDP: use the dev-only `globalThis.getViewWidgetMenuI
   detail panels are floating widgets (`LocationNameDetailPanelsHostComp`).
 - **Presenting Control overlay**: `#presenting-control` (draw/spotlight + keyboard
   screencast; W-19/W-20).
+- **Verse marks** (reader / presenter Bibles tab / lookup popup — never `screen.html`):
+  drag-select words in ONE verse → floating toolbar `.app-verse-selection-toolbar`
+  (portalled to `document.body`, carries its own `data-bs-theme`; swatches
+  `.app-verse-selection-toolbar__swatch`, comment/eraser `…__button`). Marks paint via
+  the CSS Custom Highlight API — **no DOM element per mark**; hover a commented phrase
+  → tooltip (1200ms grace). In Bible Notes each marked verse is an
+  `.app-verse-note-item` row (`bi-highlighter` glyph, count chip `…__count`, marks
+  under `.app-verse-annotation-list`). RD-108..112, W-40.
+- **Bible Note file archive**: a note-file row's `⋮`/🖱️R → **Export** writes
+  `.owanote.tar.gz` (CM-98); the Bible Notes list body/header → **Import** /
+  **Import From URL**, or drop the bundle on the list (CM-99, PR-30/31, W-41).
 
 ## Targeting tips for chrome-devtools-mcp
 

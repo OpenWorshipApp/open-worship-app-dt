@@ -265,7 +265,7 @@ the 69 run-sheet rows `PL-10, PL-29, PL-32..76, PL-81..102` with coverage accoun
 (`coverage-<runid>.json`, `"focus": "presentingFlow"`), a scratch `zz-robot-<runid>` fixture that
 is torn down at the end, and the mandatory blocks ridden from the presenting flow itself. The
 other PL rows are the Documents/Lyrics lists — same prefix, different subsystem — including
-the newer `PL-104` (Import From SongSelect) and `PL-105` (Import From Public Domain Songs).
+the newer `PL-103..104` (Import From SongSelect) and `PL-105` (Import From Public Domain Songs).
 
 **Media download (video AND audio) is mandatory in every run too** (matrix rows
 `MD-01..06`, SKILL.md §6e). `downloadVideoOrAudio` is the only **product** code
