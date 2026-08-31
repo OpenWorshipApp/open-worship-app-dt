@@ -18,10 +18,25 @@ import {
 } from './lookupLangHelpers';
 
 export type VerseDataType = {
+    bibleKey: string;
     title: string;
-    fullText: string;
+    text: string;
     style: CSSProperties;
 };
+
+/**
+ * `{ bibleKey: 'KJV', title: 'Genesis 35:11' }` -> `'(KJV) Genesis 35:11'`.
+ *
+ * The key is carried BESIDE the title rather than baked into it: the panel
+ * writes the two into its title bar as separately styled spans, and only the
+ * clipboard wants them joined back into one line.
+ */
+export function toVerseFullTitle({
+    bibleKey,
+    title,
+}: Readonly<{ bibleKey: string; title: string }>) {
+    return `(${bibleKey}) ${title}`;
+}
 
 /**
  * Which bible a stored reference is READ BACK in.
@@ -133,7 +148,11 @@ export function useLookupVerseFontFamily() {
 }
 
 /**
- * `EXO 6:23` -> `{ title: 'Exodus 6:23', fullText: '(23): And Aaron took…' }`.
+ * `EXO 6:23` -> `{ title: 'Exodus 6:23', text: '(23): And Aaron took…' }`.
+ *
+ * `toText`, NOT `toFullText`: the reference is shown once, by the panel's title
+ * bar, so prefixing the body with `(KJV) Exodus 6:23` again only cost a line of
+ * a small floating widget.
  */
 export async function shortToVerseData(
     bibleKey: string,
@@ -144,9 +163,9 @@ export async function shortToVerseData(
         return null;
     }
     const title = await bibleItem.toTitle();
-    const fullText = await bibleItem.toFullText();
+    const text = await bibleItem.toText();
     const fontFamily = await getBibleFontFamily(bibleKey);
-    return { title, fullText, style: { fontFamily } };
+    return { bibleKey, title, text, style: { fontFamily } };
 }
 
 /**

@@ -15,8 +15,10 @@ import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { useThemeSource } from '../others/themeHelpers';
+import type { VerseDataType } from './bibleVerseHelpers';
 import {
     openVerseInBibleLookup,
+    toVerseFullTitle,
     useLookupVerseFontFamily,
 } from './bibleVerseHelpers';
 import type { DetailPanelType } from './detailPanelHelpers';
@@ -159,18 +161,18 @@ function RenderDetailPanelComp({
     const { fontFamily } = useLookupLangPresentation();
     const verseFontFamily = useLookupVerseFontFamily();
     const resolvedVersesRef = useRef<string[]>([]);
-    const verseTextRef = useRef<{ title: string; fullText: string } | null>(
-        null,
-    );
     // A verse panel has no record to name it, so `panel.name` — the reference as
     // it read the moment the panel was opened — used to be its title for good.
     // It goes stale the moment the bible behind it changes: switching the lookup
     // language re-titles the BODY (`Genesis 10:4`) and left the title bar
     // showing the previous bible's wording (`លោកុប្បត្តិ ១០:៤`). The body
     // resolves the reference anyway, so its answer is the title.
-    const [resolvedVerseTitle, setResolvedVerseTitle] = useState<string | null>(
-        null,
-    );
+    //
+    // State rather than a ref, and the WHOLE resolved verse rather than its
+    // title alone: the title bar now writes the bible key beside the reference
+    // and the body no longer repeats either, so the one thing the body resolved
+    // feeds both the chrome and the clipboard.
+    const [verseData, setVerseData] = useState<VerseDataType | null>(null);
     // Resolved into two separately TYPED locals rather than one union: a single
     // `record` forced an `as any` at each summary call, which is exactly the
     // check that would catch a location record reaching `buildNameSummary`.
@@ -184,25 +186,28 @@ function RenderDetailPanelComp({
             : null;
     const record = nameRecord ?? locationRecord;
     // `panel.name` stays the provisional title until the body has resolved.
-    const title = record?.name ?? resolvedVerseTitle ?? panel.name;
+    const title = record?.name ?? verseData?.title ?? panel.name;
     // A verse panel's title is a reference, not a record name, so there is
     // never an English one to add to it.
     const kjvName = record === null ? '' : getRecordKjvName(record);
     const handleCopy = async () => {
         if (panel.kind === 'verse') {
-            const verseText = verseTextRef.current;
             // The reference belongs with the text — a bare verse pasted into a
-            // sermon note with no "Exodus 6:23" attached is not much use.
+            // sermon note with no "(KJV) Exodus 6:23" attached is not much use.
+            // The body stopped rendering that line once the title bar took the
+            // bible key, so this is where the two are joined back together.
+            const fullTitle =
+                verseData === null ? null : toVerseFullTitle(verseData);
             const plainText =
-                verseText === null
+                verseData === null || fullTitle === null
                     ? panel.target
-                    : `${verseText.title}\n${verseText.fullText}`;
+                    : `${fullTitle}\n${verseData.text}`;
             await copyRecordToClipboard(
                 plainText,
-                verseText === null
+                verseData === null || fullTitle === null
                     ? `<p>${escapeHtml(plainText)}</p>`
-                    : `<p><strong>${escapeHtml(verseText.title)}</strong></p>` +
-                          `<p>${escapeHtml(verseText.fullText)}</p>`,
+                    : `<p><strong>${escapeHtml(fullTitle)}</strong></p>` +
+                          `<p>${escapeHtml(verseData.text)}</p>`,
             );
             return;
         }
@@ -274,6 +279,16 @@ function RenderDetailPanelComp({
                             name={title}
                         />
                     )}
+                    {panel.kind === 'verse' && verseData !== null ? (
+                        <span
+                            className={
+                                'flex-shrink-0' +
+                                ' location-name-lookup__kjv-name'
+                            }
+                        >
+                            ({verseData.bibleKey})
+                        </span>
+                    ) : null}
                     <span className="text-truncate">{title}</span>
                     {kjvName === '' ? null : (
                         <span
@@ -335,13 +350,7 @@ function RenderDetailPanelComp({
                 {panel.kind === 'verse' ? (
                     <RenderVerseDetailComp
                         shortVerse={panel.target}
-                        onResolved={(verseTitle, fullText) => {
-                            verseTextRef.current = {
-                                title: verseTitle,
-                                fullText,
-                            };
-                            setResolvedVerseTitle(verseTitle);
-                        }}
+                        onResolved={setVerseData}
                     />
                 ) : null}
             </div>

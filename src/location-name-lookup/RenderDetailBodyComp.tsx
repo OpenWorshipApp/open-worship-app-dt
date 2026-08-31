@@ -6,6 +6,7 @@ import {
 import { WEBSITE_IFRAME_REFERRER_POLICY } from '../helper/constants';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
+import type { VerseDataType } from './bibleVerseHelpers';
 import { shortToVerseData, useLookupVerseBibleKey } from './bibleVerseHelpers';
 import {
     BasicInfoComp,
@@ -23,7 +24,6 @@ import { useLookupLangPresentation } from './lookupLangHelpers';
 import { useLookupManagersContext } from './lookupManagersContext';
 import {
     LOCATION_ICON_CLASS,
-    VERSE_ICON_CLASS,
     getNameTypeIconClass,
     getNameTypeSingularLabel,
 } from './lookupPresentationHelpers';
@@ -288,7 +288,7 @@ export function RenderVerseDetailComp({
     onResolved,
 }: Readonly<{
     shortVerse: string;
-    onResolved: (title: string, fullText: string) => void;
+    onResolved: (verseData: VerseDataType) => void;
 }>) {
     const verseBibleKey = useLookupVerseBibleKey();
     const [verseData] = useAppStateAsync(async () => {
@@ -301,7 +301,7 @@ export function RenderVerseDetailComp({
     const onResolvedRef = useAppCurrentRef(onResolved);
     useAppEffect(() => {
         if (verseData != null) {
-            onResolvedRef.current(verseData.title, verseData.fullText);
+            onResolvedRef.current(verseData);
         }
     }, [verseData]);
     if (verseData === undefined) {
@@ -310,17 +310,11 @@ export function RenderVerseDetailComp({
     if (verseData === null) {
         return <RenderMissingRecordComp />;
     }
+    // No title of its own: the widget's title bar names the reference — bible
+    // key included — and a panel this small cannot spare two lines repeating it.
     return (
         <div className="location-name-lookup__detail" style={verseData.style}>
-            <div className="location-name-lookup__basic-title">
-                <i
-                    className={`${VERSE_ICON_CLASS} location-name-lookup__basic-icon`}
-                />
-                {verseData.title}
-            </div>
-            <p className="location-name-lookup__verse-text">
-                {verseData.fullText}
-            </p>
+            <p className="location-name-lookup__verse-text">{verseData.text}</p>
         </div>
     );
 }
