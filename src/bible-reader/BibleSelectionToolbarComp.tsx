@@ -233,7 +233,7 @@ function RenderSelectionToolbarComp({
                         style={{
                             backgroundColor: `var(--owa-verse-hl-${color})`,
                         }}
-                        aria-label={color}
+                        aria-label={tran(color)}
                         title={tran('Highlight')}
                         onClick={() => {
                             onHighlight(color);

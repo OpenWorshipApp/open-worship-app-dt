@@ -1470,6 +1470,17 @@ const dictionary = {
     // No lowercase `mentioned by` twin: keys are matched case-insensitively,
     // so it would collide with `Mentioned by` above and this module throws at
     // load on a duplicate. The one entry serves the chip and any edge label.
+
+    // Verse-highlight colours (`VERSE_HIGHLIGHT_COLOR_KEYS`). They label the
+    // selection toolbar's swatches and ARE the visible text of the recolour
+    // menu, so without these the menu reads five English words beside a
+    // translated `Delete`. Adding a colour there means adding a key here.
+    yellow: 'លឿង',
+    green: 'បៃតង',
+    blue: 'ខៀវ',
+    pink: 'ផ្កាឈូក',
+    orange: 'ទឹកក្រូច',
+    purple: 'ស្វាយ',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

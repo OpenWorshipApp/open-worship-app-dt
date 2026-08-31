@@ -17,8 +17,8 @@
 #
 # Usage:
 #   ./build-yt-dlp.sh [version]
-#   ./build-yt-dlp.sh                 # defaults to 2026.07.04 (the shipped tag)
-#   ./build-yt-dlp.sh 2026.07.04      # a pinned release tag (reproducible)
+#   ./build-yt-dlp.sh                 # defaults to 2026.08.19 (the shipped tag)
+#   ./build-yt-dlp.sh 2026.08.19      # a pinned release tag (reproducible)
 #   ./build-yt-dlp.sh master          # bleeding edge
 #
 # Knobs (env overrides):
@@ -39,7 +39,7 @@
 
 set -euo pipefail
 
-VERSION="${1:-2026.07.04}"
+VERSION="${1:-2026.08.19}"
 VERSION="${VERSION#v}" # tolerate a stray leading "v"
 
 script_dir=$(cd "$(dirname "$0")" && pwd)

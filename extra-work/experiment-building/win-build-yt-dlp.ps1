@@ -20,8 +20,8 @@
 # Usage (PowerShell):
 #   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 #   .\win-build-yt-dlp.ps1 [version]
-#   .\win-build-yt-dlp.ps1              # defaults to 2026.07.04 (the shipped tag)
-#   .\win-build-yt-dlp.ps1 2026.07.04   # a pinned release tag (reproducible)
+#   .\win-build-yt-dlp.ps1              # defaults to 2026.08.19 (the shipped tag)
+#   .\win-build-yt-dlp.ps1 2026.08.19   # a pinned release tag (reproducible)
 #   .\win-build-yt-dlp.ps1 master       # bleeding edge
 #
 # Environment overrides:
@@ -49,7 +49,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 # --- args --------------------------------------------------------------------
-$Version = if ($args.Count -ge 1 -and $args[0]) { $args[0] } else { '2026.07.04' }
+$Version = if ($args.Count -ge 1 -and $args[0]) { $args[0] } else { '2026.08.19' }
 $Version = $Version -replace '^v', ''   # tolerate a stray leading "v"
 
 $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }

@@ -149,7 +149,7 @@ export default function RenderVerseAnnotationComp({
                             }}
                         />
                     ),
-                    menuElement: color,
+                    menuElement: tran(color),
                     onSelect: () => {
                         updateVerseHighlightColor(
                             filePathRef.current,
