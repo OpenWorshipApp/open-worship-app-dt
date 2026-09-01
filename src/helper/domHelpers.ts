@@ -363,6 +363,12 @@ export type PopupWindowFeaturesType = {
     appTopToMain?: boolean;
     appShowMenuBar?: boolean;
     appResize?: boolean;
+    // Ask the OS compositor for a translucent backdrop behind this window --
+    // frosted glass over whatever is under it, instead of a slab. Ignored
+    // where the compositor cannot do it (`systemUtils.isGlassCapable`), so a
+    // window that wants it must ALSO keep its own stylesheet readable when it
+    // does not get it.
+    appGlassy?: boolean;
     // Names of experimental Blink runtime features to enable for this window
     // only, e.g. `['CanvasDrawElement']`. Joined with `+` because the window
     // features string is itself `,`/`=` delimited.
@@ -465,7 +471,11 @@ export function openChatbotPage() {
             width: 460,
             height: 640,
             // Beside the app rather than over it: the answers point at
-            // controls in the window behind this one.
+            // controls in the window behind this one -- and the frosted
+            // backdrop keeps that window half-visible THROUGH the help, so a
+            // step that says "the button below the tabs" can be followed
+            // without moving anything out of the way.
+            appGlassy: true,
             appAlignHorizontal: 'right',
             appAlignVertical: 'center',
             appFollowScale: true,

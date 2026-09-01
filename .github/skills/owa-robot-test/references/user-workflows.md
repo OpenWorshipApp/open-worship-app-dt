@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-31g** (**W-42: every chat tab has a menu, and a chat can be locked.** A **⋮** at the left of each tab — or a right-click on it — opens that tab’s menu: rename it, lock it, close it, **Close other chats…**, **Clear all chats…**. The last two take more than one conversation, so they ask first, on a line under the strip that says how many will go. **Lock this chat** takes the tab’s **×** away, puts a 🔒 in its place, and makes both sweeping actions step around it — so the strip can be cleared at the end of a service with the one answer worth keeping still in it. Verified live 2026-08-31 on the reader: the menu on a plain and on a locked tab, both confirmations, a solo and a clear that each left the locked tab standing, and the lock read back off disk.)
+**workflowsVersion: 2026-08-31h** (**W-21 step 2 named a button that does not exist.** It told you to “use the **+** button in the folder-path bar”; there is no **+** there. Observed live on the Videos tab: the control is the **⋮ More Options** button at the right of that bar, beside the search, sort and filter icons. The step now describes it — deliberately without bolding it, because several buttons in the app carry that same title and the walkthrough would ring the wrong one. The right-click route it leads with is unchanged and is what the app's own walkthrough now performs.)
+
+Previous: **workflowsVersion: 2026-08-31g** (**W-42: every chat tab has a menu, and a chat can be locked.** A **⋮** at the left of each tab — or a right-click on it — opens that tab’s menu: rename it, lock it, close it, **Close other chats…**, **Clear all chats…**. The last two take more than one conversation, so they ask first, on a line under the strip that says how many will go. **Lock this chat** takes the tab’s **×** away, puts a 🔒 in its place, and makes both sweeping actions step around it — so the strip can be cleared at the end of a service with the one answer worth keeping still in it. Verified live 2026-08-31 on the reader: the menu on a plain and on a locked tab, both confirmations, a solo and a clear that each left the locked tab standing, and the lock read back off disk.)
 
 Previous: **workflowsVersion: 2026-08-31f** (**W-42: the help window holds several chats,
 and each one carries its own settings.** A tab strip runs along the top — **+** for
@@ -1265,8 +1267,9 @@ Videos / Audios folder, without leaving the app or installing anything.
 
 1. Open the **Background** (ផ្ទៃខាងក្រោយ) panel (W-08 step 1) and choose the **Videos**
    (វីដេអូ) tab — or the **♫Audios♫** (សំលេង) split if you want the sound only.
-2. **Right-click an empty part of the list** (or use the **+** button in the folder-path
-   bar) and choose **Download From URL** (ទាញយកពី URL). 📸
+2. **Right-click an empty part of the list** (or use the ⋮ More Options button at
+   the right of the folder-path bar) and choose **Download From URL**
+   (ទាញយកពី URL). 📸
 3. A small box asks for the link — **Video URL:** on the Videos tab, **Audio URL:** on
    Audios. If you copied the link first, it is **already filled in**; otherwise paste it.
    The box is outlined red while it is empty.

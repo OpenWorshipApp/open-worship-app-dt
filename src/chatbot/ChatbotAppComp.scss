@@ -33,6 +33,12 @@
   --chat-panel: #161e2a;
   --chat-panel-soft: #121a24;
   --chat-line: #232d3c;
+  // The same two grounds, guaranteed opaque. Identical to the pair above
+  // until the window is glassy, at which point those go translucent and these
+  // do not -- for the handful of surfaces that cannot be see-through: an
+  // OS-drawn list, and a menu floating over the thing it acts on.
+  --chat-solid: #161e2a;
+  --chat-solid-soft: #121a24;
   --chat-text: #e4e9f0;
   --chat-muted: #8b97a8;
   // The house lamp, not the screen: this window is the operator's side of
@@ -63,6 +69,8 @@
     --chat-panel: #ffffff;
     --chat-panel-soft: #eef2f7;
     --chat-line: #dbe2ec;
+    --chat-solid: #ffffff;
+    --chat-solid-soft: #eef2f7;
     --chat-text: #16202e;
     --chat-muted: #5c6b7f;
     --chat-brass: #9a6b22;
@@ -155,8 +163,9 @@ select.chat-engine {
   border-radius: 4px;
   // The head row's own ground, not `transparent`: Chromium paints the popup
   // from the select's computed background, and a see-through one gave a white
-  // list with grey-on-white rows.
-  background-color: var(--chat-panel-soft);
+  // list with grey-on-white rows. The opaque twin for the same reason -- a
+  // glassy window must not hand the OS an alpha to paint a list from.
+  background-color: var(--chat-solid-soft);
   padding: 2px 15px 2px 6px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238b97a8' stroke-width='1.4'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -178,7 +187,7 @@ select.chat-engine {
   // with grey-on-white text in this window, so the rows are painted here too.
   option {
     color: var(--chat-text);
-    background-color: var(--chat-panel);
+    background-color: var(--chat-solid);
   }
 }
 
@@ -436,7 +445,9 @@ button.chat-engine {
   display: flex;
   flex-direction: column;
   padding: 4px;
-  background-color: var(--chat-panel);
+  // Solid even in a glassy window: this one floats OVER the tab it acts on,
+  // and a menu you can read the tab names through is a menu you misread.
+  background-color: var(--chat-solid);
   border: 1px solid var(--chat-line);
   border-radius: 5px;
   box-shadow: 0 8px 22px rgb(0 0 0 / 45%);
@@ -857,7 +868,7 @@ button.chat-engine {
   flex: 0 0 auto;
   display: flex;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 2px;
   border-top: 1px solid var(--chat-line);
   background-color: var(--chat-panel-soft);
 }
@@ -908,6 +919,54 @@ button.chat-engine {
   &:disabled {
     opacity: 0.45;
     cursor: default;
+  }
+}
+
+// --- glass ------------------------------------------------------------------
+//
+// Set only where the OS put a real backdrop behind this window -- Windows 11's
+// acrylic, macOS's vibrancy; `appGlassy` in `openChatbotPage`, gated on
+// `systemUtils.isGlassCapable`. Nothing here is a `backdrop-filter`: a popup
+// is its own OS window, so a CSS blur would have nothing of the app to blur,
+// and the compositor's version costs this app no frames at all -- which is the
+// only kind of glass a machine at the back of a church hall can afford.
+//
+// One tinted ground, and everything above it a FILM on that ground rather than
+// a body of its own. Two translucent slabs stacked would add up to an opaque
+// one, and the window would go right back to being a slab with soft edges.
+
+.chatbot-app[data-glassy] {
+  --chat-ink: rgb(10 15 22 / 58%);
+  --chat-panel: rgb(255 255 255 / 7%);
+  --chat-panel-soft: rgb(255 255 255 / 4%);
+  --chat-line: rgb(255 255 255 / 13%);
+
+  // The lit edge that says "pane of glass" rather than "hole in the window".
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 9%);
+
+  // The ground is already carrying the tint; the strip painting it a second
+  // time is what would double it.
+  .chat-tabs {
+    background-color: transparent;
+  }
+
+  // Answers are the one thing in here that is read word by word, so the bubble
+  // holding them keeps a little more body than the furniture around it.
+  .cue-bot .cue-body {
+    background-color: rgb(255 255 255 / 9%);
+  }
+}
+
+.chatbot-app[data-glassy][data-bs-theme='light'] {
+  --chat-ink: rgb(247 249 252 / 62%);
+  --chat-panel: rgb(255 255 255 / 55%);
+  --chat-panel-soft: rgb(14 24 40 / 5%);
+  --chat-line: rgb(14 24 40 / 13%);
+
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 55%);
+
+  .cue-bot .cue-body {
+    background-color: rgb(255 255 255 / 62%);
   }
 }
 

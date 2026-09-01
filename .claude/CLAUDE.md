@@ -211,6 +211,12 @@ Use these when working against the running app via `owa-devtools`:
   `el.closest('[data-react-comp-fp]')`) and open that file directly — no
   grepping class names to find which component rendered what.
 
+Because they are dev-only, nothing shipped may match on them. The one name that
+IS in production DOM is `data-widget-name` on every resizable pane — its English
+`toWidgetLabel` key, present whether the panel is open or collapsed and whatever
+language the app is in. That is what `domMatch.mjs` reads for the parent path
+(`Background > Videos`) and for the `inPanel` a match reports.
+
 ## owa-devtools / CDP driving notes
 
 - **Screen output window.** The presentation screen is a separate Electron

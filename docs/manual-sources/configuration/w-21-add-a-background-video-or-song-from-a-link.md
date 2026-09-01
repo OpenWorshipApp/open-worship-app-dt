@@ -14,8 +14,9 @@ Videos / Audios folder, without leaving the app or installing anything.
 
 1. Open the **Background** (ផ្ទៃខាងក្រោយ) panel (W-08 step 1) and choose the **Videos**
    (វីដេអូ) tab — or the **♫Audios♫** (សំលេង) split if you want the sound only.
-2. **Right-click an empty part of the list** (or use the **+** button in the folder-path
-   bar) and choose **Download From URL** (ទាញយកពី URL). 📸
+2. **Right-click an empty part of the list** (or use the ⋮ More Options button at
+   the right of the folder-path bar) and choose **Download From URL**
+   (ទាញយកពី URL). 📸
 3. A small box asks for the link — **Video URL:** on the Videos tab, **Audio URL:** on
    Audios. If you copied the link first, it is **already filled in**; otherwise paste it.
    The box is outlined red while it is empty.

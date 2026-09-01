@@ -1323,7 +1323,18 @@ export default function ChatbotAppComp() {
     );
 
     return (
-        <div id="app" data-bs-theme={theme} className="chatbot-app">
+        <div
+            id="app"
+            data-bs-theme={theme}
+            className="chatbot-app"
+            // Only where the OS actually put a backdrop behind this window
+            // (`appGlassy` in `openChatbotPage`). Anywhere else the sheet's
+            // opaque tints stand, because a translucent panel over nothing is
+            // just an unreadable one.
+            data-glassy={
+                appProvider.systemUtils.isGlassCapable ? '' : undefined
+            }
+        >
             <RenderSessionTabsComp
                 sessions={sessions}
                 activeId={activeSession.id}

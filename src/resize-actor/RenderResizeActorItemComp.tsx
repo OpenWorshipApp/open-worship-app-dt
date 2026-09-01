@@ -101,6 +101,7 @@ export default function RenderResizeActorItemComp({
         className = '',
         extraStyle = {},
         widgetName,
+        widgetKey,
         widgetIconName,
     } = data;
     const flexSizeValue = flexSize[key] ?? restoreFlexSize[key] ?? [];
@@ -251,6 +252,12 @@ export default function RenderResizeActorItemComp({
                 <div
                     ref={paneRef}
                     data-fs={keyToDataFlexSizeKey(flexSizeName, key)}
+                    // An OPEN panel used to be nameless: the name is only
+                    // drawn once it collapses. So "open the Background
+                    // panel" had nothing on screen to match but the
+                    // background-TRANSITION button beside the screen
+                    // preview, and that is what the chatbot rang.
+                    data-widget-name={widgetKey ?? widgetName}
                     data-fs-default={defaultFlexSize[key][0]}
                     data-min-size={50}
                     className={`${className} app-overflow-hidden`}
@@ -266,6 +273,7 @@ export default function RenderResizeActorItemComp({
                 <RenderHiddenWidgetTitleComp
                     elementRef={hiddenTitleRef}
                     widgetName={widgetName}
+                    widgetKey={widgetKey}
                     widgetIconName={widgetIconName}
                     type={type}
                     onClick={handleReopening ?? (() => {})}

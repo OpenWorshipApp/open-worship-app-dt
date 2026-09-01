@@ -246,6 +246,270 @@ cheaper shape is for `owa_help_search` to recognise the symptom shape itself and
 answer with a pointer to `owa_list_screens` instead of its best lexical guess.
 Only worth doing if the round is actually being spent — instrument first.
 
+## EC-18 · The ring landed on the wrong control — `done` 2026-08-31
+
+**Reported from the app with a screenshot.** The walkthrough step "Open the
+Background panel" ringed **`Background:`** — the background-*transition* button
+in the screen preview footer — and pressing **Do it** opened the transition menu
+instead of the panel. Measured live, five things on screen matched the word
+"Background" and every one of them tied at tier 1:
+
+| candidate | control? | label length |
+| --- | --- | ---: |
+| the collapsed **Background** panel bar | **no** (a `div`) | 28 |
+| `Background:` transition button | yes | 33 |
+| **Clear Background [F7]** button | yes | 41 |
+| the screen-preview card, the transition group | no | 57 / 31 |
+
+Two independent causes, both now fixed:
+
+- **The app lied about what the control is.** `RenderHiddenWidgetTitleComp` —
+  the thin bar that is the only way to reopen a panel you collapsed — was a
+  clickable `div` with no `role`, so `checkIsControl` ranked it below any real
+  button sharing its words. It is now `role="button"` with `tabIndex={0}` and
+  Enter/Space activation, which also means a keyboard can reopen a collapsed
+  panel for the first time.
+- **The matcher broke ties on length.** `checkIsBetter` went tier → isControl →
+  shortest label, and "Background:" is shorter than "Background Enable
+  Background". Length is a proxy for specificity and a bad one. `labelOf` now
+  keeps each way an element is named APART as well as joined
+  (`labelPartsOf`), and an element one of whose names IS the needle
+  (`checkIsNamedExactly`) beats one that merely contains it — ranked BELOW
+  `isControl` on purpose, because a container is often named exactly what the
+  control inside it is named. Note tier 0 was near-dead code before this: any
+  element with both text and a `title` could never reach an exact match.
+
+Verified live end to end on the real W-08 recipe from a collapsed layout:
+step 1 rings the panel bar, **Do it** reports
+`{done: true, did: "clicked", label: "Background"}`, and the panel expands to
+its tabs. `owa_find_ui "Background"` also now heads its list with the panel bar.
+
+## EC-19 · A two-letter candidate matched inside a longer word — `done` 2026-08-31
+
+**Found while verifying EC-18, in the same recipe.** W-08 step 2 offers "Ok"
+(from "choose **Ok** or **Cancel**") as a control to ring. Nothing on screen is
+labelled "Ok" — but `matchTier`'s tier 2 was a plain substring test, and
+"Bible Lookup Open bible lookup popup [Ctrl+B]" contains **lo-ok-up**. So the
+step rang the **Bible Lookup** button, and in demo mode **Do it** would have
+PRESSED it, opening a popup over a volunteer's presenter mid-service. Strictly
+worse than the reported bug, and it was one step further into the same guide.
+
+Tier 2 now requires the needle to at least BEGIN a word. That keeps the case
+tier 2 exists for — the manual writes "**Web**" for a tab labelled "Webs" — and
+drops the case it never wanted. Verified live: step 2 stopped ringing Bible
+Lookup.
+
+## EC-20 · A row of tabs written as one bold had nothing to ring — `done` 2026-08-31
+
+With EC-19 fixed, W-08 step 2 rang *nothing*: the recipe names the whole tab row
+in a single bold, "**Colors / Images / Videos / Cameras / Web**", and no control
+carries that string. Honest, but useless. `toFindCandidates` now offers each
+part of a slash-joined bold as its own candidate — the joined phrase FIRST, so a
+control genuinely named "A / B" still wins it — and drops the punctuation the
+sentence needed but the button does not ("**Colors:**" → `Colors`). Verified
+live: step 2 rings the real **Colors** tab (tier 0).
+
+This is a slice of `EC-16`'s 24 "step bolds nothing actionable" steps, taken from
+the other end: not by guessing from typography, but by reading the shape the
+manual actually writes.
+
+## EC-21 · The card showed a volunteer a manual id — `done` 2026-08-31
+
+Visible in the same reported screenshot: the card read *"Open the Background
+panel **(W-08 step 1)** and choose the Videos tab."* The system prompt already
+forbids this in as many words — *"NEVER show them ... an id like \"W-06\" — not
+even in passing"* — and the model did it anyway. A rule the model can ignore is
+not a rule.
+
+`stripInternalIds` now cleans every step text and the title, at one choke point
+covering both sources (the model's own steps and a recipe citing a sibling —
+W-08 step 2 cites W-15 itself). The whole aside goes, not just the id: deleting
+"W-08" out of "(W-08 step 1)" leaves "( step 1)", which is worse than what it
+replaced. Verified live through the app's own MCP host with the reported step
+verbatim. Words on real controls are untouched ("Ctrl+Q", "16:9", "F7").
+
+**Left open:** the same ids can still reach the user in ORDINARY prose answers,
+which do not pass through the guide. That is `EC-22`.
+
+## EC-22 · Prose answers are still on the honour system for ids — `open`, medium
+
+`EC-21` enforces the no-ids rule for anything drawn on a guide card, because
+that is where it was caught. A plain chat answer still relies on the prompt
+alone, and the same model ignored that prompt once already. The cheap version is
+to run the assistant's final text through the same `stripInternalIds` before it
+is rendered in `ChatbotAppComp`; the honest question first is whether it happens
+in prose at all — instrument before building, the way `EC-14` asks.
+
+## EC-23 · `genSessionId` collides, and flakes the whole gate — `open`, medium
+
+Found by running the gate for `EC-18`: `npm run lint` failed at its FIRST stage
+on `src/chatbot/chatSessionHelpers.test.ts` — *expected 499 to be 500* — with
+nothing in this change anywhere near it. Reproduced 1 run in 3.
+
+`genSessionId` is `Date.now().toString(36)` + **4** random base-36 characters,
+so ids drawn inside one millisecond have 36⁴ ≈ 1.68 M values to land in. The
+test draws 500 of them; the birthday probability of a collision is ≈7% per run.
+The test is right and the generator is thin.
+
+It matters twice: the gate is `&&`-chained, so a 7% flake at stage one silently
+skips the typecheck, prettier, eslint AND build for whoever hit it; and a real
+collision merges two of a user's chat tabs. `slice(2, 6)` → `slice(2, 10)` takes
+the odds to ~1e-7 and changes nothing else (the ids are opaque keys). Left for
+the user to take, because it is product code outside the reported defect.
+
+## EC-24 · A step whose control is inside a menu could only apologise — `done` 2026-08-31
+
+**Reported from the app with a screenshot**, one step further into the same
+walkthrough as `EC-18`. W-21 step 2 — *"Right-click an empty part of the list
+(or use the + button in the folder-path bar) and choose **Download From URL**"*
+— answered:
+
+> I could not do that one for you (nothing on screen to act on) - do it
+> yourself, then press Skip.
+
+Correct, and useless. **Download From URL** is genuinely not on screen; it is one
+right-click away. Three separate things were wrong:
+
+- **The guide could not right-click at all.** `action` was `click` or `type`.
+- **The step's target is a REGION, not a control.** "an empty part of the list"
+  has no words on it, and no label matcher will ever find one.
+- **A step like this is two actions**, and the card does one per press.
+
+Shipped, and it is the shape that matters more than the case:
+
+- `action: "rightClick"` — `dm.openContextMenu` fires a real `contextmenu` at a
+  point INSIDE the region (bottom right: a list fills from the top left, so
+  that is its empty part, and right-clicking an item gets the *item's* menu,
+  which is a different menu). Verified against the app before any of it was
+  written.
+- `dm.findListRegion(point)` answers "which list?" the way the user would: the
+  scroller above the point the guide last acted at — a panel opens exactly
+  where the bar that opened it was — then the NEAREST scroller to that point,
+  and only then the biggest on screen. `state.lastPoint` carries it.
+- **A step may take two presses.** After any demo action, a label the step
+  itself names that was NOT on screen and now IS comes back as `more`, and the
+  card holds the step: *Done - and it brought up "Download From URL". Press Do
+  it again to finish this step.* It is never clicked for them — "click
+  **Delete**, then **Yes**" would otherwise confirm its own dialog.
+- `state.pendingFind` aims that second press at what the first revealed.
+  Without it the press re-reads the step's candidates from the top and lands on
+  whatever still answers to the FIRST of them — live, step 1's second press
+  clicked the `Background:` transition button instead of the **Videos** tab it
+  had just opened.
+- `toGuideSteps` marks a step `rightClick` only when the sentence BEGINS with
+  one. W-08 step 2 ("Pick a tab … (or right-click the empty list)") mentions one
+  as an aside and its real action is a plain click on a tab already on screen;
+  the first version of this broke it.
+
+5 manual steps across W-18, W-21 and W-22 are right-click steps that used to
+apologise every time. The two-press completion is wider than that: 105 of the
+251 manual steps name more than one control.
+
+Verified live end to end on the real W-21 recipe from a collapsed layout:
+press 1 clicks **Background** and reveals **Videos**; press 2 clicks **Videos**;
+press 3 right-clicks the list at (797, 822) and the app's own menu opens with
+**Download From URL** ringed; press 4 clicks it and the link box appears.
+
+**Also found and fixed:** the manual told the user to press a **+** button in the
+folder-path bar. There is no such button — it is a **⋮ More Options** button
+(`ListMenuButtonComp`). The recipe now describes it, deliberately WITHOUT
+bolding it: "More Options" is the title of several buttons in the app, and
+bolding it hands the ring an ambiguous label — the first attempt duly rang the
+mini-screen's ⋮ instead.
+
+## EC-25 · The Khmer twin left a husk in the card — `done` 2026-08-31
+
+Visible in the same screenshot: the step ended *"…and choose Download From URL
+**(URL)**."* `toEnglishOnly` dropped a bracket only when it held Khmer and
+nothing else, so `(ទាញយកពី URL)` lost its Khmer and kept its Latin word. Any
+bracket holding Khmer is a translation aside and now goes whole. Brackets that
+are all English ("(or right-click the empty list)") are untouched. 0 husks left
+across the 251 manual steps.
+
+## EC-26 · The ring landed on the wrong control AGAIN, with the panel open — `done` 2026-08-31
+
+**Reported from the app with a screenshot — the same symptom `EC-18` closed.**
+The W-21 walkthrough step *"Open the **Background** panel and choose the
+**Videos** tab"* ringed **`Background:`**, the background-*transition* button in
+the screen preview footer.
+
+`EC-18` was verified *"live on the real W-08 recipe from a collapsed layout"*.
+That is the whole story: with the panel COLLAPSED its title bar is on screen and
+says "Background", so the tie-breaks `EC-18` added had something right to pick.
+With the panel **OPEN** the pane draws its name nowhere at all — measured live,
+the only element on the whole window whose own text was "Background" was the
+transition button. There was nothing to rank; the ranking was never reached.
+
+A fix that can only be verified in one of a control's two states is not a fix.
+
+Three changes, in order of how much they carry:
+
+1. **A panel has a name in the DOM, open or collapsed** — every resizable pane
+   carries `data-widget-name` (`RenderResizeActorItemComp`), and so does the
+   collapsed title bar. It is the **English** key from `toWidgetLabel`, not the
+   translated `widgetName`: a panel that only answers to its Khmer text is one
+   the matcher loses the moment the app is switched over. Panes named after a
+   file or a slide have no English twin and fall back to what they display.
+   Production DOM too — `data-react-comp-name` is dev-only, so component names
+   were never an option here.
+2. **The matcher reads the parent path** (`domMatch.mjs`). `parseNeedle` splits
+   `Background > Videos` into a scope and a target and treats the scope as a
+   requirement; a trailing kind noun (`panel`, `tab`, `box`) is dropped rather
+   than spent on a failed match, and a *region* noun additionally says the words
+   in front of it name a place, not a press. `containerPathOf` walks at most 24
+   ancestors for at most 4 names, and only for elements that already matched.
+   `pathTier` lets the panel supply words the label lacks (`Background Videos`)
+   as long as at least one word is on the control itself — otherwise every
+   control in a panel answers to the panel's name. `describe` reports `inPanel`.
+3. **A recipe that qualifies a bold scopes the rest of the step to it**
+   (`guide.mjs`). "the **Background** (ផ្ទៃខាងក្រោយ) panel … the **Videos** tab"
+   now yields `Background > Videos`, `Background panel`, `Background`,
+   `Videos` — in that order, which is the adaptive part: the scoped candidate
+   can only match once the panel is open, so a collapsed panel still rings the
+   panel bar, which is the half of the step not done yet.
+
+Verified live in both states: open → the **Videos** tab inside the Background
+panel, hint *"The ringed control is in the Background panel, at the middle left
+of this window"*; `owa_find_ui "Background"` now answers with the panel first
+where it used to answer with the transition button. 9 tests added.
+
+Cost: +97 tokens/round (~8686 → ~8783) for the `Panel > Control` syntax in three
+tool descriptions. Tool count unchanged at 42.
+
+## EC-27 · The guide card parked itself on top of its own ring — `done` 2026-08-31
+
+**Reported from the app with a screenshot.** The card opens bottom right and the
+ring lands wherever the control is, so a step pointing at anything in that corner
+was a card reading *"the ringed control"* with the ring underneath it. The
+frosted glass was not enough: a control read through an 18px blur is not a
+control you can find.
+
+`avoidRing(rect)` picks the first of the four corners that clears the ringed
+rect by 12px, bottom right FIRST so a ring nowhere near the card never moves it,
+and the least-bad corner when a ring is big enough to reach all four. Corners
+only, never a slide — a card that shuffles every time the ring twitches is worse
+than one briefly in the way. It stands down permanently once the user drags the
+card: they know what is under it and the guide does not. The rect is passed in
+rather than read back off the ring, whose 150ms transition means its own box is
+still the last step's.
+
+Verified live: a step aimed at the screen preview's `Background:` button moved
+the card to the bottom left (overlap 0); a step aimed at the middle left left it
+in place.
+
+## EC-28 · The ring only animated its size — `done` 2026-08-31
+
+Asked for directly. The app window is mostly bordered boxes, so a ring that only
+grows and shrinks reads as one more of them at a glance. The colour now travels
+with it, red through amber and back — `owa-ring-beat` (colour + size) while the
+guide waits on the user, and a new `owa-ring-glow` (colour only, no geometry)
+while demo mode is about to press it, so "I am about to do this" still reads as
+alive rather than as a leftover outline. `prefers-reduced-motion` drops both.
+
+`owa_find_ui`'s own `flash` marker got the same treatment. Its border is set
+inline, which the keyframes override: an animation outranks a `style` attribute
+in the cascade, so the colour can travel without restyling the marker per frame.
+
 ## EC-16 · 69 manual steps still cannot be demoed, and 34 are one rule — `open`, medium
 
 Measured this run over all 39 manual recipes with steps (251 numbered steps).

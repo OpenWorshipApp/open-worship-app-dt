@@ -76,6 +76,10 @@ export type SystemUtilsType = {
     isLinux: boolean;
     isUbuntu: boolean;
     isFedora: boolean;
+    // Whether the OS compositor can put a translucent backdrop behind a
+    // window, i.e. whether the `appGlassy` popup feature does anything. A
+    // renderer that styles itself for glass must read this and not assume it.
+    isGlassCapable: boolean;
     openFile: (filePath: string) => void;
     generateFileMD5: (filePath: string) => Promise<string>;
     generateMD5: (input: string) => string;

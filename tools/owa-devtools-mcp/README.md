@@ -82,10 +82,50 @@ Everything chrome-devtools-mcp registers (click, fill, snapshot, screenshot,
 | `owa_app_state`    | Live instances, open windows, and the main window's page/language/theme       |
 | `owa_list_screens` | Which presentation screens are showing, and the displays available            |
 | `owa_hide_screens` | Hide one screen or all of them (confirm with the user first)                  |
-| `owa_find_ui`      | Where a control is on screen — and `highlight` outlines it in the real window |
+| `owa_find_ui`      | Where a control is on screen — `Panel > Control` narrows it, `highlight` rings it |
 | `owa_guide_start`  | Walk the user through a task with a numbered card drawn in the app window     |
 | `owa_guide_step`   | Move a running walkthrough on — or `do` the current step for the user         |
 | `owa_guide_status` | Where the user has got to, and whether this step is one that can be done      |
+
+Which control a step means is answered by the shared matcher
+(`domMatch.mjs`), and it ranks by how the element is NAMED, not by how short
+its text is: an element one of whose names IS the words asked for beats one
+that merely contains them. That is the difference between "open the
+**Background** panel" ringing the collapsed Background panel and ringing the
+`Background:` transition button beside the screen preview.
+
+It reads the **parent path** as well as the label. Every resizable pane
+carries its English name as `data-widget-name` — open or collapsed, whatever
+language the app is in — so a panel is a place a step can be sent to, and not
+only while it is collapsed and drawing its own title. On top of that:
+
+- `Background > Videos` is the Videos tab **inside** the Background panel, and
+  nothing else: a scope the caller wrote down is a requirement, not a hint.
+- `Background panel` means the panel itself, where a bare `Background` would
+  rank any button sharing the word above it.
+- A trailing kind noun (`reference box`, `Videos tab`) is dropped rather than
+  spent on a failed match and a second round — it is never part of a label.
+- The panel supplies words the control's own label lacks, so `Background
+  Videos` finds that tab. At least one word must be on the control itself,
+  or every control in the panel would answer to the panel's name.
+- Every match reports the panel it is in (`inPanel`), which is what lets an
+  answer tell two same-named controls apart. A match must also
+begin a word — "Ok", from a recipe's "choose **Ok** or **Cancel**", was
+otherwise found inside "lo-ok-up" and rang the Bible Lookup button. A recipe
+that names a whole row of tabs in one bold ("**Colors / Images / Videos /
+Cameras / Web**") offers each of them separately, the joined phrase first.
+
+A step whose control lives in a **right-click menu** is `action: "rightClick"`
+(a recipe gets it when its sentence BEGINS with a right-click). Such a step is
+two actions, so it is two presses: the first opens the app's own menu where the
+step points — a region, "an empty part of the list", found from where the guide
+last acted rather than from a label — and the card holds the step, saying what
+it brought up. The next press chooses it. What a press reveals is never clicked
+for the user: "click **Delete**, then **Yes**" would confirm its own dialog.
+
+Anything the card SHOWS is stripped of ids like `W-08` first, whether the
+model wrote them into its own steps or a recipe cited a sibling recipe. The
+user reading the card is a volunteer; those ids mean nothing to them.
 
 A guide step acts on the control it names. When it names none but names a
 keyboard shortcut instead — `press: "Ctrl+Q"`, or a **Ctrl+Q** written into a

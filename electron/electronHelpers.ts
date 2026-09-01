@@ -106,6 +106,28 @@ export const isLinux = process.platform === 'linux';
 const osRelease = release().toLowerCase();
 export const isUbuntu = isLinux && osRelease.includes('ubuntu');
 export const isFedora = isLinux && osRelease.includes('fedora');
+/**
+ * Whether this OS can put a real translucent backdrop BEHIND a window.
+ *
+ * Only the compositor can do this: a popup is its own OS window, so nothing
+ * CSS does inside it can see the app window underneath. Windows 11 22H2 grew
+ * `backgroundMaterial`, macOS has always had `vibrancy`; everywhere else the
+ * window must stay opaque, because a window told to be see-through with no
+ * backdrop to blur is just unreadable text over the desktop.
+ */
+function checkIsGlassCapable() {
+    if (isMac) {
+        return true;
+    }
+    if (!isWindows) {
+        return false;
+    }
+    // `10.0.22621` -- the first build carrying the acrylic system backdrop.
+    const buildNumber = Number(release().split('.')[2]);
+    return !Number.isNaN(buildNumber) && buildNumber >= 22621;
+}
+export const isGlassCapable = checkIsGlassCapable();
+
 export const isSecured = false; // TODO: make it secure
 export const is64System = process.arch === 'x64';
 export const isArm64 = process.arch === 'arm64';
@@ -478,6 +500,7 @@ export type PopupWindowFeaturesType = {
     appTopToMain?: boolean;
     appShowMenuBar?: boolean;
     appResize?: boolean;
+    appGlassy?: boolean;
     // `+`-joined Blink runtime feature names, see `PopupWindowFeaturesType` in
     // `src/helper/domHelpers.ts`.
     appBlinkFeatures?: string;
@@ -809,6 +832,40 @@ function genPopupWebPreferences(
     };
 }
 
+/**
+ * The window options behind `appGlassy` -- a popup that reads as frosted glass
+ * over the app instead of a slab on top of it.
+ *
+ * The backdrop is drawn by the OS compositor, so it costs this app nothing on
+ * the machines it has to run on; a CSS `backdrop-filter` could not do it at
+ * all, having no access to what is behind its own window. The page must leave
+ * the window fully transparent for it to show through, which is why the alpha
+ * background colour is the whole point rather than an oversight -- the popup's
+ * own stylesheet paints the readable tint on top.
+ *
+ * Where the compositor cannot do it, the popup stays exactly as opaque as
+ * every other one.
+ */
+function genGlassOptions(
+    featuresRecord: PopupWindowFeaturesType,
+): BrowserWindowConstructorOptions {
+    if (featuresRecord.appGlassy !== true || !isGlassCapable) {
+        return { backgroundColor: getAppThemeBackgroundColor() };
+    }
+    return {
+        backgroundColor: '#00000000',
+        ...(isMac
+            ? ({
+                  vibrancy: 'under-window',
+                  // Or the blur freezes the moment the popup loses focus,
+                  // which is most of the time: the answers in it are about
+                  // the window behind.
+                  visualEffectState: 'active',
+              } as const)
+            : ({ backgroundMaterial: 'acrylic' } as const)),
+    };
+}
+
 export const POPUP_FRAME_NAME_PREFIX = 'popup_window';
 function handlePopupWindowOpen(
     win: BrowserWindow,
@@ -874,7 +931,7 @@ function handlePopupWindowOpen(
             webPreferences: popupWebPreferences,
             // transparent: true,
             // frame: false,
-            backgroundColor: getAppThemeBackgroundColor(),
+            ...genGlassOptions(featuresRecord),
         },
         createWindow: (
             constructionOptions: BrowserWindowConstructorOptions,

@@ -4,6 +4,7 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import {
     dropStepsAlreadyDone,
     genGuideExpression,
+    stripInternalIds,
     toGuideSteps,
     toKeystroke,
 } from './guide.mjs';
@@ -50,6 +51,26 @@ describe('toGuideSteps', () => {
     // The keystroke is dropped as a thing to RING and kept as a thing to
     // press: W-06 step 4 ("close the dialog ... or Ctrl+Q") named no control
     // at all, so "Do it" could only apologise on it.
+    it('scopes a control to the panel the same step names', () => {
+        // W-21 step 1, verbatim. "Background" on its own is also the word on
+        // the screen preview's background-transition button, which is where
+        // the ring landed before the panel was part of the question.
+        const steps = toGuideSteps(
+            '1. Open the **Background** (ផ្ទៃខាងក្រោយ) panel and choose the ' +
+                '**Videos** (វីដេអូ) tab.\n',
+        );
+        expect(steps[0].finds[0]).toBe('Background > Videos');
+        // The panel itself is next, so a COLLAPSED panel still gets rung --
+        // that is the half of the step not done yet.
+        expect(steps[0].finds).toContain('Background panel');
+        expect(steps[0].finds).toContain('Background');
+    });
+
+    it('leaves a step that names no panel exactly as it was', () => {
+        const steps = toGuideSteps('1. Click **Save** to keep it.\n');
+        expect(steps[0].finds).toEqual(['Save']);
+    });
+
     it('keeps a keystroke a step names, even beside a control label', () => {
         const steps = toGuideSteps(
             [
@@ -419,5 +440,145 @@ describe('what the guide costs while it sits there', () => {
         // Moving on is a new step, and that one does scroll.
         window.__owaGuide.next();
         expect(scrollCount).toBe(2);
+    });
+});
+
+describe('stripping internal ids out of what the card shows', () => {
+    it('takes out the aside a manual id was cited in', () => {
+        // Verbatim from a card a volunteer was shown.
+        expect(
+            stripInternalIds(
+                'Open the Background panel (W-08 step 1) and choose the ' +
+                    'Videos tab.',
+            ),
+        ).toBe('Open the Background panel and choose the Videos tab.');
+    });
+
+    it('takes out a recipe citing a sibling recipe', () => {
+        expect(
+            stripInternalIds('Click Add URL (opens the Web Editor, W-15).'),
+        ).toBe('Click Add URL.');
+    });
+
+    it('leaves an aside that carries no id alone', () => {
+        const text = 'Press Ctrl+Q to close it (or click the red X).';
+        expect(stripInternalIds(text)).toBe(text);
+    });
+
+    it('leaves the words on real controls alone', () => {
+        const text = 'Set the ratio to 16:9, then press F7.';
+        expect(stripInternalIds(text)).toBe(text);
+    });
+});
+
+describe('what a step offers as a control to ring', () => {
+    it('splits a row of tabs written as one bold, keeping the whole first', () => {
+        // W-08 step 2, verbatim. Before this the only candidates were the
+        // slash-joined phrase and "Ok"/"Cancel" -- and "Ok" was found inside
+        // "lo-ok-up", so the step rang the Bible Lookup button.
+        const [step] = toGuideSteps(
+            '1. Pick a tab: **Colors / Images / Videos / Cameras / Web**.\n',
+        );
+        expect(step.finds[0]).toBe('Colors / Images / Videos / Cameras / Web');
+        expect(step.finds).toContain('Colors');
+        expect(step.finds).toContain('Web');
+    });
+
+    it('drops the punctuation the sentence needed but the button lacks', () => {
+        const [step] = toGuideSteps('1. Choose **Colors:** then a swatch.\n');
+        expect(step.finds).toContain('Colors');
+    });
+
+    it('offers each candidate once', () => {
+        const [step] = toGuideSteps(
+            '1. Press **Videos** on the **Videos** tab.\n',
+        );
+        expect(step.finds).toEqual(['Videos']);
+    });
+});
+
+describe('a step whose control lives in a right-click menu', () => {
+    it('is a right-click step only when the sentence STARTS with one', () => {
+        const steps = toGuideSteps(
+            [
+                '1. **Right-click an empty part of the list** and choose',
+                '   **Download From URL**.',
+                '',
+                '2. Pick a tab: **Colors** (or right-click the empty list to',
+                '   use **Add URL**).',
+                '',
+            ].join('\n'),
+        );
+        // W-21 step 2: the right-click IS the action.
+        expect(steps[0].action).toBe('rightClick');
+        expect(steps[0].finds).toEqual(['Download From URL']);
+        // W-08 step 2: the right-click is an aside; the action is a click on
+        // a tab that is already on screen.
+        expect(steps[1].action).toBeUndefined();
+        expect(steps[1].finds).toContain('Colors');
+    });
+
+    it('offers the demo even though it rings nothing yet', () => {
+        // The reported failure: "I could not do that one for you (nothing on
+        // screen to act on)" on a step whose item is one right-click away.
+        const guide = startGuide({
+            title: 'Add a background video from a link',
+            mode: 'demo',
+            steps: [
+                {
+                    text: 'Right-click an empty part of the list and choose'
+                        + ' Download From URL.',
+                    find: 'Download From URL',
+                    action: 'rightClick',
+                },
+            ],
+        });
+        expect(guide.canDemo).toBe(true);
+        expect(guide.isTargetFound).toBe(false);
+        expect(guide.canActOnStep).toBe(true);
+    });
+
+    it('opens the menu on the first press and does not move on', async () => {
+        // A list with something behind a right-click, the way the app does
+        // it: the menu item does not exist until the contextmenu fires.
+        document.body.innerHTML = '<div id="list"></div>';
+        const list = document.getElementById('list');
+        Object.defineProperty(list, 'scrollHeight', { value: 900 });
+        Object.defineProperty(list, 'clientHeight', { value: 300 });
+        list.getBoundingClientRect = () => {
+            return { x: 0, y: 0, width: 600, height: 300, top: 0, left: 0 };
+        };
+        document.elementFromPoint = () => list;
+        list.addEventListener('contextmenu', () => {
+            const item = document.createElement('button');
+            item.id = 'item';
+            item.textContent = 'Download From URL';
+            document.body.append(item);
+        });
+
+        const guide = startGuide({
+            mode: 'demo',
+            steps: [
+                {
+                    text: 'Right-click the list and choose Download From URL.',
+                    find: 'Download From URL',
+                    action: 'rightClick',
+                },
+                { text: 'Paste the link.', find: 'Video URL' },
+            ],
+        });
+        expect(guide.stepNumber).toBe(1);
+
+        const after = await window.__owaGuide.act();
+        expect(after.lastResult.did).toBe('right-clicked');
+        // The item it brought up is named back, and the card STAYS on the
+        // step: the second press is what chooses it.
+        expect(after.lastResult.more).toBe('Download From URL');
+        expect(after.stepNumber).toBe(1);
+        expect(document.getElementById('item')).not.toBe(null);
+
+        const done = await window.__owaGuide.act();
+        expect(done.lastResult.did).toBe('clicked');
+        expect(done.lastResult.more).toBeUndefined();
     });
 });

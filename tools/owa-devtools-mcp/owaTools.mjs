@@ -19,6 +19,7 @@ import { readPublishedInstances } from './discovery.mjs';
 import {
     dropStepsAlreadyDone,
     genGuideExpression,
+    stripInternalIds,
     toGuideSteps,
     toKeystroke,
 } from './guide.mjs';
@@ -341,7 +342,11 @@ export function registerOwaTools(server) {
                 'it, in dev). Matching is tolerant -- exact words first, then ' +
                 'looser fits -- and a zero answer comes back with the closest ' +
                 'labels that ARE on screen, so retry with one of those ' +
-                'instead of a new guess. `highlight` outlines it in the real ' +
+                'instead of a new guess. Write "Panel > Control" when the ' +
+                'same words appear in more than one panel ("Background > ' +
+                'Videos"), and say "the X panel" to mean the panel itself; ' +
+                'each answer names the panel it is in. `highlight` outlines ' +
+                'it in the real ' +
                 'window for four seconds, so the user can be pointed at it. ' +
                 '`anyPage` searches every open window and says which one ' +
                 'each match lives in.',
@@ -466,7 +471,10 @@ export function registerOwaTools(server) {
                 'first one on screen wins. Waits a moment for a panel that ' +
                 'is still rendering, and when nothing matches it answers ' +
                 'with the closest labels it did find, so retry with one of ' +
-                'those instead of giving up. Anything that changes what the ' +
+                'those instead of giving up. Write "Panel > Control" to mean ' +
+                'the one inside that panel ("Background > Videos"), which is ' +
+                'how a word that several panels share picks out the right ' +
+                'one. Anything that changes what the ' +
                 'congregation sees -- presenting, clearing, hiding a screen ' +
                 '-- must be offered to the user first, never done unasked.',
             inputSchema: {
@@ -510,7 +518,8 @@ export function registerOwaTools(server) {
                 'placeholder or the text already in it -- e.g. the Bible ' +
                 'reference box. Set `submit` to also press Enter. When ' +
                 'nothing matches it answers with the closest labels on ' +
-                'screen; retry with one of those. It cannot drive a code ' +
+                'screen; retry with one of those. "Panel > Box" narrows it ' +
+                'to one panel. It cannot drive a code ' +
                 'editor field (those need a real keyboard) -- for those, use ' +
                 'a guide step that asks the user to type.',
             inputSchema: {
@@ -573,7 +582,9 @@ export function registerOwaTools(server) {
                 '`mode: "demo"` the card DOES each step for the user when ' +
                 'they press **Do it** -- one press per step, never a run of ' +
                 'them -- using each step\'s `action` (`click`, the default, ' +
-                'or `type` with a `value`), or `press` for a step that is a ' +
+                '`type` with a `value`, or `rightClick` for one whose ' +
+                'control lives in a right-click menu), or `press` for a ' +
+                'step that is a ' +
                 'keyboard shortcut rather than a button. Offer the demo ' +
                 'rather than ' +
                 'assuming it -- but a user who has just ASKED you to do it ' +
@@ -600,11 +611,15 @@ export function registerOwaTools(server) {
                                         'is about, to ring in the window',
                                 ),
                             action: z
-                                .enum(['click', 'type'])
+                                .enum(['click', 'type', 'rightClick'])
                                 .optional()
                                 .describe(
                                     'What "Do it" does in demo mode; ' +
-                                        'defaults to click',
+                                        'defaults to click. Use rightClick ' +
+                                        'for a step whose control is in a ' +
+                                        'right-click menu: the first press ' +
+                                        'opens the menu, the next chooses ' +
+                                        'the `find` in it.',
                                 ),
                             value: z
                                 .string()
@@ -687,6 +702,15 @@ export function registerOwaTools(server) {
                     guideSteps,
                     typeof pathname === 'string' ? pathname : '',
                 );
+                // One choke point for both sources of steps: the model
+                // writes an id into a step it invented as readily as a
+                // recipe cites a sibling recipe, and neither belongs in
+                // front of the volunteer reading the card.
+                guideSteps = guideSteps.map((step) => {
+                    return { ...step, text: stripInternalIds(step.text) };
+                });
+                guideTitle =
+                    guideTitle === null ? null : stripInternalIds(guideTitle);
                 const { value } = await evaluateInApp(
                     genGuideExpression(
                         `start(${JSON.stringify({

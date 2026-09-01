@@ -98,4 +98,7 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [`.claude/` edits need a knowledge rebuild](claude-dir-edits-need-knowledge-rebuild.md) — run `node extra-work/build-knowledge.mjs` in the same change, or the chatbot keeps answering from the old notes
 - [`evaluate_script` is dead under Node 22](evaluate-script-disposablestack.md) — "DisposableStack is not defined"; drive pages over raw CDP `Runtime.evaluate` instead
 - [MCP tool edits leave two processes out of step](mcp-tool-edit-two-processes.md) — your own `mcp__owa-devtools__*` tools serve STALE code after the edit while the app serves fresh; verify against the app's HTTP host
+- [DOM matcher is memoised in the page](dom-match-memoised-in-page.md) — `window.__owaDomMatch`/`__owaGuide` survive an edit to domMatch.mjs; clear them or your fix looks dead (and a backtick in the runtime breaks the parse)
 - [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md) — a page-made KeyboardEvent at `document` fires real shortcuts, but only renderer-registered ones and only with `code` set
+- [Glassy popup windows](glassy-popup-windows.md) — the chatbot popup is frosted by the OS compositor, not CSS; DWM's blur never survives a BitBlt screenshot
+- [Panels are named in the DOM](panel-name-in-dom.md) — an OPEN pane drew its name nowhere; `data-widget-name` carries the ENGLISH key, and `data-react-comp-name` is dev-only so it was never an option

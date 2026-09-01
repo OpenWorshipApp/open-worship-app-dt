@@ -26,6 +26,12 @@ export type DataInputType = {
           };
     key: string;
     widgetName: string;
+    // The pane's English name, stamped into the DOM as `data-widget-name` so
+    // anything reading the window -- the help chatbot's control matcher, a
+    // screen reader -- can name the panel whatever language the app is in,
+    // and whether it is open or collapsed. Falls back to `widgetName` for the
+    // panes named after a file or a slide, which have no English twin.
+    widgetKey?: string;
     // Bootstrap-icon name (without the `bi bi-` prefix) shown next to
     // `widgetName` when the widget is collapsed. Use `toWidgetLabel` in
     // `others/labelIconHelpers` to fill both fields consistently.

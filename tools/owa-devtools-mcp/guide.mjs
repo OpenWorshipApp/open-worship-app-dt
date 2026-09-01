@@ -41,6 +41,18 @@ const GUIDE_RUNTIME = `
         wasDemoAsked: false,
         lastAction: null,
         lastResult: null,
+        // Where the last action landed. A step that points at a region
+        // ('an empty part of the list') has no label to find, and the
+        // region the user means is the one the guide was just working
+        // in -- a panel opens exactly where the bar that opened it was.
+        lastPoint: null,
+        // What the last press BROUGHT UP, when the step was not
+        // finished by it. The card promises the next press will choose
+        // it, so that is what the next press must aim at -- re-reading
+        // the step's candidates from the top instead lands on whatever
+        // still answers to the FIRST of them, which by then is usually
+        // some other control that shares the word.
+        pendingFind: null,
         labels: {
             next: 'Next', back: 'Back', done: 'Done', step: 'Step',
             act: 'Do it', skip: 'Skip',
@@ -63,36 +75,76 @@ const GUIDE_RUNTIME = `
                "and nothing happens until you press it" -- which is the
                question a volunteer stuck on a step is actually asking. So
                it beats only while the guide is waiting on THEM, and holds
-               still while the card is about to do the step itself. */
+               still while the card is about to do the step itself.
+               The COLOUR travels with the beat, red through amber and back.
+               Size alone is a weak signal on a window that is mostly boxes
+               with borders: a ring that only grows reads as another one of
+               them at a glance, while a ring that changes hue is the only
+               thing on screen doing it. The still state gets the same
+               journey with no geometry, so "I am about to press this" still
+               reads as alive rather than as a leftover outline. */
             .ring[data-waiting="yes"] {
                 animation: owa-ring-beat 1.4s ease-in-out infinite;
             }
+            .ring[data-waiting="no"] {
+                animation: owa-ring-glow 2.2s ease-in-out infinite;
+            }
             @keyframes owa-ring-beat {
                 0%, 100% {
-                    box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.25);
+                    box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.3);
                     border-color: #ff3b30;
                 }
                 50% {
-                    box-shadow: 0 0 0 11px rgba(255, 59, 48, 0.04);
-                    border-color: #ff8f88;
+                    box-shadow: 0 0 0 12px rgba(255, 214, 10, 0.05);
+                    border-color: #ffd60a;
                 }
             }
-            @media (prefers-reduced-motion: reduce) {
-                .ring[data-waiting="yes"] { animation: none; }
+            @keyframes owa-ring-glow {
+                0%, 100% {
+                    box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.3);
+                    border-color: #ff3b30;
+                }
+                50% {
+                    box-shadow: 0 0 0 4px rgba(255, 214, 10, 0.3);
+                    border-color: #ffd60a;
+                }
             }
+            /* Reduced motion takes the movement, not the meaning: the ring
+               keeps its solid red and simply stops travelling. */
+            @media (prefers-reduced-motion: reduce) {
+                .ring[data-waiting="yes"], .ring[data-waiting="no"] {
+                    animation: none;
+                }
+            }
+            /* Frosted, not solid. The card sits ON the app it is talking
+               about, and the ring it is pointing with is often right beside
+               it -- an opaque slab hides the very thing the step names, and
+               the person following it has already been asked once to drag the
+               card out of the way. The blur is what keeps it readable over a
+               busy slide; the region is one small card, so it stays cheap.
+               Where the engine cannot blur, the tint goes back to solid
+               rather than leaving text floating on the app. */
             .card {
                 position: fixed; right: 16px; bottom: 16px; width: 320px;
                 max-width: calc(100vw - 32px);
-                background: #10151c; color: #f2f5f8;
-                border: 1px solid #2b3646; border-radius: 10px;
-                box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+                background: rgba(14, 19, 26, 0.62); color: #f2f5f8;
+                backdrop-filter: blur(18px) saturate(140%);
+                -webkit-backdrop-filter: blur(18px) saturate(140%);
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                border-radius: 10px;
+                box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
                 font: 14px/1.45 system-ui, -apple-system, sans-serif;
                 pointer-events: auto; display: none; overflow: hidden;
             }
+            @supports not (backdrop-filter: blur(1px)) {
+                .card { background: #10151c; }
+            }
             .head {
                 display: flex; align-items: center; justify-content: space-between;
-                gap: 8px; padding: 8px 12px; background: #18202b;
-                border-bottom: 1px solid #2b3646;
+                gap: 8px; padding: 8px 12px;
+                background: rgba(255, 255, 255, 0.06);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
                 cursor: move; user-select: none; touch-action: none;
             }
             .title { font-weight: 600; font-size: 13px; }
@@ -103,10 +155,13 @@ const GUIDE_RUNTIME = `
             .foot { display: flex; gap: 8px; padding: 0 12px 12px; }
             button {
                 flex: 1; padding: 7px 10px; border-radius: 6px; cursor: pointer;
-                font: inherit; font-size: 13px; border: 1px solid #2b3646;
-                background: #1d2734; color: #f2f5f8;
+                font: inherit; font-size: 13px;
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                background: rgba(255, 255, 255, 0.08); color: #f2f5f8;
             }
-            button:hover { background: #26323f; }
+            button:hover { background: rgba(255, 255, 255, 0.16); }
+            /* The one press that does something stays solid: it is the anchor
+               the eye lands on, and glass on glass would bury it. */
             button.primary { background: #0d6efd; border-color: #0d6efd; }
             button.primary:hover { background: #2a80ff; }
             button:disabled { opacity: 0.4; cursor: default; }
@@ -156,7 +211,7 @@ const GUIDE_RUNTIME = `
     // the walkthrough. Always kept fully inside the window -- a card dragged
     // off the edge could not be dragged back.
     const head = root.querySelector('.head');
-    const placement = { left: null, top: null };
+    const placement = { left: null, top: null, wasMoved: false };
     const clampCard = () => {
         if (placement.left === null) {
             return;
@@ -170,6 +225,76 @@ const GUIDE_RUNTIME = `
         card.style.right = 'auto';
         card.style.bottom = 'auto';
     };
+    // The card sits in a corner and the ring lands wherever the control is,
+    // so sooner or later the card is parked on top of the one thing it is
+    // pointing at -- and the person following the step is looking at a step
+    // that says "the ringed control", with no ring in sight. Frosted glass
+    // was not enough: a control read through an 18px blur is not a control
+    // you can find. So the card moves itself out of the way.
+    // Corners only, and the current one first: a card that slides a few
+    // pixels every time the ring twitches is worse than one that is briefly
+    // in the way. It never moves once the user has dragged it -- they know
+    // what is underneath it and the guide does not.
+    const CARD_GAP = 16;
+    const avoidRing = () => {
+        if (placement.wasMoved || ring.style.display === 'none') {
+            return;
+        }
+        const target = ring.getBoundingClientRect();
+        if (target.width === 0 && target.height === 0) {
+            return;
+        }
+        const width = card.offsetWidth;
+        const height = card.offsetHeight;
+        if (width === 0 || height === 0) {
+            return;
+        }
+        const maxLeft = Math.max(0, innerWidth - width - CARD_GAP);
+        const maxTop = Math.max(0, innerHeight - height - CARD_GAP);
+        // Bottom right first: where the card lives unless something is in
+        // the way, so a ring nowhere near it never moves it at all.
+        const corners = [
+            { left: maxLeft, top: maxTop },
+            { left: CARD_GAP, top: maxTop },
+            { left: maxLeft, top: CARD_GAP },
+            { left: CARD_GAP, top: CARD_GAP },
+        ];
+        let bestCorner = null;
+        for (const corner of corners) {
+            // The ring is drawn 3px outside its control and beats outward;
+            // clearing it by a margin is what keeps the two visibly apart.
+            const overlapX = Math.max(
+                0,
+                Math.min(corner.left + width, target.x + target.width + 12) -
+                    Math.max(corner.left, target.x - 12),
+            );
+            const overlapY = Math.max(
+                0,
+                Math.min(corner.top + height, target.y + target.height + 12) -
+                    Math.max(corner.top, target.y - 12),
+            );
+            const overlap = overlapX * overlapY;
+            if (overlap === 0) {
+                bestCorner = corner;
+                break;
+            }
+            // Every corner covered (a ring bigger than the gaps between
+            // them): the least bad one still shows the most of it.
+            if (bestCorner === null || overlap < bestCorner.overlap) {
+                bestCorner = Object.assign({ overlap }, corner);
+            }
+        }
+        if (
+            placement.left === bestCorner.left &&
+            placement.top === bestCorner.top
+        ) {
+            return;
+        }
+        placement.left = bestCorner.left;
+        placement.top = bestCorner.top;
+        clampCard();
+    };
+
     let grab = null;
     const endGrab = () => {
         grab = null;
@@ -183,6 +308,10 @@ const GUIDE_RUNTIME = `
         grab = { x: event.clientX - rect.x, y: event.clientY - rect.y };
         placement.left = rect.x;
         placement.top = rect.y;
+        // From here the card is where the USER put it. The avoidance below
+        // stands down for the rest of the walkthrough: it exists to save
+        // them a drag, not to undo one.
+        placement.wasMoved = true;
         // Keeps the pointer with the handle when the hand outruns the card;
         // the window listeners below are what actually move it, so a browser
         // that refuses the capture still drags.
@@ -287,12 +416,28 @@ const GUIDE_RUNTIME = `
     // screen: a step reads "Press Ctrl+B (or click Bible Lookup in the
     // header)", and only the second half of that is a thing to point at.
     const findElement = (step) => {
+        if (state.pendingFind !== null) {
+            const pending = dm.findBest([state.pendingFind]);
+            if (pending !== null) {
+                return pending.element;
+            }
+        }
         const wanted = (step.finds ?? [step.find]).filter(Boolean);
         if (wanted.length === 0) {
             return null;
         }
         const found = dm.findBest(wanted);
         return found === null ? null : found.element;
+    };
+
+    // A needle can say where to look as well as what to look for
+    // ("Background > Videos"). The card is read by a volunteer, so it says
+    // the thing, and the panel it is in comes from the element the ring
+    // actually landed on -- which is the truth, where the needle is only the
+    // request.
+    const toSpoken = (needle) => {
+        const parts = String(needle ?? '').split('>');
+        return parts[parts.length - 1].trim();
     };
 
     const renderStep = () => {
@@ -317,7 +462,9 @@ const GUIDE_RUNTIME = `
             : (isLast ? state.labels.done : state.labels.next);
         unwatch();
         const target = findElement(step);
-        const named = (step.finds ?? [step.find]).filter(Boolean)[0];
+        const named = toSpoken(
+            (step.finds ?? [step.find]).filter(Boolean)[0],
+        );
         if (target === null) {
             ring.style.display = 'none';
             // Not an error: plenty of steps are "type the book name" or "wait
@@ -332,6 +479,12 @@ const GUIDE_RUNTIME = `
                         step.keys.label + ' for you.'
                     : 'Press ' + step.keys.label + ' — I will notice when ' +
                         'you do.';
+                return;
+            }
+            if (state.isDemo && step.action === 'rightClick') {
+                parts.hint.textContent = 'Press ' + state.labels.act +
+                    ' and I will right-click the list for you, then press it ' +
+                    'again to choose' + (named ? ' "' + named + '"' : '') + '.';
                 return;
             }
             parts.hint.textContent = named
@@ -366,10 +519,17 @@ const GUIDE_RUNTIME = `
         ring.style.top = (shown.y - 3) + 'px';
         ring.style.width = shown.width + 'px';
         ring.style.height = shown.height + 'px';
+        avoidRing(shown);
+        // Which panel it is in beats any amount of "top left": a window this
+        // busy has four panels in every corner, and the panel is the word the
+        // user can actually look for.
+        const inPanel = dm.describe(target).inPanel;
         parts.hint.textContent = (state.isDemo
             ? 'Press ' + state.labels.act + ' and I will ' +
                 (step.action === 'type' ? 'type it' : 'click it') + ' for you. '
-            : '') + 'The ringed control is at the ' +
+            : '') + 'The ringed control is ' +
+            (inPanel === null ? '' : 'in the ' + inPanel + ' panel, ') +
+            'at the ' +
             (shown.y < innerHeight / 3 ? 'top' :
                 (shown.y > innerHeight * 2 / 3 ? 'bottom' : 'middle')) + ' ' +
             (shown.x < innerWidth / 3 ? 'left' :
@@ -401,6 +561,10 @@ const GUIDE_RUNTIME = `
         ring.style.top = (rect.y - 3) + 'px';
         ring.style.width = rect.width + 'px';
         ring.style.height = rect.height + 'px';
+        // The control can move under the card without the step changing --
+        // a panel opening, a list scrolling -- so this is checked on every
+        // reposition, not only when a new step is drawn.
+        avoidRing(rect);
     };
 
     // Only while a guide is actually on screen. The old timer was installed
@@ -449,6 +613,13 @@ const GUIDE_RUNTIME = `
                 'will walk you through them instead.';
             return;
         }
+        if (state.lastAction === 'demo-did-it' && state.lastResult !== null &&
+            state.lastResult.more !== undefined) {
+            parts.hint.textContent = 'Done - and it brought up "' +
+                state.lastResult.more + '". Press ' + state.labels.act +
+                ' again to finish this step.';
+            return;
+        }
         if (state.lastAction === 'demo-could-not' && state.lastResult !== null) {
             parts.hint.textContent = 'I could not do that one for you (' +
                 state.lastResult.reason + ') - do it yourself, then press ' +
@@ -462,12 +633,67 @@ const GUIDE_RUNTIME = `
     // because a step can land before its panel has finished rendering: ask
     // again for a moment before declaring nothing on screen, and say which
     // labels WERE seen so the caller can retry with real words.
+    // Which of the step's own labels are NOT on screen right now. If one
+    // appears BECAUSE of the press -- the menu item behind the menu the step
+    // told you to open -- the step is not finished, and the card says so
+    // instead of moving on. It is never clicked for them: "click Delete,
+    // then Yes" would otherwise confirm its own dialog.
+    const missingOf = (step) => {
+        return (step.finds ?? [step.find]).filter(Boolean).filter((one) => {
+            return dm.findBest([one]) === null;
+        });
+    };
+
+    const rememberPoint = (element) => {
+        const rect = element.getBoundingClientRect();
+        state.lastPoint = {
+            x: Math.round(rect.x + rect.width / 2),
+            y: Math.round(rect.y + rect.height / 2),
+        };
+    };
+
     const perform = async () => {
         const step = state.steps[state.index];
         if (step === undefined) {
             return { done: false, reason: 'no step' };
         }
+        const missingBefore = missingOf(step);
+        // Done AND still not finished: report what the press revealed rather
+        // than letting the card march on to the next step with a menu open.
+        const withMore = async (result) => {
+            // Aimed at once: whatever happens next, the step is no longer
+            // waiting on the thing the PREVIOUS press brought up.
+            state.pendingFind = null;
+            if (!result.done || missingBefore.length === 0) {
+                return result;
+            }
+            const appeared = await dm.waitForBest(missingBefore, 900);
+            if (appeared === null || appeared.element === null) {
+                return result;
+            }
+            state.pendingFind = appeared.needle;
+            // The step's OWN words, not the element's joined names: a menu
+            // item carrying both text and a title reads back as "Download
+            // From URL Download From URL", and the card is quoting this to
+            // the user.
+            return Object.assign(result, {
+                more: String(appeared.needle).slice(0, 40),
+            });
+        };
         let target = findElement(step);
+        // A step reading "right-click the list and choose X" is two actions.
+        // While X is not on screen the press opens the menu; once it is, the
+        // very same press chooses it. One press, one action, either way --
+        // and the region is only reached for when there is no control.
+        if (target === null && step.action === 'rightClick') {
+            const region = dm.findListRegion(state.lastPoint);
+            if (region !== null) {
+                unwatch();
+                rememberPoint(region);
+                const at = dm.openContextMenu(region);
+                return await withMore({ done: true, did: 'right-clicked', at });
+            }
+        }
         if (target === null) {
             const wanted = (step.finds ?? [step.find]).filter(Boolean);
             // Nothing was named to wait FOR, so there is nothing to wait for:
@@ -512,12 +738,17 @@ const GUIDE_RUNTIME = `
                 setter.call(target, step.value);
                 target.dispatchEvent(new Event('input', { bubbles: true }));
                 target.dispatchEvent(new Event('change', { bubbles: true }));
-                return { done: true, did: 'typed', value: step.value };
+                rememberPoint(target);
+                return await withMore({
+                    done: true, did: 'typed', value: step.value,
+                });
             }
             unwatch();
+            rememberPoint(target);
             target.click();
-            return { done: true, did: 'clicked', label: (target.textContent ||
-                target.getAttribute('title') || '').trim().slice(0, 40) };
+            return await withMore({ done: true, did: 'clicked',
+                label: (target.textContent ||
+                    target.getAttribute('title') || '').trim().slice(0, 40) });
         } catch (error) {
             return { done: false, reason: String(error && error.message) };
         }
@@ -537,12 +768,14 @@ const GUIDE_RUNTIME = `
             state.canDemo = state.steps.some((step) => {
                 return (
                     (step.finds ?? [step.find]).filter(Boolean).length > 0 ||
-                    step.keys != null
+                    step.keys != null ||
+                    step.action === 'rightClick'
                 );
             });
             state.wasDemoAsked = payload.mode === 'demo';
             state.isDemo = state.wasDemoAsked && state.canDemo;
             state.index = 0;
+            state.pendingFind = null;
             state.isRunning = state.steps.length > 0;
             state.lastAction = 'started';
             state.lastResult = null;
@@ -551,6 +784,7 @@ const GUIDE_RUNTIME = `
         },
         go(index) {
             state.index = Math.max(0, Math.min(state.steps.length - 1, index));
+            state.pendingFind = null;
             render();
             return api.status();
         },
@@ -559,12 +793,14 @@ const GUIDE_RUNTIME = `
                 return api.stop(reason ?? 'finished');
             }
             state.index += 1;
+            state.pendingFind = null;
             state.lastAction = reason ?? 'next';
             render();
             return api.status();
         },
         back() {
             state.index = Math.max(0, state.index - 1);
+            state.pendingFind = null;
             state.lastAction = 'back';
             render();
             return api.status();
@@ -581,7 +817,7 @@ const GUIDE_RUNTIME = `
             state.lastResult = result;
             state.lastAction = result.done ? 'demo-did-it' : 'demo-could-not';
             // A moment to see what happened before the card moves on.
-            if (result.done) {
+            if (result.done && result.more === undefined) {
                 setTimeout(() => {
                     if (state.isRunning) {
                         api.next('after-demo');
@@ -599,9 +835,10 @@ const GUIDE_RUNTIME = `
             // told which label this step used, whether it landed -- and when
             // it did not, the labels that came closest, so the retry is
             // written in words the screen actually has.
-            const named = step === undefined
+            const firstFind = step === undefined
                 ? null
                 : ((step.finds ?? [step.find]).filter(Boolean)[0] ?? null);
+            const named = firstFind === null ? null : toSpoken(firstFind);
             const found =
                 state.isRunning && step !== undefined
                     ? findElement(step)
@@ -621,7 +858,8 @@ const GUIDE_RUNTIME = `
                     : step.keys.label,
                 canActOnStep:
                     found !== null ||
-                    (step !== undefined && step.keys != null),
+                    (step !== undefined &&
+                        (step.keys != null || step.action === 'rightClick')),
                 nearMisses:
                     state.isRunning && step !== undefined && found === null
                         ? dm.nearMisses(
@@ -812,6 +1050,46 @@ export function toKeystroke(phrase) {
 const ACTION_PATTERN =
     /^(double-?click|right-?click|click|press|type|drag|drop|hover|scroll|open|choose|select)\b/i;
 
+// A recipe names a whole row of tabs in one bold -- "**Colors / Images /
+// Videos / Cameras / Web**" -- and introduces each with the colon it is
+// written with, "**Colors:**". Neither string is the text on any control, so
+// the step about picking a tab had nothing to point at and rang whatever else
+// on screen happened to contain one of its other bolds. The full phrase stays
+// FIRST, because a control really named "A / B" must still win it; its parts
+// follow, and the punctuation the sentence needed is not part of a label.
+// A recipe that opens a menu says so in the first words of the step:
+// "**Right-click an empty part of the list** ... and choose **Download From
+// URL**". What it tells you to right-click is prose, never a label, so the
+// step found nothing and demo mode could only apologise -- while the item it
+// names is one right-click away. The sentence carries the ACTION; where to
+// aim it is worked out from where the guide is looking.
+// It has to be the sentence's FIRST words, not a mention anywhere in it:
+// W-08 step 2 reads "Pick a tab ... (or right-click the empty list)",
+// and its action is a plain click on a tab already on screen.
+const RIGHT_CLICK_PATTERN = /^\s*(?:\*\*)?right[- ]?click\b/i;
+
+// A bold, plus the word the recipe qualifies it with: "the **Background**
+// (ផ្ទៃខាងក្រោយ) panel". Only the CONTAINER nouns are captured -- they are
+// the ones that change which control is meant, where "tab" or "button" only
+// repeat what the label already says. The Khmer twin the manual writes
+// between the two is stepped over, not matched: this window is English.
+// That aside must not itself contain a bold: "press **Ctrl+B** (or click
+// **Bible Lookup**)" is one step naming two things, and a parenthesis
+// allowed to swallow asterisks eats the second one whole.
+const BOLD_PATTERN =
+    /\*\*([^*]{2,40})\*\*(?:\s*\([^)*]{0,60}\))?(?:\s*(panel|pane|section|area|sidebar))?/g;
+
+function toFindCandidates(phrase) {
+    const candidates = [phrase, ...phrase.split(/\s+\/\s+/)];
+    return candidates
+        .map((one) => {
+            return one.replace(/[:.,;]+$/, '').trim();
+        })
+        .filter((one, at, all) => {
+            return one.length > 0 && all.indexOf(one) === at;
+        });
+}
+
 function checkIsControlLabel(candidate) {
     return (
         candidate.length > 1 &&
@@ -830,6 +1108,29 @@ function checkIsControlLabel(candidate) {
 // sooner or later, write that down as step 1 -- and a walkthrough whose
 // first instruction is to look at the thing you are already looking at has
 // spent the one step the user was most willing to follow. The card says it.
+// The system prompt tells the model never to show a volunteer an id like
+// "W-06", not even in passing -- and a card in front of one still read
+// "Open the Background panel (W-08 step 1)". A rule the model can ignore is
+// not a rule, so the card strips them out of whatever it is handed: the
+// model's own steps, and a recipe's (W-08 step 2 cites W-15 itself).
+// The whole aside goes, not just the id -- deleting "W-08" out of
+// "(W-08 step 1)" leaves "( step 1)", which is worse than what it replaced,
+// and an aside built around an id carries nothing else the user needed.
+const ID_PATTERN = /\b[A-Z]{1,3}-\d{1,3}\b/g;
+const ID_ASIDE_PATTERN = /\s*[([][^)\]]*\b[A-Z]{1,3}-\d{1,3}\b[^)\]]*[)\]]/g;
+
+export function stripInternalIds(text) {
+    return String(text ?? '')
+        .replace(ID_ASIDE_PATTERN, '')
+        .replace(ID_PATTERN, '')
+        // Whatever the cut left behind: a doubled space, a space in front of
+        // the full stop, or the comma that used to introduce the id.
+        .replace(/\s+([.,;:!?])/g, '$1')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/[,;:]\s*$/, '')
+        .trim();
+}
+
 const PREAMBLE_PATTERN = /^(look|watch|see)\b[^.]{0,40}\bapp window\b/i;
 
 export function dropStepsAlreadyDone(steps, pathname = '') {
@@ -896,12 +1197,45 @@ export function toGuideSteps(markdown, limit = MAX_STEPS) {
         steps.push(current);
     }
     return steps.slice(0, limit).map((step) => {
-        const bolds = [...step.raw.matchAll(/\*\*([^*]{2,40})\*\*/g)].map(
-            (match) => {
-                return toEnglishOnly(match[1].replace(/[*`]/g, '')).trim();
-            },
-        );
-        const finds = bolds.filter(checkIsControlLabel);
+        const marked = [...step.raw.matchAll(BOLD_PATTERN)].map((match) => {
+            return {
+                text: toEnglishOnly(match[1].replace(/[*`]/g, '')).trim(),
+                region: match[2] ?? null,
+            };
+        });
+        const bolds = marked.map((one) => {
+            return one.text;
+        });
+        const plain = bolds
+            .flatMap(toFindCandidates)
+            .filter(checkIsControlLabel);
+        // A step that names a PANEL and a control inside it is naming ONE
+        // thing, not two: "open the **Background** panel and choose the
+        // **Videos** tab" means the Videos tab of that panel. Asked for on
+        // its own, "Background" is also the word on a transition button down
+        // beside the screen preview -- and that is what the ring landed on.
+        // The ORDER is the adaptive part. The scoped candidate is tried
+        // first and can only match once the panel is open; with the panel
+        // collapsed it finds nothing and the panel itself is next, which is
+        // the half of the step the user has not done yet.
+        const scope = marked.find((one) => {
+            return one.region !== null && checkIsControlLabel(one.text);
+        });
+        const finds = [
+            ...(scope === undefined
+                ? []
+                : plain
+                      .filter((one) => {
+                          return one !== scope.text;
+                      })
+                      .map((one) => {
+                          return scope.text + ' > ' + one;
+                      })),
+            ...(scope === undefined ? [] : [scope.text + ' ' + scope.region]),
+            ...plain,
+        ].filter((one, at, all) => {
+            return all.indexOf(one) === at;
+        });
         // The first shortcut the step names, kept ALONGSIDE the labels rather
         // than instead of them: a recipe writes "press Ctrl+B (or click Bible
         // Lookup)", and clicking the control the user can see is the better
@@ -914,6 +1248,7 @@ export function toGuideSteps(markdown, limit = MAX_STEPS) {
             }) ?? null;
         return {
             keys,
+            action: RIGHT_CLICK_PATTERN.test(step.raw) ? 'rightClick' : undefined,
             text: toEnglishOnly(
                 step.raw
                     // The screenshot markers and links mean nothing on a card.

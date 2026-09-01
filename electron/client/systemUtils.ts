@@ -12,6 +12,7 @@ import {
     isArm64,
     isUbuntu,
     isFedora,
+    isGlassCapable,
 } from '../electronHelpers';
 
 function generateFileMD5(filePath: string) {
@@ -52,6 +53,7 @@ const systemUtils = {
     isLinux,
     isUbuntu,
     isFedora,
+    isGlassCapable,
     is64System,
     isArm64,
     generateFileMD5,

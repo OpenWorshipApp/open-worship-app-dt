@@ -182,3 +182,20 @@ describe('toEnglishOnly', () => {
         );
     });
 });
+
+describe('the Khmer twin the manual writes beside every label', () => {
+    it('takes the whole bracket, not only the Khmer inside it', () => {
+        // The card read "...and choose Download From URL (URL)." because the
+        // bracket held a Latin word too, so only its Khmer was stripped.
+        expect(
+            toEnglishOnly(
+                'choose **Download From URL** (ទាញយកពី URL).',
+            ),
+        ).toBe('choose **Download From URL**.');
+    });
+
+    it('leaves a bracket that is all English alone', () => {
+        const text = 'Click **Add URL** (or right-click the empty list).';
+        expect(toEnglishOnly(text)).toBe(text);
+    });
+});

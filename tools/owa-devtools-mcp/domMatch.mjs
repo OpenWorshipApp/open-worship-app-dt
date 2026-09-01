@@ -35,12 +35,32 @@ export const DOM_MATCH_RUNTIME = `
         'button', 'a', '[role="button"]', 'input', 'textarea', 'select',
         'label', 'summary', '.nav-link', '[contenteditable="true"]',
         '[title]', '[aria-label]', '[placeholder]',
+        // A panel is a place a step can send someone -- "open the Background
+        // panel" -- and an OPEN one draws its name nowhere, so until this it
+        // was not on the list at all and the words landed on whatever button
+        // shared them.
+        '[data-widget-name]', '[role="region"]', '[role="tabpanel"]',
     ].join(', ');
     const collect = () => [...document.querySelectorAll(SELECTOR)];
 
-    const labelOf = (element) => {
+    // Every way the element is named, kept APART as well as joined. An
+    // element whose own text is exactly the words asked for is a better
+    // answer than one that merely contains them, and joining first threw
+    // that away: the collapsed "Background" panel bar lost to the
+    // "Background:" transition button beside the screen preview, so a
+    // walkthrough step that meant "open the background panel" opened the
+    // transition menu instead.
+    const labelPartsOf = (element) => {
+        // A named panel is named by that name and nothing else. Its
+        // textContent is every word the panel contains -- a label no needle
+        // can match, and one whose cost is the whole subtree, on a window
+        // where this runs for every element in it. The attribute is also the
+        // pane's ENGLISH name, which is the point: the visible one is
+        // translated, and a panel that only answers to its Khmer text is a
+        // panel this matcher loses the moment the app is switched over.
+        const widget = element.getAttribute('data-widget-name');
         const parts = [
-            element.textContent,
+            widget === null ? element.textContent : widget,
             element.getAttribute('title'),
             element.getAttribute('aria-label'),
             element.getAttribute('placeholder'),
@@ -51,8 +71,76 @@ export const DOM_MATCH_RUNTIME = `
         if (tag === 'INPUT' || tag === 'TEXTAREA') {
             parts.push(element.value);
         }
-        return parts.filter(Boolean).join(' ')
-            .replace(/\\s+/g, ' ').trim();
+        return parts
+            .filter(Boolean)
+            .map((part) => { return part.replace(/\\s+/g, ' ').trim(); })
+            .filter((part) => { return part.length > 0; });
+    };
+
+    const labelOf = (element) => {
+        return labelPartsOf(element).join(' ');
+    };
+
+    // Is one of those names EXACTLY what was asked for? A tie-breaker,
+    // not a tier: it is ranked below "is it a control" on purpose,
+    // because a container is often named exactly what the control inside
+    // it is named, and pressing the container is how the wrong thing
+    // happens.
+    const checkIsNamedExactly = (element, needle) => {
+        return labelPartsOf(element).some((part) => {
+            return part.toLowerCase() === needle;
+        });
+    };
+
+    // A named PLACE rather than a thing to press: a resizable panel, a
+    // dialog, the body of a tab. Read off the attribute first because this
+    // runs for every ancestor of every candidate -- the roles below are the
+    // rare case, the panes are the common one.
+    const regionNameOf = (element) => {
+        const named = element.getAttribute('data-widget-name');
+        if (named !== null && named.trim().length > 0) {
+            return named.trim();
+        }
+        const role = element.getAttribute('role');
+        const tag = element.tagName;
+        if (
+            role !== 'region' && role !== 'tabpanel' && role !== 'dialog' &&
+            tag !== 'DIALOG'
+        ) {
+            return null;
+        }
+        const aria = element.getAttribute('aria-label');
+        return aria !== null && aria.trim().length > 0 ? aria.trim() : null;
+    };
+
+    const checkIsRegion = (element) => {
+        return regionNameOf(element) !== null;
+    };
+
+    // The named panels a control sits INSIDE, nearest first -- the parent
+    // path. It is what tells "the Videos tab in the Background panel" from
+    // the Videos tab of some other panel, and what lets a step name a
+    // container the control's own label never mentions.
+    // Bounded twice over: four names is more context than any step needs, and
+    // the walk stops well short of the document. It is computed for the
+    // handful of elements that already MATCHED, never for every element on
+    // screen -- which is why the tier below is tried on the label first.
+    const containerPathOf = (element) => {
+        const names = [];
+        let node = element.parentElement;
+        let hops = 0;
+        while (node !== null && node !== document.body && hops < 24) {
+            hops += 1;
+            const name = regionNameOf(node);
+            if (name !== null && !names.includes(name)) {
+                names.push(name);
+                if (names.length >= 4) {
+                    break;
+                }
+            }
+            node = node.parentElement;
+        }
+        return names;
     };
 
     const checkIsControl = (element) => {
@@ -68,12 +156,30 @@ export const DOM_MATCH_RUNTIME = `
     // container before the control inside it, and its textContent is the
     // text of everything it wraps -- "KJV" used to resolve to a whole Bible
     // history row instead of the version button beside it.
-    const checkIsBetter = (candidate, best) => {
+    const checkIsBetter = (candidate, best, isRegionWanted = false) => {
         if (candidate.tier !== best.tier) {
             return candidate.tier < best.tier;
         }
+        // "The Background panel" is a place, not a press. Without this the
+        // rule below prefers any control that shares the word, which is
+        // exactly how "open the Background panel" rang the background
+        // TRANSITION button down beside the screen preview.
+        if (isRegionWanted && candidate.isRegion !== best.isRegion) {
+            return candidate.isRegion;
+        }
         if (candidate.isControl !== best.isControl) {
             return candidate.isControl;
+        }
+        // Two controls that fit equally: the one inside the panel the step
+        // named is the one the step meant.
+        if (candidate.isInScope !== best.isInScope) {
+            return candidate.isInScope;
+        }
+        // Named exactly beats named partly, whatever the labels weigh:
+        // the collapsed panel called "Background" is what "Background"
+        // means, even though "Background:" is the shorter string.
+        if (candidate.isNamed !== best.isNamed) {
+            return candidate.isNamed;
         }
         return candidate.length < best.length;
     };
@@ -82,13 +188,19 @@ export const DOM_MATCH_RUNTIME = `
         return (character >= 'a' && character <= 'z') ||
             (character >= '0' && character <= '9');
     };
-    const checkIsWordMatch = (label, needle) => {
+    // atWordStart alone is the looser test: the needle begins a word but
+    // may run past its end ("Web" is how the manual writes the "Webs"
+    // tab). Both ends is the tight one.
+    const checkIsWordMatch = (label, needle, atWordStart = false) => {
         let at = label.indexOf(needle);
         while (at !== -1) {
             const before = at === 0 ? ' ' : label[at - 1];
             const end = at + needle.length;
             const after = end >= label.length ? ' ' : label[end];
-            if (!checkIsWordChar(before) && !checkIsWordChar(after)) {
+            if (
+                !checkIsWordChar(before) &&
+                (atWordStart || !checkIsWordChar(after))
+            ) {
                 return true;
             }
             at = label.indexOf(needle, at + 1);
@@ -135,7 +247,15 @@ export const DOM_MATCH_RUNTIME = `
         ) {
             return 1;
         }
-        if (label.length <= needle.length * 8 + 60 && label.includes(needle)) {
+        // A plain substring test here let a short needle hide INSIDE a
+        // word: "Ok" (from a recipe's "choose Ok or Cancel") matched
+        // "Bible Lookup ... lo-ok-up popup" and a walkthrough step rang
+        // -- and in demo mode would have PRESSED -- the Bible Lookup
+        // button. A match must at least begin a word.
+        if (
+            label.length <= needle.length * 8 + 60 &&
+            checkIsWordMatch(label, needle, true)
+        ) {
             return 2;
         }
         const needleTokens = tokensOf(needle);
@@ -151,6 +271,83 @@ export const DOM_MATCH_RUNTIME = `
         return -1;
     };
 
+    // The words a step hangs on a label to say what KIND of thing it is
+    // ("the Videos tab", "the Background panel"). They are never part of what
+    // is written on the control, so a needle carrying one used to match
+    // nothing and fall back to the bare word -- taking the qualifier's whole
+    // point with it. Stripped from every needle; the region half additionally
+    // says the words in front of it name a PLACE, not a thing to press.
+    const KIND_NOUNS = [
+        'panel', 'pane', 'section', 'area', 'widget', 'sidebar',
+        'tab', 'button', 'box', 'field', 'list', 'menu',
+    ];
+    const REGION_NOUNS = [
+        'panel', 'pane', 'section', 'area', 'widget', 'sidebar',
+    ];
+
+    const dropKindNoun = (text) => {
+        const words = text.split(' ');
+        const last = words[words.length - 1];
+        if (words.length < 2 || !KIND_NOUNS.includes(last)) {
+            return { text, isRegionWanted: false };
+        }
+        return {
+            text: words.slice(0, -1).join(' '),
+            isRegionWanted: REGION_NOUNS.includes(last),
+        };
+    };
+
+    // "Background > Videos" is the Videos tab INSIDE the Background panel --
+    // not the Videos tab of whichever panel answers first, which is how a
+    // step that named both ended up ringing the wrong one. Everything before
+    // the last arrow is the parent path to sit inside.
+    const parseNeedle = (raw) => {
+        const whole = String(raw ?? '').toLowerCase()
+            .replace(/\\s+/g, ' ').trim();
+        const cut = whole.split(/\\s*(?:>|\\u00bb)\\s*/).filter((one) => {
+            return one.length > 0;
+        });
+        const target = dropKindNoun(cut[cut.length - 1] ?? '');
+        const scope = cut.length > 1
+            ? dropKindNoun(cut.slice(0, -1).join(' ')).text
+            : null;
+        return {
+            text: target.text,
+            scope: scope !== null && scope.length > 0 ? scope : null,
+            isRegionWanted: target.isRegionWanted,
+        };
+    };
+
+    const checkIsInScope = (path, scope) => {
+        return path.some((name) => {
+            return matchTier(name.toLowerCase(), scope) !== -1;
+        });
+    };
+
+    // The container supplies the words the control's own label does not, so
+    // the Videos tab inside the Background panel answers to "Background
+    // Videos". At least one word must be on the control ITSELF -- otherwise
+    // every control in that panel answers to it too, and the ring lands on
+    // whichever one the scan reached first.
+    const pathTier = (label, path, needle) => {
+        const needleTokens = tokensOf(needle);
+        if (
+            needleTokens.length < 2 || path.length === 0 ||
+            label.length > needle.length * 8 + 60
+        ) {
+            return -1;
+        }
+        const own = new Set(tokensOf(label));
+        if (!needleTokens.some((token) => own.has(token))) {
+            return -1;
+        }
+        const around = new Set(tokensOf(path.join(' ')));
+        const isCovered = needleTokens.every((token) => {
+            return own.has(token) || around.has(token);
+        });
+        return isCovered ? 4 : -1;
+    };
+
     // Every candidate the caller offered, in order, until one is on screen.
     // A hidden match is kept only as a fallback: the panel it belongs to may
     // simply be closed, which is a different answer than "not there". With
@@ -159,7 +356,7 @@ export const DOM_MATCH_RUNTIME = `
     const findBest = (needles, { onlyBoxes = false } = {}) => {
         let hiddenFallback = null;
         for (const one of needles) {
-            const needle = String(one ?? '').toLowerCase().trim();
+            const { text: needle, scope, isRegionWanted } = parseNeedle(one);
             if (needle.length === 0) {
                 continue;
             }
@@ -172,9 +369,30 @@ export const DOM_MATCH_RUNTIME = `
                 if (label.length === 0) {
                     continue;
                 }
-                const tier = matchTier(label.toLowerCase(), needle);
+                const lowered = label.toLowerCase();
+                // The label is tried FIRST and the parent path only when it
+                // comes up empty: reading the path means walking ancestors,
+                // and this loop runs for every element on the window.
+                let path = null;
+                let tier = matchTier(lowered, needle);
+                if (tier === -1) {
+                    path = containerPathOf(element);
+                    tier = pathTier(lowered, path, needle);
+                }
                 if (tier === -1) {
                     continue;
+                }
+                let isInScope = false;
+                if (scope !== null) {
+                    path = path ?? containerPathOf(element);
+                    isInScope = checkIsInScope(path, scope);
+                    // A scope the caller wrote down is a requirement, not a
+                    // hint: "Background > Videos" must never answer with the
+                    // Videos of another panel, which is the whole reason the
+                    // step said which panel.
+                    if (!isInScope) {
+                        continue;
+                    }
                 }
                 const rect = element.getBoundingClientRect();
                 if (rect.width === 0 || rect.height === 0) {
@@ -184,11 +402,16 @@ export const DOM_MATCH_RUNTIME = `
                     continue;
                 }
                 const candidate = {
-                    element, tier, needle: one,
+                    element, tier, needle: one, isInScope,
                     isControl: checkIsControl(element),
+                    isRegion: checkIsRegion(element),
+                    isNamed: checkIsNamedExactly(element, needle),
                     length: label.length,
                 };
-                if (best === null || checkIsBetter(candidate, best)) {
+                if (
+                    best === null ||
+                    checkIsBetter(candidate, best, isRegionWanted)
+                ) {
                     best = candidate;
                 }
             }
@@ -205,7 +428,13 @@ export const DOM_MATCH_RUNTIME = `
     // step impossible.
     const nearMisses = (needles, limit = 5) => {
         const wantedTokens = [
-            ...new Set(needles.flatMap((one) => tokensOf(String(one ?? '')))),
+            ...new Set(needles.flatMap((one) => {
+                const parsed = parseNeedle(one);
+                return tokensOf(
+                    (parsed.scope === null ? '' : parsed.scope + ' ') +
+                    parsed.text,
+                );
+            })),
         ];
         if (wantedTokens.length === 0) {
             return [];
@@ -273,8 +502,14 @@ export const DOM_MATCH_RUNTIME = `
         const horizontal = rect.x < innerWidth / 3
             ? 'left'
             : (rect.x > (innerWidth * 2) / 3 ? 'right' : 'center');
+        // Which panel it is in, said the way the user would say it. It is
+        // what makes two same-named controls tellable apart in an answer --
+        // and what a caller quotes back as a scope ("Background > Videos")
+        // to ask for exactly the one it meant.
+        const inPanel = containerPathOf(element)[0] ?? null;
         return {
             label: labelOf(element).slice(0, 80),
+            inPanel,
             where: vertical === 'middle' && horizontal === 'center'
                 ? 'in the middle of the window'
                 : 'at the ' + vertical + ' ' + horizontal + ' of the window',
@@ -311,9 +546,17 @@ export const DOM_MATCH_RUNTIME = `
             return;
         }
         beatStyle = document.createElement('style');
+        // The colour travels with the beat, red through amber and back --
+        // the window is full of bordered boxes, so a ring that only grows
+        // reads as one more of them, while a ring that changes hue is the
+        // only thing on screen doing it. An animation outranks the inline
+        // border below in the cascade, which is what lets it take the
+        // colour over without the marker having to be restyled per frame.
         beatStyle.textContent = '@keyframes owa-find-beat {' +
-            '0%,100%{box-shadow:0 0 0 4px rgba(255,59,48,.25)}' +
-            '50%{box-shadow:0 0 0 11px rgba(255,59,48,.04)}}' +
+            '0%,100%{box-shadow:0 0 0 4px rgba(255,59,48,.3);' +
+            'border-color:#ff3b30}' +
+            '50%{box-shadow:0 0 0 12px rgba(255,214,10,.05);' +
+            'border-color:#ffd60a}}' +
             '@media (prefers-reduced-motion:reduce){' +
             '[data-owa-find-marker]{animation:none!important}}';
         document.head.append(beatStyle);
@@ -343,6 +586,69 @@ export const DOM_MATCH_RUNTIME = `
         setTimeout(() => {
             marker.remove();
         }, durationMs);
+    };
+
+    // A step can point at a REGION instead of a control -- "right-click an
+    // empty part of the list" names nothing with words on it, and no label
+    // matcher will ever find one. The region a user means is the one they
+    // are looking at, so a point is taken first (the guide hands over where
+    // it last acted; a panel opens exactly where the bar that opened it was)
+    // and only then the biggest scroller on screen.
+    const checkIsScroller = (element) => {
+        if (element === null || element.getBoundingClientRect === undefined) {
+            return false;
+        }
+        const rect = element.getBoundingClientRect();
+        return rect.width >= 200 && rect.height >= 100 &&
+            element.scrollHeight > element.clientHeight + 4;
+    };
+
+    const findListRegion = (point) => {
+        if (point !== null && point !== undefined) {
+            let node = document.elementFromPoint(point.x, point.y);
+            while (node !== null && node !== document.body) {
+                if (checkIsScroller(node)) {
+                    return node;
+                }
+                node = node.parentElement;
+            }
+        }
+        // No scroller above the point -- the tab you just pressed sits
+        // beside its list, not inside it. The NEAREST list is that list;
+        // the biggest one on screen is some other panel entirely.
+        let best = null;
+        for (const element of document.querySelectorAll('div, ul, section')) {
+            if (!checkIsScroller(element)) {
+                continue;
+            }
+            const rect = element.getBoundingClientRect();
+            const score = point === null || point === undefined
+                ? -rect.width * rect.height
+                : Math.hypot(
+                    Math.max(rect.x - point.x, point.x - (rect.x + rect.width), 0),
+                    Math.max(rect.y - point.y, point.y - (rect.y + rect.height), 0),
+                );
+            if (best === null || score < best.score) {
+                best = { element, score };
+            }
+        }
+        return best === null ? null : best.element;
+    };
+
+    // The app opens its own menu from the event COORDINATES, so a menu fired
+    // at 0,0 is drawn in the corner away from what it belongs to. The point
+    // is the bottom right INSIDE the region: a list fills from the top left,
+    // so that is the part of it that is empty -- and right-clicking an item
+    // instead gets the item's menu, which is a different menu.
+    const openContextMenu = (element) => {
+        const rect = element.getBoundingClientRect();
+        const x = Math.round(rect.x + rect.width - 20);
+        const y = Math.round(rect.y + rect.height - 12);
+        const at = document.elementFromPoint(x, y) ?? element;
+        at.dispatchEvent(new MouseEvent('contextmenu', {
+            bubbles: true, cancelable: true, clientX: x, clientY: y, button: 2,
+        }));
+        return { x, y };
     };
 
     // What is actually on screen, one row per control a volunteer could
@@ -380,8 +686,11 @@ export const DOM_MATCH_RUNTIME = `
     };
 
     window.__owaDomMatch = {
-        collect, labelOf, matchTier, checkIsControl, checkIsTextBox, findBest,
-        waitForBest, nearMisses, describe, flash, listControls,
+        collect, labelOf, labelPartsOf, matchTier, checkIsControl,
+        checkIsNamedExactly, checkIsTextBox, findBest, findListRegion,
+        openContextMenu, waitForBest, nearMisses, describe, flash,
+        listControls, parseNeedle, containerPathOf, checkIsRegion,
+        checkIsInScope, pathTier, checkIsBetter,
     };
     return window.__owaDomMatch;
 })()`;
@@ -504,28 +813,53 @@ export function genTypeExpression(
 export function genFindUiExpression(text, isHighlighting) {
     return `(() => {
         const dm = ${DOM_MATCH_RUNTIME};
-        const needle = String(${JSON.stringify(String(text))})
-            .toLowerCase().trim();
+        // Parsed the same way the click matcher parses it, so "Background
+        // panel" and "Background > Videos" mean here what they mean there --
+        // an answer that ranks controls differently from the ring is an
+        // answer that points somewhere the ring will not go.
+        const asked = dm.parseNeedle(${JSON.stringify(String(text))});
+        const needle = asked.text;
         const found = [];
         for (const element of dm.collect()) {
             const label = dm.labelOf(element);
             if (label.length === 0) {
                 continue;
             }
-            const tier = dm.matchTier(label.toLowerCase(), needle);
+            const lowered = label.toLowerCase();
+            let path = null;
+            let tier = dm.matchTier(lowered, needle);
+            if (tier === -1) {
+                path = dm.containerPathOf(element);
+                tier = dm.pathTier(lowered, path, needle);
+            }
             if (tier === -1) {
                 continue;
             }
-            found.push({ element, described: Object.assign(
-                dm.describe(element), { tier },
-            ) });
+            let isInScope = false;
+            if (asked.scope !== null) {
+                path = path === null ? dm.containerPathOf(element) : path;
+                isInScope = dm.checkIsInScope(path, asked.scope);
+                if (!isInScope) {
+                    continue;
+                }
+            }
+            found.push({
+                element, tier, isInScope,
+                isControl: dm.checkIsControl(element),
+                isRegion: dm.checkIsRegion(element),
+                isNamed: dm.checkIsNamedExactly(element, needle),
+                length: label.length,
+                described: Object.assign(dm.describe(element), { tier }),
+            });
             if (found.length >= 40) {
                 break;
             }
         }
         found.sort((one, other) => {
-            return one.described.tier - other.described.tier ||
-                one.described.label.length - other.described.label.length;
+            if (dm.checkIsBetter(one, other, asked.isRegionWanted)) {
+                return -1;
+            }
+            return dm.checkIsBetter(other, one, asked.isRegionWanted) ? 1 : 0;
         });
         // Ring what is ANSWERED, after the sort -- not everything the scan
         // touched, in document order, before it. A loose word used to light up
@@ -543,7 +877,9 @@ export function genFindUiExpression(text, isHighlighting) {
             count: found.length,
             shownCount: shown.length,
             matches: shown.map((one) => one.described),
-            nearMisses: shown.length === 0 ? dm.nearMisses([needle]) : [],
+            nearMisses: shown.length === 0
+                ? dm.nearMisses([${JSON.stringify(String(text))}])
+                : [],
         };
     })()`;
 }

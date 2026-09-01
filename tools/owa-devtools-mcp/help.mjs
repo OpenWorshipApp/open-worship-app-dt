@@ -270,7 +270,11 @@ export function toEnglishOnly(text) {
             // "Bible Lookup / \u179F\u17D2\u179C\u17C2\u1784\u179A\u1780", "Clear Bible \u2014 \u179F\u1798\u17D2\u17A2\u17B6\u178F" -- or the
             // leftover punctuation reads as a typo: "Bible Lookup / in the
             // header", "(Clear Bible \u2014)".
-            .replace(/\s*\(\s*[\u1780-\u17FF][\u1780-\u17FF\u200b \t]*\)/gu, '')
+            // Any bracket holding Khmer at all, not only one holding
+            // NOTHING else: "(ទាញយកពី URL)" is the twin of
+            // "Download From URL", and stripping just its Khmer left a
+            // card reading "...choose Download From URL (URL)".
+            .replace(/\s*\([^()]*[\u1780-\u17FF][^()]*\)/gu, '')
             .replace(/\s*[/\u2013\u2014-]\s*[\u1780-\u17FF][\u1780-\u17FF\u200b \t]*(?=[),.;:]|$)/gmu, '')
             .replace(/\s*[/\u2013\u2014-]\s*[\u1780-\u17FF][\u1780-\u17FF\u200b \t]*/gu, ' ')
             .replace(/[\u1780-\u17FF\u19E0-\u19FF][\u1780-\u17FF\u200b \t]*/gu, '')
