@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-07-16"
+workflowsVersion: "2026-08-31"
 ---
 # W-06 — Look up and present a Bible verse
 
@@ -16,8 +16,9 @@ workflowsVersion: "2026-07-16"
 2. The input is a **step-by-step picker**: type the first letters of the book (e.g.
    `Joh`) and click the book, then pick the chapter, then the verse. Press **Tab** to
    auto-complete the current part; **Escape** clears the input.
-   > Note: typing a full reference like `John 3:16` in THIS dialog only filters the
-   > book list — for full-reference typing use the **Bible Reader** page (W-10).
+   > Note: typing a full reference like `John 3:16` only filters the book list — the
+   > chapter and verse you typed are dropped when you pick the book. This is true of the
+   > **Bible Reader** page too (W-10), so always pick book → chapter → verse in steps.
 3. The verse renders in the preview panel. **Double-click** it to present. 📸
 4. Close the dialog with the red ✕ button or **Ctrl+Q**.
 5. Press **F9** (Clear Bible — លុបព្រះគម្ពីរ) to take the verse off screen.
@@ -29,5 +30,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-07-16).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
 :::

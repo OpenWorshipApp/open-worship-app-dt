@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, KB-03, KB-07]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-07-16"
+workflowsVersion: "2026-08-31"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -20,12 +20,12 @@ has its own controls and a Show/Start button:
 - **Marquee Top:** type the scrolling text, click Show — it scrolls along the top edge.
 - **Marquee Bottom:** type the scrolling text, click Show — it scrolls along the bottom
   edge. Top and bottom can be shown at the same time.
-- Both marquees expose a **scroll speed** (%) under *Properties*: `100%` is the default
+- Both marquees expose a **scroll speed** (%) under _Properties_: `100%` is the default
   pace, higher is faster, lower is slower. Changing it while a marquee is showing
   re-paces it without having to click Show again.
 - **Quick Text:** type a short message, click Show.
-- **Countdown:** two modes — *to a date/time* (set date + time, press Start) or *for a
-  duration* (set hours/minutes, press Start). Hide with its Hide button. 📸
+- **Countdown:** two modes — _to a date/time_ (set date + time, press Start) or _for a
+  duration_ (set hours/minutes, press Start). Hide with its Hide button. 📸
 - **Stopwatch**, **Clock**, **Images slideshow**, **Camera overlay**, **Web overlay**:
   same pattern — configure, Show, Hide.
 - The shared properties row (font size / color / position) restyles the live widget.
@@ -40,5 +40,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `KB-03` · `KB-07`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-07-16).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
 :::

@@ -1,0 +1,932 @@
+// The help window reads as a CUE SHEET, not a chat app.
+//
+// This app already has a vernacular for "things that happen in order": the
+// presenting flow's cue gutter -- a rail down the left with a marker per cue.
+// A help conversation is a running order too (call, cue, action), so the same
+// rail carries it here, and the newest marker is lit. That is the one bold
+// move in this window; everything around it stays hairline-quiet, because the
+// person reading it is standing at the back of a room with a service about to
+// start.
+//
+// Two rules this window cannot break:
+//   * it loads bootstrap and THIS sheet, nothing else -- no app tokens, no
+//     `.app-data`, so every colour it needs is declared here;
+//   * no webfonts. The building's internet is the first thing to go, and a
+//     help window that waits on a font download is a help window that is not
+//     there. Bahnschrift ships with Windows, DIN Alternate with macOS, and the
+//     stack falls back to the system UI face.
+
+.chatbot-app {
+  // Warm label face for anything that names something: titles, cue labels,
+  // eyebrows, buttons. Condensed signage lettering -- the language written
+  // on the equipment this app drives.
+  --chat-font-label:
+    'Bahnschrift', 'DIN Alternate', 'Avenir Next Condensed', 'Segoe UI',
+    system-ui, sans-serif;
+  // Answers are read under pressure: the system face, at a size that does
+  // not ask anything of the reader.
+  --chat-font-body:
+    system-ui, -apple-system, 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
+  --chat-font-data: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --chat-ink: #0f141c;
+  --chat-panel: #161e2a;
+  --chat-panel-soft: #121a24;
+  --chat-line: #232d3c;
+  --chat-text: #e4e9f0;
+  --chat-muted: #8b97a8;
+  // The house lamp, not the screen: this window is the operator's side of
+  // the room. Spent on the rail and its markers, nowhere else.
+  --chat-brass: #d9a441;
+  --chat-brass-dim: #6b552a;
+  // Borrowed from the app itself, and kept for the one action that matters.
+  --chat-signal: #35c4e8;
+  --chat-signal-ink: #04222c;
+  --chat-warn: #e0b054;
+  --chat-warn-bg: #251d10;
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--chat-ink);
+  color: var(--chat-text);
+  font-family: var(--chat-font-body);
+  font-size: 13.5px;
+  line-height: 1.5;
+  // Answers are meant to be copied out of this window.
+  user-select: text;
+
+  &[data-bs-theme='light'] {
+    --chat-ink: #f5f7fa;
+    --chat-panel: #ffffff;
+    --chat-panel-soft: #eef2f7;
+    --chat-line: #dbe2ec;
+    --chat-text: #16202e;
+    --chat-muted: #5c6b7f;
+    --chat-brass: #9a6b22;
+    --chat-brass-dim: #d8c39a;
+    --chat-signal: #0e7c99;
+    --chat-signal-ink: #ffffff;
+    --chat-warn: #6b4c12;
+    --chat-warn-bg: #fdf3dd;
+  }
+
+  button {
+    font-family: var(--chat-font-label);
+    cursor: pointer;
+  }
+
+  // Bahnschrift is variable (wght + wdth). Narrowing it a touch is what
+  // makes the labels read as equipment lettering rather than as UI text;
+  // faces without the axis simply ignore this.
+  .chat-title,
+  .cue-label,
+  .chat-eyebrow,
+  .seg-item,
+  .cue-act,
+  .cue-tool,
+  .chat-tab-name,
+  .chat-menu-item,
+  .chat-send {
+    font-variation-settings: 'wdth' 87.5;
+  }
+
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--chat-signal);
+    outline-offset: 1px;
+  }
+}
+
+// --- head -------------------------------------------------------------------
+
+.chat-head {
+  flex: 0 0 auto;
+  padding: 10px 12px 9px;
+  border-bottom: 1px solid var(--chat-line);
+  background-color: var(--chat-panel-soft);
+}
+
+.chat-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  & + & {
+    margin-top: 8px;
+  }
+}
+
+.chat-title {
+  margin: 0;
+  font-family: var(--chat-font-label);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  // The lamp above the running order.
+  border-left: 2px solid var(--chat-brass);
+  padding-left: 8px;
+}
+
+.chat-engine {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 68%;
+  font-family: var(--chat-font-data);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--chat-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: end;
+}
+
+// Which model answers. The list itself is drawn by the OS, and `color-scheme`
+// is the only thing that tells it whether this window is dark or light.
+select.chat-engine {
+  appearance: none;
+  color-scheme: dark;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  // The head row's own ground, not `transparent`: Chromium paints the popup
+  // from the select's computed background, and a see-through one gave a white
+  // list with grey-on-white rows.
+  background-color: var(--chat-panel-soft);
+  padding: 2px 15px 2px 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238b97a8' stroke-width='1.4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  background-size: 8px 5px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: var(--chat-text);
+    border-color: var(--chat-line);
+  }
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.6;
+  }
+
+  // The list itself is an OS-drawn popup. `color-scheme` alone left it white
+  // with grey-on-white text in this window, so the rows are painted here too.
+  option {
+    color: var(--chat-text);
+    background-color: var(--chat-panel);
+  }
+}
+
+// With no key this line is the way out of here, to the panel that takes one.
+button.chat-engine {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 2px 4px;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+
+  &:hover {
+    color: var(--chat-text);
+  }
+}
+
+.chatbot-app[data-bs-theme='light'] select.chat-engine {
+  color-scheme: light;
+}
+
+// A segmented control, sized for a window this narrow: the two states of one
+// switch, not two buttons that happen to sit together.
+.seg {
+  display: inline-flex;
+  flex: 0 0 auto;
+  border: 1px solid var(--chat-line);
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: var(--chat-ink);
+}
+
+.seg-item {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--chat-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  line-height: 1.4;
+
+  & + & {
+    border-left: 1px solid var(--chat-line);
+  }
+
+  &:hover:not(:disabled) {
+    color: var(--chat-text);
+  }
+
+  &.is-on {
+    background-color: var(--chat-panel);
+    color: var(--chat-text);
+    box-shadow: inset 0 -2px 0 var(--chat-brass);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+// --- tabs -------------------------------------------------------------------
+
+// Several conversations at once, and all of them still here tomorrow. Above
+// the head row, the way a browser puts its tabs above the toolbar -- because
+// everything in that head row (which half of the app, who answers, on which
+// model) belongs to the tab in front, not to the window.
+//
+// Sized down hard on purpose: this strip is the way back to an answer, not the
+// furniture of the window.
+// The question itself. Warm, not red: nothing here is broken -- the user is
+// about to throw away something they can't get back, which is a different
+// thing from an error.
+.chat-clear-confirm {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background-color: var(--chat-warn-bg);
+  border-bottom: 1px solid var(--chat-line);
+}
+
+.chat-clear-ask {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--chat-warn);
+  font-size: 12px;
+}
+
+.chat-clear-no,
+.chat-clear-yes {
+  flex: 0 0 auto;
+  appearance: none;
+  border-radius: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 4px 9px;
+}
+
+.chat-clear-no {
+  border: 1px solid var(--chat-line);
+  background-color: var(--chat-panel);
+  color: var(--chat-text);
+
+  &:hover {
+    border-color: var(--chat-muted);
+  }
+}
+
+.chat-clear-yes {
+  border: 1px solid var(--chat-warn);
+  background-color: transparent;
+  color: var(--chat-warn);
+
+  &:hover {
+    background-color: var(--chat-warn);
+    color: var(--chat-warn-bg);
+  }
+}
+
+.chat-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 2px;
+  padding: 5px 0 0 8px;
+  background-color: var(--chat-ink);
+  border-bottom: 1px solid var(--chat-line);
+  // The strip scrolls sideways instead of squeezing every tab thinner: once
+  // there are more chats than fit, each one keeps a readable name and the
+  // strip is dragged/wheeled past them, the way a browser does it.
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    height: 0;
+  }
+}
+
+.chat-tab {
+  display: flex;
+  align-items: center;
+  // Never shrinks -- a tab is as wide as its name, between these two bounds,
+  // and the strip scrolls when they no longer fit.
+  flex: 0 0 auto;
+  min-width: 96px;
+  max-width: 165px;
+  border: 1px solid transparent;
+  border-radius: 4px 4px 0 0;
+  background-color: transparent;
+
+  &:hover:not(.is-on) {
+    background-color: var(--chat-panel-soft);
+  }
+
+  // The one in front is joined to the head row below it: same ground, and its
+  // bottom edge sits ON the strip's rule rather than above it.
+  &.is-on {
+    background-color: var(--chat-panel-soft);
+    border-color: var(--chat-line);
+    border-bottom-color: transparent;
+    margin-bottom: -1px;
+    box-shadow: inset 0 2px 0 var(--chat-brass);
+  }
+}
+
+.chat-tab-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--chat-muted);
+  font-family: var(--chat-font-label);
+  font-size: 11px;
+  text-align: start;
+  padding: 5px 2px 5px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .chat-tab.is-on & {
+    color: var(--chat-text);
+  }
+}
+
+// Typing over a tab's name. Sized to the tab it replaces, so the strip does
+// not jump while it is being renamed.
+.chat-tab-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  appearance: none;
+  font-family: var(--chat-font-label);
+  font-size: 11px;
+  color: var(--chat-text);
+  background-color: var(--chat-ink);
+  border: 1px solid var(--chat-signal);
+  border-radius: 3px;
+  padding: 3px 6px;
+  margin: 2px;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+// Dimmed until the tab is hovered or in front, then as readable as the close
+// beside it: three of these down a full strip, all lit, would be the loudest
+// thing in a window whose whole design is hairline-quiet.
+.chat-tab-menu {
+  flex: 0 0 auto;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--chat-muted);
+  opacity: 0.5;
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 1px 4px 5px;
+  border-radius: 3px;
+
+  .chat-tab:hover &,
+  .chat-tab.is-on &,
+  .chat-tab.is-menu-on & {
+    opacity: 1;
+  }
+
+  &:hover,
+  .chat-tab.is-menu-on & {
+    color: var(--chat-text);
+    background-color: var(--chat-line);
+  }
+}
+
+// Catches the next press anywhere and shuts the menu. Transparent: this is
+// not a modal veil, it is the "click outside" that every menu needs and that
+// a document listener keeps getting wrong.
+.chat-menu-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.chat-menu {
+  position: fixed;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background-color: var(--chat-panel);
+  border: 1px solid var(--chat-line);
+  border-radius: 5px;
+  box-shadow: 0 8px 22px rgb(0 0 0 / 45%);
+}
+
+.chat-menu-item {
+  appearance: none;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--chat-text);
+  font-size: 11.5px;
+  text-align: start;
+  white-space: nowrap;
+  padding: 6px 8px;
+
+  &:hover {
+    background-color: var(--chat-panel-soft);
+  }
+
+  // The one item here that cannot be undone, coloured as the warning it is
+  // -- and it still only ASKS.
+  &.is-warn {
+    color: var(--chat-warn);
+
+    &:hover {
+      background-color: var(--chat-warn-bg);
+    }
+  }
+}
+
+.chat-menu-line {
+  height: 1px;
+  margin: 4px 2px;
+  background-color: var(--chat-line);
+}
+
+// Where the close button would be, saying why it is not. Not a control: a
+// lock that comes off with one stray press on the exact spot the close used
+// to be is not a lock.
+.chat-tab-lock {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  color: var(--chat-brass);
+  font-size: 10px;
+  padding: 4px 6px;
+}
+
+.chat-tab-close,
+.chat-tab-add {
+  flex: 0 0 auto;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--chat-muted);
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 3px;
+
+  &:hover:not(:disabled) {
+    color: var(--chat-text);
+    background-color: var(--chat-line);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+.chat-tab-add {
+  align-self: center;
+  font-size: 15px;
+  padding: 1px 8px 3px;
+  // Pinned to the right edge of the strip while the tabs scroll underneath,
+  // so starting another chat is never a scroll away.
+  position: sticky;
+  right: 0;
+  margin-left: 2px;
+  background-color: var(--chat-ink);
+  box-shadow: -6px 0 6px -4px var(--chat-ink);
+}
+
+// --- the cue sheet ----------------------------------------------------------
+
+.chat-log {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 12px 12px 30px;
+  position: relative;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--chat-line) transparent;
+}
+
+// The rail: from the first cue to the last, and no further.
+.chat-cues {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: -17px;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      var(--chat-brass-dim),
+      var(--chat-line)
+    );
+  }
+}
+
+.cue {
+  position: relative;
+  margin-bottom: 14px;
+  animation: cue-in 180ms ease-out;
+
+  &:last-child {
+    margin-bottom: 4px;
+  }
+}
+
+.cue-mark {
+  position: absolute;
+  left: -21px;
+  top: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--chat-brass);
+  background-color: var(--chat-ink);
+}
+
+.cue-you .cue-mark {
+  background-color: var(--chat-brass-dim);
+  border-color: var(--chat-brass-dim);
+}
+
+// Only the newest answer is lit: a cue standing live on the desk.
+.cue-bot:last-child .cue-mark {
+  background-color: var(--chat-brass);
+  box-shadow: 0 0 0 3px rgb(217 164 65 / 18%);
+}
+
+.cue-label {
+  margin: 0 0 3px;
+  font-family: var(--chat-font-label);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--chat-muted);
+}
+
+.cue-you .cue-body {
+  color: var(--chat-muted);
+}
+
+.cue-bot .cue-body {
+  background-color: var(--chat-panel);
+  border: 1px solid var(--chat-line);
+  border-radius: 6px;
+  padding: 9px 11px;
+}
+
+.chatbot-line {
+  margin: 0 0 5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  code {
+    font-family: var(--chat-font-data);
+    font-size: 0.92em;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background-color: var(--chat-panel-soft);
+    border: 1px solid var(--chat-line);
+    color: var(--chat-text);
+  }
+}
+
+.chatbot-item {
+  position: relative;
+  padding-left: 17px;
+  margin-bottom: 4px;
+}
+
+.chatbot-item-dot::before {
+  content: '▸';
+  position: absolute;
+  left: 2px;
+  top: 0;
+  font-size: 10px;
+  line-height: 1.95;
+  color: var(--chat-brass);
+}
+
+.chatbot-item-mark {
+  position: absolute;
+  left: 0;
+  top: 1px;
+  font-family: var(--chat-font-label);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--chat-brass);
+}
+
+// Why an answer came from somewhere other than the engine that was asked.
+.cue-note {
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  border-left: 2px solid var(--chat-warn);
+  background-color: var(--chat-warn-bg);
+  color: var(--chat-warn);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+// --- what you can do about the answer ---------------------------------------
+
+.cue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.cue-act {
+  appearance: none;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--chat-line);
+  background-color: transparent;
+  color: var(--chat-muted);
+  text-align: start;
+
+  &:hover {
+    color: var(--chat-text);
+    border-color: var(--chat-muted);
+  }
+}
+
+// The walkthroughs: the two answers that DO something.
+.cue-act-guide {
+  border-color: var(--chat-signal);
+  color: var(--chat-signal);
+
+  &:hover {
+    color: var(--chat-signal);
+    background-color: rgb(53 196 232 / 10%);
+  }
+}
+
+.cue-act-demo {
+  background-color: var(--chat-signal);
+  border-color: var(--chat-signal);
+  color: var(--chat-signal-ink);
+
+  &::before {
+    content: '▶';
+    margin-right: 6px;
+    font-size: 9px;
+  }
+
+  &:hover {
+    color: var(--chat-signal-ink);
+    filter: brightness(1.08);
+  }
+}
+
+.cue-tools {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+// Quieter than the walkthrough buttons beside them: taking a copy is not one
+// of the answers, it is what a person does with one.
+.cue-tool {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-family: var(--chat-font-label);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--chat-muted);
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+    color: var(--chat-text);
+    background-color: var(--chat-panel-soft);
+  }
+}
+
+// The question is a button too: the same words, back in the box.
+.cue-said {
+  cursor: pointer;
+  border-radius: 3px;
+
+  &:hover {
+    color: var(--chat-text);
+  }
+}
+
+// --- empty, waiting, broken -------------------------------------------------
+
+.chat-eyebrow {
+  margin: 0 0 8px;
+  font-family: var(--chat-font-label);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--chat-muted);
+}
+
+.chat-starters {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.chat-starter {
+  appearance: none;
+  max-width: 100%;
+  text-align: start;
+  font-family: var(--chat-font-body);
+  font-size: 12.5px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--chat-text);
+  background-color: var(--chat-panel);
+  border: 1px solid var(--chat-line);
+  border-left: 2px solid var(--chat-brass-dim);
+  border-radius: 4px;
+  padding: 7px 10px;
+
+  &:hover {
+    border-left-color: var(--chat-brass);
+    background-color: var(--chat-panel-soft);
+  }
+}
+
+.chat-hint {
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--chat-muted);
+}
+
+.chat-link {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font-family: var(--chat-font-body);
+  font-size: inherit;
+  color: var(--chat-signal);
+  text-decoration: underline;
+
+  &:hover {
+    filter: brightness(1.12);
+  }
+}
+
+.chat-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-family: var(--chat-font-data);
+  font-size: 11px;
+  color: var(--chat-muted);
+}
+
+.chat-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--chat-brass);
+  animation: cue-standby 1.1s ease-in-out infinite;
+}
+
+.chat-alert {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--chat-warn);
+  border-left-width: 3px;
+  border-radius: 4px;
+  background-color: var(--chat-warn-bg);
+  color: var(--chat-warn);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+// --- asking -----------------------------------------------------------------
+
+.chat-ask {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--chat-line);
+  background-color: var(--chat-panel-soft);
+}
+
+.chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  appearance: none;
+  font-family: var(--chat-font-body);
+  font-size: 13px;
+  color: var(--chat-text);
+  background-color: var(--chat-ink);
+  border: 1px solid var(--chat-line);
+  border-radius: 4px;
+  padding: 8px 10px;
+
+  &::placeholder {
+    color: var(--chat-muted);
+  }
+
+  &:focus {
+    border-color: var(--chat-signal);
+    outline: none;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.chat-send {
+  flex: 0 0 auto;
+  appearance: none;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 4px;
+  background-color: var(--chat-signal);
+  color: var(--chat-signal-ink);
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+}
+
+@keyframes cue-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+@keyframes cue-standby {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cue,
+  .chat-status-dot {
+    animation: none;
+  }
+}

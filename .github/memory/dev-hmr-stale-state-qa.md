@@ -5,10 +5,10 @@ metadata:
   type: feedback
 ---
 
-When verifying a change against the running dev app via chrome-devtools, a Vite
-HMR full reload (triggered by the file edits under review) leaves the page in a
-state where **keyboard shortcuts stop firing entirely and any open overlay has
-silently unmounted** — `#presenting-control` disappears, and every
+When verifying a change against the running dev app via the `owa-devtools` MCP,
+a Vite HMR full reload (triggered by the file edits under review) leaves the
+page in a state where **keyboard shortcuts stop firing entirely and any open
+overlay has silently unmounted** — `#presenting-control` disappears, and every
 `KeyboardEventListener` layer binding goes dead even though `document.onkeydown`
 is still installed and still runs. It looks exactly like the change under review
 broke the keyboard.

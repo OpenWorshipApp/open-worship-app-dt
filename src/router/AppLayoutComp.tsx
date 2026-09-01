@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import {
     BibleLookupButtonComp,
     BibleLookupTogglePopupContext,
+    ChatbotButtonComp,
     HelpButtonComp,
     SettingButtonComp,
 } from '../others/commonButtons';
@@ -81,6 +82,7 @@ export default function AppLayoutComp({
                         {isInjectedAppDocumentFilePath ? null : (
                             <SettingButtonComp />
                         )}
+                        <ChatbotButtonComp />
                         <HelpButtonComp />
                     </div>
                 </div>

@@ -33,7 +33,7 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
 `src/router/routeHelpers.tsx`). For robot testing, drive this directly:
 
 - **Navigate the main window** to another **main-window** page (`presenter.html`,
-  `reader.html`, `appDocumentEditor.html`) with `mcp_chrome_devtoo_navigate_page` using the
+  `reader.html`, `appDocumentEditor.html`) with `mcp__owa-devtools__navigate_page` using the
   dev URL above (e.g. `https://localhost:3000/reader.html`). Reuse the same window; the
   Electron preload stays attached, so `window.electron` keeps working.
 - ⚠️ **Do NOT navigate the main window to a popup-only page** (`setting.html`, `about.html`,
@@ -275,7 +275,7 @@ The OS menu is invisible to CDP: use the dev-only `globalThis.getViewWidgetMenuI
   `.owanote.tar.gz` (CM-98); the Bible Notes list body/header → **Import** /
   **Import From URL**, or drop the bundle on the list (CM-99, PR-30/31, W-41).
 
-## Targeting tips for chrome-devtools-mcp
+## Targeting tips for the `owa-devtools` MCP
 
 - `take_snapshot` returns nodes with `uid`s + accessible names — click/fill by matching
   the visible label (e.g. `Documents`, `Bible Lookup`, `General`).

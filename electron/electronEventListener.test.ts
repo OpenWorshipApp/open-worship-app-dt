@@ -68,6 +68,9 @@ vi.mock('./electronHelpers', () => ({
     tarCreate,
     tarExtract,
     toShortcutKey: () => 'CmdOrCtrl+F',
+    // `aiHelpers` reads it to decide what an unset master switch means, and
+    // the Help menu asks `aiHelpers` whether to carry the chatbot item.
+    isDev: false,
 }));
 
 vi.mock('./finderOverlayHelpers', () => ({

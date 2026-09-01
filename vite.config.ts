@@ -111,6 +111,12 @@ export default defineConfig({
     build: {
         outDir: '../dist',
         emptyOutDir: true,
+        // Shipped on purpose: an agent driving the packaged app through
+        // DevTools sees real file names and line numbers instead of
+        // `index-Bq7f.js:1`, and so does a stack trace in a bug report. They
+        // are only fetched when something opens DevTools, so the runtime cost
+        // on a low-spec machine is nil -- it is install size we are paying.
+        sourcemap: true,
         rollupOptions: {
             input: Object.fromEntries(htmlFiles),
         },

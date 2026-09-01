@@ -13,6 +13,7 @@ const {
     openFindOverlay,
     previewPrintCurrentWindow,
     printCurrentWindow,
+    resetPopupWindowsBounds,
     toShortcutKey,
 } = vi.hoisted(() => ({
     copyDebugInfoToClipboard: vi.fn(),
@@ -20,6 +21,7 @@ const {
     openFindOverlay: vi.fn(),
     previewPrintCurrentWindow: vi.fn(async () => undefined),
     printCurrentWindow: vi.fn(),
+    resetPopupWindowsBounds: vi.fn(),
     toShortcutKey: vi.fn(() => 'CmdOrCtrl+F'),
 }));
 
@@ -35,7 +37,11 @@ vi.mock('./electronHelpers', () => ({
     goDownload,
     previewPrintCurrentWindow,
     printCurrentWindow,
+    resetPopupWindowsBounds,
     toShortcutKey,
+    // `aiHelpers` reads it to decide what an unset master switch means, and
+    // the Help menu asks `aiHelpers` whether to carry the chatbot item.
+    isDev: false,
 }));
 
 vi.mock('./client/appInfo', () => ({
@@ -56,6 +62,7 @@ describe('electronMenu', () => {
         openFindOverlay.mockClear();
         previewPrintCurrentWindow.mockClear();
         printCurrentWindow.mockClear();
+        resetPopupWindowsBounds.mockClear();
         toShortcutKey.mockClear();
         electronMockState.shell.openExternal.mockClear();
         electronMockState.Menu.buildFromTemplate.mockReturnValue({
@@ -280,6 +287,11 @@ describe('electronMenu', () => {
         expect(
             appController.settingManager.restoreMainBounds,
         ).toHaveBeenCalledWith(appController.mainWin);
+        // the popups have no menu bar of their own, so the same click rescues
+        // them too
+        expect(resetPopupWindowsBounds).toHaveBeenCalledWith(
+            appController.mainWin,
+        );
 
         const helpMenu = template.find((item: any) => item.role === 'help');
         clickSubmenuItem(helpMenu, 'Learn More');

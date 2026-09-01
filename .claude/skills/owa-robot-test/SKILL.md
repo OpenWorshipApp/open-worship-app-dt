@@ -1,10 +1,10 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~761 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..99, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the "Key is missing" guessing-key dialog, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41).'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~761 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..99, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the "Key is missing" guessing-key dialog, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41).'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
-# OWA Robot Test — QA e2e via chrome-devtools-mcp
+# OWA Robot Test — QA e2e via the `owa-devtools` MCP
 
 Drive the **live** Open Worship App like a human QA engineer and report real UI/UX
 issues. This is black-box testing against the actually-running Electron window, not
@@ -38,41 +38,64 @@ unit or Playwright tests.
 
 - `npm run dev` runs two things via `concurrently`:
   - `vite:dev` → dev server at `https://localhost:3000` (self-signed cert).
-  - `electron:build && electron` → launches Electron with
-    `--remote-debugging-port=9223` and `NODE_ENV=development`.
+  - `electron:build && electron` → launches Electron with `NODE_ENV=development`.
 - In dev, Electron's main window loads `https://localhost:3000/presenter.html`.
-- [.mcp.json](../../../.mcp.json) starts `chrome-devtools-mcp` with
-  `--browserUrl=http://127.0.0.1:9223`, so the MCP **attaches to the already-running
-  Electron instance** (it does not launch its own Chrome). The app must be up first.
+- The CDP port is **not fixed**: Chromium binds a free one and the app publishes
+  it to `<temp>/open-worship-app-cdp/<pid>.json` (with the URL of its own MCP
+  server). Nothing hardcodes it: the project's `./.mcp.json` registers
+  **`owa-devtools`** → `node tools/owa-devtools-mcp/bin.mjs`, which discovers
+  the running instance itself and adds app-level `owa_*` tools on top of the
+  chrome-devtools ones (same thing per-user, if that file is missing:
+  `claude mcp add owa-devtools -- node tools/owa-devtools-mcp/bin.mjs`).
+  A client pinned to a fixed URL can be served with
+  `node tools/owa-devtools-mcp/bin.mjs --bridge --listen=9223`.
 
 ```
 npm run dev ──► Vite (localhost:3000, https)
-            └─► Electron (loads presenter.html)  ──CDP:9223──► chrome-devtools-mcp ──► this agent
+            └─► Electron (loads presenter.html)  ──CDP:<published>──► owa-devtools-mcp ──► this agent
 ```
 
 ## Prerequisites
 
 - Node 22+, `npm install` already done.
-- `chrome-devtools-mcp` present (it is in devDependencies) and configured in
-  [.mcp.json](../../../.mcp.json) with `--browserUrl=http://127.0.0.1:9223`.
+- `chrome-devtools-mcp` present (the npm dependency `owa-devtools` is built on)
+  and the **`owa-devtools`** MCP registered (`./.mcp.json`, see above; its path
+  is repo-relative, so start the client from the repo root). AI features must be
+  ON in Settings → Others — with them off the app opens no CDP endpoint at all.
 - Only ONE Open Worship App instance can run (single-instance lock). If one is already
   running with the debugger, reuse it instead of starting another.
 
 ## Procedure
 
-### 0. Load the DevTools MCP tools (required)
+### 0. Load the `owa-devtools` MCP tools (required)
 
-The `mcp_chrome_devtoo_*` tools are deferred and MUST be loaded before use. Run
-`tool_search` with a query like:
+Everything below is driven through **`owa-devtools`** — the app's own MCP server
+(`./.mcp.json` → `node tools/owa-devtools-mcp/bin.mjs`), which serves every
+chrome-devtools tool PLUS app-level `owa_*` ones. They are deferred and MUST be
+loaded before use. Run `tool_search` with a query like:
 
-> chrome devtools mcp list pages take snapshot click fill console network screenshot wait_for
+> owa-devtools list pages take snapshot click fill console network screenshot wait_for owa_app_state owa_find_ui
 
-Confirm at least these are available: `mcp_chrome_devtoo_list_pages`,
-`mcp_chrome_devtoo_select_page`, `mcp_chrome_devtoo_take_snapshot`,
-`mcp_chrome_devtoo_take_screenshot`, `mcp_chrome_devtoo_click`,
-`mcp_chrome_devtoo_fill`, `mcp_chrome_devtoo_hover`, `mcp_chrome_devtoo_press_key`,
-`mcp_chrome_devtoo_wait_for`, `mcp_chrome_devtoo_evaluate_script`,
-`mcp_chrome_devtoo_list_console_messages`, `mcp_chrome_devtoo_list_network_requests`.
+Confirm at least these are available: `mcp__owa-devtools__list_pages`,
+`mcp__owa-devtools__select_page`, `mcp__owa-devtools__take_snapshot`,
+`mcp__owa-devtools__take_screenshot`, `mcp__owa-devtools__click`,
+`mcp__owa-devtools__fill`, `mcp__owa-devtools__hover`, `mcp__owa-devtools__press_key`,
+`mcp__owa-devtools__wait_for`, `mcp__owa-devtools__evaluate_script`,
+`mcp__owa-devtools__list_console_messages`, `mcp__owa-devtools__list_network_requests`.
+
+The prefix is client-specific (`mcp__owa-devtools__x` in Claude Code, a
+truncated form elsewhere) — the bare tool name after it is what matters. Also
+load the app-level tools, which are faster and more reliable than hunting
+through a snapshot:
+
+| Tool | Use it for |
+| --- | --- |
+| `owa_app_state` | Every live instance, its windows, and one window's page / language / theme / visible tabs — check WHERE you are before navigating. |
+| `owa_find_ui` | Find a control by its visible text or tooltip; returns its position + the component that renders it (dev), and `highlight: true` outlines it in the real window (handy for a screenshot). |
+| `owa_list_screens` | The presentation screens showing right now + the displays available — use it in the mandatory screen block (§6a) instead of inferring from target enumeration. |
+| `owa_hide_screens` | Hide one screen by id, or all of them. **Destructive** — it takes content off a projector; never call it on a display the user says is in live use. |
+| `owa_help_search` / `owa_help_page` | Search/read the bundled knowledge (`manual` = the W-xx recipes in references/user-workflows.md, `internal` = these notes) by id. |
+| `owa_guide_start` / `_step` / `_status` | Draw the numbered walkthrough card in the app window. Not needed for QA; it is what the in-app chatbot uses. |
 
 ### 1. Is the app already running?
 
@@ -107,29 +130,29 @@ soon as the page target appears.
 
 ### 3. Connect and confirm the DOM is ready
 
-1. `mcp_chrome_devtoo_list_pages` → locate the page whose URL ends in `presenter.html`
+1. `mcp__owa-devtools__list_pages` → locate the page whose URL ends in `presenter.html`
    (other targets like `screen.html` may appear when presenting; ignore them for now).
-2. `mcp_chrome_devtoo_select_page` on that page.
+2. `mcp__owa-devtools__select_page` on that page.
 3. Confirm React finished mounting (not just DOM-loaded). Use a **page-agnostic**
-   readiness check (works on every page) via `mcp_chrome_devtoo_evaluate_script`:
+   readiness check (works on every page) via `mcp__owa-devtools__evaluate_script`:
    `() => { const r = document.getElementById('root'); return !!r && r.children.length > 0 && !r.querySelector('img.loading'); }`
    and expect `true`. On `presenter.html` / `appDocumentEditor.html` you can also
-   `mcp_chrome_devtoo_wait_for` the text `Bible Lookup` (those pages have `#app-header`;
+   `mcp__owa-devtools__wait_for` the text `Bible Lookup` (those pages have `#app-header`;
    `reader.html` and popups do not). A `.loading` image that never disappears is itself a
    bug — record it.
 
 ### 4. Baseline capture
 
-- `mcp_chrome_devtoo_take_snapshot` — gives interactable elements with `uid`s (this is
+- `mcp__owa-devtools__take_snapshot` — gives interactable elements with `uid`s (this is
   how you target clicks/fills; there is no Playwright locator here).
-- `mcp_chrome_devtoo_take_screenshot` — save under `test-results/robot-test/`.
-- `mcp_chrome_devtoo_list_console_messages` — record load-time errors/warnings.
-- `mcp_chrome_devtoo_list_network_requests` — record any `4xx`/`5xx`/failed requests.
+- `mcp__owa-devtools__take_screenshot` — save under `test-results/robot-test/`.
+- `mcp__owa-devtools__list_console_messages` — record load-time errors/warnings.
+- `mcp__owa-devtools__list_network_requests` — record any `4xx`/`5xx`/failed requests.
 
 ### 5. Change to the page / route under test
 
 The window opens on `presenter.html`. To test another page, **navigate the currently
-selected page directly to its dev URL** with `mcp_chrome_devtoo_navigate_page` (reuse the
+selected page directly to its dev URL** with `mcp__owa-devtools__navigate_page` (reuse the
 same window — do NOT open a brand-new tab):
 
 | Page | Navigate to |
@@ -209,6 +232,11 @@ optional and not skippable by focus area**: a run that only tested "bible lookup
 still run it. A report without evidence for this block is **incomplete** — say so
 rather than shipping it. Full row definitions: coverage-matrix.md §SP + §SC; recipe:
 test-plan.md §S7. (The other always-on block is the locale switch — §6d.)
+
+> `owa_list_screens` answers "which screens are showing, on which displays" in one
+> call — use it to record the before/after state of this block instead of inferring
+> it from `list_pages`. Its companion `owa_hide_screens` is the one **destructive**
+> app-level tool: never point it at a display the user says is in live use.
 
 Minimum pass (≈5 minutes, self-restoring):
 
@@ -357,7 +385,7 @@ CDP-drivable-edit techniques are in **KB §12** — read it first):
    selected before.
 6. **Restore** with editor **Undo** (never *Discard*) + re-save; delete the scratch doc.
 
-Caveat: opening/closing the separate editor window can trigger a chrome-devtools-mcp "browser
+Caveat: opening/closing the separate editor window can trigger an `owa-devtools` "browser
 reconnected" — re-`list_pages`/`select_page` after each, and read screen visibility from
 `.show-hide.showing`, not target enumeration.
 
@@ -842,7 +870,7 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
   text, broken/blank images, layout shift, a `loading.gif` that never disappears.
 - **Accessibility**: icon-only buttons with no accessible name, controls missing roles
   or labels, focus traps. (`take_snapshot` exposes the a11y tree — flag unnamed nodes.)
-- **Performance** (optional): use `mcp_chrome_devtoo_performance_start_trace` /
+- **Performance** (optional): use `mcp__owa-devtools__performance_start_trace` /
   `stop_trace` around a heavy action (e.g. loading a document) and flag long tasks.
 
 ## Troubleshooting
@@ -850,8 +878,9 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - **CDP never comes up**: check the `npm run dev` terminal output — Electron only starts
   after `electron:build` finishes (slow on first run). Confirm the `electron .` line ran.
 - **MCP "connection refused"**: the MCP attaches to a running Electron; if it errors, the
-  app isn't up yet — re-run the wait script (step 2) before retrying MCP tools. Verify
-  `.mcp.json` uses `--browserUrl=http://127.0.0.1:9223`.
+  app isn't up yet — re-run the wait script (step 2) before retrying MCP tools. Check
+  `<temp>/open-worship-app-cdp/` for a published instance; an empty dir means either no
+  app is running or AI features are switched off in Settings → Others.
 - **Wrong target selected**: there is normally ONE main window target — keep using it and
   switch pages with `navigate_page` (step 5), not by opening new tabs. A separate
   `screen.html?screenId=N` target exists **only while that screen is showing** — select
@@ -862,8 +891,10 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
   can't navigate out and persists `mainHtmlPath`. Recover: stop the app, set `mainHtmlPath`
   back to `"presenter.html"` in `%APPDATA%/open-worship-app/setting.json` (keep the other
   keys), relaunch. Details: [references/knowledge-base.md](./references/knowledge-base.md) §3.
-- **Port 9223 busy / single-instance**: a stale OWA instance holds the port and lock —
-  reuse it (step 1) or close it before starting a fresh run.
+- **Stale instance / single-instance lock**: a stale OWA instance holds the lock —
+  reuse it (step 1) or close it before starting a fresh run. Ports no longer collide
+  (each instance gets its own), but a stale published file whose process is gone is
+  skipped automatically.
 - **HTTPS cert warnings**: the Vite dev server uses a self-signed cert; Electron ignores
   cert errors in dev. This does not affect the MCP (it talks to Electron, not Vite).
 

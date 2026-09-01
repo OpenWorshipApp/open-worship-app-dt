@@ -3,6 +3,7 @@ import { type ChangeEvent, type ReactNode, useCallback } from 'react';
 import { tran } from '../lang/langHelpers';
 import { getSetting, useStateSettingBoolean } from '../helper/settingHelpers';
 import {
+    ChatbotButtonComp,
     HelpButtonComp,
     QuitCurrentPageComp,
     SettingButtonComp,
@@ -122,6 +123,7 @@ export default function RenderExtraButtonsRightComp({
                             pathname={appProvider.presenterHomePage}
                         />
                         <SettingButtonComp />
+                        <ChatbotButtonComp />
                         <HelpButtonComp />
                     </>
                 ) : null}

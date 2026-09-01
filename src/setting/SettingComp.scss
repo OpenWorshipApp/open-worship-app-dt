@@ -208,6 +208,44 @@
     max-width: 460px;
   }
 
+  // Fields that belong to ONE outside account, boxed so the pairing is visible
+  // rather than inferred from where the row happened to wrap.
+  .app-setting-others-groups {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px 18px;
+    margin-top: 10px;
+  }
+
+  .app-setting-others-group {
+    flex: 1 1 260px;
+    min-width: 0;
+    border: 1px solid var(--app-line);
+    border-radius: var(--bs-border-radius);
+    background-color: rgba(var(--bs-body-color-rgb), 0.02);
+    padding: 6px 10px 10px;
+  }
+
+  // The account's name, not a field name: it sits ABOVE the labels in the
+  // hierarchy but stays quiet, because it is a landmark and not an
+  // instruction. Brand casing is kept as the provider writes it.
+  .app-setting-others-group-title {
+    display: block;
+    margin-bottom: 6px;
+    font-size: var(--app-text-xs);
+    font-weight: 600;
+    color: var(--app-muted);
+  }
+
+  // One column on purpose: a card is half a 1200px rack, and splitting that
+  // between two key boxes leaves neither wide enough for its input plus the
+  // reveal and "Get ..." buttons that sit on the same line.
+  .app-setting-others-group-fields {
+    display: grid;
+    gap: 10px;
+  }
+
   .app-setting-others-details {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 6px 18px;

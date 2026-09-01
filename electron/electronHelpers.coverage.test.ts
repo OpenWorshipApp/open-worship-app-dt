@@ -19,6 +19,22 @@ vi.mock('node:fs/promises', () => ({ mkdir, readdir, rm, writeFile }));
 
 vi.mock('tar', () => ({ c: tarC, x: tarX, r: tarR }));
 
+const { settingManagerMock } = vi.hoisted(() => ({
+    settingManagerMock: {
+        getPopupWinBounds: vi.fn(() => null as any),
+        setPopupWinBounds: vi.fn(),
+        clearPopupWinBounds: vi.fn(),
+    },
+}));
+
+vi.mock('./ElectronSettingManager', () => ({
+    default: {
+        getInstance: () => {
+            return settingManagerMock;
+        },
+    },
+}));
+
 import {
     captureWebScreenShot,
     copyDebugInfoToClipboard,
@@ -27,6 +43,7 @@ import {
     previewPrintCurrentWindow,
     printCurrentWindow,
     printHTMLContent,
+    resetPopupWindowsBounds,
     tarAppend,
     tarCreate,
     tarExtract,
@@ -64,6 +81,9 @@ describe('electronHelpers coverage', () => {
         tarC.mockResolvedValue(undefined);
         tarX.mockResolvedValue(undefined);
         tarR.mockResolvedValue(undefined);
+        settingManagerMock.getPopupWinBounds.mockClear().mockReturnValue(null);
+        settingManagerMock.setPopupWinBounds.mockClear();
+        settingManagerMock.clearPopupWinBounds.mockClear();
         consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
         consoleErrorSpy = vi
             .spyOn(console, 'error')
@@ -264,6 +284,157 @@ describe('electronHelpers coverage', () => {
         expect(popupWin.setResizable).toHaveBeenCalledWith(false);
         expect(popupWin.setMenuBarVisibility).toHaveBeenCalledWith(false);
         expect(popupWin.setAutoHideMenuBar).toHaveBeenCalledWith(true);
+        vi.runAllTimers();
+    });
+
+    function openPopup(
+        parentWin: any,
+        {
+            url = 'https://localhost:3000/about.html?uuid=about',
+            features = 'popup',
+        }: { url?: string; features?: string } = {},
+    ) {
+        guardBrowsing(parentWin, { preload: '/tmp/preload.js' } as any);
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls.at(-1)[0];
+        const response = windowOpenHandler({
+            url,
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_test`,
+            features,
+        } as any);
+        const popupWin = createMockBrowserWindow();
+        electronMockState.setBrowserWindowFactory(() => popupWin);
+        response.createWindow(response.overrideBrowserWindowOptions);
+        return { response, popupWin };
+    }
+
+    function getWindowListener(win: any, eventName: string) {
+        return win.on.mock.calls.find(([name]: [string]) => {
+            return name === eventName;
+        })?.[1];
+    }
+
+    test('a popup reopens where the user last left it', () => {
+        vi.useFakeTimers();
+        settingManagerMock.getPopupWinBounds.mockReturnValue({
+            x: 1400,
+            y: 120,
+            width: 460,
+            height: 640,
+            isMaximized: false,
+        });
+        const parentWin = createMockBrowserWindow();
+
+        const { response, popupWin } = openPopup(parentWin, {
+            // the page's own placement is exactly what the remembered geometry
+            // has to win over
+            features:
+                'popup,width=460,height=640,appAlignHorizontal=right,' +
+                'appAlignVertical=center,appFollowScale',
+        });
+
+        expect(settingManagerMock.getPopupWinBounds).toHaveBeenCalledWith(
+            'about.html',
+        );
+        expect(response.overrideBrowserWindowOptions).toEqual(
+            expect.objectContaining({
+                x: 1400,
+                y: 120,
+                width: 460,
+                height: 640,
+            }),
+        );
+        // restored bounds are already at the user's zoom, so re-scaling them
+        // would grow the window on every launch
+        expect(getWindowListener(popupWin.webContents, 'did-finish-load')).toBe(
+            undefined,
+        );
+
+        popupWin.getBounds.mockReturnValue({
+            x: 1410,
+            y: 130,
+            width: 500,
+            height: 600,
+        });
+        getWindowListener(popupWin, 'move')();
+        expect(settingManagerMock.setPopupWinBounds).toHaveBeenCalledWith(
+            'about.html',
+            { x: 1410, y: 130, width: 500, height: 600, isMaximized: false },
+        );
+        vi.runAllTimers();
+    });
+
+    test('a maximized popup comes back maximized, remembering its normal size', () => {
+        vi.useFakeTimers();
+        settingManagerMock.getPopupWinBounds.mockReturnValue({
+            x: 0,
+            y: 0,
+            width: 1920,
+            height: 1080,
+            isMaximized: true,
+        });
+        const parentWin = createMockBrowserWindow();
+
+        const { popupWin } = openPopup(parentWin);
+
+        expect(popupWin.maximize).toHaveBeenCalledTimes(1);
+
+        popupWin.isMaximized.mockReturnValue(true);
+        popupWin.getNormalBounds.mockReturnValue({
+            x: 300,
+            y: 200,
+            width: 700,
+            height: 500,
+        });
+        getWindowListener(popupWin, 'maximize')();
+        // the maximized rectangle is the screen, never a size worth restoring
+        expect(settingManagerMock.setPopupWinBounds).toHaveBeenCalledWith(
+            'about.html',
+            { x: 300, y: 200, width: 700, height: 500, isMaximized: true },
+        );
+        vi.runAllTimers();
+    });
+
+    test('a popup that is not one of the app pages is not remembered', () => {
+        vi.useFakeTimers();
+        const parentWin = createMockBrowserWindow();
+
+        const { popupWin } = openPopup(parentWin, {
+            // a pdf preview: keying this would add an entry per file opened
+            url: 'file:///data/videos/some-file.pdf?uuid=preview',
+        });
+
+        expect(settingManagerMock.getPopupWinBounds).not.toHaveBeenCalled();
+        expect(getWindowListener(popupWin, 'move')).toBe(undefined);
+        vi.runAllTimers();
+    });
+
+    test('resetting the bounds recentres open popups and forgets the saved geometry', () => {
+        vi.useFakeTimers();
+        const parentWin = createMockBrowserWindow();
+        const { popupWin } = openPopup(parentWin);
+        settingManagerMock.setPopupWinBounds.mockClear();
+
+        const fallbackWin = createMockBrowserWindow();
+        resetPopupWindowsBounds(fallbackWin as any);
+
+        expect(settingManagerMock.clearPopupWinBounds).toHaveBeenCalledTimes(1);
+        // back to 90% of the opener, centred on it
+        expect(popupWin.setBounds).toHaveBeenCalledWith({
+            x: 69,
+            y: 79,
+            width: 1080,
+            height: 680,
+        });
+
+        // the move event the reset itself causes must not record the defaults
+        // it just applied as the user's choice
+        getWindowListener(popupWin, 'move')();
+        expect(settingManagerMock.setPopupWinBounds).not.toHaveBeenCalled();
+
+        vi.advanceTimersByTime(2000);
+        getWindowListener(popupWin, 'move')();
+        expect(settingManagerMock.setPopupWinBounds).toHaveBeenCalledTimes(1);
         vi.runAllTimers();
     });
 

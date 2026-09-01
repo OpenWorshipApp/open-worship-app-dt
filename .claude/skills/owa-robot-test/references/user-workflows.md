@@ -21,7 +21,60 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-30j** (**new W-41 — share a whole page of Bible Notes.** A note could only leave the app one item at a time; a whole note file — every note in it, the pictures, clips and sound files inside them, and the background attached to it — now exports as a single `.owanote.tar.gz` from the file's `⋮` and imports from the top of the **Bible Notes** panel, by dialog, by URL or by dropping the bundle on the panel. A name already in use is never overwritten: the arriving file lands beside yours as `name (1)`. W-41 step 6 also records that the single-note **Import** is no longer limited to the **Default** file — a note exported from anywhere can be imported into any note file. Verified live 2026-08-30 on the reader, plain and password-protected.)
+**workflowsVersion: 2026-08-31g** (**W-42: every chat tab has a menu, and a chat can be locked.** A **⋮** at the left of each tab — or a right-click on it — opens that tab’s menu: rename it, lock it, close it, **Close other chats…**, **Clear all chats…**. The last two take more than one conversation, so they ask first, on a line under the strip that says how many will go. **Lock this chat** takes the tab’s **×** away, puts a 🔒 in its place, and makes both sweeping actions step around it — so the strip can be cleared at the end of a service with the one answer worth keeping still in it. Verified live 2026-08-31 on the reader: the menu on a plain and on a locked tab, both confirmations, a solo and a clear that each left the locked tab standing, and the lock read back off disk.)
+
+Previous: **workflowsVersion: 2026-08-31f** (**W-42: the help window holds several chats,
+and each one carries its own settings.** A tab strip runs along the top — **+** for
+another conversation, **×** to close one, double-click to rename one — and every tab,
+its answers and its half-typed question survive closing the window and the app. The
+half of the app being asked about, Claude-or-ChatGPT and the **model** all belong to the
+tab rather than to the window, so one tab can be on Claude about the presenter while the
+next is on a cheap model about the reader. The model is a picker now, not a caption:
+three per provider with what each is good for, how quick it is and what it costs on the
+hover, plus **More models…**, which asks the user's own account what else it can run.
+Every answer has **Copy** and every question **Ask again**. With no key at all the
+window says Claude and ChatGPT need one and offers **Open AI settings**. Verified live
+2026-08-31 on the reader: two tabs kept apart, a rename, a reopen, the OpenAI catalogue
+listed from the account.)
+
+Previous: **2026-08-31e** (**W-42: the help window was redesigned.** It reads
+as a cue sheet now — each turn hangs off a brass rail with its own marker, the newest
+answer lit; steps in an answer are set as a numbered list with the number in the margin;
+**Presenter/Bible Reader** and **Claude/ChatGPT** are compact segmented switches with the
+model named beside them; and the window follows the app's dark/light theme instead of
+opening white in front of a dark app. The two walkthrough buttons lost their emoji and
+are now ranked — **Do it for me** filled, **Show me step by step** outlined. Verified
+live 2026-08-31 in both themes.)
+
+Previous: **2026-08-31d** (**W-42 step 9 — the help window can drive the app
+for you.** Beside **Show me step by step** there is now **Do it for me**: the same
+numbered card, but each press of **Do it** clicks the circled button (or types the
+text) and moves on — one step per press, with **Skip** for a step you would rather do
+yourself, and a plain "I could not do that one" when a step has nothing to click.
+Nothing that changes what the congregation sees is done unasked. Verified live
+2026-08-31 in the Bible Reader.)
+
+Previous: **2026-08-31c** (**W-42 steps 8 and 9 — the help window can walk
+you through it, and it knows which window you are in.** Every answer now offers
+**Show me step by step**, which draws a numbered card inside the app itself and
+circles the button each step is about — clicking that button advances the card on its
+own, and steps you have already done (the tab you are already looking through) are
+dropped before it starts. Answers are also scoped to the half of the app you asked
+from, so the reader is never told to press the presenter's **Ctrl+B**, and the whole
+window is English: the Khmer twin the manual writes beside each label is stripped out.
+W-11's goal line now says it is where you look a verse up when you are not presenting.
+Verified live 2026-08-31 in the Bible Reader.)
+
+Previous: **2026-08-31b** (**W-42 steps 1 and 7 — the chatbot has a button of
+its own, and you choose who answers.** It opened only from the **Help** menu; a **🤖**
+button now sits in the top-right corner of both the presenter and the reader, immediately
+left of the **?**, and it is absent when AI features are switched off. Inside the window,
+**Claude** and **ChatGPT** are a pair of buttons under the header: whichever keys you have
+set are selectable, the model that will answer is named beneath them, and the choice is
+remembered. Verified live 2026-08-31 — gpt-5 answered from the manual and from the internal
+notes, and a failing provider still fell back to the manual and said which one failed.)
+
+Previous: **2026-08-31a** (**new W-41 — share a whole page of Bible Notes.** A note could only leave the app one item at a time; a whole note file — every note in it, the pictures, clips and sound files inside them, and the background attached to it — now exports as a single `.owanote.tar.gz` from the file's `⋮` and imports from the top of the **Bible Notes** panel, by dialog, by URL or by dropping the bundle on the panel. A name already in use is never overwritten: the arriving file lands beside yours as `name (1)`. W-41 step 6 also records that the single-note **Import** is no longer limited to the **Default** file — a note exported from anywhere can be imported into any note file. Verified live 2026-08-30 on the reader, plain and password-protected. **New W-42 — the built-in help chatbot**, added 2026-08-31: a Help menu window that answers from this manual and from what the app is doing right now, and can outline the control it is talking about in the real window.)
 
 Previous: **2026-08-30i** (**W-40 steps 7-9: a mark takes you to its verse now, and a verse row can be filed somewhere else.** Clicking a mark opens the verse beside what you are reading instead of only flashing it, so you keep your place; editing a comment moved onto the mark's own `⋮`. A verse row can be dragged onto another **Bible Notes** file to move it there, marks and all — the same drag still adds the verse to **Bibles** if you drop it there instead. Everything about a marked verse is now lettered in that bible's own font, and the little panel that appears over commented words waits much longer before it goes. Verified live 2026-08-30.)
 
@@ -895,7 +948,8 @@ _Verify: PR-04..07, SP-01..09, KB-03..07, KB-13._
 
 ### W-11 — Read the Bible (full references, versions)
 
-**Goal:** deeper reading than the quick lookup.
+**Goal:** look up and read a verse in the Bible Reader — deeper reading than the
+quick lookup, and where you look a verse up when you are not presenting.
 **Where:** header tab **Bible Reader** (អានព្រះគម្ពីរ).
 
 1. Click the **Bible Reader** tab. 📸
@@ -2775,3 +2829,89 @@ to it — travels as one bundle.
    not only **Default**.
 
 _Verify: PR-30, PR-31, CM-69, CM-98, CM-99._
+
+---
+
+### W-42 — Ask the app for help (the chatbot)
+
+The app can answer its own "how do I …?" questions. It reads the same manual you are
+reading now, looks at what the app is doing at that moment, and can point at the button
+it is describing.
+
+1. Click the **🤖** button in the top-right corner of the window, just left of the
+   **?**, or open **Help** → **App Help (Chatbot)** in the menu bar. A narrow window
+   opens beside the app. 📸
+2. A strip of **tabs** runs along the very top — several conversations at once, the way
+   a browser holds several pages. **+** starts another, **×** closes one, and a
+   **double-click on a tab's name** renames it (useful once three of them start "how do
+   I"). Until you rename it, a tab is called after the first question you asked in it.
+   Everything is kept: close the window — close the app — and the tabs, their answers
+   and even a half-typed question are all there when you open it again. 📸
+3. Every tab opens with a **⋮** on its left, and a right-click anywhere on the tab
+   does the same thing: it is that chat's own menu — **Rename this chat**, **Lock this
+   chat**, **Close this chat**, and, when there is more than one chat to take, **Close
+   other chats…** and **Clear all chats…**. Those last two are never done on the first
+   press: a line appears under the strip saying how many chats will go, with **Keep
+   them** beside the button that does it. 📸
+4. **Lock this chat** is how you keep one. A locked tab has no **×** any more — a 🔒
+   sits there instead — and neither **Close other chats** nor **Clear all chats** takes
+   it, so the strip can be cleared at the end of a service with the one answer worth
+   keeping still in it. **Unlock this chat**, in the same menu, gives the **×** back.
+   The lock is remembered with everything else, so it is still locked next Sunday. 📸
+5. The rest of the top line belongs to the tab in front. **Presenter** / **Bible
+   Reader** says which half of the app you are asking about: it starts on whichever one
+   you opened the window from, and the suggested questions change with it. Another tab
+   can be asking about the other half at the same time. 📸
+6. Type a question and press **Enter**, or click one of the suggestions. Answers arrive
+   with follow-up buttons: **Read all of W-xx** opens the full recipe, the other buttons
+   are the next-best matches. 📸
+7. Under every answer is **Copy**, which puts that answer on the clipboard and says
+   **✓ Copied**. Under every question of yours is **Ask again** — or just click the
+   question itself — and the same words go back in the box, ready to be changed a
+   little and asked again. 📸
+8. Ask **"where is …"** and name a button — the chatbot outlines it in **red** in the app
+   window for a few seconds, and tells you where it is. Nothing is clicked for you. 📸
+9. Ask about screens ("is any screen showing?") and the answer comes from the live app,
+   not the manual — with a **Hide every screen** button offered, never pressed for you.
+10. With an **AI key** set in **Settings** (កំណត់) → **Others** → **AI Providers**, the
+   same window becomes a real conversation: the model answers, using the same app
+   knowledge and the same tools. Without a key — or when the internet is down — it
+   still answers from the manual, and says so; with no key at all it also tells you that
+   Claude and ChatGPT need one, and gives you an **Open AI settings** button that goes
+   straight to the panel that takes it.
+11. **Claude** and **ChatGPT** sit in that same top line, and you can change your mind
+   between two questions: the one whose key you have set can be picked, the other stays
+   greyed out until you add its key in the same Settings panel. Beside them is the
+   **model** that will answer — **Opus 5**, **GPT-5** — and it is a list you can change.
+   Hold the mouse over a name to see what it is good for, how quick it is and what it
+   costs, e.g. `gpt-5 · best answers · slower · $1.25/$10 per 1M tokens`; the smaller
+   models answer a "how do I" just as well for a fraction of it. Choose **More models…**
+   at the bottom of the list and the window asks your own account what else it can run
+   and adds those too. Each tab keeps its own provider and model, and a new tab starts
+   on the last pair you picked. 📸
+12. Every answer offers **Show me step by step**. Press it and a numbered card
+   appears in the corner of the app window itself, with the button for the current
+   step **circled in red**: press **Next** on the card when you have done it, or
+   just do it — clicking the circled button moves the card on by itself. **Back**
+   returns a step, **✕** stops. Steps you have already done are not shown: asked
+   from the Bible Reader, a recipe that starts "click the Bible Reader tab" starts
+   at the step after it instead. 📸
+13. **Do it for me** runs the same walkthrough with the app driven for you: the
+   card's button becomes **Do it**, and each press clicks the circled control (or
+   types the text) and moves to the next step. One press per step — nothing runs
+   ahead of you — and **Skip** does a step yourself. When a step has nothing to
+   click, the card says so and waits. Anything that changes what the congregation
+   sees is offered, never done for you unasked. 📸
+14. The window answers about the half of the app you are in — asked from the Bible
+   Reader, you are told the reader's way, never the presenter's (they differ: the
+   presenter looks a verse up in a **Ctrl+B** popup, the reader has no such popup).
+   It follows you: switch the app to the other page and the next answer follows,
+   unless you have pressed one of the two buttons yourself. Answers are in English.
+
+   > Nothing here leaves the machine unless you set a key. The manual is bundled inside
+   > the app.
+15. To turn the whole feature off, untick **Enable AI features** in the same settings
+   section and restart the app: the chatbot, its tools and the debugging endpoint they
+   use are then never started.
+
+_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15._

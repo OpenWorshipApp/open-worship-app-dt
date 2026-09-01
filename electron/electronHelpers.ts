@@ -5,12 +5,14 @@ import {
     shell,
     clipboard,
     BrowserWindow,
-    type WebPreferences,
-    type WindowOpenHandlerResponse,
-    type BrowserWindowConstructorOptions,
-    type HandlerDetails,
-    type WebContents,
-    type MenuItemConstructorOptions,
+} from 'electron';
+import type {
+    WebPreferences,
+    WindowOpenHandlerResponse,
+    BrowserWindowConstructorOptions,
+    HandlerDetails,
+    WebContents,
+    MenuItemConstructorOptions,
 } from 'electron';
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, readdir, rm, writeFile } from 'node:fs/promises';
@@ -19,6 +21,13 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import appInfo from '../package.json';
+// Cyclic on paper -- `ElectronSettingManager` imports `genTimeoutAttempt` from
+// here -- but every use below is inside a function body, so neither module ever
+// reads a half-initialised export of the other.
+import ElectronSettingManager, {
+    type PopupWinBoundsType,
+} from './ElectronSettingManager';
+import { htmlFiles } from './fsServe';
 
 export type OptionalPromise<T> = T | Promise<T>;
 
@@ -105,6 +114,7 @@ export const commitHash = getPackInfo()?.commitHash ?? undefined;
 export const messageChannels = {
     screenMessage: 'app:screen:message',
     openAboutPage: 'main:app:open-about-page',
+    openChatbotPage: 'main:app:open-chatbot-page',
 };
 
 /**
@@ -492,6 +502,28 @@ function toFeatureRecord(featuresString: string) {
     return featuresRecord as PopupWindowFeaturesType;
 }
 
+// A second window of the same kind steps off the one already open instead of
+// landing exactly on top of it.
+function genGroupCascadePosition(groupWindows: BrowserWindow[]) {
+    const boundsList = groupWindows.map((win) => {
+        return win.getBounds();
+    });
+    return {
+        x:
+            Math.max(
+                ...boundsList.map(({ x }) => {
+                    return x;
+                }),
+            ) + 20,
+        y:
+            Math.max(
+                ...boundsList.map(({ y }) => {
+                    return y;
+                }),
+            ) + 20,
+    };
+}
+
 function genBoundsData(
     parentWin: BrowserWindow,
     groupWindows: BrowserWindow[],
@@ -507,18 +539,7 @@ function genBoundsData(
         height: bounds.height,
     });
     if (groupWindows.length > 0 && selfWindows.length === 0) {
-        const maxX = Math.max(
-            ...groupWindows.map((win) => {
-                return win.getBounds().x;
-            }),
-        );
-        subDisplay.x = maxX + 20;
-        const maxY = Math.max(
-            ...groupWindows.map((win) => {
-                return win.getBounds().y;
-            }),
-        );
-        subDisplay.y = maxY + 20;
+        Object.assign(subDisplay, genGroupCascadePosition(groupWindows));
     }
     Object.assign(subDisplay, {
         width: featuresRecord.width ?? subDisplay.width,
@@ -559,6 +580,36 @@ function genBoundsData(
     return subDisplay;
 }
 
+/**
+ * The key a popup's remembered position and size is stored under.
+ *
+ * It is the popup's own html page, NOT the full url: a per-document key would
+ * grow `setting.json` by one entry for every file the user ever opened an
+ * editor, note or preview for, while "this kind of window opens where I last
+ * left it" is what a user actually expects anyway. Anything that is not one of
+ * the app's own pages -- a `file://` pdf preview -- is deliberately not
+ * remembered, which is what keeps the map bounded by the page count.
+ */
+const popupBoundsKeySet = new Set<string>(Object.values(htmlFiles));
+function genPopupBoundsKey(url: string) {
+    if (!URL.canParse(url)) {
+        return null;
+    }
+    const htmlFileFullName = new URL(url).pathname.split('/').pop() ?? '';
+    return popupBoundsKeySet.has(htmlFileFullName) ? htmlFileFullName : null;
+}
+
+type PopupWindowMetaType = {
+    boundsKey: string | null;
+    featuresRecord: PopupWindowFeaturesType;
+    parentWin: BrowserWindow;
+    boundsResetAt: number;
+};
+// Weak so a closed popup drops out on its own. `resetPopupWindowsBounds` walks
+// `BrowserWindow.getAllWindows()` and looks each window up here, because popups
+// are registered nowhere else (see `ElectronAppController.reloadAll`).
+const popupWindowMetaMap = new WeakMap<BrowserWindow, PopupWindowMetaType>();
+
 function getPopupWindowData(parentWin: BrowserWindow, options: HandlerDetails) {
     const { url, features } = options;
     const featuresRecord = toFeatureRecord(features);
@@ -589,18 +640,79 @@ function getPopupWindowData(parentWin: BrowserWindow, options: HandlerDetails) {
         featuresRecord,
     );
 
-    return { groupWindows, selfWindows, subDisplay, featuresRecord };
+    return {
+        groupWindows,
+        selfWindows,
+        subDisplay,
+        featuresRecord,
+        boundsKey: genPopupBoundsKey(url),
+    };
 }
+
+// Window move/resize events arrive after the OS has actually moved the window,
+// so a synchronous flag would already be gone by the time they land. A short
+// quiet period is what stops `Reset Position and Size` from immediately
+// recording the very defaults it just applied.
+const BOUNDS_RESET_QUIET_MILLISECOND = 1000;
+
+/**
+ * Records where the user leaves a popup. Same shape as the main window's own
+ * tracking in `ElectronSettingManager.syncMainWindow`: every move/resize writes
+ * the geometry, and the setting write behind it is debounced and skipped when
+ * nothing actually changed.
+ */
+function trackPopupWindowBounds(popupWin: BrowserWindow, boundsKey: string) {
+    const saveBounds = () => {
+        const meta = popupWindowMetaMap.get(popupWin);
+        if (
+            popupWin.isDestroyed() ||
+            Date.now() - (meta?.boundsResetAt ?? 0) <
+                BOUNDS_RESET_QUIET_MILLISECOND
+        ) {
+            return;
+        }
+        const isMaximized = popupWin.isMaximized();
+        // The maximized rectangle is the whole screen, never a size worth
+        // restoring to once the window is un-maximized again.
+        const bounds = isMaximized
+            ? popupWin.getNormalBounds()
+            : popupWin.getBounds();
+        ElectronSettingManager.getInstance().setPopupWinBounds(boundsKey, {
+            ...bounds,
+            isMaximized,
+        });
+    };
+    popupWin.on('resize', saveBounds);
+    popupWin.on('move', saveBounds);
+    popupWin.on('maximize', saveBounds);
+    popupWin.on('unmaximize', saveBounds);
+}
+
+type PopupWindowContextType = {
+    parentWin: BrowserWindow;
+    webPreferences: WebPreferences | undefined;
+    featuresRecord: PopupWindowFeaturesType;
+    boundsKey: string | null;
+    savedBounds: PopupWinBoundsType | null;
+};
 
 function createPopupWindow(
     options: HandlerDetails,
-    webPreferences: WebPreferences | undefined,
-    featuresRecord: PopupWindowFeaturesType,
+    context: PopupWindowContextType,
     constructionOptions: BrowserWindowConstructorOptions,
 ): WebContents {
+    const {
+        parentWin,
+        webPreferences,
+        featuresRecord,
+        boundsKey,
+        savedBounds,
+    } = context;
     const popupWin = new BrowserWindow(constructionOptions);
     guardBrowsing(popupWin, webPreferences);
-    if (featuresRecord.appFollowScale) {
+    // Restored bounds are already the size the user last saw AT their zoom
+    // level; scaling them again would grow the window on every launch.
+    if (featuresRecord.appFollowScale && savedBounds === null) {
         applyZoomFactor(popupWin);
     }
     if (featuresRecord.appAlwaysOnTop) {
@@ -616,11 +728,63 @@ function createPopupWindow(
     if (featuresRecord.appResize === false) {
         popupWin.setResizable(false);
     }
+    popupWindowMetaMap.set(popupWin, {
+        boundsKey,
+        featuresRecord,
+        parentWin,
+        boundsResetAt: 0,
+    });
+    if (boundsKey !== null) {
+        if (savedBounds?.isMaximized) {
+            popupWin.maximize();
+        }
+        trackPopupWindowBounds(popupWin, boundsKey);
+    }
     popupWin.loadURL(options.url);
     setTimeout(() => {
         popupWin.focus();
     }, 100);
     return popupWin.webContents;
+}
+
+/**
+ * `Window` -> `Reset Position and Size`, for the popup windows.
+ *
+ * Two halves, both needed: the remembered geometry is dropped so the NEXT open
+ * starts from the page's own defaults, and every popup currently on screen is
+ * moved back over its opener -- rescuing a window that ended up where the mouse
+ * cannot reach it is the whole point of the menu item.
+ */
+export function resetPopupWindowsBounds(fallbackParentWin: BrowserWindow) {
+    ElectronSettingManager.getInstance().clearPopupWinBounds();
+    const resetWindows: BrowserWindow[] = [];
+    for (const popupWin of BrowserWindow.getAllWindows()) {
+        const meta = popupWindowMetaMap.get(popupWin);
+        if (meta === undefined || popupWin.isDestroyed()) {
+            continue;
+        }
+        const parentWin = meta.parentWin.isDestroyed()
+            ? fallbackParentWin
+            : meta.parentWin;
+        // Already-reset popups of the same kind act as the group, so several
+        // open at once fan out instead of stacking on a single spot.
+        const groupWindows = resetWindows.filter((resetWin) => {
+            const resetMeta = popupWindowMetaMap.get(resetWin);
+            return resetMeta?.boundsKey === meta.boundsKey;
+        });
+        const { x, y, width, height } = genBoundsData(
+            parentWin,
+            groupWindows,
+            [],
+            meta.featuresRecord,
+        );
+        meta.boundsResetAt = Date.now();
+        if (popupWin.isMaximized()) {
+            popupWin.unmaximize();
+        }
+        popupWin.setBounds({ x, y, width, height });
+        resetWindows.push(popupWin);
+    }
 }
 
 /**
@@ -662,7 +826,7 @@ function handlePopupWindowOpen(
         return { action: 'deny' };
     }
 
-    const { groupWindows, selfWindows, subDisplay, featuresRecord } =
+    const { groupWindows, selfWindows, subDisplay, featuresRecord, boundsKey } =
         getPopupWindowData(win, options);
     if (groupWindows.length > 0) {
         setTimeout(() => {
@@ -676,6 +840,20 @@ function handlePopupWindowOpen(
     }
     if (selfWindows.length > 0) {
         return { action: 'deny' };
+    }
+
+    // Where the user last left this kind of popup wins over the page's own
+    // declared placement -- that is the whole point of remembering it.
+    const savedBounds =
+        boundsKey === null
+            ? null
+            : ElectronSettingManager.getInstance().getPopupWinBounds(boundsKey);
+    if (savedBounds !== null) {
+        const { x, y, width, height } = savedBounds;
+        Object.assign(subDisplay, { x, y, width, height });
+        if (groupWindows.length > 0) {
+            Object.assign(subDisplay, genGroupCascadePosition(groupWindows));
+        }
     }
 
     const topToMainOptions: BrowserWindowConstructorOptions = {};
@@ -703,8 +881,13 @@ function handlePopupWindowOpen(
         ) => {
             return createPopupWindow(
                 options,
-                popupWebPreferences,
-                featuresRecord,
+                {
+                    parentWin: win,
+                    webPreferences: popupWebPreferences,
+                    featuresRecord,
+                    boundsKey,
+                    savedBounds,
+                },
                 constructionOptions,
             );
         },

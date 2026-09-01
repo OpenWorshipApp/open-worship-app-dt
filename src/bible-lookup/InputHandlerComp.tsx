@@ -140,6 +140,11 @@ export default function InputHandlerComp({
                 type="text"
                 autoFocus
                 placeholder={placeholder ?? ''}
+                // The one box a "type a verse" step is about; it is named
+                // only by the verse inside it, which no matcher (or screen
+                // reader) can find it by.
+                title={tran('Bible Reference')}
+                aria-label={tran('Bible Reference')}
                 style={{ fontFamily }}
                 onKeyUp={handleInputKeyUp}
                 onChange={handleInputChange}

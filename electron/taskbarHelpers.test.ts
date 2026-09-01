@@ -12,6 +12,10 @@ const platformFlags = vi.hoisted(() => {
     return { isDev: false, isWindows: true };
 });
 
+const { resetPopupWindowsBounds } = vi.hoisted(() => ({
+    resetPopupWindowsBounds: vi.fn(),
+}));
+
 vi.mock('./electronHelpers', () => ({
     get isDev() {
         return platformFlags.isDev;
@@ -19,6 +23,7 @@ vi.mock('./electronHelpers', () => ({
     get isWindows() {
         return platformFlags.isWindows;
     },
+    resetPopupWindowsBounds,
 }));
 
 import {
@@ -59,6 +64,7 @@ describe('taskbarHelpers', () => {
         electronMockState.app.getAppPath.mockReturnValue('/mock-app');
         platformFlags.isDev = false;
         platformFlags.isWindows = true;
+        resetPopupWindowsBounds.mockClear();
     });
 
     test('reads the data dir a relaunch names on the command line', () => {
@@ -149,6 +155,10 @@ describe('taskbarHelpers', () => {
         expect(
             appController.settingManager.restoreMainBounds,
         ).toHaveBeenCalledWith(appController.mainWin);
+        // the popups are stranded with it, and have no menu bar of their own
+        expect(resetPopupWindowsBounds).toHaveBeenCalledWith(
+            appController.mainWin,
+        );
         expect(appController.mainWin.focus).toHaveBeenCalledTimes(1);
     });
 
@@ -161,6 +171,7 @@ describe('taskbarHelpers', () => {
         expect(
             appController.settingManager.restoreMainBounds,
         ).not.toHaveBeenCalled();
+        expect(resetPopupWindowsBounds).not.toHaveBeenCalled();
         expect(appController.mainWin.focus).toHaveBeenCalledTimes(1);
         expect(appController.mainWin.restore).not.toHaveBeenCalled();
     });

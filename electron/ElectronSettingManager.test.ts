@@ -109,6 +109,77 @@ describe('ElectronSettingManager', () => {
         });
     });
 
+    function genManagerWithDisplays(popupWinBoundsMap: any = {}) {
+        electronMockState.screen.getAllDisplays.mockReturnValue([
+            {
+                id: 1,
+                bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+                workArea: { x: 0, y: 0, width: 1920, height: 1040 },
+            },
+        ] as any);
+        readFileSync.mockReturnValue(JSON.stringify({ popupWinBoundsMap }));
+        return new ElectronSettingManager();
+    }
+
+    test('remembers where a popup window was left', () => {
+        const manager = genManagerWithDisplays();
+
+        manager.setPopupWinBounds('chatbot.html', {
+            x: 1400,
+            y: 120,
+            width: 460,
+            height: 640,
+            isMaximized: false,
+        });
+
+        expect(manager.getPopupWinBounds('chatbot.html')).toEqual({
+            x: 1400,
+            y: 120,
+            width: 460,
+            height: 640,
+            isMaximized: false,
+        });
+        expect(manager.getPopupWinBounds('about.html')).toBeNull();
+        expect(writeFileSync).toHaveBeenCalledTimes(1);
+
+        // dragging fires a move event per frame; re-writing the whole setting
+        // file for geometry that did not change is pure churn
+        manager.setPopupWinBounds('chatbot.html', {
+            x: 1400,
+            y: 120,
+            width: 460,
+            height: 640,
+            isMaximized: false,
+        });
+        expect(writeFileSync).toHaveBeenCalledTimes(1);
+
+        manager.clearPopupWinBounds();
+        expect(manager.getPopupWinBounds('chatbot.html')).toBeNull();
+        expect(writeFileSync).toHaveBeenCalledTimes(2);
+        // nothing left to forget
+        manager.clearPopupWinBounds();
+        expect(writeFileSync).toHaveBeenCalledTimes(2);
+    });
+
+    test('drops a remembered popup position no display can reach', () => {
+        const manager = genManagerWithDisplays({
+            // the second monitor it was left on is gone
+            'setting.html': { x: 2600, y: 300, width: 700, height: 500 },
+            // only a sliver would be grabbable
+            'about.html': { x: -690, y: 100, width: 700, height: 500 },
+            'chatbot.html': { x: 1500, y: 100, width: 700, height: 500 },
+            // junk in the file is not geometry
+            'reader.html': { x: 10, y: 10, width: 0, height: 500 },
+            'presenter.html': 'nonsense',
+        });
+
+        expect(manager.getPopupWinBounds('setting.html')).toBeNull();
+        expect(manager.getPopupWinBounds('about.html')).toBeNull();
+        expect(manager.getPopupWinBounds('chatbot.html')).not.toBeNull();
+        expect(manager.getPopupWinBounds('reader.html')).toBeNull();
+        expect(manager.getPopupWinBounds('presenter.html')).toBeNull();
+    });
+
     test('tolerates an empty or unreadable setting file', () => {
         const consoleLogSpy = vi
             .spyOn(console, 'log')

@@ -27,12 +27,19 @@ const { syncMainWindow, mainWin, mainController, lwShareController } =
         };
     });
 
-vi.mock('./ElectronSettingManager', () => ({
-    default: class MockElectronSettingManager {
+vi.mock('./ElectronSettingManager', () => {
+    class MockElectronSettingManager {
         syncMainWindow = syncMainWindow;
         mainHtmlPath = 'presenter.html';
-    },
-}));
+        static instance: MockElectronSettingManager | null = null;
+        static getInstance() {
+            MockElectronSettingManager.instance ??=
+                new MockElectronSettingManager();
+            return MockElectronSettingManager.instance;
+        }
+    }
+    return { default: MockElectronSettingManager };
+});
 
 vi.mock('./ElectronMainController', () => ({
     default: {

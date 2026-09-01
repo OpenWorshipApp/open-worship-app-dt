@@ -14,7 +14,7 @@
         "strictFunctionTypes": true,
         "strictPropertyInitialization": true,
         "strictBindCallApply": true,
-        "sourceMap": false,
+        "sourceMap": true,
         "outDir": "electron-build/"
     },
     "include": ["electron/**/*.ts", "electron/**/*.json"],

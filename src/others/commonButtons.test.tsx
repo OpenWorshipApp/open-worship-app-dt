@@ -7,7 +7,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 const h = vi.hoisted(() => ({
     goToPathMock: vi.fn(),
     openSettingPageMock: vi.fn(),
+    openChatbotPageMock: vi.fn(),
     openExternalURLMock: vi.fn(),
+    getIsAIEnabledMock: vi.fn(() => true),
     useKeyboardRegisteringMock: vi.fn(),
     captured: { kbCb: undefined as any },
     appProvider: {
@@ -42,10 +44,19 @@ vi.mock('../setting/settingHelpers', () => ({
     openSettingPage: h.openSettingPageMock,
 }));
 vi.mock('../server/appProvider', () => ({ default: h.appProvider }));
+// `domHelpers` registers IPC listeners at module scope, which the appProvider
+// mock above has no channel for.
+vi.mock('../helper/domHelpers', () => ({
+    openChatbotPage: h.openChatbotPageMock,
+}));
+vi.mock('../helper/ai/aiHelpers', () => ({
+    getIsAIEnabled: h.getIsAIEnabledMock,
+}));
 
 import {
     BibleLookupButtonComp,
     BibleLookupTogglePopupContext,
+    ChatbotButtonComp,
     HelpButtonComp,
     QuitCurrentPageComp,
     SettingButtonComp,
@@ -106,6 +117,18 @@ describe('others commonButtons', () => {
         expect(h.openExternalURLMock).toHaveBeenCalledWith(
             'https://owa.app/help#presenter',
         );
+    });
+
+    test('ChatbotButtonComp opens the chatbot window', async () => {
+        await render(<ChatbotButtonComp />);
+        clickButton();
+        expect(h.openChatbotPageMock).toHaveBeenCalled();
+    });
+
+    test('ChatbotButtonComp renders nothing when AI is disabled', async () => {
+        h.getIsAIEnabledMock.mockReturnValueOnce(false);
+        await render(<ChatbotButtonComp />);
+        expect(container.querySelector('button')).toBeNull();
     });
 
     test('BibleLookupButtonComp toggles showing on click and shortcut', async () => {

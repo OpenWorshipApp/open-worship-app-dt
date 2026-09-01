@@ -17,6 +17,7 @@ export const htmlFiles = {
     lyricEditor: 'lyricEditor.html',
     bibleNote: 'bibleNote.html',
     webEditor: 'webEditor.html',
+    chatbot: 'chatbot.html',
 };
 export const customScheme = 'owa';
 export const schemePrivileges = {

@@ -189,7 +189,7 @@ Forcing the main window to `setting.html` (e.g. `navigate_page → setting.html`
 
 ### ✅ Correct way to test Settings/About/etc.
 1. Click the gear (Settings) / relevant button in the app — it opens a **new popup target**.
-2. `mcp_chrome_devtoo_list_pages` → find the `setting.html` target → `select_page` it.
+2. `mcp__owa-devtools__list_pages` → find the `setting.html` target → `select_page` it.
 3. Test it, then `close_page` the popup (or leave it; it's a separate window).
 Keep the main window on `presenter.html`.
 
@@ -262,11 +262,13 @@ Keep the main window on `presenter.html`.
   .find((el) => el.innerText.includes('\\audios'))`, then assert the popup subtitle reads
   `Audio URL:` **before** submitting.
 - **`list_pages` stays broken after the selected page closes; `select_page` recovers it.**
-  Closing the screen target (its ❌ button) or a popup leaves chrome-devtools-mcp erroring
+  Closing the screen target (its ❌ button) or a popup leaves `owa-devtools` erroring
   `The selected page has been closed. Call list_pages to see open pages.` — from
   `list_pages` itself, so the advice is circular. Call `select_page` with a known id (the
   presenter is normally the lowest one) and it selects and re-lists fine. Confirm the app
-  is actually alive with `Invoke-RestMethod http://127.0.0.1:9223/json/list` before
+  is actually alive with
+  `node .claude/skills/owa-robot-test/scripts/wait-for-debugger.mjs --timeout=5000`
+  (it discovers the published port itself — there is no fixed 9223 any more) before
   assuming a crash.
 - **Contrast-aware dialog.** Choosing a background color that may clash with text pops a
   confirm: *"…text color may not be visible… change text color as well?"* (`Cancel`/`Ok`).
@@ -639,7 +641,7 @@ Three reasons earlier runs missed it, each with the fix:
    (this also covers the mandatory screen block — but note the live screen is a snapshot and
    is **not** expected to auto-update on save; see step 4 / XW-03).
 2. Open that doc's **Doc Editor as a separate window** (NAV-21 external icon). `list_pages`
-   → you now have both targets. *(Opening/closing a popup can trigger chrome-devtools-mcp
+   → you now have both targets. *(Opening/closing a popup can trigger an `owa-devtools`
    "browser reconnected" — re-`list_pages` and re-`select_page` after each window
    open/close; read screen visibility from `.show-hide.showing`, not target enumeration.)*
 3. **Make a CDP-drivable edit in the editor target** (no OS focus needed), pick one:

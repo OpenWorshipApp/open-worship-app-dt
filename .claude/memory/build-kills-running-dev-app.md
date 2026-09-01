@@ -6,7 +6,7 @@ metadata:
 ---
 
 Never run `npm run build` (or `npm run electron:build`, or the full `npm run lint`, which
-ends in `build`) while the dev app is up for chrome-devtools verification. `electron:build`
+ends in `build`) while the dev app is up for `owa-devtools` verification. `electron:build`
 starts with `node extra-work/rmdir.mjs electron-build`, a recursive delete of
 `electron-build/` — and `package.json`'s `"main"` is `./electron-build/electron/index.js`,
 plus the preload scripts live there. The build pulls the running app's own code out from
@@ -24,7 +24,7 @@ answers). Every earlier `npm run lint` stage — `test:all`, `lint:all:error`, `
 renderer-only (`src/`) change is fully gated; only the `electron/**/*.ts` emit is missing, and
 `lint:all:error`'s project-wide `tsc --noEmit` already typechecked that too.
 
-**Why:** CLAUDE.md asks for both a live chrome-devtools check and a green `npm run build`,
+**Why:** CLAUDE.md asks for both a live `owa-devtools` check and a green `npm run build`,
 and those two collide. It looks like an unrelated crash — the app just disappears mid-session
 with no error in the renderer console.
 

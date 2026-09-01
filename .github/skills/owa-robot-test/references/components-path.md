@@ -41,7 +41,7 @@ Pair it with:
 
 ## Interaction legend
 
-| Symbol | Interaction | How to drive with chrome-devtools-mcp |
+| Symbol | Interaction | How to drive with the `owa-devtools` MCP |
 |---|---|---|
 | 🖱️ | Click | `click` the button's `uid` from `take_snapshot` |
 | 🖱️🖱️ | Double-click | `evaluate_script` dispatching `dblclick`, or two quick `click`s (used to send an item to screen) |

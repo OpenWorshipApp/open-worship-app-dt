@@ -1,7 +1,7 @@
 import { app } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
-import { isDev, isWindows } from './electronHelpers';
+import { isDev, isWindows, resetPopupWindowsBounds } from './electronHelpers';
 
 import packageInfo from '../package.json';
 
@@ -17,8 +17,12 @@ export function findUserDataPathArg(argv: string[]) {
     return userDataPath ? userDataPath : null;
 }
 
-export function resetMainWindowBounds(appController: ElectronAppController) {
+export function resetWindowsBounds(appController: ElectronAppController) {
     appController.settingManager.restoreMainBounds(appController.mainWin);
+    // Popups follow the main window, so whatever stranded it stranded them too
+    // -- and unlike the main window they have no menu bar of their own to be
+    // rescued from.
+    resetPopupWindowsBounds(appController.mainWin);
 }
 
 // The jump list attaches to the process' Application User Model ID. For the
@@ -79,7 +83,7 @@ export function initSecondInstance(appController: ElectronAppController) {
             win.restore();
         }
         if (argv.includes(RESET_WINDOW_BOUNDS_ARG)) {
-            resetMainWindowBounds(appController);
+            resetWindowsBounds(appController);
         }
         // a plain relaunch means "give me the app I already have running"
         win.focus();

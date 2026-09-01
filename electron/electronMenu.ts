@@ -7,6 +7,7 @@ import {
 } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
+import { checkIsAiEnabled } from './aiHelpers';
 import {
     copyDebugInfoToClipboard,
     goDownload,
@@ -23,7 +24,7 @@ import {
 } from './finderOverlayHelpers';
 import {
     RESET_WINDOW_BOUNDS_LABEL,
-    resetMainWindowBounds,
+    resetWindowsBounds,
 } from './taskbarHelpers';
 
 import packageInfo from '../package.json';
@@ -332,7 +333,7 @@ export function initMenu(appController: ElectronAppController) {
                     // can never drift apart
                     label: RESET_WINDOW_BOUNDS_LABEL,
                     click: () => {
-                        resetMainWindowBounds(appController);
+                        resetWindowsBounds(appController);
                     },
                 },
             ],
@@ -340,6 +341,19 @@ export function initMenu(appController: ElectronAppController) {
         {
             role: 'help',
             submenu: [
+                // Hidden outright when AI is switched off in Settings ->
+                // Others: the window it opens would have nothing to talk to.
+                ...(checkIsAiEnabled()
+                    ? [
+                          {
+                              label: 'App Help (Chatbot)',
+                              click: () => {
+                                  appController.openChatbotPage();
+                              },
+                          },
+                          { type: 'separator' },
+                      ]
+                    : []),
                 {
                     label: 'Learn More',
                     click: () => {

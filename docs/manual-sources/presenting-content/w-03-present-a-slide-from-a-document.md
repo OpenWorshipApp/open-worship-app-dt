@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, KB-05, KB-08]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-07-16"
+workflowsVersion: "2026-08-31"
 ---
 # W-03 — Present a slide from a document
 
@@ -22,14 +22,16 @@ workflowsVersion: "2026-07-16"
    the matching clear button under the mini screen.
 
 Tips:
+
 - The slider in the Documents-tab footer resizes the thumbnails.
 - The stopwatch icon in the same footer opens **auto-play**: set seconds, press play,
   and slides advance automatically; the red ✕ closes it (W-04).
+- **Pin the document so you cannot lose it by a stray click** — see W-27.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `KB-05` · `KB-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-07-16).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
 :::

@@ -10,6 +10,7 @@ import electron, {
 } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
+import { getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
 import {
     checkIsEncryptedFile,
     decryptFile,
@@ -135,6 +136,15 @@ export function initEventListenerApp(appController: ElectronAppController) {
 
     ipcMain.on('main:app:get-temp-path', (event) => {
         event.returnValue = app.getPath('temp');
+    });
+
+    // What the in-app chatbot connects to. Both doors are on ports this
+    // process picked at launch, so nothing in the renderer can hardcode them.
+    ipcMain.on('main:app:get-ai-endpoints', (event) => {
+        event.returnValue = {
+            mcpUrl: getMcpUrl(),
+            cdpPort: getRemoteDebuggingPort(),
+        };
     });
 
     onAsync(ipcMain, 'main:app:select-dirs', async () => {

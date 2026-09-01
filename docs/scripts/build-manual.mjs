@@ -63,14 +63,24 @@ function expandVerify(str) {
     for (const raw of str.split(',')) {
         const tok = raw.trim().replace(/\.+$/, '');
         if (!tok) continue;
-        const m = tok.match(/^([A-Z]+)-(\d+)\.\.(\d+)$/);
+        // Both ways the source writes a range: "PM-05..09" and, when the
+        // author repeats themselves, "PL-32..PL-76". The second form used to
+        // fall through to the else and ship as ONE token, so a workflow
+        // proving forty-five rows was recorded as proving a row called
+        // "PL-32..PL-76" that does not exist in the matrix.
+        const m = tok.match(/^([A-Z]+)-(\d+)\.\.(?:\1-)?(\d+)$/);
         if (m) {
             const [, prefix, a, b] = m;
             const width = a.length;
             for (let i = parseInt(a, 10); i <= parseInt(b, 10); i++) {
                 out.push(`${prefix}-${String(i).padStart(width, '0')}`);
             }
-        } else {
+            continue;
+        }
+        // Only real row ids. A "Verify:" line that says the rows are pending
+        // is prose, and prose used to be recorded as a matrix row id -- one
+        // the robot-test skill would then look for and never find.
+        if (/^[A-Z]+-\d+$/.test(tok)) {
             out.push(tok);
         }
     }
@@ -120,16 +130,45 @@ let cur = null;
 
 const flush = () => {
     if (!cur) return;
-    // last "*Verify: ... *" italic line -> matrix rows; drop it from the body
+    // The italic "Verify: ..." line -> matrix rows; drop it from the body.
+    //
+    // BOTH markdown italic delimiters, deliberately: the source is hand-edited
+    // prose, and it moved from `*Verify: ...*` to `_Verify: ..._` at some point.
+    // Matching only the asterisk form did not fail loudly -- it silently left
+    // every `verify` list empty AND stopped stripping the line, so a page full
+    // of internal coverage-row ids ("PL-01, PM-05..09") shipped to users and
+    // into the chatbot's corpus, which the bot is told never to say out loud.
+    // ...and it may WRAP: a workflow proving fourteen matrix rows does not fit
+    // on one line, so the block runs until the closing delimiter. Anchoring to
+    // a single line left exactly those long lists -- the ones that matter most
+    // -- empty and on the page.
     let verify = [];
     const kept = [];
+    let verifyLines = null;
     for (const l of cur.body) {
-        const vm = l.match(/^\*Verify:\s*(.+?)\.?\*\s*$/);
-        if (vm) {
-            verify = expandVerify(vm[1]);
-            continue; // do not render the raw verify line in the manual
+        if (verifyLines === null && /^(?:\*|_)Verify:/.test(l)) {
+            verifyLines = [l];
+        } else if (verifyLines !== null) {
+            verifyLines.push(l);
+        } else {
+            kept.push(l);
+            continue;
         }
-        kept.push(l);
+        // Closed on this line? (A one-line block closes immediately.)
+        if (!/(?:\*|_)\s*$/.test(l)) {
+            continue;
+        }
+        const block = verifyLines.join(' ');
+        verifyLines = null;
+        const vm = block.match(/^(?:\*|_)Verify:\s*(.+?)\.?(?:\*|_)\s*$/);
+        // A block that says "coverage rows pending" carries no rows; either
+        // way the raw line never reaches the manual.
+        verify = vm === null ? [] : expandVerify(vm[1]);
+    }
+    // An unterminated block is a typo in the source, not body text: keep the
+    // page clean and let the empty list say the rows are missing.
+    if (verifyLines !== null) {
+        console.warn(`! ${cur.id}: unterminated Verify block, ignored`);
     }
     // trim leading/trailing blank lines and a stray trailing rule
     while (kept.length && kept[0].trim() === '') kept.shift();

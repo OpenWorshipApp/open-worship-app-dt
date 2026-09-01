@@ -6,7 +6,9 @@ import KeyboardEventListener, {
     toShortcutKey,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
+import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { openChatbotPage } from '../helper/domHelpers';
 import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
 import { openSettingPage } from '../setting/settingHelpers';
@@ -54,6 +56,33 @@ export function SettingButtonComp() {
             onClick={handleClick}
         >
             <i className="bi bi-gear-wide-connected" />
+        </button>
+    );
+}
+
+/**
+ * Opens the in-app assistant, beside the Help button that goes to the website:
+ * the two answer the same question, one from the manual bundled in this build
+ * and from what the app is doing right now, the other from a browser and an
+ * internet connection this machine may not have.
+ */
+export function ChatbotButtonComp() {
+    const handleClick = useCallback(() => {
+        openChatbotPage();
+    }, []);
+    // With the master switch off there is no assistant service to talk to, so
+    // the button goes with it -- exactly as the Help menu item does.
+    if (!getIsAIEnabled()) {
+        return null;
+    }
+    return (
+        <button
+            className="btn btn-outline-info"
+            title={tran('App Assistant')}
+            aria-label={tran('App Assistant')}
+            onClick={handleClick}
+        >
+            <i className="bi bi-robot" />
         </button>
     );
 }

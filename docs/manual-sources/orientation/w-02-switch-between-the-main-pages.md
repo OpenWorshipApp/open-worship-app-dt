@@ -5,7 +5,7 @@ section: "Orientation"
 verify: [NAV-01, NAV-02, NAV-03, NAV-04]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-07-16"
+workflowsVersion: "2026-08-31"
 ---
 # W-02 — Switch between the main pages
 
@@ -21,5 +21,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-01` · `NAV-02` · `NAV-03` · `NAV-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-07-16).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
 :::

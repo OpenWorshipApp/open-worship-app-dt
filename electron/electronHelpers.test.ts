@@ -19,6 +19,22 @@ vi.mock('node:fs/promises', () => ({
     writeFile,
 }));
 
+const { settingManagerMock } = vi.hoisted(() => ({
+    settingManagerMock: {
+        getPopupWinBounds: vi.fn(() => null as any),
+        setPopupWinBounds: vi.fn(),
+        clearPopupWinBounds: vi.fn(),
+    },
+}));
+
+vi.mock('./ElectronSettingManager', () => ({
+    default: {
+        getInstance: () => {
+            return settingManagerMock;
+        },
+    },
+}));
+
 import {
     applyRendererRecovery,
     attemptClosing,

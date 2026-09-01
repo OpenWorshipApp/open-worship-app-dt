@@ -1,5 +1,6 @@
 import { app, protocol } from 'electron';
 
+import { enableRemoteDebugging, initAi } from './aiHelpers';
 import { isDev, sweepStalePrintPreviewFiles } from './electronHelpers';
 import {
     customScheme,
@@ -60,10 +61,16 @@ async function main() {
         app.quit();
         return;
     }
+    // Before `ready` (Chromium reads the switch there) but after the lock, so
+    // the throwaway process a jump list task spawns never touches it.
+    enableRemoteDebugging();
     await app.whenReady();
     // Fire-and-forget: clear print preview temp files left behind by a
     // previous run that was killed with a preview open.
     sweepStalePrintPreviewFiles();
+    // Same: serve `owa-devtools-mcp` and publish both agent doors. Only
+    // `node:http` loads until something actually connects.
+    initAi();
     initCustomSchemeHandler();
     initDisplayMediaHandler();
     const appController = ElectronAppController.getInstance();

@@ -11,6 +11,60 @@ import {
     scrubLegacyPlaintextSecrets,
 } from './electronSecureSettingHelpers';
 
+export type PopupWinBoundsType = Electron.Rectangle & {
+    isMaximized: boolean;
+};
+
+// Enough of a window to still be grabbed with the mouse. A remembered
+// rectangle that leaves less than this on any display is treated as gone --
+// unplugging a second monitor must not strand a popup where it cannot be
+// reached.
+const MIN_REACHABLE_WIDTH = 120;
+const MIN_REACHABLE_HEIGHT = 32;
+
+function checkIsFiniteNumber(value: any) {
+    return typeof value === 'number' && Number.isFinite(value);
+}
+
+function toValidBounds(value: any): PopupWinBoundsType | null {
+    if (typeof value !== 'object' || value === null) {
+        return null;
+    }
+    const { x, y, width, height } = value;
+    if (
+        !checkIsFiniteNumber(x) ||
+        !checkIsFiniteNumber(y) ||
+        !checkIsFiniteNumber(width) ||
+        !checkIsFiniteNumber(height) ||
+        width < 1 ||
+        height < 1
+    ) {
+        return null;
+    }
+    return {
+        x: Math.round(x),
+        y: Math.round(y),
+        width: Math.round(width),
+        height: Math.round(height),
+        isMaximized: value.isMaximized === true,
+    };
+}
+
+function toPopupWinBoundsMap(value: any) {
+    const boundsMap: Record<string, PopupWinBoundsType> = {};
+    if (typeof value !== 'object' || value === null) {
+        return boundsMap;
+    }
+    for (const [key, bounds] of Object.entries(value)) {
+        const validBounds = toValidBounds(bounds);
+        if (validBounds !== null) {
+            boundsMap[key] = validBounds;
+        }
+    }
+    return boundsMap;
+}
+
+let instance: ElectronSettingManager | null = null;
 export default class ElectronSettingManager {
     timeoutAttempt = genTimeoutAttempt();
     settingObject: {
@@ -19,12 +73,20 @@ export default class ElectronSettingManager {
         mainHtmlPath: string;
         clientSetting: Record<string, any>;
         secureSetting: Record<string, string>;
+        /**
+         * Where the user last left each popup window. Keyed by the popup's own
+         * html page (`genPopupBoundsKey` in `electronHelpers.ts`), so it is
+         * bounded by the number of pages the app has -- never by the number of
+         * documents, notes or pdfs the user has ever opened one for.
+         */
+        popupWinBoundsMap: Record<string, PopupWinBoundsType>;
     } = {
         mainWinBounds: null,
         appScreenDisplayId: null,
         mainHtmlPath: htmlFiles.reader,
         clientSetting: {},
         secureSetting: {},
+        popupWinBoundsMap: {},
     };
     /**
      * Decrypted secure values. Bounded by the number of secure keys (two today,
@@ -54,6 +116,9 @@ export default class ElectronSettingManager {
             nativeTheme.themeSource = json.themeSource ?? 'system';
             this.settingObject.clientSetting = json.clientSetting ?? {};
             this.settingObject.secureSetting = json.secureSetting ?? {};
+            this.settingObject.popupWinBoundsMap = toPopupWinBoundsMap(
+                json.popupWinBoundsMap,
+            );
             if (scrubLegacyPlaintextSecrets(this.settingObject.clientSetting)) {
                 // Immediate: cleartext credentials must not survive a crash in
                 // the debounce window.
@@ -134,6 +199,66 @@ export default class ElectronSettingManager {
         return this.allDisplays.find((display) => {
             return display.id === displayId;
         });
+    }
+
+    /**
+     * A remembered rectangle is only usable while a display it overlaps is
+     * still attached. Checked against the work area rather than the full
+     * display bounds so a window is never handed back behind the taskbar.
+     */
+    checkIsBoundsReachable(bounds: Electron.Rectangle) {
+        return this.allDisplays.some(({ workArea }) => {
+            const overlapWidth =
+                Math.min(bounds.x + bounds.width, workArea.x + workArea.width) -
+                Math.max(bounds.x, workArea.x);
+            const overlapHeight =
+                Math.min(
+                    bounds.y + bounds.height,
+                    workArea.y + workArea.height,
+                ) - Math.max(bounds.y, workArea.y);
+            return (
+                overlapWidth >= MIN_REACHABLE_WIDTH &&
+                overlapHeight >= MIN_REACHABLE_HEIGHT
+            );
+        });
+    }
+
+    getPopupWinBounds(key: string): PopupWinBoundsType | null {
+        const bounds = toValidBounds(this.settingObject.popupWinBoundsMap[key]);
+        if (bounds === null || !this.checkIsBoundsReachable(bounds)) {
+            return null;
+        }
+        return bounds;
+    }
+
+    setPopupWinBounds(key: string, bounds: PopupWinBoundsType) {
+        const validBounds = toValidBounds(bounds);
+        if (validBounds === null) {
+            return;
+        }
+        const currentBounds = this.settingObject.popupWinBoundsMap[key];
+        // Dragging a window fires a move event per frame; without this every
+        // one of them would queue another whole-setting-file write.
+        if (
+            currentBounds !== undefined &&
+            (Object.keys(validBounds) as (keyof PopupWinBoundsType)[]).every(
+                (name) => {
+                    return currentBounds[name] === validBounds[name];
+                },
+            )
+        ) {
+            return;
+        }
+        this.settingObject.popupWinBoundsMap[key] = validBounds;
+        this.save();
+    }
+
+    clearPopupWinBounds() {
+        if (Object.keys(this.settingObject.popupWinBoundsMap).length === 0) {
+            return;
+        }
+        this.settingObject.popupWinBoundsMap = {};
+        this.save();
     }
 
     /**
@@ -288,5 +413,12 @@ export default class ElectronSettingManager {
         this.secureCache.clear();
         this.settingObject.secureSetting = {};
         this.save(true);
+    }
+
+    // One writer per process: two managers would each hold a full copy of
+    // `settingObject` and overwrite each other's `setting.json`.
+    static getInstance() {
+        instance ??= new this();
+        return instance;
     }
 }

@@ -3,11 +3,10 @@ import { app, BrowserWindow } from 'electron';
 import ElectronMainController from './ElectronMainController';
 import ElectronSettingManager from './ElectronSettingManager';
 import { getCurrent, htmlFiles } from './fsServe';
-import { getAppThemeBackgroundColor } from './electronHelpers';
+import { getAppThemeBackgroundColor, messageChannels } from './electronHelpers';
 import ElectronLWShareController from './ElectronLWShareController';
 
 let instance: ElectronAppController | null = null;
-let settingManager: ElectronSettingManager | null = null;
 let lwShareController: ElectronLWShareController | null = null;
 export default class ElectronAppController {
     constructor() {
@@ -28,8 +27,7 @@ export default class ElectronAppController {
     }
 
     get settingManager() {
-        settingManager ??= new ElectronSettingManager();
-        return settingManager;
+        return ElectronSettingManager.getInstance();
     }
 
     get mainController() {
@@ -43,6 +41,10 @@ export default class ElectronAppController {
 
     openAboutPage() {
         this.mainController.sendMessage('main:app:open-about-page');
+    }
+
+    openChatbotPage() {
+        this.mainController.sendMessage(messageChannels.openChatbotPage);
     }
 
     static getInstance() {

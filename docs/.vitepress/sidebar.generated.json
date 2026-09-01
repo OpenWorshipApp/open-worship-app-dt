@@ -93,11 +93,113 @@
       },
       {
         "text": "W-17 — Find text anywhere (Find bar) & About",
-        "link": "/configuration/w-17-find-text-anywhere-finder-about"
+        "link": "/configuration/w-17-find-text-anywhere-find-bar-about"
       },
       {
         "text": "W-18 — Use more than one screen (multi-screen)",
         "link": "/configuration/w-18-use-more-than-one-screen-multi-screen"
+      },
+      {
+        "text": "W-19 — Draw and spotlight on the app itself (Presenting Control)",
+        "link": "/configuration/w-19-draw-and-spotlight-on-the-app-itself-presenting-control"
+      },
+      {
+        "text": "W-20 — Show the keys you press (Keyboard Screencast)",
+        "link": "/configuration/w-20-show-the-keys-you-press-keyboard-screencast"
+      },
+      {
+        "text": "W-21 — Add a background video or song from a link",
+        "link": "/configuration/w-21-add-a-background-video-or-song-from-a-link"
+      },
+      {
+        "text": "W-22 — Build a service presenting flow (and share it)",
+        "link": "/configuration/w-22-build-a-service-presenting-flow-and-share-it"
+      },
+      {
+        "text": "W-23 — Share one document (song, sermon slides, PDF) with another machine",
+        "link": "/configuration/w-23-share-one-document-song-sermon-slides-pdf-with-another-machine"
+      },
+      {
+        "text": "W-24 — Share a bible list with another machine",
+        "link": "/configuration/w-24-share-a-bible-list-with-another-machine"
+      },
+      {
+        "text": "W-25 — Back up everything, or move to a new computer",
+        "link": "/configuration/w-25-back-up-everything-or-move-to-a-new-computer"
+      },
+      {
+        "text": "W-26 — Compare two documents side by side (floating slide previews)",
+        "link": "/configuration/w-26-compare-two-documents-side-by-side-floating-slide-previews"
+      },
+      {
+        "text": "W-27 — Pin the document you are presenting from",
+        "link": "/configuration/w-27-pin-the-document-you-are-presenting-from"
+      },
+      {
+        "text": "W-28 — Build a slide by dragging from the Background panel",
+        "link": "/configuration/w-28-build-a-slide-by-dragging-from-the-background-panel"
+      },
+      {
+        "text": "W-29 — Look up a Bible name or place (people, tribes, cities, maps)",
+        "link": "/configuration/w-29-look-up-a-bible-name-or-place-people-tribes-cities-maps"
+      },
+      {
+        "text": "W-30 — See who and where is in the passage you are reading",
+        "link": "/configuration/w-30-see-who-and-where-is-in-the-passage-you-are-reading"
+      }
+    ]
+  },
+  {
+    "text": "Keyboard shortcut reference (tutorial appendix)",
+    "collapsed": false,
+    "items": [
+      {
+        "text": "W-31 — Hide, show, and reset the app's panels (View menu)",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-31-hide-show-and-reset-the-app-s-panels-view-menu"
+      },
+      {
+        "text": "W-32 — See who published a Bible translation (and its copyright)",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-32-see-who-published-a-bible-translation-and-its-copyright"
+      },
+      {
+        "text": "W-33 — Share your Bible translations (XML) with another machine",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-33-share-your-bible-translations-xml-with-another-machine"
+      },
+      {
+        "text": "W-34 — Add a Bible translation from the internet (XML), and make it read in its own language",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-34-add-a-bible-translation-from-the-internet-xml-and-make-it-read-in-its-own-language"
+      },
+      {
+        "text": "W-35 — Bring a song in from CCLI SongSelect",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-35-bring-a-song-in-from-ccli-songselect"
+      },
+      {
+        "text": "W-36 — Import a public domain song (no account needed)",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-36-import-a-public-domain-song-no-account-needed"
+      },
+      {
+        "text": "W-37 — Keep your own files beside the verse (Resources)",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-37-keep-your-own-files-beside-the-verse-resources"
+      },
+      {
+        "text": "W-38 — See how people and places connect (Connection Graph)",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-38-see-how-people-and-places-connect-connection-graph"
+      },
+      {
+        "text": "W-39 — Let the passage scroll itself while you read",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-39-let-the-passage-scroll-itself-while-you-read"
+      },
+      {
+        "text": "W-40 — Mark up a passage while you study it",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-40-mark-up-a-passage-while-you-study-it"
+      },
+      {
+        "text": "W-41 — Share a whole page of Bible Notes with another machine",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-41-share-a-whole-page-of-bible-notes-with-another-machine"
+      },
+      {
+        "text": "W-42 — Ask the app for help (the chatbot)",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-42-ask-the-app-for-help-the-chatbot"
       }
     ]
   }

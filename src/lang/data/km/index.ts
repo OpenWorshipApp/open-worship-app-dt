@@ -1029,6 +1029,7 @@ const dictionary = {
     'Bible item is added': 'ធាតុព្រះគម្ពីរត្រូវបានបន្ថែម',
     'Bible item is inserted into the editing slide':
         'ធាតុព្រះគម្ពីរត្រូវបានបញ្ចូលទៅក្នុងស្លាយកែសម្រួល',
+    'Bible Reference': 'ការយោងព្រះគម្ពីរ',
     'Bible Text to Speech': 'ព្រះគម្ពីរបំលែងអក្សរទៅជាសំលេង',
     'Book Chapter': 'ជំពូកគម្ពីរ',
     'Books map': 'ផែនទីគម្ពីរ',
@@ -1330,7 +1331,20 @@ const dictionary = {
         'និង Bible Audio តាមបំណង។',
     'Key set': 'មាន key ហើយ',
     'No key set': 'មិនទាន់មាន key',
+    // --- The AI master switch and the in-app chatbot (2026-08-31).
+    'Enable AI features': 'បើកមុខងារ AI',
+    'Turns off the chatbot, the assistant tools and the debugging endpoint they use.':
+        'បិទ chatbot ឧបករណ៍ជំនួយការ និង debugging endpoint ដែលវាប្រើ។',
+    'Restart the app to apply': 'សូមបើកកម្មវិធីឡើងវិញ ដើម្បីអនុវត្ត',
+    'Turned off': 'បានបិទ',
+    'AI features are turned off in Settings.':
+        'មុខងារ AI ត្រូវបានបិទនៅក្នុងការកំណត់។',
+    'Only needed if your Anthropic key is identity-linked':
+        'ត្រូវការតែពេល key Anthropic របស់អ្នកជាប្រភេទ identity-linked ប៉ុណ្ណោះ',
+    'App Assistant': 'ជំនួយការកម្មវិធី',
     'Get key': 'យក key',
+    'Get ID': 'យក ID',
+    'Find Anthropic workspace id': 'រកមើល Anthropic workspace id',
     Hide: 'លាក់',
     'Extra Binaries': 'កម្មវិធីបន្ថែម',
     'The media tools used to download background video and audio. They are downloaded separately to keep the app small.':

@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [PR-03, PU-03, KB-11]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-07-16"
+workflowsVersion: "2026-08-31"
 ---
 # W-14 — Keep Bible notes
 
@@ -21,5 +21,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-03` · `PU-03` · `KB-11`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-07-16).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
 :::

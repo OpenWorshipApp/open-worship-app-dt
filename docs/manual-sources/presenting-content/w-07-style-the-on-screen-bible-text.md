@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-13, PM-14]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-07-16"
+workflowsVersion: "2026-08-31"
 ---
 # W-07 — Style the on-screen Bible text
 
@@ -20,5 +20,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-13` · `PM-14`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-07-16).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
 :::

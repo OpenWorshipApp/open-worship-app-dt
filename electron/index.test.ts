@@ -18,6 +18,8 @@ const findUserDataPathArg = vi.fn(() => null as string | null);
 const initAppUserModelId = vi.fn();
 const initSecondInstance = vi.fn();
 const initUserTasks = vi.fn();
+const enableRemoteDebugging = vi.fn();
+const initAi = vi.fn();
 const getInstance = vi.fn(() => ({ id: 'app-controller' }));
 
 vi.mock('./fsServe', () => ({
@@ -40,6 +42,7 @@ vi.mock('./taskbarHelpers', () => ({
     initUserTasks,
 }));
 
+vi.mock('./aiHelpers', () => ({ enableRemoteDebugging, initAi }));
 vi.mock('./electronMenu', () => ({ initMenu }));
 vi.mock('./devtools', () => ({ initDevtools }));
 vi.mock('./displayMediaHelpers', () => ({ initDisplayMediaHandler }));
@@ -73,6 +76,8 @@ describe('electron index', () => {
         initAppUserModelId.mockClear();
         initSecondInstance.mockClear();
         initUserTasks.mockClear();
+        enableRemoteDebugging.mockClear();
+        initAi.mockClear();
         getInstance.mockClear();
         electronMockState.reset();
         electronMockState.app.whenReady.mockResolvedValue(undefined);
@@ -116,6 +121,21 @@ describe('electron index', () => {
             id: 'app-controller',
         });
         expect(initUserTasks).toHaveBeenCalledTimes(1);
+        expect(enableRemoteDebugging).toHaveBeenCalledTimes(1);
+        expect(initAi).toHaveBeenCalledTimes(1);
+    });
+
+    test('the agent doors are opened before ready, never without the lock', async () => {
+        electronMockState.app.requestSingleInstanceLock.mockReturnValueOnce(
+            false,
+        );
+
+        await import('./index');
+
+        // A jump list task spawns a throwaway process that quits immediately:
+        // it must not touch the command line or publish itself as an instance.
+        expect(enableRemoteDebugging).not.toHaveBeenCalled();
+        expect(initAi).not.toHaveBeenCalled();
     });
 
     test('a relaunch may name the data dir, overriding the dev default', async () => {

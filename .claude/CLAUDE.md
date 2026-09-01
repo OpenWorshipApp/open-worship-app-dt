@@ -66,10 +66,31 @@ Every React function component must have a name ending in `Comp`
 
 ## Verifying code changes
 
-Always verify any code change against the running app using `chrome-devtools`
-(the chrome-devtools MCP). A passing typecheck/build is not sufficient — take a
-screenshot of the live app and confirm the change actually renders/behaves as
-intended before considering the work done. The CDP endpoint is on port 9223.
+Always verify any code change against the running app using `owa-devtools` (the
+app's own MCP server, `tools/owa-devtools-mcp`). A passing typecheck/build is
+not sufficient — take a screenshot of the live app and confirm the change
+actually renders/behaves as intended before considering the work done.
+
+The CDP endpoint has **no fixed port** since 2026-08-31: Chromium binds a free
+one and the app publishes it (see *Agent access* below). Nothing needs that
+number: the project's `./.mcp.json` registers `owa-devtools` →
+`node tools/owa-devtools-mcp/bin.mjs`, which discovers the running instance
+itself (same thing per-user, if that file is missing:
+`claude mcp add owa-devtools -- node tools/owa-devtools-mcp/bin.mjs`). Its tools
+arrive as `mcp__owa-devtools__*`: every chrome-devtools tool (`list_pages`,
+`take_snapshot`, `click`, `evaluate_script`, …) PLUS app-level ones —
+`owa_app_state`, `owa_find_ui`, `owa_list_ui`, `owa_click`, `owa_type`,
+`owa_goto_page`, `owa_list_screens`, `owa_hide_screens`, `owa_help_search` /
+`owa_help_page`, `owa_guide_start` / `_step` / `_status`.
+Reach for those first: `owa_find_ui` locates (and optionally outlines) a control
+by its visible text, `owa_list_ui` enumerates the visible controls of a window,
+`owa_click` / `owa_type` act on a control by its label, `owa_goto_page`
+switches the main window between presenter and reader, and `owa_app_state`
+reports which window, page, language and theme are live — all without a
+snapshot. `owa_hide_screens` takes content
+off a projector, so confirm with the user before calling it. For a client pinned
+to a fixed URL, `node tools/owa-devtools-mcp/bin.mjs --bridge --listen=9223`
+forwards 9223 to wherever the app is.
 
 After any code change, also run `npm run lint`. It is the full gate: tests
 (`test:all`), typecheck (`lint:all:error`), prettier (`lint:pre`, which rewrites
@@ -87,6 +108,88 @@ and a production `build`.
   has no `pipefail`, so the pipeline reports the last command's status and masks
   the real failure. Check the log body, not just the exit code.
 
+## Agent access (`electron/aiHelpers.ts`, `tools/owa-devtools-mcp`)
+
+Everything that makes the app drivable by an agent — the in-app self-help
+chatbot first, an outside client second — lives in `electron/aiHelpers.ts` and
+the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
+
+- **CDP**: `enableRemoteDebugging()` appends `--remote-debugging-port=0` (any
+  free port) BEFORE `ready` and after the single-instance lock. It must stay
+  synchronous — Chromium reads the switch when it starts the DevTools handler,
+  so an `await`ed free-port lookup loses that race and the app silently gets no
+  endpoint. Packaged builds open it too (the chatbot needs it), bound to
+  `127.0.0.1`.
+- **MCP**: `startMcpHost()` serves `owa-devtools-mcp` over streamable HTTP on
+  `OWA_MCP_PORT` (default 39223, next free port if taken). Only `node:http`
+  loads at startup; chrome-devtools-mcp and puppeteer are imported on the first
+  MCP session. The SAME server is what `./.mcp.json` spawns over stdio for an
+  outside agent (as `owa-devtools`), so the chatbot and the agent share one tool
+  set — chrome-devtools' plus the `owa_*` ones.
+- **Discovery**: `publishAiEndpoints()` writes
+  `<temp>/open-worship-app-cdp/<pid>.json` with `{port, url, mcpUrl, isDev,
+  userDataPath, startedAt}` — one file per live instance, swept when a pid is
+  gone, removed on `will-quit`. Chromium reports its chosen port through
+  `<userData>/DevToolsActivePort`, which is polled after `ready`.
+- **Master switch**: Settings → Others → *Enable AI features* writes
+  `ai-enabled` into `clientSetting` in `<userData>/setting.json`.
+  `checkIsAiEnabled()` reads that file directly (before `ready`, before the
+  setting manager exists); off means neither door opens, the Help menu drops
+  the chatbot item, and the renderer's AI providers refuse to hand out a
+  client. It only takes effect on the next launch — that is the point.
+  **Unset means OFF in a packaged build and ON in dev**, and the renderer's
+  `getIsAIEnabled()` (`src/helper/ai/aiHelpers.ts`) MUST agree with the
+  main-process twin or the Settings toggle, the 🤖 button and the provider
+  clients contradict a process that opened no door. Nobody gets a CDP endpoint
+  by upgrading: anything reaching it drives a renderer with node integration.
+- **Knowledge**: `extra-work/build-knowledge.mjs` (part of `electron:build`)
+  bundles `docs/manual-sources/**` (kind `manual`) and an ALLOWLIST of
+  `.claude/` — `CLAUDE.md`, `memory/`, `skills/` — (kind `internal`) into
+  `electron-build/knowledge/` with a search index, so answers
+  are one file read, not 140. The main process passes the path in through
+  `OWA_KNOWLEDGE_DIR`.
+  **Every edit under `.claude/` — `CLAUDE.md`, `memory/`, `skills/` — must
+  re-run `node extra-work/build-knowledge.mjs` in the SAME change**, or the
+  chatbot keeps answering from the previous text. Run that script ALONE while
+  the app is up (`npm run build` / `electron:build` `rm -rf`s all of
+  `electron-build/`, the running app's own main entry; this one clears only
+  `knowledge/`). No restart is needed — `listKnowledgeEntries()` re-reads
+  `index.json` per call — unlike a change to the MCP `.mjs` modules.
+- **Chatbot**: `html/chatbot.html` → `src/chatbot/*`, opened by the **🤖**
+  toolbar button (`ChatbotButtonComp`, left of Help on both the presenter and
+  the reader, hidden with the master switch) or Help → *App Help (Chatbot)*. It
+  talks to the MCP host over HTTP (the port comes from
+  `main:app:get-ai-endpoints`), and answers from the manual, from live app
+  state, and by outlining the real control in the window. It holds several
+  conversations at once — a **tab strip** above the head row, persisted whole to
+  `local-storage/chatbot-sessions` (`src/chatbot/chatSessionHelpers.ts`, capped
+  at 12 tabs × 60 messages, debounced save + `beforeunload` flush). Each tab
+  carries a `⋮` (right-clicking the tab does the same) opening its own menu:
+  rename, **lock**, close, *Close other chats…*, *Clear all chats…*. The last
+  two take more than one conversation, so they are confirmed on a line under
+  the strip and `saveChatSessions` on the spot instead of on the debounce; a
+  LOCKED tab (`isLocked`) has no `×`, is refused by `handleClosingSession`,
+  and is what both of them step around. The
+  ENTIRE head row belongs to the tab in front, not to the window: the
+  Presenter/Reader switch (which follows the opener window until the user
+  presses one), the Claude/ChatGPT switch, and the model picker beside them.
+  The provider and model settings (`chatbot-llm-provider`,
+  `chatbot-llm-model-<provider>`) are now only what a NEW tab starts on. The
+  picker lists three models per provider with speed and list price on the hover
+  and a *More models…* that asks the account's own `models.list`; a
+  non-reasoning OpenAI model is sent no `reasoning_effort`. Every answer has
+  **Copy** and every question **Ask again**; with no key at all the window says
+  so and offers a button that opens Settings → Others. It falls back to the
+  offline manual bot when a call fails, and is written for a non-technical
+  volunteer and English-only: no ids, no paths, manual pages only, and
+  `owa_guide_*` can walk them through a task with a numbered card drawn in the
+  app window itself.
+
+`chrome-devtools-mcp`'s `usageStatistics` is forced off in `server.mjs`: its
+telemetry is a process-wide singleton that throws on the second
+`createMcpServer` (one per MCP session), and it would phone home from the
+operator's machine.
+
 ## Mapping DOM elements to components in dev
 
 The dev server (and only the dev server — `apply: 'serve'` in
@@ -100,7 +203,7 @@ root DOM element of every `*Comp` React function component with:
 The DOM carries the **innermost** component's name: when a component's root is
 another component, the outer one is not stamped.
 
-Use these when working against the running app via chrome-devtools:
+Use these when working against the running app via `owa-devtools`:
 
 - To locate a component's element: query `[data-react-comp-name="FooComp"]`.
 - To find which source file renders something on screen: read
@@ -108,7 +211,7 @@ Use these when working against the running app via chrome-devtools:
   `el.closest('[data-react-comp-fp]')`) and open that file directly — no
   grepping class names to find which component rendered what.
 
-## chrome-devtools / CDP driving notes
+## owa-devtools / CDP driving notes
 
 - **Screen output window.** The presentation screen is a separate Electron
   `BrowserWindow` (`screen.tsx` / `ScreenAppComp`, `appProvider.isPageScreen`).
@@ -309,3 +412,44 @@ download also leaves a `temp-*.part` behind. Deleting on disk needs piped
 objects, not a glob — the names start with `[MV]` and `[` is a PowerShell
 wildcard — and must match the **canonical video's title**, never `*YouTube*`:
 the user's own library holds real downloads whose names also end in `- YouTube`.
+
+## owa-enhance-chatbot skill
+
+`.claude/skills/owa-enhance-chatbot` is the counterpart to owa-robot-test for the
+**AI subsystem**: robot-test QAs the chatbot (`CB-01..CB-14`), this one changes
+it. Scope is everything in *Agent access* above — `src/chatbot/*`,
+`tools/owa-devtools-mcp/*`, `electron/aiHelpers.ts`,
+`extra-work/build-knowledge.mjs` — with the MCP tool surface as its main subject.
+
+**The chatbot is not good enough yet, and the skill is written as a climb, not as
+maintenance.** It carries a six-rung ladder (it answers → answers correctly and
+usably → acts reliably → trustworthy under pressure → situational → the fastest
+way to use the app; currently around rung 2) and a `references/scoreboard.md` that
+takes one row per run — pass rate, leaks, median tool rounds, cost, rung. Every
+run must leave the assistant measurably better and say by how much, a question
+that passed before must never come back failing, and when the evidence says the
+current design *caps* a rung, the finding is that — size the structural change and
+put it to the user rather than shaving another 200 tokens off a description.
+
+- **Tool surface IS chatbot performance.** `llmBotHelpers.ts` sends every tool
+  `tools/list` returns to the model on EVERY round of the loop
+  (`MAX_TOOL_ROUNDS` 10). Measured 2026-08-31: **42 tools, ~8.5k tokens/round,
+  ~85k worst case for one question** — 29 of those tools are chrome-devtools' and
+  include `evaluate_script`. Baseline it with
+  `node .claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs` (reads
+  `mcpUrl` from the published instance file, `--json`, and warns when an acting
+  tool is missing from `notify.mjs`'s `ACTING_TOOLS`).
+- **Every run researches before it builds** (`references/research.md`): ask the
+  live assistant a standing corpus of real volunteer questions, grade each answer
+  (correct? actionable? internals leaked? rounds used? did the walkthrough ring
+  land?), mine the app for gaps it cannot see or do, and only then implement —
+  graded against three axes, *smarter / easier / more impressive*. The argument
+  `research` runs that phase alone and ships nothing.
+- Tracked work carries stable `EC-xx` ids in the skill's `references/backlog.md`;
+  add what you find there even when you don't do it.
+- Same mirror rule as owa-robot-test: `.github/skills/owa-enhance-chatbot` is a
+  copy, `.claude/` is the source of truth.
+- **A tool change is not done until it was driven against the running app.** The
+  gate ends in a `build`, which deletes `electron-build/` and kills that app, so
+  verify live first and run `npm run lint` last — except knowledge changes, which
+  need the build before they exist at all.

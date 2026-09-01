@@ -19,6 +19,7 @@ export default defineConfig({
         include: [
             'src/**/*.test.ts',
             'src/**/*.test.tsx',
+            'tools/**/*.test.mjs',
         ],
         clearMocks: true,
         restoreMocks: true,

@@ -443,7 +443,7 @@ document/lyric lists, or the file-reload/`useFileSourceEvents` wiring.
    tab's `bi-box-arrow-up-right` external icon (NAV-21) or a doc row's **Edit ↗**
    (`openPopupWindow`), **not** the in-place `Slide Editor` tab. `list_pages` should show
    both `appDocumentEditor.html` and `presenter.html`/`screen.html`. *(Opening/closing the
-   popup may cause a chrome-devtools-mcp "browser reconnected" — re-`list_pages`/`select_page`
+   popup may cause an `owa-devtools` "browser reconnected" — re-`list_pages`/`select_page`
    after each; read screen visibility from `.show-hide.showing`, not target enumeration.)*
 3. **CDP-drivable edit** in the editor target (CDP can't drag-resize / Monaco-type — needs OS
    focus): select a box → `fill` the **Position/Size/Rotate** numeric inputs (ED-19) or slide

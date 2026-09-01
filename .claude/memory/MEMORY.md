@@ -94,3 +94,8 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Bible-XML cache is key-scoped](bible-xml-cache-key-scoped.md) — every writer must call `clearBibleXMLCache` (memory + folder) or a re-imported key serves the OLD bible; embedded-KJV reset takes filePath, not key
 - [experiments/html-in-canvas is dev-only](experiments-html-in-canvas.md) — build-excluded scratch harness (vite `exclude-experiments` plugin throws on product imports); second runner of the yt-dlp binaries
 - [Verse marks are note items](verse-marks-note-items.md) — highlights/comments live in `.note` files as a second item kind; `toJson` must spread or a save erases them
+- [Agent access & in-app chatbot](agent-access-mcp-chatbot.md) — no fixed CDP port; `./.mcp.json` spawns the app's own `owa-devtools` MCP (chrome-devtools tools + `owa_*`), and it ships a self-help chatbot
+- [`.claude/` edits need a knowledge rebuild](claude-dir-edits-need-knowledge-rebuild.md) — run `node extra-work/build-knowledge.mjs` in the same change, or the chatbot keeps answering from the old notes
+- [`evaluate_script` is dead under Node 22](evaluate-script-disposablestack.md) — "DisposableStack is not defined"; drive pages over raw CDP `Runtime.evaluate` instead
+- [MCP tool edits leave two processes out of step](mcp-tool-edit-two-processes.md) — your own `mcp__owa-devtools__*` tools serve STALE code after the edit while the app serves fresh; verify against the app's HTTP host
+- [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md) — a page-made KeyboardEvent at `document` fires real shortcuts, but only renderer-registered ones and only with `code` set

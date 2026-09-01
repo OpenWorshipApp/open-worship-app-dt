@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { tran } from '../../lang/langHelpers';
 
-import { getAISetting, useAISetting } from './aiHelpers';
+import { getAISetting, getIsAIEnabled, useAISetting } from './aiHelpers';
 
 export type AISettingType = {
     openAIAPIKey: string;
@@ -16,6 +16,16 @@ let instance: OpenAI | null = null;
 let key: string | null = null;
 export function getOpenAIInstance() {
     const { openAIAPIKey } = getAISetting();
+    // The master switch in Settings > Others turns every AI feature off,
+    // stored keys or not -- and says so. Blaming a missing key sends the user
+    // to re-enter one that is already there.
+    if (!getIsAIEnabled()) {
+        showSimpleToast(
+            tran('Fail to get OpenAI instance'),
+            tran('AI features are turned off in Settings.'),
+        );
+        return null;
+    }
     if (!openAIAPIKey) {
         showSimpleToast(
             tran('Fail to get OpenAI instance'),
@@ -36,7 +46,7 @@ export function getOpenAIInstance() {
 
 export function checkIsAvailable(aiSetting?: AISettingType) {
     const setting = aiSetting ?? getAISetting();
-    return setting.openAIAPIKey.trim().length > 0;
+    return getIsAIEnabled() && setting.openAIAPIKey.trim().length > 0;
 }
 
 export function useAvailable() {

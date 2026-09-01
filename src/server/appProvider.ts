@@ -125,6 +125,8 @@ export type PagePropsType = {
     lyricEditorHomePage: string;
     isPageAbout: boolean;
     aboutHomePage: string;
+    isPageChatbot: boolean;
+    chatbotHomePage: string;
     isPageLWShare: boolean;
     isMainPage: boolean;
     lwShareHomePage: string;

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [SP-04, SP-05, SP-10, SP-11, SP-12]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-07-16"
+workflowsVersion: "2026-08-31"
 ---
 # W-18 — Use more than one screen (multi-screen)
 
@@ -29,5 +29,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `SP-04` · `SP-05` · `SP-10` · `SP-11` · `SP-12`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-07-16).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
 :::

@@ -456,6 +456,27 @@ appProvider.messageUtils.listenForData('main:app:open-about-page', () => {
     openAboutPage();
 });
 
+export function openChatbotPage() {
+    return openPopupWindow(
+        appProvider.chatbotHomePage,
+        `chatbot_${Date.now()}`,
+        'chatbot',
+        {
+            width: 460,
+            height: 640,
+            // Beside the app rather than over it: the answers point at
+            // controls in the window behind this one.
+            appAlignHorizontal: 'right',
+            appAlignVertical: 'center',
+            appFollowScale: true,
+            appTopToMain: true,
+        },
+    );
+}
+appProvider.messageUtils.listenForData('main:app:open-chatbot-page', () => {
+    openChatbotPage();
+});
+
 function toURLObject(urlOrPathname: string) {
     return new URL(urlOrPathname, globalThis.location.href);
 }
