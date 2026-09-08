@@ -39,9 +39,10 @@ type McpHostType = {
 // `import()` survives here; TypeScript would turn a plain dynamic import into
 // `require()` under `module: commonjs`, which cannot load an ESM graph that
 // awaits at its top level.
-const importEsm = new Function('specifier', 'return import(specifier);') as (
-    specifier: string,
-) => Promise<any>;
+export const importEsm = new Function(
+    'specifier',
+    'return import(specifier);',
+) as (specifier: string) => Promise<any>;
 
 // The env var wins over the argv value for the same reason `OWA_USER_DATA_PATH`
 // does: a jump list relaunch carries argv but no environment.
@@ -209,11 +210,23 @@ async function sweepStaleAiInfo(dirPath: string) {
     } catch (_error) {}
 }
 
-function getMcpHostModulePath() {
-    // `tools/` ships unpacked beside the asar so the ESM loader can read it.
+/**
+ * One module of the `owa-devtools-mcp` package on disk. `tools/` ships
+ * unpacked beside the asar so the ESM loader can read it.
+ *
+ * Exported because the main process now loads a SECOND module from that
+ * package: `webPageHelpers.ts` shares `webUrlPolicy.mjs` with the MCP
+ * firewall, so the address policy the firewall refuses on and the one the
+ * socket is opened under cannot drift apart.
+ */
+export function toMcpPackagePath(fileName: string) {
     return toUnpackedPath(
-        path.join(app.getAppPath(), 'tools', 'owa-devtools-mcp', 'host.mjs'),
+        path.join(app.getAppPath(), 'tools', 'owa-devtools-mcp', fileName),
     );
+}
+
+function getMcpHostModulePath() {
+    return toMcpPackagePath('host.mjs');
 }
 
 /**

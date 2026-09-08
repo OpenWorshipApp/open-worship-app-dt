@@ -51,6 +51,7 @@ export type MockBrowserWindow = {
     show: ReturnType<typeof vi.fn>;
     close: ReturnType<typeof vi.fn>;
     maximize: ReturnType<typeof vi.fn>;
+    minimize: ReturnType<typeof vi.fn>;
     isMinimized: ReturnType<typeof vi.fn>;
     isMaximized: ReturnType<typeof vi.fn>;
     unmaximize: ReturnType<typeof vi.fn>;
@@ -128,6 +129,7 @@ export function createMockBrowserWindow(
         show: vi.fn(),
         close: vi.fn(),
         maximize: vi.fn(),
+        minimize: vi.fn(),
         isMinimized: vi.fn(() => false),
         isMaximized: vi.fn(() => false),
         unmaximize: vi.fn(),

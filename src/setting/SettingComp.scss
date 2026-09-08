@@ -238,6 +238,35 @@
     color: var(--app-muted);
   }
 
+  // What the key in this box is actually for, said on the box rather than in
+  // the hover on the little "i" -- three providers in a column, each feeding a
+  // different set of features, is not something to make anyone hunt for.
+  .app-setting-others-group-uses {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .app-setting-others-group-uses-label {
+    font-size: var(--app-text-xs);
+    color: var(--app-muted);
+  }
+
+  .app-setting-others-group-use {
+    font-size: var(--app-text-xs);
+    line-height: 1.4;
+    padding: 1px 7px;
+    border: 1px solid var(--app-line);
+    border-radius: 999px;
+    color: var(--app-ink);
+    // Quieter than a field label and louder than the card behind it: these
+    // are read once, when deciding whether this row is worth a key at all.
+    background-color: rgba(var(--bs-body-color-rgb), 0.04);
+    white-space: nowrap;
+  }
+
   // One column on purpose: a card is half a 1200px rack, and splitting that
   // between two key boxes leaves neither wide enough for its input plus the
   // reveal and "Get ..." buttons that sit on the same line.

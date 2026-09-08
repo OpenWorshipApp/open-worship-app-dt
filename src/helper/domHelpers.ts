@@ -183,7 +183,18 @@ export function handleAutoHide(targetDom: HTMLDivElement) {
         padding: '0px',
         boxShadow: '0px 0px 2px 1px rgba(0,0,0,0.3)',
     });
-    clearButton.title = tran('Show');
+    // Named without the word "show" in it at all, and NOT `tran('Show')`,
+    // which is what it used to be. There is one of these per auto-hide footer
+    // -- Background, Bible previewer, presenting-flow preview, mini screen --
+    // and "Show" is the most collided word in this app: `owa_click` ranks an
+    // exact label above every looser fit, so an assistant asked to turn the
+    // projector on matched this decoration four times over, beat the screen's
+    // own "Toggle showing screen" control, and reported the screen was
+    // showing because it had managed to press something. Dropping the word
+    // is what makes that impossible rather than merely unlikely -- renaming
+    // it to "Show Hidden Controls" first still won the bare word "Show" on a
+    // whole-word match.
+    clearButton.title = tran('Reveal Hidden Controls');
     let timeoutId: any = null;
     const mouseEnterListener = () => {
         if (timeoutId !== null) {
@@ -485,6 +496,76 @@ export function openChatbotPage() {
 }
 appProvider.messageUtils.listenForData('main:app:open-chatbot-page', () => {
     openChatbotPage();
+});
+
+// The chatbot's walkthrough card lives in THIS window and rings the control
+// each step is about -- but the help window it was asked from is a separate
+// OS window on top of this one, and whatever it covers cannot be seen or
+// pressed. So the card says when a walkthrough starts and ends, and the main
+// process steps that window aside for the length of it.
+//
+// Relayed rather than handled here: only the main process can move a window,
+// and the card is a dependency-free expression injected into the page, so a
+// DOM event is the only thing it is allowed to reach us with.
+document.addEventListener('owa-guide-running', (event) => {
+    const { isRunning } = (event as CustomEvent).detail ?? {};
+    appProvider.messageUtils.sendData('all:app:guide-running', {
+        isRunning: isRunning === true,
+    });
+});
+
+// The same card, stuck: a step it cannot press for the user. It used to
+// apologise and stop there. Now it asks the chat window that started the
+// walkthrough — which can look at the real window through its tools and
+// rewrite the guide from this step — and shows what comes back on the card
+// itself, so a volunteer following steps in the app never has to go and find
+// the help window to be helped.
+//
+// Relayed both ways for the same reason as the running signal: the card is a
+// dependency-free expression injected into the page, and the chat window is a
+// different renderer that only the main process can reach.
+document.addEventListener('owa-guide-help', (event) => {
+    const detail = (event as CustomEvent).detail ?? {};
+    appProvider.messageUtils.sendData('all:app:guide-help', detail);
+});
+appProvider.messageUtils.listenForData(
+    'main:app:guide-help-answer',
+    (_event, data: { token?: number; text?: string }) => {
+        document.dispatchEvent(
+            new CustomEvent('owa-guide-help-answer', { detail: data ?? {} }),
+        );
+    },
+);
+
+// `owa_lyric_file` / `owa_slide_file`: an agent asking to look at or write one
+// of the user's own documents.
+//
+// Relayed rather than handled inline for the same reason as the guide events
+// above — the tool's only way in is a dependency-free page expression, which
+// may not `import()` an app module — and the worker is imported LAZILY here so
+// that nothing in the song/slide graph loads in every window just in case
+// somebody asks (memory: `app-document-helpers-lyric-cycle` is the cycle a
+// static import would close).
+document.addEventListener('owa-agent-file', (event) => {
+    const detail = (event as CustomEvent).detail ?? {};
+    const { token } = detail;
+    const reply = (result: unknown) => {
+        document.dispatchEvent(
+            new CustomEvent('owa-agent-file-answer', {
+                detail: { token, result },
+            }),
+        );
+    };
+    import('./agentFileHelpers')
+        .then(async ({ handleAgentFileRequest }) => {
+            reply(await handleAgentFileRequest(detail));
+        })
+        .catch((error) => {
+            reply({
+                isError: true,
+                reason: String(error?.message ?? error),
+            });
+        });
 });
 
 function toURLObject(urlOrPathname: string) {

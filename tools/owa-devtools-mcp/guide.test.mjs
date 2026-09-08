@@ -2,6 +2,7 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 
 import {
+    detectRecipeWindow,
     dropStepsAlreadyDone,
     genGuideExpression,
     stripInternalIds,
@@ -27,6 +28,26 @@ beforeEach(() => {
         return { x: 10, y: 10, width: 40, height: 20, top: 10, left: 10 };
     };
     Element.prototype.scrollIntoView = function () {};
+    // jsdom has no checkVisibility; Electron 43 does, and the matcher
+    // asks it whether a control is painted. Answered here the long way --
+    // the ancestor walk it replaces in the browser for being 28x slower.
+    Element.prototype.checkVisibility = function (options = {}) {
+        let node = this;
+        while (node !== null && node.nodeType === 1) {
+            const style = getComputedStyle(node);
+            if (style.display === 'none') {
+                return false;
+            }
+            if (
+                (options.checkVisibilityCSS && style.visibility === 'hidden') ||
+                (options.opacityProperty && style.opacity === '0')
+            ) {
+                return false;
+            }
+            node = node.parentElement;
+        }
+        return true;
+    };
 });
 
 describe('toGuideSteps', () => {
@@ -161,6 +182,124 @@ describe('dropStepsAlreadyDone', () => {
         ];
         expect(dropStepsAlreadyDone(steps, '/reader.html')).toHaveLength(1);
         expect(dropStepsAlreadyDone(steps, '/presenter.html')).toHaveLength(2);
+    });
+
+    // Seen live the moment the chatbot started OPENING the window a
+    // walkthrough needs: Settings comes up, and step 1 of 4 says to click the
+    // gear that opens Settings -- a control that is not in this window, for a
+    // thing already done. The rule had been written for the reader and the
+    // presenter alone while the app has eight windows.
+    it('drops the opening step in a window of its own too', () => {
+        const steps = [
+            {
+                text:
+                    'Click the gear (Settings) in the header - Settings ' +
+                    'opens in its own window.',
+                finds: ['Setting'],
+            },
+            { text: 'Choose the General tab.', finds: ['General'] },
+        ];
+        expect(dropStepsAlreadyDone(steps, '/setting.html?uuid=setting')).toEqual([
+            steps[1],
+        ]);
+        // Asked from anywhere else, it is still the first thing to do.
+        expect(dropStepsAlreadyDone(steps, '/presenter.html')).toHaveLength(2);
+    });
+
+    it('knows the Document Editor by the words on its tab', () => {
+        const steps = [
+            { text: 'Open the Slide Editor.', finds: ['Slide Editor'] },
+            { text: 'Click Add New Slide.', finds: ['Add New Slide'] },
+        ];
+        // The tab reads "Slide Editor"; the window is called the Document
+        // Editor. A recipe may say either, so both have to count.
+        expect(
+            dropStepsAlreadyDone(steps, '/appDocumentEditor.html'),
+        ).toHaveLength(1);
+        expect(
+            dropStepsAlreadyDone(
+                [{ text: 'Open the Document Editor.', finds: [] }, steps[1]],
+                '/appDocumentEditor.html',
+            ),
+        ).toHaveLength(1);
+    });
+
+    it('leaves a step alone in a window nothing declares', () => {
+        const steps = [
+            { text: 'Click the Bible Reader tab.', finds: ['Bible Reader'] },
+            { text: 'Type a reference.', finds: [] },
+        ];
+        expect(dropStepsAlreadyDone(steps, '/nothing-like-it.html')).toEqual(
+            steps,
+        );
+    });
+});
+
+// Reported with a screenshot: the Settings recipe, its card drawn in the
+// Presenter, and a red ring around a Bible version button. Step 2 of that
+// recipe names nine bold words; none is a control of the Presenter except
+// "English" -- out of "Language: click English" -- which is an exact word of
+// the button labelled "KJV English KJV". Three rows matched it equally well
+// and the first was rung. No matcher could have saved that: the card was in
+// the wrong window, and the recipe's own first step says which one it means.
+describe('detectRecipeWindow', () => {
+    it('reads the window out of the step that gets you there', () => {
+        expect(
+            detectRecipeWindow([
+                {
+                    text:
+                        'Click the gear (Settings) in the header - Settings ' +
+                        'opens in its own window.',
+                },
+                { text: 'General tab: Language, Theme, Font family.' },
+            ]),
+        ).toBe('setting.html');
+    });
+
+    it('knows the Document Editor by the words on its tab', () => {
+        expect(
+            detectRecipeWindow([
+                { text: 'Open the Slide Editor.' },
+                { text: 'Click Add New Slide.' },
+            ]),
+        ).toBe('appDocumentEditor.html');
+    });
+
+    // Silent unless it is sure, in both directions. A recipe that names
+    // several windows genuinely works in several of them -- the annotation
+    // overlay and this assistant open from all eight -- and one that names
+    // none is the common case. Both keep the page the caller asked for.
+    it('says nothing when a step names more than one window', () => {
+        expect(
+            detectRecipeWindow([
+                {
+                    text:
+                        'Open the Tools menu in the Presenter, the Bible ' +
+                        'Reader or Settings and choose Start Controlling.',
+                },
+            ]),
+        ).toBeNull();
+    });
+
+    it('says nothing when no window is named', () => {
+        expect(
+            detectRecipeWindow([{ text: 'Select a slide and double-click.' }]),
+        ).toBeNull();
+    });
+
+    // The recipe has to be TELLING you to go there. A step that merely
+    // mentions a window is describing it.
+    it('says nothing when the first step is not a go-there step', () => {
+        expect(
+            detectRecipeWindow([
+                { text: 'The Settings window shows four tabs.' },
+            ]),
+        ).toBeNull();
+    });
+
+    it('says nothing about no steps at all', () => {
+        expect(detectRecipeWindow([])).toBeNull();
+        expect(detectRecipeWindow(undefined)).toBeNull();
     });
 });
 
@@ -580,5 +719,451 @@ describe('a step whose control lives in a right-click menu', () => {
         const done = await window.__owaGuide.act();
         expect(done.lastResult.did).toBe('clicked');
         expect(done.lastResult.more).toBeUndefined();
+    });
+});
+
+// A step the card cannot press used to be the end of the walkthrough. It now
+// goes back to the assistant that wrote it -- which can look at the real
+// window -- and draws what comes back on the card itself.
+describe('a stuck step asks the assistant', () => {
+    const hintOf = () => {
+        return document
+            .getElementById('owa-guide-host')
+            .shadowRoot.querySelector('.hint').textContent;
+    };
+    const startStuck = () => {
+        return startGuide({
+            title: 'Look up and present a Bible verse',
+            mode: 'demo',
+            steps: [
+                {
+                    text: 'The verse renders in the preview panel.'
+                        + ' Double-click it to present.',
+                },
+                { text: 'Press the clear button.', find: 'Clear' },
+            ],
+        });
+    };
+
+    it('fires the request with the step and what it looked for', async () => {
+        const asked = [];
+        document.addEventListener('owa-guide-help', (event) => {
+            asked.push(event.detail);
+        });
+        // A control the step does NOT name, so there is a near miss to report.
+        document.body.innerHTML = '<button>Preview</button>';
+        startStuck();
+        const after = await window.__owaGuide.act();
+
+        expect(after.lastResult.done).toBe(false);
+        expect(asked).toHaveLength(1);
+        expect(asked[0].stepNumber).toBe(1);
+        expect(asked[0].stepCount).toBe(2);
+        expect(asked[0].stepText).toContain('Double-click');
+        expect(asked[0].reason).toBe('nothing on screen to act on');
+        expect(asked[0].looked).toEqual([]);
+        // The card says what it is doing rather than apologising, and says so
+        // in the status a tool call reads back.
+        expect(hintOf()).toContain('asking the assistant');
+        expect(after.help.status).toBe('asking');
+    });
+
+    it('draws the answer on the card, with ids stripped out of it', async () => {
+        startStuck();
+        const after = await window.__owaGuide.act();
+        document.dispatchEvent(
+            new CustomEvent('owa-guide-help-answer', {
+                detail: {
+                    token: after.help === null ? 0 : 1,
+                    text: 'Double-click the verse in the preview panel on the'
+                        + ' left (W-06 step 3) — I cannot double-click for you.',
+                },
+            }),
+        );
+        expect(hintOf()).toContain('Double-click the verse');
+        // The rule that a volunteer is never shown an id holds whichever road
+        // the sentence arrived by.
+        expect(hintOf()).not.toContain('W-06');
+        expect(window.__owaGuide.status().help.status).toBe('answered');
+    });
+
+    it('falls back to the plain apology when nobody can answer', async () => {
+        startStuck();
+        await window.__owaGuide.act();
+        // What the main process sends when there is no chat window open.
+        document.dispatchEvent(
+            new CustomEvent('owa-guide-help-answer', {
+                detail: { token: 1, text: '' },
+            }),
+        );
+        expect(hintOf()).toContain('I could not do that one for you');
+        expect(window.__owaGuide.status().help.status).toBe('unavailable');
+    });
+
+    it('ignores an answer to a question the card has moved on from', async () => {
+        startStuck();
+        await window.__owaGuide.act();
+        document.dispatchEvent(
+            new CustomEvent('owa-guide-help-answer', {
+                detail: { token: 99, text: 'from some older card' },
+            }),
+        );
+        expect(hintOf()).not.toContain('older card');
+        expect(window.__owaGuide.status().help.status).toBe('asking');
+    });
+
+    it('asks once per step, not once per press', async () => {
+        const asked = [];
+        document.addEventListener('owa-guide-help', (event) => {
+            asked.push(event.detail);
+        });
+        startStuck();
+        await window.__owaGuide.act();
+        await window.__owaGuide.act();
+        expect(asked).toHaveLength(1);
+    });
+
+    it('drops the rescue when the guide is restarted', async () => {
+        startStuck();
+        await window.__owaGuide.act();
+        expect(window.__owaGuide.status().help.status).toBe('asking');
+        // The assistant's own answer to a stuck step is often a corrected
+        // guide, and the card it puts up owes nothing to the one it replaced.
+        const restarted = window.__owaGuide.start({
+            title: 'Look up and present a Bible verse',
+            mode: 'demo',
+            steps: [{ text: 'Press the clear button.', find: 'Clear' }],
+        });
+        expect(restarted.help).toBe(null);
+    });
+});
+
+// Reported with a screenshot (2026-09-08): the Bible Lookup popup open over
+// the presenter, the card at "pick a tab", the ring drawn THROUGH the popup
+// on a line of Genesis, and Do it clicking a tab nobody could see. A control
+// is reachable only when it is what the window paints at its own centre.
+describe('a control behind a popup', () => {
+    function mockHitTest(topId) {
+        // jsdom has no hit-testing: whatever is named here is what the
+        // window paints on top, everywhere.
+        document.elementsFromPoint = () => {
+            const top = document.getElementById(topId);
+            return top === null ? [] : [top];
+        };
+    }
+
+    function layoutPopupOverTab() {
+        document.body.innerHTML = [
+            '<div id="panel"><button id="images">Images</button></div>',
+            '<div id="modal-container"><div id="lookup">',
+            '<div><button class="btn btn-danger" id="close" aria-label="Close">',
+            '<i class="bi bi-x-lg"></i></button></div>',
+            '<p id="verse">In the beginning</p>',
+            '</div></div>',
+        ].join('');
+        document.getElementById('close').addEventListener('click', () => {
+            document.getElementById('modal-container').remove();
+        });
+    }
+
+    it('rings the way out of the popup and does not count that click as the step', () => {
+        layoutPopupOverTab();
+        mockHitTest('verse');
+        const guide = startGuide({
+            mode: 'show',
+            steps: [
+                { text: 'Pick the Images tab.', finds: ['Images'] },
+                { text: 'Done.', finds: [] },
+            ],
+        });
+        expect(guide.isTargetFound).toBe(true);
+        expect(guide.behind).toBe('the popup that is open');
+        const host = document.getElementById('owa-guide-host');
+        const hint = host.shadowRoot.querySelector('.hint, [class*=hint]');
+        expect(hint.textContent).toContain('behind the popup that is open');
+        expect(hint.textContent).toContain('ringed');
+        // The user closes it: the guide stays on the same step.
+        document.getElementById('close').click();
+        expect(window.__owaGuide.status().stepNumber).toBe(1);
+    });
+
+    it('closes the popup on the first press and does the step on the next', async () => {
+        layoutPopupOverTab();
+        mockHitTest('verse');
+        const clicked = [];
+        document.getElementById('images').addEventListener('click', () => {
+            clicked.push('images');
+        });
+        startGuide({
+            mode: 'demo',
+            steps: [
+                { text: 'Pick the Images tab.', finds: ['Images'] },
+                { text: 'Done.', finds: [] },
+            ],
+        });
+        const first = await window.__owaGuide.act();
+        expect(first.lastResult).toMatchObject({ done: true, did: 'closed' });
+        expect(first.stepNumber).toBe(1);
+        expect(clicked).toEqual([]);
+        expect(document.getElementById('modal-container')).toBeNull();
+        // The popup is gone, so the tab is what the window paints there now.
+        mockHitTest('images');
+        const second = await window.__owaGuide.act();
+        expect(second.lastResult).toMatchObject({ done: true, did: 'clicked' });
+        expect(clicked).toEqual(['images']);
+    });
+
+    it('never answers a question the app is asking, and asks nobody else to', async () => {
+        document.body.innerHTML = [
+            '<div id="panel"><button id="images">Images</button></div>',
+            '<div id="modal-container" class="modal-container--blocking">',
+            '<div id="app-confirm-popup"><p id="q">Replace it?</p>',
+            '<button id="ok">Ok</button></div></div>',
+        ].join('');
+        mockHitTest('q');
+        const clicked = [];
+        for (const id of ['images', 'ok']) {
+            document.getElementById(id).addEventListener('click', () => {
+                clicked.push(id);
+            });
+        }
+        startGuide({
+            mode: 'demo',
+            steps: [
+                { text: 'Pick the Images tab.', finds: ['Images'] },
+                { text: 'Done.', finds: [] },
+            ],
+        });
+        const result = await window.__owaGuide.act();
+        expect(result.lastResult.done).toBe(false);
+        expect(result.lastResult.reason).toContain('a question the app is asking');
+        expect(result.help).toBeNull();
+        expect(clicked).toEqual([]);
+    });
+});
+
+// The two other layers a run of every recipe left in front of a control: a
+// right-click menu (closes on a click of its own backdrop) and a floating
+// panel (closes with its own toolbar button). Neither is a question, so the
+// card may close them on the first press.
+describe('a control behind a menu or a floating panel', () => {
+    function mockHitTest(topId) {
+        document.elementsFromPoint = () => {
+            const top = document.getElementById(topId);
+            return top === null ? [] : [top];
+        };
+    }
+
+    it('closes a right-click menu by its backdrop and stays on the step', async () => {
+        document.body.innerHTML = [
+            '<button id="export">Export</button>',
+            '<div id="app-context-menu-container">',
+            '<div class="app-context-menu"><div id="item">Copy Title</div></div>',
+            '</div>',
+        ].join('');
+        document
+            .getElementById('app-context-menu-container')
+            .addEventListener('click', (event) => {
+                event.currentTarget.remove();
+            });
+        mockHitTest('item');
+        const guide = startGuide({
+            mode: 'demo',
+            steps: [{ text: 'Press Export.', finds: ['Export'] }, { text: 'Done.' }],
+        });
+        expect(guide.behind).toBe('the menu that is open');
+        const first = await window.__owaGuide.act();
+        expect(first.lastResult).toMatchObject({ done: true, did: 'closed', closed: 'the menu' });
+        expect(first.stepNumber).toBe(1);
+        expect(document.getElementById('app-context-menu-container')).toBeNull();
+    });
+
+    it('closes a floating panel with its own button', async () => {
+        document.body.innerHTML = [
+            '<button id="export">Export</button>',
+            '<div class="floating-widget" id="widget"><div class="floating-widget__toolbar">',
+            '<button class="floating-widget__button" id="wclose" aria-label="Close floating widget">',
+            '<i class="bi bi-x-lg"></i></button></div><p id="body">Names</p></div>',
+        ].join('');
+        document.getElementById('wclose').addEventListener('click', () => {
+            document.getElementById('widget').remove();
+        });
+        mockHitTest('body');
+        const guide = startGuide({
+            mode: 'show',
+            steps: [{ text: 'Press Export.', finds: ['Export'] }, { text: 'Done.' }],
+        });
+        expect(guide.behind).toBe('the floating panel that is open');
+        const host = document.getElementById('owa-guide-host');
+        expect(host.shadowRoot.querySelector('[class*=hint]').textContent).toContain(
+            'ringed ✕',
+        );
+        document.getElementById('wclose').click();
+        expect(window.__owaGuide.status().stepNumber).toBe(1);
+        expect(window.__owaGuide.status().behind).toBeNull();
+    });
+});
+
+// Four recipes are tours written as bold-led bullets, with no numbered step
+// anywhere -- and the walkthrough buttons under their answers, the panic
+// question's among them, answered "Nothing to guide".
+describe('a page written as bold-led bullets', () => {
+    it('reads each top-level bullet as a step, sub-bullets folded in', () => {
+        const steps = toGuideSteps(
+            [
+                '**Goal:** manage the live output.',
+                '',
+                '- The **mini screen** always mirrors the audience view.',
+                '- **Lock** (header, the padlock): when locked, the screen refuses',
+                '  slide changes.',
+                '  - click again to unlock.',
+                '- **Display** (footer): click to pick **which physical display**.',
+                '',
+            ].join('\n'),
+        );
+        expect(steps.map((one) => one.finds[0])).toEqual(['Lock', 'Display']);
+        expect(steps[0].text).toContain('click again to unlock');
+    });
+
+    it('never mixes the two shapes: numbered steps win outright', () => {
+        const steps = toGuideSteps(
+            ['1. Click **Lock**.', '', '- **Display**: pick one.', ''].join('\n'),
+        );
+        expect(steps.map((one) => one.finds[0])).toEqual(['Lock']);
+    });
+});
+
+// Measured over every recipe step Do it was pressed on (2026-09-08): 40 of
+// the 124 refusals were steps that describe what the user will SEE. A step
+// like that gets a Next button and an honest line, not a failed press.
+describe('a step that is something to notice', () => {
+    it('is marked as a look-step only when it names nothing to press', () => {
+        const steps = toGuideSteps(
+            [
+                "1. The live background's tab shows a `*` prefix (e.g. `*Videos`).",
+                '',
+                '2. When it finishes, the file appears in the folder you were in.',
+                '',
+                '3. The **Lock** button (header): click it to lock the screen.',
+                '',
+                '4. Click the yellow dot.',
+                '',
+                '5. Press **F7** to clear it.',
+                '',
+                '6. The bar under the box says how many matched — **74 verses found**.',
+                '',
+            ].join('\n'),
+        );
+        expect(steps.map((one) => one.kind ?? 'act')).toEqual([
+            'look',
+            'look',
+            'act',
+            'act',
+            'act',
+            'look',
+        ]);
+    });
+
+    it('draws Next instead of Do it, and a "do" just moves on', async () => {
+        document.body.innerHTML = '<button id="lock">Lock</button>';
+        startGuide({
+            mode: 'demo',
+            steps: [
+                { text: 'The tab shows a star.', finds: [], kind: 'look' },
+                { text: 'Click Lock.', finds: ['Lock'] },
+                { text: 'Done.', finds: [] },
+            ],
+        });
+        const host = document.getElementById('owa-guide-host');
+        const next = [...host.shadowRoot.querySelectorAll('button')].find((one) => {
+            return one.textContent === 'Next';
+        });
+        expect(next).toBeDefined();
+        expect(host.shadowRoot.querySelector('[class*=hint]').textContent).toContain(
+            'something to notice',
+        );
+        const status = window.__owaGuide.status();
+        expect(status.kind).toBe('look');
+        expect(status.canActOnStep).toBe(false);
+        const after = await window.__owaGuide.act();
+        expect(after.lastResult).toEqual({ done: true, did: 'looked' });
+        expect(after.help).toBeNull();
+    });
+});
+
+// Measured 2026-09-08 over every recipe step: the demo pressed the
+// projector's "Clear All [F6]" for a step about the drawing panel's Clear,
+// and "Break lines following model formatting" for "Follow". Close enough
+// to point at is not close enough to press.
+describe('a control that only resembles the step', () => {
+    it('is not pressed, and the label it found goes to the rescue', async () => {
+        document.body.innerHTML = [
+            '<button id="all" title="Clear All [F6]">Clear All</button>',
+        ].join('');
+        const clicked = [];
+        document.getElementById('all').addEventListener('click', () => {
+            clicked.push('all');
+        });
+        const guide = startGuide({
+            mode: 'demo',
+            steps: [
+                { text: 'Press Clear in the title bar.', finds: ['Clear'] },
+                { text: 'Done.', finds: [] },
+            ],
+        });
+        expect(guide.isTargetFound).toBe(false);
+        expect(guide.nearest).toBe('Clear All');
+        const result = await window.__owaGuide.act();
+        expect(result.lastResult.done).toBe(false);
+        expect(result.lastResult.reason).toContain('"Clear All"');
+        expect(clicked).toEqual([]);
+    });
+
+    it('still presses a control named exactly, shortcut and all', async () => {
+        document.body.innerHTML =
+            '<button id="toggle" title="Toggle showing screen [F5]"></button>';
+        const clicked = [];
+        document.getElementById('toggle').addEventListener('click', () => {
+            clicked.push('toggle');
+        });
+        startGuide({
+            mode: 'demo',
+            steps: [
+                { text: 'Press Toggle showing screen.', finds: ['Toggle showing screen'] },
+                { text: 'Done.', finds: [] },
+            ],
+        });
+        const result = await window.__owaGuide.act();
+        expect(result.lastResult.done).toBe(true);
+        expect(clicked).toEqual(['toggle']);
+    });
+});
+
+describe('a control inside a floating panel', () => {
+    it('is not "behind" the panel it lives in', async () => {
+        // The Foreground widgets are floating panels; a header bar over a
+        // label inside one read as a cover and the card closed the panel.
+        document.body.innerHTML = [
+            '<div class="floating-widget" id="widget">',
+            '<div class="floating-widget__toolbar"><div id="bar">Marquee Top</div>',
+            '<button class="floating-widget__button" id="wclose"><i class="bi bi-x-lg"></i></button></div>',
+            '<button id="show">Show</button></div>',
+        ].join('');
+        document.elementsFromPoint = () => [document.getElementById('bar')];
+        const clicked = [];
+        document.getElementById('show').addEventListener('click', () => {
+            clicked.push('show');
+        });
+        document.getElementById('wclose').addEventListener('click', () => {
+            clicked.push('closed');
+        });
+        const guide = startGuide({
+            mode: 'demo',
+            steps: [{ text: 'Click Show.', finds: ['Show'] }, { text: 'Done.' }],
+        });
+        expect(guide.behind).toBeNull();
+        const result = await window.__owaGuide.act();
+        expect(result.lastResult).toMatchObject({ done: true, did: 'clicked' });
+        expect(clicked).toEqual(['show']);
     });
 });

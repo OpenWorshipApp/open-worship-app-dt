@@ -996,6 +996,23 @@ export function registerAppMenuClicked<T>(
     };
 }
 
+export type AppMenuItemsOptionsType = {
+    /**
+     * Send the click to the window the user is LOOKING AT, not to the one that
+     * registered the items.
+     *
+     * For anything route-scoped the default is right: only the registrant has a
+     * handler for its own `clickData`. But the native menu keeps ONE entry per
+     * key, so a key every window contributes -- an app-wide feature like the
+     * presenting control or the assistant -- is owned by whichever window
+     * happened to load last, and every other one's press is dropped by its own
+     * `getIsWindowFocused()` guard. Opening Settings used to take
+     * *Tools → Start Controlling* away from the presenter for exactly that
+     * reason.
+     */
+    isRoutedToFocusedWindow?: boolean;
+};
+
 /**
  * Contribute this window's items to the native menu, or pass `null` to withdraw
  * them.
@@ -1007,10 +1024,12 @@ export function registerAppMenuClicked<T>(
 export function setAppMenuItems(
     key: string,
     menusData: CustomMenusDataType | null,
+    options?: AppMenuItemsOptionsType,
 ) {
     appProvider.messageUtils.sendData('main:app:set-menu-items', {
         key,
         menusData,
+        options,
     });
 }
 

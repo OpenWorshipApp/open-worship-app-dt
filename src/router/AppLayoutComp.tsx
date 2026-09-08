@@ -68,16 +68,29 @@ export default function AppLayoutComp({
         <MultiContextRenderComp contexts={contexts}>
             {/* <TestInfiniteComp /> */}
             <div id="app-header" className="d-flex">
-                {isInjectedAppDocumentFilePath ? null : <LayoutTabRenderComp />}
+                <div
+                    className={
+                        'app-highlight-border-bottom d-flex app-header-side'
+                    }
+                >
+                    {isInjectedAppDocumentFilePath ? null : (
+                        <LayoutTabRenderComp />
+                    )}
+                </div>
                 <div
                     className={
                         'app-highlight-border-bottom d-flex' +
-                        ' justify-content-center flex-fill'
+                        ' justify-content-center'
                     }
                 >
                     <BibleLookupButtonComp />
                 </div>
-                <div className="app-highlight-border-bottom">
+                <div
+                    className={
+                        'app-highlight-border-bottom d-flex' +
+                        ' justify-content-end app-header-side'
+                    }
+                >
                     <div className="btn-group" role="group">
                         {isInjectedAppDocumentFilePath ? null : (
                             <SettingButtonComp />

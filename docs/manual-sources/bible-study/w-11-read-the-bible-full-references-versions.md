@@ -5,13 +5,13 @@ section: "Bible study"
 verify: [RD-01, RD-02, RD-03, RD-04, RD-05, RD-06, RD-07, RD-11]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-11 — Read the Bible (full references, versions)
 
 **Goal:** look up and read a verse in the Bible Reader — deeper reading than the
 quick lookup, and where you look a verse up when you are not presenting.
-**Where:** header tab **Bible Reader** (អានព្រះគម្ពីរ).
+**Where:** header tab **[en:tran:Bible Reader]**.
 
 1. Click the **Bible Reader** tab. 📸
 2. Type a reference using the same step-by-step picker as the lookup dialog: book →
@@ -28,5 +28,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-01` · `RD-02` · `RD-03` · `RD-04` · `RD-05` · `RD-06` · `RD-07` · `RD-11`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

@@ -5,14 +5,14 @@ section: "Bible study"
 verify: [RD-10, RD-49, RD-50, RD-51, RD-52]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-13 — Cross references
 
 **Goal:** see what else in scripture speaks to the verse you are reading.
 
 1. In the bible lookup, click **Advance Bible Lookup** (`bi-search`, top right) to open
-   the side panel, then pick **Cross Reference** (ខគម្ពីរយោង) from the panel's dropdown —
+   the side panel, then pick **[en:tran:Cross Reference]** from the panel's dropdown —
    the second entry, after **Find**. 📸
    You can also get here from the verse itself: right-click any verse in the lookup body
    and choose **Open in Cross Reference**. That opens the panel on this view AND on that
@@ -24,7 +24,7 @@ workflowsVersion: "2026-08-31"
    verse, or the version chip to read the references in another translation. 📸
 3. Under it, **AI Cross References** with the version it is quoting on the right, and a
    line saying how much there is: **7 Themes · 35 Verses**. Click the title to collapse the
-   whole section; right-click it for **Refresh** (ផ្ទុកឡើងវិញ), which re-fetches.
+   whole section; right-click it for **[en:tran:Refresh]**, which re-fetches.
 4. The references are grouped by **theme** — a sentence such as _Genealogy from Adam to
    Noah_ — set flush left, with that theme's verses hanging off a single vertical line
    beneath it. 📸 Each verse gives its reference on its own line and the opening of the
@@ -47,5 +47,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-10` · `RD-49` · `RD-50` · `RD-51` · `RD-52`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

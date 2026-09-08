@@ -57,6 +57,7 @@ describe('aiHelpers secret splitting', () => {
         setAISetting({
             openAIAPIKey: '  sk-openai  ',
             anthropicAPIKey: 'sk-ant',
+            kimiAPIKey: '',
             anthropicWorkspaceId: '',
             isAutoPlay: true,
         });
@@ -70,13 +71,18 @@ describe('aiHelpers secret splitting', () => {
         });
         expect(
             JSON.parse(secureStore.get('ai-setting-secret') as string),
-        ).toEqual({ openAIAPIKey: 'sk-openai', anthropicAPIKey: 'sk-ant' });
+        ).toEqual({
+            openAIAPIKey: 'sk-openai',
+            anthropicAPIKey: 'sk-ant',
+            kimiAPIKey: '',
+        });
     });
 
     test('the merged read is unchanged for callers', () => {
         setAISetting({
             openAIAPIKey: 'sk-openai',
             anthropicAPIKey: 'sk-ant',
+            kimiAPIKey: '',
             anthropicWorkspaceId: '',
             isAutoPlay: true,
         });
@@ -84,6 +90,7 @@ describe('aiHelpers secret splitting', () => {
         expect(getAISetting()).toEqual({
             openAIAPIKey: 'sk-openai',
             anthropicAPIKey: 'sk-ant',
+            kimiAPIKey: '',
             anthropicWorkspaceId: '',
             isAutoPlay: true,
         });
@@ -93,6 +100,7 @@ describe('aiHelpers secret splitting', () => {
         setAISetting({
             openAIAPIKey: '',
             anthropicAPIKey: 'sk-ant',
+            kimiAPIKey: '',
             anthropicWorkspaceId: '',
             isAutoPlay: true,
         });
@@ -110,10 +118,47 @@ describe('aiHelpers secret splitting', () => {
         expect(getAISetting().isAutoPlay).toBe(false);
     });
 
-    test('two empty keys leave no phantom blob behind', () => {
+    // The blob is rebuilt from scratch on every save, so a key the writer
+    // forgot to carry over is not merely stale -- it is gone. Worse, the
+    // "nothing to protect" branch would then fire on the very save that stores
+    // it: the user types a good key, tabs out of the field, and the switch
+    // stays disabled with nothing said.
+    test('a key from one provider alone survives a save', () => {
+        setAISetting({
+            openAIAPIKey: '',
+            anthropicAPIKey: '',
+            kimiAPIKey: '  sk-kimi  ',
+            anthropicWorkspaceId: '',
+            isAutoPlay: false,
+        });
+
+        expect(secureStore.has('ai-setting-secret')).toBe(true);
+        expect(getAISetting().kimiAPIKey).toBe('sk-kimi');
+    });
+
+    // ...and it must still be there after a save that is about something else
+    // entirely, which is what re-listing the fields in two places used to break.
+    test('a save about another field keeps the keys it did not mention', () => {
         setAISetting({
             openAIAPIKey: 'sk-openai',
             anthropicAPIKey: '',
+            kimiAPIKey: 'sk-kimi',
+            anthropicWorkspaceId: '',
+            isAutoPlay: false,
+        });
+        setAISetting({ ...getAISetting(), anthropicWorkspaceId: 'wrk-1' });
+
+        const setting = getAISetting();
+        expect(setting.kimiAPIKey).toBe('sk-kimi');
+        expect(setting.openAIAPIKey).toBe('sk-openai');
+        expect(setting.anthropicWorkspaceId).toBe('wrk-1');
+    });
+
+    test('every key empty leaves no phantom blob behind', () => {
+        setAISetting({
+            openAIAPIKey: 'sk-openai',
+            anthropicAPIKey: '',
+            kimiAPIKey: '',
             anthropicWorkspaceId: '',
             isAutoPlay: false,
         });
@@ -122,6 +167,7 @@ describe('aiHelpers secret splitting', () => {
         setAISetting({
             openAIAPIKey: '',
             anthropicAPIKey: '',
+            kimiAPIKey: '',
             anthropicWorkspaceId: '',
             isAutoPlay: false,
         });
@@ -135,6 +181,7 @@ describe('aiHelpers secret splitting', () => {
         setAISetting({
             openAIAPIKey: 'sk-openai',
             anthropicAPIKey: '',
+            kimiAPIKey: '',
             anthropicWorkspaceId: '',
             isAutoPlay: true,
         });
@@ -152,6 +199,7 @@ describe('aiHelpers secret splitting', () => {
         setAISetting({
             openAIAPIKey: '',
             anthropicAPIKey: 'sk-ant',
+            kimiAPIKey: '',
             anthropicWorkspaceId: '  wrkspc_123  ',
             isAutoPlay: false,
         });
@@ -168,6 +216,7 @@ describe('aiHelpers secret splitting', () => {
         setAISetting({
             openAIAPIKey: 'sk-openai',
             anthropicAPIKey: '',
+            kimiAPIKey: '',
             anthropicWorkspaceId: '',
             isAutoPlay: true,
         });
@@ -209,6 +258,7 @@ describe('aiHelpers secret splitting', () => {
         expect(getAISetting()).toEqual({
             openAIAPIKey: '',
             anthropicAPIKey: '',
+            kimiAPIKey: '',
             anthropicWorkspaceId: '',
             isAutoPlay: false,
         });

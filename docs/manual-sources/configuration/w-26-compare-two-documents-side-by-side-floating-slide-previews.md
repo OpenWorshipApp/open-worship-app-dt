@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PM-118, PM-119, PM-120, PM-126, PL-01, CM-06]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-26 — Compare two documents side by side (floating slide previews)
 
@@ -17,8 +17,8 @@ the one you already had open.
 The middle panel previews the **one** document you have selected. To look at another one
 as well, give it a window of its own.
 
-1. In the left **Documents** (ឯកសារ) list, **right-click** a document you have NOT
-   selected and choose **Open Slides Preview** (បើកការមើលស្លាយជាមុន). A window titled
+1. In the left **[en:tran:Documents]** list, **right-click** a document you have NOT
+   selected and choose **[en:tran:Open Slides Preview]**. A window titled
    **Slides: ‹name›** appears over the app. 📸
    Faster, once you know it: hold **Ctrl** (**⌘** on a Mac) and click the row. Same
    thing, no menu — and holding Ctrl again on that row closes the window. The menu
@@ -59,5 +59,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-118` · `PM-119` · `PM-120` · `PM-126` · `PL-01` · `CM-06`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

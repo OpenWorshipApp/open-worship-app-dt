@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-92, RD-93, RD-94, RD-95, RD-96, RD-97, RD-98, RD-99, RD-100, RD-101, RD-102, RD-103, RD-104, RD-105, RD-106]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-38 — See how people and places connect (Connection Graph)
 
@@ -15,7 +15,7 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
 1. Open the **Names and locations lookup** (`👤📍`) from the Bible Lookup header and find
    a person — try **Jacob** (យ៉ាកុប). 📸
 2. Click the **⋮** at the right end of the row — or **right-click** the row — and
-   choose **Open Graph Preview** (បើកមើលក្រាបទំនាក់ទំនង). A floating window opens with
+   choose **[en:tran:Open Graph Preview]**. A floating window opens with
    that person in the middle.
    > You can right-click a name anywhere it is already clickable — in the list, in the
    > **names and locations in your reading** panel, underlined inside a verse, or in the
@@ -60,7 +60,7 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    right. The graph's own centre is already the starting point — it sits there as a chip —
    so you only say where you want to get TO: type **jesus**, pick **យេស៊ូវ (Jesus)** from
    the list (every name is offered with its English name beside it), and press
-   **Find Connection** (រកទំនាក់ទំនង). The canvas fills with the generations from David
+   **[en:tran:Find Connection]**. The canvas fills with the generations from David
    down to Jesus, the connecting line highlighted, and every box on it still expandable. 📸
    > The panel takes the name of the person the chain STARTS from, and that first box
    > becomes the graph's new centre.
@@ -82,5 +82,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-92` · `RD-93` · `RD-94` · `RD-95` · `RD-96` · `RD-97` · `RD-98` · `RD-99` · `RD-100` · `RD-101` · `RD-102` · `RD-103` · `RD-104` · `RD-105` · `RD-106`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

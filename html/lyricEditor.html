@@ -34,6 +34,11 @@
         </div>
     </div>
     <template data-ol-mount="dashboardShell"></template>
+    <!-- The body belongs to the Open Lyric dashboard, which mounts itself over
+         it. The app's own window-level tools (the presenting control overlay,
+         the assistant shortcut) get a container of their own; everything they
+         draw is `position: fixed`, so an empty div is all they need. -->
+    <div id="app-window-tools"></div>
     <script type="module" src="/src/lyricEditor.tsx"></script>
 </body>
 

@@ -203,19 +203,18 @@ async function mcpCallTool(name, args = {}) {
 
 // A snapshot of the chatbot window's state, taken in one evaluation.
 const CHATBOT_STATE_EXPRESSION = `(() => {
-    const readSeg = (label) => {
-        const group = document.querySelector(
-            '.chat-head-row [aria-label="' + label + '"]',
+    const readPick = (label) => {
+        const picker = document.querySelector(
+            '.chat-head-row select[aria-label="' + label + '"]',
         );
-        if (group === null) {
+        if (picker === null) {
             return null;
         }
-        const buttons = [...group.querySelectorAll('button')].map((button) => ({
-            label: button.textContent.trim(),
-            isOn: button.classList.contains('is-on'),
-            isDisabled: button.disabled,
+        return [...picker.options].map((option) => ({
+            label: option.textContent.trim(),
+            isOn: option.value === picker.value,
+            isDisabled: option.disabled,
         }));
-        return buttons;
     };
     const modelPicker = document.querySelector('select.chat-engine');
     const messages = [...document.querySelectorAll('.chat-cues > *')].map(
@@ -232,8 +231,8 @@ const CHATBOT_STATE_EXPRESSION = `(() => {
     );
     return {
         url: location.href,
-        focus: readSeg('Which part of the app'),
-        providers: readSeg('Which model answers'),
+        focus: readPick('Which part of the app'),
+        providers: readPick('Which assistant answers'),
         model: modelPicker === null ? null : modelPicker.value,
         modelOptions: modelPicker === null
             ? []
@@ -249,24 +248,34 @@ const CHATBOT_STATE_EXPRESSION = `(() => {
     };
 })()`;
 
-// Click a seg button by its label; answer the resulting state.
-function genClickSegExpression(groupLabel, buttonLabel) {
+// Choose an option in one of the head row's dropdowns, by its visible label.
+function genChoosePickExpression(pickerLabel, optionLabel) {
     return `(() => {
-        const group = document.querySelector('.chat-head-row [aria-label="' +
-            ${JSON.stringify(groupLabel)} + '"]');
-        if (group === null) {
-            return { ok: false, reason: 'no group' };
+        const picker = document.querySelector(
+            '.chat-head-row select[aria-label="' +
+                ${JSON.stringify(pickerLabel)} + '"]',
+        );
+        if (picker === null) {
+            return { ok: false, reason: 'no picker' };
         }
-        const button = [...group.querySelectorAll('button')].find((one) => {
-            return one.textContent.trim() === ${JSON.stringify(buttonLabel)};
+        const option = [...picker.options].find((one) => {
+            return one.textContent.trim() === ${JSON.stringify(optionLabel)};
         });
-        if (button === undefined) {
-            return { ok: false, reason: 'no button' };
+        if (option === undefined) {
+            return { ok: false, reason: 'no option' };
         }
-        if (button.disabled) {
+        if (option.disabled) {
             return { ok: false, reason: 'disabled' };
         }
-        button.click();
+        // The select is React-controlled: assigning \`value\` directly is
+        // reverted on the next render unless the change goes through the
+        // native setter React's own onChange is watching.
+        const setValue = Object.getOwnPropertyDescriptor(
+            window.HTMLSelectElement.prototype,
+            'value',
+        ).set;
+        setValue.call(picker, option.value);
+        picker.dispatchEvent(new Event('change', { bubbles: true }));
         return { ok: true };
     })()`;
 }
@@ -276,7 +285,7 @@ function genClickSegExpression(groupLabel, buttonLabel) {
 // requestSubmit so the Ask button's disabled state is honoured.
 function genAskExpression(question) {
     return `(() => {
-        const input = document.querySelector('input.chat-input');
+        const input = document.querySelector('textarea.chat-input');
         const form = document.querySelector('form.chat-ask');
         if (input === null || form === null) {
             return { ok: false, reason: 'no form' };
@@ -440,7 +449,7 @@ async function waitForAskReady(chatbotPage, timeoutMs = 8000) {
         const ready = await evaluateInTarget(
             chatbotPage,
             `(() => {
-                const input = document.querySelector('input.chat-input');
+                const input = document.querySelector('textarea.chat-input');
                 return { ready: input !== null && !input.disabled };
             })()`,
         );
@@ -465,7 +474,7 @@ async function runCell({ focusKey, providerLabel, modelId, withGuide }) {
     }
     const focusClick = await evaluateInTarget(
         chatbotPage,
-        genClickSegExpression(
+        genChoosePickExpression(
             'Which part of the app',
             FOCUS_CASES[focusKey].button,
         ),
@@ -476,7 +485,7 @@ async function runCell({ focusKey, providerLabel, modelId, withGuide }) {
     }
     const providerClick = await evaluateInTarget(
         chatbotPage,
-        genClickSegExpression('Which model answers', providerLabel),
+        genChoosePickExpression('Which assistant answers', providerLabel),
     );
     if (!providerClick.ok) {
         check(`${tag}: set provider`, false, providerClick.reason);
@@ -602,11 +611,11 @@ for (const providerLabel of available) {
     await waitForAskReady(chatbotPage);
     await evaluateInTarget(
         chatbotPage,
-        genClickSegExpression('Which part of the app', 'Presenter'),
+        genChoosePickExpression('Which part of the app', 'Presenter'),
     );
     await evaluateInTarget(
         chatbotPage,
-        genClickSegExpression('Which model answers', available[0]),
+        genChoosePickExpression('Which assistant answers', available[0]),
     );
     note(`${tag}: asking with focus=Presenter while the window is the reader`);
     await evaluateInTarget(
@@ -700,7 +709,7 @@ if (presenterPage !== null) {
 for (const providerLabel of available) {
     await evaluateInTarget(
         chatbotPage,
-        genClickSegExpression('Which model answers', providerLabel),
+        genChoosePickExpression('Which assistant answers', providerLabel),
     );
     await new Promise((resolve) => setTimeout(resolve, 400));
     const state = await getChatbotState(chatbotPage);

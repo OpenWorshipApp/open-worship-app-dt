@@ -14,8 +14,39 @@
 // the caller saves on a debounce rather than on every keystroke.
 
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import type { BotActionType, BotFocusType } from './helpBotHelpers';
+import {
+    MAX_ATTACHMENT_COUNT,
+    type ChatAttachmentType,
+} from './attachmentHelpers';
+import type { BotFocusType } from '../../tools/owa-devtools-mcp/botFocus.d.mts';
+// A VALUE import, unlike the provider union below: `botFocus.mjs` is a list of
+// plain objects with no imports of its own, so it costs this startup path
+// nothing -- and a hand-kept copy of eight window keys is exactly the drift
+// this module already learned to avoid once.
+import { toBotFocus } from '../../tools/owa-devtools-mcp/botFocus.mjs';
+
+import type { BotActionType } from './helpBotHelpers';
 import type { LlmProviderType } from './llmBotHelpers';
+import type { AttachRequestType, ShowRefType } from './quickReplyHelpers';
+
+/**
+ * A type-only import of the union above, deliberately: this module is read at
+ * mount, before anything asks a model, and a VALUE import of the provider list
+ * would drag both SDKs and the MCP client into that path.
+ *
+ * This map is what keeps that cheap and still honest -- a provider added to the
+ * union and not listed here is a compile error, not a tab that silently forgets
+ * who it was asking. It is not cosmetic: an unrecognised name here becomes
+ * `null`, and the window then rewrites the tab to its own default, so a tab
+ * deliberately parked on a cheap model comes back on an expensive one with
+ * nothing on screen saying it moved.
+ */
+const PROVIDER_KEY_MAP: Record<LlmProviderType, true> = {
+    anthropic: true,
+    openai: true,
+    kimi: true,
+    free: true,
+};
 
 export type ChatMessageType = {
     id: number;
@@ -25,6 +56,21 @@ export type ChatMessageType = {
     // somewhere other than where the user asked it to.
     note?: string;
     actions?: BotActionType[];
+    // The things the user can press instead of typing their next message.
+    // Stored rather than derived on the fly because the best of them were
+    // WRITTEN by the model that wrote the answer -- reopening the window
+    // cannot re-derive those, and re-deriving the rest per render would spend
+    // the same work on every message to show it on one.
+    replies?: string[];
+    // What was attached to this question -- the DESCRIPTION of it, never the
+    // bytes. `attachmentHelpers` holds the picture for the life of the window
+    // and this file must never learn about it: a settings blob that is read
+    // whole and synchronously at startup cannot carry a screenshot.
+    attachments?: ChatAttachmentType[];
+    // What the assistant asked to be SHOWN, as buttons that attach it.
+    attachRequests?: AttachRequestType[];
+    // ...and what it offers to show the user in return.
+    shows?: ShowRefType[];
 };
 
 export type ChatSessionType = {
@@ -69,6 +115,14 @@ const SESSIONS_SETTING_NAME = 'chatbot-sessions';
 export const MAX_SESSION_COUNT = 12;
 const MAX_MESSAGE_COUNT = 60;
 const MAX_TITLE_LENGTH = 26;
+// Three buttons on one message. Re-applied on READ as well as on write: this
+// file is plain JSON on disk and a hand-edited one must not be able to draw
+// forty buttons into a 460px window. The length is a guard against absurd
+// data, not a layout rule -- a follow-up drawn from the question corpus is a
+// whole question ("A panel has disappeared - how do I get it back?") and
+// cutting one in half would be worse than showing it wrapped.
+const MAX_REPLY_COUNT = 3;
+const MAX_REPLY_LENGTH = 120;
 // A typed name may be longer than a derived one -- the user chose it -- but
 // not without end: it is stored in the same file and drawn in the same strip.
 const MAX_TYPED_TITLE_LENGTH = 40;
@@ -168,6 +222,65 @@ export function checkCanSoloChatSession(
     });
 }
 
+function toValidReplies(raw: any) {
+    if (!Array.isArray(raw)) {
+        return {};
+    }
+    const replies = raw
+        .filter((reply: any) => {
+            return typeof reply === 'string' && reply.trim().length > 0;
+        })
+        .slice(0, MAX_REPLY_COUNT)
+        .map((reply: string) => {
+            return reply.trim().slice(0, MAX_REPLY_LENGTH);
+        });
+    return replies.length > 0 ? { replies } : {};
+}
+
+// The fields an attachment is ALLOWED to have on the way back off disk, listed
+// rather than spread. That is the whole guard: this file is plain JSON a user
+// can edit, and copying `...raw` would let a hand-written `dataUrl` back into
+// the store that the rest of this design exists to keep pictures out of. An
+// unknown field is dropped in silence -- there is nothing to tell anyone.
+function toValidAttachments(raw: any) {
+    if (!Array.isArray(raw)) {
+        return {};
+    }
+    const attachments = raw
+        .filter((one: any) => {
+            return (
+                typeof one?.id === 'string' &&
+                typeof one?.name === 'string' &&
+                (one.kind === 'image' ||
+                    one.kind === 'text' ||
+                    one.kind === 'element')
+            );
+        })
+        .slice(0, MAX_ATTACHMENT_COUNT)
+        .map((one: any): ChatAttachmentType => {
+            return {
+                id: one.id,
+                kind: one.kind,
+                name: String(one.name).slice(0, MAX_TITLE_LENGTH * 4),
+                mimeType:
+                    typeof one.mimeType === 'string'
+                        ? one.mimeType
+                        : 'text/plain',
+                byteSize: typeof one.byteSize === 'number' ? one.byteSize : 0,
+                ...(typeof one.selector === 'string'
+                    ? { selector: one.selector }
+                    : {}),
+                ...(typeof one.filePath === 'string'
+                    ? { filePath: one.filePath }
+                    : {}),
+                ...(typeof one.summary === 'string'
+                    ? { summary: one.summary }
+                    : {}),
+            };
+        });
+    return attachments.length > 0 ? { attachments } : {};
+}
+
 function toValidMessage(raw: any): ChatMessageType | null {
     if (
         typeof raw?.text !== 'string' ||
@@ -181,6 +294,41 @@ function toValidMessage(raw: any): ChatMessageType | null {
         text: raw.text,
         ...(typeof raw.note === 'string' ? { note: raw.note } : {}),
         ...(Array.isArray(raw.actions) ? { actions: raw.actions } : {}),
+        ...toValidReplies(raw.replies),
+        ...toValidAttachments(raw.attachments),
+        ...(Array.isArray(raw.shows)
+            ? {
+                  shows: raw.shows
+                      .filter((one: any) => {
+                          return (
+                              typeof one?.value === 'string' &&
+                              typeof one?.name === 'string' &&
+                              (one.kind === 'control' ||
+                                  one.kind === 'selector' ||
+                                  one.kind === 'file')
+                          );
+                      })
+                      .slice(0, MAX_ATTACHMENT_COUNT)
+                      .map((one: any): ShowRefType => {
+                          return {
+                              kind: one.kind,
+                              value: one.value,
+                              name: one.name,
+                          };
+                      }),
+              }
+            : {}),
+        ...(Array.isArray(raw.attachRequests)
+            ? {
+                  attachRequests: raw.attachRequests.filter((one: any) => {
+                      return (
+                          one === 'screenshot' ||
+                          one === 'element' ||
+                          one === 'file'
+                      );
+                  }),
+              }
+            : {}),
     };
 }
 
@@ -199,13 +347,14 @@ function toValidSession(raw: any): ChatSessionType | null {
             })
             .slice(-MAX_MESSAGE_COUNT),
         draft: typeof raw.draft === 'string' ? raw.draft : '',
-        focus: raw.focus === 'reader' ? 'reader' : 'presenter',
+        focus: toBotFocus(raw.focus),
         isFocusChosen: raw.isFocusChosen === true,
         // Checked against the keys that are actually set by the caller, which
         // is the only place that knows: a key removed in Settings must not
         // leave a tab pointing at a provider that can only fail.
         provider:
-            raw.provider === 'anthropic' || raw.provider === 'openai'
+            typeof raw.provider === 'string' &&
+            Object.hasOwn(PROVIDER_KEY_MAP, raw.provider)
                 ? raw.provider
                 : null,
         model: typeof raw.model === 'string' ? raw.model : '',

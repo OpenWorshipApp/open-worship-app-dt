@@ -30,7 +30,14 @@ export function getAiEndpoints(): AiEndpointsType {
     }
 }
 
-async function post(body: any, isRetry = false): Promise<any> {
+// Every call takes the caller's stop signal, all the way down to the `fetch`
+// that does the work: a question the user gave up on must stop asking the
+// tool host too, not just stop listening to it.
+async function post(
+    body: any,
+    isRetry = false,
+    signal?: AbortSignal | null,
+): Promise<any> {
     const { mcpUrl } = getAiEndpoints();
     if (mcpUrl === null) {
         throw new Error(
@@ -48,6 +55,9 @@ async function post(body: any, isRetry = false): Promise<any> {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
+        // Undefined when nobody passed one, which is what `fetch` wants:
+        // handing it `null` is a type error, not "no signal".
+        signal: signal ?? undefined,
     });
     const newSessionId = response.headers.get('mcp-session-id');
     if (newSessionId) {
@@ -66,8 +76,8 @@ async function post(body: any, isRetry = false): Promise<any> {
             // that is how a host answering 404 to everything becomes an
             // endless loop instead of one honest error.
             if (!isRetry && body?.method !== 'initialize') {
-                await ensureSession();
-                return await post(body, true);
+                await ensureSession(signal);
+                return await post(body, true, signal);
             }
         }
         throw new Error(`The assistant service answered ${response.status}`);
@@ -82,44 +92,66 @@ async function post(body: any, isRetry = false): Promise<any> {
     return data?.result ?? null;
 }
 
-async function ensureSession() {
+async function ensureSession(signal?: AbortSignal | null) {
     if (sessionId !== null) {
         return;
     }
     requestId += 1;
-    await post({
-        jsonrpc: '2.0',
-        id: requestId,
-        method: 'initialize',
-        params: {
-            protocolVersion: '2025-06-18',
-            capabilities: {},
-            clientInfo: { name: 'owa-chatbot', version: '0.1.0' },
+    await post(
+        {
+            jsonrpc: '2.0',
+            id: requestId,
+            method: 'initialize',
+            params: {
+                protocolVersion: '2025-06-18',
+                capabilities: {},
+                clientInfo: { name: 'owa-chatbot', version: '0.1.0' },
+            },
         },
-    });
-    await post({ jsonrpc: '2.0', method: 'notifications/initialized' });
+        false,
+        signal,
+    );
+    await post(
+        { jsonrpc: '2.0', method: 'notifications/initialized' },
+        false,
+        signal,
+    );
 }
 
-export async function listTools(): Promise<McpToolType[]> {
-    await ensureSession();
+export async function listTools(
+    signal?: AbortSignal | null,
+): Promise<McpToolType[]> {
+    await ensureSession(signal);
     requestId += 1;
-    const result = await post({
-        jsonrpc: '2.0',
-        id: requestId,
-        method: 'tools/list',
-    });
+    const result = await post(
+        {
+            jsonrpc: '2.0',
+            id: requestId,
+            method: 'tools/list',
+        },
+        false,
+        signal,
+    );
     return result?.tools ?? [];
 }
 
-export async function callTool(name: string, args: any = {}) {
-    await ensureSession();
+export async function callTool(
+    name: string,
+    args: any = {},
+    signal?: AbortSignal | null,
+) {
+    await ensureSession(signal);
     requestId += 1;
-    const result = await post({
-        jsonrpc: '2.0',
-        id: requestId,
-        method: 'tools/call',
-        params: { name, arguments: args },
-    });
+    const result = await post(
+        {
+            jsonrpc: '2.0',
+            id: requestId,
+            method: 'tools/call',
+            params: { name, arguments: args },
+        },
+        false,
+        signal,
+    );
     const text = (result?.content ?? [])
         .filter((item: any) => {
             return item?.type === 'text';

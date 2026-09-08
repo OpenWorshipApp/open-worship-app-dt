@@ -30,6 +30,26 @@ beforeEach(() => {
         return { x: 10, y: 10, width: 40, height: 20, top: 10, left: 10 };
     };
     Element.prototype.scrollIntoView = function () {};
+    // jsdom has no checkVisibility; Electron 43 does, and the matcher
+    // asks it whether a control is painted. Answered here the long way --
+    // the ancestor walk it replaces in the browser for being 28x slower.
+    Element.prototype.checkVisibility = function (options = {}) {
+        let node = this;
+        while (node !== null && node.nodeType === 1) {
+            const style = getComputedStyle(node);
+            if (style.display === 'none') {
+                return false;
+            }
+            if (
+                (options.checkVisibilityCSS && style.visibility === 'hidden') ||
+                (options.opacityProperty && style.opacity === '0')
+            ) {
+                return false;
+            }
+            node = node.parentElement;
+        }
+        return true;
+    };
 });
 
 describe('the shared DOM matcher', () => {
@@ -291,6 +311,31 @@ describe('the packaged expressions', () => {
         expect(result.matched).toBe('Bible Reader');
     });
 
+    // What a press DID, not just what it hit. Written after an assistant
+    // pressed a toolbar-reveal decoration and reported the projector was on.
+    it('reports a toggle that flipped as proof the press worked', async () => {
+        document.body.innerHTML =
+            '<div role="button" aria-pressed="false" title="Toggle showing' +
+            ' screen">on</div>';
+        const target = document.querySelector('[role="button"]');
+        target.addEventListener('click', () => {
+            target.setAttribute('aria-pressed', 'true');
+        });
+        const result = await run(genClickExpression(['Toggle showing screen']));
+        expect(result.isOnNow).toBe(true);
+        expect(result.didChange).toBe(true);
+        expect(result.unverified).toBe(undefined);
+    });
+
+    it('says a plain button press is unproven rather than nothing', async () => {
+        document.body.innerHTML = '<button title="Show">S</button>';
+        const result = await run(genClickExpression(['Show']));
+        expect(result.clicked.label).toBe('S Show');
+        expect(result.isOnNow).toBe(undefined);
+        expect(result.didChange).toBe(false);
+        expect(result.unverified).toContain('nothing is proven');
+    });
+
     it('types into a box the React-compatible way', async () => {
         document.body.innerHTML = '<input id="ref" placeholder="Reference">';
         let inputValue = null;
@@ -376,5 +421,252 @@ describe('pointing at a region instead of a control', () => {
         expect(at.x).toBe(480);
         expect(at.y).toBe(388);
         expect(seen[0]).toEqual({ x: 480, y: 388 });
+    });
+});
+
+// A row of icons the app paints only while the mouse is over the part of
+// the window it belongs to -- the six buttons above every bible view are
+// this shape, and they were being ringed as though they were on show.
+describe('controls the app hides until the mouse is over them', () => {
+    // The real markup, cut down: the button is hidden by an ancestor
+    // several levels up, and revealed by a rule on one further up still.
+    const HOVER_MARKUP = [
+        '<style>',
+        '.motion .low { visibility: hidden; }',
+        '.motion:hover .low { visibility: visible; }',
+        '</style>',
+        '<div class="motion"><div class="head"><div class="low">',
+        '<button id="copy" title="Copy">C</button>',
+        '</div></div></div>',
+        '<div id="other">Copy of the service sheet</div>',
+    ].join('');
+
+    it('still finds one, and says it is not on show', () => {
+        document.body.innerHTML = HOVER_MARKUP;
+        const dm = install();
+        expect(dm.visibilityOf(document.getElementById('copy'))).toBe(
+            'hidden',
+        );
+        const found = dm.findBest(['Copy']);
+        expect(found?.element?.id).toBe('copy');
+        const described = dm.describe(found.element);
+        expect(described.isVisible).toBe(false);
+        expect(described.showsOnHover).toBe(true);
+    });
+
+    // The point of ranking it below isControl and not above it: a hidden
+    // BUTTON still beats a visible div, because only one of the two is a
+    // thing to press.
+    it('prefers a hover-hidden control over a visible container', () => {
+        document.body.innerHTML = HOVER_MARKUP;
+        const dm = install();
+        expect(dm.findBest(['Copy'])?.element?.id).toBe('copy');
+    });
+
+    it('prefers the twin that is already on show', () => {
+        document.body.innerHTML =
+            HOVER_MARKUP +
+            '<button id="shown" title="Copy">C</button>';
+        const dm = install();
+        expect(dm.findBest(['Copy'])?.element?.id).toBe('shown');
+    });
+
+    // Forcing the hover rather than moving the mouse: the state the mouse
+    // would have produced, held while the user reads the card.
+    it('reveals it by forcing the hover on its container', () => {
+        document.body.innerHTML = HOVER_MARKUP;
+        const dm = install();
+        const target = document.getElementById('copy');
+        expect(dm.revealHidden(target, 5000)).toBe(true);
+        expect(dm.visibilityOf(target)).toBe('shown');
+        expect(
+            document.querySelectorAll('[data-owa-hover-style]').length,
+        ).toBe(1);
+        dm.releaseHidden();
+        expect(dm.visibilityOf(target)).toBe('hidden');
+        expect(
+            document.querySelectorAll('[data-owa-hover-style]').length,
+        ).toBe(0);
+        expect(document.querySelectorAll('[data-owa-hover]').length).toBe(0);
+    });
+
+    // Found live: the guide card redraws its step every so often, and on
+    // the second draw the control was visible -- because the card itself
+    // was holding it -- so a caller that tested before asking dropped the
+    // one sentence explaining why it was visible at all.
+    it('reads as held while it is still being held', () => {
+        document.body.innerHTML = HOVER_MARKUP;
+        const dm = install();
+        const target = document.getElementById('copy');
+        expect(dm.revealHidden(target, 5000)).toBe(true);
+        expect(dm.revealHidden(target, 5000)).toBe(true);
+        expect(
+            document.querySelectorAll('[data-owa-hover-style]').length,
+        ).toBe(1);
+        dm.releaseHidden();
+    });
+
+    it('reads as not held for a control that never needed it', () => {
+        document.body.innerHTML = HOVER_MARKUP;
+        const dm = install();
+        const other = document.getElementById('other');
+        expect(dm.revealHidden(other, 5000)).toBe(false);
+        expect(document.querySelectorAll('[data-owa-hover]').length).toBe(0);
+    });
+
+    // One at a time: a window wearing several forced hovers is not a
+    // window anybody could recognise, and every one of them is a style
+    // element and a row of attributes left on the page.
+    it('holds one reveal at a time', () => {
+        document.body.innerHTML = HOVER_MARKUP + HOVER_MARKUP;
+        const dm = install();
+        const [one, other] = [...document.querySelectorAll('#copy')];
+        expect(dm.revealHidden(one, 5000)).toBe(true);
+        expect(dm.revealHidden(other, 5000)).toBe(true);
+        expect(dm.visibilityOf(one)).toBe('hidden');
+        expect(dm.visibilityOf(other)).toBe('shown');
+        expect(
+            document.querySelectorAll('[data-owa-hover-style]').length,
+        ).toBe(1);
+        dm.releaseHidden();
+    });
+
+    // Nothing to reveal is not the same as a reveal that failed, and
+    // neither may leave a mark on the page.
+    it('refuses what no hover can bring back, and leaves nothing', () => {
+        document.body.innerHTML = [
+            '<style>.dead { display: none; }</style>',
+            '<div class="dead"><button id="gone" title="Copy">C</button>',
+            '</div>',
+        ].join('');
+        const dm = install();
+        const target = document.getElementById('gone');
+        expect(dm.visibilityOf(target)).toBe('gone');
+        expect(dm.revealHidden(target, 5000)).toBe(false);
+        expect(document.querySelectorAll('[data-owa-hover]').length).toBe(0);
+        expect(
+            document.querySelectorAll('[data-owa-hover-style]').length,
+        ).toBe(0);
+    });
+
+    // What owa_list_ui answers with. Leaving these off the list is what
+    // stopped the assistant ever mentioning them; a control with no box
+    // at all stays off it.
+    it('lists a hover-revealed control, marked, and not a missing one', () => {
+        document.body.innerHTML =
+            HOVER_MARKUP +
+            '<style>.dead { display: none; }</style>' +
+            '<div class="dead"><button title="Export">E</button></div>';
+        const dm = install();
+        const labels = dm.listControls('', 50).map((row) => row.label);
+        expect(labels).toContain('C Copy');
+        expect(labels).not.toContain('E Export');
+        const row = dm
+            .listControls('C Copy', 50)
+            .find((one) => one.label === 'C Copy');
+        expect(row.showsOnHover).toBe(true);
+        expect(row.isVisible).toBe(false);
+    });
+
+    // The click path: pressed for real, and the answer says the user
+    // could not have seen it -- which is what the assistant tells them.
+    it('reveals before clicking one', async () => {
+        document.body.innerHTML = HOVER_MARKUP;
+        const dm = install();
+        const target = document.getElementById('copy');
+        let clicks = 0;
+        target.addEventListener('click', () => {
+            clicks += 1;
+        });
+        const result = await run(genClickExpression(['Copy'], 100));
+        expect(result.clicked.label).toBe('C Copy');
+        expect(result.revealedForHover).toBe(true);
+        expect(clicks).toBe(1);
+        dm.releaseHidden();
+    });
+});
+
+// A selector that finds one element again and nothing else.
+//
+// The element picker's whole answer rests on this: a person can point at a
+// control and cannot describe it, so what comes back has to be re-findable.
+// The rule the tests hold it to is that it is TESTED before it is returned --
+// a selector matching two things is worse than none, because it looks right.
+describe('selectorOf', () => {
+    it('prefers the words the app chose over the position', () => {
+        document.body.innerHTML = `
+            <div>
+                <button aria-label="Bible Lookup">B</button>
+                <button>Other</button>
+            </div>`;
+        const dm = install();
+        const target = document.querySelector('[aria-label="Bible Lookup"]');
+        const selector = dm.selectorOf(target);
+        expect(selector).toContain('[aria-label="Bible Lookup"]');
+        expect(document.querySelectorAll(selector)).toHaveLength(1);
+    });
+
+    it('names a panel by the attribute that survives a re-render', () => {
+        document.body.innerHTML =
+            '<div data-widget-name="Background"><span>x</span></div>';
+        const dm = install();
+        const selector = dm.selectorOf(
+            document.querySelector('[data-widget-name]'),
+        );
+        expect(selector).toBe('div[data-widget-name="Background"]');
+    });
+
+    it('falls back to position when nothing names it', () => {
+        document.body.innerHTML =
+            '<ul><li><i>a</i></li><li><i>b</i></li><li><i>c</i></li></ul>';
+        const dm = install();
+        const target = document.querySelectorAll('li')[2];
+        const selector = dm.selectorOf(target);
+        expect(document.querySelectorAll(selector)).toHaveLength(1);
+        expect(document.querySelector(selector)).toBe(target);
+    });
+
+    it('never answers with a selector that matches two things', () => {
+        // Three identical buttons under three identical parents. Whatever it
+        // comes back with must still single one out -- or be null.
+        document.body.innerHTML = `
+            <div><div><button>Go</button></div></div>
+            <div><div><button>Go</button></div></div>
+            <div><div><button>Go</button></div></div>`;
+        const dm = install();
+        for (const target of document.querySelectorAll('button')) {
+            const selector = dm.selectorOf(target);
+            if (selector === null) {
+                continue;
+            }
+            expect(document.querySelectorAll(selector)).toHaveLength(1);
+            expect(document.querySelector(selector)).toBe(target);
+        }
+    });
+
+    // React and Bootstrap both mint ids that change on the next render, so a
+    // selector built on one stops working while the user is still looking at
+    // the same screen.
+    it('does not build on a generated id', () => {
+        document.body.innerHTML =
+            '<div><button id="radix-1729384756">Go</button></div>';
+        const dm = install();
+        const selector = dm.selectorOf(document.querySelector('button'));
+        expect(selector).not.toContain('radix-1729384756');
+        expect(document.querySelectorAll(selector)).toHaveLength(1);
+    });
+
+    it('uses an id the app wrote itself', () => {
+        document.body.innerHTML = '<div id="app-header"><button>Go</button></div>';
+        const dm = install();
+        expect(dm.selectorOf(document.querySelector('#app-header'))).toBe(
+            'div#app-header',
+        );
+    });
+
+    it('answers nothing for the body and for nothing', () => {
+        const dm = install();
+        expect(dm.selectorOf(document.body)).toBeNull();
+        expect(dm.selectorOf(null)).toBeNull();
     });
 });

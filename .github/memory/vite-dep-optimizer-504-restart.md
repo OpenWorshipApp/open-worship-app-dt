@@ -21,3 +21,12 @@ transform cache and re-optimizes, and the Electron windows stay alive. Confirm
 with `node_modules/.vite/deps/_metadata.json` (`browserHash` changes). Do NOT
 restart `npm run dev`; that kills the user's running app. See
 [[build-kills-running-dev-app]].
+
+**Second shape (2026-09-08):** the SAME error on an `/@fs/.../node_modules/
+<dep>/dist/*.mjs` URL, surfacing in the app as the "Reload is needed" dialog
+(`errorHelpers` → `main.tsx:147`). That is a dep Vite had never pre-bundled
+being DISCOVERED on first use — `bible-note` is imported lazily
+(`import('bible-note')` in `bibleNoteShortVerseHelpers.ts`), so its first
+resolution runs the optimizer, which invalidates the in-flight module graph
+and fails the dynamic import. Once `_metadata.json` lists the dep the reload
+works; the durable fix is `optimizeDeps.include` for lazily-imported deps.

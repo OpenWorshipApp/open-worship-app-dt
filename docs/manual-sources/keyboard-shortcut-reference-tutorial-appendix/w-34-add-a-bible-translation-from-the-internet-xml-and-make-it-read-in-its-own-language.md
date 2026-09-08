@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, RD-11, LT-01]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
 
@@ -19,10 +19,9 @@ Any XML in the app's format works the same way (**Import XML File → ?** shows 
 
 **Part 1 — bring the file in**
 
-1. Open **Settings** (Tools → Settings, or the ⚙ button) and pick the **Bible**
-   (ព្រះគម្ពីរ) tab. Top-left is the **Import XML File** (នាំចូលឯកសារ XML) box. 📸
+1. Open **Settings** (Tools → Settings, or the ⚙ button) and pick the **[en:tran:Bible]** tab. Top-left is the **[en:tran:Import XML File]** box. 📸
 2. Leave **Choose File** alone and paste the link into the **URL:** box instead. As soon as
-   the link is a valid address the file row dims out and **Import** (នាំចូល) lights up.
+   the link is a valid address the file row dims out and **[en:tran:Import]** lights up.
    (A malformed address turns the box red with the tip **Invalid URL**.)
 3. Click **Import**. A progress line walks through **Downloading file… → Reading file… →
    Deleting file…** — the app fetches the file itself, reads it, and throws the download
@@ -87,7 +86,7 @@ matters** — the last two take their suggestions from the language you set firs
 > it is harmless, and reusing the same code later just refills it.)
 
 > **Putting the KJV back.** The **KJV** row — and only that row — carries an extra
-> orange ↺ button, **Reset Bible XML** (កំណត់ XML ព្រះគម្ពីរឡើងវិញ), to the LEFT of the ✏️ pencil.
+> orange ↺ button, **[en:tran:Reset Bible XML]**, to the LEFT of the ✏️ pencil.
 > It asks _Reset this bible XML with the app embedded KJV? All your changes will be
 > lost._ — **Yes** throws away the KJV file you have and writes the copy that ships inside
 > the app (the same copy the **Create KJV Bible XML** row below writes),
@@ -98,7 +97,7 @@ matters** — the last two take their suggestions from the language you set firs
 >
 > **Deleted it by mistake?** The KJV is the one translation the app carries inside
 > itself, so it can always be rebuilt. Whenever your list has no **KJV**, a green
-> **+ Create KJV Bible XML** (បង្កើតឯកសារ XML ព្រះគម្ពីរ KJV) row sits at the TOP
+> **[en:tran:Create KJV Bible XML]** row sits at the TOP
 > of the **Bibles XML** list, above the translations — not only on a brand-new install
 > with nothing in the list. Click it and the KJV comes back; the button then disappears
 > because there is nothing left to create.
@@ -108,5 +107,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `RD-11` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

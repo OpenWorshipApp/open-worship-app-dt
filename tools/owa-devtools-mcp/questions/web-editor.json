@@ -1,0 +1,105 @@
+{
+    "page": "web-editor",
+    "label": "Web Editor",
+    "window": "webEditor.html",
+    "focus": "webEditor",
+    "description": "The window a web background is set up in: the address and title on one side, the page itself on the other.",
+    "updated": "2026-09-02",
+    "sections": [
+        {
+            "id": "editing",
+            "label": "Setting up a web background",
+            "panel": "Editor",
+            "recipes": [
+                "W-15",
+                "W-08"
+            ],
+            "questions": [
+                {
+                    "id": "edit-web-item",
+                    "text": "How do I change the address of a web background?",
+                    "kind": "howto",
+                    "keywords": [
+                        "url",
+                        "address",
+                        "link",
+                        "change page",
+                        "edit web"
+                    ],
+                    "starter": true,
+                    "starterRank": 1,
+                    "resources": {
+                        "recipe": "W-15",
+                        "related": [
+                            "W-08"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "web-title",
+                    "text": "How do I give a web background a name?",
+                    "kind": "howto",
+                    "keywords": [
+                        "title",
+                        "name",
+                        "label",
+                        "call it"
+                    ],
+                    "starter": true,
+                    "starterRank": 2,
+                    "resources": {
+                        "recipe": "W-15",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "save-web-item",
+                    "text": "How do I save the web background I am editing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "save",
+                        "keep",
+                        "store",
+                        "apply"
+                    ],
+                    "starter": true,
+                    "starterRank": 3,
+                    "resources": {
+                        "recipe": "W-15",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "using-it",
+            "label": "Putting it on the screen",
+            "panel": "Background",
+            "recipes": [
+                "W-08"
+            ],
+            "questions": [
+                {
+                    "id": "present-web-background",
+                    "text": "How do I show this web page as the background?",
+                    "kind": "howto",
+                    "keywords": [
+                        "present",
+                        "show",
+                        "projector",
+                        "screen",
+                        "web background"
+                    ],
+                    "starter": true,
+                    "starterRank": 4,
+                    "resources": {
+                        "recipe": "W-08",
+                        "find": "Background > Webs",
+                        "guide": true
+                    }
+                }
+            ]
+        }
+    ]
+}

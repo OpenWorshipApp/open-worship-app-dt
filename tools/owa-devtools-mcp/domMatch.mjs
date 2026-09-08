@@ -92,6 +92,30 @@ export const DOM_MATCH_RUNTIME = `
         });
     };
 
+    // Is one of those names what was asked for once the decoration comes
+    // off -- the shortcut a title carries in brackets ("Toggle showing
+    // screen [F5]"), an icon glyph in front of the words? This is the bar
+    // for PRESSING. The tiers below it are right for pointing and for a
+    // near miss, and wrong for a click: measured 2026-09-08 over every
+    // recipe step, the demo pressed "Clear All [F6]" on the projector for a
+    // step about the drawing panel's Clear, "Break lines following model
+    // formatting" for "Follow", "Add Bible Item" for "Add", and opened the
+    // help window for "ASSISTANT" -- every one a tier-1 or looser match
+    // taken as the thing itself.
+    const normaliseLabelPart = (part) => {
+        return String(part)
+            .toLowerCase()
+            .replace(/\\[[^\\]]*\\]/g, ' ')
+            .replace(/^[^\\p{L}\\p{N}]+/u, '')
+            .replace(/\\s+/g, ' ')
+            .trim();
+    };
+    const checkIsNamedNearly = (element, needle) => {
+        return labelPartsOf(element).some((part) => {
+            return normaliseLabelPart(part) === needle;
+        });
+    };
+
     // A named PLACE rather than a thing to press: a resizable panel, a
     // dialog, the body of a tab. Read off the attribute first because this
     // runs for every ancestor of every candidate -- the roles below are the
@@ -169,6 +193,14 @@ export const DOM_MATCH_RUNTIME = `
         }
         if (candidate.isControl !== best.isControl) {
             return candidate.isControl;
+        }
+        // Of two controls that fit equally, the one already on show.
+        // Ranked BELOW isControl on purpose: a hover-revealed button
+        // is a real thing to press and a visible container is not, so
+        // reaching for whatever is visible first is exactly the
+        // wrong-ring bug this ordering was built to stop.
+        if (candidate.isShown !== best.isShown) {
+            return candidate.isShown;
         }
         // Two controls that fit equally: the one inside the panel the step
         // named is the one the step meant.
@@ -348,13 +380,217 @@ export const DOM_MATCH_RUNTIME = `
         return isCovered ? 4 : -1;
     };
 
+    // ------------------------------------------------------------------
+    // Controls this app only paints while the mouse is over them.
+    //
+    // A row of icons that appears on hover is NOT missing from the page:
+    // it is laid out, sized and clickable, and hidden by visibility (or a
+    // zero opacity) rather than by display. So "does it have a box?"
+    // -- the only question this matcher used to ask -- answered yes, and
+    // the ring landed on blank space above a bible view while the answer
+    // named a button the user could not see. The six icons over every
+    // bible view (Copy, Split, Save, Export...) are exactly that, and so
+    // are two dozen more controls on the presenter as it stands.
+    const VISIBILITY_OPTIONS = {
+        checkVisibilityCSS: true,
+        opacityProperty: true,
+    };
+
+    // Three states, because they want three different answers.
+    // 'shown'  -- a person can see it.
+    // 'hidden' -- laid out but painted away. Reachable, and revealHidden
+    //             below brings it back.
+    // 'gone'   -- no box at all: display:none, or a panel that is closed.
+    //             Nothing to reveal and nothing to ring.
+    // Measured on the presenter: checkVisibility answers for all 659
+    // controls in 0.4ms against 11ms for the ancestor walk it replaces --
+    // this runs for every element on the window, on machines that count.
+    const visibilityOf = (element) => {
+        if (element.checkVisibility(VISIBILITY_OPTIONS)) {
+            return 'shown';
+        }
+        // Has it a box at all? That is what checkVisibility answers with
+        // no options: display:none and anything not being rendered say no,
+        // while a control merely painted away still says yes. Reading the
+        // rect instead would answer the same and force a layout to do it.
+        return element.checkVisibility() ? 'hidden' : 'gone';
+    };
+
+    const HOVER_ATTR = 'data-owa-hover';
+    // Far past any real nesting; a guard against a cycle, not a budget.
+    const MAX_HOVER_CHAIN = 40;
+
+    // The page own :hover rules, re-aimed at an attribute we can put on
+    // an element ourselves. :hover and [attr] weigh the SAME in the
+    // cascade, so a rewritten rule beats its twin only by coming later in
+    // the sheet -- which is the whole trick, and why none of this needs
+    // an !important that would then have to be undone.
+    //
+    // Read fresh on every reveal rather than cached: 162 of the
+    // presenter's 5639 rules carry :hover and finding them costs ~7ms,
+    // against a table that would then sit in the page for the rest of the
+    // session on a machine that cannot spare it. A reveal happens once
+    // per acting call, never per frame.
+    const collectHoverRules = () => {
+        const rules = [];
+        const walk = (list) => {
+            for (const rule of list) {
+                const selector = rule.selectorText;
+                if (
+                    typeof selector === 'string' &&
+                    selector.includes(':hover') && rule.style !== undefined
+                ) {
+                    rules.push({
+                        forced: selector.split(':hover')
+                            .join('[' + HOVER_ATTR + ']'),
+                        body: rule.style.cssText,
+                    });
+                }
+                // A style rule carries cssRules of its own now that CSS
+                // nesting exists -- empty for most of them, and the
+                // nested half of the sheet for the rest. Skipping them
+                // read the app's stylesheets as having no hover rules.
+                if (rule.cssRules !== undefined && rule.cssRules.length) {
+                    walk(rule.cssRules);
+                }
+            }
+        };
+        for (const sheet of document.styleSheets) {
+            try {
+                walk(sheet.cssRules);
+            } catch (error) {
+                // A sheet from another origin will not open its rules.
+                // The app's own are all same-origin; skipping is right.
+            }
+        }
+        return rules;
+    };
+
+    // One reveal at a time, so the page can never be left wearing more
+    // than one of ours -- and it always lapses by itself. A caller that
+    // never gets to release (a click that navigates, a card that is
+    // closed) still hands the window back the way it found it.
+    let held = null;
+
+    const releaseHidden = () => {
+        if (held === null) {
+            return;
+        }
+        clearTimeout(held.timeoutId);
+        for (const node of held.chain) {
+            node.removeAttribute(HOVER_ATTR);
+        }
+        held.style.remove();
+        held = null;
+    };
+
+    // Hold a hover-revealed control visible, without touching the mouse.
+    //
+    // The mouse is the user. Moving it -- even synthetically -- fights
+    // them for it and lands wherever the window has scrolled to since.
+    // Forcing the state the mouse WOULD have produced is the same result
+    // and none of that, and it stays put while they read the card, where
+    // a real hover would end the moment they reached for the button.
+    //
+    // Answers whether the control is BEING HELD visible -- true for a
+    // reveal this call made and true for one already up (the hold is
+    // re-armed), false when it never needed one. Callers say "hold this
+    // if it needs holding" and read the answer; asking them to test
+    // first made the guide card drop its own explanation on the second
+    // render of a step, when the control it was describing was visible
+    // precisely BECAUSE the card was holding it.
+    //
+    // Every ancestor is stamped, not just the one that does the hiding:
+    // the browser marks the whole chain :hover when a mouse is over a
+    // control, and the rule that reveals a toolbar is written several
+    // levels up (the icons over a bible view are revealed by the bible
+    // view itself). Only rules that match something on that chain are
+    // injected, so a reveal is five rules, not the page's 162.
+    const revealHidden = (element, holdMs = 4000) => {
+        if (held !== null && held.element === element) {
+            clearTimeout(held.timeoutId);
+            held.timeoutId = setTimeout(releaseHidden, holdMs);
+            return true;
+        }
+        releaseHidden();
+        if (visibilityOf(element) !== 'hidden') {
+            return false;
+        }
+        const chain = [];
+        let node = element;
+        while (
+            node !== null && node.nodeType === 1 &&
+            chain.length < MAX_HOVER_CHAIN
+        ) {
+            chain.push(node);
+            node = node.parentElement;
+        }
+        const unstamp = () => {
+            for (const one of chain) {
+                one.removeAttribute(HOVER_ATTR);
+            }
+        };
+        for (const one of chain) {
+            one.setAttribute(HOVER_ATTR, '');
+        }
+        const wanted = [];
+        for (const rule of collectHoverRules()) {
+            let isWanted = false;
+            try {
+                isWanted = chain.some((one) => {
+                    return one.matches(rule.forced);
+                });
+            } catch (error) {
+                // A selector this engine will not parse is not ours.
+                isWanted = false;
+            }
+            if (isWanted) {
+                wanted.push(rule.forced + '{' + rule.body + '}');
+            }
+        }
+        if (wanted.length === 0) {
+            unstamp();
+            return false;
+        }
+        const style = document.createElement('style');
+        style.setAttribute('data-owa-hover-style', '');
+        style.textContent = wanted.join(' ');
+        document.head.append(style);
+        // Judged WITHOUT the opacity test that classified it. A reveal
+        // the app fades in over half a second is still at opacity 0 the
+        // instant the rule lands -- a running transition keeps the old
+        // computed value until its first frame -- so measuring the end of
+        // a fade before it starts fails every one of them. Visibility and
+        // display flip at once, and they are what hides these controls.
+        if (!element.checkVisibility({ checkVisibilityCSS: true })) {
+            unstamp();
+            style.remove();
+            return false;
+        }
+        held = {
+            element, chain, style,
+            timeoutId: setTimeout(releaseHidden, holdMs),
+        };
+        return true;
+    };
+
     // Every candidate the caller offered, in order, until one is on screen.
     // A hidden match is kept only as a fallback: the panel it belongs to may
     // simply be closed, which is a different answer than "not there". With
     // onlyBoxes (typing) a button that merely shares the words is skipped
     // -- "Genesis 1" is a history row to click, never a box to type into.
-    const findBest = (needles, { onlyBoxes = false } = {}) => {
+    // preferPressSafe: keep scanning the candidates for one whose match is
+    // exact before settling for a loose fit on an earlier one. A step offers
+    // its candidates in order and the first with ANY match used to win: a
+    // step naming "Show" and "Toggle showing screen" answered with a
+    // word-start match on "Add Stage" (…are shown) and never tried the
+    // second, which is the control's exact title (measured 2026-09-08).
+    const findBest = (
+        needles,
+        { onlyBoxes = false, preferPressSafe = false } = {},
+    ) => {
         let hiddenFallback = null;
+        let looseFallback = null;
         for (const one of needles) {
             const { text: needle, scope, isRegionWanted } = parseNeedle(one);
             if (needle.length === 0) {
@@ -394,18 +630,34 @@ export const DOM_MATCH_RUNTIME = `
                         continue;
                     }
                 }
-                const rect = element.getBoundingClientRect();
-                if (rect.width === 0 || rect.height === 0) {
+                const seen = visibilityOf(element);
+                // Only a control with no box at all is set aside.
+                // One that is merely painted away is a real answer --
+                // the caller reveals it -- and dropping it here is
+                // how a step ended up ringing whatever visible thing
+                // shared its words instead.
+                if (seen === 'gone') {
                     hiddenFallback = hiddenFallback ?? {
                         element, tier, needle: one,
+                        isPressSafe:
+                            tier === 0 || checkIsNamedNearly(element, needle),
                     };
                     continue;
                 }
+                const isRegion = checkIsRegion(element);
                 const candidate = {
                     element, tier, needle: one, isInScope,
+                    isShown: seen === 'shown',
                     isControl: checkIsControl(element),
-                    isRegion: checkIsRegion(element),
+                    isRegion,
                     isNamed: checkIsNamedExactly(element, needle),
+                    // Safe to PRESS: the control is called what the step
+                    // says, not merely containing or beginning with it --
+                    // or it is the very panel the step asked for.
+                    isPressSafe:
+                        tier === 0 ||
+                        checkIsNamedNearly(element, needle) ||
+                        (isRegion && isRegionWanted),
                     length: label.length,
                 };
                 if (
@@ -416,10 +668,13 @@ export const DOM_MATCH_RUNTIME = `
                 }
             }
             if (best !== null) {
-                return best;
+                if (!preferPressSafe || best.isPressSafe === true) {
+                    return best;
+                }
+                looseFallback = looseFallback ?? best;
             }
         }
-        return hiddenFallback;
+        return looseFallback ?? hiddenFallback;
     };
 
     // When nothing matches, the labels that came closest. "reference box"
@@ -445,8 +700,7 @@ export const DOM_MATCH_RUNTIME = `
             if (label.length === 0 || label.length > 120) {
                 continue;
             }
-            const rect = element.getBoundingClientRect();
-            if (rect.width === 0 || rect.height === 0) {
+            if (visibilityOf(element) === 'gone') {
                 continue;
             }
             const labelTokens = new Set(tokensOf(label));
@@ -491,8 +745,83 @@ export const DOM_MATCH_RUNTIME = `
         });
     };
 
+    // A selector that finds THIS element again and nothing else.
+    //
+    // Asked for by the element picker: "the button I mean" is a thing a person
+    // can point at and cannot describe, and every other field here describes.
+    // It is built shortest-first and each candidate is TESTED against the
+    // document before it is returned -- a selector that matches two elements is
+    // worse than none, because it looks like an answer.
+    //
+    // Words the app chose beat position: 'data-widget-name', an aria-label or a
+    // placeholder survive a re-render and a sibling being inserted, where
+    // ':nth-child(7)' is right until the list above it grows by one. The tag
+    // always leads so a bare attribute cannot match something unrelated.
+    const cssEscape = (value) => {
+        const text = String(value);
+        return window.CSS !== undefined && CSS.escape !== undefined
+            ? CSS.escape(text)
+            : text.replace(/[^a-zA-Z0-9_-]/g, '\\\\$&');
+    };
+    const NAMING_ATTRIBUTES = [
+        'data-widget-name', 'data-tab-key', 'name', 'aria-label',
+        'placeholder', 'title',
+    ];
+    const selectorPartOf = (element) => {
+        const tag = element.tagName.toLowerCase();
+        // An id is only worth using when it is one the app wrote. React and
+        // Bootstrap both mint ids that change on the next render, and a
+        // selector built on one is a selector that stops working while the
+        // user is still looking at the same screen.
+        const id = element.getAttribute('id');
+        if (id !== null && /^[A-Za-z][\\w-]*$/.test(id) && !/[0-9]{4}/.test(id)) {
+            return tag + '#' + cssEscape(id);
+        }
+        for (const name of NAMING_ATTRIBUTES) {
+            const value = element.getAttribute(name);
+            if (value !== null && value.length > 0 && value.length < 60) {
+                return tag + '[' + name + '="' + value.replace(
+                    /["\\\\]/g, '\\\\$&',
+                ) + '"]';
+            }
+        }
+        const parent = element.parentElement;
+        if (parent === null) {
+            return tag;
+        }
+        const index = [...parent.children].indexOf(element) + 1;
+        return tag + ':nth-child(' + index + ')';
+    };
+    const MAX_SELECTOR_DEPTH = 8;
+    const selectorOf = (element) => {
+        if (element === null || element === undefined || element === document.body) {
+            return null;
+        }
+        const parts = [];
+        let current = element;
+        for (let step = 0; step < MAX_SELECTOR_DEPTH; step++) {
+            if (current === null || current === document.body) {
+                break;
+            }
+            parts.unshift(selectorPartOf(current));
+            const candidate = parts.join(' > ');
+            try {
+                const found = document.querySelectorAll(candidate);
+                if (found.length === 1 && found[0] === element) {
+                    return candidate;
+                }
+            } catch (_error) {
+                // A selector this engine will not parse is not an answer.
+                return null;
+            }
+            current = current.parentElement;
+        }
+        return null;
+    };
+
     const describe = (element) => {
         const rect = element.getBoundingClientRect();
+        const seen = visibilityOf(element);
         const owner = element.closest('[data-react-comp-fp]');
         // Said in words, because the person being pointed at the control is
         // looking at a window, not at a coordinate system.
@@ -514,7 +843,15 @@ export const DOM_MATCH_RUNTIME = `
                 ? 'in the middle of the window'
                 : 'at the ' + vertical + ' ' + horizontal + ' of the window',
             tag: element.tagName.toLowerCase(),
-            isVisible: rect.width > 0 && rect.height > 0,
+            // Having a box is not being visible. A control the app
+            // paints only under the mouse used to report
+            // isVisible: true, so an answer sent someone looking for
+            // a button that was not on their screen.
+            isVisible: seen === 'shown',
+            // Said only when it is true, so an ordinary control costs
+            // the reader nothing: this one appears when the mouse is
+            // over the part of the window it lives in.
+            showsOnHover: seen === 'hidden' ? true : undefined,
             isEnabled: element.disabled !== true &&
                 element.getAttribute('aria-disabled') !== 'true',
             position: {
@@ -660,10 +997,14 @@ export const DOM_MATCH_RUNTIME = `
         const seen = new Set();
         const rows = [];
         for (const element of collect()) {
-            const rect = element.getBoundingClientRect();
-            if (rect.width === 0 || rect.height === 0) {
+            // Hover-revealed controls stay on the list, marked:
+            // leaving them off is what stopped the assistant ever
+            // mentioning the row of icons above a bible view. Only
+            // what has no box at all is skipped.
+            if (visibilityOf(element) === 'gone') {
                 continue;
             }
+            const rect = element.getBoundingClientRect();
             const label = labelOf(element);
             if (label.length === 0 || label.length > 120) {
                 continue;
@@ -687,10 +1028,11 @@ export const DOM_MATCH_RUNTIME = `
 
     window.__owaDomMatch = {
         collect, labelOf, labelPartsOf, matchTier, checkIsControl,
+        visibilityOf, revealHidden, releaseHidden,
         checkIsNamedExactly, checkIsTextBox, findBest, findListRegion,
         openContextMenu, waitForBest, nearMisses, describe, flash,
         listControls, parseNeedle, containerPathOf, checkIsRegion,
-        checkIsInScope, pathTier, checkIsBetter,
+        checkIsInScope, pathTier, checkIsBetter, selectorOf,
     };
     return window.__owaDomMatch;
 })()`;
@@ -711,10 +1053,35 @@ export function genListUiExpression({ filter = '', limit = 100 } = {}) {
  * Click the control a label names, waiting a moment for it to render. On a
  * miss the expression answers with the closest labels it did see, so the
  * caller retries with real words instead of a new guess.
+ *
+ * It answers with what the press DID as well as what it hit. Pressing is not
+ * an outcome, and a tool that reports only the press invites the answer this
+ * was built after: asked to turn the projector on, the assistant matched a
+ * toolbar-reveal decoration titled "Show", was told it had clicked "Show",
+ * and said "Done -- the screen is now showing" to a room with nothing on the
+ * wall. So the control is read back AFTER the press: a toggle that flipped is
+ * proof, and no readable state is `unverified`, which is a worse answer than
+ * proof and a far better one than silence.
  */
-export function genClickExpression(finds, timeoutMs = 1500) {
+export function genClickExpression(finds, timeoutMs = 1500, settleMs = 250) {
     return `(async () => {
         const dm = ${DOM_MATCH_RUNTIME};
+        // The on/off a control carries about ITSELF, or null when it carries
+        // none. Read off the accessibility tree first because that is what
+        // the app already maintains for these -- the show/hide screen control
+        // is a styled div whose aria-pressed IS its state -- and off
+        // .checked only for a real input.
+        const stateOf = (element) => {
+            for (const name of ['aria-pressed', 'aria-checked', 'aria-expanded']) {
+                const value = element.getAttribute(name);
+                if (value === 'true' || value === 'false') {
+                    return value === 'true';
+                }
+            }
+            return typeof element.checked === 'boolean'
+                ? element.checked
+                : null;
+        };
         const found = await dm.waitForBest(${JSON.stringify(finds)}, ${timeoutMs});
         if (found.element === null) {
             return {
@@ -724,8 +1091,13 @@ export function genClickExpression(finds, timeoutMs = 1500) {
             };
         }
         const target = found.element;
-        const rect = target.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) {
+        // Controls this app only paints under the mouse are
+        // pressed with the mouse nowhere near them, so the hover
+        // is forced first -- and held a moment AFTER the press,
+        // because a button that is invisible before and after it
+        // is pressed leaves the user with no idea what happened.
+        const isRevealed = dm.revealHidden(target, 1500);
+        if (dm.visibilityOf(target) === 'gone') {
             return {
                 clicked: null,
                 reason: 'the matching control is not visible right now',
@@ -733,8 +1105,51 @@ export function genClickExpression(finds, timeoutMs = 1500) {
             };
         }
         target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        const describedBefore = dm.describe(target);
+        const stateBefore = stateOf(target);
         target.click();
-        return { clicked: dm.describe(target), matched: found.needle };
+        // This app re-renders on an event, not on the press, so reading the
+        // control straight back reports what it looked like BEFORE it was
+        // pressed -- which would have made every toggle report 'no change'.
+        await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
+        // Three kinds of evidence, weakest last. A control that is GONE did
+        // something (a menu item, a row that closed its own panel); a toggle
+        // that flipped is the state itself; a label that turned Show into
+        // Hide is the same fact written in words. Anything else is a press
+        // with nothing to show for it.
+        const isStillHere = target.isConnected;
+        const stateAfter = isStillHere ? stateOf(target) : null;
+        const labelAfter = isStillHere ? dm.labelOf(target).slice(0, 80) : null;
+        const didChange = !isStillHere
+            ? true
+            : (stateBefore !== null || stateAfter !== null
+                ? stateAfter !== stateBefore
+                : labelAfter !== describedBefore.label);
+        return {
+            clicked: describedBefore,
+            matched: found.needle,
+            // Only when it happened, and said in the words the
+            // answer needs: this control is not on their screen
+            // until they put the mouse over that part of it.
+            revealedForHover: isRevealed ? true : undefined,
+            // What the control says about itself now. Present only when it
+            // says anything at all -- a plain button says nothing, and
+            // inventing an 'on' for it would be the same lie in a new place.
+            isOnNow: stateAfter === null ? undefined : stateAfter,
+            // Whether anything about the control itself changed. false is
+            // the interesting one: a press that did nothing at all.
+            didChange,
+            // The one field written for the model rather than about the DOM.
+            // Absent evidence must not read as success, so it is spelled out
+            // rather than left to be inferred from a missing key.
+            unverified: didChange
+                ? undefined
+                : 'The press left this control exactly as it was, so nothing ' +
+                    'is proven. Check the thing you were asked to change -- ' +
+                    'owa_list_screens for the projector, owa_app_state for ' +
+                    'the window, owa_find_ui for the control -- or tell the ' +
+                    'user what you pressed rather than what happened.',
+        };
     })()`;
 }
 
@@ -761,8 +1176,11 @@ export function genTypeExpression(
             };
         }
         const target = found.element;
-        const rect = target.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) {
+        // A box inside a bar the app hides until the mouse is over
+        // it types perfectly well -- but typing into something the
+        // user cannot see is how they end up not believing us.
+        const isRevealed = dm.revealHidden(target, 4000);
+        if (dm.visibilityOf(target) === 'gone') {
             return {
                 typed: null,
                 reason: 'the matching box is not visible right now',
@@ -800,7 +1218,11 @@ export function genTypeExpression(
                 }));
             }
         }
-        return { typed: ${JSON.stringify(value)}, into: dm.describe(target) };
+        return {
+            typed: ${JSON.stringify(value)},
+            into: dm.describe(target),
+            revealedForHover: isRevealed ? true : undefined,
+        };
     })()`;
 }
 
@@ -810,6 +1232,42 @@ export function genTypeExpression(
  * zero answer comes back with the closest labels on screen, so "where is the
  * reference box" can still point at the "Bible Reference" box that is there.
  */
+/**
+ * Ring exactly the element a selector names, skipping the matcher entirely.
+ *
+ * For the one case where the caller already KNOWS which element it means: the
+ * user pointed at it, and pressing its chip should show them where it went.
+ * Going back through the label matcher there would be a guess dressed as a
+ * lookup -- "Copy" is on six controls, and the one they picked is the one they
+ * expect to light up.
+ */
+export function genHighlightSelectorExpression(selector, isHighlighting) {
+    return `(() => {
+        const dm = ${DOM_MATCH_RUNTIME};
+        let element = null;
+        try {
+            element = document.querySelector(${JSON.stringify(String(selector))});
+        } catch (_error) {
+            return { found: false, reason: 'That is not a selector this page can read.' };
+        }
+        if (element === null) {
+            // The honest answer, and a common one: panels come and go, and a
+            // control picked ten minutes ago may simply not be on screen.
+            return { found: false, reason: 'That control is not on the screen any more.' };
+        }
+        let isRevealed = false;
+        if (${isHighlighting ? 'true' : 'false'}) {
+            isRevealed = dm.revealHidden(element, 4000);
+            dm.flash(element);
+        }
+        return {
+            found: true,
+            match: dm.describe(element),
+            revealedForHover: isRevealed ? true : undefined,
+        };
+    })()`;
+}
+
 export function genFindUiExpression(text, isHighlighting) {
     return `(() => {
         const dm = ${DOM_MATCH_RUNTIME};
@@ -866,6 +1324,15 @@ export function genFindUiExpression(text, isHighlighting) {
         // forty controls while the answer named twenty of them, most of which
         // were not the twenty that were ringed.
         const shown = found.slice(0, ${MAX_FIND_UI_MATCHES});
+        // Ringing a control the app has not painted points at
+        // blank space. The best answer is held visible for as long
+        // as its ring lasts -- one at a time, because a window
+        // wearing several forced hovers at once is not a window
+        // anybody could recognise.
+        let isRevealed = false;
+        if (${isHighlighting ? 'true' : 'false'} && shown.length > 0) {
+            isRevealed = dm.revealHidden(shown[0].element, 4000);
+        }
         if (${isHighlighting ? 'true' : 'false'}) {
             for (const one of shown) {
                 dm.flash(one.element);
@@ -877,6 +1344,7 @@ export function genFindUiExpression(text, isHighlighting) {
             count: found.length,
             shownCount: shown.length,
             matches: shown.map((one) => one.described),
+            revealedForHover: isRevealed ? true : undefined,
             nearMisses: shown.length === 0
                 ? dm.nearMisses([${JSON.stringify(String(text))}])
                 : [],

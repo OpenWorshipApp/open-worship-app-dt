@@ -5,16 +5,16 @@ section: "Presenting content"
 verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, KB-03, KB-07]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
 **Goal:** run service extras.
 
-**Audio:** in the Background panel, toggle the **Audios** (សំលេង) tab open, click play
+**Audio:** in the Background panel, toggle the **[en:tran:Audios]** tab open, click play
 on a track — the tab is marked while playing; click stop to end. 📸
 
-**Foreground widgets** — open the middle **Foreground** (ផ្ទៃខាងមុខ) tab; each widget
+**Foreground widgets** — open the middle **[en:tran:Foreground]** tab; each widget
 has its own controls and a Show/Start button:
 
 - **Marquee Top:** type the scrolling text, click Show — it scrolls along the top edge.
@@ -40,5 +40,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `KB-03` · `KB-07`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

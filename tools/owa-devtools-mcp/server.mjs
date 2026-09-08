@@ -12,6 +12,7 @@ import { parseArguments } from 'chrome-devtools-mcp/build/src/config/mcp-options
 import { VERSION } from 'chrome-devtools-mcp/build/src/version.js';
 
 import { readLiveInstances } from './discovery.mjs';
+import { guardToolCalls } from './firewall.mjs';
 import { watchToolCalls } from './notify.mjs';
 import { registerOwaTools } from './owaTools.mjs';
 
@@ -58,6 +59,11 @@ export async function createOwaMcpServer({ argv = [], logFile } = {}) {
         const connected = await connect(transport);
         // After, never before: the SDK chains whatever handler it finds.
         watchToolCalls(transport);
+        // Last, so it is the OUTERMOST wrapper and therefore runs FIRST. The
+        // order is load-bearing: a call the firewall refuses must not also
+        // raise a banner telling the user the app just did it. See
+        // `firewall.mjs` for what it refuses and why.
+        guardToolCalls(transport);
         return connected;
     };
     return { server, args };

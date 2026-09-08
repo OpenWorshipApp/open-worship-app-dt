@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PL-10, PL-29, PL-32, PL-33, PL-34, PL-35, PL-36, PL-37, PL-38, PL-39, PL-40, PL-41, PL-42, PL-43, PL-44, PL-45, PL-46, PL-47, PL-48, PL-49, PL-50, PL-51, PL-52, PL-53, PL-54, PL-55, PL-56, PL-57, PL-58, PL-59, PL-60, PL-61, PL-62, PL-63, PL-64, PL-65, PL-66, PL-67, PL-68, PL-69, PL-70, PL-71, PL-72, PL-73, PL-74, PL-75, PL-76, PL-81, PL-82, PL-83, PL-84, PL-85, PL-86, PL-87, PL-88, PL-89, PL-90, PL-91, PL-92, PL-93, PL-94, PL-95, PL-96, PL-101]
 screenshots: 27
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-22 — Build a service presenting flow (and share it)
 
@@ -13,8 +13,8 @@ workflowsVersion: "2026-08-31"
 foreground presets — into one running order you can work down live, and hand the whole
 thing to another machine.
 
-1. Find the **Presenting Flows** (តារាងកម្មវិធី) panel — it is the lower of the two lists on the
-   left, under **Documents** (ឯកសារ). If the list is empty, right-click its empty area (or
+1. Find the **[en:tran:Presenting Flows]** panel — it is the lower of the two lists on the
+   left, under **[en:tran:Documents]**. If the list is empty, right-click its empty area (or
    use the **⋮ More Options** button in its title bar) → **New File** to create one. 📸
 2. **Drag things onto the presenting flow's NAME row to add them.** (Dropping onto a _line_ of an
    open presenting flow does something else — see step 5.) Anything you can present can go in:
@@ -25,19 +25,18 @@ thing to another machine.
    - a **foreground preset** — drag the blue **Show Marquee Top** / **Start Countdown** /
      **Show Time** button itself. Whatever you typed and styled travels with it, so the
      presenting flow remembers _that_ announcement, not just "a marquee". 📸
-   - an **audio track** — drag it out of the **♫Audios♫** (សំលេង) split.
+   - an **audio track** — drag it out of the **[en:tran:Audios]** split.
 
    **Add a screen action.** A running order can also hold something to _do_ rather than
-   something to show. Right-click the presenting flow → **Add Action** (បន្ថែមសកម្មភាព) →
-   **Clear Screen** (លុបអេក្រង់) — a row that adds nothing and opens the clears — and pick
-   one of **Clear All** (លុបទាំងអស់), **Clear Background** (លុបផ្ទៃខាងក្រោយ), **Clear
-   Slide** (លុបស្លាយ), **Clear Bible** (លុបព្រះគម្ពីរ) or **Clear Foreground**
-   (លុបផ្ទៃខាងមុខ) — the same five clears as the buttons on each mini screen, and the line
+   something to show. Right-click the presenting flow → **[en:tran:Add Action]** →
+   **[en:tran:Clear Screen]** — a row that adds nothing and opens the clears — and pick
+   one of **[en:tran:Clear All]**, **[en:tran:Clear Background]**, **Clear
+   Slide** ([en:tran:Clear Slide]), **[en:tran:Clear Bible]** or **[en:tran:Clear Foreground]** — the same five clears as the buttons on each mini screen, and the line
    carries the same `ALL` / `BG` / `SL` / `BB` / `FG` badge so you can tell them apart at a
    glance. It lands at the end of the list; drag it up to where it belongs — say between
    the last song and the sermon. 📸
 
-   Under those five, **Other Clear FG Items** (ការលុប FG ផ្សេងទៀត) offers a **finer clear
+   Under those five, **[en:tran:Other Clear FG Items]** offers a **finer clear
    for one foreground widget at a time**, so you can take the countdown down and leave the
    marquee running: **Clear FG
    Marquee Top** (`M↑`), **Marquee Bottom** (`M↓`), **Quick Text** (`QT`), **Countdown**
@@ -48,11 +47,10 @@ thing to another machine.
    _background_ despite sitting in that panel, so **Clear Background** is what stops it.
 
    **Let the running order walk itself.** Back on the first menu — beside **Clear Screen**,
-   not inside it — are two actions that move the RUN on instead of touching a screen: **Next: Interval** (បន្ទាប់៖ រៀងរាល់ចន្លោះពេល)
-   and **Next: Timeout** (បន្ទាប់៖ អស់ពេលកំណត់). Each asks how many **seconds**
-   (វិនាទី) when you add it, and the answer is part of the line — `⏱ Next: Timeout (5)` —
+   not inside it — are two actions that move the RUN on instead of touching a screen: **[en:tran:Next: Interval]**
+   and **[en:tran:Next: Timeout]**. Each asks how many **[en:tran:Seconds]** when you add it, and the answer is part of the line — `⏱ Next: Timeout (5)` —
    so a glance at the sheet tells you how long it waits. Got it wrong? Right-click the
-   line → **Change Seconds** (ផ្លាស់ប្តូរវិនាទី); it opens on the number it is holding
+   line → **[en:tran:Change Seconds]**; it opens on the number it is holding
    now. 📸
 
    - **Next: Timeout** waits once. When the run reaches it, it counts down and then moves
@@ -64,13 +62,12 @@ thing to another machine.
 
      **Or wait until a time on the clock.** A timeout is the one that does not have to be
      counted in seconds: the left-hand side of its question is a chooser, and switching it
-     from **Seconds** to **At Time** (នៅម៉ោង) lets you type the time you want the run to
+     from **Seconds** to **[en:tran:At Time]** lets you type the time you want the run to
      move on — `7:05 AM`, `8:30 PM`. The line then reads `⏱ Next: Timeout (7:05 AM)`, and
      the pill counts down in minutes and hours (`4:58`, `1:12:30`) instead of a long number
      of seconds. Use it for the notice board before a service: put it on the last
      announcement and the run leaves it exactly when the service starts, whether you armed
-     it an hour or five minutes before. Its menu entry is **Change Timing**
-     (ផ្លាស់ប្តូរការកំណត់ពេល) rather than **Change Seconds**, and it opens on whichever half
+     it an hour or five minutes before. Its menu entry is **[en:tran:Change Timing]** rather than **Change Seconds**, and it opens on whichever half
      you armed it with — the two are alternatives, so choosing one clears the other. If the
      time you set has **already gone by**, the app says so (**The set time is already due**)
      and starts nothing: it will not quietly wait until tomorrow. Set a new time, or arm it
@@ -84,7 +81,7 @@ thing to another machine.
      the same colour as the line that started it). Closing the panel stops it too, as does
      reaching the end of the sheet.
 
-   - **Next: Clear Interval** (បន្ទាប់៖ បញ្ឈប់រៀងរាល់ចន្លោះពេល) stops that loop, and it is the
+   - **[en:tran:Next: Clear Interval]** stops that loop, and it is the
      one way the SHEET can stop it: the pill, closing the panel and the end of the list are
      all you being at the machine. Add it — it asks nothing, there being only ever one clock
      running — and the line reads `⊘ Next: Clear Interval` in the interval's own colour,
@@ -111,13 +108,13 @@ thing to another machine.
    **Each line may wait for its own length.** A CC element normally reads whatever the
    `Next: Timeout` line is set to, so re-arming that one line re-arms every follower of it
    at once. When one line needs a different wait, click the small **stopwatch** at the
-   right of that CC row (or right-click it → **Change Timing** / ផ្លាស់ប្តូរការកំណត់ពេល) and
+   right of that CC row (or right-click it → **[en:tran:Change Timing]**) and
    answer with seconds or a time of day, exactly as on a line of its own. That answer
    belongs to **that attachment only**: the same `Next: Timeout` can hold the welcome slide
    for 4 seconds and the notice slide for 30, with one timeout in the running order instead
    of one per length. A row holding its own wait shows the stopwatch **filled** and reads
    its own number; one still following the element shows it hollow. To hand a row back,
-   right-click it → **Use Element Timing** (ប្រើការកំណត់ពេលរបស់ធាតុ) — it goes back to the
+   right-click it → **[en:tran:Use Element Timing]** — it goes back to the
    element's number and moves with it again. 📸
    **A Next: Interval cannot be attached to anything** and is simply not in that list —
    an interval is not stopped by anything you do, so one riding a slide would keep moving
@@ -126,7 +123,7 @@ thing to another machine.
    up **and** stop the loop" is one click, and something that stops a loop can never run
    away with the running order.
 
-   **Go back, not just forward.** The third one, **Jump to** (លោតទៅ), is how a running
+   **Go back, not just forward.** The third one, **[en:tran:Jump to]**, is how a running
    order reaches a line that is not the next one. Add it, then right-click it →
    **Add CC Elements** and pick the line it should go to — its list is everything in the
    presenting flow, **a whole song included**, because here the attached line is not something
@@ -144,8 +141,7 @@ thing to another machine.
    or the line it named has since been deleted, it says so instead of quietly doing
    nothing.
 
-   **Reach a line with a key of your own.** The fourth one, **Keyboard Event**
-   (ព្រឹត្តិការណ៍ក្តារចុច), is a shortcut you set yourself. Adding it asks for the
+   **Reach a line with a key of your own.** The fourth one, **[en:tran:Keyboard Event]**, is a shortcut you set yourself. Adding it asks for the
    shortcut, and you answer by **pressing it** — the box is not typed into. Hold **Ctrl**
    or **Shift** (those two only, and at least one of them, so the shortcut means the same
    thing on any machine and cannot take a key the running order already uses) and press
@@ -163,8 +159,8 @@ thing to another machine.
    to click first. With nothing attached yet it says so rather than doing nothing. 📸
 
    **Put the screen itself up and down.** Two more actions are not about what is _on_ a
-   screen but about whether there is one: **Screen: Show** (អេក្រង់៖ បង្ហាញ) and
-   **Screen: Hide** (អេក្រង់៖ លាក់), the same thing the slides button on each mini screen
+   screen but about whether there is one: **[en:tran:Screen: Show]** and
+   **[en:tran:Screen: Hide]**, the same thing the slides button on each mini screen
    does by hand. Use them when the running order has to work with nobody at the machine —
    a **Screen: Show** at the top of a pre-service loop, a **Screen: Hide** at the end of
    it, and the screen goes dark on its own instead of holding the last announcement until
@@ -196,10 +192,10 @@ thing to another machine.
    presenting flow never plays audio itself, so that you keep the panel's safeguards like
    "one track at a time").
    You can also **drag an element onto a mini screen**, or **right-click → Show on
-   Screens** (បង្ហាញលើអេក្រង់) to pick the screen.
+   Screens** ([en:tran:Show on Screens]) to pick the screen.
    A **screen action** works the same way, except it is _run_ rather than shown: click it
    to clear, drag it onto one mini screen to clear only that one, or right-click →
-   **Apply on Screens** (អនុវត្តនៅលើអេក្រង់) to choose. It never lights up as "live",
+   **[en:tran:Apply on Screens]** to choose. It never lights up as "live",
    because there is nothing of it on the screen to be live. **Screen: Show** /
    **Screen: Hide** are the exception to the first of those: clicking one goes to the
    screens it names and nowhere else. **Apply on Screens** still asks, since that entry
@@ -211,7 +207,7 @@ thing to another machine.
 
    **Send a line to one particular screen, every time.** If a lyric always belongs on the
    stage screen and the sermon slides on the main one, you do not have to drag them there
-   over and over. Right-click the line → **Set Specific Screen** (កំណត់អេក្រង់ជាក់លាក់) and
+   over and over. Right-click the line → **[en:tran:Set Specific Screen]** and
    tick the screens it should go to — `Screen id: 0`, `Screen id: 1`, … The menu stays open
    so you can tick more than one, and the line then shows a small 📌 with those numbers —
    **each number in its own screen's colour**, the very colour that screen's mini-screen
@@ -219,7 +215,7 @@ thing to another machine.
    (The tick boxes in the menu are tinted the same way.) 📸
    From then on **clicking that line ignores which mini screens are selected**
    and goes straight to its own; so do the arrow/Space keys in the preview panel. Untick
-   them, or choose **No Specific Screen** (គ្មានអេក្រង់ជាក់លាក់), to hand it back to the
+   them, or choose **[en:tran:No Specific Screen]**, to hand it back to the
    normal behaviour.
 
    Two things deliberately still override a pin, so you are never stuck: **dragging** the
@@ -255,7 +251,7 @@ thing to another machine.
      only way to put it anywhere but the end of the list, since dropping on the presenting flow's
      name adds to the end.
 
-   - **right-click the line → Add CC Elements** (បន្ថែមធាតុ CC) and pick from the other
+   - **[en:tran:Add CC Elements]** and pick from the other
      lines already in this presenting flow. 📸
 
    A CC element shows as a `↳` line just under the one it rides with. From then on,
@@ -272,7 +268,7 @@ thing to another machine.
    - **Clicking a CC line never projects it.** It scrolls the element it is a copy of into
      view and flashes it — in the presenting flow and in the preview window at once — so you can
      always find what a short label refers to.
-   - Right-click a CC line for **Remove CC Element** (ដកធាតុ CC ចេញ). There is no
+   - Right-click a CC line for **[en:tran:Remove CC Element]**. There is no
      **Disable** on a CC: parking takes a _line_ out of the running order, and a CC is not
      a line of the running order — one you do not want is simply removed. (So attaching a
      line you have parked gives you a CC that _does_ fire, while the parked line itself
@@ -285,7 +281,7 @@ thing to another machine.
    **Media Control — playing the video or song inside a slide by itself.** A slide can hold
    a video or an audio clip of its own, and normally you press play on it by hand on the
    mini screen. Right-click the slide (or the document line, or the line of a slide inside
-   a document) → **Add Media Control** (បន្ថែមការគ្រប់គ្រងមេឌៀ) and the running order does it
+   a document) → **[en:tran:Add Media Control]** and the running order does it
    for you. A settings panel opens first — nothing is added until you press **Ok**:
 
    - **Action** — **Play**, **Pause** or **Stop**. Play starts the media; Pause leaves it
@@ -336,12 +332,11 @@ thing to another machine.
    is on the slide thumbnails inside the preview panel.
    **Park a line you do not want touched.** A line you might click by accident — an
    alternate verse, last week's notice, a song you may or may not reach — can be taken out
-   of the running order without deleting it: right-click it → **Disable**
-   (បិទដំណើរការ). The line dims, is written in italics, is **crossed out** and gains a small
+   of the running order without deleting it: right-click it → **[en:tran:Disable]**. The line dims, is written in italics, is **crossed out** and gains a small
    amber 🚫 at its right end, and from then on **clicking it does nothing at all** — nothing
    is projected, and a document line does not even open. Dragging it onto a mini screen puts nothing there,
    and the arrow/Space keys in the preview panel step straight past it. Right-click →
-   **Enable** (បើកដំណើរការ) puts it back. (While a line is parked its menu drops
+   **[en:tran:Enable]** puts it back. (While a line is parked its menu drops
    **Show on Screens** — an entry that could no longer do anything — but everything else
    stays, so you can still recolour it, move it, or turn it back on.) 📸
    You can park **one slide of a document** the same way: open the document's arrow and
@@ -357,13 +352,13 @@ thing to another machine.
    turned off; open the document and enable the slide there. In the preview panel the same
    two marks sit in the **bottom-left corner** of each dimmed thumbnail. 📸
 
-6. Right-click an element for **Move up** / **Move down**, **Choose Color** (ជ្រើសរើសពណ៌)
+6. Right-click an element for **Move up** / **Move down**, **[en:tran:Choose Color]**
    to group your running order by colour, or **Remove from Presenting Flow**. To move a line a long
-   way, use **Move to Top** (ផ្លាស់ទីទៅលើគេ) or **Move to Bottom** (ផ្លាស់ទីទៅក្រោមគេ) instead of
+   way, use **[en:tran:Move to Top]** or **[en:tran:Move to Bottom]** instead of
    clicking **Move up** over and over — the line jumps straight to that end and everything
    else keeps its order. (A line that is already at the top is not offered **Move up** or
    **Move to Top**, and one already at the bottom is not offered **Move down** or
-   **Move to Bottom**.) **Duplicate** (ស្ទួន) puts a copy of the line **directly below** it,
+   **Move to Bottom**.) **[en:tran:Duplicate]** puts a copy of the line **directly below** it,
    with its colour, its pinned screens and its parked slides already on the copy — the quick
    way to sing a song twice in one service, then change only the second one. The two copies
    are separate from then on: parking or recolouring one leaves the other alone. 📸
@@ -378,8 +373,7 @@ thing to another machine.
 7. Whatever is **live on the screen right now** is marked with a green `*` — on the
    element itself, on the document it belongs to, on the presenting flow, and on the
    **Presenting Flows** heading — so you can see at a glance where you are in the running order.
-8. Not sure which "5.jpg" a line means? Right-click it → **Reveal Original**
-   (បង្ហាញកន្លែងដើម) — the app scrolls to the real item elsewhere in the window and
+8. Not sure which "5.jpg" a line means? Right-click it → **[en:tran:Reveal Original]** — the app scrolls to the real item elsewhere in the window and
    flashes it. This works on the slides inside an opened document too. A colour or a
    camera has no original to point at, and the panel holding the original has to be
    open already.
@@ -387,8 +381,8 @@ thing to another machine.
    right-click → **Open Preview**). A floating panel shows every element with its real
    preview — slides look exactly as they will project, and a document shows all of its
    slides. Collapse the ones you are not working on — or fold the whole running order
-   away at once with the **Collapse All** (បង្រួមទាំងអស់) icon at the bottom-right of the
-   panel, and open it all again with **Expand All** (ពង្រីកទាំងអស់) beside it. Whichever
+   away at once with the **[en:tran:Collapse All]** icon at the bottom-right of the
+   panel, and open it all again with **[en:tran:Expand All]** beside it. Whichever
    of the two has nothing left to do fades out. Whatever you folded away is remembered for
    that presenting flow, so a running order trimmed down to the few things you are working on
    comes back that way next time — and it follows the element, not its position, so
@@ -449,18 +443,17 @@ thing to another machine.
 
 **Sharing it with another machine**
 
-10. Right-click the presenting flow → **Export** (នាំចេញ). A small panel asks for a
-    **Password** (ពាក្យសម្ងាត់) and a **Confirm Password** (បញ្ជាក់ពាក្យសម្ងាត់).
+10. Right-click the presenting flow → **[en:tran:Export]**. A small panel asks for a
+    **[en:tran:Password]** and a **[en:tran:Confirm Password]**.
     **Leave both empty and press Ok** for the ordinary bundle: one
     `<name>.owapf.tar.gz` file in your **Downloads** folder, and the folder opens. It
     contains the presenting flow _and every file it needs_ — the full documents behind your
     slides, the images and videos, and any background attached to those documents.
     (See step 10a to put a password on it instead.)
     10a. **To protect it with a password**, type the same password in both fields and press
-    **Ok**. **Show Password** (បង្ហាញពាក្យសម្ងាត់) reveals what you typed if you want to
+    **Ok**. **[en:tran:Show Password]** reveals what you typed if you want to
     check it. You get `<name>.owapf.enc` instead — the same bundle, locked. If the two
-    fields do not match the panel says **Passwords do not match**
-    (ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ) and asks again rather than exporting, keeping what you
+    fields do not match the panel says **[en:tran:Passwords do not match]** and asks again rather than exporting, keeping what you
     already typed so you only fix the half that is wrong. Clearing both fields is always
     allowed — that just means "no password".
 
@@ -469,19 +462,18 @@ thing to another machine.
     > somewhere safe before you hand the file over, and send it by a different route than
     > the file itself.
 
-11. On the other machine, right-click an empty part of the **Presenting Flows** list → **Import**
-    (នាំចូល) and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
+11. On the other machine, right-click an empty part of the **Presenting Flows** list → **[en:tran:Import]** and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
     file from your file manager onto the Presenting Flows list**, which imports it the same way.
     A protected bundle asks for its password first, saying **This archive is password
-    protected** (ឯកសារបណ្ណសារនេះត្រូវបានការពារដោយពាក្យសម្ងាត់); get it wrong and it says
-    **Wrong password, try again** (ពាក្យសម្ងាត់មិនត្រឹមត្រូវ សូមព្យាយាមម្តងទៀត) and lets
+    protected** ([en:tran:This archive is password protected]); get it wrong and it says
+    **[en:tran:Wrong password, try again]** and lets
     you retype it, up to three tries. An ordinary bundle never asks. The songs, documents
     and media are re-created in that machine's own folders, Bible verses are added to the
     **Default** list, and every link inside the presenting flow is re-pointed at the local
     copies. 📸
 12. If the bundle is on a web server or a machine sharing it over the local network,
     you can skip copying the file about: right-click the **Presenting Flows** list →
-    **Import From URL** (នាំចូលពី URL), paste the link and press **Ok**. (If the link is
+    **[en:tran:Import From URL]**, paste the link and press **Ok**. (If the link is
     already on your clipboard it is filled in for you.) The app downloads the bundle to a
     temporary folder, imports it exactly as above and then deletes the download — you end
     up with the presenting flow and nothing else left over. A plain `http://…` address with a
@@ -511,5 +503,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-10` · `PL-29` · `PL-32` · `PL-33` · `PL-34` · `PL-35` · `PL-36` · `PL-37` · `PL-38` · `PL-39` · `PL-40` · `PL-41` · `PL-42` · `PL-43` · `PL-44` · `PL-45` · `PL-46` · `PL-47` · `PL-48` · `PL-49` · `PL-50` · `PL-51` · `PL-52` · `PL-53` · `PL-54` · `PL-55` · `PL-56` · `PL-57` · `PL-58` · `PL-59` · `PL-60` · `PL-61` · `PL-62` · `PL-63` · `PL-64` · `PL-65` · `PL-66` · `PL-67` · `PL-68` · `PL-69` · `PL-70` · `PL-71` · `PL-72` · `PL-73` · `PL-74` · `PL-75` · `PL-76` · `PL-81` · `PL-82` · `PL-83` · `PL-84` · `PL-85` · `PL-86` · `PL-87` · `PL-88` · `PL-89` · `PL-90` · `PL-91` · `PL-92` · `PL-93` · `PL-94` · `PL-95` · `PL-96` · `PL-101`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

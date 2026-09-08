@@ -48,6 +48,9 @@ import {
     POPUP_FRAME_NAME_PREFIX,
     previewPrintCurrentWindow,
     printCurrentWindow,
+    setGuideRunning,
+    askGuideHelp,
+    answerGuideHelp,
     sweepStalePrintPreviewFiles,
     toShortcutKey,
     toUnpackedPath,
@@ -55,6 +58,7 @@ import {
 } from './electronHelpers';
 import { electronMockState } from './testElectronModule';
 import { createMockBrowserWindow, createMockWebContents } from './testUtils';
+import type { MockBrowserWindow } from './testUtils';
 
 describe('electronHelpers', () => {
     beforeEach(() => {
@@ -421,6 +425,219 @@ describe('electronHelpers', () => {
         expect(
             responseWithout.overrideBrowserWindowOptions.webPreferences,
         ).not.toHaveProperty('enableBlinkFeatures');
+    });
+
+    describe('setGuideRunning', () => {
+        // A walkthrough rings a control in the app window; the help window
+        // sits on top of it and hides whatever it covers. These four cases are
+        // the whole contract: get out of the way, but only when in the way,
+        // and only ever undo your own doing.
+        const genWindows = (chatbotBounds: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        }) => {
+            const guidedWin = createMockBrowserWindow({
+                webContents: createMockWebContents({
+                    getURL: vi.fn(
+                        () => 'https://localhost:3000/presenter.html',
+                    ),
+                }),
+                getBounds: vi.fn(() => ({
+                    x: 0,
+                    y: 0,
+                    width: 1400,
+                    height: 900,
+                })),
+            });
+            const chatbotWin = createMockBrowserWindow({
+                webContents: createMockWebContents({
+                    getURL: vi.fn(() => {
+                        return 'https://localhost:3000/chatbot.html?uuid=chatbot';
+                    }),
+                }),
+                getBounds: vi.fn(() => chatbotBounds),
+            });
+            electronMockState.browserWindows.push(guidedWin, chatbotWin);
+            return { guidedWin, chatbotWin };
+        };
+
+        // What the window itself would tell the main process when the user
+        // brings it back from the taskbar.
+        const fireOn = (win: MockBrowserWindow, eventName: string) => {
+            for (const [name, handler] of win.once.mock.calls) {
+                if (name === eventName) {
+                    (handler as () => void)();
+                }
+            }
+        };
+
+        test('minimises the help window over the guided one, and brings it back', () => {
+            const { guidedWin, chatbotWin } = genWindows({
+                x: 100,
+                y: 100,
+                width: 500,
+                height: 540,
+            });
+
+            setGuideRunning(guidedWin as any, true);
+            expect(chatbotWin.minimize).toHaveBeenCalledTimes(1);
+            // The walkthrough happens in the app window from here on.
+            expect(guidedWin.focus).toHaveBeenCalledTimes(1);
+
+            setGuideRunning(guidedWin as any, false);
+            expect(chatbotWin.restore).toHaveBeenCalledTimes(1);
+        });
+
+        test('leaves a help window that is not in the way where it is', () => {
+            const { guidedWin, chatbotWin } = genWindows({
+                x: 1500,
+                y: 100,
+                width: 500,
+                height: 540,
+            });
+
+            setGuideRunning(guidedWin as any, true);
+            expect(chatbotWin.minimize).not.toHaveBeenCalled();
+
+            // Nothing was moved, so nothing is "restored" either -- otherwise
+            // a second monitor would pop the window up at the end of every
+            // walkthrough it never took part in.
+            setGuideRunning(guidedWin as any, false);
+            expect(chatbotWin.restore).not.toHaveBeenCalled();
+        });
+
+        test('never restores a window the user minimised themselves', () => {
+            const { guidedWin, chatbotWin } = genWindows({
+                x: 100,
+                y: 100,
+                width: 500,
+                height: 540,
+            });
+            chatbotWin.isMinimized.mockReturnValue(true);
+
+            setGuideRunning(guidedWin as any, true);
+            expect(chatbotWin.minimize).not.toHaveBeenCalled();
+
+            setGuideRunning(guidedWin as any, false);
+            expect(chatbotWin.restore).not.toHaveBeenCalled();
+        });
+
+        test('leaves a window the user brought back mid-walkthrough alone', () => {
+            const { guidedWin, chatbotWin } = genWindows({
+                x: 100,
+                y: 100,
+                width: 500,
+                height: 540,
+            });
+
+            setGuideRunning(guidedWin as any, true);
+            expect(chatbotWin.minimize).toHaveBeenCalledTimes(1);
+
+            // The user pressed the taskbar button: the window says so, and it
+            // is theirs again. Told, not re-read -- asking `isMinimized()` a
+            // beat later is what used to leave it down with no way back.
+            fireOn(chatbotWin, 'restore');
+            setGuideRunning(guidedWin as any, false);
+            expect(chatbotWin.restore).not.toHaveBeenCalled();
+        });
+
+        test('gives up a help window that was closed while it was away', () => {
+            const { guidedWin, chatbotWin } = genWindows({
+                x: 100,
+                y: 100,
+                width: 500,
+                height: 540,
+            });
+
+            setGuideRunning(guidedWin as any, true);
+            fireOn(chatbotWin, 'closed');
+            chatbotWin.isDestroyed.mockReturnValue(true);
+
+            setGuideRunning(guidedWin as any, false);
+            expect(chatbotWin.restore).not.toHaveBeenCalled();
+        });
+    });
+
+    // The other half of the same relay: a walkthrough step the card could not
+    // press, carried to the chat window and the answer carried back. Neither
+    // renderer can reach the other, so all of it goes through here.
+    describe('askGuideHelp / answerGuideHelp', () => {
+        const genWindows = () => {
+            const guidedWin = createMockBrowserWindow({
+                webContents: createMockWebContents({
+                    getURL: vi.fn(
+                        () => 'https://localhost:3000/presenter.html',
+                    ),
+                }),
+            });
+            const chatbotWin = createMockBrowserWindow({
+                webContents: createMockWebContents({
+                    getURL: vi.fn(() => {
+                        return 'https://localhost:3000/chatbot.html?uuid=chatbot';
+                    }),
+                }),
+            });
+            electronMockState.browserWindows.push(guidedWin, chatbotWin);
+            return { guidedWin, chatbotWin };
+        };
+
+        test('carries the question over and the answer back', () => {
+            const { guidedWin, chatbotWin } = genWindows();
+
+            expect(askGuideHelp(guidedWin as any, { token: 7 })).toBe(true);
+            expect(chatbotWin.webContents.send).toHaveBeenCalledWith(
+                'main:app:guide-help',
+                { token: 7 },
+            );
+
+            expect(answerGuideHelp({ token: 7, text: 'Do it twice' })).toBe(
+                true,
+            );
+            expect(guidedWin.webContents.send).toHaveBeenCalledWith(
+                'main:app:guide-help-answer',
+                { token: 7, text: 'Do it twice' },
+            );
+        });
+
+        test('answers itself when there is no chat window to ask', () => {
+            const guidedWin = createMockBrowserWindow({
+                webContents: createMockWebContents({
+                    getURL: vi.fn(
+                        () => 'https://localhost:3000/presenter.html',
+                    ),
+                }),
+            });
+            electronMockState.browserWindows.push(guidedWin);
+
+            // The card must not sit on "asking the assistant" for half a
+            // minute when nobody was ever going to be asked.
+            expect(askGuideHelp(guidedWin as any, { token: 3 })).toBe(false);
+            expect(guidedWin.webContents.send).toHaveBeenCalledWith(
+                'main:app:guide-help-answer',
+                { token: 3, text: '' },
+            );
+        });
+
+        test('drops an answer whose window has gone', () => {
+            const { guidedWin } = genWindows();
+            askGuideHelp(guidedWin as any, { token: 1 });
+            guidedWin.isDestroyed.mockReturnValue(true);
+
+            expect(answerGuideHelp({ token: 1, text: 'too late' })).toBe(false);
+        });
+
+        test('does not answer the same request twice', () => {
+            const { guidedWin } = genWindows();
+            askGuideHelp(guidedWin as any, { token: 2 });
+
+            expect(answerGuideHelp({ token: 2, text: 'once' })).toBe(true);
+            // A second answer has no window to go to: the request is spent.
+            // Without this a later stray answer would be drawn on whatever
+            // card happens to be up.
+            expect(answerGuideHelp({ token: 2, text: 'twice' })).toBe(false);
+        });
     });
 
     test('debounces callback execution', () => {

@@ -5,13 +5,13 @@ section: "Presenting content"
 verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, XW-08]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-05 — Present song lyrics
 
 **Goal:** put a song's lyrics on the screen.
 
-1. In the left column, click a song in the **Documents** (ឯកសារ) list — songs carry a
+1. In the left column, click a song in the **[en:tran:Documents]** list — songs carry a
    music-note icon. The middle **Documents** tab switches to the song view: the lyric
    **Previewer** on top and the **Stage Previewer** verses under it. Only one file in the
    list is ever highlighted, so picking a song releases whatever was selected before. 📸
@@ -54,5 +54,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `XW-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

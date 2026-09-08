@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PM-121, PM-122, PM-123, PL-01]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-27 — Pin the document you are presenting from
 
@@ -14,13 +14,13 @@ half-way through.
 
 **Preconditions:** a document selected in the middle **Documents** tab.
 
-1. Look at the middle **Documents** (ឯកសារ) tab heading. With a document selected, a
+1. Look at the middle **[en:tran:Documents]** tab heading. With a document selected, a
    faint **pin** sits just after the word — nothing selected, no pin. 📸
 2. Click the pin. It fills in and turns amber: the document is now **pinned**. Hovering it
-   reads **Unpin document** (ដោះខ្ទាស់ឯកសារ). 📸
+   reads **[en:tran:Unpin document]**. 📸
 3. Click a different document in the left list. **Nothing changes** — the previewer keeps
    your document. A message says **Document is pinned** / _Unpin the document to preview
-   another one_ (ឯកសារត្រូវបានខ្ទាស់), and the pin flashes so you can see what stopped
+   another one_ ([en:tran:Document is pinned]), and the pin flashes so you can see what stopped
    it. 📸
 4. The same protection covers every way of swapping the document: a song row, a document
    inside a **presenting flow**, and clicking the file name in the previewer's own footer (which
@@ -42,5 +42,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-121` · `PM-122` · `PM-123` · `PL-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

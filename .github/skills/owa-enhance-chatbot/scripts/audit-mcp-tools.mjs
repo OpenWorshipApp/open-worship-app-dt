@@ -15,7 +15,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // scripts -> owa-enhance-chatbot -> skills -> .claude|.github -> repo root
@@ -131,16 +131,26 @@ async function listTools(mcpUrl) {
 // `notify.mjs` decides which tools put "something else is driving your app" in
 // the window. A tool that ACTS and is missing from its table acts silently,
 // which is the one thing that table exists to prevent.
-async function loadDescribeToolCall() {
+// `modelTools.mjs` decides which of them the CHATBOT's model is offered. The
+// host's bill and the model's bill are different numbers, and the one that
+// matters for a question is the smaller one -- reporting only the total is how
+// a tool added "for the developer" quietly ends up billed to every volunteer.
+// `pathToFileURL`, not the bare path: dynamic import of `C:\...` throws
+// ERR_UNSUPPORTED_ESM_URL_SCHEME, and the catch below swallowed it -- which is
+// why the notify check silently did nothing on Windows.
+async function loadPackageModule(file) {
     try {
-        const module = await import(
-            path.join(REPO_ROOT, 'tools', 'owa-devtools-mcp', 'notify.mjs')
+        return await import(
+            pathToFileURL(
+                path.join(REPO_ROOT, 'tools', 'owa-devtools-mcp', file),
+            ).href
         );
-        return module.describeToolCall;
-    } catch {
+    } catch (error) {
+        console.error(`  ! could not load ${file}: ${error.message}`);
         return null;
     }
 }
+
 
 const ACTING_NAME_PATTERN =
     /^(owa_)?(click|type|fill|drag|hover|press|upload|navigate|new_page|close|resize|emulate|evaluate|handle_dialog|goto|hide|guide_start|guide_step|find_ui)/;
@@ -157,6 +167,7 @@ function measure(tool) {
     return {
         name: tool.name,
         isOwa: tool.name.startsWith('owa_'),
+        isModelHidden: false,
         descriptionChars: description.length,
         schemaChars: schema.length,
         tokens: Math.ceil(wire.length / CHARS_PER_TOKEN),
@@ -174,26 +185,45 @@ function padStart(text, width) {
 async function main() {
     const mcpUrl = resolveMcpUrl();
     const tools = await listTools(mcpUrl);
-    const describeToolCall = await loadDescribeToolCall();
-    const rows = tools.map(measure).sort((one, other) => {
-        return other.tokens - one.tokens;
-    });
+    const describeToolCall = (await loadPackageModule('notify.mjs'))
+        ?.describeToolCall;
+    const checkIsModelHiddenTool = (await loadPackageModule('modelTools.mjs'))
+        ?.checkIsModelHiddenTool;
+    const rows = tools
+        .map((tool) => {
+            return {
+                ...measure(tool),
+                isModelHidden: Boolean(checkIsModelHiddenTool?.(tool.name)),
+            };
+        })
+        .sort((one, other) => {
+            return other.tokens - one.tokens;
+        });
     const owaRows = rows.filter((row) => row.isOwa);
     const devtoolsRows = rows.filter((row) => !row.isOwa);
     const sum = (list) => {
         return list.reduce((total, row) => total + row.tokens, 0);
     };
     const totalTokens = sum(rows);
+    const modelRows = rows.filter((row) => {
+        return !row.isModelHidden;
+    });
+    const modelTokens = sum(modelRows);
 
     const warnings = [];
     for (const tool of tools) {
         if (!tool.description) {
             warnings.push(`${tool.name}: no description at all`);
         }
-        if (describeToolCall === null) {
+        if (!describeToolCall) {
             continue;
         }
-        const isAnnounced = Boolean(describeToolCall(tool.name, {}));
+        // `{ highlight: true }`, not `{}`: `owa_find_ui` announces itself
+        // only when it is asked to draw, so empty args report the one tool
+        // with a conditional banner as having none.
+        const isAnnounced = Boolean(
+            describeToolCall(tool.name, { highlight: true }),
+        );
         if (ACTING_NAME_PATTERN.test(tool.name) && !isAnnounced) {
             warnings.push(
                 `${tool.name}: acts on the window but is NOT in notify.mjs ` +
@@ -211,6 +241,9 @@ async function main() {
         owaTokens: sum(owaRows),
         devtoolsTokens: sum(devtoolsRows),
         tokensPerQuestion: totalTokens * rounds,
+        modelToolCount: modelRows.length,
+        modelTokensPerRound: modelTokens,
+        modelTokensPerQuestion: modelTokens * rounds,
         rounds,
         warnings,
         tools: rows,
@@ -231,8 +264,15 @@ async function main() {
             `(owa_* ~${report.owaTokens}, devtools ~${report.devtoolsTokens})`,
     );
     console.log(
-        `Worst case      ~${report.tokensPerQuestion} tokens of tool schema ` +
-            `across ${rounds} rounds of ONE question`,
+        `To the model    ${report.modelToolCount} tools, ` +
+            `~${report.modelTokensPerRound} tokens/round ` +
+            `(${report.toolCount - report.modelToolCount} withheld by ` +
+            'modelTools.mjs)',
+    );
+    console.log(
+        `Worst case      ~${report.modelTokensPerQuestion} tokens of tool ` +
+            `schema across ${rounds} rounds of ONE question ` +
+            `(~${report.tokensPerQuestion} if nothing were withheld)`,
     );
     console.log('');
     console.log(
@@ -244,12 +284,14 @@ async function main() {
     console.log('-'.repeat(58));
     for (const row of rows) {
         console.log(
-            pad(row.name, 34) +
+            pad(row.isModelHidden ? `(${row.name})` : row.name, 34) +
                 padStart(row.tokens, 8) +
                 padStart(row.descriptionChars, 8) +
                 padStart(row.schemaChars, 8),
         );
     }
+    console.log('');
+    console.log('(name) = served to the developer, withheld from the model.');
     if (warnings.length > 0) {
         console.log('');
         console.log('Warnings:');

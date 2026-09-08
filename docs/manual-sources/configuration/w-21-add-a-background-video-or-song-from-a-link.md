@@ -5,18 +5,16 @@ section: "Configuration"
 verify: [MD-01, MD-02, MD-03, CM-24, PM-102]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-21 — Add a background video or song from a link
 
 **Goal:** get a video (or its audio as an MP3) from an online link straight into your
 Videos / Audios folder, without leaving the app or installing anything.
 
-1. Open the **Background** (ផ្ទៃខាងក្រោយ) panel (W-08 step 1) and choose the **Videos**
-   (វីដេអូ) tab — or the **♫Audios♫** (សំលេង) split if you want the sound only.
+1. Open the **[en:tran:Background]** panel (W-08 step 1) and choose the **[en:tran:Videos]** tab — or the **[en:tran:Audios]** split if you want the sound only.
 2. **Right-click an empty part of the list** (or use the ⋮ More Options button at
-   the right of the folder-path bar) and choose **Download From URL**
-   (ទាញយកពី URL). 📸
+   the right of the folder-path bar) and choose **[en:tran:Download From URL]**. 📸
 3. A small box asks for the link — **Video URL:** on the Videos tab, **Audio URL:** on
    Audios. If you copied the link first, it is **already filled in**; otherwise paste it.
    The box is outlined red while it is empty.
@@ -37,5 +35,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `MD-01` · `MD-02` · `MD-03` · `CM-24` · `PM-102`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

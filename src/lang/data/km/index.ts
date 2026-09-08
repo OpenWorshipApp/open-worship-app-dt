@@ -296,6 +296,8 @@ const dictionary = {
     'Choose City': 'ជ្រើសរើសទីក្រុង',
     'New Slide': 'ស្លាយថ្មី',
     'Show on Screens': 'បង្ហាញនៅលើអេក្រង់',
+    'Toggle showing screen': 'បិទ/បើក ការបង្ហាញអេក្រង់',
+    'Reveal Hidden Controls': 'បង្ហាញប៊ូតុងដែលលាក់',
     'Set Specific Screen': 'កំណត់អេក្រង់ជាក់លាក់',
     'Remove from screen': 'ដកចេញពីអេក្រង់',
     Rename: 'កែឈ្មោះ',
@@ -946,6 +948,16 @@ const dictionary = {
     'Show the keys being pressed': 'បង្ហាញគ្រាប់ចុចដែលកំពុងចុច',
     'Drawing history': 'ប្រវត្តិគំនូរ',
     'Clear drawing': 'លុបគំនូរ',
+    // The Presenting Control's snapshot, and the three things it can do with
+    // the picture it takes.
+    'Take a picture of the app': 'ថតរូបកម្មវិធី',
+    'App Snapshot': 'រូបថតកម្មវិធី',
+    'Ask the assistant about this': 'សួរជំនួយការអំពីរូបនេះ',
+    'Save into your images': 'រក្សាទុកក្នុងរូបភាពរបស់អ្នក',
+    'Copied to clipboard': 'បានចម្លងទៅក្តារតម្បៀតខ្ទាស់',
+    'Saved into your images': 'បានរក្សាទុកក្នុងរូបភាពរបស់អ្នក',
+    'No images folder is set yet': 'មិនទាន់មានថតរូបភាពត្រូវបានកំណត់ទេ',
+    'Cannot save this picture': 'មិនអាចរក្សាទុករូបនេះបានទេ',
     'Paste Bible Item': 'បិទភ្ជាប់ធាតុព្រះគម្ពីរ',
     Unlock: 'ដោះសោ',
     Lock: 'ចាក់សោ',
@@ -1331,6 +1343,30 @@ const dictionary = {
         'និង Bible Audio តាមបំណង។',
     'Key set': 'មាន key ហើយ',
     'No key set': 'មិនទាន់មាន key',
+    // --- Kimi joins the chatbot, and every AI row now says what its key is
+    // actually FOR (2026-09-01). The two hints it replaces both named Bible
+    // Cross Ref and Bible Audio and forgot the chatbot, which they also drive.
+    Kimi: 'កីមី',
+    'Kimi API Key': 'Kimi API Key',
+    'Create Kimi api key': 'បង្កើត Kimi api key',
+    'Answers in the chatbot only': 'ឆ្លើយតែក្នុង chatbot ប៉ុណ្ណោះ',
+    'Answers in the chatbot, and powers custom Bible Cross Reference':
+        'ឆ្លើយក្នុង chatbot និងបន្ទេមឆ្លើយ Bible Cross Reference តាមបំណង',
+    'Answers in the chatbot, and powers custom Bible Cross Reference and Bible Audio':
+        'ឆ្លើយក្នុង chatbot និងបន្ទេមឆ្លើយ Bible Cross Reference និង Bible Audio តាមបំណង',
+    'Used by': 'ប្រើដោយ',
+    Chatbot: 'Chatbot',
+    'Bible Audio': 'សំលេងព្រះគម្ពីរ',
+    'Add a key from any one of these. Each row says what its key is used for.':
+        'បញ្ចូល key ពីមួយក្នុងចំណោមនេះ។ ជួរនីមួយៗ បង្ហាញនូវការប្រើប្រាស់ key របស់វា។',
+    'Fail to get Kimi instance': 'មិនអាចយក Kimi instance បាន',
+    'Missing Kimi API Key.': 'ខ្វះ Kimi API Key។',
+    // --- The keyless assistant, for a user who has typed no key at all
+    // (2026-09-01). It answers over free PUBLIC services, so the panel says so.
+    'Fail to get free assistant': 'មិនអាចយកជំនួយការឥតគិតថ្លៃបាន',
+    'Free assistant (no key needed)': 'ជំនួយការឥតគិតថ្លៃ (មិនត្រូវការ key)',
+    'With no key of your own, the chatbot answers through free public AI services. They are shared, slower, and can be busy, and your questions leave this computer. Add a key above for better and more private answers.':
+        'ប្រសិនបើអ្នកមិនមាន key ផ្ទាល់ខ្លួន chatbot ឆ្លើយតាមរយៈសេវាកម្ម AI សាធារណៈឥតគិតថ្លៃ។ សេវាទាំងនោះត្រូវបានចែករំលែក យឺត និងអាចរវល់ ហើយសំណួររបស់អ្នកនឹងចាកចេញពីកុំព្យូទ័រនេះ។ សូមបញ្ចូល key ខាងលើ ដើម្បីទទួលចម្លើយប្រសើរ និងឯកជនជាងមុន។',
     // --- The AI master switch and the in-app chatbot (2026-08-31).
     'Enable AI features': 'បើកមុខងារ AI',
     'Turns off the chatbot, the assistant tools and the debugging endpoint they use.':

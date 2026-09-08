@@ -49,6 +49,12 @@ const DOUBLE_PRESS_SLOP_PIXEL = 6;
 interface MyProps {
     children?: ReactNode;
     collapsedChildren?: ReactNode | null;
+    // The host has NOTHING to put in the body right now — a mode whose panel
+    // simply is not there. Drawn exactly like a collapsed widget (header only,
+    // at the collapsed height) without touching the user's own collapse toggle,
+    // so the body comes back at the size they left it the moment the host has
+    // something to show again.
+    isBodyHidden?: boolean;
     title?: ReactNode;
     // Widget-specific buttons placed before the collapse/close pair. They share
     // the actions container, so they are excluded from the drag surface too.
@@ -88,6 +94,7 @@ function checkIsOwnPointer(
 export default function FloatingWidgetComp({
     children,
     collapsedChildren = null,
+    isBodyHidden = false,
     title,
     extraActionButtons = null,
     options = {},
@@ -109,6 +116,11 @@ export default function FloatingWidgetComp({
         clientY: number;
     } | null>(null);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    // Header only, for either reason. Everything about how the widget is DRAWN,
+    // sized and clamped follows this; `isCollapsed` on its own stays what the
+    // user asked for, so a host that runs out of body content never silently
+    // rewrites their toggle.
+    const isHeaderOnly = isCollapsed || isBodyHidden;
     const [activeMode, setActiveMode] = useState<InteractionMode | null>(null);
     // A widget that just opened is the one the user asked for, so it starts on
     // top; the registry corrects this on the very next notification.
@@ -140,7 +152,7 @@ export default function FloatingWidgetComp({
     const isMaximizedRef = useAppCurrentRef(isMaximized);
     const persistKeyRef = useAppCurrentRef(persistKey);
     const optionsRef = useAppCurrentRef(options);
-    const isCollapsedRef = useAppCurrentRef(isCollapsed);
+    const isHeaderOnlyRef = useAppCurrentRef(isHeaderOnly);
     const optionHeight = options.height;
     const optionMaxHeight = options.maxHeight;
     const optionMaxWidth = options.maxWidth;
@@ -201,11 +213,11 @@ export default function FloatingWidgetComp({
                         : (optionHeight ?? prev.height),
                 },
                 sizingOptions,
-                isCollapsed,
+                isHeaderOnly,
             ),
         );
     }, [
-        isCollapsed,
+        isHeaderOnly,
         isMaximizedRef,
         optionHeight,
         optionMaxHeight,
@@ -233,7 +245,7 @@ export default function FloatingWidgetComp({
                 return;
             }
             setWidgetRect((prev) =>
-                clampWidgetRect(prev, sizingOptions, isCollapsed),
+                clampWidgetRect(prev, sizingOptions, isHeaderOnly),
             );
         };
 
@@ -245,7 +257,7 @@ export default function FloatingWidgetComp({
             );
         };
     }, [
-        isCollapsed,
+        isHeaderOnly,
         isMaximizedRef,
         optionHeight,
         optionMaxHeight,
@@ -353,7 +365,7 @@ export default function FloatingWidgetComp({
                               top: interactionState.startRect.top + deltaY,
                           },
                           optionsRef.current,
-                          isCollapsedRef.current,
+                          isHeaderOnlyRef.current,
                       )
                     : resizeWidgetRect(
                           interactionState.startRect,
@@ -431,7 +443,7 @@ export default function FloatingWidgetComp({
                 widgetRectRef.current,
                 restoreRectRef.current,
                 optionsRef.current,
-                isCollapsedRef.current,
+                isHeaderOnlyRef.current,
             );
             // Kept in step synchronously, the way a drag does: a press landing
             // before React re-renders must not resize from the stale rect.
@@ -458,15 +470,24 @@ export default function FloatingWidgetComp({
             onPointerDown={(event) => event.stopPropagation()}
         >
             {extraActionButtons}
-            <button
-                type="button"
-                className="floating-widget__button"
-                onClick={() => setIsCollapsed((prev) => !prev)}
-                aria-label={collapseLabel}
-                title={collapseLabel}
-            >
-                <i className={`bi bi-chevron-${isCollapsed ? 'up' : 'down'}`} />
-            </button>
+            {isBodyHidden ? null : (
+                // There is no body to roll up, so the chevron would toggle
+                // nothing visible — and a control that answers a press with
+                // nothing is worse than one that is not offered.
+                <button
+                    type="button"
+                    className="floating-widget__button"
+                    onClick={() => setIsCollapsed((prev) => !prev)}
+                    aria-label={collapseLabel}
+                    title={collapseLabel}
+                >
+                    <i
+                        className={`bi bi-chevron-${
+                            isCollapsed ? 'up' : 'down'
+                        }`}
+                    />
+                </button>
+            )}
             <button
                 type="button"
                 className="floating-widget__button"
@@ -486,7 +507,7 @@ export default function FloatingWidgetComp({
             className={[
                 'floating-widget',
                 isAboveModal ? 'floating-widget--above-modal' : '',
-                isCollapsed ? 'floating-widget--collapsed' : '',
+                isHeaderOnly ? 'floating-widget--collapsed' : '',
                 activeMode === 'move' ? 'floating-widget--moving' : '',
                 activeMode === 'resize' ? 'floating-widget--resizing' : '',
                 options.extraClassName ?? '',
@@ -499,7 +520,7 @@ export default function FloatingWidgetComp({
                     left: widgetRect.left,
                     top: widgetRect.top,
                     width: widgetRect.width,
-                    height: isCollapsed ? COLLAPSED_HEIGHT : widgetRect.height,
+                    height: isHeaderOnly ? COLLAPSED_HEIGHT : widgetRect.height,
                     '--floating-widget-z-offset': zIndexOffset,
                 } as CSSProperties
             }
@@ -533,9 +554,9 @@ export default function FloatingWidgetComp({
                     title == null || options.isBodyDraggable ? 'false' : 'true'
                 }
             >
-                {isCollapsed ? collapsedChildren : children}
+                {isHeaderOnly ? collapsedChildren : children}
             </div>
-            {!isCollapsed &&
+            {!isHeaderOnly &&
                 RESIZE_HANDLES.map((handle) => (
                     <div
                         key={handle}

@@ -5,12 +5,12 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, CM-93]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
 If you already keep study material on disk named after the verse it belongs to —
-`PSA.1.pdf`, `GEN.49.pptx` — **Resources** (ឯកសារពាក់ព័ន្ធ) puts those files
+`PSA.1.pdf`, `GEN.49.pptx` — **[en:tran:Resources]** puts those files
 right beside whatever verse you are reading, from as many folders as you like.
 
 The name has to follow one pattern: **`<book key>.<chapter>.<anything>`**. The book key is
@@ -28,7 +28,7 @@ all count as book-level too.
    the side panel, then pick **Resources** from the panel's dropdown — the fourth entry
    after **Find**, **Cross Reference** and **Location-Name (KJV)**. 📸
    You can also get here from the verse itself: right-click any verse in the lookup body
-   and choose **Open in Resources** (បើកនៅក្នុងឯកសារពាក់ព័ន្ធ), just under **Open in
+   and choose **[en:tran:Open in Resources]**, just under **Open in
    Cross Reference**. That opens the panel on this view AND on that verse.
 2. The top of the view shows the verse it is working from — its version, its reference and
    its text, exactly as **Cross Reference** shows it. Click the reference to move to
@@ -37,11 +37,11 @@ all count as book-level too.
    anywhere in Psalm 1, a solid `PSA.1.*` for the chapter's own files and a dashed
    `PSA.0.*` for the book's. Moving to another verse of the same chapter changes the
    heading but not the files. 📸
-3. The first time, the body holds a single **Add Folder** (បន្ថែមថត) button. Click it and
+3. The first time, the body holds a single **[en:tran:Add Folder]** button. Click it and
    pick the folder your files are in. You can add as many as you want — the **⋮ More
    Options** button, or a right-click anywhere in the view including the empty space below
    the folders, offers **Add Folder** again. Adding the same folder twice does nothing. 📸
-   That same menu has **Reload** (ផ្ទុកឡើងវិញ), which re-reads everything at once: your
+   That same menu has **[en:tran:Reload]**, which re-reads everything at once: your
    folder list, and the files inside every folder. Use it after adding files on disk while
    the app is open, or after changing the list from another window. 📸
 4. Each folder becomes its own group, named after the folder, with the folder it lives in
@@ -51,7 +51,7 @@ all count as book-level too.
    video, image, bible note). The extension is set quieter than the rest of the name so the
    reference reads first. Hover a file to see where it actually lives. 📸
    A file that matched the book-level pattern rather than this chapter's carries a dashed
-   **Introduction** (សេចក្ដីផ្ដើម) tag, so a `PSA.0.pdf` listed under Psalm 1 says why it
+   **[en:tran:Introduction]** tag, so a `PSA.0.pdf` listed under Psalm 1 says why it
    is there. A group with nothing for this verse says **No matching files**.
 5. Sometimes you want a file that is _not_ named after this verse. Click the **magnifier**
    (`bi-search`) at the right-hand end of the pattern line and a search box opens under it.
@@ -91,5 +91,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

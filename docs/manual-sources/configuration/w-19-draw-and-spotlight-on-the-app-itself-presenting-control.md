@@ -3,9 +3,9 @@ id: W-19
 title: "Draw and spotlight on the app itself (Presenting Control)"
 section: "Configuration"
 verify: []
-screenshots: 3
+screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-19 — Draw and spotlight on the app itself (Presenting Control)
 
@@ -15,17 +15,27 @@ The audience screen has its own Draw and Focus tools on the mini-screen card (W-
 this is the same pair of tools pointed at the app.
 
 1. Open the **Tools** menu → **Start Controlling** (**Ctrl+Shift+P**, **⌘+Shift+P** on
-   Mac). A floating **Presenting Control** panel appears — drag it by its title bar,
+   Mac). **Every window of the app answers it** — the Presenter, the Bible Reader, the
+   Slide Editor, a Bible Note, Settings, the Web Editor, the Lyric Editor and Local Web
+   Share — and the one you are looking at is the one that gets the panel. (The projector
+   output, the About box and the Find bar deliberately do not: an overlay on what the
+   congregation sees is the one place this must never appear.) The menu bar is hidden on
+   the smaller windows, so the shortcut is the way in there.
+   A floating **Presenting Control** panel appears — drag it by its title bar,
    resize it from any edge or corner, double-click the title bar to fill the window (and
-   again to put it back), and collapse it with the chevron; it reopens where and how you
-   last left it. 📸
+   again to put it back), and collapse it with the chevron once a tool with settings is
+   showing; it reopens where and how you last left it. 📸
 2. The **title bar** carries everything you reach for mid-presentation: the four tools on
    the left, then the **keyboard screencast** switch (W-20) and **Undo** / **Redo** /
    **Clear** on the right. Only the settings live in the body, so collapsing the panel
    with the chevron leaves every group one click away — roll it up to get the sliders out
    of the way and keep drawing.
 3. The panel opens on the **arrow** tool — the app stays completely usable and
-   anything already drawn stays visible on top of it.
+   anything already drawn stays visible on top of it. The arrow has no settings of its
+   own, so on it the panel is **just its title bar**: no empty body sitting over the app
+   you have just asked to have back, and no chevron either, because there is nothing to
+   roll up. Pick the brush, eraser or spotlight and the body opens again at the size you
+   last left it.
 4. Click the **brush** to draw. A magenta frame around the window shows the app is no
    longer taking clicks; drag anywhere to draw. Pick **Color**, **Size** (`[` / `]`) and
    **Opacity** (`-` / `=`), and switch the stroke style with **Straight** (`S`), **3D**
@@ -40,9 +50,16 @@ this is the same pair of tools pointed at the app.
    rather dim only while the mouse button is down. **Contrast** (`X`) inverts it — the
    circle becomes the blocked area instead. Size, **Dim color**, dim amount and **edge
    blur** (`,` / `.`) all have sliders. 📸
-7. Press **Escape** (or click the arrow) to hand the app back while keeping the
+7. The **camera** at the end of the title bar takes a picture of the app **as it looks
+   right now** — your drawing, your spotlight and all — and asks what to do with it:
+   **Ask the assistant about this** opens the help window with the picture already
+   attached, so "what is this?" is one press and one sentence; **Copy** puts it on the
+   clipboard; **Save into your images** puts it in the Background Images folder, where
+   it can then be presented like any other picture. The help window itself never appears
+   in the shot, even when it is sitting on top of the app. 📸
+8. Press **Escape** (or click the arrow) to hand the app back while keeping the
    drawing on screen. Move the panel if it covers what you are pointing at.
-8. Click **✕** in the panel header to finish. The drawing is discarded; it is not saved
+9. Click **✕** in the panel header to finish. The drawing is discarded; it is not saved
    between sessions. **Ctrl+Shift+P** and **Tools → Start Controlling** only ever _open_
    the panel — neither closes it, so a stray press mid-service cannot lose your drawing.
 

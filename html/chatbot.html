@@ -7,7 +7,38 @@
         <!-- TODO: change logo192.png -->
         <link rel="apple-touch-icon" href="/logo192.png" />
         <link rel="manifest" href="/manifest.json" />
-        <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; worker-src 'self' blob:">prod -->
+        <!--
+            A tighter policy than the rest of the app carries, because this is
+            the one window whose content comes from outside the machine and the
+            one window holding the user's API keys.
+
+            `connect-src` is the part that matters: it is the list of places
+            this window is allowed to SPEAK to. Every assistant it can be set
+            to is named, plus the app's own MCP host on a loopback port the
+            launcher picks. Anything else -- a paste, an attachment or an
+            answer that tried to send the user's key somewhere -- has nowhere
+            to send it to.
+
+            No 'unsafe-eval', and `object-src`/`frame-src`/`base-uri` are shut
+            because nothing here uses them and each is a way to get script into
+            a page that has none of its own. Prod only, like every other page:
+            the dev server needs its own websocket and inline module graph.
+        -->
+        <!-- prod<meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self';
+                script-src 'self' 'unsafe-inline';
+                style-src 'self' 'unsafe-inline';
+                img-src 'self' data: blob:;
+                font-src 'self' data:;
+                worker-src 'self' blob:;
+                connect-src 'self' data: blob:
+                    https://api.anthropic.com https://api.openai.com
+                    https://api.moonshot.ai https://api.llm7.io
+                    https://api.kilo.ai
+                    http://127.0.0.1:* http://localhost:*;
+                object-src 'none'; frame-src 'none'; child-src 'none';
+                base-uri 'none'; form-action 'none'">prod -->
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="Open Worship App" />
         <title>Open Worship app - Chatbot Beta (🤖)</title>

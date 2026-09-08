@@ -1,0 +1,304 @@
+{
+    "page": "settings",
+    "label": "Settings",
+    "window": "setting.html",
+    "focus": null,
+    "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
+    "updated": "2026-09-02",
+    "sections": [
+        {
+            "id": "general",
+            "label": "Language, theme & fonts",
+            "recipes": [
+                "W-16"
+            ],
+            "questions": [
+                {
+                    "id": "open-settings",
+                    "text": "Where are the settings?",
+                    "kind": "where",
+                    "keywords": [
+                        "gear",
+                        "preferences",
+                        "options",
+                        "configure",
+                        "cog"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "find": "Settings",
+                        "guide": true
+                    },
+                    "starter": true,
+                    "starterRank": 13
+                },
+                {
+                    "id": "change-language",
+                    "text": "How do I change the app's language?",
+                    "kind": "howto",
+                    "keywords": [
+                        "english",
+                        "khmer",
+                        "translate",
+                        "locale",
+                        "language"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-16",
+                        "guide": true
+                    },
+                    "starterRank": 10
+                },
+                {
+                    "id": "change-theme",
+                    "text": "How do I switch between light and dark?",
+                    "kind": "howto",
+                    "keywords": [
+                        "theme",
+                        "dark mode",
+                        "light mode",
+                        "bright",
+                        "night",
+                        "colours"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "change-font",
+                    "text": "How do I change the font used on screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "font family",
+                        "typeface",
+                        "missing font",
+                        "text style",
+                        "letters"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "change-folders",
+                    "text": "How do I change where my documents and songs are stored?",
+                    "kind": "howto",
+                    "keywords": [
+                        "directory",
+                        "folder",
+                        "location",
+                        "on disk",
+                        "move files",
+                        "path"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "related": [
+                            "W-25"
+                        ],
+                        "guide": true
+                    },
+                    "starter": true,
+                    "starterRank": 12
+                },
+                {
+                    "id": "reset-settings",
+                    "text": "What do the reset buttons in Settings do?",
+                    "kind": "what",
+                    "keywords": [
+                        "reset",
+                        "clear all settings",
+                        "erase",
+                        "start over",
+                        "dangerous",
+                        "default"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "related": [
+                            "W-31"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "bible-settings",
+            "label": "Bible versions",
+            "recipes": [
+                "W-16",
+                "W-32",
+                "W-33",
+                "W-34"
+            ],
+            "questions": [
+                {
+                    "id": "download-bible",
+                    "text": "How do I download another Bible version?",
+                    "kind": "howto",
+                    "keywords": [
+                        "new bible",
+                        "translation",
+                        "install",
+                        "get bible",
+                        "more versions"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-16",
+                        "related": [
+                            "W-34"
+                        ],
+                        "guide": true
+                    },
+                    "starterRank": 11
+                },
+                {
+                    "id": "enable-bible",
+                    "text": "How do I turn a downloaded Bible on or off?",
+                    "kind": "howto",
+                    "keywords": [
+                        "enable",
+                        "disable",
+                        "hide version",
+                        "too many bibles",
+                        "tick"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "import-xml",
+                    "text": "How do I import a Bible XML file?",
+                    "kind": "howto",
+                    "keywords": [
+                        "xml",
+                        "import file",
+                        "own translation",
+                        "add bible",
+                        "load"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "related": [
+                            "W-33"
+                        ],
+                        "find": "Import XML File",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "bible-copyright",
+                    "text": "Where do I find a Bible's publisher and copyright?",
+                    "kind": "where",
+                    "keywords": [
+                        "copyright",
+                        "publisher",
+                        "legal",
+                        "licence",
+                        "edition",
+                        "info"
+                    ],
+                    "resources": {
+                        "recipe": "W-32",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "others",
+            "label": "Accounts, AI and extras",
+            "recipes": [
+                "W-35",
+                "W-42",
+                "W-21"
+            ],
+            "questions": [
+                {
+                    "id": "ai-key",
+                    "text": "How do I give the assistant an API key?",
+                    "kind": "howto",
+                    "keywords": [
+                        "api key",
+                        "claude",
+                        "chatgpt",
+                        "openai",
+                        "anthropic",
+                        "ai providers",
+                        "kimi",
+                        "moonshot",
+                        "what is the key for"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "AI Providers",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "enable-ai",
+                    "text": "How do I turn the AI features on or off?",
+                    "kind": "howto",
+                    "keywords": [
+                        "enable ai",
+                        "turn off",
+                        "chatbot",
+                        "master switch",
+                        "disable",
+                        "privacy"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Enable AI features",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "songselect-signin",
+                    "text": "How do I sign in to CCLI SongSelect?",
+                    "kind": "howto",
+                    "keywords": [
+                        "ccli",
+                        "songselect",
+                        "sign in",
+                        "account",
+                        "client id",
+                        "subscription key"
+                    ],
+                    "resources": {
+                        "recipe": "W-35",
+                        "find": "SongSelect Integration",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "extra-binaries",
+                    "text": "What are the Extra Binaries and do I need them?",
+                    "kind": "what",
+                    "keywords": [
+                        "extra binaries",
+                        "download tools",
+                        "yt-dlp",
+                        "ffmpeg",
+                        "install pack",
+                        "missing"
+                    ],
+                    "resources": {
+                        "recipe": "W-35",
+                        "related": [
+                            "W-21"
+                        ],
+                        "find": "Extra Binaries"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PL-77, PL-78, PL-79, PL-80, CM-36, CM-37]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-23 — Share one document (song, sermon slides, PDF) with another machine
 
@@ -14,9 +14,8 @@ travels as its own bundle, with everything attached to it.
 
 1. In the **Documents** list, right-click the item you want — an Open Worship slide
    document, a lyric, a PDF, a PowerPoint or a Word file all work — and choose
-   **Export** (នាំចេញ). 📸
-2. A small panel asks for a **Password** (ពាក្យសម្ងាត់) and a **Confirm Password**
-   (បញ្ជាក់ពាក្យសម្ងាត់). Leave both empty and press **Ok** for the ordinary bundle, or
+   **[en:tran:Export]**. 📸
+2. A small panel asks for a **[en:tran:Password]** and a **[en:tran:Confirm Password]**. Leave both empty and press **Ok** for the ordinary bundle, or
    type the same password in both to lock it — see W-22 step 10a, it works identically
    here and there is no way to recover a forgotten one. 📸
 3. You get one `<name>.owadoc.tar.gz` file in your **Downloads** folder (or
@@ -25,7 +24,7 @@ travels as its own bundle, with everything attached to it.
    (and that background's image or video file), any video placed inside its slides, and
    its colour note.
 4. On the other machine, right-click an empty part of the **Documents** list →
-   **Import** (នាំចូល) and pick that file — or just **drag the
+   **[en:tran:Import]** and pick that file — or just **drag the
    `.owadoc.tar.gz` (or `.owadoc.enc`) file from your file manager onto the Documents
    list**, which imports it the same way. A protected bundle asks for its password
    first; an ordinary one never does. 📸
@@ -33,7 +32,7 @@ travels as its own bundle, with everything attached to it.
    its background re-attached and its colour note restored, so it is ready to present
    straight away.
 6. If the bundle is on a web server or a machine sharing it over the local network, use
-   **Import From URL** (នាំចូលពី URL) instead and paste the link. The
+   **[en:tran:Import From URL]** instead and paste the link. The
    download goes to a temporary folder, is imported exactly as above, and is then
    deleted.
 
@@ -61,5 +60,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-77` · `PL-78` · `PL-79` · `PL-80` · `CM-36` · `CM-37`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

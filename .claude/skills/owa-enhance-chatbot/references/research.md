@@ -53,6 +53,17 @@ Cover the shapes, not just the topics. Twelve questions is enough for a run.
 | 10 | Feature that landed recently | anything from the newest `W-xx` recipe |
 | 11 | Ambiguous noun | "How do I add a song?" (lyric? SongSelect? public domain?) |
 | 12 | Follow-up in the same tab | "and how do I undo that?" |
+| 13 | A chip, followed THROUGH | press *Can you make a song from words I paste in?*, then paste the words, then press what appears under the draft |
+
+**Grade on the assistant the user's window is set to**, not on the paid key
+you would pick. Added 2026-09-08: every row before that was Claude Sonnet 5
+answering one question, and the four starter chips all passed there. On the
+user's own Kimi (free tier) the failures were on the SECOND message of the
+flow a chip starts — the paste that arrives inside the tier's minute and is
+refused, the model-written pill under a draft that is pressed instead of the
+real button — which a single graded answer cannot show. Read the head row,
+space Kimi asks ~60 s apart (`kimi-free-tier-round-budget` in memory), and
+press the thing a volunteer would press next.
 
 ### The scorecard
 

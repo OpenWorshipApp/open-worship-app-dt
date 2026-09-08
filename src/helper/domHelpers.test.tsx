@@ -326,7 +326,7 @@ describe('domHelpers', () => {
         ) as HTMLElement | null;
         expect(oldButton.isConnected).toBe(false);
         expect(panel.classList.contains('app-auto-hide')).toBe(true);
-        expect(clearButton?.title).toBe('Show');
+        expect(clearButton?.title).toBe('Reveal Hidden Controls');
 
         clearButton?.click();
         expect(panel.classList.contains('auto-hide-show')).toBe(true);

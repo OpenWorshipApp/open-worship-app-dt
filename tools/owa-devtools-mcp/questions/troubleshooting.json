@@ -1,0 +1,466 @@
+{
+    "page": "troubleshooting",
+    "label": "When something is wrong",
+    "window": null,
+    "focus": null,
+    "description": "Symptoms rather than tasks. Somebody standing at the back of a room describes what they can see going wrong, not the name of the feature that would fix it.",
+    "updated": "2026-09-01",
+    "sections": [
+        {
+            "id": "screen",
+            "label": "Nothing on the projector",
+            "panel": null,
+            "recipes": ["W-10", "W-18"],
+            "questions": [
+                {
+                    "id": "nothing-showing",
+                    "text": "Nothing is showing on the projector — what do I check?",
+                    "kind": "fix",
+                    "keywords": [
+                        "blank",
+                        "black",
+                        "not working",
+                        "broken",
+                        "no picture",
+                        "help",
+                        "panic"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-10",
+                        "related": ["W-18"],
+                        "tools": ["owa_list_screens", "owa_app_state"],
+                        "shortcut": "F5"
+                    },
+                    "starterRank": 5
+                },
+                {
+                    "id": "two-screens-differ",
+                    "text": "My two screens are showing different things — why?",
+                    "kind": "fix",
+                    "keywords": [
+                        "out of step",
+                        "not synced",
+                        "one is behind",
+                        "mismatch"
+                    ],
+                    "resources": {
+                        "recipe": "W-18",
+                        "related": ["W-10"],
+                        "tools": ["owa_list_screens"]
+                    }
+                },
+                {
+                    "id": "verse-not-stepping",
+                    "text": "The verse will not move to the next one from the Bible Reader — what do I do?",
+                    "kind": "fix",
+                    "keywords": [
+                        "stuck verse",
+                        "next verse",
+                        "reader",
+                        "will not advance"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "related": ["W-11"]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "settings",
+            "label": "The app itself is behaving oddly",
+            "panel": null,
+            "recipes": ["W-16"],
+            "questions": [
+                {
+                    "id": "language-stuck",
+                    "text": "The app is in a language I cannot read — how do I change it back?",
+                    "kind": "fix",
+                    "keywords": [
+                        "wrong language",
+                        "cannot read",
+                        "khmer",
+                        "mis-click",
+                        "back to english",
+                        "stuck"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "apply-settings",
+                    "text": "Why has my setting not taken effect yet?",
+                    "kind": "fix",
+                    "keywords": [
+                        "apply settings",
+                        "not working",
+                        "no change",
+                        "reload",
+                        "save settings"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "find": "Apply Settings",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "bible",
+            "label": "A Bible version is wrong or missing",
+            "panel": null,
+            "recipes": ["W-32", "W-33", "W-34"],
+            "questions": [
+                {
+                    "id": "bible-key-taken",
+                    "text": "It says the Bible key is already taken — what do I do?",
+                    "kind": "fix",
+                    "keywords": [
+                        "key exists",
+                        "duplicate",
+                        "already taken",
+                        "error",
+                        "clash",
+                        "red row"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "related": ["W-33"]
+                    }
+                },
+                {
+                    "id": "lookup-language",
+                    "text": "Why are the names in English when my Bible is not?",
+                    "kind": "what",
+                    "keywords": [
+                        "language",
+                        "translation",
+                        "khmer",
+                        "english names",
+                        "brackets",
+                        "not translated"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "related": ["W-16"]
+                    }
+                },
+                {
+                    "id": "restore-kjv",
+                    "text": "I deleted a Bible by mistake — how do I get it back?",
+                    "kind": "fix",
+                    "keywords": [
+                        "deleted",
+                        "restore",
+                        "kjv",
+                        "missing bible",
+                        "gone",
+                        "recover"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "reference-loses-verse",
+                    "text": "I typed John 3:16 in the Bible Reader and it only opened the chapter — why?",
+                    "kind": "fix",
+                    "keywords": [
+                        "full reference",
+                        "chapter and verse",
+                        "ignored",
+                        "colon"
+                    ],
+                    "resources": {
+                        "recipe": "W-11"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "accounts",
+            "label": "A sign-in will not connect",
+            "panel": null,
+            "recipes": ["W-35"],
+            "questions": [
+                {
+                    "id": "songselect-fails",
+                    "text": "SongSelect will not connect — what do I check?",
+                    "kind": "fix",
+                    "keywords": [
+                        "could not reach",
+                        "sign in failed",
+                        "error",
+                        "not working",
+                        "cancelled"
+                    ],
+                    "resources": {
+                        "recipe": "W-35",
+                        "related": ["W-36"]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "media",
+            "label": "A download or a media file fails",
+            "panel": null,
+            "recipes": ["W-21"],
+            "questions": [
+                {
+                    "id": "download-needs-binaries",
+                    "text": "It says I need to install something before downloading a video — why?",
+                    "kind": "fix",
+                    "keywords": [
+                        "extra binaries",
+                        "cannot download",
+                        "missing",
+                        "install first",
+                        "yt-dlp",
+                        "blocked"
+                    ],
+                    "resources": {
+                        "recipe": "W-21",
+                        "related": ["W-35"],
+                        "find": "Extra Binaries",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "download-left-part-file",
+                    "text": "A download failed and left a temp file behind — what do I do with it?",
+                    "kind": "fix",
+                    "keywords": [
+                        "part file",
+                        "temp",
+                        "half downloaded",
+                        "failed download"
+                    ],
+                    "resources": {
+                        "recipe": "W-21"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "sharing",
+            "label": "A file somebody sent will not open",
+            "panel": null,
+            "recipes": ["W-23", "W-25"],
+            "questions": [
+                {
+                    "id": "wrong-password",
+                    "text": "It says the password is wrong on a file I was sent — what now?",
+                    "kind": "fix",
+                    "keywords": [
+                        "wrong password",
+                        "cannot open",
+                        "encrypted",
+                        "locked",
+                        "error"
+                    ],
+                    "resources": {
+                        "recipe": "W-25",
+                        "related": ["W-23"]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "layout",
+            "label": "Something has vanished from the window",
+            "panel": null,
+            "recipes": ["W-31"],
+            "questions": [
+                {
+                    "id": "panel-disappeared",
+                    "text": "A panel has disappeared — how do I get it back?",
+                    "kind": "fix",
+                    "keywords": [
+                        "missing",
+                        "gone",
+                        "collapsed",
+                        "hidden",
+                        "cannot see",
+                        "closed"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-31",
+                        "menu": "View → Widgets",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "panel-has-no-height",
+                    "text": "A panel is open but there is nothing in it — how do I get its height back?",
+                    "kind": "fix",
+                    "keywords": [
+                        "squashed",
+                        "no height",
+                        "collapsed",
+                        "full view",
+                        "reset widgets"
+                    ],
+                    "resources": {
+                        "recipe": "W-31",
+                        "menu": "View → Widgets"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "editing",
+            "label": "A slide does not look right",
+            "panel": null,
+            "recipes": ["W-15"],
+            "questions": [
+                {
+                    "id": "slide-size",
+                    "text": "Why does my slide look the wrong shape on the screen?",
+                    "kind": "fix",
+                    "keywords": [
+                        "dimension",
+                        "aspect ratio",
+                        "wrong size",
+                        "stretched",
+                        "cut off",
+                        "16:9"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "related": ["W-10"]
+                    }
+                },
+                {
+                    "id": "website-not-live",
+                    "text": "Why does my web slide look frozen in the editor?",
+                    "kind": "what",
+                    "keywords": [
+                        "screenshot",
+                        "not live",
+                        "picture",
+                        "stale",
+                        "refresh preview",
+                        "old"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "Refresh Preview"
+                    }
+                },
+                {
+                    "id": "unsaved-edit-on-screen",
+                    "text": "The projector is showing an edit I never saved — how is that possible?",
+                    "kind": "fix",
+                    "keywords": [
+                        "unsaved",
+                        "not saved yet",
+                        "draft",
+                        "editing history"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "related": ["W-22"]
+                    }
+                },
+                {
+                    "id": "pptx-first-slide-blank",
+                    "text": "Why is the first slide of my PowerPoint blank?",
+                    "kind": "fix",
+                    "keywords": [
+                        "powerpoint",
+                        "pptx",
+                        "empty slide",
+                        "first page"
+                    ],
+                    "resources": {
+                        "recipe": "W-03"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "running-order",
+            "label": "The running order is not behaving",
+            "panel": "Presenting Flows",
+            "recipes": ["W-22"],
+            "questions": [
+                {
+                    "id": "flow-drag-between",
+                    "text": "I cannot drag a line from one running order into another — why not?",
+                    "kind": "fix",
+                    "keywords": [
+                        "drag between",
+                        "two flows",
+                        "nothing happens",
+                        "copy a line"
+                    ],
+                    "resources": {
+                        "recipe": "W-22"
+                    }
+                },
+                {
+                    "id": "flow-stopped-advancing",
+                    "text": "The running order stopped advancing by itself — what happened?",
+                    "kind": "fix",
+                    "keywords": [
+                        "auto next stopped",
+                        "timer",
+                        "not moving on",
+                        "cancelled",
+                        "clicked"
+                    ],
+                    "resources": {
+                        "recipe": "W-22"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "reporting",
+            "label": "Telling someone it is broken",
+            "panel": null,
+            "recipes": ["W-42"],
+            "questions": [
+                {
+                    "id": "report-a-problem",
+                    "text": "Something in the app is broken — how do I report it?",
+                    "kind": "fix",
+                    "keywords": [
+                        "report a bug",
+                        "tell the developer",
+                        "send a bug report",
+                        "log a fault",
+                        "issue",
+                        "crash"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": ["Report"],
+                        "tools": ["owa_app_state", "list_console_messages"]
+                    }
+                },
+                {
+                    "id": "report-where-saved",
+                    "text": "Where does the report go when I press Send report?",
+                    "kind": "fact",
+                    "keywords": [
+                        "send report",
+                        "downloads",
+                        "who sees it",
+                        "issue tracker"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                }
+            ]
+        }
+    ]
+}

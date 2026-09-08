@@ -2,7 +2,15 @@ import { type CSSProperties, lazy } from 'react';
 
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { tran } from '../lang/langHelpers';
+import {
+    copySnapshot,
+    saveSnapshotToImages,
+    sendSnapshotToChatbot,
+    takeAppSnapshot,
+} from './presentingSnapshotHelpers';
 import { useAppEffect } from '../helper/appHooks';
 import {
     drawShortcutMap,
@@ -136,6 +144,13 @@ export default function ControllerToolbarComp({
     // Re-render so Undo/Redo/Clear track what is actually on the canvas.
     usePresentingManagerEvents(drawManager);
     const isDrawing = checkIsDrawingTool(tool);
+    const isFocusing = tool === 'focus';
+    // `interact` is the one tool with no settings of its own, so in it the
+    // widget is a header and nothing else: the body would be an empty box the
+    // size of the brush panel, parked over the app the operator just asked to
+    // get back. The widget keeps its saved height and returns to it the moment
+    // a tool with a panel is picked.
+    const hasToolPanel = isDrawing || isFocusing;
 
     // Warm both panel chunks as soon as the controller opens. Correctness no
     // longer depends on it — arming is a tool fact ControllerComp owns, so the
@@ -179,6 +194,50 @@ export default function ControllerToolbarComp({
     usePresentingShortcut(drawShortcutMap.redo, () => {
         drawManager.redo();
     });
+
+    // The picture is taken FIRST and the menu offered second, so the menu
+    // itself is never in the shot. Opening it, choosing, and only then
+    // capturing would photograph the menu the user just used.
+    //
+    // Which is why the menu is opened from a REMEMBERED point rather than from
+    // the click event: by the time the capture comes back that event has been
+    // dispatched and done with, and `preventDefault` on it is a no-op on a
+    // press that finished a moment ago.
+    const handleSnapshotting = async (event: any) => {
+        const at = { clientX: event.clientX, clientY: event.clientY };
+        const dataUrl = await takeAppSnapshot();
+        if (dataUrl === null) {
+            return;
+        }
+        const contextMenuItems: ContextMenuItemType[] = [
+            {
+                menuElement: tran('Ask the assistant about this'),
+                onSelect: () => {
+                    sendSnapshotToChatbot(dataUrl);
+                },
+            },
+            {
+                menuElement: tran('Copy'),
+                onSelect: () => {
+                    copySnapshot(dataUrl);
+                },
+            },
+            {
+                menuElement: tran('Save into your images'),
+                onSelect: () => {
+                    saveSnapshotToImages(dataUrl);
+                },
+            },
+        ];
+        showAppContextMenu(
+            {
+                ...at,
+                preventDefault: () => {},
+                stopPropagation: () => {},
+            } as any as MouseEvent,
+            contextMenuItems,
+        );
+    };
 
     // All three button groups live in the widget's HEADER, not its content: the
     // tool switcher on the left, then the screencast switch and
@@ -293,6 +352,26 @@ export default function ControllerToolbarComp({
                         drawManager.clear();
                     }}
                 />
+                {/*
+                 * The snapshot belongs in THIS group rather than beside the
+                 * tools: it is a thing done to the drawing that is already on
+                 * screen, like undoing it or clearing it -- and this group is
+                 * the one that survives the widget being rolled up, which is
+                 * exactly the state someone is in when they want a picture of
+                 * what they have just marked.
+                 *
+                 * One button and a menu, not three buttons. The header is
+                 * eight controls wide at its 360px floor already.
+                 */}
+                <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onMouseDown={handleKeepOverlayFocus}
+                    onClick={handleSnapshotting}
+                    title={tran('Take a picture of the app')}
+                    aria-label={tran('Take a picture of the app')}
+                >
+                    <i className="bi bi-camera" />
+                </button>
             </div>
         </>
     );
@@ -302,11 +381,10 @@ export default function ControllerToolbarComp({
             title={titleComp}
             persistKey={toPresentingSettingKey(WIDGET_RECT_SETTING_NAME)}
             onClose={onClose}
+            isBodyHidden={!hasToolPanel}
             options={{
                 // Sized for the widest panel (the brush row) wrapping onto two
-                // lines; `interact` has no panel at all and leaves the body empty
-                // rather than resizing under the user, and a persisted rect wins
-                // over this anyway.
+                // lines; a persisted rect wins over this anyway.
                 width: 640,
                 height: 150,
                 // Both header groups keep their full width at every size, so the
@@ -327,7 +405,7 @@ export default function ControllerToolbarComp({
                     />
                 </AppSuspenseComp>
             ) : null}
-            {tool === 'focus' ? (
+            {isFocusing ? (
                 <AppSuspenseComp>
                     <ControllerFocusToolsCompLazy focusManager={focusManager} />
                 </AppSuspenseComp>

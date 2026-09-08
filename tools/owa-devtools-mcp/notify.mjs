@@ -42,14 +42,72 @@ const ACTING_TOOLS = {
     owa_click: 'clicked something',
     owa_type: 'typed something',
     owa_goto_page: 'switched the window to another page',
+    // Draws an outline over the window and swallows the next click. Nothing in
+    // the app changes, but the window stops behaving normally until the user
+    // picks, and that is exactly what the banner is for.
+    owa_pick_element: 'asked you to point at a control',
+    owa_highlight_selector: 'pointed out a control',
+    // The one tool that reaches off this machine. It changes nothing in the
+    // window, so by the rule above it would stay quiet -- and it is here
+    // anyway, because "what left this computer" is the one thing an operator
+    // is owed a look at even more than "what was pressed". A URL is a channel
+    // out, so the banner NAMES the site: a read of a site nobody recognises,
+    // in the middle of a question about clearing a screen, is the shape a
+    // prompt injection makes, and a banner reading "read a website" would
+    // have hidden exactly the part worth seeing.
+    owa_read_website: 'read a website',
+    // Writing the user's own documents. The banner says the ACTION and the
+    // NAME, because "changed a song" is the one notice where which song is
+    // the whole question -- and a read (`list` / `info`) says nothing at all,
+    // the same rule every other reading tool follows.
+    owa_lyric_file: 'changed a song',
+    owa_slide_file: 'changed a slide document',
 };
 
-// `owa_find_ui` only draws when asked to; without a highlight it is a read.
+// What a write to one of the user's documents is called, or null for a read.
+const AGENT_FILE_VERBS = {
+    create: 'made',
+    update: 'changed',
+    rename: 'renamed',
+};
+
+// Two tools say more than their entry. `owa_find_ui` only draws when asked to,
+// so without a highlight it is a read; `owa_read_website` names where it went.
 export function describeToolCall(name, args) {
     if (name === 'owa_find_ui' && args?.highlight !== true) {
         return null;
     }
+    if (name === 'owa_lyric_file' || name === 'owa_slide_file') {
+        const verb = AGENT_FILE_VERBS[args?.action];
+        if (verb === undefined) {
+            // `list` and `info` only read, and a banner per read would both
+            // cry wolf and photograph itself during a QA run.
+            return null;
+        }
+        const what = name === 'owa_lyric_file' ? 'song' : 'slide document';
+        const named = typeof args?.name === 'string' && args.name !== '';
+        return named ? `${verb} the ${what} "${args.name}"` : `${verb} a ${what}`;
+    }
+    if (name === 'owa_read_website') {
+        const site = toSiteName(args?.url);
+        // The generic entry above, when the address is unreadable: a tool
+        // that announces itself only for well-formed input announces itself
+        // exactly when it matters least.
+        return site === null
+            ? ACTING_TOOLS[name]
+            : `read a page on ${site}`;
+    }
     return ACTING_TOOLS[name] ?? null;
+}
+
+// Just the site, never the whole address: the path is where an exfiltration
+// attempt puts its payload, and a banner is a thing glanced at, not read.
+function toSiteName(url) {
+    try {
+        return new URL(String(url)).hostname;
+    } catch {
+        return null;
+    }
 }
 
 const NOTICE_RUNTIME = `

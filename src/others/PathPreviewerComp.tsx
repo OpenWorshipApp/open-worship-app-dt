@@ -79,7 +79,17 @@ export function PathPreviewerComp({
         // The ⋮ is a SIBLING of the path, never a child of it: the label is
         // `app-ellipsis-left`, which is `direction: rtl`, and anything nested in
         // it is re-ordered by that too.
-        <div className="d-flex align-items-center flex-fill">
+        //
+        // `minWidth: 0` is load-bearing, not tidiness: this wrapper is itself a
+        // flex item, its automatic minimum size is the min-content of a
+        // `white-space: nowrap` path, and the label's own `overflow: hidden`
+        // does NOT lift that off the parent. Without it the path refuses to
+        // shrink and pushes the whole row — search, sort, filter, ⋮ — past the
+        // panel edge instead of ellipsizing.
+        <div
+            className="d-flex align-items-center flex-fill"
+            style={{ minWidth: 0 }}
+        >
             <div
                 className={
                     'app-ellipsis-left app-border-white-round px-1 flex-fill' +

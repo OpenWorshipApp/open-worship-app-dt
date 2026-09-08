@@ -137,6 +137,9 @@ export const messageChannels = {
     screenMessage: 'app:screen:message',
     openAboutPage: 'main:app:open-about-page',
     openChatbotPage: 'main:app:open-chatbot-page',
+    guideHelp: 'main:app:guide-help',
+    guideHelpAnswer: 'main:app:guide-help-answer',
+    chatAttach: 'main:app:chat-attach',
 };
 
 /**
@@ -811,6 +814,186 @@ export function resetPopupWindowsBounds(fallbackParentWin: BrowserWindow) {
 }
 
 /**
+ * The help window steps aside while a walkthrough is running.
+ *
+ * The chatbot is a separate OS window that deliberately sits ON TOP of the app
+ * (`appTopToMain`), because its answers are about the window behind it. That is
+ * exactly wrong for a walkthrough: the card it starts rings a control in that
+ * window, and roughly a quarter of the app can be behind the help window at any
+ * moment -- measured at 12% of the presenter's named controls with it parked
+ * over the middle. Telling someone to press a button they cannot see is worse
+ * than not offering to.
+ *
+ * So it is minimised for the length of the walkthrough and restored when the
+ * card closes. Two things keep that from being rude:
+ *
+ * - **Only when it is actually in the way.** A second monitor, or a window
+ *   pushed off to the side, is left alone -- and then nothing is restored
+ *   either, because nothing moved.
+ * - **Only what this did.** A window the user minimised themselves is not
+ *   "restored", and one they bring back mid-walkthrough is theirs again.
+ *
+ * Recovering it by hand already works and keeps working: the taskbar, or the
+ * app's own 🤖 button, which `handlePopupWindowOpen` answers by restoring the
+ * window that is already open rather than making a second one.
+ */
+let tuckedAwayWin: BrowserWindow | null = null;
+let handleUserReclaiming: (() => void) | null = null;
+
+// Stop treating the window as ours. Called both when the USER brings it back
+// and just before this code does -- our own `restore()` and `close` fire the
+// same events, and re-entering through them would clear the reference a second
+// time or restore a window twice.
+function releaseTuckedAwayWin() {
+    if (tuckedAwayWin !== null && handleUserReclaiming !== null) {
+        if (!tuckedAwayWin.isDestroyed()) {
+            tuckedAwayWin.off('restore', handleUserReclaiming);
+            tuckedAwayWin.off('closed', handleUserReclaiming);
+        }
+    }
+    tuckedAwayWin = null;
+    handleUserReclaiming = null;
+}
+
+function findChatbotWindow() {
+    return (
+        BrowserWindow.getAllWindows().find((win) => {
+            return (
+                !win.isDestroyed() &&
+                win.webContents.getURL().includes(htmlFiles.chatbot)
+            );
+        }) ?? null
+    );
+}
+
+function checkIsOverlapping(one: BrowserWindow, other: BrowserWindow) {
+    const a = one.getBounds();
+    const b = other.getBounds();
+    return (
+        Math.min(a.x + a.width, b.x + b.width) > Math.max(a.x, b.x) &&
+        Math.min(a.y + a.height, b.y + b.height) > Math.max(a.y, b.y)
+    );
+}
+
+export function setGuideRunning(guidedWin: BrowserWindow, isRunning: boolean) {
+    if (!isRunning) {
+        // Only ever undo this function's own doing: `tuckedAwayWin` is null
+        // unless a walkthrough put it there, and the `restore` listener below
+        // has already given it up if the user brought it back themselves.
+        //
+        // Deliberately NOT gated on `isMinimized()` any more: that asks the
+        // window manager to confirm, a beat later, something we already know,
+        // and a stale answer leaves the window down with no way back but the
+        // taskbar. Whether the user has reclaimed it is a thing to be TOLD
+        // (the event), not a state to re-read.
+        const win = tuckedAwayWin;
+        releaseTuckedAwayWin();
+        if (win !== null && !win.isDestroyed()) {
+            win.restore();
+        }
+        return;
+    }
+    const chatbotWin = findChatbotWindow();
+    if (
+        chatbotWin === null ||
+        chatbotWin === guidedWin ||
+        chatbotWin.isMinimized() ||
+        !checkIsOverlapping(chatbotWin, guidedWin)
+    ) {
+        return;
+    }
+    // Nothing should still be held here -- the stop always releases, and a
+    // window still held would be minimised and so refused above -- but taking
+    // a second one without letting the first go would leak a listener.
+    releaseTuckedAwayWin();
+    tuckedAwayWin = chatbotWin;
+    handleUserReclaiming = releaseTuckedAwayWin;
+    chatbotWin.once('restore', handleUserReclaiming);
+    chatbotWin.once('closed', handleUserReclaiming);
+    chatbotWin.minimize();
+    // The walkthrough happens in the app window from here, and a demo step
+    // that types needs it genuinely focused -- minimising the window in front
+    // of it is most of the way there, but not all of it on every desktop.
+    if (!guidedWin.isDestroyed()) {
+        guidedWin.focus();
+    }
+}
+
+/**
+ * A walkthrough step the card could not perform, handed to the chat window
+ * that started it. The two are separate renderers — one drawing a card in the
+ * presenter, one holding the conversation and the model — and neither can
+ * reach the other, so the main process carries the question across and the
+ * answer back.
+ *
+ * The guided window is remembered rather than looked up, because by the time
+ * the answer arrives the model has had several rounds to move the app around,
+ * and the card that asked is in the window that asked — not in whatever is
+ * focused a few seconds later.
+ *
+ * Nothing here restores the chat window. It was minimised for the length of
+ * the walkthrough on purpose (`setGuideRunning`), the user is looking at the
+ * app, and the answer is drawn on the card in front of them; pulling the help
+ * window back over the control they are about to press would undo the fix
+ * while delivering it.
+ */
+let guideHelpAskingWin: BrowserWindow | null = null;
+
+export function askGuideHelp(guidedWin: BrowserWindow, payload: any) {
+    guideHelpAskingWin = guidedWin;
+    const chatbotWin = findChatbotWindow();
+    if (chatbotWin === null || chatbotWin === guidedWin) {
+        // Say so at once instead of letting the card wait out its timeout:
+        // with no chat window there is nobody to ask, and the sooner the card
+        // knows, the sooner the user gets the plain instruction back.
+        answerGuideHelp({ token: payload?.token, text: '' });
+        return false;
+    }
+    chatbotWin.webContents.send(messageChannels.guideHelp, payload);
+    return true;
+}
+
+/**
+ * A picture on its way from the Presenting Control to the help window.
+ *
+ * Held here for the same reason the guide's answer is routed here: the two are
+ * separate renderers and neither can reach the other. What is different is the
+ * TIMING -- pressing the camera also OPENS the help window, and a window still
+ * loading cannot receive a message. So the picture waits, and the window takes
+ * it when it is ready. Exactly one is held: a second snapshot replaces the
+ * first, because a queue of screenshots in the main process is a memory leak
+ * dressed as a feature.
+ */
+let pendingChatAttachment: any = null;
+
+export function sendChatAttachment(payload: any) {
+    pendingChatAttachment = payload;
+    const chatbotWin = findChatbotWindow();
+    if (chatbotWin === null) {
+        return false;
+    }
+    chatbotWin.webContents.send(messageChannels.chatAttach, payload);
+    return true;
+}
+
+/** Read once and forgotten: this must not keep a picture alive. */
+export function takeChatAttachment() {
+    const payload = pendingChatAttachment;
+    pendingChatAttachment = null;
+    return payload;
+}
+
+export function answerGuideHelp(payload: any) {
+    const win = guideHelpAskingWin;
+    guideHelpAskingWin = null;
+    if (win === null || win.isDestroyed()) {
+        return false;
+    }
+    win.webContents.send(messageChannels.guideHelpAnswer, payload);
+    return true;
+}
+
+/**
  * Blink runtime features (e.g. `CanvasDrawElement`) can be switched on for a
  * single window through its `webPreferences`. They are per renderer *process*
  * though, so this only takes effect because `openPopupWindow` marks such
@@ -1165,6 +1348,51 @@ export async function captureWebScreenShot(
     } finally {
         attemptClosing(captureWin);
     }
+}
+
+/**
+ * A photograph of a window the app already has open — the presenter or reader
+ * the user is looking at, or a projector screen that is showing.
+ *
+ * Not `captureWebScreenShot` above, which loads a URL into a NEW hidden window:
+ * that answers "what does this page look like", and the question here is "what
+ * does the operator's screen look like RIGHT NOW", drawing and spotlight and
+ * half-open menus included.
+ *
+ * `capturePage` photographs the window's own web contents rather than the
+ * desktop, which is what makes it right for this: the chatbot popup sits ON TOP
+ * of the app (`appTopToMain`), and a desktop-level grab would hand the assistant
+ * a picture of itself covering the thing it was asked about.
+ */
+export async function captureWindowImage(win: BrowserWindow | null) {
+    if (win === null || win.isDestroyed()) {
+        throw new Error('That window is not open');
+    }
+    const image = await win.webContents.capturePage();
+    return image.toDataURL();
+}
+
+/**
+ * The window a showing projector screen is drawn in, or null when that screen
+ * is not showing — which is not an error but an answer: "there is nothing on
+ * screen 2" is what most questions asking for a picture of screen 2 are really
+ * asking. The target only exists while the screen is up.
+ *
+ * `appController.mainWin` is deliberately NOT resolved in this module: it would
+ * close an import cycle (`ElectronAppController` reads `messageChannels` from
+ * here), so the caller passes the window it wants.
+ */
+export function findScreenWindow(screenId: number) {
+    return (
+        BrowserWindow.getAllWindows().find((one) => {
+            return (
+                !one.isDestroyed() &&
+                one.webContents
+                    .getURL()
+                    .includes(`screenId=${screenId.toString()}`)
+            );
+        }) ?? null
+    );
 }
 
 export function genTimeoutAttempt(

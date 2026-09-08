@@ -61,17 +61,25 @@ export default function PresentingControlComp() {
         return registerAppMenuClicked(handleMenuItemClicked);
     }, [handleMenuItemClicked]);
     useAppEffect(() => {
-        setAppMenuItems('presenting-control', {
-            tools: [
-                {
-                    label: tran('Start Controlling'),
-                    accelerator: appProvider.systemUtils.isMac
-                        ? 'Command+Shift+P'
-                        : 'Ctrl+Shift+P',
-                    clickData: { isTogglePresentingControl: true },
-                },
-            ],
-        });
+        setAppMenuItems(
+            'presenting-control',
+            {
+                tools: [
+                    {
+                        label: tran('Start Controlling'),
+                        accelerator: appProvider.systemUtils.isMac
+                            ? 'Command+Shift+P'
+                            : 'Ctrl+Shift+P',
+                        clickData: { isTogglePresentingControl: true },
+                    },
+                ],
+            },
+            // Every window contributes this key and only the last one to load
+            // is remembered, so an owner-routed click reaches that window and
+            // no other -- which is why opening Settings used to take this menu
+            // item away from the presenter.
+            { isRoutedToFocusedWindow: true },
+        );
     }, []);
 
     if (!isControlling) {

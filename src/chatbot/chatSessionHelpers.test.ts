@@ -12,6 +12,7 @@ vi.mock('../helper/settingHelpers', () => ({
     },
 }));
 
+import { BOT_FOCUS_KEYS } from '../../tools/owa-devtools-mcp/botFocus.mjs';
 import {
     checkCanAddChatSession,
     checkCanClearChatSessions,
@@ -134,6 +135,7 @@ describe('loadChatSessions', () => {
                 sessions: [
                     { id: 'a', messages: [], provider: 'anthropic' },
                     { id: 'b', messages: [], provider: 'some-other-service' },
+                    { id: 'c', messages: [], provider: 'kimi' },
                 ],
             }),
         );
@@ -142,6 +144,9 @@ describe('loadChatSessions', () => {
 
         expect(state.sessions[0].provider).toBe('anthropic');
         expect(state.sessions[1].provider).toBe(null);
+        // ...and every provider the build DOES know survives, which is
+        // the half that silently broke when this was a hand-written pair.
+        expect(state.sessions[2].provider).toBe('kimi');
     });
 
     test('an activeId naming no tab falls back to the first one', () => {
@@ -213,6 +218,36 @@ describe('saveChatSessions', () => {
         expect(stored.sessions).toHaveLength(MAX_SESSION_COUNT);
         expect(stored.sessions[0].messages).toHaveLength(60);
         expect(stored.activeId).toBe('s0');
+    });
+
+    // Eight windows now, not two. The validator used to be a ternary that read
+    // "reader or presenter", so every other window's tab came back as the
+    // presenter's the moment it was reloaded.
+    test('a tab remembers whichever window it was asking about', () => {
+        for (const focus of BOT_FOCUS_KEYS) {
+            const session = genSession({
+                id: `tab-${focus}`,
+                focus,
+                isFocusChosen: true,
+            });
+            saveChatSessions({ sessions: [session], activeId: session.id });
+            expect(
+                loadChatSessions('presenter', null, '').sessions[0].focus,
+                focus,
+            ).toBe(focus);
+        }
+    });
+
+    test('a window it has never heard of falls back to the presenter', () => {
+        const session = genSession({ id: 'odd', isFocusChosen: true });
+        saveChatSessions({
+            sessions: [{ ...session, focus: 'projector' as any }],
+            activeId: 'odd',
+        });
+
+        expect(loadChatSessions('reader', null, '').sessions[0].focus).toBe(
+            'presenter',
+        );
     });
 
     test('a save then a load is the same state', () => {
@@ -394,5 +429,201 @@ describe('genSessionId', () => {
         );
 
         expect(ids.size).toBe(500);
+    });
+});
+
+// The best options under an answer were WRITTEN by the model that wrote it, so
+// reopening the window cannot re-derive them -- they have to be on disk. And
+// this file is plain JSON a user can edit, so what comes back off it is capped
+// again on the way in.
+describe('quick-reply options on a message', () => {
+    test('they survive a save and a load', () => {
+        const session = genNewChatSession('presenter', 'anthropic', 'model');
+        session.messages = [
+            {
+                id: 1,
+                author: 'bot',
+                text: 'Would you like help?',
+                replies: ['Yes', 'No thanks'],
+            },
+        ];
+        saveChatSessions({ sessions: [session], activeId: session.id });
+
+        const state = loadChatSessions('presenter', 'anthropic', 'model');
+
+        expect(state.sessions[0].messages[0].replies).toEqual([
+            'Yes',
+            'No thanks',
+        ]);
+    });
+
+    test('a hand-edited file cannot fill the window with buttons', () => {
+        settingMap.set(
+            'chatbot-sessions',
+            JSON.stringify({
+                activeId: 's1',
+                sessions: [
+                    {
+                        id: 's1',
+                        messages: [
+                            {
+                                id: 1,
+                                author: 'bot',
+                                text: 'hi',
+                                replies: [
+                                    ...Array.from({ length: 20 }, () => {
+                                        return 'x'.repeat(400);
+                                    }),
+                                    '',
+                                    42,
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            }),
+        );
+
+        const state = loadChatSessions('presenter', null, '');
+
+        const [message] = state.sessions[0].messages;
+        expect(message.replies).toHaveLength(3);
+        expect(message.replies?.[0]).toHaveLength(120);
+    });
+
+    test('a message with no options carries none', () => {
+        settingMap.set(
+            'chatbot-sessions',
+            JSON.stringify({
+                activeId: 's1',
+                sessions: [
+                    {
+                        id: 's1',
+                        messages: [{ id: 1, author: 'bot', text: 'hi' }],
+                    },
+                ],
+            }),
+        );
+
+        const state = loadChatSessions('presenter', null, '');
+
+        expect(state.sessions[0].messages[0]).not.toHaveProperty('replies');
+    });
+});
+
+// A message can now say what was attached to it. What it must never say is
+// what the attachment CONTAINED: this file is read whole and synchronously at
+// startup on a machine chosen for having nothing to spare, and one screenshot
+// in it would cost more than every conversation the window has ever held.
+describe('attachments on a message', () => {
+    beforeEach(() => {
+        settingMap.clear();
+    });
+
+    function loadOneMessage(raw: any) {
+        settingMap.set(
+            SETTING_NAME,
+            JSON.stringify({
+                sessions: [{ ...genSession(), messages: [raw] }],
+                activeId: 'x',
+            }),
+        );
+        return loadChatSessions('presenter', 'anthropic', 'm').sessions[0]
+            .messages[0];
+    }
+
+    test('the description survives a restart', () => {
+        const message = loadOneMessage({
+            id: 1,
+            author: 'you',
+            text: 'what is this?',
+            attachments: [
+                {
+                    id: 'a1',
+                    kind: 'image',
+                    name: 'my screen',
+                    mimeType: 'image/png',
+                    byteSize: 1234,
+                },
+            ],
+        });
+        expect(message.attachments).toEqual([
+            {
+                id: 'a1',
+                kind: 'image',
+                name: 'my screen',
+                mimeType: 'image/png',
+                byteSize: 1234,
+            },
+        ]);
+    });
+
+    // The guard is that the fields are LISTED rather than spread. A file a user
+    // can edit must not be able to put a picture back into the store that this
+    // whole design exists to keep pictures out of.
+    test('a hand-written data URL cannot smuggle bytes back in', () => {
+        const message = loadOneMessage({
+            id: 1,
+            author: 'you',
+            text: 'hello',
+            attachments: [
+                {
+                    id: 'a1',
+                    kind: 'image',
+                    name: 'sneaky',
+                    mimeType: 'image/png',
+                    byteSize: 1,
+                    dataUrl: 'data:image/png;base64,AAAA',
+                    data: 'AAAA',
+                },
+            ],
+        });
+        expect(message.attachments?.[0]).not.toHaveProperty('dataUrl');
+        expect(message.attachments?.[0]).not.toHaveProperty('data');
+    });
+
+    test('an element keeps its selector, and the count is capped', () => {
+        const message = loadOneMessage({
+            id: 1,
+            author: 'you',
+            text: 'this one',
+            attachments: [
+                ...Array.from({ length: 9 }, (_one, index) => {
+                    return {
+                        id: `a${index.toString()}`,
+                        kind: 'element',
+                        name: 'Bible Lookup',
+                        mimeType: 'application/x-owa-element',
+                        byteSize: 0,
+                        selector: 'button[aria-label="Bible Lookup"]',
+                        summary: 'the control they pointed at',
+                    };
+                }),
+            ],
+        });
+        expect(message.attachments).toHaveLength(4);
+        expect(message.attachments?.[0].selector).toBe(
+            'button[aria-label="Bible Lookup"]',
+        );
+    });
+
+    test('junk in the list is dropped rather than drawn', () => {
+        const message = loadOneMessage({
+            id: 1,
+            author: 'you',
+            text: 'hello',
+            attachments: [{ id: 'a1' }, { kind: 'image', name: 'x' }, 7],
+        });
+        expect(message.attachments).toBeUndefined();
+    });
+
+    test('only the three real attach requests come back', () => {
+        const message = loadOneMessage({
+            id: 1,
+            author: 'bot',
+            text: 'show me',
+            attachRequests: ['screenshot', 'delete-everything', 'file'],
+        });
+        expect(message.attachRequests).toEqual(['screenshot', 'file']);
     });
 });

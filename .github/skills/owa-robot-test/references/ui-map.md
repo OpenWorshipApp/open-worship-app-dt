@@ -87,7 +87,7 @@ Two widgets only, top to bottom: **Documents**, then **Presenting Flows**. The s
 - **Documents** list: header text `Documents`; items are `li.list-group-item`
   (selected item has `.active`); icons `bi bi-file-earmark-slides` / `-pdf` /
   `-music-note` (lyric) etc.
-- **Presenting Flows** list: header text `PresentingFlows` (តារាងកម្មវិធី); present in **every**
+- **Presenting Flows** list: header text `PresentingFlows` ([en:tran:Presenting Flows]); present in **every**
   build — no longer dev-gated. Cards are `li.list-group-item`; inside an opened card the
   elements are `.app-presenting-flow-row` (`.app-presenting-flow-row-error` for a damaged entry,
   `.app-on-screen` on the label while live). Header icon `bi-window-stack` opens the

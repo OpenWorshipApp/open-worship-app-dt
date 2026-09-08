@@ -13,7 +13,7 @@ hero:
       link: /presenting-content/w-06-look-up-and-present-a-bible-verse
 features:
   - title: "Orientation"
-    details: "Understand the Presenter window · Switch between the main pages"
+    details: "Understand the Presenter window · The `⋮` button: everything a thing can do · Switch between the main pages"
     link: /orientation/w-01-understand-the-presenter-window
   - title: "Presenting content"
     details: "Present a slide from a document · Auto-play slides on a timer · Present song lyrics · Look up and present a Bible verse · Style the on-screen Bible text · Set the background (color / image / video / web) · Play audio, and foreground extras (countdown, clock, marquee bottom…) · Control what the audience sees (mini screen + clears)"

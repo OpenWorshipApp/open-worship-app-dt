@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 9e541ebe-bc3b-4c9b-9390-88ff0a61c2c9
-  modified: 2026-09-01T01:19:56.240Z
+  modified: 2026-09-08T20:04:52.894Z
 ---
 
 Editing anything under `tools/owa-devtools-mcp/` puts TWO long-lived processes
@@ -15,6 +15,10 @@ work":
 - **The app's in-process MCP host** (`startMcpHost`, HTTP on 39223) restarts with
   the app — and `npm run electron:watch` watches `tools/owa-devtools-mcp` as well
   as `electron-build`, so saving the file already restarted it. This one is FRESH.
+  The flip side (2026-09-08): EVERY save under `tools/owa-devtools-mcp/` — a
+  test file included — restarts the app, closes the chatbot window and drops
+  every `list_pages` id, so batch those edits and reopen the window before a
+  live run rather than in the middle of one.
 - **The agent's own `mcp__owa-devtools__*` tools** come from a separate stdio
   process that `./.mcp.json` spawned once (`node tools/owa-devtools-mcp/bin.mjs`).
   It imported the module at startup and nothing reloads it. This one is STALE
@@ -31,6 +35,16 @@ tools.** Read `mcpUrl` from `<temp>/open-worship-app-cdp/<pid>.json` and speak
 JSON-RPC to it directly (initialize → `notifications/initialized` → `tools/call`);
 `scripts/audit-mcp-tools.mjs` already resolves that URL. That is also the exact
 door the in-app chatbot uses, so it is the more honest test anyway.
+
+**The "fresh" host can be stale too** (2026-09-02): if an OLD app instance
+survived a restart of the `electron:dev` chain (its parent chain is gone, the
+process is orphaned), it still holds the single-instance lock, so every
+relaunch nodemon makes quits at once and the discovery file keeps the old pid
+and `startedAt`. Check the pid against the launch time before trusting the
+host; when it is stale, spawn a FRESH server over stdio
+(`node tools/owa-devtools-mcp/bin.mjs`, JSON-RPC on stdin) to verify the new
+code, and ask the user to close the old app — killing it needs a permission
+the harness may refuse.
 
 Unrelated but adjacent: killing the Electron main process alone does NOT make
 nodemon relaunch it — touch a watched file to get the app back. See

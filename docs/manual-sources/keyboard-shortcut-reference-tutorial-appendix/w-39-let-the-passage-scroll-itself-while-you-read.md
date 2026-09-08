@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-107]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-39 — Let the passage scroll itself while you read
 
@@ -14,18 +14,18 @@ wheel — the app can scroll it for you, at whatever pace you set.
 
 1. Open a passage long enough to scroll, in a Bible panel or on the screen preview.
    Down in the bottom-right corner of the text, two faint controls sit one above the
-   other: an up-arrow (**Scroll to the top** / រំកិលទៅលើគេ) and a double chevron below it.
+   other: an up-arrow (**[en:tran:Scroll to the top]**) and a double chevron below it.
    The double chevron is the auto-scroll button. 📸
 2. Click the double chevron once. The text starts creeping downward. Click it again and
    it goes faster; each click adds a little more speed.
 3. As soon as it is moving, a **⋯** appears just to its left. Click it. 📸
    A small menu opens listing everything this button can do, with the mouse action for
    each one written beside it:
-   - **Auto Scroll Speed** (ល្បឿនរំកិលដោយស្វ័យប្រវត្តិ) — how fast it is going right now.
-   - **Speed Up** (បង្កើនល្បឿន) — the same as clicking the chevron.
-   - **Speed Up Faster** (បង្កើនល្បឿនខ្លាំង) — a bigger jump, the same as double-clicking it.
-   - **Slow Down** (បន្ថយល្បឿន) — the same as right-clicking it.
-   - **Stop Auto Scrolling** (បញ្ឈប់ការរំកិលដោយស្វ័យប្រវត្តិ) — the same as Alt + right-click.
+   - **[en:tran:Auto Scroll Speed]** — how fast it is going right now.
+   - **[en:tran:Speed Up]** — the same as clicking the chevron.
+   - **[en:tran:Speed Up Faster]** — a bigger jump, the same as double-clicking it.
+   - **[en:tran:Slow Down]** — the same as right-clicking it.
+   - **[en:tran:Stop Auto Scrolling]** — the same as Alt + right-click.
 4. Pick **Slow Down** a couple of times and watch the speed number fall each time you
    reopen the menu. Pick **Stop Auto Scrolling** to end it — the text stops and the **⋯**
    disappears, because there is nothing left to control. 📸
@@ -40,5 +40,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-107`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

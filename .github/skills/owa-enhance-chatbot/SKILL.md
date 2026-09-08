@@ -38,7 +38,7 @@ more than ten good ones earn.
 | --- | --- | --- |
 | **1 · It answers** | A question gets a relevant manual answer, offline and online, and never a stack trace. | reached |
 | **2 · It answers *correctly and usably*** | Right for the window they are in, numbered steps, no path/id/component name ever, English, honest when the app cannot do the thing. | **partly — the current front line** |
-| **3 · It acts, reliably** | The ring lands on the real control, the walkthrough survives a wrong guess, demo mode does the step, and every acting call is announced and safe near a live service. | partly |
+| **3 · It acts, reliably** | The ring lands on the real control, the walkthrough survives a wrong guess, demo mode does the step, and every acting call is announced and safe near a live service. | partly — measured for the first time 2026-09-08 (`demo-failure-rate.mjs`): Do it now presses only the control the step names and closes a popup in its way, but still refuses ~59% of recipe steps (most name nothing to press; `EC-108`, `EC-109`) |
 | **4 · It is trustworthy under pressure** | Recovers from its own wrong turns without the user noticing, answers in 1–2 rounds, costs little enough to use freely, and degrades honestly when the network or the key dies. | not yet |
 | **5 · It is situational** | Knows what is on screen and what the user is in the middle of; handles "nothing is showing on the projector" end to end; suggests the next step before being asked. | not yet |
 | **6 · It is the fastest way to use the app** | A volunteer would rather ask than click. | the point of the climb |
@@ -69,7 +69,7 @@ and app features that merely happen to be *described* by the manual.
 | The window                        | `html/chatbot.html` → `src/chatbot/ChatbotAppComp.tsx` (+ `.scss`)                                       |
 | Conversation tabs                 | `src/chatbot/chatSessionHelpers.ts` — `local-storage/chatbot-sessions`, 12 tabs × 60 messages             |
 | Offline bot (no key / fallback)   | `src/chatbot/helpBotHelpers.ts` — manual search only, plus `genGuideActions` / `runBotAction`             |
-| LLM loop, providers, models       | `src/chatbot/llmBotHelpers.ts` — the system prompt, `MAX_TOOL_ROUNDS`, Anthropic + OpenAI                 |
+| LLM loop, providers, models       | `src/chatbot/llmBotHelpers.ts` — the system prompt, `MAX_TOOL_ROUNDS`, `LLM_PROVIDER_MAP` (Anthropic + OpenAI + Kimi) |
 | MCP client                        | `src/chatbot/mcpClient.ts` — one session, re-opened on a 404 sweep                                       |
 | App-level tools                   | `tools/owa-devtools-mcp/owaTools.mjs` — the 13 `owa_*` tools                                             |
 | DOM matching for `find/click/type`| `tools/owa-devtools-mcp/domMatch.mjs` (+ test)                                                          |
@@ -374,8 +374,8 @@ user's own API credit.
 
 ### E. The window
 
-`ChatbotAppComp.tsx` is one file with the tab strip, head row (Presenter/Reader,
-provider, model picker), message list and ask form.
+`ChatbotAppComp.tsx` is one file with the tab strip, head row (three `<select>`s
+— Presenter/Reader, provider, model picker), message list and ask form.
 
 - The ENTIRE head row belongs to the tab in front, not to the window. The stored
   provider/model settings are only what a NEW tab starts on. Do not "fix" this
@@ -449,4 +449,17 @@ knows the app's internals.
   change in the live app.
 - [scripts/audit-mcp-tools.mjs](./scripts/audit-mcp-tools.mjs) — live tool-surface
   audit (`--json`, `--rounds=N`).
+- [scripts/rescue-failure-rate.mjs](./scripts/rescue-failure-rate.mjs) — drives a
+  stuck walkthrough step N times and grades every answer with a deterministic
+  grader (`--runs=N --manual=W-06 --step=3`, `--json`). **Report a failure RATE,
+  never a handful of answers you liked**: five good ones is what a run tells
+  itself when it wants to stop. Spends the user's API credit, one round per run.
+- [scripts/demo-failure-rate.mjs](./scripts/demo-failure-rate.mjs) — presses
+  **Do it** through every step of every recipe in the window it is filed under
+  (`--recipes=W-08,W-06`, `--page=reader`, `--json`), paced under the firewall's
+  25 acting calls a minute, and grades each press by what the card reported.
+  Run it with the chatbot window CLOSED for the card's own numbers (open, every
+  refusal spends a model round on the rescue). **Grade the presses it calls
+  done by the label they clicked**, not only the refusals: the first run's
+  "done" column hid ten wrong controls. Never while a screen is live.
 - `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-14`.

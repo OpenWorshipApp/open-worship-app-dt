@@ -6,7 +6,7 @@ import HandleAlertComp from './popup-widget/HandleAlertComp';
 import TopProgressBarComp from './progress-bar/TopProgressBarComp';
 import { forceReloadAppWindows } from './setting/settingHelpers';
 import ToastComp from './toast/ToastComp';
-import PresentingControlComp from './presenting-control/PresentingControlComp';
+import AppWindowToolsComp from './others/AppWindowToolsComp';
 
 globalThis.addEventListener('beforeunload', () => {
     forceReloadAppWindows();
@@ -22,7 +22,7 @@ init(async () => {
             <ToastComp />
             <HandleAlertComp />
             <AppContextMenuComp />
-            <PresentingControlComp />
+            <AppWindowToolsComp />
         </>,
     );
 });

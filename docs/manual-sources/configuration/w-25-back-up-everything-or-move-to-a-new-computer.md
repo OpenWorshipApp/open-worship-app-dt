@@ -5,15 +5,14 @@ section: "Configuration"
 verify: [NAV-17, NAV-18, NAV-19]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-25 — Back up everything, or move to a new computer
 
 W-22 to W-24 each carry one thing. To take **all** your material at once — for a backup,
 or to set up a second machine — use the app's **File** menu.
 
-1. Open the **File** menu at the top of the window and choose **Export Data**
-   (នាំចេញទិន្នន័យ). 📸
+1. Open the **File** menu at the top of the window and choose **[en:tran:Export Data]**. 📸
 2. A panel lists every data folder you have set up — Documents, Presenting Flows, Background
    Images, Videos, Audios and Webs, Bible Present, Bible Reader, Notes, and **Bibles XML**
    — with the folder each one points at. **They all start ticked.** Untick anything you do
@@ -25,8 +24,8 @@ or to set up a second machine — use the app's **File** menu.
    > **only those**: the Bible versions you downloaded in the app are left out, because
    > you simply download them again on the other machine. If you have never added an XML
    > Bible, the row is not offered at all.
-   > 2a. Below the folder list, the same panel asks for a **Password** (ពាក្យសម្ងាត់) and a
-   > **Confirm Password** (បញ្ជាក់ពាក្យសម្ងាត់). Leave both empty for an ordinary backup.
+   > 2a. Below the folder list, the same panel asks for a **[en:tran:Password]** and a
+   > **[en:tran:Confirm Password]**. Leave both empty for an ordinary backup.
    > Type the same password in both to lock it — a backup carried on a USB stick holds your
    > whole document set, so this is the one worth protecting. 📸
 
@@ -36,7 +35,7 @@ or to set up a second machine — use the app's **File** menu.
 3. Press **Ok**. You get one `open-worship-data.owadata.tar` file in your **Downloads**
    folder — or `open-worship-data.owadata.enc` if you set a password — and the folder
    opens. Copy it to a USB stick or the other machine.
-4. On the other machine, choose **File → Import Data** (នាំចូលទិន្នន័យ) and pick that
+4. On the other machine, choose **[en:tran:Import Data]** and pick that
    file. A protected backup asks for its password first. The panel then lists only the
    folders the file actually contains — again all ticked — so you can restore just the
    songs, or just the backgrounds. 📸
@@ -69,5 +68,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-17` · `NAV-18` · `NAV-19`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

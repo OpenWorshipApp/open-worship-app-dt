@@ -11,9 +11,24 @@ export type RefreshingRefType = {
     refresh: () => void;
 };
 
+/**
+ * The credential fields, named once. Every provider that can be switched on in
+ * the chatbot names its field from this union, and so does the settings panel
+ * that types the key in -- a provider given a switch but no field to fill it
+ * from is then a build failure rather than a button that can only fail.
+ *
+ * NOT `keyof AISettingType`: that includes the booleans and the workspace id,
+ * and these are the ones a key is read out of.
+ */
+export type AISecretKeyNameType =
+    'openAIAPIKey' | 'anthropicAPIKey' | 'kimiAPIKey';
+
 export type AISettingType = {
     openAIAPIKey: string;
     anthropicAPIKey: string;
+    // Kimi (Moonshot) answers in the chatbot only -- Bible Cross Ref and Bible
+    // Audio are bound to their own SDKs and have no reason to learn about it.
+    kimiAPIKey: string;
     // Required by Anthropic when the key is identity-linked ("anthropic-
     // workspace-id is required ..." 400); ignored otherwise. Not a secret --
     // it is an id, not a credential -- so it lives in the plaintext half.
@@ -36,22 +51,24 @@ const AI_ENABLED_SETTING_NAME = 'ai-enabled';
 // store, and never merge the two halves back into one storage key.
 const AI_SECRET_SETTING_NAME = 'ai-setting-secret';
 
-function getAISecret() {
+function toStoredKey(value: unknown) {
+    return typeof value === 'string' ? value.trim() : '';
+}
+
+function getAISecret(): Record<AISecretKeyNameType, string> {
     const settingStr = appSecureStorage.getItem(AI_SECRET_SETTING_NAME) || '{}';
     try {
         const data = JSON.parse(settingStr);
         return {
-            openAIAPIKey:
-                typeof data.openAIAPIKey === 'string'
-                    ? data.openAIAPIKey.trim()
-                    : '',
-            anthropicAPIKey:
-                typeof data.anthropicAPIKey === 'string'
-                    ? data.anthropicAPIKey.trim()
-                    : '',
+            openAIAPIKey: toStoredKey(data.openAIAPIKey),
+            anthropicAPIKey: toStoredKey(data.anthropicAPIKey),
+            kimiAPIKey: toStoredKey(data.kimiAPIKey),
         };
     } catch (_error) {
-        return { openAIAPIKey: '', anthropicAPIKey: '' };
+        // Every field, not just the ones that existed when this was written:
+        // a blob that failed to parse must still answer the same shape, or a
+        // provider added later reads `undefined` here and nowhere else.
+        return { openAIAPIKey: '', anthropicAPIKey: '', kimiAPIKey: '' };
     }
 }
 
@@ -124,7 +141,6 @@ export function setIsAIEnabled(isEnabled: boolean) {
 }
 export function setAISetting(value: AISettingType) {
     const openAIAPIKey = (value.openAIAPIKey ?? '').trim();
-    const anthropicAPIKey = (value.anthropicAPIKey ?? '').trim();
     appHomeStorage.setItem(
         AI_SETTING_NAME,
         JSON.stringify({
@@ -132,19 +148,34 @@ export function setAISetting(value: AISettingType) {
             anthropicWorkspaceId: (value.anthropicWorkspaceId ?? '').trim(),
         }),
     );
-    if (openAIAPIKey.length === 0 && anthropicAPIKey.length === 0) {
+    // Built as ONE object and then asked whether it holds anything, rather
+    // than re-listing the fields in a condition and again in the write. Listed
+    // twice, a key added later is dropped by whichever copy was not updated --
+    // and the "nothing to protect" branch would then fire on the very save
+    // that stores it, deleting the blob it was about to write. The user types
+    // a good key, tabs out of the field, and nothing happens at all.
+    const secret: Record<AISecretKeyNameType, string> = {
+        openAIAPIKey,
+        anthropicAPIKey: (value.anthropicAPIKey ?? '').trim(),
+        kimiAPIKey: (value.kimiAPIKey ?? '').trim(),
+    };
+    const isAnyKeySet = Object.values(secret).some((one) => {
+        return one.length > 0;
+    });
+    if (!isAnyKeySet) {
         // Nothing to protect, so leave no phantom blob behind.
         appSecureStorage.removeItem(AI_SECRET_SETTING_NAME);
     } else {
         appSecureStorage.setItem(
             AI_SECRET_SETTING_NAME,
-            JSON.stringify({ openAIAPIKey, anthropicAPIKey }),
+            JSON.stringify(secret),
         );
     }
     for (const listener of changingListener) {
         listener();
     }
 }
+
 export function useAISetting() {
     const [setting, setSetting] = useState<AISettingType>(() => getAISetting());
     useAppEffect(() => {

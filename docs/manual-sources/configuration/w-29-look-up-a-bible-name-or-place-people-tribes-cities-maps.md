@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126]
 screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-29 — Look up a Bible name or place (people, tribes, cities, maps)
 
@@ -14,7 +14,7 @@ your Bible reading.
 
 1. Open the **Bible Reader**, or the **Bible Lookup** popup in the Presenter. At the
    right-hand end of the reference box, click the person-and-pin button
-   **Names and locations lookup** (ការស្វែងរកឈ្មោះ និងទីកន្លែង). A small floating
+   **[en:tran:Names and locations lookup]**. A small floating
    window opens. The first open takes a few seconds while the dictionary loads — after
    that it is instant. It is a floating window like any other: drag it by its title bar,
    resize it from any edge, and **double-click the title bar** to make it fill the app
@@ -32,19 +32,18 @@ your Bible reading.
    wording, which is what makes them findable at all. The lists, the record
    windows and the "in your reading" panel are also **typed in that language's own
    script and font** — the name across the top of a record window included — and the
-   kind of each record — **People** (មនុស្ស), **Groups**
-   (ក្រុម), **Places** (ទីកន្លែង) — is named in it too, in the filter and on each
+   kind of each record — **[en:tran:People]**, **[en:tran:Groups]**, **[en:tran:Places]** — is named in it too, in the filter and on each
    record. Every record also carries its **English name in brackets** beside its own —
    _ម៉ូសេ (Moses)_, _យេរូសាឡិម (Jerusalem)_ — the way a Bible book reads
    _លោកុប្បត្តិ (Genesis)_, so a name you only know in English is still recognizable.
    With `en` chosen nothing is added: the name already is the English one. 📸
-3. Use the **Names** (ឈ្មោះ) and **Locations** (ទីកន្លែង) tabs to choose what you are
+3. Use the **[en:tran:Names]** and **[en:tran:Locations]** tabs to choose what you are
    looking for, and type in the search box. Each tab remembers what you typed, so you
    can switch back and forth. The list updates as you type. You may type in **either
    language** — with Khmer records on screen, `Moses` and `ម៉ូសេ` both find him.
 4. On the **Names** tab the dropdown beside the tabs narrows the list by kind —
-   **All types** (គ្រប់ប្រភេទ), **People** (មនុស្ស), **Groups** (ក្រុម),
-   **Places** (ទីកន្លែង) and so on. These follow the **lookup** language from step 2,
+   **[en:tran:All Types]**, **[en:tran:People]**, **[en:tran:Groups]**,
+   **[en:tran:Places]** and so on. These follow the **lookup** language from step 2,
    not the app's, so they read the same way as the records they filter. It is greyed
    out on the **Locations** tab, where there is nothing to filter.
 5. Use the arrows at the bottom to page through results, or type a page number in the
@@ -52,8 +51,8 @@ your Bible reading.
    page 1. 📸
 6. Click a result to open it in its own small window: a small icon for what kind of
    record it is — a person, a place, a book for a verse — then a short description, then
-   a **Details** (ព័ត៌មានលម្អិត) section with things like **Also called**, **Type**,
-   **Gender**, **Parents**, **Children** and **Verses** (ខគម្ពីរ). 📸
+   a **[en:tran:Details]** section with things like **Also called**, **Type**,
+   **Gender**, **Parents**, **Children** and **[en:tran:Verses]**. 📸
    > Every row in the list — and in the **names and locations in your reading** panel —
    > also carries a **⋮** button at its right end. It opens the same short menu that
    > right-clicking the row gives you, so you never need a right mouse button
@@ -75,7 +74,7 @@ your Bible reading.
    King James text, because that is the Bible these records were built from; with any
    other language you get the Bible you are currently reading, and the eye button
    below leaves you in it rather than switching you to the King James. The eye button in that
-   window's title bar, **Open in bible lookup** (បើកក្នុងការស្វែងរកព្រះគម្ពីរ), loads
+   window's title bar, **[en:tran:Open in bible lookup]**, loads
    that passage into the reference box behind it. 📸
 10. For a place that has coordinates, a map appears at the bottom of its window under
     **Approximate location, the marker is an estimated point**, with an **Open in
@@ -99,5 +98,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

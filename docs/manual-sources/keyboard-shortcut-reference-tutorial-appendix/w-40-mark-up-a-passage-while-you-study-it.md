@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-108, RD-109, RD-110, RD-111, RD-112]
 screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-40 — Mark up a passage while you study it
 
@@ -20,7 +20,7 @@ are still there the next time you open the app.
    yellow wash, and the toolbar goes away.
    > The colours are a fixed set of six. They are meant to read like a highlighter pen
    > over the text, so the verse still reads as scripture underneath.
-4. Look at the left panel and open **Bible Notes** (កណ្ណត់ត្រាព្រះគម្ពៀរ). Under
+4. Look at the left panel and open **[en:tran:Bible Notes]**. Under
    **Default** there is now a new row named after the verse — `(KJV) Genesis 22:1` — with a
    highlighter pen in front of it and a small number on the right saying how many marks it
    holds. Click it to fold it open. 📸
@@ -46,11 +46,11 @@ are still there the next time you open the app.
    > A mark is a place you kept inside something you were reading. Reaching it should not
    > cost you your place, which is why it opens beside rather than on top.
 9. The verse row itself has a **⋮** too. 📸 It can do three things:
-   - **Add to Bible List** (បន្ថែមទៅបញ្ជីព្រះគម្ពីរ) — puts that verse in your **Bibles**
+   - **[en:tran:Add to Bible List]** — puts that verse in your **Bibles**
      list, ready to present, without going and looking it up again.
-   - **Move To** (ផ្លាស់ទីទៅ) — moves the whole row, marks and all, into one of your other
+   - **[en:tran:Move To]** — moves the whole row, marks and all, into one of your other
      note files.
-   - **Delete** (លុប) — removes the verse and everything marked on it, after asking.
+   - **[en:tran:Delete]** — removes the verse and everything marked on it, after asking.
    > You can also just **drag the verse row and let go**. Dropped on a file in the
    > **Bibles** panel it arrives as an ordinary bible item, the same as if you had looked
    > it up; dropped on another file in **Bible Notes** it moves there instead, marks and
@@ -70,5 +70,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-108` · `RD-109` · `RD-110` · `RD-111` · `RD-112`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

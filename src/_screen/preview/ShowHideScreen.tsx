@@ -9,6 +9,7 @@ import {
     useScreenManagerEvents,
 } from '../managers/screenManagerHooks';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { tran } from '../../lang/langHelpers';
 
 const showingScreenEventMap = { key: 'F5' };
 export default function ShowHideScreenComp() {
@@ -47,8 +48,13 @@ export default function ShowHideScreenComp() {
         manager.isShowing = !manager.isShowing;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // Through `tran()` because this is the one control an assistant is asked
+    // to press by name -- "turn the screen on" -- and a hardcoded English
+    // title is a control a Khmer window cannot answer to at all. The manual
+    // names it as `[en:tran:Toggle showing screen]` for the same reason.
     const toggleTitle =
-        'Toggle showing screen ' + `[${toShortcutKey(showingScreenEventMap)}]`;
+        tran('Toggle showing screen') +
+        ` [${toShortcutKey(showingScreenEventMap)}]`;
     return (
         // Showing/hiding a screen is the most important control in the app, but
         // it renders as a div for styling — so it needs the button semantics

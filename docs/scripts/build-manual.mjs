@@ -185,7 +185,17 @@ const flush = () => {
 
 for (const line of lines) {
     const sec = line.match(/^##\s+(?!#)(.+?)\s*$/);
-    const wf = line.match(/^###\s+(W-\d+)\s+[—-]\s+(.+?)\s*$/);
+    // `W-01b`, not just `W-01`: a recipe inserted between two others takes a
+    // letter rather than renumbering every id after it. Matching digits alone
+    // did not fail here -- it silently skipped the heading, so W-01b (the
+    // `⋮` menu: rename, delete, duplicate, export) had no manual page at all,
+    // and the four supported questions pointing at it could never be answered.
+    const wf = line.match(/^###\s+(W-\d+[a-z]?)\s+[—-]\s+(.+?)\s*$/);
+    if (!wf && /^###\s+W-/.test(line)) {
+        // Never silently again: a recipe heading this cannot read is a page
+        // that will not exist, and nothing downstream would say so.
+        throw new Error(`Unreadable recipe heading: ${line.trim()}`);
+    }
     if (wf) {
         flush();
         cur = {

@@ -3,7 +3,12 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { readHelpPage, searchHelp, toEnglishOnly } from './help.mjs';
+import {
+    readHelpPage,
+    scrubRecipeIds,
+    searchHelp,
+    toEnglishOnly,
+} from './help.mjs';
 
 // `searchHelp` decides which page answers a volunteer's question, so it is
 // graded here against a fixture corpus rather than the real one -- the real one
@@ -46,7 +51,7 @@ beforeAll(() => {
                 surface: null,
                 file: 'manual/w-19.md',
             },
-            '# Draw and spotlight\nNothing is drawn until you pick a colour, and it is showing on the projector while you draw.\n',
+            '# Draw and spotlight\nNothing is drawn until you pick a colour (W-10 step 1), and it is showing on the projector while you draw -- see W-18.\n',
         ),
         // The reader's own page, so the focus rule has something to prefer.
         writeEntry(
@@ -197,5 +202,69 @@ describe('the Khmer twin the manual writes beside every label', () => {
     it('leaves a bracket that is all English alone', () => {
         const text = 'Click **Add URL** (or right-click the empty list).';
         expect(toEnglishOnly(text)).toBe(text);
+    });
+});
+
+// Measured 2026-09-02: on all 258 corpus questions that name a recipe, the
+// ranking put that recipe first for 147. A question picked off the app's own
+// list is not a search; its page is already known.
+describe('a supported question is a label, not a search', () => {
+    it('puts the filed recipe first, marked, even when the words point elsewhere', () => {
+        // The fixture's W-19 is the only page saying "projector"; the corpus
+        // files this exact question under W-10.
+        const hits = searchHelp(
+            'Nothing is showing on the projector — what do I check?',
+            5,
+            'manual',
+            'presenter',
+        );
+        expect(hits[0].id).toBe('W-10');
+        expect(hits[0].isKnownQuestion).toBe(true);
+        expect(hits.filter((hit) => hit.id === 'W-10').length).toBe(1);
+    });
+
+    it('a paraphrase is ranked as before, with no mark on it', () => {
+        const hits = searchHelp('nothing comes out on the projector', 5, 'manual');
+        expect(hits.some((hit) => hit.isKnownQuestion)).toBe(false);
+    });
+
+    it('never files a question under an internal note', () => {
+        const hits = searchHelp(
+            'Nothing is showing on the projector — what do I check?',
+            5,
+            'internal',
+        );
+        expect(hits.some((hit) => hit.isKnownQuestion)).toBe(false);
+    });
+});
+
+describe('scrubRecipeIds', () => {
+    it('takes a cited id out with its aside, keeping the step structure', () => {
+        expect(
+            scrubRecipeIds(
+                '1. Open the **Background** panel (W-08 step 1) and choose\n' +
+                    '   the **Videos** tab — see W-28.\n' +
+                    '2. Right-click the row (W-01b), see also W-03; then click.',
+            ),
+        ).toBe(
+            '1. Open the **Background** panel and choose\n' +
+                '   the **Videos** tab.\n' +
+                '2. Right-click the row; then click.',
+        );
+    });
+    it('leaves a page with no id exactly as it was', () => {
+        const text = '1. Press **Ctrl+B**.\n   Type the book. You can see it.';
+        expect(scrubRecipeIds(text)).toBe(text);
+    });
+    it('reaches the search excerpts too', () => {
+        // W-21 step 1 cites "(W-08 step 1)"; the excerpt used to hand the
+        // model the id the page tool had scrubbed, and a two-round answer is
+        // written from the excerpt.
+        const hits = searchHelp('pick a colour and draw', 5, 'manual');
+        const hit = hits.find((one) => one.id === 'W-19');
+        expect(hit).toBeDefined();
+        expect(hit.excerpt).toContain('pick a colour, and it is showing');
+        expect(hit.excerpt).not.toMatch(/\bW-\d/);
+        expect(hit.excerpt).not.toMatch(/see\./);
     });
 });

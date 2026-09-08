@@ -1,9 +1,19 @@
 ---
 name: evaluate-script-disposablestack
-description: owa-devtools `evaluate_script` dies with "DisposableStack is not defined" under Node 22; drive pages over raw CDP Runtime.evaluate instead
+description: owa-devtools `evaluate_script` is now REFUSED by the MCP firewall, and was already dead under Node 22; drive pages over raw CDP Runtime.evaluate instead
 metadata:
   type: project
 ---
+
+**Since 2026-09-01 there is a second, permanent reason: the MCP firewall
+refuses it.** `tools/owa-devtools-mcp/firewall.mjs` denies `evaluate_script`
+(also `take_heapsnapshot` and `upload_file`) and drops it from `tools/list`
+altogether, for BOTH doors — the chatbot's and yours. Renderers run with
+`nodeIntegration: true`, so that tool reached `require('fs')` on the operator's
+machine from a caller with no credential. It is not coming back. A QA run that
+genuinely needs it sets `OWA_MCP_FIREWALL=off` in its own `.mcp.json`, which is
+an env var the person launching the process sets — you cannot switch it off
+over the wire. Everything below still describes the right way to drive a page.
 
 As of 2026-08-31 every `mcp__owa-devtools__evaluate_script` call fails with
 `Error: DisposableStack is not defined`, whatever the page or the function.

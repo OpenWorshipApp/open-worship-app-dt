@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [ED-40, ED-41, ED-42, ED-43, ED-44, ED-21, ED-37, PM-06]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-28 — Build a slide by dragging from the Background panel
 
@@ -15,8 +15,8 @@ walking the Insert menu — just drag it out of the panel you are already browsi
 **Preconditions:** a slide document open in the **Slide Editor**, and the bottom
 **Background** panel visible.
 
-1. Pick a tab in the bottom **Background** panel — **Colors** (ពណ៌), **Images** (រូបភាព),
-   **Videos** (វីដេអូ), **Cameras** (កាមេរ៉ា) or **Webs** (វេប). The presenter also has an
+1. Pick a tab in the bottom **Background** panel — **[en:tran:Colors]**, **[en:tran:Images]**,
+   **[en:tran:Videos]**, **[en:tran:Cameras]** or **[en:tran:Webs]**. The presenter also has an
    **Audios** pane. 📸
 2. Drag one item out of the panel and hold it over the canvas. The canvas **dims** to show
    it will take the drop. (It stays bright for things it cannot use — a Bible verse, for
@@ -56,5 +56,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ED-40` · `ED-41` · `ED-42` · `ED-43` · `ED-44` · `ED-21` · `ED-37` · `PM-06`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

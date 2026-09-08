@@ -44,11 +44,15 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   `.claude/**` (`internal`) into `electron-build/knowledge/` plus a search
   index, so a question is one file read, not 140. Internal hits are labelled —
   they are notes for whoever builds the app, not user instructions.
-- **Two ways in, two providers, many models.** The window opens from the **🤖**
-  button in the top-right toolbar (left of **?**, on the presenter and the
-  reader — it is `ChatbotButtonComp` in `src/others/commonButtons.tsx`, and it
-  renders nothing when the master switch is off) or from Help →
-  *App Help (Chatbot)*. Inside, **Claude** / **ChatGPT** picks the provider and
+- **Reachable from every window, two providers, many models.** The **🤖**
+  button is in the top-right toolbar (left of **?**) of the three windows that
+  have one — presenter, slide editor, reader — as `ChatbotButtonComp` in
+  `src/others/commonButtons.tsx`. Everywhere else the way in is
+  `Tools → App Assistant` / **Ctrl+Shift+A**, from `AppAssistantComp`, which
+  `AppWindowToolsComp` mounts on all nine pages beside the presenting control
+  (never on `about`, `chatbot`, `finder` or `screen`). Help →
+  *App Help (Chatbot)* still works too. All of them go quiet with the master
+  switch. Inside, **Claude** / **ChatGPT** picks the provider and
   a `<select>` beside it picks the model: three per provider, best first, with
   what each is good for, how quick it is and its list price on the HOVER (the
   line itself shows the name only — the window is 460px). **More models…** asks

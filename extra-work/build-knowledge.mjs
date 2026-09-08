@@ -30,6 +30,11 @@ import {
 } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 
+import {
+    extractDictionary,
+    extractLangMeta,
+} from '../tools/owa-devtools-mcp/tran.mjs';
+
 const REPO_ROOT = resolve('.');
 const OUTPUT_DIR = join(REPO_ROOT, 'electron-build', 'knowledge');
 // Enough for scoring and an excerpt; the full file is read only when a page is
@@ -117,19 +122,37 @@ function toBody(content) {
         .trim();
 }
 
-// Which half of the two-in-one app a recipe is about, so a question asked from
-// the Bible Reader is not answered with the presenter's way of doing it (they
-// differ: the presenter has a Ctrl+B lookup popup, the reader does not). Taken
-// from what the recipe itself declares -- its `Where:` line and its section --
-// and left null when it genuinely applies to both.
+// The windows a page can be written FOR, most specific first: a recipe whose
+// **Where:** line says "Lyric Editor window" must not be claimed by the looser
+// "presenter" test below it, and the Document Editor is a tab OF the presenter
+// window, so it has to be tried before it too. The keys are `botFocus.mjs`'s.
+const SURFACE_PATTERNS = [
+    [/lyric editor|lyriceditor\.html/, 'lyricEditor'],
+    [/web editor|webeditor\.html/, 'webEditor'],
+    [/bible note window|note editor|biblenote\.html/, 'bibleNote'],
+    [/local web share|lwshare\.html/, 'lwShare'],
+    [/settings window|setting\.html/, 'setting'],
+    [
+        /slide editor|document editor|appdocumenteditor\.html/,
+        'appDocumentEditor',
+    ],
+    [/bible reader|reader\.html|reader window|reader tab/, 'reader'],
+    [/presenter|presenting content|main window/, 'presenter'],
+];
+
+// Which window of the app a recipe is about, so a question asked from the Bible
+// Reader is not answered with the presenter's way of doing it (they differ: the
+// presenter has a Ctrl+B lookup popup, the reader does not). Taken from what the
+// recipe itself declares -- its `Where:` line and its section -- and left null
+// when it genuinely applies everywhere, which is what a page about a window the
+// manual has no dedicated recipe for falls back to.
 function toSurface(body, section) {
     const where = /^\*\*Where:\*\*\s*(.+)$/m.exec(body)?.[1] ?? '';
     const declared = `${where} ${section}`.toLowerCase();
-    if (/bible reader|reader\.html|reader window|reader tab/.test(declared)) {
-        return 'reader';
-    }
-    if (/presenter|presenting content|main window/.test(declared)) {
-        return 'presenter';
+    for (const [pattern, surface] of SURFACE_PATTERNS) {
+        if (pattern.test(declared)) {
+            return surface;
+        }
     }
     const readerCount = (body.match(/bible reader/gi) ?? []).length;
     const presenterCount = (body.match(/presenter/gi) ?? []).length;
@@ -208,8 +231,49 @@ writeFileSync(
     JSON.stringify({ generatedAt: new Date().toISOString(), entries }),
 );
 
+// The app's own label dictionary, beside the documents that name those labels.
+//
+// The knowledge is written in English and the buttons it names are not, so a
+// document says `[en:tran:Clear Bible]` and the assistant fills that in with
+// whatever the key reads as in the interface language the user is actually
+// looking at. That substitution happens inside the running app, which cannot
+// load a TypeScript language pack (fonts, plugins, a whole module graph) just
+// to read a map of strings -- so the map is lifted out here, at build time,
+// where the packs are plain files on disk.
+//
+// English is the key language, so its dictionary is empty by construction and
+// is not written: `tran()` returns the key itself for the default locale.
+const LANG_DATA_DIR = join(REPO_ROOT, 'src', 'lang', 'data');
+const languages = [];
+const dictionaries = {};
+for (const langCode of readdirSync(LANG_DATA_DIR)) {
+    const packPath = join(LANG_DATA_DIR, langCode, 'index.ts');
+    if (!existsSync(packPath)) {
+        continue;
+    }
+    const packSource = readFileSync(packPath, 'utf-8');
+    const meta = extractLangMeta(packSource);
+    languages.push({
+        code: langCode,
+        name: meta.name ?? langCode,
+        nativeName: meta.nativeName ?? langCode,
+    });
+    const dictionary = extractDictionary(packSource);
+    if (Object.keys(dictionary).length > 0) {
+        dictionaries[langCode] = dictionary;
+    }
+}
+writeFileSync(
+    join(OUTPUT_DIR, 'tran.json'),
+    JSON.stringify({ languages, dictionaries }),
+);
+
 const manualCount = entries.filter((entry) => entry.kind === 'manual').length;
+const tranCount = Object.values(dictionaries).reduce((total, dictionary) => {
+    return total + Object.keys(dictionary).length;
+}, 0);
 console.log(
     `Knowledge bundled: ${entries.length} documents ` +
-        `(${manualCount} manual, ${entries.length - manualCount} internal)`,
+        `(${manualCount} manual, ${entries.length - manualCount} internal), ` +
+        `${languages.length} languages, ${tranCount} translated labels`,
 );

@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-77, RD-78, RD-11, LT-01]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-32 — See who published a Bible translation (and its copyright)
 
@@ -21,16 +21,16 @@ space to the verse buttons instead.
    **និក្ខមនំ (Exodus)**, …). 📸
 2. Look at the **top-right corner of that pane**, on the same line as the small
    version badge (e.g. `ពគប`). There is a round **ⓘ** button — hover it and the tip
-   reads **Bible Information** (ព័ត៌មានព្រះគម្ពីរ).
+   reads **[en:tran:Bible Information]**.
 3. Click **ⓘ**. A card opens in the middle of the window. 📸 It lists:
-   - **Title** (ចំណងជើង) — the edition's full name, e.g.
+   - **[en:tran:title]** — the edition's full name, e.g.
      `Khmer BFBS (ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤)`
-   - **Key** (កូនសោ) — the short code shown on the badge, e.g. `ពគប`
-   - **Version** (កំណែ), **Locale** (ភាសា) — e.g. `Khmer (ភាសាខ្មែរ) (km-KH)`
-   - **Publisher** (អ្នកបោះពុម្ពផ្សាយ), **Copy Rights** (រក្សាសិទ្ធិ),
-     **Legal Note** (កំណត់សម្គាល់ផ្លូវច្បាប់) — e.g.
+   - **[en:tran:Key]** — the short code shown on the badge, e.g. `ពគប`
+   - **[en:tran:Version]**, **[en:tran:Locale]** — e.g. `Khmer (ភាសាខ្មែរ) (km-KH)`
+   - **[en:tran:Publisher]**, **[en:tran:Copy Rights]**,
+     **[en:tran:Legal Note]** — e.g.
      `© BFBS/UBS 1954, 1962. All Rights Reserved.`
-   - **Description** (ការពិពណ៌នា), **Books** (គម្ពីរ) — how many books this edition
+   - **[en:tran:Description]**, **[en:tran:Books]** — how many books this edition
      contains, e.g. `66`
    - Anything the edition does not record is simply left out of the list.
 4. If any of those lines mentions a **web address** — publishers often put their site
@@ -52,5 +52,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-77` · `RD-78` · `RD-11` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

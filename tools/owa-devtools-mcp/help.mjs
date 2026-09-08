@@ -19,6 +19,11 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { getBotFocus } from './botFocus.mjs';
+import { flattenQuestions } from './questionMatch.mjs';
+import { loadQuestionPages } from './questions.mjs';
+import { loadTranBundle, resolveTranTemplates } from './tran.mjs';
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // tools/owa-devtools-mcp -> repo root
 const REPO_ROOT = path.join(HERE, '..', '..');
@@ -86,10 +91,17 @@ function parseFrontMatter(content) {
 }
 
 function toBody(content) {
-    return content
-        .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
-        .replace(/:::\s*details[\s\S]*?:::\s*/g, '')
-        .trim();
+    return (
+        content
+            .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
+            .replace(/:::\s*details[\s\S]*?:::\s*/g, '')
+            // The manual's own mark for "a screenshot belongs here". It means
+            // something on the documentation site and nothing in a chat, and a
+            // model handed it pastes it into the answer, where it reads as an
+            // instruction to look at a picture that does not exist.
+            .replace(/[ \t]*📸/g, '')
+            .trim()
+    );
 }
 
 // Fallback for a source checkout with no build yet: the manual only.
@@ -155,10 +167,27 @@ function countTerm(text, term) {
         return text.split(term).length - 1;
     }
     // From four letters up the word may carry a tail -- "look" is how a user
-    // says "lookup", "verse" is how they say "verses" -- and matching the
-    // start of the word is all the stemming this corpus needs. Below four,
-    // only whole words: "read" must not match "ready".
-    const tail = term.length >= 4 ? '' : '(?![\\p{L}\\p{N}])';
+    // says "lookup", "verse" is how they say "verses" -- but only a SHORT one.
+    // Unbounded, a term matched any longer word that merely STARTS the same
+    // way, and 45 such pairs are live in this corpus: "copy" was "copyright",
+    // "song" was "SongSelect", "back" was "background", "down" was "download",
+    // "stop" was "stopwatch" and "screen" was "Screencast". Ten of them land in
+    // a page TITLE, where a match is worth 14 -- which is how
+    // `owa_help_search "show screen"` put the page about the keyboard
+    // screencast strip (score 77) above the page about the projector (57), and
+    // so how a question about what the audience can see started an eight-step
+    // walkthrough of a keyboard toy.
+    //
+    // Three letters keeps every inflection this corpus actually needs
+    // ("verses" +1, "screens" +1, "lookup" +2, "presenting" +3) and cuts all 45
+    // of those pairs, the shortest of which adds four. A real form that doubles
+    // its consonant ("dragging") is lost with them; the base word still
+    // matches, and a wrong page is the more expensive of the two mistakes.
+    // Below four letters, only whole words: "read" must not match "ready".
+    const tail =
+        term.length >= 4
+            ? '[\\p{L}\\p{N}]{0,3}(?![\\p{L}\\p{N}])'
+            : '(?![\\p{L}\\p{N}])';
     const matches = text.match(
         new RegExp(`(?<![\\p{L}\\p{N}])${term}${tail}`, 'gu'),
     );
@@ -239,25 +268,38 @@ function countEntry(entry, terms) {
 
 function scoreCounts(entry, counts, inverseFrequencies) {
     let score = 0;
-    let matchedCount = 0;
+    let matchedWeight = 0;
+    let totalWeight = 0;
     counts.forEach((count, index) => {
+        totalWeight += inverseFrequencies[index];
         if (!count.inTitle && !count.inHeadings && count.textCount === 0) {
             return;
         }
-        matchedCount += 1;
+        matchedWeight += inverseFrequencies[index];
         score +=
             ((count.inTitle ? 14 : 0) +
                 (count.inHeadings ? 10 : 0) +
                 count.textCount) *
             inverseFrequencies[index];
     });
-    if (matchedCount === 0) {
+    if (matchedWeight === 0) {
         return 0;
     }
-    // Squared coverage: a page carrying every word of the question beats one
-    // that carries a single word of it many times over.
-    const coverage = matchedCount / counts.length;
-    return score * coverage * coverage * (KIND_WEIGHT[entry.kind] ?? 1);
+    // Coverage weighted by how much each word SETTLES, not by how many words
+    // matched. Counting words read "How do I move to the next slide?" as a
+    // three-word question, and the page that answers it -- W-03, whose step 3
+    // is "step through slides ... Arrow keys / PageUp / PageDown" -- carries
+    // only "slide". One of three, squared, is a 0.11 multiplier: it scored 7,
+    // while a presenting-flow page that happens to say "move", "next" and
+    // "slide" in passing scored 27. "move" and "next" are everywhere in this
+    // corpus and settle nothing, and the inverse frequencies computed for the
+    // score already say so, so the same numbers build the ratio for free.
+    //
+    // No longer squared: the weighting is the discrimination the square was
+    // standing in for, and squaring on top of it put the pages that answer a
+    // long question back out of reach.
+    const coverage = matchedWeight / totalWeight;
+    return score * coverage * (KIND_WEIGHT[entry.kind] ?? 1);
 }
 
 // The help window is English-only, and the manual writes app labels with their
@@ -287,6 +329,35 @@ export function toEnglishOnly(text) {
     );
 }
 
+// The recipe ids a page cites in passing -- "(W-08 step 1)", "see W-28" --
+// leave the text here rather than being argued about in the prompt. The
+// prompt forbids showing a volunteer "W-06"; measured 2026-09-08, a model that
+// had only SEARCHED still opened its answer with "W-08 has exactly what you
+// need", because the id was in the excerpt and in the hit, and a rule the
+// model can ignore is not a rule. Shared by the page tool and the excerpts,
+// which used to differ: the page was scrubbed, the excerpt was not, and the
+// excerpt is what a two-round answer is written from. Only the parenthesised
+// aside goes whole -- line breaks and indentation are a page's step structure
+// and must survive. The `id` FIELD of a hit is untouched: it is the handle
+// `owa_help_page` and `owa_guide_start` take, and the window scrubs whatever
+// still reaches the answer (`scrubRecipeIds` in `quickReplyHelpers.ts`).
+export function scrubRecipeIds(text) {
+    return String(text ?? '')
+        .replace(
+            /[ \t]*[([][^)\]\n]*\b[A-Z]{1,3}-\d{1,3}[a-z]?\b[^)\]\n]*[)\]]/g,
+            '',
+        )
+        .replace(/\b[A-Z]{1,3}-\d{1,3}[a-z]?\b/g, '')
+        // "-- see W-28." with its id gone is "-- see.", which reads as a
+        // typo; the pointer goes with what it pointed at.
+        .replace(/(?:\s*[–—-])?\s*\bsee(?:\s+also)?\s*(?=[.,;:)]|$)/gim, '')
+        .replace(/[ \t]+([.,;:])/g, '$1')
+        .replace(/[,;:](?=[.,;:])/g, '')
+        // Only INSIDE a line: the leading spaces are what keep a wrapped step
+        // attached to its number.
+        .replace(/(?<=\S)[ \t]{2,}/g, ' ');
+}
+
 function genExcerpt(text, terms) {
     // Headings are dropped: the top one repeats the title the caller already
     // shows, which made every answer say the same thing twice.
@@ -313,11 +384,15 @@ function genExcerpt(text, terms) {
         .trim();
 }
 
-// A recipe for the other half of the app is worse than no recipe: it names
-// buttons that are not on the user's screen. Dropped outright when anything
-// else matched, kept when it is all there is.
+// A recipe for another window is worse than no recipe: it names buttons that
+// are not on the user's screen. Dropped outright when anything else matched,
+// kept when it is all there is.
+//
+// A manual page whose `surface` stayed null applies everywhere, so a focus the
+// manual has no page written FOR -- the Web Editor, say -- filters nothing out
+// and simply ranks by relevance. That is the safe direction to fail in.
 function applyFocus(ranked, focus) {
-    if (focus !== 'presenter' && focus !== 'reader') {
+    if (getBotFocus(focus) === null) {
         return ranked;
     }
     const fitting = ranked.filter((item) => {
@@ -383,7 +458,51 @@ function toTerms(query) {
  * manual has nothing, so a user's "how do I ...?" is never answered with a
  * page written for whoever builds the app.
  */
-export function searchHelp(query, limit = 5, kind = 'auto', focus = null) {
+/**
+ * The recipe a question was FILED under, when the query IS one of the
+ * corpus's own questions -- a chip, a row of the suggestion list, the More
+ * list. The words of a supported question are then not evidence to be
+ * weighed but a label already read: measured 2026-09-02 on all 258 corpus
+ * questions with a recipe, the ranking below put that recipe first for 57%
+ * of them, so a question picked off the app's own list got the wrong page
+ * two times in five. A paraphrase never matches here and is ranked as
+ * before -- this is a lookup, not a second ranker.
+ */
+function toQuestionKey(text) {
+    return String(text ?? '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+}
+
+export function findKnownQuestionRecipe(query) {
+    const key = toQuestionKey(query);
+    if (key.length === 0) {
+        return null;
+    }
+    let pages;
+    try {
+        pages = loadQuestionPages();
+    } catch {
+        // No corpus on disk is no reason for a search to fail.
+        return null;
+    }
+    const row = flattenQuestions(pages).find((one) => {
+        return toQuestionKey(one.text) === key;
+    });
+    return row?.resources?.recipe ?? null;
+}
+
+// Added to the top score so the known page is first whatever the words did.
+const KNOWN_QUESTION_BONUS = 100;
+
+export function searchHelp(
+    query,
+    limit = 5,
+    kind = 'auto',
+    focus = null,
+    langCode = null,
+) {
     const terms = toTerms(query);
     if (terms.length === 0) {
         return [];
@@ -430,9 +549,35 @@ export function searchHelp(query, limit = 5, kind = 'auto', focus = null) {
         kind === 'auto' && manualRanked.length > 0 ? manualRanked : ranked,
         focus,
     );
-    return chosen
+    // A supported question's own recipe goes first, marked, so a caller can
+    // tell a label from a guess. Only the manual can be filed under: the
+    // internal corpus is never the answer to a question a user picked.
+    const knownId = kind === 'internal' ? null : findKnownQuestionRecipe(query);
+    const known =
+        knownId === null
+            ? undefined
+            : counted.find(({ entry }) => {
+                  return entry.id === knownId;
+              });
+    const picked =
+        known === undefined
+            ? chosen
+            : [
+                  {
+                      entry: known.entry,
+                      score: (chosen[0]?.score ?? 0) + KNOWN_QUESTION_BONUS,
+                      isKnownQuestion: true,
+                  },
+                  ...chosen.filter(({ entry }) => {
+                      return entry.id !== knownId;
+                  }),
+              ];
+    // One read of the label dictionary for the whole page of results, not one
+    // per excerpt.
+    const tranBundle = loadTranBundle();
+    return picked
         .slice(0, limit)
-        .map(({ entry, score }) => {
+        .map(({ entry, score, isKnownQuestion }) => {
             return {
                 id: entry.id,
                 title: entry.title,
@@ -440,14 +585,21 @@ export function searchHelp(query, limit = 5, kind = 'auto', focus = null) {
                 kind: entry.kind,
                 surface: entry.surface ?? null,
                 score: Math.round(score),
-                excerpt: toEnglishOnly(
-                    genExcerpt(entry.searchText, excerptTerms),
+                ...(isKnownQuestion === true ? { isKnownQuestion: true } : {}),
+                excerpt: resolveTranTemplates(
+                    scrubRecipeIds(
+                        toEnglishOnly(
+                            genExcerpt(entry.searchText, excerptTerms),
+                        ),
+                    ),
+                    langCode,
+                    tranBundle,
                 ),
             };
         });
 }
 
-export function readHelpPage(id) {
+export function readHelpPage(id, langCode = null) {
     const wantedId = id.trim().toLowerCase();
     const entry = listKnowledgeEntries().find((item) => {
         return (
@@ -458,15 +610,25 @@ export function readHelpPage(id) {
     if (entry === undefined) {
         return null;
     }
+    // Templates are filled in BEFORE the cut, so a page trimmed at the byte
+    // cap can never end halfway through a token and hand the model a bare
+    // `[en:tran:Clear` to read out to somebody.
+    const tranBundle = loadTranBundle();
+    const toPageBody = (raw) => {
+        return toBoundedBody(
+            resolveTranTemplates(raw, langCode, tranBundle),
+            entry.kind,
+        );
+    };
     try {
         const content = readFileSync(entry.absolutePath, 'utf-8').slice(
             0,
             MAX_PAGE_BYTES,
         );
-        return { ...entry, body: toBoundedBody(toBody(content), entry.kind) };
+        return { ...entry, body: toPageBody(toBody(content)) };
     } catch (_error) {
         // Indexed but unreadable (a partial install): the index copy still
         // answers something rather than nothing.
-        return { ...entry, body: toBoundedBody(entry.searchText, entry.kind) };
+        return { ...entry, body: toPageBody(entry.searchText) };
     }
 }

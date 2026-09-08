@@ -13,7 +13,7 @@ user types in chatbot.html
           │                                              (one MCP server per session)
           ├─ genSystemPrompt(focus)          built ONCE per question
           └─ loop, max 10 rounds:
-                provider call (Anthropic | OpenAI) with ALL tools
+         provider call (Anthropic | OpenAI | Kimi) with ALL tools
                   └─ tool_use ──▶ callTool() ──▶ owaTools.mjs handler
                                      ├─ help.mjs      reads electron-build/knowledge/
                                      ├─ cdp.mjs       Runtime.evaluate in the app page
@@ -112,15 +112,26 @@ felt.
 ## The window
 
 `html/chatbot.html` → `src/chatbot/ChatbotAppComp.tsx`, opened by the 🤖 toolbar
-button (`ChatbotButtonComp`, left of Help on both presenter and reader) or
-Help → *App Help (Chatbot)*.
+button (`ChatbotButtonComp`, left of Help on the presenter, the slide editor and
+the reader — the only three windows with a top bar), by Help →
+*App Help (Chatbot)*, or from any of the nine app pages by `AppAssistantComp`
+(`Tools → App Assistant`, `Ctrl+Shift+A`), which `src/others/AppWindowToolsComp.tsx`
+mounts beside the presenting control. See the `app-window-tools-everywhere`
+memory for the theme wrapper and the focused-window menu routing both of those
+depend on.
 
 - A **tab strip** above the head row holds several conversations, persisted whole
   to `local-storage/chatbot-sessions` (`chatSessionHelpers.ts`, capped at 12 tabs
   × 60 messages, debounced save + `beforeunload` flush).
-- The **entire head row belongs to the tab in front**, not the window: the
-  Presenter/Reader switch (which follows the opener window until the user presses
-  one), the Claude/ChatGPT switch, and the model picker. The stored settings
+- The **entire head row belongs to the tab in front**, not the window, and all
+  three of it are `<select>`s sharing one `.chat-pick` skin: the *asking about*
+  switch (eight windows, from `tools/owa-devtools-mcp/botFocus.mjs` — the ONE
+  declaration the picker, both MCP tool schemas, the manual's focus filter and
+  the session validator all read; it follows the opener window until the user
+  picks one), the assistant switch, and the model picker. Their `aria-label`s must stay
+  distinct — `extra-work/verify-chatbot-e2e.mjs` addresses each by its label,
+  and the provider and model pickers shared one string until 2026-09-01. The
+  stored settings
   (`chatbot-llm-provider`, `chatbot-llm-model-<provider>`) are only what a NEW tab
   starts on.
 - The model picker lists three models per provider with speed and list price on
@@ -143,7 +154,19 @@ the real control advances the card (`lastAction: "user-did-it"`).
   `owa_guide_start` answers `canDemo: false` and quietly degrades to a plain
   walkthrough.
 - `mode: "demo"` performs each step on a press of **Do it**.
-- Leading steps for a place the user is already in are dropped.
+- A recipe runs in the window it is ABOUT. `detectRecipeWindow` reads that off
+  the recipe’s own first step (the same sentence the drop rule below throws
+  away) and overrules the page the caller asked for — a Settings recipe walked
+  in the Presenter rings whatever word happens to match there.
+- Leading steps for a place the user is already in are dropped, in ALL eight
+  windows — `dropStepsAlreadyDone` reads the window’s names off
+  `botFocus.mjs` (`label`, `openFind`) rather than testing for the reader and
+  the presenter, which is all it did until 2026-09-02.
+- A guide asked for in a window that is not OPEN does not fail: the chatbot’s
+  `genPageOpenAnswer` navigates there (`owa_goto_page`) or presses the control
+  that opens it (`openFind`), then starts the walkthrough. One attempt, then
+  the window’s own `howToOpen` words. A tool’s error text never reaches the
+  user — `describeActionError` is the one place a failed press is worded.
 - Like `notify.mjs`, it is a dependency-free string evaluated in the page: it
   never imports an app module (that re-runs `document.onkeydown` and kills every
   shortcut) and it is confined to its own shadow root so no app style reaches it

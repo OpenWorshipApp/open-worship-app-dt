@@ -112,9 +112,10 @@ export default function AppContextMenuComp() {
 }
 
 export function genContextMenuItemShortcutKey(eventMapper: EventMapperType) {
+    const text = toShortcutKey(eventMapper);
     return (
-        <div className="context-menu-shortcut-key">
-            <span className="">{toShortcutKey(eventMapper)}</span>
+        <div className="context-menu-shortcut-key" title={text}>
+            <span className="">{text}</span>
         </div>
     );
 }

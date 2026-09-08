@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [PR-30, PR-31, CM-69, CM-98, CM-99]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-41 — Share a whole page of Bible Notes with another machine
 
@@ -14,20 +14,18 @@ every note in it, the pictures and clips inside them, and the background you att
 to it — travels as one bundle.
 
 1. In the **Bible Notes** panel, click the `⋮` on the note file you want (or right-click
-   its name) and choose **Export** (នាំចេញ). It sits just under **Import**. 📸
-2. A small panel asks for a **Password** (ពាក្យសម្ងាត់) and a **Confirm Password**
-   (បញ្ជាក់ពាក្យសម្ងាត់). Leave both empty for an ordinary bundle, or type the same
-   password in both to lock it. Press **Ok** (យល់ព្រម).
+   its name) and choose **[en:tran:Export]**. It sits just under **Import**. 📸
+2. A small panel asks for a **[en:tran:Password]** and a **[en:tran:Confirm Password]**. Leave both empty for an ordinary bundle, or type the same
+   password in both to lock it. Press **[en:tran:Ok]**.
 3. You get one `<name>.owanote.tar.gz` file in your **Downloads** folder —
    `<name>.owanote.enc` if you set a password — and the app opens the folder on it. 📸
 
    > Everything a note points at rides inside: a picture you pasted, a clip you inserted,
    > the sound file you attached. That makes this bundle much larger than a bible list's,
    > so give a note full of video a moment to finish.
-4. On the other machine, click the `⋮` at the top of the **Bible Notes** panel → **Import**
-   (នាំចូល) and pick the file — or **drag the `.owanote.tar.gz` (or `.owanote.enc`) onto
+4. On the other machine, click the `⋮` at the top of the **Bible Notes** panel → **[en:tran:Import]** and pick the file — or **drag the `.owanote.tar.gz` (or `.owanote.enc`) onto
    the Bible Notes panel**. A protected one asks for its password first.
-   **Import From URL** (នាំចូលពី URL) works here too if the bundle is on the web. 📸
+   **[en:tran:Import From URL]** works here too if the bundle is on the web. 📸
 5. The note file appears in that machine's notes folder with all its notes, your
    highlights and comments, and its pictures and clips playing from the local copies.
 
@@ -42,5 +40,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-30` · `PR-31` · `CM-69` · `CM-98` · `CM-99`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

@@ -86,6 +86,17 @@ $app-context-menu-dots-opacity: 0.1;
     width: 100% !important;
     height: $header-height !important;
     overflow: hidden;
+
+    // Equal-width side columns so the middle column's centre IS the window's
+    // centre, whatever the tab list is called in the current language.
+    // `flex-basis: 0`, NOT Bootstrap's `.flex-fill` (`flex: 1 1 auto`) whose
+    // `auto` basis hands the wide tab list and the narrow icon group unequal
+    // shares and pushes the Bible Lookup button off centre. Keep the default
+    // `min-width: auto` floor: when the tabs need more than half the leftover
+    // space it wins and the button slides right instead of overlapping them.
+    > .app-header-side {
+      flex: 1 1 0;
+    }
   }
 
   & #app-body {

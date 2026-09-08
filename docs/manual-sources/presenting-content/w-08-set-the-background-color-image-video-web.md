@@ -5,16 +5,15 @@ section: "Presenting content"
 verify: [PM-26, PM-27, PM-28, PM-29, PM-30, PM-31, PM-32, PM-33, PM-101, PM-114, KB-04]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-08 — Set the background (color / image / video / web)
 
 **Goal:** put something behind your content.
 
-1. At the bottom of the middle column, click the thin **Background** (ផ្ទៃខាងក្រោយ)
+1. At the bottom of the middle column, click the thin **[en:tran:Background]**
    bar — the panel expands to show its tabs. 📸
-2. Pick a tab: **Colors / Images / Videos / Cameras / Web** (ពណ៌ / រូបភាព / វីដេអូ /
-   កាមេរ៉ា / វេបសាយ).
+2. Pick a tab: **[en:tran:Colors] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
    - **Colors:** click a swatch. If the color could clash with the text, the app asks
      whether to adjust the text color too — choose **Ok** or **Cancel**.
    - **Images / Videos:** **double-click** an item to make it the live background. 📸
@@ -39,5 +38,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-26` · `PM-27` · `PM-28` · `PM-29` · `PM-30` · `PM-31` · `PM-32` · `PM-33` · `PM-101` · `PM-114` · `KB-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::

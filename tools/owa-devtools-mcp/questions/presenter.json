@@ -1,0 +1,1488 @@
+{
+    "page": "presenter",
+    "label": "Presenter",
+    "window": "presenter.html",
+    "focus": "presenter",
+    "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
+    "updated": "2026-09-04",
+    "sections": [
+        {
+            "id": "orientation",
+            "label": "Finding your way around",
+            "recipes": [
+                "W-01",
+                "W-01b",
+                "W-02"
+            ],
+            "questions": [
+                {
+                    "id": "window-parts",
+                    "text": "What is each part of the Presenter window?",
+                    "kind": "what",
+                    "keywords": [
+                        "layout",
+                        "columns",
+                        "panels",
+                        "overview",
+                        "tour",
+                        "lost",
+                        "confused",
+                        "first time"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-01",
+                        "related": [
+                            "W-02",
+                            "W-31"
+                        ],
+                        "guide": true
+                    },
+                    "starterRank": 9
+                },
+                {
+                    "id": "dots-menu",
+                    "text": "What is the ⋮ button next to everything?",
+                    "kind": "what",
+                    "keywords": [
+                        "three dots",
+                        "more options",
+                        "right click",
+                        "menu",
+                        "extra actions",
+                        "hidden"
+                    ],
+                    "resources": {
+                        "recipe": "W-01b",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "more-actions",
+                    "text": "Where are the extra actions for a song or a slide?",
+                    "kind": "where",
+                    "keywords": [
+                        "right click",
+                        "context menu",
+                        "options",
+                        "dots",
+                        "rename",
+                        "delete",
+                        "duplicate"
+                    ],
+                    "resources": {
+                        "recipe": "W-01b",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "go-reader",
+                    "text": "How do I switch to the Bible Reader?",
+                    "kind": "howto",
+                    "keywords": [
+                        "reading page",
+                        "change page",
+                        "tab",
+                        "switch window",
+                        "study"
+                    ],
+                    "resources": {
+                        "recipe": "W-02",
+                        "find": "Bible Reader",
+                        "tools": [
+                            "owa_goto_page"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "go-editor",
+                    "text": "How do I open the Slide Editor?",
+                    "kind": "howto",
+                    "keywords": [
+                        "edit slides",
+                        "change page",
+                        "editor tab",
+                        "no slide selected",
+                        "design"
+                    ],
+                    "resources": {
+                        "recipe": "W-02",
+                        "find": "Slide Editor",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "go-presenter",
+                    "text": "How do I get back to the Presenter?",
+                    "kind": "howto",
+                    "keywords": [
+                        "back",
+                        "main page",
+                        "home",
+                        "return",
+                        "leave"
+                    ],
+                    "resources": {
+                        "recipe": "W-02",
+                        "find": "Presenter",
+                        "tools": [
+                            "owa_goto_page"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "resize-panels",
+                    "text": "How do I make a panel bigger or smaller?",
+                    "kind": "howto",
+                    "keywords": [
+                        "resize",
+                        "drag divider",
+                        "wider",
+                        "narrower",
+                        "split",
+                        "too small"
+                    ],
+                    "resources": {
+                        "recipe": "W-01",
+                        "related": [
+                            "W-31"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "making",
+            "label": "Making a new file",
+            "panel": "Documents",
+            "recipes": [
+                "W-15"
+            ],
+            "questions": [
+                {
+                    "id": "new-document",
+                    "text": "How do I make a new slide document?",
+                    "kind": "howto",
+                    "keywords": [
+                        "new file",
+                        "create",
+                        "blank",
+                        "start",
+                        "sermon slides",
+                        "add document"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "New App Document",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "new-lyric",
+                    "text": "How do I make a new song?",
+                    "kind": "howto",
+                    "keywords": [
+                        "new lyric",
+                        "create song",
+                        "blank song",
+                        "add song",
+                        "write"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "New Lyric",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "song-from-text",
+                    "text": "Can you make a song from words I paste in?",
+                    "kind": "howto",
+                    "keywords": [
+                        "paste lyrics",
+                        "import words",
+                        "type up a song",
+                        "make a song from text",
+                        "copy lyrics in",
+                        "song from a link",
+                        "lyrics file",
+                        "create lyric file",
+                        "turn words into a song"
+                    ],
+                    "starter": true,
+                    "starterRank": 3,
+                    "resources": {
+                        "tools": [
+                            "owa_lyric_validate",
+                            "owa_lyric_file"
+                        ],
+                        "related": [
+                            "W-15"
+                        ]
+                    }
+                },
+                {
+                    "id": "song-from-link",
+                    "text": "Create a lyric file from https://example.com/lyric/amazing_grace",
+                    "kind": "howto",
+                    "keywords": [
+                        "song from a link",
+                        "lyrics page",
+                        "chord sheet",
+                        "import a song from a website",
+                        "create lyric from a url",
+                        "hymn page",
+                        "song page address",
+                        "read a song page"
+                    ],
+                    "starter": true,
+                    "starterRank": 4,
+                    "template": true,
+                    "resources": {
+                        "tools": [
+                            "owa_read_website",
+                            "owa_lyric_validate",
+                            "owa_lyric_file"
+                        ],
+                        "related": [
+                            "W-15"
+                        ]
+                    }
+                },
+                {
+                    "id": "open-editor",
+                    "text": "How do I open the Slide Editor for a document?",
+                    "kind": "howto",
+                    "keywords": [
+                        "edit",
+                        "editor tab",
+                        "no slide selected",
+                        "open editor",
+                        "change slides"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "related": [
+                            "W-02"
+                        ],
+                        "find": "Slide Editor",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "edit-in-window",
+                    "text": "How do I edit one slide in its own window?",
+                    "kind": "howto",
+                    "keywords": [
+                        "separate window",
+                        "popup",
+                        "edit arrow",
+                        "second window",
+                        "while presenting"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "Edit ↗",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "rename-document",
+                    "text": "How do I rename a document or a song?",
+                    "kind": "howto",
+                    "keywords": [
+                        "rename",
+                        "change name",
+                        "title",
+                        "wrong name",
+                        "edit name"
+                    ],
+                    "resources": {
+                        "recipe": "W-01b",
+                        "related": [
+                            "W-15"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "delete-document",
+                    "text": "How do I delete a document I do not need?",
+                    "kind": "howto",
+                    "keywords": [
+                        "delete",
+                        "remove",
+                        "trash",
+                        "bin",
+                        "get rid of",
+                        "tidy"
+                    ],
+                    "resources": {
+                        "recipe": "W-01b",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "open-lyric-editor",
+                    "text": "How do I open the Lyric Editor?",
+                    "kind": "howto",
+                    "keywords": [
+                        "edit song",
+                        "lyric editor",
+                        "change words",
+                        "open song"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "related": [
+                            "W-05"
+                        ],
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "documents",
+            "label": "Documents & slides",
+            "panel": "Documents",
+            "recipes": [
+                "W-03",
+                "W-04",
+                "W-26",
+                "W-27"
+            ],
+            "questions": [
+                {
+                    "id": "present-slide",
+                    "text": "How do I put a slide on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "project",
+                        "show",
+                        "display",
+                        "go live",
+                        "present",
+                        "audience"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-03",
+                        "related": [
+                            "W-10"
+                        ],
+                        "find": "Documents",
+                        "guide": true
+                    },
+                    "starterRank": 7
+                },
+                {
+                    "id": "open-document",
+                    "text": "How do I open a document?",
+                    "kind": "howto",
+                    "keywords": [
+                        "select file",
+                        "sermon",
+                        "slides",
+                        "load",
+                        "pick",
+                        "choose"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "find": "Documents",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "next-slide",
+                    "text": "How do I move to the next slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "advance",
+                        "forward",
+                        "arrow keys",
+                        "page down",
+                        "space",
+                        "continue"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "shortcut": "Arrow keys / PageDown / Space",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "previous-slide",
+                    "text": "How do I go back to the previous slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "back",
+                        "backwards",
+                        "page up",
+                        "arrow keys",
+                        "went too far"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "shortcut": "Arrow keys / PageUp",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "clear-slide",
+                    "text": "How do I take the slide off the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "clear slide",
+                        "remove",
+                        "blank",
+                        "stop showing",
+                        "take down"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "related": [
+                            "W-10"
+                        ],
+                        "shortcut": "F8",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "present-pdf",
+                    "text": "How do I present a PDF or a PowerPoint?",
+                    "kind": "howto",
+                    "keywords": [
+                        "pdf",
+                        "powerpoint",
+                        "pptx",
+                        "word",
+                        "docx",
+                        "pages",
+                        "import"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "related": [
+                            "W-23"
+                        ],
+                        "find": "Documents",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "auto-play",
+                    "text": "How do I make the slides advance by themselves?",
+                    "kind": "howto",
+                    "keywords": [
+                        "auto play",
+                        "timer",
+                        "automatic",
+                        "hands free",
+                        "loop",
+                        "slideshow"
+                    ],
+                    "resources": {
+                        "recipe": "W-04",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "auto-play-stop",
+                    "text": "How do I stop the slides advancing on their own?",
+                    "kind": "howto",
+                    "keywords": [
+                        "pause",
+                        "stop auto play",
+                        "turn off timer",
+                        "hands free off",
+                        "keeps changing"
+                    ],
+                    "resources": {
+                        "recipe": "W-04",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "auto-play-speed",
+                    "text": "How do I change how long each slide stays up?",
+                    "kind": "howto",
+                    "keywords": [
+                        "seconds",
+                        "interval",
+                        "speed",
+                        "duration",
+                        "too fast",
+                        "too slow"
+                    ],
+                    "resources": {
+                        "recipe": "W-04",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "compare-documents",
+                    "text": "How do I look at two documents at the same time?",
+                    "kind": "howto",
+                    "keywords": [
+                        "compare",
+                        "side by side",
+                        "floating preview",
+                        "second window",
+                        "both"
+                    ],
+                    "resources": {
+                        "recipe": "W-26",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "pin-document",
+                    "text": "How do I stop a stray click changing the document I am presenting?",
+                    "kind": "howto",
+                    "keywords": [
+                        "pin",
+                        "lock",
+                        "accidental",
+                        "protect",
+                        "stay",
+                        "keeps switching"
+                    ],
+                    "resources": {
+                        "recipe": "W-27",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "unpin-document",
+                    "text": "How do I unpin the document I pinned?",
+                    "kind": "howto",
+                    "keywords": [
+                        "unpin",
+                        "release",
+                        "unlock",
+                        "remove pin",
+                        "stuck"
+                    ],
+                    "resources": {
+                        "recipe": "W-27",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "slide-notes",
+                    "text": "Where are the notes that go with a slide?",
+                    "kind": "where",
+                    "keywords": [
+                        "note",
+                        "speaker notes",
+                        "reminder",
+                        "comment",
+                        "prompt"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "find": "Note"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lyrics",
+            "label": "Songs & lyrics",
+            "panel": "Documents",
+            "recipes": [
+                "W-05",
+                "W-35",
+                "W-36"
+            ],
+            "questions": [
+                {
+                    "id": "present-lyrics",
+                    "text": "How do I put a song's lyrics on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "song",
+                        "words",
+                        "worship",
+                        "verse",
+                        "chorus",
+                        "sing",
+                        "hymn"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-05",
+                        "related": [
+                            "W-03"
+                        ],
+                        "find": "Documents",
+                        "guide": true
+                    },
+                    "starterRank": 8
+                },
+                {
+                    "id": "find-song",
+                    "text": "Where are my songs?",
+                    "kind": "where",
+                    "keywords": [
+                        "songs list",
+                        "music note",
+                        "lyrics folder",
+                        "library",
+                        "cannot find"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "related": [
+                            "W-16"
+                        ],
+                        "find": "Documents"
+                    }
+                },
+                {
+                    "id": "edit-lyrics",
+                    "text": "How do I edit the words of a song?",
+                    "kind": "howto",
+                    "keywords": [
+                        "change lyrics",
+                        "typo",
+                        "fix words",
+                        "lyric editor",
+                        "rewrite",
+                        "spelling"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "related": [
+                            "W-15"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "song-look",
+                    "text": "How do I change how the song looks on screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "font size",
+                        "padding",
+                        "stage style",
+                        "opacity",
+                        "bigger text",
+                        "too small"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "song-order",
+                    "text": "How do I change the order the verses are sung in?",
+                    "kind": "howto",
+                    "keywords": [
+                        "running order",
+                        "structure",
+                        "chorus",
+                        "repeat",
+                        "arrangement",
+                        "sequence"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "song-attachment",
+                    "text": "How do I attach a file or a link to a song?",
+                    "kind": "howto",
+                    "keywords": [
+                        "attachment",
+                        "chart",
+                        "backing track",
+                        "extra slide",
+                        "link",
+                        "sheet music"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "songselect",
+                    "text": "How do I bring a song in from CCLI SongSelect?",
+                    "kind": "howto",
+                    "keywords": [
+                        "ccli",
+                        "songselect",
+                        "download song",
+                        "sign in",
+                        "import",
+                        "licence"
+                    ],
+                    "resources": {
+                        "recipe": "W-35",
+                        "related": [
+                            "W-16"
+                        ],
+                        "find": "Import From SongSelect",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "public-domain",
+                    "text": "How do I import a hymn without a SongSelect account?",
+                    "kind": "howto",
+                    "keywords": [
+                        "public domain",
+                        "hymn",
+                        "free",
+                        "hymnary",
+                        "no account",
+                        "old song"
+                    ],
+                    "resources": {
+                        "recipe": "W-36",
+                        "find": "Import From Public Domain Songs",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "bible",
+            "label": "Bible verses on screen",
+            "panel": "Bible Lookup",
+            "recipes": [
+                "W-06",
+                "W-07"
+            ],
+            "questions": [
+                {
+                    "id": "present-verse",
+                    "text": "How do I present a Bible verse?",
+                    "kind": "howto",
+                    "keywords": [
+                        "scripture",
+                        "verse",
+                        "passage",
+                        "reading",
+                        "project bible",
+                        "show verse"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-06",
+                        "related": [
+                            "W-07",
+                            "W-11"
+                        ],
+                        "find": "Bible Lookup",
+                        "shortcut": "Ctrl+B",
+                        "guide": true
+                    },
+                    "starterRank": 1
+                },
+                {
+                    "id": "open-lookup",
+                    "text": "Where is the Bible lookup?",
+                    "kind": "where",
+                    "keywords": [
+                        "search verse",
+                        "ctrl b",
+                        "find passage",
+                        "reference box",
+                        "bible button"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "find": "Bible Lookup",
+                        "shortcut": "Ctrl+B",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-range",
+                    "text": "How do I show more than one verse at a time?",
+                    "kind": "howto",
+                    "keywords": [
+                        "range",
+                        "several verses",
+                        "whole passage",
+                        "multiple",
+                        "block",
+                        "to verse"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "shortcut": "Ctrl+B",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "change-version",
+                    "text": "How do I change the Bible version on screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "translation",
+                        "kjv",
+                        "version",
+                        "swap bible",
+                        "different bible",
+                        "language"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "related": [
+                            "W-32",
+                            "W-34"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "two-versions",
+                    "text": "How do I show two Bible versions side by side?",
+                    "kind": "howto",
+                    "keywords": [
+                        "compare translations",
+                        "parallel",
+                        "two bibles",
+                        "side by side",
+                        "bilingual"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "related": [
+                            "W-11"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "next-verse",
+                    "text": "How do I step to the next verse while presenting?",
+                    "kind": "howto",
+                    "keywords": [
+                        "advance verse",
+                        "next",
+                        "continue reading",
+                        "step",
+                        "following verse"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "shortcut": "Ctrl/Alt+ArrowRight (on the output screen)",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "clear-bible",
+                    "text": "How do I take the verse off the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "clear bible",
+                        "remove verse",
+                        "blank",
+                        "stop showing",
+                        "take down"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "related": [
+                            "W-10"
+                        ],
+                        "shortcut": "F9",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-style",
+                    "text": "How do I make the verse text bigger on screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "font size",
+                        "appearance",
+                        "readable",
+                        "too small",
+                        "bigger",
+                        "colour"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Bibles",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-shadow",
+                    "text": "How do I add a shadow behind the verse text?",
+                    "kind": "howto",
+                    "keywords": [
+                        "text shadow",
+                        "outline",
+                        "hard to read",
+                        "contrast",
+                        "background too busy"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Bibles",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "bible-list",
+                    "text": "How do I save a verse to a list for later?",
+                    "kind": "howto",
+                    "keywords": [
+                        "bible list",
+                        "save verse",
+                        "collection",
+                        "prepare",
+                        "shortlist",
+                        "bookmark"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "related": [
+                            "W-24",
+                            "W-40"
+                        ],
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "background",
+            "label": "Backgrounds",
+            "panel": "Background",
+            "recipes": [
+                "W-08",
+                "W-21",
+                "W-28"
+            ],
+            "questions": [
+                {
+                    "id": "add-background",
+                    "text": "How do I add a background?",
+                    "kind": "howto",
+                    "keywords": [
+                        "background",
+                        "picture behind",
+                        "image",
+                        "video",
+                        "colour",
+                        "wallpaper",
+                        "backdrop"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-08",
+                        "find": "Background",
+                        "guide": true
+                    },
+                    "starterRank": 2
+                },
+                {
+                    "id": "background-colour",
+                    "text": "How do I set a plain colour background?",
+                    "kind": "howto",
+                    "keywords": [
+                        "solid colour",
+                        "black",
+                        "plain",
+                        "colours tab",
+                        "no picture"
+                    ],
+                    "resources": {
+                        "recipe": "W-08",
+                        "find": "Background > Colors",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "background-image",
+                    "text": "How do I use my own picture as the background?",
+                    "kind": "howto",
+                    "keywords": [
+                        "photo",
+                        "image file",
+                        "jpg",
+                        "png",
+                        "my pictures",
+                        "add folder"
+                    ],
+                    "resources": {
+                        "recipe": "W-08",
+                        "related": [
+                            "W-16"
+                        ],
+                        "find": "Background > Images",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "background-video",
+                    "text": "How do I use a video as the background?",
+                    "kind": "howto",
+                    "keywords": [
+                        "motion",
+                        "loop",
+                        "mp4",
+                        "moving background",
+                        "clip"
+                    ],
+                    "resources": {
+                        "recipe": "W-08",
+                        "find": "Background > Videos",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "background-camera",
+                    "text": "How do I put a camera on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "webcam",
+                        "live camera",
+                        "video feed",
+                        "camera overlay",
+                        "stage"
+                    ],
+                    "resources": {
+                        "recipe": "W-08",
+                        "find": "Background > Cameras",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "background-web",
+                    "text": "How do I show a web page as the background?",
+                    "kind": "howto",
+                    "keywords": [
+                        "website",
+                        "url",
+                        "web page",
+                        "link",
+                        "add url",
+                        "internet"
+                    ],
+                    "resources": {
+                        "recipe": "W-08",
+                        "find": "Background > Webs",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "background-from-link",
+                    "text": "How do I download a background video from a link?",
+                    "kind": "howto",
+                    "keywords": [
+                        "youtube",
+                        "download",
+                        "url",
+                        "video link",
+                        "save video",
+                        "internet"
+                    ],
+                    "resources": {
+                        "recipe": "W-21",
+                        "find": "Download From URL",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "audio-from-link",
+                    "text": "How do I get an MP3 out of an online link?",
+                    "kind": "howto",
+                    "keywords": [
+                        "mp3",
+                        "audio download",
+                        "song from link",
+                        "youtube audio",
+                        "music file"
+                    ],
+                    "resources": {
+                        "recipe": "W-21",
+                        "find": "Download From URL",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "clear-background",
+                    "text": "How do I remove the background from the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "clear",
+                        "take off",
+                        "remove",
+                        "blank",
+                        "plain again"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "related": [
+                            "W-08"
+                        ],
+                        "shortcut": "F7",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "background-folder",
+                    "text": "How do I point the app at my own pictures folder?",
+                    "kind": "howto",
+                    "keywords": [
+                        "folder",
+                        "directory",
+                        "my files",
+                        "location",
+                        "where files live",
+                        "empty list"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "related": [
+                            "W-08"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "background-onto-slide",
+                    "text": "How do I drag a picture onto a slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "drag",
+                        "drop",
+                        "add image to slide",
+                        "build slide",
+                        "editor"
+                    ],
+                    "resources": {
+                        "recipe": "W-28",
+                        "related": [
+                            "W-15"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "new-web-item",
+                    "text": "How do I add a web page to the Background panel?",
+                    "kind": "howto",
+                    "keywords": [
+                        "web item",
+                        "add url",
+                        "website background",
+                        "new web",
+                        "link"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "related": [
+                            "W-08"
+                        ],
+                        "find": "Background > Webs",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "foreground",
+            "label": "Foreground extras & audio",
+            "panel": "Foreground",
+            "recipes": [
+                "W-09"
+            ],
+            "questions": [
+                {
+                    "id": "foreground-what",
+                    "text": "What are the foreground extras?",
+                    "kind": "what",
+                    "keywords": [
+                        "overlay",
+                        "on top",
+                        "extras",
+                        "widgets",
+                        "countdown clock marquee"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Foreground",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "countdown",
+                    "text": "How do I show a countdown before the service?",
+                    "kind": "howto",
+                    "keywords": [
+                        "timer",
+                        "count down",
+                        "starts in",
+                        "minutes",
+                        "before service",
+                        "pre service"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Foreground",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "clock",
+                    "text": "How do I put a clock on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "time",
+                        "current time",
+                        "watch",
+                        "show time",
+                        "hour"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Foreground",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "stopwatch",
+                    "text": "How do I run a stopwatch on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "timer up",
+                        "elapsed",
+                        "count up",
+                        "stopwatch",
+                        "how long"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Foreground",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "marquee",
+                    "text": "How do I scroll a message along the bottom of the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "marquee",
+                        "ticker",
+                        "scrolling text",
+                        "announcement",
+                        "banner",
+                        "bottom"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Foreground",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "quick-text",
+                    "text": "How do I put a quick line of text on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "quick text",
+                        "type message",
+                        "one line",
+                        "announcement",
+                        "note on screen"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Foreground",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "slideshow",
+                    "text": "How do I run a slideshow of images?",
+                    "kind": "howto",
+                    "keywords": [
+                        "images slideshow",
+                        "photos",
+                        "rotate pictures",
+                        "gallery",
+                        "loop pictures"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Foreground",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "play-audio",
+                    "text": "How do I play a song or backing track?",
+                    "kind": "howto",
+                    "keywords": [
+                        "audio",
+                        "music",
+                        "mp3",
+                        "sound",
+                        "background music",
+                        "track"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Background > Audios",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "audio-volume",
+                    "text": "How do I change the volume of what is playing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "volume",
+                        "louder",
+                        "quieter",
+                        "mute",
+                        "sound level",
+                        "too loud"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "related": [
+                            "W-22"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "clear-foreground",
+                    "text": "How do I clear the countdown or the message off the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "clear foreground",
+                        "remove overlay",
+                        "take off",
+                        "stop showing"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "related": [
+                            "W-09"
+                        ],
+                        "shortcut": "F10",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "control",
+            "label": "Drawing & spotlight on the app",
+            "recipes": [
+                "W-19",
+                "W-20"
+            ],
+            "questions": [
+                {
+                    "id": "draw-on-app",
+                    "text": "How do I draw on the app window while I teach?",
+                    "kind": "howto",
+                    "keywords": [
+                        "annotate",
+                        "pen",
+                        "brush",
+                        "highlight",
+                        "mark up",
+                        "presenting control"
+                    ],
+                    "resources": {
+                        "recipe": "W-19",
+                        "menu": "Tools → Start Controlling",
+                        "shortcut": "Ctrl+Shift+P",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "spotlight",
+                    "text": "How do I spotlight part of the app window?",
+                    "kind": "howto",
+                    "keywords": [
+                        "focus",
+                        "dim",
+                        "highlight area",
+                        "circle",
+                        "point at"
+                    ],
+                    "resources": {
+                        "recipe": "W-19",
+                        "shortcut": "Ctrl+Shift+P, then F",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "draw-clear",
+                    "text": "How do I clear what I drew?",
+                    "kind": "howto",
+                    "keywords": [
+                        "erase",
+                        "undo",
+                        "clear drawing",
+                        "rub out",
+                        "reset"
+                    ],
+                    "resources": {
+                        "recipe": "W-19",
+                        "shortcut": "C (clear) / Ctrl+Z (undo)",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "draw-stop",
+                    "text": "How do I stop drawing mode?",
+                    "kind": "howto",
+                    "keywords": [
+                        "exit",
+                        "escape",
+                        "turn off",
+                        "stop controlling",
+                        "back to normal",
+                        "stuck"
+                    ],
+                    "resources": {
+                        "recipe": "W-19",
+                        "shortcut": "Escape, then the ✕ on the panel",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "keycast",
+                    "text": "How do I show the room which keys I am pressing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "keyboard screencast",
+                        "show keys",
+                        "teaching",
+                        "demo",
+                        "training"
+                    ],
+                    "resources": {
+                        "recipe": "W-20",
+                        "shortcut": "Ctrl+Shift+P, then K",
+                        "guide": true
+                    }
+                }
+            ]
+        }
+    ]
+}

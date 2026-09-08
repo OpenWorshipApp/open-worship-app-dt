@@ -1,0 +1,468 @@
+{
+    "page": "presenting-flow",
+    "label": "Presenting flows",
+    "window": "presenter.html",
+    "focus": "presenter",
+    "description": "The running order for a service: what happens, in what order, on which screen. Built in the Presenting Flows panel and run from its own preview.",
+    "updated": "2026-09-04",
+    "sections": [
+        {
+            "id": "building",
+            "label": "Building the running order",
+            "panel": "Presenting Flows",
+            "recipes": [
+                "W-22"
+            ],
+            "questions": [
+                {
+                    "id": "flow-what",
+                    "text": "What is a presenting flow?",
+                    "kind": "what",
+                    "keywords": [
+                        "running order",
+                        "service plan",
+                        "setlist",
+                        "order of service",
+                        "playlist"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "find": "Presenting Flows"
+                    }
+                },
+                {
+                    "id": "flow-build",
+                    "text": "How do I build a running order for a service?",
+                    "kind": "howto",
+                    "keywords": [
+                        "plan service",
+                        "setlist",
+                        "prepare",
+                        "order",
+                        "sunday",
+                        "new flow"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-22",
+                        "find": "Presenting Flows",
+                        "guide": true
+                    },
+                    "starterRank": 15
+                },
+                {
+                    "id": "flow-add",
+                    "text": "How do I add a song or a verse to a presenting flow?",
+                    "kind": "howto",
+                    "keywords": [
+                        "add item",
+                        "drag in",
+                        "put in order",
+                        "include",
+                        "build list"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "flow-reorder",
+                    "text": "How do I move a line up or down in the running order?",
+                    "kind": "howto",
+                    "keywords": [
+                        "reorder",
+                        "move up",
+                        "move down",
+                        "rearrange",
+                        "sort",
+                        "wrong order"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "flow-remove",
+                    "text": "How do I take a line out of the running order?",
+                    "kind": "howto",
+                    "keywords": [
+                        "delete line",
+                        "remove",
+                        "get rid of a row",
+                        "take out"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "flow-expand",
+                    "text": "How do I see the slides inside a song in the running order?",
+                    "kind": "howto",
+                    "keywords": [
+                        "expand",
+                        "open up a line",
+                        "inside",
+                        "show the slides"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "related": [
+                            "W-05"
+                        ]
+                    }
+                },
+                {
+                    "id": "flow-drag-onto",
+                    "text": "How do I drop one line onto another instead of moving it?",
+                    "kind": "howto",
+                    "keywords": [
+                        "aim at the middle",
+                        "attach",
+                        "edge",
+                        "ctrl drag",
+                        "drop on top"
+                    ],
+                    "resources": {
+                        "recipe": "W-22"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "running",
+            "label": "Running the service from it",
+            "panel": "Presenting Flows",
+            "recipes": [
+                "W-22"
+            ],
+            "questions": [
+                {
+                    "id": "flow-run",
+                    "text": "How do I run the service from the presenting flow?",
+                    "kind": "howto",
+                    "keywords": [
+                        "play",
+                        "work down",
+                        "live",
+                        "next item",
+                        "preview",
+                        "run sheet"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "flow-preview",
+                    "text": "How do I follow the running order without putting it up yet?",
+                    "kind": "howto",
+                    "keywords": [
+                        "preview",
+                        "rehearse",
+                        "practice",
+                        "look ahead",
+                        "run player"
+                    ],
+                    "resources": {
+                        "recipe": "W-22"
+                    }
+                },
+                {
+                    "id": "flow-preview-many",
+                    "text": "Can I have two running orders open at the same time?",
+                    "kind": "what",
+                    "keywords": [
+                        "both",
+                        "two flows",
+                        "several",
+                        "side by side"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "related": [
+                            "W-26"
+                        ]
+                    }
+                },
+                {
+                    "id": "flow-jump-back",
+                    "text": "How do I go back to an earlier line in the running order?",
+                    "kind": "howto",
+                    "keywords": [
+                        "jump to",
+                        "backwards",
+                        "repeat",
+                        "earlier",
+                        "go back"
+                    ],
+                    "resources": {
+                        "recipe": "W-22"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "automation",
+            "label": "Making it advance by itself",
+            "panel": "Presenting Flows",
+            "recipes": [
+                "W-22"
+            ],
+            "questions": [
+                {
+                    "id": "flow-auto-next",
+                    "text": "How do I make the running order advance by itself?",
+                    "kind": "howto",
+                    "keywords": [
+                        "auto next",
+                        "timer",
+                        "interval",
+                        "timeout",
+                        "hands free",
+                        "walk itself"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "flow-auto-next-time",
+                    "text": "How do I make a line start at a set time on the clock?",
+                    "kind": "howto",
+                    "keywords": [
+                        "time of day",
+                        "at 10am",
+                        "wait until",
+                        "start of service",
+                        "timeout"
+                    ],
+                    "resources": {
+                        "recipe": "W-22"
+                    }
+                },
+                {
+                    "id": "flow-interval",
+                    "text": "How do I make a loop of slides run over and over before the service?",
+                    "kind": "howto",
+                    "keywords": [
+                        "interval",
+                        "loop",
+                        "pre service",
+                        "repeat",
+                        "cycle"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "related": [
+                            "W-04"
+                        ]
+                    }
+                },
+                {
+                    "id": "flow-timing-per-line",
+                    "text": "How do I give one line its own waiting time?",
+                    "kind": "howto",
+                    "keywords": [
+                        "change timing",
+                        "longer",
+                        "shorter",
+                        "per line",
+                        "seconds"
+                    ],
+                    "resources": {
+                        "recipe": "W-22"
+                    }
+                },
+                {
+                    "id": "flow-shortcut",
+                    "text": "How do I give a line its own keyboard shortcut?",
+                    "kind": "howto",
+                    "keywords": [
+                        "keyboard event",
+                        "hotkey",
+                        "shortcut",
+                        "key",
+                        "jump to"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "actions",
+            "label": "Lines that do something",
+            "panel": "Presenting Flows",
+            "recipes": [
+                "W-22"
+            ],
+            "questions": [
+                {
+                    "id": "flow-action",
+                    "text": "How do I make a line clear the screen or show it?",
+                    "kind": "howto",
+                    "keywords": [
+                        "screen action",
+                        "clear",
+                        "show",
+                        "hide",
+                        "automatic action"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "flow-screen-show",
+                    "text": "How do I make a line turn a screen on or off?",
+                    "kind": "howto",
+                    "keywords": [
+                        "screen show",
+                        "screen hide",
+                        "turn on the projector",
+                        "blank at the end"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "related": [
+                            "W-10"
+                        ],
+                        "tools": [
+                            "owa_list_screens"
+                        ]
+                    }
+                },
+                {
+                    "id": "flow-cc-element",
+                    "text": "How do I make one line put up two things at once?",
+                    "kind": "howto",
+                    "keywords": [
+                        "cc element",
+                        "together",
+                        "song and background",
+                        "follower",
+                        "attach"
+                    ],
+                    "resources": {
+                        "recipe": "W-22"
+                    }
+                },
+                {
+                    "id": "flow-pin-screen",
+                    "text": "How do I make one line always go to the same screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "set specific screen",
+                        "pin",
+                        "target screen",
+                        "always",
+                        "stage"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "related": [
+                            "W-18"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "flow-media-control",
+                    "text": "How do I control a video's play and pause from the running order?",
+                    "kind": "howto",
+                    "keywords": [
+                        "media control",
+                        "play",
+                        "pause",
+                        "volume",
+                        "seek",
+                        "video"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "sharing",
+            "label": "Sharing a running order",
+            "panel": "Presenting Flows",
+            "recipes": [
+                "W-22",
+                "W-23"
+            ],
+            "questions": [
+                {
+                    "id": "flow-share",
+                    "text": "How do I share a presenting flow with another machine?",
+                    "kind": "howto",
+                    "keywords": [
+                        "export",
+                        "import",
+                        "send",
+                        "another computer",
+                        "backup",
+                        "usb"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "related": [
+                            "W-23",
+                            "W-25"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "flow-password",
+                    "text": "How do I put a password on a presenting flow I export?",
+                    "kind": "howto",
+                    "keywords": [
+                        "password",
+                        "protect",
+                        "encrypt",
+                        "secure",
+                        "lock file"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "related": [
+                            "W-23",
+                            "W-25"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "flow-import",
+                    "text": "How do I open a running order somebody sent me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "import",
+                        "owapf",
+                        "received",
+                        "open a file",
+                        "from usb"
+                    ],
+                    "resources": {
+                        "recipe": "W-22",
+                        "related": [
+                            "W-23"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

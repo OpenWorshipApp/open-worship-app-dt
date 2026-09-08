@@ -42,14 +42,24 @@
   --chat-text: #e4e9f0;
   --chat-muted: #8b97a8;
   // The house lamp, not the screen: this window is the operator's side of
-  // the room. Spent on the rail and its markers, nowhere else.
-  --chat-brass: #d9a441;
-  --chat-brass-dim: #6b552a;
+  // the room. Spent on the rail and its markers, nowhere else. Named for
+  // what it was, kept for what it is -- the one accent slot in this sheet.
+  // The light theme darkens it instead of copying it: the same value is used
+  // as TEXT (the bullets, the numbered marks, the lock on a pinned tab) and
+  // #ff2bbf on a white panel is not readable.
+  --chat-brass: #ff2bbf;
+  --chat-brass-dim: #7a1359;
   // Borrowed from the app itself, and kept for the one action that matters.
   --chat-signal: #35c4e8;
   --chat-signal-ink: #04222c;
   --chat-warn: #e0b054;
   --chat-warn-bg: #251d10;
+  // Attachments: what the user hands the assistant, and the buttons that go
+  // and fetch it. A cooler relative of the signal colour, kept apart from it
+  // on purpose -- signal means "this drives the app", and a paperclip does
+  // not.
+  --chat-clip-ink: #7ee7f5;
+  --chat-clip-edge: rgb(126 231 245 / 38%);
 
   display: flex;
   flex-direction: column;
@@ -73,17 +83,25 @@
     --chat-solid-soft: #eef2f7;
     --chat-text: #16202e;
     --chat-muted: #5c6b7f;
-    --chat-brass: #9a6b22;
-    --chat-brass-dim: #d8c39a;
+    --chat-brass: #a8107c;
+    --chat-brass-dim: #f0bade;
     --chat-signal: #0e7c99;
     --chat-signal-ink: #ffffff;
     --chat-warn: #6b4c12;
     --chat-warn-bg: #fdf3dd;
+    --chat-clip-ink: #0b6274;
+    --chat-clip-edge: rgb(11 98 116 / 38%);
   }
 
   button {
     font-family: var(--chat-font-label);
     cursor: pointer;
+  }
+
+  // `button` above does not reach a `select`, and an unstyled one falls back
+  // to the body face in the middle of a row of labels.
+  select {
+    font-family: var(--chat-font-label);
   }
 
   // Bahnschrift is variable (wght + wdth). Narrowing it a touch is what
@@ -92,17 +110,19 @@
   .chat-title,
   .cue-label,
   .chat-eyebrow,
-  .seg-item,
   .cue-act,
   .cue-tool,
   .chat-tab-name,
   .chat-menu-item,
+  .chat-pick-caption,
   .chat-send {
     font-variation-settings: 'wdth' 87.5;
   }
 
   button:focus-visible,
-  input:focus-visible {
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
     outline: 2px solid var(--chat-signal);
     outline-offset: 1px;
   }
@@ -120,7 +140,11 @@
 .chat-head-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  // The two that say WHO is answering sit together on the left; the model is
+  // pushed to the right edge by its own field's auto margin. `space-between`
+  // spread all three evenly once the segmented pairs became selects, which
+  // left the provider floating in the middle of the row attached to neither.
+  justify-content: flex-start;
   gap: 8px;
 
   & + & {
@@ -140,23 +164,94 @@
   padding-left: 8px;
 }
 
-.chat-engine {
-  flex: 0 1 auto;
+// One head-row choice: its caption and the control it names. Side by side by
+// default -- read as a line ("Asking about: Presenter") rather than as two
+// things -- and stacked only once the window is too narrow to hold three of
+// them that way (below).
+.chat-pick-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  // Only the model field gives ground (below); the two that name a fixed
+  // pair of choices keep their width, so the row never reflows mid-answer.
+  flex: 0 0 auto;
   min-width: 0;
+}
+
+// The model is the one that runs long -- an account's own catalogue holds
+// names no head row can fit -- so its field alone gives ground, and it holds
+// the row's right edge.
+.chat-pick-field-engine {
+  flex: 0 1 auto;
+  margin-inline-start: auto;
   max-width: 68%;
+  justify-content: flex-end;
+}
+
+// Three captions beside three controls do not fit the width this window opens
+// at, and the one that would be pushed off the end is the model name. Below
+// that width each caption goes back over its own control, which costs one
+// line of height and no width at all.
+@media (max-width: 560px) {
+  .chat-pick-field {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+
+  .chat-pick-field-engine {
+    align-items: flex-end;
+  }
+}
+
+// What the control beside it is FOR. Small and quiet on purpose: it is read
+// once, when the user first wonders what "Presenter" is doing up there, and
+// never needs to be read again.
+.chat-pick-caption {
+  font-family: var(--chat-font-label);
+  // 9.5px against the control's 10.5px: subordinate to what it labels, but
+  // this window is read on a laptop at the back of a hall by someone who is
+  // not looking for it, so it stops short of the size a caption can be.
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--chat-muted);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.8;
+  padding-inline: 2px;
+  // The whole field is a `<label>`, so the caption is a click target for the
+  // control beside it -- and must not read as inert text.
+  cursor: pointer;
+}
+
+// Every dropdown in the head row: which half of the app, which assistant,
+// which model. One skin, because they are one row of the same kind of choice
+// -- and because a segmented pair of buttons cost this 460px window more
+// width than the three of them together do.
+.chat-pick {
+  max-width: 100%;
+  min-width: 0;
   font-family: var(--chat-font-data);
   font-size: 10.5px;
   letter-spacing: 0.02em;
   color: var(--chat-muted);
   white-space: nowrap;
+}
+
+// Its column is what runs out of room, so the name itself ellipsises.
+.chat-engine {
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: end;
 }
 
-// Which model answers. The list itself is drawn by the OS, and `color-scheme`
-// is the only thing that tells it whether this window is dark or light.
-select.chat-engine {
+// The list itself is drawn by the OS, and `color-scheme` is the only thing
+// that tells it whether this window is dark or light.
+select.chat-pick {
   appearance: none;
   color-scheme: dark;
   border: 1px solid transparent;
@@ -205,51 +300,8 @@ button.chat-engine {
   }
 }
 
-.chatbot-app[data-bs-theme='light'] select.chat-engine {
+.chatbot-app[data-bs-theme='light'] select.chat-pick {
   color-scheme: light;
-}
-
-// A segmented control, sized for a window this narrow: the two states of one
-// switch, not two buttons that happen to sit together.
-.seg {
-  display: inline-flex;
-  flex: 0 0 auto;
-  border: 1px solid var(--chat-line);
-  border-radius: 4px;
-  overflow: hidden;
-  background-color: var(--chat-ink);
-}
-
-.seg-item {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--chat-muted);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 4px 9px;
-  line-height: 1.4;
-
-  & + & {
-    border-left: 1px solid var(--chat-line);
-  }
-
-  &:hover:not(:disabled) {
-    color: var(--chat-text);
-  }
-
-  &.is-on {
-    background-color: var(--chat-panel);
-    color: var(--chat-text);
-    box-shadow: inset 0 -2px 0 var(--chat-brass);
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
 }
 
 // --- tabs -------------------------------------------------------------------
@@ -594,7 +646,7 @@ button.chat-engine {
 // Only the newest answer is lit: a cue standing live on the desk.
 .cue-bot:last-child .cue-mark {
   background-color: var(--chat-brass);
-  box-shadow: 0 0 0 3px rgb(217 164 65 / 18%);
+  box-shadow: 0 0 0 3px rgb(255 43 191 / 18%);
 }
 
 .cue-label {
@@ -676,6 +728,40 @@ button.chat-engine {
   line-height: 1.4;
 }
 
+// --- the song a draft would save --------------------------------------------
+
+.cue-lyric {
+  margin-top: 10px;
+
+  > summary {
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+}
+
+.cue-lyric-text {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--chat-line);
+  border-radius: 6px;
+  background-color: var(--chat-panel-soft);
+  color: var(--chat-text);
+  // The notation is column work -- a chord sits over the syllable it lands on
+  // -- so it has to be read in a fixed pitch, and it must not be re-wrapped.
+  font-family: var(--chat-font-data);
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: pre;
+  overflow: auto;
+  resize: vertical;
+}
+
 // --- what you can do about the answer ---------------------------------------
 
 .cue-actions {
@@ -729,6 +815,56 @@ button.chat-engine {
   &:hover {
     color: var(--chat-signal-ink);
     filter: brightness(1.08);
+  }
+}
+
+// "Show me and I can answer." Shaped as equipment like its neighbours, because
+// pressing one does drive the app -- it takes a picture, or puts an outline
+// over the window and waits for a click -- but tinted with the attachment
+// colour rather than the signal one, so it does not read as a walkthrough.
+.cue-act-attach {
+  border-color: var(--chat-clip-edge);
+  color: var(--chat-clip-ink);
+
+  &:hover {
+    color: var(--chat-clip-ink);
+    background-color: rgb(126 231 245 / 10%);
+  }
+}
+
+// Things to SAY, under the things to DO. Every answer carries a row of these
+// now, because "type the next sentence in English" is the step a volunteer
+// minutes before a service does not take.
+//
+// Deliberately not shaped like `.cue-act` beside it: those are uppercase
+// equipment lettering because pressing one drives the app, and these are
+// sentences the user is about to say. Body font, sentence case, pill --
+// nothing here should read as a control.
+.cue-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.cue-reply {
+  appearance: none;
+  max-width: 100%;
+  text-align: start;
+  font-family: var(--chat-font-body);
+  font-size: 12px;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--chat-line);
+  background-color: var(--chat-panel);
+  color: var(--chat-text);
+
+  &:hover {
+    border-color: var(--chat-brass);
+    background-color: var(--chat-panel-soft);
   }
 }
 
@@ -817,6 +953,46 @@ button.chat-engine {
   color: var(--chat-muted);
 }
 
+// The way from the four suggestions to the whole list of what this window can
+// be asked. Quiet, but a BUTTON rather than a link glyph: it is the only thing
+// on the empty screen that says the four chips are not the whole of it.
+.chat-more {
+  appearance: none;
+  margin: 10px 0 0;
+  padding: 4px 8px;
+  border: 1px dashed var(--chat-line);
+  border-radius: 4px;
+  background-color: transparent;
+  font-family: var(--chat-font-label);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--chat-muted);
+
+  &:hover {
+    border-style: solid;
+    border-color: var(--chat-brass-dim);
+    color: var(--chat-text);
+  }
+}
+
+.chat-all {
+  margin-top: 12px;
+}
+
+// A rule per heading, so ~25 sections read as a list of PLACES rather than as
+// one long wall of questions.
+.chat-all-group {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--chat-line);
+}
+
+.chat-all-count {
+  margin-top: 8px;
+}
+
 .chat-link {
   appearance: none;
   border: 0;
@@ -850,6 +1026,44 @@ button.chat-engine {
   animation: cue-standby 1.1s ease-in-out infinite;
 }
 
+// What it is doing, one line per step, the finished ones kept above the
+// running one. Rows rather than a single replacing line because somebody
+// deciding whether to press Stop is asking whether it is GETTING ANYWHERE,
+// which one line cannot answer.
+.chat-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+// A step that is over. The pulse stops -- exactly one dot on the line is ever
+// breathing, and that is what makes it readable at a glance -- and the whole
+// row steps back so the eye lands on the one still running.
+.chat-status.is-done {
+  opacity: 0.55;
+
+  > .chat-status-dot {
+    animation: none;
+    background-color: var(--chat-line);
+  }
+}
+
+// Older steps are counted rather than dropped in silence: a list that quietly
+// forgot its first three would make a long question look like a short one.
+.chat-progress-more,
+.chat-progress-stop {
+  margin: 0;
+  padding-left: 15px;
+  font-family: var(--chat-font-data);
+  font-size: 10.5px;
+  color: var(--chat-muted);
+  opacity: 0.7;
+}
+
+.chat-progress-more {
+  font-style: italic;
+}
+
 .chat-alert {
   margin: 0 0 12px;
   padding: 8px 10px;
@@ -862,28 +1076,512 @@ button.chat-engine {
   line-height: 1.45;
 }
 
+// The standing notice above a keyless conversation. Deliberately quieter than
+// `.chat-alert`: that one reports something that has gone wrong and wants to be
+// read now, this one states a condition that holds for the whole conversation
+// and has to survive being looked at for an hour without becoming noise.
+.chat-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  // Pinned to the top of the log, not scrolled away with the first exchange.
+  // The thing it warns about is true of the tenth question as much as the
+  // first, and a notice a user has scrolled past has stopped warning anybody.
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--chat-warn);
+  border-radius: 4px;
+  // Opaque, and it has to stay that way: sticky over a translucent panel lets
+  // the answers slide visibly under the words.
+  background-color: var(--chat-warn-bg);
+  color: var(--chat-warn);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.chat-warn-mark {
+  flex: 0 0 auto;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+// The notice opens in full and folds itself to one line a few seconds later.
+// Folded is not dismissed: the row keeps its border, its colour and its place
+// at the top of the log, so it is still the first thing seen on looking up --
+// it just stops spending three lines on it for the rest of the conversation.
+//
+// No height transition on purpose. This window opens on machines where a
+// re-layout of the whole message log is felt, and the fold happens while the
+// user is reading something else.
+.chat-warn-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  // After the text when open, so the control to fold it reads last.
+  order: 1;
+}
+
+.chat-warn-fold {
+  order: 2;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  opacity: 0.7;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+  }
+}
+
+.chat-warn.is-folded {
+  align-items: center;
+  padding-block: 5px;
+
+  .chat-warn-body {
+    display: none;
+  }
+
+  // Folded, the button IS the notice: it carries the warning's own first
+  // sentence and the whole row is the target that opens it again.
+  .chat-warn-fold {
+    order: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 11.5px;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: 0;
+    opacity: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+// The services the warning names, on their own line under it. A row rather
+// than more of the sentence: these are two proper nouns a volunteer has never
+// heard of, and burying them mid-paragraph is how a name gets read past.
+.chat-warn-links {
+  display: block;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+// A link, not a button, to look at: it is the way OUT of the free tier, and it
+// belongs to the sentence it ends rather than to the row of actions below.
+.chat-warn-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 0.8;
+  }
+}
+
 // --- asking -----------------------------------------------------------------
 
 .chat-ask {
   flex: 0 0 auto;
   display: flex;
+  // Wrapping, since the box is no longer the only thing above the send
+  // button: attachments and anything refused sit on their own full-width
+  // lines ABOVE the row the user is typing in, so nothing that appears there
+  // can push the caret sideways mid-sentence.
+  flex-wrap: wrap;
+  // Bottom, not centre: the box grows downward as the question gets longer,
+  // and Ask has to stay beside the line being typed rather than drift up the
+  // side of a five-line question.
+  align-items: flex-end;
   gap: 8px;
   padding: 2px;
   border-top: 1px solid var(--chat-line);
   background-color: var(--chat-panel-soft);
+  // The suggestion list hangs off this, and the ask row is the last thing in
+  // the window -- so it opens UPWARD, over the conversation, never pushing the
+  // box the user is typing in down the screen.
+  position: relative;
 }
 
+.chat-suggests {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: calc(100% + 2px);
+  z-index: 3;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 44vh;
+  overflow-y: auto;
+  background-color: var(--chat-panel);
+  border: 1px solid var(--chat-line);
+  border-radius: 4px;
+  box-shadow: 0 -6px 18px rgb(0 0 0 / 35%);
+}
+
+.chat-suggest {
+  appearance: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  text-align: start;
+  font-family: var(--chat-font-body);
+  font-size: 12.5px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--chat-text);
+  background-color: transparent;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 3px;
+  padding: 6px 8px;
+
+  &:hover,
+  &.is-on {
+    border-left-color: var(--chat-brass);
+    background-color: var(--chat-panel-soft);
+  }
+}
+
+.chat-suggest-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// Which panel the question is about. A volunteer asking "clear" gets several
+// right answers, and the panel name is what tells them which one is theirs.
+.chat-suggest-where {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  color: var(--chat-muted);
+  white-space: nowrap;
+}
+
+// --- attachments ------------------------------------------------------------
+//
+// What the user has clipped to the question, in the box and again in the
+// transcript above it. A picture gets a thumbnail because that is the only way
+// to tell two screenshots apart; everything else is a name and an icon.
+
+.chat-clips {
+  flex: 0 0 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 2px 0;
+}
+
+.chat-clip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 3px 4px 3px 6px;
+  border: 1px solid var(--chat-clip-edge);
+  border-radius: 999px;
+  background-color: var(--chat-panel);
+  font-family: var(--chat-font-body);
+  font-size: 11.5px;
+  color: var(--chat-clip-ink);
+
+  img {
+    width: 22px;
+    height: 22px;
+    object-fit: cover;
+    border-radius: 3px;
+  }
+}
+
+// A picture opened over the conversation. It fills the window because the
+// window is 460px wide and a screenshot of a whole app inside a chip is not
+// something anyone can read.
+.chat-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  background-color: rgb(0 0 0 / 78%);
+  cursor: zoom-out;
+
+  img {
+    max-width: 100%;
+    max-height: calc(100% - 30px);
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 8px 30px rgb(0 0 0 / 55%);
+  }
+}
+
+// Copy and Save, on the picture itself. A picture worth opening big is a
+// picture worth keeping, and this is the only place in the window where one is
+// big enough to be worth the two buttons.
+.chat-preview-tools {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-preview-tool {
+  appearance: none;
+  font-family: var(--chat-font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 45%);
+  background-color: rgb(255 255 255 / 8%);
+  color: #fff;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgb(255 255 255 / 18%);
+  }
+}
+
+.chat-preview-hint {
+  margin: 0;
+  font-family: var(--chat-font-label);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 65%);
+}
+
+// A chip that can show you where its control is. The cursor and the lift on
+// hover are the whole affordance: a chip is otherwise a label, and nothing
+// about a label says it can be pressed.
+.chat-clip-showable {
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--chat-clip-ink);
+    background-color: rgb(126 231 245 / 10%);
+  }
+}
+
+// The bytes lived only as long as the window did. Rather than a broken
+// thumbnail, the chip goes quiet and its title says why -- which is the
+// visible half of never writing a picture into the settings file.
+.chat-clip-gone {
+  border-style: dashed;
+  color: var(--chat-muted);
+  opacity: 0.7;
+}
+
+.chat-clip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+.chat-clip-x {
+  appearance: none;
+  border: 0;
+  background-color: transparent;
+  color: var(--chat-muted);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 3px;
+
+  &:hover {
+    color: var(--chat-warn);
+  }
+}
+
+// One thing this window can do, said where the eye is already going: the last
+// full-width line before the box. Quiet on purpose -- it must be ignorable
+// while a question is being written -- and pressable, because the whole point
+// of a random tip is that the next one might be the useful one.
+// The tip and the two arrows that walk it. The row takes the full-width slot
+// the tip itself used to hold in the ask form's wrapping flex line.
+.chat-tip-row {
+  flex: 0 0 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+
+  // Faint until the line is under the pointer, and never hidden. This whole
+  // line exists because a feature nobody announces is a feature nobody has,
+  // so revealing its own controls on hover would be the same mistake one
+  // level down -- a volunteer would have to already know they were there to
+  // find out they were there.
+  &:hover > .chat-tip-walk,
+  &:focus-within > .chat-tip-walk {
+    opacity: 1;
+  }
+}
+
+.chat-tip-walk {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0;
+  opacity: 0.5;
+  transition: opacity 120ms ease-out;
+}
+
+.chat-tip-step {
+  appearance: none;
+  border: 0;
+  background-color: transparent;
+  color: var(--chat-muted);
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 4px;
+  border-radius: 3px;
+
+  &:hover {
+    color: var(--chat-brass);
+    background-color: var(--chat-panel);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-tip-walk {
+    transition: none;
+  }
+}
+
+.chat-tip {
+  appearance: none;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 3px 6px 1px;
+  border: 0;
+  background-color: transparent;
+  text-align: start;
+  font-family: var(--chat-font-body);
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--chat-muted);
+
+  // The accent's DIM slot is a pale pink in the light theme -- it is a
+  // background there, not an ink -- so the lamp takes the muted colour and
+  // only lights up under the pointer.
+  > .bi {
+    flex: 0 0 auto;
+    color: var(--chat-muted);
+  }
+
+  &:hover {
+    color: var(--chat-text);
+
+    > .bi {
+      color: var(--chat-brass);
+    }
+  }
+}
+
+.chat-attach-row {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+}
+
+.chat-attach {
+  appearance: none;
+  border: 0;
+  background-color: transparent;
+  color: var(--chat-muted);
+  font-size: 15px;
+  line-height: 1;
+  padding: 6px 5px;
+  border-radius: 4px;
+
+  &:hover {
+    color: var(--chat-clip-ink);
+    background-color: var(--chat-panel);
+  }
+}
+
+// The real file input. Hidden rather than absent: the paperclip and the
+// assistant's own "attach a file" button both click it, and a `display: none`
+// input still answers a programmatic click.
+.chat-file-input {
+  display: none;
+}
+
+// Both what went wrong and what is about to happen. One line, because they
+// occupy the same place in the same moment -- "point at the control you mean"
+// is only ever followed by either the chip or the reason there is none.
+.chat-attach-error {
+  flex: 0 0 100%;
+  margin: 0;
+  padding: 2px 4px 0;
+  font-family: var(--chat-font-body);
+  font-size: 11.5px;
+  color: var(--chat-warn);
+}
+
+.chat-attach-fix {
+  appearance: none;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--chat-warn);
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--chat-warn);
+  font-size: 11px;
+
+  &:hover {
+    background-color: rgb(255 187 51 / 12%);
+  }
+}
+
+// A textarea since 2026-09-01, and everything below the padding is what that
+// costs: no drag handle (the box sizes itself off `question`), no sideways
+// scrolling, and a ceiling of about eight lines -- past that it scrolls,
+// because a composer that keeps growing would eat the conversation it is
+// asking about in a 460px window.
 .chat-input {
   flex: 1 1 auto;
   min-width: 0;
   appearance: none;
+  display: block;
   font-family: var(--chat-font-body);
   font-size: 13px;
+  line-height: 1.45;
   color: var(--chat-text);
   background-color: var(--chat-ink);
   border: 1px solid var(--chat-line);
   border-radius: 4px;
   padding: 8px 10px;
+  resize: none;
+  overflow-y: auto;
+  max-height: 168px;
 
   &::placeholder {
     color: var(--chat-muted);
@@ -899,9 +1597,76 @@ button.chat-engine {
   }
 }
 
+// The question Report asks before it does anything. A full-width line above
+// the box -- the same shape and the same warn colour as the confirmation over
+// the tab strip, because it is the same kind of moment: a press that cannot be
+// taken back quietly.
+.chat-report-confirm {
+  flex: 0 0 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--chat-warn);
+  border-radius: 4px;
+  background-color: var(--chat-warn-bg);
+}
+
+.chat-report-ask {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--chat-warn);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.chat-report-no,
+.chat-report-yes {
+  flex: 0 0 auto;
+  appearance: none;
+  border-radius: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 4px 9px;
+}
+
+.chat-report-no {
+  border: 1px solid var(--chat-line);
+  background-color: var(--chat-panel);
+  color: var(--chat-text);
+
+  &:hover {
+    border-color: var(--chat-muted);
+  }
+}
+
+.chat-report-yes {
+  border: 1px solid var(--chat-warn);
+  background-color: transparent;
+  color: var(--chat-warn);
+
+  &:hover {
+    background-color: var(--chat-warn);
+    color: var(--chat-warn-bg);
+  }
+}
+
+// Ask and Report, stacked in the corner of the ask row. A column, so the
+// second one costs the box no width -- and stretched, so the pair reads as one
+// control with a main half and a quiet half rather than as two buttons that
+// happen to be near each other.
+.chat-ask-buttons {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
 .chat-send {
   flex: 0 0 auto;
   appearance: none;
+  padding-block: 7px;
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -920,6 +1685,37 @@ button.chat-engine {
     opacity: 0.45;
     cursor: default;
   }
+}
+
+// The Ask button while an answer is on its way. Warn-coloured rather than
+// signal-coloured: it is the same button in the same place, and the colour is
+// the only thing saying that pressing it now UNDOES rather than sends.
+.chat-stop {
+  background-color: var(--chat-warn);
+  color: var(--chat-warn-bg);
+}
+
+// The way to say the app itself is wrong, rather than to ask it something.
+// Outlined rather than filled: it must be findable without competing with Ask,
+// which is what all but a handful of presses are for.
+.chat-report {
+  background-color: transparent;
+  border: 1px solid var(--chat-line);
+  color: var(--chat-muted);
+
+  &:hover:not(:disabled) {
+    filter: none;
+    border-color: var(--chat-warn);
+    color: var(--chat-warn);
+  }
+}
+
+// Only there while an answer is coming AND there are words in the box. It
+// sends them into the answer being written rather than starting a second
+// question, so it sits in front of Stop -- the two are a pair, and the one
+// that keeps the work has to be the one nearer the box.
+.chat-add {
+  padding: 0 12px;
 }
 
 // --- glass ------------------------------------------------------------------

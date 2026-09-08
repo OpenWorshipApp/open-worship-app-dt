@@ -2,10 +2,10 @@
 id: W-42
 title: "Ask the app for help (the chatbot)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15]
-screenshots: 11
+verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46]
+screenshots: 36
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-08-31"
+workflowsVersion: "2026-09-08"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -16,6 +16,15 @@ it is describing.
 1. Click the **🤖** button in the top-right corner of the window, just left of the
    **?**, or open **Help** → **App Help (Chatbot)** in the menu bar. A narrow window
    opens beside the app. 📸
+   **The 🤖 button is only on the three windows with a top bar** — the Presenter, the
+   Bible Reader and the Slide Editor. Everywhere else, and on those three as well, the
+   way in is the **Tools** menu → **App Assistant**, or **Ctrl+Shift+A**
+   (**⌘+Shift+A** on Mac). That works from a Bible Note, Settings, the Web Editor, the
+   Lyric Editor and Local Web Share — the windows a volunteer is most likely to be
+   stuck in — and the menu bar is hidden on those, so the shortcut is the way in. If a
+   help window is already open it comes to the front rather than a second one opening.
+   With **AI features** switched off in Settings → Others, the button, the menu entry
+   and the shortcut all go quiet together.
 2. A strip of **tabs** runs along the very top — several conversations at once, the way
    a browser holds several pages. **+** starts another, **×** closes one, and a
    **double-click on a tab's name** renames it (useful once three of them start "how do
@@ -33,66 +42,342 @@ it is describing.
    it, so the strip can be cleared at the end of a service with the one answer worth
    keeping still in it. **Unlock this chat**, in the same menu, gives the **×** back.
    The lock is remembered with everything else, so it is still locked next Sunday. 📸
-5. The rest of the top line belongs to the tab in front. **Presenter** / **Bible
-   Reader** says which half of the app you are asking about: it starts on whichever one
-   you opened the window from, and the suggested questions change with it. Another tab
-   can be asking about the other half at the same time. 📸
-6. Type a question and press **Enter**, or click one of the suggestions. Answers arrive
-   with follow-up buttons: **Read all of W-xx** opens the full recipe, the other buttons
-   are the next-best matches. 📸
-7. Under every answer is **Copy**, which puts that answer on the clipboard and says
+5. The rest of the top line belongs to the tab in front, and it is three **drop-down
+   lists**, each with its own small grey caption saying what it is for —
+   **ASKING ABOUT**, **ASSISTANT** and **MODEL**. (Narrow the window and the captions
+   move to sit above their lists instead of beside them.) The first,
+   **ASKING ABOUT**, says which window of the app you are asking about —
+   **Presenter**, **Bible Reader**, **Document Editor**, **Bible Note**, **Settings**,
+   **Web Editor**, **Lyric Editor** or **Local Web Share**. It starts on whichever one
+   you opened the help from, and the suggested questions change with it: opened from
+   the Lyric Editor it offers marking verses and choruses, opened from Settings it
+   offers the language and the Bible downloads. Answers follow it too — a recipe
+   belonging to another window names buttons that are not on your screen, so it is
+   left out. Another tab can be asking about a different window at the same time. **ASSISTANT** is which service answers and **MODEL** is which of
+   its models; with no API key at all the third one reads **app guide · offline** under
+   **ANSWERS FROM**, and clicking it opens the settings panel that takes a key. 📸
+6. Type a question and press **Ctrl+Enter**, click **Ask**, or click one of the
+   suggestions. Answers arrive with follow-up buttons: **Read the whole thing** opens
+   the full recipe, the other button is the next-best match. Pages of this guide are
+   always named by their **title** — *the guide page “Set the background”* — never
+   by a code or a number, whatever the assistant was reading. 📸
+   **The four suggestions are not all it can answer — press More… to see the
+   rest.** Under the **Try asking** chips on an empty chat is a small
+   **More… — everything it can answer** button. It opens the whole list for the
+   window you are asking about, sorted under the panel each question belongs to
+   — *Bible*, *Backgrounds*, *The screen the audience sees*, *Nothing on the
+   projector*, and so on. There are 184 of them for the Presenter, and every one
+   has a page of this guide or a look at the live app behind it, so nothing on
+   that list can be pressed and come back with a shrug. It is worth a scroll
+   once: most people use this window for the one thing they first saw it do.
+   Press any of them to ask it, or type a few words in the box and the same list
+   narrows itself as you type. **Fewer** folds it away again. 📸
+   **The box takes as many lines as you need.** Plain **Enter** starts a new line
+   rather than sending, so a question can be written out properly — what you did,
+   what happened, what you expected — and the box grows as you type, up to about
+   eight lines, then scrolls. **Ctrl+Enter** is what sends it.
+   **A question you asked before comes back with Alt+↑.** The window remembers what
+   you have typed into it — across every tab, and from one day to the next — and
+   **Alt+↑** puts the question before back in the box, with the cursor at the end of
+   it, ready to be changed. **Alt+↓** walks forward again, and one press past the
+   newest gives you back whatever you were halfway through typing, untouched. It is
+   for the question that was nearly right: bring it back, fix the verse reference or
+   the screen number, and ask it again without writing the whole sentence out twice.
+   (The plain arrow keys still move the cursor and still walk the list of
+   suggestions, which is why this one wants **Alt** as well.) 📸
+   **You can just carry on talking.** Each tab is one conversation, so the answer to
+   "is any screen showing?" can be replied to with **yes**, or with "how do I turn it
+   off?", and it knows what you mean — you do not have to say the whole thing again.
+   Each tab keeps its own thread: a question asked here is never answered out of the
+   chat next door.
+   **And you rarely have to type the next thing.** Every answer ends with two or
+   three short buttons in the assistant's own words — *“How do I style the verse
+   text?”*, *“Which button shows it?”*, *“No thanks”* — and pressing one says it for
+   you, as if you had typed it. A reply that only repeats **Show me step by step**
+   in other words is not offered beside it. They are the round-cornered buttons on the bottom row; the
+   square ones above them, in capitals, are the ones that DO something in the app.
+   Only the newest answer carries them, so a **Yes** is always a yes to the question
+   you were just asked. 📸
+   **It tells you what it is doing while you wait.** Under your question, a
+   short list builds up as it works — *Connecting to the app*, *Thinking about
+   it*, *Searching the guide for "background"*, *Checking the projector
+   screens*, *Reading example.com*, *Creating a new song: "Amazing
+   Grace"*. The one it is on now is the bright line at the bottom with the
+   pulsing dot; the ones above it are done and go grey. A question that has to
+   read a web page and write a song out of it takes the best part of a minute,
+   and this is how you can tell it is getting somewhere rather than stuck — and
+   whether it is doing what you meant. If it says *Reading* a site you did not
+   ask about, or *Pressing* something you did not want pressed, that is the
+   moment to press **Stop**. 📸
+   **Changed your mind? Press Stop.** While an answer is on its way the **Ask**
+   button becomes **Stop**, and the last line under the steps says so —
+   *press Stop to give up on it.* Pressing it (or **Esc**) calls
+   the question off there and then: the chat says **Stopped**, nothing arrives
+   afterwards, and your question is still sitting above it with **Ask again**
+   under it. Use it for a question asked by mistake, one taking longer than you
+   have before the service starts, or an assistant that is thinking its way
+   round the houses. 📸
+   **And you can keep talking while it works.** The box is not locked while an
+   answer is coming: type the thing you forgot to say and press **Add** (or
+   Enter) and it goes into the answer that is already being written, rather than
+   starting a second question — the line joins the conversation marked *Added
+   while it was working*. If it arrives too late to be worked in, it is answered
+   on its own and the reply says so. Press **Stop** instead and every word you
+   added comes straight back into the box: nothing you typed is thrown away. 📸
+   **A question you picked from the list is answered from its own page.** The
+   **Try asking** chips, the suggestions under the box and the **More…** list are
+   the app's own supported questions, and each one is filed under the page of this
+   guide that answers it — so picking one goes straight to that page rather than
+   searching for it, with an assistant or without one. Type the question in your
+   own words and it is searched for as before.
+   **Some things need no assistant at all — type `/`.** A line that starts with
+   `/` is a **command**: it runs on the spot, on this machine, with no assistant,
+   no key and no internet, and the answer says what CHANGED. Type `/` on its own
+   and the list of them appears above the box — walk it with the arrows or click
+   one. **/screen** says whether anything is on the projector; **/screen-show**
+   turns the screen on and **/screen-hide** turns every screen off, and both read
+   the screens back afterwards, so *the screen is on now* is never a guess;
+   **/clear-all**, **/clear-background**, **/clear-slide**, **/clear-bible** and
+   **/clear-foreground** press the five clear buttons (**F6**–**F10**);
+   **/find Clear Bible** outlines a control in red; **/goto reader** switches the
+   main window (the projector is untouched); **/here** says which window is in
+   front; **/help clear bible** searches this guide without an assistant;
+   **/commands** lists them all. The square buttons under a command's answer are
+   commands too — *Turn the screen on* under *nothing is showing* — and pressing
+   one writes the command into the chat as though you had typed it, so the word is
+   there for next time. A command with a spelling mistake lists the real ones
+   rather than guessing. 📸
+   **One line above the box tells you something this window can do.** A 💡 and a
+   short sentence — the picture button, the walkthrough cards, **Report**, **Alt+↑**,
+   locking a tab. It is a different one each time the window opens, and clicking the
+   line gives you another; the cursor goes straight back to the box, so reading one
+   never costs you the question you were writing. 📸
+   **The two small arrows at the end of that line walk them in order.** **›**
+   goes to the next one and **‹** back to the one before, round and round, so
+   you can read the lot in a quiet minute before a service instead of waiting
+   for the right one to come up — and, more usefully, **‹** brings back the tip
+   that changed while you were still reading it. (Clicking the sentence itself
+   still picks one at random, which is the quick way to be shown something
+   new.) 📸
+7. **Show it, instead of describing it.** Beside the box are three buttons.
+   **📎** attaches a picture or a file from your computer; **📷** takes a picture
+   of the app as it looks right now; **🎯** lets you POINT — an outline follows
+   your mouse over the app and the control you click is the one you meant.
+   You can also paste a picture straight into the box (**Ctrl+V**) or drag a file
+   onto the window. Whatever you attach shows as a small chip above the box, with
+   an **×** to take it off again, and up to four can ride one question. Clicking a
+   control to point at it does **not** press it — the app does not act on that
+   click, so it is safe to point at **Clear Bible** and ask what it does. 📸
+   **Press a chip to see what it stands for.** A control you pointed at is
+   **circled in red** in the app window again, so you can find it after looking
+   away; a picture opens big enough to read (press anywhere, or **Esc**, to
+   close it); and a file you attached from your computer opens the folder it
+   came from.
+   **Answers can carry them too.** When the assistant points you at a button or a
+   file, it puts a chip under its answer as well: press it and the button is
+   circled in the app, or the file opens. A picture opens big, with **Copy** and
+   **Save a copy** on it. 📸
+   **Pictures are kept only while the window is open.** Close the help window and
+   the conversation is all still there, but the picture itself is gone — the chip
+   goes grey and says so. Ask again with a fresh one if you need to.
+   **Some assistants cannot see pictures.** If the one you have chosen cannot, the
+   window says so before spending anything and offers you one that can, in a
+   single press.
+   **And it can ask to be shown.** When the assistant cannot answer without
+   seeing your screen it says so and puts the button right there — *Send a picture
+   of my screen*, *Point at the control*, *Attach a file* — so you never have to
+   work out how to send it one. 📸
+8. Under every answer is **Copy**, which puts that answer on the clipboard and says
    **✓ Copied**. Under every question of yours is **Ask again** — or just click the
    question itself — and the same words go back in the box, ready to be changed a
    little and asked again. 📸
-8. Ask **"where is …"** and name a button — the chatbot outlines it in **red** in the app
+9. **Something wrong with the app itself? Press Report.** Under **Ask** is a quieter
+   **Report** button, for when the answer is not "how do I" but "this is broken".
+   Say what went wrong in the box — one line is enough — and press it. It asks
+   first, quoting back what it is about to report, with **Not now** beside
+   **Report it**, so a mis-hit costs you nothing. (Press it with an empty box and it
+   takes the last thing you asked, which after a wrong answer is usually what you
+   mean.) 📸
+   Say yes and it goes and looks: it photographs the app as it stands, notes the
+   version, the window you are in and what the screens are doing, reads the app's own
+   error log, and then investigates the problem in the running app. A few seconds
+   later it comes back with what it found and a report written up in your place,
+   with a **Send report** button under it. **Nothing is sent until you press that** —
+   and there is no bug tracker connected to this app yet, so what it does today is
+   save the whole thing, with the picture, into your **Downloads** folder and tell
+   you where: press the file's chip to open the folder and pass it on however you
+   like. 📸
+10. Ask **"where is …"** and name a button — the chatbot outlines it in **red** in the app
    window for a few seconds, and tells you where it is. Nothing is clicked for you. 📸
-9. Ask about screens ("is any screen showing?") and the answer comes from the live app,
+11. Ask about screens ("is any screen showing?") and the answer comes from the live app,
    not the manual — with a **Hide every screen** button offered, never pressed for you.
-10. With an **AI key** set in **Settings** (កំណត់) → **Others** → **AI Providers**, the
+12. With an **AI key** set in **[en:tran:Settings]** → **Others** → **AI Providers**, the
    same window becomes a real conversation: the model answers, using the same app
    knowledge and the same tools. Without a key — or when the internet is down — it
    still answers from the manual, and says so; with no key at all it also tells you that
-   Claude and ChatGPT need one, and gives you an **Open AI settings** button that goes
-   straight to the panel that takes it.
-11. **Claude** and **ChatGPT** sit in that same top line, and you can change your mind
-   between two questions: the one whose key you have set can be picked, the other stays
-   greyed out until you add its key in the same Settings panel. Beside them is the
-   **model** that will answer — **Opus 5**, **GPT-5** — and it is a list you can change.
+   Claude, ChatGPT and Kimi need one, and gives you an **Open AI settings** button that
+   goes straight to the panel that takes it. That panel has one card per provider, and
+   each card says in plain words what its key is used for — **OpenAI** answers here and
+   powers Bible Cross Reference and Bible Audio, **Anthropic** answers here and powers
+   Bible Cross Reference, **Kimi** answers here only — so you can tell which key is
+   worth getting before you go and fetch one.
+13. The second list is **who answers** — **Claude**, **ChatGPT**, **Kimi** — and you
+   can change your mind between two questions. The ones whose key you have set can be
+   chosen; the others are still in the list, greyed out and reading **needs an API key**,
+   so you can see they are there and what they want. Beside it is the third list, the
+   **model** that will answer — **Opus 5**, **GPT-5**, **Kimi K3** — and it is a list
+   you can change.
    Hold the mouse over a name to see what it is good for, how quick it is and what it
    costs, e.g. `gpt-5 · best answers · slower · $1.25/$10 per 1M tokens`; the smaller
-   models answer a "how do I" just as well for a fraction of it. Choose **More models…**
+   models answer a "how do I" just as well for a fraction of it. A model whose price the
+   maker does not publish simply shows no price line rather than a guessed one. Choose **More models…**
    at the bottom of the list and the window asks your own account what else it can run
    and adds those too. Each tab keeps its own provider and model, and a new tab starts
    on the last pair you picked. 📸
-12. Every answer offers **Show me step by step**. Press it and a numbered card
+14. Every answer offers **Show me step by step**. Press it and a numbered card
    appears in the corner of the app window itself, with the button for the current
    step **circled in red**: press **Next** on the card when you have done it, or
    just do it — clicking the circled button moves the card on by itself. **Back**
    returns a step, **✕** stops. Steps you have already done are not shown: asked
    from the Bible Reader, a recipe that starts "click the Bible Reader tab" starts
    at the step after it instead. 📸
-13. **Do it for me** runs the same walkthrough with the app driven for you: the
+   The help window **gets out of your way while the card is up**: it tucks itself
+   down to the taskbar the moment the walkthrough starts, so nothing it was sitting
+   on top of is hidden from you, and it comes back on its own when you close the
+   card. If you had already put it out of the way yourself, or it was not covering
+   the app in the first place, it is left exactly where you had it. To fetch it back
+   in the middle of a walkthrough, click it in the taskbar or press the **🤖**
+   button again — that reopens the chat you were in, not a new one.
+15. **Do it for me** runs the same walkthrough with the app driven for you: the
    card's button becomes **Do it**, and each press clicks the circled control (or
    types the text) and moves to the next step. One press per step — nothing runs
-   ahead of you — and **Skip** does a step yourself. When a step has nothing to
-   click, the card says so and waits. Anything that changes what the congregation
-   sees is offered, never done for you unasked. 📸
-14. The window answers about the half of the app you are in — asked from the Bible
+   ahead of you — and **Skip** does a step yourself. Anything that changes what
+   the congregation sees is offered, never done for you unasked. 📸
+   **It presses the button the step names, and nothing that merely resembles
+   it.** A step about the drawing panel's *Clear* does not press the projector's
+   *Clear All*; when the only thing on screen is a look-alike, the card says
+   what it can see — *the closest control on screen is "Clear All", which is not
+   "Clear"* — and asks the assistant instead. 📸
+   **Something in the way is closed first.** With the Bible Lookup popup, a
+   right-click menu or a floating panel over the control the step needs, the
+   card rings the way out (the popup's red ✕) and says so; in **Do it for me**
+   the first press closes it and the next does the step. A question the app is
+   asking — *Ok* / *Cancel* — is never answered for you: answer it and the card
+   carries on. 📸
+   **A step that is something to notice reads Next, not Do it.** *The bar under
+   the search box says how many verses matched* has nothing to press; the card
+   says so and the button moves you on. 📸
+16. **When a step cannot be done for you, the card goes and asks.** Some steps are
+   not a button — a double-click on a verse, something to watch happen, a control
+   that is not on screen yet. The card used to say it could not do that one and
+   leave you to it. It now asks the assistant, which looks at your window as it is
+   right now and writes one line back onto the card telling you exactly what to do
+   and where. It takes a few seconds, and the card says it is asking while it
+   waits. With the help window closed there is nobody to ask, and you get the plain
+   instruction instead. 📸
+17. The window answers about the half of the app you are in — asked from the Bible
    Reader, you are told the reader's way, never the presenter's (they differ: the
    presenter looks a verse up in a **Ctrl+B** popup, the reader has no such popup).
    It follows you: switch the app to the other page and the next answer follows,
-   unless you have pressed one of the two buttons yourself. Answers are in English.
+   unless you have chosen a half yourself in the first list. Answers are in English.
 
    > Nothing here leaves the machine unless you set a key. The manual is bundled inside
    > the app.
-15. To turn the whole feature off, untick **Enable AI features** in the same settings
+18. **It can turn words you already have into a song.** Paste the verses of a song
+   into the box — from an email, from a hymn sheet, from a page you found — and ask
+   for a song; or attach a `.txt` of the words with the paperclip; or give it the
+   address of a page the words are on. One of the **Try asking** chips offers this
+   outright: *Can you make a song from words I paste in?* 📸
+   The answer comes back in plain words — what the song came out as, its parts and
+   the order they play in, and **what it had to guess**, which is usually the key,
+   the tempo, the time signature and the author, because ordinary lyrics say none of
+   those. Underneath it are two buttons: **Create "<the song's title>"** and
+   **Copy song text**. 📸
+   The song's own notation never appears in the chat, and you never have to type it.
+   **Create** writes a real song into your documents list, ready to put on a screen,
+   and answers with two things to press: **Show it in the list**, which draws a red
+   ring round the new song's row in the app window behind, so you can see exactly
+   where it landed; and the song's name, which opens the folder it was written to.
+   📸 It never replaces a song you already have: press it twice and the second is
+   saved beside the first with `(1)` after the name. **Copy song text** puts the same thing on the clipboard, to paste
+   straight into the Lyric Editor.
+   Labels help it: write `Chorus`, `Verse 2`, `Bridge` or just `1.` and `2.` above
+   the blocks and it uses them. Without labels each block becomes a verse, and a
+   block repeated word for word is written once and sung each time it appears. Chord
+   lines above the words are left out — Open Lyric puts chords inside the words —
+   and a section it cannot make sense of is kept whole, with your own label above it,
+   rather than dropped. If you paste something that is not a song, it says so instead
+   of inventing one.
+   **Those two buttons are the only thing to press.** The assistant sometimes
+   writes its own suggestions under an answer, but under a song it never repeats
+   the buttons in other words — *Create the file* or *Copy the text* are not
+   offered, because the real buttons are right there and do the job without
+   asking anybody. 📸
+   **Pasted words become a song even when the assistant cannot answer.** With no
+   key set, out of credit, or refused for asking too often in a minute (a free
+   Kimi account allows about three questions a minute), a paste of song words is
+   written out by the app itself in a second or two, under a note that reads
+   *I wrote the song out myself instead* — with the same **Create** and **Copy
+   song text** buttons, and nothing searched in this guide for the words. 📸
+19. **Give it the address of a song page and it reads the page for you.** The fourth
+   **Try asking** chip is not a question but the start of one:
+   *Create a lyric file from https://example.com/lyric/amazing_grace*. Pressing it
+   does not ask anything — it drops the sentence into the box with the cursor in it,
+   so you can swap that example address for the one you actually have and press
+   **Ctrl+Enter**. 📸 A banner appears in the app window naming the site while it
+   reads.
+   A song page is never just the song: there is a toolbar above it, a strumming
+   diagram, a fretboard chart at the bottom, a row of related songs and the site's
+   own footer — and the words themselves are laid out in columns, with the chords
+   over them, which comes out as one broken fragment per line. It sorts all of that
+   out on its own. It finds the part of the page the song is on, puts the fragments
+   of each line back together, and reads the **key, tempo and time** off the page
+   when the page prints them.
+   **The chords come with the song.** Each one is written into the line at the
+   syllable the page puts it over, the way Open Lyric writes chords, so what you get
+   is something a musician can play from rather than the words on their own. Where
+   the page prints a chord it cannot place — a whole row of them above a line, or
+   the fretboard chart at the bottom — it leaves that one off rather than guess,
+   because a chord over the wrong syllable is worse than a chord left out. Verse and
+   chorus labels are used as written, a `(2x)` beside one is read as *sing it twice*,
+   and a line like *Repeat Chorus* is read as the play order rather than as another
+   copy of the words.
+   **A hymnal's text page works too.** Such a page has no chords at all: the
+   stanzas are printed numbered, `1`, `2`, `3`, in the middle of the site's menus,
+   and the song's own facts sit in a table far below them. The numbered stanzas
+   are taken as the song and nothing else, and the **title**, **author** and
+   **copyright** — *Public Domain*, for a hymn — are read off that table, with
+   the page's address kept with the song as its source. 📸
+   **A song printed in two languages stays in two languages.** Where a page prints
+   the meaning underneath the line that is sung, the two are kept paired, so the
+   slide can show both.
+   **The copyright line on the page is kept with the song**, in its `Copyright`
+   field, so whoever opens the file later can see whose song it is. Most pages
+   print that at the very bottom, a long way from the words, and it is read from
+   there. **The address of the page is kept too**, in the song's `Attachments`,
+   so anyone who opens the file can go and look at where the words came from.
+   **You can read the song before you make it.** The text of the file appears in
+   a box above the two buttons, exactly as it will be saved, so nothing is
+   created out of sight. (If you closed the help window since the song was
+   drafted, the box is not there — ask again and it comes back.) Whether your
+   church may sing it is your own licence and your own decision — the app copies
+   nothing anywhere and sends nothing to anyone, and no file is written until you
+   press **Create**.
+   Because it is a guess about someone else's page, the answer always says **which
+   part of the page it used**, quoting the first and last line it took and how many
+   lines of menus and links it left out. Read that line. If it took in too much or
+   stopped too early, say so in your own words — *the song starts at "…" and ends at
+   "…"* — and ask again. Everything else is the same as pasting the words yourself:
+   the two buttons underneath, and nothing written to disk until you press
+   **Create**.
+20. To turn the whole feature off, untick **Enable AI features** in the same settings
    section and restart the app: the chatbot, its tools and the debugging endpoint they
    use are then never started.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15`
+`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-08-31).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
 :::
