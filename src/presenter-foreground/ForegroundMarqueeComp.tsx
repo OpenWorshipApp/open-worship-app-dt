@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import {
     type ChangeEvent,
     type CSSProperties,
@@ -504,6 +505,10 @@ export default function ForegroundMarqueeComp({
                     >
                         <i className="bi bi-display" /> {tran(config.showLabel)}
                     </button>
+                    <ContextMenuDotsButtonComp
+                        label={tran('Show on Screens')}
+                        onOpening={handleContextMenuOpening}
+                    />
                 </div>
             </div>
             {genHidingElement(false)}

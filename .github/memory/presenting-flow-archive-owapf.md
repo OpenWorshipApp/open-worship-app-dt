@@ -25,7 +25,10 @@ Non-obvious contract, all of it load-bearing:
 - **`resolveKindDirPaths` runs BEFORE any file is copied.** `getKindDirPath` throws when a
   list has no folder chosen yet, and discovering that halfway would leave media imported
   and no presenting flow to show for it. Same for the presenting flows folder itself.
-- Archive paths are validated (`..` or a backslash → `Invalid presentingFlow archive file path`).
+  Both now live in `src/helper/appArchiveHelpers.ts:454,485`, shared with
+  `singleItemArchiveHelpers.ts` too.
+- Archive paths are validated in the shared module (`..` or a backslash →
+  `Invalid archive file path`, `src/helper/appArchiveHelpers.ts:449`).
 - **Reuse is decided by MD5, not by name.** A same-named file in the destination folder is
   reused only when `getFileMD5` matches; a different one is left alone and the archive's
   copy lands beside it (`fsCopyFilePathToPath` → `genNextFilePath` → `a (1).mp4`), because

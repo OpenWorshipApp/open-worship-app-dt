@@ -5,12 +5,15 @@ metadata:
   type: project
 ---
 
-**FIXED 2026-07-29 on `refactor22`** (uncommitted). `ElectronAppController.reloadAll()` used
-to iterate `allWindows()`, which returns only `[mainController.win, lwShareController.win]`,
+**FIXED 2026-07-29 on `refactor22`** (since committed). `ElectronAppController.reloadAll()`
+used to iterate `allWindows()`, which returns only
+`[mainController.win, lwShareController.win]`,
 so every popup (Settings, About, Finder, the document/lyric/bible-note/web editors) kept the
 old language, theme, font and directory paths. It now iterates
 `BrowserWindow.getAllWindows()` and skips destroyed windows plus `htmlFiles.screen` outputs
-(reloading a live output would blank the presentation).
+(reloading a live output would blank the presentation). `sendMessageToAll` got the same
+all-windows enumeration for the same reason (`electron/ElectronAppController.ts:87-100`) —
+the sibling trap.
 
 **Why:** popups are created in `createPopupWindow()` (`electron/electronHelpers.ts`) off the
 `setWindowOpenHandler` path and are registered nowhere `allWindows()` can see. `allWindows()`

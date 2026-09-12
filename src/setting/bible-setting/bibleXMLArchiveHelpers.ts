@@ -36,6 +36,7 @@ import {
     getBibleHeadInfoFromFile,
     getBibleKeyFromFile,
 } from './bibleXMLJsonDataHelpers';
+import { clearBibleXMLCache } from './bibleXMLHelpers';
 
 /**
  * The XML bibles of the Bible settings page as a `.owabdata.tar.gz` bundle.
@@ -409,6 +410,9 @@ export async function importBibleXMLEntries(
             continue;
         }
         await fsCloneFile(entry.extractedFilePath, destinationFilePath);
+        // The key was free, but a `<KEY>.xml.cache` folder from whatever bible
+        // last held it may not have been — and it would answer for this one.
+        await clearBibleXMLCache(entry.bibleKey);
         installedKeys.add(comparableKey);
         importedBibleKeys.push(entry.bibleKey);
     }

@@ -1,5 +1,7 @@
 import './AppDocumentListComp.scss';
 
+import { useState } from 'react';
+
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import VaryAppDocumentFileComp from './VaryAppDocumentFileComp';
 import AppDocument from './AppDocument';
@@ -33,10 +35,7 @@ import LyricFileComp from '../lyric-list/LyricFileComp';
 import type DirSource from '../helper/DirSource';
 import { tran } from '../lang/langHelpers';
 import { toIconedLabel } from '../others/labelIconHelpers';
-import {
-    type ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import {
     askForURL,
@@ -58,6 +57,17 @@ import {
     importDroppedAppDocumentArchive,
     selectAndImportAppDocumentArchive,
 } from './appDocumentArchiveHelpers';
+import SongSelectSearchPopupComp from '../plugins/song-select/SongSelectSearchPopupComp';
+import {
+    checkIsSongSelectSignedIn,
+    getSongSelectSetting,
+} from '../plugins/song-select/songSelectSettingHelpers';
+import PublicDomainSongsPopupComp from '../plugins/public-domain-songs/PublicDomainSongsPopupComp';
+
+type ImportPopupHandlersType = {
+    openPublicDomainSongs: () => void;
+    openSongSelect: () => void;
+};
 
 function handleExtraFileChecking(filePath: string) {
     const fileSource = FileSource.getInstance(filePath);
@@ -164,7 +174,10 @@ async function checkIsOnScreen(filePaths: string[]) {
     return false;
 }
 
-async function genContextMenuItems(dirSource: DirSource) {
+async function genContextMenuItems(
+    dirSource: DirSource,
+    importPopupHandlers: ImportPopupHandlersType,
+) {
     if (dirSource.dirPath === '') {
         return [];
     }
@@ -234,30 +247,53 @@ async function genContextMenuItems(dirSource: DirSource) {
             }
         },
     });
+    // The embedded catalog needs no account or network, so this entry is
+    // always present.
+    contextMenuItems.push({
+        childBefore: genContextMenuItemIcon('music-note-list'),
+        menuElement: tran('Import From Public Domain Songs'),
+        onSelect: () => {
+            importPopupHandlers.openPublicDomainSongs();
+        },
+    });
+    // Gated per menu build: `getSongSelectSetting` reads the home storage
+    // synchronously, so signing in or out is picked up on the next open.
+    if (checkIsSongSelectSignedIn(getSongSelectSetting())) {
+        contextMenuItems.push({
+            childBefore: genContextMenuItemIcon('cloud-arrow-down'),
+            menuElement: tran('Import From SongSelect'),
+            onSelect: () => {
+                importPopupHandlers.openSongSelect();
+            },
+        });
+    }
     return contextMenuItems;
 }
 
-// Kept out of the "Add Items" sub menu and given to the list itself: it is the
-// one entry here that adds nothing, it points at what is downloadable, so it
-// belongs where an empty folder can advertise it as its own row.
+// Kept apart from the adding items and given to the list itself: it is the one
+// entry here that adds nothing, it points at what is downloadable, so it sits
+// after them, at the end of the menu.
 function genSharedLinkContextMenuItems(): ContextMenuItemType[] {
     return [getOpenSharedLinkMenuItem('slides')];
 }
 
-async function handleItemsAdding(
+async function genItemsAddingMenuItems(
     dirSource: DirSource,
+    importPopupHandlers: ImportPopupHandlersType,
     defaultContextMenuItems: ContextMenuItemType[],
-    event: any,
 ) {
-    const contextMenuItems = await genContextMenuItems(dirSource);
-    showAppContextMenu(event, [
-        ...defaultContextMenuItems,
-        ...contextMenuItems,
-    ]);
+    const contextMenuItems = await genContextMenuItems(
+        dirSource,
+        importPopupHandlers,
+    );
+    return [...defaultContextMenuItems, ...contextMenuItems];
 }
 
 export default function VaryAppDocumentListComp() {
     const dirSource = useGenDirSourceReload(dirSourceSettingNames.APP_DOCUMENT);
+    const [isShowingSongSelect, setIsShowingSongSelect] = useState(false);
+    const [isShowingPublicDomainSongs, setIsShowingPublicDomainSongs] =
+        useState(false);
     if (dirSource === null) {
         return null;
     }
@@ -307,22 +343,51 @@ export default function VaryAppDocumentListComp() {
     };
 
     return (
-        <FileListHandlerComp
-            className="app-document-list"
-            mimetypeName="appDocument"
-            extraMimetypeNames={['lyric']}
-            defaultFolderName={defaultDataDirNames.APP_DOCUMENT}
-            dirSource={dirSource}
-            checkExtraFile={handleExtraFileChecking}
-            takeDroppedFile={handleFileTaking.bind(null, dirSource)}
-            onNewFile={newFileHandling}
-            newFileKinds={newFileKinds}
-            header={<span>{toIconedLabel('Documents')}</span>}
-            bodyHandler={handleBodyRendering}
-            checkIsOnScreen={checkIsOnScreen}
-            fileSelectionOption={fileSelectionOption}
-            genContextMenuItems={genSharedLinkContextMenuItems}
-            onItemsAdding={handleItemsAdding.bind(null, dirSource)}
-        />
+        <>
+            <FileListHandlerComp
+                className="app-document-list"
+                mimetypeName="appDocument"
+                extraMimetypeNames={['lyric']}
+                defaultFolderName={defaultDataDirNames.APP_DOCUMENT}
+                dirSource={dirSource}
+                checkExtraFile={handleExtraFileChecking}
+                takeDroppedFile={handleFileTaking.bind(null, dirSource)}
+                onNewFile={newFileHandling}
+                newFileKinds={newFileKinds}
+                header={<span>{toIconedLabel('Documents')}</span>}
+                bodyHandler={handleBodyRendering}
+                checkIsOnScreen={checkIsOnScreen}
+                fileSelectionOption={fileSelectionOption}
+                genContextMenuItems={genSharedLinkContextMenuItems}
+                genItemsAddingMenuItems={genItemsAddingMenuItems.bind(
+                    null,
+                    dirSource,
+                    {
+                        openPublicDomainSongs: () => {
+                            setIsShowingPublicDomainSongs(true);
+                        },
+                        openSongSelect: () => {
+                            setIsShowingSongSelect(true);
+                        },
+                    },
+                )}
+            />
+            {isShowingPublicDomainSongs ? (
+                <PublicDomainSongsPopupComp
+                    dirPath={dirSource.dirPath}
+                    onClose={() => {
+                        setIsShowingPublicDomainSongs(false);
+                    }}
+                />
+            ) : null}
+            {isShowingSongSelect ? (
+                <SongSelectSearchPopupComp
+                    dirPath={dirSource.dirPath}
+                    onClose={() => {
+                        setIsShowingSongSelect(false);
+                    }}
+                />
+            ) : null}
+        </>
     );
 }

@@ -26,6 +26,12 @@ vi.mock('../../helper/settingHelpers', () => ({
     setSetting: setSettingMock,
     removeSetting: removeSettingMock,
 }));
+vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: getSettingMock,
+        setItem: setSettingMock,
+    },
+}));
 vi.mock('../../server/appProvider', () => ({ default: appProviderMock }));
 vi.mock('../../toast/toastHelpers', () => ({ showSimpleToast: vi.fn() }));
 vi.mock('../../context-menu/appContextMenuHelpers', () => ({

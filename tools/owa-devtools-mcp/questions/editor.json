@@ -1,0 +1,278 @@
+{
+    "page": "editor",
+    "label": "Slide Editor",
+    "window": "appDocumentEditor.html",
+    "focus": "appDocumentEditor",
+    "description": "The Slide Editor: the canvas a slide document is built on, and the list of slides beside it.",
+    "updated": "2026-09-02",
+    "sections": [
+        {
+            "id": "slides",
+            "label": "Working with slides",
+            "panel": "Slides",
+            "recipes": [
+                "W-15"
+            ],
+            "questions": [
+                {
+                    "id": "add-slide",
+                    "text": "How do I add a slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "new slide",
+                        "another slide",
+                        "insert",
+                        "add page",
+                        "more slides"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "guide": true
+                    },
+                    "starter": true,
+                    "starterRank": 2
+                },
+                {
+                    "id": "duplicate-slide",
+                    "text": "How do I copy a slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "duplicate",
+                        "copy",
+                        "same again",
+                        "repeat slide",
+                        "clone"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "delete-slide",
+                    "text": "How do I delete a slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "remove slide",
+                        "delete",
+                        "get rid of",
+                        "too many"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "reorder-slides",
+                    "text": "How do I change the order of the slides?",
+                    "kind": "howto",
+                    "keywords": [
+                        "reorder",
+                        "move",
+                        "drag",
+                        "rearrange",
+                        "wrong order",
+                        "sort"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "save-document",
+                    "text": "How do I save my changes?",
+                    "kind": "howto",
+                    "keywords": [
+                        "save",
+                        "keep",
+                        "unsaved",
+                        "lost work",
+                        "ctrl s"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "shortcut": "Ctrl+S",
+                        "guide": true
+                    },
+                    "starter": true,
+                    "starterRank": 4
+                },
+                {
+                    "id": "undo-edit",
+                    "text": "How do I undo a change I made by mistake?",
+                    "kind": "howto",
+                    "keywords": [
+                        "undo",
+                        "redo",
+                        "back",
+                        "mistake",
+                        "revert",
+                        "ctrl z"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "shortcut": "Ctrl+Z",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "canvas",
+            "label": "The slide canvas",
+            "panel": "Canvas",
+            "recipes": [
+                "W-15",
+                "W-28"
+            ],
+            "questions": [
+                {
+                    "id": "add-text",
+                    "text": "How do I add text to a slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "text box",
+                        "type",
+                        "write",
+                        "words",
+                        "new box",
+                        "title"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "New",
+                        "shortcut": "Ctrl+Enter focuses the canvas",
+                        "guide": true
+                    },
+                    "starterRank": 1
+                },
+                {
+                    "id": "edit-text",
+                    "text": "How do I change the words in a text box?",
+                    "kind": "howto",
+                    "keywords": [
+                        "edit text",
+                        "double click",
+                        "typo",
+                        "retype",
+                        "change words"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "move-resize",
+                    "text": "How do I move or resize a box on the slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "drag",
+                        "handles",
+                        "position",
+                        "bigger",
+                        "smaller",
+                        "align"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "insert-media",
+                    "text": "How do I put a picture or video on a slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "insert media",
+                        "image",
+                        "video",
+                        "photo",
+                        "add picture"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "related": [
+                            "W-28"
+                        ],
+                        "find": "Insert Medias",
+                        "guide": true
+                    },
+                    "starter": true,
+                    "starterRank": 3
+                },
+                {
+                    "id": "insert-link",
+                    "text": "How do I put a video from a link on a slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "media link",
+                        "youtube",
+                        "url",
+                        "online video",
+                        "embed"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "Insert Media Link",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "insert-website",
+                    "text": "How do I put a web page on a slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "website",
+                        "web box",
+                        "url",
+                        "page",
+                        "live site"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "Insert Website",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "insert-camera",
+                    "text": "How do I put a camera on a slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "camera",
+                        "webcam",
+                        "live feed",
+                        "video in"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "Insert Camera",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "drag-from-background",
+                    "text": "How do I build a slide by dragging from the Background panel?",
+                    "kind": "howto",
+                    "keywords": [
+                        "drag",
+                        "drop",
+                        "background panel",
+                        "quick slide",
+                        "colour",
+                        "picture"
+                    ],
+                    "resources": {
+                        "recipe": "W-28",
+                        "find": "Background",
+                        "guide": true
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,6 +1,6 @@
 import './BackgroundImagesComp.scss';
 
-import { useCallback, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
@@ -11,7 +11,6 @@ import {
 } from '../helper/constants';
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import {
     checkIsImagesInClipboard,
@@ -181,20 +180,6 @@ async function genContextMenuItems(dirSource: DirSource) {
 }
 
 export default function BackgroundImagesComp() {
-    const handleItemsAdding = useCallback(
-        async (
-            dirSource: DirSource,
-            defaultContextMenuItems: ContextMenuItemType[],
-            event: any,
-        ) => {
-            const contextMenuItems = await genContextMenuItems(dirSource);
-            showAppContextMenu(event, [
-                ...defaultContextMenuItems,
-                ...contextMenuItems,
-            ]);
-        },
-        [],
-    );
     return (
         <BackgroundMediaComp
             defaultFolderName={defaultDataDirNames.BACKGROUND_IMAGE}
@@ -202,7 +187,6 @@ export default function BackgroundImagesComp() {
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_IMAGE}
             genContextMenuItems={genContextMenuItems}
-            onItemsAdding={handleItemsAdding}
             itemFillingClassname="image-thumbnail"
         />
     );

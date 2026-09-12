@@ -84,6 +84,12 @@ vi.mock('../../helper/settingHelpers', () => ({
     getSetting: mocks.getSetting,
     setSetting: mocks.setSetting,
 }));
+vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: mocks.getSetting,
+        setItem: mocks.setSetting,
+    },
+}));
 
 vi.mock('../../server/unlockingHelpers', () => ({
     unlocking: mocks.unlocking,

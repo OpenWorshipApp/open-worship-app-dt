@@ -1,5 +1,6 @@
 import { use, useCallback } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import BibleInfoButtonComp from './BibleInfoButtonComp';
 import RenderEditingActionButtonsComp from './RenderEditingActionButtonsComp';
 import { closeCurrentEditingBibleItem } from '../bible-reader/readBibleHelpers';
@@ -90,6 +91,9 @@ export default function RenderBibleEditingHeaderComp() {
                         />
                     )}
                 </div>
+                {/* No handler: the bible view around this header owns the
+                    menu. */}
+                <ContextMenuDotsButtonComp />
             </div>
         </div>
     );

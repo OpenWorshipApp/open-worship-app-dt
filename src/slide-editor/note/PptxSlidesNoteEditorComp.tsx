@@ -1,5 +1,6 @@
 import type PptxSlide from '../../app-document-list/PptxSlide';
 import PptxSlideNoteEditorComp from './PptxSlideNoteEditorComp';
+import { tran } from '../../lang/langHelpers';
 
 export default function PptxSlidesNoteEditorComp({
     pptxSlides,
@@ -26,7 +27,9 @@ export default function PptxSlidesNoteEditorComp({
                     >
                         <PptxSlideNoteEditorComp
                             pptxSlide={pptxSlide}
-                            title={`PowerPoint Slide Note: ${index + 1}`}
+                            title={`PowerPoint ${tran('Slide Note')}: ${
+                                index + 1
+                            }`}
                         />
                     </div>
                 );

@@ -1,10 +1,6 @@
 import { EditorPluginKmKh } from 'open-lyric-plugin-km-kh';
 
-import {
-    genOpenLyricFontFaces,
-    type LanguageDataType,
-} from '../../langHelpers';
-import { resolveGzBundleFilePath } from '../../gzBundleFilePath';
+import { type LanguageDataType } from '../../langHelpers';
 
 import btbBlack from './fonts/Battambang/Battambang-Black.ttf';
 import btbBold from './fonts/Battambang/Battambang-Bold.ttf';
@@ -15,6 +11,8 @@ import fhRegular from './fonts/Fasthand/Fasthand-Regular.ttf';
 
 import bibleBooks from './bibleBooks.json';
 import bbCR from './bb-cr.gz.bundle';
+import locationsMapUrl from './location-name-map-data/locationsMap.json?url';
+import namesMapUrl from './location-name-map-data/namesMap.json?url';
 
 const numMap = {
     '០': '0',
@@ -41,6 +39,32 @@ const dictionary = {
     'Filter by name': 'ត្រងតាមឈ្មោះ',
     'Filter by Type': 'ត្រងតាមប្រភេទ',
     'No matching files': 'រកមិនឃើញឯកសារដែលត្រូវគ្នា',
+    'Add Folder': 'បន្ថែមថត',
+    'Remove Folder': 'លុបថតចេញ',
+    'Folder not found': 'រកមិនឃើញថត',
+    'Cannot read folder': 'មិនអាចអានថតបានទេ',
+    'Too many folders to search': 'ថតច្រើនពេកមិនអាចស្វែងរកអស់បានទេ',
+    'Too many matching files': 'ឯកសារដែលត្រូវគ្នាច្រើនពេក',
+    'Search file name': 'ស្វែងរកឈ្មោះឯកសារ',
+    // --- Resources: the links inside a `.json` beside the verse.
+    'Open Link in Browser': 'បើកតំណនៅក្នុងកម្មវិធីរុករក',
+    'Too many links': 'តំណច្រើនពេក',
+    'entry was not understood': 'ធាតុមិនអាចអានបានទេ',
+    'entries were not understood': 'ធាតុមិនអាចអានបានទេ',
+    'Only http and https links can be opened':
+        'អាចបើកបានតែតំណ http និង https ប៉ុណ្ណោះ',
+    'Drop folders here': 'ទម្លាក់ថតនៅទីនេះ',
+    'Folder is already added': 'ថតនេះមានក្នុងបញ្ជីរួចហើយ',
+    'Drop a folder, not a file': 'សូមទម្លាក់ថត មិនមែនឯកសារទេ',
+    // --- Bible Find: the results list and its chunk footer.
+    'verses found': 'ខគម្ពីរដែលរកឃើញ',
+    Results: 'លទ្ធផល',
+    'Go to results': 'ទៅកាន់លទ្ធផល',
+    'Load more results': 'ផ្ទុកលទ្ធផលបន្ថែម',
+    'Show pages': 'បង្ហាញទំព័រ',
+    'Book-level files are shown in every chapter':
+        'ឯកសារកម្រិតកណ្ឌគម្ពីរ ត្រូវបានបង្ហាញនៅគ្រប់ជំពូក',
+    Introduction: 'សេចក្ដីផ្ដើម',
     'This folder is empty': 'ថតឯកសារនេះទទេ',
     Dimensions: 'វិមាត្រ',
     'Exporting DOCX Pages': 'កំពុងបម្លែងទំព័រ DOCX ទៅជា HTML',
@@ -187,8 +211,32 @@ const dictionary = {
     Notes: 'កំណត់ត្រា',
     Note: 'កំណត់ត្រា',
     'Bible Notes': 'កំណត់ត្រាព្រះគម្ពីរ',
+    'Bible Notes (Lookup)': 'កំណត់ត្រាព្រះគម្ពីរ (ស្វែងរក)',
     'Bible and Notes': 'ព្រះគម្ពីរ និងកំណត់ត្រា',
     'Bible and Notes (Lookup)': 'ព្រះគម្ពីរ និងកំណត់ត្រា (ស្វែងរក)',
+    // Verse marks: highlights and comments made on selected verse text.
+    Highlight: 'គូសបន្លិច',
+    'Remove Marks': 'លុបសញ្ញាសម្គាល់',
+    'No mark in the selected text': 'គ្មានសញ្ញាសម្គាល់ក្នុងអត្ថបទដែលបានជ្រើស',
+    'Saving Verse Mark': 'កំពុងរក្សាទុកសញ្ញាសម្គាល់ខគម្ពីរ',
+    'Bible notes directory is not set': 'មិនទាន់កំណត់ថតកំណត់ត្រាព្រះគម្ពីរ',
+    'Show what is marked on this verse': 'បង្ហាញអ្វីដែលបានសម្គាល់លើខគម្ពីរនេះ',
+    'Click to reveal the verse': 'ចុចដើម្បីបង្ហាញខគម្ពីរ',
+    'Add Comment': 'បន្ថែមមតិយោបល់',
+    'Edit Comment': 'កែមតិយោបល់',
+    'Delete Comment': 'លុបមតិយោបល់',
+    'Click to edit the comment': 'ចុចដើម្បីកែមតិយោបល់',
+    'No comment yet': 'មិនទាន់មានមតិយោបល់',
+    'Write a comment': 'សរសេរមតិយោបល់',
+    'Add to Bible List': 'បន្ថែមទៅបញ្ជីព្រះគម្ពីរ',
+    'Delete Verse Marks': 'លុបសញ្ញាសម្គាល់ខគម្ពីរ',
+    'Are you sure to delete all marks on this verse?':
+        'តើអ្នកប្រាកដជាចង់លុបសញ្ញាសម្គាល់ទាំងអស់លើខគម្ពីរនេះមែនទេ?',
+    'Drag to the Bible list to add this verse':
+        'អូសទៅបញ្ជីព្រះគម្ពីរដើម្បីបន្ថែមខគម្ពីរនេះ',
+    'Drag to the Bible list, or to another note file':
+        'អូសទៅបញ្ជីព្រះគម្ពីរ ឬទៅឯកសារកំណត់ត្រាផ្សេង',
+    'Click to open the verse': 'ចុចដើម្បីបើកខគម្ពីរ',
     'Document List': 'បញ្ជីឯកសារ',
     'Lyric List': 'បញ្ជីអក្សរភ្លេង',
     'Presenting Flow List': 'បញ្ជីតារាងកម្មវិធី',
@@ -236,7 +284,16 @@ const dictionary = {
     'New Testament': 'សញ្ញាថ្មី',
     Find: 'ស្វែងរក',
     'Cross Reference': 'ខគម្ពីរយោង',
+    Resources: 'ឯកសារពាក់ព័ន្ធ',
     'Cross References': 'ខគម្ពីរយោង',
+    // --- Cross Reference panel (2026-08-29 redesign).
+    Themes: 'ប្រធានបទ',
+    'No cross references for this verse': 'គ្មានខគម្ពីរយោងសម្រាប់ខនេះទេ',
+    'Open beside the current verse': 'បើកនៅក្បែរខបច្ចុប្បន្ន',
+    'No verse selected': 'មិនបានជ្រើសរើសខគម្ពីរទេ',
+    'Choose a verse in the reader to see what else in scripture speaks to it.':
+        'ជ្រើសរើសខគម្ពីរនៅក្នុងកម្មវិធីអាន ដើម្បីមើលខផ្សេងទៀត' +
+        'ក្នុងព្រះគម្ពីរដែលពាក់ព័ន្ធនឹងខនោះ។',
     'Reveal in File Explorer': 'បើកក្នុងកម្មវិធីរុករកឯកសារ',
     'Saving note': 'កំពុងរក្សាទុកកំណត់សម្គាល់',
     'Please wait while the note is being saved.':
@@ -249,6 +306,8 @@ const dictionary = {
     'Choose City': 'ជ្រើសរើសទីក្រុង',
     'New Slide': 'ស្លាយថ្មី',
     'Show on Screens': 'បង្ហាញនៅលើអេក្រង់',
+    'Toggle showing screen': 'បិទ/បើក ការបង្ហាញអេក្រង់',
+    'Reveal Hidden Controls': 'បង្ហាញប៊ូតុងដែលលាក់',
     'Set Specific Screen': 'កំណត់អេក្រង់ជាក់លាក់',
     'Remove from screen': 'ដកចេញពីអេក្រង់',
     Rename: 'កែឈ្មោះ',
@@ -301,6 +360,7 @@ const dictionary = {
     Cover: 'គ្របពេញ',
     Contain: 'ដាក់ទាំងមូល',
     Fill: 'ពង្រីកពេញ',
+    'Cannot be empty': 'មិនអាចទទេបានទេ',
     'YouTube URL:': 'តំណ YouTube៖',
     'Website URL:': 'តំណគេហទំព័រ៖',
     'Video URL:': 'តំណវីដេអូ៖',
@@ -309,6 +369,7 @@ const dictionary = {
     'Web URL:': 'តំណវេបសាយ៖',
     'Documents URL:': 'តំណឯកសារ៖',
     'Presenting Flow Archive URL:': 'តំណប័ណ្ណសារតារាងកម្មវិធី៖',
+    'Bible Note Archive URL:': 'តំណប័ណ្ណសារកំណត់ចំណាំព្រះគម្ពីរ៖',
     'Open URL': 'បើកតំណ',
     'Copy URL': 'ចម្លងតំណ',
     New: 'ថ្មី',
@@ -474,9 +535,9 @@ const dictionary = {
     'Collapse All': 'បង្រួមទាំងអស់',
     'Expand All': 'ពង្រីកទាំងអស់',
     Bibles: 'ព្រះគម្ពីរ',
+    'Bibles (Lookup)': 'ព្រះគម្ពីរ (ស្វែងរក)',
     'Full Text': 'បង្ហាញពេញ',
     'Add Extra Bible': 'បន្ថែមព្រះគម្ពីរ',
-    'Add Items': 'បន្ថែម',
     'Add Time': 'បន្ថែមម៉ោង',
     'Advance Bible Lookup': 'ស្វែងរកព្រះគម្ពីរកម្រិតខ្ពស់',
     'Apply All Slides': 'អនុវត្តទៅកាន់គ្រប់ស្លាយ',
@@ -601,6 +662,7 @@ const dictionary = {
     'Opacity (%)': 'ភាពស្រអាប់ (%)',
     'Opacity:': 'ភាពស្រអាប់:',
     'Open in Cross Reference': 'បើកនៅក្នុងឯកសារយោងឆ្លង',
+    'Open in Resources': 'បើកនៅក្នុងឯកសារពាក់ព័ន្ធ',
     'Open Shared Link': 'បើកតំណដែលបានចែករំលែក',
     Open: 'បើក',
     'Original Size': 'ទំហំដើម',
@@ -645,6 +707,9 @@ const dictionary = {
     'Save or discard unsaved Bible changes before refreshing.':
         'សូមរក្សាទុក ឬបោះបង់ការផ្លាស់ប្តូរព្រះគម្ពីរដែលមិនទាន់រក្សាទុក ' +
         'មុនពេលផ្ទុកឡើងវិញ។',
+    'Save or discard unsaved Bible changes before resetting.':
+        'សូមរក្សាទុក ឬបោះបង់ការផ្លាស់ប្តូរព្រះគម្ពីរដែលមិនទាន់រក្សាទុក ' +
+        'មុនពេលកំណត់ឡើងវិញ។',
     'Save or discard unsaved Bible changes before switching tabs.':
         'សូមរក្សាទុក ឬបោះបង់ការផ្លាស់ប្តូរព្រះគម្ពីរដែលមិនទាន់រក្សាទុក ' +
         'មុនពេលប្តូរផ្ទាំង។',
@@ -758,6 +823,9 @@ const dictionary = {
     'Import Presenting Flow': 'នាំចូលតារាងកម្មវិធី',
     'Export Bible Note Item': 'នាំចេញកំណត់ចំណាំព្រះគម្ពីរ',
     'Import Bible Note Item': 'នាំចូលកំណត់ចំណាំព្រះគម្ពីរ',
+    // The whole note FILE, as opposed to the two item keys above.
+    'Export Bible Note': 'នាំចេញឯកសារកំណត់ចំណាំព្រះគម្ពីរ',
+    'Import Bible Note': 'នាំចូលឯកសារកំណត់ចំណាំព្រះគម្ពីរ',
     // The XML bibles of the Bible settings page, as their own bundle.
     'Bible Data': 'ទិន្នន័យព្រះគម្ពីរ',
     'Export Bible Data': 'នាំចេញទិន្នន័យព្រះគម្ពីរ',
@@ -891,6 +959,16 @@ const dictionary = {
     'Show the keys being pressed': 'បង្ហាញគ្រាប់ចុចដែលកំពុងចុច',
     'Drawing history': 'ប្រវត្តិគំនូរ',
     'Clear drawing': 'លុបគំនូរ',
+    // The Presenting Control's snapshot, and the three things it can do with
+    // the picture it takes.
+    'Take a picture of the app': 'ថតរូបកម្មវិធី',
+    'App Snapshot': 'រូបថតកម្មវិធី',
+    'Ask the assistant about this': 'សួរជំនួយការអំពីរូបនេះ',
+    'Save into your images': 'រក្សាទុកក្នុងរូបភាពរបស់អ្នក',
+    'Copied to clipboard': 'បានចម្លងទៅក្តារតម្បៀតខ្ទាស់',
+    'Saved into your images': 'បានរក្សាទុកក្នុងរូបភាពរបស់អ្នក',
+    'No images folder is set yet': 'មិនទាន់មានថតរូបភាពត្រូវបានកំណត់ទេ',
+    'Cannot save this picture': 'មិនអាចរក្សាទុករូបនេះបានទេ',
     'Paste Bible Item': 'បិទភ្ជាប់ធាតុព្រះគម្ពីរ',
     Unlock: 'ដោះសោ',
     Lock: 'ចាក់សោ',
@@ -974,6 +1052,7 @@ const dictionary = {
     'Bible item is added': 'ធាតុព្រះគម្ពីរត្រូវបានបន្ថែម',
     'Bible item is inserted into the editing slide':
         'ធាតុព្រះគម្ពីរត្រូវបានបញ្ចូលទៅក្នុងស្លាយកែសម្រួល',
+    'Bible Reference': 'ការយោងព្រះគម្ពីរ',
     'Bible Text to Speech': 'ព្រះគម្ពីរបំលែងអក្សរទៅជាសំលេង',
     'Book Chapter': 'ជំពូកគម្ពីរ',
     'Books map': 'ផែនទីគម្ពីរ',
@@ -998,6 +1077,11 @@ const dictionary = {
     'Creating Presenting Flow': 'កំពុងបង្កើតតារាងកម្មវិធី',
     'Delete Bible': 'លុបព្រះគម្ពីរ',
     'Delete Bible XML': 'លុប XML ព្រះគម្ពីរ',
+    'Reset Bible XML': 'កំណត់ XML ព្រះគម្ពីរឡើងវិញ',
+    'Reset this bible XML with the app embedded KJV?':
+        'កំណត់ XML ព្រះគម្ពីរនេះឡើងវិញដោយ KJV ដែលភ្ជាប់មកជាមួយកម្មវិធី?',
+    'All your changes will be lost.':
+        'ការផ្លាស់ប្តូរទាំងអស់របស់អ្នកនឹងត្រូវបាត់បង់។',
     'Delete Canvas Items': 'លុបធាតុផ្ទាំងក្រណាត់',
     Deleting: 'កំពុងលុប',
     'Document downloaded successfully': 'បានទាញយកឯកសារដោយជោគជ័យ',
@@ -1129,6 +1213,16 @@ const dictionary = {
     'Saving Bible Data': 'កំពុងរក្សាទុកទិន្នន័យព្រះគម្ពីរ',
     'Saving File': 'កំពុងរក្សាទុកឯកសារ',
     'Scroll to the top': 'រំកិលទៅលើគេ',
+    'Auto Scroll Options': 'ជម្រើសរំកិលដោយស្វ័យប្រវត្តិ',
+    'Auto Scroll Speed': 'ល្បឿនរំកិលដោយស្វ័យប្រវត្តិ',
+    'Speed Up': 'បង្កើនល្បឿន',
+    'Speed Up Faster': 'បង្កើនល្បឿនខ្លាំង',
+    'Slow Down': 'បន្ថយល្បឿន',
+    'Stop Auto Scrolling': 'បញ្ឈប់ការរំកិលដោយស្វ័យប្រវត្តិ',
+    Click: 'ចុច',
+    'Double Click': 'ចុចពីរដង',
+    'Right Click': 'ចុចខាងស្តាំ',
+    'Alt + Right Click': 'Alt + ចុចខាងស្តាំ',
     'Seek Item': 'ស្វែងរកធាតុ',
     'Select custom color': 'ជ្រើសរើសពណ៌ផ្ទាល់ខ្លួន',
     'Set according paths': 'កំណត់ផ្លូវទៅតាមនោះ',
@@ -1172,6 +1266,9 @@ const dictionary = {
     // a native speaker should review the phrasing. Note `All Types` above
     // already covers the panel's "All types" option after key sanitization.
     'Names and locations lookup': 'ការស្វែងរកឈ្មោះ និងទីកន្លែង',
+    // The language the lookup DATASET is read in, which is a separate
+    // choice from the language of the interface.
+    'Names and locations language': 'ភាសាឈ្មោះ និងទីកន្លែង',
     Names: 'ឈ្មោះ',
     Locations: 'ទីកន្លែង',
     'Search names': 'ស្វែងរកឈ្មោះ',
@@ -1199,6 +1296,15 @@ const dictionary = {
     Places: 'ទីកន្លែង',
     Supernatural: 'អធិធម្មជាតិ',
     Unknown: 'មិនស្គាល់',
+    // The same nine types named ONE at a time, for a single record's `Type` row
+    // and its fact chip. `Life`, `Supernatural` and `Unknown` read the same
+    // either way and are not repeated — a duplicate key throws on module load.
+    Concept: 'គំនិត',
+    Deity: 'ព្រះ',
+    Group: 'ក្រុម',
+    Month: 'ខែ',
+    Person: 'មនុស្ស',
+    Place: 'ទីកន្លែង',
     // Record detail panel. `Title`, `Type`, `Copy` and `Copied` already exist
     // above and resolve after key sanitization, so they are not repeated here —
     // a duplicate would throw when this module loads.
@@ -1239,6 +1345,68 @@ const dictionary = {
     // --- The on-demand media tools pack (Settings > Others > Extra Binaries),
     // and the dialog that sends a user there when they try to download a video
     // or audio without it (2026-08-10).
+    // --- Settings > Others, reworked into three service rows (2026-08-24).
+    // The state pill of each row speaks that service's own vocabulary rather
+    // than one shared word, so the label matches the button that changes it.
+    'AI Providers': 'អ្នកផ្តល់សេវា AI',
+    'Add a key from either provider to use custom Bible Cross Ref and Bible Audio.':
+        'បញ្ចូល key ពីអ្នកផ្តល់សេវាណាមួយ ដើម្បីប្រើ Bible Cross Ref ' +
+        'និង Bible Audio តាមបំណង។',
+    'Key set': 'មាន key ហើយ',
+    'No key set': 'មិនទាន់មាន key',
+    // --- Kimi joins the chatbot, and every AI row now says what its key is
+    // actually FOR (2026-09-01). The two hints it replaces both named Bible
+    // Cross Ref and Bible Audio and forgot the chatbot, which they also drive.
+    Kimi: 'កីមី',
+    'Kimi API Key': 'Kimi API Key',
+    'Create Kimi api key': 'បង្កើត Kimi api key',
+    'Answers in the chatbot only': 'ឆ្លើយតែក្នុង chatbot ប៉ុណ្ណោះ',
+    'Answers in the chatbot, and powers custom Bible Cross Reference':
+        'ឆ្លើយក្នុង chatbot និងបន្ទេមឆ្លើយ Bible Cross Reference តាមបំណង',
+    'Answers in the chatbot, and powers custom Bible Cross Reference and Bible Audio':
+        'ឆ្លើយក្នុង chatbot និងបន្ទេមឆ្លើយ Bible Cross Reference និង Bible Audio តាមបំណង',
+    'Used by': 'ប្រើដោយ',
+    Chatbot: 'Chatbot',
+    'Bible Audio': 'សំលេងព្រះគម្ពីរ',
+    'Add a key from any one of these. Each row says what its key is used for.':
+        'បញ្ចូល key ពីមួយក្នុងចំណោមនេះ។ ជួរនីមួយៗ បង្ហាញនូវការប្រើប្រាស់ key របស់វា។',
+    'Fail to get Kimi instance': 'មិនអាចយក Kimi instance បាន',
+    'Missing Kimi API Key.': 'ខ្វះ Kimi API Key។',
+    // --- The keyless assistant, for a user who has typed no key at all
+    // (2026-09-01). It answers over free PUBLIC services, so the panel says so.
+    'Fail to get free assistant': 'មិនអាចយកជំនួយការឥតគិតថ្លៃបាន',
+    'Free assistant (no key needed)': 'ជំនួយការឥតគិតថ្លៃ (មិនត្រូវការ key)',
+    'With no key of your own, the chatbot answers through free public AI services. They are shared, slower, and can be busy, and your questions leave this computer. Add a key above for better and more private answers.':
+        'ប្រសិនបើអ្នកមិនមាន key ផ្ទាល់ខ្លួន chatbot ឆ្លើយតាមរយៈសេវាកម្ម AI សាធារណៈឥតគិតថ្លៃ។ សេវាទាំងនោះត្រូវបានចែករំលែក យឺត និងអាចរវល់ ហើយសំណួររបស់អ្នកនឹងចាកចេញពីកុំព្យូទ័រនេះ។ សូមបញ្ចូល key ខាងលើ ដើម្បីទទួលចម្លើយប្រសើរ និងឯកជនជាងមុន។',
+    // --- The AI master switch and the in-app chatbot (2026-08-31).
+    'Enable AI features': 'បើកមុខងារ AI',
+    'Turns off the chatbot, the assistant tools and the debugging endpoint they use.':
+        'បិទ chatbot ឧបករណ៍ជំនួយការ និង debugging endpoint ដែលវាប្រើ។',
+    'Restart the app to apply': 'សូមបើកកម្មវិធីឡើងវិញ ដើម្បីអនុវត្ត',
+    'Restart Now': 'បើកឡើងវិញឥឡូវនេះ',
+    'The app will close and open again. Save your work first.':
+        'កម្មវិធីនឹងបិទ ហើយបើកឡើងវិញ។ សូមរក្សាទុកការងាររបស់អ្នកជាមុនសិន។',
+    'Turned off': 'បានបិទ',
+    'AI features are turned off in Settings.':
+        'មុខងារ AI ត្រូវបានបិទនៅក្នុងការកំណត់។',
+    'Would you like to open Settings to enable them?':
+        'តើអ្នកចង់បើកការកំណត់ ដើម្បីបើកវាឬ?',
+    'Only needed if your Anthropic key is identity-linked':
+        'ត្រូវការតែពេល key Anthropic របស់អ្នកជាប្រភេទ identity-linked ប៉ុណ្ណោះ',
+    'App Assistant': 'ជំនួយការកម្មវិធី',
+    'AI Chat': 'ជជែក AI',
+    // --- The caution asked before either AI window opens (2026-09-12).
+    'Be careful with AI': 'សូមប្រុងប្រយ័ត្នជាមួយ AI',
+    'AI can be confidently wrong.':
+        'AI អាចឆ្លើយខុស ទាំងដែលមើលទៅដូចជាត្រឹមត្រូវ។',
+    'It can misread the app or describe a button that is not there, and what it offers to do can reach a live projector. Check anything that matters before a service, and read a step yourself before you press it.':
+        'វាអាចអានកម្មវិធីនេះខុស ឬពណ៌នាប៊ូតុងដែលគ្មានពិត ហើយអ្វីដែលវាស្នើធ្វើ អាចប៉ះពាល់ដល់ការបញ្ចាំងផ្ទាល់។ សូមពិនិត្យរាល់អ្វីដែលសំខាន់មុនពេលថ្វាយបង្គំ ហើយអានជំហាននីមួយៗដោយខ្លួនឯងមុនពេលចុច។',
+    "This opens a company's own chat website: whatever you type there leaves this computer, and it knows nothing about this app. Check anything that matters before a service.":
+        'វាបើកគេហទំព័រជជែករបស់ក្រុមហ៊ុនផ្ទាល់៖ អ្វីដែលអ្នកវាយបញ្ចូលនឹងចាកចេញពីកុំព្យូទ័រនេះ ហើយវាមិនដឹងអ្វីអំពីកម្មវិធីនេះទេ។ សូមពិនិត្យរាល់អ្វីដែលសំខាន់មុនពេលថ្វាយបង្គំ។',
+    'Get key': 'យក key',
+    'Get ID': 'យក ID',
+    'Find Anthropic workspace id': 'រកមើល Anthropic workspace id',
+    Hide: 'លាក់',
     'Extra Binaries': 'កម្មវិធីបន្ថែម',
     'The media tools used to download background video and audio. They are downloaded separately to keep the app small.':
         'ឧបករណ៍មេឌាសម្រាប់ទាញយកវីដេអូ និងសំឡេងផ្ទៃខាងក្រោយ។ ' +
@@ -1268,6 +1436,130 @@ const dictionary = {
     'No pack is available for this app version':
         'គ្មានកញ្ចប់សម្រាប់កំណែកម្មវិធីនេះទេ',
     'No local pack was built yet': 'មិនទាន់បានបង្កើតកញ្ចប់ក្នុងម៉ាស៊ីននេះទេ',
+    'The media tools may be out of date': 'ឧបករណ៍មេឌាអាចហួសសម័យហើយ',
+    'Press Enter to apply this folder': 'ចុច Enter ដើម្បីអនុវត្តថតនេះ',
+    'Something went wrong here': 'មានបញ្ហាកើតឡើងនៅទីនេះ',
+    'Try Again': 'ព្យាយាមម្តងទៀត',
+    // Shown in both credential cards of Settings > Others when the OS has no
+    // usable credential store, so nothing can be encrypted at rest (2026-08-24).
+    'This system has no secure credential store, so keys are kept only until the app closes':
+        'ប្រព័ន្ធនេះគ្មានកន្លែងរក្សាទុកព័ត៌មានសម្ងាត់ដោយសុវត្ថិភាពទេ ' +
+        'ដូច្នេះកូនសោនឹងត្រូវរក្សាទុករហូតដល់ពេលបិទកម្មវិធីប៉ុណ្ណោះ',
+    // --- CCLI SongSelect integration: the Settings > Others credential
+    // section with its OAuth sign-in, the documents list's "Import From
+    // SongSelect" item, and the search/download popup (2026-08-24).
+    'SongSelect Integration': 'ការភ្ជាប់ SongSelect',
+    'Import song lyrics from CCLI SongSelect':
+        'នាំចូលអត្ថបទចម្រៀងពី CCLI SongSelect',
+    'The OAuth client ID of your CCLI API application':
+        'OAuth client ID នៃកម្មវិធី CCLI API របស់អ្នក',
+    'Leave empty for a public client': 'ទុកឲ្យទទេ សម្រាប់ public client',
+    'The subscription key from the CCLI developer portal':
+        'Subscription key ពី CCLI developer portal',
+    'Must exactly match the redirect URI registered with CCLI':
+        'ត្រូវតែដូចគ្នានឹង redirect URI ដែលបានចុះឈ្មោះជាមួយ CCLI',
+    'Open CCLI SongSelect website': 'បើកគេហទំព័រ CCLI SongSelect',
+    'Sign In': 'ចូលគណនី',
+    'Sign Out': 'ចាកចេញពីគណនី',
+    'Signed in': 'បានចូលគណនី',
+    'Not signed in': 'មិនទាន់ចូលគណនីទេ',
+    'Signing in...': 'កំពុងចូលគណនី...',
+    'Set Client ID, Subscription Key and Redirect URI first':
+        'សូមបំពេញ Client ID, Subscription Key និង Redirect URI ជាមុនសិន',
+    'Signed in to SongSelect successfully': 'បានចូលគណនី SongSelect ដោយជោគជ័យ',
+    'Signed out from SongSelect': 'បានចាកចេញពីគណនី SongSelect',
+    'Sign in failed': 'ការចូលគណនីបរាជ័យ',
+    'Sign in was canceled': 'ការចូលគណនីត្រូវបានបោះបង់',
+    'Import From SongSelect': 'នាំចូលពី SongSelect',
+    'Search songs': 'ស្វែងរកចម្រៀង',
+    'Type to search': 'វាយអក្សរដើម្បីស្វែងរក',
+    'Lyrics not available for this song': 'មិនមានអត្ថបទចម្រៀងសម្រាប់បទនេះទេ',
+    'Not authorized for these lyrics': 'មិនមានសិទ្ធិប្រើអត្ថបទចម្រៀងនេះទេ',
+    'Public Domain': 'កម្មសិទ្ធិសាធារណៈ',
+    'SongSelect sign-in expired, please sign in again in Settings':
+        'ការចូលគណនី SongSelect បានផុតកំណត់ ' +
+        'សូមចូលគណនីម្តងទៀតនៅក្នុងការកំណត់',
+    'Your account is not licensed for this content':
+        'គណនីរបស់អ្នកមិនមានអាជ្ញាបណ្ណសម្រាប់មាតិកានេះទេ',
+    'Too many requests, please wait a moment': 'សំណើច្រើនពេក សូមរង់ចាំបន្តិច',
+    'Could not reach SongSelect': 'មិនអាចភ្ជាប់ទៅ SongSelect បានទេ',
+    'SongSelect request failed': 'សំណើទៅ SongSelect បរាជ័យ',
+    'Lyric document created successfully':
+        'បានបង្កើតឯកសារអត្ថបទចម្រៀងដោយជោគជ័យ',
+    'This song has no lyrics to import':
+        'បទចម្រៀងនេះមិនមានអត្ថបទសម្រាប់នាំចូលទេ',
+    '(dev) Use Mock Data': '(dev) ប្រើទិន្នន័យសាកល្បង',
+    '(mock)': '(សាកល្បង)',
+    // --- Public Domain Songs plugin: embedded hymn catalog importable as
+    // lyric documents with no sign-in (2026-08-24).
+    'Import From Public Domain Songs': 'នាំចូលពីចម្រៀងកម្មសិទ្ធិសាធារណៈ',
+    'Failed to create lyric document': 'បរាជ័យក្នុងការបង្កើតឯកសារអត្ថបទចម្រៀង',
+    // --- Connection graph (src/graph-view): a floating, pannable graph of a
+    // record and everything it is related to (2026-08-29). The plural relation
+    // labels the filter chips use (Parents, Children, Spouses, Siblings,
+    // Cousins, Locations, Related locations) are already in this file and are
+    // reused rather than repeated.
+    'Open Graph Preview': 'បើកមើលក្រាបទំនាក់ទំនង',
+    'Graph Preview': 'ក្រាបទំនាក់ទំនង',
+    'Open all Related': 'បើកអ្វីៗដែលពាក់ព័ន្ធទាំងអស់',
+    'No related records': 'គ្មានកំណត់ត្រាពាក់ព័ន្ធ',
+    'Open detail': 'បើកព័ត៌មានលម្អិត',
+    'Graph node limit reached': 'ដល់ដែនកំណត់ចំនួនប្រអប់ក្នុងក្រាបហើយ',
+    'This will add many boxes to the graph. Continue?':
+        'នេះនឹងបន្ថែមប្រអប់ច្រើនទៅក្នុងក្រាប។ បន្តទេ?',
+    'Use as root': 'ប្រើជាចំណុចចាប់ផ្ដើម',
+    'Set as centre': 'កំណត់ជាចំណុចកណ្ដាល',
+    'Fit to view': 'ធ្វើឱ្យសមនឹងអេក្រង់',
+    'Re-layout': 'រៀបចំជាថ្មី',
+    Fullscreen: 'ពេញអេក្រង់',
+    'Exit fullscreen': 'ចេញពីពេញអេក្រង់',
+    Zoom: 'ពង្រីក',
+    'Path from': 'ចាប់ពី',
+    'Path to': 'ទៅ',
+    Swap: 'ដូរ',
+    'Find Connection': 'រកទំនាក់ទំនង',
+    'No connection found': 'រកមិនឃើញទំនាក់ទំនង',
+    'A location cannot be a path endpoint':
+        'ទីតាំងមិនអាចជាចំណុចចាប់ផ្តើម ឬចុងបញ្ចប់បានទេ',
+    'Mentioned by': 'បានរៀបរាប់ដោយ',
+    'Save as image': 'រក្សាទុកជារូបភាព',
+    'Save preset': 'រក្សាទុកគំរូ',
+    'Delete preset': 'លុបគំរូ',
+    Presets: 'គំរូ',
+    'Right-click to show only this': 'ចុចខាងស្តាំដើម្បីបង្ហាញតែមួយនេះ',
+    All: 'ទាំងអស់',
+    // Relation labels drawn on the edges. Lowercase because each reads as a
+    // phrase sitting on a line ("son", "wife"), not as a heading — which is
+    // also what keeps them distinct from the plural chip keys above.
+    father: 'ឪពុក',
+    mother: 'ម្តាយ',
+    parent: 'ឪពុកម្តាយ',
+    son: 'កូនប្រុស',
+    daughter: 'កូនស្រី',
+    child: 'កូន',
+    husband: 'ប្តី',
+    wife: 'ប្រពន្ធ',
+    spouse: 'សហព័ទ្ធ',
+    brother: 'បងប្អូនប្រុស',
+    sister: 'បងប្អូនស្រី',
+    sibling: 'បងប្អូន',
+    cousin: 'ជីដូនមួយ',
+    'located at': 'ស្ថិតនៅ',
+    'related location': 'ទីតាំងពាក់ព័ន្ធ',
+    // No lowercase `mentioned by` twin: keys are matched case-insensitively,
+    // so it would collide with `Mentioned by` above and this module throws at
+    // load on a duplicate. The one entry serves the chip and any edge label.
+
+    // Verse-highlight colours (`VERSE_HIGHLIGHT_COLOR_KEYS`). They label the
+    // selection toolbar's swatches and ARE the visible text of the recolour
+    // menu, so without these the menu reads five English words beside a
+    // translated `Delete`. Adding a colour there means adding a key here.
+    yellow: 'លឿង',
+    green: 'បៃតង',
+    blue: 'ខៀវ',
+    pink: 'ផ្កាឈូក',
+    orange: 'ទឹកក្រូច',
+    purple: 'ស្វាយ',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();
@@ -1298,7 +1590,7 @@ const fontFamily = 'app-Battambang';
 const globalFontFamily = 'Battambang';
 const stickyNoteFontFamily = 'km-font-Fasthand';
 const lang: LanguageDataType = {
-    packageDir: __dirname,
+    packageDir: '',
     version: '0.0.1',
     locale: 'km-KH',
     langCode: 'km',
@@ -1598,10 +1890,35 @@ const lang: LanguageDataType = {
         }
         return [bookName];
     },
-    getBibleCrossRefBundleFilePath() {
+    getBibleCrossRefBundleFilePath(resolveGzBundleFilePath) {
         return resolveGzBundleFilePath(bbCR);
     },
-    initOpenLyricPlugins: ({ editor, openLyric, openLyricMarkdownManager }) => {
+    async getLookupDataVersion({ readJsonFileVersion }) {
+        const [namesMap, locationsMap] = await Promise.all([
+            readJsonFileVersion(namesMapUrl),
+            readJsonFileVersion(locationsMapUrl),
+        ]);
+        if (namesMap === null || locationsMap === null) {
+            return null;
+        }
+        return { namesMap, locationsMap };
+    },
+    async getLookupData({ readJsonFile }) {
+        try {
+            const namesMap = await readJsonFile(namesMapUrl);
+            const locationsMap = await readJsonFile(locationsMapUrl);
+            return { namesMap, locationsMap };
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
+    },
+    initOpenLyricPlugins: ({
+        editor,
+        openLyric,
+        openLyricMarkdownManager,
+        genOpenLyricFontFaces,
+    }) => {
         editor?.addPlugin('km-KH', new EditorPluginKmKh());
         const option = {
             title: 'Khmer',

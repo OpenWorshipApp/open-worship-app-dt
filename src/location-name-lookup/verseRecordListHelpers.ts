@@ -39,12 +39,17 @@ import type {
  */
 export const useLookupRecordLabels = genLookupFileStore<LookupRecordLabelsType>(
     loadLookupRecordLabelsFile,
+    // One sidecar per lookup language: a change means the OTHER file, not the
+    // one already resident.
+    true,
 );
 
 export type VerseRecordType = {
     recordId: string;
     kind: 'name' | 'location';
     label: string;
+    // The record's English name when the label is a translated one, else ''.
+    kjvName: string;
     title: string;
     iconClass: string;
     // Verse numbers within this target that attest the record, in order.
@@ -113,6 +118,7 @@ function toVerseRecord(
         recordId: index.ids[recordIndex],
         kind,
         label,
+        kjvName: recordLabels.kjvNames[recordIndex] ?? '',
         title: recordLabels.titles[recordIndex] ?? '',
         iconClass:
             kind === 'location'

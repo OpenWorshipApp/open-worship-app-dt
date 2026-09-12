@@ -94,6 +94,12 @@ vi.mock('../../helper/settingHelpers', () => ({
     getSetting: mocks.getSetting,
     setSetting: mocks.setSetting,
 }));
+vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: mocks.getSetting,
+        setItem: mocks.setSetting,
+    },
+}));
 
 vi.mock('../bibleScreenHelpers', () => ({
     default: {
@@ -397,9 +403,20 @@ describe('ScreenBibleManager coverage', () => {
             }
             return undefined;
         });
+        // A stored value that is valid JSON but not an object fails the setting
+        // manager's validate, so it degrades to the default WITHOUT throwing
+        // and logging the way the hand-rolled parse used to.
         expect(ScreenBibleManager.textStyle).toEqual({});
-        expect(mocks.appError).toHaveBeenCalledWith(5);
-        expect(mocks.handleError).toHaveBeenCalled();
+        expect(mocks.appError).not.toHaveBeenCalledWith(5);
+
+        // Malformed JSON lands on the same default.
+        mocks.getSetting.mockImplementation((key: string) => {
+            if (key === 'screen-bible-style-text') {
+                return '{not-json';
+            }
+            return undefined;
+        });
+        expect(ScreenBibleManager.textStyle).toEqual({});
 
         manager.render();
         expect(mocks.renderScreenBibleManager).toHaveBeenCalledWith(manager);

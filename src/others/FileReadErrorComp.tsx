@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import type FileSource from '../helper/FileSource';
 import { useAppCurrentRef } from '../helper/appHooks';
@@ -30,6 +31,9 @@ export default function FileReadErrorComp({
             className="card app-caught-hover-pointer"
             onContextMenu={onContextMenu}
         >
+            {onContextMenu === undefined ? null : (
+                <ContextMenuDotsButtonComp isCorner onOpening={onContextMenu} />
+            )}
             <div
                 className={
                     'card-body d-flex justify-content-center ' +

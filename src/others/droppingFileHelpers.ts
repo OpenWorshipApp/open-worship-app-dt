@@ -171,34 +171,18 @@ export async function handleFilesSelectionMenuItem(
     await Promise.all(promises);
 }
 
-export function genItemsAddingContextMenuItems(
-    addItems?: (event: any) => void,
-) {
-    if (addItems === undefined) {
-        return [];
-    }
-    return [
-        {
-            childBefore: genContextMenuItemIcon('plus-lg'),
-            menuElement: tran('Add Items'),
-            // The event of the click that selects the item, not of the one that
-            // opened the menu: this item opens a sub menu, which has to be
-            // positioned where it was asked for. Taking it here is also what
-            // lets the item list be built without any event at all.
-            onSelect: (event: any) => {
-                addItems(event);
-            },
-        },
-    ];
-}
-
 export type DirSourceContextMenuOptionsType = {
     contextMenuItems?: ContextMenuItemType[];
     genContextMenuItems?: (
         dirSource: DirSource,
         event?: MouseEvent<HTMLElement>,
     ) => OptionalPromise<ContextMenuItemType[]>;
-    addItems?: (event: any) => void;
+    // The ways the list can be filled: picking local files, plus whatever the
+    // list itself offers (importing an archive, downloading from a URL, a song
+    // catalog...). They used to hide behind an "Add Items" sub menu; they are
+    // spread into the menu itself so every way in is one click away, and so an
+    // empty folder advertises all of them as its own rows.
+    genItemsAddingMenuItems?: () => OptionalPromise<ContextMenuItemType[]>;
     // One entry per kind of file the list can create. The list owns the
     // labels because a list holding more than one kind (documents + lyrics)
     // names each one instead of a generic "New File". Generated per menu
@@ -218,7 +202,7 @@ export async function genDirSourceContextMenuItems(
     {
         contextMenuItems,
         genContextMenuItems,
-        addItems,
+        genItemsAddingMenuItems,
         genNewFileMenuItems,
     }: DirSourceContextMenuOptionsType,
     event?: MouseEvent<HTMLElement>,
@@ -233,7 +217,9 @@ export async function genDirSourceContextMenuItems(
         },
         ...(contextMenuItems ?? []),
     ];
-    menuItems.push(...genItemsAddingContextMenuItems(addItems));
+    if (genItemsAddingMenuItems !== undefined) {
+        menuItems.push(...(await genItemsAddingMenuItems()));
+    }
     if (genNewFileMenuItems !== undefined) {
         menuItems.push(...genNewFileMenuItems());
     }

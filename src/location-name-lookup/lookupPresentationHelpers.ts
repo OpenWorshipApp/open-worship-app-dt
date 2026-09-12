@@ -8,6 +8,10 @@ export const ALL_TYPES = 'all';
 
 export const LOCATION_ICON_CLASS = 'bi bi-geo-alt-fill';
 
+// A verse panel has no record behind it, so it names its own icon
+// rather than reading one off a record's `type`.
+export const VERSE_ICON_CLASS = 'bi bi-book-half';
+
 const NAME_TYPE_ICON_CLASS: { [key in MentionNameType]: string } = {
     concept: 'bi-lightbulb-fill',
     deity: 'bi-brightness-high-fill',
@@ -35,6 +39,21 @@ export const NAME_TYPE_LABEL: { [key in MentionNameType]: string } = {
     unknown: 'Unknown',
 };
 
+// The same nine types named one at a time, for the places that label a SINGLE
+// record rather than a filter over many — the detail panel's fact chip and its
+// `Type` row. Bare English literals for the same reason as above.
+export const NAME_TYPE_SINGULAR_LABEL: { [key in MentionNameType]: string } = {
+    concept: 'Concept',
+    deity: 'Deity',
+    group: 'Group',
+    life: 'Life',
+    month: 'Month',
+    person: 'Person',
+    place: 'Place',
+    supernatural: 'Supernatural',
+    unknown: 'Unknown',
+};
+
 // Mirrors `bible-note`'s own `normalizeMentionNameType`, including its fallback
 // to `person` for an unrecognized value. Reimplemented rather than imported so
 // this module — and therefore the panel that renders before the dataset has
@@ -51,13 +70,82 @@ export function getNameTypeIconClass(type: string | null | undefined): string {
     return `bi ${NAME_TYPE_ICON_CLASS[normalizeNameType(type)]}`;
 }
 
+/**
+ * A name record's raw `type` as a readable label, ready for translation.
+ *
+ * The datasets keep this field in English whatever language the records
+ * themselves are in (`"gender": "male"` sits beside a Khmer name), so it is a
+ * key, not text to show. An empty type has nothing to label and stays empty
+ * rather than becoming "Person" out of nowhere.
+ */
+export function getNameTypeSingularLabel(
+    type: string | null | undefined,
+): string {
+    if (typeof type !== 'string' || type.trim() === '') {
+        return '';
+    }
+    return NAME_TYPE_SINGULAR_LABEL[normalizeNameType(type)];
+}
+
+/**
+ * Every inline reference scheme the datasets emit.
+ *
+ * Kept in ONE place because two modules must agree on it: this stripper and the
+ * renderer in `LookupDetailPartsComp`. When the datasets grew `book-key` and
+ * `chapter-key` tokens, a list that knew only the older three left the raw
+ * `[Acts](book-key://ACT)` markup showing through as text.
+ */
+export const REFERENCE_TOKEN_SCHEME_LIST = [
+    'name-id',
+    'location-id',
+    'book-key',
+    'chapter-key',
+    'verse-key',
+] as const;
+
+const REFERENCE_TOKEN_SCHEME_PATTERN = REFERENCE_TOKEN_SCHEME_LIST.join('|');
+
 // Titles and descriptions carry inline reference tokens, e.g.
 // "[Jesus](name-id://<id>)" or "[John 3:16](verse-key://<verse>)". Only the
 // readable label belongs in a one-line summary; without this the raw markup
 // shows through.
-const MENTION_REFERENCE_TOKEN_REGEX =
-    /\[([^\]]+)\]\((?:name-id|location-id|verse-key):\/\/[^)]*\)/g;
+const MENTION_REFERENCE_TOKEN_REGEX = new RegExp(
+    String.raw`\[([^\]]+)\]\((?:` +
+        REFERENCE_TOKEN_SCHEME_PATTERN +
+        String.raw`):\/\/[^)]*\)`,
+    'g',
+);
 
 export function getPlainReferenceText(value: string): string {
     return value.replace(MENTION_REFERENCE_TOKEN_REGEX, '$1');
+}
+
+/**
+ * The English name worth showing beside a record's own name, or `''` when there
+ * is nothing to add — the KJV dataset itself, whose `name` already IS the
+ * English one, or a translated record that spells it identically.
+ *
+ * Shown the way a bible book reads in a translated UI: `លោកុប្បត្តិ (Genesis)`.
+ *
+ * Mirrors `bible-note`'s own `getMentionKjvName`, reimplemented here for the
+ * same reason as `normalizeNameType` above: this module is imported by surfaces
+ * that render before — and without — that ~46MB package, and a value import
+ * would put its whole graph in their eager chunk.
+ */
+export function getRecordKjvName(
+    record: Readonly<{ name: string; kjvName?: string | null }>,
+): string {
+    const kjvName = (record.kjvName ?? '').trim();
+    return kjvName === '' || kjvName === record.name.trim() ? '' : kjvName;
+}
+
+/**
+ * `name (KjvName)` as ONE string, for the places that cannot render two
+ * elements — a `title` tooltip, a clipboard summary.
+ */
+export function getRecordDisplayName(
+    record: Readonly<{ name: string; kjvName?: string | null }>,
+): string {
+    const kjvName = getRecordKjvName(record);
+    return kjvName === '' ? record.name : `${record.name} (${kjvName})`;
 }

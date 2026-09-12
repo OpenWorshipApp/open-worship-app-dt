@@ -145,9 +145,21 @@ class LookupBibleItemController extends BibleItemsViewController {
      * lookup it has in hand.
      */
     resolveStraightBibleItems(foundBibleItem: ReadIdOnlyBibleItem | null) {
+        // The editing pane is known by its ID, not by its class.
+        // `EditingBibleItem` is stamped only when the tree is re-parsed from
+        // the setting (`bibleItemFromJson`); a split or a retarget rebuilds
+        // the tree from the instances the caller held, after which the
+        // editing pane is a plain item carrying the target it had when it was
+        // LAST selected, not what the input resolves to now. Seen live: the
+        // input on Genesis 29, the pane's stored Genesis 27 in the list, and
+        // that deduped away against the pane it had been split from.
+        const selectedId = this.selectedBibleItem.id;
         return this.straightBibleItems
             .map((bibleItem) => {
-                if (bibleItem instanceof EditingBibleItem) {
+                if (
+                    bibleItem instanceof EditingBibleItem ||
+                    bibleItem.id === selectedId
+                ) {
                     return foundBibleItem;
                 }
                 return bibleItem;

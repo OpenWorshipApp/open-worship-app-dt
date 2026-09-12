@@ -17,6 +17,8 @@ export const htmlFiles = {
     lyricEditor: 'lyricEditor.html',
     bibleNote: 'bibleNote.html',
     webEditor: 'webEditor.html',
+    chatbot: 'chatbot.html',
+    aichat: 'aichat.html',
 };
 export const customScheme = 'owa';
 export const schemePrivileges = {
@@ -201,6 +203,7 @@ export function initCustomSchemeHandler() {
                           'content-type',
                           'x-api-key',
                           'x-goog-api-key',
+                          'ocp-apim-subscription-key',
                       ],
             );
             setResponseHeader(

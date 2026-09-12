@@ -1,11 +1,12 @@
 import './LocationNameLookupPanelComp.scss';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { MentionNameType } from 'bible-note';
 
 import { useAppEffect } from '../helper/appHooks';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import LoadingComp from '../others/LoadingComp';
+import RenderPaginationComp from '../others/RenderPaginationComp';
 import { tran } from '../lang/langHelpers';
 import {
     ALL_TYPES,
@@ -14,8 +15,10 @@ import {
     PAGE_SIZE,
     getNameTypeIconClass,
     getPlainReferenceText,
+    getRecordKjvName,
 } from './lookupPresentationHelpers';
 import type { LookupManagersType } from './lookupDataHelpers';
+import { useLookupLangPresentation } from './lookupLangHelpers';
 import { useLookupManagers } from './lookupManagersContext';
 import type { DetailPanelKindType } from './detailPanelHelpers';
 import type { LookupRecordItemType } from './RenderLookupRecordItemComp';
@@ -37,111 +40,6 @@ type LookupPageType = {
     totalRecords: number;
     records: LookupRecordItemType[];
 };
-
-function RenderPaginationComp({
-    safePage,
-    totalPages,
-    totalRecords,
-    setPage,
-}: Readonly<{
-    safePage: number;
-    totalPages: number;
-    totalRecords: number;
-    setPage: (page: number) => void;
-}>) {
-    const [pageInput, setPageInput] = useState(`${safePage}`);
-    const totalPagesDigitCount = `${totalPages}`.length;
-    // Set when Enter/Escape already handled the value, so the programmatic blur
-    // they trigger does not commit the draft a second time.
-    const shouldSkipBlurCommitRef = useRef(false);
-    // Mirror the committed page back into the editable field (arrows, clamping).
-    useAppEffect(() => {
-        setPageInput(`${safePage}`);
-    }, [safePage]);
-    const commitPageInput = () => {
-        const parsed = Number.parseInt(pageInput, 10);
-        if (Number.isNaN(parsed)) {
-            setPageInput(`${safePage}`);
-            return;
-        }
-        setPage(Math.min(totalPages, Math.max(1, parsed)));
-    };
-    return (
-        <div
-            className={
-                'd-flex align-items-center justify-content-between gap-2' +
-                ' p-0 px-1 border-top'
-            }
-        >
-            <button
-                className="btn btn-sm btn-outline-secondary"
-                type="button"
-                title={tran('Previous')}
-                aria-label={tran('Previous')}
-                disabled={safePage <= 1}
-                onClick={() => {
-                    setPage(Math.max(1, safePage - 1));
-                }}
-            >
-                <i className="bi bi-chevron-left" />
-            </button>
-            <span
-                className={
-                    'small text-secondary text-nowrap d-inline-flex' +
-                    ' align-items-center gap-1'
-                }
-            >
-                <input
-                    className="form-control form-control-sm text-center"
-                    type="text"
-                    inputMode="numeric"
-                    aria-label={tran('Jump to page')}
-                    title={tran('Type a page number and press Enter')}
-                    value={pageInput}
-                    style={{ width: `${totalPagesDigitCount + 3}ch` }}
-                    onChange={(event) => {
-                        setPageInput(event.target.value.replace(/\D/g, ''));
-                    }}
-                    onFocus={(event) => {
-                        event.target.select();
-                    }}
-                    onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                            event.preventDefault();
-                            shouldSkipBlurCommitRef.current = true;
-                            commitPageInput();
-                            event.currentTarget.blur();
-                        } else if (event.key === 'Escape') {
-                            shouldSkipBlurCommitRef.current = true;
-                            setPageInput(`${safePage}`);
-                            event.currentTarget.blur();
-                        }
-                    }}
-                    onBlur={() => {
-                        if (shouldSkipBlurCommitRef.current) {
-                            shouldSkipBlurCommitRef.current = false;
-                            return;
-                        }
-                        commitPageInput();
-                    }}
-                />
-                {`/ ${totalPages} · ${totalRecords}`}
-            </span>
-            <button
-                className="btn btn-sm btn-outline-secondary"
-                type="button"
-                title={tran('Next')}
-                aria-label={tran('Next')}
-                disabled={safePage >= totalPages}
-                onClick={() => {
-                    setPage(Math.min(totalPages, safePage + 1));
-                }}
-            >
-                <i className="bi bi-chevron-right" />
-            </button>
-        </div>
-    );
-}
 
 function RenderResultListComp({
     kind,
@@ -245,6 +143,9 @@ function RenderLookupBodyComp({
     const attemptLocationTimeout = useMemo(() => {
         return genTimeoutAttempt(SEARCH_DEBOUNCE_MILLISECOND);
     }, []);
+    // The records are in the LOOKUP language, not the interface locale, so what
+    // labels them follows the records — see `useLookupLangPresentation`.
+    const { fontFamily, translate } = useLookupLangPresentation();
 
     const isOnNameTab = activeTab === 'name';
     const typedQuery = isOnNameTab ? typedNameQuery : typedLocationQuery;
@@ -266,12 +167,12 @@ function RenderLookupBodyComp({
     // types that would return results. "All types" always leads.
     const nameTypeOptions = useMemo(() => {
         return [
-            { value: ALL_TYPES, label: tran('All types') },
+            { value: ALL_TYPES, label: translate('All types') },
             ...namesLookupManager.nameTypes.map(({ type }) => {
-                return { value: type, label: tran(NAME_TYPE_LABEL[type]) };
+                return { value: type, label: translate(NAME_TYPE_LABEL[type]) };
             }),
         ];
-    }, [namesLookupManager]);
+    }, [namesLookupManager, translate]);
 
     const searchNames = useMemo(() => {
         return (searchQuery: string, page: number): LookupPageType => {
@@ -292,6 +193,7 @@ function RenderLookupBodyComp({
                     return {
                         id: record.id,
                         name: record.name,
+                        kjvName: getRecordKjvName(record),
                         title: getPlainReferenceText(record.title),
                         iconClass: getNameTypeIconClass(record.type),
                     };
@@ -315,6 +217,7 @@ function RenderLookupBodyComp({
                     return {
                         id: record.id,
                         name: record.name,
+                        kjvName: getRecordKjvName(record),
                         title: getPlainReferenceText(record.title),
                         iconClass: LOCATION_ICON_CLASS,
                     };
@@ -329,6 +232,14 @@ function RenderLookupBodyComp({
             // Tracks the bible text zoom. `zoom` rather than `transform: scale`
             // so the content keeps a real layout box and still scrolls inside
             // the widget instead of being painted outside it.
+            //
+            // The whole panel takes the lookup language's font, not just the
+            // record rows: the query is typed in that language and the filter
+            // names its categories in it, so anything less leaves one control
+            // per row falling back to whatever the system happens to have. A
+            // package that names no font (English) leaves this undefined and
+            // nothing changes.
+            style={{ fontFamily }}
         >
             <div className="input-group input-group-sm p-2 pb-1">
                 <span className="input-group-text">

@@ -1,0 +1,341 @@
+{
+    "page": "screen",
+    "label": "The audience screen",
+    "window": "screen.html",
+    "focus": "presenter",
+    "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
+    "updated": "2026-09-04",
+    "sections": [
+        {
+            "id": "screens",
+            "label": "The screen the audience sees",
+            "panel": "Mini Screen",
+            "recipes": [
+                "W-10",
+                "W-18"
+            ],
+            "questions": [
+                {
+                    "id": "is-anything-showing",
+                    "text": "Is any screen showing right now?",
+                    "kind": "state",
+                    "keywords": [
+                        "live",
+                        "on air",
+                        "projector",
+                        "audience",
+                        "what is up",
+                        "showing"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-10",
+                        "tools": [
+                            "owa_list_screens"
+                        ]
+                    },
+                    "starterRank": 14
+                },
+                {
+                    "id": "clear-button",
+                    "text": "Where is the clear button?",
+                    "kind": "where",
+                    "keywords": [
+                        "clear",
+                        "blank the screen",
+                        "remove everything",
+                        "wipe",
+                        "take it off"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-10",
+                        "shortcut": "F6 (all) / F7 / F8 / F9 / F10",
+                        "guide": true
+                    },
+                    "starterRank": 6
+                },
+                {
+                    "id": "clear-all",
+                    "text": "How do I clear everything off the screen at once?",
+                    "kind": "howto",
+                    "keywords": [
+                        "clear all",
+                        "blank",
+                        "empty",
+                        "start over",
+                        "remove everything"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "shortcut": "F6",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "show-hide-screen",
+                    "text": "How do I show or hide the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "turn on",
+                        "turn off",
+                        "black out",
+                        "hide projector",
+                        "display off"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "find": "Toggle showing screen",
+                        "shortcut": "F5",
+                        "tools": [
+                            "owa_hide_screens"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "hide-all-screens",
+                    "text": "How do I hide every screen right now?",
+                    "kind": "howto",
+                    "keywords": [
+                        "emergency",
+                        "all screens off",
+                        "black out everything",
+                        "stop showing"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "shortcut": "F5",
+                        "tools": [
+                            "owa_hide_screens"
+                        ]
+                    }
+                },
+                {
+                    "id": "mini-screen",
+                    "text": "What is the little preview on the right?",
+                    "kind": "what",
+                    "keywords": [
+                        "mini screen",
+                        "preview",
+                        "monitor",
+                        "what audience sees",
+                        "thumbnail"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "related": [
+                            "W-01"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "choose-display",
+                    "text": "How do I choose which display the screen goes to?",
+                    "kind": "howto",
+                    "keywords": [
+                        "monitor",
+                        "projector",
+                        "second screen",
+                        "display",
+                        "wrong screen",
+                        "laptop"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "related": [
+                            "W-18"
+                        ],
+                        "tools": [
+                            "owa_list_screens"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "add-screen",
+                    "text": "How do I use more than one screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "multi screen",
+                        "two projectors",
+                        "second display",
+                        "stage screen",
+                        "add new"
+                    ],
+                    "resources": {
+                        "recipe": "W-18",
+                        "tools": [
+                            "owa_list_screens"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "sync-screens",
+                    "text": "How do I make two screens show the same thing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "sync",
+                        "line sync",
+                        "mirror",
+                        "same content",
+                        "link screens"
+                    ],
+                    "resources": {
+                        "recipe": "W-18",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "screen-to-one",
+                    "text": "How do I send something to just one screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "one screen only",
+                        "specific screen",
+                        "drag to card",
+                        "target",
+                        "stage only"
+                    ],
+                    "resources": {
+                        "recipe": "W-18",
+                        "related": [
+                            "W-22"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "transitions",
+                    "text": "How do I change the fade between slides?",
+                    "kind": "howto",
+                    "keywords": [
+                        "transition",
+                        "fade",
+                        "move",
+                        "zoom",
+                        "animation",
+                        "none"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "lock-screen",
+                    "text": "What does the lock on the screen preview do?",
+                    "kind": "what",
+                    "keywords": [
+                        "lock",
+                        "freeze",
+                        "protect",
+                        "stop changing",
+                        "padlock"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "clear-one-kind",
+                    "text": "How do I take the background off but leave the words up?",
+                    "kind": "howto",
+                    "keywords": [
+                        "F7",
+                        "background off",
+                        "keep the lyrics",
+                        "just one thing"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "shortcut": "F7"
+                    }
+                },
+                {
+                    "id": "clear-shortcuts",
+                    "text": "What do the F6 to F10 keys do?",
+                    "kind": "what",
+                    "keywords": [
+                        "F6",
+                        "F8",
+                        "F9",
+                        "F10",
+                        "function keys",
+                        "quick keys"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "shortcut": "F6"
+                    }
+                },
+                {
+                    "id": "unselect-screen",
+                    "text": "How do I stop one screen receiving content without deleting it?",
+                    "kind": "howto",
+                    "keywords": [
+                        "unselect",
+                        "deselect",
+                        "skip a screen",
+                        "pause a screen"
+                    ],
+                    "resources": {
+                        "recipe": "W-18",
+                        "tools": [
+                            "owa_list_screens"
+                        ]
+                    }
+                },
+                {
+                    "id": "delete-screen",
+                    "text": "How do I remove a screen I no longer need?",
+                    "kind": "howto",
+                    "keywords": [
+                        "delete screen",
+                        "too many screens",
+                        "get rid of a card"
+                    ],
+                    "resources": {
+                        "recipe": "W-18"
+                    }
+                },
+                {
+                    "id": "line-sync",
+                    "text": "How do I keep two screens on the same line of a verse?",
+                    "kind": "howto",
+                    "keywords": [
+                        "set line sync",
+                        "same line",
+                        "follow",
+                        "stage display"
+                    ],
+                    "resources": {
+                        "recipe": "W-18",
+                        "related": [
+                            "W-06"
+                        ]
+                    }
+                },
+                {
+                    "id": "drag-to-screen",
+                    "text": "How do I send one slide to one screen by dragging it?",
+                    "kind": "howto",
+                    "keywords": [
+                        "drag onto a card",
+                        "drop on a screen",
+                        "one screen only"
+                    ],
+                    "resources": {
+                        "recipe": "W-18",
+                        "related": [
+                            "W-03"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -40,7 +40,8 @@ slide goes up, from 0:10, at 2x, and stop it at 1:10" meant sitting on the mouse
   Its pin NARROWS the host's screens (`intersectCcScreenIds`) instead of replacing them
   (`resolveCcScreenIds`): it acts on media the host just projected, so a pin naming a screen
   the host never reached names a screen with no media on it and must do NOTHING.
-- **`apply` now takes `(screenManager, presentingFlowItem)`.** The other seventeen entries
+- **`apply` now takes `(screenManager, presentingFlowItem)`.** The other fifteen entries
+  (16 screen actions total: 5 clears + 8 FG clears + 2 show/hide + media-control)
   ignore the second argument; widening it beat a third `target` family, which would have
   cost branches in `isScreenReachable`, the pin gate, the drop path and the CC apply loop.
 - **The executor runs on the PRESENTER side** (`screenSlideMediaControlHelpers.ts`, under
@@ -74,8 +75,9 @@ slide goes up, from 0:10, at 2x, and stop it at 1:10" meant sitting on the mouse
   icon; `stopPropagation` is mandatory or the click fires the app's UNSCOPED FileSource
   `select`), with `Media Control Settings` on the CC row menu as the right-click route.
   The floating preview draws CC rows through the same component, so it is there for free.
-- Unit tests: `presentingFlowMediaControl.test.ts`,
-  `screenSlideMediaControlHelpers.test.ts` (fake timers), plus the intersection case in
-  `presentingFlowCcPropagation.test.ts`.
+- Unit tests: only `src/_screen/managers/screenSlideMediaControlHelpers.test.ts`
+  (fake timers) survives. `presentingFlowMediaControl.test.ts` and the intersection
+  case in `presentingFlowCcPropagation.test.ts` were deleted 2026-08-24 — the
+  presenting-flow half is untested.
 
 See [[presenting-flow-cc-elements]], [[presenting-flow-screen-pinning]].

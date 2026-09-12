@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <!-- TODO: change favicon.ico -->
+        <link rel="icon" href="/favicon.ico" />
+        <!-- TODO: change logo192.png -->
+        <link rel="apple-touch-icon" href="/logo192.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <!--
+            A tighter policy than the rest of the app carries, because this is
+            the one window whose content comes from outside the machine and the
+            one window holding the user's API keys.
+
+            `connect-src` is the part that matters: it is the list of places
+            this window is allowed to SPEAK to. Every assistant it can be set
+            to is named, plus the app's own MCP host on a loopback port the
+            launcher picks. Anything else -- a paste, an attachment or an
+            answer that tried to send the user's key somewhere -- has nowhere
+            to send it to.
+
+            No 'unsafe-eval', and `object-src`/`frame-src`/`base-uri` are shut
+            because nothing here uses them and each is a way to get script into
+            a page that has none of its own. Prod only, like every other page:
+            the dev server needs its own websocket and inline module graph.
+        -->
+        <!-- prod<meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self';
+                script-src 'self' 'unsafe-inline';
+                style-src 'self' 'unsafe-inline';
+                img-src 'self' data: blob:;
+                font-src 'self' data:;
+                worker-src 'self' blob:;
+                connect-src 'self' data: blob:
+                    https://api.anthropic.com https://api.openai.com
+                    https://api.moonshot.ai https://api.kilo.ai
+                    http://127.0.0.1:* http://localhost:*;
+                object-src 'none'; frame-src 'none'; child-src 'none';
+                base-uri 'none'; form-action 'none'">prod -->
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Open Worship App" />
+        <title>Open Worship app - Chatbot Beta (🤖)</title>
+        <style>
+            body,
+            html,
+            #root {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            /*
+             * The window opens on the same mark it works by: a cue standing by
+             * on the rail. Drawn in CSS rather than loaded as a gif — this
+             * window is opened mid-service on machines where one fewer file to
+             * fetch is one fewer thing to wait for, and the old gif was
+             * half-centred anyway (it only ever shifted on X).
+             */
+            .chatbot-standby {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font:
+                    600 10.5px/1 'Bahnschrift',
+                    'DIN Alternate',
+                    system-ui,
+                    sans-serif;
+                letter-spacing: 0.16em;
+                text-transform: uppercase;
+                color: #8b97a8;
+            }
+
+            .chatbot-standby::before {
+                content: '';
+                width: 9px;
+                height: 9px;
+                border-radius: 50%;
+                background-color: #d9a441;
+                animation: chatbot-standby-pulse 1.1s ease-in-out infinite;
+            }
+
+            @keyframes chatbot-standby-pulse {
+                50% {
+                    opacity: 0.25;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .chatbot-standby::before {
+                    animation: none;
+                }
+            }
+        </style>
+    </head>
+
+    <body style="background-color: transparent !important">
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <div id="root">
+            <p class="chatbot-standby">Standing by</p>
+        </div>
+        <script type="module" src="/src/chatbot.tsx"></script>
+    </body>
+</html>

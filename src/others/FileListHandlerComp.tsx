@@ -160,10 +160,13 @@ type PropsType = {
     defaultFolderName?: string;
     fileSelectionOption?: FileSelectionOptionType;
     checkIsOnScreen?: (filePaths: string[]) => Promise<boolean>;
-    onItemsAdding?: (
+    // Called with the generic "Add Local Files" entry so the list can append
+    // its own ways in (import an archive, download from a URL, a song
+    // catalog...). Whatever comes back is spread into the list menu itself,
+    // not into a sub menu.
+    genItemsAddingMenuItems?: (
         defaultContextMenuItems: ContextMenuItemType[],
-        event: any,
-    ) => void;
+    ) => OptionalPromise<ContextMenuItemType[]>;
     sortFilePaths?: (filePaths: string[]) => string[];
     disableColorNoteGrouping?: boolean;
 };
@@ -185,7 +188,7 @@ export default function FileListHandlerComp({
     defaultFolderName,
     fileSelectionOption,
     checkIsOnScreen,
-    onItemsAdding,
+    genItemsAddingMenuItems,
     sortFilePaths,
     disableColorNoteGrouping,
 }: Readonly<PropsType>) {
@@ -241,15 +244,13 @@ export default function FileListHandlerComp({
         ...extraMimetypeNames,
     ]);
     const filterData = useFileListFilterData(dirSource);
-    const handleItemsAdding = useMemo(() => {
+    // Built when the menu opens, not memoized into items: `tran` must run
+    // after a locale switch, like every other item in this menu.
+    const handleItemsAddingMenuItemsGenerating = useMemo(() => {
         if (fileSelectionOption === undefined) {
             return undefined;
         }
-        return (event: any) => {
-            if (onItemsAdding === undefined) {
-                handleFilesSelectionMenuItem(fileSelectionOption);
-                return;
-            }
+        return () => {
             const menuItems: ContextMenuItemType[] = [
                 {
                     childBefore: genContextMenuItemIcon('plus-lg'),
@@ -259,14 +260,17 @@ export default function FileListHandlerComp({
                     },
                 },
             ];
-            onItemsAdding(menuItems, event);
+            if (genItemsAddingMenuItems === undefined) {
+                return menuItems;
+            }
+            return genItemsAddingMenuItems(menuItems);
         };
-    }, [onItemsAdding, fileSelectionOption]);
+    }, [genItemsAddingMenuItems, fileSelectionOption]);
     const noDirFolderName = dirSource.dirPath ? undefined : defaultFolderName;
     const contextMenuOptions = {
         contextMenuItems,
         genContextMenuItems,
-        addItems: handleItemsAdding,
+        genItemsAddingMenuItems: handleItemsAddingMenuItemsGenerating,
         genNewFileMenuItems,
     };
     const handleMenuShowing = genDroppingFileOnContextMenu(

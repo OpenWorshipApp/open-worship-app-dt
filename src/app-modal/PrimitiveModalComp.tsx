@@ -9,5 +9,9 @@ interface MyProps {
 export default function PrimitiveModalComp({
     children,
 }: PropsWithChildren<MyProps>) {
-    return <div id="modal-container">{children}</div>;
+    return (
+        <div id="modal-container" className="modal-container--blocking">
+            {children}
+        </div>
+    );
 }

@@ -6,6 +6,7 @@ import { tran } from '../../lang/langHelpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { warnIfAnyBibleEditorDirty } from './bibleEditorDirtyHelpers';
+import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
 
 export default function BibleXMLListComp({
     isPending,
@@ -42,6 +43,20 @@ export default function BibleXMLListComp({
     if (isPending) {
         return <LoadingComp />;
     }
+    // ONE element for both call sites: the empty state and a populated list
+    // that has lost its KJV offer the very same action, and a second copy of
+    // the label would be free to drift from this one.
+    const createKJVBibleButton = (
+        <button
+            className="btn btn-success"
+            onClick={async () => {
+                await bibleDataReader.initKJVBible();
+                handleRefresh();
+            }}
+        >
+            <i className="bi bi-plus-lg" /> {tran('Create KJV Bible XML')}
+        </button>
+    );
     const buttons = (
         <>
             <button
@@ -68,15 +83,7 @@ export default function BibleXMLListComp({
                 <hr />
                 <div className="d-flex align-items-center ms-2">
                     <div className="hand-pointing-right">👉</div>
-                    <button
-                        className="btn btn-success mt-2"
-                        onClick={async () => {
-                            await bibleDataReader.initKJVBible();
-                            handleRefresh();
-                        }}
-                    >
-                        {tran('Create KJV Bible XML')}
-                    </button>
+                    {createKJVBibleButton}
                 </div>
             </div>
         );
@@ -88,6 +95,15 @@ export default function BibleXMLListComp({
             </h3>
             <div className="w-100">
                 <ul className="list-group d-flex flex-fill">
+                    {/* The KJV is the one bible the app can rebuild from
+                        itself, so a list that has lost it keeps the offer at
+                        the head of the list — not only on the first run, when
+                        the list is empty and the offer is all there is. */}
+                    {bibleKeys.includes(BIBLE_KJV_KEY) ? null : (
+                        <li className="list-group-item p-1">
+                            {createKJVBibleButton}
+                        </li>
+                    )}
                     {bibleKeys.map((bibleKey) => {
                         return (
                             <BibleXMLInfoComp

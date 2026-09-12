@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
+import OpenGraphPreviewButtonComp from '../graph-view/OpenGraphPreviewButtonComp';
 import { getCurrentLookupBibleItemController } from '../bible-reader/LookupBibleItemController';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useBibleViewTextScale } from '../helper/bibleViewHelpers';
@@ -14,18 +15,21 @@ import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { useThemeSource } from '../others/themeHelpers';
-import { openVerseInBibleLookup } from './bibleVerseHelpers';
+import type { VerseDataType } from './bibleVerseHelpers';
+import {
+    openVerseInBibleLookup,
+    toVerseFullTitle,
+    useLookupVerseFontFamily,
+} from './bibleVerseHelpers';
 import type { DetailPanelType } from './detailPanelHelpers';
 import { closeDetailPanel, useOpenDetailPanels } from './detailPanelHelpers';
 import type { LookupManagersType } from './lookupDataHelpers';
+import { useLookupLangPresentation } from './lookupLangHelpers';
 import {
     LookupManagersContext,
     useLookupManagers,
 } from './lookupManagersContext';
-import {
-    LOCATION_ICON_CLASS,
-    getNameTypeIconClass,
-} from './lookupPresentationHelpers';
+import { getRecordKjvName } from './lookupPresentationHelpers';
 import {
     buildLocationSummary,
     buildNameSummary,
@@ -141,20 +145,6 @@ function RenderOpenInLookupButtonComp({
     );
 }
 
-function getPanelIconClass(
-    panel: DetailPanelType,
-    managers: LookupManagersType,
-) {
-    if (panel.kind === 'verse') {
-        return 'bi bi-book-half';
-    }
-    if (panel.kind === 'location') {
-        return LOCATION_ICON_CLASS;
-    }
-    const record = managers.namesLookupManager.getRecordById(panel.target);
-    return getNameTypeIconClass(record?.type);
-}
-
 function RenderDetailPanelComp({
     index,
     managers,
@@ -168,10 +158,21 @@ function RenderDetailPanelComp({
     // record whose verse titles have not been read yet copies the raw
     // references rather than blocking on dozens of bible reads.
     const textScale = useBibleViewTextScale();
+    const { fontFamily } = useLookupLangPresentation();
+    const verseFontFamily = useLookupVerseFontFamily();
     const resolvedVersesRef = useRef<string[]>([]);
-    const verseTextRef = useRef<{ title: string; fullText: string } | null>(
-        null,
-    );
+    // A verse panel has no record to name it, so `panel.name` — the reference as
+    // it read the moment the panel was opened — used to be its title for good.
+    // It goes stale the moment the bible behind it changes: switching the lookup
+    // language re-titles the BODY (`Genesis 10:4`) and left the title bar
+    // showing the previous bible's wording (`លោកុប្បត្តិ ១០:៤`). The body
+    // resolves the reference anyway, so its answer is the title.
+    //
+    // State rather than a ref, and the WHOLE resolved verse rather than its
+    // title alone: the title bar now writes the bible key beside the reference
+    // and the body no longer repeats either, so the one thing the body resolved
+    // feeds both the chrome and the clipboard.
+    const [verseData, setVerseData] = useState<VerseDataType | null>(null);
     // Resolved into two separately TYPED locals rather than one union: a single
     // `record` forced an `as any` at each summary call, which is exactly the
     // check that would catch a location record reaching `buildNameSummary`.
@@ -184,22 +185,29 @@ function RenderDetailPanelComp({
             ? managers.locationsLookupManager.getRecordById(panel.target)
             : null;
     const record = nameRecord ?? locationRecord;
-    const title = record?.name ?? panel.name;
+    // `panel.name` stays the provisional title until the body has resolved.
+    const title = record?.name ?? verseData?.title ?? panel.name;
+    // A verse panel's title is a reference, not a record name, so there is
+    // never an English one to add to it.
+    const kjvName = record === null ? '' : getRecordKjvName(record);
     const handleCopy = async () => {
         if (panel.kind === 'verse') {
-            const verseText = verseTextRef.current;
             // The reference belongs with the text — a bare verse pasted into a
-            // sermon note with no "Exodus 6:23" attached is not much use.
+            // sermon note with no "(KJV) Exodus 6:23" attached is not much use.
+            // The body stopped rendering that line once the title bar took the
+            // bible key, so this is where the two are joined back together.
+            const fullTitle =
+                verseData === null ? null : toVerseFullTitle(verseData);
             const plainText =
-                verseText === null
+                verseData === null || fullTitle === null
                     ? panel.target
-                    : `${verseText.title}\n${verseText.fullText}`;
+                    : `${fullTitle}\n${verseData.text}`;
             await copyRecordToClipboard(
                 plainText,
-                verseText === null
+                verseData === null || fullTitle === null
                     ? `<p>${escapeHtml(plainText)}</p>`
-                    : `<p><strong>${escapeHtml(verseText.title)}</strong></p>` +
-                          `<p>${escapeHtml(verseText.fullText)}</p>`,
+                    : `<p><strong>${escapeHtml(fullTitle)}</strong></p>` +
+                          `<p>${escapeHtml(verseData.text)}</p>`,
             );
             return;
         }
@@ -244,11 +252,54 @@ function RenderDetailPanelComp({
                     data-no-widget-drag="true"
                     // Zoomed with the SAME factor as the body, so the record's
                     // name in the title bar reads at the bible text's size too
-                    // rather than staying at the widget chrome's default.
-                    style={{ cursor: 'text', fontSize: `${textScale}em` }}
+                    // rather than staying at the widget chrome's default — and
+                    // set in the same font for the same reason. The title is the
+                    // record's own name, but it renders in the widget CHROME,
+                    // which is outside the body that carries that font.
+                    //
+                    // A verse panel is the exception: its title is a
+                    // reference written by a BIBLE, not a record name, so it
+                    // takes that bible's font. Those two settings are
+                    // independent — and under an English lookup language the
+                    // reference is a KJV one, which normally names no font at
+                    // all and so leaves the chrome exactly as it was.
+                    style={{
+                        cursor: 'text',
+                        fontSize: `${textScale}em`,
+                        fontFamily:
+                            panel.kind === 'verse'
+                                ? verseFontFamily
+                                : fontFamily,
+                    }}
                 >
-                    <i className={getPanelIconClass(panel, managers)} />
+                    {panel.kind === 'verse' ? null : (
+                        <OpenGraphPreviewButtonComp
+                            kind={panel.kind}
+                            recordId={panel.target}
+                            name={title}
+                        />
+                    )}
+                    {panel.kind === 'verse' && verseData !== null ? (
+                        <span
+                            className={
+                                'flex-shrink-0' +
+                                ' location-name-lookup__kjv-name'
+                            }
+                        >
+                            ({verseData.bibleKey})
+                        </span>
+                    ) : null}
                     <span className="text-truncate">{title}</span>
+                    {kjvName === '' ? null : (
+                        <span
+                            className={
+                                'text-truncate' +
+                                ' location-name-lookup__kjv-name'
+                            }
+                        >
+                            ({kjvName})
+                        </span>
+                    )}
                     {panel.kind === 'verse' ? (
                         <RenderOpenInLookupButtonComp
                             shortVerse={panel.target}
@@ -267,6 +318,12 @@ function RenderDetailPanelComp({
                 minHeight: 180,
                 initialOffset: DETAIL_PANEL_BASE_OFFSET + index * CASCADE_STEP,
                 extraClassName: 'location-name-lookup-detail-widget',
+                // The host is a window singleton, so no modal is ever its
+                // ancestor — but the record it shows is opened from a name in
+                // verse text or from the lookup panel, and both of those live
+                // inside the Bible Lookup popup, which would bury the panel the
+                // click just asked for.
+                isAboveModal: true,
             }}
             extraActionButtons={<RenderCopyButtonComp onCopy={handleCopy} />}
         >
@@ -293,12 +350,7 @@ function RenderDetailPanelComp({
                 {panel.kind === 'verse' ? (
                     <RenderVerseDetailComp
                         shortVerse={panel.target}
-                        onResolved={(verseTitle, fullText) => {
-                            verseTextRef.current = {
-                                title: verseTitle,
-                                fullText,
-                            };
-                        }}
+                        onResolved={setVerseData}
                     />
                 ) : null}
             </div>
@@ -325,7 +377,7 @@ export default function LocationNameDetailPanelsComp() {
                     onClose={() => {
                         closeDetailPanel(openPanels[0].key);
                     }}
-                    options={{ width: 300, height: 160 }}
+                    options={{ width: 300, height: 160, isAboveModal: true }}
                 >
                     <LoadingComp />
                 </FloatingWidgetComp>

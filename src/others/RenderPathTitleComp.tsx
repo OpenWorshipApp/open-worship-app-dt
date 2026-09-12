@@ -15,7 +15,7 @@ export default function RenderPathTitleComp({
     }
     return (
         <>
-            {/* Reload and Add Items are list context menu items
+            {/* Reload and the adding entries are list context menu items
                 (`genDroppingFileOnContextMenu`, reachable from the header ⋮ or
                 a right-click on the empty body), not icons — this cramped row
                 keeps only the path and the filter/sort affordances. */}

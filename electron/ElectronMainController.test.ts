@@ -6,12 +6,14 @@ vi.mock('electron', async () => {
 });
 
 const {
+    applyRendererRecovery,
     attemptClosing,
     genWebPreferences,
     getAppThemeBackgroundColor,
     guardBrowsing,
     loadURL,
 } = vi.hoisted(() => ({
+    applyRendererRecovery: vi.fn(),
     attemptClosing: vi.fn(),
     genWebPreferences: vi.fn(() => ({ preload: '/tmp/preload.js' })),
     getAppThemeBackgroundColor: vi.fn(() => '#101010'),
@@ -20,6 +22,7 @@ const {
 }));
 
 vi.mock('./electronHelpers', () => ({
+    applyRendererRecovery,
     attemptClosing,
     genWebPreferences,
     getAppThemeBackgroundColor,

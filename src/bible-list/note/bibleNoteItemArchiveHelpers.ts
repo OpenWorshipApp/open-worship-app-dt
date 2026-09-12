@@ -37,6 +37,11 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import { tran } from '../../lang/langHelpers';
 import type Note from './Note';
 import NoteItem from './NoteItem';
+import {
+    collectLexicalAppFilePaths,
+    parseJson,
+    rewriteLexicalAppFilePaths,
+} from './noteEmbeddedFileHelpers';
 import { type NoteItemType } from './noteItemHelpers';
 
 export const BIBLE_NOTE_ITEM_ARCHIVE_DOT_EXTENSION = '.owabn.tar.gz';
@@ -48,7 +53,6 @@ const ARCHIVE_VERSION = 1;
 const INVALID_FILE_NAME_CHAR_CODES = new Set([
     34, 42, 47, 58, 60, 62, 63, 92, 124,
 ]);
-const EMBEDDED_FILE_PATH_KEYS = ['appFilePath', 'src'] as const;
 
 type ArchiveFileEntry = {
     originalPath: string;
@@ -60,19 +64,6 @@ type ArchiveManifest = {
     noteItem: string;
     files: ArchiveFileEntry[];
 };
-
-function parseJson(text: string) {
-    const trimmedText = text.trim();
-    if (!trimmedText.startsWith('{') && !trimmedText.startsWith('[')) {
-        return null;
-    }
-    try {
-        return JSON.parse(text) as unknown;
-    } catch (error) {
-        handleError(error);
-        return null;
-    }
-}
 
 function sanitizeFileNamePart(value: string) {
     const sanitizedText = Array.from(value.trim())
@@ -88,43 +79,6 @@ function sanitizeFileNamePart(value: string) {
         .replace(/_+/g, '_')
         .replace(/\s+/g, ' ')
         .replace(/[_ .]+$/g, '');
-}
-
-function isUrlLike(value: string) {
-    const lowerValue = value.toLowerCase();
-    return (
-        lowerValue.startsWith('http://') ||
-        lowerValue.startsWith('https://') ||
-        lowerValue.startsWith('data:') ||
-        lowerValue.startsWith('blob:')
-    );
-}
-
-function isLocalFilePath(value: string) {
-    const trimmedValue = value.trim();
-    if (trimmedValue.length === 0 || isUrlLike(trimmedValue)) {
-        return false;
-    }
-
-    const firstCodePoint = trimmedValue.codePointAt(0);
-    const secondCodePoint = trimmedValue.codePointAt(1);
-    const thirdCodePoint = trimmedValue.codePointAt(2);
-    const isWindowsDrivePath =
-        firstCodePoint !== undefined &&
-        ((firstCodePoint >= 65 && firstCodePoint <= 90) ||
-            (firstCodePoint >= 97 && firstCodePoint <= 122)) &&
-        secondCodePoint === 58 &&
-        (thirdCodePoint === 47 || thirdCodePoint === 92);
-    const isPosixAbsolutePath = firstCodePoint === 47;
-    const isUncPath = firstCodePoint === 92 && secondCodePoint === 92;
-    return isWindowsDrivePath || isPosixAbsolutePath || isUncPath;
-}
-
-function checkIsEmbeddedFilePathField(key: string, value: string) {
-    if (key === 'appFilePath') {
-        return value.length > 0;
-    }
-    return key === 'src' && isLocalFilePath(value);
 }
 
 export function toBibleNoteItemArchiveFileName(
@@ -162,98 +116,6 @@ export function toBibleNoteItemTmpFileName(
         `${noteName}/${noteItemId}/${timestamp}`,
     );
     return `bn-${encodedTrace}${getDotExtensionFromFilePath(filePath)}`;
-}
-
-function collectAppFilePaths(
-    value: unknown,
-    paths: string[],
-    seenPaths: Set<string>,
-) {
-    if (Array.isArray(value)) {
-        value.forEach((child) => {
-            collectAppFilePaths(child, paths, seenPaths);
-        });
-        return;
-    }
-    if (value === null || typeof value !== 'object') {
-        return;
-    }
-
-    const objectValue = value as Record<string, unknown>;
-    for (const key of EMBEDDED_FILE_PATH_KEYS) {
-        const embeddedFilePath = objectValue[key];
-        if (
-            typeof embeddedFilePath === 'string' &&
-            checkIsEmbeddedFilePathField(key, embeddedFilePath) &&
-            !seenPaths.has(embeddedFilePath)
-        ) {
-            seenPaths.add(embeddedFilePath);
-            paths.push(embeddedFilePath);
-        }
-    }
-    Object.values(objectValue).forEach((child) => {
-        collectAppFilePaths(child, paths, seenPaths);
-    });
-}
-
-export function collectLexicalAppFilePaths(content: string) {
-    const jsonData = parseJson(content);
-    if (jsonData === null) {
-        return [];
-    }
-    const paths: string[] = [];
-    collectAppFilePaths(jsonData, paths, new Set<string>());
-    return paths;
-}
-
-function rewriteAppFilePaths(
-    value: unknown,
-    appFilePathByOriginalPath: Map<string, string>,
-) {
-    let isChanged = false;
-    if (Array.isArray(value)) {
-        value.forEach((child) => {
-            isChanged =
-                rewriteAppFilePaths(child, appFilePathByOriginalPath) ||
-                isChanged;
-        });
-        return isChanged;
-    }
-    if (value === null || typeof value !== 'object') {
-        return false;
-    }
-
-    const objectValue = value as Record<string, unknown>;
-    for (const key of EMBEDDED_FILE_PATH_KEYS) {
-        const embeddedFilePath = objectValue[key];
-        if (typeof embeddedFilePath !== 'string') {
-            continue;
-        }
-        const importedPath = appFilePathByOriginalPath.get(embeddedFilePath);
-        if (importedPath !== undefined) {
-            objectValue[key] = importedPath;
-            isChanged = true;
-        }
-    }
-    Object.values(objectValue).forEach((child) => {
-        isChanged =
-            rewriteAppFilePaths(child, appFilePathByOriginalPath) || isChanged;
-    });
-    return isChanged;
-}
-
-export function rewriteLexicalAppFilePaths(
-    content: string,
-    appFilePathByOriginalPath: Map<string, string>,
-) {
-    const jsonData = parseJson(content);
-    if (jsonData === null) {
-        return content;
-    }
-    if (!rewriteAppFilePaths(jsonData, appFilePathByOriginalPath)) {
-        return content;
-    }
-    return JSON.stringify(jsonData);
 }
 
 function createWorkDirName(prefix: string) {

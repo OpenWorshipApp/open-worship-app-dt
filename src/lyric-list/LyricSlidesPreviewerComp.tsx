@@ -338,7 +338,10 @@ export default function LyricSlidesPreviewerComp() {
                 </button>
                 <button
                     type="button"
-                    className="btn btn-sm btn-outline-secondary stage-previewer-more"
+                    className={
+                        'btn btn-sm btn-outline-secondary stage-previewer-more' +
+                        ' app-context-menu-dots'
+                    }
                     title={tran('More Options')}
                     aria-label={tran('More Options')}
                     onClick={handleMoreOptions}

@@ -12,6 +12,7 @@ import {
     useSlideItemsControlEventContext,
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import ScrollingHandlerComp from '../../scrolling/ScrollingHandlerComp';
 import {
     bringDomToCenterView,
@@ -145,6 +146,25 @@ export default function VarySlidesPreviewerComp() {
             {...{ [SLIDES_PREVIEWER_SCOPE_KEY]: scope.scopeId }}
         >
             <SlidesPreviewerScopeContext value={scope}>
+                {/* The document's own menu — the one a right-click on the empty
+                    area gives. Sticky in a zero-height row so it stays reachable
+                    however far the list is scrolled without taking a strip of
+                    the previewer away from the slides. */}
+                <div
+                    style={{
+                        position: 'sticky',
+                        top: 0,
+                        height: 0,
+                        zIndex: 3,
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                    }}
+                >
+                    <ContextMenuDotsButtonComp
+                        className="me-2"
+                        onOpening={handleContextMenu}
+                    />
+                </div>
                 <div>
                     {isDisplayingEditingMenu ? (
                         <div

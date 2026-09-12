@@ -1,0 +1,842 @@
+{
+    "page": "common",
+    "label": "Anywhere in the app",
+    "window": null,
+    "focus": null,
+    "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
+    "updated": "2026-09-12",
+    "sections": [
+        {
+            "id": "panels",
+            "label": "Panels & layout",
+            "recipes": ["W-31"],
+            "questions": [
+                {
+                    "id": "hide-panel",
+                    "text": "How do I hide a panel I do not use?",
+                    "kind": "howto",
+                    "keywords": [
+                        "hide",
+                        "remove panel",
+                        "declutter",
+                        "more room",
+                        "turn off",
+                        "divider",
+                        "right-click the line",
+                        "close first widget",
+                        "collapse"
+                    ],
+                    "resources": {
+                        "recipe": "W-31",
+                        "menu": "View → Widgets",
+                        "guide": true,
+                        "find": "divider between Document List and Presenting Flow List"
+                    }
+                },
+                {
+                    "id": "reset-layout",
+                    "text": "How do I put the layout back the way it started?",
+                    "kind": "howto",
+                    "keywords": [
+                        "reset",
+                        "default layout",
+                        "messed up",
+                        "sizes",
+                        "back to normal",
+                        "reset size",
+                        "double-click the divider"
+                    ],
+                    "resources": {
+                        "recipe": "W-31",
+                        "menu": "View → Reset Widgets Size",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "divider-menu",
+                    "text": "What does right-clicking the line between two panels do?",
+                    "kind": "what",
+                    "keywords": [
+                        "divider",
+                        "splitter",
+                        "border between panels",
+                        "reset size",
+                        "close first widget",
+                        "close second widget",
+                        "arrows on the line"
+                    ],
+                    "resources": {
+                        "recipe": "W-31",
+                        "find": "divider between Document List and Presenting Flow List",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "find-bar",
+            "label": "Find text & About",
+            "recipes": ["W-17"],
+            "questions": [
+                {
+                    "id": "find-on-page",
+                    "text": "How do I find some text in the window I am looking at?",
+                    "kind": "howto",
+                    "keywords": [
+                        "find bar",
+                        "search page",
+                        "ctrl f",
+                        "locate",
+                        "highlight text"
+                    ],
+                    "resources": {
+                        "recipe": "W-17",
+                        "menu": "Edit → Find",
+                        "shortcut": "Ctrl+F",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "find-next",
+                    "text": "How do I jump to the next match in the find bar?",
+                    "kind": "howto",
+                    "keywords": [
+                        "next",
+                        "previous",
+                        "matches",
+                        "enter",
+                        "cycle",
+                        "more results"
+                    ],
+                    "resources": {
+                        "recipe": "W-17",
+                        "shortcut": "Enter / Shift+Enter",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "app-version",
+                    "text": "What version of the app am I running?",
+                    "kind": "state",
+                    "keywords": [
+                        "about",
+                        "version",
+                        "build",
+                        "which release",
+                        "update"
+                    ],
+                    "resources": {
+                        "recipe": "W-17",
+                        "tools": ["owa_app_state"]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "sharing",
+            "label": "Sharing & backup",
+            "recipes": ["W-23", "W-24", "W-25", "W-41"],
+            "questions": [
+                {
+                    "id": "share-document",
+                    "text": "How do I send one song or sermon to another machine?",
+                    "kind": "howto",
+                    "keywords": [
+                        "export",
+                        "import",
+                        "send",
+                        "another computer",
+                        "usb",
+                        "share file"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-23",
+                        "related": ["W-22", "W-25"],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "import-document",
+                    "text": "How do I import a document somebody sent me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "import",
+                        "open file",
+                        "received",
+                        "load",
+                        "bring in",
+                        "drag file"
+                    ],
+                    "resources": {
+                        "recipe": "W-23",
+                        "related": ["W-22"],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "import-from-url",
+                    "text": "How do I import something from a link?",
+                    "kind": "howto",
+                    "keywords": [
+                        "import from url",
+                        "link",
+                        "download",
+                        "web address",
+                        "online"
+                    ],
+                    "resources": {
+                        "recipe": "W-23",
+                        "find": "Import From URL",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "backup-everything",
+                    "text": "How do I back everything up?",
+                    "kind": "howto",
+                    "keywords": [
+                        "backup",
+                        "export data",
+                        "save all",
+                        "copy",
+                        "safe",
+                        "whole library"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-25",
+                        "menu": "File → Export Data",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "move-machine",
+                    "text": "How do I move everything to a new computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "new computer",
+                        "migrate",
+                        "transfer",
+                        "restore",
+                        "move",
+                        "import data"
+                    ],
+                    "resources": {
+                        "recipe": "W-25",
+                        "menu": "File → Import Data",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "archive-password",
+                    "text": "How do I password-protect something I export?",
+                    "kind": "howto",
+                    "keywords": [
+                        "password",
+                        "protect",
+                        "encrypt",
+                        "secure",
+                        "private",
+                        "lock"
+                    ],
+                    "resources": {
+                        "recipe": "W-25",
+                        "related": ["W-22", "W-23"],
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "status",
+            "label": "What the app is doing right now",
+            "recipes": ["W-10", "W-01"],
+            "questions": [
+                {
+                    "id": "where-am-i",
+                    "text": "Which page am I on right now?",
+                    "kind": "state",
+                    "keywords": [
+                        "where",
+                        "which window",
+                        "current page",
+                        "lost",
+                        "what is this"
+                    ],
+                    "resources": {
+                        "recipe": "W-01",
+                        "tools": ["owa_app_state"]
+                    }
+                },
+                {
+                    "id": "what-is-on-screen",
+                    "text": "What is on the audience screen at the moment?",
+                    "kind": "state",
+                    "keywords": [
+                        "live",
+                        "showing",
+                        "on air",
+                        "projector",
+                        "audience",
+                        "right now",
+                        "which verse",
+                        "which slide",
+                        "what song"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "tools": ["owa_list_screens", "owa_app_state"]
+                    }
+                },
+                {
+                    "id": "which-displays",
+                    "text": "Which displays does this computer have?",
+                    "kind": "state",
+                    "keywords": [
+                        "monitors",
+                        "screens",
+                        "projector",
+                        "second display",
+                        "connected"
+                    ],
+                    "resources": {
+                        "recipe": "W-18",
+                        "tools": ["owa_list_screens"]
+                    }
+                },
+                {
+                    "id": "find-a-control",
+                    "text": "Where is the button that does this?",
+                    "kind": "where",
+                    "keywords": [
+                        "where is",
+                        "which button",
+                        "cannot find",
+                        "show me",
+                        "point at",
+                        "locate"
+                    ],
+                    "resources": {
+                        "tools": ["owa_find_ui", "owa_list_ui"]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "help",
+            "label": "This help window",
+            "recipes": ["W-42"],
+            "questions": [
+                {
+                    "id": "what-can-i-ask",
+                    "text": "What can I ask you?",
+                    "kind": "what",
+                    "keywords": [
+                        "help",
+                        "questions",
+                        "what do you know",
+                        "topics",
+                        "capabilities",
+                        "list",
+                        "everything",
+                        "more",
+                        "full list",
+                        "all questions"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-42",
+                        "tools": ["owa_list_questions"],
+                        "find": "More… — everything it can answer"
+                    }
+                },
+                {
+                    "id": "quick-commands",
+                    "text": "What commands can I type instead of asking?",
+                    "kind": "what",
+                    "keywords": [
+                        "slash",
+                        "command",
+                        "commands",
+                        "shortcut",
+                        "no assistant",
+                        "offline",
+                        "without internet",
+                        "screen-show",
+                        "screen-hide",
+                        "lyric",
+                        "song from a page",
+                        "quick"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Ask how to do something in the app"
+                    }
+                },
+                {
+                    "id": "walk-me-through",
+                    "text": "Can you walk me through it step by step?",
+                    "kind": "howto",
+                    "keywords": [
+                        "step by step",
+                        "show me",
+                        "walkthrough",
+                        "guide",
+                        "do it for me",
+                        "demo"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-42",
+                        "tools": ["owa_guide_start", "owa_guide_step"]
+                    }
+                },
+                {
+                    "id": "new-chat",
+                    "text": "How do I start a new chat?",
+                    "kind": "howto",
+                    "keywords": [
+                        "new tab",
+                        "another chat",
+                        "start over",
+                        "clear",
+                        "fresh"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "keep-chat",
+                    "text": "How do I stop a chat being closed by accident?",
+                    "kind": "howto",
+                    "keywords": [
+                        "lock",
+                        "keep",
+                        "protect",
+                        "pin chat",
+                        "do not close"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "copy-answer",
+                    "text": "How do I copy an answer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy",
+                        "clipboard",
+                        "paste",
+                        "save answer",
+                        "share"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "chat-cost",
+                    "text": "How much has this chat cost so far?",
+                    "kind": "where",
+                    "keywords": [
+                        "cost",
+                        "credit",
+                        "credits",
+                        "spent",
+                        "spend",
+                        "price",
+                        "bill",
+                        "tokens",
+                        "usage",
+                        "how much",
+                        "dollars",
+                        "expensive",
+                        "money"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Credit used"
+                    }
+                },
+                {
+                    "id": "chat-spend-limit",
+                    "text": "How do I stop the assistant spending too much?",
+                    "kind": "howto",
+                    "keywords": [
+                        "limit",
+                        "budget",
+                        "cap",
+                        "spending",
+                        "spend limit",
+                        "too much",
+                        "runaway",
+                        "infinite loop",
+                        "eat my credit",
+                        "bill",
+                        "paused",
+                        "allow more",
+                        "per hour"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Limit per hour"
+                    }
+                },
+                {
+                    "id": "ask-again-earlier",
+                    "text": "How do I bring back a question I asked before?",
+                    "kind": "howto",
+                    "keywords": [
+                        "history",
+                        "earlier question",
+                        "last question",
+                        "previous",
+                        "ask again",
+                        "retype",
+                        "alt up",
+                        "arrow up",
+                        "recall"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "quick-answers",
+                    "text": "How do I answer without typing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "buttons",
+                        "options",
+                        "quick reply",
+                        "yes",
+                        "press",
+                        "no typing",
+                        "suggestions"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "stop-answer",
+                    "text": "How do I stop it while it is answering?",
+                    "kind": "howto",
+                    "keywords": [
+                        "stop",
+                        "cancel",
+                        "abort",
+                        "give up",
+                        "escape",
+                        "wrong question",
+                        "asked by mistake",
+                        "taking too long",
+                        "still waiting"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "what-is-it-doing",
+                    "text": "What is it doing while I wait?",
+                    "kind": "what",
+                    "keywords": [
+                        "waiting",
+                        "progress",
+                        "taking long",
+                        "slow",
+                        "still thinking",
+                        "looking it up",
+                        "stuck",
+                        "hung",
+                        "frozen",
+                        "steps",
+                        "what is happening"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "see-more-tips",
+                    "text": "How do I see the other tips above the box?",
+                    "kind": "howto",
+                    "keywords": [
+                        "tip",
+                        "tips",
+                        "lightbulb",
+                        "hint",
+                        "arrows",
+                        "next tip",
+                        "previous tip",
+                        "features"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "read-a-web-page",
+                    "text": "Can you read a web page for me?",
+                    "kind": "what",
+                    "keywords": [
+                        "website",
+                        "web page",
+                        "link",
+                        "url",
+                        "internet",
+                        "online",
+                        "read this page",
+                        "what does this say",
+                        "look it up",
+                        "article",
+                        "wikipedia"
+                    ],
+                    "resources": {
+                        "tools": ["owa_read_website"]
+                    }
+                },
+                {
+                    "id": "choose-model",
+                    "text": "How do I change which model answers?",
+                    "kind": "howto",
+                    "keywords": [
+                        "model",
+                        "claude",
+                        "chatgpt",
+                        "provider",
+                        "switch",
+                        "faster",
+                        "cheaper",
+                        "kimi",
+                        "moonshot"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "related": ["W-16"]
+                    }
+                },
+                {
+                    "id": "offline-help",
+                    "text": "Does the help still work without internet?",
+                    "kind": "what",
+                    "keywords": [
+                        "offline",
+                        "no internet",
+                        "wifi down",
+                        "no key",
+                        "works anyway"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "shortcuts-list",
+                    "text": "What keyboard shortcuts does the app have?",
+                    "kind": "what",
+                    "keywords": [
+                        "shortcuts",
+                        "hotkeys",
+                        "keys",
+                        "keyboard",
+                        "function keys",
+                        "faster"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "related": ["W-10", "W-06"]
+                    }
+                },
+                {
+                    "id": "show-a-picture",
+                    "text": "Can I show you a picture of my screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "picture",
+                        "screenshot",
+                        "image",
+                        "photo",
+                        "show you",
+                        "attach",
+                        "paste",
+                        "camera",
+                        "see my screen"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Attach a picture of the app"
+                    }
+                },
+                {
+                    "id": "attach-a-file",
+                    "text": "How do I attach a file to my question?",
+                    "kind": "howto",
+                    "keywords": [
+                        "attach",
+                        "file",
+                        "paperclip",
+                        "upload",
+                        "send file",
+                        "drag",
+                        "drop"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Attach a file"
+                    }
+                },
+                {
+                    "id": "point-at-a-control",
+                    "text": "How do I point at the button I mean?",
+                    "kind": "howto",
+                    "keywords": [
+                        "point",
+                        "this one",
+                        "which button",
+                        "pick",
+                        "click on",
+                        "show you the button",
+                        "that thing"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Point at a control in the app",
+                        "tools": ["owa_pick_element"]
+                    }
+                },
+                {
+                    "id": "add-while-waiting",
+                    "text": "Can I add something while you are still answering?",
+                    "kind": "howto",
+                    "keywords": [
+                        "add",
+                        "waiting",
+                        "more information",
+                        "forgot to say",
+                        "while it works",
+                        "still thinking"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "ai-chat",
+            "label": "AI Chat window",
+            "recipes": ["W-44"],
+            "questions": [
+                {
+                    "id": "use-chatgpt-inside-the-app",
+                    "text": "Can I use ChatGPT or Claude inside the app?",
+                    "kind": "howto",
+                    "keywords": [
+                        "chatgpt",
+                        "claude",
+                        "gemini",
+                        "deepseek",
+                        "kimi",
+                        "grok",
+                        "mistral",
+                        "perplexity",
+                        "copilot",
+                        "ai chat",
+                        "sidebar",
+                        "website",
+                        "sparkle",
+                        "sign in"
+                    ],
+                    "resources": {
+                        "recipe": "W-44",
+                        "find": "AI Chat",
+                        "menu": "Help → AI Chat"
+                    }
+                },
+                {
+                    "id": "ai-chat-tab-reloaded",
+                    "text": "Why did my AI Chat tab load again when I came back to it?",
+                    "kind": "what",
+                    "keywords": [
+                        "reload",
+                        "refresh",
+                        "tab",
+                        "came back",
+                        "memory",
+                        "three tabs",
+                        "unload",
+                        "lost"
+                    ],
+                    "resources": {
+                        "recipe": "W-44"
+                    }
+                },
+                {
+                    "id": "ai-chat-sign-out",
+                    "text": "How do I sign out of the AI chat websites?",
+                    "kind": "howto",
+                    "keywords": [
+                        "sign out",
+                        "log out",
+                        "signed in",
+                        "account",
+                        "someone else",
+                        "shared computer",
+                        "cookies",
+                        "forget me",
+                        "ai chat"
+                    ],
+                    "resources": {
+                        "recipe": "W-44",
+                        "find": "Sign out of every site"
+                    }
+                },
+                {
+                    "id": "ai-chat-shared-computer",
+                    "text": "Several people use this computer — is my AI chat account safe?",
+                    "kind": "what",
+                    "keywords": [
+                        "shared",
+                        "several people",
+                        "volunteer",
+                        "privacy",
+                        "account",
+                        "still signed in",
+                        "safe",
+                        "ai chat"
+                    ],
+                    "resources": {
+                        "recipe": "W-44",
+                        "find": "Sign out of every site"
+                    }
+                },
+                {
+                    "id": "ai-chat-not-the-assistant",
+                    "text": "What is the difference between the sparkle button and the robot button?",
+                    "kind": "what",
+                    "keywords": [
+                        "sparkle",
+                        "robot",
+                        "two buttons",
+                        "assistant",
+                        "chatbot",
+                        "ai chat",
+                        "which one",
+                        "api key"
+                    ],
+                    "resources": {
+                        "recipe": "W-44",
+                        "related": ["W-42"],
+                        "find": "AI Chat"
+                    }
+                }
+            ]
+        }
+    ]
+}

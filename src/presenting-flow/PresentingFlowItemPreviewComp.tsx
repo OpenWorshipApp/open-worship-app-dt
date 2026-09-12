@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { PresetScreenIdsContext } from '../_screen/managers/screenChoosingHelpers';
 import { showDroppedDataOnScreens } from '../_screen/managers/screenDroppedHelpers';
 import { VaryAppDocumentContext } from '../app-document-list/appDocumentHelpers';
@@ -290,6 +291,9 @@ function PreviewFrameComp({
                         screenIds={presentingFlowItem.screenIds}
                     />
                 ) : null}
+                {/* No handler: the frame around this label owns the element's
+                    menu, and it is the frame the previews inside defer to. */}
+                <ContextMenuDotsButtonComp />
             </div>
             {isExpanded ? (
                 <div className="app-presenting-flow-preview-item-body">

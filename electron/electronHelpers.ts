@@ -1,15 +1,19 @@
 import {
     app,
+    dialog,
     nativeTheme,
     shell,
     clipboard,
     BrowserWindow,
-    type WebPreferences,
-    type WindowOpenHandlerResponse,
-    type BrowserWindowConstructorOptions,
-    type HandlerDetails,
-    type WebContents,
-    type MenuItemConstructorOptions,
+    screen,
+} from 'electron';
+import type {
+    WebPreferences,
+    WindowOpenHandlerResponse,
+    BrowserWindowConstructorOptions,
+    HandlerDetails,
+    WebContents,
+    MenuItemConstructorOptions,
 } from 'electron';
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, readdir, rm, writeFile } from 'node:fs/promises';
@@ -18,6 +22,13 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import appInfo from '../package.json';
+// Cyclic on paper -- `ElectronSettingManager` imports `genTimeoutAttempt` from
+// here -- but every use below is inside a function body, so neither module ever
+// reads a half-initialised export of the other.
+import ElectronSettingManager, {
+    type PopupWinBoundsType,
+} from './ElectronSettingManager';
+import { htmlFiles } from './fsServe';
 
 export type OptionalPromise<T> = T | Promise<T>;
 
@@ -96,6 +107,28 @@ export const isLinux = process.platform === 'linux';
 const osRelease = release().toLowerCase();
 export const isUbuntu = isLinux && osRelease.includes('ubuntu');
 export const isFedora = isLinux && osRelease.includes('fedora');
+/**
+ * Whether this OS can put a real translucent backdrop BEHIND a window.
+ *
+ * Only the compositor can do this: a popup is its own OS window, so nothing
+ * CSS does inside it can see the app window underneath. Windows 11 22H2 grew
+ * `backgroundMaterial`, macOS has always had `vibrancy`; everywhere else the
+ * window must stay opaque, because a window told to be see-through with no
+ * backdrop to blur is just unreadable text over the desktop.
+ */
+function checkIsGlassCapable() {
+    if (isMac) {
+        return true;
+    }
+    if (!isWindows) {
+        return false;
+    }
+    // `10.0.22621` -- the first build carrying the acrylic system backdrop.
+    const buildNumber = Number(release().split('.')[2]);
+    return !Number.isNaN(buildNumber) && buildNumber >= 22621;
+}
+export const isGlassCapable = checkIsGlassCapable();
+
 export const isSecured = false; // TODO: make it secure
 export const is64System = process.arch === 'x64';
 export const isArm64 = process.arch === 'arm64';
@@ -104,6 +137,11 @@ export const commitHash = getPackInfo()?.commitHash ?? undefined;
 export const messageChannels = {
     screenMessage: 'app:screen:message',
     openAboutPage: 'main:app:open-about-page',
+    openChatbotPage: 'main:app:open-chatbot-page',
+    openAiChatPage: 'main:app:open-aichat-page',
+    guideHelp: 'main:app:guide-help',
+    guideHelpAnswer: 'main:app:guide-help-answer',
+    chatAttach: 'main:app:chat-attach',
 };
 
 /**
@@ -192,6 +230,55 @@ export function attemptClosing(target?: ClosableInt | null) {
     try {
         target?.close();
     } catch (_error) {}
+}
+
+/**
+ * A renderer that dies (`render-process-gone`) leaves its BrowserWindow as a
+ * dead shell nothing revives — no navigation, no reload, only an app restart.
+ * A renderer that HANGS (`unresponsive`) is worse: the window silently ignores
+ * every click, and on the operator's machine mid-service that reads as "the
+ * app is gone". Both get one recovery path here: reload the content, by force
+ * (`forcefullyCrashRenderer` -> `render-process-gone` -> reload) when the
+ * renderer cannot cooperate.
+ *
+ * The timestamp window caps a crash-loop: content that dies on every boot
+ * would otherwise reload forever, burning the low-spec target machine.
+ */
+export function applyRendererRecovery(
+    win: BrowserWindow,
+    reloadContent: () => void,
+) {
+    const MAX_RELOADS = 3;
+    const WINDOW_MILLIS = 30 * 1000;
+    let reloadTimes: number[] = [];
+    win.webContents.on('render-process-gone', (_event, details) => {
+        if (details.reason === 'clean-exit') {
+            return;
+        }
+        const now = Date.now();
+        reloadTimes = reloadTimes.filter((time) => {
+            return now - time < WINDOW_MILLIS;
+        });
+        if (reloadTimes.length >= MAX_RELOADS) {
+            return;
+        }
+        reloadTimes.push(now);
+        reloadContent();
+    });
+    win.on('unresponsive', async () => {
+        const { response } = await dialog.showMessageBox(win, {
+            type: 'warning',
+            title: 'Window Not Responding',
+            message: 'This window has stopped responding.',
+            buttons: ['Reload', 'Wait'],
+            defaultId: 0,
+            cancelId: 1,
+        });
+        if (response === 0 && !win.isDestroyed()) {
+            // The gone-handler above performs the actual reload.
+            win.webContents.forcefullyCrashRenderer();
+        }
+    });
 }
 
 // src/event/KeyboardEventListener.ts
@@ -418,6 +505,7 @@ export type PopupWindowFeaturesType = {
     appTopToMain?: boolean;
     appShowMenuBar?: boolean;
     appResize?: boolean;
+    appGlassy?: boolean;
     // `+`-joined Blink runtime feature names, see `PopupWindowFeaturesType` in
     // `src/helper/domHelpers.ts`.
     appBlinkFeatures?: string;
@@ -442,6 +530,28 @@ function toFeatureRecord(featuresString: string) {
     return featuresRecord as PopupWindowFeaturesType;
 }
 
+// A second window of the same kind steps off the one already open instead of
+// landing exactly on top of it.
+function genGroupCascadePosition(groupWindows: BrowserWindow[]) {
+    const boundsList = groupWindows.map((win) => {
+        return win.getBounds();
+    });
+    return {
+        x:
+            Math.max(
+                ...boundsList.map(({ x }) => {
+                    return x;
+                }),
+            ) + 20,
+        y:
+            Math.max(
+                ...boundsList.map(({ y }) => {
+                    return y;
+                }),
+            ) + 20,
+    };
+}
+
 function genBoundsData(
     parentWin: BrowserWindow,
     groupWindows: BrowserWindow[],
@@ -457,18 +567,7 @@ function genBoundsData(
         height: bounds.height,
     });
     if (groupWindows.length > 0 && selfWindows.length === 0) {
-        const maxX = Math.max(
-            ...groupWindows.map((win) => {
-                return win.getBounds().x;
-            }),
-        );
-        subDisplay.x = maxX + 20;
-        const maxY = Math.max(
-            ...groupWindows.map((win) => {
-                return win.getBounds().y;
-            }),
-        );
-        subDisplay.y = maxY + 20;
+        Object.assign(subDisplay, genGroupCascadePosition(groupWindows));
     }
     Object.assign(subDisplay, {
         width: featuresRecord.width ?? subDisplay.width,
@@ -506,8 +605,69 @@ function genBoundsData(
             break;
     }
 
-    return subDisplay;
+    return Object.assign(subDisplay, keepOnScreen(bounds, subDisplay));
 }
+
+/**
+ * Keeps a popup where the mouse can reach it.
+ *
+ * `right`/`bottom` alignment and a cascade both place a window BESIDE its
+ * opener, and beside a maximised opener is off the edge of the monitor. A
+ * window created there is nudged back by the OS; one MOVED there by
+ * `setBounds` is not -- `Reset Position and Size` put the chatbot at x=1502 on
+ * a 1494-wide screen, which is how the menu item meant to rescue a lost window
+ * lost one. The same clamp runs on open too, so the two paths agree.
+ */
+function keepOnScreen(
+    parentBounds: Electron.Rectangle,
+    { x, y, width, height }: Electron.Rectangle,
+): Electron.Rectangle {
+    const { workArea } = screen.getDisplayMatching(parentBounds);
+    const clampedWidth = Math.min(width, workArea.width);
+    const clampedHeight = Math.min(height, workArea.height);
+    return {
+        x: Math.max(
+            workArea.x,
+            Math.min(x, workArea.x + workArea.width - clampedWidth),
+        ),
+        y: Math.max(
+            workArea.y,
+            Math.min(y, workArea.y + workArea.height - clampedHeight),
+        ),
+        width: clampedWidth,
+        height: clampedHeight,
+    };
+}
+
+/**
+ * The key a popup's remembered position and size is stored under.
+ *
+ * It is the popup's own html page, NOT the full url: a per-document key would
+ * grow `setting.json` by one entry for every file the user ever opened an
+ * editor, note or preview for, while "this kind of window opens where I last
+ * left it" is what a user actually expects anyway. Anything that is not one of
+ * the app's own pages -- a `file://` pdf preview -- is deliberately not
+ * remembered, which is what keeps the map bounded by the page count.
+ */
+const popupBoundsKeySet = new Set<string>(Object.values(htmlFiles));
+function genPopupBoundsKey(url: string) {
+    if (!URL.canParse(url)) {
+        return null;
+    }
+    const htmlFileFullName = new URL(url).pathname.split('/').pop() ?? '';
+    return popupBoundsKeySet.has(htmlFileFullName) ? htmlFileFullName : null;
+}
+
+type PopupWindowMetaType = {
+    boundsKey: string | null;
+    featuresRecord: PopupWindowFeaturesType;
+    parentWin: BrowserWindow;
+    boundsResetAt: number;
+};
+// Weak so a closed popup drops out on its own. `resetPopupWindowsBounds` walks
+// `BrowserWindow.getAllWindows()` and looks each window up here, because popups
+// are registered nowhere else (see `ElectronAppController.reloadAll`).
+const popupWindowMetaMap = new WeakMap<BrowserWindow, PopupWindowMetaType>();
 
 function getPopupWindowData(parentWin: BrowserWindow, options: HandlerDetails) {
     const { url, features } = options;
@@ -539,18 +699,79 @@ function getPopupWindowData(parentWin: BrowserWindow, options: HandlerDetails) {
         featuresRecord,
     );
 
-    return { groupWindows, selfWindows, subDisplay, featuresRecord };
+    return {
+        groupWindows,
+        selfWindows,
+        subDisplay,
+        featuresRecord,
+        boundsKey: genPopupBoundsKey(url),
+    };
 }
+
+// Window move/resize events arrive after the OS has actually moved the window,
+// so a synchronous flag would already be gone by the time they land. A short
+// quiet period is what stops `Reset Position and Size` from immediately
+// recording the very defaults it just applied.
+const BOUNDS_RESET_QUIET_MILLISECOND = 1000;
+
+/**
+ * Records where the user leaves a popup. Same shape as the main window's own
+ * tracking in `ElectronSettingManager.syncMainWindow`: every move/resize writes
+ * the geometry, and the setting write behind it is debounced and skipped when
+ * nothing actually changed.
+ */
+function trackPopupWindowBounds(popupWin: BrowserWindow, boundsKey: string) {
+    const saveBounds = () => {
+        const meta = popupWindowMetaMap.get(popupWin);
+        if (
+            popupWin.isDestroyed() ||
+            Date.now() - (meta?.boundsResetAt ?? 0) <
+                BOUNDS_RESET_QUIET_MILLISECOND
+        ) {
+            return;
+        }
+        const isMaximized = popupWin.isMaximized();
+        // The maximized rectangle is the whole screen, never a size worth
+        // restoring to once the window is un-maximized again.
+        const bounds = isMaximized
+            ? popupWin.getNormalBounds()
+            : popupWin.getBounds();
+        ElectronSettingManager.getInstance().setPopupWinBounds(boundsKey, {
+            ...bounds,
+            isMaximized,
+        });
+    };
+    popupWin.on('resize', saveBounds);
+    popupWin.on('move', saveBounds);
+    popupWin.on('maximize', saveBounds);
+    popupWin.on('unmaximize', saveBounds);
+}
+
+type PopupWindowContextType = {
+    parentWin: BrowserWindow;
+    webPreferences: WebPreferences | undefined;
+    featuresRecord: PopupWindowFeaturesType;
+    boundsKey: string | null;
+    savedBounds: PopupWinBoundsType | null;
+};
 
 function createPopupWindow(
     options: HandlerDetails,
-    webPreferences: WebPreferences | undefined,
-    featuresRecord: PopupWindowFeaturesType,
+    context: PopupWindowContextType,
     constructionOptions: BrowserWindowConstructorOptions,
 ): WebContents {
+    const {
+        parentWin,
+        webPreferences,
+        featuresRecord,
+        boundsKey,
+        savedBounds,
+    } = context;
     const popupWin = new BrowserWindow(constructionOptions);
     guardBrowsing(popupWin, webPreferences);
-    if (featuresRecord.appFollowScale) {
+    // Restored bounds are already the size the user last saw AT their zoom
+    // level; scaling them again would grow the window on every launch.
+    if (featuresRecord.appFollowScale && savedBounds === null) {
         applyZoomFactor(popupWin);
     }
     if (featuresRecord.appAlwaysOnTop) {
@@ -566,11 +787,279 @@ function createPopupWindow(
     if (featuresRecord.appResize === false) {
         popupWin.setResizable(false);
     }
+    popupWindowMetaMap.set(popupWin, {
+        boundsKey,
+        featuresRecord,
+        parentWin,
+        boundsResetAt: 0,
+    });
+    if (boundsKey !== null) {
+        if (savedBounds?.isMaximized) {
+            popupWin.maximize();
+        }
+        trackPopupWindowBounds(popupWin, boundsKey);
+    }
     popupWin.loadURL(options.url);
     setTimeout(() => {
         popupWin.focus();
     }, 100);
     return popupWin.webContents;
+}
+
+/**
+ * `Window` -> `Reset Position and Size`, for the popup windows.
+ *
+ * Two halves, both needed: the remembered geometry is dropped so the NEXT open
+ * starts from the page's own defaults, and every popup currently on screen is
+ * moved back over its opener -- rescuing a window that ended up where the mouse
+ * cannot reach it is the whole point of the menu item.
+ */
+export function resetPopupWindowsBounds(fallbackParentWin: BrowserWindow) {
+    ElectronSettingManager.getInstance().clearPopupWinBounds();
+    const resetWindows: BrowserWindow[] = [];
+    for (const popupWin of BrowserWindow.getAllWindows()) {
+        const meta = popupWindowMetaMap.get(popupWin);
+        if (meta === undefined || popupWin.isDestroyed()) {
+            continue;
+        }
+        const parentWin = meta.parentWin.isDestroyed()
+            ? fallbackParentWin
+            : meta.parentWin;
+        // Already-reset popups of the same kind act as the group, so several
+        // open at once fan out instead of stacking on a single spot.
+        const groupWindows = resetWindows.filter((resetWin) => {
+            const resetMeta = popupWindowMetaMap.get(resetWin);
+            return resetMeta?.boundsKey === meta.boundsKey;
+        });
+        const { x, y, width, height } = genBoundsData(
+            parentWin,
+            groupWindows,
+            [],
+            meta.featuresRecord,
+        );
+        meta.boundsResetAt = Date.now();
+        if (popupWin.isMaximized()) {
+            popupWin.unmaximize();
+        }
+        popupWin.setBounds({ x, y, width, height });
+        resetWindows.push(popupWin);
+    }
+}
+
+/**
+ * The help window steps aside while a walkthrough is running.
+ *
+ * The chatbot is a separate OS window that deliberately sits ON TOP of the app
+ * (`appTopToMain`), because its answers are about the window behind it. That is
+ * exactly wrong for a walkthrough: the card it starts rings a control in that
+ * window, and roughly a quarter of the app can be behind the help window at any
+ * moment -- measured at 12% of the presenter's named controls with it parked
+ * over the middle. Telling someone to press a button they cannot see is worse
+ * than not offering to.
+ *
+ * So it is minimised for the length of the walkthrough and restored when the
+ * card closes. Two things keep that from being rude:
+ *
+ * - **Only when it is actually in the way.** A second monitor, or a window
+ *   pushed off to the side, is left alone -- and then nothing is restored
+ *   either, because nothing moved.
+ * - **Only what this did.** A window the user minimised themselves is not
+ *   "restored", and one they bring back mid-walkthrough is theirs again.
+ *
+ * Recovering it by hand already works and keeps working: the taskbar, or the
+ * app's own 🤖 button, which `handlePopupWindowOpen` answers by restoring the
+ * window that is already open rather than making a second one.
+ */
+let tuckedAwayWin: BrowserWindow | null = null;
+let handleUserReclaiming: (() => void) | null = null;
+
+// Stop treating the window as ours. Called both when the USER brings it back
+// and just before this code does -- our own `restore()` and `close` fire the
+// same events, and re-entering through them would clear the reference a second
+// time or restore a window twice.
+function releaseTuckedAwayWin() {
+    if (tuckedAwayWin !== null && handleUserReclaiming !== null) {
+        if (!tuckedAwayWin.isDestroyed()) {
+            tuckedAwayWin.off('restore', handleUserReclaiming);
+            tuckedAwayWin.off('closed', handleUserReclaiming);
+        }
+    }
+    tuckedAwayWin = null;
+    handleUserReclaiming = null;
+}
+
+function findChatbotWindow() {
+    return (
+        BrowserWindow.getAllWindows().find((win) => {
+            return (
+                !win.isDestroyed() &&
+                win.webContents.getURL().includes(htmlFiles.chatbot)
+            );
+        }) ?? null
+    );
+}
+
+function checkIsOverlapping(one: BrowserWindow, other: BrowserWindow) {
+    const a = one.getBounds();
+    const b = other.getBounds();
+    return (
+        Math.min(a.x + a.width, b.x + b.width) > Math.max(a.x, b.x) &&
+        Math.min(a.y + a.height, b.y + b.height) > Math.max(a.y, b.y)
+    );
+}
+
+/**
+ * macOS only: take the window out of its parent's group for as long as it is
+ * minimised.
+ *
+ * The chatbot is opened as a CHILD of the window that asked for it
+ * (`appTopToMain`), and on macOS that is an AppKit child window, which cannot
+ * be miniaturised on its own (electron/electron#26031 and #39578, both open).
+ * `minimize()` on it sent the PRESENTER into the Dock, and every other popup
+ * riding on it, while the chatbot stayed up and never counted as minimised --
+ * so the `restore()` at the end of the walkthrough did nothing and the app
+ * stayed down. Measured live 2026-09-12: presenter and Settings off screen,
+ * chatbot on.
+ *
+ * It rejoins on `restore`, whoever restores it -- this code when the card
+ * closes, or the user from the Dock or the robot button -- and NOT straight
+ * after our own `restore()` call: the window is still miniaturised then, and
+ * Electron only attaches a VISIBLE window to its parent, so a parent set too
+ * early is remembered and the window floats free of it.
+ *
+ * Windows and Linux minimise an owned window by itself, so nothing is detached
+ * there. The platform is read at call time so a test can pick one.
+ */
+function detachFromParentWhileMinimised(win: BrowserWindow) {
+    const parentWin = win.getParentWindow();
+    if (process.platform !== 'darwin' || parentWin === null) {
+        return;
+    }
+    win.setParentWindow(null);
+    win.once('restore', () => {
+        if (!win.isDestroyed() && !parentWin.isDestroyed()) {
+            win.setParentWindow(parentWin);
+        }
+    });
+}
+
+export function setGuideRunning(guidedWin: BrowserWindow, isRunning: boolean) {
+    if (!isRunning) {
+        // Only ever undo this function's own doing: `tuckedAwayWin` is null
+        // unless a walkthrough put it there, and the `restore` listener below
+        // has already given it up if the user brought it back themselves.
+        //
+        // Deliberately NOT gated on `isMinimized()` any more: that asks the
+        // window manager to confirm, a beat later, something we already know,
+        // and a stale answer leaves the window down with no way back but the
+        // taskbar. Whether the user has reclaimed it is a thing to be TOLD
+        // (the event), not a state to re-read.
+        const win = tuckedAwayWin;
+        releaseTuckedAwayWin();
+        if (win !== null && !win.isDestroyed()) {
+            win.restore();
+        }
+        return;
+    }
+    const chatbotWin = findChatbotWindow();
+    if (
+        chatbotWin === null ||
+        chatbotWin === guidedWin ||
+        chatbotWin.isMinimized() ||
+        !checkIsOverlapping(chatbotWin, guidedWin)
+    ) {
+        return;
+    }
+    // Nothing should still be held here -- the stop always releases, and a
+    // window still held would be minimised and so refused above -- but taking
+    // a second one without letting the first go would leak a listener.
+    releaseTuckedAwayWin();
+    tuckedAwayWin = chatbotWin;
+    handleUserReclaiming = releaseTuckedAwayWin;
+    chatbotWin.once('restore', handleUserReclaiming);
+    chatbotWin.once('closed', handleUserReclaiming);
+    detachFromParentWhileMinimised(chatbotWin);
+    chatbotWin.minimize();
+    // The walkthrough happens in the app window from here, and a demo step
+    // that types needs it genuinely focused -- minimising the window in front
+    // of it is most of the way there, but not all of it on every desktop.
+    if (!guidedWin.isDestroyed()) {
+        guidedWin.focus();
+    }
+}
+
+/**
+ * A walkthrough step the card could not perform, handed to the chat window
+ * that started it. The two are separate renderers — one drawing a card in the
+ * presenter, one holding the conversation and the model — and neither can
+ * reach the other, so the main process carries the question across and the
+ * answer back.
+ *
+ * The guided window is remembered rather than looked up, because by the time
+ * the answer arrives the model has had several rounds to move the app around,
+ * and the card that asked is in the window that asked — not in whatever is
+ * focused a few seconds later.
+ *
+ * Nothing here restores the chat window. It was minimised for the length of
+ * the walkthrough on purpose (`setGuideRunning`), the user is looking at the
+ * app, and the answer is drawn on the card in front of them; pulling the help
+ * window back over the control they are about to press would undo the fix
+ * while delivering it.
+ */
+let guideHelpAskingWin: BrowserWindow | null = null;
+
+export function askGuideHelp(guidedWin: BrowserWindow, payload: any) {
+    guideHelpAskingWin = guidedWin;
+    const chatbotWin = findChatbotWindow();
+    if (chatbotWin === null || chatbotWin === guidedWin) {
+        // Say so at once instead of letting the card wait out its timeout:
+        // with no chat window there is nobody to ask, and the sooner the card
+        // knows, the sooner the user gets the plain instruction back.
+        answerGuideHelp({ token: payload?.token, text: '' });
+        return false;
+    }
+    chatbotWin.webContents.send(messageChannels.guideHelp, payload);
+    return true;
+}
+
+/**
+ * A picture on its way from the Presenting Control to the help window.
+ *
+ * Held here for the same reason the guide's answer is routed here: the two are
+ * separate renderers and neither can reach the other. What is different is the
+ * TIMING -- pressing the camera also OPENS the help window, and a window still
+ * loading cannot receive a message. So the picture waits, and the window takes
+ * it when it is ready. Exactly one is held: a second snapshot replaces the
+ * first, because a queue of screenshots in the main process is a memory leak
+ * dressed as a feature.
+ */
+let pendingChatAttachment: any = null;
+
+export function sendChatAttachment(payload: any) {
+    pendingChatAttachment = payload;
+    const chatbotWin = findChatbotWindow();
+    if (chatbotWin === null) {
+        return false;
+    }
+    chatbotWin.webContents.send(messageChannels.chatAttach, payload);
+    return true;
+}
+
+/** Read once and forgotten: this must not keep a picture alive. */
+export function takeChatAttachment() {
+    const payload = pendingChatAttachment;
+    pendingChatAttachment = null;
+    return payload;
+}
+
+export function answerGuideHelp(payload: any) {
+    const win = guideHelpAskingWin;
+    guideHelpAskingWin = null;
+    if (win === null || win.isDestroyed()) {
+        return false;
+    }
+    win.webContents.send(messageChannels.guideHelpAnswer, payload);
+    return true;
 }
 
 /**
@@ -584,14 +1073,57 @@ function createPopupWindow(
 function genPopupWebPreferences(
     webPreferences: WebPreferences,
     featuresRecord: PopupWindowFeaturesType,
+    boundsKey: string | null,
 ): WebPreferences {
+    // The AI Chat window is the ONE page allowed a `<webview>` guest -- the
+    // box it keeps a company's chat site in. Keyed on the page, never on a
+    // feature the opener could ask for: a renderer that could request the
+    // tag could host a foreign page next to node integration. What the guest
+    // itself may do is decided in `aiChatGuestHelpers.ts`.
+    const guestPreferences: WebPreferences =
+        boundsKey === htmlFiles.aichat ? { webviewTag: true } : {};
     const blinkFeatures = featuresRecord.appBlinkFeatures;
     if (!blinkFeatures) {
-        return webPreferences;
+        return { ...webPreferences, ...guestPreferences };
     }
     return {
         ...webPreferences,
+        ...guestPreferences,
         enableBlinkFeatures: blinkFeatures.split('+').join(','),
+    };
+}
+
+/**
+ * The window options behind `appGlassy` -- a popup that reads as frosted glass
+ * over the app instead of a slab on top of it.
+ *
+ * The backdrop is drawn by the OS compositor, so it costs this app nothing on
+ * the machines it has to run on; a CSS `backdrop-filter` could not do it at
+ * all, having no access to what is behind its own window. The page must leave
+ * the window fully transparent for it to show through, which is why the alpha
+ * background colour is the whole point rather than an oversight -- the popup's
+ * own stylesheet paints the readable tint on top.
+ *
+ * Where the compositor cannot do it, the popup stays exactly as opaque as
+ * every other one.
+ */
+function genGlassOptions(
+    featuresRecord: PopupWindowFeaturesType,
+): BrowserWindowConstructorOptions {
+    if (featuresRecord.appGlassy !== true || !isGlassCapable) {
+        return { backgroundColor: getAppThemeBackgroundColor() };
+    }
+    return {
+        backgroundColor: '#00000000',
+        ...(isMac
+            ? ({
+                  vibrancy: 'under-window',
+                  // Or the blur freezes the moment the popup loses focus,
+                  // which is most of the time: the answers in it are about
+                  // the window behind.
+                  visualEffectState: 'active',
+              } as const)
+            : ({ backgroundMaterial: 'acrylic' } as const)),
     };
 }
 
@@ -612,7 +1144,7 @@ function handlePopupWindowOpen(
         return { action: 'deny' };
     }
 
-    const { groupWindows, selfWindows, subDisplay, featuresRecord } =
+    const { groupWindows, selfWindows, subDisplay, featuresRecord, boundsKey } =
         getPopupWindowData(win, options);
     if (groupWindows.length > 0) {
         setTimeout(() => {
@@ -628,6 +1160,20 @@ function handlePopupWindowOpen(
         return { action: 'deny' };
     }
 
+    // Where the user last left this kind of popup wins over the page's own
+    // declared placement -- that is the whole point of remembering it.
+    const savedBounds =
+        boundsKey === null
+            ? null
+            : ElectronSettingManager.getInstance().getPopupWinBounds(boundsKey);
+    if (savedBounds !== null) {
+        const { x, y, width, height } = savedBounds;
+        Object.assign(subDisplay, { x, y, width, height });
+        if (groupWindows.length > 0) {
+            Object.assign(subDisplay, genGroupCascadePosition(groupWindows));
+        }
+    }
+
     const topToMainOptions: BrowserWindowConstructorOptions = {};
     if (featuresRecord.appTopToMain) {
         topToMainOptions.parent = win;
@@ -636,6 +1182,7 @@ function handlePopupWindowOpen(
     const popupWebPreferences = genPopupWebPreferences(
         webPreferences,
         featuresRecord,
+        boundsKey,
     );
 
     const content: WindowOpenHandlerResponse = {
@@ -646,15 +1193,20 @@ function handlePopupWindowOpen(
             webPreferences: popupWebPreferences,
             // transparent: true,
             // frame: false,
-            backgroundColor: getAppThemeBackgroundColor(),
+            ...genGlassOptions(featuresRecord),
         },
         createWindow: (
             constructionOptions: BrowserWindowConstructorOptions,
         ) => {
             return createPopupWindow(
                 options,
-                popupWebPreferences,
-                featuresRecord,
+                {
+                    parentWin: win,
+                    webPreferences: popupWebPreferences,
+                    featuresRecord,
+                    boundsKey,
+                    savedBounds,
+                },
                 constructionOptions,
             );
         },
@@ -875,6 +1427,51 @@ export async function captureWebScreenShot(
     } finally {
         attemptClosing(captureWin);
     }
+}
+
+/**
+ * A photograph of a window the app already has open — the presenter or reader
+ * the user is looking at, or a projector screen that is showing.
+ *
+ * Not `captureWebScreenShot` above, which loads a URL into a NEW hidden window:
+ * that answers "what does this page look like", and the question here is "what
+ * does the operator's screen look like RIGHT NOW", drawing and spotlight and
+ * half-open menus included.
+ *
+ * `capturePage` photographs the window's own web contents rather than the
+ * desktop, which is what makes it right for this: the chatbot popup sits ON TOP
+ * of the app (`appTopToMain`), and a desktop-level grab would hand the assistant
+ * a picture of itself covering the thing it was asked about.
+ */
+export async function captureWindowImage(win: BrowserWindow | null) {
+    if (win === null || win.isDestroyed()) {
+        throw new Error('That window is not open');
+    }
+    const image = await win.webContents.capturePage();
+    return image.toDataURL();
+}
+
+/**
+ * The window a showing projector screen is drawn in, or null when that screen
+ * is not showing — which is not an error but an answer: "there is nothing on
+ * screen 2" is what most questions asking for a picture of screen 2 are really
+ * asking. The target only exists while the screen is up.
+ *
+ * `appController.mainWin` is deliberately NOT resolved in this module: it would
+ * close an import cycle (`ElectronAppController` reads `messageChannels` from
+ * here), so the caller passes the window it wants.
+ */
+export function findScreenWindow(screenId: number) {
+    return (
+        BrowserWindow.getAllWindows().find((one) => {
+            return (
+                !one.isDestroyed() &&
+                one.webContents
+                    .getURL()
+                    .includes(`screenId=${screenId.toString()}`)
+            );
+        }) ?? null
+    );
 }
 
 export function genTimeoutAttempt(

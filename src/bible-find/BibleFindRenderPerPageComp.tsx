@@ -1,4 +1,5 @@
 import { bringDomToTopView } from '../helper/helpers';
+import { tran } from '../lang/langHelpers';
 import RenderFoundItemComp from './RenderFoundItemComp';
 import { ShowFindingComp } from './ShowFindingComp';
 
@@ -7,6 +8,8 @@ export const APP_FOUND_PAGE_CLASS = 'app-found-page';
 export default function BibleFindRenderPerPageComp({
     page,
     items,
+    fromNumber,
+    toNumber,
     findText,
     bibleKey,
 }: Readonly<{
@@ -17,6 +20,8 @@ export default function BibleFindRenderPerPageComp({
               uniqueKey: string;
           }[]
         | undefined;
+    fromNumber: number;
+    toNumber: number;
     findText: string;
     bibleKey: string;
 }>) {
@@ -26,7 +31,7 @@ export default function BibleFindRenderPerPageComp({
     return (
         <>
             <div
-                className={`d-flex ${APP_FOUND_PAGE_CLASS}-${page}`}
+                className={`app-find-chunk-divider ${APP_FOUND_PAGE_CLASS}-${page}`}
                 ref={(element) => {
                     if (element === null) {
                         return;
@@ -36,13 +41,18 @@ export default function BibleFindRenderPerPageComp({
                     }, 1000);
                 }}
             >
-                <span className="app-found-highlight">{page}</span>
-                <hr
-                    className="w-100"
-                    style={{
-                        border: '1px dotted var(--bs-info-text-emphasis)',
-                    }}
-                />
+                {/*
+                 * The RANGE, not the chunk number. This line is what the
+                 * footer's numbers jump to, and a bare `1` beside a rule reads
+                 * as a stray verse number in a list made entirely of verse
+                 * numbers -- while `Results 1-20`, against the
+                 * `74 verses found` in the footer, says where in the find you
+                 * have got to.
+                 */}
+                <span className="app-data">
+                    {`${tran('Results')} ${fromNumber.toLocaleString()}` +
+                        `\u2013${toNumber.toLocaleString()}`}
+                </span>
             </div>
             <div className="w-100">
                 {items.map(({ text, uniqueKey }) => {

@@ -42,4 +42,5 @@ window up holding the last thing, and nobody is at the machine to press F5.
   [[presenting-flow-cc-elements]].
 - Icons/colours mirror the mini screen toggle: `file-slides-fill` green / `file-slides`
   red, badges `ON` / `OFF`. Menu order is clears → FG group → these two → run family.
-- Matrix row `PL-100`; the presenting flow deep mode scope is `PL-81..101` (68 rows) now.
+- Matrix row `PL-100`; the presenting flow deep mode scope is `PL-81..102` —
+  69 rows in all (`PL-10, PL-29, PL-32..76, PL-81..102`).

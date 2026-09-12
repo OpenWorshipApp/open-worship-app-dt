@@ -64,6 +64,7 @@ export const electronMockState = {
     BrowserWindowMock,
     app: {
         getVersion: vi.fn(() => '1.2.3'),
+        isReady: vi.fn(() => true),
         getAppPath: vi.fn(() => '/mock-app'),
         getPath: vi.fn(() => '/mock-user-data'),
         setPath: vi.fn(),
@@ -73,11 +74,26 @@ export const electronMockState = {
         whenReady: vi.fn(),
         requestSingleInstanceLock: vi.fn(() => true),
         quit: vi.fn(),
+        relaunch: vi.fn(),
         setAppUserModelId: vi.fn(),
         setUserTasks: vi.fn(),
         commandLine: {
             appendSwitch: vi.fn(),
         },
+    },
+    safeStorage: {
+        isEncryptionAvailable: vi.fn(() => true),
+        encryptString: vi.fn((plainText: string) => {
+            return Buffer.from(`enc:${plainText}`, 'utf8');
+        }),
+        decryptString: vi.fn((buffer: Buffer) => {
+            const text = buffer.toString('utf8');
+            if (!text.startsWith('enc:')) {
+                throw new Error('Failed to decrypt');
+            }
+            return text.slice(4);
+        }),
+        getSelectedStorageBackend: vi.fn(() => 'gnome_libsecret'),
     },
     nativeTheme: {
         shouldUseDarkColors: false,
@@ -111,6 +127,7 @@ export const electronMockState = {
     },
     dialog: {
         showOpenDialog: vi.fn(),
+        showMessageBox: vi.fn(async () => ({ response: 1 })),
     },
     ipcMain: {
         handle: vi.fn(),
@@ -129,6 +146,12 @@ export const electronMockState = {
             bounds: { x: 0, y: 0, width: 1920, height: 1080 },
             size: { width: 1920, height: 1080 },
         })),
+        getDisplayMatching: vi.fn(() => ({
+            id: 1,
+            bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+            workArea: { x: 0, y: 0, width: 1920, height: 1080 },
+            size: { width: 1920, height: 1080 },
+        })),
     },
     Menu: MenuMock,
     // constructed with `new MenuItem(...)`, so it must be a real function
@@ -145,6 +168,7 @@ export const electronMockState = {
         BrowserWindowMock.getFocusedWindow.mockClear();
         BrowserWindowMock.fromWebContents.mockClear();
         this.app.getVersion.mockClear();
+        this.app.isReady.mockClear().mockReturnValue(true);
         this.app.getAppPath.mockClear();
         this.app.getPath.mockClear();
         this.app.setPath.mockClear();
@@ -152,6 +176,7 @@ export const electronMockState = {
         this.app.whenReady.mockClear();
         this.app.requestSingleInstanceLock.mockClear();
         this.app.quit.mockClear();
+        this.app.relaunch.mockClear();
         this.app.setAppUserModelId.mockClear();
         this.app.setUserTasks.mockClear();
         this.app.commandLine.appendSwitch.mockClear();
@@ -168,11 +193,37 @@ export const electronMockState = {
         this.session.defaultSession.webRequest.onErrorOccurred.mockClear();
         this.session.defaultSession.setDisplayMediaRequestHandler.mockClear();
         this.dialog.showOpenDialog.mockClear();
+        this.dialog.showMessageBox
+            .mockClear()
+            .mockImplementation(async () => ({ response: 1 }));
         this.ipcMain.handle.mockClear();
         this.ipcMain.on.mockClear();
         this.systemPreferences.askForMediaAccess.mockClear();
+        // `mockClear` keeps any `mockReturnValue` a test set, so each default
+        // implementation is restored explicitly.
+        this.safeStorage.isEncryptionAvailable
+            .mockClear()
+            .mockReturnValue(true);
+        this.safeStorage.getSelectedStorageBackend
+            .mockClear()
+            .mockReturnValue('gnome_libsecret');
+        this.safeStorage.encryptString
+            .mockClear()
+            .mockImplementation((plainText: string) => {
+                return Buffer.from(`enc:${plainText}`, 'utf8');
+            });
+        this.safeStorage.decryptString
+            .mockClear()
+            .mockImplementation((buffer: Buffer) => {
+                const text = buffer.toString('utf8');
+                if (!text.startsWith('enc:')) {
+                    throw new Error('Failed to decrypt');
+                }
+                return text.slice(4);
+            });
         this.screen.getAllDisplays.mockClear();
         this.screen.getPrimaryDisplay.mockClear();
+        this.screen.getDisplayMatching.mockClear();
         MenuMock.mockClear();
         menuBuildFromTemplate.mockClear();
         menuSetApplicationMenu.mockClear();
@@ -189,6 +240,7 @@ export const electronMockState = {
 export function createElectronModuleMock() {
     const electronModule = {
         app: electronMockState.app,
+        safeStorage: electronMockState.safeStorage,
         nativeTheme: electronMockState.nativeTheme,
         shell: electronMockState.shell,
         clipboard: electronMockState.clipboard,

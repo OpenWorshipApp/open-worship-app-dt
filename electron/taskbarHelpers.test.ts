@@ -12,6 +12,10 @@ const platformFlags = vi.hoisted(() => {
     return { isDev: false, isWindows: true };
 });
 
+const { resetPopupWindowsBounds } = vi.hoisted(() => ({
+    resetPopupWindowsBounds: vi.fn(),
+}));
+
 vi.mock('./electronHelpers', () => ({
     get isDev() {
         return platformFlags.isDev;
@@ -19,6 +23,7 @@ vi.mock('./electronHelpers', () => ({
     get isWindows() {
         return platformFlags.isWindows;
     },
+    resetPopupWindowsBounds,
 }));
 
 import {
@@ -26,6 +31,7 @@ import {
     initAppUserModelId,
     initSecondInstance,
     initUserTasks,
+    relaunchApp,
 } from './taskbarHelpers';
 import { electronMockState } from './testElectronModule';
 import { createMockBrowserWindow } from './testUtils';
@@ -59,6 +65,31 @@ describe('taskbarHelpers', () => {
         electronMockState.app.getAppPath.mockReturnValue('/mock-app');
         platformFlags.isDev = false;
         platformFlags.isWindows = true;
+        resetPopupWindowsBounds.mockClear();
+    });
+
+    test('relaunches naming the data dir, and leaves the window alone', () => {
+        relaunchApp();
+
+        expect(electronMockState.app.relaunch).toHaveBeenCalledWith({
+            args: ['--owa-user-data-path=/mock-user-data'],
+        });
+        // A restart asked for in Settings must not move the user's window --
+        // that argument belongs to the jump list task and nowhere else.
+        expect(
+            electronMockState.app.relaunch.mock.calls[0][0].args,
+        ).not.toContain('--owa-reset-window-bounds');
+        expect(electronMockState.app.quit).toHaveBeenCalledTimes(1);
+    });
+
+    test('a dev relaunch carries the app path electron.exe needs', () => {
+        platformFlags.isDev = true;
+
+        relaunchApp();
+
+        expect(electronMockState.app.relaunch).toHaveBeenCalledWith({
+            args: ['/mock-app', '--owa-user-data-path=/mock-user-data'],
+        });
     });
 
     test('reads the data dir a relaunch names on the command line', () => {
@@ -149,6 +180,10 @@ describe('taskbarHelpers', () => {
         expect(
             appController.settingManager.restoreMainBounds,
         ).toHaveBeenCalledWith(appController.mainWin);
+        // the popups are stranded with it, and have no menu bar of their own
+        expect(resetPopupWindowsBounds).toHaveBeenCalledWith(
+            appController.mainWin,
+        );
         expect(appController.mainWin.focus).toHaveBeenCalledTimes(1);
     });
 
@@ -161,6 +196,7 @@ describe('taskbarHelpers', () => {
         expect(
             appController.settingManager.restoreMainBounds,
         ).not.toHaveBeenCalled();
+        expect(resetPopupWindowsBounds).not.toHaveBeenCalled();
         expect(appController.mainWin.focus).toHaveBeenCalledTimes(1);
         expect(appController.mainWin.restore).not.toHaveBeenCalled();
     });

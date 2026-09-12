@@ -12,7 +12,7 @@ vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     },
 }));
 
-import SettingManager from './SettingManager';
+import SettingManager, { genStringListSettingManager } from './SettingManager';
 
 describe('SettingManager', () => {
     beforeEach(() => {
@@ -94,6 +94,65 @@ describe('SettingManager', () => {
 
         expect(() => manager.setSetting('invalid')).toThrow(
             'Invalid setting value: invalid',
+        );
+    });
+});
+
+describe('genStringListSettingManager', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        getItemMock.mockReturnValue(null);
+    });
+
+    test('returns an empty list when nothing is stored', () => {
+        const manager = genStringListSettingManager('history-text-list');
+
+        expect(manager.getSetting()).toEqual([]);
+        expect(getItemMock).toHaveBeenCalledWith('history-text-list');
+    });
+
+    test('reads back a stored list', () => {
+        getItemMock.mockReturnValue('["Gen 1:1","John 3:16"]');
+
+        const manager = genStringListSettingManager('history-text-list');
+
+        expect(manager.getSetting()).toEqual(['Gen 1:1', 'John 3:16']);
+    });
+
+    // The defect this replaced: an unguarded `JSON.parse` in a render body
+    // threw on a truncated settings file and took the panel down with it.
+    test('falls back to the default when the stored JSON is truncated', () => {
+        getItemMock.mockReturnValue('["Gen 1:1","John 3:1');
+
+        const manager = genStringListSettingManager('history-text-list');
+
+        expect(manager.getSetting()).toEqual([]);
+    });
+
+    test('falls back to the default when the stored JSON is not an array', () => {
+        getItemMock.mockReturnValue('{"nope":true}');
+
+        const manager = genStringListSettingManager('history-text-list');
+
+        expect(manager.getSetting()).toEqual([]);
+    });
+
+    test('drops non-string entries instead of failing the whole read', () => {
+        getItemMock.mockReturnValue('["Gen 1:1",42,null,"John 3:16"]');
+
+        const manager = genStringListSettingManager('history-text-list');
+
+        expect(manager.getSetting()).toEqual(['Gen 1:1', 'John 3:16']);
+    });
+
+    test('serializes the list on write', () => {
+        const manager = genStringListSettingManager('history-text-list');
+
+        manager.setSetting(['Gen 1:1']);
+
+        expect(setItemMock).toHaveBeenCalledWith(
+            'history-text-list',
+            '["Gen 1:1"]',
         );
     });
 });

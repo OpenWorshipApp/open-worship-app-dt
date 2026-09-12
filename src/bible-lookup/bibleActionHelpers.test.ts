@@ -68,7 +68,7 @@ describe('bible-lookup bibleActionHelpers', () => {
     function genController() {
         return {
             onLookupSaveBibleItem: vi.fn(),
-            bibleCrossReferenceVerseKey: '',
+            selectedVerseKey: '',
             openBibleSearch: vi.fn(),
             setIsAdvanceLookupOpened: vi.fn(),
         } as any;
@@ -106,7 +106,7 @@ describe('bible-lookup bibleActionHelpers', () => {
         )!;
         expect(crossRef).toBeDefined();
         crossRef.onSelect!({} as any);
-        expect(ctl.bibleCrossReferenceVerseKey).toBe('(KJV) GEN 1:1');
+        expect(ctl.selectedVerseKey).toBe('(KJV) GEN 1:1');
         expect(ctl.openBibleSearch).toHaveBeenCalledWith('c');
         expect(ctl.setIsAdvanceLookupOpened).toHaveBeenCalledWith(true);
     });
@@ -153,7 +153,7 @@ describe('bible-lookup bibleActionHelpers', () => {
         const menu = genFoundBibleItemContextMenu({ target }, genController(), {
             id: 1,
         } as any);
-        // cross reference is suppressed on the editor page
+        // the verse-key item is suppressed on the editor page
         expect(
             menu.some((m) => m.menuElement === 'Open in Cross Reference'),
         ).toBe(false);
@@ -169,5 +169,9 @@ describe('bible-lookup bibleActionHelpers', () => {
             { id: 1 } as any,
         );
         expect(Array.isArray(menu)).toBe(true);
+        // No verse key, so the item that needs one is not offered.
+        expect(
+            menu.some((m) => m.menuElement === 'Open in Cross Reference'),
+        ).toBe(false);
     });
 });

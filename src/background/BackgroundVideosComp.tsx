@@ -26,8 +26,6 @@ import { downloadVideoOrAudio, timeToTimeString } from '../server/appHelpers';
 import { fsMove, getTempPath } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type DirSource from '../helper/DirSource';
-import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import {
@@ -265,21 +263,6 @@ function genExtraItemContextMenuItems(filePath: string) {
 }
 
 export default function BackgroundVideosComp() {
-    const handleItemsAdding = useCallback(
-        async (
-            dirSource: DirSource,
-            defaultContextMenuItems: ContextMenuItemType[],
-            event: any,
-        ) => {
-            const contextMenuItems =
-                await genVideoDownloadContextMenuItems(dirSource);
-            showAppContextMenu(event, [
-                ...defaultContextMenuItems,
-                ...contextMenuItems,
-            ]);
-        },
-        [],
-    );
     return (
         <BackgroundMediaComp
             defaultFolderName={defaultDataDirNames.BACKGROUND_VIDEO}
@@ -287,7 +270,6 @@ export default function BackgroundVideosComp() {
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_VIDEO}
             genContextMenuItems={genVideoDownloadContextMenuItems}
-            onItemsAdding={handleItemsAdding}
             genExtraItemContextMenuItems={genExtraItemContextMenuItems}
             itemFillingClassname="video-thumbnail"
         />

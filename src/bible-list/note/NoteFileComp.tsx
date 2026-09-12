@@ -8,7 +8,7 @@ import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import {
     genRemovingAttachedBackgroundMenu,
     useAttachedBackgroundData,
-    extractDropData,
+    extractDropDataOfType,
     handleAttachBackgroundDrop,
 } from '../../helper/dragHelpers';
 import { DragTypeEnum } from '../../helper/DragInf';
@@ -22,6 +22,7 @@ import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { copyToClipboard } from '../../server/appHelpers';
 import Note from './Note';
 import NoteItem from './NoteItem';
+import { exportBibleNote } from './bibleNoteArchiveHelpers';
 import { selectAndImportBibleNoteItemArchive } from './bibleNoteItemArchiveHelpers';
 import { moveNoteItemTo } from './noteHelpers';
 
@@ -100,17 +101,22 @@ function genContextMenu(
                 createNewNoteItem(note);
             },
         },
-        ...(note.isDefault
-            ? [
-                  {
-                      childBefore: genContextMenuItemIcon('box-arrow-in-down'),
-                      menuElement: tran('Import'),
-                      onSelect: () => {
-                          selectAndImportBibleNoteItemArchive(note);
-                      },
-                  },
-              ]
-            : []),
+        {
+            // Every note file, not only `Default`: an item exported from one
+            // file has to be able to come back into any of them.
+            childBefore: genContextMenuItemIcon('box-arrow-in-down'),
+            menuElement: tran('Import'),
+            onSelect: () => {
+                selectAndImportBibleNoteItemArchive(note);
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('file-earmark-arrow-down'),
+            menuElement: tran('Export'),
+            onSelect: () => {
+                exportBibleNote(note.filePath);
+            },
+        },
         ...(isAttachedBackgroundElement
             ? genRemovingAttachedBackgroundMenu(note.filePath)
             : []),
@@ -126,9 +132,12 @@ function NotePreview({ note }: Readonly<{ note: Note }>) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="w-100 accordion accordion-flush py-1">
+        <div className="w-100 accordion accordion-flush">
             <div
-                className={'accordion-header d-flex app-caught-hover-pointer'}
+                className={
+                    'accordion-header d-flex app-caught-hover-pointer' +
+                    ' app-cue-group'
+                }
                 onClick={handleToggleOpened}
             >
                 <div className="flex-fill">
@@ -139,21 +148,36 @@ function NotePreview({ note }: Readonly<{ note: Note }>) {
                                 : 'bi-chevron-right'
                         }`}
                     />
-                    <span className="w-100 text-center">
-                        <i
-                            className={`bi bi-book${
-                                note.isOpened ? '-fill' : ''
-                            } px-1`}
-                        />
-                        {fileSource.name}
-                    </span>
+                    <i
+                        className={`bi bi-journal${
+                            note.isOpened ? '-text' : 's'
+                        } px-1`}
+                    />
+                    <span className="app-ellipsis">{fileSource.name}</span>
                 </div>
                 {note.isOpened ? (
                     <div className="me-2">
                         <i
-                            className="bi bi-plus app-caught-hover-pointer"
-                            style={{ color: 'green', fontSize: '20px' }}
+                            className="bi bi-plus app-ghost-button app-cue-add"
+                            role="button"
+                            tabIndex={0}
+                            aria-label={tran('New Note Item')}
+                            title={tran('New Note Item')}
                             onClick={(event) => {
+                                event.stopPropagation();
+                                createNewNoteItem(note);
+                            }}
+                            onKeyDown={(event) => {
+                                if (
+                                    event.key !== 'Enter' &&
+                                    event.key !== ' '
+                                ) {
+                                    return;
+                                }
+                                // Otherwise Space scrolls the panel and Enter
+                                // reaches the header behind, which toggles the
+                                // folder shut on the item just added.
+                                event.preventDefault();
                                 event.stopPropagation();
                                 createNewNoteItem(note);
                             }}
@@ -222,8 +246,14 @@ export default function NoteFileComp({
     const noteRef = useAppCurrentRef(note);
     const filePathRef = useAppCurrentRef(filePath);
     const handleDataDropping = useCallback((event: any) => {
-        const droppedData = extractDropData(event);
-        if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
+        // Typed rather than `extractDropData`: a verse row drags as a bible item
+        // AND as a note item at once, so the note file has to ask for its own
+        // kind instead of reading whatever the `text` payload happens to be.
+        const droppedData = extractDropDataOfType(
+            event,
+            DragTypeEnum.NOTE_ITEM,
+        );
+        if (droppedData !== null) {
             stopDraggingState(event);
             const noteItem = droppedData.item as NoteItem;
             if (noteItem.filePath === undefined) {

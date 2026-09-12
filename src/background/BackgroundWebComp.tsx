@@ -4,7 +4,6 @@ import { useCallback, useRef } from 'react';
 import { useState } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import {
     defaultDataDirNames,
@@ -105,21 +104,7 @@ export default function BackgroundWebComp() {
         },
         [getAddUrlContextMenuItem],
     );
-    const dirSourceRef = useAppCurrentRef(dirSource);
     const genWebContextMenuItemsRef = useAppCurrentRef(genWebContextMenuItems);
-    const handleItemsAdding = useCallback(
-        (defaultContextMenuItems: ContextMenuItemType[], event: any) => {
-            if (dirSourceRef.current === null) {
-                return;
-            }
-            showAppContextMenu(event, [
-                ...defaultContextMenuItems,
-                ...genWebContextMenuItemsRef.current(dirSourceRef.current),
-            ]);
-        },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [],
-    );
     const handleContextMenuItemsGenerating = useCallback(
         async (dirSource: DirSource) => {
             return genWebContextMenuItemsRef.current(dirSource);
@@ -163,7 +148,6 @@ export default function BackgroundWebComp() {
                             dirPath: dirSource.dirPath,
                             extensions: getMimetypeExtensions('web'),
                         }}
-                        onItemsAdding={handleItemsAdding}
                     />
                 )}
             </div>

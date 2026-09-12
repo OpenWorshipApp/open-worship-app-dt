@@ -12,6 +12,7 @@ import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAb
 import appProvider from '../server/appProvider';
 import { useFileSourceRefreshEvents } from '../helper/dirSourceHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from './ItemColorNoteComp';
 import {
     getMenuTitleRevealFile,
@@ -262,6 +263,7 @@ export default function FileItemHandlerComp({
         <li
             className={
                 `list-group-item ${moreClassName} app-overflow-hidden` +
+                ' app-has-action-rail' +
                 ` ${userClassName ?? ''} ${isPointer ? 'pointer' : ''}`
             }
             onClick={handleClicking}
@@ -299,11 +301,23 @@ export default function FileItemHandlerComp({
                             renderChild(fileData)
                         )}
                     </div>
-                    {isDisabledColorNote ? null : (
-                        <div className="color-note-container">
+                    {/* The row's action rail: the ⋮ that opens the menu a
+                        right-click gives, then the colour note. Centred on the
+                        row rather than hung off its top corner — both act on
+                        the whole row, not on its first line. */}
+                    <div
+                        className={
+                            'color-note-container app-action-rail' +
+                            ' app-action-rail--pinned'
+                        }
+                    >
+                        <ContextMenuDotsButtonComp
+                            onOpening={handleContextMenuOpening}
+                        />
+                        {isDisabledColorNote ? null : (
                             <ItemColorNoteComp item={fileSource} />
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </>
             )}
         </li>

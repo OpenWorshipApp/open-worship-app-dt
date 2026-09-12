@@ -5,8 +5,8 @@ metadata:
   type: project
 ---
 
-Local npm is v12 (node v22.22.3, win-arm64), which changed two defaults that
-break a plain `npm i` here:
+Local npm is v12 (node v24.15.0; written on win-arm64, repo now on macOS),
+which changed two defaults that break a plain `npm i` here:
 
 1. `allow-git = "none"` → `npm error code EALLOWGIT` on the five git deps
    (`bible-note`, `open-lyric`, `open-lyric-plugin-km-kh`, `docx-to-html`,
@@ -17,15 +17,18 @@ break a plain `npm i` here:
    `electron-winstaller` blocked — all harmless, since the win32-arm64 native
    packages install as normal optional deps.
 
-**The real casualty is electron:** its zip lands in
-`~/AppData/Local/electron/Cache` but `node_modules/electron/dist/` is never
-extracted, so `npm run dev` has no `electron.exe`. Fix with
-`node node_modules/electron/install.js` after every fresh install.
+**The real casualty is electron:** its zip lands in the electron cache but
+`node_modules/electron/dist/` is never extracted, so `npm run dev` has no
+binary. Fix with `node node_modules/electron/install.js` after every fresh
+install.
 
 **Why:** these are npm-version defaults, not repo breakage — the errors look
 like a broken dependency list or a corrupt lockfile.
 
-**How to apply:** run `npm i --allow-git=all`, then
-`node node_modules/electron/install.js`, then verify
-`node_modules/electron/dist/electron.exe` exists before trying
+**How to apply:** the manual fix now ships as scripts — run `npm run i:d:a`
+(= `npm cache clean --force && npm i --allow-git=all && npm run
+electron:install`); `i:d` is the `--allow-git=root` variant, and
+`electron:install` = `node node_modules/electron/install.js`. Then verify the
+electron artifact exists — `node_modules/electron/dist/electron.exe` on
+Windows, `node_modules/electron/dist/Electron.app` on macOS — before trying
 [[dev-data-dir-is-separate]] / `npm run dev`.

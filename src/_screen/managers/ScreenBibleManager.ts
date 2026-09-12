@@ -10,7 +10,6 @@ import {
     bringDomToTopView,
     checkIsVerticalPartialInvisible,
     cloneJson,
-    parseJsonSafely,
 } from '../../helper/helpers';
 import {
     getSetting,
@@ -30,7 +29,6 @@ import {
     getBibleListOnScreenSetting,
 } from '../screenHelpers';
 import * as loggerHelpers from '../../helper/loggerHelpers';
-import { handleError } from '../../helper/errorHelpers';
 import { screenManagerSettingNames } from '../../helper/constants';
 import ScreenEventHandler from './ScreenEventHandler';
 import type ScreenManagerBase from './ScreenManagerBase';
@@ -42,6 +40,7 @@ import { unlocking } from '../../server/unlockingHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import Bible from '../../bible-list/Bible';
 import type { AnyObjectType } from '../../helper/typeHelpers';
+import SettingManager from '../../helper/SettingManager';
 import type {
     BasicScreenMessageType,
     BibleItemDataType,
@@ -55,6 +54,21 @@ import {
 } from '../../others/color/colorHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { tran } from '../../lang/langHelpers';
+
+const textStyleSettingManager = new SettingManager<AnyObjectType>({
+    settingName: `${SCREEN_BIBLE_SETTING_PREFIX}-style-text`,
+    defaultValue: {},
+    isErrorToDefault: true,
+    validate: (jsonString) => {
+        try {
+            return JSON.parse(jsonString) instanceof Object;
+        } catch (_error) {
+            return false;
+        }
+    },
+    serialize: (style) => JSON.stringify(style),
+    deserialize: (jsonString) => JSON.parse(jsonString),
+});
 
 class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType> {
     static readonly eventNamePrefix: string = 'screen-ft-m';
@@ -335,28 +349,11 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     static get textStyle(): AnyObjectType {
-        const str =
-            getSetting(`${SCREEN_BIBLE_SETTING_PREFIX}-style-text`) ?? '';
-        try {
-            const style = parseJsonSafely(str, true);
-            if (style !== null) {
-                if (typeof style !== 'object') {
-                    loggerHelpers.appError(style);
-                    throw new Error('Invalid style data');
-                }
-                return style;
-            }
-        } catch (error) {
-            handleError(error);
-        }
-        return {};
+        return textStyleSettingManager.getSetting();
     }
 
     static set textStyle(style: AnyObjectType) {
-        setSetting(
-            `${SCREEN_BIBLE_SETTING_PREFIX}-style-text`,
-            JSON.stringify(style),
-        );
+        textStyleSettingManager.setSetting(style);
         this.addPropEvent('text-style');
     }
 

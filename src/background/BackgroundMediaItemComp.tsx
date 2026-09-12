@@ -7,6 +7,7 @@ import {
 } from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
 import type { DragTypeEnum } from '../helper/DragInf';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { handleDragStart } from '../helper/dragHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -149,12 +150,17 @@ export default function BackgroundMediaItemComp({
                 thumbnailWidth,
                 thumbnailHeight,
                 <div
+                    className="d-flex align-items-start"
                     style={{
                         position: 'absolute',
                         top: 0,
                         right: 0,
+                        zIndex: 2,
                     }}
                 >
+                    <ContextMenuDotsButtonComp
+                        onOpening={handleContextMenuOpening}
+                    />
                     <ItemColorNoteComp item={fileSource} />
                 </div>,
             )}

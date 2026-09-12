@@ -212,27 +212,34 @@ export default function RenderFindingInfoHeaderComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const isFiltered = selectedBooks.length > 0;
     return (
-        <div className="w-100 d-flex overflow-hidden app-inner-shadow p-1 align-items-center">
+        <div className="app-find-filter-bar">
             <button
-                className="btn btn-sm btn-outline-secondary flex-shrink-0 me-1 px-1 py-0"
+                className="app-ghost-button"
                 type="button"
-                aria-label={tran('Reset Search Data')}
-                title={tran('Reset Search Data')}
+                aria-label={tran('More Options')}
+                title={tran('More Options')}
                 onClick={handleExtraActions}
             >
                 <i className="bi bi-three-dots-vertical" />
             </button>
-            <div className="w-100 overflow-hidden">
-                <button
-                    className="btn btn-sm btn-info app-ellipsis"
-                    title={text}
-                    style={{ maxWidth: '100%' }}
-                    onClick={handleSelectBookKeys}
-                >
-                    <span style={{ fontFamily }}>{text}</span>
-                </button>
-            </div>
+            <button
+                className={
+                    'app-find-filter app-ellipsis' +
+                    (isFiltered ? ' is-filtered' : '')
+                }
+                type="button"
+                title={text}
+                onClick={handleSelectBookKeys}
+            >
+                {/*
+                 * The funnel appears only when one is actually on, so the state
+                 * survives a grayscale screen and a colour-blind reader.
+                 */}
+                {isFiltered ? <i className="bi bi-funnel-fill pe-1" /> : null}
+                <span style={{ fontFamily }}>{text}</span>
+            </button>
         </div>
     );
 }

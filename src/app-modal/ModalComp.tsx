@@ -8,6 +8,7 @@ import {
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
+import { ModalLayerContext } from './modalLayerContext';
 
 interface MyProps {
     children?: ReactNode;
@@ -47,5 +48,12 @@ export function ModalCloseButtonComp({
 }
 
 export function ModalComp({ children }: PropsWithChildren<MyProps>) {
-    return <div id="modal-container">{children}</div>;
+    return (
+        // Anything this modal opens — a floating widget above all — has to know
+        // it is on top of the modal layer so it can render ABOVE it instead of
+        // being hidden behind the very thing that opened it.
+        <ModalLayerContext value={true}>
+            <div id="modal-container">{children}</div>
+        </ModalLayerContext>
+    );
 }

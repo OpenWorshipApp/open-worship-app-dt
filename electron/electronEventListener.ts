@@ -10,6 +10,8 @@ import electron, {
 } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
+import { getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
+import { clearAiChatGuestData } from './aiChatGuestHelpers';
 import {
     checkIsEncryptedFile,
     decryptFile,
@@ -18,11 +20,18 @@ import {
 import {
     attemptClosing,
     captureWebScreenShot,
+    captureWindowImage,
+    findScreenWindow,
     goDownload,
     isMac,
     messageChannels,
     previewPrintCurrentWindow,
     printHTMLContent,
+    setGuideRunning,
+    askGuideHelp,
+    answerGuideHelp,
+    sendChatAttachment,
+    takeChatAttachment,
     tarAppend,
     tarCreate,
     tarExtract,
@@ -48,6 +57,9 @@ import {
     type PptxToHtmlsParamsType,
 } from './msHelpers';
 import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
+import { captureOAuthRedirectUrl } from './oauthHelpers';
+import { relaunchApp } from './taskbarHelpers';
+import { readWebPage } from './webPageHelpers';
 
 const { dialog, ipcMain, app } = electron;
 
@@ -136,6 +148,23 @@ export function initEventListenerApp(appController: ElectronAppController) {
         event.returnValue = app.getPath('temp');
     });
 
+    // What the in-app chatbot connects to. Both doors are on ports this
+    // process picked at launch, so nothing in the renderer can hardcode them.
+    ipcMain.on('main:app:get-ai-endpoints', (event) => {
+        event.returnValue = {
+            mcpUrl: getMcpUrl(),
+            cdpPort: getRemoteDebuggingPort(),
+        };
+    });
+
+    // The AI Chat window's "Sign out of every site". It is the only way in
+    // the app to end a sign-in held on the guest partition, and the window
+    // has already asked twice by the time it gets here.
+    onAsync(ipcMain, 'main:app:clear-ai-chat-data', async () => {
+        await clearAiChatGuestData();
+        return true;
+    });
+
     onAsync(ipcMain, 'main:app:select-dirs', async () => {
         const result = await dialog.showOpenDialog(appController.mainWin, {
             properties: ['openDirectory'],
@@ -152,6 +181,23 @@ export function initEventListenerApp(appController: ElectronAppController) {
                 filters,
             });
             return result.filePaths;
+        },
+    );
+
+    // A photograph of what the operator is actually looking at. Three callers,
+    // one path: the Presenting Control's snapshot button, the chatbot's own
+    // "attach a screenshot", and `owa_screenshot` for an agent driving the app
+    // from outside. Everything here is a data URL, and the renderer that asked
+    // is the one that decides what to do with it.
+    onAsync(
+        ipcMain,
+        'main:app:capture-window',
+        async ({ screenId }: { screenId?: number }) => {
+            return await captureWindowImage(
+                screenId === undefined
+                    ? appController.mainWin
+                    : findScreenWindow(screenId),
+            );
         },
     );
 }
@@ -363,6 +409,17 @@ export function initFinderEvent() {
 }
 
 export function initEventOther(appController: ElectronAppController) {
+    // OAuth sign-in (e.g. CCLI SongSelect): the consent page must live in a
+    // real window the main process controls, so the renderer only receives
+    // the captured redirect URL back.
+    onAsync(
+        ipcMain,
+        'main:app:oauth-authorize',
+        (data: { authorizeUrl: string; redirectUriPrefix: string }) => {
+            return captureOAuthRedirectUrl(data);
+        },
+    );
+
     onAsync(
         ipcMain,
         'main:app:tar-extract',
@@ -512,6 +569,13 @@ export function initEventOther(appController: ElectronAppController) {
         goDownload();
     });
 
+    // Asked for by the Settings panel that owns a setting a reload cannot
+    // apply. Fire-and-forget on purpose: nothing can be answered to a renderer
+    // that is about to be torn down with the process.
+    ipcMain.on('main:app:relaunch', () => {
+        relaunchApp();
+    });
+
     ipcMain.on(
         'main:app:set-theme',
         (_event, theme: 'dark' | 'light' | 'system') => {
@@ -597,6 +661,24 @@ export function initEventOther(appController: ElectronAppController) {
         },
     );
 
+    // What `owa_read_website` reaches through. The address is judged in
+    // `readWebPage` itself rather than here: that function is what opens the
+    // socket, and a check placed at the door instead would be one an added
+    // caller could forget.
+    onAsync(
+        ipcMain,
+        'main:app:read-web-page',
+        (data: {
+            url: string;
+            wantsScreenshot?: boolean;
+            maxChars?: number;
+            width?: number;
+            height?: number;
+        }) => {
+            return readWebPage(data.url, data);
+        },
+    );
+
     ipcMain.on('all:app:check-is-window-on-top', (event) => {
         const win = BrowserWindow.fromWebContents(event.sender);
         if (win === null) {
@@ -648,7 +730,12 @@ export function initEventOther(appController: ElectronAppController) {
             {
                 key,
                 menusData,
-            }: { key: string; menusData: CustomMenusDataType | null },
+                options,
+            }: {
+                key: string;
+                menusData: CustomMenusDataType | null;
+                options?: { isRoutedToFocusedWindow?: boolean };
+            },
         ) => {
             // Route clicks back to the renderer that contributed the items, not
             // to whichever window happens to be focused: only the owner has a
@@ -656,6 +743,13 @@ export function initEventOther(appController: ElectronAppController) {
             // tools links), so focus-based routing silently drops the click
             // whenever a popup or a screen window is in front.
             const ownerWin = BrowserWindow.fromWebContents(event.sender);
+            // ...unless the items belong to a feature EVERY window carries.
+            // Only one entry is kept per key, so the last window to load owns
+            // the routing and every other window's press lands nowhere -- the
+            // owner is not focused, and its own guard drops it. For those, the
+            // window in front is the one that meant to press it.
+            const isRoutedToFocusedWindow =
+                options?.isRoutedToFocusedWindow === true;
             setCustomMenusData(
                 key,
                 menusData === null
@@ -663,7 +757,13 @@ export function initEventOther(appController: ElectronAppController) {
                     : {
                           menusData,
                           clickMenu: (menuData: any) => {
-                              sendMenuClicked(menuData, ownerWin);
+                              sendMenuClicked(
+                                  menuData,
+                                  isRoutedToFocusedWindow
+                                      ? (BrowserWindow.getFocusedWindow() ??
+                                            ownerWin)
+                                      : ownerWin,
+                              );
                           },
                       },
             );
@@ -704,4 +804,83 @@ export function initEventOther(appController: ElectronAppController) {
             event.returnValue = returnValue;
         },
     );
+
+    // Sibling of `main:app:client-setting` for credentials. Same shape, but the
+    // values are encrypted at rest by `safeStorage`. There is deliberately no
+    // `get-all-keys`: enumerating secret key names buys nothing.
+    ipcMain.on(
+        'main:app:secure-setting',
+        (
+            event,
+            data: {
+                key: string;
+                type: 'get' | 'set' | 'delete' | 'clear' | 'is-available';
+                value?: any;
+            },
+        ) => {
+            const { key, type, value } = data;
+            const { settingManager } = appController;
+            let returnValue: any = null;
+            if (type === 'get') {
+                returnValue = settingManager.getSecureSetting(key);
+            } else if (type === 'set') {
+                settingManager.setSecureSetting(key, value);
+                returnValue = true;
+            } else if (type === 'delete') {
+                settingManager.deleteSecureSetting(key);
+                returnValue = true;
+            } else if (type === 'clear') {
+                settingManager.clearSecureSettings();
+                returnValue = true;
+            } else if (type === 'is-available') {
+                returnValue = settingManager.checkIsSecureStorageAvailable();
+            }
+            event.returnValue = returnValue;
+        },
+    );
+
+    ipcMain.on('all:app:check-is-main-window', (event) => {
+        event.returnValue = event.sender === appController.mainWin.webContents;
+    });
+
+    // The chatbot's walkthrough card, relayed out of the window it is drawn in
+    // (`domHelpers`). The sender IS that window, which is the one the card
+    // rings controls in -- and so the one the help window must not cover.
+    ipcMain.on(
+        'all:app:guide-running',
+        (event, data: { isRunning: boolean }) => {
+            const win = BrowserWindow.fromWebContents(event.sender);
+            if (win === null) {
+                return;
+            }
+            setGuideRunning(win, data.isRunning === true);
+        },
+    );
+
+    // The same card, stuck on a step it cannot press. It asks the chat window
+    // that started the walkthrough; the answer comes back the other way and is
+    // drawn on the card, so the user never leaves the window they are working
+    // in. Both halves are routed here because the two renderers cannot reach
+    // each other, and the ANSWER carries no window of its own -- it goes back
+    // to whichever window asked, which `askGuideHelp` is holding.
+    ipcMain.on('all:app:guide-help', (event, data: any) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        if (win === null) {
+            return;
+        }
+        askGuideHelp(win, data ?? {});
+    });
+    ipcMain.on('all:app:guide-help-answer', (_event, data: any) => {
+        answerGuideHelp(data ?? {});
+    });
+
+    // The Presenting Control's snapshot, on its way to the help window. Sent
+    // if that window is already up, and held for it either way -- the same
+    // press opens it, and a window still loading has nobody listening yet.
+    ipcMain.on('all:app:chat-attach', (_event, data: any) => {
+        sendChatAttachment(data ?? {});
+    });
+    ipcMain.on('main:app:take-chat-attachment', (event) => {
+        event.returnValue = takeChatAttachment();
+    });
 }

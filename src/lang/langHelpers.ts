@@ -5,10 +5,10 @@ import { unlocking } from '../server/unlockingHelpers';
 import { globalCacheManager10Seconds } from '../others/CacheManager';
 import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
-import { getSetting, setSetting } from '../helper/settingHelpers';
+import SettingManager from '../helper/SettingManager';
 import type { Editor, OpenLyric, OpenLyricMarkdownManager } from 'open-lyric';
+import { resolveGzBundleFilePath } from './gzBundleFilePath';
 
-const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LANG_CODE = 'en';
 export const supportedLangCodes = [DEFAULT_LANG_CODE, 'km'];
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
@@ -479,9 +479,27 @@ export type LanguageDataType = {
      */
     nativeName?: string;
     flagSVG: string;
-    getLookupData?: (packageLocation: string) => Promise<{
+    getLookupData?: (_args: {
+        readJsonFile: (url: string) => Promise<any>;
+        packageDir: string;
+    }) => Promise<{
         namesMap: AnyObjectType;
         locationsMap: AnyObjectType;
+    } | null>;
+    /**
+     * The dataset's own version numbers, read WITHOUT loading the dataset.
+     *
+     * The derived lookup index is cached on disk, and the only cheap way to tell
+     * a cache built from an older dataset apart is to ask the package what its
+     * maps are stamped with. A package that cannot answer (or predates this)
+     * leaves the cache keyed on the app version alone.
+     */
+    getLookupDataVersion?: (_args: {
+        readJsonFileVersion: (url: string) => Promise<number | null>;
+        packageDir: string;
+    }) => Promise<{
+        namesMap: number;
+        locationsMap: number;
     } | null>;
     sanitizeText: (text: string) => string;
     sanitizePreviewText: (text: string) => string;
@@ -496,11 +514,28 @@ export type LanguageDataType = {
     bibleAudioAvailable: boolean;
     sanitizeTranKey: (key: string) => string;
     transformBibleBookName: (bookName: string) => string[];
-    getBibleCrossRefBundleFilePath: () => string;
+    getBibleCrossRefBundleFilePath: (
+        resolveGzBundleFilePath: (bundle: {
+            filePath: string;
+            fileName: string | null;
+        }) => string,
+    ) => string;
     initOpenLyricPlugins?: (data: {
         editor?: Editor;
         openLyric?: OpenLyric;
         openLyricMarkdownManager?: OpenLyricMarkdownManager;
+        genOpenLyricFontFaces: (
+            fontFacesList: OpenLyricFontFace,
+            fontFaceData: {
+                title: string;
+                fontFaces: string[];
+                indexRange: number;
+            },
+        ) => {
+            title: string;
+            fontFaces: string[];
+            indexRange: number;
+        }[];
     }) => void;
 };
 
@@ -538,18 +573,35 @@ export function checkIsValidLocale(text: string) {
     return !!(allLocalesMap as any)[text];
 }
 
+let localeSettingManager: SettingManager<LocaleType> | null = null;
+/**
+ * Built on first use, NOT at module load. This module sits inside the
+ * `SettingManager` -> `appLocalStorage` -> `fileHelpers` -> `FileSource` ->
+ * `FileSourceMetaManager` -> `langHelpers` import cycle, so when
+ * `SettingManager` is the module that starts the cycle, a top-level `new` here
+ * reaches the class while it is still in its temporal dead zone and throws
+ * "default is not a constructor".
+ */
+function getLocaleSettingManager() {
+    localeSettingManager ??= new SettingManager<LocaleType>({
+        settingName: 'language-locale',
+        defaultValue: DEFAULT_LOCALE,
+        isErrorToDefault: true,
+        validate: checkIsValidLocale,
+    });
+    return localeSettingManager;
+}
 export function getCurrentLocale(): LocaleType {
-    const locale = getSetting(LANGUAGE_LOCALE_SETTING_NAME) ?? DEFAULT_LOCALE;
-    if (checkIsValidLocale(locale)) {
-        return locale as LocaleType;
-    }
-    return DEFAULT_LOCALE;
+    return getLocaleSettingManager().getSetting();
 }
 export function setCurrentLocale(locale: LocaleType) {
+    // Coerced BEFORE the manager sees it: `setSetting` throws on an invalid
+    // value, and this is called from the language picker, which has always
+    // silently fallen back rather than failing.
     if (!checkIsValidLocale(locale)) {
         locale = DEFAULT_LOCALE;
     }
-    setSetting(LANGUAGE_LOCALE_SETTING_NAME, locale);
+    getLocaleSettingManager().setSetting(locale);
 }
 
 const langCache = new Map<string, LanguageDataType>();
@@ -577,6 +629,31 @@ async function fetchLangData(langCode: string) {
     return module.default as LanguageDataType;
 }
 
+/**
+ * ONE language package, addressed by its code.
+ *
+ * The point of not going through `getAllLangsAsync` is that this imports a
+ * single language chunk: anything that only needs, say, the lookup dataset of
+ * the language the user picked must not pay to import every other language's
+ * module for nothing.
+ */
+export async function getLangDataByCodeAsync(
+    langCode: string,
+): Promise<LanguageDataType | null> {
+    const cachedLangData = langCache.get(langCode);
+    if (cachedLangData !== undefined) {
+        return cachedLangData;
+    }
+    const langData = await fetchLangData(langCode);
+    if (langData === null) {
+        return null;
+    }
+    langCache.set(langData.locale, langData);
+    langCache.set(langCode, langData);
+    initLangCss(langData);
+    return langData;
+}
+
 export async function getLangDataAsync(
     locale: LocaleType,
 ): Promise<LanguageDataType | null> {
@@ -588,13 +665,14 @@ export async function getLangDataAsync(
     if (langCode === null) {
         return null;
     }
-    const langData = await fetchLangData(langCode);
+    const langData = await getLangDataByCodeAsync(langCode);
     if (langData === null) {
         return null;
     }
+    // The REQUESTED locale, which is not necessarily the package's own: every
+    // `en-*` resolves to the same English package, and each has to hit the cache
+    // under the key it was asked for.
     langCache.set(locale, langData);
-    langCache.set(langCode, langData);
-    initLangCss(langData);
     return langData;
 }
 
@@ -692,6 +770,34 @@ export function tran(...args: any[]): string {
     }
     const value = getDictValue(langData, text, currentLocale);
     return value;
+}
+
+/**
+ * `tran`, but into a NAMED language instead of the interface locale.
+ *
+ * For text that describes CONTENT the user chose a language for separately from
+ * the UI — the names-and-locations lookup is the case this exists for: its
+ * records may be Khmer while the menus around them are English, and a record's
+ * category then has to read in the language of the record, not of the menu.
+ *
+ * Unlike `tran` it does NOT throw on a missing key in dev. The interface locale
+ * is guaranteed to translate every string the app renders; a language picked for
+ * its DATA is not, and a package that ships a dataset without a complete UI
+ * dictionary must degrade to English rather than blank the panel.
+ */
+export function tranByLangData(
+    langData: LanguageDataType | null | undefined,
+    text: string,
+): string {
+    if (
+        langData === null ||
+        langData === undefined ||
+        langData.langCode === DEFAULT_LANG_CODE
+    ) {
+        return text;
+    }
+    const sanitizedKey = langData.sanitizeTranKey(text);
+    return langData.dictionary[sanitizedKey] ?? text;
 }
 
 export function toStringNum(numList: string[], n: number): string {
@@ -864,7 +970,9 @@ export async function getLocalBibleCrossRef(
     if (langData === null) {
         return null;
     }
-    const bundleFilePath = langData.getBibleCrossRefBundleFilePath();
+    const bundleFilePath = langData.getBibleCrossRefBundleFilePath(
+        resolveGzBundleFilePath,
+    );
     const db = getBibleCrossRefBundleReader(bundleFilePath);
     return db.getVerse(
         targetVerse.bookKey,
@@ -888,6 +996,23 @@ export function registerAppMenuClicked<T>(
     };
 }
 
+export type AppMenuItemsOptionsType = {
+    /**
+     * Send the click to the window the user is LOOKING AT, not to the one that
+     * registered the items.
+     *
+     * For anything route-scoped the default is right: only the registrant has a
+     * handler for its own `clickData`. But the native menu keeps ONE entry per
+     * key, so a key every window contributes -- an app-wide feature like the
+     * presenting control or the assistant -- is owned by whichever window
+     * happened to load last, and every other one's press is dropped by its own
+     * `getIsWindowFocused()` guard. Opening Settings used to take
+     * *Tools → Start Controlling* away from the presenter for exactly that
+     * reason.
+     */
+    isRoutedToFocusedWindow?: boolean;
+};
+
 /**
  * Contribute this window's items to the native menu, or pass `null` to withdraw
  * them.
@@ -899,10 +1024,12 @@ export function registerAppMenuClicked<T>(
 export function setAppMenuItems(
     key: string,
     menusData: CustomMenusDataType | null,
+    options?: AppMenuItemsOptionsType,
 ) {
     appProvider.messageUtils.sendData('main:app:set-menu-items', {
         key,
         menusData,
+        options,
     });
 }
 

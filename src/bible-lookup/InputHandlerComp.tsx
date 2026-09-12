@@ -31,7 +31,6 @@ import {
 import { pasteTextToInput } from '../server/appHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { tran } from '../lang/langHelpers';
-import LocationNameLookupToggleComp from '../location-name-lookup/LocationNameLookupToggleComp';
 
 export const InputTextContext = createContext<{
     inputText: string;
@@ -141,6 +140,11 @@ export default function InputHandlerComp({
                 type="text"
                 autoFocus
                 placeholder={placeholder ?? ''}
+                // The one box a "type a verse" step is about; it is named
+                // only by the verse inside it, which no matcher (or screen
+                // reader) can find it by.
+                title={tran('Bible Reference')}
+                aria-label={tran('Bible Reference')}
                 style={{ fontFamily }}
                 onKeyUp={handleInputKeyUp}
                 onChange={handleInputChange}
@@ -164,7 +168,6 @@ export default function InputHandlerComp({
             >
                 <i className="bi bi-caret-right" />
             </button>
-            <LocationNameLookupToggleComp />
         </Fragment>
     );
 }

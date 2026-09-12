@@ -1,11 +1,11 @@
 ---
 name: cdp-dynamic-import-hijack
-description: Never `import()` an app module inside chrome-devtools evaluate_script — it re-runs module side effects and hijacks the app's global handlers
+description: Never `import()` an app module inside the owa-devtools MCP evaluate_script — it re-runs module side effects and hijacks the app's global handlers
 metadata:
   type: feedback
 ---
 
-Do NOT use `await import('/src/…')` inside `mcp__chrome-devtools__evaluate_script`
+Do NOT use `await import('/src/…')` inside `mcp__owa-devtools__evaluate_script`
 to inspect app module state (layer stacks, managers, singletons). The devtools
 evaluation world has its own module map, so the file is **re-executed** as a
 second instance: its module-level side effects run again and clobber the app's.

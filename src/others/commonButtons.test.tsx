@@ -7,7 +7,18 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 const h = vi.hoisted(() => ({
     goToPathMock: vi.fn(),
     openSettingPageMock: vi.fn(),
+    openChatbotPageMock: vi.fn(),
+    openOthersSettingMock: vi.fn(),
+    // Typed, so `mock.calls[0][0]` is the title rather than `never`: an
+    // untyped `vi.fn` infers an EMPTY parameter tuple and indexing it is a
+    // type error.
+    showAppConfirmMock: vi.fn(
+        async (_title: string, _body: string, _options?: any) => true,
+    ),
+    openAiChatPageMock: vi.fn(),
+    popupWidgetManager: { openConfirm: vi.fn() },
     openExternalURLMock: vi.fn(),
+    getIsAIEnabledMock: vi.fn(() => true),
     useKeyboardRegisteringMock: vi.fn(),
     captured: { kbCb: undefined as any },
     appProvider: {
@@ -15,6 +26,13 @@ const h = vi.hoisted(() => ({
         appInfo: { homepage: 'https://owa.app' },
         browserUtils: { openExternalURL: vi.fn() },
         systemUtils: { isDev: false },
+        // `commonButtons` reaches `appHelpers`, which reads this at module
+        // scope through `fileHelpers`; without it the file throws while it is
+        // still being imported and the whole suite reports zero tests.
+        pathUtils: { sep: '/', join: (...parts: string[]) => parts.join('/') },
+        // `QuitCurrentPageComp` renders nothing outside the main window, and
+        // `checkIsMainWindow` asks over this channel.
+        messageUtils: { sendDataSync: vi.fn(() => true) },
     },
 }));
 
@@ -33,12 +51,31 @@ vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
 vi.mock('../router/routeHelpers', () => ({ goToPath: h.goToPathMock }));
 vi.mock('../setting/settingHelpers', () => ({
     openSettingPage: h.openSettingPageMock,
+    openOthersSetting: h.openOthersSettingMock,
+}));
+vi.mock('../popup-widget/popupWidgetHelpers', () => ({
+    showAppConfirm: h.showAppConfirmMock,
+    // The AI caution reads this to decide whether a dialog can be drawn at
+    // all; a window with none fails OPEN, so it must be non-null here or
+    // these tests would never exercise the confirm.
+    popupWidgetManager: h.popupWidgetManager,
 }));
 vi.mock('../server/appProvider', () => ({ default: h.appProvider }));
+// `domHelpers` registers IPC listeners at module scope, which the appProvider
+// mock above has no channel for.
+vi.mock('../helper/domHelpers', () => ({
+    openChatbotPage: h.openChatbotPageMock,
+    openAiChatPage: h.openAiChatPageMock,
+}));
+vi.mock('../helper/ai/aiHelpers', () => ({
+    getIsAIEnabled: h.getIsAIEnabledMock,
+}));
 
 import {
     BibleLookupButtonComp,
     BibleLookupTogglePopupContext,
+    AiChatButtonComp,
+    ChatbotButtonComp,
     HelpButtonComp,
     QuitCurrentPageComp,
     SettingButtonComp,
@@ -62,6 +99,18 @@ function clickButton() {
         button.dispatchEvent(
             new MouseEvent('click', { bubbles: true, cancelable: true }),
         );
+    });
+}
+
+// The disabled-AI path answers a promise, so the press has to be awaited: the
+// confirm is opened in a microtask and the settings window in the one after.
+async function clickButtonAndSettle() {
+    await act(async () => {
+        container
+            .querySelector('button')!
+            .dispatchEvent(
+                new MouseEvent('click', { bubbles: true, cancelable: true }),
+            );
     });
 }
 
@@ -99,6 +148,74 @@ describe('others commonButtons', () => {
         expect(h.openExternalURLMock).toHaveBeenCalledWith(
             'https://owa.app/help#presenter',
         );
+    });
+
+    test('ChatbotButtonComp opens the chatbot window after the caution', async () => {
+        h.showAppConfirmMock.mockResolvedValueOnce(true);
+        await render(<ChatbotButtonComp />);
+        await clickButtonAndSettle();
+        expect(h.showAppConfirmMock).toHaveBeenCalledTimes(1);
+        expect(h.openChatbotPageMock).toHaveBeenCalled();
+    });
+
+    // Asked for by the user: the warning comes FIRST, and saying no to it
+    // means no window -- not a window with a warning already dismissed.
+    test('ChatbotButtonComp opens nothing when the caution is declined', async () => {
+        h.showAppConfirmMock.mockResolvedValueOnce(false);
+        await render(<ChatbotButtonComp />);
+        await clickButtonAndSettle();
+        expect(h.showAppConfirmMock).toHaveBeenCalledTimes(1);
+        expect(h.openChatbotPageMock).not.toHaveBeenCalled();
+    });
+
+    test('AiChatButtonComp asks the caution before opening', async () => {
+        h.showAppConfirmMock.mockResolvedValueOnce(true);
+        await render(<AiChatButtonComp />);
+        await clickButtonAndSettle();
+        expect(h.showAppConfirmMock).toHaveBeenCalledTimes(1);
+        expect(h.openAiChatPageMock).toHaveBeenCalled();
+    });
+
+    test('AiChatButtonComp opens nothing when the caution is declined', async () => {
+        h.showAppConfirmMock.mockResolvedValueOnce(false);
+        await render(<AiChatButtonComp />);
+        await clickButtonAndSettle();
+        expect(h.openAiChatPageMock).not.toHaveBeenCalled();
+    });
+
+    // The switch is the more urgent news, and warning about an assistant that
+    // is turned off is two dialogs to reach one fact.
+    test('ChatbotButtonComp skips the caution when AI is disabled', async () => {
+        h.getIsAIEnabledMock.mockReturnValueOnce(false);
+        h.showAppConfirmMock.mockResolvedValueOnce(false);
+        await render(<ChatbotButtonComp />);
+        await clickButtonAndSettle();
+        expect(h.showAppConfirmMock).toHaveBeenCalledTimes(1);
+        expect(h.showAppConfirmMock.mock.calls[0][0]).toBe(
+            'Enable AI features',
+        );
+    });
+
+    test('ChatbotButtonComp offers Settings when AI is disabled', async () => {
+        h.getIsAIEnabledMock.mockReturnValueOnce(false);
+        h.showAppConfirmMock.mockResolvedValueOnce(true);
+        await render(<ChatbotButtonComp />);
+        // The button stays: with nothing to press, nothing says why the
+        // assistant is missing.
+        expect(container.querySelector('button')).not.toBeNull();
+        await clickButtonAndSettle();
+        expect(h.openChatbotPageMock).not.toHaveBeenCalled();
+        expect(h.showAppConfirmMock).toHaveBeenCalledTimes(1);
+        expect(h.openOthersSettingMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('ChatbotButtonComp opens nothing when the offer is declined', async () => {
+        h.getIsAIEnabledMock.mockReturnValueOnce(false);
+        h.showAppConfirmMock.mockResolvedValueOnce(false);
+        await render(<ChatbotButtonComp />);
+        await clickButtonAndSettle();
+        expect(h.openOthersSettingMock).not.toHaveBeenCalled();
+        expect(h.openChatbotPageMock).not.toHaveBeenCalled();
     });
 
     test('BibleLookupButtonComp toggles showing on click and shortcut', async () => {

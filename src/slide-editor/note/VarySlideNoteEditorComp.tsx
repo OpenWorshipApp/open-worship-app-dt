@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { tran } from '../../lang/langHelpers';
 import AppDocument from '../../app-document-list/AppDocument';
 import { type SimpleNoteEditorStoreType } from '../../others/SimpleNoteEditorComp';
-import { useAppEffect } from '../../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
 import NoteEditorRenderComp from '../../others/NoteEditorRenderComp';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import {
@@ -64,10 +64,25 @@ export default function VarySlideNoteEditorComp({
     }, [store]);
     const uuid = `slide-note-editor-${slide.uuid}`;
 
+    // The closure below holds the slide as it was when the event FIRED; these
+    // refs hold the slide as it is when the read resolves. They differ only
+    // when the editor was re-fed mid-read, which is what the guard checks.
+    const appDocumentRef = useAppCurrentRef(appDocument);
+    const slideRef = useAppCurrentRef(slide);
     useFileSourceEvents(
         ['update'],
         async () => {
             const newSlide = await appDocument.getItemById(slide.id);
+            // This editor is re-fed a different slide IN PLACE (its widget key
+            // is static), so without this the old slide's note would replace
+            // the store just built for the new one — and the unmount `save()`
+            // would then write it into the wrong slide.
+            if (
+                appDocument !== appDocumentRef.current ||
+                slide !== slideRef.current
+            ) {
+                return;
+            }
             if (newSlide === null || newSlide.note === store.currentText) {
                 return;
             }

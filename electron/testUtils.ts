@@ -51,9 +51,15 @@ export type MockBrowserWindow = {
     show: ReturnType<typeof vi.fn>;
     close: ReturnType<typeof vi.fn>;
     maximize: ReturnType<typeof vi.fn>;
+    minimize: ReturnType<typeof vi.fn>;
     isMinimized: ReturnType<typeof vi.fn>;
+    isMaximized: ReturnType<typeof vi.fn>;
+    unmaximize: ReturnType<typeof vi.fn>;
+    getNormalBounds: ReturnType<typeof vi.fn>;
     isDestroyed: ReturnType<typeof vi.fn>;
     restore: ReturnType<typeof vi.fn>;
+    getParentWindow: ReturnType<typeof vi.fn>;
+    setParentWindow: ReturnType<typeof vi.fn>;
 };
 
 let lastMockWebContentsId = 0;
@@ -125,9 +131,20 @@ export function createMockBrowserWindow(
         show: vi.fn(),
         close: vi.fn(),
         maximize: vi.fn(),
+        minimize: vi.fn(),
         isMinimized: vi.fn(() => false),
+        isMaximized: vi.fn(() => false),
+        unmaximize: vi.fn(),
+        getNormalBounds: vi.fn(() => ({
+            x: 10,
+            y: 20,
+            width: 1200,
+            height: 800,
+        })),
         isDestroyed: vi.fn(() => false),
         restore: vi.fn(),
+        getParentWindow: vi.fn(() => null),
+        setParentWindow: vi.fn(),
         ...overrides,
         webContents,
     };

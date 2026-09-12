@@ -57,9 +57,11 @@ vi.mock('../helper/FileSource', () => ({
     },
 }));
 
-vi.mock('../helper/settingHelpers', () => ({
-    getSetting: mocks.getSettingMock,
-    setSetting: mocks.setSettingMock,
+vi.mock('../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: mocks.getSettingMock,
+        setItem: mocks.setSettingMock,
+    },
 }));
 
 vi.mock('../helper/errorHelpers', () => ({
@@ -294,10 +296,15 @@ describe('BibleItem', () => {
 
         expect(BibleItem.getBiblePresenterSetting()).toHaveLength(1);
 
+        // Corrupt JSON is absorbed by the setting manager's validate, so the
+        // reader degrades to the default WITHOUT going through handleError.
         mocks.settings.set('bible-presenter', '{bad-json');
-        // A non-array parsed value makes `.map` throw, exercising the
-        // outer catch path.
-        mocks.parseJsonSafelyMock.mockReturnValueOnce({ not: 'an array' });
+        expect(BibleItem.getBiblePresenterSetting()).toEqual([]);
+        expect(mocks.handleErrorMock).not.toHaveBeenCalled();
+
+        // A well-formed array whose ENTRY is invalid still throws out of
+        // `fromJson`, which is what the outer catch is there for.
+        mocks.settings.set('bible-presenter', '[{"nope":true}]');
         expect(BibleItem.getBiblePresenterSetting()).toEqual([]);
         expect(mocks.handleErrorMock).toHaveBeenCalled();
 

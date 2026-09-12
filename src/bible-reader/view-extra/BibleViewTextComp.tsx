@@ -1,4 +1,4 @@
-import { Fragment, useCallback } from 'react';
+import { Fragment, useCallback, useRef } from 'react';
 
 import {
     BIBLE_VIEW_TEXT_CLASS,
@@ -15,6 +15,8 @@ import RenderRestVerseNumListComp from './RenderRestVerseNumListComp';
 import RenderVerseTextComp from './RenderVerseTextComp';
 import { tran } from '../../lang/langHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
+import { useVerseHighlightPainting } from '../verseHighlightPainter';
+import { useVerseCommentHover } from '../verseCommentHoverHelpers';
 
 function RenderVerseTitleComp({
     bibleItem,
@@ -139,8 +141,14 @@ export default function BibleViewTextComp({
         return `${targetRef.current.verseStart}-${verse}`;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // ONE per bible view, not one per verse: the painter watches this whole
+    // container for the DOM changes that invalidate a mark's range.
+    const containerRef = useRef<HTMLDivElement>(null);
+    useVerseHighlightPainting(containerRef);
+    useVerseCommentHover(containerRef);
     return (
         <div
+            ref={containerRef}
             className={`${BIBLE_VIEW_TEXT_CLASS} app-selectable-text p-1`}
             data-bible-item-id={bibleItem.id}
             dir={isRtl && !isExtraVerses ? 'rtl' : undefined}

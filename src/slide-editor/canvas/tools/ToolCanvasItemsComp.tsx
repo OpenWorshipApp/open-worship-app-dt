@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../../../context-menu/ContextMenuDotsButtonComp';
 import CanvasItemRendererComp from '../../CanvasItemRendererComp';
 import { useCanvasControllerContext } from '../CanvasController';
 import {
@@ -61,8 +62,13 @@ export default function ToolCanvasItemsComp() {
                             showBibleLookupPopup,
                         )}
                     >
-                        <div className="card-header">
-                            {canvasItem.id}:{props.width}x{props.height}
+                        <div className="card-header d-flex align-items-center">
+                            <span className="flex-fill app-ellipsis">
+                                {canvasItem.id}:{props.width}x{props.height}
+                            </span>
+                            {/* No handler: the card around this header owns
+                                the item's menu. */}
+                            <ContextMenuDotsButtonComp />
                         </div>
                         <div
                             className="card-body"

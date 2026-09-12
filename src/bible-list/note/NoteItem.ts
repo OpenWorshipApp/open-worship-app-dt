@@ -10,6 +10,10 @@ import { type ItemSourceInfBasic } from '../../others/ItemSourceInf';
 import {
     type NoteItemMetadataType,
     type NoteItemType,
+    type VerseCommentType,
+    type VerseHighlightType,
+    toValidVerseComments,
+    toValidVerseHighlights,
 } from './noteItemHelpers';
 
 export default class NoteItem
@@ -59,6 +63,38 @@ export default class NoteItem
         this.originalJson.content = newContent;
     }
 
+    /**
+     * A verse item holds the highlights and comments made on ONE verse; an item
+     * with no `verseKey` is an ordinary bible note and behaves exactly as it
+     * always did. Anything that opens the `bible-note` editor has to branch on
+     * this — a verse item has no rich-text content to open.
+     */
+    get isVerseItem() {
+        return typeof this.originalJson.verseKey === 'string';
+    }
+
+    get verseKey() {
+        return this.originalJson.verseKey ?? null;
+    }
+
+    get highlights(): VerseHighlightType[] {
+        return this.originalJson.highlights ?? [];
+    }
+    set highlights(newHighlights: VerseHighlightType[]) {
+        this.originalJson.highlights = newHighlights;
+    }
+
+    get comments(): VerseCommentType[] {
+        return this.originalJson.comments ?? [];
+    }
+    set comments(newComments: VerseCommentType[]) {
+        this.originalJson.comments = newComments;
+    }
+
+    get annotationCount() {
+        return this.highlights.length + this.comments.length;
+    }
+
     get metadata() {
         return this.originalJson.metadata;
     }
@@ -99,7 +135,13 @@ export default class NoteItem
         if (this.isError) {
             return this.jsonError;
         }
+        // The spread comes FIRST, and it is load-bearing: `Note.items`' setter
+        // rebuilds EVERY item through this method on every mutation — adding an
+        // item, deleting one, reordering by drag — so a field not carried here
+        // is erased off every other item in the file too. Naming the three
+        // getter-backed fields after it keeps them authoritative.
         return {
+            ...this.originalJson,
             title: this.title,
             content: this.content,
             metadata: this.metadata,
@@ -124,6 +166,17 @@ export default class NoteItem
         ) {
             appError(json);
             throw new Error('Invalid note item data');
+        }
+        // The marks are NORMALIZED, not validated: one malformed mark is dropped
+        // on its own, never a reason to throw and take the whole note file's
+        // items down with it.
+        if (typeof json.verseKey === 'string') {
+            json.highlights = toValidVerseHighlights(json.highlights);
+            json.comments = toValidVerseComments(json.comments);
+        } else {
+            delete json.verseKey;
+            delete json.highlights;
+            delete json.comments;
         }
     }
 
@@ -154,6 +207,13 @@ export default class NoteItem
     update(NoteItem: NoteItem) {
         this.content = NoteItem.content;
         this.metadata = NoteItem.metadata;
+        // `NoteItem.save()` routes through here, so without this a verse item
+        // would be written back with the marks it started the session with.
+        if (NoteItem.isVerseItem) {
+            this.originalJson.verseKey = NoteItem.verseKey ?? undefined;
+            this.highlights = NoteItem.highlights;
+            this.comments = NoteItem.comments;
+        }
     }
 
     syncData(NoteItem: NoteItem) {
@@ -191,6 +251,32 @@ export default class NoteItem
                 createdAt: new Date(),
                 updatedAt: new Date(),
             },
+        };
+        return noteItemJsonData;
+    }
+
+    /**
+     * `content` is the plain short verse (`GEN 22:1`), which is what makes the
+     * existing note-to-verse index mark the verse number for an annotated verse
+     * without a line of new indexing code — see `bibleNoteShortVerseHelpers`.
+     */
+    static genNewVerseJsonData(
+        verseKey: string,
+        title: string,
+        content: string,
+    ) {
+        const noteItemJsonData: NoteItemType = {
+            title,
+            content,
+            metadata: {
+                id: -1,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                isOpened: true,
+            },
+            verseKey,
+            highlights: [],
+            comments: [],
         };
         return noteItemJsonData;
     }

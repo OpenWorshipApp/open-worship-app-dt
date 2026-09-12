@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import './LyricRenderPreviewBodyComp.scss';
 
 import { useCallback } from 'react';
@@ -39,6 +40,23 @@ export default function LyricRenderPreviewBodyComp() {
             }}
             onContextMenu={handleContextMenuHandling}
         >
+            {/* The lyric's own menu. Sticky in a zero-height row so it stays
+                reachable however far the words are scrolled. */}
+            <div
+                style={{
+                    position: 'sticky',
+                    top: 0,
+                    height: 0,
+                    zIndex: 3,
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                }}
+            >
+                <ContextMenuDotsButtonComp
+                    className="me-2"
+                    onOpening={handleContextMenuHandling}
+                />
+            </div>
             <div
                 className="w-100 p-2 app-lyric-render-preview-body"
                 ref={(el) => {

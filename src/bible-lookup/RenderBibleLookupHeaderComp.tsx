@@ -13,6 +13,7 @@ import { AIConfigComp } from '../bible-reader/AIConfigComp';
 import RenderOpenWikiDictionaryComp from './RenderOpenWikiDictionaryComp';
 import RenderExportWordComp from './RenderExportWordComp';
 import { useAppCurrentRef } from '../helper/appHooks';
+import LocationNameLookupToggleComp from '../location-name-lookup/LocationNameLookupToggleComp';
 
 // The history strip beside the input group is sized against half of this, and
 // `.app-input-group-header` in `BibleReaderComp.scss` caps it at the same value
@@ -65,6 +66,9 @@ export default function RenderBibleLookupHeaderComp({
             >
                 <InputHandlerComp onBibleKeyChange={handleBibleKeyChanging} />
             </div>
+            <div className="mx-1">
+                <LocationNameLookupToggleComp />
+            </div>
             {viewController.isMinimized ? (
                 <div className="mx-2">
                     <AdvanceLookupHandlerComp
@@ -82,19 +86,17 @@ export default function RenderBibleLookupHeaderComp({
                     <div
                         className={
                             'app-flex-item flex-fill justify-content-end' +
+                            ' align-items-center' +
                             (appProvider.isPageReader ? '' : ' pe-5')
                         }
                     >
-                        <RenderExportWordComp />
-                        <RenderOpenWikiDictionaryComp />
-                        <div className="float-start">
-                            <RenderExtraButtonsRightComp
-                                setIsAdvanceLookupOpened={
-                                    setIsAdvanceLookupOpened
-                                }
-                                isAdvanceLookupOpened={isAdvanceLookupOpened}
-                            />
-                        </div>
+                        <RenderExtraButtonsRightComp
+                            setIsAdvanceLookupOpened={setIsAdvanceLookupOpened}
+                            isAdvanceLookupOpened={isAdvanceLookupOpened}
+                        >
+                            <RenderExportWordComp />
+                            <RenderOpenWikiDictionaryComp />
+                        </RenderExtraButtonsRightComp>
                     </div>
                     {hideBibleLookupPopup === null ? null : (
                         <ModalCloseButtonComp

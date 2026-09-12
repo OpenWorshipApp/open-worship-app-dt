@@ -58,6 +58,14 @@ export default class Lyric extends AppEditableDocumentSourceAbs<LyricType> {
         return super.create(dir, name, this.getDefaultContentJsonData());
     }
 
+    // Content passed at creation lands clean on disk; create-then-setContent
+    // would route through the editing history and leave the file unsaved.
+    static async createWithContent(dir: string, name: string, content: string) {
+        const jsonData = this.getDefaultContentJsonData();
+        jsonData.content = content;
+        return super.create(dir, name, jsonData);
+    }
+
     async save(): Promise<boolean> {
         return await this.historySave((dataText) => {
             return dataText;

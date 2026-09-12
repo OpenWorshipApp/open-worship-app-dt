@@ -1,0 +1,275 @@
+// The Cross Reference panel: what else in scripture speaks to the verse on
+// screen.
+//
+// The content is not a list. It is an ARGUMENT -- a theme someone wrote
+// ("Adam as the First Man Created by God") and, under it, the verses that
+// carry it. The panel shipped rendering that as a flat wall of rounded boxes,
+// every verse identical to every other, with the theme set in the same blue as
+// the card header above it and the reference pill below it. Three ranks of
+// information, one weight, three near-identical cyans -- so nothing outranked
+// anything and the sentence that explains WHY those verses are together read as
+// a caption.
+//
+// So the shape here is a citation block: the theme overhangs, flush left, and
+// its evidence hangs off a rail beneath it. Rank is carried by structure and
+// weight, not by colour, and the only colour that ever moves is
+// `--app-accent` -- the app's one hue for "this is what you are pointing at".
+// The dotted `--bs-info-text-emphasis` card and the `app-found-highlight` pills
+// are gone for the reason the Resources tab beside this one dropped them: they
+// were a second accent competing with the first, and in the dark theme a border
+// per verse meant the boxes read louder than the words inside them.
+//
+// A rail is also one painted line per theme in place of four borders per verse,
+// which is the cheaper thing to paint on the machines this app targets.
+.app {
+  // The stack of sources -- the bundled set, plus Custom OpenAI / Custom
+  // Anthropic when the user has keys. Sections separated by a rule, not three
+  // floating cards: they answer the same question from different places.
+  .app-xref-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-xref-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.375rem;
+    border-bottom: 1px solid var(--app-line);
+  }
+
+  // A real `button`, so the collapse is reachable from the keyboard and gets
+  // the app's focus ring for free. It was a `div` with an `onClick`.
+  .app-xref-card-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    color: inherit;
+    text-align: left;
+    &:hover .app-xref-card-title {
+      color: var(--app-accent);
+    }
+  }
+
+  .app-xref-card-chevron {
+    flex: 0 0 auto;
+    font-size: 0.65rem;
+    color: var(--app-muted);
+  }
+
+  .app-xref-card-title {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--app-ink);
+  }
+
+  // Which bible the verses below are quoted in. It used to be a parenthetical
+  // inside the title -- "(KJV)" -- so it truncated first when the panel got
+  // narrow, which is backwards: a quotation you cannot attribute is worse than
+  // a title you cannot finish reading.
+  .app-xref-card-key {
+    flex: 0 0 auto;
+    padding: 0 0.3rem;
+    border: 1px solid var(--app-line);
+    border-radius: 3px;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.1rem;
+    color: var(--app-muted);
+  }
+
+  // Where the text came from, and what that costs you. Two different notes
+  // that shipped wearing the SAME lightbulb: one on the card meaning "a model
+  // wrote these", one on every theme meaning "this heading was machine
+  // translated". Same glyph, different claim, six times per screen -- so it
+  // read as a bullet. They are now `bi-cpu` and `bi-translate`, each appears
+  // once where it is true, and both are buttons that open the page explaining
+  // the caveat.
+  .app-xref-note {
+    flex: 0 0 auto;
+    padding: 0 0.15rem;
+    border: 0;
+    background-color: transparent;
+    font-size: 0.75rem;
+    line-height: 1;
+    color: var(--app-muted);
+    &:hover {
+      color: var(--app-accent);
+    }
+  }
+
+  .app-xref-card-body {
+    padding: 0.35rem 0.375rem 0.5rem;
+  }
+
+  // Themes are independent of one another, so they set in columns rather than
+  // in one long ribbon: at the popup's full width a single column ran the verse
+  // text past 1000px, and the flex-wrap it replaces aligned each ROW to its
+  // tallest theme, leaving the dead half-screen of nothing under the short one.
+  // `19rem` is the narrowest measure a reference plus its verse still reads at,
+  // and it collapses to one column on its own in the 350px docked panel.
+  .app-xref-themes {
+    columns: 19rem;
+    column-gap: 1.5rem;
+  }
+
+  .app-xref-theme {
+    // A theme is a unit of argument; splitting one across a column boundary
+    // would file half its evidence under nothing.
+    break-inside: avoid;
+    margin: 0 0 1.1rem;
+  }
+
+  // The sentence -- the one piece of prose in the panel, and the thing being
+  // scanned for. Flush left, overhanging its own evidence, so the eye can run
+  // down the headings alone and ignore everything indented.
+  .app-xref-theme-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    margin: 0 0 0.35rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--app-ink);
+  }
+
+  // THE rail. One line holding a theme's verses together, and the surface the
+  // hover state lights a segment of.
+  //
+  // 2px, not the 1px hairline the rest of the app rules with: those run the
+  // full width of a panel and are read as an edge, whereas this is a 60px
+  // vertical stub, and `--app-line` on the dark shell is a 1.9:1 hairline that
+  // simply vanished at that length -- leaving the indent under every theme
+  // looking arbitrary.
+  .app-xref-verses {
+    --app-xref-rail-w: 2px;
+    --app-xref-rail-gap: 0.6rem;
+    border-left: var(--app-xref-rail-w) solid var(--app-line);
+    padding-left: var(--app-xref-rail-gap);
+  }
+
+  .app-xref-item {
+    position: relative;
+    padding: 0.25rem 0.3rem;
+    border-radius: 3px;
+
+    // The lit segment of the rail: the row you are pointing at, marked in the
+    // rail it hangs from rather than by a box drawn around it. Sits exactly on
+    // the rail -- same width, same x -- so the rail CHANGES COLOUR beside the
+    // row rather than growing a second bar next to itself.
+    &::before {
+      content: '';
+      position: absolute;
+      left: calc((var(--app-xref-rail-gap) + var(--app-xref-rail-w)) * -1);
+      top: 0;
+      bottom: 0;
+      width: var(--app-xref-rail-w);
+      background-color: transparent;
+    }
+    &:hover,
+    &:focus-visible {
+      background-color: var(--app-surface);
+      &::before {
+        background-color: var(--app-accent);
+      }
+      .title {
+        color: var(--app-accent);
+      }
+    }
+
+    // The reference, scoped to this panel -- `BibleDirectViewTitleComp` is
+    // shared with Find and Resources, so it is overridden here, never edited
+    // there. On its own line it forms a column the eye runs straight down;
+    // inline, "1 Corinthians 15:45" ate half the measure of the verse it was
+    // introducing.
+    .title {
+      display: block;
+      margin: 0 0 0.1rem !important;
+      padding: 0 !important;
+      border: 0;
+      border-radius: 0;
+      background-color: transparent;
+      // A label, where the theme above is a sentence: smaller and lighter than
+      // the heading it sits under, so the two ranks do not have to be told
+      // apart by indent alone -- but still the boldest thing in its own row,
+      // because it is what a click actually acts on.
+      font-size: 0.73rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--app-ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  // Evidence, not headline: it supports the reference above it, so it steps
+  // back a rank in colour while keeping a readable measure and leading.
+  .app-xref-text {
+    display: block;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--app-muted);
+  }
+
+  // How much there is to read, before you start reading it -- the one fact the
+  // panel could not answer at a glance.
+  .app-xref-meta {
+    padding: 0.1rem 0.3rem 0.4rem;
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--app-muted);
+  }
+
+  // A second verse of a range picking up where the last one ended.
+  .app-xref-continued {
+    margin-top: 0.4rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--app-line);
+  }
+
+  .app-xref-status {
+    padding: 0.4rem 0.3rem;
+    font-size: 0.76rem;
+    color: var(--app-muted);
+    &.is-error {
+      color: var(--bs-danger-text-emphasis);
+    }
+  }
+
+  // Nothing selected, and nothing found: both are states the user can act on,
+  // so both say what to do rather than sitting blank.
+  .app-xref-placeholder {
+    margin: 0.5rem;
+    padding: 0.75rem;
+    border: 1px dashed var(--app-line);
+    border-radius: 4px;
+    color: var(--app-muted);
+  }
+
+  .app-xref-placeholder-title {
+    margin: 0 0 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--app-ink);
+  }
+
+  .app-xref-placeholder-body {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+}

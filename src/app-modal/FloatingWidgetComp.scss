@@ -29,6 +29,16 @@ $resize-corner-size: 16px;
   }
 }
 
+// A widget opened from inside a modal keeps the same in-band stacking, only on
+// top of the modal that hosts it — without this it is drawn (and blurred by the
+// modal's `backdrop-filter`) behind the popup its own toggle lives in.
+.floating-widget--above-modal {
+  z-index: calc(
+    #{$z-index-floating-widget-above-modal} +
+      min(var(--floating-widget-z-offset, 0), #{$z-index-floating-widget-band})
+  );
+}
+
 // While actively dragging, force a consistent cursor over the whole widget and
 // suppress text selection so the move feels smooth from any blank area.
 .floating-widget--moving,

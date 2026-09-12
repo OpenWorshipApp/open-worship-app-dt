@@ -394,4 +394,44 @@ describe('screenEventHelpers', () => {
         expect(scrollPreventDefault).toHaveBeenCalledOnce();
         expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 });
     });
+
+    test('swallows the one scroll event a remote sync applied', async () => {
+        const { registerScrollingSyncEvent } =
+            await import('./screenEventHelpers');
+
+        const target = document.createElement('div');
+        Object.defineProperties(target, {
+            scrollLeft: { configurable: true, writable: true, value: 50 },
+            scrollTop: { configurable: true, writable: true, value: 25 },
+            scrollWidth: { configurable: true, value: 200 },
+            clientWidth: { configurable: true, value: 100 },
+            scrollHeight: { configurable: true, value: 125 },
+            clientHeight: { configurable: true, value: 25 },
+        });
+        const onScroll = vi.fn();
+        registerScrollingSyncEvent(target, onScroll);
+        appProviderMock.getIsMouseOverApp.mockReturnValue(true);
+        appProviderMock.getIsWindowFocused.mockReturnValue(true);
+
+        // The event fired by `syncScrollPercentage`'s own scrollTo (the
+        // element is stamped, position matches) must NOT re-broadcast — it is
+        // the remote scroll coming back around, and forwarding it echoes
+        // between windows forever.
+        (target as any)._remoteAppliedScroll = { left: 50, top: 25 };
+        target.dispatchEvent(new Event('scroll', { bubbles: true }));
+        expect(onScroll).not.toHaveBeenCalled();
+        expect((target as any)._remoteAppliedScroll).toBeUndefined();
+
+        // A stale stamp must not eat a genuine user scroll: the position
+        // differs, so the event goes through (and the stamp is consumed).
+        (target as any)._remoteAppliedScroll = { left: 0, top: 100 };
+        target.dispatchEvent(new Event('scroll', { bubbles: true }));
+        expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 });
+        expect((target as any)._remoteAppliedScroll).toBeUndefined();
+
+        // With no stamp at all, scrolls flow as before.
+        onScroll.mockClear();
+        target.dispatchEvent(new Event('scroll', { bubbles: true }));
+        expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 });
+    });
 });

@@ -128,6 +128,18 @@ describe('setting settingHelpers', () => {
         );
     });
 
+    test('asks the main process to close and open the app again', async () => {
+        const module = await loadSettingHelpers();
+
+        module.relaunchApp();
+
+        // A reload cannot apply a setting the main process read before it had
+        // a window to reload, so this one goes the whole way round.
+        expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
+            'main:app:relaunch',
+        );
+    });
+
     test('returns only valid app font family and weight settings', async () => {
         const module = await loadSettingHelpers();
 

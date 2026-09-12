@@ -1,0 +1,47 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://openworship.app/schemas/resource-links.schema.json",
+    "title": "Open Worship app — Resources link list",
+    "description": "The default shape of a `.json` file in a Resources folder, named after the chapter it belongs to (`1CH.0.json`, `GEN.4.json`). Each entry becomes a pressable row under the file in the Resources panel, and pressing one opens its URL in the machine's own web browser. A `.json` that does not match this shape is not an error: the panel simply lists it as an ordinary file and hands it to whatever application the machine uses for it. The shape is implemented by `src/resources/resourceLinksHelpers.ts` and this file is the same rules written for an editor.",
+    "type": "array",
+    "items": {
+        "oneOf": [
+            {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "description": "The words the row shows. Optional: an entry with no title, or a blank one, is titled with its own URL — a row with nothing to read would be a row nobody can press."
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://",
+                        "description": "Where pressing the row goes. `http` or `https` ONLY: opening a URL hands it to the desktop, which will also launch whatever application has registered a scheme, so `file:`, `mailto:` and bespoke schemes are refused and the entry is dropped."
+                    }
+                },
+                "required": ["url"],
+                "additionalProperties": true
+            },
+            {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://",
+                "description": "Shorthand: a bare URL string is a link that titles itself."
+            }
+        ]
+    },
+    "examples": [
+        [
+            {
+                "title": "Overview: Old Testament",
+                "url": "https://www.example.com/watch?v=overview-ot"
+            },
+            {
+                "title": "Overview: 1-2 Chronicles",
+                "url": "https://www.example.com/watch?v=overview-chronicles"
+            },
+            "https://www.example.com/a-link-that-titles-itself"
+        ]
+    ]
+}

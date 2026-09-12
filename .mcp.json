@@ -1,11 +1,8 @@
 {
     "mcpServers": {
-        "chrome-devtools": {
-            "command": "npx",
-            "args": [
-                "chrome-devtools-mcp@latest",
-                "--browserUrl=http://127.0.0.1:9223"
-            ]
+        "owa-devtools": {
+            "command": "node",
+            "args": ["tools/owa-devtools-mcp/bin.mjs"]
         }
     }
 }

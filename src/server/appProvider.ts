@@ -4,8 +4,6 @@ import type zlip from 'node:zlib';
 import type path from 'node:path';
 import type * as nodeCrypto from 'node:crypto';
 
-import appProviderMock from './appProvider.mock';
-
 export type MessageEventType = {
     returnValue: any;
 };
@@ -78,6 +76,10 @@ export type SystemUtilsType = {
     isLinux: boolean;
     isUbuntu: boolean;
     isFedora: boolean;
+    // Whether the OS compositor can put a translucent backdrop behind a
+    // window, i.e. whether the `appGlassy` popup feature does anything. A
+    // renderer that styles itself for glass must read this and not assume it.
+    isGlassCapable: boolean;
     openFile: (filePath: string) => void;
     generateFileMD5: (filePath: string) => Promise<string>;
     generateMD5: (input: string) => string;
@@ -127,6 +129,10 @@ export type PagePropsType = {
     lyricEditorHomePage: string;
     isPageAbout: boolean;
     aboutHomePage: string;
+    isPageChatbot: boolean;
+    chatbotHomePage: string;
+    isPageAichat: boolean;
+    aichatHomePage: string;
     isPageLWShare: boolean;
     isMainPage: boolean;
     lwShareHomePage: string;
@@ -233,8 +239,7 @@ document.addEventListener('mouseleave', () => {
     isMouseOverApp = false;
 });
 
-const injectedProvider = (globalThis as any).provider;
-const providerSource = injectedProvider ?? appProviderMock;
+const providerSource = (globalThis as any).provider;
 
 const appProvider = {
     ...providerSource,
@@ -249,7 +254,7 @@ const appProvider = {
 } as AppProviderType;
 
 // for security reason, appProvider should not be accessible globally
-if (injectedProvider) {
+if (providerSource) {
     delete (globalThis as any).provider;
 }
 

@@ -13,6 +13,7 @@ const {
     openFindOverlay,
     previewPrintCurrentWindow,
     printCurrentWindow,
+    resetPopupWindowsBounds,
     toShortcutKey,
 } = vi.hoisted(() => ({
     copyDebugInfoToClipboard: vi.fn(),
@@ -20,6 +21,7 @@ const {
     openFindOverlay: vi.fn(),
     previewPrintCurrentWindow: vi.fn(async () => undefined),
     printCurrentWindow: vi.fn(),
+    resetPopupWindowsBounds: vi.fn(),
     toShortcutKey: vi.fn(() => 'CmdOrCtrl+F'),
 }));
 
@@ -35,7 +37,11 @@ vi.mock('./electronHelpers', () => ({
     goDownload,
     previewPrintCurrentWindow,
     printCurrentWindow,
+    resetPopupWindowsBounds,
     toShortcutKey,
+    // `aiHelpers` reads it to decide what an unset master switch means, and
+    // the Help menu asks `aiHelpers` whether to carry the chatbot item.
+    isDev: false,
 }));
 
 vi.mock('./client/appInfo', () => ({
@@ -56,6 +62,7 @@ describe('electronMenu', () => {
         openFindOverlay.mockClear();
         previewPrintCurrentWindow.mockClear();
         printCurrentWindow.mockClear();
+        resetPopupWindowsBounds.mockClear();
         toShortcutKey.mockClear();
         electronMockState.shell.openExternal.mockClear();
         electronMockState.Menu.buildFromTemplate.mockReturnValue({
@@ -280,6 +287,11 @@ describe('electronMenu', () => {
         expect(
             appController.settingManager.restoreMainBounds,
         ).toHaveBeenCalledWith(appController.mainWin);
+        // the popups have no menu bar of their own, so the same click rescues
+        // them too
+        expect(resetPopupWindowsBounds).toHaveBeenCalledWith(
+            appController.mainWin,
+        );
 
         const helpMenu = template.find((item: any) => item.role === 'help');
         clickSubmenuItem(helpMenu, 'Learn More');
@@ -385,6 +397,36 @@ describe('electronMenu', () => {
         }
     });
 
+    test('Relaunch asks first, then closes and opens the app', async () => {
+        initMenu(createAppController() as any);
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        const viewMenu = template.find((item: any) => {
+            return item.label === 'View';
+        });
+        const relaunchItem = viewMenu.submenu.find((item: any) => {
+            return item.label === 'Relaunch';
+        });
+
+        // The mock answers Cancel by default -- the whole point of the dialog
+        // is that a mis-click one row under Reload closes nothing.
+        relaunchItem.click();
+        await vi.waitFor(() => {
+            expect(electronMockState.dialog.showMessageBox).toHaveBeenCalled();
+        });
+        expect(electronMockState.app.relaunch).not.toHaveBeenCalled();
+        expect(electronMockState.app.quit).not.toHaveBeenCalled();
+
+        electronMockState.dialog.showMessageBox.mockImplementation(async () => {
+            return { response: 0 };
+        });
+        relaunchItem.click();
+        await vi.waitFor(() => {
+            expect(electronMockState.app.relaunch).toHaveBeenCalledTimes(1);
+        });
+        expect(electronMockState.app.quit).toHaveBeenCalledTimes(1);
+    });
+
     test('the View menu keeps its roles and appends renderer widget items', () => {
         // With nothing registered the menu must be untouched — the built-in
         // roles are the whole View menu on every page that has no widgets.
@@ -430,6 +472,8 @@ describe('electronMenu', () => {
                 viewMenu.submenu.map((item: any) => item.label ?? item.role),
             ).toEqual([
                 'reload',
+                // The app-wide restart, one row under the window-wide reload.
+                'Relaunch',
                 'forceReload',
                 'toggleDevTools',
                 undefined,

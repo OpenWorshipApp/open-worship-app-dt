@@ -14,7 +14,7 @@ import {
     initBibleNote,
 } from './bible-list/note/bibleNoteHelpers';
 import { registerAppMenuClicked } from './lang/langHelpers';
-import PresentingControlComp from './presenting-control/PresentingControlComp';
+import AppWindowToolsComp from './others/AppWindowToolsComp';
 
 init(async () => {
     const bibleNoteData = await getBibleNoteData();
@@ -61,7 +61,7 @@ init(async () => {
                 }}
             />
             <NoteItemEditorPopupComp bibleNote={bibleNote} />
-            <PresentingControlComp />
+            <AppWindowToolsComp />
         </PopupLayoutComp>,
     );
 });

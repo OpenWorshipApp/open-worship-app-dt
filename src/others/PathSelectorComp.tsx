@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import './PathSelectorComp.scss';
 
 import type { ReactNode } from 'react';
@@ -108,6 +109,8 @@ export default function PathSelectorComp({
                         extraElements={extraElements}
                     />
                 )}
+                {/* No handler: the selector around this row owns the menu. */}
+                <ContextMenuDotsButtonComp />
             </div>
             {shouldShowingEditor && (
                 <AppSuspenseComp>

@@ -130,6 +130,12 @@ vi.mock('../../helper/settingHelpers', () => ({
     getSetting: h.getSettingMock,
     setSetting: h.setSettingMock,
 }));
+vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: h.getSettingMock,
+        setItem: h.setSettingMock,
+    },
+}));
 vi.mock('../../helper/bible-helpers/bibleModelHelpers', () => ({
     BIBLE_KJV_KEY: 'KJV',
 }));
@@ -385,7 +391,7 @@ describe('bible-list/note bibleNoteHelpers', () => {
             capturedConfig.excalidrawClearLibrariesFileList();
             expect(h.setSettingMock).toHaveBeenCalledWith(
                 'excalidraw-libraries',
-                null,
+                '[]',
             );
         });
 

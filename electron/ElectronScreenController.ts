@@ -4,6 +4,7 @@ import { type AnyObjectType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
 import {
+    applyRendererRecovery,
     attemptClosing,
     genWebPreferences,
     guardBrowsing,
@@ -34,6 +35,9 @@ export default class ElectronScreenController {
         });
         guardBrowsing(win, webPreferences);
         const query = `?screenId=${this.screenId}`;
+        applyRendererRecovery(win, () => {
+            routeProps.loadURL(win, query);
+        });
         routeProps.loadURL(win, query);
         if (isScreenCanFullScreen) {
             win.setFullScreen(true);

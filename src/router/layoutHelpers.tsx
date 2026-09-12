@@ -30,7 +30,6 @@ import { type AllControlType as KeyboardControlType } from '../event/KeyboardEve
 import { onSlideItemsKeyboardEvent } from '../slide-editor/slideEditingKeyboardEventHelpers';
 import { checkIsHistoryMovementEventType } from '../editing-manager/EditingHistoryManager';
 import { tran } from '../lang/langHelpers';
-import { genLabelIcon } from '../others/labelIconHelpers';
 import { openPopupWindow } from '../helper/domHelpers';
 
 export function genLayoutTabs() {
@@ -45,7 +44,7 @@ export function genLayoutTabs() {
         title: (
             <>
                 <span style={{ color: 'var(--app-color-reader)' }}>
-                    {genLabelIcon('Bible Reader')}
+                    📖
                     {tran('Bible Reader') + ' '}
                 </span>
                 <span
@@ -95,7 +94,7 @@ export function genLayoutTabs() {
         title: (
             <>
                 <span>
-                    {genLabelIcon('Slide Editor')}
+                    🖥️✏️
                     {tran('Slide Editor') + ' '}
                 </span>
                 <span

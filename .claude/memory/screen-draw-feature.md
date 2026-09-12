@@ -135,8 +135,8 @@ combos. Design points that matter:
 - `handlePointerDown` bails on `event.button !== 0`. The armed overlay covers the
   whole mini-screen, so a right-click aimed at the preview's context menu
   otherwise claimed the keyboard and (once focused) left a dot behind.
-- **Focus ring.** `applyFocusOutline` puts a translucent cyan
-  (`FOCUS_OUTLINE_COLOR`, user-tuned) `outline` on the focused canvas —
+- **Focus ring.** `applyKeyboardOutline` puts a translucent cyan
+  (`OVERLAY_KEYBOARD_OUTLINE_COLOR`) `outline` on the focused canvas —
   `outline`, not `border`, so nothing reflows. Width scales with the screen width
   (`width/480`, min 2) because the overlay is sized in NATIVE px and then
   CSS-scaled by the previewer; a fixed 2px ring renders sub-pixel.
@@ -277,13 +277,24 @@ ring, native-px mapping, `forwardToOwnScreenOutput`, `genFrameScheduler`,
 [[screen-focus-spotlight]] for the full inventory. Behaviour is unchanged EXCEPT
 the canvas `tabIndex`, which is now 0 only while armed on the presenter.
 
+**Third overlay consumer shipped:** `src/presenting-control/`
+(`PresentingDrawManager.ts`, `PresentingFocusManager.ts`,
+`ControllerDrawToolsComp.tsx`, `ControllerFocusToolsComp.tsx`) draws and
+spotlights on the app itself, and it correctly reuses `screenOverlayHelpers`,
+`screenDrawShortcutHelpers` and `miniScreenOverlayControlComps` instead of
+copying — exactly what this note asked for.
+
 **To add another mode:** extend `DrawDataType`, add render + a sync action,
 and a tab/panel. The manager mirrors `ScreenForegroundManager`; `'draw'` is
 registered in `ScreenManager.getSyncGroupScreenEventHandler` and
 `screenTypeList`. `ScreenDrawComp` is mounted in both `MiniScreenAppComp`
 (preview) and `ScreenAppComp` (real output).
 
-**Docs debt:** owa-robot-test `user-workflows.md` + `coverage-matrix.md` were
-NOT yet updated for this feature — not the original Paint panel, not the
-2026-07-21 manual eraser, not the palette shortcuts (CLAUDE.md asks for it when
-UI changes). The shortcuts also belong in the `KB-xx` keyboard matrix.
+**Docs debt (still open 2026-08-30):** `coverage-matrix.md` still has no rows
+for the screen Draw/Focus panel — not the original Paint panel, not the
+2026-07-21 manual eraser, not the palette shortcuts (which also belong in the
+`KB-xx` keyboard matrix). `user-workflows.md` gained W-19 "Draw and spotlight
+on the app itself (Presenting Control)", but that documents the DIFFERENT
+`src/presenting-control/` feature above, and W-19 forward-references W-10 for
+the mini-screen tools — which W-10 does not deliver — so the gap now also
+reads as a broken cross-reference.

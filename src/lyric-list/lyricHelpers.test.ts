@@ -28,9 +28,11 @@ vi.mock('./Lyric', () => ({ default: class {} }));
 vi.mock('./LyricAppDocumentStage0', () => ({ default: mocks.stage0 }));
 vi.mock('./LyricAppDocumentStage1', () => ({ default: mocks.stage1 }));
 vi.mock('../lang/langHelpers', () => ({ getAllLangsAsync: vi.fn() }));
-vi.mock('../helper/settingHelpers', () => ({
-    getSetting: vi.fn(() => null),
-    setSetting: vi.fn(),
+vi.mock('../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+    },
 }));
 vi.mock('../helper/FileSource', () => ({ default: { getInstance: vi.fn() } }));
 vi.mock('../others/themeHelpers', () => ({

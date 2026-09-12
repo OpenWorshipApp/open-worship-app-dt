@@ -344,12 +344,32 @@ export function useIsOnScreen(items: BibleItem[]) {
             return `${item.id}-${item.bibleKey}-${JSON.stringify(item.target)}`;
         })
         .join(',');
-    useAppEffectAsync(async () => {
-        setIsOnScreen(await checkIsBibleItemOnScreen(itemsRef.current));
-    }, [itemsKey]);
+    const itemsKeyRef = useAppCurrentRef(itemsKey);
+    // `setValue` goes through the method context so being re-fed other verses
+    // mid-check neuters this write instead of letting the old answer land.
+    useAppEffectAsync(
+        async (methodContext) => {
+            const newIsOnScreen = await checkIsBibleItemOnScreen(
+                itemsRef.current,
+            );
+            methodContext.setValue(newIsOnScreen);
+        },
+        [itemsKey],
+        { setValue: setIsOnScreen },
+    );
     useScreenUpdateEvents(undefined, () => {
         attemptTimeout(async () => {
-            setIsOnScreen(await checkIsBibleItemOnScreen(itemsRef.current));
+            const newIsOnScreen = await checkIsBibleItemOnScreen(
+                itemsRef.current,
+            );
+            // Answered for the verses held when the event fired — building
+            // their titles is itself async. Being re-fed others mid-check
+            // re-runs the guarded read above, so letting this land would
+            // report the PREVIOUS verses' on-screen state.
+            if (itemsKey !== itemsKeyRef.current) {
+                return;
+            }
+            setIsOnScreen(newIsOnScreen);
         });
     });
     return isOnScreen;

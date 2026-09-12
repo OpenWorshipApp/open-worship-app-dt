@@ -7,9 +7,13 @@ import {
     ALL_TYPES,
     LOCATION_ICON_CLASS,
     NAME_TYPE_LABEL,
+    NAME_TYPE_SINGULAR_LABEL,
     PAGE_SIZE,
     getNameTypeIconClass,
+    getNameTypeSingularLabel,
     getPlainReferenceText,
+    getRecordDisplayName,
+    getRecordKjvName,
 } from './lookupPresentationHelpers';
 
 describe('name-type presentation', () => {
@@ -49,13 +53,41 @@ describe('name-type presentation', () => {
     // THROWS and blanks the page. Bare English literals are what makes the
     // dictionary check possible at all.
     test('labels are plain English literals, not pre-translated', () => {
-        for (const label of Object.values(NAME_TYPE_LABEL)) {
+        const everyLabel = [
+            ...Object.values(NAME_TYPE_LABEL),
+            ...Object.values(NAME_TYPE_SINGULAR_LABEL),
+        ];
+        for (const label of everyLabel) {
             expect(label).toMatch(/^[A-Z][A-Za-z ]*$/);
         }
     });
 
+    test('every type has a singular label as well as a plural one', () => {
+        expect(Object.keys(NAME_TYPE_SINGULAR_LABEL)).toStrictEqual(
+            Object.keys(NAME_TYPE_LABEL),
+        );
+    });
+
     test('the "all types" sentinel cannot collide with a real type', () => {
         expect(Object.keys(NAME_TYPE_LABEL)).not.toContain(ALL_TYPES);
+    });
+
+    // The datasets keep `type` in English whatever language the record is in, so
+    // it reaches the panel as a key. The unknown-type fallback has to match the
+    // icon's, or a record would show one type and wear another's icon.
+    test('resolves a raw dataset type to its singular label', () => {
+        expect(getNameTypeSingularLabel('group')).toBe('Group');
+        expect(getNameTypeSingularLabel('  DEITY ')).toBe('Deity');
+        expect(getNameTypeSingularLabel('pharaoh')).toBe('Person');
+    });
+
+    // An absent type has nothing to label; inventing "Person" would put a fact
+    // chip on a record the dataset never typed.
+    test('leaves a missing type empty rather than guessing', () => {
+        expect(getNameTypeSingularLabel('')).toBe('');
+        expect(getNameTypeSingularLabel('   ')).toBe('');
+        expect(getNameTypeSingularLabel(null)).toBe('');
+        expect(getNameTypeSingularLabel(undefined)).toBe('');
     });
 
     test('a page holds a sane number of records', () => {
@@ -77,6 +109,18 @@ describe('stripping inline reference tokens for a one-line summary', () => {
                     'in [Exodus 1:1](verse-key://EXO 1:1)',
             ),
         ).toBe('Moses went to Egypt in Exodus 1:1');
+    });
+
+    // The datasets grew these two after the first three; a stripper that does
+    // not know a scheme leaves its whole `[label](scheme://key)` markup in the
+    // summary line.
+    test('handles the book and chapter schemes too', () => {
+        expect(
+            getPlainReferenceText(
+                'remembered in [Acts](book-key://ACT) and ' +
+                    '[2 Samuel 20](chapter-key://2SA 20)',
+            ),
+        ).toBe('remembered in Acts and 2 Samuel 20');
     });
 
     test('replaces every token, not just the first', () => {
@@ -103,6 +147,31 @@ describe('stripping inline reference tokens for a one-line summary', () => {
     test('leaves non-reference links alone', () => {
         expect(getPlainReferenceText('[Wiki](https://example.com)')).toBe(
             '[Wiki](https://example.com)',
+        );
+    });
+});
+
+describe('the English name beside a translated one', () => {
+    test('shows the KJV name of a translated record', () => {
+        expect(
+            getRecordKjvName({ name: 'លោកុប្បត្តិ', kjvName: 'Genesis' }),
+        ).toBe('Genesis');
+        expect(
+            getRecordDisplayName({ name: 'លោកុប្បត្តិ', kjvName: 'Genesis' }),
+        ).toBe('លោកុប្បត្តិ (Genesis)');
+    });
+
+    // The KJV dataset itself carries none: its `name` already IS the English
+    // one, and a `Moses (Moses)` row says nothing twice over.
+    test('adds nothing when the record carries no other name', () => {
+        expect(getRecordKjvName({ name: 'Moses', kjvName: null })).toBe('');
+        expect(getRecordKjvName({ name: 'Moses' })).toBe('');
+        expect(getRecordKjvName({ name: 'Moses', kjvName: '  ' })).toBe('');
+        expect(getRecordKjvName({ name: 'Moses', kjvName: ' Moses ' })).toBe(
+            '',
+        );
+        expect(getRecordDisplayName({ name: 'Moses', kjvName: null })).toBe(
+            'Moses',
         );
     });
 });

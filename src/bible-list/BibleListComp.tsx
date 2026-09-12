@@ -1,4 +1,4 @@
-import './BibleListComp.scss';
+import './cueList.scss';
 
 import { useCallback } from 'react';
 
@@ -95,7 +95,7 @@ export default function BibleListComp() {
         : defaultDataDirNames.BIBLE_PRESENT;
     return (
         <FileListHandlerComp
-            className={`${settingPrefix}bible-list`}
+            className={`${settingPrefix}bible-list app-cue-list`}
             mimetypeName="bible"
             defaultFolderName={defaultDataDirName}
             dirSource={dirSource}

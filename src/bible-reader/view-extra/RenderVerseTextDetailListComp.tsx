@@ -10,7 +10,7 @@ import {
     useIsAudioAIEnabled,
 } from '../../helper/ai/openAIAudioHelpers';
 import RenderVerseTextViewComp from './RenderVerseTextViewComp';
-import { getAISetting } from '../../helper/ai/aiHelpers';
+import { getAIIsAutoPlay } from '../../helper/ai/aiHelpers';
 import { checkIsVerticalPartialInvisible } from '../../helper/helpers';
 import appProvider from '../../server/appProvider';
 import { useAppCurrentRef } from '../../helper/appHooks';
@@ -28,8 +28,7 @@ function handleNextVersionSelection(
     currentTarget: HTMLDivElement,
     nextKjvVerseKey: string,
 ) {
-    const audioAISetting = getAISetting();
-    if (!audioAISetting.isAutoPlay || !appProvider.isPageReader) {
+    if (!getAIIsAutoPlay() || !appProvider.isPageReader) {
         return;
     }
     const parentElement = currentTarget.parentElement;

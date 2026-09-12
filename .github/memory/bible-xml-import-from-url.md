@@ -48,5 +48,7 @@ Traps that cost time here:
   `.focus()` + `F1`, and **match the palette row by label** — it re-sorts the last-used
   command to the top, so a fixed arrow count runs the wrong one. Setting `.value` on the
   palette input empties the list instead of filtering it.
-- **Move to Trash leaves `<key>.xml.cache`** (13 MB for this file) beside the deleted XML;
-  scratch-bible runs must sweep it, like the media block's MD-04.
+- **FIXED (`3a97acc4`, 2026-08-22):** Move to Trash used to leave `<key>.xml.cache` (13 MB
+  here) beside the deleted XML; `deleteBibleXML` now also runs `clearBibleXMLCache(bibleKey)`
+  (`bibleXMLHelpers.ts:515-526`, via `BibleXMLInfoComp.tsx:105`; pinned by
+  `bibleXMLHelpers.test.tsx:447-454`) — no sweep needed.

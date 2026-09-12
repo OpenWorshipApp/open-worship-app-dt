@@ -54,6 +54,12 @@ vi.mock('../../helper/settingHelpers', () => ({
     getSetting: mocks.getSetting,
     setSetting: mocks.setSetting,
 }));
+vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: mocks.getSetting,
+        setItem: mocks.setSetting,
+    },
+}));
 
 vi.mock('../../lang/langHelpers', () => ({
     DEFAULT_LOCALE: 'en-US',

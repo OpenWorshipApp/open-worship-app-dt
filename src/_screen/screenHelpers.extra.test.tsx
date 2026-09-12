@@ -61,6 +61,7 @@ vi.mock('../lang/langHelpers', () => ({
 
 vi.mock('../scrolling/scrollingHandlerHelpers', () => ({
     PLAY_TO_BOTTOM_CLASSNAME: 'play-to-bottom',
+    PLAY_TO_BOTTOM_MENU_CLASSNAME: 'play-to-bottom-menu',
     TO_THE_TOP_CLASSNAME: 'to-the-top',
     TO_THE_TOP_STYLE_STRING: '.floating-control { position: fixed; }',
     applyPlayToBottom: applyPlayToBottomMock,
@@ -85,8 +86,12 @@ vi.mock('../bible-list/BibleItem', () => ({
     },
 }));
 
-vi.mock('../helper/appHooks', () => {
+// Partial mock: only `useAppStateAsync` is simplified here, and the module's
+// siblings (`useAppCurrentRef`) must survive or the hook under test throws.
+vi.mock('../helper/appHooks', async (importOriginal) => {
+    const actual = await importOriginal<object>();
     return {
+        ...actual,
         useAppStateAsync: function useAppStateAsync<T>(
             callee: () => Promise<T> | T,
             _deps: ReadonlyArray<unknown> = [],

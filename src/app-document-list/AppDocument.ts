@@ -483,6 +483,23 @@ export default class AppDocument
         return super.create(dir, name, jsonData);
     }
 
+    /**
+     * A document created with slides already in it, landing CLEAN on disk.
+     *
+     * The twin of `Lyric.createWithContent`, and for the same reason its
+     * comment gives: create-then-`setJsonData` would route the content through
+     * the editing history and leave a brand-new document already unsaved.
+     * `items` is validated by the caller -- `AppDocument.validate` is what says
+     * whether the app can open it at all.
+     */
+    static async createWithContent(
+        dir: string,
+        name: string,
+        items: AnyObjectType[],
+    ) {
+        return super.create(dir, name, { items });
+    }
+
     static async getCopiedSlides() {
         const clipboardSlides = await navigator.clipboard.read();
         const copiedSlides: Slide[] = [];

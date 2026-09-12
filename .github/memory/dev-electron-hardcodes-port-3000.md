@@ -19,8 +19,8 @@ wrong. (In that session both servers served this same repo, so results held — 
 and it took a process/port check to establish.)
 
 **How to apply:** when a run matters, confirm which process owns `:3000` before trusting the
-window — `Get-NetTCPConnection -LocalPort 3000 -State Listen` then
-`Get-CimInstance Win32_Process` for its cwd/start time. If the dev terminal ever prints
+window — `lsof -nP -iTCP:3000 -sTCP:LISTEN` then `ps -o pid,lstart,args -p <pid>` for its
+start time and command line. If the dev terminal ever prints
 "Port 3000 is in use", stop and reconcile before testing. At cleanup, kill only your own tree
 and leave the pre-existing server alone. Related: [[vite-dep-optimizer-504-restart]],
 [[build-kills-running-dev-app]].

@@ -49,6 +49,10 @@ const {
             isPageReader: false,
             isPageScreen: false,
             readerHomePage: '/reader.html',
+            appInfo: {
+                author: 'Open Worship Foundation <owf2025@gmail.com>',
+                homepage: 'https://www.openworship.app',
+            },
             systemUtils: {
                 copyToClipboard,
             },
@@ -765,5 +769,111 @@ describe('appHelpers', () => {
             'all:app:set-is-window-on-top',
             { isOnTop: true },
         );
+    });
+
+    test('reads the contact address out of the package author field', async () => {
+        const { parseContactEmail } = await loadModule();
+        expect(
+            parseContactEmail(
+                'Open Worship Foundation <owf2025@gmail.com> ' +
+                    '(https://github.com/orgs/OpenWorshipApp/people)',
+            ),
+        ).toBe('owf2025@gmail.com');
+        expect(parseContactEmail('Somebody <  a.b@c.org >')).toBe('a.b@c.org');
+        // No address is null, never a guess: the report says where to take
+        // the file instead.
+        expect(parseContactEmail('Open Worship Foundation')).toBeNull();
+        expect(parseContactEmail('Somebody <not an address>')).toBeNull();
+        expect(parseContactEmail('')).toBeNull();
+        // The field this reads is the one in package.json, and the Report
+        // button depends on it carrying an address -- held here so a tidy-up
+        // of that line cannot quietly take the address off every report.
+        const { author } = (await import('../../package.json')).default;
+        expect(parseContactEmail(author)).toMatch(/^[^@\s]+@[^@\s]+$/);
+    });
+
+    test('reads the contact address off a help page, link or words', async () => {
+        const { readContactEmailFromPage } = await loadModule();
+        expect(
+            readContactEmailFromPage({
+                text: 'For assistance, please contact us at info@openworship.app today',
+                links: [],
+            }),
+        ).toBe('info@openworship.app');
+        expect(
+            readContactEmailFromPage({
+                text: 'nothing here',
+                links: [
+                    {
+                        text: 'Write to us',
+                        href: 'mailto:hello@openworship.app?subject=Hi',
+                    },
+                ],
+            }),
+        ).toBe('hello@openworship.app');
+        // A link beats the words: it is the one the page itself points at.
+        expect(
+            readContactEmailFromPage({
+                text: 'old@example.org',
+                links: [{ text: 'x', href: 'mailto:new@example.org' }],
+            }),
+        ).toBe('new@example.org');
+        expect(
+            readContactEmailFromPage({ text: 'no address at all', links: [] }),
+        ).toBeNull();
+        expect(readContactEmailFromPage(null)).toBeNull();
+    });
+
+    test('takes the help page address first and remembers it', async () => {
+        const module = await loadModule();
+        appProviderMock.messageUtils.listenOnceForData.mockImplementationOnce(
+            (
+                _replyEventName: string,
+                callback: (event: unknown, value: unknown) => void,
+            ) => {
+                callback(
+                    {},
+                    {
+                        text: 'please contact us at info@openworship.app',
+                        links: [],
+                    },
+                );
+            },
+        );
+        await expect(module.findContactEmail()).resolves.toEqual({
+            email: 'info@openworship.app',
+            source: 'help page',
+        });
+        expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
+            'main:app:read-web-page',
+            expect.objectContaining({
+                url: 'https://www.openworship.app/help',
+            }),
+        );
+        // Read once, then remembered: the buttons under a report ask again
+        // within minutes and must not load the page each time.
+        appProviderMock.messageUtils.sendData.mockClear();
+        await expect(module.findContactEmail()).resolves.toEqual({
+            email: 'info@openworship.app',
+            source: 'help page',
+        });
+        expect(appProviderMock.messageUtils.sendData).not.toHaveBeenCalled();
+    });
+
+    test('falls back to the address the build carries when the page cannot be read', async () => {
+        const module = await loadModule();
+        appProviderMock.messageUtils.listenOnceForData.mockImplementationOnce(
+            (
+                _replyEventName: string,
+                callback: (event: unknown, value: unknown) => void,
+            ) => {
+                callback({}, new Error('offline'));
+            },
+        );
+        await expect(module.findContactEmail()).resolves.toEqual({
+            email: 'owf2025@gmail.com',
+            source: 'app',
+        });
+        expect(logErrorMock).toHaveBeenCalled();
     });
 });

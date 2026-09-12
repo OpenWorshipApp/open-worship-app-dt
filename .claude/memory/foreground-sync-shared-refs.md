@@ -25,4 +25,4 @@ making `containerMapper` a per-instance field).
 per-screen DOM node MUST be scoped per manager instance, never module-global.
 The bug only manifests in the presenter (multiple managers in one process, incl.
 mini-previews); each real `screen.html?screenId=N` window is its own process with
-a single manager, so it never collided. Related: [[verify-against-running-app]].
+a single manager, so it never collided. Related: [[dev-hmr-stale-state-qa]].

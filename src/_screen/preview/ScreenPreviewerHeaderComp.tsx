@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import ShowHideScreen from './ShowHideScreen';
 import MiniScreenClearControlComp from './MiniScreenClearControlComp';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
@@ -5,7 +6,7 @@ import {
     useScreenManagerBaseContext,
     useScreenManagerEvents,
 } from '../managers/screenManagerHooks';
-import { useCallback, useState } from 'react';
+import { type KeyboardEvent, useCallback, useState } from 'react';
 import ShowingScreenIconComp from './ShowingScreenIcon';
 import { tran } from '../../lang/langHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
@@ -38,9 +39,18 @@ export default function ScreenPreviewerHeaderComp({
         setIsFullViewRef.current(!isFullViewRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handleLockKeyingUp = useCallback(
+        (event: KeyboardEvent<HTMLElement>) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                handleToggleLock();
+            }
+        },
+        [handleToggleLock],
+    );
     const fullViewLabel = isFullView
         ? tran('Exit full view')
         : tran('Full view');
+    const lockLabel = isLocked ? tran('Unlock') : tran('Lock');
     return (
         <div
             className="card-header w-100"
@@ -64,13 +74,23 @@ export default function ScreenPreviewerHeaderComp({
                         <ItemColorNoteComp item={screenManagerBase} />
                     </div>
                     <div className="ms-2">
+                        {/* Named, focusable and key-operable on purpose: this
+                            was an anonymous <i> with an onClick, so a screen
+                            reader announced nothing, the keyboard could not
+                            reach it, and no tool could find it by label. */}
                         <i
                             className={
                                 `bi bi-${isLocked ? 'lock-fill' : 'unlock'}` +
                                 ' app-caught-hover-pointer'
                             }
                             style={{ color: isLocked ? 'red' : 'green' }}
+                            role="button"
+                            tabIndex={0}
+                            title={lockLabel}
+                            aria-label={lockLabel}
+                            aria-pressed={isLocked}
                             onClick={handleToggleLock}
+                            onKeyUp={handleLockKeyingUp}
                         />
                     </div>
                     <div className="ms-2">
@@ -86,6 +106,12 @@ export default function ScreenPreviewerHeaderComp({
                             aria-label={fullViewLabel}
                             onClick={handleToggleFullView}
                         />
+                    </div>
+                    {/* The screen's own menu — the one a right-click anywhere on
+                        the preview gives. No handler: the card around this
+                        header owns it. */}
+                    <div className="ms-2">
+                        <ContextMenuDotsButtonComp />
                     </div>
                 </div>
             </div>

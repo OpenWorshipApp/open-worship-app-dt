@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { useCallback } from 'react';
 
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
@@ -22,6 +23,7 @@ function RenderVerseTextComp({
     const fontFamily = useBibleFontFamily(bibleKey);
     return (
         <span
+            className="app-xref-text"
             title={bibleText}
             style={{
                 fontFamily,
@@ -65,18 +67,28 @@ export default function BibleCrossRefAIRenderFoundItemComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // The row is the target, so it has to take focus too -- the reference is
+    // the fast path to a passage and the keyboard is the fast path during a
+    // service.
+    const handleKeyingDown = useCallback((event: any) => {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+        event.preventDefault();
+        openInBibleLookup(
+            event,
+            viewControllerRef.current,
+            dataRef.current!.bibleItem,
+            true,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (data === undefined) {
-        return <div>{tran('Loading')}...</div>;
+        return <div className="app-xref-status">{tran('Loading')}...</div>;
     }
     if (data === null) {
         return (
-            <div
-                className={
-                    'w-100 app-border-white-round my-1 p-1 ' +
-                    'app-caught-hover-pointer'
-                }
-                style={{ color: 'red' }}
-            >
+            <div className="app-xref-status is-error">
                 {tran('Fail to get data for')} "{bibleVersesKey}"
             </div>
         );
@@ -84,17 +96,27 @@ export default function BibleCrossRefAIRenderFoundItemComp({
     const { htmlText, bibleItem, bibleText } = data;
     return (
         <div
-            className={
-                'w-100 app-border-white-round my-1 p-1 ' +
-                'app-caught-hover-pointer'
-            }
-            title={tran('shift + click to append')}
+            className="app-xref-item app-caught-hover-pointer"
+            role="button"
+            tabIndex={0}
+            // What a click actually does. The old "shift + click to append"
+            // described a modifier this row has never read: it appends either
+            // way.
+            title={tran('Open beside the current verse')}
             draggable
             onDragStart={handleDragStart}
             onContextMenu={handleContextMenuOpening}
             onClick={handleClicking}
+            onKeyDown={handleKeyingDown}
         >
-            <BibleDirectViewTitleComp bibleItem={bibleItem} />
+            <div className="d-flex align-items-start">
+                <div className="flex-fill app-overflow-hidden">
+                    <BibleDirectViewTitleComp bibleItem={bibleItem} />
+                </div>
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
+            </div>
             <RenderVerseTextComp
                 bibleKey={bibleItem.bibleKey}
                 bibleText={bibleText}

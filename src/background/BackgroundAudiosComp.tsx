@@ -25,8 +25,6 @@ import {
     toDownloadFailureMessage,
 } from './downloadHelper';
 import { downloadVideoOrAudio } from '../server/appHelpers';
-import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import VaryAppDocumentAudiosComp from './VaryAppDocumentAudiosComp';
 import { genAudioBodyChild } from './AudioBodyComp';
 import { useAppDocumentAudioData } from './backgroundHelpers';
@@ -117,21 +115,6 @@ export default function BackgroundAudiosComp() {
             };
         });
     }, []);
-    const handleItemsAdding = useCallback(
-        async (
-            dirSource: DirSource,
-            defaultContextMenuItems: ContextMenuItemType[],
-            event: any,
-        ) => {
-            const contextMenuItems =
-                await genAudioDownloadContextMenuItems(dirSource);
-            showAppContextMenu(event, [
-                ...defaultContextMenuItems,
-                ...contextMenuItems,
-            ]);
-        },
-        [],
-    );
     const mainElement = (
         <BackgroundMediaComp
             rendChild={genAudioBodyChild.bind(null, activeMap)}
@@ -142,7 +125,6 @@ export default function BackgroundAudiosComp() {
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_AUDIO}
             isNameOnTop={true}
             genContextMenuItems={genAudioDownloadContextMenuItems}
-            onItemsAdding={handleItemsAdding}
             shouldHideFooter
         />
     );

@@ -355,8 +355,60 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         showAppContextMenu(event, menuItems);
     }
 
+    // The divider between two panes had no name at all. The help chatbot's
+    // control matcher (`owa_find_ui`, the walkthrough card) reads a name off
+    // `title` / `aria-label` / `data-widget-name`, so a step about this
+    // divider's right-click menu -- Reset Size, Close First Widget, Close
+    // Second Widget -- had nothing on screen to ring, and the View-menu
+    // route it fell back on lives in the native menu bar, which no card can
+    // press. Named after its neighbours' ENGLISH widget names, the same
+    // `data-widget-name` the panes carry open or collapsed, so it answers to
+    // the words a recipe writes whatever language the app is displaying (a
+    // screen reader gets the same name). Read once, at mount: a pane and its
+    // collapsed strip swap places beside the divider but keep the name.
+    private stampAccessibleName() {
+        const node = this.myRef.current;
+        if (node === null) {
+            return;
+        }
+        node.setAttribute('role', 'separator');
+        node.setAttribute(
+            'aria-orientation',
+            this.isVertical ? 'horizontal' : 'vertical',
+        );
+        // Not the `preNode`/`nextNode` getters: those step OVER a collapsed
+        // strip (and throw on the edge of the container), where the strip
+        // is exactly the neighbour wanted here -- it carries the same name
+        // as the pane it stands for.
+        const nameBeside = (isNext: boolean) => {
+            let sibling = isNext
+                ? node.nextElementSibling
+                : node.previousElementSibling;
+            while (sibling !== null) {
+                const name = (sibling as HTMLElement).dataset['widgetName'];
+                if (name !== undefined) {
+                    return name;
+                }
+                sibling = isNext
+                    ? sibling.nextElementSibling
+                    : sibling.previousElementSibling;
+            }
+            return undefined;
+        };
+        const preName = nameBeside(false);
+        const nextName = nameBeside(true);
+        if (preName === undefined || nextName === undefined) {
+            return;
+        }
+        node.setAttribute(
+            'aria-label',
+            `Divider between ${preName} and ${nextName}`,
+        );
+    }
+
     componentDidMount() {
         const target = this.currentNode;
+        this.stampAccessibleName();
         target.addEventListener('mousedown', (event) => {
             if (event.button === 2) {
                 return;

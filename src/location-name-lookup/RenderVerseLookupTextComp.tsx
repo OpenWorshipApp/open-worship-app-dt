@@ -1,11 +1,18 @@
 import { Fragment, useMemo } from 'react';
 
+import { showGraphPreviewContextMenu } from '../graph-view/graphContextMenuHelpers';
+import { DEFAULT_LANG_CODE } from '../lang/langHelpers';
 import { openDetailPanel } from './detailPanelHelpers';
 import {
-    toVerseTextSegments,
+    findLookupTextMatches,
+    toVerseTextSegmentList,
     useLookupTextIndex,
     type LookupTextMatchType,
 } from './verseTextIndexHelpers';
+import {
+    findTranslatedLookupMatches,
+    useLookupTextNeedles,
+} from './verseTextTranslatedHelpers';
 
 export const VERSE_LOOKUP_LINK_CLASS = 'verse-lookup-link';
 
@@ -31,6 +38,55 @@ export function handleMatchClicking(
 }
 
 /**
+ * How to find the names in one verse of one bible, or null while the files it
+ * needs are still loading.
+ *
+ * Both render paths below take their matcher from here so the choice between
+ * English and a translation is made once. Both stores are subscribed
+ * unconditionally — the needles one with an empty code on the English path,
+ * which subscribes to nothing — because the language changes when the reader
+ * switches bibles and a conditional hook cannot survive that.
+ *
+ * The index is needed either way: it carries the record ids and the verse
+ * evidence, neither of which is per-language.
+ */
+export function useVerseLookupMatcher(
+    lookupLangCode: string,
+    kjvShortVerse: string,
+) {
+    const isTranslated = lookupLangCode !== DEFAULT_LANG_CODE;
+    const lookupTextIndex = useLookupTextIndex();
+    const lookupTextNeedles = useLookupTextNeedles(
+        isTranslated ? lookupLangCode : '',
+    );
+    return useMemo(() => {
+        if (lookupTextIndex === null) {
+            return null;
+        }
+        if (!isTranslated) {
+            return (text: string) => {
+                return findLookupTextMatches(
+                    lookupTextIndex,
+                    text,
+                    kjvShortVerse,
+                );
+            };
+        }
+        if (lookupTextNeedles === null) {
+            return null;
+        }
+        return (text: string) => {
+            return findTranslatedLookupMatches(
+                lookupTextIndex,
+                lookupTextNeedles,
+                text,
+                kjvShortVerse,
+            );
+        };
+    }, [lookupTextIndex, lookupTextNeedles, isTranslated, kjvShortVerse]);
+}
+
+/**
  * Verse text with every unambiguously identified name and location made
  * clickable.
  *
@@ -43,14 +99,19 @@ export function handleMatchClicking(
 export default function RenderVerseLookupTextComp({
     text,
     kjvShortVerse,
+    lookupLangCode,
 }: Readonly<{
     text: string;
     kjvShortVerse: string;
+    lookupLangCode: string;
 }>) {
-    const lookupTextIndex = useLookupTextIndex();
+    const findMatchList = useVerseLookupMatcher(lookupLangCode, kjvShortVerse);
     const segmentList = useMemo(() => {
-        return toVerseTextSegments(lookupTextIndex, text, kjvShortVerse);
-    }, [lookupTextIndex, text, kjvShortVerse]);
+        if (findMatchList === null || text === '') {
+            return null;
+        }
+        return toVerseTextSegmentList(text, findMatchList(text));
+    }, [findMatchList, text]);
     if (segmentList === null) {
         return text;
     }
@@ -66,6 +127,13 @@ export default function RenderVerseLookupTextComp({
                 title={match.text}
                 onClick={(event) => {
                     handleMatchClicking(event, match);
+                }}
+                onContextMenu={(event) => {
+                    showGraphPreviewContextMenu(event.nativeEvent, {
+                        kind: match.kind,
+                        recordId: match.recordId,
+                        name: match.text,
+                    });
                 }}
             >
                 {match.text}

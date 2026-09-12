@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test-presenting-flow-mode
-description: `/owa-robot-test presentingFlow` is a tracked 11-phase MODE over 66 run-sheet rows, not a focus area that trims the run
+description: `/owa-robot-test presentingFlow` is a tracked 11-phase MODE over 69 run-sheet rows, not a focus area that trims the run
 metadata:
   type: project
 ---

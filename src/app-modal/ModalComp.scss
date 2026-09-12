@@ -12,4 +12,10 @@
   justify-content: center;
   backdrop-filter: blur(5px);
   padding: 10px;
+
+  // Alert/confirm/input popups have to be answered before anything else can
+  // happen, so they also clear the band an in-modal floating widget lives in.
+  &.modal-container--blocking {
+    z-index: $z-index-blocking-modal;
+  }
 }

@@ -80,6 +80,9 @@ import {
     openInBibleLookup,
     pageNumberToReqData,
     setBibleSearchingTabType,
+    toFindChunkRange,
+    toFindPageWindow,
+    toFoundVerseCount,
     type BibleFindResultType,
     type FindDataType,
 } from './bibleFindHelpers';
@@ -163,7 +166,7 @@ describe('bible-find bibleFindHelpers', () => {
             'gen.1:1:In the beginning',
             'KJV',
         );
-        expect(result.newItem).toContain('app-found-highlight');
+        expect(result.newItem).toContain('app-found-match');
         expect(result.kjvVerseKey).toBe('KJV-KEY');
         expect(bibleItemFromJsonMock).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -329,5 +332,145 @@ describe('bible-find bibleFindHelpers', () => {
         };
         await doFinding(controller, 'text', data, setData);
         expect(setData).toHaveBeenCalledWith(null);
+    });
+});
+
+describe('toFindPageWindow', () => {
+    function toLabels(items: any[]) {
+        return items.map((item) => {
+            return item.type === 'gap'
+                ? `${item.fromPage}..${item.toPage}`
+                : item.page;
+        });
+    }
+
+    test('draws every number while there are few of them', () => {
+        expect(toLabels(toFindPageWindow(5, 1, [1]))).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    test('windows a find that pages into the thousands', () => {
+        // The shape that made this necessary: 1556 chunks used to be 1556
+        // buttons. First, last, the neighbours of the chunk being read, and a
+        // gap naming exactly which chunks it is holding.
+        expect(toLabels(toFindPageWindow(1556, 800, [800]))).toEqual([
+            1,
+            '2..797',
+            798,
+            799,
+            800,
+            801,
+            802,
+            '803..1555',
+            1556,
+        ]);
+    });
+
+    test('keeps a jump-back number for every loaded chunk', () => {
+        expect(toLabels(toFindPageWindow(1556, 800, [800, 12, 400]))).toEqual([
+            1,
+            '2..11',
+            12,
+            '13..399',
+            400,
+            '401..797',
+            798,
+            799,
+            800,
+            801,
+            802,
+            '803..1555',
+            1556,
+        ]);
+    });
+
+    test('caps the loaded chunks at the eight nearest, so the strip stays bounded', () => {
+        const loaded = [800, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+        const numbers = toLabels(toFindPageWindow(1556, 800, loaded)).filter(
+            (label) => {
+                return typeof label === 'number';
+            },
+        );
+        // 8 nearest loaded + first + last + the 5 neighbours, less overlaps.
+        expect(numbers.length).toBeLessThanOrEqual(15);
+        // The nearest loaded survive and the farthest are dropped.
+        expect(numbers).toContain(100);
+        expect(numbers).not.toContain(10);
+    });
+
+    test('drops numbers outside the range, and an empty find draws nothing', () => {
+        expect(toLabels(toFindPageWindow(3, 1, [9, -1]))).toEqual([1, 2, 3]);
+        expect(toFindPageWindow(0, 1, [])).toEqual([]);
+    });
+
+    test('opening a gap reveals every number it was holding', () => {
+        // 140 chunks: the gap covers 4..139 and opens whole, because a number
+        // nobody can reach is worse than a number nobody wants to see.
+        const items = toFindPageWindow(140, 1, [1], [[4, 139]]);
+        const numbers = toLabels(items);
+        expect(numbers).not.toContain('4..139');
+        expect(numbers).toContain(4);
+        expect(numbers).toContain(72);
+        expect(numbers).toContain(139);
+        expect(numbers.length).toBe(140);
+    });
+
+    test('an opened gap too big to draw whole opens as steps that open further', () => {
+        const items = toFindPageWindow(1556, 1, [1], [[4, 1555]]);
+        const numbers = toLabels(items).filter((label) => {
+            return typeof label === 'number';
+        });
+        // Never back to the thousand-button grid this replaced...
+        expect(numbers.length).toBeLessThanOrEqual(210);
+        // ...and the steps leave gaps of their own, so a second click reaches
+        // anything in between.
+        const gaps = toLabels(items).filter((label) => {
+            return typeof label === 'string';
+        });
+        expect(gaps.length).toBeGreaterThan(0);
+        expect(numbers).toContain(4);
+        expect(numbers).toContain(1556);
+    });
+});
+
+describe('toFoundVerseCount', () => {
+    function genData(foundData: any): FindDataType {
+        return {
+            pagingData: { pages: ['1', '2'], currentPage: '1', perPage: 20 },
+            foundData,
+        };
+    }
+
+    test('reads the whole result size off the first chunk that landed', () => {
+        expect(
+            toFoundVerseCount(
+                genData({
+                    1: undefined,
+                    2: { maxLineNumber: 31120 } as any,
+                }),
+            ),
+        ).toBe(31120);
+    });
+
+    test('says nothing until a chunk has come back', () => {
+        expect(toFoundVerseCount(genData({ 1: undefined, 2: null }))).toBe(
+            null,
+        );
+    });
+});
+
+describe('toFindChunkRange', () => {
+    test('counts from one, so the label agrees with the footer number', () => {
+        // The data comes back zero-based for the first chunk, which would
+        // print `Results 0-19` under a footer calling that same chunk `1`.
+        expect(toFindChunkRange(1, 20, 74)).toEqual([1, 20]);
+        expect(toFindChunkRange(2, 20, 74)).toEqual([21, 40]);
+    });
+
+    test('clamps the last chunk to what the find actually returned', () => {
+        expect(toFindChunkRange(4, 20, 74)).toEqual([61, 74]);
+    });
+
+    test('leaves the range unclamped until the count is known', () => {
+        expect(toFindChunkRange(4, 20, null)).toEqual([61, 80]);
     });
 });

@@ -23,6 +23,9 @@ const LazyBibleCrossReferencePreviewerComp = lazy(() => {
 const LazyBibleLocationNamePreviewerComp = lazy(() => {
     return import('./BibleLocationNamePreviewerComp');
 });
+const LazyResourcesPreviewerComp = lazy(() => {
+    return import('../resources/ResourcesPreviewerComp');
+});
 
 // The label KEY, not a rendered label: an `option` can only carry text, so the
 // icon is rendered beside the `select`, for the active tab only.
@@ -30,6 +33,7 @@ const tabTypeList = [
     ['s', 'Find', LazyBibleFindPreviewerComp],
     ['c', 'Cross Reference', LazyBibleCrossReferencePreviewerComp],
     ['l', 'Location-Name (KJV)', LazyBibleLocationNamePreviewerComp],
+    ['r', 'Resources', LazyResourcesPreviewerComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
 export default function BibleFindPreviewerComp() {

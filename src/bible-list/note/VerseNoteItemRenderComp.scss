@@ -1,0 +1,191 @@
+// A verse and the marks made on it, in the Bible Notes panel.
+//
+// A verse row is not another note. A note item is a document you wrote; a verse
+// item is a set of marks you made ON scripture, and the panel has to say which
+// one it is looking at without being read word by word. Two devices carry that,
+// and nothing else is added:
+//
+//   1. THE MARK WEARS ITSELF. A highlight row is set in the very wash those
+//      words carry in the reader, and a commented row carries the reader's own
+//      wavy underline. The panel is a miniature of the page, so the colour a row
+//      is found by IS the colour it is — which is why there is no swatch chip in
+//      front of a highlight and no legend anywhere: the palette is quoted, not
+//      restated.
+//   2. A HAIRLINE STEM holds the marks under their verse. `--app-line`, the same
+//      containment the cue sheet already draws beside every row number, so a
+//      mark reads as belonging to the verse above it rather than as another
+//      row in the file.
+//
+// No hue is introduced here. `--app-accent` is deliberately NOT used for an
+// expanded verse: in this console accent means "where you are", and a verse row
+// that opened is not a selection.
+//
+// Scoped to `.app[data-bs-theme] .app-cue-list` for the reason `cueList.scss`
+// documents at length — the theme sheets paint these rows from
+// `.app[data-bs-theme='dark'] .list-group-item…`, and matching the attribute is
+// what lets these rules land without `!important`.
+.app[data-bs-theme] .app-cue-list {
+  .app-verse-note-item {
+    // The shared row rule centres its children; this row is as tall as the marks
+    // it holds, and its index gutter has to run the full height beside them.
+    align-items: stretch;
+    // The row is a container for its own list, so the list-group padding that
+    // suits a leaf row would double up on every mark under it.
+    padding-top: 1px;
+    padding-bottom: 2px;
+    padding-left: 0;
+
+    &__body {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      // Without this the ellipsis on the verse title never engages: a flex item's
+      // min-width is its content by default, so a long title widens the row
+      // instead of being trimmed.
+      min-width: 0;
+      padding-left: 4px;
+    }
+
+    // The verse's own line: chevron, glyph, reference, count.
+    &__head {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      min-height: 20px;
+    }
+
+    // One glyph rotated, not two glyphs swapped: the arrow that turns is the
+    // only motion in this row, and it is the app's cheapest possible one.
+    &__chevron {
+      flex: 0 0 auto;
+      width: 12px;
+      opacity: 0.7;
+      font-size: var(--app-text-xs);
+      transition: transform 120ms ease;
+
+      &.is-open {
+        transform: rotate(90deg);
+      }
+    }
+
+    // `bi-highlighter` rather than a bookmark: the row is about marks on a
+    // verse, and the glyph may as well be the instrument that made them.
+    &__glyph {
+      flex: 0 0 auto;
+      padding-right: 2px;
+      opacity: 0.7;
+      font-size: var(--app-text-md);
+    }
+
+    // A reference is a code with numbers in it. Pinned figures so `22:2`,
+    // `22:11` and `3:16` line up down a panel of them.
+    &__title {
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+    }
+
+    // Present only while the row is FOLDED. Open, every mark is on screen and
+    // the count is a number restating a list you can already see. A quiet chip
+    // in the `.bible-selector` idiom, never Bootstrap's filled badge — a count
+    // of 1 has no business being the loudest thing in the panel.
+    &__count {
+      flex: 0 0 auto;
+      min-width: 2ch;
+      padding: 0 4px;
+      border-radius: 3px;
+      background-color: rgba(127, 127, 127, 0.22);
+      color: var(--app-muted);
+      font-size: var(--app-text-xs);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    // Containment by ALIGNMENT alone — the marks start under their verse's
+    // glyph and nothing is drawn to say so.
+    //
+    // A hairline stem was tried here and removed: the cue sheet's index gutter
+    // already runs its rule the full height of this row, children included, so
+    // the group is bracketed once already. A second vertical line beside it read
+    // as a stray tick on the common one-mark verse and said nothing the indent
+    // had not.
+    .app-verse-annotation-list {
+      margin: 1px 0 0;
+      padding-left: 16px;
+    }
+  }
+
+  .app-verse-annotation {
+    min-height: 20px;
+    padding: 1px 4px;
+    border: 0;
+    background: transparent;
+    line-height: 1.5;
+
+    &__line {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    // The marked words, wearing the mark. The wash arrives as an inline
+    // `background-color` from the same `--owa-verse-hl-*` custom property the
+    // reader paints `::highlight()` with — one palette, defined once in
+    // `appInit.scss`.
+    //
+    // Deliberately NOT italic: it was a third way of saying "quoted" on top of
+    // the wash and the indent, and synthetic obliquing is what it does to the
+    // Khmer scripts this app is mostly read in.
+    &__text {
+      // Shrinks before the comment beside it does, but never past the point of
+      // being a legible sample of the words.
+      flex: 0 1 auto;
+      min-width: 0;
+      padding: 0 3px;
+      border-radius: 3px;
+      overflow: hidden;
+      color: var(--app-ink);
+      font-size: var(--app-text-sm);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    // What you wrote about those words. Secondary to them, and the part that
+    // gives way when the panel is narrow.
+    &__comment {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      color: var(--app-muted);
+      font-size: var(--app-text-sm);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  // A comment is not washed — it is underlined, exactly as it is in the verse —
+  // so a comment and a highlight on the same words stay tellable apart here for
+  // the same reason they do there.
+  //
+  // Written out rather than nested as `&--comment &__text`: Sass expands EVERY
+  // `&` to the whole compound, so that form compiles to
+  // `…app-verse-annotation--comment .app[data-bs-theme] .app-cue-list…` and
+  // matches nothing.
+  .app-verse-annotation--comment .app-verse-annotation__text {
+    text-decoration: underline wavy var(--owa-verse-comment);
+    text-underline-offset: 0.2em;
+  }
+}
+
+// The recolour menu's chips, which are not in the panel and so are not scoped
+// with it: in a context menu the colour has no words to sit behind, so there it
+// stays a swatch.
+.app-verse-annotation__swatch {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 50%;
+}

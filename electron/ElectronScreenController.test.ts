@@ -5,15 +5,22 @@ vi.mock('electron', async () => {
     return mod.createElectronModuleMock();
 });
 
-const { guardBrowsing, genWebPreferences, attemptClosing, loadURL } =
-    vi.hoisted(() => ({
-        guardBrowsing: vi.fn(),
-        genWebPreferences: vi.fn(() => ({ preload: '/tmp/preload.js' })),
-        attemptClosing: vi.fn(),
-        loadURL: vi.fn(),
-    }));
+const {
+    guardBrowsing,
+    genWebPreferences,
+    attemptClosing,
+    applyRendererRecovery,
+    loadURL,
+} = vi.hoisted(() => ({
+    guardBrowsing: vi.fn(),
+    genWebPreferences: vi.fn(() => ({ preload: '/tmp/preload.js' })),
+    attemptClosing: vi.fn(),
+    applyRendererRecovery: vi.fn(),
+    loadURL: vi.fn(),
+}));
 
 vi.mock('./electronHelpers', () => ({
+    applyRendererRecovery,
     attemptClosing,
     genWebPreferences,
     guardBrowsing,

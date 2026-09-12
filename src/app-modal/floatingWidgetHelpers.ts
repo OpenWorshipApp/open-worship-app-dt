@@ -80,6 +80,11 @@ export type FloatingWidgetOptions = {
     // hosts that can open several widgets at once and would otherwise drop them
     // all on the same spot.
     initialOffset?: number;
+    // Forces the widget into the band ABOVE the modal layer. Only needed by
+    // window-level hosts, which are mounted outside every modal yet are opened
+    // from inside one (the record detail panels); a widget rendered in a modal's
+    // own React tree is detected through `ModalLayerContext` instead.
+    isAboveModal?: boolean;
 };
 
 // Floating widgets are opened by unrelated hosts in unrelated React trees, so

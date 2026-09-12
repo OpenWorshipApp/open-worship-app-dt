@@ -2,6 +2,7 @@ import './BackgroundListItemComp.scss';
 
 import type { ReactNode } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ShowingScreenIcon from '../_screen/preview/ShowingScreenIcon';
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 
@@ -64,6 +65,7 @@ export default function BackgroundListItemComp({
                     />
                 );
             })}
+            <ContextMenuDotsButtonComp onOpening={onContextMenu} />
             {colorNoteChild}
         </div>
     );

@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
 
+import { CONTEXT_MENU_DOTS_CLASSNAME } from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
-import { getSetting, setSetting } from '../helper/settingHelpers';
+import { genStringListSettingManager } from '../helper/SettingManager';
 import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
@@ -16,20 +17,15 @@ import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
-const HISTORY_TEXT_LIST_SETTING_NAME = 'history-text-list';
+const historyTextListSettingManager =
+    genStringListSettingManager('history-text-list');
 function useHistoryTextList(maxHistoryCount: number) {
-    const historyTextListJson =
-        getSetting(HISTORY_TEXT_LIST_SETTING_NAME) ?? '[]';
-    const defaultHistoryTextList = JSON.parse(historyTextListJson) as string[];
-    const [historyTextList, setHistoryTextList] = useState<string[]>(
-        defaultHistoryTextList,
-    );
+    const [historyTextList, setHistoryTextList] = useState<string[]>(() => {
+        return historyTextListSettingManager.getSetting();
+    });
     const setHistoryTextList1 = (newHistoryTextList: string[]) => {
         setHistoryTextList(newHistoryTextList);
-        setSetting(
-            HISTORY_TEXT_LIST_SETTING_NAME,
-            JSON.stringify(newHistoryTextList),
-        );
+        historyTextListSettingManager.setSetting(newHistoryTextList);
     };
     useAppEffect(() => {
         bibleHistoryStore.addBibleItemHistory = (text: string) => {
@@ -203,6 +199,23 @@ function RendHistoryItemComp({
                 <i className="bi bi-x" />
             </small>
             <small className="flex-fill app-ellipsis">{historyText}</small>
+            {/* A `span`, not the shared button component: this row IS a
+                `<button>` and may not hold another one. Everything else about it
+                — class, label, the press it swallows — is the same. */}
+            <span
+                role="button"
+                tabIndex={-1}
+                className={CONTEXT_MENU_DOTS_CLASSNAME}
+                title={tran('More Options')}
+                aria-label={tran('More Options')}
+                onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleContextMenuOpening(historyText, event);
+                }}
+            >
+                <i className="bi bi-three-dots-vertical" />
+            </span>
         </button>
     );
 }

@@ -52,3 +52,34 @@ export default class SettingManager<T> {
         appLocalStorage.setItem(this.settingName, this.serialize(value));
     }
 }
+
+/**
+ * A `string[]` setting, the shape four settings independently hand-rolled
+ * before this existed (lookup history, bible-find book selection, the clock
+ * widget id list, the Excalidraw library list).
+ *
+ * Non-string entries are dropped rather than failing the whole read: a single
+ * bad element must not throw away a list the user built up.
+ */
+export function genStringListSettingManager(settingName: string) {
+    return new SettingManager<string[]>({
+        settingName,
+        defaultValue: [],
+        isErrorToDefault: true,
+        validate: (jsonString) => {
+            try {
+                return Array.isArray(JSON.parse(jsonString));
+            } catch (_error) {
+                return false;
+            }
+        },
+        serialize: (itemList) => JSON.stringify(itemList),
+        deserialize: (jsonString) => {
+            return (JSON.parse(jsonString) as unknown[]).filter(
+                (item): item is string => {
+                    return typeof item === 'string';
+                },
+            );
+        },
+    });
+}

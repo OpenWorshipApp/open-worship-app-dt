@@ -16,6 +16,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { tran } from '../lang/langHelpers';
 import NewLineSettingComp from './NewLineSettingComp';
 import BibleModelInfoSettingComp from './BibleModelInfoSettingComp';
+import BibleSelectionToolbarComp from './BibleSelectionToolbarComp';
 
 function RenderComp() {
     const nestedBibleItems = useBibleItemViewControllerUpdateEvent();
@@ -94,6 +95,11 @@ export default function BiblePreviewerRenderComp({
                 <BibleViewFontSizeContext value={fontSize}>
                     <RenderComp />
                 </BibleViewFontSizeContext>
+                {/* Portals to `document.body`, so where it sits in this tree
+                    costs nothing; being here is what gives it one instance per
+                    window that shows bible views, and none in the screen
+                    output, which never renders this component at all. */}
+                <BibleSelectionToolbarComp />
             </div>
             <div
                 className={'app-auto-hide-bottom p-1 card-footer w-100'}

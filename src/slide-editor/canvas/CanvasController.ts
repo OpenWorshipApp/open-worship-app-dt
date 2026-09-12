@@ -2,7 +2,7 @@ import EventHandler, { type ListenerType } from '../../event/EventHandler';
 import type Canvas from './Canvas';
 import type { CanvasItemPropsType } from './CanvasItem';
 import type CanvasItem from './CanvasItem';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
+import SettingManager from '../../helper/SettingManager';
 import FileSource from '../../helper/FileSource';
 import CanvasItemText from './CanvasItemText';
 import CanvasItemImage from './CanvasItemImage';
@@ -30,7 +30,16 @@ import { showCanvasItemContextMenu } from './canvasContextMenuHelpers';
 import type AppDocument from '../../app-document-list/AppDocument';
 import { allArrows } from '../../event/KeyboardEventListener';
 
-const EDITOR_SCALE_SETTING_NAME = 'canvas-editor-scale';
+const editorScaleSettingManager = new SettingManager<number>({
+    settingName: 'canvas-editor-scale',
+    defaultValue: 1,
+    isErrorToDefault: true,
+    validate: (value) => {
+        return Number.isFinite(Number.parseFloat(value));
+    },
+    serialize: (value) => `${value}`,
+    deserialize: (value) => Number.parseFloat(value),
+});
 export const defaultRangeSize = {
     size: 10,
     min: 1,
@@ -55,12 +64,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
     constructor(appDocument: AppDocument, canvas: Canvas) {
         super();
-        const defaultData = Number.parseFloat(
-            getSetting(EDITOR_SCALE_SETTING_NAME) ?? '',
-        );
-        if (!Number.isNaN(defaultData)) {
-            this._scale = defaultData;
-        }
+        this._scale = editorScaleSettingManager.getSetting();
         this.appDocument = appDocument;
         this.canvas = canvas;
     }
@@ -71,7 +75,9 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
     set scale(newScale: number) {
         this._scale = newScale;
-        setSetting(EDITOR_SCALE_SETTING_NAME, this._scale.toString());
+        if (Number.isFinite(newScale)) {
+            editorScaleSettingManager.setSetting(newScale);
+        }
         this.addPropEvent('scale', { canvasItems: this.canvas.canvasItems });
     }
 

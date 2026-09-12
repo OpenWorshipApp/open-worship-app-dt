@@ -21,7 +21,7 @@ import {
 import { tran } from '../lang/langHelpers';
 import { showFileOrDirExplorer } from '../server/appHelpers';
 import { checkIsVersionOutdated } from '../server/updatingAppHelpers';
-import SettingCardHeaderComp from './SettingCardHeaderComp';
+import SettingOthersSectionComp from './SettingOthersSectionComp';
 
 type LocalStateType = {
     dirPath: string;
@@ -53,16 +53,20 @@ async function readExtraBinLocalState(): Promise<LocalStateType> {
     };
 }
 
-function RenderRowComp({
+function RenderDetailComp({
     label,
+    isWide = false,
     children,
-}: Readonly<{ label: string; children: ReactNode }>) {
+}: Readonly<{ label: string; isWide?: boolean; children: ReactNode }>) {
     return (
-        <div className="d-flex align-items-center gap-2">
-            <span className="text-nowrap text-body-secondary">
-                {tran(label)}:
-            </span>
-            <span className="app-ellipsis flex-fill app-data">{children}</span>
+        <div
+            className={
+                'app-setting-others-detail' +
+                (isWide ? ' app-setting-others-detail-wide' : '')
+            }
+        >
+            <span className="app-setting-others-label">{tran(label)}</span>
+            <span className="app-ellipsis app-data">{children}</span>
         </div>
     );
 }
@@ -175,52 +179,86 @@ export default function SettingOthersExtraBinComp() {
         installedVersion !== null &&
         !!onlineEntry &&
         checkIsVersionOutdated(installedVersion, onlineEntry.version);
+    const primaryAction = isOutdated ? (
+        <button
+            className="btn btn-sm btn-warning"
+            disabled={isBusy}
+            onClick={handleUpdating}
+        >
+            {`${tran('Update to')} ${onlineEntry.version}`}
+        </button>
+    ) : !isInstalled ? (
+        <button
+            className="btn btn-sm btn-primary"
+            disabled={isBusy}
+            onClick={handleFreshInstalling}
+        >
+            {tran('Download and Install')}
+        </button>
+    ) : null;
     return (
-        <div className="card m-1">
-            <SettingCardHeaderComp
-                iconClassName="bi-hdd-stack"
-                title="Extra Binaries"
-            />
-            <div className="card-body">
-                <div
-                    className="text-body-secondary mb-2"
-                    style={{ fontSize: 'var(--app-text-sm)' }}
-                >
-                    {tran(
-                        'The media tools used to download background video ' +
-                            'and audio. They are downloaded separately to ' +
-                            'keep the app small.',
-                    )}
-                </div>
-                <RenderRowComp label="Location">
+        <SettingOthersSectionComp
+            iconClassName="bi-hdd-stack"
+            title="Extra Binaries"
+            description={
+                'The media tools used to download background video and ' +
+                'audio. They are downloaded separately to keep the app small.'
+            }
+            state={isInstalled && !isOutdated ? 'ready' : 'attention'}
+            stateLabel={
+                !isInstalled
+                    ? 'Not installed'
+                    : isOutdated
+                      ? 'Update Available'
+                      : 'Installed'
+            }
+            headerActions={
+                <>
+                    {primaryAction}
+                    {/* Re-reading state belongs with the state readout, not
+                        among the repair actions below. */}
+                    <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={isBusy}
+                        title={tran('Refresh')}
+                        onClick={handleRefreshing}
+                    >
+                        <i className="bi bi-arrow-clockwise" />
+                    </button>
+                </>
+            }
+        >
+            <div className="app-setting-others-details">
+                <RenderDetailComp label="Location" isWide>
                     {/* A button, not a styled span: the path is the primary
                         way to get at the folder, so it has to be reachable by
                         keyboard too. */}
                     <button
                         className="btn btn-link p-0 border-0 align-baseline"
-                        title={`${dirPath}\n${tran('Reveal Folder')}`}
+                        title={`${dirPath}
+${tran('Reveal Folder')}`}
                         onClick={handleRevealing}
                     >
                         <code>{dirPath}</code>
                         <i className="bi bi-folder2-open ms-1" />
                     </button>
-                </RenderRowComp>
-                <RenderRowComp label="Installed version">
-                    {isInstalled ? (
-                        <>
-                            <i className="bi bi-check-circle-fill text-success me-1" />
-                            {installedVersion ?? '?'}
-                        </>
-                    ) : (
+                </RenderDetailComp>
+                {isInstalled ? (
+                    <RenderDetailComp label="Installed version">
+                        {installedVersion ?? '?'}
+                    </RenderDetailComp>
+                ) : (
+                    /* A missing pack has no version to report; what the
+                       operator needs is which tools are gone. */
+                    <RenderDetailComp label="Missing">
                         <span className="text-warning">
-                            {tran('Not installed')}
                             {missingNames.length > 0
-                                ? ` (${missingNames.join(', ')})`
-                                : ''}
+                                ? missingNames.join(', ')
+                                : tran('Not installed')}
                         </span>
-                    )}
-                </RenderRowComp>
-                <RenderRowComp label="Latest version">
+                    </RenderDetailComp>
+                )}
+                <RenderDetailComp label="Latest version">
                     {onlineEntry === undefined ? (
                         <span className="text-body-secondary">
                             {tran('Checking...')}
@@ -230,16 +268,11 @@ export default function SettingOthersExtraBinComp() {
                             {tran('Could not check for updates')}
                         </span>
                     ) : (
-                        <>
-                            {onlineEntry.version}
-                            {isOutdated ? (
-                                <i className="bi bi-arrow-up-circle-fill text-warning ms-1" />
-                            ) : null}
-                        </>
+                        onlineEntry.version
                     )}
-                </RenderRowComp>
+                </RenderDetailComp>
                 {archiveFileFullName !== null ? (
-                    <RenderRowComp label="Archive">
+                    <RenderDetailComp label="Archive">
                         <span
                             title={tran(
                                 'Kept on purpose, so the binaries can be ' +
@@ -249,58 +282,30 @@ export default function SettingOthersExtraBinComp() {
                             {archiveFileFullName}
                             <i className="bi bi-info-circle ms-1" />
                         </span>
-                    </RenderRowComp>
+                    </RenderDetailComp>
                 ) : null}
-                <div className="d-grid gap-2 mt-2">
-                    {isOutdated ? (
-                        <button
-                            className="btn btn-sm btn-warning"
-                            disabled={isBusy}
-                            onClick={handleUpdating}
-                        >
-                            {`${tran('Update to')} ${onlineEntry.version}`}
-                        </button>
-                    ) : !isInstalled ? (
-                        <button
-                            className="btn btn-sm btn-primary"
-                            disabled={isBusy}
-                            onClick={handleFreshInstalling}
-                        >
-                            {tran('Download and Install')}
-                        </button>
-                    ) : null}
-                    {/* The three maintenance actions share one row — they are
-                        secondary to whichever primary button is above them.
-                        No "Reveal Folder" among them: the Location path above
-                        IS that affordance, and two of them is clutter. */}
-                    <div className="d-flex gap-2">
-                        {archiveFileFullName !== null ? (
-                            <button
-                                className="btn btn-sm btn-secondary flex-fill"
-                                disabled={isBusy}
-                                onClick={handleReextracting}
-                            >
-                                {tran('Re-extract')}
-                            </button>
-                        ) : null}
-                        <button
-                            className="btn btn-sm btn-secondary flex-fill"
-                            disabled={isBusy}
-                            onClick={handleReinstalling}
-                        >
-                            {tran('Reinstall')}
-                        </button>
-                        <button
-                            className="btn btn-sm btn-outline-secondary flex-fill"
-                            disabled={isBusy}
-                            onClick={handleRefreshing}
-                        >
-                            <i className="bi bi-arrow-clockwise me-1" />
-                            {tran('Refresh')}
-                        </button>
-                    </div>
-                </div>
             </div>
-        </div>
+            {/* The repair actions, secondary to whichever primary button sits
+                up in the header. No "Reveal Folder" among them: the Location
+                path above IS that affordance, and two of them is clutter. */}
+            <div className="app-setting-others-repair">
+                {archiveFileFullName !== null ? (
+                    <button
+                        className="btn btn-sm btn-secondary"
+                        disabled={isBusy}
+                        onClick={handleReextracting}
+                    >
+                        {tran('Re-extract')}
+                    </button>
+                ) : null}
+                <button
+                    className="btn btn-sm btn-secondary"
+                    disabled={isBusy}
+                    onClick={handleReinstalling}
+                >
+                    {tran('Reinstall')}
+                </button>
+            </div>
+        </SettingOthersSectionComp>
     );
 }

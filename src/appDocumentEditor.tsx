@@ -2,7 +2,7 @@ import './bootstrapCss';
 import { init } from './boot';
 import { run } from './others/main';
 import AppLayoutComp from './router/AppLayoutComp';
-import PresentingControlComp from './presenting-control/PresentingControlComp';
+import AppWindowToolsComp from './others/AppWindowToolsComp';
 
 init(async () => {
     const AppDocumentEditorComp = (
@@ -11,7 +11,7 @@ init(async () => {
     run(
         <AppLayoutComp>
             <AppDocumentEditorComp />
-            <PresentingControlComp />
+            <AppWindowToolsComp />
         </AppLayoutComp>,
     );
 });

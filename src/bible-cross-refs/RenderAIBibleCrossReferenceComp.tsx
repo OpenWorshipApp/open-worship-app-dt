@@ -6,18 +6,20 @@ import { tran } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
 
-function genGoogleTranslated() {
+// Only rendered when the heading actually WAS translated. It used to sit on
+// every theme, in every locale -- including on an English bible, where nothing
+// had been translated at all and the mark was simply untrue.
+function genGoogleTranslated(titleEn: string) {
+    const label =
+        tran('Generated using Google Translate.') +
+        ' Results may vary and may not be ' +
+        'accurate. Please use with caution.';
     return (
-        <i
-            className="bi bi-lightbulb app-caught-hover-pointer"
-            title={
-                tran('Generated using Google Translate.') +
-                ' Results may vary and may not be ' +
-                'accurate. Please use with caution.'
-            }
-            style={{
-                color: 'var(--bs-info-text-emphasis)',
-            }}
+        <button
+            type="button"
+            className="app-xref-note bi bi-translate"
+            title={`${label}\n${titleEn}`}
+            aria-label={label}
             onClick={(event) => {
                 event.stopPropagation();
                 appProvider.browserUtils.openExternalURL(
@@ -36,27 +38,28 @@ export default function RenderAIBibleCrossReferenceComp({
     const bibleKey = useBibleKeyContext();
     const fontFamily = useBibleFontFamily(bibleKey);
     const { title, titleEn, verses } = crossReference;
+    const isTranslated = !!titleEn && titleEn !== title;
     return (
-        <div style={{ maxWidth: '400px' }}>
-            <strong
-                className="app-selectable-text app-found-highlight"
-                style={{ fontFamily, color: 'var(--bs-info)' }}
-                title={titleEn}
+        <div className="app-xref-theme">
+            <h4
+                className="app-xref-theme-title app-selectable-text"
+                style={{ fontFamily }}
             >
-                {genGoogleTranslated()}
                 <span
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(title) }}
                 />
-            </strong>
-            {verses.map((item, i) => {
-                return (
-                    <BibleCrossRefAIRenderFoundItemComp
-                        key={item + i}
-                        bibleVersesKey={item}
-                    />
-                );
-            })}
-            <hr />
+                {isTranslated ? genGoogleTranslated(titleEn) : null}
+            </h4>
+            <div className="app-xref-verses">
+                {verses.map((item, i) => {
+                    return (
+                        <BibleCrossRefAIRenderFoundItemComp
+                            key={item + i}
+                            bibleVersesKey={item}
+                        />
+                    );
+                })}
+            </div>
         </div>
     );
 }

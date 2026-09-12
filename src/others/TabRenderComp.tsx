@@ -23,13 +23,22 @@ function useIsOnScreen<T>(tab: TabHeaderPropsType<T>) {
         }
         return tab.checkIsOnScreen(tab.key);
     }, [tab.key]);
+    const tabKeyRef = useAppCurrentRef(tab.key);
     const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     useScreenUpdateEvents(undefined, () => {
         attemptTimeout(async () => {
             if (tab.checkIsOnScreen === undefined) {
                 return;
             }
-            const isOnScreen = await tab.checkIsOnScreen(tab.key);
+            const tabKey = tab.key;
+            const isOnScreen = await tab.checkIsOnScreen(tabKey);
+            // Answered for the tab held when the event fired. Being re-fed a
+            // different key mid-check re-runs the guarded read above, so
+            // letting this land would light the new tab's dot from the old
+            // tab's answer.
+            if (tabKey !== tabKeyRef.current) {
+                return;
+            }
             setIsOnScreen(isOnScreen);
         });
     });

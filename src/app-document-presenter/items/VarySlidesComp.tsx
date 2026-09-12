@@ -69,12 +69,26 @@ function useVarySlidesData() {
         return selectedVaryAppDocument.getSlides();
     }, [selectedVaryAppDocument]);
 
-    const refresh = async () => {
+    const selectedVaryAppDocumentRef = useAppCurrentRef(
+        selectedVaryAppDocument,
+    );
+    const refresh = useCallback(async () => {
         attemptTimeout(async () => {
-            const newVarySlides = await selectedVaryAppDocument.getSlides();
+            const appDocument = selectedVaryAppDocumentRef.current;
+            const newVarySlides = await appDocument.getSlides();
+            // When selected file already changed, the new slides are for a
+            // different document and must not be applied to the old one.
+            if (
+                appDocument.fileSource !==
+                selectedVaryAppDocumentRef.current.fileSource
+            ) {
+                refresh();
+                return;
+            }
             setVarySlide(newVarySlides);
         });
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useFileSourceEvents(
         ['update'],
@@ -111,9 +125,6 @@ function useVarySlidesData() {
     const isDocxAppDocument = useMemo(() => {
         return DocxAppDocument.checkIsThisType(selectedVaryAppDocument);
     }, [selectedVaryAppDocument]);
-    const selectedVaryAppDocumentRef = useAppCurrentRef(
-        selectedVaryAppDocument,
-    );
     const isPDFAppDocumentRef = useAppCurrentRef(isPDFAppDocument);
     const refreshPDFImages = useCallback(async () => {
         if (!isPDFAppDocumentRef.current) {

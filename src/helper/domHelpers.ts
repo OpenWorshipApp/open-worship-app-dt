@@ -1,3 +1,4 @@
+import { askAiCaution } from './ai/aiCautionHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -183,7 +184,18 @@ export function handleAutoHide(targetDom: HTMLDivElement) {
         padding: '0px',
         boxShadow: '0px 0px 2px 1px rgba(0,0,0,0.3)',
     });
-    clearButton.title = tran('Show');
+    // Named without the word "show" in it at all, and NOT `tran('Show')`,
+    // which is what it used to be. There is one of these per auto-hide footer
+    // -- Background, Bible previewer, presenting-flow preview, mini screen --
+    // and "Show" is the most collided word in this app: `owa_click` ranks an
+    // exact label above every looser fit, so an assistant asked to turn the
+    // projector on matched this decoration four times over, beat the screen's
+    // own "Toggle showing screen" control, and reported the screen was
+    // showing because it had managed to press something. Dropping the word
+    // is what makes that impossible rather than merely unlikely -- renaming
+    // it to "Show Hidden Controls" first still won the bare word "Show" on a
+    // whole-word match.
+    clearButton.title = tran('Reveal Hidden Controls');
     let timeoutId: any = null;
     const mouseEnterListener = () => {
         if (timeoutId !== null) {
@@ -363,6 +375,12 @@ export type PopupWindowFeaturesType = {
     appTopToMain?: boolean;
     appShowMenuBar?: boolean;
     appResize?: boolean;
+    // Ask the OS compositor for a translucent backdrop behind this window --
+    // frosted glass over whatever is under it, instead of a slab. Ignored
+    // where the compositor cannot do it (`systemUtils.isGlassCapable`), so a
+    // window that wants it must ALSO keep its own stylesheet readable when it
+    // does not get it.
+    appGlassy?: boolean;
     // Names of experimental Blink runtime features to enable for this window
     // only, e.g. `['CanvasDrawElement']`. Joined with `+` because the window
     // features string is itself `,`/`=` delimited.
@@ -454,6 +472,260 @@ function openAboutPage() {
 }
 appProvider.messageUtils.listenForData('main:app:open-about-page', () => {
     openAboutPage();
+});
+
+export function openChatbotPage() {
+    return openPopupWindow(
+        appProvider.chatbotHomePage,
+        `chatbot_${Date.now()}`,
+        'chatbot',
+        {
+            width: 460,
+            height: 640,
+            // Beside the app rather than over it: the answers point at
+            // controls in the window behind this one -- and the frosted
+            // backdrop keeps that window half-visible THROUGH the help, so a
+            // step that says "the button below the tabs" can be followed
+            // without moving anything out of the way.
+            appGlassy: true,
+            appAlignHorizontal: 'right',
+            appAlignVertical: 'center',
+            appFollowScale: true,
+            appTopToMain: true,
+        },
+    );
+}
+// Help -> App Help (Chatbot) in the native menu bar. It gets the same
+// caution the 🤖 button and the Tools entry ask for, so the warning cannot be
+// walked around by opening the window a different way.
+appProvider.messageUtils.listenForData('main:app:open-chatbot-page', () => {
+    void (async () => {
+        if (await askAiCaution('assistant')) {
+            openChatbotPage();
+        }
+    })();
+});
+
+/**
+ * The AI Chat window: a company's own chat site (ChatGPT, Claude, Gemini...)
+ * in a box beside the app, the way a browser's AI sidebar holds one. Opened
+ * exactly as the chatbot is -- same size, same side, same glass -- so the two
+ * read as one family; what is inside is `html/aichat.html` and a `<webview>`
+ * guest that `electron/aiChatGuestHelpers.ts` keeps in its box.
+ */
+export function openAiChatPage() {
+    return openPopupWindow(
+        appProvider.aichatHomePage,
+        `aichat_${Date.now()}`,
+        'aichat',
+        {
+            width: 460,
+            height: 640,
+            appGlassy: true,
+            appAlignHorizontal: 'right',
+            appAlignVertical: 'center',
+            appFollowScale: true,
+            appTopToMain: true,
+        },
+    );
+}
+// Help -> AI Chat, same as above.
+appProvider.messageUtils.listenForData('main:app:open-aichat-page', () => {
+    void (async () => {
+        if (await askAiCaution('aichat')) {
+            openAiChatPage();
+        }
+    })();
+});
+
+// The chatbot's walkthrough card lives in THIS window and rings the control
+// each step is about -- but the help window it was asked from is a separate
+// OS window on top of this one, and whatever it covers cannot be seen or
+// pressed. So the card says when a walkthrough starts and ends, and the main
+// process steps that window aside for the length of it.
+//
+// Relayed rather than handled here: only the main process can move a window,
+// and the card is a dependency-free expression injected into the page, so a
+// DOM event is the only thing it is allowed to reach us with.
+document.addEventListener('owa-guide-running', (event) => {
+    const { isRunning } = (event as CustomEvent).detail ?? {};
+    appProvider.messageUtils.sendData('all:app:guide-running', {
+        isRunning: isRunning === true,
+    });
+});
+
+// The same card, stuck: a step it cannot press for the user. It used to
+// apologise and stop there. Now it asks the chat window that started the
+// walkthrough — which can look at the real window through its tools and
+// rewrite the guide from this step — and shows what comes back on the card
+// itself, so a volunteer following steps in the app never has to go and find
+// the help window to be helped.
+//
+// Relayed both ways for the same reason as the running signal: the card is a
+// dependency-free expression injected into the page, and the chat window is a
+// different renderer that only the main process can reach.
+document.addEventListener('owa-guide-help', (event) => {
+    const detail = (event as CustomEvent).detail ?? {};
+    appProvider.messageUtils.sendData('all:app:guide-help', detail);
+});
+appProvider.messageUtils.listenForData(
+    'main:app:guide-help-answer',
+    (_event, data: { token?: number; text?: string }) => {
+        document.dispatchEvent(
+            new CustomEvent('owa-guide-help-answer', { detail: data ?? {} }),
+        );
+    },
+);
+
+// `owa_lyric_file` / `owa_slide_file`: an agent asking to look at or write one
+// of the user's own documents.
+//
+// Relayed rather than handled inline for the same reason as the guide events
+// above — the tool's only way in is a dependency-free page expression, which
+// may not `import()` an app module — and the worker is imported LAZILY here so
+// that nothing in the song/slide graph loads in every window just in case
+// somebody asks (memory: `app-document-helpers-lyric-cycle` is the cycle a
+// static import would close).
+document.addEventListener('owa-agent-file', (event) => {
+    const detail = (event as CustomEvent).detail ?? {};
+    const { token } = detail;
+    const reply = (result: unknown) => {
+        document.dispatchEvent(
+            new CustomEvent('owa-agent-file-answer', {
+                detail: { token, result },
+            }),
+        );
+    };
+    import('./agentFileHelpers')
+        .then(async ({ handleAgentFileRequest }) => {
+            reply(await handleAgentFileRequest(detail));
+        })
+        .catch((error) => {
+            reply({
+                isError: true,
+                reason: String(error?.message ?? error),
+            });
+        });
+});
+
+// `owa_list_screens`: an agent asking what is ON each presentation screen --
+// the slide, the verse, the background, the foreground widgets, the lock.
+//
+// Same relay, same reason, and the same lazy import: the screen managers pull
+// the whole presenting graph behind them, and a help question about the
+// projector must not make every window carry it. Without this the tool could
+// say only whether a screen was showing, and a model handed "showing" for a
+// screen with a verse on it told a volunteer it was blank (2026-09-09).
+document.addEventListener('owa-agent-screens', (event) => {
+    const detail = (event as CustomEvent).detail ?? {};
+    const { token } = detail;
+    const reply = (result: unknown) => {
+        document.dispatchEvent(
+            new CustomEvent('owa-agent-screens-answer', {
+                detail: { token, result },
+            }),
+        );
+    };
+    import('./agentScreenHelpers')
+        .then(({ describeScreensForAgent }) => {
+            reply(describeScreensForAgent());
+        })
+        .catch((error) => {
+            reply({
+                isError: true,
+                reason: String(error?.message ?? error),
+            });
+        });
+});
+
+// `owa_app_state`: an agent asking what the user is in the MIDDLE of on the
+// Presenter page -- the selected document, its slides, which is on a screen,
+// which is next, and the words each card answers to.
+//
+// Same relay, same lazy import: the selected document pulls in the document
+// graph and the screen managers. Without this the tool knew the projector and
+// nothing before it: asked which song was selected, the assistant named the
+// one on the screen (2026-09-09), and asked for the next slide it dumped
+// every control in the window looking for a card that had no name.
+document.addEventListener('owa-agent-presenter', (event) => {
+    const detail = (event as CustomEvent).detail ?? {};
+    const { token } = detail;
+    const reply = (result: unknown) => {
+        document.dispatchEvent(
+            new CustomEvent('owa-agent-presenter-answer', {
+                detail: { token, result },
+            }),
+        );
+    };
+    import('./agentPresenterHelpers')
+        .then(async ({ describePresenterForAgent }) => {
+            reply(await describePresenterForAgent());
+        })
+        .catch((error) => {
+            reply({
+                isError: true,
+                reason: String(error?.message ?? error),
+            });
+        });
+});
+
+// `owa_present_bible`: an agent asked to put a Bible passage on the projector
+// by its reference -- "John 3:16" -- or to read what that reference is.
+//
+// Same relay, same lazy import: the resolver pulls in the bible graph and
+// the screen managers. Without it the assistant could only describe the
+// Bible Lookup's picker, and the "do it for me" under that answer stopped at
+// the step where a person types the book's first letters (2026-09-10).
+document.addEventListener('owa-agent-bible', (event) => {
+    const detail = (event as CustomEvent).detail ?? {};
+    const { token } = detail;
+    const reply = (result: unknown) => {
+        document.dispatchEvent(
+            new CustomEvent('owa-agent-bible-answer', {
+                detail: { token, result },
+            }),
+        );
+    };
+    import('./agentBibleHelpers')
+        .then(async ({ handleAgentBibleRequest }) => {
+            reply(await handleAgentBibleRequest(detail));
+        })
+        .catch((error) => {
+            reply({
+                isError: true,
+                reason: String(error?.message ?? error),
+            });
+        });
+});
+
+// `owa_foreground`: an agent asked to start or stop a foreground extra -- a
+// countdown, a clock, a scrolling message -- on the ticked screens, or to read
+// which are on.
+//
+// Same relay, same lazy import: the worker pulls in the screen managers.
+// Without it "start a 5 minute countdown" was eight rounds of the assistant
+// hunting the Foreground tab's boxes, and the "yes" under it ran out of rounds
+// with nothing started (2026-09-11).
+document.addEventListener('owa-agent-foreground', (event) => {
+    const detail = (event as CustomEvent).detail ?? {};
+    const { token } = detail;
+    const reply = (result: unknown) => {
+        document.dispatchEvent(
+            new CustomEvent('owa-agent-foreground-answer', {
+                detail: { token, result },
+            }),
+        );
+    };
+    import('./agentForegroundHelpers')
+        .then(async ({ handleAgentForegroundRequest }) => {
+            reply(await handleAgentForegroundRequest(detail));
+        })
+        .catch((error) => {
+            reply({
+                isError: true,
+                reason: String(error?.message ?? error),
+            });
+        });
 });
 
 function toURLObject(urlOrPathname: string) {

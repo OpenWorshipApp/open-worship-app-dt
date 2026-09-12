@@ -46,7 +46,14 @@ const CANVAS_DOCUMENT_DOT_EXTENSIONS = ['.ows', '.preview'];
  * original app document and the slide reference resolves against it.
  */
 export type ArchiveFileKindType =
-    'document' | 'bible' | 'image' | 'video' | 'audio' | 'web';
+    | 'document'
+    | 'bible'
+    | 'note'
+    | 'note-asset'
+    | 'image'
+    | 'video'
+    | 'audio'
+    | 'web';
 
 export const kindDirSettingNameMap: Record<ArchiveFileKindType, string> = {
     document: dirSourceSettingNames.APP_DOCUMENT,
@@ -55,6 +62,13 @@ export const kindDirSettingNameMap: Record<ArchiveFileKindType, string> = {
     // the reader page), so the bible bundle pre-resolves its own destination and
     // passes it to `resolveKindDirPaths`.
     bible: dirSourceSettingNames.BIBLE_PRESENT,
+    note: dirSourceSettingNames.BIBLE_NOTES,
+    // Also only a fallback: an image a note item embeds belongs in the app's
+    // temp-files folder, which is not a dir-source setting at all, so the note
+    // bundle presets that destination. The entry still has to exist — a kind
+    // absent from this map is rejected by `validateArchiveFileEntries` — and
+    // BIBLE_NOTES is what gives it the `always-new` collision policy it wants.
+    'note-asset': dirSourceSettingNames.BIBLE_NOTES,
     image: dirSourceSettingNames.BACKGROUND_IMAGE,
     video: dirSourceSettingNames.BACKGROUND_VIDEO,
     audio: dirSourceSettingNames.BACKGROUND_AUDIO,
@@ -64,7 +78,11 @@ export const kindDirSettingNameMap: Record<ArchiveFileKindType, string> = {
 // The kinds that are an APP ITEM rather than a media file: the ones an import
 // may rewrite afterwards (canvas media re-pointing, color notes) and whose
 // sidecar is re-attached.
-const ITEM_FILE_KINDS = new Set<ArchiveFileKindType>(['document', 'bible']);
+const ITEM_FILE_KINDS = new Set<ArchiveFileKindType>([
+    'document',
+    'bible',
+    'note',
+]);
 
 export type ArchiveFileEntryType = {
     originalPath: string;

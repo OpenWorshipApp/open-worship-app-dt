@@ -28,6 +28,41 @@ import NoteItem from './NoteItem';
 import { DragTypeEnum } from '../../helper/DragInf';
 import { type NoteItemType } from './noteItemHelpers';
 
+function genVerseJson(): NoteItemType {
+    return {
+        title: '(KJV) Genesis 22:1',
+        content: 'GEN 22:1',
+        metadata: {
+            id: 4,
+            createdAt: new Date('2026-01-01T00:00:00.000Z'),
+            updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+        },
+        verseKey: '(KJV) GEN 22:1',
+        highlights: [
+            {
+                id: 'h-uuid',
+                start: 16,
+                end: 32,
+                text: 'pass after these',
+                color: 'yellow',
+                createdAt: '2026-01-01T00:00:00.000Z',
+                updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+        ],
+        comments: [
+            {
+                id: 'c-uuid',
+                start: 40,
+                end: 47,
+                text: 'Abraham',
+                comment: 'for Sunday',
+                createdAt: '2026-01-01T00:00:00.000Z',
+                updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+        ],
+    };
+}
+
 function genValidJson(overrides: Partial<NoteItemType> = {}): NoteItemType {
     return {
         title: 'Title',
@@ -141,6 +176,75 @@ describe('bible-list/note NoteItem', () => {
                 updatedAt: new Date('2026-01-02T00:00:00.000Z'),
             },
         });
+    });
+
+    // `Note.items`' setter rebuilds every item through `toJson()` on every
+    // mutation of the file, so a verse item's marks are erased by an edit to a
+    // completely unrelated item unless `toJson` carries them.
+    test('toJson carries a verse item through unchanged', () => {
+        const json = genVerseJson();
+        const item = new NoteItem(json, '/notes/a.note');
+        expect(item.isVerseItem).toBe(true);
+        expect(item.verseKey).toBe('(KJV) GEN 22:1');
+        expect(item.annotationCount).toBe(2);
+        expect(item.toJson()).toEqual(json);
+    });
+
+    test('a round trip through toJson/fromJson keeps every uuid', () => {
+        const item = new NoteItem(genVerseJson(), '/notes/a.note');
+        const restored = NoteItem.fromJson(item.toJson(), '/notes/a.note');
+        expect(restored.highlights.map((one) => one.id)).toEqual(['h-uuid']);
+        expect(restored.comments.map((one) => one.id)).toEqual(['c-uuid']);
+        expect(restored.highlights[0].color).toBe('yellow');
+        expect(restored.comments[0].comment).toBe('for Sunday');
+    });
+
+    test('an ordinary note item gains no verse fields', () => {
+        const item = new NoteItem(genValidJson(), '/notes/a.note');
+        expect(item.isVerseItem).toBe(false);
+        expect(item.verseKey).toBeNull();
+        expect(item.toJson()).not.toHaveProperty('verseKey');
+        expect(item.toJson()).not.toHaveProperty('highlights');
+    });
+
+    test('update carries the marks, since save() routes through it', () => {
+        const target = new NoteItem(
+            { ...genVerseJson(), highlights: [], comments: [] },
+            '/notes/a.note',
+        );
+        target.update(new NoteItem(genVerseJson(), '/notes/a.note'));
+        expect(target.highlights).toHaveLength(1);
+        expect(target.comments).toHaveLength(1);
+    });
+
+    test('validate drops a malformed mark instead of failing the item', () => {
+        const json = genVerseJson();
+        (json.highlights as any[]).push(
+            { id: 'bad', start: 5 },
+            { id: 'worse', start: 1, end: 2, text: 'x', color: 'chartreuse' },
+        );
+        (json.comments as any[]).push({ id: 'nope', start: 1, end: 2 });
+        const item = NoteItem.fromJson(json, '/notes/a.note');
+        expect(item.highlights.map((one) => one.id)).toEqual(['h-uuid']);
+        expect(item.comments.map((one) => one.id)).toEqual(['c-uuid']);
+    });
+
+    test('dragSerialize keeps the marks with the item', () => {
+        const item = new NoteItem(genVerseJson(), '/notes/a.note');
+        const restored = NoteItem.dragDeserialize(item.dragSerialize().data);
+        expect(restored?.annotationCount).toBe(2);
+    });
+
+    test('genNewVerseJsonData starts a verse item with no marks', () => {
+        const json = NoteItem.genNewVerseJsonData(
+            '(KJV) GEN 22:1',
+            '(KJV) Genesis 22:1',
+            'GEN 22:1',
+        );
+        expect(json.verseKey).toBe('(KJV) GEN 22:1');
+        expect(json.highlights).toEqual([]);
+        expect(json.comments).toEqual([]);
+        expect(json.metadata.isOpened).toBe(true);
     });
 
     test('clone resets the id unless isKeepId is set', () => {

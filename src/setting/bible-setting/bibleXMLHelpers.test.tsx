@@ -20,6 +20,10 @@ const mocks = vi.hoisted(() => {
         async set(key: string, value: T) {
             this.store.set(key, value);
         }
+
+        async delete(key: string) {
+            this.store.delete(key);
+        }
     }
 
     const getInstance = (filePath: string) => {
@@ -69,9 +73,9 @@ const mocks = vi.hoisted(() => {
         getAllXMLFileKeysMock: vi.fn(),
         getBibleInfoJsonMock: vi.fn(),
         getBibleInfoMock: vi.fn(),
-        getFileMD5Mock: vi.fn(),
         getInstance,
         getMenuTitleRevealFileMock: vi.fn(() => 'Reveal in File Explorer'),
+        genEmbeddedKJVBibleXMLTextMock: vi.fn(),
         getModelKeyBookMapMock: vi.fn(),
         getBibleModelInfoSettingMock: vi.fn(),
         handleErrorMock: vi.fn(),
@@ -137,7 +141,6 @@ vi.mock('../../server/fileHelpers', () => ({
     fsCheckFileExist: mocks.fsCheckFileExistMock,
     fsDeleteDir: mocks.fsDeleteDirMock,
     fsDeleteFile: mocks.fsDeleteFileMock,
-    getFileMD5: mocks.getFileMD5Mock,
     pathJoin: mocks.pathJoinMock,
 }));
 
@@ -225,7 +228,12 @@ vi.mock('./schemas/bibleSchemaHelpers', () => ({
 }));
 
 vi.mock('../../helper/bible-helpers/bibleModelHelpers', () => ({
+    BIBLE_KJV_KEY: 'KJV',
     getBibleModelInfoSetting: mocks.getBibleModelInfoSettingMock,
+}));
+
+vi.mock('../../helper/bible-helpers/kjvBibleXMLTextHelpers', () => ({
+    genEmbeddedKJVBibleXMLText: mocks.genEmbeddedKJVBibleXMLTextMock,
 }));
 
 async function loadModule() {
@@ -264,7 +272,6 @@ describe('bibleXMLHelpers', () => {
             key: 'KJV',
             title: 'Bible',
         });
-        mocks.getFileMD5Mock.mockResolvedValue('abc123');
         mocks.getModelKeyBookMapMock.mockReturnValue({
             EXO: 'Exodus',
             GEN: 'Genesis',
@@ -437,8 +444,14 @@ describe('bibleXMLHelpers', () => {
         mocks.bibleKeyToXMLFilePathMock.mockResolvedValueOnce(null);
         expect(await saveXMLText('MISSING', '<bible />')).toBe(false);
 
+        mocks.files.set('/bibles/KJV.xml.cache/all', '{}');
         await deleteBibleXML('KJV');
         expect(mocks.trashedFiles).toContain('/bibles/KJV.xml');
+        // the parsed copies sit BESIDE the file, so trashing it leaves them
+        expect(mocks.fsDeleteDirMock).toHaveBeenCalledWith(
+            '/bibles/KJV.xml.cache',
+        );
+        expect(mocks.files.has('/bibles/KJV.xml.cache/all')).toBe(false);
     });
 
     test('opens context menu actions and invalidates bible XML cache folders', async () => {
@@ -460,6 +473,43 @@ describe('bibleXMLHelpers', () => {
         items[1]?.onSelect();
         await Promise.resolve();
         await Promise.resolve();
+    });
+
+    test('resetting a KJV overwrites its own file and drops both caches', async () => {
+        const { getBibleXMLDataFromKeyCaching, resetBibleXMLToEmbeddedKJV } =
+            await loadModule();
+
+        // warm both caches so the reset has something stale to drop
+        mocks.files.set('/bibles/KJV.xml', '<bible key="KJV" />');
+        mocks.files.set('/bibles/my-kjv.xml', '<bible key="KJV" />');
+        mocks.xmlTextToJsonMock.mockResolvedValue({ info: { key: 'KJV' } });
+        expect(await getBibleXMLDataFromKeyCaching('KJV')).toEqual({
+            info: { key: 'KJV' },
+        });
+
+        mocks.genEmbeddedKJVBibleXMLTextMock.mockResolvedValue('<kjv />');
+        expect(await resetBibleXMLToEmbeddedKJV('/bibles/my-kjv.xml')).toBe(
+            true,
+        );
+        // the row's OWN file, not `<dir>/KJV.xml`
+        expect(mocks.files.get('/bibles/my-kjv.xml')).toBe('<kjv />');
+        expect(mocks.files.has('/bibles/KJV.xml.cache/all')).toBe(false);
+
+        mocks.xmlTextToJsonMock.mockResolvedValue({ info: { key: 'RESET' } });
+        expect(await getBibleXMLDataFromKeyCaching('KJV')).toEqual({
+            info: { key: 'RESET' },
+        });
+
+        // an unserializable bible leaves the file alone
+        mocks.genEmbeddedKJVBibleXMLTextMock.mockResolvedValue(null);
+        expect(await resetBibleXMLToEmbeddedKJV('/bibles/my-kjv.xml')).toBe(
+            false,
+        );
+        expect(mocks.files.get('/bibles/my-kjv.xml')).toBe('<kjv />');
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Reset Bible XML',
+            'Failed to convert KJV Bible data to XML text.',
+        );
     });
 
     test('uses backup and fresh cache paths when reading cached XML data and chapter data', async () => {
@@ -590,10 +640,6 @@ describe('bibleXMLHelpers', () => {
         expect(mocks.fsDeleteDirMock).toHaveBeenCalledWith(
             '/bibles/KJV.xml.cache',
         );
-        expect(mocks.ensureDirectoryMock).toHaveBeenCalledWith(
-            '/bibles/KJV.xml.cache',
-        );
-        expect(mocks.files.has('/bibles/KJV.xml.cache/abc123')).toBe(true);
 
         mocks.files.set('/bibles/KJV.xml', '<bible key="KJV" />');
         mocks.xmlTextToJsonMock.mockResolvedValueOnce(jsonData);
@@ -643,7 +689,35 @@ describe('bibleXMLHelpers', () => {
                 }),
             }),
         );
+        // a renamed key answers out of a folder the save never touched
+        expect(mocks.fsDeleteDirMock).toHaveBeenCalledWith(
+            '/bibles/NEW.xml.cache',
+        );
     });
+
+    test('saving drops the in-memory parsed copy, not only the folder', async () => {
+        const { getBibleXMLDataFromKeyCaching, saveJsonDataToXMLfile } =
+            await loadModule();
+
+        mocks.files.set('/bibles/KJV.xml', '<bible key="KJV" />');
+        mocks.xmlTextToJsonMock.mockResolvedValue({ info: { key: 'STALE' } });
+        expect(await getBibleXMLDataFromKeyCaching('KJV')).toEqual({
+            info: { key: 'STALE' },
+        });
+
+        mocks.jsonToXMLTextMock.mockReturnValue('<bible key="KJV" />');
+        expect(
+            await saveJsonDataToXMLfile({ info: { key: 'KJV' } } as any),
+        ).toBe(true);
+
+        // left in memory, this copy would be written straight back into a fresh
+        // `all` blob that then stands for a week
+        mocks.xmlTextToJsonMock.mockResolvedValue({ info: { key: 'SAVED' } });
+        expect(await getBibleXMLDataFromKeyCaching('KJV')).toEqual({
+            info: { key: 'SAVED' },
+        });
+    });
+
     test('the XML info and key-list hooks load on mount', async () => {
         const { act } = await import('react');
         const { createRoot } = await import('react-dom/client');

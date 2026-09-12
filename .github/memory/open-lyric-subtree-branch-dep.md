@@ -1,11 +1,11 @@
 ---
 name: open-lyric-subtree-branch-dep
-description: open-lyric is consumed via a git subtree-split branch, not a subdirectory URL; must be re-split and force-pushed on every update
+description: open-lyric is consumed as a pre-built dist repo pinned to a version tag (open-lyric-dist#0.1.55); the old git subtree-split branch is history
 metadata:
   type: project
 ---
 
-The `open-lyric` devDependency points at `git+ssh://git@github.com/raksa/open-lyric.git#pkg-open-lyric`
+The `open-lyric` dep once pointed at `git+ssh://git@github.com/raksa/open-lyric.git#pkg-open-lyric`
 — a `git subtree split --prefix=packages/open-lyric` branch of the private
 `raksa/open-lyric` monorepo (local clone: `../open-lyric`). Set up 2026-07-26.
 
@@ -14,29 +14,14 @@ previous spec `…/open-lyric.git/tree/main/packages/open-lyric` was a GitHub
 *web-UI* path — npm silently stripped it and installed the 84 MB monorepo root
 (`open-lyric@1.0.0`, main `scripts/electron-ol.mjs`, no `dist/`) instead of the
 27 MB library (`open-lyric@0.1.0`, main `./dist/index.cjs`). It failed silently,
-not loudly. The package's `dist/` is committed upstream, so the branch needs no
-build step at install time.
+not loudly. That constraint is the reason the dist repos below exist.
 
-**How to apply:**
-- To ship an upstream change, re-split — the branch does NOT track `main`:
-  ```
-  cd ../open-lyric && git branch -D pkg-open-lyric
-  git subtree split --prefix=packages/open-lyric -b pkg-open-lyric
-  git push -f origin pkg-open-lyric
-  ```
-  The split reads committed history only; uncommitted `packages/open-lyric/dist`
-  changes are excluded. Hashes are deterministic for identical history.
-- **npm will not re-resolve on a plain `npm install`.** It rewrites the spec in
-  the lockfile but keeps the old `resolved` commit and reports "up to date".
-  Force it: `npm uninstall open-lyric --ignore-scripts` then
-  `npm install --save-dev --ignore-scripts "git+ssh://…#pkg-open-lyric"`.
-- **Keep the explicit `git+ssh://` spec.** npm normalizes it to the `github:`
-  shorthand on save, which resolves via the codeload HTTPS tarball — that 404s
-  because the repo is private, and only works via npm's SSH fallback. Re-edit
-  `package.json` back to the `git+ssh://` form after any `--save` install.
-- Cloning the repo on Windows needs `-c core.longpaths=true`; the
-  `packages/*/dist/types-cjs/**` paths exceed MAX_PATH.
-- Cleaner long-term alternative: the upstream repo already has a built-out
-  `npm run pub` (`scripts/publish-packages.ts`) and the name `open-lyric` is
-  unclaimed on npm — publishing would remove the git-clone cost from CI and
-  `electron-builder` packaging.
+**How to apply:** Superseded 2026-08. The dep is a pre-built dist repo pinned to
+a tag: `"open-lyric": "https://github.com/raksa/open-lyric-dist#0.1.55"`
+(`package.json:169`). To ship an upstream change, publish a new dist tag and
+bump the `#<tag>` in package.json, then `npm i` — npm re-resolves on a changed
+ref. Same shape for `bible-note-dist#0.4.0-dev` (:150) and
+`open-lyric-plugin-km-kh-dist#0.1.10` (:170). The old git+ssh subtree-split
+branch (#pkg-open-lyric) is history only — its gotchas (npm normalizing
+`git+ssh://` to the `github:` shorthand that 404s on a private repo, Windows
+clones needing `-c core.longpaths=true`) no longer apply to the dist model.

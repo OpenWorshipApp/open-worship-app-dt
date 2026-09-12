@@ -1,3 +1,5 @@
+import './BibleFindComp.scss';
+
 import { useCallback, useState } from 'react';
 
 import type { FindDataType, SelectedBookKeyType } from './bibleFindHelpers';

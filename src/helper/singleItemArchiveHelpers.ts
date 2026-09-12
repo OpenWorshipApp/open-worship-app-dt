@@ -97,6 +97,29 @@ export type SingleItemArchiveConfigType = {
      * Resolved BEFORE anything is written, like every other folder.
      */
     getItemDirSettingName?: () => string;
+    /**
+     * Files the item's own CONTENTS point at, beyond what `addDocument` finds
+     * (a bible note's items embed images in their Lexical content). Called with
+     * the collector so the files ride in `manifest.files` like every other.
+     */
+    collectExtraFiles?: (
+        collector: ArchiveFileCollector,
+        filePath: string,
+    ) => Promise<void>;
+    /**
+     * Destinations for kinds whose folder is not a dir-source setting at all —
+     * a note's embedded images belong in the app's temp-files folder. Resolved
+     * BEFORE anything is written, like every other folder.
+     */
+    getExtraPresetDirPaths?: () => Promise<Map<ArchiveFileKindType, string>>;
+    /**
+     * Re-point an imported item file at the local copies of those extra files.
+     * Only ever called for an item this import WROTE.
+     */
+    applyImportedExtraFiles?: (
+        itemFilePath: string,
+        localFilePathByOriginalPath: Map<string, string>,
+    ) => Promise<void>;
 };
 
 /**
@@ -147,6 +170,7 @@ export async function createSingleItemArchive(
                 `Unable to read the ${config.itemLabel}: ${filePath}`,
             );
         }
+        await config.collectExtraFiles?.(collector, filePath);
         const { archiveFiles, archiveEntries } = await stageArchiveFiles(
             collector,
             stagingDir,
@@ -307,20 +331,23 @@ function validateManifest(
  * not a plain constant fails before anything is written, exactly like the
  * kinds `resolveKindDirPaths` handles.
  */
-function toPresetDirPathByKind(config: SingleItemArchiveConfigType) {
-    if (config.getItemDirSettingName === undefined) {
-        return undefined;
-    }
-    const dirPath = DirSource.getDirPathBySettingName(
-        config.getItemDirSettingName(),
+async function toPresetDirPathByKind(config: SingleItemArchiveConfigType) {
+    const presetDirPathByKind = new Map<ArchiveFileKindType, string>(
+        await config.getExtraPresetDirPaths?.(),
     );
-    if (!dirPath) {
-        throw new Error(
-            `No "${config.itemLabel}" folder is selected yet — open that list` +
-                ' and choose its folder first',
+    if (config.getItemDirSettingName !== undefined) {
+        const dirPath = DirSource.getDirPathBySettingName(
+            config.getItemDirSettingName(),
         );
+        if (!dirPath) {
+            throw new Error(
+                `No "${config.itemLabel}" folder is selected yet — open that` +
+                    ' list and choose its folder first',
+            );
+        }
+        presetDirPathByKind.set(config.itemKind, dirPath);
     }
-    return new Map<ArchiveFileKindType, string>([[config.itemKind, dirPath]]);
+    return presetDirPathByKind.size > 0 ? presetDirPathByKind : undefined;
 }
 
 export async function importSingleItemArchive(
@@ -353,7 +380,7 @@ export async function importSingleItemArchive(
         // of leaving half a bundle behind.
         const dirPathByKind = resolveKindDirPaths(
             manifest.files,
-            toPresetDirPathByKind(config),
+            await toPresetDirPathByKind(config),
         );
         const { localFilePathByOriginalPath, writtenItemFilePaths } =
             await importArchiveFiles(extractDir, manifest.files, dirPathByKind);
@@ -375,6 +402,10 @@ export async function importSingleItemArchive(
         // exactly what an existing `.bg.json` is spared from.
         if (writtenItemFilePaths.includes(itemFilePath)) {
             setColorNoteFilePathSettings(itemFilePath, manifest.colorNotes);
+            await config.applyImportedExtraFiles?.(
+                itemFilePath,
+                localFilePathByOriginalPath,
+            );
         }
         FileSource.getInstance(itemFilePath).fireUpdateEvent();
         return itemFilePath;

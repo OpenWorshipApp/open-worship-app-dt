@@ -13,7 +13,21 @@ body {
   overflow: hidden;
 }
 
+// One resting alpha for every ⋮ in the app, wherever it is drawn. The same
+// value the colour note beside it rests at (`bootstrap-override.scss`), so the
+// two marks a row carries are equally quiet until the row is approached.
+$app-context-menu-dots-opacity: 0.1;
+
 .app {
+  // The right-hand strip of a row where its controls live — the colour note
+  // that says something ABOUT the row, and the ⋮ that ACTS on it. One width
+  // for the whole app, so a column of them down a list is a straight rail
+  // rather than three insets that wander with whatever flex parent each button
+  // landed in.
+  --app-action-rail: 22px;
+  // The tallest a row's own line gets. Past it, the row is holding other rows.
+  --app-action-rail-line: 34px;
+
   &:not(.app-floating-widget-portal) {
     width: 100vw !important;
     height: 100vh !important;
@@ -72,6 +86,17 @@ body {
     width: 100% !important;
     height: $header-height !important;
     overflow: hidden;
+
+    // Equal-width side columns so the middle column's centre IS the window's
+    // centre, whatever the tab list is called in the current language.
+    // `flex-basis: 0`, NOT Bootstrap's `.flex-fill` (`flex: 1 1 auto`) whose
+    // `auto` basis hands the wide tab list and the narrow icon group unequal
+    // shares and pushes the Bible Lookup button off centre. Keep the default
+    // `min-width: auto` floor: when the tabs need more than half the leftover
+    // space it wins and the button slides right instead of overlapping them.
+    > .app-header-side {
+      flex: 1 1 0;
+    }
   }
 
   & #app-body {
@@ -120,6 +145,28 @@ body {
     position: relative;
     overflow: hidden;
     min-width: 120px;
+  }
+
+  // A strip of toolbar buttons that scrolls sideways when the window is too
+  // narrow to hold it. Without `min-width: 0` a flex item never shrinks below
+  // its content, so the strip overflowed its `.app-flex-item` parent -- and
+  // that parent is `justify-content-end`, which pushes the overflow off the
+  // START edge, where it is clipped and no scroll can reach it.
+  .app-scroll-x-buttons {
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+
+    > * {
+      flex: 0 0 auto;
+    }
+
+    // The header row holding this is 38px against ~31px buttons, so the
+    // app-wide 7px bar would not fit underneath them.
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
   }
 
   .right {
@@ -288,6 +335,127 @@ body {
     z-index: $z-index-popup-full-screen;
   }
 
+  // The `⋮` that opens a surface's context menu — see
+  // `ContextMenuDotsButtonComp`. Global rather than per-feature: it is the SAME
+  // affordance on a file row, a background card and a screen preview, and a
+  // reader who learns it in one list must recognize it in the next.
+  .app-context-menu-dots {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    // ONE box, everywhere. Left to the flex parent it landed in, the same
+    // button came out 18×24px in one list and 18×17px in the next — same
+    // control, two hit targets, and a ragged column down the panel.
+    width: var(--app-action-rail);
+    height: var(--app-action-rail);
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    background-color: transparent;
+    color: inherit;
+    line-height: 1;
+    // Near-silent at rest, full under the pointer. One of these sits on every
+    // row of a long list, so it stays out of the way of the names being read
+    // down that column.
+    opacity: $app-context-menu-dots-opacity;
+    cursor: pointer;
+
+    // Set here rather than inherited: these sit in headers and rows whose own
+    // font-size ranges from 10.5px to the bible text's, and the glyph is a
+    // control, not part of that text.
+    > i {
+      font-size: 0.95rem;
+    }
+
+    &:hover,
+    &:focus-visible {
+      opacity: 1;
+      background-color: var(--bs-tertiary-bg);
+    }
+  }
+
+  // The strip itself. Absolute against the row so it never takes width from a
+  // title, and centred on the row's full height — a control that acts on the
+  // whole row has no business hanging off its first line.
+  .app-action-rail {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    padding-right: 2px;
+  }
+
+  // Centred on the row's own LINE, not on its full height. A file row grows to
+  // hold the items inside it, and a rail centred on all of that parks the
+  // file's own ⋮ halfway down its children, level with one of THEIR ⋮ —
+  // two controls on one line belonging to different rows.
+  //
+  // So it stretches, and stops at one line: any row taller than this is holding
+  // something, and the rail stays up on the header where the row's own name is.
+  // Top-aligning instead was worse in the common case — on a folder row it left
+  // the ⋮ hovering above the label it belongs to.
+  .app-action-rail--pinned {
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    right: 0;
+    max-height: var(--app-action-rail-line);
+  }
+
+  // Rows that carry a pinned rail hold that width open, so a long title
+  // ellipsizes at the rail instead of running underneath it. Pinned rails only
+  // — an inline one already takes its width in the flow, and padding there just
+  // pushes the button in off the edge, which is the ragged column this whole
+  // rail exists to fix.
+  //
+  // Nothing here arms the button on ROW hover, deliberately: the glyph is
+  // already legible at rest, the arming would reach only the rows that carry
+  // this class, and a touch screen — the reason these buttons exist at all —
+  // never hovers anything.
+  .app-has-action-rail {
+    padding-right: calc(var(--app-action-rail) + 6px) !important;
+  }
+
+  // A rail may hold more than the ⋮ — a bible item's attached-background
+  // badge is an action on the row too, and belongs in the same strip.
+  .app-has-action-rail-2 {
+    padding-right: calc(var(--app-action-rail) * 2 + 6px) !important;
+  }
+
+  // Every other ⋮ in the app predates `ContextMenuDotsButtonComp` and carries
+  // chrome of its own — a ghost button, an outline button, a bare round icon.
+  // Only the ALPHA is unified here: a menu button should read at one weight
+  // wherever it is, and it was jarring to have the panel header shouting over
+  // the quiet column of row buttons underneath it.
+  :not(.app-context-menu-dots) > .bi-three-dots-vertical {
+    opacity: $app-context-menu-dots-opacity;
+  }
+
+  // Armed from whatever holds the glyph, since these are icons INSIDE their
+  // button rather than the button itself.
+  *:hover > .bi-three-dots-vertical,
+  *:focus-visible > .bi-three-dots-vertical {
+    opacity: 1;
+  }
+
+  // For cards and previews, where the content fills the box and an inline
+  // button would take a bite out of it. Needs a positioned host.
+  .app-context-menu-dots--corner {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    z-index: 2;
+    // The card underneath is usually an image or a rendered slide, so the
+    // button carries its own ground rather than trusting the contrast.
+    background-color: rgba(0, 0, 0, 0.45);
+    color: #fff;
+
+    &:hover,
+    &:focus-visible {
+      background-color: rgba(0, 0, 0, 0.75);
+    }
+  }
+
   .app-round-icon {
     transition: opacity 0.5s ease-out;
     opacity: 0.3;
@@ -380,6 +548,32 @@ body {
       font-size: 0.62em;
       vertical-align: 0.28em;
       padding-right: 0.28em;
+    }
+  }
+
+  // A control that only draws a box when you point at it. Icon-only buttons in
+  // the side panels used Bootstrap's outline variants, which -- on top of the
+  // themes' global `.btn` border -- made a 16px glyph read as heavy as the
+  // content it sits above. Shared, because the Find and Resources tabs of the
+  // one panel must not drift apart. `aria-pressed` carries the on state, so a
+  // plain button never picks it up.
+  .app-ghost-button {
+    flex: 0 0 auto;
+    padding: 0 0.3rem;
+    line-height: 1.35rem;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background-color: transparent;
+    color: var(--app-muted);
+    &:hover {
+      color: var(--app-ink);
+      background-color: var(--app-surface);
+      border-color: var(--app-line);
+    }
+    &[aria-pressed='true'] {
+      color: var(--app-accent);
+      background-color: var(--app-accent-halo);
+      border-color: transparent;
     }
   }
 
@@ -494,4 +688,55 @@ body {
   100% {
     color: rgb(255, 42, 166);
   }
+}
+
+// The verse marks, painted through the CSS Custom Highlight API. Each palette
+// colour needs its own registered name and its own rule here — that pairing is
+// the whole reason the palette is fixed rather than a free colour picker.
+//
+// Only `background-color` is set, never `color`: a translucent wash over the
+// text the theme already chose reads correctly on both the dark and the light
+// reader, where a hardcoded ink colour would go invisible on one of them.
+// `::highlight()` also accepts only a small property set — background, colour,
+// text-decoration, text-shadow — so nothing structural can be expressed here,
+// which is exactly why marks cost no layout.
+//
+// Declared as custom properties so the swatches in the selection toolbar can
+// paint themselves from the SAME values the marks are painted with — the palette
+// is defined once, here, and never restated in TypeScript.
+:root {
+  --owa-verse-hl-yellow: rgb(255 214 0 / 35%);
+  --owa-verse-hl-green: rgb(64 220 120 / 32%);
+  --owa-verse-hl-blue: rgb(90 170 255 / 35%);
+  --owa-verse-hl-pink: rgb(255 120 190 / 32%);
+  --owa-verse-hl-orange: rgb(255 150 60 / 35%);
+  --owa-verse-hl-purple: rgb(180 130 255 / 35%);
+  --owa-verse-comment: rgb(125 190 255 / 85%);
+}
+
+::highlight(owa-verse-hl-yellow) {
+  background-color: var(--owa-verse-hl-yellow);
+}
+::highlight(owa-verse-hl-green) {
+  background-color: var(--owa-verse-hl-green);
+}
+::highlight(owa-verse-hl-blue) {
+  background-color: var(--owa-verse-hl-blue);
+}
+::highlight(owa-verse-hl-pink) {
+  background-color: var(--owa-verse-hl-pink);
+}
+::highlight(owa-verse-hl-orange) {
+  background-color: var(--owa-verse-hl-orange);
+}
+::highlight(owa-verse-hl-purple) {
+  background-color: var(--owa-verse-hl-purple);
+}
+
+// Commented words are underlined rather than washed, so a comment and a
+// highlight on the same words stay tellable apart.
+::highlight(owa-verse-comment) {
+  background-color: rgb(125 190 255 / 14%);
+  text-decoration: underline wavy var(--owa-verse-comment);
+  text-underline-offset: 0.2em;
 }

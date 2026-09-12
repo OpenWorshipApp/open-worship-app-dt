@@ -426,3 +426,52 @@ export function checkIsVerticalAtBottom(
     const targetBottom = targetRect.bottom;
     return targetBottom > containerBottom;
 }
+
+/**
+ * Enter/Space on a styled `div` that is standing in for a button, delivered as
+ * a real click AT THE ELEMENT.
+ *
+ * The usual hand-written handler calls the click callback directly with the
+ * `KeyboardEvent`, which is fine only while nothing downstream reads the
+ * event. Several of ours do: choosing a background colour ends in
+ * `ScreenEventHandler.chooseScreenIds`, which opens the "which screen?" menu
+ * AT the event's coordinates — and a `KeyboardEvent` has none, so the menu
+ * would open in the window's top-left corner, nowhere near the swatch pressed.
+ *
+ * Dispatching a `click` with the element's own centre makes the keyboard path
+ * take exactly the mouse path, menu position included. Returns whether it
+ * acted, so a caller can keep its own `event.repeat` guard.
+ */
+export function pressElementLikeButton(event: {
+    key: string;
+    repeat?: boolean;
+    currentTarget: unknown;
+    preventDefault: () => void;
+}) {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+        return false;
+    }
+    // Holding the key must not fire the action over and over.
+    if (event.repeat === true) {
+        return false;
+    }
+    const element = event.currentTarget as HTMLElement | null;
+    if (
+        element === null ||
+        typeof element.getBoundingClientRect !== 'function'
+    ) {
+        return false;
+    }
+    // Space would scroll the panel out from under the control otherwise.
+    event.preventDefault();
+    const rect = element.getBoundingClientRect();
+    element.dispatchEvent(
+        new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2,
+        }),
+    );
+    return true;
+}

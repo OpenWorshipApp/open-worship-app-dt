@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -72,7 +73,14 @@ export default function BibleCrossRefRenderFoundItemComp({
             onContextMenu={handleContextMenuOpening}
             onClick={handleClicking}
         >
-            <BibleDirectViewTitleComp bibleItem={bibleItem} />
+            <div className="d-flex align-items-start">
+                <div className="flex-fill app-overflow-hidden">
+                    <BibleDirectViewTitleComp bibleItem={bibleItem} />
+                </div>
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
+            </div>
             {/* TODO: update title */}
             <span className="badge badge-success" title="isS">
                 {itemInfo.isS ? 'S ' : ''}

@@ -6,7 +6,8 @@ import {
 import { WEBSITE_IFRAME_REFERRER_POLICY } from '../helper/constants';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
-import { shortToVerseData } from './bibleVerseHelpers';
+import type { VerseDataType } from './bibleVerseHelpers';
+import { shortToVerseData, useLookupVerseBibleKey } from './bibleVerseHelpers';
 import {
     BasicInfoComp,
     DetailsSectionComp,
@@ -19,7 +20,13 @@ import {
     OptionalVerseListRowComp,
     ReferenceTextComp,
 } from './LookupDetailPartsComp';
+import { useLookupLangPresentation } from './lookupLangHelpers';
 import { useLookupManagersContext } from './lookupManagersContext';
+import {
+    LOCATION_ICON_CLASS,
+    getNameTypeIconClass,
+    getNameTypeSingularLabel,
+} from './lookupPresentationHelpers';
 import {
     checkHasDetailValue,
     getDisplayLinks,
@@ -42,16 +49,32 @@ export function RenderNameDetailComp({
     onVersesResolved: (titles: string[]) => void;
 }>) {
     const { namesLookupManager } = useLookupManagersContext();
+    const { fontFamily, translate } = useLookupLangPresentation();
+    const verseBibleKey = useLookupVerseBibleKey();
     const record = namesLookupManager.getRecordById(recordId);
     if (record === null) {
         return <RenderMissingRecordComp />;
     }
-    const facts = [record.type, record.gender, record.age].filter((value) => {
+    // The datasets keep `type` in English whatever language the record itself is
+    // in, so it is a key to translate rather than text to show. `gender` and
+    // `age` are left alone: age is free-form ("123 years"), not an enum.
+    const nameTypeKey = getNameTypeSingularLabel(record.type);
+    // Decided on the ENGLISH key and only THEN translated. Both this guard and
+    // `checkHasDetailValue` inside the row below drop an `unknown` type by
+    // comparing the string to `'unknown'`, and neither would recognize it once
+    // it reads `មិនស្គាល់` — an untyped record would grow a chip in Khmer that it
+    // does not have in English.
+    const isNameTypeShown =
+        nameTypeKey !== '' && nameTypeKey.toLowerCase() !== 'unknown';
+    const nameTypeLabel = isNameTypeShown ? translate(nameTypeKey) : '';
+    const facts = [nameTypeLabel, record.gender, record.age].filter((value) => {
         return value !== '' && value.toLowerCase() !== 'unknown';
     });
     return (
-        <div className="location-name-lookup__detail">
+        <div className="location-name-lookup__detail" style={{ fontFamily }}>
             <BasicInfoComp
+                bibleKey={verseBibleKey}
+                iconClassName={getNameTypeIconClass(record.type)}
                 title={record.title}
                 description={record.description}
                 facts={facts}
@@ -59,7 +82,10 @@ export function RenderNameDetailComp({
             <DetailsSectionComp>
                 {record.description ? (
                     <p className="location-name-lookup__basic-description">
-                        <ReferenceTextComp value={record.description} />
+                        <ReferenceTextComp
+                            bibleKey={verseBibleKey}
+                            value={record.description}
+                        />
                     </p>
                 ) : null}
                 <dl className="location-name-lookup__grid">
@@ -67,7 +93,12 @@ export function RenderNameDetailComp({
                         <DetailRowComp
                             isInline
                             label={tran('Title')}
-                            value={<ReferenceTextComp value={record.title} />}
+                            value={
+                                <ReferenceTextComp
+                                    bibleKey={verseBibleKey}
+                                    value={record.title}
+                                />
+                            }
                         />
                     ) : null}
                     <OptionalTextRowComp
@@ -76,7 +107,7 @@ export function RenderNameDetailComp({
                     />
                     <OptionalTextRowComp
                         label={tran('Type')}
-                        value={record.type}
+                        value={nameTypeLabel}
                     />
                     <OptionalTextRowComp
                         label={tran('Gender')}
@@ -115,6 +146,7 @@ export function RenderNameDetailComp({
                         ids={record.cousin}
                     />
                     <OptionalVerseListRowComp
+                        bibleKey={verseBibleKey}
                         values={record.verses}
                         onResolved={onVersesResolved}
                     />
@@ -174,16 +206,22 @@ export function RenderLocationDetailComp({
     onVersesResolved: (titles: string[]) => void;
 }>) {
     const { locationsLookupManager } = useLookupManagersContext();
+    const { fontFamily } = useLookupLangPresentation();
+    const verseBibleKey = useLookupVerseBibleKey();
     const record = locationsLookupManager.getRecordById(recordId);
     if (record === null) {
         return <RenderMissingRecordComp />;
     }
+    // NOT translated the way a name's type is: a location's `type` is free-form
+    // dataset prose ("city", "region", "mountain range"), not one of nine keys.
     const facts = [record.type].filter((value) => {
         return value !== '' && value.toLowerCase() !== 'unknown';
     });
     return (
-        <div className="location-name-lookup__detail">
+        <div className="location-name-lookup__detail" style={{ fontFamily }}>
             <BasicInfoComp
+                bibleKey={verseBibleKey}
+                iconClassName={LOCATION_ICON_CLASS}
                 title={record.title}
                 description={record.description}
                 facts={facts}
@@ -191,7 +229,10 @@ export function RenderLocationDetailComp({
             <DetailsSectionComp>
                 {record.description ? (
                     <p className="location-name-lookup__basic-description">
-                        <ReferenceTextComp value={record.description} />
+                        <ReferenceTextComp
+                            bibleKey={verseBibleKey}
+                            value={record.description}
+                        />
                     </p>
                 ) : null}
                 <dl className="location-name-lookup__grid">
@@ -199,7 +240,12 @@ export function RenderLocationDetailComp({
                         <DetailRowComp
                             isInline
                             label={tran('Title')}
-                            value={<ReferenceTextComp value={record.title} />}
+                            value={
+                                <ReferenceTextComp
+                                    bibleKey={verseBibleKey}
+                                    value={record.title}
+                                />
+                            }
                         />
                     ) : null}
                     <OptionalTextRowComp
@@ -219,6 +265,7 @@ export function RenderLocationDetailComp({
                         values={record.relatedLocations}
                     />
                     <OptionalVerseListRowComp
+                        bibleKey={verseBibleKey}
                         values={record.verses}
                         onResolved={onVersesResolved}
                     />
@@ -241,19 +288,20 @@ export function RenderVerseDetailComp({
     onResolved,
 }: Readonly<{
     shortVerse: string;
-    onResolved: (title: string, fullText: string) => void;
+    onResolved: (verseData: VerseDataType) => void;
 }>) {
+    const verseBibleKey = useLookupVerseBibleKey();
     const [verseData] = useAppStateAsync(async () => {
         try {
-            return await shortToVerseData(shortVerse);
+            return await shortToVerseData(verseBibleKey, shortVerse);
         } catch {
             return null;
         }
-    }, [shortVerse]);
+    }, [verseBibleKey, shortVerse]);
     const onResolvedRef = useAppCurrentRef(onResolved);
     useAppEffect(() => {
         if (verseData != null) {
-            onResolvedRef.current(verseData.title, verseData.fullText);
+            onResolvedRef.current(verseData);
         }
     }, [verseData]);
     if (verseData === undefined) {
@@ -262,14 +310,11 @@ export function RenderVerseDetailComp({
     if (verseData === null) {
         return <RenderMissingRecordComp />;
     }
+    // No title of its own: the widget's title bar names the reference — bible
+    // key included — and a panel this small cannot spare two lines repeating it.
     return (
         <div className="location-name-lookup__detail" style={verseData.style}>
-            <div className="location-name-lookup__basic-title">
-                {verseData.title}
-            </div>
-            <p className="location-name-lookup__verse-text">
-                {verseData.fullText}
-            </p>
+            <p className="location-name-lookup__verse-text">{verseData.text}</p>
         </div>
     );
 }

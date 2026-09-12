@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 import {
     BibleLookupButtonComp,
     BibleLookupTogglePopupContext,
+    AiChatButtonComp,
+    ChatbotButtonComp,
     HelpButtonComp,
     SettingButtonComp,
 } from '../others/commonButtons';
@@ -21,6 +23,7 @@ import {
 import LayoutTabRenderComp from './LayoutTabRenderComp';
 import { useAppDocumentContextValues } from './layoutHelpers';
 import AppDocumentPreviewFloatingComp from '../app-document-list/AppDocumentPreviewFloatingComp';
+import GraphViewPanelsHostComp from '../graph-view/GraphViewPanelsHostComp';
 import LocationNameDetailPanelsHostComp from '../location-name-lookup/LocationNameDetailPanelsHostComp';
 
 export default function AppLayoutComp({
@@ -66,22 +69,37 @@ export default function AppLayoutComp({
         <MultiContextRenderComp contexts={contexts}>
             {/* <TestInfiniteComp /> */}
             <div id="app-header" className="d-flex">
-                {isInjectedAppDocumentFilePath ? null : <LayoutTabRenderComp />}
+                <div
+                    className={
+                        'app-highlight-border-bottom d-flex app-header-side'
+                    }
+                >
+                    {isInjectedAppDocumentFilePath ? null : (
+                        <LayoutTabRenderComp />
+                    )}
+                </div>
                 <div
                     className={
                         'app-highlight-border-bottom d-flex' +
-                        ' justify-content-center flex-fill'
+                        ' justify-content-center'
                     }
                 >
                     <BibleLookupButtonComp />
                 </div>
-                {isInjectedAppDocumentFilePath ? null : (
-                    <div className="app-highlight-border-bottom">
-                        <SettingButtonComp />
+                <div
+                    className={
+                        'app-highlight-border-bottom d-flex' +
+                        ' justify-content-end app-header-side'
+                    }
+                >
+                    <div className="btn-group" role="group">
+                        {isInjectedAppDocumentFilePath ? null : (
+                            <SettingButtonComp />
+                        )}
+                        <ChatbotButtonComp />
+                        <AiChatButtonComp />
+                        <HelpButtonComp />
                     </div>
-                )}
-                <div className="app-highlight-border-bottom">
-                    <HelpButtonComp />
                 </div>
             </div>
             <div id="app-body">{children}</div>
@@ -92,6 +110,7 @@ export default function AppLayoutComp({
             <HandleAlertComp />
             <AppDocumentPreviewFloatingComp />
             <LocationNameDetailPanelsHostComp />
+            <GraphViewPanelsHostComp />
         </MultiContextRenderComp>
     );
 }

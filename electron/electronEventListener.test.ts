@@ -68,6 +68,9 @@ vi.mock('./electronHelpers', () => ({
     tarCreate,
     tarExtract,
     toShortcutKey: () => 'CmdOrCtrl+F',
+    // `aiHelpers` reads it to decide what an unset master switch means, and
+    // the Help menu asks `aiHelpers` whether to carry the chatbot item.
+    isDev: false,
 }));
 
 vi.mock('./finderOverlayHelpers', () => ({
@@ -497,6 +500,89 @@ describe('electronEventListener', () => {
         setMenuItemsHandler(
             { sender: ownerWin.webContents },
             { key: 'lang', menusData: null },
+        );
+    });
+
+    // The other half of the rule. Only ONE entry is kept per menu key, so a
+    // key EVERY window contributes -- the presenting control, the assistant --
+    // is owned by whichever window loaded last, and an owner-routed click is
+    // then dropped by every other window's own `getIsWindowFocused()` guard.
+    // Opening Settings used to take `Tools -> Start Controlling` away from the
+    // presenter exactly like this.
+    test('sends an app-wide menu click to the window in front instead', () => {
+        const appController = {
+            mainWin: { webContents: { getZoomFactor: vi.fn(() => 1) } },
+            mainController: {
+                sendScreenMessage: vi.fn(),
+                changeBible: vi.fn(),
+                ctrlScrolling: vi.fn(),
+            },
+            settingManager: {
+                themeSource: 'system',
+                primaryDisplay: { size: { width: 1280 } },
+            },
+            resetThemeBackgroundColor: vi.fn(),
+            reloadAll: vi.fn(),
+        };
+        initEventOther(appController as any);
+
+        const setMenuItemsHandler =
+            electronMockState.ipcMain.on.mock.calls.find(
+                ([eventName]) => eventName === 'main:app:set-menu-items',
+            )?.[1];
+
+        const ownerWin = new electronMockState.BrowserWindowMock();
+        // Registered second, so it is the one the map remembers -- and the
+        // one the user is NOT looking at.
+        const focusedWin = new electronMockState.BrowserWindowMock();
+        electronMockState.BrowserWindowMock.getFocusedWindow.mockReturnValue(
+            focusedWin,
+        );
+
+        setMenuItemsHandler(
+            { sender: ownerWin.webContents },
+            {
+                key: 'presenting-control',
+                menusData: {
+                    tools: [
+                        {
+                            label: 'Start Controlling',
+                            clickData: { isTogglePresentingControl: true },
+                        },
+                    ],
+                },
+                options: { isRoutedToFocusedWindow: true },
+            },
+        );
+
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        const toolsMenu = template.find((item: any) => item.label === 'Tools');
+        const controlItem = toolsMenu.submenu.find(
+            (item: any) => item.label === 'Start Controlling',
+        );
+        controlItem.click();
+
+        expect(focusedWin.webContents.send).toHaveBeenCalledWith(
+            'app:main:menu-item-clicked',
+            { isTogglePresentingControl: true },
+        );
+        expect(ownerWin.webContents.send).not.toHaveBeenCalled();
+
+        // Nothing focused (every window minimised) falls back to the owner
+        // rather than dropping the press.
+        electronMockState.BrowserWindowMock.getFocusedWindow.mockReturnValue(
+            null,
+        );
+        controlItem.click();
+        expect(ownerWin.webContents.send).toHaveBeenCalledWith(
+            'app:main:menu-item-clicked',
+            { isTogglePresentingControl: true },
+        );
+
+        setMenuItemsHandler(
+            { sender: ownerWin.webContents },
+            { key: 'presenting-control', menusData: null },
         );
     });
 });

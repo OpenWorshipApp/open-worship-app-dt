@@ -124,8 +124,13 @@ If the staged change alters observable behavior:
 - `docs/test-paths/coverage-matrix.md` — the row IDs.
 - Both must be updated in the *same* change, with their version dates bumped, and no
   step may be published that was not observed working live.
-- `.claude/memory/*.md` — flag any note the change makes wrong. Note that a stale copy
-  of the skill exists under `.github/skills/owa-robot-test`; do not extend it.
+- `.claude/memory/*.md` — flag any note the change makes wrong.
+- **Copilot mirrors must move in the same change.** `.github/copilot-instructions.md`
+  (← `.claude/CLAUDE.md`), `.github/memory/` (← `.claude/memory/`) and
+  `.github/skills/owa-robot-test/` (← `.claude/skills/owa-robot-test/`) are verbatim
+  copies; `.claude/` is the source of truth. A staged edit to a `.claude/` knowledge
+  file without the matching mirror copy is a finding — and so is a hand-edit that
+  touches only the `.github/` side.
 
 ## §7 Verification commands
 

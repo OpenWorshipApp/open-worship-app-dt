@@ -1,8 +1,9 @@
 import { type SyntheticEvent, useCallback } from 'react';
 
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../../lang/langHelpers';
 import LoadingComp from '../../others/LoadingComp';
-import { getAISetting } from '../../helper/ai/aiHelpers';
+import { getAIIsAutoPlay } from '../../helper/ai/aiHelpers';
 import { playMediaElement } from '../../helper/mediaHelpers';
 import appProvider from '../../server/appProvider';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
@@ -70,28 +71,32 @@ export default function AudioPlayerComp({
         return null;
     }
     return (
-        <audio
-            className="verse-audio"
-            ref={(element) => {
-                const openAISetting = getAISetting();
-                if (
-                    appProvider.isPageReader &&
-                    openAISetting.isAutoPlay &&
-                    element?.checkVisibility()
-                ) {
-                    playMediaElement(element);
-                    element.focus();
-                    onStart(element);
-                }
-            }}
-            controls
-            onPlay={handlePlay}
-            onEnded={handleEnded}
-            onContextMenu={handleContextMenuOpening}
-        >
-            <source src={src} />
-            <track kind="captions" />
-            {tran('Browser does not support audio.')}
-        </audio>
+        // Wrapped so the ⋮ can sit BESIDE the player: an `<audio controls>`
+        // draws its own shadow DOM and takes no children of ours.
+        <span className="d-inline-flex align-items-center">
+            <audio
+                className="verse-audio"
+                ref={(element) => {
+                    if (
+                        appProvider.isPageReader &&
+                        getAIIsAutoPlay() &&
+                        element?.checkVisibility()
+                    ) {
+                        playMediaElement(element);
+                        element.focus();
+                        onStart(element);
+                    }
+                }}
+                controls
+                onPlay={handlePlay}
+                onEnded={handleEnded}
+                onContextMenu={handleContextMenuOpening}
+            >
+                <source src={src} />
+                <track kind="captions" />
+                {tran('Browser does not support audio.')}
+            </audio>
+            <ContextMenuDotsButtonComp onOpening={handleContextMenuOpening} />
+        </span>
     );
 }

@@ -195,30 +195,6 @@ describe('presenter item basic coverage', () => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = false;
     });
 
-    test('renders slide index with explicit and fallback titles', async () => {
-        const { default: RenderSlideIndexComp } =
-            await import('./RenderSlideIndexComp');
-
-        let element = await renderIntoRoot(
-            <RenderSlideIndexComp viewIndex={4} dataKey="key-4" />,
-            root,
-            container,
-        );
-        expect(element?.textContent).toContain('4');
-        expect(element?.getAttribute('title')).toBe('Index: 4');
-
-        element = await renderIntoRoot(
-            <RenderSlideIndexComp
-                viewIndex={9}
-                dataKey="key-9"
-                title="Custom title"
-            />,
-            root,
-            container,
-        );
-        expect(element?.getAttribute('title')).toBe('Custom title');
-    });
-
     test('shows hover content only while the background preview is active', async () => {
         const { default: BackgroundRenderOnHoverComp } =
             await import('./BackgroundRenderOnHoverComp');

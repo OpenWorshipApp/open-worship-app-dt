@@ -573,3 +573,117 @@ export function useIsOnTop() {
     }, []);
     return [isOnTop, setIsOnTop1] as const;
 }
+
+export function checkIsMainWindow() {
+    return (
+        appProvider.messageUtils.sendDataSync(
+            'all:app:check-is-main-window',
+        ) === true
+    );
+}
+
+export function getHelpPageUrl() {
+    return `${appProvider.appInfo.homepage}/help`;
+}
+
+/**
+ * The maintainers' address, read out of the package's `author` field -- the
+ * `Name <email> (site)` form npm documents -- so it is declared ONCE, in
+ * `package.json`, and everything that says "write to us" (the chatbot's
+ * Report button first) agrees on it. `null` when the field carries no
+ * address, and the caller says so rather than inventing one.
+ */
+export function parseContactEmail(author: string) {
+    const matched = /<\s*([^\s<>@]+@[^\s<>@]+\.[^\s<>@]+)\s*>/.exec(author);
+    return matched?.[1] ?? null;
+}
+
+export function getContactEmail() {
+    return parseContactEmail(appProvider.appInfo.author ?? '');
+}
+
+export type ContactEmailType = {
+    email: string;
+    // Where it came from: the app's own help page, read live, or the address
+    // this build was made with. The page wins because a build goes stale --
+    // the package named one address while the site had moved to another.
+    source: 'help page' | 'app';
+};
+
+const EMAIL_PATTERN =
+    /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/;
+
+/**
+ * The address a help page names: a `mailto:` link first, then the first
+ * address written in its words ("please contact us at …"). The page reader
+ * keeps only http(s) links, so in practice it is the words that carry it.
+ */
+export function readContactEmailFromPage(
+    page: { text?: unknown; links?: unknown } | null | undefined,
+) {
+    if (page === null || page === undefined) {
+        return null;
+    }
+    const links: unknown[] = Array.isArray(page.links) ? page.links : [];
+    for (const link of links) {
+        const href =
+            typeof (link as any)?.href === 'string' ? (link as any).href : '';
+        if (href.toLowerCase().startsWith('mailto:')) {
+            const email = EMAIL_PATTERN.exec(href.slice('mailto:'.length))?.[0];
+            if (email !== undefined) {
+                return email;
+            }
+        }
+    }
+    const text = typeof page.text === 'string' ? page.text : '';
+    return EMAIL_PATTERN.exec(text)?.[0] ?? null;
+}
+
+// Short-lived, deliberately: the buttons under a report are pressed within
+// minutes of it being written, and each would otherwise load the page again.
+const HELP_PAGE_CONTACT_TTL_MILLISECONDS = 10 * 60 * 1000;
+let helpPageContact: { email: string | null; readAt: number } | null = null;
+
+async function readHelpPageContactEmail() {
+    const now = Date.now();
+    if (
+        helpPageContact !== null &&
+        now - helpPageContact.readAt < HELP_PAGE_CONTACT_TTL_MILLISECONDS
+    ) {
+        return helpPageContact.email;
+    }
+    let email: string | null = null;
+    try {
+        // The same locked-down reader `owa_read_website` uses: the page is
+        // RENDERED (the site is a script that paints its own text, so a plain
+        // fetch of the HTML finds nothing), and nothing of it but the address
+        // is kept here.
+        const page = await electronSendAsync<{
+            text?: unknown;
+            links?: unknown;
+        }>('main:app:read-web-page', {
+            url: getHelpPageUrl(),
+            maxChars: 20000,
+        });
+        email = readContactEmailFromPage(page);
+    } catch (error) {
+        logError('Could not read the help page for a contact address:', error);
+    }
+    // A failed read is remembered for the same window: a machine with no
+    // internet must not wait on the page again at every press.
+    helpPageContact = { email, readAt: now };
+    return email;
+}
+
+/**
+ * Where a report should go: the address the app's help page names TODAY,
+ * and only when that cannot be read, the one this build was made with.
+ */
+export async function findContactEmail(): Promise<ContactEmailType | null> {
+    const fromHelpPage = await readHelpPageContactEmail();
+    if (fromHelpPage !== null) {
+        return { email: fromHelpPage, source: 'help page' };
+    }
+    const fromApp = getContactEmail();
+    return fromApp === null ? null : { email: fromApp, source: 'app' };
+}

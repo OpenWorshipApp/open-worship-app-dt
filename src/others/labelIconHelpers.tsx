@@ -14,7 +14,6 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     Documents: 'file-earmark-text',
     'Document List': 'list-ul',
     Slides: 'collection',
-    'Slide Editor': 'pencil-square',
     'Slide Editor Canvas': 'bounding-box-circles',
     'Slide Editor Ground': 'bounding-box',
     // -- lyrics
@@ -25,11 +24,12 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     // -- bible
     Bible: 'book',
     Bibles: 'book',
-    'Bible Reader': 'book',
+    'Bibles (Lookup)': 'book',
     'Bible View': 'book-half',
     'Bible and Notes': 'journal-bookmark',
     'Bible and Notes (Lookup)': 'journal-bookmark',
     'Bible Notes': 'journal-text',
+    'Bible Notes (Lookup)': 'journal-text',
     Notes: 'journal-text',
     Note: 'sticky',
     'Bible Lookup': 'search',
@@ -38,6 +38,7 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     Find: 'search',
     'Cross Reference': 'signpost-split',
     'Location-Name (KJV)': 'geo-alt-fill',
+    Resources: 'folder2-open',
     // -- backgrounds
     Background: 'card-image',
     'Background Audio': 'file-earmark-music',
@@ -104,10 +105,16 @@ export function toIconedLabel(labelKey: string, className?: string): ReactNode {
 // `RenderHiddenWidgetTitleComp` also interpolates it into a `title` attribute.
 export function toWidgetLabel(labelKey: string): {
     widgetName: string;
+    widgetKey: string;
     widgetIconName?: string;
 } {
     return {
         widgetName: tran(labelKey),
+        // The SAME pane, said in English. `widgetName` is translated, and a
+        // panel that only answers to its Khmer name is a panel the help
+        // chatbot cannot point at once the app is switched over -- while its
+        // English key never moves.
+        widgetKey: labelKey,
         widgetIconName: getLabelIconName(labelKey) ?? undefined,
     };
 }

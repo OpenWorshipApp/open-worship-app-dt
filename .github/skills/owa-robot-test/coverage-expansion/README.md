@@ -1,7 +1,14 @@
 # coverage-expansion — provenance for the 2026-07-18 matrix expansion
 
+> ⚠️ **Frozen as of the 2026-07-18 sweep.** Component names and `src/` paths here
+> predate the Comp-suffix renames and the 2026-08 subdirectory moves — ~14 cited
+> files no longer exist — and the canvas `CM-36..39` / audio-seek `SP-18` rows were
+> renumbered to `CM-94..97` / `SP-22` in the live matrix on 2026-08-30. Do **not**
+> use these files as a targeting index; see `references/components-path.md` and
+> [`docs/test-paths/coverage-matrix.md`](../../../../docs/test-paths/coverage-matrix.md).
+
 These are **research artifacts**, not runtime skill references. They record how
-[`../references/coverage-matrix.md`](../../../../docs/test-paths/coverage-matrix.md) grew from ~150 to
+[`docs/test-paths/coverage-matrix.md`](../../../../docs/test-paths/coverage-matrix.md) grew from ~150 to
 **535** stable-ID test rows (every interactive path + every keyboard shortcut + every
 context-menu item enumerated as a deterministic, source-cited unit test).
 

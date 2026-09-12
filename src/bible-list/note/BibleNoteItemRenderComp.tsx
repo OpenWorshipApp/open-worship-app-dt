@@ -6,7 +6,7 @@ import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelper
 import { useFileSourceRefreshEvents } from '../../helper/dirSourceHelpers';
 import {
     genRemovingAttachedBackgroundMenu,
-    extractDropData,
+    extractDropDataOfType,
     handleAttachBackgroundDrop,
     handleDragStart as handleDragStartHelper,
 } from '../../helper/dragHelpers';
@@ -14,6 +14,7 @@ import { DragTypeEnum } from '../../helper/DragInf';
 import FileSource from '../../helper/FileSource';
 import { changeDragEventStyle, stopDraggingState } from '../../helper/helpers';
 import { attachBackgroundManager } from '../../others/AttachBackgroundManager';
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
 import ItemReadErrorComp from '../../others/ItemReadErrorComp';
 import Note from './Note';
@@ -126,8 +127,13 @@ export default function BibleNoteItemRenderComp({
     );
     const handleDataDropping = useCallback(async (event: any) => {
         changeDragEventStyle(event, 'opacity', '1');
-        const droppedData = extractDropData(event);
-        if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
+        // Typed: a verse row carries a bible-item payload in `text` as well, and
+        // dropped inside this list it is the note item that is meant.
+        const droppedData = extractDropDataOfType(
+            event,
+            DragTypeEnum.NOTE_ITEM,
+        );
+        if (droppedData !== null) {
             const note = await Note.fromFilePath(filePathRef.current);
             if (note === null) {
                 return;
@@ -176,11 +182,8 @@ export default function BibleNoteItemRenderComp({
     const fileSource = FileSource.getInstance(filePath);
     return (
         <li
-            className="list-group-item item ps-2 pe-1"
+            className="list-group-item item app-has-action-rail"
             title={tran('Double click to open note')}
-            style={{
-                height: 28,
-            }}
             data-note-item-id={`${fileSource.name}-${noteItem.id}`}
             data-index={index + 1}
             draggable={!isEditingTitle}
@@ -228,6 +231,13 @@ export default function BibleNoteItemRenderComp({
                     </div>
                 )}
             </div>
+            {isEditingTitle ? null : (
+                <div className="app-action-rail app-action-rail--pinned">
+                    <ContextMenuDotsButtonComp
+                        onOpening={handleContextMenuOpening}
+                    />
+                </div>
+            )}
         </li>
     );
 }

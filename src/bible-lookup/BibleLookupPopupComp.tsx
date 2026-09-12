@@ -23,6 +23,11 @@ export default function BibleLookupPopupComp() {
                 flexSizeName={resizeSettingNames.bibleLookupPopup}
                 onLookupSaveBibleItem={handleLookupSaveBibleItem}
                 bibleAndNotesLabel="Bible and Notes (Lookup)"
+                readingLeftFlexSizeName={
+                    resizeSettingNames.bibleReadingLeftLookup
+                }
+                readingLeftBiblesLabel="Bibles (Lookup)"
+                readingLeftBibleNotesLabel="Bible Notes (Lookup)"
             />
         </ModalComp>
     );

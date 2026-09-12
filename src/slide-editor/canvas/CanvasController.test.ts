@@ -25,9 +25,11 @@ const mocks = vi.hoisted(() => ({
     genFromDeviceCameraMock: vi.fn(),
 }));
 
-vi.mock('../../helper/settingHelpers', () => ({
-    getSetting: mocks.getSettingMock,
-    setSetting: mocks.setSettingMock,
+vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: mocks.getSettingMock,
+        setItem: mocks.setSettingMock,
+    },
 }));
 
 vi.mock('../../helper/FileSource', () => ({

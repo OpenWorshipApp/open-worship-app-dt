@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import {
@@ -75,20 +76,42 @@ export function PathPreviewerComp({
         ? 'text-muted'
         : 'text-danger-emphasis bg-danger-subtle border-danger fw-bold';
     return (
+        // The ⋮ is a SIBLING of the path, never a child of it: the label is
+        // `app-ellipsis-left`, which is `direction: rtl`, and anything nested in
+        // it is re-ordered by that too.
+        //
+        // `minWidth: 0` is load-bearing, not tidiness: this wrapper is itself a
+        // flex item, its automatic minimum size is the min-content of a
+        // `white-space: nowrap` path, and the label's own `overflow: hidden`
+        // does NOT lift that off the parent. Without it the path refuses to
+        // shrink and pushes the whole row — search, sort, filter, ⋮ — past the
+        // panel edge instead of ellipsizing.
         <div
-            className={
-                'app-ellipsis-left app-border-white-round px-1 flex-fill' +
-                ` ${onClick ? 'pointer' : ''}` +
-                ` ${stateClassName}`
-            }
-            onClick={onClick}
-            title={isValidPath ? cleanedDirectoryPath : tran('Invalid Path')}
-            style={{
-                fontSize: '0.9rem',
-            }}
-            onContextMenu={handleContextMenuOpening}
+            className="d-flex align-items-center flex-fill"
+            style={{ minWidth: 0 }}
         >
-            {directoryPath}
+            <div
+                className={
+                    'app-ellipsis-left app-border-white-round px-1 flex-fill' +
+                    ` ${onClick ? 'pointer' : ''}` +
+                    ` ${stateClassName}`
+                }
+                onClick={onClick}
+                title={
+                    isValidPath ? cleanedDirectoryPath : tran('Invalid Path')
+                }
+                style={{
+                    fontSize: '0.9rem',
+                }}
+                onContextMenu={handleContextMenuOpening}
+            >
+                {directoryPath}
+            </div>
+            {canOpenFileExplorer ? (
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
+            ) : null}
         </div>
     );
 }
