@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [NAV-17, NAV-18, NAV-19]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-08"
+workflowsVersion: "2026-09-12"
 ---
 # W-25 — Back up everything, or move to a new computer
 
@@ -68,5 +68,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-17` · `NAV-18` · `NAV-19`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
 :::

@@ -1,5 +1,6 @@
 import { app, protocol } from 'electron';
 
+import { initAiChatGuestGuard } from './aiChatGuestHelpers';
 import { enableRemoteDebugging, initAi } from './aiHelpers';
 import { isDev, sweepStalePrintPreviewFiles } from './electronHelpers';
 import {
@@ -52,6 +53,17 @@ async function main() {
     if (isDev) {
         app.commandLine.appendSwitch('ignore-certificate-errors');
     }
+    // Measured 2026-09-11 on browserscan.net from inside the AI Chat
+    // window's guest: `navigator.webdriver` read `true` -- the one red
+    // square on an otherwise "Normal" browser, and one of the two things a
+    // site's bot check (Cloudflare on claude.ai) refuses a browser for. This
+    // app runs nothing that reads the flag, and the remote-debugging door
+    // (`enableRemoteDebugging`) stays open exactly as before; the flag is
+    // simply not announced.
+    app.commandLine.appendSwitch(
+        'disable-blink-features',
+        'AutomationControlled',
+    );
     // Taken before `whenReady()` so the throwaway process a jump list task
     // spawns quits without ever spinning up Chromium.
     const gotTheLock = app.requestSingleInstanceLock({
@@ -73,6 +85,9 @@ async function main() {
     initAi();
     initCustomSchemeHandler();
     initDisplayMediaHandler();
+    // The AI Chat window's guest session, locked down before any guest
+    // can exist: the window is opened by a renderer, not by code here.
+    initAiChatGuestGuard();
     const appController = ElectronAppController.getInstance();
     initSecondInstance(appController);
     initUserTasks();

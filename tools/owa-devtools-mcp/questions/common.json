@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-09-05",
+    "updated": "2026-09-12",
     "sections": [
         {
             "id": "panels",
@@ -20,12 +20,17 @@
                         "remove panel",
                         "declutter",
                         "more room",
-                        "turn off"
+                        "turn off",
+                        "divider",
+                        "right-click the line",
+                        "close first widget",
+                        "collapse"
                     ],
                     "resources": {
                         "recipe": "W-31",
                         "menu": "View → Widgets",
-                        "guide": true
+                        "guide": true,
+                        "find": "divider between Document List and Presenting Flow List"
                     }
                 },
                 {
@@ -37,11 +42,32 @@
                         "default layout",
                         "messed up",
                         "sizes",
-                        "back to normal"
+                        "back to normal",
+                        "reset size",
+                        "double-click the divider"
                     ],
                     "resources": {
                         "recipe": "W-31",
                         "menu": "View → Reset Widgets Size",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "divider-menu",
+                    "text": "What does right-clicking the line between two panels do?",
+                    "kind": "what",
+                    "keywords": [
+                        "divider",
+                        "splitter",
+                        "border between panels",
+                        "reset size",
+                        "close first widget",
+                        "close second widget",
+                        "arrows on the line"
+                    ],
+                    "resources": {
+                        "recipe": "W-31",
+                        "find": "divider between Document List and Presenting Flow List",
                         "guide": true
                     }
                 }
@@ -253,7 +279,10 @@
                         "on air",
                         "projector",
                         "audience",
-                        "right now"
+                        "right now",
+                        "which verse",
+                        "which slide",
+                        "what song"
                     ],
                     "resources": {
                         "recipe": "W-10",
@@ -336,6 +365,8 @@
                         "without internet",
                         "screen-show",
                         "screen-hide",
+                        "lyric",
+                        "song from a page",
                         "quick"
                     ],
                     "resources": {
@@ -404,6 +435,54 @@
                     ],
                     "resources": {
                         "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "chat-cost",
+                    "text": "How much has this chat cost so far?",
+                    "kind": "where",
+                    "keywords": [
+                        "cost",
+                        "credit",
+                        "credits",
+                        "spent",
+                        "spend",
+                        "price",
+                        "bill",
+                        "tokens",
+                        "usage",
+                        "how much",
+                        "dollars",
+                        "expensive",
+                        "money"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Credit used"
+                    }
+                },
+                {
+                    "id": "chat-spend-limit",
+                    "text": "How do I stop the assistant spending too much?",
+                    "kind": "howto",
+                    "keywords": [
+                        "limit",
+                        "budget",
+                        "cap",
+                        "spending",
+                        "spend limit",
+                        "too much",
+                        "runaway",
+                        "infinite loop",
+                        "eat my credit",
+                        "bill",
+                        "paused",
+                        "allow more",
+                        "per hour"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": "Limit per hour"
                     }
                 },
                 {
@@ -645,6 +724,116 @@
                     ],
                     "resources": {
                         "recipe": "W-42"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "ai-chat",
+            "label": "AI Chat window",
+            "recipes": ["W-44"],
+            "questions": [
+                {
+                    "id": "use-chatgpt-inside-the-app",
+                    "text": "Can I use ChatGPT or Claude inside the app?",
+                    "kind": "howto",
+                    "keywords": [
+                        "chatgpt",
+                        "claude",
+                        "gemini",
+                        "deepseek",
+                        "kimi",
+                        "grok",
+                        "mistral",
+                        "perplexity",
+                        "copilot",
+                        "ai chat",
+                        "sidebar",
+                        "website",
+                        "sparkle",
+                        "sign in"
+                    ],
+                    "resources": {
+                        "recipe": "W-44",
+                        "find": "AI Chat",
+                        "menu": "Help → AI Chat"
+                    }
+                },
+                {
+                    "id": "ai-chat-tab-reloaded",
+                    "text": "Why did my AI Chat tab load again when I came back to it?",
+                    "kind": "what",
+                    "keywords": [
+                        "reload",
+                        "refresh",
+                        "tab",
+                        "came back",
+                        "memory",
+                        "three tabs",
+                        "unload",
+                        "lost"
+                    ],
+                    "resources": {
+                        "recipe": "W-44"
+                    }
+                },
+                {
+                    "id": "ai-chat-sign-out",
+                    "text": "How do I sign out of the AI chat websites?",
+                    "kind": "howto",
+                    "keywords": [
+                        "sign out",
+                        "log out",
+                        "signed in",
+                        "account",
+                        "someone else",
+                        "shared computer",
+                        "cookies",
+                        "forget me",
+                        "ai chat"
+                    ],
+                    "resources": {
+                        "recipe": "W-44",
+                        "find": "Sign out of every site"
+                    }
+                },
+                {
+                    "id": "ai-chat-shared-computer",
+                    "text": "Several people use this computer — is my AI chat account safe?",
+                    "kind": "what",
+                    "keywords": [
+                        "shared",
+                        "several people",
+                        "volunteer",
+                        "privacy",
+                        "account",
+                        "still signed in",
+                        "safe",
+                        "ai chat"
+                    ],
+                    "resources": {
+                        "recipe": "W-44",
+                        "find": "Sign out of every site"
+                    }
+                },
+                {
+                    "id": "ai-chat-not-the-assistant",
+                    "text": "What is the difference between the sparkle button and the robot button?",
+                    "kind": "what",
+                    "keywords": [
+                        "sparkle",
+                        "robot",
+                        "two buttons",
+                        "assistant",
+                        "chatbot",
+                        "ai chat",
+                        "which one",
+                        "api key"
+                    ],
+                    "resources": {
+                        "recipe": "W-44",
+                        "related": ["W-42"],
+                        "find": "AI Chat"
                     }
                 }
             ]

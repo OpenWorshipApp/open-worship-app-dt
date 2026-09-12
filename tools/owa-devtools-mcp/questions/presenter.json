@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-09-04",
+    "updated": "2026-09-11",
     "sections": [
         {
             "id": "orientation",
@@ -236,14 +236,16 @@
                         "create lyric from a url",
                         "hymn page",
                         "song page address",
-                        "read a song page"
+                        "read a song page",
+                        "/lyric",
+                        "lyric command",
+                        "without an assistant"
                     ],
                     "starter": true,
                     "starterRank": 4,
                     "template": true,
                     "resources": {
                         "tools": [
-                            "owa_read_website",
                             "owa_lyric_validate",
                             "owa_lyric_file"
                         ],
@@ -395,6 +397,66 @@
                         "recipe": "W-03",
                         "find": "Documents",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "which-selected",
+                    "text": "Which song is selected right now?",
+                    "kind": "state",
+                    "keywords": [
+                        "selected document",
+                        "what did I click",
+                        "highlighted song",
+                        "current song",
+                        "which document is open",
+                        "what am I on"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "tools": [
+                            "owa_app_state"
+                        ]
+                    }
+                },
+                {
+                    "id": "what-is-next",
+                    "text": "What is the next slide?",
+                    "kind": "state",
+                    "keywords": [
+                        "coming up",
+                        "about to put on the screen",
+                        "which slide is up",
+                        "what slide is showing",
+                        "next verse",
+                        "after this one"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "tools": [
+                            "owa_app_state",
+                            "owa_list_screens"
+                        ]
+                    }
+                },
+                {
+                    "id": "show-next-slide",
+                    "text": "Show the next slide?",
+                    "kind": "state",
+                    "keywords": [
+                        "advance for me",
+                        "go to the next slide",
+                        "put the next verse up",
+                        "next one",
+                        "move on",
+                        "do it for me"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "tools": [
+                            "owa_app_state",
+                            "owa_click",
+                            "owa_list_screens"
+                        ]
                     }
                 },
                 {
@@ -587,6 +649,43 @@
                     "resources": {
                         "recipe": "W-03",
                         "find": "Note"
+                    }
+                },
+                {
+                    "id": "trash-document",
+                    "text": "How do I delete a song or document?",
+                    "kind": "howto",
+                    "keywords": [
+                        "remove",
+                        "trash",
+                        "get rid of",
+                        "recycle bin",
+                        "erase",
+                        "undo new file",
+                        "delete file"
+                    ],
+                    "resources": {
+                        "recipe": "W-43",
+                        "related": [
+                            "W-01b"
+                        ],
+                        "find": "Documents",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "restore-trashed-document",
+                    "text": "I moved a file to the trash by mistake, can I get it back?",
+                    "kind": "howto",
+                    "keywords": [
+                        "restore",
+                        "recycle bin",
+                        "undo trash",
+                        "recover",
+                        "deleted"
+                    ],
+                    "resources": {
+                        "recipe": "W-43"
                     }
                 }
             ]
@@ -789,6 +888,28 @@
                         "guide": true
                     },
                     "starterRank": 1
+                },
+                {
+                    "id": "present-verse-for-me",
+                    "text": "Put John 3:16 on the screen",
+                    "kind": "state",
+                    "keywords": [
+                        "put a verse up for me",
+                        "show a passage",
+                        "display scripture",
+                        "present psalm 23",
+                        "verse on the projector",
+                        "do it for me",
+                        "put up the reading"
+                    ],
+                    "template": true,
+                    "resources": {
+                        "recipe": "W-06",
+                        "tools": [
+                            "owa_present_bible",
+                            "owa_list_screens"
+                        ]
+                    }
                 },
                 {
                     "id": "open-lookup",
@@ -1238,7 +1359,30 @@
                     "resources": {
                         "recipe": "W-09",
                         "find": "Foreground",
-                        "guide": true
+                        "guide": true,
+                        "tools": [
+                            "owa_foreground"
+                        ]
+                    }
+                },
+                {
+                    "id": "countdown-start",
+                    "text": "Can you start a 5 minute countdown on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "start countdown",
+                        "timer",
+                        "count down",
+                        "minutes",
+                        "before the service",
+                        "starts in",
+                        "put the countdown up"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "tools": [
+                            "owa_foreground"
+                        ]
                     }
                 },
                 {
@@ -1255,7 +1399,10 @@
                     "resources": {
                         "recipe": "W-09",
                         "find": "Foreground",
-                        "guide": true
+                        "guide": true,
+                        "tools": [
+                            "owa_foreground"
+                        ]
                     }
                 },
                 {
@@ -1272,7 +1419,10 @@
                     "resources": {
                         "recipe": "W-09",
                         "find": "Foreground",
-                        "guide": true
+                        "guide": true,
+                        "tools": [
+                            "owa_foreground"
+                        ]
                     }
                 },
                 {
@@ -1290,7 +1440,10 @@
                     "resources": {
                         "recipe": "W-09",
                         "find": "Foreground",
-                        "guide": true
+                        "guide": true,
+                        "tools": [
+                            "owa_foreground"
+                        ]
                     }
                 },
                 {
@@ -1307,7 +1460,10 @@
                     "resources": {
                         "recipe": "W-09",
                         "find": "Foreground",
-                        "guide": true
+                        "guide": true,
+                        "tools": [
+                            "owa_foreground"
+                        ]
                     }
                 },
                 {
@@ -1381,7 +1537,10 @@
                             "W-09"
                         ],
                         "shortcut": "F10",
-                        "guide": true
+                        "guide": true,
+                        "tools": [
+                            "owa_foreground"
+                        ]
                     }
                 }
             ]

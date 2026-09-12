@@ -47,6 +47,20 @@ export function toDraftedLyricName(content: string) {
 }
 
 /**
+ * The first words of the drafter's refusal when a site answered a bot check
+ * instead of its page (`BROWSER_CHECK_TEXT` in `openLyricDraft.mjs`). A
+ * prefix rather than an import: the drafter is the one heavy module in that
+ * package, and the renderer has no use for it beyond this sentence.
+ * `lyricDraftHelpers.test.ts` holds the two together.
+ */
+export const BROWSER_CHECK_REFUSAL_PREFIX =
+    'That address answered with a browser check';
+
+export function checkIsBrowserCheckRefusal(text: string) {
+    return String(text ?? '').startsWith(BROWSER_CHECK_REFUSAL_PREFIX);
+}
+
+/**
  * Is this the tool result of a draft that came out valid?
  *
  * The document is fenced in the result by a line the drafter writes, so it can
@@ -168,6 +182,70 @@ export function checkIsLyricPaste(text: string) {
     return hasLabel
         ? sung.length >= MIN_LYRIC_LINE_COUNT
         : sung.length >= Math.max(MIN_LYRIC_LINE_COUNT, lines.length * 0.85);
+}
+
+// ---------------------------------------------------------------------------
+// A song page, named by its address
+// ---------------------------------------------------------------------------
+
+// https only: the app's own address policy refuses everything else, so an
+// `http://` link would only ever be read back as a refusal.
+const HTTPS_ADDRESS_PATTERN = /https:\/\/[^\s<>"'`)\]]+/g;
+// The words that make a link a SONG link. "Read this page for me" with an
+// address is a question about the world outside the app, which the offline
+// bot cannot answer and must not pretend to by drafting a menu as a hymn.
+const SONG_WORD_PATTERN =
+    /\b(?:songs?|lyrics?|hymns?|chords?|chord\s+sheets?|worship)\b/i;
+// Past this many words around the address it is a message with a link IN
+// it, not an ask about the link.
+const MAX_SONG_LINK_ASK_WORDS = 40;
+
+/**
+ * The one https address in a piece of text, with the punctuation a sentence
+ * hangs on its end taken off -- or null when there is none, or more than one
+ * (two addresses is a list, and the drafter reads one page).
+ */
+export function readSongAddress(text: string): string | null {
+    const addresses = String(text ?? '').match(HTTPS_ADDRESS_PATTERN) ?? [];
+    if (addresses.length !== 1) {
+        return null;
+    }
+    const address = addresses[0].replace(/[.,;:!?]+$/, '');
+    return address.length > 'https://'.length ? address : null;
+}
+
+/**
+ * The address of a song page in an ask, or null.
+ *
+ * "Create a lyric file from https://…" is the app's own starter chip, and
+ * measured 2026-10-09 with the assistant paused (no key, no credit or a 429
+ * all land here) the offline bot searched the manual for the ADDRESS and
+ * answered with how to make an empty file. The drafter reads the page
+ * itself (`owa_lyric_validate` with `url`), so the one thing the link was for
+ * needs no model at all -- and a song is only ever OFFERED under a button,
+ * never written, so a page that merely mentions a hymn costs nothing.
+ *
+ * A song word beside exactly one https address, in a short message. A bare
+ * address is not enough: on its own it is as likely a YouTube link or a Bible
+ * XML file, and reading a page is rationed and announced in the app window.
+ */
+export function readSongLinkAsk(text: string): string | null {
+    const trimmed = String(text ?? '').trim();
+    if (trimmed.startsWith('/') || trimmed.includes('```')) {
+        return null;
+    }
+    const address = readSongAddress(trimmed);
+    if (address === null) {
+        return null;
+    }
+    const rest = trimmed.replace(address, ' ');
+    if (!SONG_WORD_PATTERN.test(rest)) {
+        return null;
+    }
+    const wordCount = rest.split(/\s+/).filter((word) => {
+        return word.length > 0;
+    }).length;
+    return wordCount > MAX_SONG_LINK_ASK_WORDS ? null : address;
 }
 
 export type DraftReportType = {

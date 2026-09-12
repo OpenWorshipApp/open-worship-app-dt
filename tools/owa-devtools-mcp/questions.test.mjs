@@ -78,8 +78,12 @@ describe('the question corpus', () => {
                 // A template is the start of a sentence the user finishes, so
                 // it is an instruction rather than a question -- and it has to
                 // carry a blank for them to fill, or there was nothing to
-                // finish and it should have been asked outright.
-                expect(row.text, row.id).toMatch(/example\.com|\.\.\.|<[^>]+>/);
+                // finish and it should have been asked outright. An example
+                // address or an example verse reference is such a blank: the
+                // user overtypes the example with their own.
+                expect(row.text, row.id).toMatch(
+                    /example\.com|\.\.\.|<[^>]+>|\b[A-Z][a-z]+ \d+:\d+\b/,
+                );
                 continue;
             }
             expect(row.text.endsWith('?'), row.id).toBe(true);

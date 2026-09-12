@@ -146,6 +146,44 @@ function checkIsPrivateIpV6(bare) {
     );
 }
 
+/**
+ * Whether a hostname names this machine or the network it is on, rather than
+ * a host on the public internet. The NAME half of the rule below: an address
+ * literal is judged as an address, and a name is judged on its shape, since
+ * nothing here has resolved it yet.
+ *
+ * Two consumers want the same rule for different reasons, which is why this
+ * is exported rather than left inside `checkWebUrl`:
+ *
+ *  - `checkWebUrl`, for an address a language MODEL named.
+ *  - `electron/aiChatGuestHelpers.ts`, for a request a CHAT SITE made from
+ *    inside the AI Chat window's guest. That is a page nobody here wrote,
+ *    running on a machine whose loopback carries this app's own CDP and MCP
+ *    doors, and a blind `fetch` at one needs no permission and reads no
+ *    answer -- so it is refused by address rather than by what it asks for.
+ *
+ * The caller must pass the hostname a URL PARSER produced, never the raw
+ * text -- see the note at the top of this file about `127.1` and friends.
+ */
+export function checkIsLocalHostname(hostname) {
+    const bare = toBareHostname(hostname);
+    if (bare === '') {
+        return true;
+    }
+    if (toIpV4Parts(bare) !== null || bare.includes(':')) {
+        return checkIsPrivateAddress(bare);
+    }
+    // A single-label name -- `localhost`, `intranet`, `printer` -- resolves
+    // through the operator's own DNS suffix or hosts file, which is exactly
+    // the network neither consumer may explore.
+    return (
+        !bare.includes('.') ||
+        PRIVATE_HOST_SUFFIXES.some((suffix) => {
+            return bare.endsWith(suffix);
+        })
+    );
+}
+
 /** Whether a resolved address may be connected to. Used by the DNS pass. */
 export function checkIsPrivateAddress(address) {
     if (typeof address !== 'string' || address === '') {
@@ -219,21 +257,7 @@ export function checkWebUrl(url) {
                       'it is switched off.'),
         );
     }
-    const bare = toBareHostname(parsed.hostname);
-    if (bare === '' || bare === 'localhost') {
-        return refuse(genPrivateReason(parsed.hostname));
-    }
-    const isAddressLiteral = toIpV4Parts(bare) !== null || bare.includes(':');
-    if (isAddressLiteral) {
-        if (checkIsPrivateAddress(bare)) {
-            return refuse(genPrivateReason(parsed.hostname));
-        }
-    } else if (
-        !bare.includes('.') ||
-        PRIVATE_HOST_SUFFIXES.some((suffix) => {
-            return bare.endsWith(suffix);
-        })
-    ) {
+    if (checkIsLocalHostname(parsed.hostname)) {
         return refuse(genPrivateReason(parsed.hostname));
     }
     return { isAllowed: true, href: parsed.href, hostname: parsed.hostname };

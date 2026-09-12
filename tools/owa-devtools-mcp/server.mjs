@@ -11,23 +11,10 @@ import { createMcpServer } from 'chrome-devtools-mcp';
 import { parseArguments } from 'chrome-devtools-mcp/build/src/config/mcp-options.js';
 import { VERSION } from 'chrome-devtools-mcp/build/src/version.js';
 
-import { readLiveInstances } from './discovery.mjs';
+import { resolveAppBrowserUrl } from './discovery.mjs';
 import { guardToolCalls } from './firewall.mjs';
 import { watchToolCalls } from './notify.mjs';
 import { registerOwaTools } from './owaTools.mjs';
-
-// Never falsy: an empty `browserUrl` makes chrome-devtools-mcp LAUNCH its own
-// Chrome, which is the one thing this server must never do.
-const NO_APP_URL = 'http://127.0.0.1:1';
-
-export function resolveAppBrowserUrl() {
-    const envPort = Number(process.env.OWA_CDP_PORT);
-    if (Number.isInteger(envPort) && envPort > 0) {
-        return `http://127.0.0.1:${envPort}`;
-    }
-    const [instance] = readLiveInstances();
-    return instance ? `http://127.0.0.1:${instance.port}` : NO_APP_URL;
-}
 
 /**
  * `argv` is chrome-devtools-mcp's own CLI surface (`--headless`, `--viewport`,
@@ -44,7 +31,7 @@ export async function createOwaMcpServer({ argv = [], logFile } = {}) {
     //    app that runs in a church back room has no business doing.
     args.usageStatistics = false;
     Object.defineProperty(args, 'browserUrl', {
-        get: resolveAppBrowserUrl,
+        get: () => resolveAppBrowserUrl(),
         configurable: true,
         enumerable: true,
     });

@@ -2,16 +2,18 @@
 id: W-37
 title: "Keep your own files beside the verse (Resources)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, CM-93]
-screenshots: 7
+verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, CM-93]
+screenshots: 9
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-08"
+workflowsVersion: "2026-09-12"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
-If you already keep study material on disk named after the verse it belongs to —
+If you already keep study material on disk named after the chapter it belongs to —
 `PSA.1.pdf`, `GEN.49.pptx` — **[en:tran:Resources]** puts those files
-right beside whatever verse you are reading, from as many folders as you like.
+right beside whatever you are reading, from as many folders as you like — and it
+follows **every passage you have open**, not one verse you clicked: three panes on
+Genesis 24, 27 and 29 list the files of all three.
 
 The name has to follow one pattern: **`<book key>.<chapter>.<anything>`**. The book key is
 the three-character one the app uses (Psalm is `PSA`, Genesis `GEN`, 1 Chronicles `1CH`), so
@@ -27,32 +29,44 @@ all count as book-level too.
 1. In the bible lookup, click **Advance Bible Lookup** (`bi-search`, top right) to open
    the side panel, then pick **Resources** from the panel's dropdown — the fourth entry
    after **Find**, **Cross Reference** and **Location-Name (KJV)**. 📸
-   You can also get here from the verse itself: right-click any verse in the lookup body
-   and choose **[en:tran:Open in Resources]**, just under **Open in
-   Cross Reference**. That opens the panel on this view AND on that verse.
-2. The top of the view shows the verse it is working from — its version, its reference and
-   its text, exactly as **Cross Reference** shows it. Click the reference to move to
-   another verse, or the version chip to read it in another translation. Under it sit the
-   file-name patterns being looked for, so you can always see what it is matching — for
-   anywhere in Psalm 1, a solid `PSA.1.*` for the chapter's own files and a dashed
-   `PSA.0.*` for the book's. Moving to another verse of the same chapter changes the
-   heading but not the files. 📸
+2. The top line of the view is the file-name patterns being looked for, one for **each
+   passage you have open**, in the order of your panes, so you can always see what it is
+   matching — reading Genesis 24 beside Genesis 27, a solid `GEN.24.*` and a solid
+   `GEN.27.*` for the chapters' own files, then one dashed `GEN.0.*` for the book's.
+   Two panes on the same chapter in two versions count once. The pane you are typing a
+   reference into follows what its box says, as soon as the reference is complete;
+   moving to another verse of the same chapter changes nothing here — it is the chapter
+   that decides. 📸
 3. The first time, the body holds a single **[en:tran:Add Folder]** button. Click it and
    pick the folder your files are in. You can add as many as you want — the **⋮ More
    Options** button, or a right-click anywhere in the view including the empty space below
    the folders, offers **Add Folder** again. Adding the same folder twice does nothing. 📸
+   **Or drag the folder straight in.** Take it from your file manager — Explorer, Finder —
+   and drop it anywhere on the Resources view: while you hold it there the view outlines
+   itself and its top line reads **[en:tran:Drop folders here]** in place of the patterns,
+   and letting go shelves the folder exactly as the button does, with its matching files
+   already listed under it. Several folders at once is one drop. 📸
+   Nothing is copied or moved — the folder stays where it is, and Resources only
+   remembers where to look. Drop a **file** by mistake and nothing is added: it says
+   **[en:tran:Drop a folder, not a file]**, because the folder a stray file sits in is as
+   often your whole Downloads as it is a library, and pointing Resources at that would
+   set it walking everything you own. A folder that is already on the list says
+   **[en:tran:Folder is already added]** rather than changing nothing in silence.
    That same menu has **[en:tran:Reload]**, which re-reads everything at once: your
    folder list, and the files inside every folder. Use it after adding files on disk while
    the app is open, or after changing the list from another window. 📸
 4. Each folder becomes its own group, named after the folder, with the folder it lives in
    shown beside the name and the full path if you hover it. Under the name, hanging off a
    single vertical line, are the matching files — **from that folder and every folder
-   inside it** — sorted by file type, each with its own icon (PDF, Word, PowerPoint,
-   video, image, bible note). The extension is set quieter than the rest of the name so the
-   reference reads first. Hover a file to see where it actually lives. 📸
-   A file that matched the book-level pattern rather than this chapter's carries a dashed
-   **[en:tran:Introduction]** tag, so a `PSA.0.pdf` listed under Psalm 1 says why it
-   is there. A group with nothing for this verse says **No matching files**.
+   inside it** — filed under the pattern each one answered to (`GEN.24.*`, then
+   `GEN.27.*`, then the dashed `GEN.0.*`), sorted by file type within each, each with its
+   own icon (PDF, Word, PowerPoint, video, image, bible note). The extension is set quieter
+   than the rest of the name so the reference reads first. Hover a file to see where it
+   actually lives. 📸
+   A book-level file is listed **once**, under its dashed pattern, however many chapters
+   of that book you have open, and carries a dashed **[en:tran:Introduction]** tag so a
+   `PSA.0.pdf` says why it is there. A group with nothing for what you are reading says
+   **No matching files**.
 5. Sometimes you want a file that is _not_ named after this verse. Click the **magnifier**
    (`bi-search`) at the right-hand end of the pattern line and a search box opens under it.
    Type any part of a file's name — `abc`, `baptism`, `PSA.11` — and every file in your
@@ -68,7 +82,43 @@ all count as book-level too.
 6. Click a file to open it in whatever application your computer normally uses for it — a
    PDF in your PDF reader, a PowerPoint in PowerPoint. Right-click one for **Open**,
    **Copy Path to Clipboard**, or **Reveal in Finder** / **Reveal in File Explorer**.
-7. Click a group's header to fold it away; it stays folded next time. Right-click a header
+7. **A `.json` file can hold a list of links** — videos, articles, anything on the web for
+   that chapter — and the panel shows them instead of opening the file. Write it as a list
+   of entries, each with a **title** to read and a **url** to open:
+
+   ```json
+   [
+       {
+           "title": "Overview: 1-2 Chronicles",
+           "url": "https://www.example.com/watch?v=overview-chronicles"
+       },
+       { "title": "Notes on the genealogies", "url": "https://www.example.com/notes" }
+   ]
+   ```
+
+   Save that as `1CH.0.json` beside your other files and the row for it gains a chevron
+   (`bi-chevron-down`) and a 🔗 icon, with one row per entry hanging under it. **Click a
+   title to open it in your own web browser** — Chrome, Edge, Safari, whatever you
+   normally use — and the site it goes to is shown after the title when the panel is wide
+   enough, with the title and the full address on the tooltip either way. Right-click a
+   link (or use its **⋮**) for **Open Link in Browser** and **Copy URL to Clipboard**. 📸
+   A few details worth knowing:
+   - A bare address on its own line — `"https://www.example.com/talk"` — is a link that
+     titles itself, so a quick list needs no titles at all. An entry with no title shows
+     its address as the title.
+   - Only **`http`** and **`https`** addresses are offered. Anything else is left out and
+     the panel says how many entries it could not read (**1 entry was not understood**),
+     so a typo shows instead of a row quietly going missing.
+   - **A `.json` that is not a list of links is just a file.** If it holds other data, or
+     is not valid JSON at all, the row keeps the ordinary file icon with no chevron and a
+     click opens it in your text editor like any other file — nothing to dismiss.
+   - The file is read when its row appears, so editing it on disk and folding the group
+     shut and open again shows your change. Files found by the **search** in step 5 are
+     read on the first click instead, which is why a link list found that way needs one
+     press to show its links.
+   - Right-click the `.json` row itself (or its **⋮**) for **Open** if you want to edit
+     the file rather than follow a link.
+8. Click a group's header to fold it away; it stays folded next time. Right-click a header
    for **Refresh** (re-reads that one folder — **Reload** in step 3 does all of them),
    **Add Folder**, **Reveal in Finder**/**File Explorer**, and **Remove Folder**,
    which asks you to confirm and then only removes it from this list — nothing on disk is
@@ -89,7 +139,7 @@ all count as book-level too.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `CM-93`
+`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
 :::

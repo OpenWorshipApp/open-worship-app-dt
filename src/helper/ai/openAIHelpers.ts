@@ -2,10 +2,7 @@ import OpenAI from 'openai';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { tran } from '../../lang/langHelpers';
 
-import type { AISettingType } from './aiHelpers';
-import { getAISetting, getIsAIEnabled, useAISetting } from './aiHelpers';
-
-export const DATA_DIR_NAME = 'ai-openai-data';
+import { getAISetting, getIsAIEnabled } from './aiHelpers';
 
 let instance: OpenAI | null = null;
 let key: string | null = null;
@@ -39,12 +36,11 @@ export function getOpenAIInstance() {
     return instance;
 }
 
-export function checkIsAvailable(aiSetting?: AISettingType) {
-    const setting = aiSetting ?? getAISetting();
-    return getIsAIEnabled() && setting.openAIAPIKey.trim().length > 0;
-}
-
-export function useAvailable() {
-    const aiSetting = useAISetting();
-    return checkIsAvailable(aiSetting);
-}
+// Re-exported so existing callers keep one import site. Import them from
+// `openAIAvailabilityHelpers` DIRECTLY in anything that merely draws a control:
+// reaching them through this module pulls the `openai` SDK into that chunk.
+export {
+    checkIsAvailable,
+    DATA_DIR_NAME,
+    useAvailable,
+} from './openAIAvailabilityHelpers';

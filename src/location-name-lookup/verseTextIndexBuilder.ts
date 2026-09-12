@@ -5,8 +5,12 @@ import { getPlainReferenceText } from './lookupPresentationHelpers';
 import type {
     LookupRecordLabelsType,
     LookupTextIndexType,
+    LookupTextNeedlesType,
 } from './verseTextIndexTypes';
-import { LOOKUP_TEXT_INDEX_VERSION } from './verseTextIndexTypes';
+import {
+    LOOKUP_TEXT_INDEX_VERSION,
+    NEEDLE_SEPARATOR,
+} from './verseTextIndexTypes';
 
 /**
  * Builds the slim in-text lookup index from the shipped lookup dataset.
@@ -33,6 +37,22 @@ import { LOOKUP_TEXT_INDEX_VERSION } from './verseTextIndexTypes';
 // so every label also contributes the bare name it is built on.
 const DISAMBIGUATOR_PATTERN =
     /^(.*?)(?:\s*\(|,\s|\s+(?:son|daughter|father|mother|wife|husband|brother|sister|the)\s+of\s+)/i;
+
+// The same job for a TRANSLATED label. A translated package leaves the
+// disambiguator in English around a translated name — `ម៉ារា of បេថានី`,
+// `អាន់ទីយ៉ូក in ពីស៊ីឌា` — so it carries a BARE connective, which the English
+// pattern above (it expects `<relation> of`) never sees. A genuine two-word
+// name has no connective and is left whole.
+const TRANSLATED_DISAMBIGUATOR_PATTERN =
+    /^(.*?)(?:\s*\(|,\s|\s+(?:of|in|at|the)\s+)/i;
+
+// Zero-width and soft-breaking characters. Khmer marks its word boundaries with
+// U+200B and joins clusters with U+200C, and a NAME carries them as readily as
+// the scripture around it does — so a needle is stripped of them here and the
+// matcher skips them in the text it reads (see `verseTextTranslatedHelpers`),
+// which is what lets the one spelling match the other. Deliberately NOT applied
+// to the English derivation, which has never seen one.
+const INVISIBLE_PATTERN = /[\u00ad\u200b-\u200f\u2060\ufeff]/g;
 
 // Two characters is too short to be safe in running prose: the dataset's 2-char
 // entries ("Er", "Uz") would false-positive against ordinary words.
@@ -293,4 +313,91 @@ export async function buildLookupTextIndex(
         kjvNames: index.ids.map((id) => displayMap.get(id)?.kjvName ?? ''),
     };
     return { index, recordLabels };
+}
+
+/**
+ * The surface forms of a TRANSLATED label, for the in-verse matcher.
+ *
+ * Two things differ from the English derivation above, both because the matcher
+ * that consumes these reads a script with no word boundaries and no case:
+ * nothing is lower-cased (there is no case to fold in Khmer, and folding it
+ * would put the needle out of step with the text the matcher compares it
+ * against character by character), and the zero-width marks a translated name
+ * carries are taken out so one spelling of a name matches the other.
+ */
+function deriveTranslatedNeedleList(rawName: unknown): string[] {
+    if (typeof rawName !== 'string') {
+        return [];
+    }
+    const trimmedName = rawName.replace(INVISIBLE_PATTERN, '').trim();
+    if (trimmedName === '') {
+        return [];
+    }
+    const needleSet = new Set<string>();
+    const addNeedle = (value: string) => {
+        const normalizedValue = value.trim();
+        if (normalizedValue.length >= MINIMUM_NEEDLE_LENGTH) {
+            needleSet.add(normalizedValue);
+        }
+    };
+    addNeedle(trimmedName);
+    const matched = TRANSLATED_DISAMBIGUATOR_PATTERN.exec(trimmedName);
+    if (matched !== null && matched[1].trim() !== '') {
+        addNeedle(matched[1]);
+    }
+    return Array.from(needleSet);
+}
+
+/**
+ * The needles file for one non-English language.
+ *
+ * Built on its own rather than as a third output of the pair above, because it
+ * follows the BIBLE on screen while the labels sidecar follows the lookup
+ * language setting — the two are frequently different languages, and folding
+ * them into one build would mean reading a ~35MB package to produce a file
+ * nobody asked for. It needs no English pass at all: `ids` comes from the index
+ * that is already on disk, so this reads exactly one package.
+ *
+ * A record the English pass never interned is skipped — no id was minted for it
+ * and no evidence map can ever reference it — and a record that is both a person
+ * and a place contributes its forms to the one slot they share.
+ */
+export async function buildLookupTextNeedles(
+    langCode: string,
+    ids: string[],
+): Promise<LookupTextNeedlesType | null> {
+    const rawLookupData = await readRawLookupData(langCode);
+    if (rawLookupData === null) {
+        return null;
+    }
+    const namesFile = rawLookupData.namesMap as AnyObjectType;
+    const locationsFile = rawLookupData.locationsMap as AnyObjectType;
+    const idIndexMap = new Map(ids.map((id, index) => [id, index]));
+    const needleListArray: string[][] = ids.map(() => []);
+    for (const record of [
+        ...toRecordList(namesFile.namesMap),
+        ...toRecordList(locationsFile.locationsMap),
+    ]) {
+        if (typeof record.id !== 'string') {
+            continue;
+        }
+        const idIndex = idIndexMap.get(record.id);
+        if (idIndex === undefined) {
+            continue;
+        }
+        const needleList = needleListArray[idIndex];
+        for (const rawName of [record.name, record.oldName]) {
+            for (const needle of deriveTranslatedNeedleList(rawName)) {
+                if (!needleList.includes(needle)) {
+                    needleList.push(needle);
+                }
+            }
+        }
+    }
+    return {
+        version: LOOKUP_TEXT_INDEX_VERSION,
+        needles: needleListArray.map((needleList) => {
+            return needleList.join(NEEDLE_SEPARATOR);
+        }),
+    };
 }

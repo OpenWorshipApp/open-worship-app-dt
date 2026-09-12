@@ -91,6 +91,51 @@ export function setResourcesFolderList(dirPathList: string[]) {
     resourcesFolderListSettingManager.setSetting(dirPathList);
 }
 
+export type ResourcesFolderAddingResultType = {
+    /** The list to save, or `null` when nothing was actually new. */
+    newDirPathList: string[] | null;
+    addedDirPaths: string[];
+    /** Candidates the list already held, by the file system's own rules. */
+    duplicatedDirPaths: string[];
+};
+
+/**
+ * Fold candidate folders into the list, saying which of them were new.
+ *
+ * The picker and a drop both need this, but they need different things from
+ * it: the picker only asks "is there anything to save?", while a drop has to
+ * be able to say WHY nothing happened -- a dropped folder that is already on
+ * the list would otherwise land on a panel that does not visibly change.
+ */
+export function addResourcesFolders(
+    existingDirPathList: string[],
+    candidateDirPaths: string[],
+): ResourcesFolderAddingResultType {
+    const sanitizedExisting = sanitizeResourcesFolderList(existingDirPathList);
+    const seenKeys = new Set(sanitizedExisting.map(toDirPathCompareKey));
+    const addedDirPaths: string[] = [];
+    const duplicatedDirPaths: string[] = [];
+    for (const dirPath of sanitizeResourcesFolderList(candidateDirPaths)) {
+        const key = toDirPathCompareKey(dirPath);
+        if (seenKeys.has(key)) {
+            duplicatedDirPaths.push(dirPath);
+            continue;
+        }
+        // Added as it goes, so two spellings of one folder in a single drop
+        // (`D:\Songs` and `D:\songs` on Windows) count once.
+        seenKeys.add(key);
+        addedDirPaths.push(dirPath);
+    }
+    return {
+        newDirPathList:
+            addedDirPaths.length === 0
+                ? null
+                : [...sanitizedExisting, ...addedDirPaths],
+        addedDirPaths,
+        duplicatedDirPaths,
+    };
+}
+
 /**
  * Ask the user for folders and return the list with them appended.
  *
@@ -103,14 +148,8 @@ export async function promptAddResourcesFolders(existingDirPathList: string[]) {
     if (pickedDirPaths.length === 0) {
         return null;
     }
-    const newDirPathList = sanitizeResourcesFolderList([
-        ...existingDirPathList,
-        ...pickedDirPaths,
-    ]);
-    if (newDirPathList.length === existingDirPathList.length) {
-        return null;
-    }
-    return newDirPathList;
+    return addResourcesFolders(existingDirPathList, pickedDirPaths)
+        .newDirPathList;
 }
 
 /**

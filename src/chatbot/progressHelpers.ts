@@ -151,8 +151,13 @@ function toQuotedStep(prefix: string, value: unknown, plain: string) {
     return quote === null ? plain : `${prefix} “${quote}”`;
 }
 
-/** The site being read, not the whole address with its query string on it. */
-function toSiteName(url: unknown) {
+/**
+ * The site being read, not the whole address with its query string on it.
+ * Exported because the offline bot and `/song` name the site in their own
+ * sentences, and two spellings of one site is the kind of thing a volunteer
+ * reads as two sites.
+ */
+export function toSiteName(url: unknown) {
     try {
         return new URL(String(url)).hostname.replace(/^www\./, '');
     } catch (_error) {
@@ -184,6 +189,50 @@ function describeFileStep(args: any, noun: string, plural: string) {
         return `${verb} ${noun}`;
     }
     return `${verb} ${noun}: “${name}”`;
+}
+
+// What each foreground extra is called on the wait line.
+const FOREGROUND_NOUN_MAP: Record<string, string> = {
+    countdown: 'the countdown',
+    stopwatch: 'the stopwatch',
+    clock: 'the clock',
+    'marquee-top': 'the scrolling message',
+    'marquee-bottom': 'the scrolling message',
+    'quick-text': 'the line of text',
+    all: 'the extras',
+};
+
+function describeForegroundStep(args: any) {
+    const widget = String(args?.widget ?? '');
+    const noun = FOREGROUND_NOUN_MAP[widget] ?? 'an extra';
+    if (args?.action === 'check') {
+        return 'Checking the extras on the screen';
+    }
+    if (args?.action === 'stop') {
+        return `Taking ${noun} off the screen`;
+    }
+    switch (widget) {
+        case 'countdown':
+            if (typeof args?.minutes === 'number') {
+                return `Starting a ${args.minutes} minute countdown on the screen`;
+            }
+            return toQuotedStep(
+                'Starting a countdown to',
+                args?.at,
+                'Starting a countdown on the screen',
+            );
+        case 'stopwatch':
+            return 'Starting a stopwatch on the screen';
+        case 'clock':
+            return 'Putting a clock on the screen';
+        case 'marquee-top':
+        case 'marquee-bottom':
+            return 'Putting a scrolling message on the screen';
+        case 'quick-text':
+            return 'Putting a line of text on the screen';
+        default:
+            return 'Putting an extra on the screen';
+    }
 }
 
 /**
@@ -227,16 +276,35 @@ export function describeToolStep(name: string, args: any): string {
             return 'Checking the projector screens';
         case 'owa_hide_screens':
             return 'Clearing the projector screens';
+        case 'owa_present_bible':
+            return toQuotedStep(
+                args?.action === 'check'
+                    ? 'Reading the passage'
+                    : 'Putting a Bible passage on the screen:',
+                args?.reference,
+                args?.action === 'check'
+                    ? 'Reading a Bible passage'
+                    : 'Putting a Bible passage on the screen',
+            );
+        case 'owa_foreground':
+            return describeForegroundStep(args);
         case 'owa_tran':
             return 'Checking what that button is called here';
         case 'owa_read_website': {
             const site = toSiteName(args?.url);
             return site === null ? 'Reading a web page' : `Reading ${site}`;
         }
-        case 'owa_lyric_validate':
+        case 'owa_lyric_validate': {
+            // Handed a page address, the drafter reads the page itself, and
+            // that is the slow half: say which site, as a read would.
+            const site = toSiteName(args?.url);
+            if (site !== null) {
+                return `Reading ${site} and writing the song out`;
+            }
             return args?.mode === 'draft'
                 ? 'Writing the song out'
                 : 'Checking the song over';
+        }
         case 'owa_lyric_file':
             return describeFileStep(args, 'song', 'songs');
         case 'owa_slide_file':

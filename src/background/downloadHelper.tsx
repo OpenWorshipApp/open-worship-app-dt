@@ -1,4 +1,4 @@
-import { type ChangeEvent, useCallback, useState } from 'react';
+import { type ChangeEvent, useCallback, useId, useState } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
@@ -33,20 +33,50 @@ function InputUrlComp({
         onChangeRef.current(e.target.value);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // The box is NAMED by the words beside it. It used to carry no
+    // accessible name at all -- "Video URL:" was a plain div next to it --
+    // so a screen reader announced an unnamed edit box, and `owa_type` (which
+    // finds a box by its label) could not target it either: a walkthrough
+    // card could open this dialog and then had no way to fill it in. The
+    // reason it is BOTH `htmlFor` and `aria-label` is that the label element
+    // names it for assistive tech while the attribute is what the app's own
+    // matcher reads.
+    const inputId = useId();
+    const messageId = `${inputId}-message`;
+    const label = tran(title);
+    const isInvalid = invalidMessage !== '';
     return (
         <div className="w-100 h-100">
-            <div className="input-group" title={invalidMessage}>
-                <div className="input-group-text">{tran(title)}</div>
+            <div className="input-group">
+                <label className="input-group-text" htmlFor={inputId}>
+                    {label}
+                </label>
                 <input
+                    id={inputId}
+                    aria-label={label}
+                    aria-invalid={isInvalid}
+                    aria-describedby={isInvalid ? messageId : undefined}
                     className={
                         'form-control form-control-sm' +
-                        (invalidMessage ? ' is-invalid' : '')
+                        (isInvalid ? ' is-invalid' : '')
                     }
                     type="text"
                     value={url}
                     onChange={handleUrlChange}
                 />
             </div>
+            {/*
+                Said in words under the box rather than as a tooltip on the
+                group around it. A tooltip has to be hovered to be read, and
+                it was also gluing itself onto the group's label -- the near
+                miss a failed `owa_type` came back with was the invented
+                "Video URL: Cannot be empty", which is on no control anywhere.
+            */}
+            {isInvalid ? (
+                <div id={messageId} className="invalid-feedback d-block">
+                    {tran(invalidMessage)}
+                </div>
+            ) : null}
         </div>
     );
 }
@@ -128,9 +158,28 @@ export function toDownloadFailureReason(error: any) {
  * is upstream tool output, and a half-translated sentence would be worse than
  * an English one.
  */
+/**
+ * What a media failure looks like when the SHIPPED yt-dlp is simply too old for
+ * the site: extraction and format selection succeed, then the media fetch is
+ * refused. Observed 2026-09-11 on the published pack 0.0.2 (yt-dlp 2026.07.04),
+ * where every download 403'd while the newer 0.0.3 pack (2026.08.19) fetched the
+ * same URL fine on the same machine and network. The reason alone
+ * ("HTTP Error 403: Forbidden") reads as somebody else's outage, so the toast
+ * has to name the one thing the operator can actually do about it.
+ */
+const STALE_MEDIA_TOOLS_REGEX =
+    /http error 403|unable to download video data|requested format is not available/i;
+
 export function toDownloadFailureMessage(message: string, error: any) {
     const reason = toDownloadFailureReason(error);
-    return reason === '' ? message : `${message}: ${reason}`;
+    const failureMessage = reason === '' ? message : `${message}: ${reason}`;
+    if (!STALE_MEDIA_TOOLS_REGEX.test(reason)) {
+        return failureMessage;
+    }
+    return (
+        `${failureMessage}. ${tran('The media tools may be out of date')} ` +
+        `(${tran('Extra Binaries')} → ${tran('Reinstall')})`
+    );
 }
 
 export function getOpenSharedLinkMenuItem(

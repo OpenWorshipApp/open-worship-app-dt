@@ -147,6 +147,28 @@ $app-context-menu-dots-opacity: 0.1;
     min-width: 120px;
   }
 
+  // A strip of toolbar buttons that scrolls sideways when the window is too
+  // narrow to hold it. Without `min-width: 0` a flex item never shrinks below
+  // its content, so the strip overflowed its `.app-flex-item` parent -- and
+  // that parent is `justify-content-end`, which pushes the overflow off the
+  // START edge, where it is clipped and no scroll can reach it.
+  .app-scroll-x-buttons {
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+
+    > * {
+      flex: 0 0 auto;
+    }
+
+    // The header row holding this is 38px against ~31px buttons, so the
+    // app-wide 7px bar would not fit underneath them.
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+  }
+
   .right {
     padding: 0;
 

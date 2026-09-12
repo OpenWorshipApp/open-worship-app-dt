@@ -58,6 +58,13 @@ const MAX_CREDIT_LENGTH = 48;
  * happened to print no chord over it.
  */
 const MAX_CREDIT_WORDS = 4;
+/**
+ * How many rows of furniture may be swept off the FRONT of the song. Looser
+ * than the credit sweep at the tail, because a site's toolbar is a row per
+ * button and nine of them is ordinary, and because every row taken is named
+ * in the report where a row eaten from a verse would not be.
+ */
+const MAX_FURNITURE_LINES = 12;
 /** How much of a line to quote back when reporting what was identified. */
 const EXCERPT_LENGTH = 60;
 
@@ -886,7 +893,7 @@ export function checkIsCreditLine(line) {
     if (/\b(?:words|music|lyrics?|translation)\b[^:]{0,20}:/i.test(text)) {
         return true;
     }
-    // `ទំនុកច្រៀងៈ សម សារិន` -- a short label, a colon of some script, a name.
+    // `ទំនុកច្រៀងៈ អ្នកណាម្នាក់` -- a short label, a colon of some script, a name.
     return /^\S{1,20}[:：៖ៈ]\s*\S/.test(text);
 }
 
@@ -926,19 +933,44 @@ function readCreditCopyright(line) {
  * Read from the BOTTOM up, and only a real notice: the SIGN, or `(c) 2026`.
  * The word on its own is a menu item (`Copyright Policy`), and taking that
  * would put the name of a link in the song's own field.
+ *
+ * And never the SITE's own notice. A chord site's footer says
+ * `© 2026 MadeUpChords.com`, which is the site talking about itself, and it
+ * went into a decades-old hymn's Copyright field as though the site owned it
+ * (2026-09-09). A notice that names the host the page came from is skipped;
+ * `siteHost` is the address's hostname, when the caller has it.
  */
-export function readPageCopyright(lines) {
+export function readPageCopyright(lines, siteHost = '') {
     for (let index = lines.length - 1; index >= 0; index -= 1) {
         const text = String(lines[index] ?? '').trim();
         if (!/©|\(c\)\s*(?:19|20)\d{2}/i.test(text)) {
             continue;
         }
         const found = readCreditCopyright(text);
-        if (found !== null) {
+        if (found !== null && !checkIsSiteNotice(found, siteHost)) {
             return found;
         }
     }
     return null;
+}
+
+/** Is this notice the site naming itself, rather than the song's owner? */
+function checkIsSiteNotice(notice, siteHost) {
+    const siteName = toSiteLabel(siteHost);
+    return siteName !== '' && notice.toLowerCase().includes(siteName);
+}
+
+/**
+ * `www.madeupchords.com` as the one word a notice would use to name the site:
+ * `madeupchords`. The first label after a leading `www`, in lower case.
+ */
+function toSiteLabel(host) {
+    const labels = String(host ?? '')
+        .toLowerCase()
+        .replace(/^www\./, '')
+        .split('.')
+        .filter(Boolean);
+    return labels.length >= 2 ? labels[0] : '';
 }
 
 /** Who a credit line names, when it names them in a way worth believing. */
@@ -1170,6 +1202,78 @@ export function markTranslations(rows) {
 }
 
 /**
+ * The region from the page's `Key: G · Time: 4/4` strip down.
+ *
+ * A chord site prints that strip immediately over its chord sheet -- it is
+ * the page's own line between the controls and the song -- and everything
+ * above it in the region is the toolbar: `Add to`, `Edit`, `Print`,
+ * `Transpose`, one word to a line, each one a line of WORDS by every test
+ * here. On a page that draws no strumming diagram between its toolbar and its
+ * first chord there is no wall to end the furniture, so the region began at
+ * the toolbar and nine buttons were drafted as Verse 1 (measured 2026-09-09
+ * on a Khmer hymnal's chord page), pushing the real verses to 2 and 3.
+ *
+ * Only a strip that comes BEFORE the first chord counts. One printed under
+ * the song -- a facts table -- is left alone, or the cut would take the song.
+ */
+function cutAboveMetadataStrip(lines, checkIsLabel = () => false) {
+    let stripAt = -1;
+    for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
+        if (checkIsMetadataStrip(line)) {
+            stripAt = index;
+            continue;
+        }
+        const kind = classifyLine(line);
+        if (
+            kind === 'chord' ||
+            kind === 'bar' ||
+            (kind === 'word' && checkIsLabel(stripIconPrefix(line).trim()))
+        ) {
+            break;
+        }
+    }
+    return stripAt === -1 ? lines : lines.slice(stripAt + 1);
+}
+
+/**
+ * Take the furniture off the FRONT: the toolbar the page prints above its
+ * song, on a page that puts no strip and no wall between the two.
+ *
+ * The mirror of `takeTrailingCredits`, on the same chord-sheet fact: every
+ * line that is SUNG has a chord over it, so a short row with no chord sitting
+ * above the first chorded row is a button, a capo note or a heading, and not
+ * words. The sweep stops at the first row that carries a chord, at a section
+ * label -- a song may well open with an unchorded line under "Verse 1", and
+ * the label is proof the song has begun -- and at anything long enough to be
+ * a line somebody sings. Every row taken is named in the report.
+ */
+function takeLeadingFurniture(rows, isChordSheet) {
+    const taken = [];
+    if (!isChordSheet) {
+        return taken;
+    }
+    while (rows.length > 1 && taken.length < MAX_FURNITURE_LINES) {
+        const first = rows[0];
+        if (first.text === '') {
+            rows.shift();
+            continue;
+        }
+        const isShort =
+            first.isLabel !== true &&
+            !first.hadChord &&
+            first.text.length <= MAX_CREDIT_LENGTH &&
+            first.text.split(/\s+/).length <= MAX_CREDIT_WORDS;
+        if (!isShort) {
+            break;
+        }
+        taken.push(first.text);
+        rows.shift();
+    }
+    return taken;
+}
+
+/**
  * Take the tail off the end: who wrote it, and whatever the page put after it.
  *
  * On a chord sheet every line that is SUNG has a chord over it. So the two
@@ -1311,7 +1415,7 @@ export function readLyricPage(rawLines, markers = {}) {
             const kind = classifyLine(line);
             return kind === 'chord' || kind === 'bar';
         }).length >= 3;
-    const pageCopyright = readPageCopyright(lines);
+    const pageCopyright = readPageCopyright(lines, markers.siteHost);
     const found = {
         ...readPageHeading(lines, markers.checkIsLabel),
         ...readMetadataStrip(lines),
@@ -1347,16 +1451,19 @@ export function readLyricPage(rawLines, markers = {}) {
                 return one.trim();
             }),
     );
-    const kept = (isChordSheet ? trimAfterLastChord(chosen, 3) : chosen).filter(
-        (line) => {
-            const trimmed = stripIconPrefix(line).trim();
-            return (
-                !checkIsPlayOrderLine(line) &&
-                !consumed.has(trimmed) &&
-                !checkIsMetadataStrip(trimmed)
-            );
-        },
-    );
+    const started = isChordSheet
+        ? cutAboveMetadataStrip(chosen, markers.checkIsLabel)
+        : chosen;
+    const kept = (
+        isChordSheet ? trimAfterLastChord(started, 3) : started
+    ).filter((line) => {
+        const trimmed = stripIconPrefix(line).trim();
+        return (
+            !checkIsPlayOrderLine(line) &&
+            !consumed.has(trimmed) &&
+            !checkIsMetadataStrip(trimmed)
+        );
+    });
     const rows = markTranslations(
         rejoinChordSheet(kept, markers.checkIsLabel),
     );
@@ -1371,12 +1478,15 @@ export function readLyricPage(rawLines, markers = {}) {
     ) {
         rows.pop();
     }
+    const furniture = takeLeadingFurniture(rows, isChordSheet);
     const {
         credits,
         artist,
         copyright,
     } = takeTrailingCredits(rows, isChordSheet);
-    if (copyright !== null) {
+    // The same site test as the footer's: a notice printed right under the
+    // song is still the site's own when it names the site.
+    if (copyright !== null && !checkIsSiteNotice(copyright, markers.siteHost)) {
         found.Copyright = copyright;
     }
     // Only when the page's own heading named nobody. "Words and music by"
@@ -1402,11 +1512,16 @@ export function readLyricPage(rawLines, markers = {}) {
             translations: rows.filter((one) => {
                 return one.isTranslation;
             }).length,
+            furniture,
             credits,
+            // The first WORDS, not the verse number over them: "the part
+            // running from '1.'" tells a reader nothing about which part.
             firstLine: toExcerpt(
                 rows.find((one) => {
-                    return one.text !== '';
-                })?.text ?? '',
+                    return one.text !== '' && one.isLabel !== true;
+                })?.text ??
+                    rows[0]?.text ??
+                    '',
             ),
             lastLine: toExcerpt(rows[rows.length - 1]?.text ?? ''),
         },

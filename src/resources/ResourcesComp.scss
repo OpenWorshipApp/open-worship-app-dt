@@ -24,6 +24,35 @@
     // Where the rail sits inside a folder body, and how far the rows clear it.
     --app-resources-rail-x: 0.5rem;
     --app-resources-tick-w: 0.55rem;
+    // So a link row can drop the site name when this panel is too narrow to
+    // hold it AND a title (see `.app-resources-link-host`). The width that
+    // matters is this panel's, which no media query can ask about -- the user
+    // drags the divider, the window never changes size. Safe here because the
+    // panel is sized by the pane it sits in, never by its own contents.
+    container-type: inline-size;
+  }
+
+  // While a folder drag is over the panel. Drawn on the panel ROOT, which is
+  // `min-height: 100%` of the scroll box, so the lit edge is visible at any
+  // scroll position -- an overlay on the list itself would be off screen in
+  // the one case a shelf is long enough to scroll. `outline`, not `border`:
+  // it is painted outside the box, so nothing below it moves when a drag
+  // arrives and nothing moves back when it leaves.
+  .app-resources.is-dropping {
+    outline: 2px dashed var(--app-accent);
+    outline-offset: -2px;
+    background-color: var(--app-accent-halo);
+  }
+
+  // The toolbar line that replaces the pattern chips mid-drag. Accent, like
+  // the outline it belongs to, so the two read as one state.
+  .app-resources-drop-hint {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--app-accent);
   }
 
   .app-resources-toolbar {
@@ -262,5 +291,121 @@
     padding: 0.1rem 0.3rem;
     font-size: 0.72rem;
     color: var(--app-muted);
+  }
+
+  // A link list and its contents are ONE thing on the rail: the wrapper adds
+  // no box, so the row's tick still lands where every other row's does.
+  .app-resources-file-item {
+    min-width: 0;
+  }
+
+  // Says a row has an inside. Sized and coloured as the folder header's
+  // chevron, because it means the same thing one level down.
+  .app-resources-file-chevron {
+    flex: 0 0 auto;
+    margin-right: 0.25rem;
+    font-size: 0.6rem;
+    color: var(--app-muted);
+  }
+
+  // The links of one file, indented under its own row and hung off a rail of
+  // their own -- a second rail, one step in, so a list of links reads as
+  // belonging to the file above it rather than as more files in the folder.
+  .app-resources-links {
+    position: relative;
+    margin: 0 0 0.15rem;
+    padding-left: calc(var(--app-resources-tick-w) + 0.75rem);
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0.75rem;
+      top: 0;
+      bottom: 0.3rem;
+      width: 1px;
+      background-color: var(--app-line);
+    }
+  }
+
+  .app-resources-link-row {
+    display: flex;
+    align-items: center;
+
+    > .app-resources-link {
+      flex: 1 1 auto;
+      width: auto;
+      min-width: 0;
+    }
+  }
+
+  // A press here leaves the app for the system browser, so it is drawn as a
+  // link -- accent coloured, underlined on hover -- rather than as another
+  // file row. Nothing else in this panel goes anywhere but the user's own
+  // machine.
+  .app-resources-link {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+    width: 100%;
+    padding: 0.1rem 0.3rem;
+    border: 0;
+    border-radius: 3px;
+    background-color: transparent;
+    color: var(--app-accent);
+    text-align: left;
+    &::before {
+      content: '';
+      position: absolute;
+      left: calc(var(--app-resources-tick-w) * -1);
+      top: 0.6em;
+      width: var(--app-resources-tick-w);
+      height: 1px;
+      background-color: var(--app-line);
+    }
+    &:hover {
+      background-color: var(--app-surface);
+      .app-resources-link-title {
+        text-decoration: underline;
+      }
+      &::before {
+        background-color: var(--app-accent);
+      }
+    }
+  }
+
+  .app-resources-link-icon {
+    flex: 0 0 auto;
+    margin-right: 0.35rem;
+    font-size: 0.7rem;
+  }
+
+  // The title is what the file's author wrote, so it gets the room; these are
+  // sentences rather than file names, so they are not `app-data`.
+  .app-resources-link-title {
+    flex: 0 1 auto;
+    min-width: 0;
+    font-size: 0.8rem;
+  }
+
+  // Where the press goes. Quiet, and it never shrinks: a site name cut down to
+  // `y...` is not a reassurance, it is noise taking room from the title, which
+  // is the thing actually being read.
+  .app-resources-link-host {
+    flex: 0 0 auto;
+    max-width: 40%;
+    margin-left: 0.4rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.03em;
+    color: var(--app-muted);
+  }
+
+  // Below this the panel cannot hold a title AND a site name, so the site name
+  // goes -- the full address is still on the row's own tooltip, and the icon
+  // still says the press leaves the app. Container query, not a media query:
+  // what is narrow here is the PANEL.
+  @container (max-width: 340px) {
+    .app-resources-link-host {
+      display: none;
+    }
   }
 }

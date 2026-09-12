@@ -23,6 +23,10 @@ that matters for a question is the model's. The audit reports both.
 | 2026-09-02, after `modelTools.mjs` | 44 / ~9 468 | **25 / ~5 721** | **~57 210** |
 | 2026-09-02, `owa_read_website` added | 45 (19 owa) / ~9 835 | 26 / ~6 088 | ~60 880 |
 | 2026-09-02, `owa_lyric_validate` added | 46 (20 owa) / ~10 056 | 27 / ~6 309 | ~63 090 |
+| 2026-09-08, the model sees the `owa_*` tools only | 48 (22 owa) / ~11 113 | **19 / ~5 503** | ~55 030 |
+| 2026-09-09, screens / selection / run sheet sentences | 48 (22 owa) / ~11 586 | 19 / ~5 976 | ~59 760 |
+| 2026-09-10, `owa_present_bible` added | 49 (23 owa) / ~11 968 | 20 / ~6 358 | ~63 580 |
+| 2026-09-11, `owa_foreground` added | 50 (24 owa) / ~12 459 | 21 / ~6 849 | ~68 490 |
 
 Each of those last two rows is what one deliberate addition costs, paid by
 every volunteer whether or not they ever ask about a web page or a song:
@@ -30,6 +34,22 @@ every volunteer whether or not they ever ask about a web page or a song:
 `owa_lyric_validate` — ~3 500 and ~2 200 across a worst-case question. That is
 the trade each tool has to be worth, and it is written down here so the next
 person can re-judge it rather than inherit it.
+
+`owa_present_bible` (2026-09-10) is **+382** — description almost entirely,
+for the app's commonest live ask, which no existing tool could do at all: the
+Bible Lookup is a picker no step can drive. Measured at +420 and trimmed once
+before the row was written; the two readers it serves (a model choosing, and
+the rule that a verse goes up when ASKED and is offered when only asked how)
+are what is left.
+
+`owa_foreground` (2026-09-11) is **+491** — six optional arguments (the widget
+list, `minutes`, `at`, `text`, `seconds`, `action`) are ~870 of its schema
+characters, and the description was trimmed from 1 232 to 1 027 characters
+before the row was written. Paid for by a measured failure rather than a
+guess: *Start a 5 minute countdown on the screen* cost 18 rounds and $0.18 on
+Sonnet 5 and started nothing; with the tool it is 2 rounds and one call. Six
+widgets share the one schema on purpose — six tools would have been ~2 000
+tokens a round for the same job.
 
 `owa_lyric_validate` is the cheaper of the two for a reason worth copying: its
 whole input is one required `text` string, so almost all of its 221 tokens are

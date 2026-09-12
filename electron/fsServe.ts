@@ -18,6 +18,7 @@ export const htmlFiles = {
     bibleNote: 'bibleNote.html',
     webEditor: 'webEditor.html',
     chatbot: 'chatbot.html',
+    aichat: 'aichat.html',
 };
 export const customScheme = 'owa';
 export const schemePrivileges = {

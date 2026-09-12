@@ -28,7 +28,11 @@ vi.mock('../lang/lookupDataVersionHelpers', () => ({
     readJsonFile: async () => ({}),
 }));
 
-import { buildLookupTextIndex } from './verseTextIndexBuilder';
+import {
+    buildLookupTextIndex,
+    buildLookupTextNeedles,
+} from './verseTextIndexBuilder';
+import { NEEDLE_SEPARATOR } from './verseTextIndexTypes';
 
 function genEnglishData() {
     return {
@@ -204,5 +208,74 @@ describe('building the derived lookup files', () => {
                 'supernatural',
             );
         });
+    });
+});
+
+describe('building the needles file for a translated bible', () => {
+    beforeEach(() => {
+        h.lookupDataMap.km = {
+            namesMap: {
+                namesMap: {
+                    'id-abram': {
+                        id: 'id-abram',
+                        name: 'អឰប្រាម',
+                        // A second spelling the text may use instead.
+                        oldName: 'អឰប្រហា្ម',
+                    },
+                    // Unknown to the English pass, so no id was ever minted for
+                    // it and nothing could reference it.
+                    'id-only-khmer': { id: 'id-only-khmer', name: 'តែខ្មែរ' },
+                },
+            },
+            locationsMap: {
+                locationsMap: [
+                    {
+                        id: 'id-haran',
+                        // A translated package leaves the disambiguator in
+                        // English around the translated name.
+                        name: 'ហារ៉ាន in មេសូប៉ូតាមា',
+                    },
+                ],
+            },
+        };
+    });
+
+    test('writes one entry per record, aligned to the English ids', async () => {
+        const built = await buildLookupTextIndex('en');
+        const { ids } = built!.index;
+
+        const needles = await buildLookupTextNeedles('km', ids);
+
+        expect(needles!.needles).toHaveLength(ids.length);
+        // Covered by the translation.
+        expect(needles!.needles[ids.indexOf('id-abram')]).toBe(
+            ['អឰប្រាម', 'អឰប្រហា្ម'].join(NEEDLE_SEPARATOR),
+        );
+        // Not covered, and still written so the array cannot mis-index.
+        expect(needles!.needles[ids.indexOf('id-satan')]).toBe('');
+    });
+
+    test('a name carrying an English disambiguator also yields the bare name', async () => {
+        const built = await buildLookupTextIndex('en');
+        const { ids } = built!.index;
+
+        const needles = await buildLookupTextNeedles('km', ids);
+
+        expect(
+            needles!.needles[ids.indexOf('id-haran')].split(NEEDLE_SEPARATOR),
+        ).toStrictEqual(['ហារ៉ាន in មេសូប៉ូតាមា', 'ហារ៉ាន']);
+    });
+
+    test('reads exactly one package and never the English one', async () => {
+        const built = await buildLookupTextIndex('en');
+        h.readLangCodes = [];
+
+        await buildLookupTextNeedles('km', built!.index.ids);
+
+        expect(h.readLangCodes).toStrictEqual(['km']);
+    });
+
+    test('gives up when that language ships no dataset', async () => {
+        expect(await buildLookupTextNeedles('fr', ['id-abram'])).toBeNull();
     });
 });

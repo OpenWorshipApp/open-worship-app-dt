@@ -35,6 +35,14 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
 - **`browserUrl` is a live getter**, re-read by chrome-devtools-mcp on every
   tool call, so one long-lived MCP server follows the app across restarts. It
   must never be falsy — an empty one makes it LAUNCH its own Chrome.
+- **The in-app host is pinned to its own instance** (2026-09-09). Discovery is
+  newest-first, so with the packaged app up and a dev build started after it
+  the packaged app's own chatbot answered about the dev window. `startMcpHost`
+  passes `getCdpPort` and `host.mjs` calls `pinCdpPort` in `discovery.mjs`;
+  BOTH resolution paths read it — the `browserUrl` getter and `cdp.mjs`'s
+  `requireLivePort` (what every `owa_*` tool uses). The stdio bin never pins,
+  so an outside agent still follows the newest app. Verified against the
+  packaged build with a planted newer decoy instance file.
 - **App-level tools read the DOM or use `ipcRenderer`; they never `import()` an
   app module** (that re-runs `document.onkeydown` and kills every shortcut —
   see [[cdp-dynamic-import-hijack]]). `owa_find_ui` can outline the real

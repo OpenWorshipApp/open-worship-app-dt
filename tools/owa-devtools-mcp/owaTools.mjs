@@ -16,7 +16,11 @@ import {
     genListUiExpression,
     genTypeExpression,
 } from './domMatch.mjs';
-import { readPublishedInstances } from './discovery.mjs';
+import { readLiveInstances } from './discovery.mjs';
+import {
+    foldPresenterState,
+    genPresenterStateExpression,
+} from './agentPresenter.mjs';
 import {
     detectRecipeWindow,
     dropStepsAlreadyDone,
@@ -62,6 +66,18 @@ import {
     toReadableCharCount,
 } from './website.mjs';
 import { listTranLanguages, tranText } from './tran.mjs';
+import { genListScreensExpression } from './agentScreens.mjs';
+import {
+    AGENT_BIBLE_ACTIONS,
+    formatPresentBibleResult,
+    genPresentBibleExpression,
+} from './agentBible.mjs';
+import {
+    AGENT_FOREGROUND_ACTIONS,
+    AGENT_FOREGROUND_WIDGETS,
+    formatForegroundResult,
+    genForegroundExpression,
+} from './agentForeground.mjs';
 
 // Spelled out once, and only on `owa_help_search`: the enum already lists the
 // keys, but `lwShare` and `appDocumentEditor` are html file names and say
@@ -161,6 +177,10 @@ async function attempt(callback) {
     }
 }
 
+// The forty dev-only component names it used to list are gone (2026-09-09):
+// ~200 tokens on every call, internal by definition, and read by nobody --
+// the Report line had to trim them out again. `data-react-comp-fp` is still
+// on the DOM for a developer who wants it.
 // Reads the DOM only. Never `import()` an app module from here -- that re-runs
 // module top-level code and takes the app's keyboard shortcuts down with it.
 const APP_STATE_EXPRESSION = `(() => {
@@ -170,53 +190,22 @@ const APP_STATE_EXPRESSION = `(() => {
             isActive: element.classList.contains('active'),
         }))
         .filter((tab) => tab.label);
-    const panels = [...document.querySelectorAll('[data-react-comp-name]')]
-        .slice(0, 40)
-        .map((element) => element.getAttribute('data-react-comp-name'));
     return {
         title: document.title,
         page: location.pathname.replace(/^.*\\//, ''),
         language: document.documentElement.lang || null,
         theme: document.documentElement.getAttribute('data-bs-theme') || null,
         tabs,
-        components: [...new Set(panels)],
     };
 })()`;
 
-// The whole Electron `Display` object is ~1.2 KB of accelerometer support,
-// colour space and cursor sizes, and it used to come back TWICE -- once as
-// `primaryDisplay` and again inside `displays` -- for a tool whose real
-// question is "is anything on the wall?". That is ~1 200 tokens to answer
-// "no", on the one tool the system prompt names as the FIRST thing to look at
-// when a volunteer says nothing is showing, and the cost is exactly what
-// makes a model skip the check and guess instead. Cut to what an answer can
-// actually say: which screens are live, and what a screen could be put on.
-const SCREENS_EXPRESSION = `(() => {
-    const electron = typeof require === 'function' ? require('electron') : null;
-    if (electron === null) {
-        return { error: 'This page has no node integration' };
-    }
-    const { ipcRenderer } = electron;
-    const showingScreenIds = ipcRenderer.sendSync('main:app:get-screens');
-    const all = ipcRenderer.sendSync('main:app:get-displays');
-    const primaryId = all && all.primaryDisplay ? all.primaryDisplay.id : null;
-    const displays = ((all && all.displays) || []).map((display) => {
-        return {
-            id: display.id,
-            // The words the display button in the screen footer shows, so an
-            // answer can name the one the user is looking at.
-            label: display.label || undefined,
-            width: display.size ? display.size.width : undefined,
-            height: display.size ? display.size.height : undefined,
-            isPrimary: display.id === primaryId ? true : undefined,
-        };
-    });
-    return {
-        isAnyShowing: showingScreenIds.length > 0,
-        showingScreenIds,
-        displays,
-    };
-})()`;
+// The screens answer lives in `agentScreens.mjs`: the IPC basics (which
+// screens are live, what they could be put on -- cut to that on 2026-09-03
+// because the whole Electron `Display` object came back twice, ~1 200 tokens
+// to answer "no"), plus what each screen HOLDS and the labels on its own
+// controls, added 2026-09-09 after a model handed "showing: true" told a
+// volunteer their projector was blank while it showed a verse.
+const SCREENS_EXPRESSION = genListScreensExpression();
 
 /**
  * A picture, as MCP carries one: the text line first so a client that shows
@@ -452,6 +441,21 @@ export function registerOwaTools(server) {
                         'screens and settings.'
                     );
                 }
+                // Said IN the result, on the hit the model is about to
+                // answer from, because the prompt's own rule to open the
+                // page first was ignored four asks out of four on 2026-09-09
+                // ("How do I edit a slide?" from the Reader: steps written
+                // off a two-line excerpt, one of them not true of the app).
+                // A tool answer is read at the moment of deciding; a rule
+                // eight hundred words up is not. One field, on one hit.
+                if (results[0]?.kind === 'manual') {
+                    results[0] = {
+                        ...results[0],
+                        note:
+                            'An excerpt, not the steps: open this page ' +
+                            'with owa_help_page before writing any step.',
+                    };
+                }
                 return results;
             });
         },
@@ -639,10 +643,25 @@ export function registerOwaTools(server) {
             description:
                 'What the running app is doing right now: every live ' +
                 'instance, its open windows, and one window\'s page, ' +
-                'language, theme and visible tabs. Use it to answer in terms ' +
-                'of what the user is actually looking at -- and to check ' +
-                'WHERE they are before telling them to go somewhere they are ' +
-                'already standing.',
+                'language, theme and visible tabs. On the Presenter page ' +
+                'also `selectedDocument` -- what the user is in the MIDDLE ' +
+                'of: the song or document they picked, its slides in order ' +
+                '(number, name, first words), `onScreen` (the one of them ' +
+                'on a screen), `next` and `previous` as the arrow keys ' +
+                'would take them. Every slide carries `find`, the exact ' +
+                'words on its card: `owa_click` with that PRESENTS the ' +
+                'slide (it changes the projector -- only when asked), then ' +
+                '`owa_list_screens` says what went up. And `runSheet` -- ' +
+                'the run sheets (presenting flows) open in their run ' +
+                'player: the lines of each in order, `cursor` (the line the ' +
+                'run is on, and the slide inside it) and `next` (what the ' +
+                'next press puts up, worked out as the Space key of the player ' +
+                'does), or the sheets there are to open when none is. No ' +
+                'tool advances a run: the operator presses Space in the ' +
+                'run player, so say what is next and stop. Use ' +
+                'it to answer in terms of what the user is actually looking ' +
+                'at, and to check WHERE they are before telling them to go ' +
+                'somewhere they are already standing.',
             inputSchema: {
                 page: z
                     .string()
@@ -661,12 +680,42 @@ export function registerOwaTools(server) {
                     port,
                     match: page,
                 });
+                let mainWindow = value;
+                // What is selected is the presenter page's to say, through
+                // the app's own managers (`agentPresenter.mjs`). Asked of
+                // any other page it is a note, never a silent absence -- a
+                // missing key is something a model infers past.
+                if (value && value.page === 'presenter.html') {
+                    const presenter = await evaluateInApp(
+                        genPresenterStateExpression(),
+                        { port, match: page },
+                    );
+                    mainWindow = foldPresenterState(value, presenter.value);
+                } else if (value) {
+                    mainWindow = foldPresenterState(value, {
+                        isAuthoritative: false,
+                    });
+                }
                 return {
-                    instances: readPublishedInstances(),
+                    // The published record minus the user's data directory:
+                    // a path with their account name in it, handed to a
+                    // model on every call, for nothing it could use.
+                    //
+                    // LIVE, not merely published: an app that was killed never
+                    // ran its `will-quit` cleanup, so its file outlives it, and
+                    // this answer was naming instances whose process is gone.
+                    // Everything else here already resolves newest-LIVE-first,
+                    // so a dead row made the state tool disagree with every
+                    // tool beside it -- and a second "running app" is exactly
+                    // what sends a reader hunting for a window nobody has.
+                    instances: readLiveInstances().map((instance) => {
+                        const { userDataPath: _dropped, ...rest } = instance;
+                        return rest;
+                    }),
                     windows: targets.map((target) => {
                         return { title: target.title, url: target.url };
                     }),
-                    mainWindow: value,
+                    mainWindow,
                 };
             });
         },
@@ -676,18 +725,191 @@ export function registerOwaTools(server) {
         'owa_list_screens',
         {
             description:
-                'The presentation screens showing right now and the displays ' +
-                'available to put them on. `isAnyShowing` is the whole ' +
-                'answer to "is anything on the projector" -- and it is how ' +
-                'you CHECK, after pressing something, that the screen really ' +
-                'did come on.',
+                'What is on the projector right now. `isAnyShowing` says ' +
+                'whether any screen is on at all, and `screens` says what ' +
+                'each one HOLDS -- showing or not: the slide (its document, ' +
+                'its name, its first words), the Bible passage, the ' +
+                'background, the foreground widgets, and whether it is ' +
+                'locked. A screen that is showing with nothing on any layer ' +
+                'is a blank projector; one that is off but holds a slide ' +
+                'needs only its show button. `controls` carries the exact ' +
+                'words on that screen\'s show/hide toggle and Clear buttons ' +
+                '(and whether each Clear has anything to clear), so press ' +
+                'them with `owa_click` by those words instead of searching; ' +
+                '`previewCard` says where the Mini Screen panel sits in the ' +
+                'window. Call it again after a press to CHECK what changed.',
             inputSchema: {},
         },
         async () => {
             return await attempt(async () => {
-                const { value } = await evaluateInApp(SCREENS_EXPRESSION);
+                // What a screen holds is known to the presenter page alone.
+                // With it open, read from it whatever window is in front;
+                // without it, the main window still answers the basics.
+                const port = await requireLivePort();
+                const targets = await listTargets(port);
+                const hasPresenter = targets.some((target) => {
+                    return target.url.includes('presenter.html');
+                });
+                const { value } = await evaluateInApp(SCREENS_EXPRESSION, {
+                    port,
+                    match: hasPresenter ? 'presenter.html' : undefined,
+                });
                 return value;
             });
+        },
+    );
+
+    server.registerTool(
+        'owa_present_bible',
+        {
+            description:
+                'Put a Bible passage on the projector by its REFERENCE -- ' +
+                '"John 3:16", "Psalm 23:1-6", "1 John 1:1-4" -- and answer ' +
+                'with what is on the screen now. Use it whenever the user ' +
+                'asks for a verse to go UP: never the Bible Lookup popup and ' +
+                'never a guide for that, because the lookup is a picker for a ' +
+                'person and no step can drive it. `version` names an ' +
+                'installed Bible (e.g. KJV); left out, the one the lookup is ' +
+                'on is used, then any installed one that reads the reference. ' +
+                '`action: "check"` only resolves and quotes the passage, for ' +
+                'an offer or "what does it say", and touches no screen. The ' +
+                'answer is read BACK off the screens: `isPresented`, the ' +
+                'passage as the app writes it, its first words, each ticked ' +
+                'screen with `isShowing` -- a screen that is off holds the ' +
+                'verse and shows nothing until its show button is pressed, ' +
+                'which is offered, never done unasked. Presenting changes what ' +
+                'the congregation sees: do it when they asked for the verse ' +
+                'to go up, offer it when they only asked how. Clear Bible ' +
+                'takes it off again.',
+            inputSchema: {
+                reference: z
+                    .string()
+                    .describe(
+                        'The passage, as the user said it: book, chapter and ' +
+                            'verse or verse range.',
+                    ),
+                version: z
+                    .string()
+                    .optional()
+                    .describe('An installed Bible version key, such as KJV'),
+                action: z
+                    .enum(AGENT_BIBLE_ACTIONS)
+                    .optional()
+                    .describe('present (default) or check'),
+            },
+        },
+        async ({ reference, version, action }) => {
+            try {
+                // Presenting is the presenter page's alone: with it open,
+                // aim there whatever window is in front, the way
+                // `owa_list_screens` does; without it the main window
+                // answers that it is not there.
+                const port = await requireLivePort();
+                const targets = await listTargets(port);
+                const hasPresenter = targets.some((target) => {
+                    return target.url.includes('presenter.html');
+                });
+                const { value } = await evaluateInApp(
+                    genPresentBibleExpression({ reference, version, action }),
+                    { port, match: hasPresenter ? 'presenter.html' : undefined },
+                );
+                const formatted = formatPresentBibleResult(value);
+                return formatted.isError
+                    ? toErrorResult(new Error(formatted.text))
+                    : toTextResult(formatted.text);
+            } catch (error) {
+                return toErrorResult(error);
+            }
+        },
+    );
+
+    server.registerTool(
+        'owa_foreground',
+        {
+            description:
+                'Start or stop a foreground extra on the projector -- a ' +
+                'countdown, stopwatch, clock, a scrolling message (marquee) ' +
+                'along the top or bottom, or a quick line of text -- and ' +
+                'answer with what each screen holds now. Use it whenever the ' +
+                'user asks for one to go UP or come off ("start a 5 minute ' +
+                'countdown", "count down to 10:30", "take the countdown ' +
+                "off\"): never the Foreground tab's own boxes, a form for a " +
+                'person whose tab closes again when pressed twice. A ' +
+                'countdown takes `minutes` OR `at` (a clock time today); a ' +
+                'marquee or quick text takes `text`. `stop` takes one off ' +
+                '(`widget: "all"` clears every extra, as F10 does); `check` ' +
+                'only reads. The answer is read BACK off the screens: `did`, ' +
+                '`detail` (what went up, in words), each ticked screen with ' +
+                '`isShowing` and its `foreground` list -- a screen that is ' +
+                'off holds the extra and shows nothing until its show button ' +
+                'is pressed, which is offered, never done unasked. Starting ' +
+                'one changes what the congregation sees: do it when they ' +
+                'asked for it, offer it when they only asked how.',
+            inputSchema: {
+                widget: z
+                    .enum(AGENT_FOREGROUND_WIDGETS)
+                    .optional()
+                    .describe(
+                        'Which extra: countdown, stopwatch, clock, ' +
+                            'marquee-top, marquee-bottom or quick-text; ' +
+                            '"all" only with stop.',
+                    ),
+                action: z
+                    .enum(AGENT_FOREGROUND_ACTIONS)
+                    .optional()
+                    .describe('start (default), stop or check'),
+                minutes: z
+                    .number()
+                    .positive()
+                    .optional()
+                    .describe('Countdown length in minutes: 5, 0.5, 90.'),
+                at: z
+                    .string()
+                    .optional()
+                    .describe(
+                        'Countdown target as a clock time today: "10:30", ' +
+                            '"18:30", "6:45 pm".',
+                    ),
+                text: z
+                    .string()
+                    .optional()
+                    .describe('The words of a marquee or a quick text.'),
+                seconds: z
+                    .number()
+                    .int()
+                    .positive()
+                    .optional()
+                    .describe('How long a quick text stays (default 10).'),
+            },
+        },
+        async ({ widget, action, minutes, at, text, seconds }) => {
+            try {
+                // The presenter page's alone, aimed the way the passage is:
+                // with it open, whatever window is in front; without it the
+                // main window answers that it is not there.
+                const port = await requireLivePort();
+                const targets = await listTargets(port);
+                const hasPresenter = targets.some((target) => {
+                    return target.url.includes('presenter.html');
+                });
+                const { value } = await evaluateInApp(
+                    genForegroundExpression({
+                        widget,
+                        action,
+                        minutes,
+                        at,
+                        text,
+                        seconds,
+                    }),
+                    { port, match: hasPresenter ? 'presenter.html' : undefined },
+                );
+                const formatted = formatForegroundResult(value);
+                return formatted.isError
+                    ? toErrorResult(new Error(formatted.text))
+                    : toTextResult(formatted.text);
+            } catch (error) {
+                return toErrorResult(error);
+            }
         },
     );
 
@@ -737,7 +959,10 @@ export function registerOwaTools(server) {
                 'Read a page on the public web -- its text, optionally its ' +
                 'links and a picture of it. For a question about the world ' +
                 'OUTSIDE this app: a link the user pasted, what a Bible ' +
-                "translation is, what a song's licence says. NOT for how this " +
+                "translation is, what a song's licence says. NOT for a song " +
+                'page the user wants as a song: give that address to ' +
+                '`owa_lyric_validate` as `url` instead, which reads it with ' +
+                'its chords. NOT for how this ' +
                 'app works -- `owa_help_search` is the only source for that, ' +
                 'and a page on the internet describing some other worship ' +
                 'program is worse than saying you do not know. https ' +
@@ -827,19 +1052,30 @@ export function registerOwaTools(server) {
                 'Lyric Editor is showing red marks or will not accept a song, ' +
                 'or BEFORE you offer them notation you wrote yourself -- a ' +
                 'song you hand over unchecked is one they have to debug. ' +
-                '`mode: "draft"` takes RAW words instead -- a paste, a page ' +
-                'you read, a file they attached -- and writes the notation ' +
-                'for them. Use it for that and never write the notation ' +
-                'yourself. Hand a song page in WHOLE, as `owa_read_website` ' +
-                'gave it: it finds the song among the menus and charts, ' +
-                'rejoins the broken lines, and reports which part of the page ' +
-                'it used. Needs nothing open.',
+                '`mode: "draft"` takes RAW words instead -- a paste, a file ' +
+                'they attached -- and writes the notation for them. Use it ' +
+                'for that and never write the notation yourself. For a song ' +
+                'on a web page give its address as `url` and no text: the ' +
+                'page is read HERE, whole, and every chord on it is written ' +
+                'into the words where it lands -- a copy you type out has no ' +
+                'chords in it. It finds the song among the menus and charts ' +
+                'and reports which part of the page it used. Needs nothing ' +
+                'open.',
             inputSchema: {
                 text: z
                     .string()
+                    .optional()
                     .describe(
                         'The song: a whole Open Lyric file to check, or the ' +
-                            'raw words to draft from',
+                            'raw words to draft from. Leave out with `url`.',
+                    ),
+                url: z
+                    .string()
+                    .optional()
+                    .describe(
+                        'draft: the https address of a song page. Read ' +
+                            'here, whole, chords and all -- give this and ' +
+                            'no `text`.',
                     ),
                 mode: z
                     .enum(['check', 'draft'])
@@ -868,23 +1104,56 @@ export function registerOwaTools(server) {
                 to: z.string().optional().describe('draft: its last words'),
             },
         },
-        async ({ text, mode, title, artist, copyright, from, to }) => {
-            return await attempt(() => {
+        async ({ text, mode, title, artist, copyright, from, to, url }) => {
+            return await attempt(async () => {
+                const known = { title, artist, copyright, from, to };
+                const address = typeof url === 'string' ? url.trim() : '';
+                if (address !== '') {
+                    // The page is read by THIS tool, and the model never gets
+                    // a turn between the reading and the drafting. Measured
+                    // 2026-09-09 on a Khmer hymnal's chord page: told twice
+                    // to hand the page over whole, the model read it with
+                    // `owa_read_website`, retyped the words itself -- every
+                    // fragment rejoined correctly, and not one chord kept --
+                    // and the user's song file came out with no chords in
+                    // it. No drafter can put back what the model deleted, so
+                    // the address goes in and the text never leaves this
+                    // process. Same expression, same locked-down window, same
+                    // firewall address check, budget and banner as
+                    // `owa_read_website` -- the firewall counts a draft
+                    // carrying a `url` as a network call.
+                    const { value } = await evaluateInApp(
+                        genReadWebPageExpression({
+                            url: address,
+                            maxChars: WEBSITE_TEXT_MAX_CHARS,
+                        }),
+                    );
+                    // Handed over exactly as `owa_read_website` would have
+                    // handed it, header line and fence included: the header
+                    // is where the drafter reads the address it keeps in the
+                    // song's Attachments, and the fence is its proof the
+                    // words came off a page. The answer starts with the
+                    // drafter's own first line, which is what the chatbot
+                    // window keys on to lift the song out and draw the
+                    // Create button -- a prefix here cost the user that
+                    // button (measured 2026-09-09).
+                    return draftOpenLyricText(formatWebPageRead(value), known);
+                }
+                if (typeof text !== 'string' || text.trim() === '') {
+                    throw new Error(
+                        'Nothing to work on: give the song as `text`, or a ' +
+                            'song page as `url`.',
+                    );
+                }
                 // A model that forgets `mode` on a paste gets a report saying
                 // the words are not notation -- true, useless, and a round
                 // spent calling again with the mode it meant (measured
                 // 2026-09-08, two identical calls on one page). Plain words
                 // have exactly one thing that can be done with them.
                 const chosenMode =
-                    mode ?? (/```ol:/.test(String(text)) ? 'check' : 'draft');
+                    mode ?? (/```ol:/.test(text) ? 'check' : 'draft');
                 return chosenMode === 'draft'
-                    ? draftOpenLyricText(text, {
-                          title,
-                          artist,
-                          copyright,
-                          from,
-                          to,
-                      })
+                    ? draftOpenLyricText(text, known)
                     : checkOpenLyricText(text);
             });
         },
@@ -1267,13 +1536,16 @@ export function registerOwaTools(server) {
             description:
                 'List the controls actually on screen in a window right now ' +
                 '-- every visible button, link, box and dropdown with the ' +
-                'words written on it, where it is and whether it is enabled. ' +
+                'words written on it, the panel it is in and where. A row ' +
+                'says only what is unusual: `isDisabled` when it is greyed ' +
+                'out, `showsOnHover` when the app paints it under the mouse ' +
+                'alone; a row with neither is an ordinary enabled control. ' +
                 'Use it BEFORE writing guide steps or acting on a control ' +
                 'whose label you cannot guess (the Bible version button ' +
                 'reads "KJV", not "version"), so every `find` is the exact ' +
-                'words on a control that exists instead of a guess. Rows ' +
-                'marked `showsOnHover` are real controls the app only ' +
-                'paints under the mouse -- say so when you name one.',
+                'words on a control that exists instead of a guess. When ' +
+                'you name a `showsOnHover` control, say the mouse has to ' +
+                'be over that part of the window first.',
             inputSchema: {
                 filter: z
                     .string()
@@ -1367,7 +1639,11 @@ export function registerOwaTools(server) {
                 'reference box. Set `submit` to also press Enter. When ' +
                 'nothing matches it answers with the closest labels on ' +
                 'screen; retry with one of those. "Panel > Box" narrows it ' +
-                'to one panel. It cannot drive a code ' +
+                'to one panel. This is also how a DROP-DOWN is changed: a ' +
+                'picker is named by the choice it is on right now (or by its ' +
+                'label), and `value` is the words of the choice you want -- ' +
+                'a wrong one answers with the choices there are. It cannot ' +
+                'drive a code ' +
                 'editor field (those need a real keyboard) -- for those, use ' +
                 'a guide step that asks the user to type.',
             inputSchema: {

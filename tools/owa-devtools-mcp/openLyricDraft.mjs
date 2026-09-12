@@ -169,6 +169,9 @@ function toCleanLines(text, markers) {
         // page. Sniffing for chords and icons finds a chord site; a hymn-text
         // site has neither, and its menu would have been drafted as verse one.
         isFromPage: inner !== whole,
+        // So the footer's own `© 2026 Site.com` is not taken for the
+        // song's notice. Off the header this package wrote, never the body.
+        siteHost: toHostname(source),
         checkIsLabel: (line) => {
             return parseSectionLabel(line) !== null;
         },
@@ -180,6 +183,15 @@ function toCleanLines(text, markers) {
             return line.replace(/\s+$/, '');
         }),
     };
+}
+
+/** The hostname of an address, or `''` for anything that is not one. */
+function toHostname(url) {
+    try {
+        return url === '' ? '' : new URL(url).hostname;
+    } catch {
+        return '';
+    }
 }
 
 /**
@@ -1011,7 +1023,7 @@ function genTierTwo(blocks, config) {
  * @typedef {object} OpenLyricDraftType
  * @property {boolean} ok Was a valid song produced.
  * @property {string|null} markdown The document, or null when there was none.
- * @property {'drafted'|'not-a-song'|'already-open-lyric'|'too-long'} outcome
+ * @property {'drafted'|'not-a-song'|'already-open-lyric'|'too-long'|'browser-check'} outcome
  * @property {1|2|null} tier Which pass produced it.
  * @property {string[]} guessed What had to be assumed, in plain words.
  * @property {object|null} report The `validateOpenLyric` result for it.
@@ -1046,6 +1058,20 @@ function genPageGuesses(notes) {
         guesses.push(
             `${notes.translations} lines were in a second language under the ` +
                 'line they translate, and were kept as translations of it',
+        );
+    }
+    if ((notes.furniture ?? []).length > 0) {
+        // Named, every one: a button swept off the front of a song is the
+        // same bet as a credit swept off the end, and a reader who sees
+        // "Transpose" in this list knows at once what happened.
+        guesses.push(
+            `left out above the song, as the page's own buttons rather than ` +
+                'words to sing: ' +
+                notes.furniture
+                    .map((one) => {
+                        return `"${one}"`;
+                    })
+                    .join(', '),
         );
     }
     if (notes.credits.length > 0) {
@@ -1095,6 +1121,13 @@ export function draftOpenLyric(rawText, known = {}) {
         // author wrote in it -- chords, cues, strumming patterns, a Structure
         // they meant.
         return genRefusal('already-open-lyric');
+    }
+    if (checkIsBrowserCheckPage(text)) {
+        // Measured 2026-09-10: a hymnal's third read in a row came back as the
+        // site's "Hold tight... checking your browser..." interstitial, which
+        // has enough short lines to pass every test below and was drafted as
+        // a valid song called "Untitled" -- with a Create button under it.
+        return genRefusal('browser-check');
     }
     const page = toCleanLines(text, {
         from: known.from,
@@ -1263,7 +1296,41 @@ export function draftOpenLyric(rawText, known = {}) {
     };
 }
 
+/**
+ * The words a site's bot check prints instead of its page. Read only off a
+ * PAGE (the wrapper is the proof), and only when the page is short: a
+ * challenge is a few lines, and a real song page could quote any of these.
+ */
+const BROWSER_CHECK_PATTERN =
+    /\b(?:checking your browser|just a moment|verify (?:that )?you are (?:a )?human|enable javascript and cookies to continue|please wait while we (?:check|verify)|hold tight|attention required!? \| cloudflare|ddos protection by|are you a robot|access denied|security check)\b/i;
+const MAX_BROWSER_CHECK_CHARS = 1500;
+
+/**
+ * Is this "page" a site's bot check rather than the page that was asked for?
+ */
+export function checkIsBrowserCheckPage(text) {
+    const whole = String(text ?? '');
+    const inner = stripWebsiteWrapper(whole);
+    if (inner === whole) {
+        // Plain words the user pasted, not a page: nothing to check.
+        return false;
+    }
+    const trimmed = inner.trim();
+    return (
+        trimmed.length <= MAX_BROWSER_CHECK_CHARS &&
+        BROWSER_CHECK_PATTERN.test(trimmed)
+    );
+}
+
+/** The refusal for a bot check, exported so the offline answer can say it. */
+export const BROWSER_CHECK_TEXT =
+    'That address answered with a browser check ("checking your browser", ' +
+    '"verify you are human") instead of the page, so there is no song to ' +
+    'read. Ask them to open the page in their browser once, or to paste the ' +
+    'words.';
+
 const OUTCOME_TEXT = {
+    'browser-check': BROWSER_CHECK_TEXT,
     'not-a-song':
         'That does not read as a song -- there are not enough lines of words ' +
         'in it. Ask them to paste the words themselves, or for a link to the ' +

@@ -47,6 +47,10 @@ export default class ElectronAppController {
         this.mainController.sendMessage(messageChannels.openChatbotPage);
     }
 
+    openAiChatPage() {
+        this.mainController.sendMessage(messageChannels.openAiChatPage);
+    }
+
     static getInstance() {
         instance ??= new ElectronAppController();
         return instance;

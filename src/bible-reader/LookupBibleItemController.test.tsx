@@ -338,6 +338,41 @@ describe('bible-reader LookupBibleItemController', () => {
         await flush();
     });
 
+    test('resolveStraightBibleItems swaps the selected pane even when it lost its marker class', async () => {
+        const ctl = genController();
+        const selectedId = ctl.selectedBibleItem.id;
+        // A split splices the caller's own instance back into the tree, so
+        // the editing pane comes back as a PLAIN item carrying its stale
+        // stored target — Genesis 27 here, while the input reads Genesis 29.
+        const stale = {
+            bookKey: 'GEN',
+            chapter: 27,
+            verseStart: 1,
+            verseEnd: 46,
+        };
+        ctl.nestedBibleItems = [
+            new FakeReadItem({
+                id: selectedId,
+                bibleKey: 'KJV',
+                target: stale,
+            }),
+            new FakeReadItem({ id: 2, bibleKey: 'KJV', target: stale }),
+        ] as any;
+        const foundBibleItem = new FakeReadItem({
+            id: selectedId,
+            bibleKey: 'KJV',
+            target: {
+                bookKey: 'GEN',
+                chapter: 29,
+                verseStart: 1,
+                verseEnd: 35,
+            },
+        }) as any;
+        const resolved = ctl.resolveStraightBibleItems(foundBibleItem);
+        expect(resolved.map((item) => item.target.chapter)).toEqual([29, 27]);
+        await flush();
+    });
+
     test('resolveStraightBibleItems drops the editing item without a result', async () => {
         const ctl = genController();
         ctl.selectedBibleItem;

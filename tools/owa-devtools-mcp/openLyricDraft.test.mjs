@@ -17,6 +17,8 @@ import { describe, expect, test } from 'vitest';
 
 import { validateOpenLyric } from './openLyric.mjs';
 import {
+    BROWSER_CHECK_TEXT,
+    checkIsBrowserCheckPage,
     checkIsChordLine,
     checkIsMixedSafe,
     draftOpenLyric,
@@ -144,6 +146,46 @@ describe('the pieces', () => {
             '--- END WEBSITE TEXT ---\n';
         expect(stripWebsiteWrapper(wrapped).trim()).toBe('the words');
         expect(stripWebsiteWrapper('plain text')).toBe('plain text');
+    });
+});
+
+// A site that rations its readers answers the third read with a bot check,
+// and that check is short lines of words -- exactly what a song looks like
+// to everything else here. Measured 2026-09-10: drafted as "Untitled".
+describe('a browser check is not a page', () => {
+    const wrap = (body) => {
+        return (
+            'Read https://hymns.example/text/lantern (read 2026-09-10)\n' +
+            '--- BEGIN WEBSITE TEXT ---\n' +
+            body +
+            '\n--- END WEBSITE TEXT ---'
+        );
+    };
+    const CHECK = [
+        'hymns.example',
+        'Hold tight... checking your browser...',
+        'This process is automatic. Your browser will redirect to your',
+        'requested content shortly.',
+        'Please allow up to 5 seconds.',
+        'Ray ID: 8f2a1c',
+    ].join('\n');
+
+    test('is refused with the reason, and nothing is drafted', () => {
+        expect(checkIsBrowserCheckPage(wrap(CHECK))).toBe(true);
+        const draft = draftOpenLyric(wrap(CHECK));
+        expect(draft.markdown).toBeNull();
+        expect(draft.outcome).toBe('browser-check');
+        expect(draftOpenLyricText(wrap(CHECK))).toBe(BROWSER_CHECK_TEXT);
+    });
+
+    test('the same words pasted by hand, or on a long page, are left to the drafter', () => {
+        expect(checkIsBrowserCheckPage(CHECK)).toBe(false);
+        const verses = Array.from({ length: 40 }, (_one, index) => {
+            return `Line ${index} of a lantern song about a security check tonight`;
+        }).join('\n');
+        expect(checkIsBrowserCheckPage(wrap(`${CHECK}\n${verses}`))).toBe(
+            false,
+        );
     });
 });
 
@@ -588,6 +630,35 @@ describe('a song read off a page', () => {
         );
     });
 
+    test('does not file the site’s own footer notice as the song’s', () => {
+        // The header names the site; the footer's notice names the same site;
+        // the song is somebody else's. `Unknown` is honest, the site is not.
+        const page = [
+            'Read https://www.madeupchords.com/chords/1',
+            '--- BEGIN WEBSITE TEXT: a document that was read. ---',
+            'Blue Lantern',
+            'The Made Up Singers',
+            'playlist_add',
+            'swap_vert',
+            'Key: D  ·  Time: 4/4',
+            '|',
+            'D',
+            'a lantern on the water',
+            'and nobody',
+            '|',
+            'A',
+            'to row it home',
+            '© 2026 MadeUpChords.com | Terms of Service',
+            '--- END WEBSITE TEXT ---',
+        ].join('\n');
+        const draft = draftOpenLyric(page);
+        expectValid(draft);
+        expect(draft.markdown).toContain('- Copyright: Unknown');
+        expect(draft.markdown).toContain(
+            '- Attachments: https://www.madeupchords.com/chords/1',
+        );
+    });
+
     test('never takes an address out of the page itself', () => {
         // The header in front of the fence is written by this package; the
         // body is written by a stranger. A `Read https://...` line planted in
@@ -613,9 +684,10 @@ describe('a song read off a page', () => {
     test('says which part of the page it used', () => {
         const said = draftOpenLyric(PAGE).guessed.join(' ');
         expect(said).toContain('a page rather than plain words');
-        // Named by its first and last line, which is the only evidence a
-        // reader has that the toolbar or the footer got in.
-        expect(said).toContain('running "Verse 1:(2x)"');
+        // Named by its first and last line of WORDS, which is the only
+        // evidence a reader has that the toolbar or the footer got in -- the
+        // verse number over the first line says nothing about which part.
+        expect(said).toContain('running "|[D]a lan|[A]tern on the water"');
         expect(said).toContain('lines of menus, chord charts and links');
         expect(said).toContain('say where the song starts and ends');
     });

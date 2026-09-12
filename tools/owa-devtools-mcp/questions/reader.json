@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-09-02",
+    "updated": "2026-09-12",
     "sections": [
         {
             "id": "reading",
@@ -769,6 +769,23 @@
                     }
                 },
                 {
+                    "id": "resources-drop-folder",
+                    "text": "Can I drag a folder into Resources instead of picking it?",
+                    "kind": "howto",
+                    "keywords": [
+                        "drag",
+                        "drop",
+                        "drag and drop",
+                        "folder",
+                        "explorer",
+                        "finder"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "find": "Resources"
+                    }
+                },
+                {
                     "id": "resources-open",
                     "text": "How do I open one of my Resources files?",
                     "kind": "howto",
@@ -782,6 +799,24 @@
                     "resources": {
                         "recipe": "W-37",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "resources-links",
+                    "text": "Can I keep web links for a chapter in Resources?",
+                    "kind": "howto",
+                    "keywords": [
+                        "link",
+                        "url",
+                        "website",
+                        "youtube",
+                        "video",
+                        "json",
+                        "browser",
+                        "open in browser"
+                    ],
+                    "resources": {
+                        "recipe": "W-37"
                     }
                 }
             ]

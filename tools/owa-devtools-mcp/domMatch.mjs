@@ -59,22 +59,62 @@ export const DOM_MATCH_RUNTIME = `
         // translated, and a panel that only answers to its Khmer text is a
         // panel this matcher loses the moment the app is switched over.
         const widget = element.getAttribute('data-widget-name');
+        const tag = element.tagName;
+        // A picker reads as the option it is ON, never as every option it
+        // holds. textContent on a <select> is all of them glued together --
+        // "AssistantClaudeChatGPTKimiFree", "LightDarkSystem Theme", the
+        // Reader's "FindCross ReferenceLocation-Name (KJV)Resources" -- which
+        // is a label no needle can match and one no control on screen shows.
+        // So every picker in the app was unfindable, unclickable, and listed
+        // to the model as words the user cannot see.
+        const ownText =
+            tag === 'SELECT'
+                ? (element.selectedOptions[0] ?? {}).text
+                : element.textContent;
         const parts = [
-            widget === null ? element.textContent : widget,
+            widget === null ? ownText : widget,
             element.getAttribute('title'),
             element.getAttribute('aria-label'),
             element.getAttribute('placeholder'),
         ];
-        const tag = element.tagName;
         // A box that already holds text is named by it as much as by any
         // label beside it ("(KJV) John 3:16" IS how the reference box reads).
         if (tag === 'INPUT' || tag === 'TEXTAREA') {
             parts.push(element.value);
         }
+        // Said once. A control that carries the same words as its title
+        // AND its aria-label -- the show/hide toggle does, so does every
+        // button built that way -- used to be listed as "Toggle showing
+        // screen [F5] Toggle showing screen [F5]", and a model that reads a
+        // label back as a click target passes the doubled thing on.
+        const seen = new Set();
         return parts
             .filter(Boolean)
             .map((part) => { return part.replace(/\\s+/g, ' ').trim(); })
-            .filter((part) => { return part.length > 0; });
+            .filter((part) => {
+                if (part.length === 0 || seen.has(part)) {
+                    return false;
+                }
+                // A tooltip that is the file's PATH is not a name anybody
+                // presses by, and it is the one thing on a label the model
+                // must never repeat: the previewer's footer carries the
+                // document's full path in its title, so a list of the
+                // Presenter read "Amazing Grace C:\\Users\\...\\documents\\Amazing
+                // Gra" (EC-130). Dropped from the parts, so neither a list
+                // nor a match ever carries it; the words beside it stay.
+                if (checkIsFilePath(part)) {
+                    return false;
+                }
+                seen.add(part);
+                return true;
+            });
+    };
+    // A Windows drive, a UNC share, or the usual roots of a Unix home. Written
+    // for the runtime's template literal, so every backslash is doubled here.
+    const FILE_PATH_PATTERN =
+        /^(?:[A-Za-z]:[\\\\/]|\\\\\\\\|\\/(?:Users|home|Volumes|mnt|tmp|var)\\/)/;
+    const checkIsFilePath = (part) => {
+        return FILE_PATH_PATTERN.test(part);
     };
 
     const labelOf = (element) => {
@@ -110,9 +150,20 @@ export const DOM_MATCH_RUNTIME = `
             .replace(/\\s+/g, ' ')
             .trim();
     };
+    // The NEEDLE loses the same decoration: the words a tool hands back
+    // carry the shortcut -- owa_list_screens says "Clear Bible [F9]", the
+    // title of that button -- and a press by those exact words was refused
+    // because the part had lost its bracket and the needle had not
+    // (EC-135: "Close [Ctrl+Q]" on the Bible Lookup, "Clear Bible [F9]" on
+    // the Mini Screen, both the control's own title). A needle that is
+    // nothing but decoration matches nothing.
     const checkIsNamedNearly = (element, needle) => {
+        const bare = normaliseLabelPart(needle);
+        if (bare.length === 0) {
+            return false;
+        }
         return labelPartsOf(element).some((part) => {
-            return normaliseLabelPart(part) === needle;
+            return normaliseLabelPart(part) === bare;
         });
     };
 
@@ -244,14 +295,27 @@ export const DOM_MATCH_RUNTIME = `
         return text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
     };
 
-    // A box text can be typed into. A button carries a value accessor too,
-    // so it is the tag and type that say, not the property.
+    // Words a question is built out of rather than the thing it names. Only
+    // the near-miss ranking reads it: an exact match is still an exact
+    // match, "the" and all.
+    const FILLER_WORD_SET = new Set([
+        'a', 'an', 'the', 'to', 'of', 'for', 'in', 'on', 'at', 'or', 'and',
+        'is', 'it', 'its', 'my', 'me', 'i', 'this', 'that', 'with', 'from',
+        'do', 'does', 'can', 'how', 'where', 'what', 'which',
+    ]);
+
+    // A control a value goes INTO. A button carries a value accessor too,
+    // so it is the tag and type that say, not the property. A <select> is
+    // here because choosing an option is the same errand as typing a value
+    // and owa_type is the only tool for it -- left out, a picker could be
+    // neither found nor changed, and the one way to answer "put it on Khmer"
+    // was a uid out of a snapshot.
     const checkIsTextBox = (element) => {
         if (element.isContentEditable === true) {
             return true;
         }
         const tag = element.tagName;
-        if (tag === 'TEXTAREA') {
+        if (tag === 'TEXTAREA' || tag === 'SELECT') {
             return true;
         }
         if (tag !== 'INPUT') {
@@ -339,15 +403,37 @@ export const DOM_MATCH_RUNTIME = `
         const cut = whole.split(/\\s*(?:>|\\u00bb)\\s*/).filter((one) => {
             return one.length > 0;
         });
-        const target = dropKindNoun(cut[cut.length - 1] ?? '');
+        const asked = cut[cut.length - 1] ?? '';
+        const target = dropKindNoun(asked);
         const scope = cut.length > 1
             ? dropKindNoun(cut.slice(0, -1).join(' ')).text
             : null;
         return {
             text: target.text,
+            asked,
             scope: scope !== null && scope.length > 0 ? scope : null,
             isRegionWanted: target.isRegionWanted,
         };
+    };
+
+    // The tier of a label against a parsed needle. "Document List" and
+    // "Presenting Flow List" are panes NAMED with a kind noun, and the
+    // divider between them carries both; with the noun dropped they were a
+    // loose fit on their own label and never an exact one, which is the
+    // one tier a press is allowed on. The whole words are tried for the
+    // exact tier first -- against the joined label and against each of
+    // its parts, because the collapsed strip of that pane is named
+    // "Presenting Flow List" AND "Enable Presenting Flow List" and the
+    // demo refused to press it -- the trimmed ones for everything else.
+    const tierOf = (element, lowered, parsed) => {
+        if (
+            parsed.asked !== parsed.text &&
+            (lowered === parsed.asked ||
+                checkIsNamedNearly(element, parsed.asked))
+        ) {
+            return 0;
+        }
+        return matchTier(lowered, parsed.text);
     };
 
     const checkIsInScope = (path, scope) => {
@@ -592,7 +678,8 @@ export const DOM_MATCH_RUNTIME = `
         let hiddenFallback = null;
         let looseFallback = null;
         for (const one of needles) {
-            const { text: needle, scope, isRegionWanted } = parseNeedle(one);
+            const parsed = parseNeedle(one);
+            const { text: needle, scope, isRegionWanted } = parsed;
             if (needle.length === 0) {
                 continue;
             }
@@ -610,7 +697,7 @@ export const DOM_MATCH_RUNTIME = `
                 // comes up empty: reading the path means walking ancestors,
                 // and this loop runs for every element on the window.
                 let path = null;
-                let tier = matchTier(lowered, needle);
+                let tier = tierOf(element, lowered, parsed);
                 if (tier === -1) {
                     path = containerPathOf(element);
                     tier = pathTier(lowered, path, needle);
@@ -681,6 +768,12 @@ export const DOM_MATCH_RUNTIME = `
     // earns the real "Bible Reference" box as a near miss, and the caller
     // retries with the words actually on screen instead of declaring the
     // step impossible.
+    //
+    // Scored on the words that CARRY meaning. "button to change the
+    // background" used to score every label holding "to" and "the" two
+    // points and the Background panel one, so the offline where-is answer
+    // offered a volunteer "pass after Click to open the verse" -- a line of
+    // Genesis -- as the control they meant, with the real panel on screen.
     const nearMisses = (needles, limit = 5) => {
         const wantedTokens = [
             ...new Set(needles.flatMap((one) => {
@@ -690,7 +783,9 @@ export const DOM_MATCH_RUNTIME = `
                     parsed.text,
                 );
             })),
-        ];
+        ].filter((token) => {
+            return !FILLER_WORD_SET.has(token);
+        });
         if (wantedTokens.length === 0) {
             return [];
         }
@@ -769,6 +864,13 @@ export const DOM_MATCH_RUNTIME = `
     ];
     const selectorPartOf = (element) => {
         const tag = element.tagName.toLowerCase();
+        const parent = element.parentElement;
+        // Where it sits among its siblings -- the one thing that can always
+        // tell two of them apart, held ready rather than used only as a last
+        // resort. See the twin check below for why.
+        const indexPart = parent === null
+            ? ''
+            : ':nth-child(' + ([...parent.children].indexOf(element) + 1) + ')';
         // An id is only worth using when it is one the app wrote. React and
         // Bootstrap both mint ids that change on the next render, and a
         // selector built on one is a selector that stops working while the
@@ -780,17 +882,40 @@ export const DOM_MATCH_RUNTIME = `
         for (const name of NAMING_ATTRIBUTES) {
             const value = element.getAttribute(name);
             if (value !== null && value.length > 0 && value.length < 60) {
-                return tag + '[' + name + '="' + value.replace(
+                const named = tag + '[' + name + '="' + value.replace(
                     /["\\\\]/g, '\\\\$&',
                 ) + '"]';
+                if (parent === null) {
+                    return named;
+                }
+                // A name is preferred over a position because it survives a
+                // re-render -- but only if it NAMES one thing. The reader
+                // routinely has two panes called "Bible View" side by side,
+                // and a part standing for both of them can never be rescued
+                // by walking up: every ancestor they share is the same node,
+                // so every longer candidate still matches two. That returned
+                // null, which is what makes a chip the user pointed at
+                // unpressable, and it took every control INSIDE the pane down
+                // with it -- 156 of 949 elements in a two-Bible reader had no
+                // selector at all. So a name that has a twin among its own
+                // siblings keeps the name AND says which one.
+                let twinCount = 0;
+                for (const sibling of parent.children) {
+                    try {
+                        if (sibling.matches(named)) {
+                            twinCount++;
+                        }
+                    } catch (_error) {
+                        // A name this engine will not parse as a selector
+                        // cannot be counted; fall through to the index, which
+                        // is always safe.
+                        return tag + indexPart;
+                    }
+                }
+                return twinCount > 1 ? named + indexPart : named;
             }
         }
-        const parent = element.parentElement;
-        if (parent === null) {
-            return tag;
-        }
-        const index = [...parent.children].indexOf(element) + 1;
-        return tag + ':nth-child(' + index + ')';
+        return parent === null ? tag : tag + indexPart;
     };
     const MAX_SELECTOR_DEPTH = 8;
     const selectorOf = (element) => {
@@ -977,10 +1102,19 @@ export const DOM_MATCH_RUNTIME = `
     // is the bottom right INSIDE the region: a list fills from the top left,
     // so that is the part of it that is empty -- and right-clicking an item
     // instead gets the item's menu, which is a different menu.
+    // A DIVIDER between two panes is a few pixels across, so "20 in from
+    // the edge" of one is a point in the pane beside it -- and a right-click
+    // there gets that pane's menu, or none. Anything thinner than the inset
+    // is aimed at its own centre.
     const openContextMenu = (element) => {
         const rect = element.getBoundingClientRect();
-        const x = Math.round(rect.x + rect.width - 20);
-        const y = Math.round(rect.y + rect.height - 12);
+        const isThin = rect.width < 40 || rect.height < 24;
+        const x = Math.round(
+            isThin ? rect.x + rect.width / 2 : rect.x + rect.width - 20,
+        );
+        const y = Math.round(
+            isThin ? rect.y + rect.height / 2 : rect.y + rect.height - 12,
+        );
         const at = document.elementFromPoint(x, y) ?? element;
         at.dispatchEvent(new MouseEvent('contextmenu', {
             bubbles: true, cancelable: true, clientX: x, clientY: y, button: 2,
@@ -1018,7 +1152,7 @@ export const DOM_MATCH_RUNTIME = `
                 continue;
             }
             seen.add(key);
-            rows.push(describe(element));
+            rows.push(describeRow(element));
             if (rows.length >= limit) {
                 break;
             }
@@ -1026,8 +1160,39 @@ export const DOM_MATCH_RUNTIME = `
         return rows;
     };
 
+    // A LIST row is not a match. "describe" answers "which control is this?"
+    // for one control -- its box, its tag, and in dev the component that
+    // renders it, which is what a developer driving QA follows into the
+    // source. A list is two hundred of them read for their WORDS, and every
+    // field beyond the words is paid two hundred times: measured 2026-09-09
+    // (EC-130), one "owa_list_ui limit: 200" answer was 34 574 tokens,
+    // ~180 a row, written into the model's cache and read back on every
+    // round after it -- and "component" / "sourceFile" on every row are the
+    // two names the prompt forbids the model to repeat, handed to it two
+    // hundred times over. So a row is the label, the panel, where it sits
+    // and only what is UNUSUAL about it: "showsOnHover" when the app paints
+    // it under the mouse alone, "isDisabled" when it is greyed out. A key
+    // that is absent means the ordinary thing, and the tool's description
+    // says so. Same shape for both callers -- a developer who wants the
+    // component of a row asks "owa_find_ui" for that one control.
+    const describeRow = (element) => {
+        const full = describe(element);
+        const row = {
+            label: full.label,
+            inPanel: full.inPanel,
+            where: full.where,
+        };
+        if (full.showsOnHover === true) {
+            row.showsOnHover = true;
+        }
+        if (full.isEnabled === false) {
+            row.isDisabled = true;
+        }
+        return row;
+    };
+
     window.__owaDomMatch = {
-        collect, labelOf, labelPartsOf, matchTier, checkIsControl,
+        collect, labelOf, labelPartsOf, matchTier, tierOf, checkIsControl,
         visibilityOf, revealHidden, releaseHidden,
         checkIsNamedExactly, checkIsTextBox, findBest, findListRegion,
         openContextMenu, waitForBest, nearMisses, describe, flash,
@@ -1072,22 +1237,54 @@ export function genClickExpression(finds, timeoutMs = 1500, settleMs = 250) {
         // is a styled div whose aria-pressed IS its state -- and off
         // .checked only for a real input.
         const stateOf = (element) => {
-            for (const name of ['aria-pressed', 'aria-checked', 'aria-expanded']) {
+            for (const name of ['aria-pressed', 'aria-checked', 'aria-expanded', 'aria-selected']) {
                 const value = element.getAttribute(name);
                 if (value === 'true' || value === 'false') {
                     return value === 'true';
                 }
             }
+            // This app's panel tabs (Documents / Bibles / Foreground, the
+            // Background tabs) are Bootstrap nav-links whose state is the
+            // 'active' class and nothing in the accessibility tree, and a
+            // press on one TOGGLES its panel. Read as no state, a press that
+            // closed the panel reported 'nothing changed' -- 2026-09-11,
+            // asked to start a countdown, the model pressed Foreground (open
+            // already), was told the press proved nothing, and spent its
+            // remaining rounds looking for controls it had just hidden.
+            if (element.matches('.nav-link, [role="tab"]')) {
+                return element.classList.contains('active');
+            }
             return typeof element.checked === 'boolean'
                 ? element.checked
                 : null;
         };
-        const found = await dm.waitForBest(${JSON.stringify(finds)}, ${timeoutMs});
+        const found = await dm.waitForBest(
+            ${JSON.stringify(finds)}, ${timeoutMs}, { preferPressSafe: true },
+        );
         if (found.element === null) {
             return {
                 clicked: null,
                 reason: 'nothing on screen to act on',
                 nearMisses: found.nearMisses,
+            };
+        }
+        // The same bar the guide card's Do it holds (isPressSafe): a press
+        // lands only on a control CALLED what was asked for. The looser tiers
+        // are right for pointing and wrong for a click -- 2026-09-08, asked
+        // to show the projector, the model's "show screen" matched the Bible
+        // Lookup's "Save bible item and show on screen" (every word, out of
+        // order), and a click there would have PRESENTED a verse to the
+        // congregation. Refused with the control it found, so the retry is
+        // its exact words rather than a new guess.
+        if (found.isPressSafe !== true) {
+            return {
+                clicked: null,
+                reason:
+                    'the closest control on screen is not called that -- a ' +
+                    'press needs the exact words written on the control. ' +
+                    'Retry with the label under nearest, or one of nearMisses.',
+                nearest: dm.describe(found.element),
+                nearMisses: dm.nearMisses(${JSON.stringify(finds)}),
             };
         }
         const target = found.element;
@@ -1189,8 +1386,47 @@ export function genTypeExpression(
         }
         target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
         target.focus();
+        // A picker is not typed into: the words asked for NAME one of its
+        // options, and what goes in is that option's own value. Resolved
+        // here so the write below is the one a text box gets -- through the
+        // element's own value setter, which is what defeats React's value
+        // tracker and makes the choice stick instead of snapping back.
+        let valueToSet = ${JSON.stringify(value)};
+        let chosenOptionText = null;
+        if (target.tagName === 'SELECT') {
+            const textOf = (one) => { return (one.text ?? '').trim(); };
+            const options = [...target.options];
+            const wanted = valueToSet.trim();
+            const lowered = wanted.toLowerCase();
+            const chosen =
+                options.find((one) => { return textOf(one) === wanted; }) ??
+                options.find((one) => {
+                    return textOf(one).toLowerCase() === lowered;
+                }) ??
+                options.find((one) => { return one.value === wanted; });
+            if (chosen === undefined) {
+                // Answered with the options there ARE, the same way a missed
+                // label answers with the labels that are on screen.
+                return {
+                    typed: null,
+                    reason: 'that is not one of the choices in this picker',
+                    choices: options.map(textOf),
+                    match: dm.describe(target),
+                };
+            }
+            if (chosen.disabled === true) {
+                return {
+                    typed: null,
+                    reason: 'that choice is listed but cannot be picked',
+                    choices: options.map(textOf),
+                    match: dm.describe(target),
+                };
+            }
+            valueToSet = chosen.value;
+            chosenOptionText = textOf(chosen);
+        }
         if (target.isContentEditable === true) {
-            target.textContent = ${JSON.stringify(value)};
+            target.textContent = valueToSet;
             target.dispatchEvent(new Event('input', { bubbles: true }));
         } else {
             // Off the element's own prototype, not the global classes: an
@@ -1207,7 +1443,7 @@ export function genTypeExpression(
                     match: dm.describe(target),
                 };
             }
-            setter.call(target, ${JSON.stringify(value)});
+            setter.call(target, valueToSet);
             target.dispatchEvent(new Event('input', { bubbles: true }));
             target.dispatchEvent(new Event('change', { bubbles: true }));
         }
@@ -1219,7 +1455,8 @@ export function genTypeExpression(
             }
         }
         return {
-            typed: ${JSON.stringify(value)},
+            typed: chosenOptionText ?? ${JSON.stringify(value)},
+            chose: chosenOptionText ?? undefined,
             into: dm.describe(target),
             revealedForHover: isRevealed ? true : undefined,
         };
@@ -1285,7 +1522,7 @@ export function genFindUiExpression(text, isHighlighting) {
             }
             const lowered = label.toLowerCase();
             let path = null;
-            let tier = dm.matchTier(lowered, needle);
+            let tier = dm.tierOf(element, lowered, asked);
             if (tier === -1) {
                 path = dm.containerPathOf(element);
                 tier = dm.pathTier(lowered, path, needle);

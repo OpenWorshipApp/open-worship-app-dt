@@ -36,8 +36,19 @@ import {
 } from './attachmentHelpers';
 import { checkIsCancelError, throwIfCancelled } from './cancelHelpers';
 import {
+    checkIsSpendLimitError,
+    recordSpendRound,
+    throwIfSpendLimitReached,
+} from './spendGuardHelpers';
+import {
+    checkIsProviderIssue,
+    readLlmIssue,
+    type LlmIssueKindType,
+} from './providerIssueHelpers';
+import {
     BOT_FOCUS_LIST,
     MIN_HELP_HIT_SCORE,
+    genBackToPresenterRoute,
     genGuideActions,
     getBotFocus,
 } from './helpBotHelpers';
@@ -57,7 +68,11 @@ import {
     keepDraftedLyric,
     readDraftedLyric,
 } from './lyricDraftHelpers';
-import { learnPageTitles, scrubAnswerRecipeIds } from './recipeIdHelpers';
+import {
+    learnPageTitles,
+    scrubAnswerRecipeIds,
+    scrubAnswerToolFields,
+} from './recipeIdHelpers';
 import {
     parseAnswerOptions,
     parseAnswerShows,
@@ -68,6 +83,12 @@ import {
     genProgressReporter,
     type BotProgressCallbackType,
 } from './progressHelpers';
+import {
+    toAnthropicRoundUsage,
+    toOpenAiRoundUsage,
+    toPriceLabel,
+    type LlmRoundUsageType,
+} from './usageHelpers';
 
 export type LlmModelType = {
     id: string;
@@ -84,6 +105,9 @@ export type LlmModelType = {
 
 // The provider's own list price, input then output. Spelled out on the hover
 // rather than beside every name, where it would double the length of the line.
+// Written by `toPriceLabel` off the ONE table in `usageHelpers` that also
+// prices every answer: a hand-written copy here would part from the figures
+// the cost line is worked out from the first time one of them is corrected.
 const PRICE_UNIT = 'per 1M tokens (in/out)';
 
 // What each provider offers, best first -- the top one is what a fresh install
@@ -99,21 +123,21 @@ const ANTHROPIC_MODEL_LIST: LlmModelType[] = [
         label: 'Opus 5',
         note: 'best answers',
         speed: 'slower',
-        price: '$5/$25',
+        price: toPriceLabel('claude-opus-5'),
     },
     {
         id: 'claude-sonnet-5',
         label: 'Sonnet 5',
         note: 'good answers',
         speed: 'quick',
-        price: '$2/$10',
+        price: toPriceLabel('claude-sonnet-5'),
     },
     {
         id: 'claude-haiku-4-5',
         label: 'Haiku 4.5',
         note: 'simple answers',
         speed: 'quickest',
-        price: '$1/$5',
+        price: toPriceLabel('claude-haiku-4-5'),
     },
 ];
 const OPENAI_MODEL_LIST: LlmModelType[] = [
@@ -122,48 +146,49 @@ const OPENAI_MODEL_LIST: LlmModelType[] = [
         label: 'GPT-5',
         note: 'best answers',
         speed: 'slower',
-        price: '$1.25/$10',
+        price: toPriceLabel('gpt-5'),
     },
     {
         id: 'gpt-5-mini',
         label: 'GPT-5 mini',
         note: 'good answers',
         speed: 'quick',
-        price: '$0.25/$2',
+        price: toPriceLabel('gpt-5-mini'),
     },
     {
         id: 'gpt-5-nano',
         label: 'GPT-5 nano',
         note: 'simple answers',
         speed: 'quickest',
-        price: '$0.05/$0.40',
+        price: toPriceLabel('gpt-5-nano'),
     },
 ];
 // Kimi's own list price is published for K3 and not for the other two, so
-// theirs is left blank rather than guessed -- `genLlmModelTitle` drops a blank
-// line, exactly as it does for a model read off the account's own catalogue,
-// and a wrong number on a hover about money is worse than no number.
+// theirs comes back blank from the price table rather than guessed --
+// `genLlmModelTitle` drops a blank line, exactly as it does for a model read
+// off the account's own catalogue, and a wrong number on a hover about money
+// is worse than no number.
 const KIMI_MODEL_LIST: LlmModelType[] = [
     {
         id: 'kimi-k3',
         label: 'Kimi K3',
         note: 'best answers',
         speed: 'slower',
-        price: '$3/$15',
+        price: toPriceLabel('kimi-k3'),
     },
     {
         id: 'kimi-k2.7-code-highspeed',
         label: 'Kimi K2.7',
         note: 'good answers',
         speed: 'quickest',
-        price: '',
+        price: toPriceLabel('kimi-k2.7-code-highspeed'),
     },
     {
         id: 'kimi-k2.6',
         label: 'Kimi K2.6',
         note: 'simple answers',
         speed: 'quick',
-        price: '',
+        price: toPriceLabel('kimi-k2.6'),
     },
 ];
 
@@ -269,6 +294,22 @@ export function genLlmModelTitle(model: LlmModelType) {
 }
 // A help answer is a paragraph and a couple of steps, not an essay.
 const MAX_TOKENS = 2000;
+// ...but Claude THINKS out of the same budget. Sonnet 5 and Opus 5 run
+// adaptive thinking whether or not the request asks for it, and measured on
+// 2026-09-09 a hard question (*show the next slide*, with 200 controls dumped
+// into the context) reached the last round, spent all 2 000 tokens thinking,
+// returned no text at all, and the window said "I could not find an answer
+// for that" to a user whose projector it had just changed. Same figure as
+// the OpenAI one, for the same reason.
+//
+// The effort setting is deliberately LEFT at the provider's default. It was
+// tried the same day: at `low` and at `medium` the model answered "how do
+// I edit a slide" (from the Reader) off the search excerpt without opening
+// the page, and wrote steps that are not true of the app; at the default it
+// opens the page and gets them right, two runs out of two. A few seconds a
+// round is not worth one wrong step to a volunteer, and the corpus is the
+// measure: change this only with the standing corpus re-graded.
+const ANTHROPIC_MAX_TOKENS = 6000;
 // GPT-5 spends reasoning tokens out of this same budget, so the answer itself
 // can come back empty at the Anthropic figure. Bought back with a low effort
 // setting: this is a lookup bot, not a solver.
@@ -563,6 +604,71 @@ export function setLlmProvider(provider: LlmProviderType) {
     setSetting(PROVIDER_SETTING_NAME, provider);
 }
 
+/**
+ * Whether a failed call is the PROVIDER's fault rather than the question's:
+ * a key refused (401/403), an account out of credit (402, or the 400/429
+ * that says so) or throttled (429), or its servers down (5xx). Those are the
+ * failures another provider would not share. Everything else -- a 400 for a
+ * request the model cannot take, no status at all because the building's
+ * internet is down -- would fail the same way again with a different key,
+ * and is not worth a second wait.
+ *
+ * Read off the body as well as the status (`readLlmIssue`), because the
+ * status alone missed the commonest empty account there is: Anthropic
+ * answers one with a 402, or with a 400 whose only clue is the sentence
+ * "credit balance is too low", and the first version of this check took
+ * every 400 for the question's own fault.
+ */
+export function checkIsProviderFault(error: any) {
+    return checkIsProviderIssue(readLlmIssue(error));
+}
+
+/**
+ * The provider to ask when the chosen one has just refused for a reason of
+ * its own: the best other one whose key the user has typed in, or null when
+ * there is none, in which case the caller falls back to the manual.
+ *
+ * A key of the user's OWN, both ways round, on purpose. The keyless service
+ * is a trade the user makes by picking it (or by having no key at all, where
+ * the window lands on it with its warning up before anything is typed) --
+ * sending a paid question's words and attachments to a public service
+ * because a card declined would make that trade for them. And a paid key
+ * standing in for the free tier would spend money nobody asked to spend.
+ */
+export function getStandInLlmProvider(
+    failedProvider: LlmProviderType,
+): LlmProviderType | null {
+    if (checkIsFreeProvider(failedProvider)) {
+        return null;
+    }
+    return (
+        getAvailableLlmProviders().find((provider) => {
+            return (
+                provider !== failedProvider && !checkIsFreeProvider(provider)
+            );
+        }) ?? null
+    );
+}
+
+/**
+ * What `askLlmBot` answers with: the bot's answer, plus -- when the provider
+ * the caller named could not answer and another key of the user's own did --
+ * who actually answered, so the window can say so and switch the tab.
+ */
+export type LlmBotAnswerType = BotAnswerType & {
+    standIn?: {
+        provider: LlmProviderType;
+        model: string;
+        failedProvider: LlmProviderType;
+        // `describeLlmError`'s one line about the provider that failed.
+        reason: string;
+        // What that failure WAS, so the window can put the door to it under
+        // the note -- the billing page for an empty account, the keys page
+        // for a refused one (`genProviderIssueActions`).
+        issue: LlmIssueKindType;
+    };
+};
+
 /** The models this build offers for a provider, best first. */
 export function getLlmModelList(provider: LlmProviderType): LlmModelType[] {
     return (
@@ -621,6 +727,30 @@ function genSystemPrompt(focus: BotFocusType) {
             ` \`owa_click\` on **${descriptor.openFind}** -- say the window is` +
             ' about to open first -- then start the guide on it.';
     }
+    // The Presenter's panels are the Presenter's. Measured 2026-09-09, four
+    // runs of *How do I edit a slide?* asked from the Bible Reader: every
+    // answer that skipped the "go to the Presenter" step started "in the
+    // **Documents** list" -- a panel the Reader page does not have (it is
+    // `BibleReaderComp` and nothing else). The model cannot know which
+    // panels a page lacks from a manual whose recipes are written for the
+    // Presenter, so it is told, once, in the prompt for that page only.
+    //
+    // The way back is named per page, because it is not the same control:
+    // the Reader has no Presenter tab -- its route is the 🖥️ button at the
+    // top right, titled **Go Back to Presenter** -- and the two "passing"
+    // answers of that run had sent the user to "a tab for it at the top".
+    const backToPresenterText = genBackToPresenterRoute(focus);
+    const notHereText =
+        backToPresenterText !== null
+            ? ' The **' +
+              descriptor.label +
+              "** page has NONE of the Presenter's panels -- no Documents" +
+              ' list, no Presenting Flows, no Background or Foreground' +
+              ' panel, no Mini Screen. When the steps you found use one of' +
+              ' them, step 1 is: ' +
+              backToPresenterText +
+              ', and the rest follow from there.'
+            : '';
     return `
 You are the built-in help assistant of Open Worship App, a free desktop app
 churches use to put lyrics, Bible verses and media on a projector screen.
@@ -633,8 +763,9 @@ Everything you say must survive that:
 - Say what they can see and press: "click the blue **Bible Lookup** button at
   the top", not "invoke the lookup popup".
 - NEVER show them a file name, a folder path, a setting key, a component or
-  function name, a code snippet, or an id like "W-06" -- not even in passing.
-  You read those; you do not repeat them.
+  function name, a code snippet, an id like "W-06", or a field out of a
+  tool's answer like "isAnyShowing" -- not even in passing, not even in
+  brackets as proof. You read those; you do not repeat them.
 - Only the steps that answer the question. No background, no internals.
 - Short sentences. Plain words. Calm: they may be in a hurry and in front of a
   congregation.
@@ -669,7 +800,7 @@ The user is currently asking about the **${descriptor.label}**, and they are
 LOOKING AT IT while they ask. Never tell them to open the window they are
 already in -- no "click the Bible Reader tab" when they are in the Bible
 Reader; start at the first step they have not done. \`owa_app_state\` with
-\`page: "${focus}.html"\` says what is on their screen if you are unsure.
+\`page: "${focus}.html"\` says what is on their screen if you are unsure.${notHereText}
 
 **The window may not be showing it.** If a tool answers that the app has no
 open page matching "${focus}.html", nothing about it can be circled, clicked or
@@ -682,7 +813,16 @@ Rules:
 - Answer from this app's own knowledge. Call \`owa_help_search\` FIRST for any
   "how do I", "where is", "what does X do" question -- ALWAYS with
   \`focus: "${focus}"\`, or you will hand them the other window's way of doing
-  it -- and \`owa_help_page\` when a hit looks right.
+  it -- and \`owa_help_page\` on the hit that fits BEFORE you write any
+  step: an excerpt is one sentence off a page, and steps written from it
+  are guesses (measured: "the Slide Editor opens when you select a
+  document" -- it does not). Only an honest "the app cannot do that" is
+  written from the search alone -- never from what a worship app "would"
+  have: this help window is part of the app, and a question about the
+  assistant itself (what it costs, its spending limit, its tabs, Stop,
+  Report, the / commands) has a guide page like any other. Measured: asked
+  how to set a spending limit, a model searched nothing and said the app
+  has no such setting, on the day the setting shipped.
 - A hit marked \`internal\` is a note written for whoever BUILDS the app. Use it
   to understand, then say what the user should press. Never quote it, never
   mention that it exists, and never pass its wording on.
@@ -735,15 +875,65 @@ Rules:
 - **"It is not working" is a different question from "how do I".** When they
   report a symptom instead of asking for a task -- nothing on the screen, the
   words not coming out, it froze, the audience is seeing the wrong thing --
-  LOOK before you answer: \`owa_list_screens\` says whether a screen is showing
-  at all and what is on it, \`owa_app_state\` says where they are. Answer from
-  what you find there. Never open with the projector's power or its cable: you
-  cannot see those, the app can see itself, and someone panicking in front of a
+  LOOK before you answer: \`owa_list_screens\` says whether each screen is
+  showing AND what it holds -- the slide and its first words, the passage, the
+  background, the lock -- and \`owa_app_state\` says where they are. Answer
+  from what you find there, and SAY what is on the screen ("it is on, showing
+  verse 2 of Amazing Grace") so they can check it against the wall. A screen
+  that is showing and holds a slide IS showing those words: never call it
+  blank. Never open with the projector's power or its cable: you cannot see
+  those, the app can see itself, and someone panicking in front of a
   congregation needs the one thing that is actually wrong. In this app it is
-  nearly always one of these, all on the screen preview card: no screen is
-  showing (the show/hide button in its header, or F5), the layer was cleared
-  (the Clear buttons beside it), the screen is locked and refusing changes, or
-  it is pointed at the wrong display (the display button in its footer).
+  nearly always one of these, all on the Mini Screen card (\`previewCard\`
+  says where that card is in THEIR window -- never guess): no screen is
+  showing (its show/hide button, or F5) though the card already holds the
+  slide; the layer was cleared (a Clear button with \`hasSomething: false\`);
+  the screen is locked and refusing changes; or it is pointed at the wrong
+  display (the display button in its footer). Say which one it is and OFFER
+  the fix as an option below; a symptom is not a request, so press nothing
+  until they say yes. When they do, press by the exact words \`controls\`
+  gave you (\`owa_click\` with \`controls.showHide\` -- no search first),
+  then \`owa_list_screens\` again and report what changed.
+- **What they are in the MIDDLE of is in \`owa_app_state\`.** On the
+  Presenter its \`selectedDocument\` is the song or document they picked
+  -- its slides in order with their first words, \`onScreen\` (the one of
+  them on a screen) and \`next\` / \`previous\` as the arrow keys would
+  go. "Which song is selected", "what is next", "what am I about to put
+  up" are answered from THAT, never from what the projector holds: the
+  selected document and the one on the screen are often different. "Show
+  the next slide" is one press: \`owa_click\` with the \`find\` of
+  \`next\` (the exact words on its card -- no search, no listing), then
+  \`owa_list_screens\` to see it went up, and say which slide is on the
+  wall now. A slide by name is pressed the same way, by its own \`find\`.
+  Presenting a slide changes what the congregation sees: when they ASKED
+  for it, do it; when they only asked what is next, say it and offer.
+  The RUN SHEET is a different question: \`runSheet\` there says which
+  presenting flow is open in its run player, \`cursor\` (the line the run
+  is on, and the slide inside it) and \`next\` (what the next press puts
+  up). "What's next in my running order / order of service" is answered
+  from THAT, in those words. You cannot advance a run -- no tool presses a
+  key -- so never offer to: the operator presses **Space** or **→** with
+  the run player in front. With no player open, \`availableSheets\` names
+  the sheets; the **Preview Presenting Flow** button on one opens it.
+- **A Bible verse by its reference is ONE call.** "Put John 3:16 on the
+  screen", "show Psalm 23", "put up the reading": \`owa_present_bible\`
+  with the words they gave -- never the Bible Lookup popup and never a
+  guide for it, because the lookup is a picker written for a person and no
+  step can drive it. When they asked for the verse to go UP, do it, then
+  say what its answer reports: the passage, the version, and whether the
+  screen is on -- an off screen holds the verse and shows nothing, so
+  offer its show button. When they only asked HOW, answer from the manual
+  and offer to put it up for them. \`action: "check"\` reads a reference
+  without touching a screen.
+- **A countdown, stopwatch, clock, scrolling message or quick text is ONE
+  call too**: \`owa_foreground\` with the widget and its \`minutes\`, \`at\`
+  (a clock time) or \`text\` -- "start a 5 minute countdown", "count down to
+  10:30", "scroll 'please silence your phones' along the bottom". Never the
+  Foreground tab's own boxes: that tab TOGGLES (a second press closes it) and
+  its boxes are a form for a person. When they asked for it to START, do it
+  and say what the answer reports -- the screen holds it, and an off screen
+  shows nothing, so offer its show button; \`action: "stop"\` takes it off
+  when they ask. When they only asked HOW, answer from the manual and offer.
 - **Never guess what a control is called.** "It may be labelled something like
   ..." is not an answer: \`owa_list_ui\` and \`owa_find_ui\` say what is really
   on their screen -- look it up, then say it exactly. \`highlight\` points at
@@ -782,14 +972,15 @@ Rules:
 - **Words of a song are a job to DO, not a question to answer.** Verses they
   pasted, a song file they attached, or a LINK to a song page: call
   \`owa_lyric_validate\` with \`mode: "draft"\` and let it write the notation.
-  For a link, \`owa_read_website\` first and then hand the whole answer over
-  as \`text\` -- the drafter finds the song among the menus and charts itself,
-  and tells you which part of the page it used. Read that line: if it took in
-  the site's own furniture or stopped before the last verse, say \`from\` and
-  \`to\` and call it again. Never write that notation yourself and never paste
-  it into your answer -- buttons appear under you that create the file and
-  copy the text. Say what the song came out as, and say plainly what it
-  guessed.
+  For a link, give the address as \`url\` and nothing as \`text\`, without
+  reading the page first: the drafter reads it itself, whole, and writes every
+  chord on it into the words -- a copy you type out has no chords in it. It
+  finds the song among the menus and charts and tells you which part of the
+  page it used. Read that line: if it took in the site's own furniture or
+  stopped before the last verse, say \`from\` and \`to\` and call it again.
+  Never write that notation yourself and never paste it into your answer --
+  buttons appear under you that create the file and copy the text. Say what
+  the song came out as, and say plainly what it guessed.
 - **Do not refuse a song because a page has a copyright notice on it.** Every
   song has an owner and every lyrics page says so; this is a format conversion
   on the user's own machine, into their own documents folder, and nothing is
@@ -799,8 +990,10 @@ Rules:
   named a copyright holder put that in one short line at the end so it travels
   with the song. If they say they hold the licence, that is the end of it:
   believe them and do the work.
-- Anything that changes what the audience sees -- hiding a screen, clearing
-  content -- must be offered, never done unasked. \`owa_hide_screens\` in
+- Anything that changes what the audience sees -- showing a screen, hiding
+  it, clearing content -- must be offered, never done unasked, and that
+  includes a shortcut key: F5 shows the screen and F6 clears it, so name the
+  key for THEM to press rather than pressing it. \`owa_hide_screens\` in
   particular takes content off a live projector.
 
 END EVERY ANSWER WITH OPTIONS, on a line of its OWN at the very end:
@@ -864,6 +1057,9 @@ async function listRemoteAnthropicModels(): Promise<LlmModelType[]> {
  * place a Kimi model and a GPT model genuinely disagree.
  */
 type OpenAiCompatProviderType = {
+    // Which of the four this is, for the price a round is looked up at: the
+    // loop below serves three providers and only the descriptor knows which.
+    key: LlmProviderType;
     label: string;
     // Takes the model because ONE of these providers is not one host: the
     // keyless provider's models live on two different free services, and which
@@ -957,35 +1153,40 @@ type McpToolType = { name: string; description?: string; inputSchema?: any };
  * markdown renderer eats the underscores in it for good measure.
  */
 export function describeLlmError(error: any): string {
-    const status = error?.status ?? error?.response?.status ?? null;
-    const rawMessage =
-        error?.error?.error?.message ??
-        error?.error?.message ??
-        (typeof error?.message === 'string' ? error.message : '');
-    const message = String(rawMessage)
-        .replace(/^\d{3}\s*\{[\s\S]*$/, '')
-        .trim();
-    if (/workspace/i.test(String(rawMessage))) {
-        return (
-            'this API key needs a workspace id — add it in ' +
-            'Settings → Others → AI Providers'
-        );
+    const { kind, status, message } = readLlmIssue(error);
+    switch (kind) {
+        case 'workspace':
+            return (
+                'this API key needs a workspace id — add it in ' +
+                'Settings → Others → AI Providers'
+            );
+        case 'badKey':
+            return 'the API key was refused — check it in Settings → Others';
+        case 'noCredit':
+            return 'the AI account is out of credit';
+        case 'rateLimited':
+            return (
+                'the AI account is being rate-limited (asked too often) — ' +
+                'wait a minute and try again'
+            );
+        case 'quotaOrRate':
+            return 'the AI account is out of credit or being rate-limited';
+        case 'overloaded':
+            return 'the AI service is overloaded right now';
+        case 'serverTrouble':
+            return 'the AI service is having trouble right now';
+        case 'modelMissing':
+            return (
+                'this model is not available to the account — pick another ' +
+                'one in the row above'
+            );
+        case 'unreachable':
+            return 'it could not be reached — the internet may be down';
+        default:
+            return message.length > 0 && message.length < 160
+                ? message
+                : `the AI service refused the request (error ${status})`;
     }
-    if (status === 401 || status === 403) {
-        return 'the API key was refused — check it in Settings → Others';
-    }
-    if (status === 429) {
-        return 'the AI account is out of credit or being rate-limited';
-    }
-    if (status !== null && status >= 500) {
-        return 'the AI service is having trouble right now';
-    }
-    if (status === null) {
-        return 'it could not be reached — the internet may be down';
-    }
-    return message.length > 0 && message.length < 160
-        ? message
-        : `the AI service refused the request (error ${status})`;
 }
 
 /**
@@ -1013,6 +1214,13 @@ type ToolWatchType = {
     /** It put a card up itself; a button offering a second one is a wrong turn. */
     isGuideStarted: boolean;
     /**
+     * It DID the thing with a tool -- a passage went on the screen -- so a
+     * button offering to walk through doing it is a wrong turn too, and a
+     * worse one: the recipe it would demo (the Bible Lookup's picker) stops
+     * at the step where a person types, with the user's verse nowhere in it.
+     */
+    isActedOn: boolean;
+    /**
      * The Open Lyric document the last successful draft produced. Lifted from
      * the tool RESULT rather than from anything the model wrote: a song asked
      * for a second time costs the whole song again in tokens, and a model
@@ -1020,10 +1228,27 @@ type ToolWatchType = {
      */
     draftedLyric: string | null;
     /**
+     * A song the model CREATED itself in this ask, name and path off the
+     * `owa_lyric_file` result. Measured 2026-09-10: asked *Create a lyric
+     * file from <address>*, Sonnet 5 drafted the song and created the file
+     * in the same breath -- and the answer still carried Create "<title>"
+     * under "Done! The song has been created", because the draft above had
+     * minted it. A second press makes a second file. Once the file exists
+     * the answer carries the row and the file, the way the button's own
+     * answer does, and no Create.
+     */
+    createdLyric: { name: string; filePath: string } | null;
+    /**
      * The title of every page a tool result named in this ask, by id -- what
      * an id the model writes anyway is replaced WITH. Per ask, never kept.
      */
     pageTitles: Record<string, string>;
+    /**
+     * The answer has already been handed back once for writing steps off a
+     * search without opening the page. Once per ask -- see
+     * `checkIsStepsWithoutPage`.
+     */
+    isPageNudged: boolean;
 };
 
 /**
@@ -1031,7 +1256,7 @@ type ToolWatchType = {
  * never settled on a recipe or already started its own card.
  */
 export function toWatchedManualId(watch: ToolWatchType) {
-    if (watch.isGuideStarted) {
+    if (watch.isGuideStarted || watch.isActedOn) {
         return null;
     }
     return watch.readId ?? watch.searchedId;
@@ -1042,9 +1267,83 @@ export function genToolWatch(): ToolWatchType {
         readId: null,
         searchedId: null,
         isGuideStarted: false,
+        isActedOn: false,
         draftedLyric: null,
+        createdLyric: null,
         pageTitles: {},
+        isPageNudged: false,
     };
+}
+
+/**
+ * Whether an answer is STEPS WRITTEN OFF AN EXCERPT: the model searched the
+ * manual, a real hit came back, it opened no page, and what it wrote is a
+ * numbered list. Both loops hand such an answer back once (`genOpenPageNudge`)
+ * and let the model open the page and write again.
+ *
+ * In code, because the rule has been in the prompt since the first run
+ * ("`owa_help_page` on the hit BEFORE you write any step") and on the top hit
+ * itself since 2026-09-09 ("An excerpt, not the steps: open this page ...") --
+ * and *How do I edit a slide?* asked from the Bible Reader was still answered
+ * from the excerpt on 2026-09-09, in three of four runs of the standing corpus,
+ * each time telling a Reader user to start "in the **Documents** list", which
+ * the Reader does not have. A rule the model can ignore is not a rule.
+ *
+ * Only a LIST counts. An honest "the app cannot do that" is written from the
+ * search alone by design, a state answer never searched, and a one-line
+ * where-is has nothing to get wrong from an excerpt. Two numbered lines is the
+ * floor because a single "1." is a sentence that happened to start with a
+ * number.
+ */
+const NUMBERED_STEP_PATTERN = /(?:^|\n)\s*\d+[.)]\s+\S/g;
+export function checkIsStepsWithoutPage(text: string, watch: ToolWatchType) {
+    if (
+        watch.isPageNudged ||
+        watch.readId !== null ||
+        watch.searchedId === null
+    ) {
+        return false;
+    }
+    const steps = text.match(NUMBERED_STEP_PATTERN) ?? [];
+    return steps.length >= 2;
+}
+
+/**
+ * What the model is told when its steps are handed back. Written as a USER
+ * turn in the loop's own conversation, never shown: it names the hit's id
+ * because that is the handle `owa_help_page` takes, and the answer seam
+ * scrubs an id that leaks into the rewrite anyway (`scrubRecipeIds`). The
+ * last sentence is the wrong-window shape that made this necessary: a recipe
+ * about the Presenter, asked from the Bible Reader, has getting there as its
+ * first step.
+ */
+export function genOpenPageNudge(watch: ToolWatchType) {
+    return (
+        'Not yet: those steps were written from a search excerpt without ' +
+        'opening the page, so they are guesses. Open the page that fits ' +
+        `with owa_help_page first (the top hit was ${watch.searchedId}), ` +
+        'then write the steps again from what the page actually says, in ' +
+        'your own plain words. If the page turns out to be about a ' +
+        'different window than the one they are looking at, the first ' +
+        'step is how to get there; if it does not answer the question, ' +
+        'say so plainly instead of guessing.'
+    );
+}
+
+/** The file a `create` wrote, off the tool's own answer; null for a refusal. */
+function readCreatedFile(text: string) {
+    try {
+        const result = JSON.parse(text);
+        if (
+            typeof result?.created === 'string' &&
+            typeof result?.filePath === 'string'
+        ) {
+            return { name: result.created, filePath: result.filePath };
+        }
+    } catch (_error) {
+        // A refusal is a sentence, not JSON.
+    }
+    return null;
 }
 
 /**
@@ -1060,11 +1359,30 @@ export function applyToolWatch(
     if (name === 'owa_guide_start') {
         watch.isGuideStarted = true;
     }
+    // Read off the RESULT, never the call: a refused or checked passage did
+    // nothing, and the walkthrough offer under it is still the right one.
+    if (name === 'owa_present_bible' && /"isPresented":\s*true/.test(text)) {
+        watch.isActedOn = true;
+    }
+    // The same rule for a countdown or a message: a started or stopped extra
+    // is the ask done, and a W-09 walkthrough under it would offer to do
+    // again what was just done. A `check` and a refusal did nothing.
+    if (
+        name === 'owa_foreground' &&
+        /"did":\s*"(started|stopped)"/.test(text)
+    ) {
+        watch.isActedOn = true;
+    }
     learnPageTitles(watch.pageTitles, name, args, text);
     if (name === 'owa_lyric_validate' && args?.mode === 'draft') {
         // Last one wins, like `readId`: a model that drafts twice has been
         // told the first one was wrong.
         watch.draftedLyric = readDraftedLyric(text) ?? watch.draftedLyric;
+    }
+    if (name === 'owa_lyric_file' && args?.action === 'create') {
+        // Off the RESULT: a refused create (a taken name, a path in the
+        // name, a song that did not parse) is prose, and nothing was written.
+        watch.createdLyric = readCreatedFile(text) ?? watch.createdLyric;
     }
     if (name === 'owa_help_page' && typeof args?.id === 'string') {
         // Last one wins: a model that opens two pages answers from the one it
@@ -1237,6 +1555,16 @@ export type AskExtraType = {
      * round, and it runs on the same thread as the answer.
      */
     onProgress?: BotProgressCallbackType;
+    /**
+     * Told what each model round USED, the moment its response lands --
+     * tokens in and out, cached and not, on which model. Pushed per round
+     * rather than summed onto the answer so that a question stopped after
+     * three rounds, or one that fails on its fourth, still reports the
+     * three it paid for: the credit is spent whether or not an answer ever
+     * arrives, and a total that only counted the answers that did would
+     * read lower than the bill every time.
+     */
+    onUsage?: (round: LlmRoundUsageType) => void;
 };
 
 // The frame an addition arrives in. Named as coming from the user and joined to
@@ -1368,11 +1696,38 @@ async function askAnthropic(
     ];
     // Built once, not once per round: it is four kilobytes of template
     // literal and it does not change while the question is being answered.
-    const systemPrompt = genSystemPrompt(focus);
+    //
+    // And CACHED, at two points. The provider renders tools, then system,
+    // then messages, and the first two are byte-identical for every round of
+    // every question asked about the same window -- measured 2026-09-08 on
+    // the standing corpus with no caching at all: ~15 900 of the ~16 000
+    // tokens a round costs, 44 rounds, 813 000 input tokens, every one billed
+    // at full price. The marker on the system block makes tools + system a
+    // cache READ for the next question inside the five-minute window, not
+    // only for the next round; the request-level marker below is the API's
+    // own moving breakpoint, placed on the last block of the growing
+    // conversation so rounds 2..N read what the earlier rounds paid for. A
+    // write is billed at 1.25x and a read at 0.1x, so a one-round question
+    // costs a quarter more than it did and every question of two rounds or
+    // more costs less -- and the corpus median is two. The system prompt
+    // must stay free of anything that changes per question (a date, the
+    // screen state) or the prefix breaks at that byte and both reads are
+    // lost; `usage.cache_read_input_tokens` is the only proof it still holds.
+    const systemBlockList: Anthropic.TextBlockParam[] = [
+        {
+            type: 'text',
+            text: genSystemPrompt(focus),
+            cache_control: { type: 'ephemeral' },
+        },
+    ];
     const reportStep = genProgressReporter(extra?.onProgress);
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-        // Before the round is paid for, not after it comes back.
+        // Before the round is paid for, not after it comes back. The spend
+        // guard is asked in the same breath and for the same reason: a
+        // round that would take the hour over its cap is a round that is
+        // never posted, whoever is asking (see `spendGuardHelpers`).
         throwIfCancelled(signal);
+        throwIfSpendLimitReached();
         const isLastRound = round === MAX_TOOL_ROUNDS - 1;
         // The model round itself is the longest single wait in most questions
         // and the one with nothing to show for it, so it gets a line too.
@@ -1382,10 +1737,16 @@ async function askAnthropic(
             response = await anthropic.messages.create(
                 {
                     model,
-                    max_tokens: MAX_TOKENS,
-                    system: systemPrompt,
-                    // Nothing left to look up: answer with what you have.
-                    ...(isLastRound ? {} : { tools: anthropicTools }),
+                    max_tokens: ANTHROPIC_MAX_TOKENS,
+                    cache_control: { type: 'ephemeral' },
+                    system: systemBlockList,
+                    tools: anthropicTools,
+                    // Nothing left to look up: answer with what you have. The
+                    // tools stay in the request even so -- taking them out
+                    // changes the prefix at byte zero and forfeits the cache
+                    // on the most expensive round of all -- and `none` is
+                    // what forbids the call.
+                    ...(isLastRound ? { tool_choice: { type: 'none' } } : {}),
                     messages,
                 },
                 // The request itself is dropped when the user gives up: a
@@ -1396,6 +1757,10 @@ async function askAnthropic(
         } finally {
             finishThinking();
         }
+        // Counted before it is read: a round that comes back with no text
+        // and a round that goes round again on the page nudge cost the same
+        // as one that answered.
+        extra?.onUsage?.(toAnthropicRoundUsage(model, response.usage));
         const toolUses = response.content.filter((block) => {
             return block.type === 'tool_use';
         }) as Anthropic.ToolUseBlock[];
@@ -1409,7 +1774,41 @@ async function askAnthropic(
                 })
                 .join('\n')
                 .trim();
-            return { text: text || 'I could not find an answer for that.' };
+            if (text.length > 0) {
+                // Steps off an excerpt go back once. Not on the last round:
+                // the call is forbidden there, so the rewrite could not open
+                // the page either and would only be the same guess twice.
+                if (!isLastRound && checkIsStepsWithoutPage(text, watch)) {
+                    watch.isPageNudged = true;
+                    messages.push({
+                        role: 'assistant',
+                        content: response.content.filter((block) => {
+                            return (
+                                block.type !== 'text' ||
+                                block.text.trim() !== ''
+                            );
+                        }),
+                    });
+                    messages.push({
+                        role: 'user',
+                        content: genOpenPageNudge(watch),
+                    });
+                    continue;
+                }
+                return { text };
+            }
+            // No words at all. With thinking on, a round that hits the cap
+            // is one that thought until the budget ran out and never got to
+            // the answer -- say THAT, because "could not find" is a claim
+            // about the app, and the round just proved nothing about it.
+            return {
+                text:
+                    response.stop_reason === 'max_tokens'
+                        ? 'I ran out of room working that out before I ' +
+                          'could answer. Try asking about one step at a ' +
+                          'time.'
+                        : 'I could not find an answer for that.',
+            };
         }
         // Its own content back, minus any EMPTY text block: a model round
         // that calls a tool sometimes carries one alongside, and echoing it
@@ -1514,8 +1913,10 @@ async function askOpenAiCompatible(
     let isSalvaging = false;
     const reportStep = genProgressReporter(extra?.onProgress);
     for (let round = 0; round < maxRounds; round++) {
-        // Before the round is paid for, not after it comes back.
+        // Before the round is paid for, not after it comes back -- and the
+        // spend guard with it, as in `askAnthropic`.
         throwIfCancelled(signal);
+        throwIfSpendLimitReached();
         const isLastRound = isSalvaging || round === maxRounds - 1;
         let completion;
         // See the note on the same line in `askAnthropic`. Closed in the
@@ -1531,8 +1932,19 @@ async function askOpenAiCompatible(
                     ...(isLastRound ? {} : { tools: openAITools }),
                     messages,
                 },
-                // See the note on the same option in `askAnthropic`.
-                { signal: signal ?? undefined },
+                // See the note on the same option in `askAnthropic`. No SDK
+                // retries: the OpenAI SDK retries a 429 twice with backoff
+                // whatever kind it is, and the kind measured on this window
+                // was `insufficient_quota` -- an account out of credit, which
+                // no retry can fix -- so every question posted the same 41 KB
+                // request three times and waited 3-5 s to learn nothing. A
+                // 429 that IS a busy service is handled here instead: past
+                // the first round by the salvage pass below, on the first by
+                // the stand-in key or the offline bot in `askLlmBot`. The
+                // Anthropic loop keeps the SDK default, because a 429 on a
+                // live Claude key is nearly always a rate limit that honours
+                // `retry-after`.
+                { signal: signal ?? undefined, maxRetries: 0 },
             );
         } catch (error: any) {
             // A rate limit on the FIRST round is just a busy service, and the
@@ -1555,6 +1967,12 @@ async function askOpenAiCompatible(
         } finally {
             finishThinking();
         }
+        // See the same line in `askAnthropic`. Only a round that came back
+        // reaches here; a rate-limited one threw or went round again above
+        // and cost nothing the provider reports.
+        extra?.onUsage?.(
+            toOpenAiRoundUsage(provider.key, model, completion.usage),
+        );
 
         const choice = completion.choices[0]?.message;
         const toolCalls = choice?.tool_calls ?? [];
@@ -1568,6 +1986,18 @@ async function askOpenAiCompatible(
                     `${provider.label} returned no answer ` +
                         `(${completion.choices[0]?.finish_reason ?? 'unknown'})`,
                 );
+            }
+            // See the same branch in `askAnthropic`. Not while salvaging: a
+            // throttled service that just managed one answer is not asked
+            // for a second.
+            if (!isLastRound && checkIsStepsWithoutPage(text, watch)) {
+                watch.isPageNudged = true;
+                messages.push(choice);
+                messages.push({
+                    role: 'user',
+                    content: genOpenPageNudge(watch),
+                });
+                continue;
             }
             return { text };
         }
@@ -1640,6 +2070,7 @@ function checkIsRateLimited(error: any) {
 }
 
 const OPENAI_PROVIDER: OpenAiCompatProviderType = {
+    key: 'openai',
     label: 'ChatGPT',
     getInstance: getOpenAIInstance,
     genRequestExtra: (model) => {
@@ -1663,6 +2094,7 @@ const OPENAI_PROVIDER: OpenAiCompatProviderType = {
 };
 
 const KIMI_PROVIDER: OpenAiCompatProviderType = {
+    key: 'kimi',
     label: 'Kimi',
     getInstance: getKimiInstance,
     genRequestExtra: (model) => {
@@ -1679,6 +2111,7 @@ const KIMI_PROVIDER: OpenAiCompatProviderType = {
 };
 
 const FREE_PROVIDER: OpenAiCompatProviderType = {
+    key: 'free',
     label: 'Free',
     getInstance: (model) => {
         return getFreeInstance(getFreeService(model));
@@ -1965,7 +2398,7 @@ export async function askLlmBot(
     // than only the interest in it.
     signal?: AbortSignal | null,
     extra?: AskExtraType,
-): Promise<BotAnswerType> {
+): Promise<LlmBotAnswerType> {
     const provider = wantedProvider ?? getLlmProvider();
     if (provider === null) {
         throw new Error('No AI provider key is set');
@@ -2000,19 +2433,99 @@ export async function askLlmBot(
     } finally {
         finishConnecting();
     }
-    const watch = genToolWatch();
+    let watch = genToolWatch();
     const history = toHistoryTurns(priorTurns);
+    const modelTools = filterModelToolList(tools);
+    // Every round's usage goes to the spend guard's ledger BEFORE it goes to
+    // whoever asked -- here, once, rather than in each provider loop, so
+    // that no caller of this function (the window, the report, a rescue, one
+    // not written yet) can spend a round the guard did not count. The
+    // caller's own callback is still told, unchanged.
+    const guardedExtra: AskExtraType = {
+        ...extra,
+        onUsage: (round) => {
+            recordSpendRound(round);
+            extra?.onUsage?.(round);
+        },
+    };
     try {
-        const answer = await LLM_PROVIDER_RUNTIME_MAP[provider].ask(
-            asked,
-            focus,
-            filterModelToolList(tools),
-            watch,
-            model,
-            history,
-            signal,
-            extra,
-        );
+        let answer: LlmBotAnswerType;
+        try {
+            answer = await LLM_PROVIDER_RUNTIME_MAP[provider].ask(
+                asked,
+                focus,
+                modelTools,
+                watch,
+                model,
+                history,
+                signal,
+                guardedExtra,
+            );
+        } catch (error: any) {
+            // The provider's own fault -- its key, its credit, its servers --
+            // is no reason to hand the question to the manual while another
+            // key of the user's own is set. Measured 2026-09-09 through the
+            // real window: the tab's default was a ChatGPT key a week out of
+            // credit, and every one of twelve questions spent three posts of
+            // the same 41 KB request on `insufficient_quota` and landed on
+            // the offline bot (8 of 12), with a live Claude key one option
+            // along in the head row. So the next key stands in, once, and
+            // the answer says so. The question's own faults (a 400, a model
+            // with no eyes) are not retried anywhere: they would fail again.
+            // A pause is not a provider fault either: it carries no status,
+            // so `checkIsProviderFault` already says no, but it is named
+            // here because a stand-in for a PAUSED key would be the guard
+            // handing the runaway a second key to spend.
+            if (
+                checkIsCancelError(error, signal) ||
+                checkIsSpendLimitError(error) ||
+                !checkIsProviderFault(error)
+            ) {
+                throw error;
+            }
+            const standInProvider = getStandInLlmProvider(provider);
+            if (standInProvider === null) {
+                throw error;
+            }
+            const standInModel = getLlmModel(standInProvider);
+            // A picture the stand-in's model cannot see would fail as a 400
+            // and bury the real reason under it.
+            if (
+                (extra?.images ?? []).length > 0 &&
+                !checkCanSeeImages(standInProvider, standInModel)
+            ) {
+                throw error;
+            }
+            // A fresh watch: the failed attempt may have read pages before
+            // it was refused, and a walkthrough offered off THOSE would be
+            // one the answering model never looked at.
+            watch = genToolWatch();
+            const finishStandingIn = genProgressReporter(extra?.onProgress)(
+                `${LLM_PROVIDER_MAP[provider].label} could not answer — ` +
+                    `asking ${LLM_PROVIDER_MAP[standInProvider].label} instead`,
+            );
+            try {
+                answer = await LLM_PROVIDER_RUNTIME_MAP[standInProvider].ask(
+                    asked,
+                    focus,
+                    modelTools,
+                    watch,
+                    standInModel,
+                    history,
+                    signal,
+                    guardedExtra,
+                );
+            } finally {
+                finishStandingIn();
+            }
+            answer.standIn = {
+                provider: standInProvider,
+                model: standInModel,
+                failedProvider: provider,
+                reason: describeLlmError(error),
+                issue: readLlmIssue(error).kind,
+            };
+        }
         // The options the model attached, taken off the text before anyone
         // sees it. Done HERE rather than in each provider so there is exactly
         // one place the frame can leak from -- and so the guide rescue, which
@@ -2041,12 +2554,37 @@ export async function askLlmBot(
         // the frames have already left; and against the titles THIS ask's
         // tool results carried, so the id becomes the page's own name.
         answer.text = scrubAnswerRecipeIds(answer.text, watch.pageTitles);
+        // And a tool's field name quoted as evidence -- "(isAnyShowing is
+        // false)" -- which the prompt forbids in the same breath as the ids
+        // and which arrived twice in two asks the day the symptom rule asked
+        // the model to say which fault it found.
+        answer.text = scrubAnswerToolFields(answer.text);
         // A song the model just wrote is a thing to DO something with, and it
         // is offered before the walkthrough fallback below on purpose: "show
         // me step by step" under a finished song offers to demonstrate an
         // unrelated recipe, which is the same wrong turn `applyToolWatch`
         // exists to stop.
-        if (answer.actions === undefined && watch.draftedLyric !== null) {
+        if (answer.actions === undefined && watch.createdLyric !== null) {
+            // The model created the file itself, so the thing to press is
+            // not Create -- a second press is a second file -- but the row it
+            // went to and the file, exactly what the Create button's own
+            // answer offers (`handleDraftedLyric`). No walkthrough either:
+            // the ask has been done.
+            const { name, filePath } = watch.createdLyric;
+            answer.actions = [];
+            answer.shows = [
+                ...(answer.shows ?? []),
+                {
+                    kind: 'control',
+                    value: `Document List > ${name}`,
+                    name: 'Show it in the list',
+                },
+                { kind: 'file', value: filePath, name },
+            ];
+        } else if (
+            answer.actions === undefined &&
+            watch.draftedLyric !== null
+        ) {
             const drafted = keepDraftedLyric(watch.draftedLyric);
             answer.actions = [
                 {
@@ -2078,6 +2616,11 @@ export async function askLlmBot(
         // `describeLlmError` reads an aborted request as an unreachable
         // service and would tell a volunteer their internet is down.
         if (checkIsCancelError(error, signal)) {
+            throw error;
+        }
+        // Nor is a pause: its message is already the sentence for the room,
+        // and the window reads the class to draw the button that lifts it.
+        if (checkIsSpendLimitError(error)) {
             throw error;
         }
         // Re-thrown as one readable line; the caller shows it beside the

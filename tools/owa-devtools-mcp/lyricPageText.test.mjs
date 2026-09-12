@@ -414,7 +414,7 @@ describe('a song in two languages', () => {
         // it, and the tail sweep stops at translations -- so the pair of them
         // rode into the last verse as its closing couplet.
         const rows = markTranslations([
-            { text: 'ទំនុកច្រៀងៈ សម សារិន' },
+            { text: 'ទំនុកច្រៀងៈ អ្នកណាម្នាក់' },
             { text: 'Guitar chords' },
         ]);
         expect(rows.map((one) => one.isTranslation)).toEqual([false, false]);
@@ -515,6 +515,25 @@ describe('what is not the song', () => {
         );
     });
 
+    test('never takes the site’s own notice for the song’s', () => {
+        // A chord site's footer says whose the SITE is, and that went into a
+        // decades-old hymn's Copyright field as though the site owned it.
+        const page = [
+            'a lantern on the water',
+            '© 2026 MadeUpChords.com | Terms of Service | Privacy',
+        ];
+        expect(readPageCopyright(page, 'www.madeupchords.com')).toBe(null);
+        // A notice naming somebody else stands, whatever site it is on.
+        expect(
+            readPageCopyright(
+                ['a lantern on the water', '© 2019 A Made Up Publisher'],
+                'www.madeupchords.com',
+            ),
+        ).toBe('© 2019 A Made Up Publisher');
+        // With no address to compare against, the old reading holds.
+        expect(readPageCopyright(page)).toBe('© 2026 MadeUpChords.com');
+    });
+
     test('falls back to the credit line when the page named no artist', () => {
         const read = readLyricPage(
             [
@@ -548,6 +567,109 @@ describe('what is not the song', () => {
         expect(read.notes.lastLine).toBe('and nobody to row it');
         expect(read.notes.droppedLines).toBeGreaterThan(0);
         expect(read.notes.isMarked).toBe(false);
+    });
+
+    test('starts the song under the page’s own Key/Time strip', () => {
+        // A toolbar is a line of words per button, and a page that draws no
+        // strumming diagram between it and the first chord has no wall to
+        // end it on: nine buttons were drafted as Verse 1 (2026-09-09, a
+        // Khmer hymnal's chord page) and the real verses became 2 and 3.
+        // The strip the page prints over its chord sheet is the boundary.
+        const page = [
+            'Blue Lantern',
+            'The Made Up Singers',
+            'playlist_add',
+            'Add to',
+            'edit',
+            'Edit',
+            'print',
+            'Print',
+            'swap_vert',
+            'Transpose',
+            'Key: D  ·  Time: 4/4  ·  check_box_outline_blankSimplify',
+            '1.',
+            'a lantern',
+            '|',
+            'D',
+            'on the water',
+            'and nobody',
+            '|',
+            'A',
+            'to row it',
+        ];
+        const read = readLyricPage(page, { isFromPage: true, checkIsLabel });
+        expect(read.lines).toEqual([
+            '1.',
+            'a lantern|[D]on the water',
+            'and nobody|[A]to row it',
+        ]);
+        expect(read.notes.firstLine).toBe('a lantern|[D]on the water');
+        expect(read.lines.join('\n')).not.toContain('Transpose');
+        expect(read.found.Key).toBe('D');
+    });
+
+    test('sweeps a chordless toolbar off the front, with no strip', () => {
+        // The mirror of the credit sweep: on a chord sheet a sung line has a
+        // chord over it, so short chordless rows above the first chorded row
+        // are buttons -- and every one is named, never silently eaten.
+        const page = [
+            'playlist_add',
+            'Add to',
+            'edit',
+            'Edit',
+            'swap_vert',
+            'Transpose',
+            'a lantern',
+            '|',
+            'D',
+            'on the water',
+            'and nobody',
+            '|',
+            'A',
+            'to row it',
+        ];
+        const read = readLyricPage(page, { isFromPage: true, checkIsLabel });
+        expect(read.lines).toEqual([
+            'a lantern|[D]on the water',
+            'and nobody|[A]to row it',
+        ]);
+        // "Edit" and "Transpose" ride the icon between them into one row,
+        // exactly as the site's "Scroll" and "Transpose" do -- an icon
+        // separates without flushing. Named, so a reader can see it went.
+        expect(read.notes.furniture).toEqual([
+            'Add to',
+            'edit',
+            'EditTranspose',
+        ]);
+        expect(read.notes.firstLine).toBe('a lantern|[D]on the water');
+    });
+
+    test('a label stops the sweep; a strip under the song cuts nothing', () => {
+        // A song may open with an unchorded line under "Verse 1" -- the label
+        // is the proof the song has begun. And a facts strip printed BELOW
+        // the words is not the one over the chord sheet.
+        const page = [
+            'swap_vert',
+            'playlist_add',
+            'Verse 1',
+            'a lantern',
+            '|',
+            'D',
+            'on the water',
+            'and nobody',
+            '|',
+            'A',
+            'to row it',
+            'Key: D  ·  Time: 4/4',
+        ];
+        const read = readLyricPage(page, { isFromPage: true, checkIsLabel });
+        expect(read.lines).toEqual([
+            'Verse 1',
+            'a lantern|[D]on the water',
+            'and nobody|[A]to row it',
+        ]);
+        expect(read.notes.furniture).toEqual([]);
+        expect(read.found.Key).toBe('D');
     });
 
     test('takes the caller’s word for where the song starts and ends', () => {

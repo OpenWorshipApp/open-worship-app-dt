@@ -84,6 +84,10 @@
       {
         "text": "W-15 — Create and edit slides / lyrics / web backgrounds",
         "link": "/creating-editing-content/w-15-create-and-edit-slides-lyrics-web-backgrounds"
+      },
+      {
+        "text": "W-43 — Remove a song, document or file (Move to Trash)",
+        "link": "/creating-editing-content/w-43-remove-a-song-document-or-file-move-to-trash"
       }
     ]
   },
@@ -150,6 +154,10 @@
       {
         "text": "W-30 — See who and where is in the passage you are reading",
         "link": "/configuration/w-30-see-who-and-where-is-in-the-passage-you-are-reading"
+      },
+      {
+        "text": "W-44 — Chat with an AI website inside the app (AI Chat)",
+        "link": "/configuration/w-44-chat-with-an-ai-website-inside-the-app-ai-chat"
       }
     ]
   },

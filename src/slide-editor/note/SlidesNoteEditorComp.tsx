@@ -1,5 +1,6 @@
 import type AppDocument from '../../app-document-list/AppDocument';
 import VarySlideNoteEditorComp from './VarySlideNoteEditorComp';
+import { tran } from '../../lang/langHelpers';
 import { type VarySlideWithNoteType } from '../../app-document-list/appDocumentTypeHelpers';
 
 export default function SlidesNoteEditorComp({
@@ -30,7 +31,9 @@ export default function SlidesNoteEditorComp({
                         <VarySlideNoteEditorComp
                             appDocument={appDocument}
                             slide={slide}
-                            title={`Slide Note: ${slide.name || index + 1}`}
+                            title={`${tran('Slide Note')}: ${
+                                slide.name || index + 1
+                            }`}
                         />
                     </div>
                 );

@@ -1,6 +1,7 @@
 import {
     app,
     BrowserWindow,
+    dialog,
     Menu,
     shell,
     type MenuItemConstructorOptions,
@@ -24,11 +25,40 @@ import {
 } from './finderOverlayHelpers';
 import {
     RESET_WINDOW_BOUNDS_LABEL,
+    relaunchApp,
     resetWindowsBounds,
 } from './taskbarHelpers';
 
 import packageInfo from '../package.json';
 import appInfo from './client/appInfo';
+
+/**
+ * Asked before the whole app closes.
+ *
+ * Reload and Force Reload sit either side of Relaunch and cost a window; this
+ * one costs every window in the app, including whatever is on a screen in
+ * front of a congregation. Native rather than the app's own confirm popup: the
+ * menu belongs to the main process, and the window it would be drawn in is one
+ * of the windows about to go.
+ */
+async function confirmRelaunching() {
+    const options = {
+        type: 'question' as const,
+        title: 'Relaunch',
+        message: 'Close and open the app again?',
+        detail: 'Anything not saved is lost.',
+        buttons: ['Relaunch', 'Cancel'],
+        defaultId: 0,
+        cancelId: 1,
+    };
+    const win = BrowserWindow.getFocusedWindow();
+    const { response } = await (win
+        ? dialog.showMessageBox(win, options)
+        : dialog.showMessageBox(options));
+    if (response === 0) {
+        relaunchApp();
+    }
+}
 
 const findingShortcut = toShortcutKey({
     wControlKey: ['Ctrl'],
@@ -266,6 +296,16 @@ export function initMenu(appController: ElectronAppController) {
             label: 'View',
             submenu: [
                 { role: 'reload' },
+                {
+                    // Reload re-reads the PAGE; this re-reads the app. The AI
+                    // master switch is decided before any window exists, so
+                    // Settings can only ask for a restart -- and this is the
+                    // menu a user already opens to reload, one row down.
+                    label: 'Relaunch',
+                    click: () => {
+                        void confirmRelaunching();
+                    },
+                },
                 { role: 'forceReload' },
                 { role: 'toggleDevTools' },
                 { type: 'separator' },
@@ -354,6 +394,16 @@ export function initMenu(appController: ElectronAppController) {
                           { type: 'separator' },
                       ]
                     : []),
+                // Not gated on the switch: this window is a company's own chat
+                // site in a box, with no key, no assistant and no door of the
+                // app's opened for it.
+                {
+                    label: 'AI Chat',
+                    click: () => {
+                        appController.openAiChatPage();
+                    },
+                },
+                { type: 'separator' },
                 {
                     label: 'Learn More',
                     click: () => {

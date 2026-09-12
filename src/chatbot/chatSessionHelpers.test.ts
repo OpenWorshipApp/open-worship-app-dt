@@ -627,3 +627,77 @@ describe('attachments on a message', () => {
         expect(message.attachRequests).toEqual(['screenshot', 'file']);
     });
 });
+
+describe('what a tab has spent', () => {
+    beforeEach(() => {
+        settingMap.clear();
+    });
+
+    const SPENT = {
+        rounds: 3,
+        unpricedRounds: 0,
+        input: 6,
+        cacheRead: 30650,
+        cacheWrite: 15924,
+        output: 240,
+        costUsd: 0.0482,
+    };
+
+    function loadOne(rawSession: any) {
+        settingMap.set(
+            SETTING_NAME,
+            JSON.stringify({ sessions: [rawSession], activeId: 'x' }),
+        );
+        return loadChatSessions('presenter', 'anthropic', 'm').sessions[0];
+    }
+
+    test('the tab total and the answer total both survive a restart', () => {
+        const session = loadOne({
+            ...genSession(),
+            usage: SPENT,
+            messages: [
+                { id: 1, author: 'you', text: 'is anything showing?' },
+                { id: 2, author: 'bot', text: 'No.', usage: SPENT },
+            ],
+        });
+        expect(session.usage).toEqual(SPENT);
+        expect(session.messages[1].usage).toEqual(SPENT);
+        expect(session.messages[0]).not.toHaveProperty('usage');
+    });
+
+    // The tab's own total is what says how much the conversation cost; the
+    // answers are capped at sixty and the sixty-first's rounds are still paid.
+    test('the tab total is kept whole when the messages are trimmed', () => {
+        const state = {
+            sessions: [
+                genSession({
+                    messages: genMessages(80),
+                    usage: SPENT,
+                }),
+            ],
+            activeId: 'x',
+        };
+        saveChatSessions(state);
+        const loaded = loadChatSessions('presenter', 'anthropic', 'm')
+            .sessions[0];
+        expect(loaded.messages).toHaveLength(60);
+        expect(loaded.usage).toEqual(SPENT);
+    });
+
+    test('a hand-edited total is dropped, and an empty one is not kept', () => {
+        const edited = loadOne({
+            ...genSession(),
+            usage: { ...SPENT, costUsd: 'lots' },
+            messages: [
+                {
+                    id: 1,
+                    author: 'bot',
+                    text: 'hi',
+                    usage: { ...SPENT, rounds: 0 },
+                },
+            ],
+        });
+        expect(edited).not.toHaveProperty('usage');
+        expect(edited.messages[0]).not.toHaveProperty('usage');
+    });
+});

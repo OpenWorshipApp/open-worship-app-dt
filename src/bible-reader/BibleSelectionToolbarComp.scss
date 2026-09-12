@@ -84,6 +84,25 @@
     gap: 2px;
   }
 
+  // Force-close, on the left so it is the first thing under the pointer: the
+  // grace timer is what normally takes the tooltip away, and a tooltip that
+  // has outstayed it needs something a person can press.
+  &__close {
+    flex-shrink: 0;
+    padding: 0 3px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--bs-danger);
+    font-size: 0.7em;
+    line-height: 1.6;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--bs-danger-bg-subtle);
+    }
+  }
+
   &__button {
     padding: 0 6px;
     border: 0;

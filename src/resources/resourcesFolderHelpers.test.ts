@@ -37,6 +37,7 @@ vi.mock('../helper/settingHelpers', async (importOriginal) => {
 });
 
 import {
+    addResourcesFolders,
     getResourcesFolderList,
     promptAddResourcesFolders,
     removeResourcesFolderSettings,
@@ -107,6 +108,57 @@ describe('getResourcesFolderList / setResourcesFolderList', () => {
 
         getItemMock.mockReturnValue('{"not":"an array"}');
         expect(getResourcesFolderList()).toEqual([]);
+    });
+});
+
+describe('addResourcesFolders', () => {
+    beforeEach(() => {
+        state.isLinux = false;
+    });
+
+    test('appends the new ones and names them', () => {
+        expect(addResourcesFolders(['/a/songs'], ['/b/notes'])).toEqual({
+            newDirPathList: ['/a/songs', '/b/notes'],
+            addedDirPaths: ['/b/notes'],
+            duplicatedDirPaths: [],
+        });
+    });
+
+    test('reports a folder the list already holds instead of re-adding it', () => {
+        // The whole reason a drop needs more than the new list back: this is
+        // the case where the panel does not visibly change.
+        expect(addResourcesFolders(['/a/songs'], ['/a/songs/'])).toEqual({
+            newDirPathList: null,
+            addedDirPaths: [],
+            duplicatedDirPaths: ['/a/songs'],
+        });
+    });
+
+    test('counts two spellings of one folder in a single drop once', () => {
+        expect(addResourcesFolders([], ['/B/Notes', '/b/notes'])).toEqual({
+            newDirPathList: ['/B/Notes'],
+            addedDirPaths: ['/B/Notes'],
+            duplicatedDirPaths: [],
+        });
+    });
+
+    test('keeps both casings on Linux, where they are two folders', () => {
+        state.isLinux = true;
+        expect(addResourcesFolders([], ['/B/Notes', '/b/notes'])).toEqual({
+            newDirPathList: ['/B/Notes', '/b/notes'],
+            addedDirPaths: ['/B/Notes', '/b/notes'],
+            duplicatedDirPaths: [],
+        });
+    });
+
+    test('takes the new ones out of a drop that also held known ones', () => {
+        expect(
+            addResourcesFolders(['/a/songs'], ['/a/songs', '/c/media']),
+        ).toEqual({
+            newDirPathList: ['/a/songs', '/c/media'],
+            addedDirPaths: ['/c/media'],
+            duplicatedDirPaths: ['/a/songs'],
+        });
     });
 });
 

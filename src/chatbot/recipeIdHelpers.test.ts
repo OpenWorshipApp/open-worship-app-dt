@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { learnPageTitles, scrubAnswerRecipeIds } from './recipeIdHelpers';
+import {
+    learnPageTitles,
+    scrubAnswerRecipeIds,
+    scrubAnswerToolFields,
+} from './recipeIdHelpers';
 
 const TITLES = {
     'W-08': 'Set the background (color / image / video / web)',
@@ -88,5 +92,48 @@ describe('learnPageTitles', () => {
         learnPageTitles(titles, 'owa_help_search', {}, 'Nothing matches.');
         learnPageTitles(titles, 'owa_list_screens', {}, '{"screens":[]}');
         expect(titles).toEqual({});
+    });
+});
+
+// The answers this was written from, 2026-09-08, both on the panic question
+// the moment the symptom rule asked the model to say which fault it found.
+describe('scrubAnswerToolFields', () => {
+    it('drops a bracket quoting a tool field as evidence, and keeps the sentence', () => {
+        expect(
+            scrubAnswerToolFields(
+                'No screen is currently showing anything -- the projector ' +
+                    "display isn't turned on at all in the app right now " +
+                    '(isAnyShowing is false). That is an easy fix.',
+            ),
+        ).toBe(
+            'No screen is currently showing anything -- the projector ' +
+                "display isn't turned on at all in the app right now. " +
+                'That is an easy fix.',
+        );
+        expect(
+            scrubAnswerToolFields(
+                'Found it -- no screen is showing at all right now ' +
+                    '(isAnyShowing is false), which is why nothing appears.',
+            ),
+        ).toBe(
+            'Found it -- no screen is showing at all right now, which is ' +
+                'why nothing appears.',
+        );
+        expect(scrubAnswerToolFields('It pressed it (didChange: true).')).toBe(
+            'It pressed it.',
+        );
+    });
+    it('leaves every other bracket alone', () => {
+        for (const text of [
+            'Press F5 (or the show/hide button) to turn it on.',
+            'Type the first letters (e.g. Joh for John).',
+            'It also works on a tablet (iPad) or a phone (iPhone).',
+            'Pick the version (KJV) first.',
+            'The label reads Toggle showing screen (F5).',
+        ]) {
+            expect(scrubAnswerToolFields(text)).toBe(text);
+        }
+        expect(scrubAnswerToolFields('')).toBe('');
+        expect(scrubAnswerToolFields(undefined as any)).toBe('');
     });
 });

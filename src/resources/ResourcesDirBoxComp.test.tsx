@@ -79,6 +79,8 @@ vi.mock('../server/appProvider', () => ({
 
 import ResourcesDirBoxComp from './ResourcesDirBoxComp';
 
+const PSA_1 = [{ bookKey: 'PSA', chapter: 1 }];
+
 describe('ResourcesDirBoxComp', () => {
     let container: HTMLDivElement | null = null;
     let root: Root | null = null;
@@ -113,8 +115,7 @@ describe('ResourcesDirBoxComp', () => {
             root.render(
                 <ResourcesDirBoxComp
                     dirPath="/a/songs"
-                    bookKey="PSA"
-                    chapter={1}
+                    targets={PSA_1}
                     searchText={searchText}
                     onAddFolder={vi.fn()}
                     onRemoveFolder={vi.fn()}
@@ -145,8 +146,7 @@ describe('ResourcesDirBoxComp', () => {
         expect(scanResourceFilesMock).toHaveBeenCalledTimes(1);
         expect(scanResourceFilesMock).toHaveBeenCalledWith(
             '/a/songs',
-            'PSA',
-            1,
+            PSA_1,
             '',
             expect.any(Function),
         );
@@ -154,6 +154,51 @@ describe('ResourcesDirBoxComp', () => {
         expect(
             container?.querySelector('[title="/a/songs/PSA.1.pdf"]'),
         ).not.toBeNull();
+        // Filed under the pattern it answered to.
+        expect(container?.textContent).toContain('PSA.1.*');
+    });
+
+    test('files each match under its own chapter, book-level ones once', async () => {
+        scanResourceFilesMock.mockResolvedValue(
+            genScanResult({
+                filePaths: [
+                    '/a/songs/PSA.0.pdf',
+                    '/a/songs/PSA.1.pdf',
+                    '/a/songs/PSA.2.pdf',
+                ],
+            }),
+        );
+        const targets = [
+            { bookKey: 'PSA', chapter: 1 },
+            { bookKey: 'PSA', chapter: 2 },
+        ];
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(
+                <ResourcesDirBoxComp
+                    dirPath="/a/songs"
+                    targets={targets}
+                    searchText=""
+                    onAddFolder={vi.fn()}
+                    onRemoveFolder={vi.fn()}
+                />,
+            );
+        });
+        await act(async () => {
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        });
+        const text = container?.textContent ?? '';
+        // Pane order, then the book-level run after every chapter.
+        expect(text.indexOf('PSA.1.*')).toBeLessThan(text.indexOf('PSA.2.*'));
+        expect(text.indexOf('PSA.2.*')).toBeLessThan(text.indexOf('PSA.0.*'));
+        expect(
+            container?.querySelectorAll('[title="/a/songs/PSA.0.pdf"]'),
+        ).toHaveLength(1);
     });
 
     test('says so when nothing matched', async () => {
@@ -183,8 +228,7 @@ describe('ResourcesDirBoxComp', () => {
         await renderBox('abc');
         expect(scanResourceFilesMock).toHaveBeenCalledWith(
             '/a/songs',
-            'PSA',
-            1,
+            PSA_1,
             'abc',
             expect.any(Function),
         );
@@ -231,8 +275,7 @@ describe('ResourcesDirBoxComp', () => {
         scanResourceFilesMock.mockImplementation(
             (
                 _dirPath: string,
-                _bookKey: string,
-                _chapter: number,
+                _targets: unknown,
                 _searchText: string,
                 shouldStop: () => boolean,
             ) => {

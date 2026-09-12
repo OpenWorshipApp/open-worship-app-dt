@@ -87,6 +87,32 @@ function checkIsNotAnId(id: string) {
     return NOT_AN_ID_SET.has(id.split('-')[0]);
 }
 
+// "(isAnyShowing is false)", "(didChange: true)": a model citing a tool's
+// answer back at the user by its FIELD name, in a bracket, as evidence. Seen
+// twice in two asks on 2026-09-08 the moment the symptom rule asked it to say
+// which fault it found. The bracket is only ever a statement about a camel
+// -cased name -- a name followed by "is", "was", ":" or "=" -- so a real
+// aside ("(iPad)", "(or F5)", "(e.g. Joh)") never fits it, and the whole
+// bracket goes: nothing a volunteer needs is ever in there.
+const TOOL_FIELD_ASIDE_PATTERN =
+    /[ \t]*\(\s*[a-z]+(?:[A-Z][a-z0-9]+)+\s*(?:is|was|=|:)\s[^()\n]*\)/g;
+
+/**
+ * Every bracketed aside quoting a tool result field, removed. The rest of the
+ * sentence stands: "no screen is showing (isAnyShowing is false), which is
+ * why" becomes "no screen is showing, which is why".
+ */
+export function scrubAnswerToolFields(text: string): string {
+    const source = String(text ?? '');
+    if (source.search(TOOL_FIELD_ASIDE_PATTERN) === -1) {
+        return source;
+    }
+    return source
+        .replace(TOOL_FIELD_ASIDE_PATTERN, '')
+        .replace(/[ \t]+([.,;:])/g, '$1')
+        .replace(/(?<=\S)[ \t]{2,}/g, ' ');
+}
+
 function checkIsSentenceStart(whole: string, offset: number) {
     const before = whole.slice(0, offset).replace(/[*_`"“'(\s]+$/, '');
     return before.length === 0 || /[.!?:\n]$/.test(before);

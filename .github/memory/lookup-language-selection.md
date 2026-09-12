@@ -1,6 +1,6 @@
 ---
 name: lookup-language-selection
-description: The names/locations lookup has its own language setting; the in-text index stays English forever, only ONE language's dataset is ever loaded, and a translated record shows and is searchable by its English name
+description: The names/locations lookup has its own language setting, which the IN-VERSE underlines never follow - those follow the bible each verse is in; only ONE language's dataset is ever loaded, and a translated record shows and is searchable by its English name
 metadata:
   type: project
 ---
@@ -18,11 +18,17 @@ Four things about it are easy to get wrong:
   languages therefore RELOADS rather than setting `manager.defaultLang`.
 - **The in-text index (`verse-text-index.json`) is English and must stay English.**
   It matches KJV wording in rendered verse text (`TOKEN_PATTERN` is `[A-Za-z]`,
-  gated to `BIBLE_KJV_KEY`), so the underlines never follow the setting. Only the
-  LABELS sidecar is per-language — `verse-record-labels-<code>.json`, built by
+  gated to `BIBLE_KJV_KEY`), so the underlines never follow the setting. TWO files
+  are per-language and neither is that one. The LABELS sidecar —
+  `verse-record-labels-<code>.json`, built by
   overlaying the translated package onto the English id list, keeping English text
   for records the translation misses (an empty label makes `toVerseRecord` drop
-  the row) and always keeping the English `type` (it keys the icon map).
+  the row) and always keeping the English `type` (it keys the icon map). And the
+  NEEDLES sidecar — `verse-text-needles-<code>.json`, which is what lets a bible
+  in that language be underlined at all
+  ([[in-verse-names-follow-the-bible]]). The labels file follows the SETTING and
+  the needles file follows the BIBLE on screen, which is why they are built
+  separately even though both read the same package.
 - **Invalidation is driven by the CHANGE, not by the next read.**
   `lookupDataHelpers` subscribes to `subscribeLookupLangCode` at module load and
   drops the held managers plus the `globalCacheManager10Seconds` entries; between
@@ -58,7 +64,8 @@ for it. The app only RENDERS it, `ម៉ូសេ (Moses)`, through one helper:
   that covers a record the translation misses too. `LOOKUP_TEXT_INDEX_VERSION`
   went to 3 for it, and `checkIsRecordLabelsValid` length-checks it like the
   other arrays.
-- The in-text underlines are untouched: they match KJV wording, already English.
+- The in-text underlines are untouched by this setting: each follows the bible its
+  verse is in ([[in-verse-names-follow-the-bible]]).
 
 The dep's OWN surfaces get the font too (`0440f106`): `lookupDataHelpers`
 passes a `{ fontFamily }` style object into
@@ -118,5 +125,6 @@ always KJV. Watch out for:
   stripper, so a token there keeps its stored English label whatever the lookup
   language is. Only a detail BODY re-reads them.
 
-Related: [[onscreen-setting-parse-amplification]], [[filesource-cache-sliding-ttl]],
+Related: [[in-verse-names-follow-the-bible]],
+[[onscreen-setting-parse-amplification]], [[filesource-cache-sliding-ttl]],
 [[tran-missing-key-throws-in-dev]].

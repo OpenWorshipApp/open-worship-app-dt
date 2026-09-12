@@ -874,9 +874,16 @@ const GUIDE_RUNTIME = `
         // busy has four panels in every corner, and the panel is the word the
         // user can actually look for.
         const inPanel = dm.describe(target).inPanel;
+        // A named divider under a right-click step is right-clicked, and
+        // the card says so: "click it" would have the user expecting a
+        // press that does nothing on a divider.
+        const isRightClick = step.action === 'rightClick' &&
+            target.getAttribute('role') === 'separator';
         parts.hint.textContent = (state.isDemo
             ? 'Press ' + state.labels.act + ' and I will ' +
-                (step.action === 'type' ? 'type it' : 'click it') + ' for you. '
+                (step.action === 'type' ? 'type it' :
+                    (isRightClick ? 'right-click it' : 'click it')) +
+                ' for you. '
             : '') + (isHeldVisible
             ? 'This one only shows while the mouse is over it, so I ' +
                 'am holding it up for you. '
@@ -1085,7 +1092,17 @@ const GUIDE_RUNTIME = `
         // While X is not on screen the press opens the menu; once it is, the
         // very same press chooses it. One press, one action, either way --
         // and the region is only reached for when there is no control.
-        if (target === null && step.action === 'rightClick') {
+        // A step that names a DIVIDER gets no list to fall back on: a
+        // divider is only there while both its panels are open, and with
+        // one collapsed the fallback right-clicked whatever list was
+        // nearest and opened a menu about something else entirely
+        // (measured 2026-09-09: the Presenting Flow list's own menu, for a
+        // step about the divider above it). Missing, it is reported
+        // missing, with the strip to press named among the near misses.
+        const wantsDivider = (step.finds ?? [step.find]).some((one) => {
+            return /^divider\\b/i.test(String(one ?? ''));
+        });
+        if (target === null && step.action === 'rightClick' && !wantsDivider) {
             const region = dm.findListRegion(state.lastPoint);
             if (region !== null) {
                 unwatch();
@@ -1193,6 +1210,19 @@ const GUIDE_RUNTIME = `
             }
             unwatch();
             rememberPoint(target);
+            // A divider is right-clicked WHERE IT IS. The app names every
+            // one ("Divider between Document List and Presenting Flow
+            // List"), so a step about its menu -- Reset Size, Close First
+            // Widget -- finds the divider itself by name and never reaches
+            // the list-region search above; and a left click on a divider
+            // does nothing at all. Same one-press-one-action shape as the
+            // list: this press opens the menu, withMore names the item it
+            // brought up, the next press chooses it.
+            if (step.action === 'rightClick' &&
+                target.getAttribute('role') === 'separator') {
+                const at = dm.openContextMenu(target);
+                return await withMore({ done: true, did: 'right-clicked', at });
+            }
             target.click();
             return await withMore({ done: true, did: 'clicked',
                 label: (target.textContent ||
@@ -1702,6 +1732,15 @@ function toWindowNames(descriptor) {
         });
 }
 
+// The sentence a step OPENS with: up to the first full stop that ends a
+// sentence (one followed by a space or the end), so "e.g." and "3.16" do
+// not cut it short.
+function toFirstSentence(text) {
+    const whole = String(text ?? '').replace(/\b(e\.g|i\.e)\./gi, '$1');
+    const match = /^(.*?[.!?])(?:\s|$)/.exec(whole);
+    return match === null ? whole : match[1];
+}
+
 function genHereNames(pathname) {
     const descriptor = getBotFocus(detectBotFocus(pathname) ?? '');
     return descriptor === null ? null : toWindowNames(descriptor);
@@ -1749,8 +1788,15 @@ export function dropStepsAlreadyDone(steps, pathname = '') {
     if (hereNames === null) {
         return kept;
     }
+    // Only the step's FIRST sentence says where it is going. W-31 opens
+    // "Open View on the top menu bar → Widgets. You get one tick-box per
+    // panel ... e.g. on the presenter: App Presenter Left ..." -- a step
+    // about the View menu, with the window's name in the example list two
+    // sentences on -- and the whole step was dropped in the Presenter, so
+    // the card opened on "Click a ticked one" with nothing said about
+    // what to tick. A step that takes you somewhere says so up front.
     const checkIsHere = (text) => {
-        const lowered = String(text ?? '').toLowerCase();
+        const lowered = toFirstSentence(text).toLowerCase();
         return hereNames.some((name) => {
             return lowered.includes(name);
         });

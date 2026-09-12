@@ -7,7 +7,7 @@ import AudioPlayerComp from './AudioPlayerComp';
 import { HoverMotionHandler } from '../../helper/domHelpers';
 import RenderVerseLookupTextComp from '../../location-name-lookup/RenderVerseLookupTextComp';
 import RenderCustomVerseLookupComp from '../../location-name-lookup/RenderCustomVerseLookupComp';
-import { checkCanLookupVerseText } from '../../location-name-lookup/verseTextIndexHelpers';
+import { getVerseTextLookupLangCode } from '../../location-name-lookup/verseTextIndexHelpers';
 import { VERSE_ANNOTATION_ANCHOR_ATTR } from '../bibleVerseAnnotationHelpers';
 
 export default function RenderVerseTextViewComp({
@@ -37,30 +37,37 @@ export default function RenderVerseTextViewComp({
     const verseKey = bibleVersesKey;
     // Only mounted when the text can actually carry matches: mounting it is what
     // subscribes to — and therefore loads — the in-text lookup index. Keyed on
-    // THIS row's bible, so in a multi-version view only the KJV column decorates.
-    const canLookupText = checkCanLookupVerseText(bibleKey);
+    // THIS row's bible, so in a multi-version view each column is decorated in
+    // its own language, or not at all.
+    const lookupLangCode = getVerseTextLookupLangCode(
+        bibleKey,
+        verseInfo.locale,
+    );
     let textElement;
     if (customText !== null) {
         // Custom HTML still gets decorated — the words-of-Christ markup makes
         // most gospel verses "custom", so skipping them would leave the feature
         // absent exactly where the names are densest.
-        textElement = canLookupText ? (
-            <RenderCustomVerseLookupComp
-                bibleItem={bibleItem}
-                customHtml={customText}
-                kjvShortVerse={verseInfo.kjvBibleVersesKey}
-            />
-        ) : (
-            <RenderCustomVerseComp
-                bibleItem={bibleItem}
-                customHtml={customText}
-            />
-        );
-    } else if (canLookupText) {
+        textElement =
+            lookupLangCode !== null ? (
+                <RenderCustomVerseLookupComp
+                    bibleItem={bibleItem}
+                    customHtml={customText}
+                    kjvShortVerse={verseInfo.kjvBibleVersesKey}
+                    lookupLangCode={lookupLangCode}
+                />
+            ) : (
+                <RenderCustomVerseComp
+                    bibleItem={bibleItem}
+                    customHtml={customText}
+                />
+            );
+    } else if (lookupLangCode !== null) {
         textElement = (
             <RenderVerseLookupTextComp
                 text={text}
                 kjvShortVerse={verseInfo.kjvBibleVersesKey}
+                lookupLangCode={lookupLangCode}
             />
         );
     } else {

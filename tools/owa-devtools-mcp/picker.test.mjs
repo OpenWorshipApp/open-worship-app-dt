@@ -92,9 +92,11 @@ describe('the picker runtime', () => {
             }),
         );
         const { result } = picker.read();
-        // Joined, this reads "Setting Setting" -- which is what the chip in
-        // the help window used to say.
-        expect(result.labelParts).toEqual(['Setting', 'Setting']);
+        // Its text and its aria-label are the same word, and a name is said
+        // once: joined, this used to read "Setting Setting" -- which is what
+        // the chip in the help window used to say -- and since 2026-09-09
+        // the matcher itself keeps each distinct name once.
+        expect(result.labelParts).toEqual(['Setting']);
         expect(result.selector).toContain('#go');
     });
 

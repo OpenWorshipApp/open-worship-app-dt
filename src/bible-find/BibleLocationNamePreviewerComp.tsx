@@ -205,10 +205,9 @@ export default function BibleLocationNamePreviewerComp() {
                     // passage that stays put, and the key is now unique by
                     // construction.
                     key: targetKey,
-                    // `(NIV) LUK 3:1-3`. The synchronous formatter on purpose:
-                    // `toTitle` would read the bible's book names off disk for a
-                    // header that only names the passage.
-                    title,
+                    // `(KJV) Genesis 29:1-35`, the way the Bibles list names
+                    // a reading, so a section can be matched to its pane.
+                    title: `(${verseBibleKey}) ${title}`,
                     chapter: target.chapter,
                     names,
                     locations,

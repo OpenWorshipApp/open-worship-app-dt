@@ -438,6 +438,37 @@ describe('electronHelpers coverage', () => {
         vi.runAllTimers();
     });
 
+    test('resetting a popup aligned beside a maximised opener keeps it on screen', () => {
+        vi.useFakeTimers();
+        electronMockState.screen.getDisplayMatching.mockReturnValue({
+            id: 1,
+            bounds: { x: 0, y: 0, width: 1494, height: 934 },
+            workArea: { x: 0, y: 0, width: 1494, height: 886 },
+            size: { width: 1494, height: 934 },
+        } as any);
+        const parentWin = createMockBrowserWindow({
+            getBounds: vi.fn(() => ({ x: 0, y: 0, width: 1494, height: 886 })),
+        });
+        const { popupWin } = openPopup(parentWin, {
+            // the chatbot's own placement: beside the opener, which is off the
+            // monitor once the opener fills it
+            features:
+                'popup,width=460,height=640,appAlignHorizontal=right,' +
+                'appAlignVertical=center,appFollowScale',
+        });
+
+        resetPopupWindowsBounds(parentWin as any);
+
+        // x would be 1494 -- the far side of the screen -- unclamped
+        expect(popupWin.setBounds).toHaveBeenCalledWith({
+            x: 1494 - 460,
+            y: 123,
+            width: 460,
+            height: 640,
+        });
+        vi.runAllTimers();
+    });
+
     test('a failed print is reported rather than thrown', () => {
         const win = createMockBrowserWindow({
             webContents: createMockWebContents({

@@ -40,6 +40,7 @@ import { useThemeSource } from '../../others/themeHelpers';
 import { tran } from '../../lang/langHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { toKeyByFilePath } from '../../app-document-list/appDocumentHelpers';
+import { toSlideAccessibleName } from './slideAccessibleNameHelpers';
 import { useSlidesPreviewerScope } from './slidesPreviewerScopeHelpers';
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -349,6 +350,10 @@ export default function VarySlideRenderComp({
                     ? tran('This slide is disabled')
                     : undefined
             }
+            // The card's one accessible name -- number and slide name, as
+            // the header shows them. Also what the presenter state hands an
+            // agent as the words to press this slide with; see the helper.
+            aria-label={toSlideAccessibleName(index + 1, varySlide.name)}
             style={{
                 width: `${width}px`,
                 ...(varySlide.isDisabled

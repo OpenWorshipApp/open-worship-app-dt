@@ -30,9 +30,12 @@ function genNodeScope() {
 }
 
 describe('checkShouldLockdownRenderer', () => {
-    it('names the chatbot window and nothing else', () => {
+    it('names the two windows that hold outside content, nothing else', () => {
         expect(checkShouldLockdownRenderer('/chatbot.html')).toBe(true);
         expect(checkShouldLockdownRenderer('/chatbot.html?uuid=chatbot')).toBe(
+            true,
+        );
+        expect(checkShouldLockdownRenderer('/aichat.html?uuid=aichat')).toBe(
             true,
         );
         for (const pathName of [

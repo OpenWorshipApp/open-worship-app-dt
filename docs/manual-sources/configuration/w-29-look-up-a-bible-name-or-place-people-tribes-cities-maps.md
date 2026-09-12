@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126]
 screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-08"
+workflowsVersion: "2026-09-12"
 ---
 # W-29 — Look up a Bible name or place (people, tribes, cities, maps)
 
@@ -28,8 +28,9 @@ your Bible reading.
    (**W-16**): an English menu with Khmer names is a perfectly normal combination. The
    verse references a record cites are read back in **the Bible you are reading**, so
    they name the passage the way your own Bible does. Only the underlined names inside
-   the King James verses themselves do not change — those follow the King James
-   wording, which is what makes them findable at all. The lists, the record
+   the verses themselves do not change — those follow the Bible each verse is IN (the
+   King James one in English, a Khmer bible in Khmer), which is what makes them findable
+   at all, and not this setting. The lists, the record
    windows and the "in your reading" panel are also **typed in that language's own
    script and font** — the name across the top of a record window included — and the
    kind of each record — **[en:tran:People]**, **[en:tran:Groups]**, **[en:tran:Places]** — is named in it too, in the filter and on each
@@ -98,5 +99,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
 :::

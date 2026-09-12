@@ -13,7 +13,7 @@ import locationsMapUrl from './location-name-map-data/locationsMap.json?url';
 import namesMapUrl from './location-name-map-data/namesMap.json?url';
 
 const lang: LanguageDataType = {
-    packageDir: __dirname,
+    packageDir: '',
     version: '0.0.1',
     locale: DEFAULT_LOCALE,
     langCode: DEFAULT_LANG_CODE,

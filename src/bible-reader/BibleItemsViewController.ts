@@ -256,7 +256,6 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     _nestedBibleItems: NestedBibleItemsType = [];
     private readonly _settingNameSuffix: string;
     setBibleVerseKey = (_verseKey: string) => {};
-    setResourcesVerseKey = (_verseKey: string) => {};
     handleScreenBibleVersesHighlighting = (
         _verseKey: string,
         _isToTop: boolean,
@@ -332,7 +331,6 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     set selectedVerseKey(bibleVerseKey: string) {
         setSetting(this.toSettingName('-bible-verse-key'), bibleVerseKey);
         this.setBibleVerseKey(bibleVerseKey);
-        this.setResourcesVerseKey(bibleVerseKey);
     }
 
     /** @deprecated Alias of `selectedVerseKey`, which is what this always was:

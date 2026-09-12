@@ -1,10 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { AISettingType } from './aiHelpers';
-import { getAISetting, getIsAIEnabled, useAISetting } from './aiHelpers';
+import { getAISetting, getIsAIEnabled } from './aiHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { tran } from '../../lang/langHelpers';
-
-export const DATA_DIR_NAME = 'ai-anthropic-data';
 
 let instance: Anthropic | null = null;
 // The cache key is the credential AND the workspace it acts in: changing only
@@ -51,14 +48,11 @@ export function getAnthropicInstance() {
     return instance;
 }
 
-export function checkIsAvailable(aiSetting?: AISettingType) {
-    const setting = aiSetting ?? getAISetting();
-    // The master switch too, exactly as the OpenAI twin does: a button left on
-    // screen by a feature that is switched off can only apologise when pressed.
-    return getIsAIEnabled() && setting.anthropicAPIKey.trim().length > 0;
-}
-
-export function useAvailable() {
-    const aiSetting = useAISetting();
-    return checkIsAvailable(aiSetting);
-}
+// Re-exported so existing callers keep one import site. Import them from
+// `anthropicAvailabilityHelpers` DIRECTLY in anything that merely draws a
+// control: reaching them through this module pulls the SDK into that chunk.
+export {
+    checkIsAvailable,
+    DATA_DIR_NAME,
+    useAvailable,
+} from './anthropicAvailabilityHelpers';

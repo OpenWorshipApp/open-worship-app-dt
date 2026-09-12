@@ -20,6 +20,7 @@ const initSecondInstance = vi.fn();
 const initUserTasks = vi.fn();
 const enableRemoteDebugging = vi.fn();
 const initAi = vi.fn();
+const initAiChatGuestGuard = vi.fn();
 const getInstance = vi.fn(() => ({ id: 'app-controller' }));
 
 vi.mock('./fsServe', () => ({
@@ -43,6 +44,7 @@ vi.mock('./taskbarHelpers', () => ({
 }));
 
 vi.mock('./aiHelpers', () => ({ enableRemoteDebugging, initAi }));
+vi.mock('./aiChatGuestHelpers', () => ({ initAiChatGuestGuard }));
 vi.mock('./electronMenu', () => ({ initMenu }));
 vi.mock('./devtools', () => ({ initDevtools }));
 vi.mock('./displayMediaHelpers', () => ({ initDisplayMediaHandler }));
@@ -113,6 +115,7 @@ describe('electron index', () => {
         expect(sweepStalePrintPreviewFiles).toHaveBeenCalledTimes(1);
         expect(initCustomSchemeHandler).toHaveBeenCalledTimes(1);
         expect(initDisplayMediaHandler).toHaveBeenCalledTimes(1);
+        expect(initAiChatGuestGuard).toHaveBeenCalledTimes(1);
         expect(getInstance).toHaveBeenCalledTimes(1);
         expect(initMenu).toHaveBeenCalledWith({ id: 'app-controller' });
         expect(initDevtools).toHaveBeenCalledWith({ id: 'app-controller' });

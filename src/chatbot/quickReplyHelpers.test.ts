@@ -77,6 +77,27 @@ describe('parseAnswerOptions', () => {
         );
     });
 
+    // Measured 2026-09-10 on the free tier: the marker glued straight onto
+    // the full stop of the last sentence, no space, and every button printed
+    // at the volunteer as prose. A sentence's end counts as a word boundary.
+    test('a marker glued to the full stop before it is still taken off', () => {
+        const parsed = parseAnswerOptions(
+            'No, the projector is not showing anything right now.OPTIONS: ' +
+                'Yes, start presenting | How do I start? | No thanks',
+        );
+        expect(parsed.options).toEqual([
+            'Yes, start presenting',
+            'How do I start?',
+            'No thanks',
+        ]);
+        expect(parsed.text).toBe(
+            'No, the projector is not showing anything right now.',
+        );
+        expect(parseAnswerOptions('Is it on?OPTIONS: Yes | No').text).toBe(
+            'Is it on?',
+        );
+    });
+
     // ...but only as its own word. An answer that talks ABOUT options is prose.
     test('a word merely ending in options is not the marker', () => {
         const text =
@@ -479,6 +500,10 @@ describe('checkIsWalkthroughEcho', () => {
         'Yes',
         'OK, do it for me',
         'Walk me through it',
+        // The button's own words behind a yes, seen 2026-09-08 under the
+        // running-order answer beside the button itself.
+        'Yes, show me step by step',
+        'Show me it step by step',
     ])('reads %j as the walkthrough button in other words', (reply) => {
         expect(checkIsWalkthroughEcho(reply)).toBe(true);
     });

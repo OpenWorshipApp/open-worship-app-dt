@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import {
     BibleLookupButtonComp,
     BibleLookupTogglePopupContext,
+    AiChatButtonComp,
     ChatbotButtonComp,
     HelpButtonComp,
     SettingButtonComp,
@@ -96,6 +97,7 @@ export default function AppLayoutComp({
                             <SettingButtonComp />
                         )}
                         <ChatbotButtonComp />
+                        <AiChatButtonComp />
                         <HelpButtonComp />
                     </div>
                 </div>

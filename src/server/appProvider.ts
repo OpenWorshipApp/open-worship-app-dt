@@ -131,6 +131,8 @@ export type PagePropsType = {
     aboutHomePage: string;
     isPageChatbot: boolean;
     chatbotHomePage: string;
+    isPageAichat: boolean;
+    aichatHomePage: string;
     isPageLWShare: boolean;
     isMainPage: boolean;
     lwShareHomePage: string;

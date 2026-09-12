@@ -2,10 +2,10 @@
 id: W-42
 title: "Ask the app for help (the chatbot)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46]
-screenshots: 36
+verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71]
+screenshots: 40
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-08"
+workflowsVersion: "2026-09-12"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -13,9 +13,10 @@ The app can answer its own "how do I …?" questions. It reads the same manual y
 reading now, looks at what the app is doing at that moment, and can point at the button
 it is describing.
 
-1. Click the **🤖** button in the top-right corner of the window, just left of the
-   **?**, or open **Help** → **App Help (Chatbot)** in the menu bar. A narrow window
-   opens beside the app. 📸
+1. Click the **🤖** button in the top-right corner of the window, between the gear
+   and the **✨** (the AI Chat window, W-44 — a different thing: a company's chat site
+   in a box), or open **Help** → **App Help (Chatbot)** in the menu bar. A narrow
+   window opens beside the app. 📸
    **The 🤖 button is only on the three windows with a top bar** — the Presenter, the
    Bible Reader and the Slide Editor. Everywhere else, and on those three as well, the
    way in is the **Tools** menu → **App Assistant**, or **Ctrl+Shift+A**
@@ -134,15 +135,58 @@ it is describing.
    `/` is a **command**: it runs on the spot, on this machine, with no assistant,
    no key and no internet, and the answer says what CHANGED. Type `/` on its own
    and the list of them appears above the box — walk it with the arrows or click
-   one. **/screen** says whether anything is on the projector; **/screen-show**
+   one. **/screen** says whether anything is on the projector AND what is on it
+   — the song and the verse, the passage, the background — even while the screen
+   is off, so *the screen is off but already holds Verse 2, turning it on shows
+   that* is the answer rather than a bare *nothing is showing*; **/screen-show**
    turns the screen on and **/screen-hide** turns every screen off, and both read
    the screens back afterwards, so *the screen is on now* is never a guess;
    **/clear-all**, **/clear-background**, **/clear-slide**, **/clear-bible** and
    **/clear-foreground** press the five clear buttons (**F6**–**F10**);
+   **/selected** says which song is selected, which of its slides is up and
+   which comes next; **/next** and **/previous** put the next or the previous
+   slide of the selected song on the screen — the arrow keys, from the ask box —
+   and read the screens back afterwards, saying so when the screen itself is off;
+   **/run** says which run sheet (presenting flow) is open in its run player,
+   the line the run is on — and the slide inside it — and what the next press
+   puts up, or names the sheets there are to open when none is (it presses
+   nothing: advancing a run is your own **Space** in the run player);
+   **/verse John 3:16** puts that passage on the screen — read by the app's own
+   reference parser, in the Bible version the Bible Lookup is on (or another
+   installed one that reads it), and read back afterwards: *John 3:16 (KJV) is
+   on the screen now — "For God so loved…"*, with *Turn the screen on* offered
+   when the screen is off and *Take it off again* beside it (**F9**). Asking in
+   words does the same: *Put John 3:16 on the screen* puts it up straight away
+   with an assistant, and offers one button that does it without one;
+   **/countdown 5** starts a five-minute countdown on the screen (**/countdown
+   10:30** counts down to a time, **/countdown stop** takes it off; **/timer** is
+   the same command) and **/marquee Please silence your phones** scrolls the
+   words along the bottom (**/marquee-top** along the top; **stop** takes either
+   off) — each read back afterwards, *a 5 minute countdown, ending at 11:45 AM is
+   on the screen now*, with *Turn the screen on* offered while the screen is off
+   and *Take it off again* beside it. Asking in words does the same: *Start a 5
+   minute countdown on the screen* or *Put the time on the screen* starts it
+   straight away with an assistant and offers the screen's own show button, and
+   without one the guide offers one button that starts it; the five **/clear-**
+   commands clear a layer the screen HOLDS even while it is off;
    **/find Clear Bible** outlines a control in red; **/goto reader** switches the
    main window (the projector is untouched); **/here** says which window is in
    front; **/help clear bible** searches this guide without an assistant;
-   **/commands** lists them all. The square buttons under a command's answer are
+   **/credit** says what this chat has cost so far (also **/cost**); **/limit**
+   says or sets the hourly spending limit (**/limit 2**, **/limit off**, and
+   **/limit more** to carry on after a pause); **/lyric https://…** reads a
+   song page — a hymnal's text page, a chord sheet — and writes the song out
+   for the Lyric Editor with its chords where the page puts them, and
+   **/lyric** followed by pasted words writes those out (also **/lyrics**,
+   **/hymn**, **/new-song**); either answers in a few seconds with what the
+   song is and the two buttons — **Create "…"** and **Copy song text** — and
+   the song text as it will be saved drawn above them, and NOTHING is saved
+   until you press Create (a *page on hymnary.org was read* notice appears in
+   the app window while the page is read). Asking in words does the same
+   without an assistant — *Create a lyric file from https://…* is answered by
+   the built-in guide with the same buttons when no assistant can answer;
+   **/commands**
+   lists them all. The square buttons under a command's answer are
    commands too — *Turn the screen on* under *nothing is showing* — and pressing
    one writes the command into the chat as though you had typed it, so the word is
    there for next time. A command with a spelling mistake lists the real ones
@@ -170,13 +214,21 @@ it is describing.
    click, so it is safe to point at **Clear Bible** and ask what it does. 📸
    **Press a chip to see what it stands for.** A control you pointed at is
    **circled in red** in the app window again, so you can find it after looking
-   away; a picture opens big enough to read (press anywhere, or **Esc**, to
-   close it); and a file you attached from your computer opens the folder it
-   came from.
+   away; and **every file or picture opens** — big enough to read, right here
+   over the conversation (press anywhere, or **Esc**, to close it).
    **Answers can carry them too.** When the assistant points you at a button or a
    file, it puts a chip under its answer as well: press it and the button is
-   circled in the app, or the file opens. A picture opens big, with **Copy** and
-   **Save a copy** on it. 📸
+   circled in the app, or the file opens.
+   **Whatever opens, you can keep it.** Under every preview is **Download**,
+   which saves the file into your **Downloads** folder and opens it there —
+   a picture, a report, a song, anything. Beside it are **Copy**, which puts
+   the picture or the words on your clipboard, and **Open folder**, which
+   shows you where the file already lives. A file that is already in
+   Downloads is opened rather than copied again, so pressing Download twice
+   never leaves you with two of them. A kind this window cannot draw — a
+   video, a PDF — opens as a card naming it, with the same buttons under it.
+   Every picture chip also carries a small clipboard icon that copies the
+   picture without opening it, so it can go straight into an email. 📸
    **Pictures are kept only while the window is open.** Close the help window and
    the conversation is all still there, but the picture itself is gone — the chip
    goes grey and says so. Ask again with a fresh one if you need to.
@@ -191,6 +243,41 @@ it is describing.
    **✓ Copied**. Under every question of yours is **Ask again** — or just click the
    question itself — and the same words go back in the box, ready to be changed a
    little and asked again. 📸
+   **And every answer says what it cost.** At the right-hand end of that same line,
+   in small grey figures, is what the assistant spent answering — a few cents at
+   most for an ordinary question, and the tokens it used — and a line under the
+   three pickers at the top, **CREDIT USED**,
+   keeps the running total for the whole chat: every question in this tab, including
+   one you stopped part-way or one that failed, because the credit is spent whether
+   or not an answer arrived. Each tab keeps its own total, and it is remembered with
+   the rest of the tab. Hover either figure for the sums — how many times the model
+   was called, how many tokens went in and came out, how much of that was served
+   from the cache. The dollars are an **estimate from the model's list price**, so
+   the bill from your provider is the figure that counts; a free service reads
+   **free**, and a model this app has no list price for reads **price not known**
+   with the tokens still counted. Nothing at all is shown until a question has been
+   asked. The assistant itself cannot read these figures — it can only say where
+   they are — so for the total in words type **/credit**, which answers from the tab
+   itself with no assistant involved. 📸
+   **And it cannot run up the bill on its own.** At the right-hand end of the
+   pickers' own line, after MODEL, is **LIMIT PER HOUR**, a small list that starts on **$1** —
+   the most the assistant may spend in any one hour, across every tab of this
+   window. Beside it, once something has been spent, a figure says where the hour
+   stands (*≈ $0.31 of $1 this hour*); it turns **amber** past four fifths of the
+   cap, and the answer that crosses that line carries a *Heads-up* note. At the
+   cap the assistant **pauses**: the next question is answered from this guide
+   instead, under a note saying why, the figure reads *paused*, and an
+   **Allow more** button appears in the note and in the top line. Pressing it
+   starts the hour again with the whole limit available and asks your question
+   once more; nothing else lifts a pause — not time passing, not a restart — because
+   the point of it is that a fault which keeps asking cannot press a button.
+   Pick a different amount from the list (**$0.25** to **$20**, or **No limit**)
+   to change it; **No limit** keeps only the pace cap, which pauses after **150
+   model calls in one hour** whatever they cost — more than a person asks for, and
+   the one thing that protects a free service, which the money cap cannot see.
+   **/limit** says all of this in words and **/limit 2**, **/limit off** or
+   **/limit more** do the same as the list and the button. The figures are the same
+   estimate the credit line is. 📸
 9. **Something wrong with the app itself? Press Report.** Under **Ask** is a quieter
    **Report** button, for when the answer is not "how do I" but "this is broken".
    Say what went wrong in the box — one line is enough — and press it. It asks
@@ -205,8 +292,17 @@ it is describing.
    with a **Send report** button under it. **Nothing is sent until you press that** —
    and there is no bug tracker connected to this app yet, so what it does today is
    save the whole thing, with the picture, into your **Downloads** folder and tell
-   you where: press the file's chip to open the folder and pass it on however you
-   like. 📸
+   you where and who wants it: the answer names the maintainers' email address and
+   the subject line to use, and five buttons do the rest — **Copy report** puts the
+   whole write-up on your clipboard, **Copy subject** the subject line,
+   **Copy picture** the screenshot (paste it into the message and most mail apps
+   attach it), **Copy email address** the address, and
+   **Email it** opens your own mail app with the address and subject filled in (the
+   report is on your clipboard, so paste it in and attach the picture from
+   Downloads). The address is read from the app's help page at the time, and only
+   when that cannot be reached does it fall back to the one built into the app —
+   the answer says which. The saved file opens with the same "How to send this"
+   section, so it still says where to go a week later. 📸
 10. Ask **"where is …"** and name a button — the chatbot outlines it in **red** in the app
    window for a few seconds, and tells you where it is. Nothing is clicked for you. 📸
 11. Ask about screens ("is any screen showing?") and the answer comes from the live app,
@@ -234,6 +330,33 @@ it is describing.
    at the bottom of the list and the window asks your own account what else it can run
    and adds those too. Each tab keeps its own provider and model, and a new tab starts
    on the last pair you picked. 📸
+   **A key that cannot answer does not leave you with the guide while another of
+   yours can.** When the assistant you chose is out of credit, refused, or its
+   service is down, the question goes to the next assistant whose key you have set —
+   once, at once — and the answer opens with a note saying so: *ChatGPT could not
+   answer — the AI account is out of credit or being rate-limited. Claude answered
+   instead and this chat now uses it; pick ChatGPT in the row above to switch back.*
+   The tab's own list moves to the one that answered, so the next question in it does
+   not wait on the dead key again; a new tab still starts on the one you picked, and
+   the moment that key works it answers as before. The **Free** assistant is never
+   stood in for and never stands in — it is a choice you make yourself. With no
+   other key, or when the internet itself is down, the answer comes from this guide,
+   as before, under a note that says which. 📸
+   **The note says what is wrong, and carries the door to it.** The reason is read
+   from what the provider actually said, not only from how loudly it said it: *the
+   AI account is out of credit* when the account is empty, *being rate-limited
+   (asked too often)* when it is a rate limit, *out of credit or being rate-limited*
+   only when the provider said nothing more, *the API key was refused* for a wrong
+   or revoked key, *the AI service is overloaded* or *having trouble* when it is the
+   service's own fault. And the first button in the row under the note takes you to
+   the page that fixes it, in your browser — **Open ChatGPT billing** for an empty
+   account, **Open AI settings** and **Open Claude API keys** for a refused key,
+   **Open Kimi usage limits** for a rate limit, **Claude status page** when the
+   service is down — named for the assistant that FAILED, so with two keys you top
+   up the right one. Hold the mouse over the button to see the address it opens;
+   pressing it opens the page and the window says *Opening … in your browser.* The
+   **Free** assistant has no account to go to, so its button is **Open AI settings**,
+   where a key of your own goes. 📸
 14. Every answer offers **Show me step by step**. Press it and a numbered card
    appears in the corner of the app window itself, with the button for the current
    step **circled in red**: press **Next** on the card when you have done it, or
@@ -377,7 +500,7 @@ it is describing.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46`
+`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
 :::

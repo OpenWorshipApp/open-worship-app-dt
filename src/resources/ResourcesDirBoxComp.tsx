@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { Fragment, useCallback, useState } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -13,8 +13,12 @@ import { showFileOrDirExplorer } from '../server/appHelpers';
 import { pathBasename, pathDirname } from '../server/fileHelpers';
 import ResourcesFileRowComp from './ResourcesFileRowComp';
 import { toResourcesFolderExpandedSettingName } from './resourcesFolderHelpers';
-import type { ResourcesScanResultType } from './resourcesScanHelpers';
+import type {
+    ResourcesScanResultType,
+    ResourceTargetType,
+} from './resourcesScanHelpers';
 import {
+    groupResourceFiles,
     invalidateResourcesScanCache,
     scanResourceFiles,
 } from './resourcesScanHelpers';
@@ -43,7 +47,7 @@ function toErrorMessageKey(error: any) {
 }
 
 /**
- * One user-added folder, and every file in it matching the selected verse.
+ * One user-added folder, and every file in it matching any open chapter.
  *
  * Deliberately NOT `BibleCrossRefWrapperComp` with more props: that box is
  * built around a bible key it appends to its own title and looks a font up for,
@@ -55,15 +59,13 @@ function toErrorMessageKey(error: any) {
  */
 export default function ResourcesDirBoxComp({
     dirPath,
-    bookKey,
-    chapter,
+    targets,
     searchText,
     onAddFolder,
     onRemoveFolder,
 }: Readonly<{
     dirPath: string;
-    bookKey: string;
-    chapter: number;
+    targets: ResourceTargetType[];
     searchText: string;
     onAddFolder: () => void;
     onRemoveFolder: (dirPath: string) => void;
@@ -163,8 +165,7 @@ export default function ResourcesDirBoxComp({
             {isShowing ? (
                 <ResourcesDirBoxBodyComp
                     dirPath={dirPath}
-                    bookKey={bookKey}
-                    chapter={chapter}
+                    targets={targets}
                     searchText={searchText}
                     refreshCount={refreshCount}
                 />
@@ -175,14 +176,12 @@ export default function ResourcesDirBoxComp({
 
 function ResourcesDirBoxBodyComp({
     dirPath,
-    bookKey,
-    chapter,
+    targets,
     searchText,
     refreshCount,
 }: Readonly<{
     dirPath: string;
-    bookKey: string;
-    chapter: number;
+    targets: ResourceTargetType[];
     searchText: string;
     refreshCount: number;
 }>) {
@@ -197,7 +196,7 @@ function ResourcesDirBoxBodyComp({
         let isCancelled = false;
         const isCancelledRef = { current: false };
         setErrorMessageKey(null);
-        scanResourceFiles(dirPath, bookKey, chapter, searchText, () => {
+        scanResourceFiles(dirPath, targets, searchText, () => {
             return isCancelledRef.current;
         })
             .then((result) => {
@@ -218,8 +217,10 @@ function ResourcesDirBoxBodyComp({
             isCancelledRef.current = true;
         };
         // `searchText` arrives already debounced from the panel, so a keypress
-        // costs at most one walk per 500ms rather than one per character.
-    }, [dirPath, bookKey, chapter, searchText, refreshCount]);
+        // costs at most one walk per 500ms rather than one per character; and
+        // `targets` is one array per reading (memoised on its key), so it is
+        // a new identity only when a pane opened, closed or moved chapter.
+    }, [dirPath, targets, searchText, refreshCount]);
     if (errorMessageKey !== null) {
         return (
             <div className="app-resources-body">
@@ -242,20 +243,52 @@ function ResourcesDirBoxBodyComp({
     }
     const { filePaths, searchedFilePaths, isTruncated, isSearchTruncated } =
         scanResult;
+    // One labelled run per pattern, in the order the toolbar prints them --
+    // three panes make three questions, and a flat list could not say which
+    // chapter a `GEN.27.pdf` answered.
+    const groupList = groupResourceFiles(filePaths, targets);
     return (
         <div className="app-resources-body">
-            {filePaths.length === 0 && searchedFilePaths.length === 0 ? (
+            {groupList.length === 0 && searchedFilePaths.length === 0 ? (
                 <div className="app-resources-note">
                     {tran('No matching files')}
                 </div>
             ) : (
-                filePaths.map((filePath) => {
+                groupList.map((group) => {
                     return (
-                        <ResourcesFileRowComp
-                            key={filePath}
-                            filePath={filePath}
-                            bookKey={bookKey}
-                        />
+                        <Fragment key={group.pattern}>
+                            <div
+                                className="app-resources-found-label"
+                                title={group.pattern}
+                            >
+                                <span
+                                    className={
+                                        'app-resources-pattern app-ellipsis' +
+                                        ' app-data' +
+                                        (group.isBookLevel
+                                            ? ' is-book-level'
+                                            : '')
+                                    }
+                                >
+                                    {group.pattern}
+                                </span>
+                            </div>
+                            {group.filePaths.map((filePath) => {
+                                return (
+                                    <ResourcesFileRowComp
+                                        key={filePath}
+                                        filePath={filePath}
+                                        bookKey={group.bookKey}
+                                        // These are the files of the chapter
+                                        // being read -- a handful, and the
+                                        // reason the panel is open -- so a
+                                        // link list among them shows its links
+                                        // without a second press.
+                                        canAutoExpandLinks
+                                    />
+                                );
+                            })}
+                        </Fragment>
                     );
                 })
             )}
@@ -280,7 +313,6 @@ function ResourcesDirBoxBodyComp({
                             <ResourcesFileRowComp
                                 key={filePath}
                                 filePath={filePath}
-                                bookKey={bookKey}
                             />
                         );
                     })}

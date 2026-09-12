@@ -186,6 +186,14 @@ const ACTING_TOOL_SET = new Set([
     // somebody's Documents folder.
     'owa_lyric_file',
     'owa_slide_file',
+    // Puts a passage on the projector. A `check` only reads, but the budget
+    // counts the tool, not the argument: a loop presenting verse after verse
+    // is exactly what the cap is for.
+    'owa_present_bible',
+    // Starts a countdown, a clock or a message on the projector, or takes one
+    // off. A `check` only reads, but the budget counts the tool, not the
+    // argument, for the same reason as the passage above.
+    'owa_foreground',
 ]);
 
 export function checkIsActingTool(name) {
@@ -193,15 +201,34 @@ export function checkIsActingTool(name) {
 }
 
 /**
- * Every tool that reaches OFF this machine. One so far, and it is listed
- * rather than special-cased in `checkToolCall` because the second one must
- * inherit the address check and the budget by being added here, not by
- * somebody remembering to.
+ * Every tool that reaches OFF this machine. Listed rather than special-cased
+ * in `checkToolCall` because a second one must inherit the address check and
+ * the budget by being added here, not by somebody remembering to.
  */
 const NETWORK_TOOL_SET = new Set(['owa_read_website']);
 
+/**
+ * Tools that reach off this machine only when handed an address. The song
+ * drafter is a local tool -- it asks the app nothing and works with no window
+ * open -- until a caller gives it a `url`, at which point it opens the same
+ * hidden window `owa_read_website` does and is charged and screened the same
+ * way. Judged on the ARGUMENTS, because a draft from a paste must not spend a
+ * network slot or be refused for having no address.
+ */
+const NETWORK_WHEN_URL_TOOL_SET = new Set(['owa_lyric_validate']);
+
 export function checkIsNetworkTool(name) {
     return NETWORK_TOOL_SET.has(name);
+}
+
+/** Does THIS call go out to the internet? The name, or the name plus a url. */
+export function checkIsNetworkCall(name, args) {
+    return (
+        NETWORK_TOOL_SET.has(name) ||
+        (NETWORK_WHEN_URL_TOOL_SET.has(name) &&
+            typeof args?.url === 'string' &&
+            args.url.trim() !== '')
+    );
 }
 
 /**
@@ -508,7 +535,7 @@ export function checkToolCall(
     // -- this is the cheap synchronous half, made here so that a refusal is
     // logged where every other refusal is logged and costs no round trip to
     // the app.
-    if (checkIsNetworkTool(name)) {
+    if (checkIsNetworkCall(name, args)) {
         const verdict = checkWebUrl(args?.url);
         if (!verdict.isAllowed) {
             return refuse('foreign-url', verdict.reason);
@@ -538,7 +565,7 @@ export function checkToolCall(
                 'let them act.',
         );
     }
-    if (checkIsNetworkTool(name) && !checkRate('network', now)) {
+    if (checkIsNetworkCall(name, args) && !checkRate('network', now)) {
         return refuse(
             'rate-limit',
             'Too many pages read off the internet in the last few minutes. ' +

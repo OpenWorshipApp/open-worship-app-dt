@@ -38,10 +38,10 @@ more than ten good ones earn.
 | --- | --- | --- |
 | **1 · It answers** | A question gets a relevant manual answer, offline and online, and never a stack trace. | reached |
 | **2 · It answers *correctly and usably*** | Right for the window they are in, numbered steps, no path/id/component name ever, English, honest when the app cannot do the thing. | **partly — the current front line** |
-| **3 · It acts, reliably** | The ring lands on the real control, the walkthrough survives a wrong guess, demo mode does the step, and every acting call is announced and safe near a live service. | partly — measured for the first time 2026-09-08 (`demo-failure-rate.mjs`): Do it now presses only the control the step names and closes a popup in its way, but still refuses ~59% of recipe steps (most name nothing to press; `EC-108`, `EC-109`) |
-| **4 · It is trustworthy under pressure** | Recovers from its own wrong turns without the user noticing, answers in 1–2 rounds, costs little enough to use freely, and degrades honestly when the network or the key dies. | not yet |
-| **5 · It is situational** | Knows what is on screen and what the user is in the middle of; handles "nothing is showing on the projector" end to end; suggests the next step before being asked. | not yet |
-| **6 · It is the fastest way to use the app** | A volunteer would rather ask than click. | the point of the climb |
+| **3 · It acts, reliably** | The ring lands on the real control, the walkthrough survives a wrong guess, demo mode does the step, and every acting call is announced and safe near a live service. | partly — measured for the first time 2026-09-08 (`demo-failure-rate.mjs`): Do it now presses only the control the step names and closes a popup in its way, but still refuses ~59% of recipe steps (most name nothing to press; `EC-108`, `EC-109`). Same day, the standing corpus caught the model pressing F5 UNASKED through `press_key` (`EC-111`); the model now has the app's own tools only and `owa_click` presses only an exactly-named control |
+| **4 · It is trustworthy under pressure** | Recovers from its own wrong turns without the user noticing, answers in 1–2 rounds, costs little enough to use freely, and degrades honestly when the network or the key dies. | partly — cost is taken (2026-09-08, `EC-57`: the corpus's input bill went from $1.63 to $0.18 on Anthropic, every round after the first a cache read) and the corpus answers in 2–3 rounds; one wrong turn of its own is recovered in code (2026-09-09, `EC-139`); honest degradation was measured for the first time 2026-09-09 on the window's OWN default — a dead ChatGPT key, every question three retries and the manual — and now degrades to the next key of the user's own before the manual (`EC-144`); the offline bot is 10/12 (`EC-84`); and since 2026-09-10 the cost is ON SCREEN -- every answer carries what it cost and a **Credit used** row keeps the tab's total, honest about being a list-price estimate, with `/credit` saying it with no model (`EC-152`, the user's own ask) -- because "cheap enough to use freely" was a figure only the research driver could read; and since 2026-09-10 (later the same day, the user's own ask again) it has a CEILING: a rolling-hour spending limit the user sets and a fixed pace cap, checked before every model round on the one seam every call goes through, that PAUSES the assistant at the cap and stays paused until a person presses **Allow more** -- a fault that keeps asking cannot press a button, and a restart does not lift it (`EC-155`); and since 2026-09-10 (the user's ask, a third time that day) an unusual answer from a provider comes with the DOOR to it: the failure is read off the body and not only the status (`insufficient_quota` is an empty account, not "or being rate-limited"; an Anthropic empty account is a 402 or a 400 the stand-in used to miss altogether), and the note carries a button to the provider's own billing, keys, limits or status page, or to the app's AI settings (`EC-158`) |
+| **5 · It is situational** | Knows what is on screen and what the user is in the middle of; handles "nothing is showing on the projector" end to end; suggests the next step before being asked. | partly — measured for the first time 2026-09-09 by following the panic shapes THROUGH: with the projector showing a verse the assistant had answered *"turning the screen on just gives you a blank canvas"* (9 rounds), and its "yes" took 8 rounds and a wrong press. `owa_list_screens` now says what each screen holds and names its controls; the same asks answer with the verse on the wall, and the "yes" is 3 rounds (`EC-124`). What the user is in the MIDDLE of was measured and shipped 2026-09-09 (`EC-128`, `EC-132`); the unasked next step was seen for the first time 2026-09-10 — *How do I put a Bible verse on the screen?* now ends with *Put John 3:16 up now* as an option, because the assistant has a tool that can |
+| **6 · It is the fastest way to use the app** | A volunteer would rather ask than click. | the point of the climb — reached for ONE ask on 2026-09-10: *Put John 3:16 on the screen* is one sentence, one call and a verified verse on the wall (3 rounds, 9 s; `/verse` 1.5 s with no assistant; offline one button), where the app's own way is a five-step picker. Songs by name work the same way through `selectedDocument` (two asks). Everything else is still a walkthrough |
 
 Update the Status column when the evidence changes — up **or** down. A rung is
 "reached" only when the whole question corpus holds it, not when one answer does.
@@ -71,7 +71,7 @@ and app features that merely happen to be *described* by the manual.
 | Offline bot (no key / fallback)   | `src/chatbot/helpBotHelpers.ts` — manual search only, plus `genGuideActions` / `runBotAction`             |
 | LLM loop, providers, models       | `src/chatbot/llmBotHelpers.ts` — the system prompt, `MAX_TOOL_ROUNDS`, `LLM_PROVIDER_MAP` (Anthropic + OpenAI + Kimi) |
 | MCP client                        | `src/chatbot/mcpClient.ts` — one session, re-opened on a 404 sweep                                       |
-| App-level tools                   | `tools/owa-devtools-mcp/owaTools.mjs` — the 13 `owa_*` tools                                             |
+| App-level tools                   | `tools/owa-devtools-mcp/owaTools.mjs` — the 23 `owa_*` tools (20 of them sent to the model)                |
 | DOM matching for `find/click/type`| `tools/owa-devtools-mcp/domMatch.mjs` (+ test)                                                          |
 | Walkthrough cards                 | `tools/owa-devtools-mcp/guide.mjs` (+ test) — shadow-root card, `demo` mode                              |
 | Knowledge search                  | `tools/owa-devtools-mcp/help.mjs` — reads `electron-build/knowledge/index.json`                          |
@@ -132,6 +132,26 @@ If it says nothing is publishing an endpoint, start the app (see CLAUDE.md — t
 harness needs `env -u ELECTRON_RUN_AS_NODE npm run dev`) and re-run. Load the
 `owa-devtools` MCP tools too (`mcp__owa-devtools__*`); `list_pages` should show
 `presenter.html` or `reader.html`.
+
+**Check the master switch FIRST — Settings → Others → *Enable AI features*.**
+It decides whether this subsystem exists at all: off, the main process opens
+neither the CDP endpoint nor the MCP host, the Help menu drops the chatbot item,
+`AppAssistantComp` withdraws its Tools entry, and the 🤖 button answers with a
+dialog offering to turn it back on instead of opening the window. Unset means ON
+in dev and OFF in a packaged build, and it is easy to arrive OFF — a `prod` pass
+flips it deliberately, and so does any run that was measuring the off state. The
+symptom is `No running Open Worship App was found` from every `owa_*` call, which
+reads exactly like the app being down and is really the app running with no door.
+Read it rather than guessing (dev writes its own `-dev` data dir):
+
+```bash
+node -e "const fs=require('fs');const p=process.env.APPDATA+'/open-worship-app-dev/setting.json';console.log(JSON.stringify(JSON.parse(fs.readFileSync(p,'utf8')).clientSetting['ai-enabled']))"
+```
+
+`"true"` / `"false"` / absent (dev: absent means on). It is read at LAUNCH, so
+ticking the switch in a running app changes what the renderer believes and opens
+no door: tick it and press **Restart Now** beside it, or View → **Relaunch**.
+With the app down, editing that key on disk is safe and is the fastest way in.
 
 **Order matters:** `npm run build` / `electron:build` deletes `electron-build/`,
 which is the running app's own main entry — it kills the app (memory:
@@ -462,4 +482,9 @@ knows the app's internals.
   refusal spends a model round on the rescue). **Grade the presses it calls
   done by the label they clicked**, not only the refusals: the first run's
   "done" column hid ten wrong controls. Never while a screen is live.
+- [scripts/rank-measure.mjs](./scripts/rank-measure.mjs) — top-1 / top-3
+  accuracy of the manual search over every corpus row that names a recipe,
+  with the exact-label route defeated. **The ranking's ratchet**: run it
+  against the built index before and after touching `help.mjs`,
+  `build-knowledge.mjs` or the manual (2026-09-10: 267 rows, 54% / 78%).
 - `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-14`.

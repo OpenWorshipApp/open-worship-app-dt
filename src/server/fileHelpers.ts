@@ -735,6 +735,12 @@ export function fsReadSync(filePath: string) {
     return appProvider.fileUtils.readFileSync(filePath, 'utf8');
 }
 
+// The bytes of a file as base64 -- a saved picture on its way back to the
+// clipboard, which takes a data URL and never a path.
+export function fsReadFileBase64Sync(filePath: string) {
+    return appProvider.fileUtils.readFileSync(filePath, 'base64');
+}
+
 export async function fsCopyFilePathToPath(
     file: File | Blob | string,
     destinationPath: string,

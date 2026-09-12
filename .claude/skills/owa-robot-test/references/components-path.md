@@ -1,6 +1,6 @@
 # OWA Components Path — pages → components → interactions
 
-docVersion: 2026-08-30
+docVersion: 2026-09-11
 
 Standalone map of **every page**, the **component tree inside it**, and the
 **interactive tests** each component supports (click / double-click / right-click /
@@ -229,7 +229,7 @@ Root `BibleReaderComp` (no `#app-header`). Source:
 | Component (path) | Source | Interactions & expected result |
 |---|---|---|
 | `BibleReaderComp → BibleReadingLeftComp` | [bible-list/BibleReadingLeftComp.tsx](../../../../src/bible-list/BibleReadingLeftComp.tsx) | Bibles + Notes lists (same as presenter right column). |
-| `BibleReaderComp → RenderBibleLookupComp` | [bible-lookup/RenderBibleLookupComp.tsx](../../../../src/bible-lookup/RenderBibleLookupComp.tsx) | The reference lookup — the **same** step-by-step picker as the modal (same `InputHandlerComp`). A typed full ref (`John 3:16`) book-filters only; it does **not** resolve to the verse. |
+| `BibleReaderComp → RenderBibleLookupComp` | [bible-lookup/RenderBibleLookupComp.tsx](../../../../src/bible-lookup/RenderBibleLookupComp.tsx) | The reference lookup — the **same** step-by-step picker as the modal (same `InputHandlerComp`). A typed full ref (`John 3:16`) **resolves to the verse**, on this page and in the modal alike (corrected 2026-09-11). |
 | ↳ `InputHandlerComp` (reference input) | [bible-lookup/InputHandlerComp.tsx](../../../../src/bible-lookup/InputHandlerComp.tsx) | ⌨️✎ type a reference. **Incremental picker:** book → chapter → verse. ⌨️ `Tab` completes the current chunk; ⌨️ `Escape` clears input, `Ctrl+Escape` clears a chunk. Use char-by-char `type_text`. |
 | ↳ `InputExtraButtonsComp` | [bible-lookup/InputExtraButtonsComp.tsx](../../../../src/bible-lookup/InputExtraButtonsComp.tsx) | 🖱️ Clear input, Clear chunk, `Tab-to-complete` buttons (each titled with its shortcut). |
 | ↳ `RenderBookOptionsComp` / `RenderChapterOptionsComp` / `RenderVerseOptionsComp` | [bible-lookup/](../../../../src/bible-lookup/) | 🖱️ pick book / chapter / verse options; ⌨️ arrow navigation within options. |
@@ -244,10 +244,10 @@ Root `BibleReaderComp` (no `#app-header`). Source:
 | `BibleSelectionToolbarComp` (verse marks) | [bible-reader/BibleSelectionToolbarComp.tsx](../../../../src/bible-reader/BibleSelectionToolbarComp.tsx) | Mounted once per window by `BiblePreviewerRenderComp` (reader, presenter Bibles tab, lookup popup — never `screen.html`). ⇕ drag-select words inside ONE verse → floating toolbar over the selection: 🖱️ a colour swatch → highlight; **Add Comment** → per-mark textarea widget (500ms-debounced save); **Remove Marks**. A cross-verse selection raises nothing (by design). Marks paint via `CSS.highlights` (no DOM node); hovering a commented phrase pops an Edit/Delete tooltip (`verseCommentHoverHelpers`, 1200ms grace). Matrix `RD-108..110`; workflow `W-40`. |
 | `VerseNoteItemRenderComp` (Bible Notes verse rows) | [bible-list/note/VerseNoteItemRenderComp.tsx](../../../../src/bible-list/note/VerseNoteItemRenderComp.tsx) | One row per marked verse in Bible Notes (`bi-highlighter`, count chip while folded; the listed marks WEAR their wash/underline). 🖱️ a mark → opens its verse as another bible view; a mark's ⋮ → recolour / **Edit Comment** / **Delete** (`RenderVerseAnnotationComp`); the row's ⋮ → **Add to Bible List** / **Move To** / **Delete** (no Duplicate). ⇕ drag the row onto a bible file (arrives as a bible item) or another note file (moves the verse row, marks intact — two drag payloads). Deleting the last mark removes the row. Matrix `RD-111..112`. |
 
-> Known Low finding (KB §5): a typed full `John 3:16` only book-filters (it adds a history
-> entry but doesn't jump to the verse) — in the header **modal** *and* on the **Reader
-> page**, which share `InputHandlerComp`. Verified 2026-08-05; the previous "the Reader
-> resolves it fully" note was doc drift.
+> Corrected 2026-09-11 (KB §5): a typed full `John 3:16` **resolves to the verse** — in the
+> header **modal** *and* on the **Reader page**, which share `InputHandlerComp` and so behave
+> identically. Verified live on both surfaces, using `Psalm 23:1` as a control whose text is
+> absent from the saved Bibles list. This supersedes the 2026-08-05 "book-filters only" note.
 
 ---
 

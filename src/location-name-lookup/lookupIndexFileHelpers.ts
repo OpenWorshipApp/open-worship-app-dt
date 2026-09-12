@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 import { appManagedDataDirNames } from '../helper/constants';
 import { handleError } from '../helper/errorHelpers';
@@ -18,6 +18,7 @@ import {
     LOOKUP_TEXT_INDEX_VERSION,
     type LookupRecordLabelsType,
     type LookupTextIndexType,
+    type LookupTextNeedlesType,
 } from './verseTextIndexTypes';
 import { readJsonFileVersion } from '../lang/lookupDataVersionHelpers';
 import {
@@ -45,6 +46,10 @@ import {
 
 const INDEX_FILE_NAME = 'verse-text-index.json';
 const BUILD_LOCK_KEY = 'lookup-verse-text-index';
+
+function genNeedlesFileName(langCode: string) {
+    return `verse-text-needles-${langCode}.json`;
+}
 
 function genRecordLabelsFileName(langCode: string) {
     return `verse-record-labels-${langCode}.json`;
@@ -198,6 +203,10 @@ function checkIsIndexValid(value: LookupTextIndexType) {
     return Array.isArray(value.ids);
 }
 
+function checkIsNeedlesValid(value: LookupTextNeedlesType) {
+    return Array.isArray(value.needles);
+}
+
 function checkIsRecordLabelsValid(value: LookupRecordLabelsType) {
     return (
         Array.isArray(value.labels) &&
@@ -308,6 +317,69 @@ export async function loadLookupRecordLabelsFile() {
 }
 
 /**
+ * The surface forms of ONE non-English language, for decorating a bible written
+ * in it.
+ *
+ * Its own loader rather than a third output of the pair above: this file follows
+ * the BIBLE on screen while the labels sidecar follows the lookup language
+ * setting, and the two are routinely different languages. Building them together
+ * would mean reading a ~35MB package to write a file nobody asked for.
+ *
+ * The index is loaded first and only for its `ids`, which are what a needles
+ * file is aligned to — it is on disk by then in every case but a cold start, and
+ * a verse view that wants needles subscribes to the index anyway.
+ */
+export async function loadLookupTextNeedlesFile(langCode: string) {
+    if (langCode === DEFAULT_LANG_CODE) {
+        return null;
+    }
+    const dirPath = await getLookupDataDirPath();
+    if (dirPath === null) {
+        return null;
+    }
+    const filePath = pathJoin(dirPath, genNeedlesFileName(langCode));
+    const dataVersion = await getLookupDataVersionCached(langCode);
+    const cachedValue = await readCachedFile<LookupTextNeedlesType>(
+        filePath,
+        dataVersion,
+        checkIsNeedlesValid,
+    );
+    if (cachedValue !== null) {
+        return cachedValue;
+    }
+    // Per language: two languages have no reason to wait for each other, and
+    // this lock must not be the index's or the build below would wait on itself.
+    return await unlocking(
+        `${BUILD_LOCK_KEY}-needles-${langCode}`,
+        async () => {
+            const rebuiltValue = await readCachedFile<LookupTextNeedlesType>(
+                filePath,
+                dataVersion,
+                checkIsNeedlesValid,
+            );
+            if (rebuiltValue !== null) {
+                return rebuiltValue;
+            }
+            const index = await loadLookupTextIndexFile();
+            if (index === null) {
+                return null;
+            }
+            // DYNAMIC for the same reason as the index build: this is the only path
+            // that reads a full lookup package, and it runs at most once per app
+            // version per dataset version per language.
+            const { buildLookupTextNeedles } =
+                await import('./verseTextIndexBuilder');
+            const built = await buildLookupTextNeedles(langCode, index.ids);
+            if (built === null) {
+                return null;
+            }
+            await writeCachedFile(filePath, dataVersion, built);
+            return built;
+        },
+    );
+}
+
+/**
  * A subscriber-counted store around one of the loaders.
  *
  * The value is dropped as soon as the last consumer unsubscribes rather than
@@ -393,5 +465,98 @@ export function genLookupFileStore<T>(
     // the single shared load, and unsubscribing the last consumer releases it.
     return function useLookupFileValue() {
         return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+    };
+}
+
+/**
+ * The same subscriber-counted holding as `genLookupFileStore`, but with ONE
+ * SLOT PER LANGUAGE, because which file is wanted is decided by the bible a
+ * verse is in rather than by a setting — a comparison view can have a KJV column
+ * and a Khmer one side by side, and each has to be able to ask for its own.
+ *
+ * A slot is created on its first subscriber and dropped whole when its last one
+ * goes, so a language the reader has navigated away from is not left resident.
+ * The map is bounded by the number of shipped languages, and in practice holds
+ * one entry: English needs no needles file at all.
+ *
+ * `langCode` may be empty, for a verse whose bible is not decorated at all. That
+ * subscribes to nothing and reads null forever, which is what lets one component
+ * serve both paths without breaking the rules of hooks.
+ */
+export function genLookupLangFileStore<T>(
+    load: (_langCode: string) => Promise<T | null>,
+) {
+    type SlotType = {
+        loadedValue: T | null;
+        isLoading: boolean;
+        listeners: Set<() => void>;
+    };
+    const slotMap = new Map<string, SlotType>();
+    const startLoading = (langCode: string, slot: SlotType) => {
+        if (slot.loadedValue !== null || slot.isLoading) {
+            return;
+        }
+        slot.isLoading = true;
+        load(langCode)
+            .then((value) => {
+                slot.isLoading = false;
+                // Everything may have unmounted while this was in flight; the
+                // slot is gone by then and the value must not be revived.
+                if (
+                    slotMap.get(langCode) !== slot ||
+                    slot.listeners.size === 0
+                ) {
+                    return;
+                }
+                if (value !== null) {
+                    slot.loadedValue = value;
+                    for (const listener of slot.listeners) {
+                        listener();
+                    }
+                }
+            })
+            .catch((error) => {
+                slot.isLoading = false;
+                handleError(error);
+            });
+    };
+    const subscribe = (langCode: string, listener: () => void) => {
+        if (langCode === '') {
+            return () => {};
+        }
+        let slot = slotMap.get(langCode);
+        if (slot === undefined) {
+            slot = {
+                loadedValue: null,
+                isLoading: false,
+                listeners: new Set(),
+            };
+            slotMap.set(langCode, slot);
+        }
+        const currentSlot = slot;
+        currentSlot.listeners.add(listener);
+        startLoading(langCode, currentSlot);
+        return () => {
+            currentSlot.listeners.delete(listener);
+            if (currentSlot.listeners.size === 0) {
+                slotMap.delete(langCode);
+            }
+        };
+    };
+    return function useLookupLangFileValue(langCode: string) {
+        const subscribeLangCode = useCallback(
+            (listener: () => void) => {
+                return subscribe(langCode, listener);
+            },
+            [langCode],
+        );
+        const getSnapshot = useCallback(() => {
+            return slotMap.get(langCode)?.loadedValue ?? null;
+        }, [langCode]);
+        return useSyncExternalStore(
+            subscribeLangCode,
+            getSnapshot,
+            getSnapshot,
+        );
     };
 }

@@ -4,9 +4,10 @@ import {
     type EventMapperType,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
+import { askAiCaution } from '../helper/ai/aiCautionHelpers';
 import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { useAppEffect } from '../helper/appHooks';
-import { openChatbotPage } from '../helper/domHelpers';
+import { openAiChatPage, openChatbotPage } from '../helper/domHelpers';
 import {
     registerAppMenuClicked,
     setAppMenuItems,
@@ -41,6 +42,10 @@ const MENU_KEY = 'chatbot-assistant';
  * equivalent for everywhere else: a Tools entry and a shortcut, and nothing
  * drawn on screen.
  *
+ * The AI Chat window rides the same entry: a second Tools item, with no
+ * shortcut and no gate, since that window holds no key and asks nothing of
+ * the assistant service the switch turns off.
+ *
  * Renders `null` always; the assistant itself is a separate OS window.
  */
 export default function AppAssistantComp() {
@@ -49,8 +54,16 @@ export default function AppAssistantComp() {
     // button already do. Read once per render rather than watched: the setting
     // only takes effect on the next launch, which is the point of it.
     const isAiEnabled = getIsAIEnabled();
-    const handleOpening = useCallback(() => {
+    const handleOpening = useCallback(async () => {
         if (!getIsAIEnabled()) {
+            return;
+        }
+        // The same caution the 🤖 button asks, because this entry and that
+        // button open the same window -- a warning a menu item walks around
+        // is a warning nobody is actually given. It fails open in a window
+        // with no popup host (see askAiCaution), which is what keeps the
+        // shortcut working in Local Web Share and the Lyric Editor.
+        if (!(await askAiCaution('assistant'))) {
             return;
         }
         // Opened from THIS window rather than by asking the main process to do
@@ -59,8 +72,13 @@ export default function AppAssistantComp() {
         openChatbotPage();
     }, []);
     const handleMenuItemClicked = useCallback(
-        (_event: any, data: { isOpenChatbot?: boolean }) => {
-            if (data?.isOpenChatbot !== true) {
+        (
+            _event: any,
+            data: { isOpenChatbot?: boolean; isOpenAiChat?: boolean },
+        ) => {
+            const isOpenChatbot = data?.isOpenChatbot === true;
+            const isOpenAiChat = data?.isOpenAiChat === true;
+            if (!isOpenChatbot && !isOpenAiChat) {
                 return;
             }
             // The menu-click message reaches every open window; only the one
@@ -68,7 +86,15 @@ export default function AppAssistantComp() {
             if (!appProvider.getIsWindowFocused()) {
                 return;
             }
-            handleOpening();
+            if (isOpenAiChat) {
+                void (async () => {
+                    if (await askAiCaution('aichat')) {
+                        openAiChatPage();
+                    }
+                })();
+                return;
+            }
+            void handleOpening();
         },
         [handleOpening],
     );
@@ -77,22 +103,28 @@ export default function AppAssistantComp() {
         return registerAppMenuClicked(handleMenuItemClicked);
     }, [handleMenuItemClicked]);
     useAppEffect(() => {
-        if (!isAiEnabled) {
-            // Withdrawn rather than never contributed: the same key may have
-            // been registered by a window that loaded while AI was still on.
-            setAppMenuItems(MENU_KEY, null);
-            return;
-        }
+        // Always contributed, because the AI Chat entry does not go with the
+        // switch; with the switch off the assistant's own item is simply not
+        // in the list -- re-registered rather than withdrawn, so a window that
+        // loaded while AI was still on is corrected too.
         setAppMenuItems(
             MENU_KEY,
             {
                 tools: [
+                    ...(isAiEnabled
+                        ? [
+                              {
+                                  label: tran('App Assistant'),
+                                  accelerator: appProvider.systemUtils.isMac
+                                      ? 'Command+Shift+A'
+                                      : 'Ctrl+Shift+A',
+                                  clickData: { isOpenChatbot: true },
+                              },
+                          ]
+                        : []),
                     {
-                        label: tran('App Assistant'),
-                        accelerator: appProvider.systemUtils.isMac
-                            ? 'Command+Shift+A'
-                            : 'Ctrl+Shift+A',
-                        clickData: { isOpenChatbot: true },
+                        label: tran('AI Chat'),
+                        clickData: { isOpenAiChat: true },
                     },
                 ],
             },

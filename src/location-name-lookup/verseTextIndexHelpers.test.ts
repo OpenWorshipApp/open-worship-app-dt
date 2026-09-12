@@ -22,8 +22,8 @@ vi.mock('../setting/directory-setting/appLocalStorage', () => ({
 }));
 
 import {
-    checkCanLookupVerseText,
     findLookupTextMatches,
+    getVerseTextLookupLangCode,
     toVerseTextSegments,
 } from './verseTextIndexHelpers';
 import type { LookupTextIndexType } from './verseTextIndexTypes';
@@ -245,15 +245,24 @@ describe('toVerseTextSegments', () => {
     });
 });
 
-describe('checkCanLookupVerseText', () => {
-    test('accepts KJV only — the dataset was extracted from it', () => {
-        expect(checkCanLookupVerseText('KJV')).toBe(true);
+describe('getVerseTextLookupLangCode', () => {
+    test('English means the KJV and only the KJV', () => {
+        expect(getVerseTextLookupLangCode('KJV', 'en-US')).toBe('en');
         // Another English translation words the same verse differently, so the
         // KJV-keyed evidence must not be applied to it.
-        expect(checkCanLookupVerseText('NIV')).toBe(false);
-        expect(checkCanLookupVerseText('ESV')).toBe(false);
-        expect(checkCanLookupVerseText('KJVD')).toBe(false);
-        expect(checkCanLookupVerseText('ពគប')).toBe(false);
-        expect(checkCanLookupVerseText('')).toBe(false);
+        expect(getVerseTextLookupLangCode('NIV', 'en-US')).toBeNull();
+        expect(getVerseTextLookupLangCode('ESV', 'en-GB')).toBeNull();
+        expect(getVerseTextLookupLangCode('KJVD', 'en-US')).toBeNull();
+    });
+
+    test('a bible in a language that ships a lookup package uses it', () => {
+        expect(getVerseTextLookupLangCode('ពគប', 'km-KH')).toBe('km');
+        // Its own package's names, whatever the bible is called.
+        expect(getVerseTextLookupLangCode('គខប', 'km-KH')).toBe('km');
+    });
+
+    test('a language with no package is left undecorated', () => {
+        expect(getVerseTextLookupLangCode('LSG', 'fr-FR' as any)).toBeNull();
+        expect(getVerseTextLookupLangCode('Greek', 'el-GR' as any)).toBeNull();
     });
 });

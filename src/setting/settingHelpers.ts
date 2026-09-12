@@ -63,3 +63,16 @@ export async function getAppFontWeight() {
 export function forceReloadAppWindows() {
     appProvider.messageUtils.sendData('all:app:force-reload');
 }
+
+/**
+ * The heavier sibling of `forceReloadAppWindows`: the whole process closes and
+ * opens again, not just its renderers.
+ *
+ * Reloading a window re-reads every setting the RENDERER owns. It cannot
+ * re-read one the main process read before `ready` -- the AI master switch is
+ * the only such setting -- so that panel needs this instead. Nothing comes
+ * back: the window asking is gone with the process.
+ */
+export function relaunchApp() {
+    appProvider.messageUtils.sendData('main:app:relaunch');
+}

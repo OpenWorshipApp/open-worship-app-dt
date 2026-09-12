@@ -15,6 +15,8 @@
 
 import http from 'node:http';
 
+import { pinCdpPort } from './discovery.mjs';
+
 export const DEFAULT_MCP_PORT = 39223;
 const MCP_PATH = '/mcp';
 const SESSION_IDLE_MILLISECONDS = 15 * 60 * 1000;
@@ -129,11 +131,20 @@ function sendJson(res, status, body, headers = {}) {
  * Starts the HTTP MCP host. `port` is a preference, not a promise: a busy port
  * (a second instance, something else on the machine) falls through to a free
  * one, and the URL that comes back is the one to publish.
+ *
+ * `getCdpPort` answers the CDP port of the instance this host lives in (or
+ * `null` until Chromium has reported it). Pinned for the whole process -- the
+ * chrome-devtools tools and the `owa_*` ones resolve the app separately, and
+ * both must land on THIS instance rather than the newest published one.
  */
 export async function startOwaMcpHost({
     port = DEFAULT_MCP_PORT,
     logger = () => {},
+    getCdpPort = null,
 } = {}) {
+    if (getCdpPort !== null) {
+        pinCdpPort(getCdpPort);
+    }
     const sessionMap = new Map();
 
     async function closeSession(sessionId) {
@@ -175,7 +186,12 @@ export async function startOwaMcpHost({
         const { createOwaMcpServer } = await import('./server.mjs');
         const { server } = await createOwaMcpServer();
         await server.connect(transport);
-        const session = { sessionId, transport, server, lastUsedAt: Date.now() };
+        const session = {
+            sessionId,
+            transport,
+            server,
+            lastUsedAt: Date.now(),
+        };
         sessionMap.set(sessionId, session);
         logger(`MCP session ${sessionId} opened`);
         return session;

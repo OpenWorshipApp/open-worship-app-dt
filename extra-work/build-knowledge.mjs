@@ -37,9 +37,18 @@ import {
 
 const REPO_ROOT = resolve('.');
 const OUTPUT_DIR = join(REPO_ROOT, 'electron-build', 'knowledge');
-// Enough for scoring and an excerpt; the full file is read only when a page is
-// actually opened.
+// Enough for scoring and an excerpt of an INTERNAL note; the full file is read
+// only when a page is actually opened. The manual is indexed WHOLE (up to the
+// page cap below): it is what every answer must come from, and two of its
+// pages run to thirty kilobytes -- measured 2026-09-10, "spending limit"
+// found nothing in the manual and only an internal note, because the guide
+// page that teaches it says so in its step 8, twenty kilobytes past the cap;
+// the assistant then answered that the app has no such setting. Whole, the
+// manual adds ~90 KB to the index; the internal corpus (185 notes, some of
+// them hundreds of kilobytes) stays capped or the index would be megabytes
+// read on every search.
 const SEARCH_TEXT_LIMIT = 3000;
+const MANUAL_SEARCH_TEXT_LIMIT = 60000;
 const HEADINGS_LIMIT = 1500;
 
 const SOURCES = [
@@ -221,7 +230,12 @@ for (const source of SOURCES) {
                     : null,
             file: `${source.outputName}/${relativePath.split(sep).join('/')}`,
             headings: genHeadings(body),
-            searchText: body.slice(0, SEARCH_TEXT_LIMIT),
+            searchText: body.slice(
+                0,
+                source.kind === 'manual'
+                    ? MANUAL_SEARCH_TEXT_LIMIT
+                    : SEARCH_TEXT_LIMIT,
+            ),
         });
     }
 }

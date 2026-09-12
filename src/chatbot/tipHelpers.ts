@@ -123,6 +123,18 @@ export const CHAT_TIP_LIST: ChatTipType[] = [
             'Type a few words and a list of questions it can already answer ' +
             'drops up; the arrows walk it.',
     },
+    {
+        id: 'credit',
+        text:
+            'Every answer says what it cost; “Credit used” under the pickers ' +
+            'totals this chat. Hover either for the sums.',
+    },
+    {
+        id: 'spend-limit',
+        text:
+            'It cannot run up the bill: “Limit per hour” at the top pauses ' +
+            'it at $1 an hour until you press Allow more.',
+    },
 ];
 
 /**

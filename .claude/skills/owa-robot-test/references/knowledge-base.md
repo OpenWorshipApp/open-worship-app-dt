@@ -1,6 +1,6 @@
 # OWA Robot Test — Observation Knowledge Base
 
-docVersion: 2026-08-30
+docVersion: 2026-09-11
 
 Field notes for agents/skills doing black-box QA of the **running** Open Worship App.
 Everything here was **verified against the live app**, not inferred. Read this before a run
@@ -202,7 +202,10 @@ Keep the main window on `presenter.html`.
 ```json
 {"mainWinBounds":{...},"appScreenDisplayId":null,"mainHtmlPath":"presenter.html","themeSource":"system"}
 ```
-- Default is `presenter.html`; the value survives full restarts.
+- **Default is `reader.html`**, not the Presenter (`ElectronSettingManager` seeds
+  `mainHtmlPath: htmlFiles.reader`; verified 2026-09-09 on a fresh userData — the packaged
+  app opened on `owa://local/reader.html`). The value survives full restarts, which is
+  why a long-used dev profile opens on the Presenter.
 - **Recovery if the main window is stuck on a popup page:** (1) stop the app, (2) set
   `mainHtmlPath` back to `"presenter.html"` in `setting.json` (keep the other keys), (3)
   relaunch. The window will open on the Presenter. Locale (`localStorage['language-locale']`)
@@ -276,16 +279,17 @@ Keep the main window on `presenter.html`.
 - **Sliders.** Presenter has two `input[type=range]`: thumbnail-size (`max="200"`) and
   mini-screen zoom (`max="30"`). To drive one programmatically: native value setter +
   `dispatchEvent(new Event('input',{bubbles:true}))` (React listens on `input`).
-- **Bible Lookup input is an incremental picker** (book → chapter → verse). Typing a full
-  `John 3:16` only **book-filters** by the alpha prefix (`Joh`) and will **not** jump to the
-  verse (it *does* add a `John 3:16` history entry — inconsistent, logged as a Low finding).
-  ⚠️ **The Bible Reader page behaves identically — it does NOT resolve full refs**
-  (verified 2026-08-05: typing `John 3:16` shows only the John book tile; clicking it
-  rewrites the input to `យ៉ូហាន ` and drops `3:16`). Both surfaces render the *same*
-  `InputHandlerComp` writing the same `BIBLE_LOOKUP_INPUT_ID`, so a reader-only
-  full-ref path never existed. Earlier revisions of this file, `components-path.md`,
-  `test-plan.md` and `user-workflows.md` claimed otherwise — that was doc drift, not a
-  regression. **Pick step-by-step on both surfaces.**
+- **Bible Lookup input is an incremental picker** (book → chapter → verse) **and it now
+  resolves a typed full reference too** — ⚠️ corrected **2026-09-11**; this file claimed the
+  opposite from 2026-08-05. Typing `John 3:16` char-by-char renders that verse: the chapter
+  strip shows `16` selected and the Resources panel switches to `JHN.3`. **Both surfaces
+  behave the same** — the header modal and the Bible Reader page — which is exactly what the
+  shared `InputHandlerComp` / `BIBLE_LOOKUP_INPUT_ID` predicts; only the direction of that
+  shared behaviour changed. Verified live on both with `Psalm 23:1` as a control: its text is
+  absent from the saved Bibles list, so "The LORD is my shepherd" appearing after typing
+  cannot have come from a list row (baseline probe confirmed the word was nowhere on the page
+  first). Step-by-step picking still works — it is simply no longer the only way, and a test
+  that asserts "the `3:16` is dropped" will now fail a correct app.
   Also: a single `fill()` = one change event (test artifact); use char-by-char `type_text` to
   mimic a real user.
 - **Presenting a SLIDE is a single click, and re-clicking it does NOT clear it**
@@ -433,6 +437,7 @@ Keep the main window on `presenter.html`.
 | `[debug] [vite] connecting… / connected` | dev HMR |
 | `[log] printHtmlText` and an empty `[log]` | benign; the empty log repeats on interaction (cleanup candidate, not a bug) |
 | `TypeError: Cannot get bible list` at `getOnlineBibleInfoList` (Settings → Bible tab) | **intended** — the online bible `info.json` fetch failed or is unavailable (e.g. offline/dev); the error is caught and logged by `handleError`, the function returns `null`, and the UI simply shows no online bible list |
+| `[warn] If you are profiling the playground app, please ensure you turn off the debug view…` (reader page) | third-party dev-mode noise from the bundled **`bible-note`** dependency (`node_modules/bible-note/dist/bible-note.mjs`) — nothing in `src/` emits it. Observed 2026-09-11 |
 
 Real console issues to flag: uncaught errors, unhandled promise rejections, React
 key/warning spam, failed dynamic imports.
@@ -459,9 +464,11 @@ Real network issues to flag: `4xx`/`5xx` on app assets, blocked/CORS, broken ima
 - A tab/button that doesn't respond or doesn't toggle its state; a modal that won't open/close
   (`Ctrl+B` open, `Ctrl+Q` / red `btn-danger` close).
 - Clipped/overflowing/overlapping/low-contrast text; broken/blank images; layout shift.
-- **Accessibility:** icon-only buttons with no accessible name (observed: the **Help** button's
-  name is a raw URL `https://…/help#presenter`; the **fullscreen** toggle has *no* name).
-  Scan `take_snapshot` for unnamed interactive nodes.
+- **Accessibility:** icon-only buttons with no accessible name — scan `take_snapshot` for
+  unnamed interactive nodes. ⚠️ The presenter is **clean as of 2026-09-11** (108 buttons, all
+  named: `Help`, `Full view`, `AI Chat`, `App Assistant`, `Setting`, the five clear buttons…),
+  so both older observations — "Help's name is a raw URL" and "the fullscreen toggle has no
+  name" — are retired. An unnamed node there is now a **regression**, not the status quo.
 
 ---
 
@@ -488,8 +495,8 @@ Use as a diff target for regressions:
 - Lyrics: selected lyric renders (with chords) in `<iframe>` previews.
 - Background: panel expands; all six tabs switch; a color selection updates the mini-screen.
 - Mini-screen: reflects active content; zoom slider rescales the preview.
-- Bible Reader: renders a verse via the step-by-step picker. (It does **not** resolve a
-  typed full reference — see §5; the older claim here was wrong.)
+- Bible Reader: renders a verse via the step-by-step picker **and** from a typed full
+  reference (§5 — re-verified 2026-09-11 on both lookup surfaces).
 - Settings: title `Settings`; `General`/`Bible` tabs; `Apply Settings`; Path/Language/Theme/Font
   sections. (Note: the old `Set Default Data` button is gone — has
   `Reset All Child Directories` / `Clear All Settings` instead. `Reset Widgets Size`
@@ -1370,8 +1377,8 @@ The 4th entry of the Bible Find previewer's 4-way select
 - **Empty states are correct behaviour:** no folders → a single **Add Folder**
   button; no verse selected → "Please select any bible verse."; a saved path that
   is now a file → "Folder not found" (`ENOTDIR`).
-- Second entry point: verse context menu → **Open in Resources** (`CM-93`) — forces
-  the advanced panel open on the Resources entry.
+- The only entry point is the advanced panel's picker. The verse context menu's
+  **Open in Resources** item (`CM-93`) was REMOVED 2026-09-11 at the user's request.
 
 ## 17. Connection Graph — people/places relations (RD-92..106, W-38)
 
@@ -1393,3 +1400,177 @@ host `GraphViewPanelsHostComp` is mounted on the reader AND the main layout
 - The core under `graph-view/core/` is pure non-React; geometry constants are
   load-bearing (see memory `graph-view-connection-graph`). Route rows from the
   matrix (`RD-92..106`); the observed recipe is `W-38`.
+
+---
+
+## 18. The PACKAGED build — what prod mode changes (SKILL §2b) ⚠️
+
+Prod mode drives the app electron-builder wrote under `release/`, not `node_modules/
+electron` on Vite. Every `isDev` branch in the code base flips, and several of this
+file's rules were written on the dev side of that branch. What follows is the model;
+items marked *(source)* are read from the code and not yet re-observed live in a
+packaged run — confirm them the first time and drop the mark.
+
+### 18.1 Where things are
+
+- **Executable**: `release/win-unpacked/Open Worship app.exe` (x64) or
+  `release/win-arm64-unpacked/…` (arm64); macOS `release/mac[-arm64]/Open Worship
+  app.app`; Linux `release/linux-unpacked/open-worship-app`. `scripts/prod-app.mjs
+  locate` picks the one for this CPU and says whether any source file is newer than it.
+  The installer (`Open Worship app-<ver>-<os>-<arch>.exe` / `.zip`, `latest.yml`) sits
+  beside it — a `pack:*` writes both; the unpacked dir is what a run drives.
+- **Pages** are served by the app's own protocol: **`owa://local/<page>.html`**
+  (`electron/fsServe.ts`, `getRootUrl()` in `electron/protocolHelpers.ts`). The
+  main-window navigation guard (`isSupportedMainNavigation`,
+  `ElectronMainController.ts`) compares scheme + host, so `navigate_page` must use that
+  exact origin; a `file://` or `https://localhost:3000` URL is rejected. Observed live
+  2026-09-09: the release-dir app published `owa://local/reader.html` as its main-window
+  target — the page `mainHtmlPath` last held, not necessarily the Presenter.
+- **userData** is `%APPDATA%\open-worship-app` (macOS `~/Library/Application
+  Support/open-worship-app`, Linux `~/.config/open-worship-app`) — the `-dev` suffix is
+  dev only (`applyLaunchOverrides`, `electron/index.ts`). That dir holds `setting.json`
+  (`mainHtmlPath` recovery, §3), `bibles-data/`, `lookup-data/` and the single-instance
+  lock. `OWA_USER_DATA_PATH` / `--owa-user-data-path=` move all of it. **The app's code
+  is `resources/app.asar`** with `electron-build/`, `dist/*.gz.bundle` and
+  `tools/owa-devtools-mcp/` unpacked beside it (`asarUnpack` in package.json) — the MCP
+  host the chatbot talks to runs from that unpacked copy, so a `tools/` edit reaches
+  prod only through a rebuild.
+- **User content** (documents, lyrics, videos, audios, extra-bin) follows
+  `clientSetting["selected-parent-dir"]` in that `setting.json` and falls back to
+  userData itself — read the real path off the UI (`PathSelectorComp`) before sweeping
+  anything for MD-04. On the maintainer's box the packaged app points at
+  `Desktop\open-worship-data-dev` too, so "prod" and "dev" can share one content dir.
+
+### 18.2 Two instances, one machine
+
+- Discovery publishes `isDev` and `userDataPath` per instance
+  (`<temp>/open-worship-app-cdp/<pid>.json`, verified 2026-09-09 with a dev app and a
+  release-dir app side by side: `isDev: true` on `…\open-worship-app-dev`, `isDev:
+  false` on `…\open-worship-app`). `prod-app.mjs status` prints them with the exe behind
+  each pid; `wait-for-debugger.mjs --prod` waits for the packaged kind only.
+- The **release-dir exe and the installed app share userData** → one lock. The second
+  to start quits in `main()` before `ready` (`requestSingleInstanceLock` → `app.quit()`),
+  and the first only gets a `second-instance` focus. No error anywhere; the launch just
+  "does nothing".
+- The `owa-devtools` stdio server your tools come from resolves the app **newest
+  first on every call** (`resolveAppBrowserUrl`, `requireLivePort`). Only the in-app
+  HTTP host is pinned to its own instance (`pinCdpPort`, 2026-09-09). So a dev app
+  started AFTER the packaged one silently takes over every tool call — `owa_app_state`
+  is the tell (`instances[0].isDev`, and the window URL scheme). `OWA_CDP_PORT` pins an
+  outside client, read at its start.
+- **`npm run build` (inside every `pack:*`) deletes `electron-build/`**, the dev app's
+  main entry — memory `build-kills-running-dev-app` — and an `electron:watch` chain
+  restarts the dev app the moment the folder comes back. Stop the dev stack before the
+  pack, not just the app.
+- `ELECTRON_RUN_AS_NODE=1` (VS Code's shell) makes the packaged exe run as plain Node
+  and exit, exactly as it does `npm run dev`. `prod-app.mjs launch` strips it and
+  `NODE_ENV`.
+
+### 18.3 Defaults that flip (each one changes an assertion)
+
+| `isDev` branch | Dev | Packaged | QA consequence |
+|---|---|---|---|
+| AI features unset (`checkIsAiEnabledByDefault`, `electron/aiHelpers.ts`) | ON | **OFF** — no CDP, no MCP, no chatbot menu item | Nothing can be driven until `ai-enabled` is `"true"` in `setting.json` (`prod-app.mjs enable-ai`, app closed). Restore afterwards. |
+| `tran()` on a missing key (`src/lang/langHelpers.ts`) | throws, subtree blanks | returns the English text *(source)* | LT-01/02 assert **visually** (raw English on a Khmer screen = Low); the Critical throw class is invisible in prod and the report must say so. |
+| `data-react-comp-name` / `-fp` stamps (`vite-plugin-comp-name.ts`, `apply: 'serve'`) | present | absent | `owa_find_ui` reports no component; findings name the control's label / `data-widget-name`. |
+| `window.testSimpleToasts()` (`src/toast/toastHelpers.ts`) | defined | absent *(source)* | GL-10 toast stacking needs two real refusal toasts, or `PARTIAL`. |
+| Extra Binaries install (`extraBinInstallHelpers.ts`) | copies the local `bin-<ver>.tar.gz` | **downloads the published pack** *(source)* | MD-05 needs network and is the only real exercise of that path; a missing local pack is irrelevant. |
+| `ignore-certificate-errors` switch | on | off | A TLS failure on a URL import / SongSelect that only shows packaged is a finding. |
+| Main-process console (`all:app:log`, hidden-screen logs) | in the `npm run dev` terminal | nowhere visible | SC-05 is `BLOCKED: no main-process stdout in prod`. |
+| Electron security warnings, React DevTools, HMR noise (§7) | present | absent | The packaged console should be nearly silent; read every `[warn]`/`[error]`. |
+| Experiments page, dev menu items, `icon-dev.png` | present | absent / release icon | Rows citing `src/experiments/` are `EXCLUDED`; a dev icon on the packaged window is a packaging bug. |
+
+### 18.4 Recovery paths in prod
+
+- A main window stuck on a popup-only page (§2–§3): the file to edit is
+  `%APPDATA%\open-worship-app\setting.json` — the un-suffixed one — with the app
+  closed. Same key (`mainHtmlPath`), same fallback (`toAllowedMainHtmlPath`).
+- A packaged app that will not attach: `prod-app.mjs ai-status` first, `status` second
+  (lock holder), then check the exe `locate` printed is the one that ran.
+- **A fresh userData (`--user-data=<scratch>`) opens on the Bible Reader**, not the
+  Presenter (§3) — wait on `--match=owa://local/` and `owa_goto_page` to the presenter.
+- `prod-app.mjs stop` reports `forced after 8 s` every time so far (2026-09-09, twice):
+  a WM_CLOSE to the main window does not quit this app within that window. The force
+  kill is normal, and the script removes the dead instance's discovery file itself.
+- Renderer crash/hang recovery (§3) is the same code and also active packaged.
+
+### 18.5 Observed in the first full packaged run (2026-09-11, v2026.08.15 win-arm64)
+
+Everything here was seen live on `release/win-arm64-unpacked` driven on a scratch
+profile inside `release/`; it replaces the *(source)* marks it touches.
+
+- **A scratch profile inside `release/` is the default** (SKILL §2b P0-4) and it works:
+  `selected-parent-dir` unset → content follows `app.getPath('userData')`, so documents,
+  `bibles-data`, media, `extra-bin` and the lock all land under `release/`. The user's own
+  `setting.json` is never touched, so there is no `ai-enabled` value to restore.
+- **The Parent Directory box commits on every keystroke.** A per-character fill of an
+  absolute path made the app adopt `C:\` (the first existing prefix) and create
+  `C:\bibles-data` + `C:\local-storage` in the drive root before the *Set according paths*
+  confirm was answered. Seed the key in `setting.json` with the app closed instead.
+- **`tran()` really does not throw packaged** — confirmed, not inferred: the whole app in
+  `km-KH` rendered with no blank subtree and no `Translation for text …` line in any
+  console. LT-02 in prod is a VISUAL assertion plus a raw-English sweep. (Found that way:
+  `Slide Note: 1` stays English while `Document Note` translates.)
+- **Comp stamps are gone**, as predicted: every `owa_find_ui`/`owa_click` answer carries
+  `component: null` / `sourceFile: null`. Locate by label, `data-widget-name` or panel.
+- **`window.testSimpleToasts()` is absent** and the mini screen's lock/record/expand/⋮
+  icons carry **no accessible name at all** (`owa_list_ui` on the Mini Screen panel lists
+  only *Toggle showing screen [F5]*, the screen-id badge and the display button), so the
+  locked-screen refusal toast cannot be driven by label either. GL-10 in prod is PARTIAL
+  unless a refusal toast can be raised some other way.
+- **The media block writes OUTSIDE the data dir even on a scratch profile**:
+  `BackgroundVideosComp`/`BackgroundAudiosComp` stage the download in the OS temp dir
+  (`getTempPath()`) and move the finished file into the media dir. The failure path
+  cleaned up after itself (no `temp-*.part` in `%TEMP%` after three failed attempts).
+- **The PUBLISHED extra-bin pack can be too old to work, and only a prod run sees it.**
+  2026-09-11: the packaged app installed pack **0.0.2** from the real CDN (`yt-dlp
+  2026.07.04`, built 2026-08-11) and every media download failed with `ERROR: unable to
+  download video data: HTTP Error 403: Forbidden`. Dev is blind to this — it mock-installs
+  the LOCAL `bin-<ver>.tar.gz`, which was **0.0.3** (`yt-dlp 2026.08.19`) and works. So
+  `MD-01/02` were FAIL, not BLOCKED: a fresh install of the release cannot download media.
+- **Attribute a media failure in three runs before filing it**, because "403" alone names
+  neither the app nor YouTube:
+  1. the app's own attempt (twice — a 403 can be throttling),
+  2. the SAME `yt-dlp.exe` the app used, run directly with **the app's exact arguments**
+     (`<url> -o <out> --no-playlist --ffmpeg-location …\ffmpeg\bin --no-js-runtimes
+     --js-runtimes quickjs:…\qjs.exe`), and
+  3. a DIFFERENT yt-dlp build (the other pack on the machine) with those same arguments.
+  Same failure in 1+2 and success in 3 ⇒ stale binary, a **High** finding against the
+  published pack. Failure in all three ⇒ genuinely YouTube-side ⇒ BLOCKED.
+  ⚠️ Do not "simplify" step 2 with `-f worst`: a newer yt-dlp takes a different extraction
+  path (visionos/m3u8) where that format does not exist and dies on *Requested format is
+  not available*, which looks like a failure and proves nothing. Keep the app's args.
+- **Do not judge staleness by a test file.** `prod-app.mjs locate` now skips `*.test.*`
+  when looking for sources newer than the exe (it was reporting STALE for
+  `aiChatSessionHelpers.test.ts`, which never ships).
+- **The release ships its own test files**: 22 `*.test.mjs` (328 KB) under
+  `app.asar.unpacked/tools/owa-devtools-mcp/`.
+- **First-run furnishing is a test, not a chore** — the Reader's *No Parent Directory
+  Selected* → Settings redirect, *Set according paths* → 11 child dirs, *Create KJV Bible
+  XML* (~5 MB, no network), and the Extra Binaries install from the REAL CDN
+  (`INSTALLED 0.0.2`, archive kept, `Re-extract` works offline) all passed here.
+- **`navigate_page` is unusable packaged — use `owa_goto_page`.** The firewall's
+  `checkIsAppUrl` (`firewall.mjs:244`) allows `file:`, `about:blank` and `http(s)` on
+  localhost/127.0.0.1 only; a packaged build serves `owa://local`, so every attempt is
+  refused with *"Opening an address outside this app is switched off"*. `owa_goto_page`
+  takes `presenter.html` / `reader.html` / `appDocumentEditor.html` and is not affected.
+- **A dev-only defect must be re-checked against the package before it is filed against a
+  release.** A parallel dev run's blank `appDocumentEditor.html` (with a `.owl` selected)
+  did NOT reproduce packaged: the editor rendered fully, the app raised its own
+  *"Open Worship slide required … Return to Presenter?"* guard, the console stayed empty
+  even across a stop/relaunch that booted straight back into the editor
+  (`mainHtmlPath` persists the page, and the `.owl` selection persists with it), and
+  *Return to Presenter* restored `presenter.html`. Dev runs the working tree; the package
+  runs the tree it was built from — name which tree a finding belongs to, **but do not
+  assume the tree is the difference**: here it was not (the only change across those
+  commits in the whole document/editor path was two lines adding a header button). A
+  route hypothesis (`reader.html` → editor, presenter never mounted) was then tested on
+  the package in both selection states — nothing selected, and a `.owl` written straight
+  into `selected-vary-app-document` — and both rendered correctly with the guard and an
+  empty console; the dev session could not reproduce it again either, and downgraded it to
+  intermittent. **Sequence that works when a dev finding will not reproduce packaged:**
+  diff the relevant paths before blaming the build, then vary the approach (route,
+  selection state, cold boot vs. in-session navigation), then — if it still will not
+  reproduce — file the CODE-level risk rather than the behaviour (here: `_getInstance`
+  throws on an extension mismatch and no error boundary wraps `SlideEditorComp`), because
+  an unreproducible blank window is not a release finding but a missing boundary is real.

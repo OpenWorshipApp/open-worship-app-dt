@@ -253,6 +253,12 @@ export async function startMcpHost() {
             port:
                 getRequestedPort('OWA_MCP_PORT', MCP_PORT_ARG_PREFIX) ??
                 undefined,
+            // This host is THIS instance's door, so its sessions drive this
+            // instance's window -- not the newest one in the discovery dir,
+            // which is the dev build once it starts after the packaged app.
+            // A getter, because Chromium reports the port only after `ready`
+            // and `publishAiEndpoints` fills it in behind the first session.
+            getCdpPort: () => remoteDebuggingPort,
             logger: (...items: unknown[]) => {
                 console.log('[owa-devtools-mcp]', ...items);
             },

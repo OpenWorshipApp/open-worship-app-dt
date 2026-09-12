@@ -62,6 +62,71 @@ describe('watchToolCalls', () => {
     });
 });
 
+// The verse goes on the congregation's screen, so the banner names it: "put
+// a Bible passage on the screen" says nothing the operator can check against
+// the wall. A `check` reads the passage and touches no screen, and stays
+// quiet like every other read.
+describe('presenting a passage names the passage', () => {
+    it('names the reference', () => {
+        expect(
+            describeToolCall('owa_present_bible', { reference: 'John 3:16' }),
+        ).toBe('put John 3:16 on the screen');
+        expect(describeToolCall('owa_present_bible', {})).toBe(
+            'put a Bible passage on the screen',
+        );
+    });
+
+    it('says nothing for a check', () => {
+        expect(
+            describeToolCall('owa_present_bible', {
+                reference: 'John 3:16',
+                action: 'check',
+            }),
+        ).toBeNull();
+    });
+});
+
+// A countdown or a message goes on the congregation's screen too, so the
+// banner names WHICH extra and how long -- a sentence the operator can check
+// against the wall. A check reads and stays quiet.
+describe('a foreground extra names the extra', () => {
+    it('names the countdown and its length, or its target time', () => {
+        expect(
+            describeToolCall('owa_foreground', { widget: 'countdown', minutes: 5 }),
+        ).toBe('started a 5 minute countdown on the screen');
+        expect(
+            describeToolCall('owa_foreground', { widget: 'countdown', at: '10:30' }),
+        ).toBe('started a countdown to 10:30 on the screen');
+        expect(
+            describeToolCall('owa_foreground', {
+                widget: 'marquee-bottom',
+                text: 'Please silence your phones',
+            }),
+        ).toBe('put a scrolling message on the screen');
+        expect(describeToolCall('owa_foreground', { widget: 'clock' })).toBe(
+            'put a clock on the screen',
+        );
+        expect(describeToolCall('owa_foreground', {})).toBe(
+            'put a countdown or a message on the screen',
+        );
+    });
+
+    it('says what came off, and nothing for a check', () => {
+        expect(
+            describeToolCall('owa_foreground', {
+                action: 'stop',
+                widget: 'countdown',
+            }),
+        ).toBe('took the countdown off the screen');
+        expect(
+            describeToolCall('owa_foreground', { action: 'stop', widget: 'all' }),
+        ).toBe('took every foreground extra off the screen');
+        expect(
+            describeToolCall('owa_foreground', { action: 'check' }),
+        ).toBeNull();
+    });
+});
+
 // Reading a page changes nothing in the window, so by this file's own rule it
 // would stay quiet. It announces itself anyway: "what left this computer" is
 // the one thing an operator is owed a look at even more than "what was
@@ -92,5 +157,28 @@ describe('reading a website announces where it went', () => {
         expect(describeToolCall('owa_read_website', { url: 'not a url' })).toBe(
             'read a website',
         );
+    });
+
+    // The drafter reads a page itself when handed an address, through the
+    // same window -- so it is announced the same way, and only then: a draft
+    // from a paste leaves the computer no more than a spell-check does.
+    it('announces a song drafted straight off a page, and only then', () => {
+        expect(
+            describeToolCall('owa_lyric_validate', {
+                url: 'https://example.com/chords/1',
+            }),
+        ).toBe('read a page on example.com');
+        expect(
+            describeToolCall('owa_lyric_validate', { url: 'not a url' }),
+        ).toBe('read a website');
+        expect(
+            describeToolCall('owa_lyric_validate', { text: 'a lantern' }),
+        ).toBeNull();
+        expect(
+            describeToolCall('owa_lyric_validate', {
+                text: 'a lantern',
+                url: '',
+            }),
+        ).toBeNull();
     });
 });

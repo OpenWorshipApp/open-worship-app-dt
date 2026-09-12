@@ -22,6 +22,8 @@ import {
     checkIsMatchedName,
     checkIsSearchedName,
     compareResourceFiles,
+    fromResourceTargetsKey,
+    groupResourceFiles,
     invalidateResourcesScanCache,
     MAX_SCAN_DEPTH,
     MAX_SEARCH_MATCHES,
@@ -30,10 +32,13 @@ import {
     toResourceIcon,
     toResourceMatchPatterns,
     toResourceNameParts,
+    toResourceTargetsKey,
     checkIsBookLevelName,
 } from './resourcesScanHelpers';
 
 type FakeTreeType = { [dirPath: string]: string[] | Error };
+
+const PSA_1 = [{ bookKey: 'PSA', chapter: 1 }];
 
 function installTree(tree: FakeTreeType) {
     readdirMock.mockImplementation(
@@ -62,17 +67,98 @@ function installTree(tree: FakeTreeType) {
     );
 }
 
+function toPatternStrings(targets: { bookKey: string; chapter: number }[]) {
+    return toResourceMatchPatterns(targets).map(({ pattern, isBookLevel }) => {
+        return isBookLevel ? `[${pattern}]` : pattern;
+    });
+}
+
 describe('toResourceMatchPatterns', () => {
     test('names both halves of what is searched', () => {
-        expect(toResourceMatchPatterns('PSA', 1)).toEqual([
-            'PSA.1.*',
-            'PSA.0.*',
-        ]);
+        expect(toPatternStrings(PSA_1)).toEqual(['PSA.1.*', '[PSA.0.*]']);
     });
 
     test('does not print the book-level half twice', () => {
-        expect(toResourceMatchPatterns('PSA', 0)).toEqual(['PSA.0.*']);
-        expect(toResourceMatchPatterns('PSA', -1)).toEqual(['PSA.-1.*']);
+        expect(toPatternStrings([{ bookKey: 'PSA', chapter: 0 }])).toEqual([
+            '[PSA.0.*]',
+        ]);
+        expect(toPatternStrings([{ bookKey: 'PSA', chapter: -1 }])).toEqual([
+            '[PSA.-1.*]',
+        ]);
+    });
+
+    test('one chapter pattern per pane, then one book-level per book', () => {
+        expect(
+            toPatternStrings([
+                { bookKey: 'GEN', chapter: 29 },
+                { bookKey: 'PSA', chapter: 1 },
+                { bookKey: 'GEN', chapter: 27 },
+            ]),
+        ).toEqual([
+            'GEN.29.*',
+            'PSA.1.*',
+            'GEN.27.*',
+            '[GEN.0.*]',
+            '[PSA.0.*]',
+        ]);
+        expect(toPatternStrings([])).toEqual([]);
+    });
+});
+
+describe('toResourceTargetsKey / fromResourceTargetsKey', () => {
+    test('keeps pane order, drops repeats and round-trips', () => {
+        const targets = [
+            { bookKey: 'GEN', chapter: 29 },
+            { bookKey: 'GEN', chapter: 27 },
+            // Two panes on one chapter in two versions ask once.
+            { bookKey: 'GEN', chapter: 29 },
+            { bookKey: '1CH', chapter: -1 },
+        ];
+        const key = toResourceTargetsKey(targets);
+        expect(key).toBe('GEN.29,GEN.27,1CH.-1');
+        expect(fromResourceTargetsKey(key)).toEqual([
+            { bookKey: 'GEN', chapter: 29 },
+            { bookKey: 'GEN', chapter: 27 },
+            { bookKey: '1CH', chapter: -1 },
+        ]);
+        expect(fromResourceTargetsKey('')).toEqual([]);
+    });
+});
+
+describe('groupResourceFiles', () => {
+    test('files each match under its pattern, in print order', () => {
+        const targets = [
+            { bookKey: 'GEN', chapter: 29 },
+            { bookKey: 'GEN', chapter: 27 },
+        ];
+        const groupList = groupResourceFiles(
+            [
+                '/r/GEN.0.pdf',
+                '/r/GEN.27.pdf',
+                '/r/GEN.29.docx',
+                '/r/sub/GEN.29.pdf',
+            ],
+            targets,
+        );
+        expect(
+            groupList.map(({ pattern, filePaths }) => {
+                return [pattern, filePaths];
+            }),
+        ).toEqual([
+            ['GEN.29.*', ['/r/GEN.29.docx', '/r/sub/GEN.29.pdf']],
+            ['GEN.27.*', ['/r/GEN.27.pdf']],
+            // Listed ONCE, not once under each chapter of the book.
+            ['GEN.0.*', ['/r/GEN.0.pdf']],
+        ]);
+    });
+
+    test('a pattern nothing matched is left out', () => {
+        expect(groupResourceFiles(['/r/GEN.27.pdf'], PSA_1)).toEqual([]);
+        expect(
+            groupResourceFiles(['/r/PSA.1.pdf'], PSA_1).map(({ pattern }) => {
+                return pattern;
+            }),
+        ).toEqual(['PSA.1.*']);
     });
 });
 
@@ -208,7 +294,7 @@ describe('scanResourceFiles', () => {
             '/root/sub': ['deeper/', 'PSA.1.docx'],
             '/root/sub/deeper': ['PSA.1.zip', 'OTHER.2.pdf'],
         });
-        const result = await scanResourceFiles('/root', 'PSA', 1);
+        const result = await scanResourceFiles('/root', PSA_1);
         expect(result?.filePaths).toEqual([
             '/root/sub/PSA.1.docx',
             '/root/PSA.1.pdf',
@@ -222,7 +308,7 @@ describe('scanResourceFiles', () => {
             '/root': ['.PSA.1.pdf', '.git/'],
             '/root/.git': ['PSA.1.pdf'],
         });
-        const result = await scanResourceFiles('/root', 'PSA', 1);
+        const result = await scanResourceFiles('/root', PSA_1);
         expect(result?.filePaths).toEqual([]);
         expect(readdirMock).toHaveBeenCalledTimes(1);
     });
@@ -237,7 +323,7 @@ describe('scanResourceFiles', () => {
                 },
             ]);
         });
-        const result = await scanResourceFiles('/root', 'PSA', 1);
+        const result = await scanResourceFiles('/root', PSA_1);
         expect(result?.filePaths).toEqual([]);
     });
 
@@ -249,7 +335,7 @@ describe('scanResourceFiles', () => {
             dirPath = `${dirPath}/next`;
         }
         installTree(tree);
-        const result = await scanResourceFiles('/root', 'PSA', 1);
+        const result = await scanResourceFiles('/root', PSA_1);
         // Depth 0 through MAX_SCAN_DEPTH inclusive get read; the folder one
         // below the last of those is never opened.
         expect(result?.filePaths).toHaveLength(MAX_SCAN_DEPTH + 1);
@@ -262,7 +348,7 @@ describe('scanResourceFiles', () => {
                 code: 'EACCES',
             }),
         });
-        const result = await scanResourceFiles('/root', 'PSA', 1);
+        const result = await scanResourceFiles('/root', PSA_1);
         expect(result?.filePaths).toEqual(['/root/PSA.1.pdf']);
     });
 
@@ -270,50 +356,76 @@ describe('scanResourceFiles', () => {
         installTree({
             '/gone': Object.assign(new Error('missing'), { code: 'ENOENT' }),
         });
-        await expect(
-            scanResourceFiles('/gone', 'PSA', 1),
-        ).rejects.toMatchObject({ code: 'ENOENT' });
+        await expect(scanResourceFiles('/gone', PSA_1)).rejects.toMatchObject({
+            code: 'ENOENT',
+        });
     });
 
     test('returns null and caches nothing when asked to stop', async () => {
         installTree({ '/root': ['PSA.1.pdf'] });
-        const result = await scanResourceFiles(
-            '/root',
-            'PSA',
-            1,
-            '',
-            () => true,
-        );
+        const result = await scanResourceFiles('/root', PSA_1, '', () => true);
         expect(result).toBeNull();
         // A partial walk must not be served to the next caller as the answer.
         readdirMock.mockClear();
-        await scanResourceFiles('/root', 'PSA', 1);
+        await scanResourceFiles('/root', PSA_1);
         expect(readdirMock).toHaveBeenCalled();
     });
 
     test('caches per folder and prefix, and invalidation forces a re-read', async () => {
         installTree({ '/root': ['PSA.1.pdf', 'PSA.2.pdf'] });
-        await scanResourceFiles('/root', 'PSA', 1);
+        await scanResourceFiles('/root', PSA_1);
         expect(readdirMock).toHaveBeenCalledTimes(1);
 
-        await scanResourceFiles('/root', 'PSA', 1);
+        await scanResourceFiles('/root', PSA_1);
         expect(readdirMock).toHaveBeenCalledTimes(1);
 
         // A different verse is a different question.
-        await scanResourceFiles('/root', 'PSA', 2);
+        await scanResourceFiles('/root', [{ bookKey: 'PSA', chapter: 2 }]);
         expect(readdirMock).toHaveBeenCalledTimes(2);
 
         // So is the same verse with something typed in the search box.
-        await scanResourceFiles('/root', 'PSA', 1, 'psa');
+        await scanResourceFiles('/root', PSA_1, 'psa');
         expect(readdirMock).toHaveBeenCalledTimes(3);
 
         invalidateResourcesScanCache('/root');
-        await scanResourceFiles('/root', 'PSA', 1);
+        await scanResourceFiles('/root', PSA_1);
         expect(readdirMock).toHaveBeenCalledTimes(4);
         // Invalidation has to reach the searched entries too, whatever was
         // typed when they were cached.
-        await scanResourceFiles('/root', 'PSA', 1, 'psa');
+        await scanResourceFiles('/root', PSA_1, 'psa');
         expect(readdirMock).toHaveBeenCalledTimes(5);
+    });
+
+    test('every open chapter is found in ONE walk, whatever the pane order', async () => {
+        installTree({
+            '/root': ['GEN.0.pdf', 'GEN.27.pdf', 'GEN.29.pdf', 'GEN.30.pdf'],
+        });
+        const result = await scanResourceFiles('/root', [
+            { bookKey: 'GEN', chapter: 29 },
+            { bookKey: 'GEN', chapter: 27 },
+        ]);
+        expect(result?.filePaths).toEqual([
+            '/root/GEN.0.pdf',
+            '/root/GEN.27.pdf',
+            '/root/GEN.29.pdf',
+        ]);
+        expect(readdirMock).toHaveBeenCalledTimes(1);
+        // The panes swapped around is the same question, already answered.
+        await scanResourceFiles('/root', [
+            { bookKey: 'GEN', chapter: 27 },
+            { bookKey: 'GEN', chapter: 29 },
+        ]);
+        expect(readdirMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('nothing to look for reads no directory at all', async () => {
+        installTree({ '/root': ['GEN.1.pdf'] });
+        const result = await scanResourceFiles('/root', []);
+        expect(result?.filePaths).toEqual([]);
+        expect(readdirMock).not.toHaveBeenCalled();
+        // ...unless something is typed, which is a question of its own.
+        const searched = await scanResourceFiles('/root', [], 'gen');
+        expect(searched?.searchedFilePaths).toEqual(['/root/GEN.1.pdf']);
     });
 });
 
@@ -355,7 +467,7 @@ describe('scanResourceFiles with a search text', () => {
             '/root': ['PSA.1.pdf', 'sub/', 'nothing.txt'],
             '/root/sub': ['abc-notes.docx', 'ABC.mp4'],
         });
-        const result = await scanResourceFiles('/root', 'PSA', 1, 'abc');
+        const result = await scanResourceFiles('/root', PSA_1, 'abc');
         // The verse half is untouched by what was typed.
         expect(result?.filePaths).toEqual(['/root/PSA.1.pdf']);
         // The extra half is its own list, sorted the same way.
@@ -368,7 +480,7 @@ describe('scanResourceFiles with a search text', () => {
 
     test('a file that is both is listed once, as a verse match', async () => {
         installTree({ '/root': ['PSA.1.pdf'] });
-        const result = await scanResourceFiles('/root', 'PSA', 1, 'psa');
+        const result = await scanResourceFiles('/root', PSA_1, 'psa');
         expect(result?.filePaths).toEqual(['/root/PSA.1.pdf']);
         expect(result?.searchedFilePaths).toEqual([]);
     });
@@ -379,7 +491,7 @@ describe('scanResourceFiles with a search text', () => {
             names.push(`abc-${index}.txt`);
         }
         installTree({ '/root': names });
-        const result = await scanResourceFiles('/root', 'PSA', 1, 'abc');
+        const result = await scanResourceFiles('/root', PSA_1, 'abc');
         expect(result?.searchedFilePaths).toHaveLength(MAX_SEARCH_MATCHES);
         expect(result?.isSearchTruncated).toBe(true);
         // Over the cap the walk carries on, so the verse matches -- what the
@@ -389,7 +501,7 @@ describe('scanResourceFiles with a search text', () => {
 
     test('an empty search text searches for nothing extra', async () => {
         installTree({ '/root': ['PSA.1.pdf', 'anything.txt'] });
-        const result = await scanResourceFiles('/root', 'PSA', 1, '   ');
+        const result = await scanResourceFiles('/root', PSA_1, '   ');
         expect(result?.searchedFilePaths).toEqual([]);
     });
 });

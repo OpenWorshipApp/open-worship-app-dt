@@ -1,6 +1,6 @@
 import './ChatbotAppComp.scss';
 
-import type { MouseEvent as ReactMouseEventType, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
 
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
@@ -8,17 +8,15 @@ import { captureAppWindow } from '../helper/appCaptureHelpers';
 import { openPopupWindow } from '../helper/domHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { setSetting } from '../helper/settingHelpers';
-import type { SrcData } from '../helper/FileSource';
-import {
-    downloadImageBase64Data,
-    showFileOrDirExplorer,
-} from '../server/appHelpers';
+import { findContactEmail, showFileOrDirExplorer } from '../server/appHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 import appProvider from '../server/appProvider';
 import {
     MAX_ATTACHMENT_COUNT,
+    checkIsImageName,
     checkIsReadableTextFile,
+    copyImageToClipboard,
     dropAttachmentData,
     genElementAttachment,
     genImageAttachment,
@@ -31,24 +29,42 @@ import {
 } from './attachmentHelpers';
 import { checkIsCancelError } from './cancelHelpers';
 import {
+    checkIsAssetAttachment,
+    downloadAsset,
+    readAssetPreview,
+    toReadableSize,
+    type ChatAssetPreviewType,
+} from './assetPreviewHelpers';
+import RenderSessionTabsComp from './RenderSessionTabsComp';
+import {
+    REPORT_COPY_EMAIL_TOOL_NAME,
+    REPORT_COPY_IMAGE_TOOL_NAME,
+    REPORT_COPY_SUBJECT_TOOL_NAME,
+    REPORT_COPY_TOOL_NAME,
+    REPORT_EMAIL_TOOL_NAME,
     REPORT_SEND_TOOL_NAME,
     collectReportEvidence,
+    describeContactSource,
+    describeHowToSend,
     genPreparedReport,
+    genReportFollowUpActions,
     genReportInvestigation,
+    genReportMailtoUrl,
     keepPreparedReport,
     postIssueReport,
+    readReportImageDataUrl,
+    readReportMarkdown,
     takePreparedReport,
+    toSavedReportSubject,
 } from './reportHelpers';
 import {
     checkCanAddChatSession,
     checkCanClearChatSessions,
-    checkCanSoloChatSession,
     genChatSessionTitle,
     genNewChatSession,
     loadChatSessions,
     saveChatSessions,
     toChatSessionTitle,
-    toClearableChatSessions,
     type ChatMessageType,
     type ChatSessionStateType,
     type ChatSessionType,
@@ -106,6 +122,7 @@ import {
     LLM_PROVIDER_LIST,
     type GuideHelpRequestType,
     type LlmModelType,
+    type LlmBotAnswerType,
     type LlmProviderType,
 } from './llmBotHelpers';
 import { callTool, getAiEndpoints, parseToolJson } from './mcpClient';
@@ -120,6 +137,37 @@ import {
     type AttachRequestType,
     type ShowRefType,
 } from './quickReplyHelpers';
+import {
+    addRoundUsage,
+    describeUsageBriefly,
+    describeUsageInFull,
+    type ChatUsageType,
+    type LlmRoundUsageType,
+} from './usageHelpers';
+import {
+    SPEND_ALLOW_LABEL,
+    SPEND_ALLOW_TOOL_NAME,
+    SPEND_LIMIT_CHOICE_LIST,
+    allowMoreSpending,
+    checkIsSpendLimitError,
+    describeSpendGuard,
+    describeSpendState,
+    getLastSpendState,
+    parseSpendLimitValue,
+    setSpendLimitUsd,
+    subscribeSpendGuard,
+    takeNearLimitNotice,
+    toSpendLimitLabel,
+    toSpendLimitValue,
+    type SpendStateType,
+} from './spendGuardHelpers';
+import {
+    OPEN_AI_SETTING_TOOL_NAME,
+    OPEN_PROVIDER_PAGE_TOOL_NAME,
+    genProviderIssueActions,
+    getLlmProviderPageUrl,
+    readLlmIssue,
+} from './providerIssueHelpers';
 import {
     FALLBACK_STARTERS,
     findKnownQuestion,
@@ -509,6 +557,143 @@ function RenderPickFieldComp({
             <span className="chat-pick-caption">{caption}</span>
             {children}
         </label>
+    );
+}
+
+/**
+ * What this tab has cost so far, under the choices that decide what the
+ * next question will cost. A line of the head rather than of the log
+ * because it belongs to the TAB, like everything else in the head: the
+ * answers below are what the money bought, and this is the running bill.
+ * Drawn only once there is a bill -- an empty tab has nothing to say, and a
+ * "$0.00" over the starter chips would be a promise about the free tier --
+ * and so the whole ROW is only drawn then: it held the spend guard too
+ * until 2026-09-11, which cost every tab a second head line whether or not
+ * anything had been spent, and the guard sits in the picker row now.
+ * The hover carries the sums and the caveat; the line carries the figure a
+ * treasurer would ask for.
+ */
+function RenderCreditLineComp({
+    usage,
+}: Readonly<{ usage: ChatUsageType | undefined }>) {
+    const brief = describeUsageBriefly(usage);
+    if (brief.length === 0) {
+        return null;
+    }
+    return (
+        <div className="chat-head-row chat-credit">
+            <span
+                className="chat-credit-field"
+                title={describeUsageInFull(usage)}
+            >
+                <span className="chat-pick-caption">Credit used</span>
+                <span className="chat-credit-value">{brief}</span>
+            </span>
+        </div>
+    );
+}
+
+/**
+ * The spend guard's own corner of the head: the cap the user set, what the
+ * hour has cost against it, and -- while the assistant is paused -- the
+ * button that lifts the pause. Drawn whether or not anything has been spent
+ * yet, unlike the credit line under it: a protection nobody can see is a
+ * protection nobody trusts, and the picker is how they set it. It sits in
+ * the PICKER row, after the model (2026-09-11, asked for with a picture: a
+ * row of its own under three pickers was a head line spent on one small
+ * select), and wraps under them only where the window is too narrow to hold
+ * four. Subscribed to
+ * the guard's own store rather than lifted into the window's state, for the
+ * same reason the progress line is: every model round would otherwise
+ * re-render the whole message list. See `spendGuardHelpers`.
+ */
+function RenderSpendGuardComp() {
+    const [state, setState] = useState<SpendStateType>(() => {
+        return getLastSpendState();
+    });
+    useAppEffect(() => {
+        // Read once more on subscribe: rounds land between the first render
+        // and the effect, and an hour passing changes the figure with no
+        // publish at all.
+        setState(getLastSpendState());
+        return subscribeSpendGuard(setState);
+    }, []);
+    const figure = describeSpendState(state);
+    const hover = describeSpendGuard(state);
+    // `/limit 0.05` sets a cap the picker does not list, and a select whose
+    // value matches no option quietly shows its first one -- $0.25 over a
+    // five-cent cap. The cap in force is always an option, wherever it came
+    // from.
+    const choices = SPEND_LIMIT_CHOICE_LIST.includes(state.limitUsd)
+        ? SPEND_LIMIT_CHOICE_LIST
+        : [
+              ...SPEND_LIMIT_CHOICE_LIST.filter((choice) => {
+                  return choice !== null;
+              }),
+              state.limitUsd,
+          ]
+              .sort((a, b) => {
+                  return (a ?? 0) - (b ?? 0);
+              })
+              .concat([null]);
+    return (
+        <span
+            className={
+                'chat-spend' +
+                (state.isTripped
+                    ? ' is-paused'
+                    : state.isNearLimit
+                      ? ' is-near'
+                      : '')
+            }
+            title={hover}
+        >
+            <label className="chat-pick-field">
+                <span className="chat-pick-caption">Limit per hour</span>
+                <select
+                    className="chat-pick chat-spend-pick"
+                    aria-label="Spending limit per hour"
+                    value={toSpendLimitValue(state.limitUsd)}
+                    onChange={(event) => {
+                        const picked = parseSpendLimitValue(event.target.value);
+                        if (picked !== undefined) {
+                            setSpendLimitUsd(picked);
+                        }
+                    }}
+                >
+                    {choices.map((choice) => {
+                        return (
+                            <option
+                                key={toSpendLimitValue(choice)}
+                                value={toSpendLimitValue(choice)}
+                            >
+                                {toSpendLimitLabel(choice)}
+                            </option>
+                        );
+                    })}
+                </select>
+            </label>
+            {figure.length > 0 ? (
+                <span className="chat-credit-value chat-spend-value">
+                    {figure}
+                </span>
+            ) : null}
+            {state.isTripped ? (
+                <button
+                    type="button"
+                    className="chat-spend-allow"
+                    title={
+                        'Lift the pause and start the hour again: the whole ' +
+                        'limit is available once more from now.'
+                    }
+                    onClick={() => {
+                        allowMoreSpending();
+                    }}
+                >
+                    {SPEND_ALLOW_LABEL}
+                </button>
+            ) : null}
+        </span>
     );
 }
 
@@ -988,10 +1173,16 @@ function RenderAttachmentChipsComp({
                                                 // wrong thing.
                                                 attachment.mimeType ===
                                                       'application/x-owa-show' &&
+                                                  attachment.filePath ===
+                                                      undefined &&
                                                   attachment.summary !==
                                                       undefined
                                                 ? 'press to ring it in the app'
-                                                : 'press to open its folder'
+                                                : // Every asset opens now, and
+                                                  // the folder is one press
+                                                  // further on, beside
+                                                  // Download.
+                                                  'press to open it'
                                     }`
                                   : attachment.name
                         }
@@ -1002,8 +1193,12 @@ function RenderAttachmentChipsComp({
                                     'bi ' +
                                     (attachment.kind === 'element'
                                         ? 'bi-bullseye'
-                                        : attachment.kind === 'image'
-                                          ? 'bi-image'
+                                        : attachment.kind === 'image' ||
+                                            checkIsImageName(attachment.name)
+                                          ? // A saved picture arrives as a
+                                            // file, and reads as one on its
+                                            // chip unless the NAME is asked.
+                                            'bi-image'
                                           : 'bi-file-earmark-text')
                                 }
                             />
@@ -1013,6 +1208,12 @@ function RenderAttachmentChipsComp({
                         <span className="chat-clip-name">
                             {attachment.name}
                         </span>
+                        {attachment.kind === 'image' && dataUrl !== null ? (
+                            <RenderCopyPictureIconComp
+                                id={attachment.id}
+                                name={attachment.name}
+                            />
+                        ) : null}
                         {onRemove === undefined ? null : (
                             <button
                                 type="button"
@@ -1031,6 +1232,52 @@ function RenderAttachmentChipsComp({
                     </span>
                 );
             })}
+        </div>
+    );
+}
+
+/**
+ * What an opened asset LOOKS like: the picture, the words, or -- for the
+ * things this window cannot draw -- a card naming it and saying so.
+ *
+ * The card is not a refusal: the buttons under it are the same ones that work
+ * for everything else, which is the whole point of opening every asset the
+ * same way.
+ */
+function RenderAssetPreviewBodyComp({
+    preview,
+}: Readonly<{ preview: ChatAssetPreviewType }>) {
+    if (preview.imageDataUrl !== null) {
+        return <img src={preview.imageDataUrl} alt={preview.name} />;
+    }
+    if (preview.text !== null) {
+        return (
+            <pre
+                className="chat-preview-text"
+                onClick={(event) => {
+                    // The backdrop closes the preview; selecting a line of
+                    // the file must not.
+                    event.stopPropagation();
+                }}
+            >
+                {preview.text}
+            </pre>
+        );
+    }
+    return (
+        <div className="chat-preview-card">
+            <i className="bi bi-file-earmark" />
+            <p className="chat-preview-card-name">{preview.name}</p>
+            {preview.byteSize === null ? null : (
+                <p className="chat-preview-card-size">
+                    {toReadableSize(preview.byteSize)}
+                </p>
+            )}
+            <p className="chat-preview-card-note">
+                {preview.note ??
+                    'This window cannot show this kind of file. Download it ' +
+                        'or open its folder to look at it.'}
+            </p>
         </div>
     );
 }
@@ -1088,6 +1335,87 @@ function RenderCopyButtonComp({ text }: Readonly<{ text: string }>) {
                 : copyState === 'failed'
                   ? 'Could not copy'
                   : 'Copy'}
+        </button>
+    );
+}
+
+/**
+ * The one icon every picture in this window carries: press it and the
+ * picture is on the clipboard, without opening it first. It sits inside a
+ * chip that is itself a button, so the press must not also open the preview
+ * or ring a control -- both the click and the key are stopped here. The
+ * bytes come from the same in-memory map as the picture itself, so a chip
+ * whose picture has gone with the window draws no icon at all.
+ */
+function RenderCopyPictureIconComp({
+    id,
+    name,
+}: Readonly<{ id: string; name: string }>) {
+    const [copyState, setCopyState] = useState<'idle' | 'done' | 'failed'>(
+        'idle',
+    );
+    const timeoutRef = useRef<any>(null);
+    useAppEffect(() => {
+        return () => {
+            if (timeoutRef.current !== null) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+    const handleCopying = async (event: React.MouseEvent) => {
+        event.stopPropagation();
+        const dataUrl = getAttachmentData(id);
+        let nextState: 'done' | 'failed' = 'failed';
+        if (dataUrl !== null) {
+            try {
+                await copyImageToClipboard(dataUrl);
+                nextState = 'done';
+            } catch (_error) {
+                // Shown as a failure on the icon rather than swallowed: a
+                // press that looks as though it worked and did not is the
+                // worse one.
+                nextState = 'failed';
+            }
+        }
+        setCopyState(nextState);
+        if (timeoutRef.current !== null) {
+            clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+            setCopyState('idle');
+        }, 1600);
+    };
+    return (
+        <button
+            type="button"
+            className={
+                'chat-clip-copy' +
+                (copyState === 'idle' ? '' : ` chat-clip-copy-${copyState}`)
+            }
+            aria-label={`Copy ${name} to the clipboard`}
+            title={
+                copyState === 'done'
+                    ? 'Copied'
+                    : copyState === 'failed'
+                      ? 'Could not copy the picture'
+                      : 'Copy the picture to the clipboard'
+            }
+            onClick={handleCopying}
+            onKeyDown={(event) => {
+                // Enter on the icon must not also be Enter on the chip.
+                event.stopPropagation();
+            }}
+        >
+            <i
+                className={
+                    'bi ' +
+                    (copyState === 'done'
+                        ? 'bi-check2'
+                        : copyState === 'failed'
+                          ? 'bi-x-lg'
+                          : 'bi-clipboard')
+                }
+            />
         </button>
     );
 }
@@ -1235,6 +1563,15 @@ function RenderMessageComp({
                             const isGuide =
                                 action.toolName === 'owa_guide_start';
                             const isDemo = action.args?.mode === 'demo';
+                            // A button that leaves the app says where to
+                            // before it is pressed, and wears the arrow.
+                            const pageUrl =
+                                action.toolName === OPEN_PROVIDER_PAGE_TOOL_NAME
+                                    ? getLlmProviderPageUrl(
+                                          action.args?.provider,
+                                          action.args?.page,
+                                      )
+                                    : null;
                             return (
                                 <button
                                     key={action.label}
@@ -1245,13 +1582,26 @@ function RenderMessageComp({
                                             ? ' cue-act-demo'
                                             : isGuide
                                               ? ' cue-act-guide'
-                                              : '')
+                                              : pageUrl !== null
+                                                ? ' cue-act-page'
+                                                : '')
+                                    }
+                                    title={
+                                        pageUrl === null
+                                            ? undefined
+                                            : `Opens ${pageUrl} in your browser`
                                     }
                                     onClick={() => {
                                         onAction(action);
                                     }}
                                 >
                                     {action.label}
+                                    {pageUrl === null ? null : (
+                                        <i
+                                            className="bi bi-box-arrow-up-right"
+                                            aria-hidden="true"
+                                        />
+                                    )}
                                 </button>
                             );
                         })}
@@ -1293,449 +1643,20 @@ function RenderMessageComp({
                     ) : (
                         <RenderCopyButtonComp text={message.text} />
                     )}
+                    {message.usage === undefined ? null : (
+                        // What this one answer cost, in the same quiet voice
+                        // as the button beside it: a fact about the answer,
+                        // not one of the answers. The hover has the sums.
+                        <span
+                            className="cue-cost"
+                            title={describeUsageInFull(message.usage)}
+                        >
+                            {describeUsageBriefly(message.usage)}
+                        </span>
+                    )}
                 </div>
             </div>
         </article>
-    );
-}
-
-// The menu behind a tab's dots, and the width it is drawn at. The width is a
-// constant because the menu has to be kept on screen BEFORE there is anything
-// to measure: this window is 460px wide, and a menu opened from a tab at the
-// right-hand end would otherwise hang off the edge on its first frame.
-const TAB_MENU_WIDTH = 182;
-
-type TabMenuStateType = {
-    sessionId: string;
-    x: number;
-    y: number;
-};
-
-// The two actions that take more than one tab at a time, held back until they
-// have been asked for twice. Everything else in the menu takes exactly the tab
-// it belongs to, and can be undone by reopening the window; these two cannot.
-type SweepType =
-    | { kind: 'clear' }
-    | {
-          kind: 'solo';
-          sessionId: string;
-      };
-
-// The tab strip. Several conversations at once, the way a browser holds
-// several pages -- and, unlike a browser, every one of them still there after
-// the window is closed and the app restarted.
-function RenderSessionTabsComp({
-    sessions,
-    activeId,
-    onChoose,
-    onClose,
-    onAdd,
-    onRename,
-    onTogglingLock,
-    onSolo,
-    onClearAll,
-}: Readonly<{
-    sessions: ChatSessionType[];
-    activeId: string;
-    onChoose: (id: string) => void;
-    onClose: (id: string) => void;
-    onAdd: () => void;
-    onRename: (id: string, title: string) => void;
-    onTogglingLock: (id: string) => void;
-    onSolo: (id: string) => void;
-    onClearAll: () => void;
-}>) {
-    const canAdd = checkCanAddChatSession(sessions);
-    // Renaming is a state OF THE STRIP, not of a session: it is over the
-    // moment the box is left, and nothing about it is worth writing to disk.
-    const [renamingId, setRenamingId] = useState<string | null>(null);
-    const [renamingText, setRenamingText] = useState('');
-    // So is which tab has its menu open, and which sweeping action is waiting
-    // to be confirmed. That question is asked in this window rather than in
-    // the app's confirm popup because this window loads bootstrap and its own
-    // sheet and nothing else -- pulling the popup in here would bring `tran()`
-    // and a module-scope listener with it (see `openAiSetting`), for one
-    // question with two answers.
-    const [menuState, setMenuState] = useState<TabMenuStateType | null>(null);
-    const [sweep, setSweep] = useState<SweepType | null>(null);
-    // The menu belongs to a tab, and that tab can go out from under it -- by
-    // way of the menu's own "Close this chat", most of the time.
-    const menuSession =
-        sessions.find((session) => {
-            return session.id === menuState?.sessionId;
-        }) ?? null;
-    // What the waiting question would actually take. Locked tabs are not in
-    // it, which is the whole point of locking one, and a question that would
-    // now take nothing is a question with no answer worth pressing: it goes
-    // with the tab or the lock that emptied it.
-    const sweepingSessions =
-        sweep === null
-            ? []
-            : toClearableChatSessions(sessions).filter((session) => {
-                  return sweep.kind === 'clear'
-                      ? true
-                      : session.id !== sweep.sessionId;
-              });
-    if (sweep !== null && sweepingSessions.length === 0) {
-        setSweep(null);
-    }
-    // Only the locks worth mentioning: the tab a solo is being run FROM is
-    // staying because it is the one being soloed, not because of its lock, and
-    // saying "the locked one stays" about the tab in front reads as a warning
-    // about the wrong tab.
-    const lockedKeptCount =
-        sweep === null
-            ? 0
-            : sessions.filter((session) => {
-                  return (
-                      session.isLocked &&
-                      (sweep.kind === 'clear' || session.id !== sweep.sessionId)
-                  );
-              }).length;
-    // The strip scrolls now instead of shrinking its tabs, so a tab that is
-    // chosen (or opened) off the visible end has to be brought back into view.
-    const stripRef = useRef<HTMLDivElement>(null);
-    useAppEffect(() => {
-        stripRef.current
-            ?.querySelector('.chat-tab.is-on')
-            ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    }, [activeId]);
-    const handleRenamingDone = () => {
-        if (renamingId !== null) {
-            // An emptied box means "go back to being called after the first
-            // question", which is a useful thing to be able to undo to.
-            onRename(renamingId, renamingText);
-        }
-        setRenamingId(null);
-    };
-    const handleOpeningMenu = (
-        event: ReactMouseEventType<HTMLElement>,
-        sessionId: string,
-    ) => {
-        event.preventDefault();
-        event.stopPropagation();
-        // Hung under the control that was pressed rather than at the pointer,
-        // so the menu lands in the same place whether it was opened with the
-        // dots or by right-clicking the tab -- and shoved back onto the window
-        // when that tab is scrolled up against the right-hand end, which a
-        // 460px window makes a routine case rather than an edge one.
-        const rect = event.currentTarget.getBoundingClientRect();
-        setMenuState({
-            sessionId,
-            x: Math.max(
-                4,
-                Math.min(rect.left, window.innerWidth - TAB_MENU_WIDTH - 4),
-            ),
-            y: rect.bottom + 2,
-        });
-    };
-    const handleClosingMenu = () => {
-        setMenuState(null);
-    };
-    return (
-        <>
-            <div
-                className="chat-tabs"
-                role="tablist"
-                aria-label="Chats"
-                ref={stripRef}
-            >
-                {sessions.map((session) => {
-                    const title = genChatSessionTitle(session);
-                    const isOn = session.id === activeId;
-                    const isMenuOn = session.id === menuSession?.id;
-                    return (
-                        <div
-                            key={session.id}
-                            className={
-                                'chat-tab' +
-                                (isOn ? ' is-on' : '') +
-                                (isMenuOn ? ' is-menu-on' : '')
-                            }
-                            onContextMenu={(event) => {
-                                handleOpeningMenu(event, session.id);
-                            }}
-                        >
-                            {/*
-                             * The right-click, spelled out. Nothing on a tab
-                             * says a menu is hiding behind it, and the person
-                             * this window is written for is not going to try
-                             * -- so the dots are always there, dimmed, and
-                             * they OPEN the tab: first thing on the left, in
-                             * the one spot that does not move as the name
-                             * beside it grows, shrinks or is being retyped.
-                             */}
-                            <button
-                                type="button"
-                                className="chat-tab-menu"
-                                aria-label={`More for ${title}`}
-                                aria-haspopup="menu"
-                                aria-expanded={isMenuOn}
-                                title="More"
-                                onClick={(event) => {
-                                    handleOpeningMenu(event, session.id);
-                                }}
-                            >
-                                ⋮
-                            </button>
-                            {renamingId === session.id ? (
-                                <input
-                                    className="chat-tab-input"
-                                    type="text"
-                                    autoFocus
-                                    value={renamingText}
-                                    aria-label="Name this chat"
-                                    onChange={(event) => {
-                                        setRenamingText(event.target.value);
-                                    }}
-                                    onBlur={handleRenamingDone}
-                                    onKeyDown={(event) => {
-                                        if (event.key === 'Enter') {
-                                            handleRenamingDone();
-                                        } else if (event.key === 'Escape') {
-                                            setRenamingId(null);
-                                        }
-                                    }}
-                                />
-                            ) : (
-                                <button
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={isOn}
-                                    className="chat-tab-name"
-                                    title={`${title} — double-click to rename`}
-                                    onClick={() => {
-                                        onChoose(session.id);
-                                    }}
-                                    onDoubleClick={() => {
-                                        setRenamingId(session.id);
-                                        setRenamingText(title);
-                                    }}
-                                >
-                                    {title}
-                                </button>
-                            )}
-                            {session.isLocked ? (
-                                // The close button, replaced by the reason it
-                                // is not there. Not a button of its own: a
-                                // lock that comes off with one stray press on
-                                // the exact spot the close used to be is not a
-                                // lock.
-                                <span
-                                    className="chat-tab-lock"
-                                    role="img"
-                                    aria-label={`${title} is locked`}
-                                    title={
-                                        'Locked — unlock it from this tab’s ' +
-                                        'menu to close it'
-                                    }
-                                >
-                                    <i className="bi bi-lock-fill" />
-                                </span>
-                            ) : (
-                                <button
-                                    type="button"
-                                    className="chat-tab-close"
-                                    aria-label={`Close ${title}`}
-                                    title="Close this chat"
-                                    onClick={() => {
-                                        onClose(session.id);
-                                    }}
-                                >
-                                    ×
-                                </button>
-                            )}
-                        </div>
-                    );
-                })}
-                <button
-                    type="button"
-                    className="chat-tab-add"
-                    aria-label="New chat"
-                    title={
-                        canAdd
-                            ? 'New chat'
-                            : 'Close one of these before starting another'
-                    }
-                    disabled={!canAdd}
-                    onClick={onAdd}
-                >
-                    +
-                </button>
-            </div>
-            {sweep === null ? null : (
-                // Asked on a line of its own rather than inside the menu, and
-                // never done on the first press: these conversations are the
-                // only record of what the person at this machine was told.
-                <div
-                    className="chat-clear-confirm"
-                    role="alertdialog"
-                    aria-label={
-                        sweep.kind === 'clear'
-                            ? 'Clear all chats'
-                            : 'Close other chats'
-                    }
-                    onKeyDown={(event) => {
-                        if (event.key === 'Escape') {
-                            setSweep(null);
-                        }
-                    }}
-                >
-                    <span className="chat-clear-ask">
-                        {sweep.kind === 'clear' ? 'Clear ' : 'Close '}
-                        {sweepingSessions.length} chat
-                        {sweepingSessions.length === 1 ? '' : 's'}?
-                        {lockedKeptCount === 0
-                            ? ''
-                            : ` The locked ${
-                                  lockedKeptCount === 1
-                                      ? 'one stays'
-                                      : 'ones stay'
-                              }.`}{' '}
-                        This cannot be undone.
-                    </span>
-                    <button
-                        type="button"
-                        className="chat-clear-no"
-                        autoFocus
-                        onClick={() => {
-                            setSweep(null);
-                        }}
-                    >
-                        Keep them
-                    </button>
-                    <button
-                        type="button"
-                        className="chat-clear-yes"
-                        onClick={() => {
-                            if (sweep.kind === 'clear') {
-                                onClearAll();
-                            } else {
-                                onSolo(sweep.sessionId);
-                            }
-                            setSweep(null);
-                        }}
-                    >
-                        {sweep.kind === 'clear' ? 'Clear all' : 'Close them'}
-                    </button>
-                </div>
-            )}
-            {menuState === null || menuSession === null ? null : (
-                // Drawn OUTSIDE the strip and placed against the window: the
-                // strip scrolls, so anything inside it is clipped at its
-                // edges, and a clipped menu is a menu with items nobody can
-                // reach. The sheet behind it is what closes it on the next
-                // press anywhere -- cheaper, and harder to get wrong, than a
-                // document listener that has to be taken off again.
-                <>
-                    <div
-                        className="chat-menu-sheet"
-                        onPointerDown={handleClosingMenu}
-                        onContextMenu={(event) => {
-                            event.preventDefault();
-                            handleClosingMenu();
-                        }}
-                    />
-                    <div
-                        className="chat-menu"
-                        role="menu"
-                        aria-label={genChatSessionTitle(menuSession)}
-                        style={{
-                            left: menuState.x,
-                            top: menuState.y,
-                            width: TAB_MENU_WIDTH,
-                        }}
-                        onKeyDown={(event) => {
-                            if (event.key === 'Escape') {
-                                handleClosingMenu();
-                            }
-                        }}
-                    >
-                        <button
-                            type="button"
-                            role="menuitem"
-                            className="chat-menu-item"
-                            autoFocus
-                            onClick={() => {
-                                handleClosingMenu();
-                                setRenamingId(menuSession.id);
-                                setRenamingText(
-                                    genChatSessionTitle(menuSession),
-                                );
-                            }}
-                        >
-                            Rename this chat
-                        </button>
-                        <button
-                            type="button"
-                            role="menuitem"
-                            className="chat-menu-item"
-                            onClick={() => {
-                                handleClosingMenu();
-                                onTogglingLock(menuSession.id);
-                            }}
-                        >
-                            {menuSession.isLocked
-                                ? 'Unlock this chat'
-                                : 'Lock this chat'}
-                        </button>
-                        {menuSession.isLocked ? null : (
-                            <button
-                                type="button"
-                                role="menuitem"
-                                className="chat-menu-item"
-                                onClick={() => {
-                                    handleClosingMenu();
-                                    onClose(menuSession.id);
-                                }}
-                            >
-                                Close this chat
-                            </button>
-                        )}
-                        {checkCanSoloChatSession(sessions, menuSession.id) ? (
-                            <>
-                                <div className="chat-menu-line" />
-                                <button
-                                    type="button"
-                                    role="menuitem"
-                                    className="chat-menu-item is-warn"
-                                    onClick={() => {
-                                        handleClosingMenu();
-                                        setSweep({
-                                            kind: 'solo',
-                                            sessionId: menuSession.id,
-                                        });
-                                    }}
-                                >
-                                    Close other chats…
-                                </button>
-                            </>
-                        ) : null}
-                        {checkCanClearChatSessions(sessions) ? (
-                            <>
-                                {checkCanSoloChatSession(
-                                    sessions,
-                                    menuSession.id,
-                                ) ? null : (
-                                    <div className="chat-menu-line" />
-                                )}
-                                <button
-                                    type="button"
-                                    role="menuitem"
-                                    className="chat-menu-item is-warn"
-                                    onClick={() => {
-                                        handleClosingMenu();
-                                        setSweep({ kind: 'clear' });
-                                    }}
-                                >
-                                    Clear all chats…
-                                </button>
-                            </>
-                        ) : null}
-                    </div>
-                </>
-            )}
-        </>
     );
 }
 
@@ -1897,6 +1818,24 @@ function genInitialSessionState(): ChatSessionStateType {
     };
 }
 
+/**
+ * The half of a stand-in note that says what the offline answer IS. A song
+ * the offline bot wrote out itself -- a paste, or a page read for its
+ * address -- is not "what the guide says", and a note claiming so over a
+ * drafted song reads as the guide having a page about the user's own words.
+ * One sentence for the provider-failure note and the spend-guard pause both,
+ * because the pause note said "the app's own guide" over a drafted song the
+ * day the song link learned to draft offline (2026-09-10).
+ */
+function describeOfflineStandIn(answer: BotAnswerType) {
+    const isDrafted = (answer.actions ?? []).some((action) => {
+        return action.toolName === LYRIC_CREATE_TOOL_NAME;
+    });
+    return isDrafted
+        ? 'I wrote the song out myself instead.'
+        : "Here is what the app's own guide says.";
+}
+
 export default function ChatbotAppComp() {
     // Popup windows carry no theme of their own: without this the help window
     // opens white in front of a dark app.
@@ -1976,7 +1915,22 @@ export default function ChatbotAppComp() {
     const [attachError, setAttachError] = useState<string | null>(null);
     // The picture being looked at, big. Held by id rather than by data URL
     // so it cannot outlive the store that owns the bytes.
-    const [previewId, setPreviewId] = useState<string | null>(null);
+    // The asset being looked at, and everything the overlay needs to draw and
+    // download it. State rather than a lookup by id: a file's content is READ
+    // when it is opened, and held only while it is open.
+    const [preview, setPreview] = useState<ChatAssetPreviewType | null>(null);
+    const previewElementRef = useRef<HTMLDivElement | null>(null);
+    // The overlay takes the keyboard the moment it opens. Nothing focused it
+    // before, so focus stayed in the ask box UNDERNEATH a full-window overlay:
+    // its own Enter/Escape handler never fired, and its Copy / Download /
+    // Open folder buttons could only be reached by tabbing blindly through the
+    // conversation behind it.
+    useAppEffect(() => {
+        if (preview === null) {
+            return;
+        }
+        previewElementRef.current?.focus();
+    }, [preview]);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const draftAttachmentMapRef = useAppCurrentRef(draftAttachmentMap);
     // The catalogue, on the other hand, is a property of the ACCOUNT, not of a
@@ -2606,15 +2560,9 @@ export default function ChatbotAppComp() {
                 return;
             }
             if (
-                attachment.kind === 'image' &&
-                getAttachmentData(attachment.id) !== null
-            ) {
-                setPreviewId(attachment.id);
-                return;
-            }
-            if (
                 attachment.mimeType === 'application/x-owa-show' &&
-                attachment.summary !== undefined
+                attachment.summary !== undefined &&
+                attachment.filePath === undefined
             ) {
                 // Named rather than resolved: the model wrote a control's
                 // words, so the words are looked up NOW, against the window as
@@ -2639,11 +2587,44 @@ export default function ChatbotAppComp() {
                 }
                 return;
             }
-            if (attachment.filePath !== undefined) {
-                // A file the app can no longer read is still a file the user
-                // can go and look at -- and for a picture whose bytes have
-                // gone with the window, this is the only thing left to show.
-                showFileOrDirExplorer(attachment.filePath);
+            if (checkIsAssetAttachment(attachment)) {
+                // Every asset opens the same way now: the picture, the file
+                // the user dropped in, the report just written, the song just
+                // created. The overlay is where Download lives, so a chip
+                // that used to open a folder BEHIND this window now opens
+                // the thing itself, with the folder one press further on.
+                setPreview(await readAssetPreview(attachment));
+                return;
+            }
+            if (attachment.kind === 'element' && attachment.name.length > 0) {
+                // A control whose selector could not be built is still a
+                // control with WORDS on it, so it is looked up by those --
+                // the same second chance an answer's own SHOWS: chip gets.
+                // This is the last rung of a ladder, not a competitor to the
+                // selector above it: pointing was how the user said WHICH one
+                // they meant, and a name can land on its twin. It is offered
+                // anyway because the alternative was a chip that answered
+                // "there is nothing left to show for that one" -- which was
+                // true of the code and not of the window, where the control
+                // was sitting in plain sight the whole time.
+                try {
+                    const result = parseToolJson(
+                        await callTool('owa_find_ui', {
+                            text: attachment.name,
+                            highlight: true,
+                        }),
+                    );
+                    if (result?.shownCount) {
+                        return;
+                    }
+                } catch (_error) {
+                    // Fall through to the plain line below: a lookup that
+                    // failed is not worth a second error on top of the first.
+                }
+                setAttachError(
+                    `I could not find "${attachment.name}" on screen any` +
+                        ' more.',
+                );
                 return;
             }
             setAttachError(
@@ -2654,35 +2635,41 @@ export default function ChatbotAppComp() {
         },
         [],
     );
-    // A picture in this window is one the user may want to keep -- their own
-    // screenshot, or one an answer pointed them at. Copy puts it on the
-    // clipboard; Save writes it into Downloads and opens the folder, which is
-    // the app's own existing way of handing a picture over.
-    const handleCopyingPicture = useCallback(async (id: string) => {
-        const dataUrl = getAttachmentData(id);
-        if (dataUrl === null) {
-            return;
-        }
-        try {
-            const blob = await (await fetch(dataUrl)).blob();
-            await navigator.clipboard.write([
-                new ClipboardItem({ [blob.type]: blob }),
-            ]);
-            setAttachError('Copied.');
-        } catch (error: any) {
-            setAttachError(`I could not copy it: ${error.message}`);
-        }
-    }, []);
-    const handleSavingPicture = useCallback((id: string) => {
-        const dataUrl = getAttachmentData(id);
-        if (dataUrl === null) {
-            return;
-        }
-        // Closed first: the save opens a file-manager window, and leaving a
-        // full-window picture over the app afterwards hides what it opened.
-        setPreviewId(null);
-        downloadImageBase64Data(dataUrl as SrcData);
-    }, []);
+    // An asset in this window is one the user may want to keep -- their own
+    // screenshot, the report just written, the song just created. Copy puts
+    // it on the clipboard; Download writes a copy into Downloads and opens
+    // the folder, which is the app's own existing way of handing a file over.
+    const handleCopyingAsset = useCallback(
+        async (preview: ChatAssetPreviewType) => {
+            try {
+                if (preview.imageDataUrl !== null) {
+                    await copyImageToClipboard(preview.imageDataUrl);
+                } else if (preview.text !== null) {
+                    await navigator.clipboard.writeText(preview.text);
+                } else {
+                    return;
+                }
+                setAttachError('Copied.');
+            } catch (error: any) {
+                setAttachError(`I could not copy it: ${error.message}`);
+            }
+        },
+        [],
+    );
+    const handleDownloadingAsset = useCallback(
+        async (preview: ChatAssetPreviewType) => {
+            // Closed first: the save opens a file-manager window, and leaving
+            // a full-window preview over the app afterwards hides what it
+            // opened.
+            setPreview(null);
+            try {
+                setAttachError((await downloadAsset(preview)).message);
+            } catch (error: any) {
+                setAttachError(`I could not download it: ${error.message}`);
+            }
+        },
+        [],
+    );
     // Pressing what the assistant asked for. The same three handlers the
     // paperclip row uses -- an answer that asks for a picture and a button that
     // takes one have to be the same button, or the two will drift apart.
@@ -2733,6 +2720,12 @@ export default function ChatbotAppComp() {
         }
     }, []);
 
+    // No auto-hide here, on purpose (2026-09-10/11): the head and the ask
+    // form were made to tuck away while the conversation scrolled, the box
+    // came back the same afternoon and the head the next morning -- the user
+    // wants every control of this window where it always is. The rows are
+    // touched once a session, and a control that has to be found again is a
+    // control in the way.
     useAppEffect(() => {
         const element = listRef.current;
         if (element !== null) {
@@ -2755,6 +2748,35 @@ export default function ChatbotAppComp() {
                     messages: [...session.messages, { ...message, id }],
                 };
             });
+        },
+        [updateSession],
+    );
+
+    // What one ask spends, folded into its tab round by round. Two totals
+    // out of one stream of rounds: the ask's own, stamped on the answer when
+    // it lands, and the tab's, written as each round comes back -- so a
+    // question stopped after three rounds, or one that fails on its fourth,
+    // still counts the three it paid for in the tab's line, which is the one
+    // that says what the conversation has cost. Addressed by id like every
+    // other write, for the same reason as `addMessage`.
+    const genUsageTally = useCallback(
+        (sessionId: string) => {
+            let askUsage: ChatUsageType | undefined = undefined;
+            return {
+                onUsage: (round: LlmRoundUsageType) => {
+                    askUsage = addRoundUsage(askUsage, round);
+                    updateSession(sessionId, (session) => {
+                        return {
+                            ...session,
+                            usage: addRoundUsage(session.usage, round),
+                        };
+                    });
+                },
+                // Spread into a message: nothing when no round came back.
+                toField: () => {
+                    return askUsage === undefined ? {} : { usage: askUsage };
+                },
+            };
         },
         [updateSession],
     );
@@ -2839,28 +2861,35 @@ export default function ChatbotAppComp() {
         }
     }, [addMessage, updateSession]);
     const handleCancellingRef = useAppCurrentRef(handleCancelling);
-    const previewIdRef = useAppCurrentRef(previewId);
+    const previewRef = useAppCurrentRef(preview);
     // Escape is what a hurried person presses, and the box that already
     // handles it is disabled while an answer is on its way. Ignored while the
     // caret is in a field -- renaming a tab is also Escape, and that one
     // belongs to the rename.
     useAppEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            const tagName = (
-                document.activeElement?.tagName ?? ''
-            ).toLowerCase();
-            if (
-                event.key !== 'Escape' ||
-                tagName === 'input' ||
-                tagName === 'textarea'
-            ) {
+            if (event.key !== 'Escape') {
                 return;
             }
             // A picture open over the conversation is what Escape closes
             // first. Stopping the answer underneath it as well would be two
             // things on one press, and only one of them was meant.
-            if (previewIdRef.current !== null) {
-                setPreviewId(null);
+            //
+            // Asked BEFORE the caret guard below, deliberately: the preview
+            // covers the whole window, and it opens from a chip pressed while
+            // the caret is still sitting in the ask box -- so the guard, which
+            // is right for "stop the answer" and for a tab being renamed, was
+            // swallowing the one press that dismisses an overlay over
+            // everything. Escape did nothing at all until the user first
+            // clicked the overlay.
+            if (previewRef.current !== null) {
+                setPreview(null);
+                return;
+            }
+            const tagName = (
+                document.activeElement?.tagName ?? ''
+            ).toLowerCase();
+            if (tagName === 'input' || tagName === 'textarea') {
                 return;
             }
             handleCancellingRef.current();
@@ -2969,6 +2998,13 @@ export default function ChatbotAppComp() {
                         trimmedAsked,
                         commandFocus,
                         pushProgressStep,
+                        // The one fact a command answers that lives in this
+                        // window and nowhere a tool can read: what the tab
+                        // has spent. Read through the ref, for the tab that
+                        // TYPED it.
+                        sessionStateRef.current.sessions.find((session) => {
+                            return session.id === commandSessionId;
+                        })?.usage,
                     );
                     if (pending.controller.signal.aborted) {
                         return;
@@ -3042,6 +3078,7 @@ export default function ChatbotAppComp() {
                 options?.shownText === undefined,
             );
             const { signal } = pending.controller;
+            const usageTally = genUsageTally(askedSessionId);
             // Last question's steps off the line before this one's go up.
             // They are cleared when an ask ENDS too; this is the one that
             // matters, because the window between the line appearing and the
@@ -3063,7 +3100,7 @@ export default function ChatbotAppComp() {
                 // A model when a key is configured; the offline lookup bot
                 // otherwise -- and also when the call fails, which mid-service
                 // usually means the building's internet is down.
-                let answer;
+                let answer: LlmBotAnswerType;
                 let note = options?.answerNote;
                 // What the MODEL is asked is the question plus whatever the
                 // attachments say in words -- and, for a bare picture, the
@@ -3142,8 +3179,58 @@ export default function ChatbotAppComp() {
                                 // are worth showing is how a line ends up
                                 // saying something the app is not doing.
                                 onProgress: pushProgressStep,
+                                onUsage: usageTally.onUsage,
                             },
                         );
+                        // Another key of the user's own answered because the
+                        // tab's provider could not (see `askLlmBot`). Said
+                        // on the answer, and the TAB moves to the one that
+                        // answered -- the head row must show who is being
+                        // asked, and a tab left on a dead key would pay
+                        // the failed call again on every question. The
+                        // stored default for NEW tabs is left alone: it is
+                        // the user's choice, and a key topped up tomorrow
+                        // must be back without anybody having to know a
+                        // setting was changed behind them.
+                        if (answer.standIn !== undefined) {
+                            const { standIn } = answer;
+                            const toLabel = (key: LlmProviderType) => {
+                                return (
+                                    LLM_PROVIDER_LIST.find((item) => {
+                                        return item.key === key;
+                                    })?.label ?? key
+                                );
+                            };
+                            const failedLabel = toLabel(standIn.failedProvider);
+                            note =
+                                `${failedLabel} could not answer — ` +
+                                `${standIn.reason}. ` +
+                                `${toLabel(standIn.provider)} answered ` +
+                                'instead and this chat now uses it; pick ' +
+                                `${failedLabel} in the row above to ` +
+                                'switch back.';
+                            // The door to what went wrong, under the note:
+                            // the billing page for an empty account, the
+                            // keys page for a refused one. Named for the
+                            // provider that FAILED, not the one answering --
+                            // a user with two keys must not top up the
+                            // wrong one.
+                            answer.actions = [
+                                ...genProviderIssueActions(
+                                    standIn.failedProvider,
+                                    standIn.issue,
+                                    failedLabel,
+                                ),
+                                ...(answer.actions ?? []),
+                            ];
+                            updateSession(askedSessionId, (session) => {
+                                return {
+                                    ...session,
+                                    provider: standIn.provider,
+                                    model: standIn.model,
+                                };
+                            });
+                        }
                     } catch (error: any) {
                         // Stopping is not a provider that could not answer:
                         // it must not print an apology in this tab and it
@@ -3153,48 +3240,107 @@ export default function ChatbotAppComp() {
                         if (checkIsCancelError(error, signal)) {
                             throw error;
                         }
-                        const label = LLM_PROVIDER_LIST.find((item) => {
-                            return item.key === provider;
-                        })?.label;
-                        if (options?.withoutOfflineFallback) {
-                            // A rescue asked about THIS window and this
-                            // step. The offline bot searches the manual,
-                            // so handed a machine-written rescue prompt
-                            // it answers a different question with total
-                            // confidence: measured live, an out-of-credit
-                            // key turned every rescue into "No
-                            // presentation screen is showing right now",
-                            // 10 times out of 10, drawn on the card as
-                            // though it were the answer. The card's own
-                            // plain instruction is the honest offline
-                            // answer, so say nothing and let it fall
-                            // back to that.
-                            addMessage(askedSessionId, {
-                                author: 'bot',
-                                text:
-                                    `${label} could not answer — ` +
-                                    `${error.message}`,
-                            });
-                            options.onAnswered?.(null);
-                            return;
+                        // The spend guard said no (see `spendGuardHelpers`).
+                        // Not a provider that could not answer: the
+                        // provider was never asked, the sentence is the
+                        // guard's own, and it comes with the one button
+                        // that lifts it. The offline guide still answers
+                        // underneath, because it costs nothing -- except
+                        // for a rescue, whose machine-written ask the guide
+                        // would answer with total confidence about the
+                        // wrong thing.
+                        if (checkIsSpendLimitError(error)) {
+                            const allowAction: BotActionType = {
+                                label: SPEND_ALLOW_LABEL,
+                                toolName: SPEND_ALLOW_TOOL_NAME,
+                                // The question is carried so the press can
+                                // ask it again -- a typed one only; a
+                                // rescue's words are nobody's question.
+                                args:
+                                    options?.shownText === undefined
+                                        ? { question: trimmedAsked }
+                                        : {},
+                            };
+                            if (options?.withoutOfflineFallback) {
+                                addMessage(askedSessionId, {
+                                    author: 'bot',
+                                    text: error.message,
+                                    actions: [allowAction],
+                                });
+                                options.onAnswered?.(null);
+                                return;
+                            }
+                            answer = await askOffline();
+                            answer.actions = [
+                                allowAction,
+                                ...(answer.actions ?? []),
+                            ];
+                            note =
+                                `${error.message} ` +
+                                describeOfflineStandIn(answer);
+                        } else {
+                            const label = LLM_PROVIDER_LIST.find((item) => {
+                                return item.key === provider;
+                            })?.label;
+                            // The door to what went wrong, under the note.
+                            // The thrown line carries the SDK's error as its
+                            // `cause`, and what KIND of failure that was
+                            // decides the buttons (`genProviderIssueActions`)
+                            // -- the billing page for an empty account, the
+                            // keys page for a refused one. An error with no
+                            // cause (the tool host, a bug) gets none.
+                            const issueActions =
+                                error?.cause === undefined
+                                    ? []
+                                    : genProviderIssueActions(
+                                          provider,
+                                          readLlmIssue(error.cause).kind,
+                                          label ?? provider,
+                                      );
+                            if (options?.withoutOfflineFallback) {
+                                // A rescue asked about THIS window and this
+                                // step. The offline bot searches the manual,
+                                // so handed a machine-written rescue prompt
+                                // it answers a different question with total
+                                // confidence: measured live, an out-of-credit
+                                // key turned every rescue into "No
+                                // presentation screen is showing right now",
+                                // 10 times out of 10, drawn on the card as
+                                // though it were the answer. The card's own
+                                // plain instruction is the honest offline
+                                // answer, so say nothing and let it fall
+                                // back to that.
+                                addMessage(askedSessionId, {
+                                    author: 'bot',
+                                    text:
+                                        `${label} could not answer — ` +
+                                        `${error.message}`,
+                                    ...(issueActions.length > 0
+                                        ? { actions: issueActions }
+                                        : {}),
+                                });
+                                options.onAnswered?.(null);
+                                return;
+                            }
+                            answer = await askOffline();
+                            answer.actions = [
+                                ...issueActions,
+                                ...(answer.actions ?? []),
+                            ];
+                            note =
+                                `${label} could not answer — ${error.message}. ` +
+                                describeOfflineStandIn(answer);
                         }
-                        answer = await askOffline();
-                        // A song the offline bot wrote out itself is not
-                        // "what the guide says", and a note claiming so
-                        // over a drafted song reads as the guide having a
-                        // page about the user's own words.
-                        const isDrafted = (answer.actions ?? []).some(
-                            (action) => {
-                                return (
-                                    action.toolName === LYRIC_CREATE_TOOL_NAME
-                                );
-                            },
-                        );
+                    }
+                    // The amber line, said once on the answer that crossed
+                    // it -- a figure in the head row is easy to miss, and
+                    // the pause it warns of is a surprise otherwise.
+                    const nearLimitNotice = takeNearLimitNotice();
+                    if (nearLimitNotice !== null) {
                         note =
-                            `${label} could not answer — ${error.message}. ` +
-                            (isDrafted
-                                ? 'I wrote the song out myself instead.'
-                                : "Here is what the app's own guide says.");
+                            note === undefined
+                                ? nearLimitNotice
+                                : `${note} ${nearLimitNotice}`;
                     }
                 } else {
                     answer = await askOffline();
@@ -3238,6 +3384,7 @@ export default function ChatbotAppComp() {
                     text: shownAnswer,
                     note,
                     actions: answer.actions,
+                    ...usageTally.toField(),
                     ...(replies.length > 0 ? { replies } : {}),
                     ...(answer.attachRequests !== undefined &&
                     options?.shownText === undefined
@@ -3258,6 +3405,8 @@ export default function ChatbotAppComp() {
                 addMessage(askedSessionId, {
                     author: 'bot',
                     text: `I could not answer that: ${error.message}`,
+                    // The rounds a failed question paid for before it failed.
+                    ...usageTally.toField(),
                 });
                 // Told either way: a card left waiting on an answer that is
                 // never coming sits on "asking the assistant" until its own
@@ -3498,6 +3647,13 @@ export default function ChatbotAppComp() {
             // user can add a sentence to halfway through.
             const pending = genPendingAsk(reportedSessionId, undefined, false);
             const { signal } = pending.controller;
+            // A report's investigation is a model ask like any other, and it
+            // is charged to the tab like any other.
+            const usageTally = genUsageTally(reportedSessionId);
+            // Where the report should go, looked up NOW so the live help
+            // page is read while the investigation runs rather than after
+            // it -- the page can take seconds, and so does the model.
+            const contactPromise = findContactEmail();
             setIsBusy(true);
             try {
                 // The picture FIRST, before the investigation starts clicking
@@ -3522,6 +3678,9 @@ export default function ChatbotAppComp() {
                 }
                 let answerText = '';
                 let note: string | undefined = undefined;
+                // The door to a provider that could not investigate, beside
+                // Send report -- the same one an ordinary answer gets.
+                let issueActions: BotActionType[] = [];
                 if (provider === null) {
                     note =
                         'No assistant is set up here, so this is what the window ' +
@@ -3539,7 +3698,7 @@ export default function ChatbotAppComp() {
                             model,
                             turns,
                             signal,
-                            {},
+                            { onUsage: usageTally.onUsage },
                         );
                         answerText = answer.text;
                     } catch (error: any) {
@@ -3554,6 +3713,15 @@ export default function ChatbotAppComp() {
                             `I could not look into it — ${error.message}. The ` +
                             'report still carries what the window could see for ' +
                             'itself.';
+                        if (error?.cause !== undefined) {
+                            issueActions = genProviderIssueActions(
+                                provider,
+                                readLlmIssue(error.cause).kind,
+                                LLM_PROVIDER_LIST.find((item) => {
+                                    return item.key === provider;
+                                })?.label ?? provider,
+                            );
+                        }
                     }
                 }
                 const report = genPreparedReport({
@@ -3564,10 +3732,24 @@ export default function ChatbotAppComp() {
                         shot === null
                             ? null
                             : (getAttachmentData(shot.id) ?? null),
+                    // Named in the document so a maintainer can weigh the
+                    // diagnosis by who wrote it; nobody when no model did.
+                    investigatedBy:
+                        provider === null || answerText.length === 0
+                            ? null
+                            : `${
+                                  LLM_PROVIDER_LIST.find((item) => {
+                                      return item.key === provider;
+                                  })?.label ?? provider
+                              } (${model})`,
+                    contact: await contactPromise.catch(() => {
+                        return null;
+                    }),
                 });
                 keepPreparedReport(report);
                 addMessage(reportedSessionId, {
                     author: 'bot',
+                    ...usageTally.toField(),
                     text:
                         (report.summary.length > 0
                             ? `${report.summary}\n\n`
@@ -3582,6 +3764,7 @@ export default function ChatbotAppComp() {
                             toolName: REPORT_SEND_TOOL_NAME,
                             args: { reference: report.reference },
                         },
+                        ...issueActions,
                     ],
                     ...(shot === null ? {} : { attachments: [shot] }),
                 });
@@ -3677,6 +3860,10 @@ export default function ChatbotAppComp() {
                     name: `${posted.reference}.png`,
                 });
             }
+            const imageFileName =
+                posted.imageFilePath === null
+                    ? null
+                    : `${posted.reference}.png`;
             const text =
                 posted.failure !== null
                     ? `${posted.failure} The report is called ` +
@@ -3686,16 +3873,195 @@ export default function ChatbotAppComp() {
                         'copy on this machine too.'
                       : `Report ${posted.reference} is ready. There is no ` +
                         'issue tracker connected to this app yet, so nothing ' +
-                        'was sent — I saved the whole thing so you can pass ' +
-                        'it on.';
+                        'was sent — I saved the whole thing into your ' +
+                        'Downloads folder.\n\n' +
+                        describeHowToSend(report, imageFileName);
             addMessage(sessionId, {
                 author: 'bot',
                 text,
+                // Offered whatever the saving did: with the file gone wrong,
+                // the clipboard is the only way the report leaves this
+                // window at all.
+                actions: genReportFollowUpActions(report),
                 ...(shows.length > 0 ? { shows } : {}),
             });
         },
         [addMessage],
     );
+
+    /**
+     * The three buttons under a saved report: the report onto the clipboard,
+     * the maintainers' address onto the clipboard, or the user's own mail app
+     * opened with both filled in. Caught before any tool call exactly as Send
+     * is -- pseudo tools the server never registers -- and the address is
+     * read off the package at the press, never off the button: a session
+     * file is hand-editable, and a button that carried an address would
+     * carry whichever one somebody wrote into it.
+     */
+    const handleReportExtra = useCallback(
+        async (action: BotActionType, sessionId: string) => {
+            const reference = String(action.args?.reference ?? '');
+            // The address the document itself names, while the window still
+            // holds the report; found again (the help page first) when not,
+            // so a reopened window offers today's address too.
+            const kept = takePreparedReport(reference);
+            const contact =
+                kept !== null && kept.contactEmail !== null
+                    ? { email: kept.contactEmail, source: kept.contactSource }
+                    : await findContactEmail();
+            const contactEmail = contact?.email ?? null;
+            const contactSource = describeContactSource(
+                contact?.source ?? null,
+            );
+            const copyText = async (text: string) => {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                } catch (_error) {
+                    // Said out loud rather than swallowed, like every Copy
+                    // in this window: one that looks like it worked and did
+                    // not is worse than one that admits it.
+                    return false;
+                }
+            };
+            const noAddressText =
+                'This build carries no contact address — pass the saved ' +
+                'report on to whoever maintains the app for you.';
+            if (action.toolName === REPORT_COPY_EMAIL_TOOL_NAME) {
+                if (contactEmail === null) {
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text: noAddressText,
+                    });
+                    return;
+                }
+                const isCopied = await copyText(contactEmail);
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: isCopied
+                        ? `Copied \`${contactEmail}\`${contactSource}. ` +
+                          'Paste it into the To line of your email.'
+                        : 'I could not reach the clipboard. The address is ' +
+                          `\`${contactEmail}\` — you can select and copy it ` +
+                          'from here.',
+                });
+                return;
+            }
+            if (action.toolName === REPORT_COPY_IMAGE_TOOL_NAME) {
+                const dataUrl = readReportImageDataUrl(reference);
+                if (dataUrl === null) {
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text:
+                            'I no longer have that picture — it is not in ' +
+                            'this window and not in your Downloads folder. ' +
+                            'Press Report again and I will take a new one.',
+                    });
+                    return;
+                }
+                try {
+                    await copyImageToClipboard(dataUrl);
+                } catch (_error) {
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text:
+                            'I could not put the picture on the clipboard. ' +
+                            'Press its chip above to open the folder and ' +
+                            'attach the file from there.',
+                    });
+                    return;
+                }
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text:
+                        'Copied the picture. Paste it into the email' +
+                        (contactEmail === null
+                            ? ''
+                            : ` to \`${contactEmail}\``) +
+                        ' — most mail apps take a pasted picture as an ' +
+                        'attachment.',
+                });
+                return;
+            }
+            const markdown = await readReportMarkdown(reference);
+            if (markdown === null) {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text:
+                        'I no longer have that report — it is not in this ' +
+                        'window and not in your Downloads folder. Press ' +
+                        'Report again and I will put a new one together.',
+                });
+                return;
+            }
+            const hasImage =
+                kept === null
+                    ? markdown.includes(`${reference}.png`)
+                    : kept.imageDataUrl !== null;
+            const attachNote = hasImage
+                ? `, and attach \`${reference}.png\` from your Downloads folder`
+                : '';
+            // The same subject line the document names, before and after a
+            // reopen alike.
+            const subject = toSavedReportSubject(kept, markdown, reference);
+            if (action.toolName === REPORT_COPY_SUBJECT_TOOL_NAME) {
+                const isSubjectCopied = await copyText(subject);
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: isSubjectCopied
+                        ? `Copied the subject line \`${subject}\`. Paste it ` +
+                          'into the Subject line of your email.'
+                        : 'I could not reach the clipboard. The subject line ' +
+                          `is \`${subject}\` — you can select and copy it ` +
+                          'from here.',
+                });
+                return;
+            }
+            const isCopied = await copyText(markdown);
+            if (action.toolName === REPORT_COPY_TOOL_NAME) {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: isCopied
+                        ? 'Copied the whole report. Paste it into ' +
+                          (contactEmail === null
+                              ? 'your message'
+                              : `an email to \`${contactEmail}\``) +
+                          `${attachNote}.`
+                        : 'I could not reach the clipboard. Open the report ' +
+                          'file from the chip above — it is a plain text ' +
+                          'document you can select and copy from.',
+                });
+                return;
+            }
+            if (contactEmail === null) {
+                addMessage(sessionId, { author: 'bot', text: noAddressText });
+                return;
+            }
+            // Email it, under the same subject line.
+            const url = genReportMailtoUrl({
+                contactEmail,
+                subject,
+                reference,
+                hasImage,
+            });
+            appProvider.browserUtils.openExternalURL(url);
+            addMessage(sessionId, {
+                author: 'bot',
+                text:
+                    `Opening your email app with \`${contactEmail}\` and the ` +
+                    'subject filled in. ' +
+                    (isCopied
+                        ? 'The report is on your clipboard — paste it into ' +
+                          'the message'
+                        : 'I could not reach the clipboard, so press ' +
+                          '**Copy report** and paste it into the message') +
+                    `${attachNote}. If nothing opened, this machine has no ` +
+                    'email app set up — use the two Copy buttons instead.',
+            });
+        },
+        [addMessage],
+    );
+    const handleReportExtraRef = useAppCurrentRef(handleReportExtra);
 
     /**
      * The two buttons under a song the assistant drafted.
@@ -3821,6 +4187,19 @@ export default function ChatbotAppComp() {
                 );
                 return;
             }
+            // The three under a saved report -- the same seam, for the same
+            // reason: the clipboard and the mail app are the user's, and
+            // nothing a model says may reach either.
+            if (
+                action.toolName === REPORT_COPY_TOOL_NAME ||
+                action.toolName === REPORT_COPY_SUBJECT_TOOL_NAME ||
+                action.toolName === REPORT_COPY_IMAGE_TOOL_NAME ||
+                action.toolName === REPORT_COPY_EMAIL_TOOL_NAME ||
+                action.toolName === REPORT_EMAIL_TOOL_NAME
+            ) {
+                await handleReportExtraRef.current(action, actedSessionId);
+                return;
+            }
             // A button that runs a built-in command. Asked as though typed,
             // so the transcript shows the command the press stood for and a
             // volunteer learns the word for next time.
@@ -3829,6 +4208,59 @@ export default function ChatbotAppComp() {
                 if (checkIsBuiltinCommand(command)) {
                     handleAskingRef.current(command, true);
                 }
+                return;
+            }
+            // The button that lifts the spend guard's pause -- a person
+            // pressed it, which is the one thing a runaway cannot do. The
+            // question it was pressed under is asked again, without a
+            // second echo of it in the transcript.
+            if (action.toolName === SPEND_ALLOW_TOOL_NAME) {
+                const state = allowMoreSpending();
+                const question = String(action.args?.question ?? '').trim();
+                addMessage(actedSessionId, {
+                    author: 'bot',
+                    text:
+                        'Carrying on: the hour starts again from now' +
+                        (state.limitUsd === null
+                            ? ''
+                            : `, with ${toSpendLimitLabel(state.limitUsd)} ` +
+                              'available before I pause again') +
+                        '.' +
+                        (question.length > 0
+                            ? ' Asking your question again.'
+                            : ''),
+                });
+                if (question.length > 0) {
+                    handleAskingRef.current(question, true, {
+                        withoutEcho: true,
+                    });
+                }
+                return;
+            }
+            // The doors under a "could not answer" note: the app's own AI
+            // settings, or the provider's console page for what went wrong.
+            // Neither is a tool -- the page is resolved from a NAME here, at
+            // the press, so nothing a model says and nothing a saved file
+            // carries can be an address.
+            if (action.toolName === OPEN_AI_SETTING_TOOL_NAME) {
+                openAiSetting();
+                return;
+            }
+            if (action.toolName === OPEN_PROVIDER_PAGE_TOOL_NAME) {
+                const url = getLlmProviderPageUrl(
+                    action.args?.provider,
+                    action.args?.page,
+                );
+                if (url === null) {
+                    return;
+                }
+                appProvider.browserUtils.openExternalURL(url);
+                // Said, because the browser can open BEHIND this window and
+                // a press that shows nothing gets pressed again.
+                addMessage(actedSessionId, {
+                    author: 'bot',
+                    text: `Opening ${url} in your browser.`,
+                });
                 return;
             }
             // The same seam, for the song the assistant just wrote out.
@@ -3933,6 +4365,9 @@ export default function ChatbotAppComp() {
             <RenderSessionTabsComp
                 sessions={sessions}
                 activeId={activeSession.id}
+                genTitle={genChatSessionTitle}
+                canAdd={checkCanAddChatSession(sessions)}
+                canClearAll={checkCanClearChatSessions(sessions)}
                 onChoose={handleChoosingSession}
                 onClose={handleClosingSession}
                 onAdd={handleAddingSession}
@@ -3988,7 +4423,9 @@ export default function ChatbotAppComp() {
                             />
                         </RenderPickFieldComp>
                     )}
+                    <RenderSpendGuardComp />
                 </div>
+                <RenderCreditLineComp usage={activeSession.usage} />
             </header>
             <div className="chat-log" ref={listRef}>
                 <RenderProviderWarningComp provider={provider} />
@@ -4053,6 +4490,52 @@ export default function ChatbotAppComp() {
                         <p className="chat-hint">
                             Answers come from the app&apos;s own guide and from
                             what the app is doing right now.
+                        </p>
+                        {/*
+                         * The caution every answer in this window deserves,
+                         * said ONCE where it is actually read: before the
+                         * first question, while the user is still deciding
+                         * what this window is for. It is not the keyless
+                         * provider's privacy notice above -- that one is
+                         * about where the words GO, is true of one provider,
+                         * and rides the whole conversation. This one is about
+                         * whether the answer is RIGHT, is true of every
+                         * provider including a paid one, and is a thing to
+                         * understand rather than a thing to keep glancing at.
+                         *
+                         * It names what going wrong looks like HERE rather
+                         * than warning about AI in the abstract: a volunteer
+                         * who has been told "it can make mistakes" still has
+                         * no idea that the confident paragraph in front of
+                         * them may be describing a button that does not
+                         * exist, or that a press it offers reaches a live
+                         * projector. Generic boilerplate is read once and
+                         * never believed; a specific one is what makes
+                         * somebody check.
+                         *
+                         * Deliberately NOT dismissible and NOT auto-hidden
+                         * (see the note on auto-hide in this window): it
+                         * costs nothing during a conversation, because the
+                         * empty state it lives in is gone by then.
+                         */}
+                        <p className="chat-caution" role="note">
+                            <span
+                                className="chat-caution-mark"
+                                aria-hidden="true"
+                            >
+                                {'⚠'}
+                            </span>
+                            <span>
+                                <strong>Be careful with AI answers.</strong>{' '}
+                                This assistant can be confidently wrong — it can
+                                misread the app, describe a button that is not
+                                there, or quote a verse inaccurately — and what
+                                it offers to do can reach a live projector.
+                                Check anything that matters before a service,
+                                and read a step yourself before you press it. It
+                                is here to help you use the app, not to replace
+                                knowing it.
+                            </span>
                         </p>
                         {provider === null ? (
                             // Not an error -- the window works without a key.
@@ -4431,52 +4914,73 @@ export default function ChatbotAppComp() {
                     )}
                 </div>
             </form>
-            {previewId === null ? null : (
-                // A picture, big enough to read. Not a new window: this one is
-                // already a popup, and a popup of a popup is a thing the user
-                // has to find and close before they can carry on asking.
+            {preview === null ? null : (
+                // The asset, big enough to read, whatever kind it is. Not a
+                // new window: this one is already a popup, and a popup of a
+                // popup is a thing the user has to find and close before they
+                // can carry on asking.
                 <div
+                    ref={previewElementRef}
                     className="chat-preview"
                     role="button"
                     tabIndex={0}
-                    aria-label="Close the picture"
+                    aria-label="Close the preview"
                     onClick={() => {
-                        setPreviewId(null);
+                        setPreview(null);
                     }}
                     onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === 'Escape') {
-                            setPreviewId(null);
+                            setPreview(null);
                         }
                     }}
                 >
-                    <img src={getAttachmentData(previewId) ?? ''} alt="" />
+                    <RenderAssetPreviewBodyComp preview={preview} />
                     <div
                         className="chat-preview-tools"
                         role="presentation"
                         onClick={(event) => {
-                            // The backdrop closes the picture; the buttons
+                            // The backdrop closes the preview; the buttons
                             // sitting on it must not.
                             event.stopPropagation();
                         }}
                     >
+                        {preview.imageDataUrl === null &&
+                        preview.text === null ? null : (
+                            <button
+                                type="button"
+                                className="chat-preview-tool"
+                                onClick={() => {
+                                    handleCopyingAsset(preview);
+                                }}
+                            >
+                                <i className="bi bi-clipboard" /> Copy
+                            </button>
+                        )}
                         <button
                             type="button"
-                            className="chat-preview-tool"
+                            className="chat-preview-tool chat-preview-tool-main"
+                            title={`Download ${preview.name} into your Downloads folder`}
                             onClick={() => {
-                                handleCopyingPicture(previewId);
+                                handleDownloadingAsset(preview);
                             }}
                         >
-                            Copy
+                            <i className="bi bi-download" /> Download
                         </button>
-                        <button
-                            type="button"
-                            className="chat-preview-tool"
-                            onClick={() => {
-                                handleSavingPicture(previewId);
-                            }}
-                        >
-                            Save a copy
-                        </button>
+                        {preview.filePath === null ? null : (
+                            <button
+                                type="button"
+                                className="chat-preview-tool"
+                                onClick={() => {
+                                    // Closed first, exactly as Download is:
+                                    // this opens a window behind the app.
+                                    const { filePath } = preview;
+                                    setPreview(null);
+                                    showFileOrDirExplorer(filePath as string);
+                                }}
+                            >
+                                <i className="bi bi-folder2-open" /> Open folder
+                            </button>
+                        )}
                     </div>
                     <p className="chat-preview-hint">Press anywhere to close</p>
                 </div>

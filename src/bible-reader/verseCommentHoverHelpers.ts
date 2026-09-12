@@ -20,6 +20,10 @@ export type HoveredVerseCommentType = {
     comment: string;
     verseKey: string;
     rect: DOMRect;
+    // The bible view the words live in, so that view going away (closed, or
+    // its last comment deleted) can take its own tooltip with it and nobody
+    // else's.
+    containerElement: Element;
 };
 
 // One tooltip for the window, so one store and one grace timer.
@@ -67,6 +71,29 @@ export function scheduleHoveredCommentClearing() {
         clearTimeoutId = null;
         setHoveredComment(null);
     }, HOVER_GRACE_MILLISECOND);
+}
+
+/** Now, not after the grace: the close button, and an action that made the comment moot. */
+export function clearHoveredComment() {
+    cancelHoveredCommentClearing();
+    setHoveredComment(null);
+}
+
+function clearHoveredCommentOf(containerElement: Element) {
+    if (hoveredComment?.containerElement === containerElement) {
+        clearHoveredComment();
+    }
+}
+
+export function checkIsCommentInMap(
+    annotationsMap: VerseAnnotationsMapType,
+    verseKey: string,
+    commentId: string,
+) {
+    const comments = annotationsMap[verseKey]?.comments ?? [];
+    return comments.some(({ comment }) => {
+        return comment.id === commentId;
+    });
 }
 
 function subscribe(listener: () => void) {
@@ -136,6 +163,7 @@ function hitTestComment(
         comment: found.comment.comment,
         verseKey,
         rect: range.getBoundingClientRect(),
+        containerElement,
     };
 }
 
@@ -163,14 +191,41 @@ export function useVerseCommentHover(
     const attemptHitTest = useMemo(() => {
         return genTimeoutAttempt(120, false);
     }, []);
+    // The tooltip must not outlive the comment it shows: deleted from the
+    // notes panel, or its file gone, while the pointer has not moved since.
+    useAppEffect(() => {
+        if (
+            hoveredComment !== null &&
+            !checkIsCommentInMap(
+                annotationsMap,
+                hoveredComment.verseKey,
+                hoveredComment.commentId,
+            )
+        ) {
+            clearHoveredComment();
+        }
+    }, [annotationsMap]);
     useAppEffect(() => {
         const containerElement = containerRef.current;
         if (containerElement === null || !hasAnyComment) {
             return;
         }
+        // The hit test is debounced, so its trailing run can land AFTER the
+        // pointer has left this view, still holding the last coordinates,
+        // which were over the commented words. Left unchecked it cancelled the
+        // clearing that `mouseleave` had just scheduled, and with no further
+        // event in this view the tooltip stayed up for good. A late run for a
+        // pointer that is gone does nothing at all: `mouseleave` has already
+        // scheduled the clearing, and the tooltip's own `mouseenter` is the one
+        // thing allowed to cancel it from here on.
+        let isPointerInside = false;
         const handleMouseMove = (event: MouseEvent) => {
             const { clientX, clientY } = event;
+            isPointerInside = true;
             attemptHitTest(() => {
+                if (!isPointerInside) {
+                    return;
+                }
                 const found = hitTestComment(
                     containerElement,
                     annotationsMapRef.current,
@@ -188,16 +243,22 @@ export function useVerseCommentHover(
             });
         };
         const handleMouseLeave = () => {
+            isPointerInside = false;
             scheduleHoveredCommentClearing();
         };
         containerElement.addEventListener('mousemove', handleMouseMove);
         containerElement.addEventListener('mouseleave', handleMouseLeave);
         return () => {
+            isPointerInside = false;
             containerElement.removeEventListener('mousemove', handleMouseMove);
             containerElement.removeEventListener(
                 'mouseleave',
                 handleMouseLeave,
             );
+            // This view is going (closed, or its last comment deleted):
+            // nothing here will ever schedule the clearing again, so its
+            // tooltip goes with it.
+            clearHoveredCommentOf(containerElement);
         };
     }, [containerRef, hasAnyComment, attemptHitTest]);
 }

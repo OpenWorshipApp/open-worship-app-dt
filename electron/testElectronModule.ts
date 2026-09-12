@@ -74,6 +74,7 @@ export const electronMockState = {
         whenReady: vi.fn(),
         requestSingleInstanceLock: vi.fn(() => true),
         quit: vi.fn(),
+        relaunch: vi.fn(),
         setAppUserModelId: vi.fn(),
         setUserTasks: vi.fn(),
         commandLine: {
@@ -145,6 +146,12 @@ export const electronMockState = {
             bounds: { x: 0, y: 0, width: 1920, height: 1080 },
             size: { width: 1920, height: 1080 },
         })),
+        getDisplayMatching: vi.fn(() => ({
+            id: 1,
+            bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+            workArea: { x: 0, y: 0, width: 1920, height: 1080 },
+            size: { width: 1920, height: 1080 },
+        })),
     },
     Menu: MenuMock,
     // constructed with `new MenuItem(...)`, so it must be a real function
@@ -169,6 +176,7 @@ export const electronMockState = {
         this.app.whenReady.mockClear();
         this.app.requestSingleInstanceLock.mockClear();
         this.app.quit.mockClear();
+        this.app.relaunch.mockClear();
         this.app.setAppUserModelId.mockClear();
         this.app.setUserTasks.mockClear();
         this.app.commandLine.appendSwitch.mockClear();
@@ -215,6 +223,7 @@ export const electronMockState = {
             });
         this.screen.getAllDisplays.mockClear();
         this.screen.getPrimaryDisplay.mockClear();
+        this.screen.getDisplayMatching.mockClear();
         MenuMock.mockClear();
         menuBuildFromTemplate.mockClear();
         menuSetApplicationMenu.mockClear();

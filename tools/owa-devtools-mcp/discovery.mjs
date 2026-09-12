@@ -72,6 +72,53 @@ export function readLiveInstances() {
     });
 }
 
+// Never falsy: an empty `browserUrl` makes chrome-devtools-mcp LAUNCH its own
+// Chrome, which is the one thing this server must never do.
+export const NO_APP_URL = 'http://127.0.0.1:1';
+
+// The CDP port of the instance THIS process lives in, when it lives in one.
+// The in-app host pins it; the stdio bin (its own process) never does. A
+// getter, because Chromium reports the port only after `ready` and the host
+// starts before that.
+let getPinnedCdpPort = null;
+
+/**
+ * Pins every lookup in this process to one instance's CDP port. Without it
+ * every session picks the NEWEST published instance, which is a different app
+ * the moment a second one (a dev build beside the packaged app) starts later:
+ * measured with the packaged app up and `npm run dev` started after it, the
+ * packaged app's own chatbot reported -- and would have clicked in -- the dev
+ * window. "Newest first" is right for an outside client and wrong for a
+ * server that lives inside a particular instance. `getPort` may answer `null`
+ * while the port is not known yet, in which case the fallbacks apply.
+ */
+export function pinCdpPort(getPort) {
+    getPinnedCdpPort = typeof getPort === 'function' ? getPort : null;
+}
+
+function readPinnedCdpPort() {
+    const port = Number(getPinnedCdpPort?.());
+    return Number.isInteger(port) && port > 0 ? port : null;
+}
+
+/**
+ * Which app to drive, best evidence first: the port pinned by the instance
+ * this process lives in, then one pinned by `OWA_CDP_PORT`, then the newest
+ * published instance.
+ */
+export function resolveAppBrowserUrl(instances = null) {
+    const pinnedPort = readPinnedCdpPort();
+    if (pinnedPort !== null) {
+        return `http://127.0.0.1:${pinnedPort}`;
+    }
+    const envPort = Number(process.env.OWA_CDP_PORT);
+    if (Number.isInteger(envPort) && envPort > 0) {
+        return `http://127.0.0.1:${envPort}`;
+    }
+    const [instance] = instances ?? readLiveInstances();
+    return instance ? `http://127.0.0.1:${instance.port}` : NO_APP_URL;
+}
+
 /**
  * Ports to try, best first. `excludePorts` keeps a bridge from dialling its own
  * listener -- with the legacy fallback in the list that is an infinite loop.
@@ -81,6 +128,10 @@ export function listCandidatePorts({ port, excludePorts = [] } = {}) {
     if (port) {
         ports.push(Number(port));
     } else {
+        const pinnedPort = readPinnedCdpPort();
+        if (pinnedPort !== null) {
+            ports.push(pinnedPort);
+        }
         const envPort = Number(process.env.OWA_CDP_PORT);
         if (Number.isInteger(envPort) && envPort > 0) {
             ports.push(envPort);
@@ -123,7 +174,10 @@ export async function resolveCdpPort({
 } = {}) {
     const deadline = Date.now() + timeout;
     for (;;) {
-        for (const candidatePort of listCandidatePorts({ port, excludePorts })) {
+        for (const candidatePort of listCandidatePorts({
+            port,
+            excludePorts,
+        })) {
             if (await checkIsPortAlive(candidatePort)) {
                 return candidatePort;
             }

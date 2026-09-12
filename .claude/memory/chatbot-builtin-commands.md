@@ -9,7 +9,8 @@ The chatbot window takes **commands** (2026-09-02,
 `src/chatbot/builtinActionHelpers.ts`): `/screen`, `/screen-show`,
 `/screen-hide`, `/clear-all` … `/clear-foreground`, `/find <words>`,
 `/goto <page>`, `/here`, `/help <words>`, `/commands`, plus aliases such
-as `/presenter-screen-show`. `handleAsking` runs them BEFORE any provider is
+as `/presenter-screen-show` — and since 2026-09-10 `/lyric <address>` (a
+song from a page, no model; see [[chatbot-lyric-command]]). `handleAsking` runs them BEFORE any provider is
 looked at — no model round, no history, attachments left in the box, ~1.6 s.
 Typing `/` lists them in the same suggestion list as the questions
 (`SuggestRowType`; a command with no argument asks on the press).

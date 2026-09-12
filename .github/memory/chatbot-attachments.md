@@ -1,8 +1,11 @@
 ---
 name: chatbot-attachments
-description: The chatbot ask box takes pictures, files and a pointed-at control; the bytes are never persisted and never enter the history, and two new MCP tools are hidden from the model on purpose
-metadata:
+description: "The chatbot ask box takes pictures, files and a pointed-at control; the bytes are never persisted and never enter the history, and two new MCP tools are hidden from the model on purpose"
+metadata: 
+  node_type: memory
   type: project
+  originSessionId: b66d32ae-b5c6-4859-b86c-e66d51708a48
+  modified: 2026-09-12T18:01:22.495Z
 ---
 
 A chatbot question can carry a picture, a text file or a control the user
@@ -70,5 +73,28 @@ backlog is a bill for guessing instead.
   ends one, the module stops parsing, and the only symptom is every MCP request
   answering 500. `picker.test.mjs` exists to turn that into a red test.
 
+- **Every ASSET chip opens the same preview, and every preview downloads**
+  (2026-09-12, the user's ask: *always be able to download assets in chat
+  session*). `assetPreviewHelpers.ts`: a file chip used to open a
+  file-manager window BEHIND the app, so only a picture could be looked at.
+  Now a picture, a dropped file, the saved report and a created song all open
+  the one overlay — picture, scrollable text, or a card naming what cannot be
+  drawn — with **Download** / **Copy** / **Open folder** under it. Content is
+  read only on opening and dropped on closing (state on one component, no
+  map); `fsGetFileSize` is asked FIRST, so a picture over 8 MB or a text file
+  over 512 KB is measured and named rather than read; a file already in
+  Downloads is revealed, never copied twice. Text is decided by NAME or by
+  words the window already holds, NEVER by `kind` — every file an answer
+  offers arrives typed `text`, video and PDF included, and a test caught that.
+- **Every picture chip carries a copy icon** (2026-09-12, the user's ask). It
+  is `RenderCopyPictureIconComp`, drawn only while the bytes are still in the
+  window, in the ask row and under answers alike; it stops the click and the
+  key so the press does not also open the preview or ring a control, and it
+  goes through `copyImageToClipboard` in `attachmentHelpers.ts` — the ONE
+  image-to-clipboard path (the preview's Copy and the report's **Copy
+  picture** use it too), which redraws anything that is not PNG first because
+  Chromium's async clipboard refuses every other image type.
+
 Related: [[chatbot-answer-options]] (the `OPTIONS:` frame `NEEDS:` copies),
-[[chatbot-mid-flight-additions]], [[chatbot-stop-answer]].
+[[chatbot-mid-flight-additions]], [[chatbot-stop-answer]],
+[[chatbot-report-button]] (Copy picture under a saved report).

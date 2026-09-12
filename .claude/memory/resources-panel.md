@@ -1,10 +1,11 @@
 ---
 name: resources-panel
 description: "Resources = 4th Bible-Find tab listing the user's own <bookKey>.<chapter>.* files; budgeted breadth-first scan, 10s cache, NO watcher, click opens the OS app — never a drag or a present"
-metadata:
+metadata: 
   node_type: memory
   type: project
-  modified: 2026-08-30T00:00:00.000Z
+  modified: 2026-09-11T00:42:16.406Z
+  originSessionId: b55cf2db-64b3-4648-9ecd-ef0baee2d5a6
 ---
 
 **What it is (added `90481140`, 2026-08-29).** The 4th entry of the Advanced
@@ -19,19 +20,30 @@ tagged `Introduction`. Canonical spelling is enforced — `PSA.01.pdf` and
 `PSA.1e2.pdf` match nothing (`toChapterNumber` string-slices, no regex, and
 requires `String(chapter) === chapterText`). Free-text filename search appends
 hits below the verse matches, capped at 200; verse matches are never capped.
-Second entry point: verse context menu → **Open in Resources** (`CM-93`).
+The verse context menu's **Open in Resources** item (`CM-93`) was REMOVED
+2026-09-11 at the user's request — the picker is the only way in.
 There is no `ResourcesComp.tsx` — chain is `ResourcesPreviewerComp` →
 `ResourcesRendererComp` → N × `ResourcesDirBoxComp` → `ResourcesFileRowComp`.
 
-**Verse plumbing is a single mutable slot.** `BibleItemsViewController`
-exposes `setResourcesVerseKey` (default no-op); `set selectedVerseKey` writes
-ONE setting and fans out to it. `ResourcesPreviewerComp` installs itself on
-mount and restores the no-op on cleanup — two mounted previewers would clobber
-each other. Incoming verse changes debounce 500 ms (per-instance `useMemo`'d
-`genTimeoutAttempt`); mount applies the current verse immediately, bypassing
-the debounce. `verseEnd` is forced to `verseStart` (`// TODO: support multiple
-verses`). Only `bookKey` + `chapter` drive the scan, passed as primitives —
-arrowing between verses of one chapter does NOT re-scan.
+**It follows the OPEN PANES, not a selected verse** (2026-09-10; asked for by
+the user — *I don't want the Resources based on one selected verse anymore, I
+want all preview verses (book+chapter) in the searching criteria*). The
+`setResourcesVerseKey` slot is GONE from `BibleItemsViewController`;
+`ResourcesPreviewerComp` reads `viewController.resolveStraightBibleItems(
+foundBibleItem)` on `useBibleItemViewControllerUpdateEvent` +
+`EditingResultContext`, exactly as `BibleLocationNamePreviewerComp` does, and
+keeps the result as ONE STRING (`toResourceTargetsKey`: `GEN.24,GEN.27`, pane
+order, repeats dropped) so an update event that changed nothing about the
+reading sets the same value and re-scans nothing; `fromResourceTargetsKey` is
+memoised on it so the boxes get one array identity per reading. Debounced
+500 ms per instance, immediate on mount. `scanResourceFiles(dirPath, targets,
+searchText, stop)` matches EVERY target in ONE walk (cache key SORTS the
+targets, so swapped panes hit the same entry; empty targets + empty search
+reads no directory), and the box files the matches with `groupResourceFiles`
+— a labelled run per pattern in `toResourceMatchPatterns` order (each chapter
+solid, then ONE dashed `<BOOK>.0.*` per book), a book-level file listed once.
+`SelectedBibleVerseHeaderComp` is no longer drawn there; the pattern chips are
+the header.
 
 **Scanning is lazy twice over and budgeted** (`resourcesScanHelpers.ts`):
 the tab is `lazy()` + only-active-tab-mounted, and a collapsed folder never

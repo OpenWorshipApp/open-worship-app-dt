@@ -397,6 +397,36 @@ describe('electronMenu', () => {
         }
     });
 
+    test('Relaunch asks first, then closes and opens the app', async () => {
+        initMenu(createAppController() as any);
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        const viewMenu = template.find((item: any) => {
+            return item.label === 'View';
+        });
+        const relaunchItem = viewMenu.submenu.find((item: any) => {
+            return item.label === 'Relaunch';
+        });
+
+        // The mock answers Cancel by default -- the whole point of the dialog
+        // is that a mis-click one row under Reload closes nothing.
+        relaunchItem.click();
+        await vi.waitFor(() => {
+            expect(electronMockState.dialog.showMessageBox).toHaveBeenCalled();
+        });
+        expect(electronMockState.app.relaunch).not.toHaveBeenCalled();
+        expect(electronMockState.app.quit).not.toHaveBeenCalled();
+
+        electronMockState.dialog.showMessageBox.mockImplementation(async () => {
+            return { response: 0 };
+        });
+        relaunchItem.click();
+        await vi.waitFor(() => {
+            expect(electronMockState.app.relaunch).toHaveBeenCalledTimes(1);
+        });
+        expect(electronMockState.app.quit).toHaveBeenCalledTimes(1);
+    });
+
     test('the View menu keeps its roles and appends renderer widget items', () => {
         // With nothing registered the menu must be untouched — the built-in
         // roles are the whole View menu on every page that has no widgets.
@@ -442,6 +472,8 @@ describe('electronMenu', () => {
                 viewMenu.submenu.map((item: any) => item.label ?? item.role),
             ).toEqual([
                 'reload',
+                // The app-wide restart, one row under the window-wide reload.
+                'Relaunch',
                 'forceReload',
                 'toggleDevTools',
                 undefined,

@@ -20,7 +20,7 @@ describe('what the model is offered', () => {
             filterModelToolList(toolList).map((one) => {
                 return one.name;
             }),
-        ).toEqual(['owa_find_ui', 'take_snapshot']);
+        ).toEqual(['owa_find_ui']);
     });
 
     // A refusal the model cannot act on costs a whole round and comes back to
@@ -52,11 +52,39 @@ describe('what the model is offered', () => {
             'owa_list_ui',
             'owa_tran',
             'owa_type',
-            // The report reads these for itself, and the model is told to.
-            'list_console_messages',
-            'take_snapshot',
         ]) {
             expect(checkIsModelHiddenTool(name), name).toBe(false);
+        }
+    });
+
+    // Nothing of chrome-devtools' reaches the model any more: measured on the
+    // standing corpus 2026-09-08, the ten that still did were called only on
+    // the two questions that FAILED -- `press_key` put the congregation's
+    // screen on unasked, three `take_snapshot`s ran a panic question to the
+    // round cap. The report still reads the console for itself through
+    // `callTool`, which this filter never sees, so withholding the tool from
+    // the model costs the report nothing.
+    it('withholds every chrome-devtools tool, the page readers included', () => {
+        for (const name of [
+            'take_snapshot',
+            'list_pages',
+            'select_page',
+            'wait_for',
+            'list_console_messages',
+            'get_console_message',
+            'list_network_requests',
+            'get_network_request',
+        ]) {
+            expect(checkIsModelHiddenTool(name), name).toBe(true);
+        }
+    });
+
+    // A key press carries no label for the destructive interlock to read, and
+    // F5 / F6 are the projector. A message box is the user's to answer.
+    it('withholds the two acting tools that carry no label at all', () => {
+        for (const name of ['press_key', 'handle_dialog']) {
+            expect(checkIsModelHiddenTool(name), name).toBe(true);
+            expect(checkIsActingTool(name), name).toBe(true);
         }
     });
 

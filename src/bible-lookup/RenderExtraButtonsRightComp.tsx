@@ -3,6 +3,7 @@ import { type ChangeEvent, type ReactNode, useCallback } from 'react';
 import { tran } from '../lang/langHelpers';
 import { getSetting, useStateSettingBoolean } from '../helper/settingHelpers';
 import {
+    AiChatButtonComp,
     ChatbotButtonComp,
     HelpButtonComp,
     QuitCurrentPageComp,
@@ -102,7 +103,7 @@ export default function RenderExtraButtonsRightComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="d-flex align-items-center gap-1">
+        <div className="d-flex align-items-center gap-1 app-scroll-x-buttons">
             {appProvider.isPagePresenter ||
             appProvider.isPageAppDocumentEditor ? (
                 <KeepPopupOpenComp />
@@ -124,6 +125,7 @@ export default function RenderExtraButtonsRightComp({
                         />
                         <SettingButtonComp />
                         <ChatbotButtonComp />
+                        <AiChatButtonComp />
                         <HelpButtonComp />
                     </>
                 ) : null}

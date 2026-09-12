@@ -1,9 +1,8 @@
 import './ResourcesComp.scss';
 
+import type { DragEvent } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 
-import type BibleItem from '../bible-list/BibleItem';
-import SelectedBibleVerseHeaderComp from '../bible-reader/SelectedBibleVerseHeaderComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
@@ -12,7 +11,13 @@ import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { tran } from '../lang/langHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
 import ResourcesDirBoxComp from './ResourcesDirBoxComp';
+import {
+    checkIsDraggingFiles,
+    planResourcesFolderDrop,
+    readDroppedPaths,
+} from './resourcesDropHelpers';
 import {
     getResourcesFolderList,
     RESOURCES_SEARCH_SHOWING_SETTING_NAME,
@@ -20,17 +25,22 @@ import {
     removeResourcesFolderSettings,
     setResourcesFolderList,
 } from './resourcesFolderHelpers';
+import type { ResourceTargetType } from './resourcesScanHelpers';
 import {
     invalidateResourcesScanCache,
     toResourceMatchPatterns,
 } from './resourcesScanHelpers';
 
 export default function ResourcesRendererComp({
-    bibleItem,
-    setBibleItem,
+    targets,
 }: Readonly<{
-    bibleItem: BibleItem;
-    setBibleItem: (bibleItem: BibleItem) => void;
+    /**
+     * Every chapter open in the reader, in pane order, already unique -- and
+     * one array per reading (memoised on its key upstream), so the boxes
+     * below can take it as an effect dependency without re-walking a folder
+     * on every re-render of this panel.
+     */
+    targets: ResourceTargetType[];
 }>) {
     const [dirPathList, setDirPathList] = useState<string[]>(() => {
         return getResourcesFolderList();
@@ -50,14 +60,16 @@ export default function ResourcesRendererComp({
     // the disk for, and only catches up once typing pauses.
     const [searchText, setSearchText] = useState('');
     const [appliedSearchText, setAppliedSearchText] = useState('');
+    // Whether a folder drag is hovering the panel. A boolean in state rather
+    // than a style written onto the element, because the toolbar says what
+    // will happen as well as the panel lighting up, and the two must not be
+    // able to disagree.
+    const [isDroppingOver, setIsDroppingOver] = useState(false);
     // Per-instance, per `.claude/CLAUDE.md`: a module-level timer would be
     // shared by every mounted panel and collapse them into one.
     const attemptTimeout = useMemo(() => {
         return genTimeoutAttempt(500);
     }, []);
-    // Book and chapter only -- the verse picks what the header above shows, not
-    // which files are looked for.
-    const { bookKey, chapter } = bibleItem.target;
     const dirPathListRef = useAppCurrentRef(dirPathList);
 
     // Persisted from the handlers rather than from an effect on `dirPathList`:
@@ -106,6 +118,70 @@ export default function ResourcesRendererComp({
         setReloadCount((oldCount) => {
             return oldCount + 1;
         });
+    }, []);
+    const isDroppingOverRef = useAppCurrentRef(isDroppingOver);
+    const handleDragOver = useCallback((event: DragEvent) => {
+        if (!checkIsDraggingFiles(event.dataTransfer)) {
+            return;
+        }
+        // What makes the panel a drop target at all: without it the browser
+        // never fires `drop` and the cursor reads "no entry" over a panel
+        // that does accept folders.
+        event.preventDefault();
+        // External file drags always allow it, where `link` -- which is
+        // closer to what happens, since nothing is copied -- is only
+        // sometimes in `effectAllowed`, and asking for one that is not
+        // silently kills the drop.
+        event.dataTransfer.dropEffect = 'copy';
+        // `dragover` fires continuously while the pointer moves; only the
+        // transition is written, so a drag held over the panel re-renders it
+        // once rather than once a frame.
+        if (!isDroppingOverRef.current) {
+            setIsDroppingOver(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleDragLeave = useCallback((event: DragEvent) => {
+        // `dragleave` also arrives when the pointer crosses onto a CHILD of
+        // the panel -- a folder header, a file row -- which is not leaving at
+        // all. `relatedTarget` is null when the drag leaves the window
+        // entirely, and that one IS a leave.
+        const relatedTarget = event.relatedTarget as Node | null;
+        if (
+            relatedTarget !== null &&
+            event.currentTarget.contains(relatedTarget)
+        ) {
+            return;
+        }
+        setIsDroppingOver(false);
+    }, []);
+    const handleDropping = useCallback(async (event: DragEvent) => {
+        event.preventDefault();
+        setIsDroppingOver(false);
+        const droppedPaths = readDroppedPaths(event.dataTransfer);
+        if (droppedPaths.length === 0) {
+            return;
+        }
+        const { newDirPathList, duplicatedDirPaths } =
+            await planResourcesFolderDrop(droppedPaths, dirPathListRef.current);
+        if (newDirPathList !== null) {
+            // No toast on success: the folders appearing in the list, with
+            // their files under them, is the feedback -- and it is the thing
+            // the user was looking at when they let go.
+            setResourcesFolderList(newDirPathList);
+            setDirPathList(newDirPathList);
+            return;
+        }
+        // Nothing changed, so nothing on screen can say why on its own.
+        showSimpleToast(
+            tran('Add Folder'),
+            tran(
+                duplicatedDirPaths.length > 0
+                    ? 'Folder is already added'
+                    : 'Drop a folder, not a file',
+            ),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const isSearchShowingRef = useAppCurrentRef(isSearchShowing);
     const setIsSearchShowingRef = useAppCurrentRef(setIsSearchShowing);
@@ -165,10 +241,12 @@ export default function ResourcesRendererComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const matchPatterns = toResourceMatchPatterns(bookKey, chapter);
+    const matchPatterns = toResourceMatchPatterns(targets);
     return (
         <div
-            className="app-resources w-100"
+            className={
+                'app-resources w-100' + (isDroppingOver ? ' is-dropping' : '')
+            }
             // Fills the panel even when the folder boxes do not, so a
             // right-click in the empty space BELOW them still lands on this
             // view rather than on the bare tab body. `minHeight` rather than
@@ -178,21 +256,10 @@ export default function ResourcesRendererComp({
             // before it reaches here.
             style={{ minHeight: '100%' }}
             onContextMenu={handleContextMenuOpening}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDropping}
         >
-            <SelectedBibleVerseHeaderComp
-                bibleItem={bibleItem}
-                onBibleKeyChange={(newBibleKey) => {
-                    const newBibleItem = bibleItem.clone();
-                    newBibleItem.bibleKey = newBibleKey;
-                    setBibleItem(newBibleItem);
-                }}
-                onTargetChange={(newBibleTarget) => {
-                    const newBibleItem = bibleItem.clone();
-                    newBibleItem.target = newBibleTarget;
-                    setBibleItem(newBibleItem);
-                }}
-            />
-            <hr className="m-0" />
             <div className="app-resources-toolbar">
                 <button
                     className="app-ghost-button"
@@ -203,32 +270,46 @@ export default function ResourcesRendererComp({
                 >
                     <i className="bi bi-three-dots-vertical" />
                 </button>
-                {/*
-                 * The patterns are what this panel IS -- "your files named
-                 * after this verse" -- so they are set to be read, and drawn as
-                 * the two different things they are: the chapter that is open,
-                 * solid; the book-level catch-all, dashed, the same dashed
-                 * outline a row carries when it matched that half.
-                 */}
-                <span
-                    className="app-resources-patterns"
-                    title={tran('Book-level files are shown in every chapter')}
-                >
-                    {matchPatterns.map((matchPattern, index) => {
-                        return (
-                            <span
-                                key={matchPattern}
-                                className={
-                                    'app-resources-pattern app-ellipsis' +
-                                    ' app-data' +
-                                    (index === 0 ? '' : ' is-book-level')
-                                }
-                            >
-                                {matchPattern}
-                            </span>
-                        );
-                    })}
-                </span>
+                {isDroppingOver ? (
+                    // In the patterns' own row rather than over the list: the
+                    // list scrolls, so an overlay on it is off screen exactly
+                    // when a long shelf is being added to, and a line added
+                    // beside them would shift the whole panel mid-drag.
+                    <span className="app-resources-drop-hint app-ellipsis">
+                        <i className="bi bi-folder-plus pe-1" />
+                        {tran('Drop folders here')}
+                    </span>
+                ) : (
+                    /*
+                     * The patterns are what this panel IS -- "your files named
+                     * after what you are reading" -- so they are set to be
+                     * read, and drawn as the two different things they are: a
+                     * chapter that is open, solid, one per pane; the
+                     * book-level catch-all, dashed, once per book, the same
+                     * dashed outline a row carries when it matched that half.
+                     */
+                    <span
+                        className="app-resources-patterns"
+                        title={tran(
+                            'Book-level files are shown in every chapter',
+                        )}
+                    >
+                        {matchPatterns.map(({ pattern, isBookLevel }) => {
+                            return (
+                                <span
+                                    key={pattern}
+                                    className={
+                                        'app-resources-pattern app-ellipsis' +
+                                        ' app-data' +
+                                        (isBookLevel ? ' is-book-level' : '')
+                                    }
+                                >
+                                    {pattern}
+                                </span>
+                            );
+                        })}
+                    </span>
+                )}
                 <button
                     className="app-ghost-button"
                     type="button"
@@ -268,6 +349,14 @@ export default function ResourcesRendererComp({
                         <i className="bi bi-folder-plus pe-1" />
                         {tran('Add Folder')}
                     </button>
+                    {/*
+                     * Drag and drop is invisible until it is tried, so the one
+                     * screen a user reaches with no folders yet is where it
+                     * has to be said -- the same reasoning as the button above.
+                     */}
+                    <div className="app-resources-note pt-1">
+                        {tran('Drop folders here')}
+                    </div>
                 </div>
             ) : (
                 <div className="px-1">
@@ -276,8 +365,7 @@ export default function ResourcesRendererComp({
                             <ResourcesDirBoxComp
                                 key={`${dirPath}#${reloadCount}`}
                                 dirPath={dirPath}
-                                bookKey={bookKey}
-                                chapter={chapter}
+                                targets={targets}
                                 searchText={
                                     isSearchShowing ? appliedSearchText : ''
                                 }

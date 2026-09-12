@@ -36,6 +36,9 @@ const APP_PAGE_RANK = [
     'about.html',
     // The chatbot window asking about itself is never the answer.
     'chatbot.html',
+    // The AI Chat window is somebody else's site in a box; ranked so a
+    // developer can still drive its own page, never picked over the app.
+    'aichat.html',
     PAGE_KINDS.screen,
 ];
 

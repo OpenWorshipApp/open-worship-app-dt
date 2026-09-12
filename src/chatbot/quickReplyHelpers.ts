@@ -52,7 +52,15 @@ export const MAX_REPLY_LENGTH = 40;
 // that as prose and prints the machinery at the volunteer, which is the one
 // thing this frame exists to prevent. So the line is CUT at the marker: what
 // is in front of it is the answer, what follows is the buttons.
-const OPTIONS_MARKER = /(^|[\s>*_(-])OPTIONS:[ \t]*/i;
+//
+// And glued to the sentence before it with no space at all. Measured
+// 2026-09-10 on the free tier: "...not showing anything right now.OPTIONS:
+// Yes, start presenting How do I start? No thanks", the marker and all three
+// buttons printed at the volunteer as prose, because a full stop was not on
+// the list of what may come before the word. It is now, with its two cousins
+// -- an uppercase word and a colon straight after a sentence's end is nothing
+// a person writes.
+const OPTIONS_MARKER = /(^|[\s>*_(.!?-])OPTIONS:[ \t]*/i;
 // How far back the marker may sit. The model puts it last; two lines of slack
 // covers a stray blank or a closing sentence typed after it. Further back than
 // that and it is something else -- a quoted example, a step in a recipe.
@@ -197,7 +205,7 @@ export type ShowRefType = {
     name: string;
 };
 
-const SHOWS_MARKER = /(^|[\s>*_(-])SHOWS:[ \t]*/i;
+const SHOWS_MARKER = /(^|[\s>*_(.!?-])SHOWS:[ \t]*/i;
 // Long enough for a real path, short enough that a model cannot paste an
 // answer into one.
 const MAX_SHOW_LENGTH = 300;
@@ -266,7 +274,7 @@ export function parseAnswerShows(text: string): {
 //
 // Same shape as `OPTIONS:` for the same reason: a frame the code holds it to,
 // not a request. `EC-21`, `EC-38` and `EC-43` each paid for that lesson once.
-const NEEDS_MARKER = /(^|[\s>*_(-])NEEDS:[ \t]*/i;
+const NEEDS_MARKER = /(^|[\s>*_(.!?-])NEEDS:[ \t]*/i;
 
 const ATTACH_REQUEST_MAP: Record<string, AttachRequestType> = {
     screenshot: 'screenshot',
@@ -443,8 +451,11 @@ function toMatchKey(text: string) {
 // shapes, is the wall of buttons the ceiling exists to stop. Only ever
 // applied beside those buttons: with no walkthrough on offer, "Show me the
 // button" is a real reply and keeps its place.
+// "Yes, show me step by step" -- the button's own words behind a yes -- got
+// through on 2026-09-08 because `show me` was anchored to the end of the
+// reply and `step by step` to its start; a reply can carry both.
 const WALKTHROUGH_ECHO_PATTERN =
-    /^(?:(?:yes|yeah|ok|okay|sure|please)[,!. ]*)?(?:please )?(?:walk me through|step by step|show me how|show me the (?:steps|demo)|show me$|guide me|do it for me|do (?:it|that) for me|run the demo|(?:show|start) (?:me )?the (?:demo|walkthrough|guide)|demo (?:it|instead))|^(?:yes|yeah|ok|okay|sure)[,!. ]*(?:please)?[!. ]*$/i;
+    /^(?:(?:yes|yeah|ok|okay|sure|please)[,!. ]*)?(?:please )?(?:walk me through|step by step|show me how|show me the (?:steps|demo)|show me(?: (?:it|this|that))? step by step|show me$|guide me|do it for me|do (?:it|that) for me|run the demo|(?:show|start) (?:me )?the (?:demo|walkthrough|guide)|demo (?:it|instead))|^(?:yes|yeah|ok|okay|sure)[,!. ]*(?:please)?[!. ]*$/i;
 const WALKTHROUGH_ACTION_PATTERN = /step by step|do it for me/i;
 
 export function checkIsWalkthroughEcho(reply: string) {

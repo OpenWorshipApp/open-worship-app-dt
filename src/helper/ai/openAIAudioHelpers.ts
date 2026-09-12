@@ -18,12 +18,17 @@ import { useAppEffectAsync, useAppStateAsync } from '../appHooks';
 import type BibleItem from '../../bible-list/BibleItem';
 import type { LocaleType } from '../../lang/langHelpers';
 import { tran } from '../../lang/langHelpers';
+// Availability and the folder name come from the light module: this file is
+// reached by components that only DRAW an audio control (AudioAIEnablingComp,
+// and through it the bible view's title row), and importing `openAIHelpers`
+// here put the OpenAI SDK in their chunk -- which is how the Presenter came to
+// fetch it on a cold boot with no key set. The SDK is loaded below, at the two
+// places that actually call it.
 import {
     checkIsAvailable,
     DATA_DIR_NAME,
-    getOpenAIInstance,
     useAvailable,
-} from './openAIHelpers';
+} from './openAIAvailabilityHelpers';
 import { getLangDataFromBibleKey } from '../bible-helpers/bibleStyleHelpers';
 
 export type SpeakableTextDataType = {
@@ -47,6 +52,7 @@ export async function textToSpeech(
                 }
                 await fsDeleteFile(filePath);
             }
+            const { getOpenAIInstance } = await import('./openAIHelpers');
             const client = getOpenAIInstance();
             if (client === null) {
                 return null;
@@ -91,6 +97,7 @@ export async function bibleTextToSpeech(
     },
     isForce?: boolean,
 ) {
+    const { getOpenAIInstance } = await import('./openAIHelpers');
     if (getOpenAIInstance() === null) {
         return null;
     }

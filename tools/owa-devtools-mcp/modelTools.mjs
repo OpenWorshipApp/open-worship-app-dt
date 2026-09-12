@@ -31,6 +31,20 @@
  * tax on all of them. Measured 2026-09-02: 44 tools at the host, 41 to the
  * model at ~8 938 tokens/round; this list takes that to 25 and ~5 721, which
  * is ~32 000 tokens off a worst-case question.
+ *
+ * Since 2026-09-09 the model is offered the app's OWN tools and nothing of
+ * chrome-devtools' at all. The last ten were kept "in case", and the standing
+ * corpus showed what a model does with them: asked "nothing is showing on the
+ * projector", it rang the wrong control, then pressed F5 through `press_key`
+ * -- twice, on two windows -- and the congregation's screen came on with
+ * nobody having asked for it; asked "the words no come out big screen" it
+ * took three `take_snapshot`s of the presenter (~8 000 tokens each), read the
+ * console, ran to the ten-round cap, and answered "I could not find an
+ * answer for that" after 72 seconds and 225 000 tokens. Across every graded
+ * run before that, no chrome-devtools tool had ever been called on a question
+ * that PASSED. What each one did is done better by an `owa_*` tool that
+ * answers in the words on the user's screen: `owa_list_ui` for the snapshot,
+ * `owa_app_state` for the pages, `owa_click` for the press.
  */
 const MODEL_HIDDEN_TOOL_GROUP_LIST = [
     {
@@ -74,14 +88,54 @@ const MODEL_HIDDEN_TOOL_GROUP_LIST = [
         nameList: ['new_page', 'close_page', 'navigate_page'],
     },
     {
+        // A key press carries no label, so the destructive interlock has
+        // nothing to read -- and in this app the function keys ARE the
+        // congregation's screen: F5 shows it, F6 clears it. A message box the
+        // app puts up is a question asked of the USER, and the guide card
+        // already refuses to answer one for anybody (`guide.mjs`). Measured
+        // 2026-09-08 on the standing corpus: the model pressed F5 unasked on
+        // the panic question and reported the screen on.
+        reason:
+            'Pressing a key or answering a message box is not yours to do: ' +
+            'a key carries no label the safety check can read, and F5 and ' +
+            'F6 change what the congregation sees. Press the CONTROL with ' +
+            'owa_click, by the words written on it, after the user has said ' +
+            'yes -- or tell them which key to press themselves.',
+        nameList: ['press_key', 'handle_dialog'],
+    },
+    {
+        // The page-level readers. Each answers in uids, page numbers and log
+        // lines that mean nothing to a volunteer, and `take_snapshot` costs
+        // ~8 000 tokens a call for a tree the model can no longer act on
+        // (`click` and `fill` are withheld above). The report reads the
+        // console for itself, through `callTool`, which this filter never
+        // sees.
+        reason:
+            'That is a developer instrument and it answers in ids and log ' +
+            'lines, not in anything the user can see. owa_list_ui says what ' +
+            'is on their screen, owa_app_state which windows are open and ' +
+            'what each one shows, owa_list_screens what the projector is ' +
+            'doing. Use those.',
+        nameList: [
+            'take_snapshot',
+            'list_pages',
+            'select_page',
+            'wait_for',
+            'list_console_messages',
+            'get_console_message',
+            'list_network_requests',
+            'get_network_request',
+        ],
+    },
+    {
         // ~1 333 tokens/round of instruments that answer no volunteer's
         // question. Still served to the developer's door, which is where
         // profiling an Electron app actually happens.
         reason:
             'That is a developer instrument -- it measures or throttles the ' +
             'browser and answers nothing anyone asked. If the app is slow or ' +
-            'wrong, owa_app_state and list_console_messages are what to look ' +
-            'at.',
+            'wrong, owa_app_state says where the user is and what the window ' +
+            'shows; the Report button reads the log for itself.',
         nameList: [
             'emulate',
             'resize_page',

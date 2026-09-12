@@ -44,18 +44,44 @@ export function initAppUserModelId() {
 // `applyLaunchOverrides` would aim it at the packaged `userData` — a different
 // lock, which would open a whole second app instead of signalling this one.
 // Naming the already-resolved dir on the command line keeps dev talking to dev.
-function genRelaunchArguments() {
-    const parts = [
+//
+// A LIST, not a command line: `app.relaunch` takes the arguments already split
+// and quoting them there would make the quotes part of the path. Only the jump
+// list, which hands Windows one string, joins and quotes them.
+function genRelaunchArgList(extraArgs: string[] = []) {
+    return [
         // in dev `process.execPath` is electron.exe, which needs the app path
         ...(isDev ? [app.getAppPath()] : []),
         `${USER_DATA_PATH_ARG_PREFIX}${app.getPath('userData')}`,
-        RESET_WINDOW_BOUNDS_ARG,
+        ...extraArgs,
     ];
-    return parts
+}
+
+function genRelaunchArguments() {
+    return genRelaunchArgList([RESET_WINDOW_BOUNDS_ARG])
         .map((part) => {
             return part.includes(' ') ? `"${part}"` : part;
         })
         .join(' ');
+}
+
+/**
+ * Close this app and open it again.
+ *
+ * The one setting that CANNOT be applied any other way is the AI master
+ * switch: the main process reads it before `ready` to decide whether the
+ * debugging endpoint and the MCP host open at all, so no amount of reloading
+ * renderers (`Apply Settings`) can change it. Electron starts the new process
+ * only once this one has exited, so the single-instance lock is free by then.
+ *
+ * The window reset a jump list task carries is deliberately NOT passed on: a
+ * restart asked for in Settings must leave the user's window where they put it.
+ */
+export function relaunchApp() {
+    app.relaunch({ args: genRelaunchArgList() });
+    // `quit`, not `exit`: `will-quit` is where the agent endpoint file is
+    // swept and the settings are flushed.
+    app.quit();
 }
 
 // Adds the entry under "Tasks" when the taskbar icon is right-clicked. Must run

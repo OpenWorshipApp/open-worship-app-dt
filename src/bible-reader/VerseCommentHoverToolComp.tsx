@@ -13,6 +13,7 @@ import {
 } from './verseAnnotationActionHelpers';
 import {
     cancelHoveredCommentClearing,
+    clearHoveredComment,
     scheduleHoveredCommentClearing,
     useHoveredVerseComment,
     type HoveredVerseCommentType,
@@ -50,7 +51,9 @@ export default function VerseCommentHoverToolComp({
             title: anchor?.title ?? current.verseKey,
             verseKey: current.verseKey,
         });
-        scheduleHoveredCommentClearing();
+        // The editor is open on it now; a tooltip lingering under it for the
+        // grace period is only in the way.
+        clearHoveredComment();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleRemoving = useCallback(async () => {
@@ -63,7 +66,8 @@ export default function VerseCommentHoverToolComp({
             current.noteItemId,
             current.commentId,
         );
-        scheduleHoveredCommentClearing();
+        // The comment is gone, so the tooltip quoting it goes at once.
+        clearHoveredComment();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     if (hoveredComment === null) {
@@ -110,6 +114,14 @@ function RenderHoverToolComp({
             onMouseEnter={cancelHoveredCommentClearing}
             onMouseLeave={scheduleHoveredCommentClearing}
         >
+            <button
+                type="button"
+                className="app-verse-comment-hover__close"
+                title={tran('Close')}
+                onClick={clearHoveredComment}
+            >
+                <i className="bi bi-x-lg" />
+            </button>
             <div
                 className="app-verse-comment-hover__text"
                 style={{ fontFamily }}

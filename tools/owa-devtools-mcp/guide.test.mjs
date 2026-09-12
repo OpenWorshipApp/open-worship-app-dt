@@ -206,6 +206,35 @@ describe('dropStepsAlreadyDone', () => {
         expect(dropStepsAlreadyDone(steps, '/presenter.html')).toHaveLength(2);
     });
 
+    // W-31 step 1 (2026-09-09): "Open View on the top menu bar → Widgets. You
+    // get one tick-box per panel ... e.g. on the presenter: App Presenter
+    // Left ..." -- the window named in an EXAMPLE two sentences on, and the
+    // whole step gone in the Presenter, so the card opened on "Click a
+    // ticked one" with nothing said about what to tick.
+    it('reads only the first sentence for where a step is going', () => {
+        const steps = [
+            {
+                text:
+                    'Open View on the top menu bar → Widgets. You get one ' +
+                    'tick-box per panel, e.g. on the presenter: Presenter, ' +
+                    'Document List.',
+                finds: ['View', 'Widgets'],
+            },
+            { text: 'Click a ticked one.', finds: [] },
+        ];
+        expect(dropStepsAlreadyDone(steps, '/presenter.html')).toHaveLength(2);
+        // Named up front, it is still the step already done.
+        expect(
+            dropStepsAlreadyDone(
+                [
+                    { text: 'Click the Presenter tab. Then wait.', finds: [] },
+                    steps[1],
+                ],
+                '/presenter.html',
+            ),
+        ).toHaveLength(1);
+    });
+
     it('knows the Document Editor by the words on its tab', () => {
         const steps = [
             { text: 'Open the Slide Editor.', finds: ['Slide Editor'] },
@@ -719,6 +748,105 @@ describe('a step whose control lives in a right-click menu', () => {
         const done = await window.__owaGuide.act();
         expect(done.lastResult.did).toBe('clicked');
         expect(done.lastResult.more).toBeUndefined();
+    });
+});
+
+// The divider between two panes (reported 2026-09-09 with a screenshot of
+// its menu open beside a walkthrough of the View-menu recipe): the app now
+// names every one, so a step about its right-click menu finds the divider
+// itself by name and never reaches the list-region search -- and a left
+// click on a divider does nothing, so the press has to be a right-click.
+describe('a step whose control is a divider', () => {
+    it('right-clicks the named divider and names the item it brought up', async () => {
+        document.body.innerHTML =
+            '<div id="left" data-widget-name="Document List"></div>' +
+            '<div id="divider" role="separator"' +
+            ' aria-label="Divider between Document List and Presenting Flow List"' +
+            '></div>' +
+            '<div id="right" data-widget-name="Presenting Flow List"></div>';
+        const divider = document.getElementById('divider');
+        divider.getBoundingClientRect = () => {
+            return { x: 300, y: 0, width: 6, height: 600, top: 0, left: 300 };
+        };
+        document.elementFromPoint = () => divider;
+        const seen = [];
+        divider.addEventListener('click', () => {
+            seen.push('click');
+        });
+        divider.addEventListener('contextmenu', (event) => {
+            seen.push({ x: event.clientX, y: event.clientY });
+            const item = document.createElement('button');
+            item.id = 'item';
+            item.textContent = 'Close First Widget';
+            document.body.append(item);
+        });
+
+        const guide = startGuide({
+            mode: 'demo',
+            steps: [
+                {
+                    text: 'Right-click the divider between Document List and' +
+                        ' Presenting Flow List and choose Close First Widget.',
+                    finds: [
+                        'divider between Document List and Presenting Flow List',
+                        'Close First Widget',
+                    ],
+                    action: 'rightClick',
+                },
+                { text: 'Click the strip.', find: 'Document List' },
+            ],
+        });
+        expect(guide.isTargetFound).toBe(true);
+
+        const after = await window.__owaGuide.act();
+        expect(after.lastResult.did).toBe('right-clicked');
+        // On the divider's own centre -- a thin thing has no "20 in from
+        // the edge" that is still inside it -- and never a left click.
+        expect(seen).toEqual([{ x: 303, y: 300 }]);
+        expect(after.lastResult.more).toBe('Close First Widget');
+        expect(after.stepNumber).toBe(1);
+
+        const done = await window.__owaGuide.act();
+        expect(done.lastResult.did).toBe('clicked');
+        expect(done.lastResult.label).toBe('Close First Widget');
+    });
+
+    it('does not right-click some list when the divider is not there', async () => {
+        // One panel collapsed: no divider, only its strip and a list the
+        // region fallback would otherwise open a menu on.
+        document.body.innerHTML =
+            '<div id="strip" role="button" data-widget-name="Document List"' +
+            ' title="Enable Document List">Document List</div>' +
+            '<div id="list"></div>';
+        const list = document.getElementById('list');
+        Object.defineProperty(list, 'scrollHeight', { value: 900 });
+        Object.defineProperty(list, 'clientHeight', { value: 300 });
+        list.getBoundingClientRect = () => {
+            return { x: 0, y: 0, width: 600, height: 300, top: 0, left: 0 };
+        };
+        document.elementFromPoint = () => list;
+        let menus = 0;
+        list.addEventListener('contextmenu', () => {
+            menus += 1;
+        });
+        startGuide({
+            mode: 'demo',
+            steps: [
+                {
+                    text: 'Right-click the divider between Document List and' +
+                        ' Presenting Flow List and choose Reset Size.',
+                    finds: [
+                        'divider between Document List and Presenting Flow List',
+                        'Reset Size',
+                    ],
+                    action: 'rightClick',
+                },
+            ],
+        });
+        const after = await window.__owaGuide.act();
+        expect(after.lastResult.done).toBe(false);
+        expect(after.lastResult.reason).toBe('nothing on screen to act on');
+        expect(menus).toBe(0);
     });
 });
 

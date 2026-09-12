@@ -1,4 +1,10 @@
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
+import {
+    DEFAULT_LANG_CODE,
+    checkIsValidLangCode,
+    getLangCode,
+    type LocaleType,
+} from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import {
     genLookupFileStore,
@@ -50,20 +56,46 @@ export const useLookupTextIndex = genLookupFileStore<LookupTextIndexType>(
 );
 
 /**
- * Whether verse text in this bible may be decorated at all.
+ * Whose surface forms a verse in this bible is decorated with — a language code,
+ * or null for a bible that is not decorated at all. In a multi-version view this
+ * is answered per column, so each one is matched in its own language or left
+ * alone.
  *
- * KJV ONLY, because the whole dataset was extracted from the KJV: the verse
- * evidence is keyed by KJV references and the surface forms are KJV spellings
- * ("Galilaeans", "Elias", "Elisabeth"). Another translation renders the same
- * verse with different words, so matching it against this index would both miss
- * names and, worse, attach KJV verse evidence to text that does not say the same
- * thing. In a multi-version view this gates per column, so the KJV column is
- * decorated and the others are left alone.
+ * English means the KJV and ONLY the KJV, because this index was extracted from
+ * it: the surface forms are KJV spellings ("Galilaeans", "Elias", "Elisabeth")
+ * and the fallback that resolves a form borne by exactly one record in the whole
+ * dataset has no verse evidence behind it — so another English translation,
+ * which renders the same verse with different words, would both miss names and
+ * attach KJV verse evidence to text that does not say the same thing.
  *
- * The screen output window is excluded too — it renders text nobody can click.
+ * A bible in a language that ships a lookup package is decorated with THAT
+ * package's names instead (`verseTextTranslatedHelpers`). It is not the same
+ * bargain: that path resolves nothing without evidence for the very verse or
+ * chapter in hand, which is the constraint that makes it safe to run over a
+ * translation nobody extracted the dataset from.
+ *
+ * The screen output window is excluded from both — it renders text nobody can
+ * click.
  */
-export function checkCanLookupVerseText(bibleKey: string) {
-    return !appProvider.isPageScreen && bibleKey === BIBLE_KJV_KEY;
+export function getVerseTextLookupLangCode(
+    bibleKey: string,
+    locale: LocaleType,
+): string | null {
+    if (appProvider.isPageScreen) {
+        return null;
+    }
+    if (bibleKey === BIBLE_KJV_KEY) {
+        return DEFAULT_LANG_CODE;
+    }
+    const langCode = getLangCode(locale);
+    if (
+        langCode === null ||
+        langCode === DEFAULT_LANG_CODE ||
+        !checkIsValidLangCode(langCode)
+    ) {
+        return null;
+    }
+    return langCode;
 }
 
 // The single candidate this verse actually attests, or null when the verse
@@ -235,11 +267,15 @@ const LOOKUP_LINK_SELECTOR = '.verse-lookup-link';
  *
  * Matching runs per text node, so a phrase split across inline tags is missed;
  * that is a deliberate simplification over re-parsing the fragment.
+ *
+ * The matcher is passed IN rather than chosen here: a translated bible resolves
+ * its names a different way (see `verseTextTranslatedHelpers`) and everything
+ * below this line — walking the nodes, splitting them, the idempotence rule — is
+ * the same work for both.
  */
 export function decorateLookupMatchesInElement(
     element: HTMLElement,
-    index: LookupTextIndexType,
-    kjvShortVerse: string,
+    findMatchList: (_text: string) => LookupTextMatchType[],
     onActivate: (event: MouseEvent, match: LookupTextMatchType) => void,
 ) {
     // Idempotence is checked against the CONTENT, not a flag on the element: the
@@ -261,7 +297,7 @@ export function decorateLookupMatchesInElement(
         if (text.trim() === '') {
             continue;
         }
-        const matchList = findLookupTextMatches(index, text, kjvShortVerse);
+        const matchList = findMatchList(text);
         if (matchList.length === 0) {
             continue;
         }
@@ -305,7 +341,20 @@ export function toVerseTextSegments(
     if (index === null || text === '') {
         return null;
     }
-    const matchList = findLookupTextMatches(index, text, kjvShortVerse);
+    return toVerseTextSegmentList(
+        text,
+        findLookupTextMatches(index, text, kjvShortVerse),
+    );
+}
+
+/**
+ * The matches a finder produced, woven back into the text around them. Shared by
+ * both paths, since only the FINDING differs between them.
+ */
+export function toVerseTextSegmentList(
+    text: string,
+    matchList: LookupTextMatchType[],
+): VerseTextSegmentType[] | null {
     if (matchList.length === 0) {
         return null;
     }

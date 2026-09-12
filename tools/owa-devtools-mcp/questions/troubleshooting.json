@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Symptoms rather than tasks. Somebody standing at the back of a room describes what they can see going wrong, not the name of the feature that would fix it.",
-    "updated": "2026-09-01",
+    "updated": "2026-09-12",
     "sections": [
         {
             "id": "screen",
@@ -454,10 +454,69 @@
                         "send report",
                         "downloads",
                         "who sees it",
-                        "issue tracker"
+                        "issue tracker",
+                        "who do I send it to",
+                        "email address"
                     ],
                     "resources": {
                         "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "report-email-it",
+                    "text": "How do I email a bug report to the developers?",
+                    "kind": "howto",
+                    "keywords": [
+                        "email the report",
+                        "send the bug report by email",
+                        "contact address",
+                        "copy the report",
+                        "copy email address",
+                        "copy subject",
+                        "subject line",
+                        "copy picture",
+                        "screenshot",
+                        "maintainers"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": ["Report"]
+                    }
+                },
+                {
+                    "id": "assistant-out-of-credit",
+                    "text": "The assistant says my AI account is out of credit — what do I do?",
+                    "kind": "fix",
+                    "keywords": [
+                        "no credit",
+                        "credit balance",
+                        "billing",
+                        "quota",
+                        "insufficient",
+                        "rate-limited",
+                        "top up",
+                        "dashboard",
+                        "console"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                },
+                {
+                    "id": "assistant-key-refused",
+                    "text": "The assistant says my API key was refused — where do I fix it?",
+                    "kind": "fix",
+                    "keywords": [
+                        "invalid key",
+                        "wrong key",
+                        "refused",
+                        "API key",
+                        "AI providers",
+                        "keys page"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "find": ["Open AI settings"]
                     }
                 }
             ]

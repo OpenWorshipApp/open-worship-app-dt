@@ -10,12 +10,15 @@ import BibleCrossRefOpenAIItemRendererBodyComp from './BibleCrossRefOpenAIItemRe
 import BibleCrossRefWrapperComp from './BibleCrossRefWrapperComp';
 import BibleCrossRefAnthropicItemRendererBodyComp from './BibleCrossRefAnthropicItemRendererBodyComp';
 import type { RefreshingRefType } from '../helper/ai/aiHelpers';
-import { useAvailable as useOpenAIAvailable } from '../helper/ai/openAIHelpers';
+// From the availability module, NOT `openAIHelpers`: this component only asks
+// whether to draw an AI control, and the other module imports the OpenAI SDK.
+import { useAvailable as useOpenAIAvailable } from '../helper/ai/openAIAvailabilityHelpers';
 import {
     BibleKeyContext,
     defaultRefreshingRef,
 } from '../helper/ai/bibleCrossRefHelpers';
-import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHelpers';
+// Availability module, not `anthropicHelpers` — see the OpenAI note above.
+import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicAvailabilityHelpers';
 import { tran } from '../lang/langHelpers';
 import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
 import appProvider from '../server/appProvider';

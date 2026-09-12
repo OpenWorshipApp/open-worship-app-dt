@@ -41,6 +41,47 @@ export const MAX_SEARCH_MATCHES = 200;
  */
 const YIELD_EVERY_DIRECTORIES = 16;
 
+/**
+ * One chapter the panel looks for files of. There is one per open pane, so the
+ * list is what the user is READING, not one verse they clicked -- a reader
+ * showing Genesis 24, 27 and 29 in three panes lists the files of all three.
+ */
+export type ResourceTargetType = { bookKey: string; chapter: number };
+
+/**
+ * The target list as one string, `GEN.24,GEN.27` -- pane order kept, repeats
+ * dropped, so two panes on one chapter in two versions ask once. It is what
+ * the panel keeps in state and passes down: a primitive, so an unchanged
+ * reading re-renders nothing and re-walks nothing, where a fresh array would
+ * re-scan every folder on every update event the reader fires.
+ */
+export function toResourceTargetsKey(targets: ResourceTargetType[]) {
+    const parts: string[] = [];
+    for (const { bookKey, chapter } of targets) {
+        const part = `${bookKey}.${chapter}`;
+        if (!parts.includes(part)) {
+            parts.push(part);
+        }
+    }
+    return parts.join(',');
+}
+
+export function fromResourceTargetsKey(
+    targetsKey: string,
+): ResourceTargetType[] {
+    if (targetsKey === '') {
+        return [];
+    }
+    return targetsKey.split(',').map((part) => {
+        // The LAST dot: a book key never holds one, a chapter may be `-1`.
+        const dotIndex = part.lastIndexOf('.');
+        return {
+            bookKey: part.slice(0, dotIndex),
+            chapter: Number(part.slice(dotIndex + 1)),
+        };
+    });
+}
+
 export type ResourcesScanResultType = {
     filePaths: string[];
     /**
@@ -164,21 +205,94 @@ export function checkIsBookLevelName(fileFullName: string, bookKey: string) {
     return fileChapter !== null && fileChapter < 1;
 }
 
+export type ResourceMatchPatternType = {
+    /** `GEN.24.*` -- the words the panel prints. */
+    pattern: string;
+    bookKey: string;
+    /** `< 1` on a book-level pattern; the chapter itself otherwise. */
+    chapter: number;
+    isBookLevel: boolean;
+};
+
 /**
- * What the panel says it is looking for, as its two halves: the chapter that is
- * open, then the book-level catch-all. The second is dropped when the chapter
- * IS book-level, so it is never printed twice.
+ * What the panel says it is looking for: one pattern per open chapter, in pane
+ * order, then ONE book-level catch-all per book after them -- `GEN.24.*`,
+ * `GEN.27.*`, `GEN.0.*`. The catch-all is dropped for a book whose target
+ * already IS book-level, so it is never printed twice.
  *
- * Two strings rather than one so the panel can draw them as what they are --
- * the chapter pattern solid, the book-level one dashed -- instead of a single
- * run of grey text the user has to parse a separator out of.
+ * Objects rather than strings so the panel can draw them as what they are --
+ * a chapter pattern solid, the book-level one dashed -- and so a file can be
+ * filed under the pattern it matched (`groupResourceFiles`).
  */
-export function toResourceMatchPatterns(bookKey: string, chapter: number) {
-    const chapterPattern = `${bookKey}.${chapter}.*`;
-    if (chapter < 1) {
-        return [chapterPattern];
+export function toResourceMatchPatterns(
+    targets: ResourceTargetType[],
+): ResourceMatchPatternType[] {
+    const chapterPatterns: ResourceMatchPatternType[] = [];
+    const bookKeys: string[] = [];
+    const bookLevelBookKeys = new Set<string>();
+    for (const { bookKey, chapter } of targets) {
+        const isBookLevel = chapter < 1;
+        chapterPatterns.push({
+            pattern: `${bookKey}.${chapter}.*`,
+            bookKey,
+            chapter,
+            isBookLevel,
+        });
+        if (isBookLevel) {
+            bookLevelBookKeys.add(bookKey);
+        } else if (!bookKeys.includes(bookKey)) {
+            bookKeys.push(bookKey);
+        }
     }
-    return [chapterPattern, `${bookKey}.0.*`];
+    const bookLevelPatterns = bookKeys
+        .filter((bookKey) => {
+            return !bookLevelBookKeys.has(bookKey);
+        })
+        .map((bookKey): ResourceMatchPatternType => {
+            return {
+                pattern: `${bookKey}.0.*`,
+                bookKey,
+                chapter: 0,
+                isBookLevel: true,
+            };
+        });
+    return [...chapterPatterns, ...bookLevelPatterns];
+}
+
+export type ResourceGroupType = ResourceMatchPatternType & {
+    filePaths: string[];
+};
+
+/**
+ * The matches of one folder filed under the pattern each one answers to, in
+ * the order `toResourceMatchPatterns` prints them; a pattern nothing matched
+ * is left out. A file is filed ONCE, under the first pattern it fits, and a
+ * book-level file fits only the book-level pattern -- so `GEN.0.pdf` is listed
+ * once for a reading of Genesis 24 and 27, not once under each.
+ */
+export function groupResourceFiles(
+    filePaths: string[],
+    targets: ResourceTargetType[],
+): ResourceGroupType[] {
+    const groupList = toResourceMatchPatterns(targets).map(
+        (matchPattern): ResourceGroupType => {
+            return { ...matchPattern, filePaths: [] };
+        },
+    );
+    for (const filePath of filePaths) {
+        const fileFullName = pathBasename(filePath);
+        const group = groupList.find(({ bookKey, chapter, isBookLevel }) => {
+            const fileChapter = toChapterNumber(fileFullName, bookKey);
+            if (fileChapter === null) {
+                return false;
+            }
+            return isBookLevel ? fileChapter < 1 : fileChapter === chapter;
+        });
+        group?.filePaths.push(filePath);
+    }
+    return groupList.filter((group) => {
+        return group.filePaths.length > 0;
+    });
 }
 
 /**
@@ -239,6 +353,12 @@ const RESOURCE_ICON_BY_DOT_EXTENSION: { [key: string]: [string, string?] } = {
     '.docx': ['file-earmark-word', '#2b579a'],
     '.doc': ['file-earmark-word', '#2b579a'],
     '.own': ['journal-text'],
+    // Named as the format it is, never as a link list: a `.json` may hold the
+    // link schema (`resourceLinksHelpers.ts`) or may be any other data file, and
+    // only reading it settles that -- the row swaps this for a link glyph once
+    // the content has proved itself. Better either way than the
+    // `question-diamond` every unknown type gets.
+    '.json': ['filetype-json'],
 };
 
 // Built ONCE at module load, not per row. The obvious alternative,
@@ -275,14 +395,25 @@ const scanCacheManager = new CacheManager<ResourcesScanResultType>(10);
 
 function toScanCacheKey(
     dirPath: string,
-    bookKey: string,
-    chapter: number,
+    targets: ResourceTargetType[],
     lowerSearchText: string,
 ) {
+    // SORTED, unlike `toResourceTargetsKey`: the panes' order decides where
+    // a group is drawn, not which files a walk finds, so reordering them must
+    // hit the entry the previous order made.
+    const targetsKey = [
+        ...new Set(
+            targets.map(({ bookKey, chapter }) => {
+                return `${bookKey.toLowerCase()}.${chapter}`;
+            }),
+        ),
+    ]
+        .sort()
+        .join(',');
     // The search text goes LAST so `invalidateResourcesScanCache`'s
     // `${dirPath} ` prefix still drops every entry for a folder, whatever was
     // typed when they were made.
-    return `${dirPath} ${bookKey.toLowerCase()} ${chapter} ${lowerSearchText}`;
+    return `${dirPath} ${targetsKey} ${lowerSearchText}`;
 }
 
 /**
@@ -305,8 +436,7 @@ export function invalidateResourcesScanCache(dirPath?: string) {
 
 async function walkForMatches(
     dirPath: string,
-    bookKey: string,
-    chapter: number,
+    targets: ResourceTargetType[],
     lowerSearchText: string,
     checkShouldStop: () => boolean,
 ): Promise<ResourcesScanResultType | null> {
@@ -353,7 +483,13 @@ async function walkForMatches(
                 continue;
             }
             if (isFile) {
-                if (checkIsMatchedName(name, bookKey, chapter)) {
+                // Every open chapter in ONE walk: the cost here is the
+                // directory reads, and three panes must not mean three of
+                // them.
+                const isMatched = targets.some(({ bookKey, chapter }) => {
+                    return checkIsMatchedName(name, bookKey, chapter);
+                });
+                if (isMatched) {
                     filePaths.push(pathJoin(current.dirPath, name));
                 } else if (
                     lowerSearchText !== '' &&
@@ -389,27 +525,36 @@ async function walkForMatches(
 }
 
 /**
- * Every file under `dirPath` belonging to this book and chapter -- the
+ * Every file under `dirPath` belonging to any of these chapters -- each
  * chapter's own files plus the book-level ones (`PSA.0.*`) -- and, when
  * `searchText` is given, everything else under it whose name contains that
  * text, returned separately.
  *
  * Returns `null` when `checkShouldStop` asked it to give up, so a walk started
- * for a verse the user has already moved off stops touching the disk instead of
- * running to completion on the machine that can least afford it. An abandoned
- * walk is never cached -- its result is partial by definition.
+ * for a reading the user has already moved off stops touching the disk instead
+ * of running to completion on the machine that can least afford it. An
+ * abandoned walk is never cached -- its result is partial by definition.
  *
  * Throws only when the ROOT folder cannot be read; the caller renders that.
  */
 export async function scanResourceFiles(
     dirPath: string,
-    bookKey: string,
-    chapter: number,
+    targets: ResourceTargetType[],
     searchText: string = '',
     checkShouldStop: () => boolean = () => false,
 ): Promise<ResourcesScanResultType | null> {
     const lowerSearchText = normalizeResourceSearchText(searchText);
-    const cacheKey = toScanCacheKey(dirPath, bookKey, chapter, lowerSearchText);
+    if (targets.length === 0 && lowerSearchText === '') {
+        // Nothing to look for -- no pane resolves to a passage and nothing is
+        // typed -- so no reason to read a single directory.
+        return {
+            filePaths: [],
+            searchedFilePaths: [],
+            isTruncated: false,
+            isSearchTruncated: false,
+        };
+    }
+    const cacheKey = toScanCacheKey(dirPath, targets, lowerSearchText);
     return await scanCacheManager.unlocking(cacheKey, async () => {
         // Inside the lock: two boxes over one folder, or a remount from a tab
         // switch, then cost one walk instead of two racing ones.
@@ -419,8 +564,7 @@ export async function scanResourceFiles(
         }
         const result = await walkForMatches(
             dirPath,
-            bookKey,
-            chapter,
+            targets,
             lowerSearchText,
             checkShouldStop,
         );

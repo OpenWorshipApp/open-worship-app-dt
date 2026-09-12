@@ -62,6 +62,16 @@ const ACTING_TOOLS = {
     // the same rule every other reading tool follows.
     owa_lyric_file: 'changed a song',
     owa_slide_file: 'changed a slide document',
+    // The verse goes on the congregation's screen, so the banner NAMES it:
+    // "put a verse on the screen" says nothing the operator can check
+    // against the wall. A `check` reads the passage and touches no screen,
+    // and stays quiet like every other read.
+    owa_present_bible: 'put a Bible passage on the screen',
+    // A countdown or a message goes on the congregation's screen too, so the
+    // banner names WHICH extra and, for a countdown, how long: "started a
+    // 5 minute countdown on the screen" is something the operator can check
+    // against the wall. A `check` reads and stays quiet.
+    owa_foreground: 'put a countdown or a message on the screen',
 };
 
 // What a write to one of the user's documents is called, or null for a read.
@@ -70,6 +80,54 @@ const AGENT_FILE_VERBS = {
     update: 'changed',
     rename: 'renamed',
 };
+
+// What each foreground extra is called in a banner.
+const FOREGROUND_BANNER_NOUN_MAP = {
+    countdown: 'the countdown',
+    stopwatch: 'the stopwatch',
+    clock: 'the clock',
+    'marquee-top': 'the scrolling message',
+    'marquee-bottom': 'the scrolling message',
+    'quick-text': 'the line of text',
+    all: 'every foreground extra',
+};
+
+// The banner for `owa_foreground` says WHICH extra and, for a countdown, how
+// long -- "started a 5 minute countdown on the screen" is a sentence the
+// operator can check against the wall, where "put an extra on the screen"
+// is not. A `check` reads and is quiet, like every other read.
+function describeForegroundCall(args) {
+    if (args?.action === 'check') {
+        return null;
+    }
+    const widget = typeof args?.widget === 'string' ? args.widget : '';
+    const noun = FOREGROUND_BANNER_NOUN_MAP[widget];
+    if (args?.action === 'stop') {
+        return noun === undefined
+            ? 'took a foreground extra off the screen'
+            : `took ${noun} off the screen`;
+    }
+    switch (widget) {
+        case 'countdown':
+            if (typeof args?.minutes === 'number') {
+                return `started a ${args.minutes} minute countdown on the screen`;
+            }
+            return typeof args?.at === 'string' && args.at.trim() !== ''
+                ? `started a countdown to ${args.at.trim()} on the screen`
+                : 'started a countdown on the screen';
+        case 'stopwatch':
+            return 'started a stopwatch on the screen';
+        case 'clock':
+            return 'put a clock on the screen';
+        case 'marquee-top':
+        case 'marquee-bottom':
+            return 'put a scrolling message on the screen';
+        case 'quick-text':
+            return 'put a line of text on the screen';
+        default:
+            return ACTING_TOOLS.owa_foreground;
+    }
+}
 
 // Two tools say more than their entry. `owa_find_ui` only draws when asked to,
 // so without a highlight it is a read; `owa_read_website` names where it went.
@@ -88,16 +146,43 @@ export function describeToolCall(name, args) {
         const named = typeof args?.name === 'string' && args.name !== '';
         return named ? `${verb} the ${what} "${args.name}"` : `${verb} a ${what}`;
     }
-    if (name === 'owa_read_website') {
+    if (name === 'owa_present_bible') {
+        if (args?.action === 'check') {
+            return null;
+        }
+        const reference =
+            typeof args?.reference === 'string' ? args.reference.trim() : '';
+        return reference === ''
+            ? ACTING_TOOLS.owa_present_bible
+            : `put ${reference} on the screen`;
+    }
+    if (name === 'owa_foreground') {
+        return describeForegroundCall(args);
+    }
+    if (name === 'owa_read_website' || checkIsDraftFromPage(name, args)) {
         const site = toSiteName(args?.url);
         // The generic entry above, when the address is unreadable: a tool
         // that announces itself only for well-formed input announces itself
         // exactly when it matters least.
         return site === null
-            ? ACTING_TOOLS[name]
+            ? ACTING_TOOLS.owa_read_website
             : `read a page on ${site}`;
     }
     return ACTING_TOOLS[name] ?? null;
+}
+
+/**
+ * The song drafter, handed a page address. It is a local tool -- checking or
+ * drafting a paste opens nothing and says nothing -- but given a `url` it
+ * opens the same hidden window `owa_read_website` does, and what left this
+ * computer is announced the same way whichever tool sent it.
+ */
+function checkIsDraftFromPage(name, args) {
+    return (
+        name === 'owa_lyric_validate' &&
+        typeof args?.url === 'string' &&
+        args.url.trim() !== ''
+    );
 }
 
 // Just the site, never the whole address: the path is where an exfiltration

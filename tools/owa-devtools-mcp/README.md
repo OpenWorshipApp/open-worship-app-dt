@@ -82,19 +82,21 @@ console, network, performance) **except what the firewall denies** — see below
 | `owa_list_questions` | What this app is prepared to be asked, by page and panel, with the recipe/control/keystroke that answers each |
 | `owa_help_page`    | One document in full, by the id a hit carries — app labels already in the user's own language |
 | `owa_tran`         | What a button is CALLED on this user's screen: an English label in, the words actually printed on that control out |
-| `owa_app_state`    | Live instances, open windows, and the main window's page/language/theme       |
-| `owa_list_screens` | Which presentation screens are showing (`isAnyShowing`), and the displays available |
+| `owa_app_state`    | Live instances, open windows, the main window's page/language/theme — and on the Presenter `selectedDocument`: what the user is in the MIDDLE of (the song or document picked, its slides with their first words, `onScreen`, `next`, `previous`), every slide carrying `find`, the exact words on its card, which `owa_click` presses to PRESENT it (changes the projector: only when asked) — and `runSheet`: the presenting flows open in their run player, each one's lines, `cursor` (the line the run is on, and the slide inside it) and `next` as the Space key works it out, or `availableSheets` when none is open; no tool advances a run |
+| `owa_list_screens` | What is on the projector: whether any screen is showing (`isAnyShowing`), the displays available, and — read from the Presenter's own screen managers — what each screen HOLDS whether showing or not (`screens[]`: the slide with its document, name and first words, the Bible passage and version, the background, the foreground widgets, the lock), the exact words on that screen's show/hide toggle and Clear buttons (`controls`, in the user's language, each Clear saying whether it has anything to clear), and where the Mini Screen panel sits (`previewCard`). Off the Presenter page it degrades to the basics with a `note` |
 | `owa_hide_screens` | Hide one screen or all of them (confirm with the user first)                  |
+| `owa_present_bible` | Put a Bible passage on the projector by its reference (`John 3:16`, `Psalm 23:1-6`) through the app's own parser and the Bible Lookup's own present path, and read the screen back: `isPresented`, the passage as the app writes it, its first words, each ticked screen with `isShowing` / `isLocked`. `version` picks an installed Bible (default: the one the lookup is on, then any that reads the reference); `action: "check"` only resolves and quotes it. Nothing is saved to the Bibles list; a locked screen is refused by name. Acting: banner names the passage |
+| `owa_foreground` | Start or stop a foreground extra on the projector — a countdown (`minutes` or a clock time `at`), a stopwatch, a clock, a marquee along the top or bottom or a quick text (`text`) — through the widgets' own screen managers on the ticked screens, and read the screens back (`did`, `detail` in words, each screen's `foreground`). `stop` takes one off (`all` is F10), `check` only reads. Refusals (no length, a time gone by, no ticked screen, locked, off the Presenter) are sentences for a person: `/countdown`, `/marquee` and the offline bot print them |
 | `owa_screenshot`   | A picture of the app window, or of a projector screen by id — for when the words are not enough |
 | `owa_lyric_file` | The user's songs: `list` / `info` / `create` / `update` / `rename`. Content is an Open Lyric document, checked by Open Lyric before anything is written |
 | `owa_slide_file` | The same five actions over slide documents. Content is the document JSON, checked by `AppDocument.validate` |
-| `owa_read_website` | Read a page on the public web — its text, its links, and a picture of it. https only, public addresses only, and what comes back is fenced as a document that was read rather than as anything talking to the model |
-| `owa_lyric_validate` | Check song text against the Open Lyric notation the Lyric Editor uses: every mistake with its line, its section and what to write instead, then what the song IS — title, key, tempo, sections, play order. With `mode: "draft"` it takes RAW words instead — a paste, a page that was read, a file somebody attached — and WRITES the notation, guaranteed valid because it is round-tripped through the same validator. Hand it a whole song PAGE and it finds the song among the menus, charts and footers, rejoins the lines a chord layout breaks up, and says which part of the page it used; `from`/`to` correct that (believed on plain words too), `title`/`artist`/`copyright` add what the caller was told outright. A hymnal text page's numbered stanzas are taken as the song and its `Title:`/`Author:`/`Copyright:` table read; a short heading block above numbered stanzas is left out. With no `mode`, notation is checked and anything else is drafted. The one tool here that asks the app nothing, so it works with no window open |
+| `owa_read_website` | Read a page on the public web — its text, its links, and a picture of it. https only, public addresses only, and what comes back is fenced as a document that was read rather than as anything talking to the model. Not for a song page the user wants as a song: that address goes to `owa_lyric_validate` as `url`, which reads it with its chords |
+| `owa_lyric_validate` | Check song text against the Open Lyric notation the Lyric Editor uses: every mistake with its line, its section and what to write instead, then what the song IS — title, key, tempo, sections, play order. With `mode: "draft"` it takes RAW words instead — a paste, a page that was read, a file somebody attached — and WRITES the notation, guaranteed valid because it is round-tripped through the same validator. Hand it a whole song PAGE and it finds the song among the menus, charts and footers, rejoins the lines a chord layout breaks up, and says which part of the page it used; `from`/`to` correct that (believed on plain words too), `title`/`artist`/`copyright` add what the caller was told outright. A hymnal text page's numbered stanzas are taken as the song and its `Title:`/`Author:`/`Copyright:` table read; a short heading block above numbered stanzas is left out. With no `mode`, notation is checked and anything else is drafted. **Given a `url` and no `text`, it reads the page itself** — the same locked-down window, address check, budget and banner as `owa_read_website` — and drafts from the whole page, chords and all; the model never gets a turn to retype the words in between, which is how a chord page came out with no chords (measured 2026-09-09: told twice to hand a page over whole, the model read it and passed its own copy). The one tool here that asks the app nothing when given text, so it works with no window open |
 | `owa_pick_element` | Ask the user to POINT at a control; answers with its words, its panel and a unique selector, and swallows their click |
 | `owa_highlight_selector` | Ring the exact element a selector names — no matching, no guessing, for a selector something already resolved |
 | `owa_find_ui`      | Where a control is on screen — `Panel > Control` narrows it, `highlight` rings it (and holds a hover-only control up) |
-| `owa_list_ui`      | Every control actually on screen in a window right now, with the words written on it |
-| `owa_click`        | Press a control by the words on it — a list of candidates tries each in turn; answers with what the press CHANGED (`didChange`, `isOnNow`, `unverified`) |
+| `owa_list_ui`      | Every control actually on screen in a window right now, with the words written on it, the panel and the place — and only what is unusual (`showsOnHover`, `isDisabled`); no box, tag, component or source file on a list row (~40 tokens a row, was ~180), and a path-shaped tooltip is never part of a label |
+| `owa_click`        | Press a control by the words on it — a list of candidates tries each in turn; answers with what the press CHANGED (`didChange`, `isOnNow`, `unverified`). Presses only a control CALLED what was asked (the guide card's `isPressSafe` bar, since 2026-09-08): a loose fit is refused with the control it found as `nearest`, because "show screen" matched the Bible Lookup's save-and-present button and a click there would have put a verse on the projector |
 | `owa_type`         | Type into a box, found the same way                                           |
 | `owa_goto_page`    | Take the ONE main window to another of its pages (presenter / reader / document editor) — the way out of "no open page matching" for a page. A window of its own is opened by pressing the control that opens it, which `botFocus.mjs` names as `openFind` |
 | `owa_guide_start`  | Walk the user through a task with a numbered card drawn in the app window. A `manualId` recipe is walked in the window it is ABOUT, read off its own first step — not in whatever the main window is showing |
@@ -217,6 +219,14 @@ drift apart.
   talking to the model. That is the second line of defence against a page that
   says "ignore your instructions"; the first is that none of the refusals above
   care what a page says.
+- **There is a second door out, and it is the same door.** `owa_lyric_validate`
+  given a `url` opens the very same window through the very same expression,
+  and the firewall counts it as a network call on the ARGUMENTS
+  (`checkIsNetworkCall`): the address check, the ten-reads-in-five-minutes
+  budget and the banner naming the site all apply, while a draft from a paste
+  spends nothing and announces nothing. It exists because a model told to hand
+  a song page over whole hands over its own copy instead, and its own copy of
+  a chord sheet has no chords in it.
 
 ## What the chatbot's model is offered (`modelTools.mjs`)
 
@@ -224,23 +234,50 @@ The firewall decides what the SERVER will do. This decides what the chatbot's
 **model** is even shown — a separate question, because the developer's door
 should keep tools a volunteer's assistant has no business with.
 
-19 of the 44 are withheld: the three the window presses itself
-(`owa_screenshot`, `owa_pick_element`, `owa_highlight_selector`) plus
-`take_screenshot`, which quietly undid the same decision; the acting tools that
-aim by a snapshot id (`click`, `fill`, `fill_form`, `drag`, `hover`,
-`type_text`) — `owa_click` and `owa_type` say what they are pressing, in the
-user's own language, and are what the interlock reads; the window openers
-(`new_page`, `close_page`, `navigate_page`, against `owa_goto_page`); and the
+**The model is offered the app's own `owa_*` tools and nothing of
+chrome-devtools' at all** (since 2026-09-09): 29 of the 48 are withheld. The
+three the window presses itself (`owa_screenshot`, `owa_pick_element`,
+`owa_highlight_selector`) plus `take_screenshot`, which quietly undid the same
+decision; the acting tools that aim by a snapshot id (`click`, `fill`,
+`fill_form`, `drag`, `hover`, `type_text`) — `owa_click` and `owa_type` say
+what they are pressing, in the user's own language, and are what the interlock
+reads; the two acting tools that carry **no label at all** (`press_key`,
+`handle_dialog`) — a key press has nothing the destructive interlock can read,
+and in this app F5 shows the congregation's screen and F6 clears it; the window
+openers (`new_page`, `close_page`, `navigate_page`, against `owa_goto_page`);
+the page readers (`take_snapshot`, `list_pages`, `select_page`, `wait_for`,
+`list_console_messages`, `get_console_message`, `list_network_requests`,
+`get_network_request`), which answer in uids, page numbers and log lines and
+are covered by `owa_list_ui` / `owa_app_state` / `owa_list_screens`; and the
 developer instruments (`emulate`, `resize_page`, `lighthouse_audit`, the three
 `performance_*`).
+
+The last ten went on the evidence of the standing corpus, 2026-09-08: asked
+*Nothing is showing on the projector*, the model rang the wrong control and
+then pressed F5 through `press_key` — twice, on two windows — and the screen
+came on with nobody having asked; asked *the words no come out big screen*, it
+took three `take_snapshot`s (~8 000 tokens each), read the console, ran to the
+ten-round cap and answered "I could not find an answer for that" after 72 s
+and 225 000 tokens. No graded answer had ever called a chrome-devtools tool
+and passed. The Report button still reads the console for itself, through
+`callTool`, which this filter never sees.
 
 Same two enforcement points as the firewall, for the same reason: the list is
 filtered in `askLlmBot`, and `runMcpTool` refuses the call — these tools are
 named in the app's own manual, which the model can read, so a filtered list
 alone is a suggestion. Each refusal says what to use instead.
 
-Measured 2026-09-02: **44 tools / ~9 468 tokens per round at the host, 25 /
-~5 721 to the model** — ~32 000 tokens off a worst-case ten-round question.
+Measured 2026-09-08: **48 tools / ~11 113 tokens per round at the host, 19 /
+~5 503 to the model** (was 29 / ~7 366) — on Anthropic's own count the prefix
+a round pays for went from ~15 900 to ~13 100 tokens. And on Anthropic that
+prefix is now **cached** (`askAnthropic` in `src/chatbot/llmBotHelpers.ts`):
+a marker on the system block makes tools + system a cache read for every
+round and every question inside five minutes, and the request-level marker
+caches the growing conversation, so a round reads ~13 000 tokens at a tenth of
+the price and pays full price for the ~100–1 200 it adds. Measured on the
+corpus: 813 000 full-price input tokens for 12 questions (44 rounds) → 62
+full-price, 41 600 written and 401 600 read (31 rounds) — the input bill for
+the same twelve questions went from $1.63 to $0.18 at Sonnet 5 list prices.
 
 ```bash
 node .claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs

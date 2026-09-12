@@ -153,7 +153,7 @@ async function loadPackageModule(file) {
 
 
 const ACTING_NAME_PATTERN =
-    /^(owa_)?(click|type|fill|drag|hover|press|upload|navigate|new_page|close|resize|emulate|evaluate|handle_dialog|goto|hide|guide_start|guide_step|find_ui)/;
+    /^(owa_)?(click|type|fill|drag|hover|press|upload|navigate|new_page|close|resize|emulate|evaluate|handle_dialog|goto|hide|guide_start|guide_step|find_ui|present)/;
 
 function measure(tool) {
     const description = tool.description ?? '';

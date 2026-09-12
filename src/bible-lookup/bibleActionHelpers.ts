@@ -84,16 +84,6 @@ export function genFoundBibleItemContextMenu(
                           viewController.setIsAdvanceLookupOpened(true);
                       },
                   },
-                  {
-                      childBefore: genContextMenuItemIcon('folder2-open'),
-                      menuElement: tran('Open in Resources'),
-                      title: verseKey,
-                      onSelect: () => {
-                          viewController.selectedVerseKey = verseKey;
-                          viewController.openBibleSearch('r');
-                          viewController.setIsAdvanceLookupOpened(true);
-                      },
-                  },
               ]),
         ...(appProvider.isPagePresenter
             ? [

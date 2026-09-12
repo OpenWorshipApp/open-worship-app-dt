@@ -1,11 +1,81 @@
 import { describe, expect, it } from 'vitest';
 
+import { BROWSER_CHECK_TEXT } from '../../tools/owa-devtools-mcp/openLyricDraft.mjs';
 import {
+    checkIsBrowserCheckRefusal,
     checkIsLyricPaste,
     readDraftedLyric,
     readDraftReport,
+    readSongAddress,
+    readSongLinkAsk,
     toDraftedLyricName,
 } from './lyricDraftHelpers';
+
+const SONG_PAGE = 'https://example.com/hymns/amazing-grace';
+
+describe('checkIsBrowserCheckRefusal', () => {
+    it("is pinned to the drafter's own sentence", () => {
+        // The renderer tests a prefix rather than importing the drafter;
+        // this is what stops the two drifting apart.
+        expect(checkIsBrowserCheckRefusal(BROWSER_CHECK_TEXT)).toBe(true);
+        expect(
+            checkIsBrowserCheckRefusal('Drafted a song from the text.'),
+        ).toBe(false);
+    });
+});
+
+describe('readSongLinkAsk', () => {
+    it("reads the app's own starter chip", () => {
+        expect(readSongLinkAsk(`Create a lyric file from ${SONG_PAGE}`)).toBe(
+            SONG_PAGE,
+        );
+    });
+    it('reads the address out of other shapes of the ask, punctuation off', () => {
+        expect(
+            readSongLinkAsk(`make a song from this page ${SONG_PAGE}.`),
+        ).toBe(SONG_PAGE);
+        expect(readSongLinkAsk(`${SONG_PAGE} - the lyrics are on here`)).toBe(
+            SONG_PAGE,
+        );
+        expect(
+            readSongLinkAsk(`Can you write out the hymn at ${SONG_PAGE}?`),
+        ).toBe(SONG_PAGE);
+        expect(readSongLinkAsk(`chords: (${SONG_PAGE})`)).toBe(SONG_PAGE);
+    });
+    it('a bare address is not a song ask', () => {
+        // As likely a YouTube link or a Bible XML file: reading a page is
+        // rationed and announced, so the words have to say what it is.
+        expect(readSongLinkAsk(SONG_PAGE)).toBeNull();
+        expect(readSongLinkAsk(`read this for me ${SONG_PAGE}`)).toBeNull();
+    });
+    it('two addresses, a command, notation or a long message is left alone', () => {
+        expect(
+            readSongLinkAsk(`songs ${SONG_PAGE} and ${SONG_PAGE}/2`),
+        ).toBeNull();
+        expect(readSongLinkAsk(`/song ${SONG_PAGE}`)).toBeNull();
+        expect(
+            readSongLinkAsk(`song \`\`\`ol:Config\n${SONG_PAGE}`),
+        ).toBeNull();
+        const long = Array.from({ length: 45 }, () => 'word').join(' ');
+        expect(readSongLinkAsk(`song ${long} ${SONG_PAGE}`)).toBeNull();
+    });
+    it('only https, and never a bare scheme', () => {
+        expect(
+            readSongLinkAsk('song http://example.com/hymns/amazing-grace'),
+        ).toBeNull();
+        expect(readSongAddress('song https://')).toBeNull();
+    });
+});
+
+describe('readSongAddress', () => {
+    it('finds the one address in a command argument', () => {
+        expect(readSongAddress(`${SONG_PAGE},`)).toBe(SONG_PAGE);
+        expect(
+            readSongAddress('Amazing grace\nhow sweet the sound'),
+        ).toBeNull();
+        expect(readSongAddress(`${SONG_PAGE} ${SONG_PAGE}`)).toBeNull();
+    });
+});
 
 const AMAZING_GRACE = [
     'Amazing Grace',

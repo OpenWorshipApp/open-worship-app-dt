@@ -29,15 +29,23 @@ import {
 
 import { appError } from '../helper/loggerHelpers';
 import {
+    checkIsBrowserCheckRefusal,
     checkIsLyricPaste,
     keepDraftedLyric,
     LYRIC_COPY_TOOL_NAME,
     LYRIC_CREATE_TOOL_NAME,
     readDraftedLyric,
     readDraftReport,
+    readSongLinkAsk,
 } from './lyricDraftHelpers';
 import { callTool, parseToolJson } from './mcpClient';
+import { toSiteName } from './progressHelpers';
 import type { AttachRequestType, ShowRefType } from './quickReplyHelpers';
+import { describeScreenContent } from '../../tools/owa-devtools-mcp/agentScreens.mjs';
+import {
+    describeRunSheet,
+    describeSelectedDocument,
+} from '../../tools/owa-devtools-mcp/agentPresenter.mjs';
 
 /**
  * The app is many windows, and the same question has a different answer in
@@ -184,6 +192,30 @@ const SCREEN_QUESTION_PATTERN =
 // entirely. The screen answer is for the state and symptom shapes ("is
 // anything showing", "nothing is showing"); a how-do-I goes to the manual.
 const TASK_QUESTION_PATTERN = /^(?:how|where|what|which|can\s+i|could\s+i)\b/i;
+// What the user is in the MIDDLE of: which song is selected, which slide is
+// up, what comes next. A state question, whatever word it starts with --
+// "which song is selected" starts like a how-do-I and is not one -- so this
+// is checked before the task gate, and a how-do-I ("how do I move to the next
+// slide") is still sent to the manual by its first word.
+const SELECTION_QUESTION_PATTERN =
+    /(?:\b(?:which|what)\b.*\b(?:song|document|slide)\b.*\b(?:selected|chosen|picked|open|up|next|showing)\b|\b(?:next|previous|prev)\s+slide\b|\babout\s+to\s+(?:put|show|present|send)\b|\bwhat(?:'s|\s+is)\s+(?:next|coming\s+(?:up|next))\b)/i;
+const HOW_DO_I_PATTERN = /^(?:how|can\s+i|could\s+i)\b/i;
+// "What is next in my running order" is about the run sheet, not the
+// selected document: `owa_app_state` carries it as `runSheet` (EC-132), and
+// a state question naming the sheet is answered from that field.
+const RUN_SHEET_PATTERN =
+    /\b(?:running\s+order|presenting\s+flow|run\s+sheet|playlist|order\s+of\s+service|service\s+plan)\b/i;
+// "Put John 3:16 on the screen": a passage to PRESENT, named by a reference
+// with a chapter in it. Only a concrete reference fires it -- "how do I put a
+// Bible verse on the screen" has no chapter and goes to the manual, and a
+// how-do-I that happens to name one is still a how-do-I. The reference is
+// whatever sits between the verb and the "on the screen" tail (or ends the
+// sentence): "1 John 1:1-4", "Psalm 23", "john 3 16" -- the app's own parser
+// decides what it means, not this pattern.
+// A word-and-number that is not a book -- "slide 3", "verse 2" -- is a slide
+// ask and goes on to the selection answer, not to the passage parser.
+const VERSE_ASK_PATTERN =
+    /^(?:please\s+)?(?:put|show|present|display|open|bring)\s+(?:up\s+)?(?:the\s+)?(?!(?:slide|song|page|item|number|line|verse|chorus|stage|screen)s?\s)((?:[1-3]\s*)?[a-z][a-z .]*?\s+\d+(?:\s*[:.]\s*\d+(?:\s*-\s*\d+)?)?)(?:\s+(?:up\s+)?(?:on|onto|to)\s+(?:the\s+)?(?:big\s+)?(?:screen|projector|wall|display))?\s*[.!]?\s*$/i;
 
 /**
  * The pseudo tool name a button carries when pressing it should run one of
@@ -217,6 +249,53 @@ function genHitText(hit: HelpHitType) {
     // The id ("W-06") and the section path are how the manual is filed, not
     // something the person asking has any use for.
     return `**${hit.title}**\n\n${hit.excerpt}`;
+}
+
+/**
+ * The words that take the user from a page of the main window back to the
+ * Presenter. Named per page because it is not the same control: the Bible
+ * Reader has no Presenter tab -- its route is the 🖥️ button at the top
+ * right -- and two answers that sent a Reader user to "the Presenter tab"
+ * were graded as passing before anybody pressed it. Null on the Presenter
+ * itself and in every window of its own. ONE source for the model's prompt
+ * and the offline bot, so the two cannot name different buttons.
+ */
+export function genBackToPresenterRoute(focus: BotFocusType): string | null {
+    if (focus === 'reader') {
+        return 'click the 🖥️ **Go Back to Presenter** button at the top right';
+    }
+    if (focus === 'appDocumentEditor') {
+        return 'click the **Presenter** tab at the top of the window';
+    }
+    return null;
+}
+
+// The Presenter's panels, as the manual names them. A recipe that uses one
+// of these is a Presenter recipe whatever page it was asked from.
+const PRESENTER_PANEL_PATTERN =
+    /\b(?:Documents?\s+list|Presenting\s+Flows?|Background\s+(?:panel|bar)|Foreground\s+panel|Mini\s+Screen|Bible\s+Lookup|Slide\s+Editor|Ctrl\+B)\b/i;
+
+/**
+ * The line to put in FRONT of a manual answer given on a page that has none
+ * of the panels it names, or an empty string. Measured 2026-09-09 through the
+ * offline bot with every key dead: *How do I edit a slide?* asked from the
+ * Bible Reader opened "in the Documents list" -- a panel the Reader page has
+ * not got -- with no way across named anywhere. The model is told the same
+ * fact in its prompt; this is the offline bot's copy of it.
+ */
+export function genBackToPresenterLead(focus: BotFocusType, text: string) {
+    const route = genBackToPresenterRoute(focus);
+    // The manual bolds its control names ("the **Documents** list"), so the
+    // emphasis marks come off before the words are looked for.
+    const plainText = text.replace(/[*_`]+/g, '');
+    if (route === null || !PRESENTER_PANEL_PATTERN.test(plainText)) {
+        return '';
+    }
+    const pageLabel = getBotFocus(focus)?.label ?? focus;
+    return (
+        `This is done in the Presenter — the ${pageLabel} page has none of ` +
+        `these panels. First ${route}, then:\n\n`
+    );
 }
 
 export async function answerWhereIs(
@@ -299,11 +378,36 @@ async function answerScreens(): Promise<BotAnswerType | null> {
     }
     const showingIds: number[] = state.showingScreenIds ?? [];
     const displayCount = state.displays?.length ?? 0;
+    // What each screen HOLDS, in a sentence a person can check against the
+    // wall. "Screen 0 is showing" told them nothing they could look at;
+    // "showing verse 2 of Amazing Grace" is something they can see is true.
+    const screens: any[] = Array.isArray(state.screens) ? state.screens : [];
+    const describeHeld = (screenId: number) => {
+        const screen = screens.find((one) => one.screenId === screenId);
+        if (screen === undefined) {
+            return '';
+        }
+        const held = describeScreenContent(screen);
+        return held ? ` -- ${held}` : '';
+    };
     if (showingIds.length === 0) {
+        // A hidden screen still holds its layers: say so, because "it is off
+        // but already has the song on it" is the whole answer to most panics.
+        const heldWhileOff = screens
+            .filter((screen) => screen.isBlank !== true)
+            .map((screen) => {
+                return (
+                    `Screen ${screen.screenId} is off but already holds ` +
+                    `${describeScreenContent(screen)}, so turning it on ` +
+                    'shows that.'
+                );
+            })
+            .join(' ');
         return {
             text:
                 'No presentation screen is showing right now. This machine ' +
-                `has ${displayCount} display(s) available to present on.`,
+                `has ${displayCount} display(s) available to present on.` +
+                (heldWhileOff ? ` ${heldWhileOff}` : ''),
             // The one thing the person asking this wants next, and the one
             // thing this bot could not offer until the window could do it
             // without a model: a press that turns the screen on and reads it
@@ -321,7 +425,9 @@ async function answerScreens(): Promise<BotAnswerType | null> {
         text:
             `Screen ${showingIds.join(', ')} ` +
             `${showingIds.length === 1 ? 'is' : 'are'} showing right now, on ` +
-            `a machine with ${displayCount} display(s).`,
+            `a machine with ${displayCount} display(s)` +
+            showingIds.map(describeHeld).join('') +
+            '.',
         actions: [
             {
                 label: 'Hide every screen',
@@ -330,6 +436,225 @@ async function answerScreens(): Promise<BotAnswerType | null> {
             },
         ],
     };
+}
+
+/**
+ * "Put John 3:16 on the screen", with no model: the reference is checked
+ * against the app's own parser first (`owa_present_bible` with `check`, which
+ * touches no screen), the answer says what it reads as and quotes its first
+ * words, and ONE button puts it up -- the same offered-then-pressed shape the
+ * screen answer takes, because a sentence typed at a help window is not the
+ * same consent as a button pressed under "John 3:16 (KJV) reads ...". Before
+ * this the manual was searched for the reference and the best hit was the
+ * page about the Bible Lookup's picker, which no button can drive
+ * (2026-09-10). A reference the app cannot read gets the app's own sentence
+ * about it and no button; anything else falls through to the manual.
+ */
+async function answerVerseAsk(
+    reference: string,
+): Promise<BotAnswerType | null> {
+    let result: any;
+    try {
+        result = parseToolJson(
+            await callTool('owa_present_bible', { reference, action: 'check' }),
+        );
+    } catch (error: any) {
+        const reason = String(error?.message ?? '');
+        if (/could not be read as a passage/.test(reason)) {
+            return { text: reason };
+        }
+        appError(error, 'offline verse ask');
+        return null;
+    }
+    if (result === null || typeof result.reference !== 'string') {
+        return null;
+    }
+    const words = result.text ? ` -- "${result.text}"` : '';
+    return {
+        text:
+            `**${result.reference} (${result.version})** reads${words}. ` +
+            'I can put it on the screen for you' +
+            (result.isAnyShowing === true
+                ? '.'
+                : ' -- the screen is off just now, so it will be loaded ' +
+                  'and ready for when it is turned on.'),
+        actions: [
+            {
+                label: `Put ${result.reference} on the screen`,
+                toolName: BUILTIN_TOOL_NAME,
+                args: { command: `/verse ${result.reference}` },
+            },
+        ],
+    };
+}
+
+// A countdown asked for as a thing to DO: a start word, the word countdown
+// (or timer), and either a length or a time. "How do I show a countdown"
+// keeps going to the manual -- the how-do-I gate is checked by the caller.
+const COUNTDOWN_WORD_PATTERN = /\b(?:count\s*-?\s*down|countdown|timer)\b/i;
+const START_WORD_PATTERN =
+    /^(?:please\s+)?(?:(?:can|could|would)\s+you\s+(?:please\s+)?)?(?:start|put|show|run|begin|set|display|launch|kick\s+off)\b/i;
+
+/**
+ * The countdown a sentence asks for -- its minutes, or the clock time it
+ * counts down to -- or null when the sentence is not that ask.
+ */
+export function readCountdownAsk(
+    text: string,
+): { minutes: number } | { at: string } | null {
+    if (
+        !COUNTDOWN_WORD_PATTERN.test(text) ||
+        !START_WORD_PATTERN.test(text) ||
+        HOW_DO_I_PATTERN.test(text)
+    ) {
+        return null;
+    }
+    const minutes = /(\d+(?:\.\d+)?)\s*(?:-\s*)?(?:min(?:ute)?s?|m)\b/i.exec(
+        text,
+    );
+    if (minutes !== null) {
+        return { minutes: Number(minutes[1]) };
+    }
+    const hours = /(\d+(?:\.\d+)?)\s*(?:-\s*)?(?:h|hrs?|hours?)\b/i.exec(text);
+    if (hours !== null) {
+        return { minutes: Number(hours[1]) * 60 };
+    }
+    const at =
+        /\b(?:to|until|till|at)\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)\b/i.exec(
+            text,
+        );
+    if (at !== null) {
+        return { at: at[1].trim() };
+    }
+    return null;
+}
+
+/**
+ * "Start a 5 minute countdown on the screen", with no model: the same
+ * offered-then-pressed shape the verse takes -- the screens are read first
+ * (`owa_foreground` with `check`, which touches nothing) so the answer can
+ * say whether the screen is on, and ONE button starts it, because a sentence
+ * typed at a help window is not the consent a pressed button is. Before this
+ * the manual was searched and the best hit was the page about the Foreground
+ * tab's boxes (2026-09-11).
+ */
+async function answerCountdownAsk(
+    ask: { minutes: number } | { at: string },
+): Promise<BotAnswerType | null> {
+    let result: any;
+    try {
+        result = parseToolJson(
+            await callTool('owa_foreground', { action: 'check' }),
+        );
+    } catch (error: any) {
+        const reason = String(error?.message ?? '');
+        if (/started from the Presenter page/.test(reason)) {
+            return { text: reason };
+        }
+        appError(error, 'offline countdown ask');
+        return null;
+    }
+    if (result === null || typeof result !== 'object') {
+        return null;
+    }
+    const isMinutes = 'minutes' in ask;
+    const label = isMinutes
+        ? `a ${ask.minutes} minute countdown`
+        : `a countdown to ${ask.at}`;
+    const command = isMinutes
+        ? `/countdown ${ask.minutes}`
+        : `/countdown ${ask.at}`;
+    return {
+        text:
+            `**I can start ${label} on the screen for you**` +
+            (result.isAnyShowing === true
+                ? '.'
+                : ' -- the screen is off just now, so it will be loaded ' +
+                  'and ready for when it is turned on.'),
+        actions: [
+            {
+                label: `Start ${label}`,
+                toolName: BUILTIN_TOOL_NAME,
+                args: { command },
+            },
+        ],
+    };
+}
+
+/**
+ * What is selected, which slide is up and what is next -- from the app, with
+ * no model. Measured 2026-09-09 with a model: asked *which song is selected*
+ * the assistant named the song on the PROJECTOR, because nothing had told it
+ * what was picked; the field it needed now rides `owa_app_state`, and this
+ * bot reads the same one. An imperative -- "show the next slide" -- gets the
+ * state and a button that does it (`/next`), the same shape the screen
+ * answer takes: one press, and the transcript shows the command it ran.
+ */
+async function answerSelection(): Promise<BotAnswerType | null> {
+    const state = parseToolJson(await callTool('owa_app_state', {}));
+    const main = state?.mainWindow;
+    if (!main) {
+        return null;
+    }
+    if (main.page !== 'presenter.html') {
+        return {
+            text:
+                'The selected song lives in the Presenter, and the main ' +
+                'window is not on it right now.',
+            actions: [
+                {
+                    label: 'Go to the Presenter',
+                    toolName: BUILTIN_TOOL_NAME,
+                    args: { command: '/goto presenter' },
+                },
+            ],
+        };
+    }
+    const selected = main.selectedDocument ?? null;
+    const actions: BotActionType[] = [];
+    if (selected?.next) {
+        actions.push({
+            label: 'Show the next slide',
+            toolName: BUILTIN_TOOL_NAME,
+            args: { command: '/next' },
+        });
+    }
+    if (selected?.previous) {
+        actions.push({
+            label: 'Back one slide',
+            toolName: BUILTIN_TOOL_NAME,
+            args: { command: '/previous' },
+        });
+    }
+    return { text: describeSelectedDocument(selected), actions };
+}
+
+/**
+ * The run sheet, with no model: which one is open, where the run is, what
+ * the next press puts up -- or which sheets there are to open. Nothing here
+ * presses anything; advancing a run is the operator's own key.
+ */
+async function answerRunSheet(): Promise<BotAnswerType | null> {
+    const state = parseToolJson(await callTool('owa_app_state', {}));
+    const main = state?.mainWindow;
+    if (!main) {
+        return null;
+    }
+    if (main.page !== 'presenter.html') {
+        return {
+            text:
+                'The run sheet lives in the Presenter, and the main window ' +
+                'is not on it right now.',
+            actions: [
+                {
+                    label: 'Go to the Presenter',
+                    toolName: BUILTIN_TOOL_NAME,
+                    args: { command: '/goto presenter' },
+                },
+            ],
+        };
+    }
+    return { text: describeRunSheet(main.runSheet ?? null), actions: [] };
 }
 
 /**
@@ -356,6 +681,77 @@ export async function answerLyricPaste(
         text,
         mode: 'draft',
     });
+    return genLyricDraftAnswer(
+        raw,
+        'I wrote those words out as a song for the Lyric Editor.',
+    );
+}
+
+/**
+ * A song page, read and written out with no model in the loop.
+ *
+ * The drafter reads the page ITSELF (`owa_lyric_validate` with `url`; the
+ * firewall counts it as a network read, rations it and names the site in the
+ * app window), so nothing here ever sees the page's words. Measured
+ * 2026-09-10 with the assistant paused: *Create a lyric file from https://…*
+ * -- the app's own starter chip -- searched the manual for the address and
+ * answered with how to make an EMPTY file, offering a walkthrough of that.
+ *
+ * Never null: a link that could not be read is answered in a sentence, not
+ * by a manual search for the address, which is the one thing the manual has
+ * no page about. And never the tool's own words -- the reason goes to the log.
+ */
+export async function answerLyricLink(url: string): Promise<BotAnswerType> {
+    const site = toSiteName(url) ?? 'that page';
+    let raw: string;
+    try {
+        raw = await callTool('owa_lyric_validate', { url, mode: 'draft' });
+    } catch (error) {
+        appError(error, 'offline song link');
+        return {
+            text:
+                `I could not read ${site} just now. Check the address, or ` +
+                'copy the words off the page and paste them here and I ' +
+                'will write them out.',
+        };
+    }
+    const answer = genLyricDraftAnswer(
+        raw,
+        `I read ${site} and wrote the song on it out for the Lyric Editor.`,
+    );
+    if (answer !== null) {
+        return answer;
+    }
+    if (checkIsBrowserCheckRefusal(raw)) {
+        // The site answered a bot check instead of its page (measured
+        // 2026-09-10 on a hymnal's third read in a row). Said as what it is:
+        // "no song on it" would send them to paste words the page has.
+        return {
+            text:
+                `${site} answered with a "checking your browser" page ` +
+                'instead of the song. Open the page in your own browser ' +
+                'once and try again, or copy the words off it and paste ' +
+                'them here.',
+        };
+    }
+    return {
+        text:
+            `I read ${site} but could not find a song on it. If the words ` +
+            'are in front of you, paste them here and I will write them out.',
+    };
+}
+
+/**
+ * The answer under a drafted song: what it is, what had to be guessed, and
+ * the two buttons -- the SAME two the model's answer carries, through the same
+ * pseudo tools, so the hardened create path (a free name, nothing overwritten,
+ * the app's own validator) is the only one there is. Null when the drafter
+ * would not call it a song.
+ */
+function genLyricDraftAnswer(
+    raw: string,
+    opening: string,
+): BotAnswerType | null {
     const content = readDraftedLyric(raw);
     if (content === null) {
         return null;
@@ -363,7 +759,7 @@ export async function answerLyricPaste(
     const drafted = keepDraftedLyric(content);
     const report = readDraftReport(raw);
     const lines = [
-        'I wrote those words out as a song for the Lyric Editor.',
+        opening,
         ...[report.song, report.sections, report.playOrder].filter(
             (line): line is string => {
                 return line !== null;
@@ -437,8 +833,9 @@ export async function answerFromManual(
         };
     }
     const [first, ...rest] = hits;
+    const hitText = genHitText(first);
     return {
-        text: genHitText(first),
+        text: genBackToPresenterLead(focus, hitText) + hitText,
         actions: [
             ...genGuideActions(first, focus, false, question),
             {
@@ -493,6 +890,16 @@ export async function askHelpBot(
     if (trimmedQuestion.length === 0) {
         return { text: 'Ask me how to do something in the app.' };
     }
+    // A song page named by its address -- "Create a lyric file from
+    // https://…", the app's own starter chip -- is read and drafted by the
+    // tool with no model. Before the manual for the same reason as the paste
+    // below it: the manual has no page about an address, and measured
+    // (2026-09-10, assistant paused) it answered this with how to make an
+    // empty file.
+    const songLink = readSongLinkAsk(trimmedQuestion);
+    if (songLink !== null) {
+        return await answerLyricLink(songLink);
+    }
     // Several short lines and no question in them are the words of a song,
     // and a song is a thing to write out, not a thing to look up. First,
     // because nothing below could make anything of it: the manual has no page
@@ -543,6 +950,31 @@ export async function askHelpBot(
     const whereIsMatch = WHERE_IS_PATTERN.exec(trimmedQuestion);
     if (whereIsMatch !== null) {
         const answer = await answerWhereIs(whereIsMatch[1], focus);
+        if (answer !== null) {
+            return withPrefix(answer, prefix);
+        }
+    }
+    const verseMatch = VERSE_ASK_PATTERN.exec(trimmedQuestion);
+    if (verseMatch !== null && !HOW_DO_I_PATTERN.test(trimmedQuestion)) {
+        const answer = await answerVerseAsk(verseMatch[1].trim());
+        if (answer !== null) {
+            return withPrefix(answer, prefix);
+        }
+    }
+    const countdownAsk = readCountdownAsk(trimmedQuestion);
+    if (countdownAsk !== null) {
+        const answer = await answerCountdownAsk(countdownAsk);
+        if (answer !== null) {
+            return withPrefix(answer, prefix);
+        }
+    }
+    if (
+        SELECTION_QUESTION_PATTERN.test(trimmedQuestion) &&
+        !HOW_DO_I_PATTERN.test(trimmedQuestion)
+    ) {
+        const answer = RUN_SHEET_PATTERN.test(trimmedQuestion)
+            ? await answerRunSheet()
+            : await answerSelection();
         if (answer !== null) {
             return withPrefix(answer, prefix);
         }

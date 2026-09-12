@@ -2,10 +2,10 @@
 id: W-09
 title: "Play audio, and foreground extras (countdown, clock, marquee bottom…)"
 section: "Presenting content"
-verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, KB-03, KB-07]
+verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, KB-03, KB-07, CB-67]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-08"
+workflowsVersion: "2026-09-12"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -35,10 +35,17 @@ has its own controls and a Show/Start button:
 Press **F10** (Clear Foreground) to clear all foreground widgets, or **F6** to clear
 everything at once.
 
+**Or ask for it.** In the help window (🤖), *Start a 5 minute countdown on the
+screen* or *Put the time on the screen* starts the extra straight away and reads
+the screen back — it is held even while the screen is off, and the screen's own
+show button is offered, never pressed unasked. **/countdown 5**, **/countdown
+10:30** and **/marquee Please silence your phones** do the same with no assistant,
+and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6).
+
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `KB-03` · `KB-07`
+`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `KB-03` · `KB-07` · `CB-67`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
 :::

@@ -217,6 +217,40 @@ export async function normalizeImage(source: Blob | string) {
 }
 
 /**
+ * A picture onto the clipboard. Chromium's async clipboard takes `image/png`
+ * and nothing else, so anything else is drawn through a canvas first -- a
+ * JPEG, which is what a photo-sized capture comes back as, would otherwise be
+ * refused with "Type image/jpeg not supported". Throws on failure so the
+ * caller can say so: a Copy that looks as though it worked and did not is the
+ * worse one.
+ */
+export async function copyImageToClipboard(dataUrl: string) {
+    let blob = await (await fetch(dataUrl)).blob();
+    if (blob.type !== 'image/png') {
+        const image = await loadImageElement(dataUrl);
+        if (image === null || image.width === 0 || image.height === 0) {
+            throw new Error('the picture could not be read');
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext('2d');
+        if (context === null) {
+            throw new Error('the picture could not be redrawn');
+        }
+        context.drawImage(image, 0, 0);
+        const png = await new Promise<Blob | null>((resolve) => {
+            canvas.toBlob(resolve, 'image/png');
+        });
+        if (png === null) {
+            throw new Error('the picture could not be redrawn');
+        }
+        blob = png;
+    }
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+}
+
+/**
  * The two halves of a data URL, or null. Anything that is not a base64 image
  * data URL is refused here rather than sent and 400'd by the provider.
  */
@@ -255,14 +289,58 @@ export async function genImageAttachment(
 // as mojibake -- a model handed the first 16 KB of a .docx answers about the
 // bytes rather than saying it cannot read it.
 const TEXT_FILE_PATTERN =
-    /\.(txt|md|json|csv|log|xml|html?|ya?ml|ini|srt|vtt|ows|owpf|lyric)$/i;
+    /\.(txt|md|json|csv|log|xml|html?|ya?ml|ini|srt|vtt|owl|ows|owpf|lyric)$/i;
+
+/**
+ * By NAME alone -- for the places that have a path and no `File`: a chip being
+ * opened for a preview, a document the assistant created. One pattern for both
+ * or the window offers to show a file it will then refuse to read.
+ */
+export function checkIsReadableTextName(fileName: string) {
+    return TEXT_FILE_PATTERN.test(fileName);
+}
 
 export function checkIsReadableTextFile(file: File) {
     return (
         file.type.startsWith('text/') ||
         file.type === 'application/json' ||
-        TEXT_FILE_PATTERN.test(file.name)
+        checkIsReadableTextName(file.name)
     );
+}
+
+// The pictures this window will draw from a path. Deliberately raster only:
+// an SVG is a document that can carry script, and nothing here needs one.
+const IMAGE_FILE_PATTERN = /\.(png|jpe?g|gif|webp|bmp|avif)$/i;
+
+export function checkIsImageName(fileName: string) {
+    return IMAGE_FILE_PATTERN.test(fileName);
+}
+
+/** The media type for a picture read off the disk, by its name. */
+export function toImageMediaType(fileName: string) {
+    const matched = IMAGE_FILE_PATTERN.exec(fileName);
+    if (matched === null) {
+        return null;
+    }
+    const extension = matched[1].toLowerCase();
+    if (extension === 'jpg' || extension === 'jpeg') {
+        return 'image/jpeg';
+    }
+    return `image/${extension}`;
+}
+
+// The line the model is given above a file's words, so it knows what it is
+// reading. Written and stripped in the same module deliberately: the preview
+// shows the FILE, not the sentence this window wrapped around it.
+function genAttachedTextHeader(name: string) {
+    return `The user attached a file called "${name}":\n`;
+}
+
+/** What was in the file, without the line written for the model. */
+export function toAttachedText(attachment: ChatAttachmentType) {
+    const summary = attachment.summary ?? '';
+    const header = genAttachedTextHeader(attachment.name);
+    return summary.startsWith(header) ? summary.slice(header.length) : summary;
 }
 
 export function genTextAttachment(
@@ -284,7 +362,7 @@ export function genTextAttachment(
         mimeType: 'text/plain',
         byteSize: text.length,
         ...(filePath ? { filePath } : {}),
-        summary: `The user attached a file called "${name}":\n${body}`,
+        summary: `${genAttachedTextHeader(name)}${body}`,
     };
 }
 

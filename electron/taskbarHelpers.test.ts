@@ -31,6 +31,7 @@ import {
     initAppUserModelId,
     initSecondInstance,
     initUserTasks,
+    relaunchApp,
 } from './taskbarHelpers';
 import { electronMockState } from './testElectronModule';
 import { createMockBrowserWindow } from './testUtils';
@@ -65,6 +66,30 @@ describe('taskbarHelpers', () => {
         platformFlags.isDev = false;
         platformFlags.isWindows = true;
         resetPopupWindowsBounds.mockClear();
+    });
+
+    test('relaunches naming the data dir, and leaves the window alone', () => {
+        relaunchApp();
+
+        expect(electronMockState.app.relaunch).toHaveBeenCalledWith({
+            args: ['--owa-user-data-path=/mock-user-data'],
+        });
+        // A restart asked for in Settings must not move the user's window --
+        // that argument belongs to the jump list task and nowhere else.
+        expect(
+            electronMockState.app.relaunch.mock.calls[0][0].args,
+        ).not.toContain('--owa-reset-window-bounds');
+        expect(electronMockState.app.quit).toHaveBeenCalledTimes(1);
+    });
+
+    test('a dev relaunch carries the app path electron.exe needs', () => {
+        platformFlags.isDev = true;
+
+        relaunchApp();
+
+        expect(electronMockState.app.relaunch).toHaveBeenCalledWith({
+            args: ['/mock-app', '--owa-user-data-path=/mock-user-data'],
+        });
     });
 
     test('reads the data dir a relaunch names on the command line', () => {

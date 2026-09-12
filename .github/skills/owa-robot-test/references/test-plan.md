@@ -205,16 +205,16 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 ### S11 — Bible Reader deep-dive `[RD-01..112]`
 - Incremental picker: char-by-char book → chapter → verse; `Tab` completes, `Escape`
   clears, `Ctrl+Escape` clears a chunk; extra buttons mirror the keys.
-- Full ref `John 3:16` does **not** resolve here either — the reader book-filters exactly
-  like the modal (both share `InputHandlerComp`). Known Low; assert the book-filter
-  behaviour, not a resolved verse (KB §5).
+- Full ref `John 3:16` **does** resolve here — and in the modal; both share
+  `InputHandlerComp` and behave identically (corrected 2026-09-11, KB §5). Assert the
+  **rendered verse**, not a dropped `3:16` — the old assertion would now fail a correct app.
 - History entry re-runs a lookup; bible-version switch re-renders the verse.
 - **Advance lookup toggle** opens the **Bible Find** previewer — now a 4-way
   select: **Find** / **Cross Reference** / **Location-Name (KJV)** / **Resources**
   (`src/bible-find/BibleFindPreviewerComp.tsx`, setting `bible-search-tab`). Find:
   type a query, results paginate via the page-number buttons.
 - Cross-references view renders for a verse (AI providers BLOCKED without API keys).
-- **Resources** rows are `RD-81..90` (+ `CM-93` Open in Resources) and the
+- **Resources** rows are `RD-81..90` (`CM-93` Open in Resources is retired) and the
   **Connection Graph** rows are `RD-92..106` — route them from the matrix rows
   themselves; the observed recipes live in `user-workflows.md` **W-37** / **W-38**.
   Do not improvise steps here: recipes are only authored from live observation.
@@ -505,12 +505,25 @@ Write to `test-results/robot-test/report-<timestamp>.md`:
 # OWA Robot Test Report — <timestamp>
 
 - App version: <package.json version>
+- Target: <dev (npm run dev) | prod — see "Build under test" below>
 - Focus area: <all | full | presenter | ...>
 - Windows exercised: presenter.html, setting.html, ...
 - Result: <N Critical, N High, N Medium, N Low, N Info>
 
 ## Summary
 <one-paragraph verdict>
+
+## Build under test (required when the target was prod — SKILL §2b)
+
+- Version <package.json> · commit <git rev-parse --short HEAD> (<clean | dirty>)
+- Exe: `<release/<os>-unpacked/…>` · builtAt <iso> · locate: <up to date | STALE: <file>>
+- Pack artefacts: <installer / zip / latest.yml with mtimes>
+- Origin driven: `owa://local` (owa_app_state: `instances[0].isDev === false`)
+- userData: <%APPDATA%\open-worship-app | scratch dir> · ai-enabled: <was on | toggled
+  on, restored to <before>>
+- Prod deltas observed (KB §18.3): tran no-throw <seen / not seen> · comp stamps absent
+  <y/n> · MD-05 downloaded from the real CDN <y/n> · SC-05 BLOCKED (no stdout) ·
+  console noise: <what was left>
 
 ## Mandatory screen block (required in EVERY report)
 

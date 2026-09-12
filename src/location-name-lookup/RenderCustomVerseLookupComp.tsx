@@ -1,10 +1,10 @@
 import type BibleItem from '../bible-list/BibleItem';
 import RenderCustomVerseComp from '../bible-reader/RenderCustomVerseComp';
-import { handleMatchClicking } from './RenderVerseLookupTextComp';
 import {
-    decorateLookupMatchesInElement,
-    useLookupTextIndex,
-} from './verseTextIndexHelpers';
+    handleMatchClicking,
+    useVerseLookupMatcher,
+} from './RenderVerseLookupTextComp';
+import { decorateLookupMatchesInElement } from './verseTextIndexHelpers';
 
 /**
  * Custom/edited verse HTML with names and locations made clickable.
@@ -16,30 +16,31 @@ import {
  * gospel verses "custom", and before this they were silently never decorated.
  *
  * The index subscription lives HERE rather than in `RenderCustomVerseComp`, so
- * the component used for non-KJV custom text never loads the index at all.
+ * the component used for undecorated text never loads the index at all.
  */
 export default function RenderCustomVerseLookupComp({
     bibleItem,
     customHtml,
     kjvShortVerse,
+    lookupLangCode,
 }: Readonly<{
     bibleItem: BibleItem;
     customHtml: string;
     kjvShortVerse: string;
+    lookupLangCode: string;
 }>) {
-    const lookupTextIndex = useLookupTextIndex();
+    const findMatchList = useVerseLookupMatcher(lookupLangCode, kjvShortVerse);
     return (
         <RenderCustomVerseComp
             bibleItem={bibleItem}
             customHtml={customHtml}
             decorateElement={
-                lookupTextIndex === null
+                findMatchList === null
                     ? undefined
                     : (element) => {
                           decorateLookupMatchesInElement(
                               element,
-                              lookupTextIndex,
-                              kjvShortVerse,
+                              findMatchList,
                               handleMatchClicking,
                           );
                       }

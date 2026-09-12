@@ -205,6 +205,24 @@ describe('the shared DOM matcher', () => {
         expect(dm.checkIsNamedExactly(element, 'enable')).toBe(false);
     });
 
+    it('says a name once when the title and the aria-label agree', () => {
+        // The show/hide screen toggle: a styled div with the same words in
+        // both attributes, which used to list as the label twice over.
+        document.body.innerHTML =
+            '<div id="toggle" role="button" tabindex="0"' +
+            ' title="Toggle showing screen [F5]"' +
+            ' aria-label="Toggle showing screen [F5]"><i></i></div>';
+        const dm = install();
+        const element = document.getElementById('toggle');
+        expect(dm.labelPartsOf(element)).toEqual([
+            'Toggle showing screen [F5]',
+        ]);
+        expect(dm.labelOf(element)).toBe('Toggle showing screen [F5]');
+        expect(dm.listControls('', 10).map((row) => row.label)).toEqual([
+            'Toggle showing screen [F5]',
+        ]);
+    });
+
     it('refuses a label that only mentions the word inside another', () => {
         document.body.innerHTML =
             '<button title="...\\khmer-study-bible-pdf">GEN.0.pdf</button>';
@@ -241,6 +259,29 @@ describe('the shared DOM matcher', () => {
         // "reference box" is not written anywhere, but the real box shares
         // the word "reference" -- the retry is written in on-screen words.
         expect(dm.nearMisses(['reference box'])).toContain('Bible Reference');
+    });
+
+    it('ranks near misses on the words that mean something', () => {
+        // Measured through the offline bot: "button to change the
+        // background" scored a verse row two points for "to" and "the" and
+        // the Background panel one, and offered a line of Genesis as the
+        // control. The one real word must win.
+        document.body.innerHTML = [
+            '<div title="Click to open the verse">pass after</div>',
+            '<div title="Click to open the verse">and she conceived</div>',
+            '<button>Click or Double Click to scroll to the top</button>',
+            '<div data-widget-name="Background" title="Background"></div>',
+        ].join('');
+        const dm = install();
+        const misses = dm.nearMisses(['button to change the background']);
+        expect(misses[0]).toBe('Background');
+        expect(misses).not.toContain('pass after Click to open the verse');
+    });
+
+    it('has no near miss for a question made of filler words alone', () => {
+        document.body.innerHTML = '<button>Click to open the verse</button>';
+        const dm = install();
+        expect(dm.nearMisses(['the to of'])).toEqual([]);
     });
 
     it('waits for a panel that is still rendering', async () => {
@@ -327,6 +368,54 @@ describe('the packaged expressions', () => {
         expect(result.unverified).toBe(undefined);
     });
 
+    // This app's panel tabs keep their state in Bootstrap's 'active' class and
+    // toggle their panel. Written after the assistant pressed Foreground
+    // (already open), was told nothing changed, and never found the widget
+    // it had just hidden (2026-09-11).
+    it('reads a panel tab that toggled as a state change, not as nothing', async () => {
+        document.body.innerHTML =
+            '<ul><li class="nav-item"><button class="btn nav-link active">' +
+            'Foreground</button></li></ul>';
+        const tab = document.querySelector('.nav-link');
+        tab.addEventListener('click', () => {
+            tab.classList.toggle('active');
+        });
+        const closed = await run(genClickExpression(['Foreground']));
+        expect(closed.isOnNow).toBe(false);
+        expect(closed.didChange).toBe(true);
+        expect(closed.unverified).toBe(undefined);
+        const opened = await run(genClickExpression(['Foreground']));
+        expect(opened.isOnNow).toBe(true);
+    });
+
+    // The guide card's bar, on the tool the model presses with. Written after
+    // "show screen" matched the Bible Lookup's save-and-present button.
+    it('refuses to press a loose match, and names what it found', async () => {
+        document.body.innerHTML =
+            '<button id="save" title="Save bible item and show on screen">' +
+            'S</button><div title="Toggle showing screen [F5]" role="button"' +
+            ' aria-pressed="false">t</div>';
+        let clicks = 0;
+        document.getElementById('save').addEventListener('click', () => {
+            clicks += 1;
+        });
+        const result = await run(genClickExpression(['show screen'], 100));
+        expect(clicks).toBe(0);
+        expect(result.clicked).toBe(null);
+        expect(result.reason).toContain('exact words');
+        expect(result.nearest.label).toContain('show on screen');
+        expect(
+            result.nearMisses.some((label) => {
+                return label.includes('Toggle showing screen [F5]');
+            }),
+        ).toBe(true);
+        // The exact title, shortcut and all, still presses.
+        const exact = await run(
+            genClickExpression(['Toggle showing screen'], 100),
+        );
+        expect(exact.clicked.label).toContain('Toggle showing screen');
+    });
+
     it('says a plain button press is unproven rather than nothing', async () => {
         document.body.innerHTML = '<button title="Show">S</button>';
         const result = await run(genClickExpression(['Show']));
@@ -366,6 +455,140 @@ describe('the packaged expressions', () => {
         expect(result.typed).toBe('Mark 1:1');
         expect(result.into.tag).toBe('input');
         expect(document.getElementById('ref').value).toBe('Mark 1:1');
+    });
+});
+
+// A <select> used to be labelled with every option it holds glued together --
+// "AssistantClaudeChatGPTKimiFree" -- which is on no control anywhere, so no
+// picker in the app could be found, listed honestly, or changed.
+describe('a drop-down', () => {
+    const PICKER = [
+        '<select aria-label="Which assistant answers">',
+        '<option value="claude">Claude</option>',
+        '<option value="chatgpt">ChatGPT</option>',
+        '<option value="kimi" disabled>Kimi &mdash; needs an API key</option>',
+        '</select>',
+    ].join('');
+
+    it('is named by the choice it is on, not by all of them', () => {
+        document.body.innerHTML = PICKER;
+        const dm = install();
+        const parts = dm.labelPartsOf(document.querySelector('select'));
+        expect(parts).toContain('Claude');
+        expect(parts).toContain('Which assistant answers');
+        expect(parts.join(' ')).not.toContain('ChatGPT');
+    });
+
+    it('is found by the words it is showing', async () => {
+        document.body.innerHTML = PICKER;
+        const result = await run(genFindUiExpression('Claude'));
+        expect(result.count).toBe(1);
+        expect(result.matches[0].tag).toBe('select');
+    });
+
+    it('is changed by naming the choice, not its value', async () => {
+        document.body.innerHTML = PICKER;
+        let changedTo = null;
+        document.querySelector('select').addEventListener('change', (event) => {
+            changedTo = event.target.value;
+        });
+        const result = await run(
+            genTypeExpression(['Which assistant answers'], 'ChatGPT'),
+        );
+        expect(result.typed).toBe('ChatGPT');
+        expect(result.chose).toBe('ChatGPT');
+        // The option's VALUE is what lands on the element; its words are what
+        // the caller said. React is told through a real change event.
+        expect(document.querySelector('select').value).toBe('chatgpt');
+        expect(changedTo).toBe('chatgpt');
+    });
+
+    it('answers a wrong choice with the choices there are', async () => {
+        document.body.innerHTML = PICKER;
+        const result = await run(
+            genTypeExpression(['Which assistant answers'], 'Gemini'),
+        );
+        expect(result.typed).toBe(null);
+        expect(result.reason).toContain('not one of the choices');
+        expect(result.choices).toContain('Claude');
+        expect(document.querySelector('select').value).toBe('claude');
+    });
+
+    it('refuses a choice that is listed but cannot be picked', async () => {
+        document.body.innerHTML = PICKER;
+        const result = await run(
+            genTypeExpression(
+                ['Which assistant answers'],
+                'Kimi — needs an API key',
+            ),
+        );
+        expect(result.typed).toBe(null);
+        expect(result.reason).toContain('cannot be picked');
+        expect(document.querySelector('select').value).toBe('claude');
+    });
+});
+
+// The matcher drops a trailing kind noun ("the Videos tab") from every
+// needle -- and "Document List" and "Presenting Flow List" are panes NAMED
+// with one, so asked for by their exact name they were a loose fit on
+// their own label, which the demo refuses to press.
+describe('a control named with a kind noun', () => {
+    it('is an exact match on its whole name', () => {
+        document.body.innerHTML =
+            '<div data-widget-name="Presenting Flow List"></div>' +
+            '<div role="separator" aria-label="Divider between Document List' +
+            ' and Presenting Flow List"></div>';
+        const dm = install();
+        const pane = dm.findBest(['Presenting Flow List']);
+        expect(pane.tier).toBe(0);
+        expect(pane.isPressSafe).toBe(true);
+        const divider = dm.findBest([
+            'divider between Document List and Presenting Flow List',
+        ]);
+        expect(divider.element.getAttribute('role')).toBe('separator');
+        expect(divider.tier).toBe(0);
+        // The collapsed strip of that pane: named by the pane's name AND
+        // by its own title, so the joined label is neither.
+        document.body.innerHTML =
+            '<div role="button" data-widget-name="Presenting Flow List"' +
+            ' title="Enable Presenting Flow List">Presenting Flow List</div>';
+        const strip = dm.findBest(['Presenting Flow List']);
+        expect(strip.tier).toBe(0);
+        expect(strip.isPressSafe).toBe(true);
+        // The noun still comes off when it is the step's, not the label's.
+        expect(dm.findBest(['Presenting Flow List panel']).isPressSafe).toBe(
+            true,
+        );
+    });
+});
+
+// The words a tool hands back carry the shortcut -- `owa_list_screens` says
+// "Clear Bible [F9]", the button's own title -- and a press by exactly those
+// words was refused: the label part had its bracket taken off for the
+// comparison and the needle had not (EC-135).
+describe('a needle carrying the shortcut a title carries', () => {
+    it('is press-safe on a control whose title is those words', () => {
+        document.body.innerHTML =
+            '<button title="Clear Bible [F9]" aria-label="Clear Bible">BB' +
+            '</button>' +
+            '<button title="Close [Ctrl+Q]" aria-label="Close"><i></i>' +
+            '</button>';
+        const dm = install();
+        const clear = dm.findBest(['Clear Bible [F9]']);
+        expect(clear.element.getAttribute('aria-label')).toBe('Clear Bible');
+        expect(clear.isPressSafe).toBe(true);
+        expect(dm.findBest(['Clear Bible']).isPressSafe).toBe(true);
+        expect(dm.findBest(['Close [Ctrl+Q]']).isPressSafe).toBe(true);
+        expect(dm.findBest(['Close']).isPressSafe).toBe(true);
+    });
+
+    it('never lets bare decoration stand for the words', () => {
+        document.body.innerHTML =
+            '<button title="Clear Bible [F9]" aria-label="Clear Bible">BB' +
+            '</button>';
+        const dm = install();
+        const found = dm.findBest(['[F9]']);
+        expect(found === null || found.isPressSafe !== true).toBe(true);
     });
 });
 
@@ -421,6 +644,24 @@ describe('pointing at a region instead of a control', () => {
         expect(at.x).toBe(480);
         expect(at.y).toBe(388);
         expect(seen[0]).toEqual({ x: 480, y: 388 });
+    });
+
+    it('aims at the centre of a thing too thin to have an inside edge', () => {
+        // A divider between two panes is six pixels wide: 20 in from its
+        // right edge is a point in the pane beside it.
+        const divider = document.createElement('div');
+        divider.getBoundingClientRect = () => {
+            return { x: 300, y: 40, width: 6, height: 500, top: 40, left: 300 };
+        };
+        document.body.append(divider);
+        document.elementFromPoint = () => divider;
+        const seen = [];
+        divider.addEventListener('contextmenu', (event) => {
+            seen.push({ x: event.clientX, y: event.clientY });
+        });
+        const dm = install();
+        expect(dm.openContextMenu(divider)).toEqual({ x: 303, y: 290 });
+        expect(seen).toEqual([{ x: 303, y: 290 }]);
     });
 });
 
@@ -565,7 +806,9 @@ describe('controls the app hides until the mouse is over them', () => {
             .listControls('C Copy', 50)
             .find((one) => one.label === 'C Copy');
         expect(row.showsOnHover).toBe(true);
-        expect(row.isVisible).toBe(false);
+        // A list row says only what is unusual about a control; the ordinary
+        // keys are not there to be read (see the next describe block).
+        expect(row.isVisible).toBeUndefined();
     });
 
     // The click path: pressed for real, and the answer says the user
@@ -644,6 +887,67 @@ describe('selectorOf', () => {
         }
     });
 
+    // The reader routinely has two panes called "Bible View" side by side.
+    // The named part stood for BOTH, and walking up could never rescue it --
+    // every ancestor they share is the same node, so every longer candidate
+    // still matched two. It returned null, which made the chip the user had
+    // pointed at answer "there is nothing left to show for that one", and it
+    // took every control INSIDE the pane down with it.
+    it('tells two same-named siblings apart', () => {
+        document.body.innerHTML = `
+            <div>
+                <div data-widget-name="Bible View"><span>KJV</span></div>
+                <div data-widget-name="Bible View"><span>Khmer</span></div>
+            </div>`;
+        const dm = install();
+        const panes = document.querySelectorAll('[data-widget-name]');
+        for (const pane of panes) {
+            const selector = dm.selectorOf(pane);
+            expect(selector).not.toBeNull();
+            // The name is KEPT -- it is what survives a re-render; the
+            // position is added only to say which of the two.
+            expect(selector).toContain('[data-widget-name="Bible View"]');
+            expect(document.querySelectorAll(selector)).toHaveLength(1);
+            expect(document.querySelector(selector)).toBe(pane);
+        }
+        expect(dm.selectorOf(panes[0])).not.toBe(dm.selectorOf(panes[1]));
+    });
+
+    it('reaches a control inside one of two same-named panes', () => {
+        // The cost of the bug was never the pane itself: one ambiguous
+        // ancestor made every descendant under it untraceable too.
+        document.body.innerHTML = `
+            <div>
+                <div data-widget-name="Bible View">
+                    <div><button>Verse 1</button></div>
+                </div>
+                <div data-widget-name="Bible View">
+                    <div><button>Verse 1</button></div>
+                </div>
+            </div>`;
+        const dm = install();
+        for (const button of document.querySelectorAll('button')) {
+            const selector = dm.selectorOf(button);
+            expect(selector).not.toBeNull();
+            expect(document.querySelector(selector)).toBe(button);
+        }
+    });
+
+    it('still leaves a lone named panel unqualified', () => {
+        // The position is added ONLY to break a tie. A pane with no twin
+        // keeps the clean name, so an ordinary selector does not start
+        // carrying a brittle index it never needed.
+        document.body.innerHTML = `
+            <div>
+                <div data-widget-name="Background"><span>x</span></div>
+                <div data-widget-name="Videos"><span>y</span></div>
+            </div>`;
+        const dm = install();
+        expect(
+            dm.selectorOf(document.querySelector('[data-widget-name]')),
+        ).toBe('div[data-widget-name="Background"]');
+    });
+
     // React and Bootstrap both mint ids that change on the next render, so a
     // selector built on one stops working while the user is still looking at
     // the same screen.
@@ -668,5 +972,46 @@ describe('selectorOf', () => {
         const dm = install();
         expect(dm.selectorOf(document.body)).toBeNull();
         expect(dm.selectorOf(null)).toBeNull();
+    });
+});
+
+// A LIST row is the words and where they are, and nothing else. Measured
+// 2026-09-09 (EC-130): a 200-row list at ~180 tokens a row was 34 574 tokens
+// into the model's cache, and every row carried the component and source file
+// names the prompt forbids the model to repeat. `describe` keeps the full
+// shape for the one-control answers (find, click, the picker).
+describe('a list row is trimmed to what a reader needs', () => {
+    it('carries the label, the panel and the place, and no internals', () => {
+        document.body.innerHTML =
+            '<div data-react-comp-name="FooComp" data-react-comp-fp="src/Foo.tsx">' +
+            '<button title="Bible Lookup">Bible Lookup</button>' +
+            '<button disabled>Save</button>' +
+            '</div>';
+        const dm = install();
+        const rows = dm.listControls('', 50);
+        const lookup = rows.find((row) => row.label === 'Bible Lookup');
+        expect(Object.keys(lookup).sort()).toEqual(['inPanel', 'label', 'where']);
+        expect(lookup.component).toBeUndefined();
+        expect(lookup.sourceFile).toBeUndefined();
+        expect(lookup.position).toBeUndefined();
+        const save = rows.find((row) => row.label === 'Save');
+        expect(save.isDisabled).toBe(true);
+        // The one-control answer still has the developer's fields.
+        const full = dm.describe(document.querySelector('[title="Bible Lookup"]'));
+        expect(full.component).toBe('FooComp');
+        expect(full.position.width).toBeDefined();
+    });
+
+    it('a tooltip that is a file path is not part of the label', () => {
+        document.body.innerHTML =
+            '<div title="C:\\Users\\somebody\\documents\\Amazing Grace.owl">' +
+            'Amazing Grace</div>' +
+            '<div title="/Users/somebody/Documents/Hymn.owl">Hymn</div>' +
+            '<button title="Open C: drive">Drive</button>';
+        const dm = install();
+        expect(dm.labelOf(document.querySelectorAll('div')[0])).toBe('Amazing Grace');
+        expect(dm.labelOf(document.querySelectorAll('div')[1])).toBe('Hymn');
+        // Words that merely start with a letter and a colon are words.
+        expect(dm.labelOf(document.querySelector('button'))).toBe('Drive Open C: drive');
     });
 });

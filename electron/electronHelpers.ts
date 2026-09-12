@@ -5,6 +5,7 @@ import {
     shell,
     clipboard,
     BrowserWindow,
+    screen,
 } from 'electron';
 import type {
     WebPreferences,
@@ -137,6 +138,7 @@ export const messageChannels = {
     screenMessage: 'app:screen:message',
     openAboutPage: 'main:app:open-about-page',
     openChatbotPage: 'main:app:open-chatbot-page',
+    openAiChatPage: 'main:app:open-aichat-page',
     guideHelp: 'main:app:guide-help',
     guideHelpAnswer: 'main:app:guide-help-answer',
     chatAttach: 'main:app:chat-attach',
@@ -603,7 +605,38 @@ function genBoundsData(
             break;
     }
 
-    return subDisplay;
+    return Object.assign(subDisplay, keepOnScreen(bounds, subDisplay));
+}
+
+/**
+ * Keeps a popup where the mouse can reach it.
+ *
+ * `right`/`bottom` alignment and a cascade both place a window BESIDE its
+ * opener, and beside a maximised opener is off the edge of the monitor. A
+ * window created there is nudged back by the OS; one MOVED there by
+ * `setBounds` is not -- `Reset Position and Size` put the chatbot at x=1502 on
+ * a 1494-wide screen, which is how the menu item meant to rescue a lost window
+ * lost one. The same clamp runs on open too, so the two paths agree.
+ */
+function keepOnScreen(
+    parentBounds: Electron.Rectangle,
+    { x, y, width, height }: Electron.Rectangle,
+): Electron.Rectangle {
+    const { workArea } = screen.getDisplayMatching(parentBounds);
+    const clampedWidth = Math.min(width, workArea.width);
+    const clampedHeight = Math.min(height, workArea.height);
+    return {
+        x: Math.max(
+            workArea.x,
+            Math.min(x, workArea.x + workArea.width - clampedWidth),
+        ),
+        y: Math.max(
+            workArea.y,
+            Math.min(y, workArea.y + workArea.height - clampedHeight),
+        ),
+        width: clampedWidth,
+        height: clampedHeight,
+    };
 }
 
 /**
@@ -1004,13 +1037,22 @@ export function answerGuideHelp(payload: any) {
 function genPopupWebPreferences(
     webPreferences: WebPreferences,
     featuresRecord: PopupWindowFeaturesType,
+    boundsKey: string | null,
 ): WebPreferences {
+    // The AI Chat window is the ONE page allowed a `<webview>` guest -- the
+    // box it keeps a company's chat site in. Keyed on the page, never on a
+    // feature the opener could ask for: a renderer that could request the
+    // tag could host a foreign page next to node integration. What the guest
+    // itself may do is decided in `aiChatGuestHelpers.ts`.
+    const guestPreferences: WebPreferences =
+        boundsKey === htmlFiles.aichat ? { webviewTag: true } : {};
     const blinkFeatures = featuresRecord.appBlinkFeatures;
     if (!blinkFeatures) {
-        return webPreferences;
+        return { ...webPreferences, ...guestPreferences };
     }
     return {
         ...webPreferences,
+        ...guestPreferences,
         enableBlinkFeatures: blinkFeatures.split('+').join(','),
     };
 }
@@ -1104,6 +1146,7 @@ function handlePopupWindowOpen(
     const popupWebPreferences = genPopupWebPreferences(
         webPreferences,
         featuresRecord,
+        boundsKey,
     );
 
     const content: WindowOpenHandlerResponse = {

@@ -667,6 +667,55 @@ describe('reading a page off the internet', () => {
         ).toBe(true);
     });
 
+    // The drafter reaches out only when handed an address. Without one it is
+    // the local tool it always was -- never refused for having no url, never
+    // charged a network slot -- and with one it is screened and rationed
+    // exactly like `owa_read_website`, because it opens the same window.
+    it('screens and rations a song draft that carries an address', () => {
+        expect(
+            checkToolCall('owa_lyric_validate', { text: 'a lantern' })
+                .isAllowed,
+        ).toBe(true);
+        expect(
+            checkToolCall('owa_lyric_validate', {
+                url: 'https://example.com/chords/1',
+            }).isAllowed,
+        ).toBe(true);
+        expect(
+            checkToolCall('owa_lyric_validate', {
+                url: 'https://127.0.0.1:39223/mcp',
+            }).rule,
+        ).toBe('foreign-url');
+        expect(
+            checkToolCall('owa_lyric_validate', {
+                url: 'http://example.com/chords/1',
+            }).rule,
+        ).toBe('foreign-url');
+        // One budget for both doors out: ten reads, whichever tool made them.
+        for (let index = 0; index < 10; index += 1) {
+            checkToolCall(
+                'owa_read_website',
+                { url: `https://example.com/${index}` },
+                { now: 1000 },
+            );
+        }
+        expect(
+            checkToolCall(
+                'owa_lyric_validate',
+                { url: 'https://example.com/chords/2' },
+                { now: 1000 },
+            ).rule,
+        ).toBe('rate-limit');
+        // ...and a draft from a paste is untouched by the exhausted budget.
+        expect(
+            checkToolCall(
+                'owa_lyric_validate',
+                { text: 'a lantern', url: '  ' },
+                { now: 1000 },
+            ).isAllowed,
+        ).toBe(true);
+    });
+
     it('does not charge a refused address to the budget', () => {
         for (let index = 0; index < 30; index += 1) {
             checkToolCall(

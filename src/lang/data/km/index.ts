@@ -46,6 +46,16 @@ const dictionary = {
     'Too many folders to search': 'ថតច្រើនពេកមិនអាចស្វែងរកអស់បានទេ',
     'Too many matching files': 'ឯកសារដែលត្រូវគ្នាច្រើនពេក',
     'Search file name': 'ស្វែងរកឈ្មោះឯកសារ',
+    // --- Resources: the links inside a `.json` beside the verse.
+    'Open Link in Browser': 'បើកតំណនៅក្នុងកម្មវិធីរុករក',
+    'Too many links': 'តំណច្រើនពេក',
+    'entry was not understood': 'ធាតុមិនអាចអានបានទេ',
+    'entries were not understood': 'ធាតុមិនអាចអានបានទេ',
+    'Only http and https links can be opened':
+        'អាចបើកបានតែតំណ http និង https ប៉ុណ្ណោះ',
+    'Drop folders here': 'ទម្លាក់ថតនៅទីនេះ',
+    'Folder is already added': 'ថតនេះមានក្នុងបញ្ជីរួចហើយ',
+    'Drop a folder, not a file': 'សូមទម្លាក់ថត មិនមែនឯកសារទេ',
     // --- Bible Find: the results list and its chunk footer.
     'verses found': 'ខគម្ពីរដែលរកឃើញ',
     Results: 'លទ្ធផល',
@@ -350,6 +360,7 @@ const dictionary = {
     Cover: 'គ្របពេញ',
     Contain: 'ដាក់ទាំងមូល',
     Fill: 'ពង្រីកពេញ',
+    'Cannot be empty': 'មិនអាចទទេបានទេ',
     'YouTube URL:': 'តំណ YouTube៖',
     'Website URL:': 'តំណគេហទំព័រ៖',
     'Video URL:': 'តំណវីដេអូ៖',
@@ -1372,12 +1383,26 @@ const dictionary = {
     'Turns off the chatbot, the assistant tools and the debugging endpoint they use.':
         'បិទ chatbot ឧបករណ៍ជំនួយការ និង debugging endpoint ដែលវាប្រើ។',
     'Restart the app to apply': 'សូមបើកកម្មវិធីឡើងវិញ ដើម្បីអនុវត្ត',
+    'Restart Now': 'បើកឡើងវិញឥឡូវនេះ',
+    'The app will close and open again. Save your work first.':
+        'កម្មវិធីនឹងបិទ ហើយបើកឡើងវិញ។ សូមរក្សាទុកការងាររបស់អ្នកជាមុនសិន។',
     'Turned off': 'បានបិទ',
     'AI features are turned off in Settings.':
         'មុខងារ AI ត្រូវបានបិទនៅក្នុងការកំណត់។',
+    'Would you like to open Settings to enable them?':
+        'តើអ្នកចង់បើកការកំណត់ ដើម្បីបើកវាឬ?',
     'Only needed if your Anthropic key is identity-linked':
         'ត្រូវការតែពេល key Anthropic របស់អ្នកជាប្រភេទ identity-linked ប៉ុណ្ណោះ',
     'App Assistant': 'ជំនួយការកម្មវិធី',
+    'AI Chat': 'ជជែក AI',
+    // --- The caution asked before either AI window opens (2026-09-12).
+    'Be careful with AI': 'សូមប្រុងប្រយ័ត្នជាមួយ AI',
+    'AI can be confidently wrong.':
+        'AI អាចឆ្លើយខុស ទាំងដែលមើលទៅដូចជាត្រឹមត្រូវ។',
+    'It can misread the app or describe a button that is not there, and what it offers to do can reach a live projector. Check anything that matters before a service, and read a step yourself before you press it.':
+        'វាអាចអានកម្មវិធីនេះខុស ឬពណ៌នាប៊ូតុងដែលគ្មានពិត ហើយអ្វីដែលវាស្នើធ្វើ អាចប៉ះពាល់ដល់ការបញ្ចាំងផ្ទាល់។ សូមពិនិត្យរាល់អ្វីដែលសំខាន់មុនពេលថ្វាយបង្គំ ហើយអានជំហាននីមួយៗដោយខ្លួនឯងមុនពេលចុច។',
+    "This opens a company's own chat website: whatever you type there leaves this computer, and it knows nothing about this app. Check anything that matters before a service.":
+        'វាបើកគេហទំព័រជជែករបស់ក្រុមហ៊ុនផ្ទាល់៖ អ្វីដែលអ្នកវាយបញ្ចូលនឹងចាកចេញពីកុំព្យូទ័រនេះ ហើយវាមិនដឹងអ្វីអំពីកម្មវិធីនេះទេ។ សូមពិនិត្យរាល់អ្វីដែលសំខាន់មុនពេលថ្វាយបង្គំ។',
     'Get key': 'យក key',
     'Get ID': 'យក ID',
     'Find Anthropic workspace id': 'រកមើល Anthropic workspace id',
@@ -1411,6 +1436,10 @@ const dictionary = {
     'No pack is available for this app version':
         'គ្មានកញ្ចប់សម្រាប់កំណែកម្មវិធីនេះទេ',
     'No local pack was built yet': 'មិនទាន់បានបង្កើតកញ្ចប់ក្នុងម៉ាស៊ីននេះទេ',
+    'The media tools may be out of date': 'ឧបករណ៍មេឌាអាចហួសសម័យហើយ',
+    'Press Enter to apply this folder': 'ចុច Enter ដើម្បីអនុវត្តថតនេះ',
+    'Something went wrong here': 'មានបញ្ហាកើតឡើងនៅទីនេះ',
+    'Try Again': 'ព្យាយាមម្តងទៀត',
     // Shown in both credential cards of Settings > Others when the OS has no
     // usable credential store, so nothing can be encrypted at rest (2026-08-24).
     'This system has no secure credential store, so keys are kept only until the app closes':
@@ -1561,7 +1590,7 @@ const fontFamily = 'app-Battambang';
 const globalFontFamily = 'Battambang';
 const stickyNoteFontFamily = 'km-font-Fasthand';
 const lang: LanguageDataType = {
-    packageDir: __dirname,
+    packageDir: '',
     version: '0.0.1',
     locale: 'km-KH',
     langCode: 'km',

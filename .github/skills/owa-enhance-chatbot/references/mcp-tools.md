@@ -34,8 +34,10 @@ So: **prune before you sharpen, sharpen before you add.**
 | `owa_help_search` | `query*`, `limit`, `kind`, `focus` | Searches the bundled knowledge. `kind` splits `manual` (user-facing, verified) from `internal` (developer notes, ranked below and never quoted to a user). `focus` biases to presenter/reader. | |
 | `owa_help_page` | `id*` | Reads one page whole, by the id a search hit carries. | |
 | `owa_app_state` | `page` | What is on screen right now: page, language, theme, tabs, mounted components. DOM read only. | |
-| `owa_list_screens` | — | Showing screen ids + attached displays, via `main:app:get-screens` / `get-displays`. | |
+| `owa_list_screens` | — | Showing screen ids + attached displays via `main:app:get-screens` / `get-displays`, PLUS what each screen holds (`screens[]`: slide with its first words, passage, background, foreground, lock — from the presenter's screen managers over the `owa-agent-screens` relay), the exact words on its show/hide and Clear buttons (`controls`) and where the Mini Screen panel sits (`previewCard`). Basics + `note` off the Presenter page. | The one tool a state question is answered from; before 2026-09-09 it said "showing" and nothing about what, and the model said "blank" (`EC-124`). |
 | `owa_hide_screens` | `screenId` | Takes content OFF a projector. Destructive to a live service — always confirm first. | ✔ |
+| `owa_present_bible` | `reference*`, `version`, `action` (`present` | `check`) | Puts a passage on the projector by its reference through the app's own parser (`BibleItem.fromTitleText`, in the lookup's version then any installed one that reads it) and the lookup's own present path (`ScreenBibleManager.handleBibleItemSelecting`, ticked screens, nothing saved to the Bibles list), over the `owa-agent-bible` relay; answers what the screens hold AFTER. `check` resolves and quotes without a screen. Refusals (locked, no ticked screen, unknown version, unreadable reference, not on the Presenter) are sentences for a person: the `/verse` command and the offline bot print them. | ✔ |
+| `owa_foreground` | `widget`, `action` (`start` | `stop` | `check`), `minutes`, `at`, `text`, `seconds` | Starts or stops a foreground extra — countdown, stopwatch, clock, marquee-top / marquee-bottom, quick-text (`all` stops every one, as F10 does) — by doing what the widget's own Start button does (`ScreenForegroundManager.setCountdownData` and its siblings on the ticked screens, the widget's defaults) over the `owa-agent-foreground` relay, and answers what each screen holds AFTER (`did`, `detail` in words, `foreground` per screen, an OFF note saying to offer the show button). Refusals (no length, a time gone by, no words, no ticked screen, locked, not on the Presenter) are sentences for a person: `/countdown`, `/marquee` and the offline bot print them. | ✔ |
 | `owa_goto_page` | `page*` | Switches the main window between `presenter.html` and `reader.html`. | ✔ |
 | `owa_find_ui` | `text*`, `highlight`, `page`, `anyPage` | Locates a control by its visible text; `highlight` rings it in red in the real window. `anyPage` searches the other window too and says which one. | ✔ |
 | `owa_list_ui` | `filter`, `page`, `limit` | Enumerates the visible controls of a window. The cure for guessing a label. | |
@@ -50,7 +52,14 @@ So: **prune before you sharpen, sharpen before you add.**
 | `owa_lyric_validate` | `text*`, `mode`, `title`, `artist`, `from`, `to` | `mode: "draft"` turns RAW words into Open Lyric — a paste, a page that was read, an attached file — and is the ONLY way a song should ever be written: a careful hand-written attempt still fails on `CC` (must be `Cx2`) and on free text inside `Instrumental`. The draft is round-tripped through the validator below, so it cannot ship an invalid document; `openLyricDraft.mjs` holds the emitter and `Breakdown` is the tier-2 fence nothing can fail in. Otherwise checks song text against the Open Lyric notation the Lyric Editor uses: every mistake with its line, its section and what to write instead, then the song itself — title, key, tempo, sections, play order. `problems` are what the editor refuses the song for; `warnings` are what it accepts and a musician still wants. A whole SONG PAGE can be handed in as `text`: `lyricPageText.mjs` finds the song among the toolbars, charts and footers, rejoins the lines a chord layout breaks into fragments, reads the key/tempo/time strip, keeps a second language as a translation line, and REPORTS the area it chose -- `from`/`to` override it, `title`/`artist` override what it read. Gated so a plain paste is untouched. The ONE tool here that reaches nothing — no CDP, no window, no network — so it answers with the app shut. Its grammar is guarded against open-lyric drift by two tests, see `openLyric.mjs`. | |
 
 The other 26 tools come from `chrome-devtools-mcp` via `createMcpServer` in
-`server.mjs` and are not ours to edit — only to include or exclude.
+`server.mjs` and are not ours to edit — only to include or exclude. **Since
+2026-09-08 none of them reaches the chatbot's model**: `modelTools.mjs`
+withholds all 26 plus the window's own three, so the model is offered the 19
+`owa_*` tools above and nothing else (the developer's stdio door keeps all
+48). The last ten went on the standing corpus's evidence — `press_key`
+pressed F5 unasked and the projector came on; three `take_snapshot`s ran a
+panic question to the round cap — and on a grep of every score file: no
+chrome-devtools tool had ever been called on an answer that passed.
 
 ## Adding a tool — the checklist
 
@@ -110,14 +119,15 @@ consequences are felt by a volunteer minutes before a service. Write for both:
 
 ## Pruning and scoping
 
-The biggest available win is not sending 29 browser-debugging tools to a help bot
-for church volunteers. `lighthouse_audit`, `take_heapsnapshot`,
-`performance_start_trace`, `close_page`, `new_page`, `emulate` and
-`resize_page` are meaningful to an agent debugging the app and meaningless — or
-harmful — to a user asking where a button is.
-
-If you take that work on (`EC-02` in [backlog.md](./backlog.md)), the constraints
-are:
+The biggest available win WAS not sending 29 browser-debugging tools to a help
+bot for church volunteers — taken in two steps (2026-09-02, 2026-09-08; `EC-02`
+in [backlog.md](./backlog.md), done). What is left to prune is inside the
+`owa_*` set itself, and the second-biggest win, prompt caching, is also taken
+(`EC-57`): on Anthropic the tools + system prefix is a cache read on every
+round after the first and every question after the first, so a description
+trim now saves a tenth of what it used to — measure a change against
+`usage.cache_read_input_tokens`, not the audit's estimate. The constraints
+below still bind any change to the list:
 
 - **The outside agent must keep the full set.** The robot-test skill and Claude
   Code drive the app through the same server. Filter on the CALLER (the chatbot's
@@ -127,7 +137,9 @@ are:
   reviewable function.
 - **Allowlist, never denylist** — same reasoning as the knowledge corpus. A tool
   added upstream must not reach a volunteer's window because nobody updated an
-  exclusion list.
+  exclusion list. (What shipped is a denylist declared once, held by
+  `modelTools.test.mjs` and the audit script: on a chrome-devtools-mcp upgrade,
+  run the audit and look for a tool the model is newly offered.)
 - Keep the read/act split visible: a chatbot allowlist that quietly includes
   `evaluate_script` has handed a language model arbitrary code execution in a
   renderer with node integration.

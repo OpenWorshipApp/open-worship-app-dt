@@ -28,6 +28,10 @@ import { toBotFocus } from '../../tools/owa-devtools-mcp/botFocus.mjs';
 import type { BotActionType } from './helpBotHelpers';
 import type { LlmProviderType } from './llmBotHelpers';
 import type { AttachRequestType, ShowRefType } from './quickReplyHelpers';
+// A value import, like `botFocus.mjs` above, and safe for the same reason:
+// the usage module imports nothing but a type of its own, so it costs the
+// mount path arithmetic and a price table.
+import { toValidUsage, type ChatUsageType } from './usageHelpers';
 
 /**
  * A type-only import of the union above, deliberately: this module is read at
@@ -71,6 +75,11 @@ export type ChatMessageType = {
     attachRequests?: AttachRequestType[];
     // ...and what it offers to show the user in return.
     shows?: ShowRefType[];
+    // What this answer cost: the model rounds it took and the tokens they
+    // used, with the list-price estimate worked out from them. On the answer
+    // rather than derived later, because the tab's total below survives the
+    // message cap and the per-answer figure has to be read off the answer.
+    usage?: ChatUsageType;
 };
 
 export type ChatSessionType = {
@@ -100,6 +109,12 @@ export type ChatSessionType = {
     // second tab to keep, and a strip of twelve is cleared by someone in a
     // hurry.
     isLocked: boolean;
+    // What the whole conversation has cost so far, every round of every
+    // question folded in as it landed -- including the rounds of a question
+    // that was stopped or failed, which no message carries. Kept on the tab
+    // rather than summed off its messages because the messages are capped
+    // at sixty and the credit spent on the sixty-first is still spent.
+    usage?: ChatUsageType;
 };
 
 export type ChatSessionStateType = {
@@ -179,12 +194,21 @@ export function genChatSessionTitle(session: ChatSessionType) {
     return text.slice(0, MAX_TITLE_LENGTH - 1) + '…';
 }
 
-export function checkCanAddChatSession(sessions: ChatSessionType[]) {
-    return sessions.length < MAX_SESSION_COUNT;
+/**
+ * Whether the strip has room for one more. Structural, like the two below:
+ * the AI Chat window runs the same strip over its own tabs and its own cap.
+ */
+export function checkCanAddChatSession(
+    sessions: readonly unknown[],
+    maxCount = MAX_SESSION_COUNT,
+) {
+    return sessions.length < maxCount;
 }
 
 /** The tabs a sweeping action is allowed to take. Locked ones are not. */
-export function toClearableChatSessions(sessions: ChatSessionType[]) {
+export function toClearableChatSessions<T extends { isLocked: boolean }>(
+    sessions: T[],
+) {
     return sessions.filter((session) => {
         return !session.isLocked;
     });
@@ -213,10 +237,9 @@ export function checkCanClearChatSessions(sessions: ChatSessionType[]) {
  * Whether "close the other chats" has anything to close. A strip of locked
  * tabs and this one is already soloed, whatever the count says.
  */
-export function checkCanSoloChatSession(
-    sessions: ChatSessionType[],
-    sessionId: string,
-) {
+export function checkCanSoloChatSession<
+    T extends { id: string; isLocked: boolean },
+>(sessions: T[], sessionId: string) {
     return sessions.some((session) => {
         return session.id !== sessionId && !session.isLocked;
     });
@@ -281,6 +304,14 @@ function toValidAttachments(raw: any) {
     return attachments.length > 0 ? { attachments } : {};
 }
 
+// The one guard on a stored total, shared by the answer and the tab: every
+// field a finite number or the total is dropped, and an empty one is not
+// written back either.
+function toValidUsageField(raw: unknown) {
+    const usage = toValidUsage(raw);
+    return usage === null ? {} : { usage };
+}
+
 function toValidMessage(raw: any): ChatMessageType | null {
     if (
         typeof raw?.text !== 'string' ||
@@ -296,6 +327,7 @@ function toValidMessage(raw: any): ChatMessageType | null {
         ...(Array.isArray(raw.actions) ? { actions: raw.actions } : {}),
         ...toValidReplies(raw.replies),
         ...toValidAttachments(raw.attachments),
+        ...toValidUsageField(raw.usage),
         ...(Array.isArray(raw.shows)
             ? {
                   shows: raw.shows
@@ -359,6 +391,7 @@ function toValidSession(raw: any): ChatSessionType | null {
                 : null,
         model: typeof raw.model === 'string' ? raw.model : '',
         isLocked: raw.isLocked === true,
+        ...toValidUsageField(raw.usage),
     };
 }
 

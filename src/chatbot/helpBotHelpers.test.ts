@@ -21,6 +21,9 @@ vi.mock('./mcpClient', () => ({
 import {
     askHelpBot,
     describeActionError,
+    genBackToPresenterLead,
+    genBackToPresenterRoute,
+    readCountdownAsk,
     runBotAction,
 } from './helpBotHelpers';
 import { genQuickReplies } from './quickReplyHelpers';
@@ -346,6 +349,67 @@ describe('the offline bot does not mistake a task for a screen question', () => 
             args: { command: '/screen-show' },
         });
     });
+
+    // What the tool now answers beside the ids: a screen that is off still
+    // holds its layers, and the sentence a panicking volunteer needs is that
+    // the song is already there and only the show button is missing.
+    test('a screen that is off but holds a slide is said to hold it', async () => {
+        parseToolJson.mockReturnValue({
+            showingScreenIds: [],
+            displays: [{}],
+            screens: [
+                {
+                    screenId: 0,
+                    isShowing: false,
+                    isBlank: false,
+                    slide: {
+                        document: 'Amazing Grace',
+                        kind: 'song',
+                        name: 'Verse 2',
+                        text: 'Twas grace',
+                    },
+                    bible: null,
+                    background: null,
+                    foreground: [],
+                },
+            ],
+        });
+        const answer = await askHelpBot(
+            'Is anything showing on the projector right now?',
+            'presenter',
+        );
+        expect(answer.text).toContain('No presentation screen is showing');
+        expect(answer.text).toContain(
+            'Screen 0 is off but already holds the song "Amazing Grace" ' +
+                '(Verse 2) -- "Twas grace", so turning it on shows that.',
+        );
+    });
+
+    test('a showing screen is described by what is on it', async () => {
+        parseToolJson.mockReturnValue({
+            showingScreenIds: [0],
+            displays: [{}],
+            screens: [
+                {
+                    screenId: 0,
+                    isShowing: true,
+                    isBlank: false,
+                    slide: null,
+                    bible: { reference: 'John 3:16', version: 'KJV' },
+                    background: { kind: 'image', name: 'sky.jpg' },
+                    foreground: [],
+                },
+            ],
+        });
+        const answer = await askHelpBot(
+            'Is anything showing on the projector right now?',
+            'presenter',
+        );
+        expect(answer.text).toContain(
+            'Screen 0 is showing right now, on a machine with 1 display(s) ' +
+                '-- John 3:16 (KJV); an image background (sky.jpg).',
+        );
+    });
 });
 
 // "Can it stream to Facebook?" scored the Presenter overview page 2 -- the
@@ -475,5 +539,482 @@ describe('the offline bot writes a pasted song out itself', () => {
             'owa_lyric_validate',
             expect.anything(),
         );
+    });
+
+    // Measured 2026-09-10 with the assistant paused: the app's own starter
+    // chip, "Create a lyric file from https://…", was searched for in the
+    // manual and answered with how to make an EMPTY file.
+    const PAGE = 'https://hymnary.example/text/amazing_grace';
+
+    test('a song link is read by the drafter itself, never searched for', async () => {
+        callTool.mockResolvedValue(
+            DRAFT.replace('from the text', 'from the page'),
+        );
+        const answer = await askHelpBot(
+            `Create a lyric file from ${PAGE}`,
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledTimes(1);
+        expect(callTool).toHaveBeenCalledWith('owa_lyric_validate', {
+            url: PAGE,
+            mode: 'draft',
+        });
+        expect(answer.text).toContain('I read hymnary.example');
+        expect(answer.text).toContain('Song: "Amazing Grace"');
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Create "Amazing Grace"',
+            'Copy song text',
+        ]);
+    });
+
+    test('a page with no song on it is said so, not searched for', async () => {
+        callTool.mockResolvedValue(
+            'That does not look like the words of a song.',
+        );
+        const answer = await askHelpBot(
+            `the lyrics are at ${PAGE}`,
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledTimes(1);
+        expect(answer.text).toContain('could not find a song on it');
+        expect(answer.actions ?? []).toHaveLength(0);
+    });
+
+    test("a site's bot check is said as what it is", async () => {
+        callTool.mockResolvedValue(
+            'That address answered with a browser check ("checking your ' +
+                'browser") instead of the page, so there is no song to read.',
+        );
+        const answer = await askHelpBot(`song ${PAGE}`, 'presenter');
+        expect(answer.text).toContain(
+            'hymnary.example answered with a "checking your browser" page',
+        );
+        expect(answer.text).not.toContain('could not find a song');
+    });
+
+    test("a page that could not be read gets a sentence, never the tool's words", async () => {
+        callTool.mockRejectedValue(
+            new Error('Refused: the address budget for this window is spent'),
+        );
+        const answer = await askHelpBot(`song from ${PAGE}`, 'presenter');
+        expect(answer.text).toContain('I could not read hymnary.example');
+        expect(answer.text).not.toContain('budget');
+    });
+
+    test('a link with no song word beside it still goes to the manual', async () => {
+        callTool.mockResolvedValue('[]');
+        parseToolJson.mockReturnValue([]);
+        await askHelpBot(`what is this ${PAGE}`, 'presenter');
+        expect(callTool).toHaveBeenCalledWith(
+            'owa_help_search',
+            expect.anything(),
+        );
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_lyric_validate',
+            expect.anything(),
+        );
+    });
+});
+
+// What the user is in the MIDDLE of: measured with a model on 2026-09-09,
+// "which song is selected" was answered with the song on the PROJECTOR. This
+// bot reads the field the presenter now hands over, and an imperative gets
+// the state plus the command that does it -- never a press of its own.
+describe('the offline bot answers what is selected from the app', () => {
+    const selected = {
+        name: 'Amazing Grace',
+        kind: 'song',
+        slideCount: 3,
+        slides: [],
+        onScreen: null,
+        next: {
+            n: 1,
+            name: 'Verse 1',
+            find: 'Slide 1: Verse 1',
+            text: 'Amazing grace',
+        },
+        previous: null,
+    };
+
+    test('which song is selected is read off the presenter, not the screens', async () => {
+        parseToolJson.mockReturnValue({
+            mainWindow: { page: 'presenter.html', selectedDocument: selected },
+        });
+        const answer = await askHelpBot(
+            'Which song is selected right now?',
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledWith('owa_app_state', {});
+        expect(callTool).not.toHaveBeenCalledWith('owa_list_screens');
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_help_search',
+            expect.anything(),
+        );
+        expect(answer.text).toContain(
+            'The song "Amazing Grace" is selected (3 slides).',
+        );
+        expect(answer.text).toContain('None of its slides is on a screen yet.');
+        expect(answer.actions).toEqual([
+            {
+                label: 'Show the next slide',
+                toolName: 'builtin-command',
+                args: { command: '/next' },
+            },
+        ]);
+    });
+
+    test('"show the next slide" is the state and the button, never a press', async () => {
+        parseToolJson.mockReturnValue({
+            mainWindow: { page: 'presenter.html', selectedDocument: selected },
+        });
+        const answer = await askHelpBot('Show the next slide', 'presenter');
+        expect(answer.text).toContain('Next is slide 1 "Verse 1"');
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_click',
+            expect.anything(),
+        );
+        expect(answer.actions?.[0]?.args).toEqual({ command: '/next' });
+    });
+
+    test('a how-do-I about the next slide still goes to the manual', async () => {
+        callTool.mockResolvedValue('[]');
+        await askHelpBot('How do I move to the next slide?', 'presenter');
+        expect(callTool).not.toHaveBeenCalledWith('owa_app_state', {});
+        expect(callTool).toHaveBeenCalledWith(
+            'owa_help_search',
+            expect.anything(),
+        );
+    });
+
+    // The run sheet is a different question from the selected document, and
+    // since EC-132 it has its own field to answer from.
+    test('the running order is answered from the run sheet, not the selection', async () => {
+        parseToolJson.mockReturnValue({
+            mainWindow: {
+                page: 'presenter.html',
+                selectedDocument: {
+                    name: 'Amazing Grace',
+                    kind: 'song',
+                    slideCount: 3,
+                    slides: [],
+                    onScreen: null,
+                    next: null,
+                    previous: null,
+                },
+                runSheet: {
+                    openSheets: [
+                        {
+                            name: 'Sunday',
+                            lineCount: 4,
+                            lines: [],
+                            cursor: {
+                                n: 2,
+                                title: 'Amazing Grace',
+                                kind: 'song',
+                                slide: { n: 3, name: 'Verse 3', isLast: true },
+                            },
+                            next: {
+                                n: 3,
+                                title: 'John 3:16',
+                                kind: 'Bible passage',
+                            },
+                        },
+                    ],
+                },
+            },
+        });
+        const answer = await askHelpBot(
+            "What's next in my running order?",
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledWith('owa_app_state', {});
+        expect(answer.text).toContain('"Sunday" is open (4 lines)');
+        expect(answer.text).toContain('its last slide');
+        expect(answer.text).toContain(
+            'Next is line 3 "John 3:16" (Bible passage)',
+        );
+        expect(answer.text).not.toContain('Amazing Grace" is selected');
+    });
+
+    test('with no run player open it names the sheets there are', async () => {
+        parseToolJson.mockReturnValue({
+            mainWindow: {
+                page: 'presenter.html',
+                runSheet: {
+                    openSheets: [],
+                    availableSheets: ['Sunday', 'Youth night'],
+                },
+            },
+        });
+        const answer = await askHelpBot(
+            'what is next in the order of service?',
+            'presenter',
+        );
+        expect(answer.text).toContain('No run sheet is open');
+        expect(answer.text).toContain('"Sunday", "Youth night"');
+    });
+
+    test('off the presenter it says where the answer lives', async () => {
+        parseToolJson.mockReturnValue({ mainWindow: { page: 'reader.html' } });
+        const answer = await askHelpBot('What slide is up?', 'reader');
+        expect(answer.text).toContain('not on it right now');
+        expect(answer.actions?.[0]?.args).toEqual({
+            command: '/goto presenter',
+        });
+    });
+});
+
+// Measured 2026-09-09 through the real window with every key dead: *How do I
+// edit a slide?* asked from the Bible Reader was answered off the slides page,
+// which opens "in the Documents list" -- a panel the Reader page has not got
+// -- and named no way across. The model's prompt carries that page fact; the
+// offline bot has to carry it too, because the offline bot is what the window
+// has on exactly the afternoon this was measured on.
+describe('the offline bot names the way back to the Presenter', () => {
+    // Bolded the way the manual writes it: the lead was measured missing a
+    // second time because the pattern wanted the plain words.
+    const SLIDES_EXCERPT =
+        'Making a new file: in the **Documents** list, click the ⋮ in the ' +
+        'list header and pick **New App Document**.';
+
+    test('the route is a fact about the page, not one button for all', () => {
+        // The Reader has no Presenter tab.
+        expect(genBackToPresenterRoute('reader')).toContain(
+            'Go Back to Presenter',
+        );
+        expect(genBackToPresenterRoute('appDocumentEditor')).toContain(
+            '**Presenter** tab',
+        );
+        expect(genBackToPresenterRoute('presenter')).toBeNull();
+        // A window of its own is not a page the Presenter is a tab away from.
+        expect(genBackToPresenterRoute('setting')).toBeNull();
+    });
+
+    test('a Presenter recipe read from the Reader leads with the way across', () => {
+        const lead = genBackToPresenterLead('reader', SLIDES_EXCERPT);
+        expect(lead).toContain('Bible Reader page has none of these panels');
+        expect(lead).toContain('Go Back to Presenter');
+    });
+
+    test('a recipe that names no Presenter panel is left alone', () => {
+        expect(
+            genBackToPresenterLead(
+                'reader',
+                'Click the double chevron in the bottom-right corner.',
+            ),
+        ).toBe('');
+        // And on the Presenter itself nothing is ever added.
+        expect(genBackToPresenterLead('presenter', SLIDES_EXCERPT)).toBe('');
+    });
+
+    test('the manual answer from the Reader carries it in front', async () => {
+        callTool.mockResolvedValue(
+            JSON.stringify([
+                {
+                    id: 'W-02',
+                    title: 'Create and edit slides / lyrics / web backgrounds',
+                    section: 's',
+                    excerpt: SLIDES_EXCERPT,
+                    score: 40,
+                },
+            ]),
+        );
+        parseToolJson.mockImplementation((text: string) => JSON.parse(text));
+        const answer = await askHelpBot('How do I edit a slide?', 'reader');
+        expect(answer.text.startsWith('This is done in the Presenter')).toBe(
+            true,
+        );
+        expect(answer.text).toContain('Go Back to Presenter');
+        expect(answer.text).toContain(SLIDES_EXCERPT);
+    });
+});
+
+// "Put John 3:16 on the screen" used to be searched, and the best hit was
+// the page about the Bible Lookup's picker -- which no button can drive. The
+// reference is checked against the app's own parser first, and ONE button
+// puts it up: offered, then pressed, never done off a typed sentence.
+describe('the offline bot offers to put a passage on the screen', () => {
+    const checked = {
+        isPresented: false,
+        reference: 'John 3:16',
+        version: 'KJV',
+        text: '(16): For God so loved the world',
+        screens: [],
+        isAnyShowing: false,
+    };
+
+    test('a concrete reference is checked, quoted, and offered as one press', async () => {
+        parseToolJson.mockReturnValue(checked);
+        const answer = await askHelpBot(
+            'Put John 3:16 on the screen',
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledWith('owa_present_bible', {
+            reference: 'John 3:16',
+            action: 'check',
+        });
+        expect(callTool).not.toHaveBeenCalledWith('owa_present_bible', {
+            reference: 'John 3:16',
+        });
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_help_search',
+            expect.anything(),
+        );
+        expect(answer.text).toContain('**John 3:16 (KJV)** reads');
+        expect(answer.text).toContain('For God so loved');
+        expect(answer.text).toContain('the screen is off just now');
+        expect(answer.actions).toEqual([
+            {
+                label: 'Put John 3:16 on the screen',
+                toolName: 'builtin-command',
+                args: { command: '/verse John 3:16' },
+            },
+        ]);
+    });
+
+    test('the reference is read off several shapes of the sentence', async () => {
+        parseToolJson.mockReturnValue(checked);
+        for (const [ask, reference] of [
+            ['show Psalm 23 on the projector', 'Psalm 23'],
+            ['please put up 1 John 1:1-4', '1 John 1:1-4'],
+            ['Present Romans 8.28 to the big screen.', 'Romans 8.28'],
+        ]) {
+            callTool.mockClear();
+            await askHelpBot(ask, 'presenter');
+            expect(callTool, ask).toHaveBeenCalledWith('owa_present_bible', {
+                reference,
+                action: 'check',
+            });
+        }
+    });
+
+    test('a how-do-I, or a verse with no chapter, still goes to the manual', async () => {
+        callTool.mockResolvedValue('[]');
+        for (const ask of [
+            'How do I put John 3:16 on the screen?',
+            'How do I put a Bible verse on the screen?',
+            'Put the song on the screen',
+            'show slide 3 on the screen',
+        ]) {
+            callTool.mockClear();
+            await askHelpBot(ask, 'presenter');
+            expect(callTool, ask).not.toHaveBeenCalledWith(
+                'owa_present_bible',
+                expect.anything(),
+            );
+        }
+    });
+
+    test("a reference the app cannot read gets the app's sentence and no button", async () => {
+        callTool.mockRejectedValue(
+            new Error(
+                '"Jhn 99:99" could not be read as a passage in any installed version. Write it as book, chapter and verse.',
+            ),
+        );
+        const answer = await askHelpBot(
+            'Put Jhn 99:99 on the screen',
+            'presenter',
+        );
+        expect(answer.text).toContain('could not be read as a passage');
+        expect(answer.actions).toBeUndefined();
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_help_search',
+            expect.anything(),
+        );
+    });
+});
+
+// "Start a 5 minute countdown on the screen" used to be searched, and the
+// best hit was the page about the Foreground tab's boxes -- which the model
+// then spent ten rounds hunting (2026-09-11). The screens are read first so
+// the answer can say whether the screen is on, and ONE button starts it.
+describe('the offline bot offers to start a countdown', () => {
+    const checked = {
+        did: 'checked',
+        widget: null,
+        detail: 'No foreground extra is on any screen.',
+        screens: [],
+        isAnyShowing: false,
+    };
+
+    test('reads the minutes or the time off the sentence', () => {
+        expect(
+            readCountdownAsk('Start a 5 minute countdown on the screen'),
+        ).toEqual({
+            minutes: 5,
+        });
+        expect(readCountdownAsk('please put up a 10-min timer')).toEqual({
+            minutes: 10,
+        });
+        expect(readCountdownAsk('Can you start a countdown to 10:30?')).toEqual(
+            {
+                at: '10:30',
+            },
+        );
+        expect(readCountdownAsk('run a 1 hour countdown')).toEqual({
+            minutes: 60,
+        });
+        // A how-do-I, a bare word, and a countdown with no length go to the
+        // manual.
+        expect(
+            readCountdownAsk('How do I show a countdown before the service?'),
+        ).toBeNull();
+        expect(readCountdownAsk('Start the countdown')).toBeNull();
+        expect(readCountdownAsk('countdown')).toBeNull();
+    });
+
+    test('a countdown is offered as one press, with the screen state', async () => {
+        parseToolJson.mockReturnValue(checked);
+        const answer = await askHelpBot(
+            'Start a 5 minute countdown on the screen',
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledWith('owa_foreground', {
+            action: 'check',
+        });
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_help_search',
+            expect.anything(),
+        );
+        expect(answer.text).toContain(
+            '**I can start a 5 minute countdown on the screen for you**',
+        );
+        expect(answer.text).toContain('the screen is off just now');
+        expect(answer.actions).toEqual([
+            {
+                label: 'Start a 5 minute countdown',
+                toolName: 'builtin-command',
+                args: { command: '/countdown 5' },
+            },
+        ]);
+    });
+
+    test('a countdown to a time, with the screen showing', async () => {
+        parseToolJson.mockReturnValue({ ...checked, isAnyShowing: true });
+        const answer = await askHelpBot(
+            'put a countdown to 6:45 pm on the screen',
+            'presenter',
+        );
+        expect(answer.text).toContain(
+            '**I can start a countdown to 6:45 pm on the screen for you**.',
+        );
+        expect(answer.text).not.toContain('off just now');
+        expect(answer.actions?.[0]?.args).toEqual({
+            command: '/countdown 6:45 pm',
+        });
+    });
+
+    test("off the Presenter the app's own sentence is repeated, and nothing offered", async () => {
+        callTool.mockRejectedValue(
+            new Error(
+                'A foreground extra is started from the Presenter page, and the main window is not on it. Switch it to the Presenter first, then ask again.',
+            ),
+        );
+        const answer = await askHelpBot(
+            'Start a 5 minute countdown on the screen',
+            'presenter',
+        );
+        expect(answer.text).toContain('started from the Presenter page');
+        expect(answer.actions).toBeUndefined();
     });
 });

@@ -111,23 +111,6 @@ describe('bible-lookup bibleActionHelpers', () => {
         expect(ctl.setIsAdvanceLookupOpened).toHaveBeenCalledWith(true);
     });
 
-    test('genFoundBibleItemContextMenu adds resources when verse key present', () => {
-        const target = document.createElement('div');
-        target.dataset.verseKey = '(KJV) GEN 1:1';
-        const ctl = genController();
-        const menu = genFoundBibleItemContextMenu({ target }, ctl, {
-            id: 1,
-        } as any);
-        const resources = menu.find(
-            (m) => m.menuElement === 'Open in Resources',
-        )!;
-        expect(resources).toBeDefined();
-        resources.onSelect!({} as any);
-        expect(ctl.selectedVerseKey).toBe('(KJV) GEN 1:1');
-        expect(ctl.openBibleSearch).toHaveBeenCalledWith('r');
-        expect(ctl.setIsAdvanceLookupOpened).toHaveBeenCalledWith(true);
-    });
-
     test('genFoundBibleItemContextMenu reads verse key from parent element', () => {
         const parent = document.createElement('div');
         parent.dataset.verseKey = '(KJV) EXO 2:2';
@@ -170,13 +153,10 @@ describe('bible-lookup bibleActionHelpers', () => {
         const menu = genFoundBibleItemContextMenu({ target }, genController(), {
             id: 1,
         } as any);
-        // both verse-key items are suppressed on the editor page
+        // the verse-key item is suppressed on the editor page
         expect(
             menu.some((m) => m.menuElement === 'Open in Cross Reference'),
         ).toBe(false);
-        expect(menu.some((m) => m.menuElement === 'Open in Resources')).toBe(
-            false,
-        );
         const insert = menu.find((m) => m.menuElement === 'Insert bible item')!;
         insert.onSelect!({} as any);
         expect(h.insertBibleItemMock).toHaveBeenCalled();
@@ -189,12 +169,9 @@ describe('bible-lookup bibleActionHelpers', () => {
             { id: 1 } as any,
         );
         expect(Array.isArray(menu)).toBe(true);
-        // No verse key, so neither item that needs one is offered.
+        // No verse key, so the item that needs one is not offered.
         expect(
             menu.some((m) => m.menuElement === 'Open in Cross Reference'),
         ).toBe(false);
-        expect(menu.some((m) => m.menuElement === 'Open in Resources')).toBe(
-            false,
-        );
     });
 });

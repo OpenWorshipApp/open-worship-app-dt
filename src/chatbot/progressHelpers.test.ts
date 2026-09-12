@@ -87,6 +87,14 @@ describe('describeToolStep', () => {
         expect(describeToolStep('owa_lyric_validate', {})).toBe(
             'Checking the song over',
         );
+        // Off a page, the read is the slow half, and the site is named the
+        // way a read names it -- never the address, which is where a payload
+        // would sit.
+        expect(
+            describeToolStep('owa_lyric_validate', {
+                url: 'https://example.com/chords/1?x=secret',
+            }),
+        ).toBe('Reading example.com and writing the song out');
     });
 });
 
@@ -160,5 +168,57 @@ describe('the progress store', () => {
             report('Thinking about it')();
         }).not.toThrow();
         expect(getProgressState().steps).toHaveLength(0);
+    });
+});
+
+describe('a passage on its way to the screen', () => {
+    test('names the passage, and says a check is only a read', () => {
+        expect(
+            describeToolStep('owa_present_bible', { reference: 'John 3:16' }),
+        ).toBe('Putting a Bible passage on the screen: “John 3:16”');
+        expect(
+            describeToolStep('owa_present_bible', {
+                reference: 'John 3:16',
+                action: 'check',
+            }),
+        ).toBe('Reading the passage “John 3:16”');
+        expect(describeToolStep('owa_present_bible', {})).toBe(
+            'Putting a Bible passage on the screen',
+        );
+    });
+});
+
+describe('a foreground extra on its way to the screen', () => {
+    test('names the extra, its length, and what is coming off', () => {
+        expect(
+            describeToolStep('owa_foreground', {
+                widget: 'countdown',
+                minutes: 5,
+            }),
+        ).toBe('Starting a 5 minute countdown on the screen');
+        expect(
+            describeToolStep('owa_foreground', {
+                widget: 'countdown',
+                at: '10:30',
+            }),
+        ).toBe('Starting a countdown to “10:30”');
+        expect(
+            describeToolStep('owa_foreground', {
+                widget: 'marquee-bottom',
+                text: 'Welcome',
+            }),
+        ).toBe('Putting a scrolling message on the screen');
+        expect(
+            describeToolStep('owa_foreground', {
+                action: 'stop',
+                widget: 'clock',
+            }),
+        ).toBe('Taking the clock off the screen');
+        expect(describeToolStep('owa_foreground', { action: 'check' })).toBe(
+            'Checking the extras on the screen',
+        );
+        expect(describeToolStep('owa_foreground', {})).toBe(
+            'Putting an extra on the screen',
+        );
     });
 });

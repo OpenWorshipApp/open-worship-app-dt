@@ -11,6 +11,7 @@ import electron, {
 
 import type ElectronAppController from './ElectronAppController';
 import { getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
+import { clearAiChatGuestData } from './aiChatGuestHelpers';
 import {
     checkIsEncryptedFile,
     decryptFile,
@@ -57,6 +58,7 @@ import {
 } from './msHelpers';
 import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
 import { captureOAuthRedirectUrl } from './oauthHelpers';
+import { relaunchApp } from './taskbarHelpers';
 import { readWebPage } from './webPageHelpers';
 
 const { dialog, ipcMain, app } = electron;
@@ -153,6 +155,14 @@ export function initEventListenerApp(appController: ElectronAppController) {
             mcpUrl: getMcpUrl(),
             cdpPort: getRemoteDebuggingPort(),
         };
+    });
+
+    // The AI Chat window's "Sign out of every site". It is the only way in
+    // the app to end a sign-in held on the guest partition, and the window
+    // has already asked twice by the time it gets here.
+    onAsync(ipcMain, 'main:app:clear-ai-chat-data', async () => {
+        await clearAiChatGuestData();
+        return true;
     });
 
     onAsync(ipcMain, 'main:app:select-dirs', async () => {
@@ -557,6 +567,13 @@ export function initEventOther(appController: ElectronAppController) {
 
     ipcMain.on('main:app:go-download', () => {
         goDownload();
+    });
+
+    // Asked for by the Settings panel that owns a setting a reload cannot
+    // apply. Fire-and-forget on purpose: nothing can be answered to a renderer
+    // that is about to be torn down with the process.
+    ipcMain.on('main:app:relaunch', () => {
+        relaunchApp();
     });
 
     ipcMain.on(

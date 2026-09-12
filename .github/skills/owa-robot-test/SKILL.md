@@ -1,7 +1,7 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~761 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..99, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the "Key is missing" guessing-key dialog, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41).'
-argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~761 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..99, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the "Key is missing" guessing-key dialog, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41). The argument "prod" (or "release" / "packaged") selects PROD MODE (§2b): build the release with `npm run pack:<os>` (vite + electron build + electron-builder into `release/`), start the PACKAGED app from `release/<os>-unpacked/` through `scripts/prod-app.mjs` (which checks the AI switch the packaged build defaults to OFF, strips `ELECTRON_RUN_AS_NODE`, and records the pid so only that instance is ever stopped), attach with `wait-for-debugger.mjs --prod`, and run the same procedure against `owa://local/…` pages — proving the asar/protocol/native-module packaging and every prod-only default (no `tran()` throw, no dev stamps, real Extra Binaries download, un-suffixed userData) that a dev run structurally cannot see. It is a TARGET that combines with any focus or mode (`prod presenter`, `prod full`, `prod presentingFlow`).'
+argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "full" for a tracked full-coverage run — or "prod [focus]" to build the release and test the PACKAGED app under release/ — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
 # OWA Robot Test — QA e2e via the `owa-devtools` MCP
@@ -21,6 +21,11 @@ unit or Playwright tests.
 - "Robot test the app", "QA the UI", "smoke test the running app", "find UI issues".
 - **"presenting flow" / "run sheet"** → **presenting flow deep mode** (§6f): the tracked, phase-by-phase
   pass over the whole run-sheet subsystem, with coverage accounting on.
+- **"prod" / "release" / "packaged"** → **prod mode** (§2b): build the release
+  (`npm run pack:<os>`) and drive the PACKAGED app out of `release/` instead of
+  `npm run dev` — before a release, after a packaging/protocol/native-module change,
+  or when a bug reproduces "only in the installed app". It is a *target*, so it
+  combines with any focus or mode: `prod presenter`, `prod full`, `prod presentingFlow`.
 - After a feature/refactor, to verify nothing is visually or interactively broken.
 - To collect console errors, failed network requests, and accessibility gaps from the
   real renderer.
@@ -54,6 +59,11 @@ unit or Playwright tests.
 npm run dev ──► Vite (localhost:3000, https)
             └─► Electron (loads presenter.html)  ──CDP:<published>──► owa-devtools-mcp ──► this agent
 ```
+
+- **Prod mode (§2b)** swaps the left half only: `npm run pack:<os>` writes the
+  packaged app under `release/<os>-unpacked/`, `scripts/prod-app.mjs launch`
+  starts it, and it publishes itself the same way with `isDev: false` — pages
+  are served from `owa://local/<page>.html` instead of Vite.
 
 ## Prerequisites
 
@@ -128,6 +138,222 @@ When it prints `{ "ready": true, ... }` the debugger is attached and the window 
 navigated. Do NOT poll manually with `sleep`; run this script instead — it exits as
 soon as the page target appears.
 
+### 2b. PROD MODE — build the release and drive the PACKAGED app (argument `prod`)
+
+**Trigger.** `prod`, `release`, `packaged`, `installer`, "test the build under
+`release/`". It is a **target**, not a focus: it replaces steps 1–2 (which app is
+started and how) and leaves every other section — the focus, the mandatory blocks,
+coverage accounting, deep modes — in force. `prod presenter`, `prod full` and
+`prod presentingFlow` all mean "that run, against the packaged app". With no `prod`
+the run stays on `npm run dev`, as before.
+
+**Why it exists.** A dev run drives Vite-served pages inside `node_modules/electron`
+with `NODE_ENV=development`. What a user installs is different in ways no dev run can
+see: the asar layout (`build.files` / `asarUnpack` in package.json), the `owa://local`
+protocol (`electron/fsServe.ts`) serving `dist/`, `tools/owa-devtools-mcp` running out
+of `app.asar.unpacked`, the knowledge dir the chatbot answers from, the native modules
+`copy-build.mjs` places (`db-exts`, `eot2ttf`), and every `isDev` branch flipping the
+other way — AI features **off** unless set, `tran()` **not** throwing, no dev DOM
+stamps, no mocked Extra Binaries download, no `ignore-certificate-errors`, the
+un-suffixed userData. KB §18 lists them all with what each does to an assertion.
+
+**Helper:** [scripts/prod-app.mjs](./scripts/prod-app.mjs) —
+`locate | status | ai-status | enable-ai | launch | stop` (`--json` for machine
+output, `--user-data=<dir>` to run on a scratch data dir). It is the only thing that
+should start or stop the packaged app in a run: it strips `ELECTRON_RUN_AS_NODE`
+(inherited from VS Code, it makes ANY Electron binary run as plain Node and exit — the
+same trap as `npm run dev`) and `NODE_ENV`, records the pid, and `stop` refuses to
+touch any process it did not start.
+
+#### P0 — Preflight (nothing is built or started until all three are clear)
+
+1. **No dev instance may be up.** `node .claude/skills/owa-robot-test/scripts/prod-app.mjs status`
+   lists every live instance as `DEV` / `PROD` with its exe. The pack runs
+   `npm run build`, whose `electron:build` deletes `electron-build/` — the running dev
+   app's own main entry. Either the dev app dies mid-build, or (Windows) the delete
+   EPERMs on a loaded `.dll` and it is the **build** that dies (memory
+   `build-kills-running-dev-app`). And an `electron:dev` / `electron:watch` chain
+   (nodemon on `electron-build`) **restarts the dev app when the build re-creates that
+   folder**, after which the dev app is the NEWEST published instance and every
+   `owa-devtools` call lands on it instead of the build under test. So: a dev stack you
+   started → kill its terminal (the whole chain, not one child). One you did **not**
+   start → stop and tell the user; never `taskkill` every `electron.exe` (memory
+   `dont-taskkill-all-electron`).
+2. **No packaged instance may hold the lock you need.** The exe under `release/` uses
+   the SAME userData as the installed app (`%APPDATA%\open-worship-app`,
+   `~/Library/Application Support/open-worship-app`, `~/.config/open-worship-app`), so
+   with the installed app open a second one loses the single-instance lock and quits
+   silently (`initSecondInstance`). `status` shows it as `PROD` with the installed
+   path as its exe. Ask the user to close it — or, only when they say the installed app
+   must stay up, run with `--user-data=<scratch dir>`: that is a **fresh install** (no
+   bibles, no documents, no settings, its own lock), so say so in the report and
+   expect the Bible-dependent rows to be BLOCKED until a bible is imported (§6g).
+3. **AI features must be ON in that userData** or the packaged app opens no CDP
+   endpoint at all (`checkIsAiEnabled`: unset means OFF when packaged, ON in dev).
+   `prod-app.mjs ai-status` (exit 2 when off) → `prod-app.mjs enable-ai` with the app
+   closed writes `clientSetting["ai-enabled"] = "true"` and keeps every other key.
+   **Record the `before` value it prints and restore it in cleanup** — switching a
+   user's installed app onto the CDP door without telling them is not a test artefact
+   to leave behind.
+4. **Default to a scratch profile INSIDE `release/`** —
+   `--user-data=release/robot-userdata-<runid>` on `enable-ai` and `launch` — unless the
+   user asked for their own data to be tested. On a fresh profile
+   `selected-parent-dir` is unset, so `appLocalStorage.defaultStorage` falls back to
+   `app.getPath('userData')` (which `OWA_USER_DATA_PATH` moves), and **every** write the
+   run causes — settings, `bibles-data`, documents, downloaded media, the ~62 MB Extra
+   Binaries pack, the single-instance lock — lands under `release/`. That is what makes
+   the no-delete rule in P4 keepable, it needs no `ai-enabled` edit in the user's own
+   `setting.json`, and it cannot lose the lock to an installed app. The cost is a
+   FIRST-RUN target: no bibles, no documents, no settings (see P0-5), which is itself
+   worth testing — most prod bugs a maintainer never sees are first-run bugs.
+5. **A fresh profile has to be furnished before most rows can run**, and each step is a
+   real first-run path worth asserting: the Reader opens on **No Parent Directory
+   Selected** → `Ok` opens Settings → General; **set the Parent Directory** (see the
+   trap below) → the **Set according paths** confirm → `Yes` writes all 11 child dirs;
+   Settings → Bible → **Create KJV Bible XML** gives the Bible layer something to
+   present (~5 MB, no network); Settings → Others → **Download and Install** fetches the
+   Extra Binaries pack from the real CDN (MD-05); and a scratch document comes from
+   `owa_slide_file create` (see §6a) rather than from the user's library.
+   ⚠️ **Do not type the Parent Directory path with a per-character fill.** That box
+   commits on EVERY keystroke (`PathEditorComp` → `dirSource.dirPath = event.target.value`),
+   so a typed absolute path makes the app adopt the first prefix that exists — `C:\` —
+   and immediately create `bibles-data/` and `local-storage/` in the drive ROOT, before
+   the confirm is answered (observed 2026-09-11; those two folders then cannot be cleaned
+   up under the no-delete rule). Write `clientSetting["selected-parent-dir"]` into the
+   scratch `setting.json` with the app closed instead, then launch.
+
+#### P1 — Build the release
+
+```bash
+npm run pack:win      # Windows  →  release/win-unpacked/  (arm64: win-arm64-unpacked/)
+npm run pack:mac      # macOS    →  release/mac/ | release/mac-arm64/ (.app inside)
+npm run pack:linux    # Linux    →  release/linux-unpacked/
+```
+
+- Background terminal, **10–20 minutes**; keep the terminal id. `pack:*` is
+  `npm run build` (vite:build with an 8 GB heap, then electron:build incl.
+  `build-knowledge.mjs`) followed by electron-builder, which ALSO produces the
+  installer/zip and `latest.yml`. Wait for the command to **exit** before launching:
+  electron-builder rewrites the unpacked dir while it signs and zips.
+- Then `prod-app.mjs locate`: the exe for this OS + CPU, its `builtAt`, and
+  **`isStale`** — true when any file under `src/`, `electron/`, `html/`,
+  `tools/owa-devtools-mcp/`, `docs/manual-sources/`, `.claude/` or `package.json` is
+  newer than the exe. A stale build tests last week's code; rebuild. `isArchMismatch`
+  means the only build on disk is for another CPU (an arm64 machine with a `win-unpacked`
+  x64 build runs it under emulation — say so, or rebuild).
+- **Skip the build only when the user said so** ("don't rebuild", `prod --no-build`)
+  AND `locate` says not stale. A faster variant when the installer is not wanted:
+  `npm run build && npx electron-builder build --<os> --dir` (unpacked only, no NSIS/DMG).
+- Evidence for the report: the new artefact names in `release/` (e.g.
+  `Open Worship app-<ver>-win-arm64.exe` / `.zip`, `latest.yml`) with their mtimes, and
+  `git rev-parse --short HEAD` + whether the tree was dirty. A release built from a dirty
+  tree is still a valid test target; it just has to be named as such.
+
+#### P2 — Launch and attach
+
+```bash
+node .claude/skills/owa-robot-test/scripts/prod-app.mjs launch
+node .claude/skills/owa-robot-test/scripts/wait-for-debugger.mjs --prod --match=owa://local/ --timeout=90000
+```
+
+`launch` refuses to start when an instance already runs on that userData or when the
+AI switch is off (it names the setting file). `--prod` makes the wait script ignore any
+`isDev: true` instance, so a dev app coming back does not satisfy it. Match on the
+**origin**, not on `presenter.html`: the packaged app reopens whatever main page
+`mainHtmlPath` in the user's `setting.json` last held (verified 2026-09-09: it came up
+on `owa://local/reader.html`), and `owa_goto_page` takes it to the Presenter afterwards.
+Cold start of a packaged build is ~5–15 s; a launch that publishes nothing in 90 s is a
+finding (check that `setting.json` — KB §3 — and whether the exe is really the one
+`locate` printed).
+
+#### P3 — Confirm you are driving the packaged app, then continue at step 3
+
+The `owa-devtools` server picks the **newest** live instance per call; with the dev
+app stopped that is the packaged one, but it is a fact to **prove, not assume**, before
+a single click — a wrong-instance run reports the dev tree as the release. Call
+`owa_app_state` and require BOTH:
+
+- `instances[0].isDev === false` (and only one `isDev: false` instance listed), and
+- the main window URL starts with **`owa://local/`** (dev pages are `https://localhost:3000/`).
+
+If a dev instance is also live, stop it (P0-1) or pin the client with `OWA_CDP_PORT`
+(only a client started after the variable is set sees it — restart the MCP server).
+Then run **steps 3–8 unchanged**, with the prod deltas below.
+
+⚠️ **When you cannot stop the dev app, drive the `owa_*` tools through the PACKAGED
+app's own in-app MCP host instead** (proved 2026-09-11, when a watcher chain kept
+restarting a dev app that was newer than the build under test, and the user had asked
+for nothing to be stopped). The two tool families fail apart, which is what makes this
+survivable:
+
+- `owa_*` through `owa-devtools` re-resolves **newest-first on every call**, so a dev
+  app started after the packaged one silently answers with ITS windows — the tell is
+  `owa_click` replying "no open page matching" and naming pages you never opened, or
+  any answer carrying `https://localhost:3000`.
+- the chrome-devtools half (`list_pages`, `take_snapshot`, uid `click`, `press_key`,
+  `take_screenshot`) stays attached to the instance it connected to, so it keeps
+  driving the packaged pages — re-check `list_pages` shows `owa://local` before
+  trusting any result, since a reconnect would re-resolve too.
+
+The packaged app's in-app host is **pinned to its own instance** (`pinCdpPort`), and
+`prod-app.mjs status --json` prints its `mcpUrl` (e.g. `http://127.0.0.1:56131/mcp`).
+Call tools over it with a throwaway streamable-HTTP session — `initialize` →
+`notifications/initialized` → `tools/call` → `DELETE` — which is ~20 lines of `fetch`
+and needs no client restart. That also exercises the packaged host itself (it must
+serve `tools/list` from `app.asar.unpacked`, with `evaluate_script` withheld by the
+firewall), so it doubles as a prod row rather than costing one.
+
+#### What changes in prod (assertion deltas — the full model is KB §18)
+
+| Area | Dev | Packaged — what to do instead |
+|------|-----|-------------------------------|
+| Page URLs (step 5) | `https://localhost:3000/<page>.html` | **`owa://local/<page>.html`** — but ⚠️ **`navigate_page` cannot be used at all packaged**: the MCP firewall's `checkIsAppUrl` (`tools/owa-devtools-mcp/firewall.mjs:244`) allows only `file:`, `about:blank` and `http(s)` on localhost/127.0.0.1, and a packaged build serves `owa://`, so every main-window navigation is refused as "an address outside this app". Use **`owa_goto_page`** (`presenter.html` / `reader.html` / `appDocumentEditor.html`) — verified 2026-09-11. The app's own guard (`isSupportedMainNavigation`) rejects any other origin as well. |
+| userData / `setting.json` (KB §3, §10) | `%APPDATA%\open-worship-app-dev` | `%APPDATA%\open-worship-app` (or the `--user-data` dir). User content follows `selected-parent-dir` in THAT file — read the real dirs off the UI (`PathSelectorComp`) before the MD-04 sweep; never assume `open-worship-data-dev`. |
+| Missing Khmer key (§6d) | `tran()` **throws**, subtree blanks — Critical | `tran()` returns the English key silently. LT-01/02 still run, but the assertion is **visual only**: raw English on a Khmer screen = Low finding, and the console will NOT say `Translation for text … not found`. Say in the report that the throw-class check is dev-only. |
+| Toast stack check (§6, GL-10) | `window.testSimpleToasts()` | Dev-only global, absent. Trigger two real refusal toasts instead (e.g. present onto a **locked** screen twice) and assert they stack; otherwise mark `PARTIAL: helper is dev-only`. |
+| `owa_find_ui` component names, `data-react-comp-*` | present | Absent (the Vite plugin is `apply: 'serve'`). Locate by label / `data-widget-name` / `aria-label` only. Findings name the control, not the file — find the file in `src/` afterwards. |
+| Extra Binaries (§6e, MD-05) | mocked: copies the local `bin-<ver>.tar.gz` | **Real download from the release CDN** — this is the only place that path is ever exercised; needs network. A missing local pack is irrelevant here. ⚠️ **The published pack can be OLDER than the local one** and its yt-dlp too old for current YouTube: observed 2026-09-11, CDN `0.0.2` (yt-dlp 2026.07.04) 403'd on every media download while the local `0.0.3` (2026.08.19) worked on the same machine — dev cannot see this. Always record `info.json`'s version + binary names, and attribute a media failure with the three runs in KB §18.5 before calling it BLOCKED. |
+| Hidden-screen console (§6a, SC-05) | forwarded to the `npm run dev` terminal | The packaged main process has no terminal attached: `SC-05` is `BLOCKED: no main-process stdout in prod`, not FAIL. |
+| Console noise (KB §7) | Electron security warnings, HMR, React DevTools | None of those; **any** `[warn]` / `[error]` in the packaged console is worth a look. |
+| Experiments page, `isDev` menu items | present | Absent; rows citing `src/experiments/` are `EXCLUDED` in prod. |
+| Window title / icon | `icon-dev.png`, dev title | The release icon. A dev icon on the packaged window is a packaging bug. |
+| AI / chatbot (`CB-xx`) | on by default | Off unless the setting says on (P0-3). The **Help → App Help (Chatbot)** item and the 🤖 button must be present with it on, and the packaged MCP host (`mcpUrl` in `status`) must serve `tools/list` from `app.asar.unpacked` — one `curl` against it proves the unpacked copy loads. |
+| Certificates | `ignore-certificate-errors` | Real TLS: a Bible-XML-from-URL import (§6g) or SongSelect that fails only in prod is a finding, not network noise. |
+
+Everything else — screen block §6a, media block §6e, presenting flow §6f, coverage
+accounting §6b, the honesty rules — is unchanged.
+
+#### P4 — Cleanup (in addition to step 8)
+
+> ⚠️ **A prod run DELETES NOTHING OUTSIDE `release/`** (the user's rule, 2026-09-11).
+> That is why P0-4 puts the whole profile inside `release/`: everything the run creates
+> is then deletable without touching anything of the user's. Outside `release/`, a run
+> may only ADD (and say so in the report) — never remove, not a leftover media file, not
+> a stale discovery file, not a scratch dir somebody else's run left behind. If teardown
+> would need a delete outside `release/`, report the paths and let the user decide.
+> `prod-app.mjs` enforces this in code: `removeInsideRelease` refuses any other path, and
+> `stop` deliberately leaves the dead instance's `<temp>/open-worship-app-cdp/<pid>.json`
+> alone (every reader skips a dead pid, and the app sweeps it on its next launch).
+
+1. `node .claude/skills/owa-robot-test/scripts/prod-app.mjs stop` — quits the pid it
+   recorded (graceful, then forced after 8 s — the forced path is the normal one for this
+   app, observed every time so far), never anything else, and removes its own record
+   (`release/.robot-test/prod-app.json`).
+2. Restore `ai-enabled` to the `before` value `enable-ai` printed — **unless the run used
+   the scratch profile from P0-4**, in which case the user's own `setting.json` was never
+   touched and there is nothing to restore. Say which of the two it was.
+3. Delete the scratch `--user-data` dir (it is inside `release/`, so this is allowed) once
+   its evidence is in the report; it holds the downloaded Extra Binaries pack and any
+   bible, so it is the biggest thing the run leaves behind. Do **not** delete the rest of
+   `release/`: the artefacts are the deliverable the run was about.
+4. Do not restart the user's dev stack for them; say that it was stopped and why.
+
+**Report additions (required in every prod report — template in test-plan.md):** a
+*Build under test* block (version, commit + dirty flag, exe path, `builtAt`, pack
+artefacts, userData used, whether `ai-enabled` was toggled and restored) and, per
+delta row above, what was observed. A report that does not name `owa://local` as the
+origin driven is not a prod report.
+
 ### 3. Connect and confirm the DOM is ready
 
 1. `mcp__owa-devtools__list_pages` → locate the page whose URL ends in `presenter.html`
@@ -155,14 +381,14 @@ The window opens on `presenter.html`. To test another page, **navigate the curre
 selected page directly to its dev URL** with `mcp__owa-devtools__navigate_page` (reuse the
 same window — do NOT open a brand-new tab):
 
-| Page | Navigate to |
-|------|-------------|
-| Presenter | `https://localhost:3000/presenter.html` |
-| Bible Reader | `https://localhost:3000/reader.html` |
-| Slide / Doc Editor | `https://localhost:3000/appDocumentEditor.html` |
-| Settings | ⚠️ **popup window — do NOT `navigate_page` the main window here** (see warning) |
-| Lyric Editor / Bible Note / Web Editor / About / Screen | popup windows — see [references/ui-map.md](./references/ui-map.md) |
-| Find bar | `finder.html`, pinned INSIDE the searched window as a `WebContentsView` — see [references/ui-map.md](./references/ui-map.md) |
+| Page | Navigate to (dev) | Prod mode (§2b) |
+|------|-------------------|-----------------|
+| Presenter | `https://localhost:3000/presenter.html` | `owa://local/presenter.html` |
+| Bible Reader | `https://localhost:3000/reader.html` | `owa://local/reader.html` |
+| Slide / Doc Editor | `https://localhost:3000/appDocumentEditor.html` | `owa://local/appDocumentEditor.html` |
+| Settings | ⚠️ **popup window — do NOT `navigate_page` the main window here** (see warning) | same |
+| Lyric Editor / Bible Note / Web Editor / About / Screen | popup windows — see [references/ui-map.md](./references/ui-map.md) | same, on the `owa://local` origin |
+| Find bar | `finder.html`, pinned INSIDE the searched window as a `WebContentsView` — see [references/ui-map.md](./references/ui-map.md) | same |
 
 > ⚠️ **Popup-only pages (`setting.html`, `about.html`, finder, lyric/bible/web editors) must
 > NOT be loaded in the main window.** They open via `window.open` as separate windows. If you
@@ -782,6 +1008,13 @@ statuses, the ST-44 defaults observed, and confirmation that both `<key>.xml` an
   faked — an explicit line each for the **13 screen actions fired against a showing
   screen** (PL-72/74), the **folded-sheet walk** (PL-99) and the **performance
   measurements** (PL-63/70) with their numbers.
+- In **prod mode** (§2b) the report MUST open with the **Build under test** block
+  (version, commit + dirty flag, exe path and `builtAt`, the pack artefacts written to
+  `release/`, the userData driven, whether `ai-enabled` was toggled and restored) and
+  name `owa://local` as the origin every screenshot came from; the locale block says
+  explicitly that the missing-key throw is dev-only and what the Khmer pass asserted
+  instead; `SC-05` is `BLOCKED: no main-process stdout in prod`; and `MD-05` states
+  that the Extra Binaries pack was downloaded from the real CDN, not the local mock.
 - In full-coverage mode the report MUST include the **coverage summary** (template in
   [references/test-plan.md](./references/test-plan.md)): the formula result
   (`exercised / (total − EXCLUDED)`), plus every BLOCKED / PARTIAL / EXCLUDED row with
@@ -801,6 +1034,8 @@ statuses, the ST-44 defaults observed, and confirmation that both `<key>.xml` an
   scratch document/web item go the same way.
 - If YOU started `npm run dev` in step 2, **kill that terminal** to stop Vite + Electron
   (`concurrently -k` tears down both children).
+- In **prod mode**, `prod-app.mjs stop` the packaged app you launched, restore the
+  `ai-enabled` value and any scratch userData (§2b P4). Leave `release/` alone.
 - If the app was already running (step 1), leave it alone.
 - Do not delete `test-results/robot-test/` — those are the deliverables.
 
@@ -897,6 +1132,22 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
   skipped automatically.
 - **HTTPS cert warnings**: the Vite dev server uses a self-signed cert; Electron ignores
   cert errors in dev. This does not affect the MCP (it talks to Electron, not Vite).
+- **Prod mode: the packaged app starts and exits at once, publishes nothing**: in order
+  of likelihood — AI features off in that userData (`prod-app.mjs ai-status`; unset is
+  OFF when packaged), the installed app already holding the single-instance lock
+  (`prod-app.mjs status` shows a `PROD` row whose exe is under `Program Files` / the
+  install dir — close it or use `--user-data`), or the exe started with
+  `ELECTRON_RUN_AS_NODE=1` in its environment (always start it through
+  `prod-app.mjs launch`, which strips it).
+- **Prod mode: `owa_app_state` shows `https://localhost:3000` / `isDev: true`**: a dev
+  instance is live and newer, so every tool call drives IT — usually an
+  `electron:watch` chain that restarted the dev app when the pack re-created
+  `electron-build/`. Stop the dev chain (§2b P0-1), or pin with `OWA_CDP_PORT=<prod
+  port>` and restart the MCP client. Nothing observed before that fix counts as prod
+  evidence.
+- **Prod mode: the pack fails with `EPERM … electron-build\db-exts\fts5.dll`** — a dev
+  app is holding the file; the build, not the app, died (memory
+  `build-kills-running-dev-app`). Stop the dev app and re-run the pack.
 
 ## Resources
 
@@ -904,7 +1155,12 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
   observation notes — what to observe, expected-vs-noise, locale handling, the popup/settings
   trap + recovery, interaction gotchas, and a known-good baseline to diff against.
 - [scripts/wait-for-debugger.mjs](./scripts/wait-for-debugger.mjs) — polls the CDP
-  endpoint and exits when the target page is attached.
+  endpoint and exits when the target page is attached; `--prod` / `--dev` restrict it
+  to one kind of instance.
+- [scripts/prod-app.mjs](./scripts/prod-app.mjs) — prod mode's door to the packaged
+  app: `locate` the build under `release/` (and whether it is stale), `status` of every
+  live instance, `ai-status` / `enable-ai` for the switch a packaged build defaults to
+  off, `launch` (environment scrubbed, pid recorded) and `stop` (that pid only).
 - [references/ui-map.md](./references/ui-map.md) — windows, regions, selectors, readiness
   signals, keyboard shortcuts.
 - [references/components-path.md](./references/components-path.md) — every page → its

@@ -15,7 +15,12 @@ import {
 } from '../helper/ai/aiHelpers';
 import appProvider from '../server/appProvider';
 import { FREE_SERVICE_MAP } from '../helper/ai/freeHelpers';
+// The provider console pages, declared once (the help window opens the same
+// ones under a "could not answer" note) so the two cannot drift apart.
+import { PAID_PROVIDER_PAGE_MAP } from '../chatbot/providerIssueHelpers';
+import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { applyStore } from './SettingApplyComp';
+import { relaunchApp } from './settingHelpers';
 import SettingOthersFieldComp from './SettingOthersFieldComp';
 import SettingOthersSecureStorageWarningComp from './SettingOthersSecureStorageWarningComp';
 import SettingOthersSectionComp from './SettingOthersSectionComp';
@@ -175,7 +180,7 @@ function RenderWorkspaceIdComp() {
             <RenderOpenPageButtonComp
                 labelKey="Get ID"
                 titleKey="Find Anthropic workspace id"
-                url="https://console.anthropic.com/settings/workspaces"
+                url={PAID_PROVIDER_PAGE_MAP.anthropic.workspaces ?? ''}
             />
         </SettingOthersFieldComp>
     );
@@ -202,6 +207,21 @@ function RenderAIEnabledComp() {
         },
         [],
     );
+    // Asked first, because this closes every window in the app: whatever is
+    // half-typed in the slide editor or on a screen goes with it.
+    const handleRestarting = useCallback(async () => {
+        const isOk = await showAppConfirm(
+            tran('Restart the app to apply'),
+            tran('The app will close and open again. Save your work first.'),
+            {
+                cancelButtonLabel: 'No',
+                confirmButtonLabel: 'Yes',
+            },
+        );
+        if (isOk) {
+            relaunchApp();
+        }
+    }, []);
     return (
         <div className="app-setting-others-field">
             <div className="form-check form-switch m-0">
@@ -224,11 +244,35 @@ function RenderAIEnabledComp() {
                     />
                 </label>
             </div>
-            {isRestartNeeded ? (
-                <span className="app-data">
+            {/* Said whether or not the switch has just been touched. This one
+                setting is read before the app opens a window, so an operator
+                who ticks it and then goes looking for the assistant is looking
+                for something this process was never started with -- and the
+                Apply Settings button, which reloads the renderers, cannot get
+                it either. The button beside it is the only way to apply it. */}
+            <div className="d-flex align-items-center flex-wrap gap-2 mt-1">
+                <span
+                    className={
+                        'app-data' + (isRestartNeeded ? ' text-warning' : '')
+                    }
+                >
                     {tran('Restart the app to apply')}
                 </span>
-            ) : null}
+                <button
+                    className={
+                        'btn btn-sm ' +
+                        (isRestartNeeded
+                            ? 'btn-warning'
+                            : 'btn-outline-secondary')
+                    }
+                    type="button"
+                    title={tran('Restart the app to apply')}
+                    onClick={handleRestarting}
+                >
+                    <i className="bi bi-arrow-clockwise me-1" />
+                    {tran('Restart Now')}
+                </button>
+            </div>
         </div>
     );
 }
@@ -355,7 +399,7 @@ export default function SettingOthersAIComp() {
                         label="OpenAI API Key"
                         hintKey="Answers in the chatbot, and powers custom Bible Cross Reference and Bible Audio"
                         createKeyTitleKey="Create OpenAI api key"
-                        createKeyURL="https://platform.openai.com/api-keys"
+                        createKeyURL={PAID_PROVIDER_PAGE_MAP.openai.keys}
                     />
                 </RenderProviderGroupComp>
                 <RenderProviderGroupComp
@@ -367,7 +411,7 @@ export default function SettingOthersAIComp() {
                         label="Anthropic API Key"
                         hintKey="Answers in the chatbot, and powers custom Bible Cross Reference"
                         createKeyTitleKey="Create Anthropic api key"
-                        createKeyURL="https://console.anthropic.com/settings/keys"
+                        createKeyURL={PAID_PROVIDER_PAGE_MAP.anthropic.keys}
                     />
                     <RenderWorkspaceIdComp />
                 </RenderProviderGroupComp>
@@ -380,7 +424,7 @@ export default function SettingOthersAIComp() {
                         label="Kimi API Key"
                         hintKey="Answers in the chatbot only"
                         createKeyTitleKey="Create Kimi api key"
-                        createKeyURL="https://platform.kimi.ai/console/api-keys"
+                        createKeyURL={PAID_PROVIDER_PAGE_MAP.kimi.keys}
                     />
                 </RenderProviderGroupComp>
             </div>

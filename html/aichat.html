@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <!-- TODO: change favicon.ico -->
+        <link rel="icon" href="/favicon.ico" />
+        <!-- TODO: change logo192.png -->
+        <link rel="apple-touch-icon" href="/logo192.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <!--
+            The AI Chat window: a company's own chat website (ChatGPT, Claude,
+            Gemini, ...) in a box beside the app, the way a browser's AI
+            sidebar holds one. The page THIS window serves draws only the tab
+            strip, a head row and a chooser card; the site itself loads in a
+            `<webview>` guest on its own sandboxed session
+            (`electron/aiChatGuestHelpers.ts`), and nothing of the guest ever
+            runs in this document.
+
+            So the policy is tighter still than the chatbot's: `connect-src`
+            names nobody, because this window holds no key and asks no service
+            anything -- the guest does its own talking on its own session.
+            `frame-src` / `child-src` allow https, which is what lets the guest
+            element be created at all; the guest's OWN policy (what it may
+            load, open or ask for) is enforced in the main process, not here.
+            Prod only, like every other page: the dev server needs its own
+            websocket and inline module graph.
+        -->
+        <!-- prod<meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self';
+                script-src 'self' 'unsafe-inline';
+                style-src 'self' 'unsafe-inline';
+                img-src 'self' data: blob:;
+                font-src 'self' data:;
+                worker-src 'self' blob:;
+                connect-src 'self' data: blob:;
+                object-src 'none'; frame-src https:; child-src https:;
+                base-uri 'none'; form-action 'none'">prod -->
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Open Worship App" />
+        <title>Open Worship app - AI Chat (✨)</title>
+        <style>
+            body,
+            html,
+            #root {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            /*
+             * The same standing-by cue the chatbot opens on, for the same
+             * reason: drawn in CSS so there is one fewer file to wait for on
+             * a machine that has nothing to spare.
+             */
+            .chatbot-standby {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font:
+                    600 10.5px/1 'Bahnschrift',
+                    'DIN Alternate',
+                    system-ui,
+                    sans-serif;
+                letter-spacing: 0.16em;
+                text-transform: uppercase;
+                color: #8b97a8;
+            }
+
+            .chatbot-standby::before {
+                content: '';
+                width: 9px;
+                height: 9px;
+                border-radius: 50%;
+                background-color: #d9a441;
+                animation: chatbot-standby-pulse 1.1s ease-in-out infinite;
+            }
+
+            @keyframes chatbot-standby-pulse {
+                50% {
+                    opacity: 0.25;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .chatbot-standby::before {
+                    animation: none;
+                }
+            }
+        </style>
+    </head>
+
+    <body style="background-color: transparent !important">
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <div id="root">
+            <p class="chatbot-standby">Standing by</p>
+        </div>
+        <script type="module" src="/src/aichat.tsx"></script>
+    </body>
+</html>
