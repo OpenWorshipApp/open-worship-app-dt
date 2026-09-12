@@ -1103,14 +1103,22 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   `Record<LlmProviderType, true>` so a saved tab's provider survives a reload
   without dragging the SDKs into that module.
   **The fourth needs no key at all** (`src/helper/ai/freeHelpers.ts`): `Free` is
-  two public services — LLM7 (`api.llm7.io`, the default) and Kilo Code
-  (`api.kilo.ai`) — and the SERVICE is a property of the MODEL, not of the
-  user's choice, so `getInstance` takes the model and `getFreeService` resolves
-  it. Its `keyField` is UNSET, and that is the whole mechanism: unset means
+  one public service, Kilo Code (`api.kilo.ai`), and three of its `:free`
+  models, each driven through the real tool loop before it was listed (a test
+  holds every id to `:free`: an unsuffixed Kilo id is paid and refuses an
+  anonymous request). LLM7, the default until 2026-09-12, went paid under it —
+  `gpt-oss` answered `model_unavailable` and every keyless question fell to the
+  offline guide — and the routers `kilo-auto/free` / `openrouter/free` are left
+  out on purpose (4/7, and a raw `<tool_call>` for an answer). **A saved name
+  outlives the list**: every tab and the new-tab setting went on posting
+  `gpt-oss`, so `toUsableLlmModel` puts a keyless name the list no longer
+  carries back on the first choice — at `getLlmModel`, at window load and in
+  `askLlmBot` — and leaves a keyed provider's off-list name (one picked under
+  *More models…*) alone. Its `keyField` is UNSET, and that is the whole mechanism: unset means
   always available, and the map's order puts it LAST, so any real key still
   outranks it while a fresh install lands on it automatically. Only one free
-  model can see a picture (`stepfun/step-3.7-flash:free`, on Kilo), and *More
-  models…* is hidden for it — both hosts answer with a catalogue that is mostly
+  model can see a picture (`stepfun/step-3.7-flash:free`), and *More
+  models…* is hidden for it — the host answers with a catalogue that is mostly
   paid and mostly toolless, so the row would offer a model that cannot do the
   job. It carries a `warning` no other provider has, drawn STICKY at the top of
   the log (a notice scrolled past has stopped warning anybody) and repeated in
@@ -1123,7 +1131,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   `RenderOpenPageButtonComp`: it puts its label and title through `tran()`,
   which THROWS on a missing key in dev, and a company name and a URL are not
   translatable strings. The notice folds itself after ~9s to its own first
-  sentence (which still names both services) and a fold by hand sticks. Free models are not merely weaker but differently BROKEN, and
+  sentence (which still names the service) and a fold by hand sticks. **The app's own tool host failing is not the provider failing**: `mcpClient.ts` throws a `ToolHostError` with a sentence for the volunteer and its status in `hostStatus` — NOT `status`, which `readLlmIssue` reads as a provider 5xx and would hand to another key — and the window says that sentence instead of *"<provider> could not answer"* (a host 500 was printed as a bare status code on the day Free was broken for its own reason, and the two could not be told apart). Free models are not merely weaker but differently BROKEN, and
   three guards in the loop exist only for them: `toCleanToolName` cuts a harmony
   `<|channel|>` marker a gateway leaked INTO the function name, a
   `maxToolRounds` of 6 stops one question costing ~79k tokens for no answer at

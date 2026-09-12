@@ -124,8 +124,14 @@ import {
     type LlmModelType,
     type LlmBotAnswerType,
     type LlmProviderType,
+    toUsableLlmModel,
 } from './llmBotHelpers';
-import { callTool, getAiEndpoints, parseToolJson } from './mcpClient';
+import {
+    callTool,
+    checkIsToolHostError,
+    getAiEndpoints,
+    parseToolJson,
+} from './mcpClient';
 import {
     DRAFT_GONE_TEXT,
     LYRIC_COPY_TOOL_NAME,
@@ -1809,13 +1815,37 @@ function genInitialSessionState(): ChatSessionStateType {
                 session.provider !== null &&
                 availableProviders.includes(session.provider)
             ) {
-                return session.model.length > 0
+                // A model the keyless list has dropped is put back on its
+                // first choice too (`toUsableLlmModel`), or the head row
+                // shows one name while a withdrawn one is asked.
+                const usableModel =
+                    session.model.length > 0
+                        ? toUsableLlmModel(session.provider, session.model)
+                        : getLlmModel(session.provider);
+                return usableModel === session.model
                     ? session
-                    : { ...session, model: getLlmModel(session.provider) };
+                    : { ...session, model: usableModel };
             }
             return { ...session, provider, model };
         }),
     };
+}
+
+/**
+ * The first half of a "could not answer" line: what failed, and why.
+ *
+ * The app's OWN tool host is not the provider, and it is said in its own
+ * sentence (`ToolHostError`) -- naming the provider over it blamed "Free" for
+ * the app's own server on the day Free was also broken for a reason of its
+ * own. A trailing full stop comes off the provider's sentence first, or
+ * "is currently unavailable." grows a second one.
+ */
+function describeAskFailure(label: string, error: any) {
+    if (checkIsToolHostError(error)) {
+        return error.message;
+    }
+    const reason = String(error?.message ?? '').replace(/\.+$/, '');
+    return `${label} could not answer — ${reason}.`;
 }
 
 /**
@@ -3312,9 +3342,10 @@ export default function ChatbotAppComp() {
                                 // back to that.
                                 addMessage(askedSessionId, {
                                     author: 'bot',
-                                    text:
-                                        `${label} could not answer — ` +
-                                        `${error.message}`,
+                                    text: describeAskFailure(
+                                        label ?? provider,
+                                        error,
+                                    ),
                                     ...(issueActions.length > 0
                                         ? { actions: issueActions }
                                         : {}),
@@ -3328,7 +3359,7 @@ export default function ChatbotAppComp() {
                                 ...(answer.actions ?? []),
                             ];
                             note =
-                                `${label} could not answer — ${error.message}. ` +
+                                `${describeAskFailure(label ?? provider, error)} ` +
                                 describeOfflineStandIn(answer);
                         }
                     }
@@ -3404,7 +3435,13 @@ export default function ChatbotAppComp() {
                 }
                 addMessage(askedSessionId, {
                     author: 'bot',
-                    text: `I could not answer that: ${error.message}`,
+                    // The app's own tool host failing is said in a sentence
+                    // of its own, with what to do about it -- prefixed, it
+                    // read "I could not answer that: The assistant service
+                    // answered 500", a status code and nothing to press.
+                    text: checkIsToolHostError(error)
+                        ? error.message
+                        : `I could not answer that: ${error.message}`,
                     // The rounds a failed question paid for before it failed.
                     ...usageTally.toField(),
                 });

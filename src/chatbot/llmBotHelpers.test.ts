@@ -48,7 +48,6 @@ vi.mock('../helper/ai/freeHelpers', () => ({
     FREE_SERVICE_MAP: {
         // `homeUrl` too: the warning links are built off this map, so a mock
         // without it makes them come back pointing at nothing.
-        llm7: { label: 'LLM7', homeUrl: 'https://llm7.io' },
         kilo: { label: 'Kilo', homeUrl: 'https://kilo.ai' },
     },
     getFreeInstance: () => null,
@@ -93,10 +92,12 @@ import {
     genOpenPageNudge,
     describeLlmError,
     getAvailableLlmProviders,
-    getFreeService,
+    getLlmModel,
+    getLlmModelList,
     getLlmProviderWarning,
     getLlmProviderWarningLinks,
     toCleanToolName,
+    toUsableLlmModel,
     genGuideRescueQuestion,
     genGuideRescueSummary,
     genToolWatch,
@@ -1088,7 +1089,7 @@ describe('the free provider', () => {
         // the user to accept a stranger on the app's word. These are the only
         // providers in the window they have no account with.
         const links = getLlmProviderWarningLinks('free');
-        expect(links.map((one) => one.label)).toEqual(['LLM7', 'Kilo']);
+        expect(links.map((one) => one.label)).toEqual(['Kilo']);
         for (const link of links) {
             expect(link.url.startsWith('https://')).toBe(true);
         }
@@ -1103,22 +1104,38 @@ describe('the free provider', () => {
         expect(checkIsFreeProvider(null)).toBe(false);
     });
 
-    test('sends each free model to the service it actually lives on', () => {
-        // The two halves are different hosts. A Kilo model id posted to LLM7
-        // is a 400 the window reports as the internet being down.
-        expect(getFreeService('gpt-oss')).toBe('llm7');
-        expect(getFreeService('minimax-m2.7')).toBe('llm7');
-        expect(getFreeService('stepfun/step-3.7-flash:free')).toBe('kilo');
-        expect(getFreeService('nvidia/nemotron-3.5-lightning:free')).toBe(
-            'kilo',
-        );
+    test('offers only free models, first choice first', () => {
+        // An unsuffixed Kilo id is a PAID model, which refuses an anonymous
+        // request -- a name like that in this list is an assistant that
+        // answers nobody.
+        const modelList = getLlmModelList('free');
+        expect(modelList.length).toBeGreaterThan(0);
+        for (const one of modelList) {
+            expect(one.id.endsWith(':free')).toBe(true);
+        }
+        // No setting saved (the mock answers null), so the first one asks.
+        expect(getLlmModel('free')).toBe(modelList[0].id);
     });
 
-    test('a model dropped by a later build still gets asked somewhere', () => {
-        // A setting written by an older build names a model this one no longer
-        // lists. Falling back costs one clear error; refusing to resolve costs
-        // the user their assistant.
-        expect(getFreeService('some-model-that-went-away')).toBe('llm7');
+    test('a model a later build dropped is asked as the first choice', () => {
+        // Measured 2026-09-12: LLM7 withdrew `gpt-oss`, and every tab saved on
+        // it went on posting the name and getting `model_unavailable` back.
+        const modelList = getLlmModelList('free');
+        const firstModel = modelList[0].id;
+        expect(toUsableLlmModel('free', 'gpt-oss')).toBe(firstModel);
+        expect(toUsableLlmModel('free', 'minimax-m2.7')).toBe(firstModel);
+        expect(toUsableLlmModel('free', '')).toBe(firstModel);
+        expect(toUsableLlmModel('free', null)).toBe(firstModel);
+        const lastModel = modelList[modelList.length - 1].id;
+        expect(toUsableLlmModel('free', lastModel)).toBe(lastModel);
+    });
+
+    test('a keyed provider keeps a model off the built-in list', () => {
+        // Picked from the key's own live catalogue under More models... -- not
+        // in this build's list, and still the user's choice.
+        expect(toUsableLlmModel('openai', 'gpt-4.1-mini-2099')).toBe(
+            'gpt-4.1-mini-2099',
+        );
     });
 });
 

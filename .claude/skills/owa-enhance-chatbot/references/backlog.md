@@ -13,6 +13,88 @@ tools → cost → capability → polish.**
 
 ---
 
+## EC-178 · Free answered nobody: its default service had gone paid — `done` 2026-09-12
+
+Reported by the user with a picture of the Free provider answering *"I could
+not answer that: The assistant service answered 500"*, and the ask *fix the
+free, if it still [un]usable then remove the free service*. Measured before
+anything changed:
+
+- **LLM7's anonymous catalogue now prices every model.** `gpt-oss` — the
+  default, "Open GPT" — answers `400 model_unavailable`; `minimax-m2.7`
+  called the tool once and then answered 429 on every call; `DeepSeek-V4-Flash`
+  wants a key; `mistral-Nemo` refuses tools; `codestral-latest` answered
+  without calling one. Asked in the live window on the tab's saved `gpt-oss`:
+  *"Free could not answer — Model 'gpt-oss' is currently unavailable.."* over
+  the offline guide. That was every keyless install.
+- **Kilo Code's `:free` models, through the real loop** — the 21 tools the
+  model sees (~28 KB of schema a round), read-only tools executed against the
+  live app, up to six rounds — on seven volunteer questions: Nemotron
+  Lightning 7/7 (8–20 s), Nex Pro 7/7 (12–24 s), Step Flash 6/7 (one empty
+  answer), `openrouter/free` 6/7 with one raw `<tool_call>` for an answer and
+  one 42 s wait, `kilo-auto/free` 4/7 (two empty answers, one
+  `TOKEN_LIMIT_EXCEEDED` 429, one plan narrated instead of answered), Nemotron
+  Super 3/3 but 33–52 s.
+
+**Shipped.** Free is usable, so it stays and LLM7 goes: `FREE_SERVICE_MAP` is
+Kilo alone, the per-model `service` and `getFreeService` are gone,
+`api.llm7.io` is out of the chatbot CSP, and the list is Nemotron Lightning
+(first choice), Nex Pro, Step Flash — no routers. A test holds every id to
+`:free` (an unsuffixed Kilo id is a paid model and refuses an anonymous
+request). **As important as the list**: every saved tab and the
+`chatbot-llm-model-free` setting still named `gpt-oss`, and taking a name out
+of the list does not stop a saved tab posting it. `toUsableLlmModel` puts a
+keyless name the list no longer carries back on the first choice — at
+`getLlmModel`, at window load (`genInitialSessionState`) and in `askLlmBot`
+for every caller — and leaves a keyed provider's off-list name alone (that
+one was picked under *More models…*).
+
+Re-asked in the same window after a reload: the head row read **Free /
+Nemotron Lightning**, the notice named Kilo Code alone, and *How do I present
+a Bible verse?* answered in 16 s — six numbered steps off the manual, two Kilo
+rounds, **free · 29k tokens**, walkthrough buttons under it.
+
+Left open: the list will rot again — both services this provider has used
+churned their catalogues inside two weeks. A fall-through to the next listed
+free model on `model_unavailable`, or a launch-time probe, would catch the
+next one before a volunteer does. Not built: a probe per launch spends the
+shared allowance, and a fall-through doubles every failed wait.
+
+---
+
+## EC-179 · The app's own tool host failing printed a status code — `done` 2026-09-12
+
+The 500 in the same picture was NOT the free service. *"The assistant service
+answered 500"* is `mcpClient.ts` reporting the app's OWN MCP host. The
+window's console held two 500s from `127.0.0.1:39223/mcp` — the model loop's
+`tools/list`, then the offline guide's search, which goes through the same
+host — so both answers failed and the outer catch printed the status. On the
+path where the guide does answer, the note over it read *"Free could not
+answer — …"*: the provider blamed for the app's own server, on the day Free
+really was broken for a reason of its own, so the two could not be told
+apart. The host answered normally minutes later (a fresh session with the
+chatbot's Origin, and the window's own), and the cause was not recoverable:
+`host.mjs` logs a failed request to main-process stdout only.
+
+**Shipped.** `ToolHostError` (`mcpClient.ts`) carries a sentence written for a
+volunteer — *The app's own help service did not respond. Try again in a
+moment; if it keeps happening, restart the app with View → Relaunch in the
+main window.* — and its status in `hostStatus`, deliberately NOT `status`,
+which `readLlmIssue` would read as a provider 5xx and hand to another key.
+`describeAskFailure` in the window says that sentence instead of "<provider>
+could not answer", and takes the provider's own trailing full stop off first
+(the live note had read *"unavailable.. Here is"*). Proven by stubbing only
+the chatbot window's `fetch` to the host with a 500 and asking *Where is the
+mini screen?*: the answer was the sentence, in 2.7 s; the stub was removed.
+`mcpClient.test.ts` holds the words, the missing `status`, and that a host
+that is not running at all stays its own error.
+
+Left open (idea): why the host 500'd. A dev run with no terminal attached
+loses the logged error; the last host failure could ride `owa_app_state` or
+the discovery file so a Report carries it.
+
+---
+
 ## EC-166 · "Start a 5 minute countdown" cost 18 rounds and started nothing — `done` 2026-09-11
 
 Measured 2026-09-11 on Claude Sonnet 5, the standing corpus having held at

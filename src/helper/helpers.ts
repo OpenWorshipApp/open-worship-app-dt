@@ -456,7 +456,10 @@ export function pressElementLikeButton(event: {
         return false;
     }
     const element = event.currentTarget as HTMLElement | null;
-    if (element === null || typeof element.getBoundingClientRect !== 'function') {
+    if (
+        element === null ||
+        typeof element.getBoundingClientRect !== 'function'
+    ) {
         return false;
     }
     // Space would scroll the panel out from under the control otherwise.

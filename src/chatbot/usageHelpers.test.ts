@@ -71,10 +71,14 @@ describe('reading a provider usage block', () => {
     });
 
     test('a host that reports no details cached nothing', () => {
-        const round = toOpenAiRoundUsage('free', 'gpt-oss', {
-            prompt_tokens: 5_000,
-            completion_tokens: 100,
-        });
+        const round = toOpenAiRoundUsage(
+            'free',
+            'nvidia/nemotron-3.5-lightning:free',
+            {
+                prompt_tokens: 5_000,
+                completion_tokens: 100,
+            },
+        );
         expect(round.input).toBe(5_000);
         expect(round.cacheRead).toBe(0);
     });
@@ -205,7 +209,7 @@ describe('saying it', () => {
         const free = addRoundUsage(undefined, {
             ...SONNET_ROUND,
             provider: 'free',
-            model: 'gpt-oss',
+            model: 'nvidia/nemotron-3.5-lightning:free',
         });
         expect(toCostLabel(free)).toBe('free');
         const unpriced = addRoundUsage(undefined, {
@@ -246,7 +250,7 @@ describe('saying it', () => {
         const free = addRoundUsage(undefined, {
             ...SONNET_ROUND,
             provider: 'free',
-            model: 'gpt-oss',
+            model: 'nvidia/nemotron-3.5-lightning:free',
         });
         expect(describeUsageInFull(free)).toContain('free service');
     });

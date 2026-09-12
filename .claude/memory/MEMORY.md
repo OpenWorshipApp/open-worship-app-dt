@@ -113,7 +113,7 @@
 - [Walkthrough followed the first search](chatbot-walkthrough-follows-first-search.md) — buttons PRESSED before the model is asked
 - [Chatbot attachments](chatbot-attachments.md) — pictures, files and a pointed-at control; every asset opens one preview with Download
 - [Adding to an answer in flight](chatbot-mid-flight-additions.md) — the box stays live
-- [Free keyless chatbot provider](free-keyless-chatbot-provider.md) — no API key, via LLM7 + Kilo
+- [Free keyless chatbot provider](free-keyless-chatbot-provider.md) — no API key, via Kilo Code only (LLM7 went paid 2026-09-12)
 - [Chatbot Report button](chatbot-report-button.md) — says WHO wants it (help page address first); Copy / Email it buttons
 - [The wait says what it is doing](chatbot-progress-log.md) — phrases hand-written per tool
 - [Chatbot ask history & tips](chatbot-ask-history-and-tips.md) — Alt+↑/↓ walks what was asked (one list per window)

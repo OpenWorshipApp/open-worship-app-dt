@@ -26,7 +26,6 @@ import { getAISetting } from '../helper/ai/aiHelpers';
 import { getAnthropicInstance } from '../helper/ai/anthropicHelpers';
 import { getOpenAIInstance } from '../helper/ai/openAIHelpers';
 import { getKimiInstance } from '../helper/ai/kimiHelpers';
-import type { FreeServiceType } from '../helper/ai/freeHelpers';
 import { FREE_SERVICE_MAP, getFreeInstance } from '../helper/ai/freeHelpers';
 
 import { getSetting, setSetting } from '../helper/settingHelpers';
@@ -193,85 +192,54 @@ const KIMI_MODEL_LIST: LlmModelType[] = [
 ];
 
 /**
- * The keyless models, and which free service each of them lives on.
+ * The keyless models, all on Kilo Code's free gateway (`freeHelpers`).
  *
  * Ordered the way the others are, best first -- but "best" here is measured on
  * the only thing that matters for a bot that is nothing but a tool loop: does
- * it call the tools correctly, and how many rounds does it take to stop. Every
- * one of these was driven through the app's own MCP host before it was listed
- * (2026-09-01); a free model that cannot call a tool is not a worse assistant,
- * it is no assistant at all, and several of the ones on offer cannot.
+ * it call the tools correctly, and does it stop with an answer. Every one of
+ * these was driven through the app's own MCP host -- the 21 tools the model
+ * sees, up to six rounds -- on seven volunteer questions before it was listed
+ * (2026-09-12): Nemotron Lightning and Nex Pro answered 7 of 7, and Step Flash
+ * 6 of 7 (one empty answer), kept because it is the one that can see a
+ * picture. A free model that cannot call a tool is not a worse assistant, it
+ * is no assistant at all, and several of the ones on offer cannot.
+ *
+ * No "whatever is free" router, deliberately. The two on offer were measured
+ * the same way and both hand each question to a different model:
+ * `kilo-auto/free` answered 4 of 7 (two empty answers, one rate limit, and one
+ * that narrated its plan instead of answering) and `openrouter/free` once
+ * answered with a raw `<tool_call>` tag. A volunteer who picked a model should
+ * be answered by that model.
+ *
+ * Every id ends `:free`, and a test holds that: an unsuffixed Kilo id is a paid
+ * model, which an anonymous request is refused.
  *
  * No price on any of them, because there isn't one. The `note` carries what a
- * volunteer actually needs to weigh instead -- these are shared public
- * services, so the honest axis is how likely one is to be busy.
+ * volunteer actually needs to weigh instead.
  */
-type FreeLlmModelType = LlmModelType & { service: FreeServiceType };
-
-const FREE_MODEL_LIST: FreeLlmModelType[] = [
-    {
-        id: 'gpt-oss',
-        service: 'llm7',
-        label: 'Open GPT',
-        note: 'good answers',
-        speed: 'quick',
-        price: '',
-    },
-    {
-        id: 'minimax-m2.7',
-        service: 'llm7',
-        label: 'MiniMax',
-        note: 'simple answers',
-        speed: 'quick',
-        price: '',
-    },
-    // Kilo's half. Bigger models, and the only free ones that can look at a
-    // picture -- its pool is routed to whoever has spare capacity, which is
-    // also why it is the half that runs out of patience first.
-    {
-        id: 'stepfun/step-3.7-flash:free',
-        service: 'kilo',
-        label: 'Step Flash',
-        note: 'good answers, can see pictures',
-        speed: 'quick',
-        price: '',
-    },
+const FREE_MODEL_LIST: LlmModelType[] = [
     {
         id: 'nvidia/nemotron-3.5-lightning:free',
-        service: 'kilo',
         label: 'Nemotron Lightning',
         note: 'good answers',
         speed: 'quickest',
         price: '',
     },
     {
-        id: 'kilo-auto/free',
-        service: 'kilo',
-        label: 'Whatever is free',
-        note: 'picks any free model, so it varies',
-        speed: 'varies',
+        id: 'nex-agi/nex-n2.5-pro:free',
+        label: 'Nex Pro',
+        note: 'short, careful answers',
+        speed: 'quick',
+        price: '',
+    },
+    {
+        id: 'stepfun/step-3.7-flash:free',
+        label: 'Step Flash',
+        note: 'can see pictures',
+        speed: 'quick',
         price: '',
     },
 ];
-
-/**
- * Which free service to ask for a given model. The service is a property of the
- * model, not of the user's choice, so it is looked up rather than stored -- a
- * remembered service and a remembered model can disagree after an update, and
- * the failure is a model id posted to a host that has never heard of it.
- *
- * An unknown id means a setting written by an older build listing a model this
- * one dropped. That falls back to the default service rather than failing:
- * being asked of the wrong free host costs one clear error, and refusing to
- * ask at all costs the user their assistant.
- */
-export function getFreeService(model: string): FreeServiceType {
-    return (
-        FREE_MODEL_LIST.find((one) => {
-            return one.id === model;
-        })?.service ?? FREE_MODEL_LIST[0].service
-    );
-}
 
 /**
  * What this model is like -- for a hover, which is the only place in a window
@@ -455,7 +423,7 @@ type LlmProviderInfoType = {
      * providers in the window the user has no account with and never agreed
      * anything with, so they are the ones whose terms they most need to be
      * able to go and read. Naming them is not enough on its own: a volunteer
-     * cannot be expected to know what "LLM7" is, and this is the difference
+     * cannot be expected to know what "Kilo Code" is, and this is the difference
      * between telling somebody and letting them check.
      */
     warningLinks?: { label: string; url: string }[];
@@ -498,8 +466,7 @@ const LLM_PROVIDER_MAP: Record<LlmProviderType, LlmProviderInfoType> = {
         models: FREE_MODEL_LIST,
         warning:
             'Answers are coming from a free public AI service' +
-            ` (${FREE_SERVICE_MAP.llm7.label} or ` +
-            `${FREE_SERVICE_MAP.kilo.label}), which needs no API key. Your ` +
+            ` (${FREE_SERVICE_MAP.kilo.label}), which needs no API key. Your ` +
             'questions and anything you attach leave this computer and may ' +
             'be kept by that service, so do not send anything private. ' +
             'Answers are also weaker, and can be slow or busy. Your own key ' +
@@ -684,15 +651,47 @@ export function getLlmModelList(provider: LlmProviderType): LlmModelType[] {
  * has to survive a restart just the same.
  */
 export function getLlmModel(provider: LlmProviderType): string {
-    const chosen = getSetting(MODEL_SETTING_PREFIX + provider);
-    if (chosen) {
-        return chosen;
-    }
+    return toUsableLlmModel(
+        provider,
+        getSetting(MODEL_SETTING_PREFIX + provider),
+    );
+}
+
+/**
+ * The model a tab or a setting names, or this build's first choice when it
+ * names none or names one that can no longer be asked.
+ *
+ * Only the keyless provider's names are checked against the list. Its list is
+ * closed (there is no *More models…* for it), so a name off it is one an older
+ * build offered and a public service has since withdrawn -- measured
+ * 2026-09-12, every tab saved on LLM7's `gpt-oss` posted that name on every
+ * question and got `model_unavailable` back, and taking the name out of the
+ * list would not have stopped one saved tab asking for it. A keyed provider's
+ * name off the built-in list is one the user picked from their own key's live
+ * catalogue, and is kept.
+ */
+export function toUsableLlmModel(
+    provider: LlmProviderType,
+    model: string | null | undefined,
+): string {
+    const modelList = getLlmModelList(provider);
     // Reached from a `useState` initialiser at mount, so an empty list here
     // white-screens the whole window rather than failing one question. An
     // empty model id is a 400 that `describeLlmError` turns into one readable
     // line, which is a far better outcome than a TypeError in a render.
-    return getLlmModelList(provider)[0]?.id ?? '';
+    const firstModel = modelList[0]?.id ?? '';
+    if (!model) {
+        return firstModel;
+    }
+    if (
+        checkIsFreeProvider(provider) &&
+        !modelList.some((one) => {
+            return one.id === model;
+        })
+    ) {
+        return firstModel;
+    }
+    return model;
 }
 
 export function setLlmModel(provider: LlmProviderType, model: string) {
@@ -1061,9 +1060,9 @@ type OpenAiCompatProviderType = {
     // loop below serves three providers and only the descriptor knows which.
     key: LlmProviderType;
     label: string;
-    // Takes the model because ONE of these providers is not one host: the
-    // keyless provider's models live on two different free services, and which
-    // one to ask is a property of the model. The keyed providers ignore it.
+    // Takes the model so a provider spread over several hosts can send each
+    // model to its own. None is today -- the keyless one was, until its LLM7
+    // half was dropped (2026-09-12) -- so every descriptor ignores it.
     getInstance: (model: string) => OpenAI | null;
     genRequestExtra: (model: string) => Record<string, any>;
     /**
@@ -1485,8 +1484,7 @@ const IMAGE_CAPABLE_MODEL_MAP: Record<LlmProviderType, RegExp> = {
     anthropic: /^claude-/i,
     openai: /^(gpt-5|gpt-4o|gpt-4\.1|chatgpt-4o|o[1-9])/i,
     kimi: /(vision|kimi-latest|^kimi-k[3-9])/i,
-    // Exactly one of the free models takes a picture, and it is on Kilo's half
-    // -- LLM7's keyless tier is text-only right through. Named outright rather
+    // Exactly one of the free models takes a picture. Named outright rather
     // than by family: this list is short, closed and measured, and a pattern
     // that guessed wrong here would cost a 400 the window reports as the
     // internet being down.
@@ -2113,8 +2111,8 @@ const KIMI_PROVIDER: OpenAiCompatProviderType = {
 const FREE_PROVIDER: OpenAiCompatProviderType = {
     key: 'free',
     label: 'Free',
-    getInstance: (model) => {
-        return getFreeInstance(getFreeService(model));
+    getInstance: () => {
+        return getFreeInstance();
     },
     // The plain budget and nothing else. These are open-weight models behind
     // gateways that did not write them: `reasoning_effort` is rejected by some
@@ -2184,12 +2182,12 @@ const LLM_PROVIDER_RUNTIME_MAP: Record<
         ask: (...args) => {
             return askOpenAiCompatible(FREE_PROVIDER, ...args);
         },
-        // Deliberately nothing to add. Both free hosts DO answer `models.list`
-        // -- with 44 and 364 names, of which 5 and 20 are actually free, and of
-        // those only some can call a tool at all. Offering that list would be
-        // offering a volunteer a model that either bills nobody's account
-        // because it refuses the request, or answers every question without
-        // ever looking at their app. The five names above were each driven
+        // Deliberately nothing to add. The free host DOES answer `models.list`
+        // -- 377 names on 2026-09-12, of which 21 are free, and of those some
+        // cannot call a tool at all and two hand the question to whichever
+        // model is idle. Offering that list would be offering a volunteer a
+        // model that either refuses the request, or answers every question
+        // without ever looking at their app. The names above were each driven
         // through the real tool loop; a name off a rotating public catalogue
         // has not been.
         listRemoteModels: () => {
@@ -2403,7 +2401,12 @@ export async function askLlmBot(
     if (provider === null) {
         throw new Error('No AI provider key is set');
     }
-    const model = wantedModel || getLlmModel(provider);
+    // Checked whoever the caller is: an open window holds its tab's model in
+    // state, and a name the keyless list has since dropped must not be posted
+    // from there (`toUsableLlmModel`).
+    const model = wantedModel
+        ? toUsableLlmModel(provider, wantedModel)
+        : getLlmModel(provider);
     // The last line of defence for the one rule every provider shares: a
     // text block may not be empty. Anthropic rejects the whole request over
     // it, and `describeLlmError` reads that as an unreachable service -- so

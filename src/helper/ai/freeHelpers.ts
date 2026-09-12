@@ -14,19 +14,23 @@ import { getIsAIEnabled } from './aiHelpers';
  * offline manual search -- which cannot converse, cannot look at the app, and
  * cannot walk anyone through anything.
  *
- * These two services answer with no key and no signup at all, over the same
- * OpenAI protocol the ChatGPT and Kimi loops already speak, so nothing new is
- * needed to drive them. They are PUBLIC and SHARED, which is the whole reason
- * they are free, and that is a trade the user has to be told about rather than
- * one made quietly on their behalf -- see the warning the chatbot window puts
- * above the first free answer.
+ * This service answers with no key and no signup at all, over the same OpenAI
+ * protocol the ChatGPT and Kimi loops already speak, so nothing new is needed
+ * to drive it. It is PUBLIC and SHARED, which is the whole reason it is free,
+ * and that is a trade the user has to be told about rather than one made
+ * quietly on their behalf -- see the warning the chatbot window puts above the
+ * first free answer.
  *
- * Measured against the live app before either was offered here (2026-09-01):
- * both call tools correctly through the app's own MCP host, which is the one
- * capability this bot cannot work without.
+ * There used to be two. LLM7 (`api.llm7.io`) was the default until 2026-09-12,
+ * when every keyless question in the window came back "Free could not answer":
+ * its catalogue had turned into a priced one, `gpt-oss` answered
+ * `model_unavailable`, `minimax-m2.7` answered once and then 429 on every call
+ * after it, and the rest wanted a key or refused tools. Kilo Code's free models
+ * were driven through the real tool loop the same afternoon and answered. A
+ * second service is one row in the map below -- but only once it has been
+ * driven through that loop too: a free host that accepts a request is not the
+ * same thing as one whose models can call a tool.
  */
-export type FreeServiceType = 'llm7' | 'kilo';
-
 export type FreeServiceInfoType = {
     /** What the warning calls it. The user may want to go and read its terms. */
     label: string;
@@ -36,18 +40,13 @@ export type FreeServiceInfoType = {
 };
 
 /**
- * Declared once, and ORDERED: LLM7 first because it is the one that answered a
- * real volunteer question fastest and in the fewest rounds. Kilo carries the
- * bigger models and the only free ones that can look at a picture, and its free
- * pool is routed to whoever has capacity -- which is why its own documentation
- * warns that upstream providers may log prompts and outputs.
+ * Who answers, as the warning and Settings both name it -- they list this map
+ * rather than a name written out twice, so the two disclosures cannot drift
+ * apart. Kilo's free pool is routed to whoever has spare capacity, which is why
+ * its own documentation warns that upstream providers may log prompts and
+ * outputs.
  */
-export const FREE_SERVICE_MAP: Record<FreeServiceType, FreeServiceInfoType> = {
-    llm7: {
-        label: 'LLM7',
-        baseUrl: 'https://api.llm7.io/v1',
-        homeUrl: 'https://llm7.io',
-    },
+export const FREE_SERVICE_MAP: { kilo: FreeServiceInfoType } = {
     kilo: {
         label: 'Kilo Code',
         baseUrl: 'https://api.kilo.ai/api/gateway',
@@ -56,21 +55,18 @@ export const FREE_SERVICE_MAP: Record<FreeServiceType, FreeServiceInfoType> = {
 };
 
 /**
- * Both services answer an anonymous request, and both also accept an
- * `Authorization` header they do not recognise -- checked against each of them
- * before this was written. The SDK insists on a key, so it gets a word instead
- * of one. It is never read as a credential by anybody, and it must never be
- * mistaken for a place to put a real one.
+ * The service answers an anonymous request, and also accepts an
+ * `Authorization` header it does not recognise -- checked before this was
+ * written. The SDK insists on a key, so it gets a word instead of one. It is
+ * never read as a credential by anybody, and it must never be mistaken for a
+ * place to put a real one.
  */
 const NO_KEY_PLACEHOLDER = 'anonymous';
 
-// One client per SERVICE, memoised the way the keyed providers memoise on the
-// key itself. Not one shared client with the `baseURL` swapped per call: that
-// is the bug `kimiHelpers` calls out, one layer along -- a warm client points
-// at whichever service asked last, so a Kilo model would be asked of LLM7.
-const instanceMap = new Map<FreeServiceType, OpenAI>();
+// Memoised the way the keyed providers memoise on the key itself.
+let instance: OpenAI | null = null;
 
-export function getFreeInstance(service: FreeServiceType) {
+export function getFreeInstance() {
     // The master switch in Settings > Others turns every AI feature off. It
     // has to hold here too: "free" is about money, not about permission, and a
     // user who switched AI off did not switch it off for paying customers only.
@@ -81,16 +77,10 @@ export function getFreeInstance(service: FreeServiceType) {
         );
         return null;
     }
-    const existing = instanceMap.get(service);
-    if (existing !== undefined) {
-        return existing;
-    }
-    const info = FREE_SERVICE_MAP[service];
-    const instance = new OpenAI({
+    instance ??= new OpenAI({
         apiKey: NO_KEY_PLACEHOLDER,
-        baseURL: info.baseUrl,
+        baseURL: FREE_SERVICE_MAP.kilo.baseUrl,
         dangerouslyAllowBrowser: true,
     });
-    instanceMap.set(service, instance);
     return instance;
 }

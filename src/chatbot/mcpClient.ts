@@ -30,6 +30,41 @@ export function getAiEndpoints(): AiEndpointsType {
     }
 }
 
+/**
+ * The app's OWN tool host failed -- not the AI provider, and not the question.
+ *
+ * Its own class so the window can say that in words. Measured 2026-09-12: the
+ * host answered 500 twice in a row, the offline guide (which searches through
+ * the same host) failed with it, and the volunteer was shown "I could not
+ * answer that: The assistant service answered 500" -- a status code and
+ * nothing to do about it. On the path where the guide DID answer, the note
+ * over it blamed the provider ("Free could not answer"), on a day Free really
+ * was broken for a reason of its own, which made the two impossible to tell
+ * apart.
+ *
+ * The status goes in `hostStatus`, for whoever reads the console, and
+ * deliberately NOT in `status`: `readLlmIssue` reads that field as the
+ * provider's, and a 500 there is a provider fault -- which would hand the
+ * question to another of the user's keys for a failure no key can fix.
+ */
+export class ToolHostError extends Error {
+    hostStatus: number;
+
+    constructor(hostStatus: number) {
+        super(
+            "The app's own help service did not respond. Try again in a " +
+                'moment; if it keeps happening, restart the app with View → ' +
+                'Relaunch in the main window.',
+        );
+        this.name = 'ToolHostError';
+        this.hostStatus = hostStatus;
+    }
+}
+
+export function checkIsToolHostError(error: any): error is ToolHostError {
+    return error instanceof ToolHostError;
+}
+
 // Every call takes the caller's stop signal, all the way down to the `fetch`
 // that does the work: a question the user gave up on must stop asking the
 // tool host too, not just stop listening to it.
@@ -80,7 +115,7 @@ async function post(
                 return await post(body, true, signal);
             }
         }
-        throw new Error(`The assistant service answered ${response.status}`);
+        throw new ToolHostError(response.status);
     }
     if (response.status === 202) {
         return null;
