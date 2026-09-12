@@ -458,9 +458,31 @@ describe('electronHelpers', () => {
                     }),
                 }),
                 getBounds: vi.fn(() => chatbotBounds),
+                // Opened as a child of the window it helps (`appTopToMain`).
+                getParentWindow: vi.fn(() => guidedWin),
             });
             electronMockState.browserWindows.push(guidedWin, chatbotWin);
             return { guidedWin, chatbotWin };
+        };
+
+        // `setGuideRunning` reads the platform when it is called, so a case
+        // can pick one whatever machine the suite runs on.
+        const withPlatform = (platform: string, callback: () => void) => {
+            const descriptor = Object.getOwnPropertyDescriptor(
+                process,
+                'platform',
+            );
+            Object.defineProperty(process, 'platform', {
+                configurable: true,
+                value: platform,
+            });
+            try {
+                callback();
+            } finally {
+                if (descriptor !== undefined) {
+                    Object.defineProperty(process, 'platform', descriptor);
+                }
+            }
         };
 
         // What the window itself would tell the main process when the user
@@ -557,6 +579,88 @@ describe('electronHelpers', () => {
 
             setGuideRunning(guidedWin as any, false);
             expect(chatbotWin.restore).not.toHaveBeenCalled();
+        });
+
+        // Reported from a Mac with a picture: pressing Do it for me sent the
+        // whole app into the Dock. An AppKit child window cannot be
+        // miniaturised by itself, so its parent went instead.
+        test('on macOS, leaves the app window up: detaches first, rejoins on restore', () => {
+            const { guidedWin, chatbotWin } = genWindows({
+                x: 100,
+                y: 100,
+                width: 500,
+                height: 540,
+            });
+
+            withPlatform('darwin', () => {
+                setGuideRunning(guidedWin as any, true);
+            });
+            expect(chatbotWin.setParentWindow).toHaveBeenCalledWith(null);
+            expect(
+                chatbotWin.setParentWindow.mock.invocationCallOrder[0],
+            ).toBeLessThan(chatbotWin.minimize.mock.invocationCallOrder[0]);
+
+            setGuideRunning(guidedWin as any, false);
+            expect(chatbotWin.restore).toHaveBeenCalledTimes(1);
+            // Not yet: the window is still miniaturised, and a parent set now
+            // would be remembered without ever being attached.
+            expect(chatbotWin.setParentWindow).toHaveBeenCalledTimes(1);
+
+            fireOn(chatbotWin, 'restore');
+            expect(chatbotWin.setParentWindow).toHaveBeenLastCalledWith(
+                guidedWin,
+            );
+        });
+
+        test('on macOS, rejoins the parent when the user brings it back from the Dock', () => {
+            const { guidedWin, chatbotWin } = genWindows({
+                x: 100,
+                y: 100,
+                width: 500,
+                height: 540,
+            });
+
+            withPlatform('darwin', () => {
+                setGuideRunning(guidedWin as any, true);
+            });
+            fireOn(chatbotWin, 'restore');
+            expect(chatbotWin.setParentWindow).toHaveBeenLastCalledWith(
+                guidedWin,
+            );
+
+            setGuideRunning(guidedWin as any, false);
+            expect(chatbotWin.restore).not.toHaveBeenCalled();
+        });
+
+        test('on macOS, does not rejoin a parent that closed while it was away', () => {
+            const { guidedWin, chatbotWin } = genWindows({
+                x: 100,
+                y: 100,
+                width: 500,
+                height: 540,
+            });
+
+            withPlatform('darwin', () => {
+                setGuideRunning(guidedWin as any, true);
+            });
+            guidedWin.isDestroyed.mockReturnValue(true);
+            fireOn(chatbotWin, 'restore');
+            expect(chatbotWin.setParentWindow).toHaveBeenCalledTimes(1);
+        });
+
+        test('elsewhere, minimises the owned window without detaching it', () => {
+            const { guidedWin, chatbotWin } = genWindows({
+                x: 100,
+                y: 100,
+                width: 500,
+                height: 540,
+            });
+
+            withPlatform('win32', () => {
+                setGuideRunning(guidedWin as any, true);
+            });
+            expect(chatbotWin.minimize).toHaveBeenCalledTimes(1);
+            expect(chatbotWin.setParentWindow).not.toHaveBeenCalled();
         });
     });
 

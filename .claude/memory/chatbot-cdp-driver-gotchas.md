@@ -77,6 +77,20 @@ Related: [[chatbot-builtin-commands]].
   awaits an in-page `setTimeout(600)` hangs past the harness timeout. Time
   columns measured while locked are not the chatbot's; wait node-side, and
   say in the row that the desktop was locked.
+- **On macOS, another app in front stalls the app's renderers outright**
+  (2026-09-12, `EC-180`). With Terminal frontmost over a partly visible
+  app, a 50 ms `setTimeout` and a `requestAnimationFrame` were unsettled
+  after 20 s in the presenter AND the chatbot window, while a synchronous
+  `Runtime.evaluate` still answered and `visibilityState` still read
+  `visible` — so the page looks alive. Every `owa_*` call then times out
+  (`Timed out evaluating in …presenter.html`, `owa_guide_start` included),
+  and a CDP-dispatched `owa-guide-running` never reached the main process
+  while `require('electron').ipcRenderer.send` from the same page did.
+  Bring the app to the front before a tool-driven or timed measurement. Read
+  window state off the OS, not the page: `visibilityState` does not change
+  for a minimised window either. `CGWindowListCopyWindowInfo` through
+  `osascript -l JavaScript` needs no permission (`kCGWindowIsOnscreen` per
+  window); System Events needs Accessibility and answers -1743.
 - **A focus pick straight after New chat can fail to stick** — the Reader
   questions went out as Presenter (`owa_help_search focus:"presenter"`).
   Read the picker back after the change event and retry until it says what

@@ -58,6 +58,8 @@ export type MockBrowserWindow = {
     getNormalBounds: ReturnType<typeof vi.fn>;
     isDestroyed: ReturnType<typeof vi.fn>;
     restore: ReturnType<typeof vi.fn>;
+    getParentWindow: ReturnType<typeof vi.fn>;
+    setParentWindow: ReturnType<typeof vi.fn>;
 };
 
 let lastMockWebContentsId = 0;
@@ -141,6 +143,8 @@ export function createMockBrowserWindow(
         })),
         isDestroyed: vi.fn(() => false),
         restore: vi.fn(),
+        getParentWindow: vi.fn(() => null),
+        setParentWindow: vi.fn(),
         ...overrides,
         webContents,
     };

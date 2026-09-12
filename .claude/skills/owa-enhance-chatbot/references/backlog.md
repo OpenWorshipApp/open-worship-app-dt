@@ -13,6 +13,50 @@ tools → cost → capability → polish.**
 
 ---
 
+## EC-180 · On a Mac, a walkthrough minimised the whole app — `done` 2026-09-12
+
+Reported by the user with a picture from macOS — the help window over the
+presenter, **Do it for me** circled — and *when make assistant control then it
+minimize the chatbot window, but on Mac it will minimize all windows including
+main*.
+
+Cause, read off Electron's own source and two open issues
+(electron/electron#26031, #39578): the help window is opened with
+`parent: win` (`appTopToMain`), which on macOS makes it an AppKit child
+window, and `minimize()` is a bare `[NSWindow miniaturize:]`. A child is not
+miniaturised by itself; the parent's group went instead. `EC-29` was built and
+verified on Windows, where an owned window minimises on its own.
+
+Measured live on the dev app before the fix, off `CGWindowListCopyWindowInfo`
+(page `visibilityState` stayed `visible` throughout and proves nothing): after
+the start signal the presenter and the Settings popup were off screen and the
+help window on; after the stop the presenter was still down, because the
+`restore()` went to a window that had never counted as minimised.
+
+**Shipped.** `detachFromParentWhileMinimised` in `electron/electronHelpers.ts`:
+on macOS only, `setParentWindow(null)` before `minimize()`, and the parent set
+back on the window's own `restore` event — whoever restores it: the card
+closing, the Dock, the 🤖 button — never straight after our `restore()` call,
+because Electron attaches a window to its parent only while it is VISIBLE
+(`InternalSetParentWindow(parent, IsVisible())`), so a parent set while still
+miniaturised is remembered and never attached. A parent closed meanwhile is not
+rejoined. The platform is read at call time so a test can pick one; 4 tests.
+
+Verified live 2026-09-12 on the dev app, `all:app:guide-running` sent from the
+presenter and the OS window list read every 100 ms: start → help window off at
+~1 s, presenter on throughout; stop → help window back at ~0.6 s, presenter on
+throughout.
+
+**Not verified: the press-to-card path on the Mac.** With Terminal frontmost
+the app's renderers ran no timers — a 50 ms `setTimeout` and a
+`requestAnimationFrame` were unsettled after 20 s in the presenter AND the help
+window — so every `owa_*` call timed out and a dispatched `owa-guide-running`
+never reached the main process; the IPC was sent directly instead. That relay
+is unchanged, and it is what moved the windows in the pre-fix measurement.
+Re-check with the app in front: **How do I present a Bible verse?** → **Do it
+for me** → only the help window goes to the Dock; **✕** on the card → it comes
+back above the presenter, and moves with the presenter when that is dragged.
+
 ## EC-178 · Free answered nobody: its default service had gone paid — `done` 2026-09-12
 
 Reported by the user with a picture of the Free provider answering *"I could

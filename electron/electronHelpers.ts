@@ -908,6 +908,41 @@ function checkIsOverlapping(one: BrowserWindow, other: BrowserWindow) {
     );
 }
 
+/**
+ * macOS only: take the window out of its parent's group for as long as it is
+ * minimised.
+ *
+ * The chatbot is opened as a CHILD of the window that asked for it
+ * (`appTopToMain`), and on macOS that is an AppKit child window, which cannot
+ * be miniaturised on its own (electron/electron#26031 and #39578, both open).
+ * `minimize()` on it sent the PRESENTER into the Dock, and every other popup
+ * riding on it, while the chatbot stayed up and never counted as minimised --
+ * so the `restore()` at the end of the walkthrough did nothing and the app
+ * stayed down. Measured live 2026-09-12: presenter and Settings off screen,
+ * chatbot on.
+ *
+ * It rejoins on `restore`, whoever restores it -- this code when the card
+ * closes, or the user from the Dock or the robot button -- and NOT straight
+ * after our own `restore()` call: the window is still miniaturised then, and
+ * Electron only attaches a VISIBLE window to its parent, so a parent set too
+ * early is remembered and the window floats free of it.
+ *
+ * Windows and Linux minimise an owned window by itself, so nothing is detached
+ * there. The platform is read at call time so a test can pick one.
+ */
+function detachFromParentWhileMinimised(win: BrowserWindow) {
+    const parentWin = win.getParentWindow();
+    if (process.platform !== 'darwin' || parentWin === null) {
+        return;
+    }
+    win.setParentWindow(null);
+    win.once('restore', () => {
+        if (!win.isDestroyed() && !parentWin.isDestroyed()) {
+            win.setParentWindow(parentWin);
+        }
+    });
+}
+
 export function setGuideRunning(guidedWin: BrowserWindow, isRunning: boolean) {
     if (!isRunning) {
         // Only ever undo this function's own doing: `tuckedAwayWin` is null
@@ -943,6 +978,7 @@ export function setGuideRunning(guidedWin: BrowserWindow, isRunning: boolean) {
     handleUserReclaiming = releaseTuckedAwayWin;
     chatbotWin.once('restore', handleUserReclaiming);
     chatbotWin.once('closed', handleUserReclaiming);
+    detachFromParentWhileMinimised(chatbotWin);
     chatbotWin.minimize();
     // The walkthrough happens in the app window from here, and a demo step
     // that types needs it genuinely focused -- minimising the window in front

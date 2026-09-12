@@ -1194,6 +1194,13 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   `src/helper/domHelpers.ts` relays as `all:app:guide-running` to
   `setGuideRunning` in `electron/electronHelpers.ts`. That only acts on a
   window actually OVER the guided one, and only ever undoes its own doing.
+  **On macOS the window leaves its parent first** (2026-09-12, `EC-180`): it
+  is an `appTopToMain` CHILD, AppKit cannot miniaturise a child on its own
+  (electron#26031, #39578), and `minimize()` sent the presenter and every
+  popup on it into the Dock while the chatbot stayed up — so the `restore()`
+  did nothing. `detachFromParentWhileMinimised` calls `setParentWindow(null)`
+  first and rejoins on the window's own `restore` EVENT, not after our
+  `restore()` call: Electron attaches only a VISIBLE window to its parent.
 - **A question can carry more than words**: a file or an image from the
   paperclip, a paste, a drop, a **📷** picture of the app window, or a
   control the user POINTED at. `src/chatbot/attachmentHelpers.ts` is the one

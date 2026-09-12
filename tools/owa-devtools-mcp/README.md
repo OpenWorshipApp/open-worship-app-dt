@@ -492,7 +492,11 @@ main process (`src/helper/domHelpers.ts` -> `all:app:guide-running` ->
 `setGuideRunning`), and that window is minimised for the length of the
 walkthrough and restored when the card closes. Only when it is actually over
 the guided window, and only ever undoing its own doing: a window the user
-minimised, or brought back mid-walkthrough, is theirs. A DOM event rather than
+minimised, or brought back mid-walkthrough, is theirs. On macOS the window is
+first taken out of its parent's group and put back when it is restored: it is
+opened as a child of the app window, and minimising an AppKit child minimises
+the parent with it -- the whole app went to the Dock while the chat window
+stayed up (`EC-180`). A DOM event rather than
 anything richer because the runtime is an injected expression that may not
 import an app module (see *Notes*), and nothing else in the app can see an OS
 window.

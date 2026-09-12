@@ -21,7 +21,17 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-12d** (**W-30 step 1 — the view is picked by its NAME, and
+**workflowsVersion: 2026-09-12e** (**W-42 step 14 — on a Mac, the help window steps aside
+ALONE.** Reported by the user with a picture from macOS: pressing **Do it for me**
+minimised every window of the app, the presenter included, and closing the card brought
+nothing back. The help window is a child of the app window, and a Mac cannot minimise a
+child window on its own, so it took the app down with it. It now leaves the app window
+first and rejoins it when it comes back. The step says the Dock as well as the taskbar,
+and that the app itself stays on screen. Verified live 2026-09-12 on the dev app off the
+OS window list: the help window alone went to the Dock and came back when the walkthrough
+stopped, the presenter on screen throughout.)
+
+Previous: **workflowsVersion: 2026-09-12d** (**W-30 step 1 — the view is picked by its NAME, and
 there are four of them.** Found by a robot-test pass, not reported: the step said the
 drop-down lists *three views* and told the reader to *pick the third one*, and the live
 list has had four since Resources joined it — so the third one is now the wrong view.
@@ -3491,11 +3501,12 @@ it is describing.
    from the Bible Reader, a recipe that starts "click the Bible Reader tab" starts
    at the step after it instead. 📸
    The help window **gets out of your way while the card is up**: it tucks itself
-   down to the taskbar the moment the walkthrough starts, so nothing it was sitting
-   on top of is hidden from you, and it comes back on its own when you close the
-   card. If you had already put it out of the way yourself, or it was not covering
+   down to the taskbar (the Dock on a Mac) the moment the walkthrough starts, so
+   nothing it was sitting on top of is hidden from you, and it comes back on its own
+   when you close the card. Only the help window goes: the app itself stays on
+   screen. If you had already put it out of the way yourself, or it was not covering
    the app in the first place, it is left exactly where you had it. To fetch it back
-   in the middle of a walkthrough, click it in the taskbar or press the **🤖**
+   in the middle of a walkthrough, click it in the taskbar or the Dock, or press the **🤖**
    button again — that reopens the chat you were in, not a new one.
 15. **Do it for me** runs the same walkthrough with the app driven for you: the
    card's button becomes **Do it**, and each press clicks the circled control (or

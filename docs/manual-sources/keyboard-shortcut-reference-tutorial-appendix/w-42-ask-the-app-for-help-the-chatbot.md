@@ -365,11 +365,12 @@ it is describing.
    from the Bible Reader, a recipe that starts "click the Bible Reader tab" starts
    at the step after it instead. 📸
    The help window **gets out of your way while the card is up**: it tucks itself
-   down to the taskbar the moment the walkthrough starts, so nothing it was sitting
-   on top of is hidden from you, and it comes back on its own when you close the
-   card. If you had already put it out of the way yourself, or it was not covering
+   down to the taskbar (the Dock on a Mac) the moment the walkthrough starts, so
+   nothing it was sitting on top of is hidden from you, and it comes back on its own
+   when you close the card. Only the help window goes: the app itself stays on
+   screen. If you had already put it out of the way yourself, or it was not covering
    the app in the first place, it is left exactly where you had it. To fetch it back
-   in the middle of a walkthrough, click it in the taskbar or press the **🤖**
+   in the middle of a walkthrough, click it in the taskbar or the Dock, or press the **🤖**
    button again — that reopens the chat you were in, not a new one.
 15. **Do it for me** runs the same walkthrough with the app driven for you: the
    card's button becomes **Do it**, and each press clicks the circled control (or

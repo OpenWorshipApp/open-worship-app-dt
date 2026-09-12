@@ -128,7 +128,7 @@
 - [Checking a song](open-lyric-validator-in-mcp.md) — `owa_lyric_validate` writes the Open Lyric grammar out
 - [A model cannot write Open Lyric](model-cannot-write-open-lyric.md) — a CAREFUL attempt still fails on `CC`
 - [Chatbot built-in commands](chatbot-builtin-commands.md) — `/screen-show`, `/clear-all`, `/find` … run with NO model
-- [Driving the chatbot window over CDP](chatbot-cdp-driver-gotchas.md) — Git Bash rewrites `/screen`; tools drive the PACKAGED app if up
+- [Driving the chatbot window over CDP](chatbot-cdp-driver-gotchas.md) — Git Bash rewrites `/screen`; tools drive the PACKAGED app if up; on macOS a backgrounded app runs no renderer timers, so owa_* calls time out
 - [A supported question is a label](help-search-known-question.md) — an exact corpus question routes to its filed recipe
 - [No user-entered references in notes](no-user-specific-references-in-notes.md) — a site/URL/name the user typed is their data
 - [Recipe ids scrubbed in code](chatbot-recipe-id-scrub.md) — a prompt rule against "W-08" failed 2 of 2
