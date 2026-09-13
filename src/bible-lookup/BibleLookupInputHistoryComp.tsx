@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { type KeyboardEvent, useCallback, useState } from 'react';
 
-import { CONTEXT_MENU_DOTS_CLASSNAME } from '../context-menu/ContextMenuDotsButtonComp';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { genStringListSettingManager } from '../helper/SettingManager';
@@ -162,7 +162,14 @@ function RendHistoryItemComp({
     const historyTextListRef = useAppCurrentRef(historyTextList);
     const historyTextRef = useAppCurrentRef(historyText);
     const setHistoryTextListRef = useAppCurrentRef(setHistoryTextList);
-    const handleRemoveHistory = useCallback(() => {
+    const handleContextMenuOpeningRef = useAppCurrentRef(
+        handleContextMenuOpening,
+    );
+    const handleDoubleClickingRef = useAppCurrentRef(handleDoubleClicking);
+    const handleRemoveHistory = useCallback((event: any) => {
+        // A quick second press on ✕ must not also double-click the row it
+        // sits in, which would reopen the passage it has just removed.
+        event.stopPropagation();
         removeHistory(
             historyTextListRef.current,
             historyTextRef.current,
@@ -170,10 +177,34 @@ function RendHistoryItemComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // The row's action is a double-click, which no keyboard can make. Enter
+    // and Space on the label do exactly what it does, Shift included (put back
+    // split) -- without handing the MOUSE a single-click action it never had.
+    const handleLabelKeyDown = useCallback(
+        (event: KeyboardEvent<HTMLButtonElement>) => {
+            if ((event.key !== 'Enter' && event.key !== ' ') || event.repeat) {
+                return;
+            }
+            event.preventDefault();
+            handleDoubleClickingRef.current(historyTextRef.current, event);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleMenuOpening = useCallback((event: any) => {
+        handleContextMenuOpeningRef.current(historyTextRef.current, event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <button
-            className={'btn btn-sm d-flex app-border-white-round mx-1 p-0'}
-            key={historyText}
+        // A plain box, no longer a `<button>`: it holds three controls, and a
+        // button may not hold another. The ⋮ used to be a `span` passing for a
+        // button (its words leaked into the row's name), the ✕ was not a
+        // control at all, and the row itself did nothing on Enter.
+        <div
+            className={
+                'btn btn-sm d-flex align-items-center app-border-white-round' +
+                ' mx-1 p-0'
+            }
             title={
                 'Double click to put back, shift double click to ' +
                 'put back split'
@@ -191,32 +222,35 @@ function RendHistoryItemComp({
             onContextMenu={handleContextMenuOpening.bind(null, historyText)}
             onDoubleClick={handleDoubleClicking.bind(null, historyText)}
         >
-            <small
+            <button
+                type="button"
+                className="border-0 bg-transparent p-0"
                 title={tran('Remove')}
-                style={{ color: 'red' }}
-                onClick={handleRemoveHistory}
-            >
-                <i className="bi bi-x" />
-            </small>
-            <small className="flex-fill app-ellipsis">{historyText}</small>
-            {/* A `span`, not the shared button component: this row IS a
-                `<button>` and may not hold another one. Everything else about it
-                — class, label, the press it swallows — is the same. */}
-            <span
-                role="button"
+                aria-label={tran('Remove')}
+                // Out of the Tab order: the row's ⋮ menu offers Remove as well,
+                // and three stops for every one of twenty entries would make
+                // the strip a wall to tab through.
                 tabIndex={-1}
-                className={CONTEXT_MENU_DOTS_CLASSNAME}
-                title={tran('More Options')}
-                aria-label={tran('More Options')}
-                onClick={(event) => {
-                    event.preventDefault();
+                style={{ color: 'red', lineHeight: 1 }}
+                onClick={handleRemoveHistory}
+                onDoubleClick={(event) => {
                     event.stopPropagation();
-                    handleContextMenuOpening(historyText, event);
                 }}
             >
-                <i className="bi bi-three-dots-vertical" />
-            </span>
-        </button>
+                <small>
+                    <i className="bi bi-x" aria-hidden="true" />
+                </small>
+            </button>
+            <button
+                type="button"
+                className="d-flex flex-fill border-0 bg-transparent p-0 text-reset"
+                style={{ minWidth: 0 }}
+                onKeyDown={handleLabelKeyDown}
+            >
+                <small className="flex-fill app-ellipsis">{historyText}</small>
+            </button>
+            <ContextMenuDotsButtonComp onOpening={handleMenuOpening} />
+        </div>
     );
 }
 

@@ -241,19 +241,41 @@ describe('downloadHelper', () => {
         expect(showSimpleToastMock).not.toHaveBeenCalled();
     });
 
-    test('rejects invalid prompt values after rendering the invalid state', async () => {
+    test('complains only once the box is touched, then rejects an invalid URL', async () => {
         readTextFromClipboardMock.mockResolvedValue('not copied from browser');
         showAppInputMock.mockImplementation(
             async (_title: string, element: ReactElement) => {
                 await renderPrompt(element);
-                const inputGroup = promptContainer?.querySelector(
-                    '.input-group',
-                ) as HTMLDivElement | null;
                 const input = promptContainer?.querySelector(
                     'input',
                 ) as HTMLInputElement | null;
-                expect(inputGroup?.title).toBe('Cannot be empty');
+                // Named by its label, focused, and NOT marked wrong before the
+                // user has typed a thing.
+                expect(input?.getAttribute('aria-label')).toBe('Web URL:');
+                expect(document.activeElement).toBe(input);
+                expect(input?.className).not.toContain('is-invalid');
+                expect(input?.getAttribute('aria-invalid')).toBe('false');
+                expect(
+                    promptContainer?.querySelector('.invalid-feedback'),
+                ).toBeNull();
+                // A real edit. React tracks `value`, so a plain assignment
+                // would never reach the box's own `onChange`.
+                const setNativeValue = Object.getOwnPropertyDescriptor(
+                    HTMLInputElement.prototype,
+                    'value',
+                )?.set;
+                await act(async () => {
+                    setNativeValue?.call(input, '   ');
+                    input?.dispatchEvent(new Event('input', { bubbles: true }));
+                });
+                const message =
+                    promptContainer?.querySelector('.invalid-feedback');
                 expect(input?.className).toContain('is-invalid');
+                expect(input?.getAttribute('aria-invalid')).toBe('true');
+                expect(message?.textContent).toBe('Cannot be empty');
+                expect(input?.getAttribute('aria-describedby')).toBe(
+                    message?.id,
+                );
                 await updatePromptValue(
                     'ftp://invalid.example/file.zip',
                     element,

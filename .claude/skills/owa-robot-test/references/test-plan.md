@@ -177,14 +177,15 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
   [knowledge-base.md](./knowledge-base.md) §15; tutorial voice: W-34.
 
 ### S9 — Cross-cutting checks (do throughout) `[GL-02..05, GL-10, GL-11, GL-15, GL-23]`
-- **Toasts `[GL-10, GL-15, GL-23]`** — run once per session, no need to wait for an
-  organic trigger: `evaluate_script` → `window.testSimpleToasts()` (dev-only helper in
-  `src/toast/toastHelpers.ts`) fires 3 toasts ~500 ms apart. Assert they **stack** in
-  `.app-toast-stack` (`1` on top → `3` at the bottom) instead of replacing each other;
-  `.btn-close` on the middle one removes only that one; synthetic `mouseover` holds a
-  toast open and `mouseout` dismisses it ~2 s later; call the helper twice (6 toasts) →
-  never more than 5, oldest dropped; the container unmounts once the last toast is gone.
-  Screenshot the stack. See ui-map "Toasts".
+- **Toasts `[GL-10, GL-15, GL-23]`** — run once per session, from a real refusal
+  (`window.testSimpleToasts()` needs the refused `evaluate_script`): **Lock** screen 0 →
+  `press_key F6` + `includeSnapshot` → exactly ONE `alert` (*Screen Manager is locked*), not
+  one per layer → `hover` it (holds it open) → `press_key F6` + `includeSnapshot` → TWO
+  `alert`s **stacked**, oldest on top; `Close` on one removes only that one; moving the
+  mouse off lets the held one go ~2 s later; the container unmounts once the last toast is
+  gone → **Unlock**. Screenshot the stack. The 5-toast cap has no cheap organic trigger
+  (five refusals ≥1 s apart, each hovered) — mark it PARTIAL unless done. See ui-map
+  "Toasts".
 - Console stays clean after each interaction (diff against baseline).
 - No new failed network requests.
 - Icon-only buttons have accessible names in the snapshot (flag unnamed ones).

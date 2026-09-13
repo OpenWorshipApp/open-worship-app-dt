@@ -90,8 +90,12 @@ Confirm at least these are available: `mcp__owa-devtools__list_pages`,
 `mcp__owa-devtools__select_page`, `mcp__owa-devtools__take_snapshot`,
 `mcp__owa-devtools__take_screenshot`, `mcp__owa-devtools__click`,
 `mcp__owa-devtools__fill`, `mcp__owa-devtools__hover`, `mcp__owa-devtools__press_key`,
-`mcp__owa-devtools__wait_for`, `mcp__owa-devtools__evaluate_script`,
-`mcp__owa-devtools__list_console_messages`, `mcp__owa-devtools__list_network_requests`.
+`mcp__owa-devtools__wait_for`, `mcp__owa-devtools__list_console_messages`,
+`mcp__owa-devtools__list_network_requests`. **`evaluate_script` is not on that list and
+never will be**: the MCP firewall refuses it and drops it from `tools/list` (CLAUDE.md
+*Agent access*), so every check in this skill reads the page through a snapshot, a
+screenshot, `wait_for` or an `owa_*` tool. Older notes further down that still say
+`evaluate_script` describe what to READ — take it from a snapshot instead.
 
 The prefix is client-specific (`mcp__owa-devtools__x` in Claude Code, a
 truncated form elsewhere) — the bare tool name after it is what matters. Also
@@ -310,7 +314,7 @@ firewall), so it doubles as a prod row rather than costing one.
 | Page URLs (step 5) | `https://localhost:3000/<page>.html` | **`owa://local/<page>.html`** — but ⚠️ **`navigate_page` cannot be used at all packaged**: the MCP firewall's `checkIsAppUrl` (`tools/owa-devtools-mcp/firewall.mjs:244`) allows only `file:`, `about:blank` and `http(s)` on localhost/127.0.0.1, and a packaged build serves `owa://`, so every main-window navigation is refused as "an address outside this app". Use **`owa_goto_page`** (`presenter.html` / `reader.html` / `appDocumentEditor.html`) — verified 2026-09-11. The app's own guard (`isSupportedMainNavigation`) rejects any other origin as well. |
 | userData / `setting.json` (KB §3, §10) | `%APPDATA%\open-worship-app-dev` | `%APPDATA%\open-worship-app` (or the `--user-data` dir). User content follows `selected-parent-dir` in THAT file — read the real dirs off the UI (`PathSelectorComp`) before the MD-04 sweep; never assume `open-worship-data-dev`. |
 | Missing Khmer key (§6d) | `tran()` **throws**, subtree blanks — Critical | `tran()` returns the English key silently. LT-01/02 still run, but the assertion is **visual only**: raw English on a Khmer screen = Low finding, and the console will NOT say `Translation for text … not found`. Say in the report that the throw-class check is dev-only. |
-| Toast stack check (§6, GL-10) | `window.testSimpleToasts()` | Dev-only global, absent. Trigger two real refusal toasts instead (e.g. present onto a **locked** screen twice) and assert they stack; otherwise mark `PARTIAL: helper is dev-only`. |
+| Toast stack check (§6, GL-10) | lock, `F6`, hover the toast, `F6` | The same recipe — it needs no dev helper (`window.testSimpleToasts()` is dev-only AND reachable only through the refused `evaluate_script`). |
 | `owa_find_ui` component names, `data-react-comp-*` | present | Absent (the Vite plugin is `apply: 'serve'`). Locate by label / `data-widget-name` / `aria-label` only. Findings name the control, not the file — find the file in `src/` afterwards. |
 | Extra Binaries (§6e, MD-05) | mocked: copies the local `bin-<ver>.tar.gz` | **Real download from the release CDN** — this is the only place that path is ever exercised; needs network. A missing local pack is irrelevant here. ⚠️ **The published pack can be OLDER than the local one** and its yt-dlp too old for current YouTube: observed 2026-09-11, CDN `0.0.2` (yt-dlp 2026.07.04) 403'd on every media download while the local `0.0.3` (2026.08.19) worked on the same machine — dev cannot see this. Always record `info.json`'s version + binary names, and attribute a media failure with the three runs in KB §18.5 before calling it BLOCKED. |
 | Hidden-screen console (§6a, SC-05) | forwarded to the `npm run dev` terminal | The packaged main process has no terminal attached: `SC-05` is `BLOCKED: no main-process stdout in prod`, not FAIL. |
@@ -359,13 +363,16 @@ origin driven is not a prod report.
 1. `mcp__owa-devtools__list_pages` → locate the page whose URL ends in `presenter.html`
    (other targets like `screen.html` may appear when presenting; ignore them for now).
 2. `mcp__owa-devtools__select_page` on that page.
-3. Confirm React finished mounting (not just DOM-loaded). Use a **page-agnostic**
-   readiness check (works on every page) via `mcp__owa-devtools__evaluate_script`:
-   `() => { const r = document.getElementById('root'); return !!r && r.children.length > 0 && !r.querySelector('img.loading'); }`
-   and expect `true`. On `presenter.html` / `appDocumentEditor.html` you can also
-   `mcp__owa-devtools__wait_for` the text `Bible Lookup` (those pages have `#app-header`;
-   `reader.html` and popups do not). A `.loading` image that never disappears is itself a
-   bug — record it.
+3. Confirm React finished mounting (not just DOM-loaded) with
+   `mcp__owa-devtools__wait_for` on a name the page only draws once it has mounted.
+   `wait_for` matches ACCESSIBLE names as well as visible text (verified 2026-09-12: it
+   found `Toggle showing screen [F5]`, which exists only as a title), so an icon button
+   counts: `Bible Lookup` on `presenter.html` / `appDocumentEditor.html` (the pages with
+   `#app-header`), `Go Back to Presenter` on `reader.html`, `Apply Settings` on
+   `setting.html`. Then `owa_app_state` says which page and language are live. A page still
+   showing only its loading gif when `wait_for` times out is itself a bug — record it.
+   `wait_for` answers with the whole snapshot, so call it once rather than in a loop. (This
+   step used to be an `evaluate_script` probe of `#root`; that tool is refused now.)
 
 ### 4. Baseline capture
 
@@ -437,9 +444,14 @@ must end the run with a status. For every scenario:
 5. Record anything under **"What counts as an issue"** below.
 
 **Always run the toast check once per session** (`[GL-10, GL-15, GL-23]`, test-plan §S9)
-— it costs one `evaluate_script`: `window.testSimpleToasts()` (dev-only helper in
-`src/toast/toastHelpers.ts`) fires 3 toasts, which must **stack** in `.app-toast-stack`
-rather than replace each other. Toasts are how the app reports refusals everywhere
+— from a real refusal, because `window.testSimpleToasts()` is reachable only through the
+refused `evaluate_script`: **Lock** screen 0 → `press_key F6` with `includeSnapshot` (ONE
+`alert`, *Screen Manager is locked*) → `hover` that alert's uid (its timer stops) →
+`press_key F6` with `includeSnapshot` again → **two** `alert`s, stacked → **Unlock** and hover
+elsewhere. The hover is what makes it deterministic: a toast lives 4 s, and the refusal is
+said once a second per screen (a single F6 is refused by four layers and used to stack four
+identical toasts), so the second press must come ≥1 s later and a tool round trip can
+outlast the first toast (verified 2026-09-12). Toasts are how the app reports refusals everywhere
 (locked screen, audio-off-while-playing, drop-with-no-folder), so a broken toast stack
 silently swallows those messages. Selectors + assertions: ui-map §Toasts.
 
@@ -499,7 +511,7 @@ The definition of "coverage" is the row inventory in
 IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..60`) and
 the context-menu-item matrix (`CM-01..99`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
-counts as exercised only with evidence (screenshot, asserted `evaluate_script` result, or
+counts as exercised only with evidence (screenshot, an asserted snapshot or `owa_*` result, or
 console/network diff) — see the matrix's "Evidence rule".
 
 **Run state file** — create `test-results/robot-test/coverage-<runid>.json` at start

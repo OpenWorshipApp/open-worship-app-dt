@@ -333,9 +333,16 @@ export function useAppDocumentContextValues() {
 
     const handleFileUpdate = useCallback(
         async (data?: any) => {
+            // `isEditable` too, for the reason `setSelectedVaryAppDocument`
+            // gives above: a song passes `checkIsThisType` (it extends
+            // `AppDocument`). Without it every update to the selected song
+            // rendered the whole song to HTML here only to make its first
+            // slide the EDITING slide -- which the slide editor then tried to
+            // open as a slide document, and threw on the `.owl` extension.
             if (
                 varyAppDocument === null ||
-                !AppDocument.checkIsThisType(varyAppDocument)
+                !AppDocument.checkIsThisType(varyAppDocument) ||
+                !varyAppDocument.isEditable
             ) {
                 return;
             }

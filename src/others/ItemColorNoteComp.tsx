@@ -84,7 +84,7 @@ export default function ItemColorNoteComp({
             },
             {} as Record<string, string>,
         );
-        return reverseColorMap[colorNote ?? ''] ?? 'No Color';
+        return reverseColorMap[colorNote ?? ''] ?? tran('No Color');
     }, [colorNote]);
 
     return (

@@ -182,6 +182,24 @@ describe('ScreenManagerBase', () => {
         expect(manager.isLocked).toBe(false);
     });
 
+    test('says the lock refusal once for a burst of refused changes', () => {
+        const nowSpy = vi.spyOn(Date, 'now');
+        const manager = new TestScreenManagerBase(4);
+        manager.isLocked = true;
+        nowSpy.mockReturnValue(50_000);
+        // Clear All reaches the check from every layer in one press: all of
+        // them refused, one message.
+        expect(manager.checkIsLockedWithMessage()).toBe(true);
+        expect(manager.checkIsLockedWithMessage()).toBe(true);
+        expect(manager.checkIsLockedWithMessage()).toBe(true);
+        expect(mocks.showSimpleToast).toHaveBeenCalledOnce();
+        // A separate press a moment later is told again.
+        nowSpy.mockReturnValue(51_500);
+        expect(manager.checkIsLockedWithMessage()).toBe(true);
+        expect(mocks.showSimpleToast).toHaveBeenCalledTimes(2);
+        nowSpy.mockRestore();
+    });
+
     test('validates stage numbers, persists display ids, and checks sync groups', () => {
         const manager = new TestScreenManagerBase(3);
         manager.stage = 2;

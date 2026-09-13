@@ -1,11 +1,13 @@
 # OWA UI Map (for robot testing)
 
-docVersion: 2026-08-30
+docVersion: 2026-09-12
 
 The app uses **Bootstrap semantic classes + accessibility roles + button text**, with
 very few `data-testid`s in production code. So target elements by **visible text /
-role / icon** in the `take_snapshot` output. Use CSS classes only with
-`evaluate_script` for state checks.
+role / icon** in the `take_snapshot` output. The CSS classes below are for reading the
+source and a screenshot: `evaluate_script` is refused by the MCP firewall, so state is read
+off a snapshot (`focused`, `pressed`, `selected`, `expanded`, a control's name) or an
+`owa_*` tool.
 
 ## Windows & dev URLs
 
@@ -54,8 +56,9 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
 
 - `#root` initially contains `<img class="loading" src="/loading.gif">`. When React
   mounts, that image is removed. A persistent `.loading` image = bug.
-- **Page-agnostic ready check** (works on every page) via `evaluate_script`:
-  `() => { const r = document.getElementById('root'); return !!r && r.children.length > 0 && !r.querySelector('img.loading'); }`
+- **Ready check**: `wait_for` a name the page draws once mounted — it matches accessible
+  names (a title, an `aria-label`) as well as visible text. The old `evaluate_script`
+  probe of `#root` is refused by the MCP firewall; SKILL §3 lists a name per page.
 - Per-page hints (after the generic check passes):
   - `presenter.html` / `appDocumentEditor.html`: `#app-header` + `#app-body` exist; main
     tabs and the `Bible Lookup` button are visible.
@@ -176,14 +179,15 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
 - Every toast owns its own timer: default 4000 ms (`toast.timeout ?? 4e3`), hover
   (`mouseover`) clears only that toast's timer, `mouseout` restarts it at 2000 ms, and
   `.btn-close` removes only that one.
-- **Dev-only trigger** (no UI action needed): `window.testSimpleToasts()` — defined in
-  [toastHelpers.ts](../../../../src/toast/toastHelpers.ts) behind `appProvider.systemUtils.isDev`.
-  It fires 3 toasts (`1:` / `2:` / `3:`) ~500 ms apart, which is exactly the
-  stack-don't-replace case. Call it twice back-to-back (6 toasts) to exercise the 5-cap.
-- Snapshot/`evaluate_script` probe:
-  `() => [...document.querySelectorAll('.app-toast-stack .toast-header strong')].map(e => e.textContent)`
-- Synthetic `mouseover`/`mouseout` (`bubbles: true`) drive hover-pause fine — these are
-  bubbling handlers, not React enter/leave.
+- **Trigger**: a refusal on a locked screen (**Lock**, then `F6`). One press is ONE toast —
+  all four layers refuse, but the refusal is said once a second per screen — so for a stack,
+  `hover` the first `alert` and press again ≥1 s later (SKILL §6).
+  `window.testSimpleToasts()` ([toastHelpers.ts](../../../../src/toast/toastHelpers.ts),
+  dev-only) still exists but is reachable only through `evaluate_script`, which is refused.
+- In a snapshot each toast is an `alert` holding its title, a `button "Close"` and its
+  message.
+- The `hover` tool drives hover-pause fine — these are bubbling `mouseover`/`mouseout`
+  handlers, not React enter/leave.
 
 ## Settings window (`setting.html`)
 

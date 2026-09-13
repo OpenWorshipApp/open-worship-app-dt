@@ -26,9 +26,15 @@ function InputUrlComp({
     title: string;
 }>) {
     const [url, setUrl] = useState(defaultUrl);
-    const invalidMessage = url.trim() === '' ? 'Cannot be empty' : '';
+    // Complained about only once the box has been touched. It used to open
+    // already marked wrong -- red border, warning icon and "Cannot be empty"
+    // -- before the user had had any chance to type in it.
+    const [isTouched, setIsTouched] = useState(false);
+    const invalidMessage =
+        isTouched && url.trim() === '' ? 'Cannot be empty' : '';
     const onChangeRef = useAppCurrentRef(onChange);
     const handleUrlChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setIsTouched(true);
         setUrl(e.target.value);
         onChangeRef.current(e.target.value);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -53,6 +59,10 @@ function InputUrlComp({
                 </label>
                 <input
                     id={inputId}
+                    // The dialog opens from a list's ⋮ menu, and focus used to
+                    // stay on that ⋮ BEHIND the modal: the first thing typed
+                    // went nowhere.
+                    autoFocus
                     aria-label={label}
                     aria-invalid={isInvalid}
                     aria-describedby={isInvalid ? messageId : undefined}
