@@ -158,12 +158,15 @@ export default function SimpleNoteEditorComp({
         border: isSaved ? '2px solid transparent' : '2px solid #007bff44',
     };
     const isReadOnly = store.save === undefined;
+    // A read-only note (a PowerPoint slide's) cannot be typed into, so a
+    // prompt to type into it only misleads.
+    const shownPlaceholder = isReadOnly ? undefined : placeholder;
     if (isInput) {
         return (
             <input
                 readOnly={isReadOnly}
                 className="w-100 h-100 m-0"
-                placeholder={placeholder}
+                placeholder={shownPlaceholder}
                 style={style}
                 onKeyDown={handleKeyDown}
                 value={text}
@@ -176,7 +179,7 @@ export default function SimpleNoteEditorComp({
         <textarea
             readOnly={isReadOnly}
             className="w-100 h-100 m-0"
-            placeholder={placeholder}
+            placeholder={shownPlaceholder}
             style={style}
             onKeyDown={handleKeyDown}
             value={text}
