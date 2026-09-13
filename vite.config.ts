@@ -100,6 +100,19 @@ export default defineConfig({
     server: {
         port: 3000,
     },
+    optimizeDeps: {
+        // `src/lang/data/km/index.ts` is only reached through the template
+        // `import(`./data/${langCode}/index.ts`)`, which the dep scanner cannot
+        // follow, so its package was discovered on first use and the re-optimize
+        // that set off 504'd the in-flight import ("Reload is needed").
+        // The plugin itself stays unbundled: it loads its fonts, dictionaries
+        // and spellcheck worker with `new URL('assets/…', import.meta.url)`,
+        // which would point into `.vite/deps/` once pre-bundled. What it
+        // imports is bundled up front, next to `open-lyric`, so both share one
+        // plugin registry.
+        exclude: ['open-lyric-plugin-km-kh'],
+        include: ['open-lyric/internal'],
+    },
 
     root: './html',
     resolve: {

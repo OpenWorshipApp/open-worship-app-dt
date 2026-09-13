@@ -320,10 +320,26 @@ export default function VarySlidesComp() {
             />
         );
     }
+    // A converted document recorded its missing fonts when it was built, so
+    // the banner offers the rebuild that picks up a font installed since.
+    let fontRefreshProps: { refreshLabel?: string; onRefresh?: () => void } =
+        {};
+    if (isPptxAppDocument) {
+        fontRefreshProps = {
+            refreshLabel: tran('Refresh PPTX Slides'),
+            onRefresh: refreshPptxSlides,
+        };
+    } else if (isDocxAppDocument) {
+        fontRefreshProps = {
+            refreshLabel: tran('Refresh DOCX Pages'),
+            onRefresh: refreshDocxSlides,
+        };
+    }
     return (
         <div className="d-flex flex-wrap justify-content-center pb-5">
             <MissingFontFamilyBannerComp
                 missingFontFamilyList={missingFontFamilyList ?? []}
+                {...fontRefreshProps}
             />
             {varySlides.map((varySlide, i) => {
                 return (

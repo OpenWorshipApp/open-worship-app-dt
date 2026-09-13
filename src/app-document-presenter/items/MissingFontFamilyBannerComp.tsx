@@ -5,8 +5,15 @@ import { searchMissingFontFamily } from '../../server/fontHelpers';
 
 export default function MissingFontFamilyBannerComp({
     missingFontFamilyList,
+    refreshLabel,
+    onRefresh,
 }: Readonly<{
     missingFontFamilyList: string[];
+    // For a converted document (PPTX/DOCX) the list was recorded when the
+    // preview was built, so after installing a font only a rebuild clears it.
+    // The label is `tran()`'d at the call site so the key stays greppable.
+    refreshLabel?: string;
+    onRefresh?: () => void;
 }>) {
     // Collapsed by default so the preview keeps its vertical space when the
     // user can't (or won't) install the missing fonts.
@@ -33,32 +40,46 @@ export default function MissingFontFamilyBannerComp({
             role="alert"
             title={missingFontFamilyList.join(', ')}
         >
-            <button
-                type="button"
-                className="d-flex align-items-center w-100 text-start"
-                style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'inherit',
-                    cursor: 'pointer',
-                    padding: 0,
-                }}
-                aria-expanded={isExpanded}
-                onClick={() => {
-                    setIsExpanded((prev) => !prev);
-                }}
-            >
-                <i
-                    className={
-                        'bi me-1 ' +
-                        (isExpanded ? 'bi-chevron-down' : 'bi-chevron-right')
-                    }
-                />
-                <i className="bi bi-exclamation-triangle-fill me-1" />
-                <strong>
-                    {tran('Missing fonts')} ({missingFontFamilyList.length})
-                </strong>
-            </button>
+            <div className="d-flex flex-wrap align-items-center gap-1">
+                <button
+                    type="button"
+                    className="d-flex align-items-center flex-grow-1 text-start"
+                    style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'inherit',
+                        cursor: 'pointer',
+                        padding: 0,
+                    }}
+                    aria-expanded={isExpanded}
+                    onClick={() => {
+                        setIsExpanded((prev) => !prev);
+                    }}
+                >
+                    <i
+                        className={
+                            'bi me-1 ' +
+                            (isExpanded
+                                ? 'bi-chevron-down'
+                                : 'bi-chevron-right')
+                        }
+                    />
+                    <i className="bi bi-exclamation-triangle-fill me-1" />
+                    <strong>
+                        {tran('Missing fonts')} ({missingFontFamilyList.length})
+                    </strong>
+                </button>
+                {refreshLabel && onRefresh ? (
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-outline-warning py-0 text-nowrap"
+                        onClick={onRefresh}
+                    >
+                        <i className="bi bi-arrow-clockwise me-1" />
+                        {refreshLabel}
+                    </button>
+                ) : null}
+            </div>
             {isExpanded ? (
                 <>
                     <div className="mt-1">
