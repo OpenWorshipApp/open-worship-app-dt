@@ -1260,6 +1260,12 @@ function RenderAssetPreviewBodyComp({
         return (
             <pre
                 className="chat-preview-text"
+                // A scrolling box is a tab stop whether or not it asks to be,
+                // and one with no name was announced by the WHOLE file it holds.
+                // Named by the file instead; the words are still read inside it.
+                role="document"
+                tabIndex={0}
+                aria-label={preview.name}
                 onClick={(event) => {
                     // The backdrop closes the preview; selecting a line of
                     // the file must not.
@@ -1950,16 +1956,25 @@ export default function ChatbotAppComp() {
     // when it is opened, and held only while it is open.
     const [preview, setPreview] = useState<ChatAssetPreviewType | null>(null);
     const previewElementRef = useRef<HTMLDivElement | null>(null);
+    // What had the keyboard when the preview opened -- the chip that was
+    // pressed -- so closing it hands the keyboard back there instead of to the
+    // page, from where the next Tab starts over at the top of the window.
+    const previewOpenerRef = useRef<HTMLElement | null>(null);
     // The overlay takes the keyboard the moment it opens. Nothing focused it
     // before, so focus stayed in the ask box UNDERNEATH a full-window overlay:
     // its own Enter/Escape handler never fired, and its Copy / Download /
     // Open folder buttons could only be reached by tabbing blindly through the
     // conversation behind it.
     useAppEffect(() => {
-        if (preview === null) {
+        if (preview !== null) {
+            previewElementRef.current?.focus();
             return;
         }
-        previewElementRef.current?.focus();
+        const opener = previewOpenerRef.current;
+        previewOpenerRef.current = null;
+        if (opener?.isConnected) {
+            opener.focus();
+        }
     }, [preview]);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const draftAttachmentMapRef = useAppCurrentRef(draftAttachmentMap);
@@ -2623,6 +2638,12 @@ export default function ChatbotAppComp() {
                 // created. The overlay is where Download lives, so a chip
                 // that used to open a folder BEHIND this window now opens
                 // the thing itself, with the folder one press further on.
+                // Remembered BEFORE the read, which can take a moment: when the
+                // preview closes, the keyboard goes back to this chip.
+                previewOpenerRef.current =
+                    document.activeElement instanceof HTMLElement
+                        ? document.activeElement
+                        : null;
                 setPreview(await readAssetPreview(attachment));
                 return;
             }
@@ -4959,14 +4980,29 @@ export default function ChatbotAppComp() {
                 <div
                     ref={previewElementRef}
                     className="chat-preview"
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Close the preview"
+                    // A dialog, not a button: it HOLDS buttons, and whatever a
+                    // button contains is presentational -- Copy, Download and
+                    // Open folder were hidden from a screen reader until one of
+                    // them happened to have the keyboard.
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`Preview of ${preview.name}`}
+                    tabIndex={-1}
                     onClick={() => {
                         setPreview(null);
                     }}
                     onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === 'Escape') {
+                        // Escape closes it from anywhere inside. Enter only when
+                        // the overlay ITSELF has the keyboard: a button on it
+                        // sends its Enter up here as well, and closing on that
+                        // keydown unmounted the preview before the button's own
+                        // click arrived -- Enter on Copy closed the preview and
+                        // copied nothing.
+                        if (
+                            event.key === 'Escape' ||
+                            (event.key === 'Enter' &&
+                                event.target === event.currentTarget)
+                        ) {
                             setPreview(null);
                         }
                     }}
@@ -5018,6 +5054,20 @@ export default function ChatbotAppComp() {
                                 <i className="bi bi-folder2-open" /> Open folder
                             </button>
                         )}
+                        {/*
+                            Said in words for the keyboard and a screen reader:
+                            "press anywhere" is a mouse instruction, and Escape
+                            is a key nobody is told about.
+                        */}
+                        <button
+                            type="button"
+                            className="chat-preview-tool"
+                            onClick={() => {
+                                setPreview(null);
+                            }}
+                        >
+                            <i className="bi bi-x-lg" /> Close
+                        </button>
                     </div>
                     <p className="chat-preview-hint">Press anywhere to close</p>
                 </div>

@@ -166,17 +166,32 @@ export default class ScreenManagerBase
         });
     }
 
+    // When the refusal was last SAID. One press reaches the check below from
+    // every layer at once -- Clear All asks the background, slide, bible and
+    // foreground managers in turn -- and each used to raise its own copy of
+    // the same toast: four identical warnings stacked for one key. Every call
+    // is still refused; the message is said once per burst.
+    private lockedMessageShownAt = 0;
+    private static readonly lockedMessageGapMs = 1000;
+
     checkIsLockedWithMessage() {
-        if (this.isLocked) {
+        if (!this.isLocked) {
+            return false;
+        }
+        const now = Date.now();
+        if (
+            now - this.lockedMessageShownAt >=
+            ScreenManagerBase.lockedMessageGapMs
+        ) {
+            this.lockedMessageShownAt = now;
+            // Not "change the app document": a locked screen refuses a
+            // background, a verse or a countdown just the same.
             showSimpleToast(
                 tran('Screen Manager is locked'),
-                tran(
-                    'Please unlock the screen manager to change the app document',
-                ),
+                tran('Unlock the screen to change what it shows'),
             );
-            return true;
         }
-        return false;
+        return true;
     }
 
     updateDim() {

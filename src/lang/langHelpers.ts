@@ -689,14 +689,27 @@ export async function getAllLangsAsync() {
 // generated markup. So the `@font-face` rules have to be registered here too,
 // not only for the locale the window's UI happens to use: the screen window
 // loads no locale of its own, and a missing face silently falls back to a
-// system font whose wider metrics reflow and clip the whole slide.
+// system font with other metrics, which reflows and clips the whole slide.
 // The modules are already loaded at this point, so this costs nothing extra.
-export async function initAllLangCss() {
-    const allLangData = await getAllLangsAsync();
-    for (const langData of allLangData) {
-        initLangCss(langData);
-    }
-    return allLangData;
+//
+// ONE registration per window, shared by every caller: open-lyric awaits this
+// before each song it builds, and rewriting a `<style>` of `@font-face` rules
+// re-creates those faces for the whole window. A failed attempt is forgotten,
+// so the next caller tries again.
+let allLangCssPromise: ReturnType<typeof getAllLangsAsync> | null = null;
+export function initAllLangCss() {
+    allLangCssPromise ??= getAllLangsAsync()
+        .then((allLangData) => {
+            for (const langData of allLangData) {
+                initLangCss(langData);
+            }
+            return allLangData;
+        })
+        .catch((error) => {
+            allLangCssPromise = null;
+            throw error;
+        });
+    return allLangCssPromise;
 }
 
 function getDictValue(

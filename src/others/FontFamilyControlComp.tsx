@@ -3,6 +3,7 @@ import { type ChangeEvent, useCallback, useMemo } from 'react';
 import type { FontListType } from '../server/appProvider';
 import { useFontList } from '../server/fontHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { tran } from '../lang/langHelpers';
 
 export default function FontFamilyControlComp({
     fontFamily,
@@ -51,10 +52,16 @@ export default function FontFamilyControlComp({
         <div className="pb-2">
             <div>
                 {isShowingLabel && (
-                    <label htmlFor="text-font-family">Font Family</label>
+                    <label htmlFor="text-font-family">
+                        {tran('Font Family')}
+                    </label>
                 )}
                 <select
                     id="text-font-family"
+                    // Named whether or not the label above is drawn. Settings
+                    // hides it and titles the card instead, which nothing ties
+                    // to this picker, so it was announced as an unnamed box.
+                    aria-label={tran('Font Family')}
                     className="form-select form-select-sm"
                     value={fontFamily}
                     onChange={handleFontFamilyChange}
@@ -109,10 +116,11 @@ function FontWeight({
     return (
         <div>
             {isShowingLabel && (
-                <label htmlFor="text-font-style">Font Style</label>
+                <label htmlFor="text-font-style">{tran('Font Style')}</label>
             )}
             <select
                 id="text-font-style"
+                aria-label={tran('Font Style')}
                 className="form-select form-select-sm"
                 value={fontWeight}
                 onChange={handleFontWeightChange}

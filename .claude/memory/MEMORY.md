@@ -30,7 +30,7 @@
 - [Lyrics live in the Documents list](lyric-in-documents-list.md) — refactor24: ONE selection, ONE previewer
 - [appDocumentHelpers ↛ LyricAppDocument](app-document-helpers-lyric-cycle.md) — importing it closes a cycle and throws
 - [Presenting Flow: references vs presets](presenting-flow-references-vs-presets.md) — slides/documents are file references
-- [Screen window had no app fonts — FIXED](screen-window-has-no-app-fonts.md) — `screen.tsx` calls `initAllLangCss()`
+- [Lyric slides need their fonts registered first — FIXED](screen-window-has-no-app-fonts.md) — screen had none; Presenter raced; `initOpenLyric` awaits `initAllLangCss()`
 - [On-screen setting parse amplification — FIXED](onscreen-setting-parse-amplification.md) — getters MUST return a copy
 - [Reveal Original is a context item](reveal-original-context-menu.md) — `genRevealOriginal(reveal)` takes the ACTION
 - [Presenting Flows panel is no longer dev-only](presenting-flow-panel-no-longer-dev-only.md) — `203d35cc` dropped the gate

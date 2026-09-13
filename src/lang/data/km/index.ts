@@ -171,8 +171,8 @@ const dictionary = {
     'No Update Needed': 'មិនមានការធ្វើបច្ចុប្បន្នភាពទេ',
     'You are using the latest version of the app.':
         'អ្នកកំពុងប្រើកំណែថ្មីបំផុតនៃកម្មវិធី',
-    'Please unlock the screen manager to change the app document':
-        'សូមបើកសោកម្មវិធីគ្រប់គ្រងអេក្រង់ដើម្បីផ្លាស់ប្តូរឯកសារកម្មវិធី',
+    'Unlock the screen to change what it shows':
+        'ដោះសោអេក្រង់ ដើម្បីផ្លាស់ប្តូរអ្វីដែលវាបង្ហាញ',
     'Background Images': 'រូបភាពផ្ទៃខាងក្រោយ',
     'Background Videos': 'វីដេអូផ្ទៃខាងក្រោយ',
     'Background Audios': 'សម្លេងផ្ទៃខាងក្រោយ',
@@ -602,6 +602,7 @@ const dictionary = {
     Enable: 'បើកដំណើរការ',
     'Exit Full': 'ចាកចេញពីពេញ',
     'Font Family': 'ពុម្ពអក្សរ',
+    'Font Style': 'រចនាប័ទ្មពុម្ពអក្សរ',
     Foreground: 'ផ្ទៃខាងមុខ',
     'Full Width': 'ទទឹងពេញ',
     Full: 'ពេញ',

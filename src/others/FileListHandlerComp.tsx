@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import PathSelectorComp from './PathSelectorComp';
@@ -118,10 +118,13 @@ function ListMenuButtonComp({
 function RenderHeaderComp({
     isOnScreen,
     header,
+    headerId,
     onShowMenu,
 }: Readonly<{
     isOnScreen: boolean;
     header: any;
+    // Names the whole list for assistive tech, through `aria-labelledby`.
+    headerId: string;
     onShowMenu?: (event: any) => void;
 }>) {
     return (
@@ -131,7 +134,7 @@ function RenderHeaderComp({
                 maxHeight: '30px',
             }}
         >
-            <strong className={isOnScreen ? 'app-on-screen' : ''}>
+            <strong id={headerId} className={isOnScreen ? 'app-on-screen' : ''}>
                 {header}
             </strong>
             <ListMenuButtonComp onShowMenu={onShowMenu} className="float-end" />
@@ -282,6 +285,12 @@ export default function FileListHandlerComp({
     // still loading and failed to read, both of which `RenderListComp` speaks
     // to itself.
     const isEmptyDir = !!dirSource.dirPath && filePaths?.length === 0;
+    // The list is a tab stop, and a focusable box with no name of its own is
+    // announced by everything inside it -- the whole list read out as its
+    // label. Named by its header where it has one, by its folder where not.
+    const headerId = useId();
+    const folderName =
+        dirSource.dirPath.split(/[\\/]/).filter(Boolean).pop() ?? undefined;
     return (
         <DirSourceContext value={dirSource}>
             <div
@@ -292,6 +301,8 @@ export default function FileListHandlerComp({
                 onDragOver={genOnDragOver(dirSource)}
                 onDragLeave={genOnDragLeave()}
                 tabIndex={0}
+                aria-labelledby={header ? headerId : undefined}
+                aria-label={header ? undefined : folderName}
                 onDrop={genOnDrop({
                     dirSource,
                     mimetypeName: mimetypeName,
@@ -303,6 +314,7 @@ export default function FileListHandlerComp({
                     <RenderHeaderComp
                         isOnScreen={isOnScreen}
                         header={header}
+                        headerId={headerId}
                         onShowMenu={handleMenuShowing}
                     />
                 ) : null}

@@ -1,6 +1,6 @@
 # OWA Robot Test — Observation Knowledge Base
 
-docVersion: 2026-09-11
+docVersion: 2026-09-12
 
 Field notes for agents/skills doing black-box QA of the **running** Open Worship App.
 Everything here was **verified against the live app**, not inferred. Read this before a run
@@ -246,13 +246,17 @@ Keep the main window on `presenter.html`.
   `Background` / `Note` label). Its tabs **do not exist in the DOM until expanded** — an early
   `.nav-tabs` scan finds only the header + presenter tab groups. **Click the `Background`
   label to expand**, then the tabs (`Colors…Audios`) render as real `button.nav-link`s.
-- **Color swatches are plain `div.color-item`s carrying only a `title`** (`fuchsia`, `navy`,
-  `red`, … plus `No Color`) — no `role`, no `aria-label`, no `tabindex`, and **not
-  `<button>`s**. They therefore do **not** appear in `take_snapshot` as named nodes: select
-  them with `document.querySelector('.color-item[title="navy"]')` and `.click()` (verified
-  2026-08-07 — earlier revisions of this file said `role=group` with accessible names, which
-  is stale). Their being unreachable by keyboard and unnamed to a screen reader is a standing
-  **Info** a11y finding, not a new one — don't re-file it every run.
+- **Color swatches are `role="button"` controls** (`RenderColorComp` / `RenderNoColorComp`:
+  `tabIndex=0`, the colour name as `aria-label`, `aria-pressed` on the one in force, Enter /
+  Space press them). `take_snapshot` lists them as `button "fuchsia"` … `button "white"` plus
+  `button "No Color"` — press them by `uid` (verified 2026-09-12; earlier revisions said plain
+  `div`s carrying only a `title`, and before that `role=group` — both stale). **Focus stays on
+  the swatch that was pressed**, by mouse or by Tab + Enter: `BackgroundColorsComp` keys each
+  screen's picker by the SCREEN rather than by the colour, and puts focus back on the same
+  swatch when a re-render dropped it within 2 s of the press. A keyboard user losing their
+  place after a press is a regression now, not the standing Info it once was. Every press
+  re-renders the row, so a swatch `uid` from before the press is dead after it — snapshot
+  again (`click` answers "no longer exists").
 - ⚠️ **The Audios tab is a SECOND pane, not a different list in the same one** (verified
   2026-08-11). Clicking `Audios` leaves `Videos` active as well and splits the panel: there
   are then **two** `BackgroundMediaComp` elements side by side (videos left, audios right).
@@ -333,14 +337,19 @@ Keep the main window on `presenter.html`.
   presenter's dark theme vs black on the screen window) — comparing containers across
   windows fabricates a mismatch. Black-with-white-outline at 100px is a legitimate
   operator configuration, readable over the white background it was set against.
-- **Toasts: fire them yourself, and don't measure too early.** `window.testSimpleToasts()`
-  (dev-only, `src/toast/toastHelpers.ts`) is the cheapest way to cover `[GL-10, GL-15,
-  GL-23]` — no organic trigger needed. It deliberately spaces its 3 toasts **~500 ms
-  apart**, so a probe run 200 ms after the call sees only toast `1` and looks exactly like
-  "toasts replace each other". Wait ≥1.2 s before asserting the stack. Toasts live in
-  `.app-toast-stack` (max 5, newest at the bottom, each with its own 4 s timer); hover via
-  synthetic `mouseover`/`mouseout` (bubbling handlers, so this works) to pause/restart a
-  single toast's timer.
+- **Toasts: trigger them from a real refusal, and hold the first one open.**
+  `window.testSimpleToasts()` (dev-only, `src/toast/toastHelpers.ts`) is out of reach: it
+  needs `evaluate_script`, which the MCP firewall refuses. A locked screen is the reliable
+  source instead, covering `[GL-10, GL-15, GL-23]`: **Lock** → `press_key F6` with
+  `includeSnapshot` → `hover` the `alert` → `press_key F6` with `includeSnapshot` → two
+  `alert`s, each *Screen Manager is locked* / *Unlock the screen to change what it shows*
+  with its own `button "Close"` (verified 2026-09-12). Two traps. One F6 is refused by all
+  four layer managers, and the refusal is said **once a second per screen**
+  (`ScreenManagerBase.checkIsLockedWithMessage`), so a single press no longer shows a stack
+  and a second press inside that second stays silent. And a toast lives 4 s, which one tool
+  round trip can outlast, so hover the first before pressing again (the `hover` tool clears
+  only that toast's timer; moving off restarts it at 2 s). Toasts live in `.app-toast-stack`
+  (max 5, newest at the bottom).
 - ⚠️ **Closing a context menu with a synthetic `document.body` click KILLS every keyboard
   shortcut** (verified 2026-07-26 — cost most of a run and looked exactly like an `F7`
   regression). The menu renders a **full-viewport overlay** that owns

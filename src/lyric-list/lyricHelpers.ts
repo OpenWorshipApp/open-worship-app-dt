@@ -4,7 +4,7 @@ import type { OpenLyricTheme, OpenLyricPreviewSetting } from 'open-lyric';
 import Lyric from './Lyric';
 import LyricAppDocumentStage0 from './LyricAppDocumentStage0';
 import LyricAppDocumentStage1 from './LyricAppDocumentStage1';
-import { genOpenLyricFontFaces, getAllLangsAsync } from '../lang/langHelpers';
+import { genOpenLyricFontFaces, initAllLangCss } from '../lang/langHelpers';
 import SettingManager from '../helper/SettingManager';
 import FileSource from '../helper/FileSource';
 import type LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
@@ -71,9 +71,19 @@ export function getOpenLyricFontSetting(): {
 export async function initOpenLyric(filePath: string, isNoLangInit = false) {
     installOpenLyricPrintPopupHandler();
     const lyric = Lyric.getInstance(filePath);
+    // `initAllLangCss`, not just the language list: open-lyric freezes every
+    // line of a slide into pixel boxes measured in whatever faces the window
+    // has REGISTERED at that moment. A song set in `app-Battambang`, built
+    // before any other panel had registered the Khmer faces, was measured in
+    // the browser's fallback (Times New Roman) and then drawn in Battambang,
+    // whose Latin letters run ~19% wider — the long lines wrapped inside their
+    // frozen boxes and printed over the next line, in the Stage Previewer and
+    // on the projector alike, until a reload happened to win the race.
+    // Registered first, open-lyric's own `document.fonts` wait loads the face
+    // before anything is measured.
     const [content, langDataList] = await Promise.all([
         lyric.getContent(),
-        getAllLangsAsync(),
+        initAllLangCss(),
     ]);
     const openLyricPreviewer = new OpenLyric();
     openLyricPreviewer.value = content;

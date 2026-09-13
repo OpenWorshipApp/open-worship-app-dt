@@ -1,6 +1,6 @@
 # OWA Components Path — pages → components → interactions
 
-docVersion: 2026-09-11
+docVersion: 2026-09-12
 
 Standalone map of **every page**, the **component tree inside it**, and the
 **interactive tests** each component supports (click / double-click / right-click /
@@ -190,7 +190,7 @@ the tab bar does **not exist in the DOM** until expanded.
 |---|---|---|
 | `BackgroundComp` tab bar (`Colors`/`Images`/`Videos`/`Cameras`/`Webs`) | ⤴ BackgroundComp.tsx | 🖱️ a tab → switches panel (single-select). Active tab of the live background gets a `*` prefix. |
 | `BackgroundComp → RenderAudiosTabComp` (`♫Audios♫`) | ⤴ BackgroundComp.tsx | 🖱️ → toggles the Audios split (presenter page only). Shows `.app-on-screen` while audio plays; toggling off while playing pops a toast, doesn't hide. |
-| `BackgroundColorsComp` | [background/BackgroundColorsComp.tsx](../../../../src/background/BackgroundColorsComp.tsx) | 🖱️ a swatch — **swatches are `role=group`, not `<button>`** (target by `uid`) — sets the background color on the mini-screen. May pop a **contrast confirm** (`Cancel`/`Ok`) — handle it (good UX, not a bug). |
+| `BackgroundColorsComp` | [background/BackgroundColorsComp.tsx](../../../../src/background/BackgroundColorsComp.tsx) | 🖱️ or ⌨️ Enter/Space on a swatch — **swatches are `role=button`**, named by the colour (`button "navy"`, `button "No Color"`; `aria-pressed` on the one in force; target by `uid`) — sets the background color on the mini-screen. May pop a **contrast confirm** (`Cancel`/`Ok`) — handle it (good UX, not a bug). |
 | `BackgroundImagesComp` | [background/BackgroundImagesComp.tsx](../../../../src/background/BackgroundImagesComp.tsx) | 🖱️🖱️ an image item → set as live background. 🖱️R → context menu. ⇕ some items draggable to a screen. |
 | `BackgroundVideosComp` | [background/BackgroundVideosComp.tsx](../../../../src/background/BackgroundVideosComp.tsx) | 🖱️🖱️ a video item → set as live background (verified). 🖱️R → context menu. |
 | `BackgroundCamerasComp` | [background/BackgroundCamerasComp.tsx](../../../../src/background/BackgroundCamerasComp.tsx) | 🖱️ select a camera device → live background. |

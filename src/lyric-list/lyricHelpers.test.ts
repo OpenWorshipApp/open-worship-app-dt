@@ -6,7 +6,8 @@ import { describe, expect, test, vi } from 'vitest';
 // the resolution uses: a per-class `getInstance` cached on the file path, which
 // is what `AppDocumentSourceAbs._getInstance` does for real (it keys on the
 // CLASS NAME plus the path, which is why a stage only gets an identity of its
-// own by having a class of its own).
+// own by having a class of its own). `initOpenLyric` runs against the same
+// stubs: what it is tested for is the order it awaits things in.
 const mocks = vi.hoisted(() => {
     const genStageClass = (stage: number) => {
         const instances = new Map<string, any>();
@@ -20,14 +21,26 @@ const mocks = vi.hoisted(() => {
             }),
         };
     };
-    return { stage0: genStageClass(0), stage1: genStageClass(1) };
+    return {
+        stage0: genStageClass(0),
+        stage1: genStageClass(1),
+        getContentMock: vi.fn(async () => ''),
+        initAllLangCssMock: vi.fn(async (): Promise<any[]> => []),
+    };
 });
 
 vi.mock('open-lyric', () => ({ OpenLyric: class {} }));
-vi.mock('./Lyric', () => ({ default: class {} }));
+vi.mock('./Lyric', () => ({
+    default: {
+        getInstance: vi.fn(() => ({ getContent: mocks.getContentMock })),
+    },
+}));
 vi.mock('./LyricAppDocumentStage0', () => ({ default: mocks.stage0 }));
 vi.mock('./LyricAppDocumentStage1', () => ({ default: mocks.stage1 }));
-vi.mock('../lang/langHelpers', () => ({ getAllLangsAsync: vi.fn() }));
+vi.mock('../lang/langHelpers', () => ({
+    genOpenLyricFontFaces: vi.fn(),
+    initAllLangCss: mocks.initAllLangCssMock,
+}));
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
         getItem: vi.fn(() => null),
@@ -45,6 +58,7 @@ vi.mock('./lyricPrintHelpers', () => ({
 import {
     getAvailableLyricStages,
     getLyricAppDocumentStageByStage,
+    initOpenLyric,
 } from './lyricHelpers';
 
 const FILE_PATH = '/songs/aa3.owl';
@@ -94,5 +108,25 @@ describe('getLyricAppDocumentStageByStage', () => {
     test('a negative or non-finite stage clamps to the base stage', () => {
         expect(getLyricAppDocumentStageByStage(FILE_PATH, -3)[0]).toBe(0);
         expect(getLyricAppDocumentStageByStage(FILE_PATH, NaN)[0]).toBe(0);
+    });
+});
+
+describe('initOpenLyric', () => {
+    // The overprint regression. open-lyric freezes a slide's lines into pixel
+    // boxes measured in whatever faces the window has registered, and this used
+    // to fetch the language list WITHOUT registering any: a song set in
+    // `app-Battambang` was measured in the fallback font, then drawn in
+    // Battambang, and its long lines wrapped over the next one.
+    test('registers every language font before handing the previewer out', async () => {
+        let isRegistered = false;
+        mocks.initAllLangCssMock.mockImplementationOnce(async () => {
+            await Promise.resolve();
+            isRegistered = true;
+            return [];
+        });
+        const openLyricPreviewer = await initOpenLyric(FILE_PATH, true);
+        expect(mocks.initAllLangCssMock).toHaveBeenCalledTimes(1);
+        expect(isRegistered).toBe(true);
+        expect(openLyricPreviewer).toBeDefined();
     });
 });
