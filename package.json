@@ -5,7 +5,7 @@
     "gitRepository": "https://github.com/OpenWorshipApp/open-worship-app-dt",
     "homepage": "https://www.openworship.app",
     "msStoreProductId": "",
-    "version": "2026.09.12",
+    "version": "2026.09.19",
     "type": "commonjs",
     "main": "./electron-build/electron/index.js",
     "scripts": {
