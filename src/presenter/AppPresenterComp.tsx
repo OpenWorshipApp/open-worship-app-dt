@@ -16,10 +16,7 @@ import {
     registerLangAppMenuClicked,
 } from '../lang/langHelpers';
 import { toWidgetLabel } from '../others/labelIconHelpers';
-import {
-    initDataArchiveAppMenu,
-    registerDataArchiveAppMenuClicked,
-} from '../setting/data-archive/dataArchiveMenuHelpers';
+import DataArchiveAppMenuComp from '../setting/data-archive/DataArchiveAppMenuComp';
 
 const LazyAppPresenterLeftComp = lazy(() => {
     return import('./AppPresenterLeftComp');
@@ -35,14 +32,6 @@ export default function AppPresenterComp() {
     useAppEffect(() => {
         const unregister = registerLangAppMenuClicked();
         initLangAppMenu();
-        return unregister;
-    }, []);
-    // File → Export/Import Data. Registered from the presenter only: the
-    // entries are keyed, so a second window would replace rather than duplicate
-    // them, but its clicks would then be routed to that window instead.
-    useAppEffect(() => {
-        const unregister = registerDataArchiveAppMenuClicked();
-        initDataArchiveAppMenu();
         return unregister;
     }, []);
     const viewController = useMemo(() => {
@@ -99,6 +88,8 @@ export default function AppPresenterComp() {
                 ]}
             />
             <BibleCustomStyleFloatingComp />
+            {/* File → Export/Import Data, shared with the Reader page. */}
+            <DataArchiveAppMenuComp />
         </BibleItemsViewControllerContext>
     );
 }

@@ -7,6 +7,7 @@ import {
 } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { open, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 
 /**
@@ -196,6 +197,38 @@ async function attemptDeleting(filePath: string) {
     } catch (_error) {}
 }
 
+// Windows and (by default) macOS volumes ignore case, so `A.tar` IS `a.tar`.
+function checkIsSamePath(filePath1: string, filePath2: string) {
+    const path1 = resolve(filePath1);
+    const path2 = resolve(filePath2);
+    if (process.platform === 'win32' || process.platform === 'darwin') {
+        return path1.toLowerCase() === path2.toLowerCase();
+    }
+    return path1 === path2;
+}
+
+/**
+ * Opening the output for writing TRUNCATES it, so an input sitting at the
+ * output or at its `.part` is emptied before a byte of it is read — and what
+ * comes out is a perfectly valid container around nothing, which fails only at
+ * import. Data export did exactly that (its plain tar was `<archive>.part`), so
+ * it is refused here, before any stream opens, whoever the caller is.
+ */
+function assertIsNotReadingOutput(
+    filePath: string,
+    outputFilePath: string,
+    partFilePath: string,
+) {
+    if (
+        checkIsSamePath(filePath, outputFilePath) ||
+        checkIsSamePath(filePath, partFilePath)
+    ) {
+        throw new Error(
+            'An archive cannot be written over the file it is made from',
+        );
+    }
+}
+
 /** Whether the file carries a container this build can open. */
 export async function checkIsEncryptedFile(filePath: string) {
     try {
@@ -214,6 +247,8 @@ export async function encryptFile(
     if (!password) {
         throw new Error('A password is required to protect an archive');
     }
+    const partFilePath = `${outputFilePath}.part`;
+    assertIsNotReadingOutput(filePath, outputFilePath, partFilePath);
     const salt = randomBytes(SALT_LENGTH);
     const iv = randomBytes(IV_LENGTH);
     const derived = await deriveKey(
@@ -235,7 +270,6 @@ export async function encryptFile(
         { authTagLength: AUTH_TAG_LENGTH },
     );
     cipher.setAAD(header);
-    const partFilePath = `${outputFilePath}.part`;
     const writeStream = createWriteStream(partFilePath);
     try {
         // The header is plaintext and goes out before the cipher stream is
@@ -269,6 +303,8 @@ export async function decryptFile(
     outputFilePath: string,
     password: string,
 ): Promise<ArchiveDecryptResultType> {
+    const partFilePath = `${outputFilePath}.part`;
+    assertIsNotReadingOutput(filePath, outputFilePath, partFilePath);
     const { size } = await stat(filePath);
     if (size < HEADER_LENGTH + AUTH_TAG_LENGTH) {
         return { isOk: false, reason: 'not-encrypted' };
@@ -308,7 +344,6 @@ export async function decryptFile(
     );
     decipher.setAAD(header);
     decipher.setAuthTag(authTag);
-    const partFilePath = `${outputFilePath}.part`;
     const cipherTextLength = size - HEADER_LENGTH - AUTH_TAG_LENGTH;
     try {
         if (cipherTextLength === 0) {

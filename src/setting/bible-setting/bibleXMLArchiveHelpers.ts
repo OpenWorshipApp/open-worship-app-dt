@@ -1,6 +1,7 @@
 import {
     ARCHIVE_FILES_DIR,
     ARCHIVE_VERSION,
+    BIBLE_XML_ARCHIVE_ITEM_KIND,
     MANIFEST_FILE_NAME,
     createWorkDir,
     readArchiveManifest,
@@ -61,7 +62,6 @@ import { clearBibleXMLCache } from './bibleXMLHelpers';
 
 export const BIBLE_XML_ARCHIVE_DOT_EXTENSION = '.owabdata.tar.gz';
 export const BIBLE_XML_ARCHIVE_FALLBACK_NAME = 'Bible Data';
-const BIBLE_XML_ITEM_KIND = 'bible-xml';
 
 export type BibleXMLArchiveEntryType = {
     /** The key as it was written in the XML on the exporting machine. */
@@ -77,7 +77,7 @@ export type BibleXMLArchiveEntryType = {
 export type BibleXMLArchiveManifestType = {
     version: typeof ARCHIVE_VERSION;
     /** Refuses another kind of bundle picked through the file dialog. */
-    itemKind: typeof BIBLE_XML_ITEM_KIND;
+    itemKind: typeof BIBLE_XML_ARCHIVE_ITEM_KIND;
     bibles: BibleXMLArchiveEntryType[];
 };
 
@@ -192,7 +192,7 @@ export async function createBibleXMLArchive(
         }
         const manifest: BibleXMLArchiveManifestType = {
             version: ARCHIVE_VERSION,
-            itemKind: BIBLE_XML_ITEM_KIND,
+            itemKind: BIBLE_XML_ARCHIVE_ITEM_KIND,
             bibles,
         };
         await writeArchiveManifest(stagingDir, manifest);
@@ -240,7 +240,7 @@ function validateManifest(jsonData: unknown): BibleXMLArchiveManifestType {
     ) {
         throw new Error('Invalid bible data archive manifest');
     }
-    if (manifest.itemKind !== BIBLE_XML_ITEM_KIND) {
+    if (manifest.itemKind !== BIBLE_XML_ARCHIVE_ITEM_KIND) {
         throw new Error(
             `This archive holds a "${manifest.itemKind}", not bible data`,
         );
@@ -250,7 +250,7 @@ function validateManifest(jsonData: unknown): BibleXMLArchiveManifestType {
     }
     return {
         version: ARCHIVE_VERSION,
-        itemKind: BIBLE_XML_ITEM_KIND,
+        itemKind: BIBLE_XML_ARCHIVE_ITEM_KIND,
         bibles: manifest.bibles.map((bible: any) => {
             if (
                 typeof bible?.bibleKey !== 'string' ||

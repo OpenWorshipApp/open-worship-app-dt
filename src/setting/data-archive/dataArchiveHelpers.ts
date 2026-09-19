@@ -11,6 +11,7 @@ import {
     toExtractedArchivePath,
     writeArchiveManifest,
     ARCHIVE_VERSION,
+    BIBLE_XML_ARCHIVE_ITEM_KIND,
     type ImportCollisionPolicyType,
 } from '../../helper/appArchiveHelpers';
 import { protectArchiveFile } from '../../helper/archivePasswordHelpers';
@@ -33,6 +34,7 @@ import {
     fsCheckDirExist,
     fsCloneFile,
     fsDeleteFile,
+    fsGetFileSize,
     fsList,
     getDownloadPath,
     pathJoin,
@@ -278,8 +280,14 @@ export async function createDataArchive(
     // on the system volume (usually the smallest) and then force a full
     // cross-volume copy back. Beside it, both files sit on the volume the
     // operator already chose and the wrap is a same-volume read and write.
+    //
+    // NOT `<archive>.part`: that is the name `encryptFile` builds its OWN output
+    // under, and opening it for writing truncated this tar before a byte of it
+    // was read. Every protected Export Data came out an 80-byte container
+    // holding nothing, and it was found only at import, as tar's
+    // "Unrecognized archive format".
     const plainFilePath = password
-        ? `${archiveFilePath}.part`
+        ? `${archiveFilePath}.plain.part`
         : archiveFilePath;
     try {
         await tarCreate(
@@ -375,17 +383,42 @@ function validateManifest(jsonData: unknown): DataArchiveManifestType {
 /**
  * Read just the manifest — the archive can be gigabytes and the user has not
  * chosen anything yet, so only that one entry is unpacked.
+ *
+ * A Bible Data bundle is answered with its KIND instead of being refused. Both
+ * are exported into Downloads, a protected one of either is `<name>.<kind>.enc`
+ * and passes this flow's file dialog, and by the time this runs its password
+ * has been typed and the whole file decrypted — ending that on "Invalid data
+ * archive manifest" left a volunteer with the right file and no way in.
+ * Decided by the manifest, not the name, so a renamed bundle is caught too.
  */
-export async function readDataArchiveManifest(archiveFilePath: string) {
+export async function readDataArchiveManifest(
+    archiveFilePath: string,
+): Promise<
+    DataArchiveManifestType | { kind: typeof BIBLE_XML_ARCHIVE_ITEM_KIND }
+> {
+    // An empty file is what a protected export wrote before the `.part` fix
+    // above, and tar's own answer for it — "TAR_BAD_ARCHIVE: Unrecognized
+    // archive format" — tells a volunteer nothing about what to do next.
+    if ((await fsGetFileSize(archiveFilePath)) === 0) {
+        throw new Error(
+            'This archive is empty, so there is nothing in it to import.' +
+                ' Export the data again from the machine it came from',
+        );
+    }
     const workDir = await createWorkDir('owadata-read');
     try {
         await tarExtract(archiveFilePath, workDir, [MANIFEST_FILE_NAME]);
-        return validateManifest(
-            await readArchiveManifest(
-                workDir,
-                'This file is not an Open Worship data archive (no manifest)',
-            ),
+        const jsonData = await readArchiveManifest(
+            workDir,
+            'This file is not an Open Worship data archive (no manifest)',
         );
+        if (
+            (jsonData as { itemKind?: unknown } | null)?.itemKind ===
+            BIBLE_XML_ARCHIVE_ITEM_KIND
+        ) {
+            return { kind: BIBLE_XML_ARCHIVE_ITEM_KIND };
+        }
+        return validateManifest(jsonData);
     } finally {
         await safeDeleteDir(workDir);
     }

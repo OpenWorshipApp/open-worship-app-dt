@@ -317,6 +317,59 @@ describe('archive password protection', () => {
         REAL_FILE_TIMEOUT,
     );
 
+    test.each([
+        // What Export Data did: the plain tar at `<archive>.part`, which is
+        // where `encryptFile` opens its own output — the tar was truncated
+        // before it was read and the export came out 80 bytes of nothing.
+        ['at the output working copy', 'archive.enc.part', 'archive.enc'],
+        ['at the output itself', 'archive.enc', 'archive.enc'],
+        ['differing only in case', 'ARCHIVE.ENC.part', 'archive.enc'],
+    ])(
+        'refuses to protect an input %s, and leaves it untouched',
+        async (_name, inputFileName, outputFileName) => {
+            if (
+                inputFileName.toLowerCase() !== inputFileName &&
+                process.platform === 'linux'
+            ) {
+                // A case-sensitive volume: those are two different files.
+                return;
+            }
+            const content = randomBytes(4096);
+            const plainFilePath = await writeFixture(inputFileName, content);
+
+            await expect(
+                encryptFile(plainFilePath, toPath(outputFileName), PASSWORD),
+            ).rejects.toThrow('cannot be written over');
+
+            expect(await readFile(plainFilePath)).toEqual(content);
+        },
+        REAL_FILE_TIMEOUT,
+    );
+
+    test(
+        'refuses to decrypt into its own working copy, and leaves it untouched',
+        async () => {
+            const plainFilePath = await writeFixture(
+                'archive.tar',
+                randomBytes(1024),
+            );
+            const encryptedFilePath = toPath('restored.enc.part');
+            await encryptFile(plainFilePath, encryptedFilePath, PASSWORD);
+            const encrypted = await readFile(encryptedFilePath);
+
+            await expect(
+                decryptFile(
+                    encryptedFilePath,
+                    toPath('restored.enc'),
+                    PASSWORD,
+                ),
+            ).rejects.toThrow('cannot be written over');
+
+            expect(await readFile(encryptedFilePath)).toEqual(encrypted);
+        },
+        REAL_FILE_TIMEOUT,
+    );
+
     test(
         'leaves nothing behind when the payload cannot be read',
         async () => {

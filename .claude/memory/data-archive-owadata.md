@@ -1,8 +1,11 @@
 ---
 name: data-archive-owadata
-description: File → Export/Import Data bundles whole data FOLDERS as an uncompressed .owadata.tar written straight from the user's dirs; the File menu now takes renderer-supplied items
-metadata:
+description: "File → Export/Import Data bundles whole data FOLDERS as an uncompressed .owadata.tar written straight from the user's dirs; the File menu now takes renderer-supplied items"
+metadata: 
+  node_type: memory
   type: project
+  originSessionId: 18527600-8c55-4e7d-aba1-6af7ebfc4f6c
+  modified: 2026-09-19T15:03:12.165Z
 ---
 
 Added 2026-08-05. `src/setting/data-archive/` — the backup / move-machines counterpart of
@@ -23,8 +26,15 @@ Other non-obvious bits:
 
 - The **File menu** now renders `getCustomMenuItems('file')`, the same mechanism the
   language packs use for Tools — so the labels go through `tran` in the renderer and the
-  click routes back to the window that registered them (the presenter). `initMenu` is
-  re-run by `main:app:set-menu-items`, which is what makes the entries appear at all.
+  click routes back to the window that registered them. `initMenu` is re-run by
+  `main:app:set-menu-items`, which is what makes the entries appear at all.
+- **Both main-window pages carry them (2026-09-19).** `DataArchiveAppMenuComp` is mounted
+  by the Presenter (`AppPresenterComp`) AND the Reader (`reader.tsx`) — the Reader had
+  none, so a main window started on it showed only Print / Exit. It registers only when
+  `checkIsMainWindow()`: the key is one entry, and a Reader opened as a POPUP would take
+  the routing over and drop the main window's clicks once it closed. The component is
+  the menu only; `dataArchiveMenuHelpers.tsx` (the flows, the archive / password /
+  folder-picker modules) is imported on the CLICK, so neither page loads them at start.
 - **Dot-prefixed names never travel (2026-08-07).** `EXCLUDED_NAME_PATTERNS` carries `^\.`
   — `checkIsHiddenName` (`src/server/fileHelpers.ts`) in regex form, the app's one
   hidden-name rule, now shared by `fsListDirectories`, `getAllXMLFileKeys`, the bible
@@ -40,6 +50,14 @@ Other non-obvious bits:
   user folder called `wedding-images`.
 - Import **never overwrites**: identical contents (MD5) are skipped, a same-name file with
   different contents is kept and the archived one lands beside it as `name (1).ext`.
+- **A protected export's plain tar must not be `<archive>.part` (fixed 2026-09-19).** That
+  is where `encryptFile` opens its OWN output, so the tar was truncated before it was read:
+  every password-protected Export Data from 2026-08-07 on is an 80-byte container around
+  nothing (64-byte header + 16-byte tag). It imports as tar's `TAR_BAD_ARCHIVE:
+  Unrecognized archive format` and cannot be recovered, only exported again. The plain tar
+  is `<archive>.plain.part` now, `encryptFile` / `decryptFile` refuse an input at their
+  output or its `.part`, and import reports an empty archive in plain words. The other four
+  archive kinds stage their plain tar in a temp dir and never collided.
 - The folder catalogue is `src/setting/directory-setting/dataDirectories.ts`, shared with
   the Path Settings page — add a folder there and both pick it up. **Two of its entries
   are not plain `select-dir-*` folders (2026-08-07):**
@@ -62,6 +80,10 @@ Other non-obvious bits:
 - The OS draws the File menu, so **CDP cannot reach it**. Dev builds expose
   `globalThis.tryDataExport()` / `tryDataImport(filePath?)` (same pattern as `tryPopup`)
   to drive the flows; `handleImporting` takes an optional path that skips the picker.
+  They are set by `DataArchiveAppMenuComp`'s module and import the flows lazily too.
+  Windows UI Automation does not see Electron's menu bar either (the window exposes only
+  its `RootView` pane); `PrintWindow` on the process's NEW top-level `Chrome_WidgetWin_1`
+  after Alt, ↓ is a picture of the open dropdown and of nothing else on screen.
 
 Gotcha found while building it: a checkbox list that derives its next value from the
 `useState` value drops all but the last toggle when several land in one React batch — the

@@ -34,6 +34,12 @@ import { checkIsRemoteMediaSource } from './mediaSourceHelpers';
 export const MANIFEST_FILE_NAME = 'manifest.json';
 export const ARCHIVE_FILES_DIR = 'files';
 export const ARCHIVE_VERSION = 1;
+/**
+ * The `itemKind` a Bible Data bundle's manifest carries. Declared here rather
+ * than in `bibleXMLArchiveHelpers` so Import Data can recognise such a bundle
+ * without loading the bible XML readers behind that module.
+ */
+export const BIBLE_XML_ARCHIVE_ITEM_KIND = 'bible-xml';
 export const BACKGROUND_META_DOT_EXTENSION = '.bg.json';
 // The document kinds whose JSON holds canvas items (see
 // `src/server/mime/app-document-types.json`). Lyric, PDF, PPTX and DOCX

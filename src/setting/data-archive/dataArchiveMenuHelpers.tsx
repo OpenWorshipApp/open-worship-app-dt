@@ -1,9 +1,9 @@
+import { tran } from '../../lang/langHelpers';
 import {
-    registerAppMenuClicked,
-    setAppMenuItems,
-    tran,
-} from '../../lang/langHelpers';
-import { createWorkDir, safeDeleteDir } from '../../helper/appArchiveHelpers';
+    BIBLE_XML_ARCHIVE_ITEM_KIND,
+    createWorkDir,
+    safeDeleteDir,
+} from '../../helper/appArchiveHelpers';
 import { openArchiveForReading } from '../../helper/archivePasswordHelpers';
 import {
     ArchivePasswordComp,
@@ -14,7 +14,6 @@ import {
     hideProgressBar,
     showProgressBar,
 } from '../../progress-bar/progressBarHelpers';
-import appProvider from '../../server/appProvider';
 import { selectFiles } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { getDataDirectoryBySettingName } from '../directory-setting/dataDirectories';
@@ -33,17 +32,11 @@ import {
 } from './dataArchiveHelpers';
 
 /**
- * The **File → Export Data / Import Data** entries. They are contributed to the
- * native menu by the renderer (`setAppMenuItems`, the same mechanism the
- * language packs use for their Tools items) rather than hard-coded in
- * `electron/electronMenu.ts`, so their labels go through `tran` where the
- * loaded locale actually lives, and the work runs in the window that owns the
- * data — clicks come back to THIS renderer, not whichever window has focus.
+ * What the **File → Export Data / Import Data** entries DO. The entries
+ * themselves are contributed by `DataArchiveAppMenuComp.tsx`, which imports
+ * this module only when one of them is clicked: everything here reaches the
+ * archive, password and folder-picker modules, and no page needs those before.
  */
-
-const MENU_KEY = 'data-archive';
-const EXPORT_CLICK = 'data-archive:export';
-const IMPORT_CLICK = 'data-archive:import';
 
 /**
  * Ask which folders to act on, and — on the way out — what to protect the
@@ -137,7 +130,7 @@ async function runMenuAction(title: string, run: () => Promise<void>) {
     }
 }
 
-async function handleExporting() {
+export async function handleExporting() {
     return await runMenuAction(EXPORT_TITLE, async () => {
         const folders = await getExportableDataFolders();
         if (folders.length === 0) {
@@ -200,7 +193,7 @@ function toImportChoices(folders: DataArchiveFolderType[]) {
 
 // `archiveFilePath` skips the file picker when the archive is already known
 // (a dropped file, or an automated run that cannot drive a native dialog).
-async function handleImporting(archiveFilePath?: string) {
+export async function handleImporting(archiveFilePath?: string) {
     return await runMenuAction(IMPORT_TITLE, async () => {
         if (archiveFilePath === undefined) {
             const filePaths = await selectFiles([
@@ -236,6 +229,17 @@ async function handleImporting(archiveFilePath?: string) {
             const manifest = await runWithProgress(IMPORT_TITLE, () => {
                 return readDataArchiveManifest(readableFilePath);
             });
+            if (manifest.kind === BIBLE_XML_ARCHIVE_ITEM_KIND) {
+                // A Bible Data bundle picked here by mistake. It goes on to
+                // Import Bible Data as the DECRYPTED copy, which that flow
+                // opens as a plain archive: no second password prompt, and no
+                // second pass over the file. Loaded only now — it reaches the
+                // bible XML readers, which an ordinary data import never needs.
+                const { handleBibleXMLImporting } =
+                    await import('../bible-setting/bibleXMLArchiveMenuHelpers');
+                await handleBibleXMLImporting(readableFilePath);
+                return;
+            }
             const answer = await askForFolders(
                 IMPORT_TITLE,
                 'Choose the folders to import',
@@ -260,50 +264,5 @@ async function handleImporting(archiveFilePath?: string) {
         } finally {
             await safeDeleteDir(workDir);
         }
-    });
-}
-
-function handleDataArchiveMenuClicked(
-    _event: any,
-    clickData: { dataArchive?: string },
-) {
-    if (clickData?.dataArchive === EXPORT_CLICK) {
-        handleExporting();
-    } else if (clickData?.dataArchive === IMPORT_CLICK) {
-        handleImporting();
-    }
-}
-
-// Separate from `initDataArchiveAppMenu` for the same reason the language menu
-// splits them: the async menu build cannot be undone from an effect cleanup,
-// but a listener left behind by StrictMode's double mount would run every
-// export twice.
-export function registerDataArchiveAppMenuClicked() {
-    return registerAppMenuClicked(handleDataArchiveMenuClicked);
-}
-
-// The File menu is drawn by the OS, so it is unreachable from CDP — these give
-// an automated QA run (and a developer) a way to drive the same two flows the
-// menu entries do. Same dev-only pattern as `tryPopup` / `testSimpleToasts`.
-if (appProvider.systemUtils.isDev) {
-    (globalThis as any).tryDataExport = handleExporting;
-    (globalThis as any).tryDataImport = handleImporting;
-}
-
-// The native menu is plain text, so the labels are translated here rather than
-// rendered. They follow the locale because this re-runs on mount, and the app
-// reloads its windows when the language changes.
-export function initDataArchiveAppMenu() {
-    setAppMenuItems(MENU_KEY, {
-        file: [
-            {
-                label: tran(EXPORT_TITLE),
-                clickData: { dataArchive: EXPORT_CLICK },
-            },
-            {
-                label: tran(IMPORT_TITLE),
-                clickData: { dataArchive: IMPORT_CLICK },
-            },
-        ],
     });
 }

@@ -11,6 +11,7 @@ import ToastComp from './toast/ToastComp';
 import AppWindowToolsComp from './others/AppWindowToolsComp';
 import GraphViewPanelsHostComp from './graph-view/GraphViewPanelsHostComp';
 import LocationNameDetailPanelsHostComp from './location-name-lookup/LocationNameDetailPanelsHostComp';
+import DataArchiveAppMenuComp from './setting/data-archive/DataArchiveAppMenuComp';
 import { checkIsMainWindow } from './server/appHelpers';
 
 await init();
@@ -24,6 +25,7 @@ run(
         <AppWindowToolsComp />
         <LocationNameDetailPanelsHostComp />
         <GraphViewPanelsHostComp />
+        <DataArchiveAppMenuComp />
     </>,
 );
 
