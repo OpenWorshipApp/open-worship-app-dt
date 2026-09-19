@@ -11,12 +11,16 @@
 //    trusted from the page: no preload, no node, context isolation, sandbox;
 //  - it may only ever be on one session, `persist:aichat`, which is locked
 //    down once -- no permission granted to anything that asks (camera,
-//    microphone, location, notifications) -- and PERSISTENT, so a sign-in
+//    location, notifications, screen), the microphone only when the person
+//    says yes on the window's own line -- and PERSISTENT, so a sign-in
 //    survives a restart, which is the point of holding the site here;
 //  - it may navigate to http(s) and nothing else, and a link it opens goes to
 //    the system browser and never to a window of this app: `window.open` on
 //    an app page reaches `handlePopupWindowOpen`, which hands out
-//    `nodeIntegration: true`, and nothing loaded here may go near that.
+//    `nodeIntegration: true`, and nothing loaded here may go near that. Even
+//    the browser gets a link only for a press the person made in the page;
+//  - its requests -- WebSockets included -- reach the public internet and
+//    nothing on this machine or its network.
 //
 // Same split as `webPageHelpers.ts`, which reads a page nobody chose for the
 // chatbot's model: what the SESSION can refuse is refused once, what a
@@ -28,6 +32,7 @@ import {
     app,
     session,
     shell,
+    webContents,
     type Session,
     type WebContents,
     type WebPreferences,
@@ -109,10 +114,23 @@ export function checkIsGuestRequestAllowed(
 // and no address range, so `127.0.0.2` -- loopback, and not `127.0.0.1` --
 // would walk through a pattern list. The listener is what judges, and the
 // cost of routing a chat site's requests through the main process is what
-// that correctness is bought with. `ws:`/`wss:` are outside a `*://` pattern
-// and stay Chromium's business; the only WebSocket server on this loopback is
-// the CDP endpoint, which refuses a foreign origin.
-const GUEST_REQUEST_FILTER = { urls: ['*://*/*'] };
+// that correctness is bought with.
+//
+// WebSockets need patterns of their own. `*://` means http and https and
+// nothing else, so until 2026-09-14 a WebSocket handshake never reached the
+// listener at all: measured from inside a claude.ai guest, `ws://` to
+// 127.0.0.1, localhost, 127.1, [::1] and 127.0.0.2 all OPENED and a
+// throwaway server on each received the handshake with the site's Origin,
+// while plain http to the same server was refused. A church machine's
+// loopback is where OBS, Companion and presentation remotes listen for
+// exactly that kind of connection, many of them with no origin check. The
+// `ws://` and `wss://` patterns were proven on this Electron (43.3.0) in a
+// harness of its own first: the listener sees the handshake as `webSocket`,
+// a cancel closes it, and ordinary pages still load. Not `<all_urls>`: that
+// also hands the listener `data:` and `blob:` loads, whose empty host counts
+// as local, and every site would break.
+export const GUEST_REQUEST_URL_PATTERNS = ['*://*/*', 'ws://*/*', 'wss://*/*'];
+const GUEST_REQUEST_FILTER = { urls: GUEST_REQUEST_URL_PATTERNS };
 
 function guardGuestSessionRequests(guestSession: Session) {
     // Electron keeps ONE `onBeforeRequest` listener per session: anything
@@ -144,11 +162,180 @@ function guardGuestSessionRequests(guestSession: Session) {
 }
 
 // The one permission a chat site needs and a person expects: its Copy button.
-// Everything else -- `media` (voice mode), `notifications`, `clipboard-read`,
+// Everything else -- the camera, `notifications`, `clipboard-read`,
 // `geolocation`, the lot -- is refused without a prompt: a permission dialog
 // over a live service, raised by a page in a side window, is exactly the
-// surprise the rest of this app is built to avoid.
+// surprise the rest of this app is built to avoid. The microphone is the one
+// exception, and it is ASKED, below.
 const GRANTED_PERMISSION_SET = new Set<string>(['clipboard-sanitized-write']);
+
+// Twins of the channel names in `src/aichat/aiChatMicrophoneHelpers.ts`.
+export const AI_CHAT_MICROPHONE_ASK_CHANNEL = 'app:ai-chat:microphone-ask';
+export const AI_CHAT_MICROPHONE_SETTLED_CHANNEL =
+    'app:ai-chat:microphone-settled';
+export const AI_CHAT_MICROPHONE_ANSWER_CHANNEL =
+    'main:app:ai-chat-microphone-answer';
+
+// Long enough to read the line and decide; short enough that a question
+// nobody answered does not hold the site's request open for good.
+const MICROPHONE_ASK_TIMEOUT_MS = 2 * 60 * 1000;
+
+type MicrophoneAskDetailsType = {
+    isMainFrame: boolean;
+    requestingUrl?: string;
+    mediaTypes?: readonly string[];
+};
+
+/**
+ * The origin a microphone ask is for, or null when the ask is anything else.
+ *
+ * Asked for on 2026-09-14 with a picture of claude.ai's dictation button under
+ * "Microphone access is blocked" -- the site's own words, pointing at a
+ * browser address bar this window does not have, so the person had nothing
+ * to press. So the microphone, and only the microphone, is ASKED rather than
+ * refused. Only when all of this holds:
+ *
+ *  - `media`, and every media type in it is `audio`: a request that also
+ *    wants the camera is refused whole, never half-granted;
+ *  - the site's own top page (`isMainFrame`): an ad or an embedded frame on
+ *    the page never gets to ask;
+ *  - https: a microphone needs a secure page, and the guest may only ever be
+ *    on the public internet anyway -- the request wall above cancels every
+ *    local address before a page there could exist.
+ */
+export function toMicrophoneOrigin(
+    permission: string,
+    details: MicrophoneAskDetailsType,
+) {
+    if (permission !== 'media' || !details.isMainFrame) {
+        return null;
+    }
+    const mediaTypes = details.mediaTypes ?? [];
+    if (
+        mediaTypes.length === 0 ||
+        mediaTypes.some((mediaType) => {
+            return mediaType !== 'audio';
+        })
+    ) {
+        return null;
+    }
+    const url = details.requestingUrl ?? '';
+    if (!URL.canParse(url)) {
+        return null;
+    }
+    const { protocol, origin } = new URL(url);
+    return protocol === 'https:' ? origin : null;
+}
+
+type MicrophoneAskType = {
+    origin: string;
+    guestId: number;
+    // The AI Chat window the question went to: the only sender whose answer
+    // counts.
+    hostId: number;
+    doneList: ((isAllowed: boolean) => void)[];
+    timer: ReturnType<typeof setTimeout>;
+    release: () => void;
+};
+
+const microphoneAskMap = new Map<number, MicrophoneAskType>();
+// Sites the person said yes to, by origin. In memory ONLY: gone when the app
+// closes, and emptied by Sign out of every site. At most one entry per site a
+// person pressed Allow for, so it cannot grow on its own.
+const allowedMicrophoneOriginSet = new Set<string>();
+let lastMicrophoneAskId = 0;
+
+function settleMicrophoneAsk(askId: number, isAllowed: boolean) {
+    const ask = microphoneAskMap.get(askId);
+    if (ask === undefined) {
+        return;
+    }
+    microphoneAskMap.delete(askId);
+    clearTimeout(ask.timer);
+    ask.release();
+    if (isAllowed) {
+        allowedMicrophoneOriginSet.add(ask.origin);
+    }
+    // However it ended, the window's line has nothing left to ask.
+    const host = webContents.fromId(ask.hostId);
+    if (host !== undefined && !host.isDestroyed()) {
+        host.send(AI_CHAT_MICROPHONE_SETTLED_CHANNEL, { askId });
+    }
+    for (const done of ask.doneList) {
+        done(isAllowed);
+    }
+}
+
+/**
+ * Hand a microphone ask to the AI Chat window holding the guest, which knows
+ * what this process cannot: whether that guest is the tab in FRONT, and
+ * whether the page is that tab's own site. Even a site already allowed goes
+ * through the window, so a tab nobody is looking at cannot open a microphone
+ * on a yes given to it earlier.
+ */
+export function askAiChatMicrophone(
+    guest: WebContents,
+    origin: string,
+    done: (isAllowed: boolean) => void,
+) {
+    const host = guest.hostWebContents;
+    if (!host || host.isDestroyed()) {
+        done(false);
+        return;
+    }
+    for (const ask of microphoneAskMap.values()) {
+        if (ask.guestId === guest.id && ask.origin === origin) {
+            ask.doneList.push(done);
+            return;
+        }
+    }
+    lastMicrophoneAskId += 1;
+    const askId = lastMicrophoneAskId;
+    const handleEnding = () => {
+        settleMicrophoneAsk(askId, false);
+    };
+    guest.once('destroyed', handleEnding);
+    microphoneAskMap.set(askId, {
+        origin,
+        guestId: guest.id,
+        hostId: host.id,
+        doneList: [done],
+        timer: setTimeout(handleEnding, MICROPHONE_ASK_TIMEOUT_MS),
+        release: () => {
+            guest.removeListener('destroyed', handleEnding);
+        },
+    });
+    host.send(AI_CHAT_MICROPHONE_ASK_CHANNEL, {
+        askId,
+        guestId: guest.id,
+        hostname: new URL(origin).hostname,
+        isAllowed: allowedMicrophoneOriginSet.has(origin),
+    });
+}
+
+/** The window's answer. Only the window that was asked may give one. */
+export function answerAiChatMicrophoneAsk(senderId: number, data: unknown) {
+    if (typeof data !== 'object' || data === null) {
+        return;
+    }
+    const { askId, isAllowed } = data as Record<string, unknown>;
+    if (typeof askId !== 'number') {
+        return;
+    }
+    const ask = microphoneAskMap.get(askId);
+    if (ask === undefined || ask.hostId !== senderId) {
+        return;
+    }
+    settleMicrophoneAsk(askId, isAllowed === true);
+}
+
+/** Every yes taken back, and every question still open answered no. */
+export function forgetAiChatMicrophoneGrants() {
+    allowedMicrophoneOriginSet.clear();
+    for (const askId of Array.from(microphoneAskMap.keys())) {
+        settleMicrophoneAsk(askId, false);
+    }
+}
 
 /** Where a guest may go: the web, and nothing on this machine. */
 export function checkIsGuestUrlAllowed(url: string) {
@@ -189,11 +376,11 @@ export function toGuestWebPreferences(webPreferences: WebPreferences) {
 }
 
 /**
- * Where a navigation or an outgoing link may go: the protocol first, then the
- * address. Synchronous, because `preventDefault` is -- so it reads whatever
- * the policy has become rather than waiting for it. A navigation made in the
- * moment before the policy lands is still stopped by the request wall above,
- * which can afford to wait; this is the cheaper first line, not the only one.
+ * Where a navigation may go: the protocol first, then the address.
+ * Synchronous, because `preventDefault` is -- so it reads whatever the policy
+ * has become rather than waiting for it. A navigation made in the moment
+ * before the policy lands is still stopped by the request wall above, which
+ * can afford to wait; this is the cheaper first line, not the only one.
  */
 function checkIsGuestDestinationAllowed(url: string) {
     if (!checkIsGuestUrlAllowed(url)) {
@@ -202,6 +389,91 @@ function checkIsGuestDestinationAllowed(url: string) {
     return (
         addressPolicy === null || checkIsGuestRequestAllowed(url, addressPolicy)
     );
+}
+
+// The input a person makes when they press something in the page: a click, a
+// key, a tap. Moving the mouse over it is not asking for anything.
+export const GUEST_PRESS_INPUT_TYPE_SET = new Set<string>([
+    'mouseDown',
+    'mouseUp',
+    'rawKeyDown',
+    'keyDown',
+    'touchStart',
+    'touchEnd',
+    'gestureTap',
+]);
+
+// How long a press counts as the person asking for what the page opens next.
+// Chromium's own user activation lasts the same five seconds, which covers a
+// site that looks something up between the click and the window.
+export const GUEST_PRESS_FRESH_MS = 5000;
+
+export function checkIsGuestPressFresh(
+    lastPressAt: number | null,
+    now: number,
+) {
+    return (
+        lastPressAt !== null &&
+        now >= lastPressAt &&
+        now - lastPressAt <= GUEST_PRESS_FRESH_MS
+    );
+}
+
+export type GuestWindowOpenDecisionType = 'open' | 'refuse' | 'refuse-and-tell';
+
+/**
+ * What to do with a page's `window.open`, which from a guest can only ever
+ * mean the person's own browser.
+ *
+ * `allowpopups` is on the guest so that a pressed link reaches this instead
+ * of dying in silence -- and Electron applies no popup blocker to a guest
+ * that has it. Measured 2026-09-14 on this app's Electron (43.3.0): a page's
+ * `window.open` from a timer, with nothing pressed, reached the handler, which
+ * then opened the system browser. An ad script on a chat site could put
+ * browser windows over a live service one after another, and nobody would
+ * have asked for any of them.
+ *
+ * So a page may hand the browser ONE page per press made inside it, within
+ * five seconds of the press. Anything else is refused, and the window is
+ * told when it was a page the person might have wanted. An address the guest
+ * itself is refused -- this machine, its network, anything not http(s) -- is
+ * never handed to the browser on the site's say-so, and nothing is while the
+ * address policy has not loaded.
+ */
+export function decideGuestWindowOpen(
+    url: string,
+    lastPressAt: number | null,
+    now: number,
+    policy: GuestAddressPolicyType | null,
+): GuestWindowOpenDecisionType {
+    if (
+        policy === null ||
+        !checkIsGuestUrlAllowed(url) ||
+        !checkIsGuestRequestAllowed(url, policy)
+    ) {
+        return 'refuse';
+    }
+    return checkIsGuestPressFresh(lastPressAt, now)
+        ? 'open'
+        : 'refuse-and-tell';
+}
+
+// Twin of the channel name in `src/aichat/aiChatPopupHelpers.ts`.
+export const AI_CHAT_POPUP_REFUSED_CHANNEL = 'app:ai-chat:popup-refused';
+
+// A page opening windows in a loop earns one line in the window, not a
+// flicker of them.
+const POPUP_NOTICE_GAP_MS = 5000;
+
+function tellHostPopupRefused(contents: WebContents, url: string) {
+    const host = contents.hostWebContents;
+    if (!host || host.isDestroyed()) {
+        return;
+    }
+    host.send(AI_CHAT_POPUP_REFUSED_CHANNEL, {
+        guestId: contents.id,
+        hostname: new URL(url).hostname,
+    });
 }
 
 function guardGuest(contents: WebContents) {
@@ -215,13 +487,37 @@ function guardGuest(contents: WebContents) {
     };
     contents.on('will-navigate', handleNavigation);
     contents.on('will-redirect', handleNavigation);
+    // Read here in the main process, where a page's script cannot make one.
+    // Measured on the same Electron: the press arrives before the page's
+    // click handler reaches the window-open handler below.
+    let lastPressAt: number | null = null;
+    let lastNoticeAt = 0;
+    contents.on('input-event', (_event, input) => {
+        if (GUEST_PRESS_INPUT_TYPE_SET.has(input.type)) {
+            lastPressAt = Date.now();
+        }
+    });
     contents.setWindowOpenHandler(({ url }) => {
         // A link out of the site (a citation, a "learn more") opens in the
-        // browser the user already has. Never a window of this app, and never
-        // the machine's own network -- an address the guest is refused is not
-        // one to hand the system browser on the site's say-so.
-        if (checkIsGuestDestinationAllowed(url)) {
+        // browser the user already has. Never a window of this app.
+        const now = Date.now();
+        const decision = decideGuestWindowOpen(
+            url,
+            lastPressAt,
+            now,
+            addressPolicy,
+        );
+        if (decision === 'open') {
+            // One press, one page: a second window the same press asks for
+            // is the page's idea, not the person's.
+            lastPressAt = null;
             shell.openExternal(url);
+        } else if (
+            decision === 'refuse-and-tell' &&
+            now - lastNoticeAt >= POPUP_NOTICE_GAP_MS
+        ) {
+            lastNoticeAt = now;
+            tellHostPopupRefused(contents, url);
         }
         return { action: 'deny' };
     });
@@ -257,12 +553,43 @@ export function initAiChatGuestGuard() {
     // ever refuse a sign-in here, rewrite the `User-Agent` HEADER for its
     // sign-in hosts alone in `webRequest.onBeforeSendHeaders`, never what
     // the page's own script can read.
-    guestSession.setPermissionRequestHandler((_contents, permission, done) => {
-        done(GRANTED_PERMISSION_SET.has(permission));
-    });
-    guestSession.setPermissionCheckHandler((_contents, permission) => {
-        return GRANTED_PERMISSION_SET.has(permission);
-    });
+    guestSession.setPermissionRequestHandler(
+        (contents, permission, done, details) => {
+            if (GRANTED_PERMISSION_SET.has(permission)) {
+                done(true);
+                return;
+            }
+            const origin = toMicrophoneOrigin(permission, details);
+            if (origin === null) {
+                done(false);
+                return;
+            }
+            askAiChatMicrophone(contents, origin, done);
+        },
+    );
+    // A CHECK has no "ask me" answer in Electron: true reads to the page as
+    // granted and false as denied. A site that checks before it asks takes
+    // denied as final and shows its own "blocked" notice without ever asking,
+    // so the microphone on a site's own page checks as available and the
+    // REQUEST for the stream is what the person is asked about. What that
+    // costs: `permissions.query` says granted before anyone said so.
+    guestSession.setPermissionCheckHandler(
+        (_contents, permission, requestingOrigin, details) => {
+            if (GRANTED_PERMISSION_SET.has(permission)) {
+                return true;
+            }
+            return (
+                toMicrophoneOrigin(permission, {
+                    isMainFrame: details.isMainFrame,
+                    requestingUrl: details.requestingUrl ?? requestingOrigin,
+                    mediaTypes:
+                        details.mediaType === undefined
+                            ? []
+                            : [details.mediaType],
+                }) !== null
+            );
+        },
+    );
     app.on('web-contents-created', (_event, contents) => {
         // The HOST side: every page gets this listener, and it only ever
         // fires in the one window whose preferences allow a `<webview>`.
@@ -294,6 +621,9 @@ export function initAiChatGuestGuard() {
  * It asks nothing. The window asks, twice, before it calls this.
  */
 export async function clearAiChatGuestData() {
+    // A yes to the microphone was given by whoever was signed in; it goes
+    // with them.
+    forgetAiChatMicrophoneGrants();
     const guestSession = session.fromPartition(AI_CHAT_PARTITION);
     await guestSession.clearStorageData();
     await guestSession.clearCache();

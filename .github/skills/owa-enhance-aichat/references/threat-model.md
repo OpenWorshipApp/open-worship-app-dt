@@ -1,7 +1,7 @@
 # Threat model — a stranger's website inside the app
 
-_Last measured 2026-09-12, against the running dev app, from inside the guest.
-33 checks, all held._
+_Last measured 2026-09-14, against the running dev app, from inside the guest.
+43 checks with one site open, all held._
 
 ## Why this window is different from every other window
 
@@ -68,8 +68,9 @@ Measured: `typeof require`, `typeof process`, `typeof module` are all
 
 | Rule | What it does |
 | --- | --- |
-| `setPermissionRequestHandler` → only `clipboard-sanitized-write` | camera (voice mode), microphone, geolocation, notifications, clipboard-read, display capture, MIDI, USB, the lot: refused without a prompt — a permission dialog over a live service, raised by a page in a side window, is the surprise this app is built to avoid |
-| `setPermissionCheckHandler` → the same set | a page that only QUERIES gets the same answer as one that asks |
+| `setPermissionRequestHandler` → `clipboard-sanitized-write`, and the microphone ASKED | camera, geolocation, notifications, clipboard-read, display capture, MIDI, USB, the lot: refused without a prompt — a permission dialog over a live service, raised by a page in a side window, is the surprise this app is built to avoid |
+| the microphone (since 2026-09-14, `AC-13`) | an audio-only `media` request from the site's own https top page (`toMicrophoneOrigin`) goes to the AI Chat window (`askAiChatMicrophone`) instead of being answered here. The window refuses it silently unless the guest is the tab in FRONT and the page is on that tab's own site (`decideMicrophoneAsk`), and otherwise asks on its own amber line with **Don't allow** focused. A yes is per origin, in memory only, until the app closes or **Sign out of every site**; even a site already allowed is routed through the window, so a tab behind cannot open it. Only the window that was asked may answer (`event.sender` is checked); an ask unanswered for two minutes, or whose guest goes away, is a no. A request that also wants the camera, or comes from a frame inside the page, is refused whole. Measured 2026-09-14 on claude.ai in the dev window: the site's own **Dictate** button raised the line (it had shown *Microphone access is blocked* before); **Don't allow**, Escape and a tab switch each handed the page `NotAllowedError` and cleared the line, and the next ask asked again; **Allow** handed it a live audio track, a second ask got one with no line, and the same page behind another tab was refused on that same yes |
+| `setPermissionCheckHandler` → the same set, plus the microphone on a site's own https top page | a page that only QUERIES gets the same answer as one that asks — with one difference forced by Electron: a check has no "ask me" answer (true reads as granted, false as denied), and a site that reads denied shows its own "blocked" notice without ever asking. So the microphone checks as available on a site's own page and the STREAM is what the person is asked about. The cost, measured: `permissions.query` says granted before anyone said so, and `enumerateDevices` names the machine's microphones and speakers to the page (the camera stays unnamed) |
 | persistent | a sign-in survives a restart — the reason the window exists |
 | user agent: Electron's own | see *What a bot check sees* |
 | downloads: Electron's default Save dialog | a PERSON is driving, and a chat site legitimately hands over files the user asked for; `owa_read_website`'s session refuses them because a MODEL chose that page |
@@ -85,10 +86,30 @@ On every WebContents of type `webview`:
 | --- | --- |
 | `will-navigate` / `will-redirect` → `checkIsGuestUrlAllowed` | `http:` and `https:` only. `file:`, `owa://local/…` (the app's own pages), `javascript:`, `about:` are cancelled |
 | `setWindowOpenHandler` → `shell.openExternal` then `{ action: 'deny' }` | a link out of the site opens in the browser the user already has, NEVER a window of this app: `handlePopupWindowOpen` hands out `nodeIntegration: true` to anything it lets through |
+| … and only for a press (`decideGuestWindowOpen`, since 2026-09-14) | the browser is handed a page only within five seconds of a press the person made in that guest, one page per press. The press is the guest's `input-event` (mouse down or up, key down, tap), read in the MAIN process, where a page's script cannot make one. An address the guest itself is refused is never handed over, and nothing is while the address policy has not loaded |
 | `allowpopups` on the element | present on purpose, so `window.open` REACHES the handler above instead of dying in silence and taking sign-in popups with it. It reaches the element as the string `""` — React drops a boolean on an attribute it does not know |
 
 Measured: `window.open('file:///C:/')` returns `null` in the guest; a
 `location.href = 'file:///…'` leaves the guest where it was.
+
+**Why a press — measured 2026-09-14.** `allowpopups` does more than let a
+pressed link through: Electron applies no popup blocker at all to a guest that
+carries it. In a standalone harness on this app's Electron (43.3.0), a page's
+`window.open` from a timer, with nothing pressed, reached
+`setWindowOpenHandler` from the guest with `allowpopups` and not from the one
+without — and in the app that handler called `shell.openExternal`. So any
+script on a chat site could have opened the operator's browser again and
+again, over whatever was on the projector. The same harness proved the gate's
+plumbing: a press delivered to the guest fires its `input-event` BEFORE the
+page's click handler reaches the window-open handler, and a second
+`window.open` after that press was spent is refused. A refused page is said
+on the window's own `role="status"` line — the tab in front only, at most once
+per 5 s per guest, gone after 12 s: *This site tried to open example.com in
+your browser without a press, so it was not opened. Press the link again if
+you meant it.* Nothing on the line opens the page; the address is the site's
+word. Measured in the app after: the probe's no-press `window.open` of
+example.com was handed nothing and the line named example.com — and the line
+is only ever sent on the branch that does not open the browser.
 
 ### 4. The host page has nothing worth reaching
 
@@ -161,9 +182,35 @@ Two things about the shape, both deliberate:
   foreign `Origin` — which is exactly what the "before" table measured. The
   residue is a local service that has no origin check of its own.
 
-`ws:`/`wss:` are outside a `*://` pattern and stay Chromium's business; the
-only WebSocket server on this loopback is the CDP endpoint, and the table
-above is the measurement that it refuses the guest.
+### WebSockets — the same wall, which they walked around until 2026-09-14
+
+`*://` in a request filter means http and https and nothing else. So the wall
+above judged every `fetch`, image and script, and never saw a WebSocket
+handshake at all. Measured from inside a live claude.ai guest, with a
+throwaway server on each loopback address reading what ARRIVED:
+
+| From the guest | Before (`*://*/*`) | After (`GUEST_REQUEST_URL_PATTERNS`) |
+| --- | --- | --- |
+| `ws://127.0.0.1` | **opened; the server received it, `Origin: https://claude.ai`** | closed 1006, nothing received |
+| `ws://localhost` | **opened, received** | closed 1006, nothing received |
+| `ws://127.1` | **opened, received** | closed 1006, nothing received |
+| `ws://[::1]` | **opened, received** | closed 1006, nothing received |
+| `ws://127.0.0.2` | **opened, received** | closed 1006, nothing received |
+| `http://127.0.0.1` (the control) | refused | refused |
+| two public `wss://` echoes | opened | **still opened** |
+
+The CDP endpoint refusing a foreign origin was never the protection it looked
+like: it is one server. A church machine's loopback is where OBS, Companion
+and presentation remotes listen, and many of them take a WebSocket from
+anyone. The filter is now `*://*/*`, `ws://*/*` and `wss://*/*`, proven first
+in a standalone Electron 43 harness: the listener sees the handshake as
+`webSocket`, a cancel closes it, and `about:blank`, `data:` and a real https
+page still load. Not `<all_urls>`, which catches WebSockets too and also hands
+the listener every `data:` and `blob:` load — whose empty host
+`checkIsLocalHostname` calls local, so every site would break.
+
+What still does not pass through `onBeforeRequest` at all: WebRTC's UDP and
+WebTransport. Neither has been measured from the guest (`AC-16`).
 
 ## Signing out, and the profile on disk
 
@@ -251,6 +298,8 @@ See [backlog.md](./backlog.md). The ones worth knowing about:
   page.
 - `AC-04` — the production CSP of the host page is proven only by reading
   it; the prod markers are stripped in dev.
+- `AC-16` — WebRTC and WebTransport do not pass the request wall, and are
+  unmeasured from the guest.
 
 ## Re-proving it
 
@@ -262,11 +311,16 @@ With the dev app running and the AI Chat window open on at least one site.
 It reaches each guest over raw CDP (`/json/list` lists `webview` targets;
 `evaluateInTarget` from `tools/owa-devtools-mcp/cdp.mjs` speaks to one),
 reads the properties above, tries the refusals it expects to be refused
-(`file:` navigation, `window.open` of a `file:` address, and ten addresses
-on this machine and its network including both of the app's own doors) and
-reports. The attempts are the point of the run: one that succeeds is the
-failure this script exists to catch. The last check is the opposite — the
-site's own origin must STILL be reachable — because a wall that blocks the
+(`file:` navigation, `window.open` of a `file:` address, ten addresses on
+this machine and its network including both of the app's own doors,
+WebSockets to loopback servers it starts itself — judged by what ARRIVED,
+because a page's `closed 1006` cannot tell a refusal from nothing listening —
+and a `window.open` of example.com with nothing pressed, which must be handed
+nothing and said on the window's line) and reports. The attempts are the
+point of the run: one that succeeds is the failure this script exists to
+catch, and a browser window opening on example.com is the press gate failing.
+Two checks are the opposite — the site's own origin must STILL be reachable,
+and a public `wss://` echo must STILL open — because a wall that blocks the
 site is a brick and would otherwise pass every other check in the file.
 Note that a CDP `Runtime.enable` on a guest is itself something a bot check
 can detect for the life of that session — run the probe, then reload the

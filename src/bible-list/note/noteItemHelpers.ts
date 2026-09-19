@@ -109,3 +109,15 @@ export function toValidVerseComments(value: any): VerseCommentType[] {
         return typeof item.comment === 'string';
     });
 }
+
+/**
+ * The bible key a verse key was marked in — `"(KJV) GEN 22:1"` → `"KJV"`.
+ *
+ * Read off the string rather than through `fromBibleVerseKey` so a row can pick
+ * its font without parsing a target it is not going to use. Here, in a
+ * module that imports nothing, so the Resources panel can too.
+ */
+export function toVerseBibleKey(verseKey: string) {
+    const index = verseKey.indexOf(') ');
+    return index === -1 ? null : verseKey.slice(1, index);
+}

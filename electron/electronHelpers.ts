@@ -29,6 +29,14 @@ import ElectronSettingManager, {
     type PopupWinBoundsType,
 } from './ElectronSettingManager';
 import { htmlFiles } from './fsServe';
+// Cyclic on paper for the same reason as the line above: this reaches
+// `aiHelpers`, which imports `isDev`/`toUnpackedPath` from here. Every use on
+// both sides is inside a function body.
+import {
+    checkIsCaptureUrlAllowed,
+    guardCaptureWindow,
+    prepareCaptureSession,
+} from './webCaptureHelpers';
 
 export type OptionalPromise<T> = T | Promise<T>;
 
@@ -104,6 +112,9 @@ export const isDev = process.env.NODE_ENV === 'development';
 export const isWindows = process.platform === 'win32';
 export const isMac = process.platform === 'darwin';
 export const isLinux = process.platform === 'linux';
+// Electron's own marker for an MSIX/AppX install, set in the main process and
+// in node-integrated renderers alike; `undefined` everywhere else.
+export const isWindowsStore = isWindows && process.windowsStore === true;
 const osRelease = release().toLowerCase();
 export const isUbuntu = isLinux && osRelease.includes('ubuntu');
 export const isFedora = isLinux && osRelease.includes('fedora');
@@ -349,10 +360,42 @@ export function toShortcutKey(eventMapper: EventMapper) {
     return key;
 }
 
-export function goDownload() {
+function genDownloadPageUrl() {
     const url = new URL(`${appInfo.homepage}/download`);
     url.searchParams.set('mv', app.getVersion());
-    shell.openExternal(url.toString());
+    return url.toString();
+}
+
+export function getUpdatePageUrl(
+    isStoreInstall = isWindowsStore,
+    storeProductId = appInfo.msStoreProductId,
+) {
+    if (!isStoreInstall) {
+        return genDownloadPageUrl();
+    }
+    if (storeProductId) {
+        // The app's own page in Microsoft Store, which carries its Update
+        // button. Aimed by the product id Partner Center assigns and never
+        // changes: the package family name form is documented as deprecated,
+        // and it had to be guessed off the install path anyway.
+        const url = new URL('ms-windows-store://pdp/');
+        url.searchParams.set('ProductId', storeProductId);
+        return url.toString();
+    }
+    // Nothing reserved yet means no deep link to the package page, but the
+    // Store's own updates list still surfaces the app -- and a Store install
+    // must never land on the self-hosted download page, whose installer cannot
+    // update an MSIX package. `check-appx-config.mjs` is what keeps a real
+    // Store build from ever shipping without the id.
+    return 'ms-windows-store://downloadsandupdates';
+}
+
+export function goDownload() {
+    // The menu's "Check for Updates Online" means the WEBSITE download page,
+    // whatever the install source -- never the Store.
+    shell.openExternal(genDownloadPageUrl()).catch((error: Error) => {
+        console.error('Failed to open the download page:', error);
+    });
 }
 
 const lockSet = new Set<string>();
@@ -1398,6 +1441,18 @@ export async function captureWebScreenShot(
         height,
         delay,
     });
+    // A website item's address comes out of a DOCUMENT, which may have been
+    // shared, so it is judged before a window exists for it: only a real web
+    // page, never `file:` reading the operator's disk through
+    // `webSecurity: false`. The wall that keeps the page off this machine and
+    // off the room's network is the session's, prepared here so it is in force
+    // before the first request. See `electron/webCaptureHelpers.ts`.
+    if (!checkIsCaptureUrlAllowed(url)) {
+        throw new Error(
+            `Only a web address can be captured, not: ${url.substring(0, 100)}`,
+        );
+    }
+    const partition = await prepareCaptureSession(url);
     const captureWin = new BrowserWindow({
         show: false,
         width,
@@ -1406,8 +1461,12 @@ export async function captureWebScreenShot(
             webSecurity: false,
             nodeIntegration: false,
             contextIsolation: true,
+            sandbox: true,
+            preload: undefined,
+            partition,
         },
     });
+    guardCaptureWindow(captureWin);
     try {
         console.log('Loading page for capture');
         await captureWin.loadURL(url);

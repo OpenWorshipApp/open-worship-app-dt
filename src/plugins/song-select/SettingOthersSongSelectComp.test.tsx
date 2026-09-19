@@ -84,6 +84,9 @@ vi.mock('../../server/appProvider', () => ({
     default: {
         browserUtils: { openExternalURL: openExternalURLMock },
         systemUtils: { isDev: true },
+        // Read by the dev `useAppEffect` in the shared credential field, which
+        // puts the cursor in its input when another window asks for it.
+        envUtils: { isFEUseEffectWarning: false },
     },
 }));
 

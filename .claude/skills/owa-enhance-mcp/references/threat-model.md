@@ -1,6 +1,6 @@
 # Threat model — what an agent driving this app can reach
 
-_Last measured 2026-09-01, against the running dev app._
+_Last measured 2026-09-14, against the running dev app._
 
 ## The thing that makes this different from a browser automation server
 
@@ -47,10 +47,11 @@ The rule: **the assistant may point, the human presses.**
 | --- | --- |
 | `denied-tool` | `evaluate_script`, `take_heapsnapshot`, `upload_file` are refused AND removed from `tools/list` |
 | `foreign-url` | `navigate_page` / `new_page` may only land on a page the app itself serves (`file:`, loopback, `about:blank`). Reload / back / forward carry no address and are allowed — the allowlist means history holds only app pages |
-| `destructive-label` | `owa_click` / `owa_type` refuse a label that cannot be undone — delete, trash, discard, erase, remove, uninstall, overwrite, *clear all*, *reset all*, factory, sign/log out |
+| `destructive-label` | `owa_click` / `owa_type` refuse a label that cannot be undone — delete, trash, discard, erase, remove, uninstall, overwrite, *clear all*, *reset all*, factory, sign/log out — **and its translation in every language the app is shown in** (`destructiveLabel.mjs`, derived from the app's own dictionary), read after folding what the matcher folds |
 | `destructive-uid` | the same refusal for `click` / `fill` / `fill_form` / `drag`, which carry no label — the wording comes from the snapshot that minted the uid, read on its way out |
+| `destructive-press` / `question-press` | the same rule **in the page, on the element a press lands on** — `owa_click`, `owa_type` and a walkthrough's Do it: a title that cannot be undone on a button whose own words can, a key whose titled control cannot be (`F6` is *Clear All [F6]*), and anything inside the confirm / alert / input the app is asking the user. See *The interlock reads the control*, below |
 | `foreign-url` (outbound) | `owa_read_website` INVERTS the rule above: it may only go the other way. https, and never an address on this machine or its network — see *Reaching out*, below |
-| `rate-limit` | acting calls are capped at 25 in a rolling 60s; reads off the internet at 10 in a rolling 5 min. Separate counters across every session, because one protects the single app window and the other the single network |
+| `rate-limit` | acting calls are capped at 25 in a rolling 60s; reads off the internet at 10 in a rolling 5 min; removals (a delete of a file, list, note, slide or passage, and an undo) at 10 in a rolling 5 min. Separate counters across every session, because they protect three different things: the one app window, the one network, the user's files |
 | redaction | provider keys, bearer tokens, JWTs and named credentials are scrubbed out of every tool result |
 
 ### The uid interlock, and why it is shaped the way it is
@@ -89,6 +90,58 @@ deliberate:
 And the model does not get those tools at all — `modelTools.mjs` withholds
 them, so the recovery above is defence in depth for the door where the caller
 is the operator.
+
+### The interlock reads the control
+
+Both halves above read a LABEL somebody wrote down — a `find`, a snapshot row.
+Measured 2026-09-14, that was three holes wide (`MC-23`): the label list was
+English and the app is used in Khmer, where every destructive control
+(`ផ្លាស់ទីទៅធុងសំរាម`, `លុបទាំងអស់`) sailed through; the matcher folded a
+no-break space the patterns did not (`Clear All`); and a walkthrough
+step pressed its `find` or its `press` key with no label read at all.
+
+So the rule is data now (`destructiveLabel.mjs`: the English patterns plus
+every translation of a destructively-worded dictionary key) and it is read a
+second time where a label cannot lie — in the page, on the element the matcher
+resolved, immediately before `click()`. Four choices in it:
+
+- **Content never makes itself unpressable.** A title and an aria-label are
+  read always; an element's own text only when it is a control. A slide card
+  or a list row carries a hymn, and "erase my sin" must not refuse its card.
+- **A key is judged by the control that names it.** This app writes a control's
+  shortcut into its title, so `F6` is as destructive as *Clear All [F6]* and
+  `F9` as ordinary as *Clear Bible [F9]* — with no list of keys to keep in step.
+- **A question is the user's.** Anything inside the confirm, alert or input
+  popup is refused, which needs no language at all — and is what stands behind
+  the one gap left by design: a translation the dictionary also uses for an
+  allowed control (Khmer *Clear Bible* IS *Delete Bible*) is pressable, and the
+  app confirms the destructive reading.
+- **The card's Do it and a tool's `do` are one rule.** The card shows words the
+  model wrote, and a step reading *Press Do it to save* aimed at Move to Trash
+  must not be pressed by either; the control stays ringed and the person
+  presses it.
+
+### What the assistant can delete
+
+Since `MC-24` the data tools delete: a song, a slide document, a slide, a saved
+passage, a note, a whole list or file. They are offered because nothing they
+do is final:
+
+- **No backup, no change.** Every write snapshots what it is about to change
+  (`agentBackupHelpers.ts`) and is refused when the snapshot cannot be saved —
+  including the Bibles list and notes file, which have no undo of their own.
+- **A delete is the app's own Move to Trash**, and `owa_undo` puts any change
+  back from the backup (the OS trash cannot be emptied back by a program).
+  An undo backs itself up first, so undoing the wrong thing is one more undo.
+- **Removals have their own budget** (10 per 5 min): a loop emptying a Documents
+  folder into the trash is recoverable and still a morning lost.
+- **A note open in its own window blocks a write** to that file: the window
+  saves its whole stale copy back, which would silently undo the change the
+  answer reported.
+
+What this does not close: a model asked to "clean up" can still trash a real
+document the user wanted. The banner names the file, the answer must say it can
+be undone, and `owa_undo list` shows it — recoverable, not prevented.
 
 Why each denial, since "it's dangerous" is not a reason a future reader can
 weigh:
@@ -177,9 +230,42 @@ answer: `nodeIntegration: false`, `contextIsolation: true`, `sandbox: true`,
 (`window.open` in this app reaches `handlePopupWindowOpen`, which hands out
 node integration — `MC-03`), downloads denied, permissions denied, audio
 muted, and every redirect re-checked. It is deliberately NOT
-`captureWebScreenShot`, which runs with `webSecurity: false` and the app's own
-session for website canvas items: that previews an address the USER typed, this
-loads one a MODEL chose (`MC-16`).
+`captureWebScreenShot`, which runs with `webSecurity: false` for website canvas
+items: that previews an address the USER typed, this loads one a MODEL chose.
+The two keep separate settings and share one address dialect.
+
+### The window a SLIDE's address loads in — `MC-16`, closed 2026-09-17
+
+The one hole in this file that needed no model and no agent at all. A website
+canvas item's address goes straight from the document to a hidden window, so
+**opening a shared presenting flow was the whole delivery** — a `.owapf.tar.gz`
+from another church, a memory stick. That window ran on the app's DEFAULT
+session with `webSecurity: false` and no handler of any kind.
+
+Proven against the running app before it was changed, by serving a page on this
+machine's own LAN address and capturing it exactly as a website item does:
+
+- it reached **`127.0.0.1` and `localhost`** — the CDP endpoint (a WebSocket
+  into renderers that all have node integration) and the MCP host (click,
+  present, write a file), the same pair the AI Chat guest was walled off from
+  on 2026-09-12, in the one renderer nobody had walled;
+- **`file:///…/package.json` captured 58 622 characters** of the operator's
+  disk, and with `webSecurity: false` a `file:` page reads its neighbours.
+
+`electron/webCaptureHelpers.ts` now holds it to: **a capture may talk to the
+site it was asked for and to the public internet; never to this machine, and
+never to anything else on the local network.** Its own memory-only session;
+permissions, downloads and `window.open` refused; `sandbox: true`; http(s) only
+at the first load and at every redirect; and `onBeforeRequest` over the same
+three patterns and the same `webUrlPolicy.mjs` dialect the guest's wall uses.
+The **same-host exemption** is the difference from the guest: no chat site ever
+needs a local address, but a church's intranet notice board is a legitimate
+slide, so a private page may load its own assets and nothing else private.
+Loopback gets no exemption at all.
+
+`webSecurity` stays OFF — it might be load-bearing for a real user's slide,
+nothing measured says whether it is, and the wall closes what it would open.
+That is the residual, and it is why the wall rather than the flag is the fix.
 
 **What is NOT closed, and is not claimed to be:**
 
@@ -231,10 +317,11 @@ never be one:
 | Id | Gap |
 | --- | --- |
 | `MC-01` | The HTTP door has **no credential**. Origin-checking stops a web page; any local process drives the app. A token in the published endpoint file would close the browser and cross-user cases. |
-| `MC-13` | `press_key` is the model's last unguarded input. Enter on a focused *Move to Trash* names no label at any point, so neither half of the interlock can see it. Not closed because refusing keys by guessing at focus would refuse ordinary work; see the backlog for the two options. |
+| `MC-13` | `press_key` on the developer's door is unguarded: Enter on a focused *Move to Trash* names no label at any point. The model has not been offered `press_key` since 2026-09-08, and the walkthrough's own key press is judged by the control that names the key since 2026-09-14. |
 | `MC-03` | `window.open` from a locked-down renderer still gets `nodeIntegration: true` through `handlePopupWindowOpen`, which is a way back to Node for code already running in that window. |
 | `MC-04` | `appProvider.fileUtils` is the full `fs` surface in the chatbot window. It genuinely writes files (a saved report, a saved picture), so narrowing it to the calls that window makes is real work. |
 | `MC-05` | The redaction list is a net, not a proof. A secret in a shape nobody anticipated gets through — which is why the tools that dump memory wholesale are denied outright rather than trusted to it. |
+| `MC-16` | Residual only: a capture window still runs `webSecurity: false`. The network wall closes what that opens; the flag stays until somebody measures whether a real slide needs it. |
 
 ## Re-proving it
 

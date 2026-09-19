@@ -21,6 +21,7 @@ init(async () => {
     if (bibleNoteData === null) {
         throw new Error('No bible note data found');
     }
+    const { isReadOnly } = bibleNoteData;
     const bibleNote = await initBibleNote({
         ...bibleNoteData,
     });
@@ -60,7 +61,10 @@ init(async () => {
                     };
                 }}
             />
-            <NoteItemEditorPopupComp bibleNote={bibleNote} />
+            <NoteItemEditorPopupComp
+                bibleNote={bibleNote}
+                isReadOnly={isReadOnly}
+            />
             <AppWindowToolsComp />
         </PopupLayoutComp>,
     );

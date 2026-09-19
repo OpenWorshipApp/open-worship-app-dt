@@ -144,15 +144,71 @@ export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
     });
 }
 
-export async function getPptxMissingFontFamilyList(
+/**
+ * The small `info.json` of an already-generated preview, and nothing else: no
+ * full-file MD5, no HTML/media reads, no preview regeneration. `null` while
+ * the preview is not generated yet. `readFileJsonData` is short-lived cached.
+ *
+ * `getPptxData` is the full path -- it hashes the WHOLE pptx to validate the
+ * preview and reads every slide's html. Anything that runs per pptx in the
+ * folder (the Audios panel, the missing-font banner) must come through here.
+ */
+async function readPptxInfoDataQuick(
     filePath: string,
-): Promise<string[]> {
-    // Read only the small info.json (already short-lived cached) — no HTML/media
-    // reads and no preview regeneration; returns [] when the preview isn't
-    // generated yet.
+): Promise<AnyObjectType | null> {
     const outDir = toPptxHtmlsPreviewDirPath(filePath);
     const infoFilePath = pathJoin(outDir, 'info.json');
     const infoFileSource = FileSource.getInstance(infoFilePath);
-    const infoData = await infoFileSource.readFileJsonData();
+    return await infoFileSource.readFileJsonData();
+}
+
+export async function getPptxMissingFontFamilyList(
+    filePath: string,
+): Promise<string[]> {
+    const infoData = await readPptxInfoDataQuick(filePath);
     return (infoData?.missingFontFamily as string[] | undefined) ?? [];
+}
+
+export type PptxSlideAudioDataQuickType = {
+    // Index into `getSlides()`, whose slot 0 is the blank slide -- so for a
+    // real slide the index and the id are the same number.
+    slideIndex: number;
+    slideId: number;
+    filePaths: string[];
+};
+
+/**
+ * Which slides carry audio, read from `info.json` alone.
+ *
+ * Measured 2026-09-15 (`EN-12`): the Audios panel asked this of EVERY pptx in
+ * the Documents folder through `getSlides()` on mount and on every folder
+ * refresh, and `getPptxData` hashes the whole file first -- 10 files, 54 MB,
+ * ~150 ms of renderer CPU per pass on an SSD, unbounded on a church laptop's
+ * HDD with a folder of forty. The list may lag a pptx replaced outside the app
+ * until that document is next opened, which regenerates the preview.
+ */
+export async function getPptxSlideAudioDataListQuick(
+    filePath: string,
+): Promise<PptxSlideAudioDataQuickType[]> {
+    const infoData = await readPptxInfoDataQuick(filePath);
+    const slides = infoData?.slides;
+    if (!Array.isArray(slides)) {
+        return [];
+    }
+    const outDir = toPptxHtmlsPreviewDirPath(filePath);
+    const audioDataList: PptxSlideAudioDataQuickType[] = [];
+    slides.forEach((slide, i) => {
+        const audios: unknown = slide?.audios;
+        if (!Array.isArray(audios) || audios.length === 0) {
+            return;
+        }
+        audioDataList.push({
+            slideIndex: i + 1,
+            slideId: i + 1,
+            filePaths: audios.map((audioPath) => {
+                return pathJoin(outDir, String(audioPath));
+            }),
+        });
+    });
+    return audioDataList;
 }

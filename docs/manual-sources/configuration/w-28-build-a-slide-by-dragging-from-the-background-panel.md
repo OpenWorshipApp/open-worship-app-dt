@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [ED-40, ED-41, ED-42, ED-43, ED-44, ED-21, ED-37, PM-06]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-12"
+workflowsVersion: "2026-09-18"
 ---
 # W-28 — Build a slide by dragging from the Background panel
 
@@ -56,5 +56,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ED-40` · `ED-41` · `ED-42` · `ED-43` · `ED-44` · `ED-21` · `ED-37` · `PM-06`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
 :::

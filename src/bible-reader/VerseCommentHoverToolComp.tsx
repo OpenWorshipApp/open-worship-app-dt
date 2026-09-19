@@ -5,10 +5,11 @@ import { useAppCurrentRef } from '../helper/appHooks';
 import { tran } from '../lang/langHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { useThemeSource } from '../others/themeHelpers';
+import { useIsInModalLayer } from '../app-modal/modalLayerContext';
+import { toVerseBibleKey } from '../bible-list/note/noteItemHelpers';
 import { removeVerseAnnotation } from '../bible-list/note/verseAnnotationHelpers';
 import {
     toVerseAnchor,
-    toVerseBibleKey,
     type VerseCommentTargetType,
 } from './verseAnnotationActionHelpers';
 import {
@@ -95,6 +96,9 @@ function RenderHoverToolComp({
     // `data-bs-theme` — without this its `--bs-*` tokens resolve light whatever
     // the app is set to. Same reason as the selection toolbar.
     const { theme } = useThemeSource();
+    // Inside the Presenter's Bible Lookup popup this has to clear the popup,
+    // same as the selection toolbar.
+    const isAboveModal = useIsInModalLayer();
     // The same face the comment was written in — see `VerseCommentEditorComp`.
     const fontFamily = useBibleFontFamily(
         toVerseBibleKey(hoveredComment.verseKey) ?? '',
@@ -106,7 +110,10 @@ function RenderHoverToolComp({
     );
     return createPortal(
         <div
-            className="app-verse-comment-hover"
+            className={
+                'app-verse-comment-hover' +
+                (isAboveModal ? ' app-verse-floating-surface--above-modal' : '')
+            }
             data-bs-theme={theme}
             style={{ left, top: rect.bottom + TOOLTIP_GAP_PIXEL }}
             // The pointer leaving the words schedules this away; entering it

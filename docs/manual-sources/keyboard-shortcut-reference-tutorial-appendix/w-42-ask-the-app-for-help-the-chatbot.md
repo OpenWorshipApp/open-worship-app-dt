@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71]
 screenshots: 40
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-12"
+workflowsVersion: "2026-09-18"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -319,8 +319,13 @@ it is describing.
    worth getting before you go and fetch one.
 13. The second list is **who answers** — **Claude**, **ChatGPT**, **Kimi** — and you
    can change your mind between two questions. The ones whose key you have set can be
-   chosen; the others are still in the list, greyed out and reading **needs an API key**,
-   so you can see they are there and what they want. Beside it is the third list, the
+   chosen; the others are still in the list, in a quieter colour and reading
+   **needs an API key**, so you can see they are there and what they want. Choose one of
+   those and the conversation stays on the assistant it had, while **[en:tran:Settings]**
+   opens on **Others** with the cursor already in that assistant's key box — for Kimi,
+   **Kimi API Key** — ready for the key to be pasted in. If **[en:tran:Settings]** was
+   already open on another page, that same window comes to the front and turns to
+   **Others**. Beside it is the third list, the
    **model** that will answer — **Opus 5**, **GPT-5**, **Kimi K3** — and it is a list
    you can change.
    Hold the mouse over a name to see what it is good for, how quick it is and what it
@@ -503,5 +508,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
 :::

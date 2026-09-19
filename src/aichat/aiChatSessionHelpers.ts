@@ -13,7 +13,7 @@ import {
     genSessionId,
     toChatSessionTitle,
 } from '../chatbot/chatSessionHelpers';
-import { getAiChatProvider } from './aiChatProviders';
+import { checkIsOnAiChatSite, getAiChatProvider } from './aiChatProviders';
 
 export type AiChatSessionType = {
     id: string;
@@ -116,10 +116,7 @@ export function toKeptUrl(providerKey: string | null, url: unknown) {
     if (protocol !== 'https:') {
         return null;
     }
-    const isOnSite = provider.hosts.some((host) => {
-        return hostname === host || hostname.endsWith('.' + host);
-    });
-    return isOnSite ? url : null;
+    return checkIsOnAiChatSite(provider.key, hostname) ? url : null;
 }
 
 /**

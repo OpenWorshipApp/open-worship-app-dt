@@ -337,7 +337,7 @@ class ScreenBackgroundManager
                     tran(
                         'Failed to apply to screen. Please make sure the screen is open.',
                     ),
-                    'error',
+                    tran('Error'),
                 );
                 continue;
             }
@@ -508,6 +508,9 @@ class ScreenBackgroundManager
         const { screenId } = message;
         const screenBackgroundManager = this.getInstance(screenId);
         if (screenBackgroundManager === null) {
+            // English on purpose: this receiver also runs in the screen
+            // window, and a `tran()` there before its language data has loaded
+            // throws in dev (see `ScreenCloseButtonComp`).
             showSimpleToast(
                 'Failed to apply to screen. Please make sure the screen is open.',
                 'error',

@@ -18,6 +18,15 @@ import {
     type AiChatProviderType,
 } from './aiChatProviders';
 import { clearAiChatSiteData } from './aiChatSignOutHelpers';
+import RenderAiChatPopupNoticeComp from './RenderAiChatPopupNoticeComp';
+import {
+    AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
+    AI_CHAT_MICROPHONE_ASK_CHANNEL,
+    AI_CHAT_MICROPHONE_SETTLED_CHANNEL,
+    decideMicrophoneAsk,
+    toMicrophoneAsk,
+    type AiChatMicrophoneAskType,
+} from './aiChatMicrophoneHelpers';
 import {
     checkCanClearAiChatSessions,
     genAiChatSessionTitle,
@@ -163,6 +172,25 @@ function readGuestUrl(guest: AiChatGuestElementType | undefined) {
         return '';
     }
 }
+
+// Null for a guest that is not attached yet, which cannot have asked.
+function readGuestWebContentsId(guest: AiChatGuestElementType | undefined) {
+    try {
+        return guest?.getWebContentsId() ?? null;
+    } catch (_error) {
+        return null;
+    }
+}
+
+function answerMicrophoneAsk(askId: number, isAllowed: boolean) {
+    appProvider.messageUtils.sendData(AI_CHAT_MICROPHONE_ANSWER_CHANNEL, {
+        askId,
+        isAllowed,
+    });
+}
+
+// The ask on the line, and the tab it was asked in.
+type ShownMicrophoneAskType = AiChatMicrophoneAskType & { sessionId: string };
 
 /**
  * One site, in one guest. Mounted only while its tab is one of the live few
@@ -327,6 +355,83 @@ export default function AiChatAppComp() {
     // The guests that are up right now, by tab, so the head row's buttons can
     // reach the one in front. Registered by each guest as it mounts.
     const guestMapRef = useRef(new Map<string, AiChatGuestElementType>());
+    // A site asking for the microphone, on a line under the head row until
+    // the person answers. One at a time: a second ask refuses the first.
+    const [microphoneAsk, setMicrophoneAsk] =
+        useState<ShownMicrophoneAskType | null>(null);
+    const microphoneAskRef = useAppCurrentRef(microphoneAsk);
+    useAppEffect(() => {
+        const { messageUtils } = appProvider;
+        const handleAsking = (_event: unknown, data: unknown) => {
+            const ask = toMicrophoneAsk(data);
+            if (ask === null) {
+                return;
+            }
+            const { activeId: frontId, sessions: frontSessions } =
+                sessionStateRef.current;
+            const decision = decideMicrophoneAsk(ask, {
+                guestId: readGuestWebContentsId(
+                    guestMapRef.current.get(frontId),
+                ),
+                providerKey: frontSessions.find((session) => {
+                    return session.id === frontId;
+                })?.providerKey,
+            });
+            if (decision !== 'ask') {
+                answerMicrophoneAsk(ask.askId, decision === 'allow');
+                return;
+            }
+            const shownAsk = microphoneAskRef.current;
+            if (shownAsk !== null && shownAsk.askId !== ask.askId) {
+                answerMicrophoneAsk(shownAsk.askId, false);
+            }
+            setMicrophoneAsk({ ...ask, sessionId: frontId });
+        };
+        // Answered, timed out, or its guest gone: whichever it was, the line
+        // has nothing left to ask.
+        const handleSettled = (_event: unknown, data: unknown) => {
+            const askId = (data as { askId?: unknown } | null)?.askId;
+            setMicrophoneAsk((oldAsk) => {
+                return oldAsk?.askId === askId ? null : oldAsk;
+            });
+        };
+        messageUtils.listenForData(
+            AI_CHAT_MICROPHONE_ASK_CHANNEL,
+            handleAsking,
+        );
+        messageUtils.listenForData(
+            AI_CHAT_MICROPHONE_SETTLED_CHANNEL,
+            handleSettled,
+        );
+        return () => {
+            messageUtils.removeListener(
+                AI_CHAT_MICROPHONE_ASK_CHANNEL,
+                handleAsking,
+            );
+            messageUtils.removeListener(
+                AI_CHAT_MICROPHONE_SETTLED_CHANNEL,
+                handleSettled,
+            );
+        };
+    }, []);
+    // Switching tabs takes the question with it, or the line would sit over
+    // a different site asking on the first one's behalf.
+    useAppEffect(() => {
+        const shownAsk = microphoneAskRef.current;
+        if (shownAsk !== null && shownAsk.sessionId !== activeId) {
+            answerMicrophoneAsk(shownAsk.askId, false);
+            setMicrophoneAsk(null);
+        }
+    }, [activeId]);
+    const handleAnsweringMicrophone = useCallback((isAllowed: boolean) => {
+        const shownAsk = microphoneAskRef.current;
+        if (shownAsk === null) {
+            return;
+        }
+        answerMicrophoneAsk(shownAsk.askId, isAllowed);
+        setMicrophoneAsk(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Debounced, as in the chatbot: a navigation inside the site is a change
     // to a session, and `setSetting` writes a file synchronously.
@@ -733,6 +838,55 @@ export default function AiChatAppComp() {
                     )}
                 </div>
             )}
+            {microphoneAsk === null ? null : (
+                // The browser's own question, asked on this window's line
+                // because a guest has no address bar to ask it from. The safe
+                // answer has the focus, so Enter or Escape keeps it off.
+                <div
+                    className="chat-clear-confirm"
+                    role="alertdialog"
+                    aria-label="Microphone"
+                    onKeyDown={(event) => {
+                        if (event.key === 'Escape') {
+                            handleAnsweringMicrophone(false);
+                        }
+                    }}
+                >
+                    <span className="chat-clear-ask">
+                        {`${microphoneAsk.hostname} wants to use your ` +
+                            'microphone. Allow it until the app closes? Only ' +
+                            'this site hears it, and the camera stays off. ' +
+                            'Sign out of every site takes it back.'}
+                    </span>
+                    <button
+                        type="button"
+                        className="chat-clear-no"
+                        autoFocus
+                        onClick={() => {
+                            handleAnsweringMicrophone(false);
+                        }}
+                    >
+                        Don&rsquo;t allow
+                    </button>
+                    <button
+                        type="button"
+                        className="chat-clear-yes"
+                        onClick={() => {
+                            handleAnsweringMicrophone(true);
+                        }}
+                    >
+                        Allow
+                    </button>
+                </div>
+            )}
+            <RenderAiChatPopupNoticeComp
+                activeId={activeSession.id}
+                getFrontGuestId={() => {
+                    return readGuestWebContentsId(
+                        guestMapRef.current.get(activeSession.id),
+                    );
+                }}
+            />
             <div className="aichat-stage">
                 {activeProvider === null ? (
                     <RenderChooserComp

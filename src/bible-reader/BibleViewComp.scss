@@ -2,13 +2,19 @@
 
 // A verse a bible note talks about, calling for the eye across a wall of text.
 //
-// A cycling glow rather than a cycling colour: the number keeps the reader's own
-// verse-number colour, so the theme still reads as itself and the halo is plainly
-// a marking laid over it rather than a different kind of verse. `text-shadow`
-// repaints nothing but the two or three glyphs it surrounds, where a
-// `filter`/`background-position` shimmer would promote every marked number in the
-// chapter to its own composited layer — dozens of them, on the weak hardware this
-// app is for. Mid-lightness hues, legible against both the dark and light reader.
+// A cycling underline colour rather than a cycling text colour: the number keeps
+// the reader's own verse-number colour, so the theme still reads as itself and
+// the marking is plainly laid over it rather than a different kind of verse.
+// Mid-lightness hues, legible against both the dark and light reader.
+//
+// It runs a FEW times, never `infinite`. Measured 2026-09-15 (`EN-09`): a
+// `text-decoration-color` keyframe is a paint property, and with ONE marked
+// number in the chapter the idle Reader repainted the whole `bible-view-text`
+// column (1092×2157 px) at 235 paints/s -- 5 CPU-seconds a minute doing nothing,
+// 23 % of the main thread at 4× CPU throttle. After the last cycle the number
+// rests on its steady dotted underline, which is the marking anyway (see the
+// reduced-motion branch); a compositor-only shimmer would cost a layer per
+// marked number instead.
 @keyframes app-bible-note-verse-hint {
   0%,
   100% {
@@ -98,7 +104,7 @@
           text-decoration: underline dotted currentColor;
           text-underline-offset: 0.25em;
           text-decoration-thickness: 0.1em;
-          animation: app-bible-note-verse-hint 6s ease-in-out infinite;
+          animation: app-bible-note-verse-hint 6s ease-in-out 3;
           &:hover {
             text-decoration-style: solid;
           }

@@ -150,7 +150,7 @@ export default class BibleDataReader {
 
     async getWritableBiblePath() {
         if (this._writableBiblePath === null) {
-            const userWritablePath = appLocalStorage.defaultStorage;
+            const userWritablePath = appLocalStorage.defaultStorageDirPath;
             // The same folder the whole-data archive offers to export, built
             // from the same constant so the two can never drift apart.
             const dirPath = pathJoin(

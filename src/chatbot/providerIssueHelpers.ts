@@ -392,11 +392,21 @@ function genPageAction(
     };
 }
 
-const SETTING_ACTION: BotActionType = {
-    label: OPEN_AI_SETTING_LABEL,
-    toolName: OPEN_AI_SETTING_TOOL_NAME,
-    args: {},
-};
+/**
+ * The app's own AI settings. With the provider whose KEY is at fault, so the
+ * panel opens with the cursor in that key's box; with none -- the keyless
+ * provider, a busy service with no page of its own, a missing workspace id --
+ * on the panel itself, because the key box is not where that is fixed. The
+ * provider is a NAME, resolved at the press (`getLlmProviderKeyField`) like
+ * every other name a button carries.
+ */
+function genSettingAction(provider: LlmProviderType | null): BotActionType {
+    return {
+        label: OPEN_AI_SETTING_LABEL,
+        toolName: OPEN_AI_SETTING_TOOL_NAME,
+        args: provider === null ? {} : { provider },
+    };
+}
 
 /**
  * What to put under an answer that says the provider could not answer: the
@@ -467,7 +477,16 @@ export function genProviderIssueActions(
     if (pageActions.length === 0 && !isSettingWanted) {
         // No console to send them to (the keyless provider): the one door
         // that helps is the panel where a key of their own goes.
-        return [SETTING_ACTION];
+        return [genSettingAction(null)];
     }
-    return isSettingWanted ? [SETTING_ACTION, ...pageActions] : pageActions;
+    if (!isSettingWanted) {
+        return pageActions;
+    }
+    // Only a refused KEY opens on its box: a missing workspace id is typed
+    // into the field under it, and a cursor in the key box would say the key
+    // was the thing to change.
+    return [
+        genSettingAction(kind === 'badKey' ? provider : null),
+        ...pageActions,
+    ];
 }

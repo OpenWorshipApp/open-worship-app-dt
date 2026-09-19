@@ -48,6 +48,12 @@ export default function AudioBodyComp({
                     data-is-background-audio="true"
                     data-repeat-setting-name={settingName}
                     controls
+                    // Nothing is read until Play is pressed. The Document
+                    // Audios list mounts one of these per sound in EVERY pptx
+                    // of the folder, and the default `metadata` preload had the
+                    // presenter fetching 24 MB wavs of documents nobody had
+                    // selected at start-up (`EN-12`, 2026-09-15).
+                    preload="none"
                     onPlay={handleAudioPlaying}
                     onPause={handleAudioPausing}
                     onEnded={handleAudioEnding.bind(null, isRepeating)}

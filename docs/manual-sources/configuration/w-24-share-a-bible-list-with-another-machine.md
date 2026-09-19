@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PR-27, PR-28, PR-29, CM-38, CM-39]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-12"
+workflowsVersion: "2026-09-18"
 ---
 # W-24 — Share a bible list with another machine
 
@@ -39,5 +39,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-27` · `PR-28` · `PR-29` · `CM-38` · `CM-39`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
 :::

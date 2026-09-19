@@ -205,7 +205,9 @@ export default function RenderEditingActionButtonsComp({
             <button
                 className="btn btn-sm btn-info"
                 type="button"
-                title={`Split vertical [${toShortcutKey(eventMaps[1])}]`}
+                title={
+                    tran('Split vertical') + ` [${toShortcutKey(eventMaps[1])}]`
+                }
                 aria-label={tran('Split vertical')}
                 onClick={handleSplitVertical}
             >

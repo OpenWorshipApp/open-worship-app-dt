@@ -254,12 +254,18 @@ $app-context-menu-dots-opacity: 0.1;
     border-color: var(--app-accent);
     animation: app-highlight-selected-in-anim 0.5s ease-in-out alternate;
 
+    // The on-air pulse. A FEW cycles, never `infinite`: `border-color` is a
+    // paint property, and measured 2026-09-15 (`EN-10`) one slide card on a
+    // screen kept the idle Presenter at 59 main-thread frames/s and 22
+    // paints/s (the card and the whole document) for as long as the window was
+    // up. After the last cycle the steady accent border still says on-air; the
+    // pulse restarts whenever the class is put on a card again.
     &.animation {
       animation-delay: 2s;
       animation-name: app-highlight-selected;
       animation-duration: 2s;
       animation-timing-function: ease-out;
-      animation-iteration-count: infinite;
+      animation-iteration-count: 3;
     }
   }
 
@@ -676,17 +682,21 @@ $app-context-menu-dots-opacity: 0.1;
   }
 }
 
+// The Mini Screen's "showing" pulse (`MiniScreen.scss`). OPACITY, which the
+// compositor animates with no main-thread work: it cycled `color` `infinite`
+// until 2026-09-18 (`EN-19`), which measured 60 main-thread frames/s and 120
+// paints/s at rest for as long as a screen was up -- the whole service.
 @keyframes app-live-blinking-amin {
   0% {
-    color: rgb(213, 72, 154);
+    opacity: 1;
   }
 
   25% {
-    color: rgb(153, 0, 89);
+    opacity: 0.4;
   }
 
   100% {
-    color: rgb(255, 42, 166);
+    opacity: 1;
   }
 }
 

@@ -359,6 +359,22 @@ describe('genProviderIssueActions', () => {
             'Open Claude API keys',
         ]);
         expect(actions[0].toolName).toBe(OPEN_AI_SETTING_TOOL_NAME);
+        // Named for the provider, so the panel opens in that key's box.
+        expect(actions[0].args).toEqual({ provider: 'anthropic' });
+    });
+
+    test('only a refused KEY opens the settings on its key box', () => {
+        // A missing workspace id is not fixed in the key box, and a busy
+        // service or the keyless pool is fixed by ANOTHER key.
+        expect(
+            genProviderIssueActions('anthropic', 'workspace', 'Claude')[0].args,
+        ).toEqual({});
+        expect(
+            genProviderIssueActions('kimi', 'serverTrouble', 'Kimi')[0].args,
+        ).toEqual({});
+        expect(
+            genProviderIssueActions('free', 'quotaOrRate', 'Free')[0].args,
+        ).toEqual({});
     });
 
     test('an ambiguous 429 gets both doors, a plain rate limit one', () => {

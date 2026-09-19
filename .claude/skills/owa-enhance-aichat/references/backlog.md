@@ -97,15 +97,117 @@ doors: both refuse a foreign `Origin`, measured in threat-model.md §5. The
 residue is a local service with no origin check of its own. Weigh a DNS pass
 only if one is ever found; the honest note is the fix for now.
 
-### `AC-11` — `ws:`/`wss:` from the guest is Chromium's business, not ours · open
+### `AC-11` — a WebSocket from the guest walked around the wall · done (2026-09-14)
 
-`onBeforeRequest` is registered on `*://*/*`, which is http and https;
-Chromium's match patterns put WebSocket schemes outside it. The only
-WebSocket server on this loopback is the CDP endpoint, which refuses a
-foreign origin (measured). Widening the filter is a one-line change and was
-NOT made because an invalid pattern in the array would take the whole wall
-down with it and Electron allows one listener per session — so it needs
-proving on this Electron version first, against a real `ws://` request.
+`onBeforeRequest` was registered on `*://*/*`, and `*://` is http and https
+ONLY — so the fifth wall never saw a WebSocket handshake. Measured from inside
+a live claude.ai guest, with throwaway servers bound on loopback: `ws://` to
+127.0.0.1, localhost, 127.1, `[::1]` and 127.0.0.2 all OPENED, and every
+server received the handshake with `Origin: https://claude.ai`, while plain
+http to the same server was refused. "The only WebSocket server on this
+loopback is the CDP endpoint" was never true of a church machine: OBS,
+Companion and presentation remotes listen there, many with no origin check.
+
+Proven on this Electron (43.3.0) before touching the app, in a standalone
+harness, one process per variant: `*://*/*` saw the xhr and not the
+WebSocket, which opened; `['*://*/*', 'ws://*/*', 'wss://*/*']` and an
+explicit http/https/ws/wss list both registered without error, saw
+`webSocket ws://…`, closed it 1006 on a cancel with nothing reaching the
+server, and still loaded `about:blank`, `data:` and https://example.com;
+`<all_urls>` caught the WebSocket too, but also handed the listener the
+`data:` page load, whose empty host `checkIsLocalHostname` calls local — it
+would have cancelled every `data:` and `blob:` load a site makes.
+
+Fixed with `GUEST_REQUEST_URL_PATTERNS` in `electron/aiChatGuestHelpers.ts`.
+After, from the same guest: all five closed 1006 with nothing received, the
+http control still refused, and two public `wss://` echoes still opened
+(335 ms and 445 ms). The probe now starts its own loopback servers and reads
+what ARRIVED — a page's `closed 1006` cannot tell a refusal from nothing
+listening — and carries a public echo as the positive control. Probe 35 → 43
+checks with one site.
+
+### `AC-13` — a site's microphone was refused with no way to ask · done (2026-09-14)
+
+Reported with a picture: claude.ai's dictation button under *Microphone
+access is blocked — select the site settings icon in your browser's address
+bar and allow the microphone*. The box refused every `media` request without
+a prompt, and the site's own way out points at an address bar a guest does
+not have, so the person had nothing to press. Decided with the user: ASK,
+per site, never grant.
+
+`toMicrophoneOrigin` lets through only an audio-only request from the site's
+own https top page; `askAiChatMicrophone` hands it to the AI Chat window,
+where `decideMicrophoneAsk` refuses it silently unless the guest is the tab
+in front on its own site, and otherwise the window's amber line asks with
+**Don't allow** focused. A yes is per origin, in memory, until the app closes
+or Sign out (`forgetAiChatMicrophoneGrants`); only the window asked may
+answer; two minutes unanswered, a tab switch or the guest going away is a no.
+The check handler answers yes for that page, because Electron's check has no
+"ask me" state and a site that reads denied never asks. The camera, alone or
+beside the microphone, stays refused — the probe carries both as checks.
+
+Verified live 2026-09-14 on claude.ai in the dev window, over raw CDP into
+the guest: Claude's own **Dictate** button raised the line; **Don't allow**,
+Escape and a tab switch each gave the page `NotAllowedError` and cleared the
+line, and the next ask asked again; **Allow** gave a live audio track, a
+second ask got one with no line, and the same page behind another tab was
+refused on that same yes. Probe 91/91 over three sites. Measured cost of
+the check answering yes: the page's `enumerateDevices` now names the
+microphones and speakers (the camera stays unnamed). Not run live: **Sign
+out of every site** taking the yes back, which would have signed the dev
+window out of three sites; the unit tests cover
+`forgetAiChatMicrophoneGrants`.
+
+### `AC-14` — nothing in the window says a microphone is LIVE · open
+
+A browser draws a recording dot on the tab; a guest has no browser tab, and
+Electron exposes no capture event (`media-started-playing` is playback).
+Once a site is allowed, the only signs a microphone is open are the site's
+own button and Windows' tray icon. A head-row indicator would need the host
+to learn about capture from the main process — worth doing if a person asks,
+and BEFORE any change that lets a yes outlive the app.
+
+### `AC-15` — a page could open the person's browser with nothing pressed · done (2026-09-14)
+
+Found by measuring, not reported. `allowpopups` is on the guest so a pressed
+link reaches `setWindowOpenHandler` instead of dying in silence — and it
+switches Electron's popup blocking off entirely. In a standalone harness on
+this app's Electron (43.3.0), a `window.open` from a timer reached the handler
+from a guest with `allowpopups` (and not from one without); in the app that
+handler called `shell.openExternal` for any http(s) address. So a chat site's
+script could open the operator's browser whenever it liked, over whatever was
+on the projector, with nobody having asked.
+
+Fixed with a press gate (`decideGuestWindowOpen`, `checkIsGuestPressFresh`):
+the browser is handed a page only within five seconds of a press the person
+made in that guest (Chromium's own activation lifetime), one page per press.
+The press is the guest's `input-event` — mouse down or up, key down, tap —
+read in the main process, where a page cannot fake one; the harness proved it
+arrives before the click's `window.open` reaches the handler, and that a
+second no-press open after the press was spent is refused. An address the
+guest is refused is never handed over, and nothing is before the address
+policy has loaded. A refused page is said on the window's `role="status"`
+line (`RenderAiChatPopupNoticeComp`, `app:ai-chat:popup-refused`), for the
+tab in front only, at most once per 5 s per guest, gone after 12 s; nothing on
+the line opens the page, because the address is the site's word. Verified
+live: the probe's no-press `window.open` of example.com was handed nothing and
+the line named example.com. Not driven live: a REAL pressed link still opening
+the browser, which would open the operator's own browser (the reason given in
+`AC-05`) — proven in the harness with a press delivered to the guest.
+
+Left as it is: a key press counts, so a page could spend a keystroke typed
+into its own box on one window — the same allowance Chromium gives a page.
+
+### `AC-16` — WebRTC and WebTransport do not pass the request wall · open
+
+`onBeforeRequest` sees http(s) and, since `AC-11`, WebSocket handshakes. A
+page's `RTCPeerConnection` can still send STUN over UDP to a candidate address
+it names, a local one included, and WebTransport is not among the request
+types Electron's filter documents. Neither can speak HTTP or a WebSocket to a
+local service, which is what the wall exists for, and chat sites' voice modes
+use WebRTC, so `setWebRTCIPHandlingPolicy` would cost a feature. Unmeasured
+from the guest: measure what a manual ICE candidate at 127.0.0.1 actually
+sends before deciding anything.
 
 ## Sites
 

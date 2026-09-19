@@ -10,7 +10,7 @@ const {
     captureWebScreenShot,
     docxToHtmls,
     getDocxToHtmlsVersion,
-    getFonts,
+    getSystemFontListMap,
     getPagesCount,
     getPptxSlidesCount,
     getPptxToHtmlsVersion,
@@ -36,7 +36,10 @@ const {
     captureWebScreenShot: vi.fn(),
     docxToHtmls: vi.fn(),
     getDocxToHtmlsVersion: vi.fn(),
-    getFonts: vi.fn(async () => ['Arial', 'Khmer OS']),
+    getSystemFontListMap: vi.fn(async () => ({
+        Arial: ['400', '700'],
+        'Khmer OS': ['400'],
+    })),
     getPagesCount: vi.fn(),
     getPptxSlidesCount: vi.fn(),
     getPptxToHtmlsVersion: vi.fn(),
@@ -70,14 +73,16 @@ const {
     stopFindOverlayDraggingMock: vi.fn(),
 }));
 
-vi.mock('font-list', () => ({
-    default: { getFonts },
-    getFonts,
+vi.mock('./fontListHelpers', () => ({
+    getSystemFontListMap,
 }));
 
 vi.mock('./electronHelpers', () => ({
     attemptClosing,
     captureWebScreenShot,
+    getUpdatePageUrl: vi.fn(
+        () => 'ms-windows-store://pdp/?ProductId=9NBLGGH4NNS1',
+    ),
     goDownload,
     isMac: true,
     messageChannels: { screenMessage: 'app:screen:message' },
@@ -196,7 +201,10 @@ describe('electronEventListener handlers', () => {
         screenControllerMocks.createInstance.mockReturnValue(screenInstance);
         screenControllerMocks.getInstance.mockReturnValue(screenInstance);
         screenControllerMocks.getAllIds.mockReturnValue([3, 4]);
-        getFonts.mockResolvedValue(['Arial', 'Khmer OS']);
+        getSystemFontListMap.mockResolvedValue({
+            Arial: ['400', '700'],
+            'Khmer OS': ['400'],
+        });
         finderOverlayPairs.clear();
         consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
         consoleErrorSpy = vi
@@ -593,18 +601,18 @@ describe('electronEventListener handlers', () => {
         );
 
         expect(sender.send).toHaveBeenCalledWith('reply:fonts', {
-            Arial: [],
-            'Khmer OS': [],
+            Arial: ['400', '700'],
+            'Khmer OS': ['400'],
         });
 
         // enumerating fonts spawns a shell helper, so the map is built once for
         // the whole app run however many windows ask for it
-        const callCount = getFonts.mock.calls.length;
+        const callCount = getSystemFontListMap.mock.calls.length;
         await findOnHandler('main:app:get-font-list')(
             { sender },
             { replyEventName: 'reply:fonts' },
         );
-        expect(getFonts.mock.calls).toHaveLength(callCount);
+        expect(getSystemFontListMap.mock.calls).toHaveLength(callCount);
     });
 
     test('reveal and trash guard against empty paths and retry deletions', async () => {
@@ -666,6 +674,13 @@ describe('electronEventListener handlers', () => {
 
         findOnHandler('main:app:go-download')({});
         expect(goDownload).toHaveBeenCalledTimes(1);
+
+        // The in-app update check's Store/website hand-off: whatever
+        // `getUpdatePageUrl` decides is what gets opened, unaltered.
+        findOnHandler('main:app:go-update')({});
+        expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
+            'ms-windows-store://pdp/?ProductId=9NBLGGH4NNS1',
+        );
 
         const setTheme = findOnHandler('main:app:set-theme');
         setTheme({}, 'nonsense');

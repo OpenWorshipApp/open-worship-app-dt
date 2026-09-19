@@ -80,7 +80,7 @@ export abstract class AppDocumentSourceAbs {
     }
 
     async preDelete() {
-        attachBackgroundManager.deleteMetaDataFile(this.filePath);
+        await attachBackgroundManager.deleteMetaDataFile(this.filePath);
     }
 
     // Fonts the document references that aren't installed on this system.
@@ -236,8 +236,11 @@ export default abstract class AppEditableDocumentSourceAbs<
     }
 
     async preDelete() {
-        super.preDelete();
-        this.editingHistoryManager.discard();
+        // Awaited, both: a caller that goes on to make a file of the same name
+        // -- `owa_undo` putting a deleted document back, moments later -- must
+        // not find the old history folder half-deleted underneath it.
+        await super.preDelete();
+        await this.editingHistoryManager.discard();
     }
 
     historyUndo() {

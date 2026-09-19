@@ -51,6 +51,10 @@ function goToDownloadPage() {
     appProvider.messageUtils.sendData('main:app:go-download');
 }
 
+function goToStoreUpdatePage() {
+    appProvider.messageUtils.sendData('main:app:go-update');
+}
+
 const DOWNLOAD_BASE_URL = `${appProvider.appInfo.homepage}/download`;
 
 const PROGRESS_BAR_EVENT_KEY = 'app-update-download';
@@ -302,6 +306,21 @@ function showNoUpdateAvailableToast() {
 let isSilentlyChecked = false;
 
 export async function checkForAppUpdate(isSilent = true) {
+    // A Store install is serviced BY the Store: it downloads and installs its
+    // own packages, and this feed cannot say whether it has one to give. A
+    // release is on the website days before certification clears it for the
+    // Store -- and for good, when a build never goes there -- so comparing
+    // against the website's version nags at every launch about an update the
+    // Store has nothing to offer for, and offline it says "no compatible
+    // update" about a channel it never asked. Asking goes straight to the
+    // app's own page in Microsoft Store, which shows its Update button only
+    // when there really is one.
+    if (appProvider.systemUtils.isWindowsStore) {
+        if (!isSilent) {
+            goToStoreUpdatePage();
+        }
+        return;
+    }
     if (isSilent && isSilentlyChecked) {
         return;
     }

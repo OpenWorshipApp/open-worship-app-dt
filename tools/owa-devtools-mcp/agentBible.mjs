@@ -81,7 +81,8 @@ export function formatPresentBibleResult(result) {
             text: `${String(result.reason ?? 'That could not be done.')}${versions}`,
         };
     }
-    return { isError: false, text: JSON.stringify(result, null, 2) };
+    // Compact: see `toTextResult` in owaTools.mjs.
+    return { isError: false, text: JSON.stringify(result) };
 }
 
 function quote(text) {

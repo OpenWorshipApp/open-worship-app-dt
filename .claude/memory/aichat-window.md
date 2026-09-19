@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: c8d1ebea-4367-48e5-bef9-e0dd99a3f259
-  modified: 2026-09-11T19:28:38.007Z
+  modified: 2026-09-14T17:32:50.917Z
 ---
 
 Added 2026-09-11 at the user's ask (*like firefox, I want an ai chat panel …
@@ -14,7 +14,7 @@ chatbot*). `html/aichat.html` → `src/aichat/*` holds ChatGPT, Claude, Gemini,
 DeepSeek, Kimi, Grok, Mistral, Perplexity, Qwen or Copilot in a `<webview>`
 guest on the persistent `persist:aichat` session; `electron/aiChatGuestHelpers.ts`
 is the box (forced sandbox preferences in `will-attach-webview`, http(s)-only
-navigation, `window.open` → system browser, no permissions but clipboard
+navigation, `window.open` → system browser for a press only, no permissions but clipboard
 write; the user agent is left as Electron's OWN, and `navigator.webdriver`
 is switched off app-wide). Opened like the chatbot (same popup features) by
 the ✨ button, Help → AI Chat, Tools → AI Chat.
@@ -40,6 +40,28 @@ and a yes clears each tab's `lastUrl` and its site-given `pageTitle` (the
 previous person's conversation titles) while keeping a name the user typed,
 then remounts every guest through a window-local epoch in the React key.
 The box's fifth wall is [[aichat-guest-cannot-reach-loopback]].
+
+**Microphone (2026-09-14):** reported with a picture of claude.ai's dictation
+button under *Microphone access is blocked* — the site's own way out points
+at a browser address bar the guest does not have. The user chose to ASK per
+site rather than keep refusing or always allow. The main process routes an
+audio-only request from a site's own https top page to the window
+(`askAiChatMicrophone`), which refuses silently unless it is the tab in front
+on its own site, else asks on its amber line with *Don't allow* focused. A yes
+lives in memory until the app closes or Sign out. The permission CHECK must
+answer yes for that page: Electron's check is boolean, and a site that reads
+denied shows "blocked" without ever asking. The camera stays refused, even
+beside the microphone; nothing yet shows that a microphone is live (`AC-14`).
+
+**Popups and WebSockets (2026-09-14):** found by measuring, not reported.
+`allowpopups` switches Electron's popup blocking off, so a page's timer could
+open the system browser unasked; the handler now hands the browser a page only
+within 5 s of a press in that guest (its `input-event`, read in the main
+process), one per press, and a refused one is said on the window's
+`role="status"` line for the tab in front. And `*://` is http(s) only, so a
+`ws://` handshake to any loopback service walked around the fifth wall until
+the filter named `ws://` and `wss://` — see
+[[aichat-guest-cannot-reach-loopback]].
 
 **Why:** the user wanted the sites themselves, with their own accounts, not
 the app's assistant — and the app runs on low-spec machines, so every open

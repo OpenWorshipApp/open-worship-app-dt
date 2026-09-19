@@ -1,7 +1,7 @@
 import type { FocusEvent, ReactNode } from 'react';
-import { useCallback, useId, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 
-import { useAppCurrentRef } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { tran } from '../lang/langHelpers';
 
 /**
@@ -16,6 +16,7 @@ export default function SettingOthersFieldComp({
     hintKey,
     value,
     isSecret = false,
+    focusToken,
     onSave,
     children,
 }: Readonly<{
@@ -23,10 +24,18 @@ export default function SettingOthersFieldComp({
     hintKey: string;
     value: string;
     isSecret?: boolean;
+    /**
+     * Changes when another window asks for the cursor to be put in THIS box --
+     * the help window, sending the user here to type the key a provider needs
+     * (`aiKeyFocusHelpers`). A token rather than a flag, so asking for the same
+     * box a second time moves the cursor there again.
+     */
+    focusToken?: number;
     onSave: (value: string) => void;
     children?: ReactNode;
 }>) {
     const inputId = useId();
+    const inputRef = useRef<HTMLInputElement>(null);
     const [isRevealed, setIsRevealed] = useState(false);
     const onSaveRef = useAppCurrentRef(onSave);
     const handleSaving = useCallback((event: FocusEvent<HTMLInputElement>) => {
@@ -38,6 +47,17 @@ export default function SettingOthersFieldComp({
             return !oldIsRevealed;
         });
     }, []);
+    // On a new token only, never on the input's own mount: it is keyed by the
+    // stored value and remounts after every save, and a box that took the
+    // cursor back each time it was left would hold the user inside it.
+    useAppEffect(() => {
+        const input = inputRef.current;
+        if (focusToken === undefined || input === null) {
+            return;
+        }
+        input.focus({ preventScroll: true });
+        input.scrollIntoView({ block: 'center' });
+    }, [focusToken]);
     const isSet = !!value;
     return (
         <div className="app-setting-others-field">
@@ -64,6 +84,7 @@ export default function SettingOthersFieldComp({
                     // new value; while typing the stored value is unchanged, so
                     // no remount happens under the user.
                     key={value}
+                    ref={inputRef}
                     id={inputId}
                     className="form-control form-control-sm"
                     type={isSecret && !isRevealed ? 'password' : 'text'}
@@ -75,6 +96,9 @@ export default function SettingOthersFieldComp({
                         className="btn btn-sm btn-outline-secondary"
                         type="button"
                         title={tran(isRevealed ? 'Hide' : 'Show')}
+                        // The glyph is the whole button, so without this the
+                        // accessible name is the icon font's own character.
+                        aria-label={tran(isRevealed ? 'Hide' : 'Show')}
                         aria-pressed={isRevealed}
                         onClick={handleRevealing}
                     >

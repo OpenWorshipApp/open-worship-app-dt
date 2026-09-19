@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-09-12",
+    "updated": "2026-09-17",
     "sections": [
         {
             "id": "reading",
@@ -691,6 +691,46 @@
                     }
                 },
                 {
+                    "id": "graph-copy-text",
+                    "text": "How do I copy a connection graph into my notes?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy as markdown",
+                        "copy as mermaid",
+                        "mermaid diagram",
+                        "mindmap",
+                        "graphviz dot",
+                        "plantuml",
+                        "copy graph",
+                        "paste into notes",
+                        "clipboard",
+                        "open in mermaid live"
+                    ],
+                    "resources": {
+                        "recipe": "W-38",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "graph-open-mermaid-live",
+                    "text": "How do I open a connection graph in the Mermaid Live Editor?",
+                    "kind": "howto",
+                    "keywords": [
+                        "mermaid live",
+                        "mermaid.live",
+                        "open in mermaid",
+                        "draw the diagram",
+                        "see the diagram",
+                        "diagram editor",
+                        "export as png",
+                        "share link"
+                    ],
+                    "resources": {
+                        "recipe": "W-38",
+                        "guide": true
+                    }
+                },
+                {
                     "id": "graph-undo",
                     "text": "How do I undo a change in the connection graph?",
                     "kind": "howto",
@@ -814,6 +854,109 @@
                         "json",
                         "browser",
                         "open in browser"
+                    ],
+                    "resources": {
+                        "recipe": "W-37"
+                    }
+                },
+                {
+                    "id": "resources-others",
+                    "text": "How do I see my files in Resources that are not named after a chapter?",
+                    "kind": "howto",
+                    "keywords": [
+                        "others",
+                        "other files",
+                        "not named",
+                        "all files",
+                        "picture",
+                        "map",
+                        "without searching"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "find": "Others"
+                    }
+                },
+                {
+                    "id": "resources-copy-to-data",
+                    "text": "How do I move a Resources folder into my data folder?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy",
+                        "move",
+                        "data folder",
+                        "data directory",
+                        "parent directory",
+                        "manage",
+                        "organize"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "find": "Copy to Data Directory"
+                    }
+                },
+                {
+                    "id": "resources-add-files",
+                    "text": "How do I copy files into a Resources folder?",
+                    "kind": "howto",
+                    "keywords": [
+                        "add files",
+                        "copy files",
+                        "put files in",
+                        "import",
+                        "move into folder",
+                        "add a pdf"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "find": "Add Files"
+                    }
+                },
+                {
+                    "id": "resources-markdown-preview",
+                    "text": "How do I read a markdown file from Resources inside the app?",
+                    "kind": "howto",
+                    "keywords": [
+                        "markdown",
+                        "md",
+                        "preview",
+                        "mermaid",
+                        "diagram",
+                        "readme"
+                    ],
+                    "resources": {
+                        "recipe": "W-37"
+                    }
+                },
+                {
+                    "id": "resources-markdown-escaped",
+                    "text": "Why does my markdown preview show # and ** instead of headings and bold?",
+                    "kind": "what",
+                    "keywords": [
+                        "markdown not rendered",
+                        "shows hashtags",
+                        "stars",
+                        "backslash",
+                        "notepad",
+                        "plain text"
+                    ],
+                    "resources": {
+                        "recipe": "W-37"
+                    }
+                },
+                {
+                    "id": "resources-note-preview",
+                    "text": "Can I open a bible note file that is in a Resources folder?",
+                    "kind": "howto",
+                    "keywords": [
+                        "own",
+                        "bible note",
+                        "note file",
+                        "read-only",
+                        "read only",
+                        "someone else's notes",
+                        "highlights",
+                        "comments"
                     ],
                     "resources": {
                         "recipe": "W-37"

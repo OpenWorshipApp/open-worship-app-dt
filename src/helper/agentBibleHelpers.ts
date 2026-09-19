@@ -92,8 +92,10 @@ export type AgentBibleResultType =
       };
 
 export const AGENT_BIBLE_ACTIONS = ['present', 'check'] as const;
-// A reference is a few words; a paragraph is not one.
-const MAX_REFERENCE_LENGTH = 80;
+// A reference is a few words; a paragraph is not one. Exported, with the two
+// resolvers below, for `owa_bible_item`: saving a passage reads it exactly the
+// way presenting one does, in every version it knows.
+export const MAX_REFERENCE_LENGTH = 80;
 // How much of the passage rides in the answer -- a line, not the chapter.
 const TEXT_LIMIT = 200;
 
@@ -133,7 +135,7 @@ async function getLookupVersion(): Promise<string | null> {
  * names, and a volunteer who typed it in English wants the verse, not a
  * refusal. The answer names the version it settled on.
  */
-async function resolveVersionOrder(
+export async function resolveVersionOrder(
     version: string | null,
 ): Promise<{ order: string[]; installed: string[] } | AgentBibleRefusalType> {
     const installed = ((await getAllLocalBibleInfoList()) ?? []).map((info) => {
@@ -209,7 +211,7 @@ async function parseReference(bibleKey: string, reference: string) {
     );
 }
 
-async function resolveBibleItem(
+export async function resolveBibleItem(
     reference: string,
     order: string[],
 ): Promise<BibleItem | null> {

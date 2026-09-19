@@ -1,5 +1,6 @@
 import { type ChangeEvent, useCallback } from 'react';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { tran } from '../lang/langHelpers';
 
 export default function FontSizeControlComp({
     fontSize,
@@ -18,15 +19,21 @@ export default function FontSizeControlComp({
     );
     return (
         <div className="d-flex">
+            {/* Neither carries a word of its own, so without these the
+                accessible name of both is empty. */}
             <input
                 className="form-control form-control-sm"
                 type="number"
                 style={{ maxWidth: '100px' }}
+                title={tran('Font Size')}
+                aria-label={tran('Font Size')}
                 value={fontSize}
                 onChange={handleFontSizeChange}
             />
             <select
                 className="form-select form-select-sm"
+                title={tran('Font Size')}
+                aria-label={tran('Font Size')}
                 value={fontSize}
                 onChange={handleFontSizeChange}
             >

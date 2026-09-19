@@ -625,7 +625,7 @@ class ScreenVaryAppDocumentManager
                     tran(
                         'Failed to sync slide. Please make sure the screen is open.',
                     ),
-                    'error',
+                    tran('Error'),
                 );
                 continue;
             }
@@ -1248,6 +1248,9 @@ class ScreenVaryAppDocumentManager
         const { screenId } = message;
         const screenVaryAppDocumentManager = this.getInstance(screenId);
         if (screenVaryAppDocumentManager === null) {
+            // English on purpose: this receiver also runs in the screen
+            // window, and a `tran()` there before its language data has loaded
+            // throws in dev (see `ScreenCloseButtonComp`).
             showSimpleToast(
                 'Failed to sync slide. Please make sure the screen is open.',
                 'error',

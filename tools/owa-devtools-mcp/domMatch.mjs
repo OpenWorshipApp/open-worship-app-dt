@@ -18,6 +18,8 @@
 // The generators below package one call to it as an expression for
 // `evaluateInApp`; keep them free of backticks and `${` so they embed clean.
 
+import { PRESS_GUARD_SOURCE } from './destructiveLabel.mjs';
+
 // How many matches `owa_find_ui` answers with -- and, when asked to
 // highlight, how many rings are drawn. They are the same number on purpose:
 // the user must be able to count what the answer says on their screen.
@@ -165,6 +167,25 @@ export const DOM_MATCH_RUNTIME = `
         return labelPartsOf(element).some((part) => {
             return normaliseLabelPart(part) === bare;
         });
+    };
+
+    // What a caller is SHOWN, as against what is matched on. A title that
+    // carries its shortcut beside an aria-label that does not -- "Clear All
+    // [F6]" and "Clear All" -- is one name said twice, and the exact-repeat
+    // rule in labelPartsOf cannot see it: both matchers listed that button
+    // as "Clear All [F6] Clear All" while owa_list_screens called it "Clear
+    // All [F6]", and a model reads a label back as the words to press. The
+    // bare part stays in labelPartsOf, where the exact-name tie-breaker
+    // above reads it; only the words handed OUT drop the shorter twin.
+    const shownLabelOf = (element) => {
+        const parts = labelPartsOf(element);
+        return parts.filter((part) => {
+            const bare = normaliseLabelPart(part);
+            return !parts.some((other) => {
+                return other.length > part.length &&
+                    normaliseLabelPart(other) === bare;
+            });
+        }).join(' ');
     };
 
     // A named PLACE rather than a thing to press: a resizable panel, a
@@ -791,7 +812,7 @@ export const DOM_MATCH_RUNTIME = `
         }
         const scored = new Map();
         for (const element of collect()) {
-            const label = labelOf(element);
+            const label = shownLabelOf(element);
             if (label.length === 0 || label.length > 120) {
                 continue;
             }
@@ -962,7 +983,7 @@ export const DOM_MATCH_RUNTIME = `
         // to ask for exactly the one it meant.
         const inPanel = containerPathOf(element)[0] ?? null;
         return {
-            label: labelOf(element).slice(0, 80),
+            label: shownLabelOf(element).slice(0, 80),
             inPanel,
             where: vertical === 'middle' && horizontal === 'center'
                 ? 'in the middle of the window'
@@ -1192,7 +1213,8 @@ export const DOM_MATCH_RUNTIME = `
     };
 
     window.__owaDomMatch = {
-        collect, labelOf, labelPartsOf, matchTier, tierOf, checkIsControl,
+        collect, labelOf, labelPartsOf, shownLabelOf, matchTier, tierOf,
+        checkIsControl,
         visibilityOf, revealHidden, releaseHidden,
         checkIsNamedExactly, checkIsTextBox, findBest, findListRegion,
         openContextMenu, waitForBest, nearMisses, describe, flash,
@@ -1228,9 +1250,16 @@ export function genListUiExpression({ filter = '', limit = 100 } = {}) {
  * proof, and no readable state is `unverified`, which is a worse answer than
  * proof and a far better one than silence.
  */
-export function genClickExpression(finds, timeoutMs = 1500, settleMs = 250) {
+export function genClickExpression(
+    finds,
+    timeoutMs = 1500,
+    settleMs = 250,
+    { guard = null } = {},
+) {
     return `(async () => {
         const dm = ${DOM_MATCH_RUNTIME};
+        const guard = ${JSON.stringify(guard)};
+        const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
         // The on/off a control carries about ITSELF, or null when it carries
         // none. Read off the accessibility tree first because that is what
         // the app already maintains for these -- the show/hide screen control
@@ -1288,6 +1317,22 @@ export function genClickExpression(finds, timeoutMs = 1500, settleMs = 250) {
             };
         }
         const target = found.element;
+        // The interlock, read off the control itself (destructiveLabel.mjs).
+        // The firewall already read the words this press was aimed with; this
+        // is the half that does not care how the control was named -- a
+        // translation, a title saying Delete on a button whose own text does
+        // not -- and the half that never answers a question the app is asking
+        // the user. Before the hover is forced, so a refusal leaves the window
+        // exactly as it was.
+        if (pressGuard !== null) {
+            const refusal = pressGuard.findPressRefusal(target, guard.rule);
+            if (refusal !== null) {
+                return Object.assign(
+                    { clicked: null, match: dm.describe(target) },
+                    refusal,
+                );
+            }
+        }
         // Controls this app only paints under the mouse are
         // pressed with the mouse nowhere near them, so the hover
         // is forced first -- and held a moment AFTER the press,
@@ -1316,7 +1361,9 @@ export function genClickExpression(finds, timeoutMs = 1500, settleMs = 250) {
         // with nothing to show for it.
         const isStillHere = target.isConnected;
         const stateAfter = isStillHere ? stateOf(target) : null;
-        const labelAfter = isStillHere ? dm.labelOf(target).slice(0, 80) : null;
+        // Read the way describedBefore was, or a label merely re-joined
+        // would read as a change.
+        const labelAfter = isStillHere ? dm.describe(target).label : null;
         const didChange = !isStillHere
             ? true
             : (stateBefore !== null || stateAfter !== null
@@ -1358,10 +1405,12 @@ export function genClickExpression(finds, timeoutMs = 1500, settleMs = 250) {
 export function genTypeExpression(
     finds,
     value,
-    { submit = false, timeoutMs = 1500 } = {},
+    { submit = false, timeoutMs = 1500, guard = null } = {},
 ) {
     return `(async () => {
         const dm = ${DOM_MATCH_RUNTIME};
+        const guard = ${JSON.stringify(guard)};
+        const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
         const found = await dm.waitForBest(
             ${JSON.stringify(finds)}, ${timeoutMs}, { onlyBoxes: true },
         );
@@ -1373,6 +1422,19 @@ export function genTypeExpression(
             };
         }
         const target = found.element;
+        // A box inside a question the app is asking is the user's to fill,
+        // and one NAMED for something that cannot be undone is not filled in
+        // on their behalf. The words typed are content and are not read: a
+        // song may well be called "Remove My Sin".
+        if (pressGuard !== null) {
+            const refusal = pressGuard.findPressRefusal(target, guard.rule);
+            if (refusal !== null) {
+                return Object.assign(
+                    { typed: null, match: dm.describe(target) },
+                    refusal,
+                );
+            }
+        }
         // A box inside a bar the app hides until the mouse is over
         // it types perfectly well -- but typing into something the
         // user cannot see is how they end up not believing us.
@@ -1424,6 +1486,20 @@ export function genTypeExpression(
             }
             valueToSet = chosen.value;
             chosenOptionText = textOf(chosen);
+            // Choosing IS the press on a picker, so the choice is what is
+            // read: a picker merely offering "Delete" is not refused, one being
+            // set to it is.
+            if (pressGuard !== null &&
+                pressGuard.checkIsDestructiveLabelText(
+                    chosenOptionText, guard.rule,
+                )) {
+                return {
+                    typed: null,
+                    refused: 'destructive',
+                    label: chosenOptionText,
+                    match: dm.describe(target),
+                };
+            }
         }
         if (target.isContentEditable === true) {
             target.textContent = valueToSet;

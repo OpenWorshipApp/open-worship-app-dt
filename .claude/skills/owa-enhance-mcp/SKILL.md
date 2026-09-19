@@ -146,9 +146,10 @@ refused by the firewall. Drive pages over raw CDP `Runtime.evaluate` —
 npm run lint
 ```
 
-`&&`-chained: the first failing stage stops the rest, so a `test:all` failure
-means the typecheck, prettier, eslint and build never ran. Read the log body,
-not the exit code.
+`&&`-chained: the first failing stage stops the rest, so a typecheck failure
+means the tests, prettier, eslint and the build check never ran. Read the log
+body, not the exit code. It only checks, so it is safe beside the running app
+(`EN-16`).
 
 ### 5. Land the paper trail
 
@@ -255,7 +256,8 @@ server. What makes it good for them:
   refused reloading the page in front of it, and an audit check that had never
   run on Windows — were invisible from reading and obvious from one call. A
   false refusal only shows from the driving seat.
-- **19 tools are registered and withheld from the chatbot's model** by
+- **29 tools are registered and withheld from the chatbot's model** (of 53,
+  2026-09-14) by
   `tools/owa-devtools-mcp/modelTools.mjs` — the window's own three plus
   `take_screenshot`, the uid-aimed acting group, the window openers and the
   developer instruments. That module is the choke point for pruning what the

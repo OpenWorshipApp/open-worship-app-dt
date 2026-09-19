@@ -21,6 +21,7 @@ import { openDetailPanel } from './detailPanelHelpers';
 import { useLookupManagersContext } from './lookupManagersContext';
 import {
     getPlainReferenceText,
+    getRecordKjvName,
     REFERENCE_TOKEN_SCHEME_LIST,
 } from './lookupPresentationHelpers';
 import {
@@ -383,6 +384,27 @@ export function OptionalLinkRowComp({
 }
 
 /**
+ * The English name after a list entry — `យូដាស (Jude)` — the way the panel's
+ * title bar reads, so a reader who knows the people and places by their
+ * English names can still tell the entries apart. Nothing under an English
+ * lookup: `getRecordKjvName` is empty when the name already IS the English one.
+ *
+ * Beside the button rather than inside it, so it is not underlined as part of
+ * the link.
+ */
+function RenderListKjvNameComp({
+    record,
+}: Readonly<{ record: { name: string; kjvName?: string | null } }>) {
+    const kjvName = getRecordKjvName(record);
+    if (kjvName === '') {
+        return null;
+    }
+    return (
+        <span className="location-name-lookup__kjv-name ms-1">({kjvName})</span>
+    );
+}
+
+/**
  * A list of name-record ids rendered as buttons opening each referenced person.
  * Ids that no longer resolve fall back to inert text rather than a dead button.
  */
@@ -430,6 +452,7 @@ export function OptionalNameListRowComp({
                                 }}
                             >
                                 {record.name}
+                                <RenderListKjvNameComp record={record} />
                             </button>
                         </li>
                     );
@@ -486,6 +509,7 @@ export function OptionalLocationListRowComp({
                                 }}
                             >
                                 {record.name}
+                                <RenderListKjvNameComp record={record} />
                             </button>
                         </li>
                     );

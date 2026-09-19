@@ -172,9 +172,19 @@ export function checkIsEncryptedFile(filePath: string) {
     });
 }
 
-export function copyToClipboard(str: string) {
+/**
+ * `title` names WHAT was copied, for a caller that copies more than one thing
+ * — the connection graph's Markdown and its Mermaid diagram sit on one menu,
+ * and a confirmation reading `Copy` for either leaves the user checking their
+ * clipboard to find out which landed. It is the TOAST's title, so it arrives
+ * already translated.
+ */
+export function copyToClipboard(str: string, title?: string) {
     appProvider.systemUtils.copyToClipboard(str);
-    showSimpleToast(tran('Copy'), tran('Text has been copied to clip'));
+    showSimpleToast(
+        title ?? tran('Copy'),
+        tran('Text has been copied to clip'),
+    );
     return true;
 }
 

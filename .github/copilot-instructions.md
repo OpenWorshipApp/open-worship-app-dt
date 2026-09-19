@@ -15,6 +15,14 @@ invisible on a dev machine makes the app unusable for the target users.
   change; prefer the lighter approach even if it costs a little more code.
 - Watch for eager imports, preloading whole files/collections (e.g. bibles,
   media) when only a slice is needed, and unbounded in-memory maps.
+- No `infinite` CSS animation of a PAINT property (`color`, `border-color`,
+  `text-decoration-color`, `box-shadow`, `background`) on anything that stays
+  mounted at rest — run it a few times or animate `opacity`/`transform` only.
+  One noted verse held the idle Reader at 235 paints/s (EN-09), one on-screen
+  slide card the Presenter at 59 frames/s (EN-10), the Mini Screen's show/hide
+  icon the Presenter at 60 frames/s + 120 paints/s for as long as a screen was
+  up (EN-19 — invisible to a trace taken with the screen hidden); memory
+  `infinite-paint-animation-at-rest`.
 
 ### Debounce expensive work fired by frequently-firing events
 
@@ -45,6 +53,13 @@ debounce so rapid repeats collapse into one trailing execution. Exemplar:
 
 Every React function component must have a name ending in `Comp`
 (e.g. `FormComp`, `ForegroundCountDownComp`).
+
+Every label a user reads goes through `tran()` (in render, never at module
+scope) with its Khmer string in `src/lang/data/km/index.ts`. A missing one
+THROWS in dev. `src/lang/tranKeyCoverage.test.ts` fails the gate on any STATIC
+key without Khmer — write keys as literals so it can read them (EN-20). A
+dynamic `tran(prop)` still needs the live Khmer pass (memory
+`tran-missing-key-throws-in-dev`).
 
 ## Running the app for verification (`npm run dev`)
 
@@ -94,14 +109,27 @@ off a projector, so confirm with the user before calling it. For a client pinned
 to a fixed URL, `node tools/owa-devtools-mcp/bin.mjs --bridge --listen=9223`
 forwards 9223 to wherever the app is.
 
-After any code change, also run `npm run lint`. It is the full gate: tests
-(`test:all`), typecheck (`lint:all:error`), prettier (`lint:pre`, which rewrites
-files — expect formatting diffs), eslint with `--max-warnings 0` (`lint:es`),
-and a production `build`.
+After any code change, also run `npm run lint`. It is the full gate, and it only
+CHECKS (2026-09-18, `EN-16`): typecheck of `src` AND `electron` (`lint:all:error`
+— `tsconfig.json` includes `src` alone, so the second `tsc -p
+electron.tsconfig.json --noEmit` is the only electron typecheck outside a build),
+tests (`test:all`), prettier `--check` (`lint:pre`; `npm run format` is the
+write), eslint with `--max-warnings 0` (`lint:es`), and a production vite build
+into a throwaway temp dir (`lint:build`, `extra-work/check-build.mjs`). It writes
+nothing in the repo and never touches `dist/` or `electron-build/`, so it is
+SAFE beside a running dev app and beside another session's unfinished files —
+run it whenever. `npm run build`, `electron:build`, `test:e2e` and `pack:*`
+still delete `electron-build/` (memory `build-kills-running-dev-app`).
+`src/test-setup/lintGateScripts.test.ts` holds the gate to that — no stage
+writes or builds for real, `lint:all:error` names the electron config — and to
+**every `**` glob in a script QUOTED**: npm runs scripts with `/bin/sh` on
+macOS/Linux, which has no globstar, and an unquoted `src/**/*.ts*` made
+`lint:es` lint 573 of 952 files there, skipping every top-level `electron/*.ts`
+(`EN-13`); `cmd.exe` expands nothing, so a Windows run never saw it.
 
 - The `lint` script is `&&`-chained, so the FIRST failing stage stops everything
-  after it — a `test:all` failure means `lint:all:error`, `lint:pre`, `lint:es`
-  and `build` never ran at all, not that they passed. When a stage fails on
+  after it — a `lint:all:error` failure means `test:all`, `lint:pre`, `lint:es`
+  and `lint:build` never ran at all, not that they passed. When a stage fails on
   something unrelated to your change, run the remaining stages directly rather
   than assuming the gate is green. (The long-standing `test:electron` failure on
   `windowOptions.icon` `toContain('icon.png')` vs dev's `icon-dev.png` is FIXED —
@@ -153,7 +181,22 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   the window in front of it); `owa_click`/`owa_type`
   refuse a label that cannot be undone (delete, trash, discard, erase, remove,
   uninstall, overwrite, *clear all*, *reset all*, factory, sign/log out — NOT
-  bare `reset` or `clear`, which are `Reset Widgets Size` and `Clear Bible`);
+  bare `reset` or `clear`, which are `Reset Widgets Size` and `Clear Bible`)
+  **in every language the app is shown in, read on the CONTROL as well as on
+  the words** (2026-09-14, `MC-23`, `destructiveLabel.mjs`): the list was
+  English regexes on a call's `find`, and every Khmer destructive label, a
+  `Clear All` typed with a no-break space, and a walkthrough step's `do` —
+  which reads no words at all, and `press: "F6"` is Clear All — got through.
+  The rule is now those patterns plus every translation of a
+  destructively-worded `tran()` key, read by the firewall on the words and
+  again IN THE PAGE on the element about to be pressed (`PRESS_GUARD_SOURCE`,
+  the module's own functions as source text): a title or aria-label that
+  cannot be undone, a key whose titled control cannot be (`F6` is *Clear All
+  [F6]*), a picker's chosen option, and anything inside the app's confirm /
+  alert / input popups, which are the user's to answer. An element's own TEXT
+  is read only on a control, so a slide card saying "erase my sin" stays
+  pressable, and so does a translation the dictionary shares with an allowed
+  control (Khmer *Clear Bible* is *Delete Bible*), the app's confirm behind it;
   **and so do `click`/`fill`/`fill_form`/`drag`, which carry no label at all**
   — they aim by a uid out of a snapshot, so the interlock was two
   `take_snapshot` lines away from being irrelevant, and the label is now
@@ -355,98 +398,57 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
 - **A Bible passage is put up by its REFERENCE** (2026-09-10,
   `owa_present_bible`: `tools/owa-devtools-mcp/agentBible.mjs` +
   `src/helper/agentBibleHelpers.ts`, over the `owa-agent-bible` relay in
-  `domHelpers.ts`, lazily imported like the others). *Put John 3:16 on the
-  screen* — the app's commonest live ask and its top starter chip — was the
-  one thing the assistant could only DESCRIBE: the answer was W-06's steps
-  and the **Do it for me** under it pressed **Bible Lookup**, then stopped
-  on a step with `find: ""`, `press: "Tab"` and the user's verse nowhere in
-  it (`EC-131`, measured twice). The lookup is a picker written for a
-  person — first letters, the book, the chapter, the verse, a double-click
-  — and its labels along the way (the book's own name, bare numbers) can be
-  aimed at by nothing; the song equivalent already worked through
-  `selectedDocument`. The tool takes the reference as the user said it and
-  an optional installed `version`, resolves it with the app's OWN parser
-  (`BibleItem.fromTitleText` — the lookup box's, in every locale it knows;
-  the version's FULL book name, never `Ps` or `Jn` — `EC-151` — and a
-  whole chapter, `Psalm 23`, widened to all its verses) in the version the lookup is on first and then any
-  installed one that reads it ("John 3:16" does not parse under Khmer book
-  names), presents it exactly as the lookup's **Show bible item** does
-  (`ScreenBibleManager.handleBibleItemSelecting` to the ticked screens;
-  NOTHING is saved to the Bibles list, so **Clear Bible** undoes the whole
-  effect), and reads the screens BACK — `isPresented`, the passage as the
-  app writes it, its first words, each ticked screen with `isShowing` /
-  `isLocked`, a `note` when the screen is off saying to OFFER its show
-  button. `action: "check"` resolves and quotes without touching a screen.
-  A locked screen, no ticked screen, an unknown version (the installed ones
-  named), a reference no version reads, and a main window off the
-  Presenter are refused in sentences written for a PERSON — the `/verse`
-  command and the offline bot print them. It is in `ACTING_TOOLS` (banner
-  *put John 3:16 on the screen*; a `check` is quiet) and the firewall's
-  budget. The prompt's bullet routes every verse ask to it — never the
-  lookup popup, never a guide — done when they asked for it to go UP,
-  offered when they only asked how; `applyToolWatch` marks the ask
-  `isActedOn` on a presented result so no W-06 walkthrough is offered under
-  an answer that already did it. `/verse John 3:16` does it with no model,
-  and the offline bot answers *Put John 3:16 on the screen* by checking the
-  reference, quoting its first words and offering ONE button (a typed
-  sentence is not the consent a pressed button is). Re-asked on Sonnet 5:
-  3 rounds, 9 s, the verse loaded, the screen's own toggle offered; the
-  yes 3 rounds and proven on the wall. **Whatever version the lookup is on
-  is what goes up** — Amplified on this machine while every saved item was
-  KJV (`EC-149`). The same run fixed `EC-135`: `owa_click "Clear Bible
-  [F9]"` — the very words `owa_list_screens` hands the model — was refused
-  because `checkIsNamedNearly` stripped the `[shortcut]` off the label
-  part and not off the needle; both lose it now. Left open as `EC-148`:
-  `runBotAction` judges a demo "good enough" on `canDemo`, which is true
-  when ANY step is pressable, so a recipe whose second step needs the
-  user's words still gets the instant card and stalls there.
+  `domHelpers.ts`, lazily imported). The lookup is a picker for a person whose
+  labels nothing can aim at, so walkthroughs stalled on it (`EC-131`). The tool
+  resolves the reference with the app's OWN parser (`BibleItem.fromTitleText`,
+  every locale; the version's FULL book name, never `Ps`/`Jn` — `EC-151`; a
+  whole chapter widened to all its verses) in the lookup's version first, then
+  any installed one that reads it; presents it exactly as **Show bible item**
+  does (`ScreenBibleManager.handleBibleItemSelecting` to the ticked screens;
+  NOTHING saved to the Bibles list, so **Clear Bible** undoes it); and reads
+  the screens BACK — `isPresented`, the passage, its first words, each ticked
+  screen's `isShowing` / `isLocked`, and a `note` to OFFER the show button when
+  the screen is off. `action: "check"` resolves and quotes without touching a
+  screen. A locked screen, no ticked screen, an unknown version (installed
+  ones named), an unreadable reference and a main window off the Presenter are
+  refused in sentences for a PERSON (`/verse` and the offline bot print them).
+  It is in `ACTING_TOOLS` (banner; `check` is quiet) and the firewall budget.
+  The prompt routes every verse ask to it — done when asked to go UP, offered
+  when asked how — and `applyToolWatch` marks a presented result `isActedOn`
+  so no W-06 walkthrough is offered. `/verse John 3:16` needs no model; the
+  offline bot offers ONE button (a typed sentence is not the consent a press
+  is). **Whatever version the lookup is on is what goes up** (`EC-149`).
+  `EC-135`: `checkIsNamedNearly` strips a `[shortcut]` off both the label part
+  and the needle, so `owa_click "Clear Bible [F9]"` works. Open `EC-148`:
+  `canDemo` is true when ANY step is pressable, so a recipe whose second step
+  needs the user's words still stalls.
 - **A foreground extra is started by its WORDS** (2026-09-11, `owa_foreground`:
   `tools/owa-devtools-mcp/agentForeground.mjs` +
   `src/helper/agentForegroundHelpers.ts`, over the `owa-agent-foreground`
-  relay in `domHelpers.ts`, lazily imported like the others). *Start a 5
-  minute countdown on the screen* — a pre-service ask in nearly every church,
-  and a corpus question since 2026-09-01 — was the worst answer of the day
-  measured on Sonnet 5: 8 rounds and $0.08 to write four steps (pressing
-  **Foreground** on the way, unasked), then the *Yes, start it now* under
-  them ran to the ten-round cap, started NOTHING, and ended on *"Now
-  Foreground is active. Let me look for the countdown controls."* — $0.18
-  in all. Two things did that. The Foreground tab is a TOGGLE, so the
-  model's press CLOSED the panel it had opened a minute before, and
-  `owa_click` read a tab's state off nothing (`EC-167`: `stateOf` in
-  `genClickExpression` now reads `aria-selected` and a `.nav-link`'s `active`
-  class, so a press that shut a panel answers `isOnNow: false`). And the
-  widget is a form written for a person (`m Minutes`, **Start Countdown**),
-  the shape the Bible Lookup had the day before. The tool takes `widget`
-  (countdown, stopwatch, clock, marquee-top, marquee-bottom, quick-text; `all`
-  for a stop) with `minutes` OR `at` (a clock time today — one gone by is
-  refused in a sentence) or `text` (300 characters; a quick text stays
-  `seconds`, default 10), does exactly what the widget's own Start button does
-  (`ScreenForegroundManager.setCountdownData` and its siblings on the TICKED
-  screens, the widget's defaults, the +1 s the panel adds so the display
-  starts on the whole minute), and reads the screens back — `did`, `detail`
-  in words (*a 5 minute countdown, ending at 11:45 AM*), each screen's
-  `foreground` list, and the OFF note saying to offer the show button, never
-  press it. `stop` takes one off (`all` is F10), `check` reads. Re-asked: 2
-  rounds, 7 s, one call, the countdown held on the screen and its show button
-  offered; *Put the time on the screen* 3 rounds; **`/countdown 5`** (also
-  `/timer`), `/countdown 10:30`, `/countdown stop`, **`/marquee <words>`** and
-  `/marquee-top` do it with no model in ~3 s; the offline bot answers the
-  imperative with ONE button (`readCountdownAsk` → `/countdown`, the verse's
-  shape). It is in `ACTING_TOOLS` (the banner names the extra and its
-  length), the firewall's acting set, `describeToolStep`, and `applyToolWatch`
-  marks a started or stopped extra `isActedOn` so no W-09 walkthrough is
-  offered under an answer that did it. Cost: +491 tokens a round (21 tools,
-  ~6 849 to the model). The same run found **`/clear-foreground` and its
-  siblings answering *the screen is off, so there is nothing to clear* with a
-  countdown and a marquee HELD on the hidden screen** (`EC-168`): `readScreens`
-  in `builtinActionHelpers.ts` carries `clearable` off
-  `controls.clear[].hasSomething`, a held layer is cleared whether or not the
-  screen shows, and a Clear press — a plain button the press-verification
-  cannot read — is proven by the layer reading empty afterwards. Left open:
-  *Put Blessed Assurance on the screen* selects the song in 4 rounds, asks,
-  and the *yes* turns the screen ON to the song's wordless **First** slide
-  (`EC-169`); the W-08 background demo's step 2 clicks **Colors** and no card
-  can double-click a video (`EC-170`).
+  relay in `domHelpers.ts`, lazily imported). *Start a 5 minute countdown* once
+  cost $0.18 and started nothing: the Foreground tab is a TOGGLE the model shut,
+  and the widget is a form written for a person. `EC-167`: `stateOf` in
+  `genClickExpression` reads `aria-selected` and a `.nav-link`'s `active`
+  class, so a press that shut a panel answers `isOnNow: false`. The tool takes
+  `widget` (countdown, stopwatch, clock, marquee-top, marquee-bottom,
+  quick-text; `all` for a stop) with `minutes` OR `at` (a clock time today; a
+  past one is refused in a sentence) or `text` (≤300 characters; a quick text
+  stays `seconds`, default 10). It does what the widget's own Start does
+  (`ScreenForegroundManager.setCountdownData` and siblings on the TICKED
+  screens, the widget's defaults, the panel's +1 s) and reads back `did`,
+  `detail` in words, each screen's `foreground`, and the OFF note (offer the
+  show button, never press it). `stop` takes one off (`all` is F10), `check`
+  reads. `/countdown 5` (also `/timer`), `/countdown 10:30`, `/countdown stop`,
+  `/marquee <words>` and `/marquee-top` need no model; the offline bot offers
+  ONE button (`readCountdownAsk`). It is in `ACTING_TOOLS`, the firewall's
+  acting set and `describeToolStep`, and `applyToolWatch` marks it
+  `isActedOn`. Cost: +491 tokens a round. `EC-168`: `readScreens` in
+  `builtinActionHelpers.ts` carries `clearable` from
+  `controls.clear[].hasSomething` — a layer held on a HIDDEN screen is still
+  cleared, and a Clear press is proven by the layer reading empty. Open:
+  `EC-169` (*Put Blessed Assurance on the screen* turns the screen on to the
+  wordless **First** slide) and `EC-170` (the W-08 demo's step 2 clicks
+  **Colors**; no card can double-click a video).
 - **A panel divider is a named control, and the card right-clicks it where it
   is** (2026-09-09, `FlexResizeActorComp.stampAccessibleName`, `domMatch.mjs`
   `tierOf` / `openContextMenu`, `guide.mjs`). Reported with a screenshot: the
@@ -495,8 +497,34 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   own memory-only session, popups denied (`window.open` here would reach
   `handlePopupWindowOpen` and its `nodeIntegration: true`), downloads denied,
   permissions denied, audio muted, every redirect re-checked — deliberately NOT
-  `captureWebScreenShot`, which runs `webSecurity: false` on the app's own
-  session for website canvas items and is a different trust level (`MC-16`).
+  `captureWebScreenShot`, which keeps `webSecurity: false` for website canvas
+  items and is a different trust level: that address was typed by the USER.
+  The two keep separate settings and share one address dialect.
+- **A SLIDE's website is loaded in a box too** (2026-09-17, `MC-16`,
+  `electron/webCaptureHelpers.ts`). `captureWebScreenShot` — the hidden window
+  behind a website canvas item and a web background — opened on the app's
+  DEFAULT session with `webSecurity: false` and NO handler of any kind, and
+  loaded whatever address the document carried, so **opening a shared
+  presenting flow was the whole delivery**: no model, no agent. Measured
+  against the running app first, by capturing a page served on this machine's
+  own LAN address: it reached `127.0.0.1` AND `localhost` — the CDP and MCP
+  doors, the same pair the AI Chat guest was walled off from, in the one
+  renderer nobody had walled — and `file:///…/package.json` captured 58 622
+  characters of the operator's disk. The rule now is **a capture may talk to
+  the site it was asked for and to the public internet; never to this machine,
+  and never to anything else on the local network**: its own memory-only
+  session, permissions / downloads / `window.open` refused, `sandbox: true`,
+  http(s) only at the first load and every redirect, and `onBeforeRequest`
+  over the same three patterns (`*://*/*`, `ws://*/*`, `wss://*/*`) and the
+  same `webUrlPolicy.mjs` dialect the guest's wall uses. The **same-host
+  exemption** is the difference from that guest, and it is what keeps a
+  church's own intranet notice board working — a private page may load its own
+  assets and nothing else private; loopback gets no exemption at all.
+  `webSecurity` stays OFF: it may be load-bearing for a real user's slide,
+  nothing measured says whether it is, and the wall closes what it would open.
+  Re-measured after: the notice board captures byte for byte the same 7 106
+  characters, reaches this machine not at all, `file://` is refused in a
+  sentence, and `example.com` / Wikipedia are untouched.
   What comes back is FENCED as a document that was read rather than as anything
   talking to the model, which is the second line; the first is that no refusal
   in the firewall cares what a page says. Exfiltration is narrowed, not closed:
@@ -513,7 +541,9 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   clicked again, a created file stays created — so four rules hold, and the
   safety ones live in the worker (`src/helper/agentFileHelpers.ts`) rather
   than the tool, because the worker is what touches the disk: **nothing is
-  deleted** (there is no delete action) and `create` never overwrites;
+  lost** — since 2026-09-14 a `delete` is the app's own Move to Trash and every
+  change is backed up first (the data tools, next) — and `create` never
+  overwrites;
   **`update` writes the EDITING HISTORY, never the file** — undoable with
   Ctrl+Z, left visibly dirty with its `*`, the human presses Save, which is
   *point, don't press* applied to content and is also why a song already on a
@@ -542,6 +572,57 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   `list` and `info` stay silent like every other read. **Open Lyric Config
   fields need a leading `- `** (`- Title: ...`) — the mistake a model makes,
   now named in the refusal.
+- **The data tools change what the user KEEPS, so every change is backed up
+  first and a delete is a move to the trash** (2026-09-14, `MC-24`; asked for
+  by the user — *add all possible tools: bible-item crud, bible-note crud,
+  document (app-document, lyric) crud*, *update slide with style with text*,
+  *make sure all actions have backup action, e.g. delete it should move to
+  trash and can undo*). `owa_lyric_file` / `owa_slide_file` gained `delete`,
+  and the slide tool six slide actions — `slides`, `add-slide`,
+  `update-slide` (per box: text, font, size, colour, alignment, position, a
+  box removed or added; a locked box refused), `delete-slide`, `move-slide`,
+  `duplicate-slide` — each one editing-history entry, the pure rules in
+  `src/helper/agentSlideHelpers.ts`. `owa_bible_item` lists, adds by
+  reference (through `owa_present_bible`'s own resolvers), re-points and
+  deletes the saved passages of the Presenter's or the Reader's Bibles list,
+  and whole lists; `owa_bible_note` does the same for notes, writing plain
+  text as the note editor's own Lexical content (a verse-marks item is removed
+  or renamed whole, never re-texted); `owa_undo` lists and undoes. The three
+  share one relay, `owa-agent-data`, keyed by `domain`, the workers imported
+  lazily. **No backup, no change**: a Bibles list and a notes file have NO
+  editing history — every save is the file — so
+  `src/helper/agentBackupHelpers.ts` snapshots what a write is about to change
+  (the file, its editing head, its sidecars) into
+  `<data folder>/agent-backups/` (`<id>.meta.json` beside `<id>.data.json`;
+  the last 100 for 30 days, 25 MB an entry; not in the whole-data archive),
+  and `runWithAgentBackup` refuses the change when that cannot be saved. A
+  delete is `trashAgentFile` — the OS trash, then the material sidecars, the
+  editing history discarded only once the file is really gone — and the
+  answer carries an `undoId`, because a program cannot empty the OS trash back
+  into a folder. `owa_undo` applies a rename, then files, then editing heads
+  (unsaved state can only go into a document that exists), takes its OWN
+  backup first (undoing the wrong thing is one more undo; an undo's id redoes)
+  and names any later change to the same file that went back with it; with no
+  id it takes the newest change that is neither undone nor an undo. **The
+  store is shared by every agent on the machine**, so a script checking undo
+  passes each change's own `undoId`. The firewall rations removals — every
+  `delete*` and `owa_undo` — at 10 per 5 minutes, a counter apart from the 25
+  presses a minute, because what it protects is the user's files; and
+  `owa_bible_note` refuses a write while that file is open in a
+  `bibleNote.html` window, which saves its stale copy back over it. Cost:
+  +1 089 tokens a round to the model (24 tools, ~7 990); `owa_bible_note` is
+  the first to withhold if that matters. Verified live through fresh servers:
+  36 checks across the four kinds. **That run found a bug in the app, not the
+  tools** (`MC-25`): undoing the delete of a slide document with unsaved edits
+  brought back a state two edits old, because `FileSource.readFileData`
+  caches by PATH for 2 s while the editing history renames `N` onto `N-head`
+  and reuses its paths after a clear — a history rebuilt inside the window
+  read back the old head, and `changeCurrent` wrote its diff patch from that
+  stale text (plain editing reaches it too: undo, then edit, inside two
+  seconds). `FileSource.forgetCachedData` / `forgetCachedDataUnder` now follow
+  every history move, clone, delete and clear, and `preDelete` awaits the
+  discard; anything new that renames, copies or deletes onto a path read
+  through `readFileData` must forget it too.
 - **The chatbot window is locked down separately.** It is the one renderer
   whose content comes from outside the machine and the one holding the API
   keys. `electron/client/rendererLockdown.ts`, called from the preload AFTER
@@ -558,12 +639,36 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   host and nothing else, so an answer that tried to post the user's key
   somewhere has nowhere to send it. None of that is the FIRST line — the first
   line is that answers render as TEXT, there is no `dangerouslySetInnerHTML`
-  anywhere in `src/chatbot/` and there must never be one.
+  anywhere in `src/chatbot/` and there must never be one. The same list holds
+  `aichat.html` and `markdownPreview.html` (2026-09-17, a markdown file from
+  any folder, its HTML parsed and then DOMPurify-sanitized — memory
+  `markdown-preview-window`). **Nothing a preload reaches may evaluate a
+  string at load** (2026-09-18, `MC-32`): every preload requires
+  `electronHelpers`, which reaches `aiHelpers` through `webCaptureHelpers`,
+  and that tighter CSP has no 'unsafe-eval' — nor does EVERY page's in a
+  packaged build. `importEsm` built its `Function` at load, the preload threw,
+  and the chatbot opened on *Standing by* with no provider; it is built on the
+  first call now, which only the main process makes (memory
+  `preload-must-not-eval-at-load`).
 - **Discovery**: `publishAiEndpoints()` writes
   `<temp>/open-worship-app-cdp/<pid>.json` with `{port, url, mcpUrl, isDev,
   userDataPath, startedAt}` — one file per live instance, swept when a pid is
   gone, removed on `will-quit`. Chromium reports its chosen port through
   `<userData>/DevToolsActivePort`, which is polled after `ready`.
+  **A port named on purpose is a PIN, not a preference** (2026-09-17,
+  `MC-30`): `listCandidatePorts` used to put `pinCdpPort`'s port and
+  `OWA_CDP_PORT` at the head of a list that went on to every published
+  instance and then the legacy fallbacks, and `resolveCdpPort` takes the first
+  that ANSWERS — so a pin that had died fell through in silence, while
+  chrome-devtools' own tools (`resolveAppBrowserUrl`, always exclusive) kept
+  failing on it. Two halves of one server driving two different apps, and a
+  dev app that nodemon had restarted onto a new port left a "pinned" script
+  driving whatever was published last — the PACKAGED app, with the user's real
+  data, if one is up. A named port is now that port or nothing, and
+  `describeDeadPin` writes the refusal: *"Port 9999 was named by OWA_CDP_PORT
+  and is not answering. The app published 62807 (dev)."* The old message said
+  "start the app" with the app right there, which is what made it hard to see.
+  Pinning by KIND (`OWA_CDP_TARGET=dev`, which survives a restart) is `MC-31`.
 - **Master switch**: Settings → Others → *Enable AI features* writes
   `ai-enabled` into `clientSetting` in `<userData>/setting.json`.
   `checkIsAiEnabled()` reads that file directly (before `ready`, before the
@@ -607,7 +712,12 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   the app is up (`npm run build` / `electron:build` `rm -rf`s all of
   `electron-build/`, the running app's own main entry; this one clears only
   `knowledge/`). No restart is needed — `listKnowledgeEntries()` re-reads
-  `index.json` per call — unlike a change to the MCP `.mjs` modules.
+  `index.json` per call — unlike a change to the MCP `.mjs` modules. **Under
+  `npm run electron:dev` it restarts the app anyway**: `electron:watch` is
+  nodemon on `electron-build` AND `tools/owa-devtools-mcp`, so a knowledge
+  rebuild — or any save in that package — relaunches a dev app another session
+  may be driving, and that relaunch can quit at once; touch a watched file to
+  get it back (2026-09-14, three sessions on one dev app).
 - **Labels are i18n templates**: the knowledge is English, the buttons are not.
   A document names a control as `[en:tran:Clear Bible]`, never as an English
   label with a hand-written Khmer twin beside it, and `tran.mjs` fills it in
@@ -663,200 +773,90 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   together, because nothing in normal use would ever show it had gone stale.
 - **A song PAGE is not a song** (2026-09-04,
   `tools/owa-devtools-mcp/lyricPageText.mjs`, gated by `checkIsPageText` so a
-  plain paste is untouched). A chord site serves the song inside a toolbar, a
-  strumming diagram, a fretboard chart, a related-songs rail and a footer, and
-  lays the words out in COLUMNS that text extraction flattens to one fragment
-  per line — `|`, `E`, three words, `|`, `A`, four more. Read as lyrics that is
-  bar lines sung out loud and every line broken in half. Four rules, none of
-  them about any particular site: the song is the REGION between the walls of
-  wordless lines (a chart is a wall; scored on CHORDS first, because a footer
-  has as many words as a verse and no chords, and word-count alone picked the
-  footer), fragments rejoin with NOTHING between them (a chord lands mid-word
-  more often than between words, and where it lands between them the page's own
-  trailing space is still on the fragment — so `toCleanLines` must not strip it
-  before this runs), a fragment following a fragment starts a NEW line, and a
-  label never joins to anything (a chord between `Verse 1:` and its words made
-  them one line, found no labels, and drafted a whole hymn as a single verse).
-  **The rule that was missing is the one the user could see**: a chord site does
-  not print `|` and `D` as two things — it prints `|D`, one token, glued to the
-  syllable it lands on — and that matched neither the bar pattern nor
-  open-lyric's chord pattern, so every chord on such a page read as an ordinary
-  WORD. The row then never joined (a bare word line following a bare word line
-  flushes), so one sung line came out as four, each with `|D` sitting in front
-  of it as text somebody sings. `readChordToken` pulls the bar off the chord,
-  `splitLeadingChords` takes the run off the front of the words, and the chord
-  is WRITTEN where it lands rather than dropped: `|[D]`, **bar OUTSIDE the
-  brackets**, because `[|D]` — which is what the page looks like and what
-  anybody would reach for first — is refused by open-lyric and by our own
-  validator alike (the brackets hold a chord symbol, and a root is `A`–`G`).
-  Both forms were probed against `checkMarkdown` before the form was chosen and
-  the probe is kept as a test. `toSafeLyricLine`, whose job is to rub out every
-  bracket, now keeps exactly the ones holding a chord — it was turning
-  `|[D]morning` back into `|(D)morning` one line later. **A page that hands a
-  whole ROW over at once puts every chord but the first in the MIDDLE of the
-  text** (2026-09-02), and `splitLeadingChords` only ever read the front: a
-  Khmer draft came out `|[D]ខ្ញុំ |D ឡើង |D ឡើង |A អស់`, bracketed once and sung
-  three times. `writeInlineChords` walks the rest of the row under the same
-  three tests and the same one-chord-per-run rule, glued to the word after it;
-  the script test there is made against the row's WORDS with the chord tokens
-  taken out, because a `|D` three words on is a Latin letter too and made a
-  bare `A7` in a Khmer line read as a word. Two bounds hold it: a
-  leading chord is taken as a chord only when the page wrote a BAR on it, or the
-  rest of the line is in another script entirely, or the page has been shown to
-  glue its chords AND the token is more than one character — because `A` is a
-  chord and also a word in half the languages written in Latin script; and a run
-  of SEVERAL chords before one fragment writes nothing at all, since it says
-  which chords are played and not where any of them lands (a fretboard chart is
-  four chord lines in a row, and its last one was landing on the licence line
-  printed under the chart). Two more fell out of the same page. A wall is only
-  broken by a line of WORDS, so the `|` and the chord over the first syllable
-  sat INSIDE the wall that ends the page furniture and the song's opening
-  chord — the one that says where to start — was the only one missing from the
-  whole document; `toRegions` now carries that run into the region it opens and
-  deliberately does NOT count it, because three chords is exactly what
-  `pickLyricRegion` takes as proof a region is a song, and three carried ones
-  handed that proof to the view-count line under a fretboard chart, which then
-  won on word count and was drafted as the entire song. And nothing printed
-  UNDER a credit line is a translation of it: `Guitar chords` was pairing with
-  the songwriter's name above it, and because the tail sweep stops at
-  translations the pair rode into the last verse as its closing couplet.
-  Measured on the page this came from: four verses, three lines each, every
-  chord where the page puts it, and the two furniture lines named in the report
-  instead of sung. **Two of the page's own facts ride out with the song**: its
-  address, off `owa_read_website`'s header line and ONLY from in front of the
-  fence — the header is written by this package and the body by a stranger, so
-  a `Read https://…` planted in a page cannot be filed as the song's source —
-  which becomes `- Attachments:`, the field open-lyric keeps a song's link in
-  and the Public Domain Songs importer already fills; and the copyright notice,
-  which most pages print in the FOOTER, nowhere near the song and outside the
-  region this file works to isolate, so a page that says whose the song is in
-  plain sight was producing `Copyright: Unknown`. That one is read from the
-  BOTTOM up, trimmed at the footer's own menu (`© 2026 Somebody | Terms of
-  Service | Privacy Policy`), and only ever a real notice — the SIGN or
-  `(c) 2026`, never the bare word, which is a menu item (`Copyright Policy`)
-  whose name would otherwise land in the song's own field.
-  A page with no chords at all — a hymn-text site — is a different document and
-  gets its own reader, keyed on LINE LENGTH: a menu item is two words, a sung
-  line is eight. Nothing sniffs for that one; `stripWebsiteWrapper` finding its
-  fence is the proof the text came off a page. **Length alone was wrong on a
-  hymnal's own text page** (2026-09-08): *Printable scores: PDF, MusicXML* is
-  four words, so the region ran ninety lines and drafted sixteen verses of
-  menus. Where such a page prints its stanzas NUMBERED (`1 Amazing grace…`),
-  `pickNumberedStanzas` takes the run 1…n (plus a labelled refrain among or
-  after them) as the song, and `readPageFields` reads the `Title:` /
-  `Author:` / `Copyright:` table it prints far below the words — *Public
-  Domain* was in plain sight and the draft said *Unknown*. Neither model
-  hands a page over whole whatever the prompt says, so the drafter also reads
-  what they DO pass: their own copy with a title line and `Tune:` on top, and
-  `from`/`to` around the stanzas — the markers are believed on plain words
-  now, a short unlabelled block above numbered stanzas is dropped as the
-  heading (and names the song when nothing else did), a `copyright` slot takes
-  what the page said, and with no `mode` plain words are drafted rather than
-  "checked". Four things it reads that
-  nothing else could: `Key: D · Time: 4/4 · Tempo: 73bpm` off the strip a page
-  prints it in (checked against open-lyric's closed sets first — a key it has
-  no name for defaults instead of taking the whole song down to tier 2), a
-  verse number in the script the hymnal is PRINTED in (`១.`; every rule that
-  reads a numeral goes through `toAsciiDigits`), `(2x)` on a label and
-  `Repeat Chorus` as the PLAY ORDER rather than as more words, and — the one
-  worth the most — a Latin line under a non-Latin one as its TRANSLATION,
-  which open-lyric already has a place for (an indented line, schema.md §2, no
-  `Locales` needed). That is the only indent `toSafeLyricLine` keeps, and it is
-  safe only because this module flattens every tab it is given before re-adding
-  exactly one. **It reports the area it chose**, first line to last, because
-  the thing most likely to be wrong about a drafted song is not its notation
-  but WHICH PART OF THE PAGE it came from; `from`/`to` are how a caller who can
-  see the page overrides it. Measured over 14 real song pages: 14/14 valid,
-  structures matching the page's own play order. `owa_read_website`'s
-  screenshot became WHOLE-PAGE in the same change (capped at 2400px — it was a
-  768px viewport, which on a song page is the site's toolbar and nothing else),
-  and its `executeJavaScript` gained a timeout: without one a heavy page never
-  settled, the `finally` never ran, and two hidden windows were left alive with
-  every later read timing out against them.
+  plain paste is untouched). A chord site wraps the song in toolbars, diagrams,
+  rails and a footer, and text extraction flattens its COLUMNS to one fragment
+  per line. The rules, none about a particular site:
+  - The song is the REGION between walls of wordless lines, scored on CHORDS
+    first (a footer has a verse's word count and no chords). Fragments rejoin
+    with NOTHING between them (a chord lands mid-word, and the page's trailing
+    space is still on the fragment, so `toCleanLines` must not strip it
+    first); a fragment after a fragment starts a NEW line; a label never joins
+    anything.
+  - A glued `|D` token is a chord: `readChordToken` splits off the bar,
+    `splitLeadingChords` takes a leading run, and `writeInlineChords` walks the
+    rest of a row (its script test runs on the row's WORDS minus the chord
+    tokens). It is written as `|[D]` — **bar OUTSIDE the brackets**; `[|D]` is
+    refused by open-lyric and our validator alike (the probe is kept as a
+    test), and `toSafeLyricLine` keeps only brackets holding a chord. A leading
+    token counts as a chord only with a BAR, or when the rest of the line is in
+    another script, or when the page glues chords AND the token is longer than
+    one character (`A` is also a word). A run of SEVERAL chords before one
+    fragment is written nowhere (a fretboard chart).
+  - `toRegions` carries the chord run at the end of a wall into the region it
+    opens (the song's first chord) but does NOT count it toward the
+    three-chord proof `pickLyricRegion` uses. Nothing printed UNDER a credit
+    line is its translation.
+  - Two page facts ride out: the address, from `owa_read_website`'s header and
+    ONLY in front of the fence (a `Read https://…` planted in the body is not
+    the source), as `- Attachments:`; and the copyright, read bottom-up from
+    the footer, trimmed at its menu, and only a real notice (`©` or
+    `(c) 2026`, never the bare word).
+  - A chordless hymn-text page (proved a page by `stripWebsiteWrapper` finding
+    its fence) is read by LINE LENGTH. Where stanzas are NUMBERED,
+    `pickNumberedStanzas` takes 1…n plus a labelled refrain, and
+    `readPageFields` reads the `Title:` / `Author:` / `Copyright:` table below
+    (length alone drafted menus as verses). Models pass their own copies
+    anyway, so a title line, `Tune:`, `from`/`to` markers, a heading block above
+    numbered stanzas and a `copyright` slot are honoured; with no `mode`, plain
+    words are drafted.
+  - Also read: `Key: D · Time: 4/4 · Tempo: 73bpm` (checked against
+    open-lyric's closed sets; an unknown key defaults rather than dropping to
+    tier 2), verse numbers in the hymnal's script (`toAsciiDigits`), `(2x)` and
+    `Repeat Chorus` as PLAY ORDER, and a Latin line under a non-Latin one as
+    its TRANSLATION — an indented line, the only indent `toSafeLyricLine`
+    keeps, safe because every tab is flattened first.
+  - **It reports the area it chose** (first line to last); `from`/`to`
+    override it. 14 of 14 real pages drafted valid. `owa_read_website`'s
+    screenshot is WHOLE-PAGE (capped at 2400px), and its `executeJavaScript`
+    has a timeout — without one a heavy page left hidden windows alive and
+    every later read timed out.
 - **Writing a song from whatever the user has**: `owa_lyric_validate` with
   `mode: "draft"` (2026-09-03, `tools/owa-devtools-mcp/openLyricDraft.mjs`)
-  takes RAW words — a paste, the text of a page `owa_read_website` fetched, a
-  file dropped on the chat window — and writes the notation. A MODE on the
-  existing tool rather than a tool of its own: +61 tokens a round against
-  ~450 for a second registration. **The model may not write this format and
-  the prompt says so**, because measured against the real validator a
-  plausible attempt makes 9 mistakes and a CAREFUL one still makes 2 — `CC`
-  where `Cx2` is required, and free text inside `Instrumental`, which takes
-  chords only. Both are invisible from the outside, so no amount of prompt
-  text fixes them. **A song PAGE goes in as `url`, never as text the model
-  copied** (2026-09-09): told twice — prompt and tool description — to hand a
-  page over whole, Sonnet 5 read it with `owa_read_website`, retyped the words
-  itself (every fragment rejoined correctly, the artist transliterated) and
-  passed its own copy, and a Khmer chord page landed in the user's file with
-  not one of its 36 chords; no drafter can put back what the model deleted.
-  Given a `url` the tool reads the page ITSELF through the same expression
-  and locked-down window as `owa_read_website`, and the firewall counts the
-  call as a network call on the ARGUMENTS (`checkIsNetworkCall` — address
-  check, the ten-reads budget and the banner naming the site, none of which a
-  draft from a paste pays). Re-asked: one tool call, two rounds, 36 chords.
-  The result must still START with the drafter's own first line — the window
-  keys on it to lift the song out and draw the Create button, and a "Read
-  …" prefix cost the user that button on the first try. Two things the whole
-  page then showed: a chord site's toolbar (`Add to`, `Edit`, `Print`,
-  `Transpose`) is a line of words per button with no wall between it and
-  the first chord, and was drafted as Verse 1 — the `Key: G · Time: 4/4`
-  strip the page prints over its chord sheet is now the boundary
-  (`cutAboveMetadataStrip`) and short chordless rows above the first chorded
-  row are swept as furniture and NAMED (`takeLeadingFurniture`, the mirror of
-  the credit sweep); and the footer's `© 2026 <the site's own name>` had
-  become a decades-old hymn's Copyright — a notice naming the site the page came from is the
-  site's own and is skipped on both paths (`checkIsSiteNotice`).
-  Everything emitted is round-tripped through
-  `validateOpenLyric` before it is returned, so a drift cannot quietly produce
-  a broken song, only a report saying it is broken; when tier 1 is refused for
-  any reason tier 2 rebuilds every part as `Breakdown`, the fence open-lyric
-  does not look inside. `[Instrumental]` is RECOGNISED as a label and sent to
-  `Breakdown` — leaving it out of the label map does not keep it away from
-  that fence, it stops the line being read as a label at all and the word
-  becomes a lyric somebody sings. The trap nothing else here guards is that
-  **an indented line is the TRANSLATION of the line above it**: a hymn scrape
-  is full of leading whitespace, it stays valid, and no validator would ever
-  catch it. In the chatbot the draft never reaches the answer as text —
-  `applyToolWatch` lifts it out of the tool RESULT and mints two buttons
-  (`lyricDraftHelpers.ts`, pseudo-tools the server does not register, exactly
-  like the Report send): **Create "<title>"**, which finds a free name and
-  goes through `owa_lyric_file` so the whole hardened path applies, and
-  **Copy song text**. It IS shown, though: `RenderLyricPreviewComp` draws the
-  document in a read-only box above those buttons, off the same in-memory
-  reference they use — keeping the notation out of the ANSWER had also kept it
-  out of sight, so the one thing the user is being asked to approve was the one
-  thing they could not look at. Nothing new is persisted by it, so a window
-  reopened since draws no box rather than an empty song. **Those two buttons
-  are the ONLY thing to press under a draft** (2026-09-08): a model's own
-  `OPTIONS:` pills — *Create the file*, *Copy the text* — are drawn brighter
-  than the real buttons, and pressing one sends the words to a model that
-  retypes the notation by hand, fails the validator twice, hits the taken
-  name and offers to *Overwrite the old one*; `checkIsDraftEcho` drops them
-  beside those buttons, and no corpus follow-ups are offered under a draft.
-  **The offline bot drafts a lyric paste itself** (`checkIsLyricPaste` →
-  `answerLyricPaste` in `helpBotHelpers.ts`, same two buttons): on Kimi's
-  FREE tier a paste that follows the chip's own two rounds is a 429, and the
-  manual was being searched for sixteen lines of Amazing Grace. And a create
-  under a taken name is refused WITH the free name (`findFreeName` in the
-  worker), because *use "update"* first had a model offering to overwrite.
-  A created song answers with two chips: **Show it in the
-  list**, a `SHOWS:`-style control ref scoped `Document List > <name>` that
-  RINGS the new row in the window behind at press time, and the file itself,
-  which opens its folder. Fixing that exposed a chip tooltip which had promised
-  *press to open its folder* for every named-control chip the assistant has
-  ever offered. The document rides a bounded in-memory map, never the session
-  file. **A song the MODEL created itself gets those same two chips and no
-  Create** (2026-09-10, `EC-161`): asked *Create a lyric file from
-  <address>*, Sonnet 5 drafted and created in one breath and the window still
-  offered **Create "…"** under *Done!* — a second file per press;
-  `applyToolWatch` reads a successful create off its RESULT (`createdLyric`)
-  and the answer carries the row and the file instead. **And a site's bot
-  check is refused, never drafted** (`EC-162`): a hymnal's third read in a row
-  was its *checking your browser…* page, short lines of words that passed
-  every test and became a valid song called "Untitled" with a Create button;
-  `checkIsBrowserCheckPage` (a page, ≤ 1 500 characters, the words a challenge
-  prints) answers `BROWSER_CHECK_TEXT` before anything is drafted, and the
-  offline bot and `/lyric` say which site answered a browser check.
+  writes the notation from RAW words (a paste, a fetched page, a dropped file).
+  A mode, not a tool: +61 tokens a round against ~450. **The model may not
+  write Open Lyric, and the prompt says so** — even a careful attempt fails
+  invisibly (`CC` where `Cx2` is required, free text inside `Instrumental`).
+  - **A song PAGE goes in as `url`**, never as text the model copied (Sonnet 5
+    retyped a Khmer chord page and lost all 36 chords). The tool reads the page
+    itself through `owa_read_website`'s expression and locked-down window, and
+    the firewall counts it as a network call on the ARGUMENTS
+    (`checkIsNetworkCall`: address check, the ten-reads budget, the banner).
+    The result must START with the drafter's own first line — the window keys
+    on it to lift the song out and draw Create.
+  - `cutAboveMetadataStrip` makes the `Key: · Time:` strip a boundary;
+    `takeLeadingFurniture` sweeps and NAMES short chordless toolbar rows above
+    the first chorded row; `checkIsSiteNotice` skips a `©` naming the site
+    itself. Output is round-tripped through `validateOpenLyric`, so drift
+    yields a report, never a broken song; if tier 1 is refused, tier 2 rebuilds
+    every part as `Breakdown`. `[Instrumental]` IS a label (sent to
+    `Breakdown`), or the word becomes a sung lyric. **An indented line is the
+    TRANSLATION of the line above** — scraped whitespace stays valid, and no
+    validator catches it.
+  - In the chatbot the draft never reaches the answer text: `applyToolWatch`
+    lifts it from the RESULT into **Create "<title>"** (a free name, through
+    `owa_lyric_file`) and **Copy song text** (`lyricDraftHelpers.ts`,
+    pseudo-tools the server never registers), with `RenderLyricPreviewComp`
+    drawing it read-only above them from the same bounded in-memory map
+    (nothing persisted; a reopened window draws no box). Those are the ONLY
+    presses under a draft: `checkIsDraftEcho` drops model `OPTIONS:` echoing
+    them, and no corpus follow-ups show. The offline bot drafts a paste itself
+    (`checkIsLyricPaste` → `answerLyricPaste` in `helpBotHelpers.ts`). A create under a taken name is
+    refused WITH the free name (`findFreeName`). A created song gets **Show it
+    in the list** (a `Document List > <name>` control ref rung at press time)
+    and the file chip; a song the MODEL already created gets those and no
+    Create (`EC-161`, `createdLyric`). A site's bot check is refused, never
+    drafted (`EC-162`, `checkIsBrowserCheckPage`: a page ≤1 500 characters with
+    challenge words → `BROWSER_CHECK_TEXT`).
 - **Checking a song**: `owa_lyric_validate`
   (`tools/owa-devtools-mcp/openLyric.mjs`) takes song text and answers with
   every mistake — line, section, and what to write instead — then what the song
@@ -882,112 +882,94 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   PARTIAL and accuses nothing of being unplayed: past the broken token, unread
   is not the same as unplayed.
 - **The AI Chat window is a company's site in a box, not the assistant**
-  (2026-09-11, `html/aichat.html` → `src/aichat/*`, `electron/aiChatGuestHelpers.ts`;
-  asked for by the user with a picture of Firefox's AI sidebar — *like
-  firefox, I want an ai chat panel … just open webpage from ai company
-  directly*, *another icon right next to the chatbot icon*, *tabs for each
-  session like what having in chatbot*). ChatGPT, Claude, Gemini, DeepSeek,
-  Kimi, Grok, Mistral, Perplexity, Qwen and Copilot (`AI_CHAT_PROVIDER_LIST`,
-  one row each — adding a site is adding a row), opened by the ✨ button RIGHT
-  of the 🤖 on the three headers, Help → AI Chat and Tools → AI Chat, through
-  the same popup features as the chatbot (460×640, glassy, right/centre,
-  bounds remembered under `aichat.html`). **Not gated on the AI switch**
-  (decided with the user): no key, no MCP, no CDP door, so the switch has
-  nothing to turn off. The site loads in a `<webview>` guest —
-  `webviewTag: true` is handed out by `genPopupWebPreferences` to that ONE
-  page by its bounds key, never by a feature the opener could ask for — on the
-  persistent `persist:aichat` session (a sign-in survives a restart, which is
-  the point), and `initAiChatGuestGuard` is what keeps the guest a stranger:
-  `will-attach-webview` on every WebContents forces no preload / no node /
-  context isolation / sandbox and REFUSES any other partition or a non-https
-  `src`; the guest may navigate to http(s) only; its `window.open` goes to
-  `shell.openExternal` and is denied (`handlePopupWindowOpen` hands out
-  `nodeIntegration: true`, and nothing loaded there may reach it); the session
-  grants only `clipboard-sanitized-write`; downloads keep Electron's Save
-  dialog because a PERSON is driving. **And the box has a FIFTH wall: the
-  machine it is standing on** (2026-09-12). The other four keep the site out
-  of the APP and none of them touches the fact that the site runs on a
-  machine whose loopback carries this app's own two doors. Measured from
-  inside a live guest on claude.ai BEFORE it existed: a cors-mode READ of the
-  CDP door was refused by CORS, a POST to the MCP door by `host.mjs`'s own
-  `checkIsAllowedOrigin`, and a CDP WebSocket closed 1006 on Chromium's
-  `--remote-allow-origins` rule -- but a **`no-cors` fetch at BOTH doors went
-  out and was served**, which is all a state-changing call needs, and the same
-  request reaches the church's router, NAS and printers. So
-  `guardGuestSessionRequests` puts `onBeforeRequest` on the guest session and
-  cancels every host `checkIsLocalHostname` calls local or private -- that
-  predicate ADDED to `tools/owa-devtools-mcp/webUrlPolicy.mjs` and now the one
-  implementation `checkWebUrl` uses, so there is no second dialect to get
-  `127.1` wrong in. The filter is `*://*/*` and deliberately NOT a pattern
-  list: Chromium's match patterns carry no address range, so `127.0.0.2` --
-  loopback, and not `127.0.0.1` -- would walk straight through one; the cost
-  is a chat site's requests routed through the main process, and Electron
-  keeps ONE `onBeforeRequest` per session, so anything registered on this
-  partition later REPLACES the wall rather than joining it. Measured after:
-  both doors, `127.1`, `2130706433`, `0x7f.1`, `127.0.0.2`, `[::1]`,
-  `192.168.1.1`, `169.254.169.254` and `printer` refused, **and the site's own
-  origin still 200** -- that last one is a check in the probe, because a wall
-  that blocks the site is a brick. A public NAME resolving to a local address
-  (`localtest.me`) is not caught, deliberately: it needs a DNS pass per
-  request and a TOCTOU race anyway, and it does not reach this app's doors,
-  which both refuse a foreign Origin (`AC-10`). `ws:`/`wss:` sit outside a
-  `*://` pattern and stay Chromium's business (`AC-11`). **And the partition
-  can be emptied**: it is a credential store on disk holding a sign-in for
-  every site the machine's users have opened, and closing every tab never
-  touched it -- the tabs are a setting file, the sign-in a Chromium profile
-  beside it. `clearAiChatGuestData` (`clearStorageData` + `clearCache` +
-  `clearAuthCache`) behind `main:app:clear-ai-chat-data` is offered as
-  **Sign out of every site**: the **↤** in the head row AND a line in words on
-  the chooser card, because neither alone reaches it -- a window with all
-  eight tabs on a site cannot open the card. It ASKS, on the tab strip's own
-  amber `role="alertdialog"` line with *Keep me signed in* autofocused, and a
-  yes clears each tab's `lastUrl` and its site-given `pageTitle` -- the
-  previous person's conversation titles, sitting in a settings file -- while
-  keeping a name the user typed, then remounts every guest through a
-  window-local epoch in the React key, or a page already loaded goes on
-  showing a conversation whose cookie has just been thrown away.
-  **The user agent is Electron's own, and
-  `navigator.webdriver` is switched off** (2026-09-11, reported with a
-  picture of claude.ai's *Verify you are human* box that never passed): the
-  first cut rewrote the guest's user agent to plain Chrome so Google would
-  not refuse a sign-in, and measured on browserscan.net from inside the guest
-  the browser read *Robot* -- `navigator.webdriver` was `true` (fixed with
-  `--disable-blink-features=AutomationControlled` in `electron/index.ts`;
-  nothing in the app reads the flag) -- and with that cleared Cloudflare STILL
-  looped, because a user agent claiming Google Chrome from a browser whose
-  every other trait says Chromium is the mismatch a bot check scores on. With
-  the honest user agent claude.ai opened straight to its sign-in page and
-  accounts.google.com showed its ordinary email prompt. If Google ever does
-  refuse a sign-in, rewrite the `User-Agent` HEADER for its sign-in hosts in
-  `webRequest.onBeforeSendHeaders`, never what the page's script can read. The host page is on `LOCKED_DOWN_PATH_NAMES` beside the chatbot.
-  The tabs are the chatbot's strip, EXTRACTED to `RenderSessionTabsComp`
-  (generic over `{id, isLocked}` plus `genTitle` / `canAdd` / `canClearAll`)
-  with the tokens, the glass variants and the tab rules in
-  `chatWindowShared.scss`, so the two windows cannot drift apart;
-  `aichat-sessions` keeps 8 tabs of `{providerKey, title, pageTitle, lastUrl,
-  isLocked, lastUsedAt}`, `lastUrl` only an https page on the site's own
-  hosts (`toKeptUrl`), never a sign-in page. **Three live guests at most**
-  (`toLiveSessionIds`: the active tab + the 2 most recently used; the rest
-  unmount and reload their last page on return — every loaded site is a
-  renderer process, and the target machines cannot hold eight); a hidden
-  guest is `visibility: hidden`, never `display: none`, which re-attaches it.
-  `src` is fixed per mount and a site change is a new React key.
-  `allowpopups` must reach the element as the STRING `""` — React drops a
-  boolean on an attribute it does not know (`GUEST_POPUP_ATTRIBUTES`) — and
-  React's own types already declare `webview`, so `IntrinsicElements` is not
-  augmented for it. The guest is NOT a `list_pages` target, and the host page
-  is a locked-down window the `owa_*` tools refuse exactly as they refuse the
-  chatbot's: chrome-devtools' `take_snapshot` / `click` / `take_screenshot`
-  by page id drive the host (tabs, chooser, head row) and nothing drives the
-  site inside, so sign-in checks are by hand. A first visit to claude.ai
-  lands on Cloudflare's *Verify you are human* box, which the person ticks.
-  W-44 in the manual, CB-68 in the matrix.
+  (2026-09-11, `html/aichat.html` → `src/aichat/*`,
+  `electron/aiChatGuestHelpers.ts`; the user's ask, modelled on Firefox's AI
+  sidebar). Sites are `AI_CHAT_PROVIDER_LIST` rows (ChatGPT, Claude, Gemini,
+  DeepSeek, Kimi, Grok, Mistral, Perplexity, Qwen, Copilot — adding a site is
+  adding a row), opened by the ✨ RIGHT of the 🤖 on the three headers, Help →
+  AI Chat and Tools → AI Chat, with the chatbot's popup features (460×640,
+  glassy, bounds under `aichat.html`). **Not gated on the AI switch** (decided
+  with the user): there is no key, MCP or CDP door to turn off. W-44, CB-68.
+  - **The guest stays a stranger.** A `<webview>` (`webviewTag: true` from
+    `genPopupWebPreferences` for that ONE page by its bounds key, never by an
+    opener's feature) on the persistent `persist:aichat` session.
+    `initAiChatGuestGuard`: `will-attach-webview` forces no preload / no node /
+    context isolation / sandbox and REFUSES another partition or a non-https
+    `src`; navigation is http(s) only; `window.open` is denied and sent to
+    `shell.openExternal` (`handlePopupWindowOpen` hands out
+    `nodeIntegration: true`) ONLY within 5 s of a real press in that page, one
+    page per press (`AC-15`, `decideGuestWindowOpen`; the press is the guest's
+    `input-event`, read in main). `allowpopups` disables Electron's blocker, and
+    a page timer once opened the system browser unprompted. A refusal is said
+    on the window's `role="status"` line (`RenderAiChatPopupNoticeComp`, front
+    tab only, ≤1 per 5 s), which opens nothing. Downloads keep Electron's Save
+    dialog because a person is driving.
+  - **Permissions**: only `clipboard-sanitized-write`; the microphone is ASKED
+    (`AC-13`). An audio-only request from a site's own https top page goes to
+    the window (`askAiChatMicrophone` → `app:ai-chat:microphone-ask`), refused
+    silently unless it came from the FRONT tab on its own site, else asked on
+    the amber line with *Don't allow* focused. A yes is per origin, in memory,
+    until quit or Sign out, and only the window asked may answer. The CHECK
+    handler says yes for that page (Electron has no "ask" state, and a site
+    reading denied never asks); the cost is that `enumerateDevices` names the
+    microphones. The camera stays refused.
+  - **The fifth wall is the machine itself** (2026-09-12). Before it, a
+    `no-cors` fetch from a claude.ai guest was served by BOTH loopback doors —
+    CORS, `checkIsAllowedOrigin` and `--remote-allow-origins` stop reads, POSTs
+    and WebSockets, not that — and the same request reaches the church's
+    router, NAS and printers. `guardGuestSessionRequests` puts
+    `onBeforeRequest` on the guest session and cancels any host that
+    `checkIsLocalHostname` (in `webUrlPolicy.mjs`, the one implementation
+    `checkWebUrl` also uses) calls local or private. The filter
+    `GUEST_REQUEST_URL_PATTERNS` is `*://*/*`, `ws://*/*`, `wss://*/*` — never
+    address patterns (they carry no range; `127.0.0.2` walks through), and
+    `*://` is http(s) only, so ws/wss need their own (`AC-11`); never
+    `<all_urls>` (`data:`/`blob:` have an empty host that counts as local).
+    Electron keeps ONE `onBeforeRequest` per session, so registering another
+    on this partition REPLACES the wall. The probe also checks the site's own
+    origin still answers 200. A public name resolving to a local address
+    (`localtest.me`) is not caught, deliberately: a DNS pass per request is a
+    TOCTOU race anyway, and both doors refuse a foreign Origin (`AC-10`).
+  - **Sign out of every site**: the partition is an on-disk credential store
+    that closing tabs never touches. `clearAiChatGuestData`
+    (`clearStorageData` + `clearCache` + `clearAuthCache`, via
+    `main:app:clear-ai-chat-data`) is the **↤** in the head row AND a line on
+    the chooser card (a window with every tab on a site cannot open the card).
+    It asks on the strip's amber `role="alertdialog"` line with *Keep me signed
+    in* focused; a yes clears each tab's `lastUrl` and site-given `pageTitle`,
+    keeps a name the user typed, and remounts every guest through a
+    window-local epoch in the React key.
+  - **The browser tells the truth**: Electron's own user agent, and
+    `--disable-blink-features=AutomationControlled` (`electron/index.ts`)
+    switches `navigator.webdriver` off. A plain-Chrome user agent plus
+    `webdriver: true` read as *Robot* and looped Cloudflare on claude.ai; a
+    Chrome user agent on a browser with Chromium traits is the mismatch a bot
+    check scores. If Google ever refuses a sign-in, rewrite the `User-Agent`
+    HEADER for its sign-in hosts in `onBeforeSendHeaders`, never what page
+    script reads. A first claude.ai visit shows *Verify you are human*, which
+    the person ticks.
+  - **Tabs**: the chatbot's strip EXTRACTED to `RenderSessionTabsComp`
+    (generic over `{id, isLocked}` plus `genTitle` / `canAdd` /
+    `canClearAll`), shared rules in `chatWindowShared.scss`.
+    `aichat-sessions` keeps 8 tabs of `{providerKey, title, pageTitle, lastUrl,
+    isLocked, lastUsedAt}`; `lastUrl` is only an https page on the site's own
+    hosts (`toKeptUrl`), never a sign-in page. **Three live guests at most**
+    (`toLiveSessionIds`: active + 2 most recent; the rest unmount and reload
+    later — each site is a renderer process). Hide with `visibility: hidden`,
+    never `display: none` (it re-attaches). `src` is fixed per mount; a site
+    change is a new React key. `allowpopups` must be the STRING `""`
+    (`GUEST_POPUP_ATTRIBUTES`; React drops a boolean on an unknown attribute),
+    and React already types `webview`. The host page is on
+    `LOCKED_DOWN_PATH_NAMES`; the guest is not a `list_pages` target and the
+    `owa_*` tools refuse the host, so chrome-devtools tools by page id drive
+    only the host chrome and sign-in checks are by hand.
 - **Two things every window carries**: `AppWindowToolsComp`
   (`src/others/`) mounts `PresentingControlComp` and `AppAssistantComp` on all
   nine renderer entries — presenter, reader, appDocumentEditor, bibleNote,
   setting, webEditor, lwShare, lyricEditor, experiment — and deliberately NOT on
-  `about`, `chatbot`, `finder` or `screen` (an overlay or a help window on the
-  projector is the one place they must never appear). Both draw nothing until
+  `about`, `chatbot`, `finder`, `markdownPreview` or `screen` (an overlay or a
+  help window on the projector is the one place they must never appear; the
+  markdown preview is a locked-down reader that never calls `run()`). Both draw nothing until
   asked for, so mounting them everywhere costs a menu registration.
   Only three windows have a top bar to hold the 🤖 button, so the way in
   everywhere is `Tools → Start Controlling` / `Ctrl+Shift+P` and
@@ -1040,167 +1022,115 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   is put into words, and the reason goes to the log. It used to be printed at
   them, naming page files and the list of open windows.
 - **Chatbot**: `html/chatbot.html` → `src/chatbot/*`, opened by the **🤖**
-  toolbar button (`ChatbotButtonComp`, left of Help on the presenter, the slide
-  editor and the reader — the only windows with a top bar — and it STAYS
-  when the master switch is off: the switch is read at the PRESS, which then
-  says what is off and offers Settings → Others rather than opening the
-  window, because a button that vanished with the switch left a volunteer
-  nothing to press and nothing saying why. `AppAssistantComp`'s Tools entry
-  still withdraws — a menu item cannot explain itself), by Help →
-  *App Help (Chatbot)*, or from anywhere by
-  `AppAssistantComp` (above). It
-  talks to the MCP host over HTTP (the port comes from
-  `main:app:get-ai-endpoints`), and answers from the manual, from live app
-  state, and by outlining the real control in the window. Each question goes
-  back with the tab's own recent turns behind it (`toHistoryTurns`: 6 turns,
-  clipped, 2400 chars, oldest dropped first) — bounded because the history
-  rides EVERY round of the tool loop, and clipped at BOTH ends because an
-  answer's last line is the offer a "yes" is answering. It holds several
-  conversations at once — a **tab strip** above the head row, persisted whole to
-  `local-storage/chatbot-sessions` (`src/chatbot/chatSessionHelpers.ts`, capped
-  at 12 tabs × 60 messages, debounced save + `beforeunload` flush). Each tab
-  carries a `⋮` (right-clicking the tab does the same) opening its own menu:
-  rename, **lock**, close, *Close other chats…*, *Clear all chats…*. The last
-  two take more than one conversation, so they are confirmed on a line under
-  the strip and `saveChatSessions` on the spot instead of on the debounce; a
-  LOCKED tab (`isLocked`) has no `×`, is refused by `handleClosingSession`,
-  and is what both of them step around. The
-  ENTIRE head row belongs to the tab in front, not to the window, and it is
-  three `<select>`s: the *asking about* one (eight windows from
-  `BOT_FOCUS_LIST`, following the opener window until the user picks one), the
-  assistant one, and the model picker. The
-  first two were segmented button pairs until 2026-09-01 — six uppercase words
-  spent most of a 460px window on two either/or choices and ellipsised the
-  model name, and a third provider would not have fitted at all. A provider
-  with no key is a disabled `<option>` reading `<name> — needs an API key`,
-  in the option TEXT: Windows draws no tooltip over an OS-drawn list row. Their
-  `aria-label`s must stay distinct (`Which part of the app` / `Which assistant
-  answers` / `Which model answers`) — the last two used to share one string,
-  which was survivable only while one of them was a `<div>`;
-  `extra-work/verify-chatbot-e2e.mjs` finds all three by that label.
-  The provider and model settings (`chatbot-llm-provider`,
-  `chatbot-llm-model-<provider>`) are now only what a NEW tab starts on. The
-  picker lists three models per provider with speed and list price on the hover
-  and a *More models…* that asks the account's own `models.list`; a
-  non-reasoning OpenAI model is sent no `reasoning_effort`.
-  **Four providers since 2026-09-01**: Claude, ChatGPT, **Kimi**
-  (Moonshot) and **Free**. Kimi speaks OpenAI's protocol, so one loop serves
-  all three of the OpenAI-shaped ones — a small
-  descriptor per provider (`OpenAiCompatProviderType`: client, label,
-  `genRequestExtra`, an optional chat-model filter, an optional round cap) is
-  all that differs, and
-  `src/helper/ai/kimiHelpers.ts` is the OpenAI SDK pointed at
-  `https://api.moonshot.ai/v1`. Its budget rule is NOT OpenAI's: every Kimi
-  model offered thinks before it answers, so all of them get the 6000-token
-  budget, while `reasoning_effort` goes only to `kimi-k3` — the K2 family
-  rejects the parameter and takes a `thinking` object instead. Its catalogue
-  needs no filter (Moonshot lists chat models only); reusing OpenAI's pattern
-  there would silently return nothing. **The provider set is declared ONCE**,
-  in `LLM_PROVIDER_MAP`, with `Record<LlmProviderType, …>` lookups for the ask
-  and list-models paths and a `keyField` naming its credential — three two-way
-  ternaries used to decide that, and each sent an unrecognised provider to
-  OpenAI without a word. `chatSessionHelpers` keeps its own
-  `Record<LlmProviderType, true>` so a saved tab's provider survives a reload
-  without dragging the SDKs into that module.
-  **The fourth needs no key at all** (`src/helper/ai/freeHelpers.ts`): `Free` is
-  one public service, Kilo Code (`api.kilo.ai`), and three of its `:free`
-  models, each driven through the real tool loop before it was listed (a test
-  holds every id to `:free`: an unsuffixed Kilo id is paid and refuses an
-  anonymous request). LLM7, the default until 2026-09-12, went paid under it —
-  `gpt-oss` answered `model_unavailable` and every keyless question fell to the
-  offline guide — and the routers `kilo-auto/free` / `openrouter/free` are left
-  out on purpose (4/7, and a raw `<tool_call>` for an answer). **A saved name
-  outlives the list**: every tab and the new-tab setting went on posting
-  `gpt-oss`, so `toUsableLlmModel` puts a keyless name the list no longer
-  carries back on the first choice — at `getLlmModel`, at window load and in
-  `askLlmBot` — and leaves a keyed provider's off-list name (one picked under
-  *More models…*) alone. Its `keyField` is UNSET, and that is the whole mechanism: unset means
-  always available, and the map's order puts it LAST, so any real key still
-  outranks it while a fresh install lands on it automatically. Only one free
-  model can see a picture (`stepfun/step-3.7-flash:free`), and *More
-  models…* is hidden for it — the host answers with a catalogue that is mostly
-  paid and mostly toolless, so the row would offer a model that cannot do the
-  job. It carries a `warning` no other provider has, drawn STICKY at the top of
-  the log (a notice scrolled past has stopped warning anybody) and repeated in
-  Settings while no key is set: the questions and attachments leave the machine
-  and may be kept. It also carries `warningLinks`, built off `FREE_SERVICE_MAP`
-  so the two disclosures cannot come to name different companies — these are the
-  only providers the user has no account with and agreed nothing to, so the
-  window opens each one's own site rather than asking them to accept a stranger
-  on the app's word. In Settings those links must NOT reuse
-  `RenderOpenPageButtonComp`: it puts its label and title through `tran()`,
-  which THROWS on a missing key in dev, and a company name and a URL are not
-  translatable strings. The notice folds itself after ~9s to its own first
-  sentence (which still names the service) and a fold by hand sticks. **The app's own tool host failing is not the provider failing**: `mcpClient.ts` throws a `ToolHostError` with a sentence for the volunteer and its status in `hostStatus` — NOT `status`, which `readLlmIssue` reads as a provider 5xx and would hand to another key — and the window says that sentence instead of *"<provider> could not answer"* (a host 500 was printed as a bare status code on the day Free was broken for its own reason, and the two could not be told apart). Free models are not merely weaker but differently BROKEN, and
-  three guards in the loop exist only for them: `toCleanToolName` cuts a harmony
-  `<|channel|>` marker a gateway leaked INTO the function name, a
-  `maxToolRounds` of 6 stops one question costing ~79k tokens for no answer at
-  all, and a 429 arriving mid-loop buys ONE tools-less salvage round instead of
-  discarding every tool result already gathered. `checkIsReadableReply` in
-  `quickReplyHelpers` drops an option with no Latin letter in it — a weak model
-  keeps "answer in English" in the prose and loses it in the `OPTIONS:` line —
-  while keeping one that merely names a translated button. Every answer has
-  **Copy** and every question **Ask again**, and **every answer ends with a row
-  of things the user can PRESS instead of typing** — the model writes them on an
-  `OPTIONS:` line that `parseAnswerOptions` (`src/chatbot/quickReplyHelpers.ts`)
-  strips off whether or not it parsed, and whether it sits on its own line or
-  inline at the end of the last sentence; when the model writes none the window
-  reads the answer's own trailing yes/no or either-or question, and failing that
-  offers the nearest questions from the corpus (`genFollowUpQuestions`). Only
-  the LAST message shows them — a stale one-press "Yes" would be answering the
-  wrong question — they never duplicate an action button, and the two rows
-  together are capped at 5. The **walkthrough** buttons beside them
-  (`genGuideActions`) walk the recipe the model actually SETTLED on, which is
-  not the same as the one it first searched for: `applyToolWatch` prefers the
-  page it opened with `owa_help_page` (last one wins), lets a later search
-  overwrite an earlier one, and offers nothing at all once the model has
-  started its own card. Latching the first search's top hit is what put an
-  eight-step walkthrough of the keyboard screencast under a correct answer
-  about the mini screen — `runBotAction` starts the guide with those args
-  before the model is asked anything, so a stale id is pressed, not reviewed.
-  **An answer on its way can be STOPPED** — the Ask
-  button becomes Stop while it is coming, Escape does the same (ignored while
-  the caret is in a field), and both mean the request is ABORTED, not ignored:
-  one `AbortSignal` per ask (`src/chatbot/cancelHelpers.ts`) runs through
-  `askLlmBot` into both providers' request options and into every `callTool`
-  fetch, and the round loop checks it before buying another round. A stop is
-  said in the transcript AT THE PRESS, not when the dropped call gets round to
-  rejecting, and it must never be dressed as a failure: `describeLlmError`
-  reads an abort as an unreachable service, and falling through to the offline
-  bot would answer a question the user just called off. The busy flag is the
-  pending list's length, because two asks can overlap (a stuck guide card asks
-  while the user's own question runs) and the first one home used to take the
-  other's spinner with it. What it does NOT undo is a tool that already
-  clicked something. With no key at all the window says
-  so and offers a button that opens Settings → Others. It falls back to the
-  offline manual bot when a call fails, and is written for a non-technical
-  volunteer and English-only: no ids, no paths, manual pages only, and
-  `owa_guide_*` can walk them through a task with a numbered card drawn in the
-  app window itself. **A step the card cannot press asks the model instead of
-  apologising**: `owa-guide-help` (card) → `all:app:guide-help` (`domHelpers`)
-  → `askGuideHelp` (main) → the chat window, which asks with the live app in
-  front of it and sends one line back the same way onto the CARD — the chat
-  window is minimised for the length of a walkthrough and restoring it would
-  cover the control being pointed at. 68 of the manual's 251 steps used to end
-  there. Once per step per run, bounded by a 30s wait, and `unavailable` (the
-  old plain instruction) when nothing is listening. The model is held to
-  `DO: <instruction>` and the code parses it out — told merely not to narrate,
-  a small model still opened 3 answers in 4 with "I can see the verse ...".
-  `owa_guide_status` reports it as `help`. **Starting a walkthrough minimises the chatbot window and
-  closing the card restores it** — the card dodges its own ring, but this
-  window is a separate OS one on top of the app and hides whatever it covers.
-  The runtime cannot reach the main process (an injected expression may not
-  import an app module), so it fires an `owa-guide-running` DOM event that
-  `src/helper/domHelpers.ts` relays as `all:app:guide-running` to
-  `setGuideRunning` in `electron/electronHelpers.ts`. That only acts on a
-  window actually OVER the guided one, and only ever undoes its own doing.
-  **On macOS the window leaves its parent first** (2026-09-12, `EC-180`): it
-  is an `appTopToMain` CHILD, AppKit cannot miniaturise a child on its own
-  (electron#26031, #39578), and `minimize()` sent the presenter and every
-  popup on it into the Dock while the chatbot stayed up — so the `restore()`
-  did nothing. `detachFromParentWhileMinimised` calls `setParentWindow(null)`
-  first and rejoins on the window's own `restore` EVENT, not after our
-  `restore()` call: Electron attaches only a VISIBLE window to its parent.
+  (`ChatbotButtonComp`, left of Help on the presenter, slide editor and reader
+  — the only windows with a top bar), Help → *App Help (Chatbot)*, or
+  `AppAssistantComp` (above). The 🤖 STAYS when the master switch is off: the
+  press reads the switch and offers Settings → Others, because a vanished
+  button explains nothing; the Tools entry withdraws (a menu item cannot
+  explain itself). It talks to the MCP host over HTTP (port from
+  `main:app:get-ai-endpoints`) and answers from the manual, live app state, and
+  by outlining the real control. Each question carries the tab's recent turns
+  (`toHistoryTurns`: 6 turns, 2400 chars, oldest dropped, clipped at BOTH ends
+  because an answer's last line is the offer a "yes" answers), bounded because
+  history rides EVERY round of the loop.
+  - **Tabs** persist whole to `local-storage/chatbot-sessions`
+    (`chatSessionHelpers.ts`, 12 tabs × 60 messages, debounced save +
+    `beforeunload` flush). `⋮` or right-click: rename, **lock**, close, *Close
+    other chats…*, *Clear all chats…* — the last two confirm on a line under
+    the strip and `saveChatSessions` at once; a LOCKED tab (`isLocked`) has no
+    `×`, is refused by `handleClosingSession`, and both step around it.
+  - **The head row belongs to the tab in front**: three `<select>`s — *asking
+    about* (`BOT_FOCUS_LIST`, following the opener window until picked), the
+    assistant, the model. Their `aria-label`s must stay distinct (`Which part of the app` / `Which assistant answers` / `Which model answers`) —
+    `extra-work/verify-chatbot-e2e.mjs` finds them by label. A keyless
+    provider's option TEXT reads `<name> — needs an API key` (Windows draws no
+    tooltip on an OS list row) and is PICKABLE (`data-needs-key`, NOT
+    `disabled`): picking it keeps the tab's provider and opens Settings →
+    Others with the cursor in that key box. The request crosses windows as a
+    30-second setting (`src/helper/ai/aiKeyFocusHelpers.ts`), NEVER a URL
+    parameter — Settings is found again by URL (`getPopupWindowData`), so a
+    parameter opens a duplicate; it is read on mount and on focus via
+    `getSettingForce`. An arrow on the closed list steps over the row. Keys are
+    re-read on window focus, and **Open AI settings** under a refused key lands
+    on its box too. `chatbot-llm-provider` / `chatbot-llm-model-<provider>`
+    only seed a NEW tab. Three models per provider (speed + list price on
+    hover) plus *More models…* (the account's `models.list`); a non-reasoning
+    OpenAI model gets no `reasoning_effort`.
+  - **Providers are declared ONCE, in `LLM_PROVIDER_MAP`**
+    (`Record<LlmProviderType, …>` lookups and a `keyField`; ternaries once sent
+    an unknown provider to OpenAI silently): Claude, ChatGPT, **Kimi**,
+    **Free**. The three OpenAI-shaped ones share one loop through
+    `OpenAiCompatProviderType` (client, label, `genRequestExtra`, optional model
+    filter, optional round cap). `kimiHelpers.ts` is the OpenAI SDK at
+    `https://api.moonshot.ai/v1`; every Kimi model thinks, so all get the
+    6000-token budget, `reasoning_effort` goes only to `kimi-k3` (K2 rejects it
+    and takes `thinking`), and its catalogue gets no filter (OpenAI's pattern
+    returns nothing). `chatSessionHelpers` keeps its own
+    `Record<LlmProviderType, true>` so it need not import the SDKs.
+  - **Free needs no key** (`src/helper/ai/freeHelpers.ts`): Kilo Code
+    (`api.kilo.ai`), three `:free` models each proven through the real tool
+    loop (a test holds ids to `:free`; an unsuffixed Kilo id is paid and
+    refuses anonymous calls). LLM7 went paid 2026-09-12; `kilo-auto/free` /
+    `openrouter/free` are left out on purpose. `toUsableLlmModel` puts a
+    keyless model name the list no longer carries back on the first choice (at
+    `getLlmModel`, window load, `askLlmBot`) and leaves a keyed provider's
+    off-list pick alone. `keyField` UNSET means always available, and it sits
+    LAST in the map so any real key outranks it. Only
+    `stepfun/step-3.7-flash:free` sees pictures; *More models…* is hidden for
+    it. Its `warning` (words and attachments leave the machine and may be kept)
+    is STICKY atop the log and repeated in Settings while no key is set;
+    `warningLinks` come from `FREE_SERVICE_MAP` so both disclosures name the
+    same company. Settings must NOT draw them with `RenderOpenPageButtonComp`
+    (it `tran()`s label and title, which THROWS in dev). The notice folds to
+    its first sentence after ~9s; a fold by hand sticks.
+  - **The tool host failing is not the provider failing**: `mcpClient.ts`
+    throws `ToolHostError` with a volunteer sentence and `hostStatus` — NOT
+    `status`, which `readLlmIssue` reads as a provider 5xx and hands to another
+    key. Free-model guards: `toCleanToolName` cuts a leaked `<|channel|>`
+    marker out of the function name, `maxToolRounds` 6 (one question once cost
+    ~79k tokens for nothing), and a mid-loop 429 buys ONE tools-less salvage
+    round that keeps the gathered results. `checkIsReadableReply` drops an
+    option with no Latin letter and keeps one naming a translated button.
+  - **Every answer ends with things to PRESS**: **Copy**, **Ask again**, and
+    options from an `OPTIONS:` line that `parseAnswerOptions`
+    (`quickReplyHelpers.ts`) always strips (own line or inline at the end);
+    failing that, the answer's trailing yes/no or either-or question, then the
+    nearest corpus questions (`genFollowUpQuestions`). LAST message only,
+    never duplicating an action button, both rows capped at 5.
+    **Walkthrough** buttons (`genGuideActions`) walk the recipe the model
+    SETTLED on: `applyToolWatch` prefers the last `owa_help_page` opened, lets
+    a later search overwrite an earlier one, and offers nothing once the model
+    started its own card — `runBotAction` presses those args before any model
+    sees them, so a stale first-search id is pressed, not reviewed.
+  - **Stop ABORTS on the wire**: Ask becomes Stop, Escape too (not while the
+    caret is in a field). One `AbortSignal` per ask (`cancelHelpers.ts`) runs
+    through `askLlmBot` into both providers' requests and every `callTool`
+    fetch, and is checked before each round. Say it AT THE PRESS and never as a
+    failure — `describeLlmError` reads an abort as an unreachable service, and
+    the offline bot would answer a question the user called off. Busy is the
+    pending list's length (asks overlap). A tool that already clicked is not
+    undone.
+  - With no key at all the window says so and offers Settings → Others; a
+    failed call falls back to the offline manual bot. Written for a
+    non-technical volunteer, English-only: no ids, no paths, manual pages only;
+    `owa_guide_*` walks a task with a numbered card in the app window.
+  - **A step the card cannot press asks the model**: `owa-guide-help` (card) →
+    `all:app:guide-help` (`domHelpers`) → `askGuideHelp` (main) → the chat
+    window, which answers onto the CARD the same way (it stays minimised during
+    a walkthrough). Once per step per run, 30s wait, `unavailable` when nothing
+    listens. The model is held to `DO: <instruction>`, parsed in code — told
+    only not to narrate, small models still did. `owa_guide_status` reports
+    it as `help`.
+  - **A walkthrough minimises the chatbot window; closing the card restores
+    it.** An injected expression cannot import app modules, so the runtime
+    fires `owa-guide-running`, relayed by `src/helper/domHelpers.ts` as
+    `all:app:guide-running` to `setGuideRunning` (`electron/electronHelpers.ts`),
+    which acts only on a window OVER the guided one and undoes only its own
+    doing. **macOS** (`EC-180`): the window is an `appTopToMain` CHILD, AppKit
+    cannot miniaturise a child alone (electron#26031, #39578), and
+    `minimize()` docked the presenter instead. `detachFromParentWhileMinimised`
+    calls `setParentWindow(null)` first and rejoins on the window's own
+    `restore` EVENT — Electron attaches only a VISIBLE window to its parent.
 - **A question can carry more than words**: a file or an image from the
   paperclip, a paste, a drop, a **📷** picture of the app window, or a
   control the user POINTED at. `src/chatbot/attachmentHelpers.ts` is the one
@@ -1528,53 +1458,33 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   searched for in the manual and answered with how to make an EMPTY file.
   A page with no song, a refused read and a site's bot check each get a
   sentence of their own (`EC-123`).
-- **Report** (`src/chatbot/reportHelpers.ts`) is the one button in that window
-  that is not a question: the app itself is wrong, and the report that would help
-  a maintainer is the part a volunteer standing in a hall cannot write. Two
-  presses, and the first one only ASKS — a warn line quoting back what is about
-  to be reported (with an empty box that is the LAST thing they asked, which
-  nobody would guess from the button), cleared again by another keystroke.
-  Confirmed, it takes a picture of the app BEFORE the investigation starts
-  clicking about it, reads the build, the window, the screens and the console for
-  itself — trimmed, not dumped: `owa_app_state` carries the user's data directory
-  and forty dev-only component names — and only then asks the model to
-  investigate, through `askLlmBot` DIRECTLY rather than `handleAsking`, because
-  an ordinary answer comes back with walkthrough buttons on it and "show me step
-  by step" under a bug report offers to demonstrate the fault. The answer is
-  written in a `REPORT:`/`TITLE:`/`STEPS:` frame parsed off exactly like
-  `OPTIONS:`; no frame at all is not an error, the account stands and the
-  evidence still goes. **Nothing is sent by any of that**: the prepared report
-  waits on its own **Send report** button, held in a bounded in-memory map (the
-  message carries only the reference — the same rule the attachment bytes
-  follow), and a window reopened since says so rather than sending an empty one.
-  There is NO issue tracker endpoint yet; `ISSUE_TRACKER_ENDPOINT` is the seam,
-  and while it is null the window SAYS nothing was sent and saves
-  `OWA-<date>-<id>.md` + `.png` into Downloads with chips that open them. A
-  window that told a volunteer their problem had been filed with someone, when it
-  had not, would be worse than no button. The Send press is caught in
-  `handleActing` by a pseudo tool name (`REPORT_SEND_TOOL_NAME`) that the server
-  does not register at all, so nothing outside this window can file a report in
-  the user's name. **And it says WHO wants it** (2026-09-12, `EC-176`): the
-  address is read off the LIVE help page through the same
-  `main:app:read-web-page` reader `owa_read_website` uses (`findContactEmail`
-  in `src/server/appHelpers.ts`, beside `getHelpPageUrl` — the site is a React
-  shell, so the RENDERED words carry it, and the reader keeps only http(s)
-  links, so the text is parsed), and the package's `author` only when the page
-  cannot be read — the page said `info@openworship.app` while the package said
-  `owf2025@gmail.com` the same day, which is why the page wins. The answer
-  names a `[Open Worship app] <title> (<reference>)` subject and offers
-  **Copy report** / **Copy subject** / **Copy picture** / **Copy email
-  address** / **Email it** (a `mailto:` with the address and subject only; the
-  report goes on the clipboard first, because mail clients cut a body at
-  ~2 000 characters; the picture goes on it as PNG through
-  `copyImageToClipboard`, shared with the preview's Copy, because Chromium's
-  async clipboard takes no other image type) — five more pseudo tools
-  caught in `handleActing`, carrying ONLY the reference: the address is found
-  at the press, never stored on a button, and **Copy report** falls back to the
-  saved file in Downloads by its own name after a reopen. The saved document
-  opens with **How to send this**, says which source the address was, and
-  carries the machine line, the selection and run sheet, each screen's
-  content, the displays and who investigated.
+- **Report** (`src/chatbot/reportHelpers.ts`) is for when the app itself is
+  wrong. Two presses: the first only ASKS, quoting what will be reported (with
+  an empty box, the LAST question asked), cleared by a keystroke. Confirmed, it
+  takes a picture BEFORE investigating, reads the build, window, screens and
+  console itself — trimmed, since `owa_app_state` carries the data directory
+  and dev component names — then asks the model through `askLlmBot` DIRECTLY,
+  not `handleAsking` (which would add "show me step by step" under a bug). The
+  answer is a `REPORT:`/`TITLE:`/`STEPS:` frame parsed like `OPTIONS:`; no
+  frame is not an error. **Nothing is sent by that**: the report waits on
+  **Send report**, held in a bounded in-memory map (the message stores only
+  the reference). No tracker exists yet — `ISSUE_TRACKER_ENDPOINT` is the
+  seam; while it is null the window SAYS nothing was sent and saves
+  `OWA-<date>-<id>.md` + `.png` into Downloads with chips that open them. Send
+  is caught in `handleActing` by `REPORT_SEND_TOOL_NAME`, which the server never
+  registers, so nothing outside the window can file in the user's name. **It
+  says WHO wants it** (`EC-176`): the address is read off the LIVE help page
+  through `main:app:read-web-page` (`findContactEmail` in
+  `src/server/appHelpers.ts`, parsed from the rendered text), the package
+  `author` only as fallback. It offers a `[Open Worship app] <title> (<reference>)` subject and **Copy report** / **Copy subject** / **Copy
+  picture** (PNG via `copyImageToClipboard`) / **Copy email address** /
+  **Email it** (a `mailto:` with address and subject only; the report goes to
+  the clipboard first, since mail clients cut a body at ~2 000 characters) —
+  pseudo tools carrying ONLY the reference. The address is found at the press,
+  and **Copy report** falls back to the saved file after a reopen. The saved
+  document opens with **How to send this** and carries the address source,
+  machine, selection, run sheet, screen contents, displays and who
+  investigated.
 - **The Presenting Control takes a snapshot** (`ControllerToolbarComp`, in the
   history group that survives collapsing) of the app WITH the drawing on it, and
   offers three things to do with it: hand it to the help window, copy it, or
@@ -2070,10 +1980,10 @@ put it to the user rather than shaving another 200 tokens off a description.
   add what you find there even when you don't do it.
 - Same mirror rule as owa-robot-test: `.github/skills/owa-enhance-chatbot` is a
   copy, `.claude/` is the source of truth.
-- **A tool change is not done until it was driven against the running app.** The
-  gate ends in a `build`, which deletes `electron-build/` and kills that app, so
-  verify live first and run `npm run lint` last — except knowledge changes, which
-  need the build before they exist at all.
+- **A tool change is not done until it was driven against the running app.**
+  Verify live first and run `npm run lint` last (it no longer builds into
+  `electron-build/`, so it no longer kills that app) — and a knowledge change
+  needs `node extra-work/build-knowledge.mjs` before it exists at all.
 
 ## owa-enhance-mcp skill
 
@@ -2091,11 +2001,17 @@ surface grew 19% in a day because adding a tool is easy and nobody is billed at
 the time), **good for a developer** driving QA over stdio, and **good for the
 chatbot** answering a volunteer over HTTP. Preference order for any change is
 **remove → deny → merge → sharpen → add**. Tracked work carries `MC-xx` ids in
-`references/backlog.md`; `MC-01` (the HTTP door has no credential) and `MC-16`
-(`captureWebScreenShot` loads a slide's website with `webSecurity: false`, on
-the app's own session, with no popup/download/permission handler) are the two
-open holes worth knowing about — `MC-02`, the uid-aimed acting tools, is
-CLOSED. Same mirror rule: `.github/skills/owa-enhance-mcp` is a copy.
+`references/backlog.md`; `MC-01` (the HTTP door has no credential) is the open
+hole worth knowing about — `MC-02` (the uid-aimed acting tools) and `MC-16`
+(the window a slide's website loads in) are CLOSED, the latter down to a
+documented `webSecurity: false` residual. `MC-14` put a RATCHET on the token
+bill: `audit-mcp-tools.mjs --ratchet` fails when the model's surface crosses
+`MODEL_TOKEN_CEILING` (7 450, against 7 253 measured since `MC-07` cut the
+descriptions on 2026-09-18 — two of which contradicted the chatbot's prompt),
+so a tool added without a decision cannot land quietly. Tool results are
+compact JSON (`MC-33`): a result rides every later round, and indentation was
+~31% of it. Same mirror rule:
+`.github/skills/owa-enhance-mcp` is a copy.
 
 ## owa-enhance-aichat skill
 
@@ -2117,3 +2033,28 @@ walls and the 2026-09-11 measurements (`navigator.webdriver` `true` as
 launched; a plain-Chrome user agent looping Cloudflare's box on claude.ai
 for good, Electron's own passing with no box), `references/backlog.md` the
 `AC-xx` items. Same mirror rule: `.github/skills/owa-enhance-aichat` is a copy.
+
+## owa-enhance skill
+
+`.claude/skills/owa-enhance` is the umbrella for the WHOLE app, asked for on
+2026-09-14 as *research (planning without file update), then report and wait
+to apply*. `/owa-enhance [auto | security | performance | reliability | ui |
+dev-flow | code-health | docs | full]` researches, writes one report and
+STOPS. Research changes nothing — no edit, format, stage, setting, user data,
+screen or API credit — and its one write is a gitignored
+`test-results/owa-enhance/report-<runid>.md`, which is also what lets
+`apply EN-xx` work after the conversation is cleared. With no area it triages
+every area first — `scripts/triage.mjs` (static leads: HTML sinks, module-level
+maps, empty catches, mirror drift, repo paths in notes that are gone, the
+sub-skills' open ids, the newest robot run; no app, no network) and
+`scripts/app-vitals.mjs` (the running app's memory per process from the
+operating system and per page over raw CDP — heap, DOM nodes, listeners) — and
+researches the area holding the strongest surviving finding, ties going to
+performance. Only an explicit `apply` changes anything, and then under this
+file's rules: live proof, the gate last, the paper trail. The AI subsystems
+stay with their own skills; app-wide findings carry `EN-xx` ids in
+`references/backlog.md`. Two tool defaults its research contract exists to
+catch, true for any session driving the live app: `performance_start_trace`
+and `lighthouse_audit` both RELOAD the window they are aimed at unless told
+`reload: false` / `mode: "snapshot"`. Same mirror rule:
+`.github/skills/owa-enhance` is a copy.

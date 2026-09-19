@@ -3,9 +3,9 @@ id: W-44
 title: "Chat with an AI website inside the app (AI Chat)"
 section: "Configuration"
 verify: [CB-68]
-screenshots: 4
+screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-12"
+workflowsVersion: "2026-09-18"
 ---
 # W-44 — Chat with an AI website inside the app (AI Chat)
 
@@ -43,10 +43,24 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    you click them, which takes a second and loses nothing: the conversation lives on the
    site, under your account.
 6. A link the site opens in a new window (a citation, a "learn more") opens in your normal
-   browser, never in the app. The site cannot use the camera, microphone or your location
-   from inside this window, cannot open anything on this computer, and cannot reach
-   anything on it or on the building's network — not the app itself, not the router, not a
-   printer. Only the internet, which is all a chat site wants.
+   browser, never in the app — and only when you pressed something in the site just before.
+   A page that tries to open one on its own is stopped, and a line under the row above the
+   page says *This site tried to open … in your browser without a press, so it was not
+   opened*; press the link again if you meant it. 📸 The site cannot use the camera or your
+   location from inside this window, cannot open anything on this computer, and cannot
+   reach anything on it or on the building's network — not the app itself, not the router,
+   not a printer, not a program such as OBS that listens for connections. Only the
+   internet, which is all a chat site wants.
+
+   **Talking instead of typing.** The microphone is the one thing a site may ask for. Press
+   its microphone button (Claude's **Dictate**, for one) and a line appears under the row
+   above the page: *claude.ai wants to use your microphone. Allow it until the app
+   closes?* 📸 **Allow** lets that site hear you; **Don't allow** — already selected, so
+   Enter or Escape picks it — keeps the microphone off, and the site shows its own
+   "blocked" message until you press its button and answer again. A yes is for that one
+   site, lasts until the app closes, and only counts while its tab is the one in front; a
+   tab behind is never let in. **Sign out of every site** (step 7) takes it back. The
+   camera stays off whatever you answer.
 7. **Sharing this computer?** You stay signed in to these sites until you say otherwise,
    and closing the tabs does not sign you out — that is worth knowing in a church back
    room where several people use the same machine. Click **↤** (**Sign out of every
@@ -65,5 +79,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-68`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
 :::

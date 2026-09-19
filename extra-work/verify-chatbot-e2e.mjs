@@ -214,6 +214,7 @@ const CHATBOT_STATE_EXPRESSION = `(() => {
             label: option.textContent.trim(),
             isOn: option.value === picker.value,
             isDisabled: option.disabled,
+            needsKey: option.hasAttribute('data-needs-key'),
         }));
     };
     const modelPicker = document.querySelector('select.chat-engine');
@@ -266,6 +267,12 @@ function genChoosePickExpression(pickerLabel, optionLabel) {
         }
         if (option.disabled) {
             return { ok: false, reason: 'disabled' };
+        }
+        // A provider with no key opens Settings at its key box and leaves the
+        // tab on the provider it had, so a cell "asked with" one would quietly
+        // be asked with another.
+        if (option.hasAttribute('data-needs-key')) {
+            return { ok: false, reason: 'needs an API key' };
         }
         // The select is React-controlled: assigning \`value\` directly is
         // reverted on the next render unless the change goes through the
@@ -409,11 +416,17 @@ if (chatbotPage === null) {
 }
 
 const initial = await getChatbotState(chatbotPage);
+// A provider with no key is a PICKABLE row -- picking it opens Settings at its
+// key box -- so `data-needs-key` is what says it cannot answer, not
+// `disabled`, which only the "No AI key" placeholder still carries.
 const available = (initial.providers ?? [])
-    .filter((item) => !item.isDisabled)
+    .filter((item) => !item.isDisabled && !item.needsKey)
     .map((item) => item.label);
 note(`providers: ${(initial.providers ?? [])
-    .map((item) => `${item.label}${item.isDisabled ? ' (no key)' : ''}`)
+    .map((item) => {
+        const isKeyless = item.isDisabled || item.needsKey;
+        return `${item.label}${isKeyless ? ' (no key)' : ''}`;
+    })
     .join(', ')}`);
 note(`models on current provider: ${(initial.modelOptions ?? [])
     .map((item) => item.label)

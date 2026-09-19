@@ -61,6 +61,14 @@ Overrides, in order: `OWA_CDP_PORT` (client side) ·
 `OWA_REMOTE_DEBUGGING_PORT` / `--owa-remote-debugging-port=` (app side) ·
 `OWA_MCP_PORT` / `--owa-mcp-port=` (app side).
 
+**`OWA_CDP_PORT` is a pin, not a preference** (`MC-30`, 2026-09-17). Naming a
+port means that port or nothing: if it is not answering, every tool refuses
+with a message naming what the app actually published, rather than falling
+through to the newest instance. It used to head a list that went on to every
+published instance, so a dev app that nodemon had restarted onto a new port
+left a "pinned" script driving whatever was published last — the PACKAGED app,
+with the user's real data, if one was up.
+
 For a client that can only be pointed at one hardcoded URL:
 
 ```bash
@@ -88,20 +96,30 @@ console, network, performance) **except what the firewall denies** — see below
 | `owa_present_bible` | Put a Bible passage on the projector by its reference (`John 3:16`, `Psalm 23:1-6`) through the app's own parser and the Bible Lookup's own present path, and read the screen back: `isPresented`, the passage as the app writes it, its first words, each ticked screen with `isShowing` / `isLocked`. `version` picks an installed Bible (default: the one the lookup is on, then any that reads the reference); `action: "check"` only resolves and quotes it. Nothing is saved to the Bibles list; a locked screen is refused by name. Acting: banner names the passage |
 | `owa_foreground` | Start or stop a foreground extra on the projector — a countdown (`minutes` or a clock time `at`), a stopwatch, a clock, a marquee along the top or bottom or a quick text (`text`) — through the widgets' own screen managers on the ticked screens, and read the screens back (`did`, `detail` in words, each screen's `foreground`). `stop` takes one off (`all` is F10), `check` only reads. Refusals (no length, a time gone by, no ticked screen, locked, off the Presenter) are sentences for a person: `/countdown`, `/marquee` and the offline bot print them |
 | `owa_screenshot`   | A picture of the app window, or of a projector screen by id — for when the words are not enough |
-| `owa_lyric_file` | The user's songs: `list` / `info` / `create` / `update` / `rename`. Content is an Open Lyric document, checked by Open Lyric before anything is written |
-| `owa_slide_file` | The same five actions over slide documents. Content is the document JSON, checked by `AppDocument.validate` |
+| `owa_lyric_file` | The user's songs: `list` / `info` / `create` / `update` / `rename` / `delete`. Content is an Open Lyric document, checked by Open Lyric before anything is written; `delete` moves the song to the trash; every change is backed up first and `owa_undo` puts it back |
+| `owa_slide_file` | The same six actions over slide documents (content is the document JSON, checked by `AppDocument.validate`), plus one slide at a time: `slides` reads every slide with its text boxes and their style, `add-slide`, `update-slide` (an item with `id` changes that box -- text, font, size, colour, alignment, position -- or removes it; one without adds a text box), `delete-slide`, `duplicate-slide`, `move-slide`. A slide change is one editing-history entry: unsaved, Ctrl+Z-able, and backed up for `owa_undo` |
+| `owa_bible_item` | The user's saved Bible passages (the Presenter's Bibles list, or the Reader's): `list`, `add` a reference as the user says it ("John 3:16", read by the app's own parser in any installed version), `update` its reference or version, `delete`, and whole lists -- `create-list`, `rename-list`, `delete-list` (to the trash). A list file has no editing history, so every write is backed up first; nothing reaches a screen |
+| `owa_bible_note` | The user's Bible notes: `list`, `read`, `add` (a title and plain text, written as the note editor's own content), `update`, `delete`, and whole files -- `create-file`, `rename-file`, `delete-file` (to the trash). Refused while that notes file is open in its own window, which would save its stale copy over the change. Backed up first |
+| `owa_undo` | Put back a change the data tools made: `list` the recent ones, newest first, each with an id; `undo` one -- or, with no id, the newest not yet undone. An undo takes its own backup before it writes, so it can be undone too. Kept in `<data folder>/agent-backups/`, the last 100 for 30 days |
 | `owa_read_website` | Read a page on the public web — its text, its links, and a picture of it. https only, public addresses only, and what comes back is fenced as a document that was read rather than as anything talking to the model. Not for a song page the user wants as a song: that address goes to `owa_lyric_validate` as `url`, which reads it with its chords |
 | `owa_lyric_validate` | Check song text against the Open Lyric notation the Lyric Editor uses: every mistake with its line, its section and what to write instead, then what the song IS — title, key, tempo, sections, play order. With `mode: "draft"` it takes RAW words instead — a paste, a page that was read, a file somebody attached — and WRITES the notation, guaranteed valid because it is round-tripped through the same validator. Hand it a whole song PAGE and it finds the song among the menus, charts and footers, rejoins the lines a chord layout breaks up, and says which part of the page it used; `from`/`to` correct that (believed on plain words too), `title`/`artist`/`copyright` add what the caller was told outright. A hymnal text page's numbered stanzas are taken as the song and its `Title:`/`Author:`/`Copyright:` table read; a short heading block above numbered stanzas is left out. With no `mode`, notation is checked and anything else is drafted. **Given a `url` and no `text`, it reads the page itself** — the same locked-down window, address check, budget and banner as `owa_read_website` — and drafts from the whole page, chords and all; the model never gets a turn to retype the words in between, which is how a chord page came out with no chords (measured 2026-09-09: told twice to hand a page over whole, the model read it and passed its own copy). The one tool here that asks the app nothing when given text, so it works with no window open |
 | `owa_pick_element` | Ask the user to POINT at a control; answers with its words, its panel and a unique selector, and swallows their click |
 | `owa_highlight_selector` | Ring the exact element a selector names — no matching, no guessing, for a selector something already resolved |
 | `owa_find_ui`      | Where a control is on screen — `Panel > Control` narrows it, `highlight` rings it (and holds a hover-only control up) |
 | `owa_list_ui`      | Every control actually on screen in a window right now, with the words written on it, the panel and the place — and only what is unusual (`showsOnHover`, `isDisabled`); no box, tag, component or source file on a list row (~40 tokens a row, was ~180), and a path-shaped tooltip is never part of a label |
-| `owa_click`        | Press a control by the words on it — a list of candidates tries each in turn; answers with what the press CHANGED (`didChange`, `isOnNow`, `unverified`). Presses only a control CALLED what was asked (the guide card's `isPressSafe` bar, since 2026-09-08): a loose fit is refused with the control it found as `nearest`, because "show screen" matched the Bible Lookup's save-and-present button and a click there would have put a verse on the projector |
+| `owa_click`        | Press a control by the words on it — a list of candidates tries each in turn; answers with what the press CHANGED (`didChange`, `isOnNow`, `unverified`). Presses only a control CALLED what was asked (the guide card's `isPressSafe` bar, since 2026-09-08): a loose fit is refused with the control it found as `nearest`, because "show screen" matched the Bible Lookup's save-and-present button and a click there would have put a verse on the projector. Never a control NAMED for what cannot be undone, in whatever language the window shows, nor one inside a question the app is asking -- judged in the page, on the control itself |
 | `owa_type`         | Type into a box, found the same way                                           |
 | `owa_goto_page`    | Take the ONE main window to another of its pages (presenter / reader / document editor) — the way out of "no open page matching" for a page. A window of its own is opened by pressing the control that opens it, which `botFocus.mjs` names as `openFind` |
 | `owa_guide_start`  | Walk the user through a task with a numbered card drawn in the app window. A `manualId` recipe is walked in the window it is ABOUT, read off its own first step — not in whatever the main window is showing |
-| `owa_guide_step`   | Move a running walkthrough on — or `do` the current step for the user. A `do` presses only a control called what the step says (a loose fit is refused with the label it found); when the control is behind a popup, menu or floating panel the first `do` closes that and the next does the step; a question the app is asking is never answered; a look-step (something to notice) just moves on |
+| `owa_guide_step`   | Move a running walkthrough on — or `do` the current step for the user. A `do` presses only a control called what the step says (a loose fit is refused with the label it found); when the control is behind a popup, menu or floating panel the first `do` closes that and the next does the step; a question the app is asking is never answered; a look-step (something to notice) just moves on; a step whose control -- or whose key, judged by the control that names it (F6 is *Clear All [F6]*) -- cannot be undone is ringed and left for the user to press, by the card's own Do it as much as by a `do` |
 | `owa_guide_status` | Where the user has got to, whether this step can be done, what it is `behind` (a popup, a menu), the `nearest` label when only a loose fit is on screen, its `kind` (`act` / `look`), and any rescue in flight (`help`) |
+
+Every answer is **compact JSON** (`MC-33`, 2026-09-18) — never indented. A
+result stays in front of the chatbot's model for every later round of the
+question, and the two-space layout was ~31% of the characters; nothing reads a
+result by its layout. A label handed out says a name once: a title carrying a
+shortcut beside an aria-label without one is `Clear All [F6]`, not `Clear All
+[F6] Clear All` (`MC-34`, `shownLabelOf` in `domMatch.mjs`).
 
 ## The firewall (`firewall.mjs`)
 
@@ -119,9 +137,10 @@ The rule is **the assistant may point, the human presses.**
 | --- | --- |
 | `denied-tool` | `evaluate_script`, `take_heapsnapshot` and `upload_file` are refused **and** dropped from `tools/list` |
 | `foreign-url` | `navigate_page` / `new_page` may only land on a page the app itself serves (`file:`, loopback, `about:blank`). Reload / back / forward carry no address and are allowed. The rule INVERTS for `owa_read_website`, which may only go the other way: https, and never an address on this machine or its network — see below |
-| `destructive-label` | `owa_click` / `owa_type` refuse a label that cannot be undone — delete, trash, discard, erase, remove, uninstall, overwrite, *clear all*, *reset all*, factory, sign/log out |
-| `destructive-uid` | the same refusal for `click` / `fill` / `fill_form` / `drag`, which aim by a snapshot id and carry no label — the wording is recovered from the snapshot that minted the uid, remembered per session and only for the destructive rows |
-| `rate-limit` | acting calls are capped at 25 in a rolling 60 s; reads off the internet at 10 in a rolling 5 min. Separate counters, across all sessions — one protects the single app window, the other the single network |
+| `destructive-label` | `owa_click` / `owa_type` refuse a label that cannot be undone — delete, trash, discard, erase, remove, uninstall, overwrite, *clear all*, *reset all*, factory, sign/log out — **and its translation in every language the app is shown in**, derived from the app's own `tran()` dictionary (`destructiveLabel.mjs`), read after folding what the matcher folds (a no-break space, a double space, full-width letters) |
+| `destructive-uid` | the same refusal for `click` / `fill` / `fill_form` / `drag`, which aim by a snapshot id and carry no label — the wording (translations included) is recovered from the snapshot that minted the uid, remembered per session and only for the destructive rows |
+| `destructive-press` / `question-press` | the same rule **in the page, on the control a press actually lands on** — `owa_click`, `owa_type` and a walkthrough's Do it (the card's own button and `owa_guide_step` `do` alike): a title or aria-label saying what cannot be undone, a key whose control is (`F6` names *Clear All [F6]*), and anything inside the confirm / alert / input the app is asking the user. The words half above is cheap and logged; this half does not care how the control was named |
+| `rate-limit` | acting calls are capped at 25 in a rolling 60 s; reads off the internet at 10 in a rolling 5 min; removals (a delete of a file, list, note, slide or passage, and an undo) at 10 in a rolling 5 min. Separate counters, across all sessions — one protects the single app window, one the single network, one the user's files |
 | redaction | provider keys, bearer tokens, JWTs and named credentials are scrubbed from every tool result |
 
 Two enforcement points, because either alone is a hole: filtering `tools/list`
@@ -130,7 +149,10 @@ a client can call a tool that was never listed.
 
 A refusal comes back as an `isError` **result**, not a JSON-RPC error, and is
 written for the model: what was refused, why, and what to do instead. Ordinary
-work is untouched; `Clear Bible` and `Reset Widgets Size` still press.
+work is untouched; `Clear Bible` and `Reset Widgets Size` still press — in Khmer
+too, where Clear Bible's label is also Delete Bible's: a translation the
+dictionary shares with an allowed control is judged allowed, and the app's own
+confirm, which no tool answers, stands behind the other reading.
 
 **Off switch:** `OWA_MCP_FIREWALL=off`, an environment variable and nothing
 else — set by whoever starts the process, unreachable from the wire. For a QA
@@ -159,16 +181,21 @@ open-lyric's browser-only validator) lives in a renderer.
 Four rules, enforced in the worker rather than in the tool, because the worker
 is what touches the disk and a check further out is one a later caller forgets:
 
-- **Nothing is deleted, and `create` never overwrites.** There is no delete
-  action at all, and `fsCreateFile` throws on an existing path unless told to
-  override — which it never is.
+- **Nothing is lost, and `create` never overwrites.** `delete` moves the file
+  to the OS trash -- its sidecars with it, and its editing history only once
+  the file is really gone -- and every change (create, update, rename, delete,
+  a slide) is backed up BEFORE it is made (`src/helper/agentBackupHelpers.ts`).
+  A change whose backup cannot be written is refused, and `owa_undo` puts any
+  of them back. `fsCreateFile` throws on an existing path unless told to
+  override, which it never is.
 - **`update` writes the EDITING HISTORY, not the file.** This is the whole
   safety story for the destructive half: the change is undoable with Ctrl+Z,
   the document is left visibly dirty with its `*`, and a human presses Save. It
   is *point, don't press* applied to content. It also leaves anything already
   on a screen alone — a presented slide is a snapshot until re-presented.
-- **A name is REFUSED, never quietly cleaned** (`agentFileNameHelpers.ts`, a
-  leaf module so the rule is unit-testable without `appProvider`). Separators,
+- **A name is REFUSED, never quietly cleaned** (`agentFileName.mjs`, a leaf
+  module the tool and the worker both read, so the rule is unit-testable
+  without `appProvider`). Separators,
   `..`, control characters, Windows reserved names and over-long names are all
   refused, and the joined path is re-checked for containment. It matters
   because `createNewFileDetail` still carries a `// TODO: verify file name
@@ -179,9 +206,37 @@ is what touches the disk and a check further out is one a later caller forgets:
   that could drift.
 
 Both are in `ACTING_TOOL_SET` (inside the rate limit, so a loop cannot fill
-somebody's Documents folder) and both raise a banner naming the action and the
-file — `changed the song "Amazing Grace"`. `list` and `info` only read, so they
-say nothing, like every other reading tool.
+somebody's Documents folder), their deletes are inside the removal budget (so a
+loop cannot empty it either), and both raise a banner naming the action and the
+file — `changed the song "Amazing Grace"`, `moved the song "Amazing Grace" to
+the trash`, `removed slide 3 from "Sunday"`. `list`, `info` and `slides` only
+read, so they say nothing, like every other reading tool.
+
+### Saved passages, notes, and putting a change back: `owa_bible_item` / `owa_bible_note` / `owa_undo`
+
+The same road into the app -- one DOM event, `owa-agent-data`, keyed by
+`domain` and relayed by `domHelpers.ts` to a lazily imported worker
+(`agentBibleListHelpers.ts`, `agentNoteHelpers.ts`, `agentBackupHelpers.ts`) --
+and the same rules, with one difference that decides the design: **a Bibles
+list and a notes file have no editing history.** Every save writes the file,
+so there is no Ctrl+Z behind a change and no `*` to show it. That is why the
+backup is not a nicety here but the whole undo: the file's text is kept before
+every write, and `owa_undo` writes it back.
+
+`owa_undo` is its own tool rather than an action on four others: "put back what
+you just did" is one ask whatever was done, and one list of changes answers
+"what did you change?" across all of them. A backup is two files a change -- a
+small `.meta.json` a list reads and the `.data.json` only an undo reads -- so
+listing the last twenty changes never reads a document twenty times. An undo
+applies what it puts back in a fixed order (a rename first, then files, then a
+document's unsaved state, which can only go into a document that exists), takes
+its own backup before writing anything, and says when a LATER change to the
+same file went back with it.
+
+A note open in its own window saves its whole file from the copy it loaded, so
+`owa_bible_note` refuses every write while one is open (read off the debugging
+endpoint's page list): the change would be undone seconds later, and the answer
+that said "done" would be a lie.
 
 ### Reaching out: `owa_read_website`
 

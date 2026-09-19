@@ -1365,7 +1365,7 @@ describe('ScreenDrawManager', () => {
         );
         expect(showSimpleToast).toHaveBeenCalledWith(
             'Failed to apply to screen. Please make sure the screen is open.',
-            'error',
+            'Error',
         );
     });
 });

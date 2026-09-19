@@ -7,6 +7,7 @@ import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { tran } from '../lang/langHelpers';
 import { useThemeSource } from '../others/themeHelpers';
+import { useIsInModalLayer } from '../app-modal/modalLayerContext';
 import { showSimpleToast } from '../toast/toastHelpers';
 import {
     VERSE_HIGHLIGHT_COLOR_KEYS,
@@ -208,6 +209,9 @@ function RenderSelectionToolbarComp({
     // default and the toolbar came up white on the dark reader. Carrying the
     // theme on its own root is what the other portalled surfaces do too.
     const { theme } = useThemeSource();
+    // Context follows the React tree through the portal, so a host inside the
+    // Presenter's Bible Lookup popup knows it has to clear that popup.
+    const isAboveModal = useIsInModalLayer();
     const { rect } = selection;
     const left = Math.min(
         Math.max(rect.left + rect.width / 2, TOOLBAR_EDGE_PIXEL),
@@ -215,7 +219,10 @@ function RenderSelectionToolbarComp({
     );
     return createPortal(
         <div
-            className="app-verse-selection-toolbar"
+            className={
+                'app-verse-selection-toolbar' +
+                (isAboveModal ? ' app-verse-floating-surface--above-modal' : '')
+            }
             data-bs-theme={theme}
             style={{ left, top: rect.top - TOOLBAR_GAP_PIXEL }}
             // Without this the press collapses the selection before the click

@@ -28,6 +28,7 @@ const fsDeleteFileMock = vi.fn();
 const { systemUtilsMock, defaultSystemUtils } = vi.hoisted(() => {
     const defaultSystemUtils = {
         isWindows: false,
+        isWindowsStore: false,
         isMac: true,
         isArm64: true,
         is64System: true,
@@ -272,6 +273,133 @@ describe('updatingAppHelpers', () => {
         );
     });
 
+    // A platform feed whose only entry matches the mocked Windows system
+    // (arm64 + 64-bit), followed by the given per-platform release manifest.
+    function stubStoreFetch(releaseData: Record<string, unknown>) {
+        globalThis.fetch = vi
+            .fn()
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    winArm64: {
+                        isWindows: true,
+                        isArm64: true,
+                        is64System: true,
+                    },
+                }),
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => releaseData,
+            }) as any;
+    }
+
+    const OUTDATED_RELEASE_DATA = {
+        version: '2026.2.9',
+        commitID: 'abc',
+        isWindows: true,
+        isArm64: true,
+        portable: [],
+        installer: [
+            {
+                fileFullName: 'update.appx',
+                checksum: 'sum',
+                publicPath: 'download/update.appx',
+                releaseDate: '2026-01-01',
+            },
+        ],
+    };
+
+    test('a Store install asks the website nothing on start-up', async () => {
+        systemUtilsMock.isWindows = true;
+        systemUtilsMock.isMac = false;
+        systemUtilsMock.isWindowsStore = true;
+        stubStoreFetch(OUTDATED_RELEASE_DATA);
+
+        const { checkForAppUpdate } = await import('./updatingAppHelpers');
+        await checkForAppUpdate(true);
+
+        // Not even the feed: a website release is out days before the Store
+        // has it, so its version can only produce a prompt nobody can act on
+        // -- or, offline, a failure about a channel this install never uses.
+        // The Store notifies and updates on its own.
+        expect(globalThis.fetch).not.toHaveBeenCalled();
+        expect(showAppConfirmMock).not.toHaveBeenCalled();
+        expect(showSimpleToastMock).not.toHaveBeenCalled();
+        expect(sendDataMock).not.toHaveBeenCalledWith('main:app:go-update');
+        expect(sendDataMock).not.toHaveBeenCalledWith('main:app:go-download');
+    });
+
+    test('a Store install asking for updates is taken to Microsoft Store', async () => {
+        systemUtilsMock.isWindows = true;
+        systemUtilsMock.isMac = false;
+        systemUtilsMock.isWindowsStore = true;
+        stubStoreFetch(OUTDATED_RELEASE_DATA);
+
+        const { checkForAppUpdate } = await import('./updatingAppHelpers');
+        await checkForAppUpdate(false);
+
+        // The Store page carries the truthful answer -- an Update button only
+        // when there is one -- so nothing here compares versions, downloads an
+        // installer, or offers the download page an MSIX install cannot use.
+        expect(sendDataMock).toHaveBeenCalledWith('main:app:go-update');
+        expect(sendDataMock).not.toHaveBeenCalledWith('main:app:go-download');
+        expect(globalThis.fetch).not.toHaveBeenCalled();
+        expect(fsMoveMock).not.toHaveBeenCalled();
+        expect(showFileOrDirExplorerMock).not.toHaveBeenCalled();
+    });
+
+    test('an overdue Store install is never forced to the download page', async () => {
+        // Over three months past the app's 2026.2.8 build.
+        vi.setSystemTime(new Date('2026-06-01T00:00:00Z'));
+        systemUtilsMock.isWindows = true;
+        systemUtilsMock.isMac = false;
+        systemUtilsMock.isWindowsStore = true;
+        stubStoreFetch(OUTDATED_RELEASE_DATA);
+
+        const { checkForAppUpdate } = await import('./updatingAppHelpers');
+        await checkForAppUpdate(true);
+
+        expect(sendDataMock).not.toHaveBeenCalledWith('main:app:go-download');
+    });
+
+    test('an overdue install elsewhere is still sent to the download page', async () => {
+        vi.setSystemTime(new Date('2026-06-01T00:00:00Z'));
+        systemUtilsMock.isWindows = true;
+        systemUtilsMock.isMac = false;
+        stubStoreFetch(OUTDATED_RELEASE_DATA);
+
+        const { checkForAppUpdate } = await import('./updatingAppHelpers');
+        await checkForAppUpdate(true);
+
+        expect(sendDataMock).toHaveBeenCalledWith('main:app:go-download');
+        expect(sendDataMock).not.toHaveBeenCalledWith('main:app:go-update');
+        expect(showAppConfirmMock).not.toHaveBeenCalled();
+    });
+
+    test('a current install elsewhere reports no update', async () => {
+        systemUtilsMock.isWindows = true;
+        systemUtilsMock.isMac = false;
+        stubStoreFetch({
+            version: '2026.2.8',
+            commitID: 'abc',
+            isWindows: true,
+            isArm64: true,
+            installer: [],
+            portable: [],
+        });
+
+        const { checkForAppUpdate } = await import('./updatingAppHelpers');
+        await checkForAppUpdate(false);
+
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'No Update Needed',
+            expect.any(String),
+        );
+        expect(showAppConfirmMock).not.toHaveBeenCalled();
+        expect(sendDataMock).not.toHaveBeenCalledWith('main:app:go-update');
+    });
+
     test('a build with no matching platform reports "no compatible update"', async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -413,6 +541,7 @@ describe('updatingAppHelpers', () => {
             isArm64?: boolean;
             is64System?: boolean;
             isWindows?: boolean;
+            isWindowsStore?: boolean;
             isMac?: boolean;
             isUniversal?: boolean;
             isLinux?: boolean;
@@ -422,6 +551,7 @@ describe('updatingAppHelpers', () => {
 
         const allFalse: SystemUtilsShape = {
             isWindows: false,
+            isWindowsStore: false,
             isMac: false,
             isLinux: false,
             isArm64: false,

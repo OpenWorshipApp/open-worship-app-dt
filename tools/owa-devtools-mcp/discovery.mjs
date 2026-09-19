@@ -120,30 +120,79 @@ export function resolveAppBrowserUrl(instances = null) {
 }
 
 /**
+ * A port named on purpose -- by the instance this process lives in, or by
+ * `OWA_CDP_PORT` -- or null when nothing was named. The same order
+ * `resolveAppBrowserUrl` reads, because the two must not disagree about which
+ * app is being driven.
+ */
+function readExplicitCdpPort() {
+    const pinnedPort = readPinnedCdpPort();
+    if (pinnedPort !== null) {
+        return pinnedPort;
+    }
+    const envPort = Number(process.env.OWA_CDP_PORT);
+    return Number.isInteger(envPort) && envPort > 0 ? envPort : null;
+}
+
+/**
  * Ports to try, best first. `excludePorts` keeps a bridge from dialling its own
  * listener -- with the legacy fallback in the list that is an infinite loop.
+ *
+ * **A port named on purpose is the WHOLE list.** It used to head a list that
+ * went on to every published instance and then the legacy fallbacks, and
+ * `resolveCdpPort` takes the first that ANSWERS -- so a pin that had died fell
+ * through in silence to whatever was published last. Seen 2026-09-14 with
+ * three sessions on one dev app (`MC-30`): a dev app restarted by nodemon
+ * comes back on a NEW port, and a script pinned to dev a minute earlier was
+ * then driving the newest instance instead -- the PACKAGED app, with the
+ * user's real data, had one been up. Meanwhile chrome-devtools' own tools read
+ * `resolveAppBrowserUrl`, which has always been exclusive, so the two halves
+ * of one server drove two different apps. Naming a port now means that port or
+ * nothing, and `describeDeadPin` says what the app actually published.
  */
 export function listCandidatePorts({ port, excludePorts = [] } = {}) {
     const ports = [];
     if (port) {
         ports.push(Number(port));
     } else {
-        const pinnedPort = readPinnedCdpPort();
-        if (pinnedPort !== null) {
-            ports.push(pinnedPort);
+        const explicitPort = readExplicitCdpPort();
+        if (explicitPort !== null) {
+            ports.push(explicitPort);
+        } else {
+            for (const instance of readLiveInstances()) {
+                ports.push(instance.port);
+            }
+            ports.push(...FALLBACK_PORTS);
         }
-        const envPort = Number(process.env.OWA_CDP_PORT);
-        if (Number.isInteger(envPort) && envPort > 0) {
-            ports.push(envPort);
-        }
-        for (const instance of readLiveInstances()) {
-            ports.push(instance.port);
-        }
-        ports.push(...FALLBACK_PORTS);
     }
     return [...new Set(ports)].filter((candidate) => {
         return !excludePorts.includes(candidate);
     });
+}
+
+/**
+ * Why nothing answered, when a port was named on purpose -- or null when none
+ * was, in which case "no app is running" is the whole story. Written for the
+ * person reading a failed script: the pin is theirs, and what the app
+ * published is the number they need.
+ */
+export function describeDeadPin() {
+    const explicitPort = readExplicitCdpPort();
+    if (explicitPort === null) {
+        return null;
+    }
+    const published = readLiveInstances().map((instance) => {
+        return `${instance.port}${instance.isDev ? ' (dev)' : ''}`;
+    });
+    const source =
+        readPinnedCdpPort() !== null ? 'this app instance' : 'OWA_CDP_PORT';
+    return (
+        `Port ${explicitPort} was named by ${source} and is not answering. ` +
+        (published.length > 0
+            ? `The app published ${published.join(', ')}. Point ` +
+              'OWA_CDP_PORT at one of those, or unset it to take the newest.'
+            : 'No running app has published a port at all.')
+    );
 }
 
 export async function checkIsPortAlive(port, timeout = 1500) {

@@ -1,11 +1,11 @@
 ---
 name: mcp-model-hidden-tools
-description: "The chatbot's model is offered the 19 owa_* tools and NOTHING of chrome-devtools' (29 of 48 withheld by tools/owa-devtools-mcp/modelTools.mjs) — filtered AND refused; the last ten went after press_key put the projector on unasked"
+description: "The chatbot's model is offered owa_* tools only — 24 of 53 since 2026-09-14, 29 withheld by tools/owa-devtools-mcp/modelTools.mjs, NOTHING of chrome-devtools' — filtered AND refused; the last ten went after press_key put the projector on unasked"
 metadata: 
   node_type: memory
   type: project
   originSessionId: bf38e379-ea3a-4f16-a163-451460ad6c66
-  modified: 2026-09-01T22:37:09.530Z
+  modified: 2026-09-14T17:41:54.675Z
 ---
 
 **The host's tool bill and the model's tool bill are different numbers.**
@@ -54,6 +54,14 @@ to the model until it is named there — run the audit after any upgrade.
 guide card's `isPressSafe` bar): "show screen" had matched the Bible Lookup's
 save-and-present button, and a press there would have put a verse on the
 wall.
+
+**2026-09-14: 24 `owa_*` offered, still 29 withheld, 53 registered.** The
+data tools — `owa_bible_item`, `owa_bible_note`, `owa_undo` — joined the
+model's list on purpose: the model is who the user asks to change a list or a
+note, and to put a change back. +1 089 tokens a round (~7 990 in all),
+measured with `audit-mcp-tools.mjs --stdio`, which lists a FRESH server so an
+edit is billed before the app restarts. `owa_bible_note` is the first to
+withhold if that bill matters ([[agent-data-tools-backup-undo]]).
 
 `audit-mcp-tools.mjs` reports both bills and prints a withheld tool as
 `(name)`; reporting only the host's total is how a tool added "for the

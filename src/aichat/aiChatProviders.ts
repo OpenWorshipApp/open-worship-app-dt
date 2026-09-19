@@ -126,6 +126,26 @@ export function getAiChatProvider(key: string | null | undefined) {
         : null;
 }
 
+/**
+ * Whether a host name is on a provider's own site: one of its `hosts` or a
+ * subdomain of one -- `claude.ai` and `www.claude.ai`, never
+ * `claude.ai.evil.com` or `notclaude.ai`. What a tab may remember
+ * (`toKeptUrl`) and which page may ask for the microphone
+ * (`decideMicrophoneAsk`) are both this question.
+ */
+export function checkIsOnAiChatSite(
+    providerKey: string | null | undefined,
+    hostname: unknown,
+) {
+    const provider = getAiChatProvider(providerKey);
+    if (provider === null || typeof hostname !== 'string') {
+        return false;
+    }
+    return provider.hosts.some((host) => {
+        return hostname === host || hostname.endsWith('.' + host);
+    });
+}
+
 /** `chatgpt.com` for `https://chatgpt.com/` -- what the chooser prints. */
 export function toAiChatHostLabel(url: string) {
     return URL.canParse(url) ? new URL(url).host.replace(/^www[.]/, '') : url;

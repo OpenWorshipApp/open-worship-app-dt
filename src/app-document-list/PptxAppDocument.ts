@@ -16,6 +16,7 @@ import PptxSlide, { type PptxSlidePropsType } from './PptxSlide';
 import {
     getPptxData,
     getPptxMissingFontFamilyList,
+    getPptxSlideAudioDataListQuick,
     getPptxToHtmlsVersion,
     removePptxHtmlsPreview,
 } from '../server/pptxHelpers';
@@ -145,23 +146,22 @@ export default class PptxAppDocument
         return [];
     }
 
-    async getAudioFilePaths() {
-        const slides = await this.getSlides();
-        const audioSlideDataList = [];
-        for (let i = 0; i < slides.length; i++) {
-            const slide = slides[i];
-            if (slide.audioFilePaths.length === 0) {
-                continue;
-            }
-            const audioSlideData: VarySlideAudioDataType = {
-                slideIndex: i,
-                slideId: slide.id,
-                filePaths: slide.audioFilePaths,
-                slideFilePath: slide.filePath,
+    /**
+     * NOT through `getSlides()`: the Audios panel calls this for every pptx in
+     * the folder on every folder refresh, and `getSlides()` hashes the whole
+     * file and reads every slide's html first (`EN-12`). `info.json` alone
+     * answers it; `[]` until the preview exists.
+     */
+    async getAudioFilePaths(): Promise<VarySlideAudioDataType[]> {
+        const audioDataList = await getPptxSlideAudioDataListQuick(
+            this.filePath,
+        );
+        return audioDataList.map((audioData) => {
+            return {
+                ...audioData,
+                slideFilePath: this.filePath,
             };
-            audioSlideDataList.push(audioSlideData);
-        }
-        return audioSlideDataList;
+        });
     }
 
     async getSlideByIndex(index: number) {

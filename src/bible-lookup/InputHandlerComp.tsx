@@ -24,10 +24,6 @@ import { toInputText } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { getBookKVList } from '../helper/bible-helpers/bibleInfoHelpers';
 import InputExtraButtonsComp from './InputExtraButtonsComp';
-import {
-    BIBLE_XML_CACHE_DURATION_SEC,
-    getBibleXMLDataFromKeyCaching,
-} from '../setting/bible-setting/bibleXMLHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { tran } from '../lang/langHelpers';
@@ -108,18 +104,14 @@ export default function InputHandlerComp({
     }, []);
     const bibleKey = useBibleKeyContext();
     const fontFamily = useBibleFontFamily(bibleKey);
-    useAppEffect(() => {
-        // keep bible data in cache
-        const intervalId = setInterval(
-            () => {
-                getBibleXMLDataFromKeyCaching(bibleKey);
-            },
-            (BIBLE_XML_CACHE_DURATION_SEC - 5) * 1000,
-        );
-        return () => {
-            clearInterval(intervalId);
-        };
-    }, [bibleKey]);
+    // Deliberately NO keep-alive of the parsed bible here. Until 2026-09-15 an
+    // interval re-asked `getBibleXMLDataFromKeyCaching` every 5 s to "keep
+    // bible data in cache", against a 10 s cache whose expiry is absolute from
+    // the write -- so every second tick MISSED and re-read and re-parsed the
+    // whole bible (4.7 MB KJV, 14.8 MB Khmer) on the main thread, with a
+    // "Loading Bible Data" progress bar, for as long as this box was mounted
+    // and nobody typed (`EN-11`). The 10 s cache serves a burst of keystrokes;
+    // the first lookup after a pause pays one parse, which is the rule.
     const [books] = useAppStateAsync(() => {
         return getBookKVList(bibleKey);
     }, [bibleKey]);

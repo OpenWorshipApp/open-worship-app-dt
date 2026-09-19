@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-09-12",
+    "updated": "2026-09-14",
     "sections": [
         {
             "id": "panels",
@@ -244,6 +244,110 @@
                         "recipe": "W-25",
                         "related": ["W-22", "W-23"],
                         "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "changes",
+            "label": "Songs, slides, notes & saved passages",
+            "questions": [
+                {
+                    "id": "undo-a-change",
+                    "text": "Can you put back something the assistant deleted or changed?",
+                    "kind": "fix",
+                    "keywords": [
+                        "undo",
+                        "restore",
+                        "put it back",
+                        "deleted by mistake",
+                        "get it back",
+                        "undo what you did",
+                        "went missing"
+                    ],
+                    "resources": {
+                        "tools": ["owa_undo"]
+                    }
+                },
+                {
+                    "id": "delete-a-song",
+                    "text": "Can you delete the song I made by mistake?",
+                    "kind": "howto",
+                    "keywords": [
+                        "remove song",
+                        "delete document",
+                        "move to trash",
+                        "get rid of",
+                        "throw away"
+                    ],
+                    "resources": {
+                        "tools": ["owa_lyric_file", "owa_slide_file", "owa_undo"],
+                        "related": ["W-43"]
+                    }
+                },
+                {
+                    "id": "add-a-slide",
+                    "text": "Add a slide to my document that says ...",
+                    "kind": "howto",
+                    "template": true,
+                    "keywords": [
+                        "new slide",
+                        "text slide",
+                        "announcement slide",
+                        "make a slide",
+                        "add text to a slide"
+                    ],
+                    "resources": {
+                        "tools": ["owa_slide_file"]
+                    }
+                },
+                {
+                    "id": "restyle-slide-text",
+                    "text": "Can you make the words on a slide bigger or change their colour?",
+                    "kind": "howto",
+                    "keywords": [
+                        "font size",
+                        "text colour",
+                        "text color",
+                        "bigger text",
+                        "change the font",
+                        "edit slide text",
+                        "move the text box"
+                    ],
+                    "resources": {
+                        "tools": ["owa_slide_file"]
+                    }
+                },
+                {
+                    "id": "save-a-passage",
+                    "text": "Save John 3:16 to my Bibles list",
+                    "kind": "howto",
+                    "template": true,
+                    "keywords": [
+                        "save verse",
+                        "bibles list",
+                        "add to my list",
+                        "keep this passage",
+                        "saved passages"
+                    ],
+                    "resources": {
+                        "tools": ["owa_bible_item"]
+                    }
+                },
+                {
+                    "id": "write-a-note",
+                    "text": "Write a Bible note about ...",
+                    "kind": "howto",
+                    "template": true,
+                    "keywords": [
+                        "bible note",
+                        "sermon notes",
+                        "take a note",
+                        "jot down",
+                        "notes file"
+                    ],
+                    "resources": {
+                        "tools": ["owa_bible_note"]
                     }
                 }
             ]
@@ -834,6 +938,44 @@
                         "recipe": "W-44",
                         "related": ["W-42"],
                         "find": "AI Chat"
+                    }
+                },
+                {
+                    "id": "ai-chat-microphone-blocked",
+                    "text": "Why does the AI chat website say the microphone is blocked?",
+                    "kind": "what",
+                    "keywords": [
+                        "microphone",
+                        "mic",
+                        "dictation",
+                        "voice",
+                        "speak",
+                        "talk",
+                        "blocked",
+                        "allow",
+                        "ai chat"
+                    ],
+                    "resources": {
+                        "recipe": "W-44"
+                    }
+                },
+                {
+                    "id": "ai-chat-link-did-not-open",
+                    "text": "Why didn't a link in the AI Chat window open?",
+                    "kind": "what",
+                    "keywords": [
+                        "link",
+                        "did not open",
+                        "nothing happened",
+                        "new window",
+                        "popup",
+                        "browser",
+                        "not opened",
+                        "without a press",
+                        "ai chat"
+                    ],
+                    "resources": {
+                        "recipe": "W-44"
                     }
                 }
             ]

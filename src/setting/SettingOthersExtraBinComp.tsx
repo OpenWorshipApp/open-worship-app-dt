@@ -221,6 +221,7 @@ export default function SettingOthersExtraBinComp() {
                         className="btn btn-sm btn-outline-secondary"
                         disabled={isBusy}
                         title={tran('Refresh')}
+                        aria-label={tran('Refresh')}
                         onClick={handleRefreshing}
                     >
                         <i className="bi bi-arrow-clockwise" />

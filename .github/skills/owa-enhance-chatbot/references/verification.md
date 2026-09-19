@@ -7,7 +7,8 @@ typechecks. This file is the how.
 
 - **Verify first, build last.** `npm run build` / `electron:build` deletes
   `electron-build/`, the running app's own main entry, and kills it. The `npm run
-  lint` gate ends in a build, so it goes last.
+  lint` gate no longer does (`EN-16`: its build check goes to a temp dir), but it
+  still goes last.
 - **Except knowledge work**, which needs a build to be visible at all. Plan for
   the restart: build, relaunch, then verify.
 - **`mcp__owa-devtools__evaluate_script` is dead under Node 22**

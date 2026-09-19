@@ -31,7 +31,7 @@ function RenderBibleKeyComp({
     return (
         <span
             className="bible-extra-key bg-primary small app-caught-hover-pointer"
-            title={`Click to remove extra Bible ${bibleKey}`}
+            title={`${tran('Click to remove extra Bible')} ${bibleKey}`}
             key={bibleKey}
             style={{
                 borderRadius: '8px',

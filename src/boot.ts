@@ -9,6 +9,8 @@ import { handleError } from './helper/errorHelpers';
 import { sanitizeCssValue } from './helper/sanitizeHelpers';
 import { getSetting, setSetting } from './helper/settingHelpers';
 import { getAppFontFamily, getAppFontWeight } from './setting/settingHelpers';
+import appProvider from './server/appProvider';
+import { appLocalStorage } from './setting/directory-setting/appLocalStorage';
 
 async function initFontFamily() {
     const id = 'app-custom-style';
@@ -59,6 +61,10 @@ async function initPresentingFlowRenameMigration() {
 }
 
 export async function init(callback: () => void = () => {}) {
+    // First, before anything reads a file: the migration below reads settings,
+    // and some windows (`lyricEditor`) read their data without awaiting `init`.
+    appProvider.sessionData.defaultStorageDirPath =
+        appLocalStorage.defaultStorageDirPath;
     await initPresentingFlowRenameMigration();
     initFontFamily();
     const currentLocale = getCurrentLocale();

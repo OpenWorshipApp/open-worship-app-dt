@@ -9,6 +9,7 @@ import type { WrongDimensionType } from '../../app-document-list/AppDocument';
 import AppDocument from '../../app-document-list/AppDocument';
 import { FileEditingMenuComp } from '../../editing-manager/editingHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { tran } from '../../lang/langHelpers';
 
 function CheckingDimensionComp({
     wrongDimension,
@@ -33,14 +34,18 @@ function CheckingDimensionComp({
     if (!AppDocument.checkIsThisType(selectedVaryAppDocument)) {
         return null;
     }
+    // Two glyphs and no words, so the title is also the accessible name --
+    // without `aria-label` the name is the icon font's own character.
+    const label =
+        tran('Fix slide dimension') +
+        ': ' +
+        AppDocument.toWrongDimensionString(wrongDimension);
     return (
         <button
             className="btn btn-sm btn-warning"
             type="button"
-            title={
-                'Fix slide dimension: ' +
-                AppDocument.toWrongDimensionString(wrongDimension)
-            }
+            title={label}
+            aria-label={label}
             onClick={handleFixDimension}
         >
             <i className="bi bi-aspect-ratio" style={{ color: 'red' }} />

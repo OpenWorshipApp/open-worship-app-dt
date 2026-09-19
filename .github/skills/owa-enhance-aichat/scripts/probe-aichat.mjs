@@ -10,15 +10,21 @@
 // ones, and `evaluateInTarget` (tools/owa-devtools-mcp/cdp.mjs) speaks to
 // one over its own socket.
 //
-// What it does to the app: reads, plus the two refusals it EXPECTS to be
-// refused -- a `window.open` and a navigation to an address on this
-// machine. A run where one of those succeeds is the failure this script
-// exists to catch. What it does to the site: a CDP session on a guest is
-// itself something a bot check can notice for the life of that renderer,
-// so reload the tab before judging a site's "Verify you are human".
+// What it does to the app: reads, plus the refusals it EXPECTS to be
+// refused -- a `window.open` and a navigation to an address on this machine,
+// WebSockets to loopback servers this script starts and stops itself (bound
+// to loopback only, so no firewall prompt), and one `window.open` of
+// example.com with nothing pressed, which must be refused and said on the
+// window's own line. A run where one of those succeeds is the failure this
+// script exists to catch -- for the last one, a browser window opening on
+// example.com. What it does to the site: a CDP session on a guest is itself
+// something a bot check can notice for the life of that renderer, so reload
+// the tab before judging a site's "Verify you are human".
 //
 // Exit code: 0 when every check held, 1 when one did not or no window is up.
 
+import http from 'node:http';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -38,7 +44,10 @@ const { evaluateInTarget, requireLivePort } = await import(
 const { readLiveInstances } = await import(
   pathToFileURL(
     path.join(REPO_ROOT, 'tools', 'owa-devtools-mcp', 'discovery.mjs'),
-  ).href,
+  ).href
+);
+const { WebSocketServer } = createRequire(path.join(REPO_ROOT, 'package.json'))(
+  'ws',
 );
 
 const isJson = process.argv.includes('--json');
@@ -103,6 +112,29 @@ const GUEST_EXPRESSION = `(async () => {
         clipboardRead: await query('clipboard-read'),
         clipboardWrite: await query('clipboard-write'),
     };
+    // The camera stays refused now that the microphone is ASKED: a request
+    // that wants a camera, alone or beside a microphone, is refused whole
+    // and never reaches the window's line. A machine with no camera answers
+    // NotFoundError, which proves less and is reported as such.
+    const tryMedia = async (constraints) => {
+        try {
+            const stream = await Promise.race([
+                navigator.mediaDevices.getUserMedia(constraints),
+                new Promise((resolve, reject) => {
+                    setTimeout(() => reject(new Error('no answer')), 3000);
+                }),
+            ]);
+            stream.getTracks().forEach((track) => track.stop());
+            return 'granted';
+        } catch (error) {
+            if (error && error.message === 'no answer') {
+                return 'no answer';
+            }
+            return error && error.name ? error.name : String(error);
+        }
+    };
+    out.cameraRequest = await tryMedia({ video: true });
+    out.cameraWithMicRequest = await tryMedia({ audio: true, video: true });
     // A window onto this machine or the app must be DENIED: the handler
     // answers null, and only ever hands an http(s) address to the system
     // browser, so neither of these can open anything anywhere.
@@ -192,6 +224,252 @@ const REACH_CHECK_LIST = [
   ['metadata', 'the link-local metadata address is unreachable'],
   ['singleLabelName', 'a single-label name (printer) is unreachable'],
 ];
+
+// The fifth wall, for WebSockets. `*://` in a request filter means http and
+// https only, so until 2026-09-14 a WebSocket handshake never reached the
+// wall: from inside a claude.ai guest, `ws://` to 127.0.0.1, localhost,
+// 127.1, [::1] and 127.0.0.2 all OPENED, and a server on each received the
+// handshake with the site's Origin. A church machine's loopback is where OBS,
+// Companion and presentation remotes listen for exactly that.
+//
+// The page's own answer cannot tell "refused by the wall" from "nothing
+// listening", so this starts a real server on each loopback address and reads
+// what ARRIVED. And the positive control again: a public echo must still open,
+// or the wall has become a brick for every site's realtime socket.
+const PUBLIC_WEBSOCKET_URL_LIST = [
+  'wss://ws.postman-echo.com/raw',
+  'wss://echo.websocket.org/',
+];
+
+function startLoopbackServer(host, port) {
+  return new Promise((resolve) => {
+    const received = [];
+    const httpServer = http.createServer((request, response) => {
+      received.push(request.url);
+      response.writeHead(204);
+      response.end();
+    });
+    const wsServer = new WebSocketServer({ server: httpServer });
+    wsServer.on('connection', (socket, request) => {
+      received.push(request.url);
+      socket.close(1000, 'owa probe');
+    });
+    httpServer.on('error', () => {
+      resolve(null);
+    });
+    httpServer.listen(port, host, () => {
+      resolve({
+        received,
+        port: httpServer.address().port,
+        close: () => {
+          wsServer.close();
+          httpServer.close();
+        },
+      });
+    });
+  });
+}
+
+async function startLoopbackServers() {
+  const v4 = await startLoopbackServer('127.0.0.1', 0);
+  if (v4 === null) {
+    return null;
+  }
+  // The same port on the other loopback addresses, so `localhost` finds a
+  // listener whichever family it resolves to. Either may be unavailable on a
+  // machine; its checks are then left out rather than passed for nothing.
+  const v6 = await startLoopbackServer('::1', v4.port);
+  const alias = await startLoopbackServer('127.0.0.2', v4.port);
+  const list = [v4, v6, alias].filter(Boolean);
+  return {
+    port: v4.port,
+    hasIpv6: v6 !== null,
+    hasAlias: alias !== null,
+    readReceived: () => {
+      return list.flatMap((one) => one.received);
+    },
+    close: () => {
+      for (const one of list) {
+        one.close();
+      }
+    },
+  };
+}
+
+function genWebSocketExpression(attempts) {
+  return `(async () => {
+    const attempts = ${JSON.stringify(attempts)};
+    const tryWs = (url, waitMs) => new Promise((resolve) => {
+      let socket;
+      try {
+        socket = new WebSocket(url);
+      } catch (error) {
+        resolve({ opened: false, detail: 'threw ' + String(error).slice(0, 60) });
+        return;
+      }
+      const timer = setTimeout(() => {
+        try { socket.close(); } catch (error) {}
+        resolve({ opened: false, detail: 'no answer' });
+      }, waitMs);
+      socket.onopen = () => {
+        clearTimeout(timer);
+        resolve({ opened: true, detail: 'opened' });
+        try { socket.close(); } catch (error) {}
+      };
+      socket.onclose = (event) => {
+        clearTimeout(timer);
+        resolve({ opened: false, detail: 'closed ' + event.code });
+      };
+    });
+    const out = {};
+    for (const [key, url, waitMs, skipWhenOpened] of attempts) {
+      if (skipWhenOpened && out[skipWhenOpened] && out[skipWhenOpened].opened) {
+        continue;
+      }
+      out[key] = await tryWs(url, waitMs);
+    }
+    return out;
+  })()`;
+}
+
+async function probeGuestWebSockets(target, servers, guestIndex) {
+  const scope = `guest ${toHostLabel(target.url)} — WebSockets`;
+  const loopbackList = [
+    ['ws127', '127.0.0.1', 'a WebSocket to 127.0.0.1 is refused', true],
+    [
+      'wsLocalhost',
+      'localhost',
+      'a WebSocket to localhost is refused',
+      servers.hasIpv6,
+    ],
+    ['ws127_1', '127.1', 'a WebSocket to loopback written 127.1 is refused', true],
+    [
+      'wsIpv6',
+      '[::1]',
+      'a WebSocket to IPv6 loopback is refused',
+      servers.hasIpv6,
+    ],
+    [
+      'wsAlias',
+      '127.0.0.2',
+      'a WebSocket to loopback that is not 127.0.0.1 is refused',
+      servers.hasAlias,
+    ],
+  ].filter((one) => {
+    return one[3];
+  });
+  const toPath = (key) => {
+    return `/owa-probe-${key}-${guestIndex}`;
+  };
+  const attempts = loopbackList.map(([key, host]) => {
+    return [key, `ws://${host}:${servers.port}${toPath(key)}`, 3000];
+  });
+  PUBLIC_WEBSOCKET_URL_LIST.forEach((url, urlIndex) => {
+    attempts.push([
+      `public${urlIndex}`,
+      url,
+      8000,
+      urlIndex === 0 ? null : 'public0',
+    ]);
+  });
+  const answers = await evaluateInTarget(
+    target,
+    genWebSocketExpression(attempts),
+    60000,
+  );
+  // A handshake that did get through gets a moment to be counted.
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const received = servers.readReceived();
+  for (const [key, , name] of loopbackList) {
+    const answer = answers[key] ?? { opened: true, detail: 'was not tried' };
+    const hasArrived = received.includes(toPath(key));
+    check(
+      scope,
+      name,
+      !answer.opened && !hasArrived,
+      hasArrived ? `the server RECEIVED it (${answer.detail})` : answer.detail,
+    );
+  }
+  const publicAnswers = PUBLIC_WEBSOCKET_URL_LIST.map((_url, urlIndex) => {
+    return answers[`public${urlIndex}`];
+  }).filter(Boolean);
+  const isPublicOpen = publicAnswers.some((answer) => {
+    return answer.opened;
+  });
+  check(
+    scope,
+    'a WebSocket to the public internet STILL opens (the wall is not a brick)',
+    isPublicOpen,
+    isPublicOpen
+      ? 'opened'
+      : `${publicAnswers.map((answer) => answer.detail).join(', ')} — check this machine can reach ${PUBLIC_WEBSOCKET_URL_LIST.join(' or ')}`,
+  );
+}
+
+// The window-open handler, for a page's own idea. `allowpopups` is on the
+// guest so a pressed link reaches the system browser, and Electron applies no
+// popup blocker to a guest that has it: measured 2026-09-14, a page's timer
+// opened the system browser with nothing pressed. Now a page gets one page per
+// press, and a refused one is said on the window's own line -- which is what
+// makes the refusal visible here at all. Only the tab in front says so.
+async function probeNoPressPopup(hostTarget, guestTargets) {
+  const scope = 'host — a page opening a window with nothing pressed';
+  const frontUrl = await evaluateInTarget(
+    hostTarget,
+    `(() => {
+      const shown = Array.from(document.querySelectorAll('webview')).find(
+        (guest) => getComputedStyle(guest).visibility !== 'hidden',
+      );
+      if (!shown) {
+        return null;
+      }
+      try {
+        return shown.getURL();
+      } catch (error) {
+        return shown.getAttribute('src');
+      }
+    })()`,
+  );
+  const guest =
+    guestTargets.length === 1
+      ? guestTargets[0]
+      : guestTargets.find((one) => {
+          return one.url === frontUrl;
+        });
+  if (guest === undefined) {
+    check(scope, 'the tab in front could be found', false, `${frontUrl}`);
+    return;
+  }
+  const isDenied = await evaluateInTarget(
+    guest,
+    `(() => {
+      try {
+        return window.open('https://example.com/owa-probe-no-press') === null;
+      } catch (error) {
+        return true;
+      }
+    })()`,
+  );
+  let lineText = null;
+  for (let attempt = 0; attempt < 15 && lineText === null; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    lineText = await evaluateInTarget(
+      hostTarget,
+      `(() => {
+        const line = document.querySelector('[aria-label="Page not opened"]');
+        return line ? line.textContent : null;
+      })()`,
+    );
+  }
+  check(scope, 'the page is handed nothing', isDenied, `${isDenied}`);
+  check(
+    scope,
+    'the refusal is said on the window’s own line, naming the address',
+    typeof lineText === 'string' && lineText.includes('example.com'),
+    lineText ??
+      'no line appeared — if a browser window opened on example.com the gate is NOT holding (a second run within 5 s also shows no line)',
+  );
+}
 
 const checks = [];
 function check(scope, name, isHeld, detail) {
@@ -294,11 +572,37 @@ async function probeGuest(target) {
       check(scope, `permission ${name} (allowed on purpose)`, true, state);
       continue;
     }
+    if (name === 'microphone') {
+      // ASKED since 2026-09-14: a check has no "ask me" answer in Electron,
+      // and a site that reads denied shows its own "blocked" notice without
+      // ever asking -- so on a site's own https page the microphone checks
+      // as available, and the STREAM is what the person is asked about.
+      check(
+        scope,
+        'permission microphone checks as askable',
+        state === 'granted',
+        state,
+      );
+      continue;
+    }
     check(
       scope,
       `permission ${name} is refused`,
       state === 'denied' || state === 'unsupported',
       state,
+    );
+  }
+  for (const [name, answer] of [
+    ['a camera request', guest.cameraRequest],
+    ['a camera-and-microphone request', guest.cameraWithMicRequest],
+  ]) {
+    check(
+      scope,
+      `${name} is refused without asking`,
+      answer === 'NotAllowedError' || answer === 'NotFoundError',
+      answer === 'NotFoundError'
+        ? `${answer} (no camera on this machine, which proves less)`
+        : answer,
     );
   }
   check(
@@ -406,18 +710,43 @@ async function main() {
       return one.port === port;
     })?.mcpUrl ?? 'http://127.0.0.1:39223/mcp';
   const report = { host: await probeHost(hostTarget), guests: [] };
-  for (const target of guestTargets) {
+  const servers = await startLoopbackServers();
+  try {
+    for (const [guestIndex, target] of guestTargets.entries()) {
+      try {
+        report.guests.push(await probeGuest(target));
+        await probeGuestReach(target, port, mcpUrl);
+        if (servers === null) {
+          check(
+            `guest ${toHostLabel(target.url)} — WebSockets`,
+            'a loopback server could be started to test against',
+            false,
+            'nothing would bind on 127.0.0.1',
+          );
+        } else {
+          await probeGuestWebSockets(target, servers, guestIndex);
+        }
+      } catch (error) {
+        check(
+          `guest ${toHostLabel(target.url)}`,
+          'could be probed at all',
+          false,
+          error.message,
+        );
+      }
+    }
     try {
-      report.guests.push(await probeGuest(target));
-      await probeGuestReach(target, port, mcpUrl);
+      await probeNoPressPopup(hostTarget, guestTargets);
     } catch (error) {
       check(
-        `guest ${toHostLabel(target.url)}`,
+        'host — a page opening a window with nothing pressed',
         'could be probed at all',
         false,
         error.message,
       );
     }
+  } finally {
+    servers?.close();
   }
   printReport(hostTarget, guestTargets, report);
   process.exit(checks.every((one) => one.isHeld) ? 0 : 1);

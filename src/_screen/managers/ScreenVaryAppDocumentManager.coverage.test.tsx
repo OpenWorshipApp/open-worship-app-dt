@@ -780,7 +780,7 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
 
         expect(mocks.showSimpleToast).toHaveBeenCalledWith(
             'Failed to sync slide. Please make sure the screen is open.',
-            'error',
+            'Error',
         );
     });
 

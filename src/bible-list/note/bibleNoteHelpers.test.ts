@@ -6,6 +6,7 @@ const h = vi.hoisted(() => ({
     getDirPathBySettingNameMock: vi.fn(),
     getParamFileFullNameMock: vi.fn(),
     getParamIdNumMock: vi.fn(),
+    getBibleNotePreviewFilePathMock: vi.fn(),
     handleErrorMock: vi.fn(),
     sendDataMock: vi.fn(),
     watchMock: vi.fn(),
@@ -54,6 +55,7 @@ const bn = vi.hoisted(() => {
         set content(v: string) {
             this._content = v;
         }
+        isReadOnly = false;
     }
     return { state, FakeBibleNote };
 });
@@ -67,6 +69,9 @@ vi.mock('../../helper/DirSource', () => ({
 vi.mock('../../helper/domHelpers', () => ({
     getParamFileFullName: h.getParamFileFullNameMock,
     getParamIdNum: h.getParamIdNumMock,
+}));
+vi.mock('./bibleNotePreviewHelpers', () => ({
+    getBibleNotePreviewFilePath: h.getBibleNotePreviewFilePathMock,
 }));
 vi.mock('../../helper/errorHelpers', () => ({
     handleError: h.handleErrorMock,
@@ -89,6 +94,7 @@ vi.mock('../../server/appHomeStorage', () => ({
     },
 }));
 vi.mock('../../server/fileHelpers', () => ({
+    pathBasename: (p: string) => p.slice(p.lastIndexOf('/') + 1),
     pathJoin: h.pathJoinMock,
     pathResolve: h.pathResolveMock,
     fsExistSync: h.fsExistSyncMock,
@@ -106,6 +112,7 @@ vi.mock('../../lang/langHelpers', () => ({
     getLangDataAsync: h.getLangDataAsyncMock,
     initLangCss: h.initLangCssMock,
     initAllLangCss: h.initAllLangCssMock,
+    tran: (text: string) => text,
 }));
 // Real implementation fetches ~34MB of lookup JSON and dynamically imports the
 // `bible-note` package; only the managers it hands to the editor matter here.
@@ -158,6 +165,8 @@ describe('bible-list/note bibleNoteHelpers', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         h.genTimeoutAttemptMock.mockReturnValue((fn: any) => fn());
+        // An ordinary note window unless a test says otherwise.
+        h.getBibleNotePreviewFilePathMock.mockReturnValue(null);
         h.fsExistSyncMock.mockReturnValue(true);
         h.pathJoinMock.mockImplementation((...p: string[]) => p.join('/'));
         h.pathResolveMock.mockImplementation((p: string) => `/abs/${p}`);
@@ -192,7 +201,10 @@ describe('bible-list/note bibleNoteHelpers', () => {
             };
         }
 
-        async function setupInit(noteItem = genNoteItem()) {
+        async function setupInit(
+            noteItem = genNoteItem(),
+            isReadOnly: boolean | undefined = undefined,
+        ) {
             h.getAllLangsAsyncMock.mockResolvedValue([
                 {
                     locale: 'en',
@@ -220,6 +232,7 @@ describe('bible-list/note bibleNoteHelpers', () => {
             const bibleNote = await initBibleNote({
                 note: note as any,
                 noteItem: noteItem as any,
+                isReadOnly,
             });
             capturedConfig = bn.state.capturedConfig;
             return { note, bibleNote, noteItem };
@@ -251,6 +264,42 @@ describe('bible-list/note bibleNoteHelpers', () => {
                 noteItem,
                 true,
             );
+        });
+
+        test('a read-only note is locked and never saved', async () => {
+            const { note, noteItem, bibleNote } = await setupInit(
+                genNoteItem(),
+                true,
+            );
+            expect((bibleNote as any).isReadOnly).toBe(true);
+            await capturedConfig.saveData('new data');
+            expect(noteItem.content).toBe('note content');
+            expect(note.updateAndSaveNoteItem).not.toHaveBeenCalled();
+        });
+
+        test('an ordinary note is not locked', async () => {
+            const { bibleNote } = await setupInit();
+            expect((bibleNote as any).isReadOnly).toBe(false);
+        });
+
+        test('a read-only note follows its file without waiting', async () => {
+            vi.useFakeTimers();
+            try {
+                const { note, noteItem, bibleNote } = await setupInit(
+                    genNoteItem(),
+                    true,
+                );
+                (bibleNote as any).isFocusing = true;
+                await capturedWatchCb('change');
+                // No 3s grace: there is no typing in a preview to protect.
+                await vi.advanceTimersByTimeAsync(0);
+                expect(note.reload).toHaveBeenCalled();
+                expect(bibleNote.content).toBe('reloaded');
+                expect(noteItem.content).toBe('reloaded');
+                expect(note.updateAndSaveNoteItem).not.toHaveBeenCalled();
+            } finally {
+                vi.useRealTimers();
+            }
         });
 
         test('loadData returns null for empty content', async () => {
@@ -491,6 +540,38 @@ describe('bible-list/note bibleNoteHelpers', () => {
     });
 
     describe('getBibleNoteData', () => {
+        test('a preview opens the named file, read-only', async () => {
+            h.getBibleNotePreviewFilePathMock.mockReturnValue(
+                '/elsewhere/GEN.1.own',
+            );
+            h.fsExistSyncMock.mockReturnValue(true);
+            h.getParamIdNumMock.mockReturnValue(7);
+            h.noteFromFilePathMock.mockResolvedValue({
+                fileSource: { name: 'GEN.1' },
+                getItemById: vi.fn(() => ({ title: 'Item Title' })),
+            });
+            const data = await getBibleNoteData();
+            expect(data?.isReadOnly).toBe(true);
+            // Found by its full path, not looked up in the notes folder.
+            expect(h.noteFromFilePathMock).toHaveBeenCalledWith(
+                '/elsewhere/GEN.1.own',
+            );
+            expect(h.getDirPathBySettingNameMock).not.toHaveBeenCalled();
+            expect(document.title).toContain('GEN.1: Item Title (Read-only)');
+        });
+
+        test('a verse item is never opened in the editor', async () => {
+            h.getParamFileFullNameMock.mockReturnValue('note.note');
+            h.getDirPathBySettingNameMock.mockReturnValue('/notes');
+            h.fsExistSyncMock.mockReturnValue(true);
+            h.getParamIdNumMock.mockReturnValue(7);
+            h.noteFromFilePathMock.mockResolvedValue({
+                fileSource: { name: 'MyNote' },
+                getItemById: vi.fn(() => ({ title: 'T', isVerseItem: true })),
+            });
+            expect(await getBibleNoteData()).toBeNull();
+        });
+
         test('sets the document title and returns note data', async () => {
             h.getParamFileFullNameMock.mockReturnValue('note.note');
             h.getDirPathBySettingNameMock.mockReturnValue('/notes');
@@ -502,7 +583,9 @@ describe('bible-list/note bibleNoteHelpers', () => {
             });
             const data = await getBibleNoteData();
             expect(data).not.toBeNull();
+            expect(data?.isReadOnly).toBe(false);
             expect(document.title).toContain('MyNote: Item Title');
+            expect(document.title).not.toContain('Read-only');
         });
 
         test('returns null when the note file name is missing', async () => {

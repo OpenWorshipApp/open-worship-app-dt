@@ -142,10 +142,16 @@ const MAX_REPLY_LENGTH = 120;
 // not without end: it is stored in the same file and drawn in the same strip.
 const MAX_TYPED_TITLE_LENGTH = 40;
 
+// A window mints many ids inside one millisecond (a burst of new tabs, a
+// restore), and four random base-36 characters alone collide there about one
+// time in fourteen per 500 ids. The sequence makes ids from one window unique;
+// the stamp and the salt keep them apart across windows and restarts.
+let sessionIdSequence = 0;
 export function genSessionId() {
+    sessionIdSequence += 1;
     const stamp = Date.now().toString(36);
     const salt = Math.random().toString(36).slice(2, 6);
-    return `s${stamp}${salt}`;
+    return `s${stamp}${sessionIdSequence.toString(36)}-${salt}`;
 }
 
 export function genNewChatSession(

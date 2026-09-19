@@ -115,10 +115,12 @@ function BibleNoteBibleLookupComp({
 
 export default function NoteItemEditorPopupComp({
     bibleNote,
-}: Readonly<{ bibleNote: BibleNote }>) {
+    isReadOnly = false,
+}: Readonly<{ bibleNote: BibleNote; isReadOnly?: boolean }>) {
     const [isShowingBibleLookup, setIsShowingBibleLookup] = useState(false);
-    useBibleNoteControl({ bibleNote, setIsShowingBibleLookup });
-    if (isShowingBibleLookup) {
+    useBibleNoteControl({ bibleNote, setIsShowingBibleLookup, isReadOnly });
+    // The lookup exists to INSERT a passage, which a read-only note refuses.
+    if (isShowingBibleLookup && !isReadOnly) {
         return (
             <BibleNoteBibleLookupComp
                 bibleNote={bibleNote}

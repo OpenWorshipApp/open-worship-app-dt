@@ -21,7 +21,7 @@ export async function applyAttachBackground(
             tran(
                 'Failed to apply to screen. Please make sure the screen is open.',
             ),
-            'error',
+            tran('Error'),
         );
         return;
     }

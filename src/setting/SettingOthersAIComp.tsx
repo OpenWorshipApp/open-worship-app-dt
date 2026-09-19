@@ -1,6 +1,8 @@
 import type { ChangeEvent, ReactNode } from 'react';
 import { useCallback, useState } from 'react';
 
+import { useAppEffect } from '../helper/appHooks';
+import { takeAIKeyFocusRequest } from '../helper/ai/aiKeyFocusHelpers';
 import { tran } from '../lang/langHelpers';
 import type {
     AISecretKeyNameType,
@@ -109,18 +111,52 @@ function RenderProviderGroupComp({
     );
 }
 
+type AIKeyFocusType = { keyName: AISecretKeyNameType; token: number };
+
+/**
+ * The key box another window asked the cursor to be put in (see
+ * `aiKeyFocusHelpers`), taken the moment this panel can show it: when it
+ * mounts -- Settings opened for the purpose, or switched to this tab for it --
+ * and whenever the window comes to the front with the panel already showing,
+ * because the help window RAISES a Settings window that is already open rather
+ * than opening a second, and a raise is a focus. A request for the panel
+ * itself needs nothing more once the panel is showing.
+ */
+function useAIKeyFocus() {
+    const [keyFocus, setKeyFocus] = useState<AIKeyFocusType | null>(null);
+    useAppEffect(() => {
+        const handleTaking = () => {
+            const keyName = takeAIKeyFocusRequest()?.keyName ?? null;
+            if (keyName === null) {
+                return;
+            }
+            setKeyFocus((oldKeyFocus) => {
+                return { keyName, token: (oldKeyFocus?.token ?? 0) + 1 };
+            });
+        };
+        handleTaking();
+        window.addEventListener('focus', handleTaking);
+        return () => {
+            window.removeEventListener('focus', handleTaking);
+        };
+    }, []);
+    return keyFocus;
+}
+
 function RenderAPIKeyComp({
     keyName,
     label,
     hintKey,
     createKeyTitleKey,
     createKeyURL,
+    keyFocus,
 }: Readonly<{
     keyName: AISecretKeyNameType;
     label: string;
     hintKey: string;
     createKeyTitleKey: string;
     createKeyURL: string;
+    keyFocus: AIKeyFocusType | null;
 }>) {
     const aiSetting = useAISetting();
     // Written on blur, not per keystroke: every save is a sync IPC round trip
@@ -144,6 +180,9 @@ function RenderAPIKeyComp({
             hintKey={hintKey}
             value={aiSetting[keyName]}
             isSecret
+            focusToken={
+                keyFocus?.keyName === keyName ? keyFocus.token : undefined
+            }
             onSave={handleSaving}
         >
             <RenderOpenPageButtonComp
@@ -362,6 +401,7 @@ function RenderFreeFallbackComp() {
 export default function SettingOthersAIComp() {
     const aiSetting = useAISetting();
     const isEnabled = getIsAIEnabled();
+    const keyFocus = useAIKeyFocus();
     // Either provider on its own is enough to make the features work, so one
     // key is a working row.
     const isAnyKeySet =
@@ -400,6 +440,7 @@ export default function SettingOthersAIComp() {
                         hintKey="Answers in the chatbot, and powers custom Bible Cross Reference and Bible Audio"
                         createKeyTitleKey="Create OpenAI api key"
                         createKeyURL={PAID_PROVIDER_PAGE_MAP.openai.keys}
+                        keyFocus={keyFocus}
                     />
                 </RenderProviderGroupComp>
                 <RenderProviderGroupComp
@@ -412,6 +453,7 @@ export default function SettingOthersAIComp() {
                         hintKey="Answers in the chatbot, and powers custom Bible Cross Reference"
                         createKeyTitleKey="Create Anthropic api key"
                         createKeyURL={PAID_PROVIDER_PAGE_MAP.anthropic.keys}
+                        keyFocus={keyFocus}
                     />
                     <RenderWorkspaceIdComp />
                 </RenderProviderGroupComp>
@@ -425,6 +467,7 @@ export default function SettingOthersAIComp() {
                         hintKey="Answers in the chatbot only"
                         createKeyTitleKey="Create Kimi api key"
                         createKeyURL={PAID_PROVIDER_PAGE_MAP.kimi.keys}
+                        keyFocus={keyFocus}
                     />
                 </RenderProviderGroupComp>
             </div>

@@ -18,6 +18,11 @@ import {
 } from './domMatch.mjs';
 import { readLiveInstances } from './discovery.mjs';
 import {
+    genPressGuard,
+    genPressRefusalReason,
+    recordPressRefusal,
+} from './firewall.mjs';
+import {
     foldPresenterState,
     genPresenterStateExpression,
 } from './agentPresenter.mjs';
@@ -55,9 +60,18 @@ import {
     AGENT_FILE_ACTIONS,
     AGENT_FILE_ACTION_TEXT,
     AGENT_FILE_SAFETY_TEXT,
+    AGENT_SLIDE_ACTIONS,
     formatAgentFileResult,
     genAgentFileExpression,
 } from './agentFile.mjs';
+import {
+    AGENT_BIBLE_ITEM_ACTIONS,
+    AGENT_NOTE_ACTIONS,
+    AGENT_UNDO_ACTIONS,
+    AGENT_UNDO_TEXT,
+    formatAgentDataResult,
+    genAgentDataExpression,
+} from './agentData.mjs';
 import {
     WEBSITE_TEXT_DEFAULT_CHARS,
     WEBSITE_TEXT_MAX_CHARS,
@@ -82,14 +96,20 @@ import {
 // Spelled out once, and only on `owa_help_search`: the enum already lists the
 // keys, but `lwShare` and `appDocumentEditor` are html file names and say
 // nothing to a model about which window a volunteer is looking at. Every tool
-// schema is re-sent on EVERY round of EVERY question, so the second tool points
-// back here rather than paying for the list twice.
+// schema is re-sent on EVERY round of EVERY question, so `owa_list_questions`
+// takes the same keys without paying for the list twice.
 const WINDOW_LIST_TEXT =
     'The windows are: ' +
     BOT_FOCUS_LIST.map((item) => {
         return `${item.key} = ${item.label}`;
     }).join(', ') +
     '.';
+
+// The `page` argument, said once and short. It was ~95 characters on each of
+// six tools, re-sent every round; a caller needs only what it matches and
+// what leaving it out means.
+const PAGE_TEXT =
+    'Part of the window URL, e.g. "reader.html"; default the main window.';
 
 // What language the app's own interface is in RIGHT NOW.
 //
@@ -156,9 +176,13 @@ function withTranslations(labels, langCode) {
     return out;
 }
 
+// Compact, never indented. A result is not read once: it stays in front of
+// the model for every later round of the question, and the two-space layout
+// was 28% of the characters of fourteen ordinary answers (a line break and
+// its indent are a token of their own). Nothing reads these by layout -- the
+// window parses them, and every pattern that peeks at one takes `:\s*`.
 function toTextResult(value) {
-    const text =
-        typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    const text = typeof value === 'string' ? value : JSON.stringify(value);
     return { content: [{ type: 'text', text }] };
 }
 
@@ -386,17 +410,16 @@ export function registerOwaTools(server) {
     server.registerTool(
         'owa_help_search',
         {
+            // MC-07 (2026-09-18): the lecture on internal notes is said again
+            // by the page itself when one is opened (`kindNote` below), and
+            // to the chatbot by its prompt; once here is enough.
             description:
                 "Search this app's own knowledge for how to do something in " +
-                'it. Two corpora: `manual` -- the user-facing, live-verified ' +
-                "workflow recipes, which a user's question must be answered " +
-                'from -- and `internal`, the notes written for whoever BUILDS ' +
-                'the app: file paths, code names and design decisions. The ' +
-                'person asking is a volunteer running a service, not a ' +
-                'programmer, so never repeat an internal note to them: read ' +
-                'it, then say what they should press, or say you do not know. ' +
-                'Use this FIRST for any "how do I ...", "where is ...", ' +
-                '"what does ... do" question, before poking at the UI.',
+                'it -- FIRST for any "how do I", "where is" or "what does ' +
+                'X do" question, before poking at the UI. `manual` is the ' +
+                'user-facing recipes answers are written from; `internal` ' +
+                'is notes for whoever BUILDS the app (file paths, code ' +
+                'names) -- read one, never repeat it to a volunteer.',
             inputSchema: {
                 query: z
                     .string()
@@ -406,20 +429,16 @@ export function registerOwaTools(server) {
                     .enum(['manual', 'internal', 'auto'])
                     .optional()
                     .describe(
-                        'Which corpus to search. Default `auto` = the manual, ' +
-                            'falling back to internal notes only when the ' +
-                            'manual has nothing.',
+                        'Default `auto`: the manual, then internal notes ' +
+                            'only when the manual has nothing.',
                     ),
                 focus: z
                     .enum(BOT_FOCUS_KEYS)
                     .optional()
                     .describe(
-                        'Which window of the app the user is asking about. ' +
-                            'ALWAYS pass it: two windows do the same thing ' +
-                            'differently (the presenter looks a verse up in a ' +
-                            'Ctrl+B popup, the Bible Reader does not have ' +
-                            'one), and a recipe for another window names ' +
-                            'buttons that are not on their screen. ' +
+                        'The window the user is asking about. ALWAYS pass ' +
+                            "it: another window's recipe names buttons that " +
+                            'are not on their screen. ' +
                             WINDOW_LIST_TEXT,
                     ),
             },
@@ -486,10 +505,8 @@ export function registerOwaTools(server) {
                     .enum(BOT_FOCUS_KEYS)
                     .optional()
                     .describe(
-                        'Which window of the app they are in. Pass it: it ' +
-                            "drops the other windows' questions, which name " +
-                            'buttons that are not on their screen. Same window ' +
-                            'keys as `owa_help_search`.',
+                        "The window they are in; drops other windows' " +
+                            'questions.',
                     ),
                 // Read off the corpus directory rather than restated here:
                 // a page file that exists but is not offered is a page the
@@ -526,7 +543,20 @@ export function registerOwaTools(server) {
                         'sections from owa_list_questions with no query.'
                     );
                 }
-                return results;
+                // The words and what answers them. `keywords`, `starter`,
+                // `starterRank` and the page and focus a caller already named
+                // are the RANKER's inputs -- half of every row, read by nobody
+                // who is offering a question back to a volunteer.
+                return results.map((row) => {
+                    return {
+                        text: row.text,
+                        kind: row.kind,
+                        section: row.section,
+                        panel: row.panel ?? undefined,
+                        isTemplate: row.isTemplate || undefined,
+                        resources: row.resources,
+                    };
+                });
             });
         },
     );
@@ -534,19 +564,17 @@ export function registerOwaTools(server) {
     server.registerTool(
         'owa_tran',
         {
+            // MC-07: never called in 358 recorded chatbot asks, so it pays
+            // for its seat in words only. The Khmer example cost ~40 tokens a
+            // round to say what "another language" already says.
             description:
-                'What a button is CALLED on this user’s screen. The app can ' +
-                'run in more than one language, the manual is written in ' +
-                'English, and a user running it in Khmer has ' +
-                '`ស្វែងរកព្រះគម្ពីរ` where the manual says **Bible Lookup** -- ' +
-                'telling them to press English words they cannot see is the ' +
-                'same as not telling them. Pass the English label; get back ' +
-                'the words actually printed on that control, and use those ' +
-                'when you name it. Help pages and guide cards already come ' +
-                'back translated, so reach for this only for a label you ' +
-                'wrote yourself. No `lang` means the language the app is in ' +
-                'right now; a label the app does not translate comes back in ' +
-                'English, which is also what is on their screen.',
+                'What a button is CALLED on this user’s screen when the app ' +
+                'runs in another language: pass the English label as the ' +
+                'manual writes it, get back the words printed on that ' +
+                'control, and name it with those. Help pages, guide cards ' +
+                'and tool answers already come back translated -- this is ' +
+                'only for a label you wrote yourself. A label the app does ' +
+                'not translate comes back in English, as it is on screen.',
             inputSchema: {
                 text: z
                     .union([z.string(), z.array(z.string()).max(20)])
@@ -559,8 +587,7 @@ export function registerOwaTools(server) {
                     .string()
                     .optional()
                     .describe(
-                        'Language code, e.g. "km". Leave it out to use the ' +
-                            'language the app is displaying.',
+                        'e.g. "km"; default the language the app is showing.',
                     ),
             },
         },
@@ -666,10 +693,7 @@ export function registerOwaTools(server) {
                 page: z
                     .string()
                     .optional()
-                    .describe(
-                        'Substring of the window URL to report on, e.g. ' +
-                            '"reader.html". Defaults to the main window.',
-                    ),
+                    .describe(PAGE_TEXT),
             },
         },
         async ({ page } = {}) => {
@@ -708,9 +732,13 @@ export function registerOwaTools(server) {
                     // so a dead row made the state tool disagree with every
                     // tool beside it -- and a second "running app" is exactly
                     // what sends a reader hunting for a window nobody has.
+                    //
+                    // And without `url` and `mcpUrl`: the first is the port
+                    // again, the second a door no caller of this tool opens.
                     instances: readLiveInstances().map((instance) => {
-                        const { userDataPath: _dropped, ...rest } = instance;
-                        return rest;
+                        const { pid, port, isDev, version, startedAt } =
+                            instance;
+                        return { pid, port, isDev, version, startedAt };
                     }),
                     windows: targets.map((target) => {
                         return { title: target.title, url: target.url };
@@ -764,23 +792,20 @@ export function registerOwaTools(server) {
         {
             description:
                 'Put a Bible passage on the projector by its REFERENCE -- ' +
-                '"John 3:16", "Psalm 23:1-6", "1 John 1:1-4" -- and answer ' +
-                'with what is on the screen now. Use it whenever the user ' +
-                'asks for a verse to go UP: never the Bible Lookup popup and ' +
-                'never a guide for that, because the lookup is a picker for a ' +
-                'person and no step can drive it. `version` names an ' +
-                'installed Bible (e.g. KJV); left out, the one the lookup is ' +
-                'on is used, then any installed one that reads the reference. ' +
-                '`action: "check"` only resolves and quotes the passage, for ' +
-                'an offer or "what does it say", and touches no screen. The ' +
-                'answer is read BACK off the screens: `isPresented`, the ' +
-                'passage as the app writes it, its first words, each ticked ' +
-                'screen with `isShowing` -- a screen that is off holds the ' +
-                'verse and shows nothing until its show button is pressed, ' +
-                'which is offered, never done unasked. Presenting changes what ' +
-                'the congregation sees: do it when they asked for the verse ' +
-                'to go up, offer it when they only asked how. Clear Bible ' +
-                'takes it off again.',
+                '"John 3:16", "Psalm 23:1-6" -- and answer with what is on ' +
+                'the screen now. Use it whenever the user asks for a verse ' +
+                'to go UP: never the Bible Lookup popup and never a guide ' +
+                'for that -- the lookup is a picker no step can drive. ' +
+                'Without `version`, the version the lookup is on, then any ' +
+                'installed one that reads the reference. `action: "check"` ' +
+                'only resolves and quotes it, touching no screen. The answer ' +
+                'is read BACK off the screens: `isPresented`, the passage, ' +
+                'its first words, each ticked screen with `isShowing` -- an ' +
+                'off screen holds the verse unseen until its show button is ' +
+                'pressed, which is offered, never done unasked. Presenting ' +
+                'changes what the congregation sees: do it when they asked ' +
+                'for it to go up, offer it when they only asked how. Clear ' +
+                'Bible takes it off again.',
             inputSchema: {
                 reference: z
                     .string()
@@ -828,32 +853,27 @@ export function registerOwaTools(server) {
         {
             description:
                 'Start or stop a foreground extra on the projector -- a ' +
-                'countdown, stopwatch, clock, a scrolling message (marquee) ' +
-                'along the top or bottom, or a quick line of text -- and ' +
-                'answer with what each screen holds now. Use it whenever the ' +
-                'user asks for one to go UP or come off ("start a 5 minute ' +
-                'countdown", "count down to 10:30", "take the countdown ' +
-                "off\"): never the Foreground tab's own boxes, a form for a " +
-                'person whose tab closes again when pressed twice. A ' +
-                'countdown takes `minutes` OR `at` (a clock time today); a ' +
-                'marquee or quick text takes `text`. `stop` takes one off ' +
-                '(`widget: "all"` clears every extra, as F10 does); `check` ' +
-                'only reads. The answer is read BACK off the screens: `did`, ' +
-                '`detail` (what went up, in words), each ticked screen with ' +
-                '`isShowing` and its `foreground` list -- a screen that is ' +
-                'off holds the extra and shows nothing until its show button ' +
-                'is pressed, which is offered, never done unasked. Starting ' +
-                'one changes what the congregation sees: do it when they ' +
-                'asked for it, offer it when they only asked how.',
+                'countdown, stopwatch, clock, a scrolling marquee (top or ' +
+                'bottom) or a quick line of text -- and answer with what ' +
+                'each screen holds now. Use it whenever the user asks for ' +
+                'one to go UP or come off ("start a 5 minute countdown", ' +
+                '"count down to 10:30"): never the Foreground tab, whose ' +
+                'boxes are a form for a person and whose tab closes when ' +
+                'pressed twice. A countdown takes `minutes` OR `at` (a clock ' +
+                'time today); a marquee or quick text takes `text`. `stop` ' +
+                'takes one off (`widget: "all"` is every extra, as F10); ' +
+                '`check` only reads. The answer is read BACK off the ' +
+                'screens: `did`, `detail`, each ticked screen with ' +
+                '`isShowing` and its `foreground` -- an off screen holds the ' +
+                'extra unseen until its show button is pressed, which is ' +
+                'offered, never done unasked. Starting one changes what the ' +
+                'congregation sees: do it when they asked for it, offer it ' +
+                'when they only asked how.',
             inputSchema: {
                 widget: z
                     .enum(AGENT_FOREGROUND_WIDGETS)
                     .optional()
-                    .describe(
-                        'Which extra: countdown, stopwatch, clock, ' +
-                            'marquee-top, marquee-bottom or quick-text; ' +
-                            '"all" only with stop.',
-                    ),
+                    .describe('"all" only with `stop`.'),
                 action: z
                     .enum(AGENT_FOREGROUND_ACTIONS)
                     .optional()
@@ -1042,25 +1062,23 @@ export function registerOwaTools(server) {
     server.registerTool(
         'owa_lyric_validate',
         {
+            // MC-07: "check notation you wrote yourself BEFORE you offer it"
+            // stood two sentences before "never write the notation
+            // yourself" -- the rule the prompt holds, measured (memory
+            // `model-cannot-write-open-lyric`). The contradiction went.
             description:
-                'Check song text written in Open Lyric notation -- the format ' +
-                'the Lyric Editor uses -- against its rules. Answers with ' +
-                'every mistake, each with its line number, the section it is ' +
-                'in and what to write instead; then what the song IS: title, ' +
-                'artist, key, tempo, its sections and the order they play in. ' +
-                'Reach for it when the user pastes song text, asks why the ' +
-                'Lyric Editor is showing red marks or will not accept a song, ' +
-                'or BEFORE you offer them notation you wrote yourself -- a ' +
-                'song you hand over unchecked is one they have to debug. ' +
-                '`mode: "draft"` takes RAW words instead -- a paste, a file ' +
-                'they attached -- and writes the notation for them. Use it ' +
-                'for that and never write the notation yourself. For a song ' +
-                'on a web page give its address as `url` and no text: the ' +
-                'page is read HERE, whole, and every chord on it is written ' +
-                'into the words where it lands -- a copy you type out has no ' +
-                'chords in it. It finds the song among the menus and charts ' +
-                'and reports which part of the page it used. Needs nothing ' +
-                'open.',
+                'Check song text in Open Lyric notation -- the Lyric ' +
+                "Editor's format: every mistake with its line, its section " +
+                'and what to write instead, then what the song IS (title, ' +
+                'key, tempo, sections, play order). For a pasted song, or ' +
+                'one the Lyric Editor marks red or will not accept. ' +
+                '`mode: "draft"` writes the notation FROM raw words -- a ' +
+                'paste, an attached file; use it, and never write the ' +
+                'notation yourself. For a song on a web page pass its `url` ' +
+                'and no `text`: the page is read here, whole, with every ' +
+                'chord written in where it lands (a copy you type has none), ' +
+                'and the answer says which part of the page it used. Needs ' +
+                'nothing open.',
             inputSchema: {
                 text: z
                     .string()
@@ -1072,11 +1090,7 @@ export function registerOwaTools(server) {
                 url: z
                     .string()
                     .optional()
-                    .describe(
-                        'draft: the https address of a song page. Read ' +
-                            'here, whole, chords and all -- give this and ' +
-                            'no `text`.',
-                    ),
+                    .describe('draft: the https address of a song page.'),
                 mode: z
                     .enum(['check', 'draft'])
                     .optional()
@@ -1159,6 +1173,49 @@ export function registerOwaTools(server) {
         },
     );
 
+    // What the slide actions take. Only the slide tool carries it -- a song's
+    // slides are made from its words -- and every field is optional because
+    // each action reads a different few. One array of text boxes serves both
+    // add-slide and update-slide: an `id` names a box that is there, no `id`
+    // is a new one, `remove` takes one off.
+    const SLIDE_INPUT_SCHEMA = {
+        slide: z
+            .number()
+            .int()
+            .min(1)
+            .optional()
+            .describe('Which slide, counting from 1'),
+        to: z
+            .number()
+            .int()
+            .min(1)
+            .optional()
+            .describe('Where move-slide puts it, counting from 1'),
+        items: z
+            .array(
+                z.object({
+                    id: z.number().int().optional(),
+                    text: z.string().optional(),
+                    remove: z.boolean().optional(),
+                    fontSize: z.number().optional(),
+                    fontFamily: z.string().optional(),
+                    fontWeight: z.string().optional(),
+                    color: z.string().optional(),
+                    backgroundColor: z.string().optional(),
+                    align: z.enum(['left', 'center', 'right']).optional(),
+                    valign: z.enum(['top', 'center', 'bottom']).optional(),
+                    left: z.number().optional(),
+                    top: z.number().optional(),
+                    width: z.number().optional(),
+                    height: z.number().optional(),
+                    rotate: z.number().optional(),
+                }),
+            )
+            .max(50)
+            .optional()
+            .describe('Text boxes, for add-slide and update-slide'),
+    };
+
     // Two registrations, one implementation. The shared halves live in
     // `agentFile.mjs` so the pair cannot drift; what differs is the file type
     // and what `content` means for it, which is the only part a model
@@ -1168,6 +1225,8 @@ export function registerOwaTools(server) {
             name: 'owa_lyric_file',
             kindName: 'lyric',
             what: "the user's songs (Open Lyric documents)",
+            actions: AGENT_FILE_ACTIONS,
+            extraSchema: {},
             contentText:
                 'For `create` and `update`, `content` is the Open Lyric ' +
                 'document itself: Markdown with an ```ol:Config fence ' +
@@ -1181,12 +1240,17 @@ export function registerOwaTools(server) {
             name: 'owa_slide_file',
             kindName: 'slide',
             what: "the user's slide documents",
+            actions: [...AGENT_FILE_ACTIONS, ...AGENT_SLIDE_ACTIONS],
+            extraSchema: SLIDE_INPUT_SCHEMA,
             contentText:
-                'For `create` and `update`, `content` is the document as ' +
-                'JSON with an `items` array of slides. Read one with ' +
-                '`info` first to see the shape. It is checked by the app ' +
-                'before anything is written and refused with the reason if ' +
-                'the app could not open it.',
+                '`content` (for `create`/`update`) is the whole document JSON ' +
+                'with an `items` array of slides. One slide at a time is ' +
+                'cheaper: `slides` reads them with their text boxes and ' +
+                'style; `add-slide` adds one (at `slide`, else last); ' +
+                '`update-slide` changes slide `slide` -- an item with `id` ' +
+                'edits that box (`remove` deletes it), one without adds a ' +
+                'text box; `delete-slide`, `duplicate-slide`, `move-slide` ' +
+                '(to `to`). Pixels; colors #RRGGBB or #RRGGBBAA.',
         },
     ]) {
         server.registerTool(
@@ -1200,9 +1264,7 @@ export function registerOwaTools(server) {
                     ' ' +
                     AGENT_FILE_SAFETY_TEXT,
                 inputSchema: {
-                    action: z
-                        .enum(AGENT_FILE_ACTIONS)
-                        .describe('What to do'),
+                    action: z.enum(kind.actions).describe('What to do'),
                     name: z
                         .string()
                         .optional()
@@ -1219,10 +1281,11 @@ export function registerOwaTools(server) {
                         .string()
                         .optional()
                         .describe('Required by `create` and `update`'),
+                    ...kind.extraSchema,
                     page: z.string().optional(),
                 },
             },
-            async ({ action, name, newName, content, page }) => {
+            async ({ action, name, newName, content, slide, to, items, page }) => {
                 try {
                     // The NAME first, always. It used to reach the content
                     // validator first, which answered a caller that its song
@@ -1264,6 +1327,9 @@ export function registerOwaTools(server) {
                             name,
                             newName,
                             content,
+                            slide,
+                            to,
+                            items,
                         }),
                         { match: page },
                     );
@@ -1277,6 +1343,192 @@ export function registerOwaTools(server) {
             },
         );
     }
+
+    // The saved passages and the notes. A list or file name reaches the disk,
+    // so it is checked here first with the document tools' own rule -- and
+    // again by the worker, at the disk -- and only the names a call carries
+    // are checked: whether one is REQUIRED is the worker's sentence to write.
+    const findDataNameReason = (...nameList) => {
+        for (const oneName of nameList) {
+            if (oneName !== undefined) {
+                const reason = checkAgentFileName(oneName);
+                if (reason !== null) {
+                    return reason;
+                }
+            }
+        }
+        return null;
+    };
+    const runDataRequest = async (domain, request, page) => {
+        const { value } = await evaluateInApp(
+            genAgentDataExpression(domain, request),
+            { match: page },
+        );
+        const formatted = formatAgentDataResult(value);
+        return formatted.isError
+            ? toErrorResult(new Error(formatted.text))
+            : toTextResult(formatted.text);
+    };
+
+    server.registerTool(
+        'owa_bible_item',
+        {
+            description:
+                "The user's saved Bible passages (the Bibles list; the Reader " +
+                "keeps its own). `list` shows the lists and each passage's " +
+                '`id`; `add` saves `reference` ("John 3:16") to `list` ' +
+                '(default "Default"), in `version` or the Bible Lookup\'s; ' +
+                "`update` changes passage `id`'s `reference` or `version`; " +
+                '`delete` removes it; `create-list`, `rename-list` (to ' +
+                '`newName`) and `delete-list` (to the trash) work on whole ' +
+                'lists. Saving shows nothing on a screen -- that is ' +
+                'owa_present_bible. ' +
+                AGENT_UNDO_TEXT,
+            inputSchema: {
+                action: z.enum(AGENT_BIBLE_ITEM_ACTIONS),
+                list: z
+                    .string()
+                    .optional()
+                    .describe('A list name as the Bibles panel shows it'),
+                id: z
+                    .number()
+                    .int()
+                    .optional()
+                    .describe('A passage id from list'),
+                reference: z.string().optional(),
+                version: z.string().optional(),
+                newName: z.string().optional(),
+                page: z.string().optional(),
+            },
+        },
+        async ({ action, list, id, reference, version, newName, page }) => {
+            try {
+                const nameReason = findDataNameReason(list, newName);
+                if (nameReason !== null) {
+                    return toErrorResult(new Error(nameReason));
+                }
+                return await runDataRequest(
+                    'bible-item',
+                    { action, list, id, reference, version, newName },
+                    page,
+                );
+            } catch (error) {
+                return toErrorResult(error);
+            }
+        },
+    );
+
+    // A note open in its own window saves its WHOLE file back from the copy it
+    // loaded -- every note save rewrites the file, and the lock that orders
+    // writes lives in one window -- so a change made underneath it is put back
+    // the next time it saves, seconds later, and the answer that said "done"
+    // was a lie. The windows are on the debugging endpoint, named by the file
+    // they show, so the change is refused while one is open instead.
+    const findOpenNoteWindow = async (file) => {
+        try {
+            const targets = await listTargets(await requireLivePort());
+            const fileFullName = `${file ?? 'Default'}.own`;
+            return (
+                targets.find((target) => {
+                    if (!target.url.includes('bibleNote.html')) {
+                        return false;
+                    }
+                    const params = new URL(target.url).searchParams;
+                    return params.get('file') === fileFullName;
+                }) ?? null
+            );
+        } catch (_error) {
+            // No endpoint to ask is no window to be in the way of.
+            return null;
+        }
+    };
+
+    server.registerTool(
+        'owa_bible_note',
+        {
+            description:
+                "The user's Bible notes. `list` shows the note files and " +
+                "each note's `id`; `read` gives note `id` in full; `add` " +
+                'writes a note (`title`, `text`) into `file` (default ' +
+                "\"Default\"); `update` changes note `id`'s `title` or " +
+                '`text`; `delete` removes it; `create-file`, `rename-file` ' +
+                '(to `newName`) and `delete-file` (to the trash) work on ' +
+                "whole files. A verse's highlights and comments are their " +
+                'own kind: removed or renamed whole, their words edited in ' +
+                'the Reader. ' +
+                AGENT_UNDO_TEXT,
+            inputSchema: {
+                action: z.enum(AGENT_NOTE_ACTIONS),
+                file: z
+                    .string()
+                    .optional()
+                    .describe('A note file name as the panel shows it'),
+                id: z.number().int().optional().describe('A note id from list'),
+                title: z.string().optional(),
+                text: z.string().optional(),
+                newName: z.string().optional(),
+                page: z.string().optional(),
+            },
+        },
+        async ({ action, file, id, title, text, newName, page }) => {
+            try {
+                const nameReason = findDataNameReason(file, newName);
+                if (nameReason !== null) {
+                    return toErrorResult(new Error(nameReason));
+                }
+                if (
+                    action !== 'list' &&
+                    action !== 'read' &&
+                    (await findOpenNoteWindow(file)) !== null
+                ) {
+                    return toErrorResult(
+                        new Error(
+                            `The notes file "${file ?? 'Default'}" is open in ` +
+                                'a note window, which saves the whole file ' +
+                                'back from the copy it loaded -- a change made ' +
+                                'now would be undone the next time it saves. ' +
+                                'Ask the user to close that note window, then ' +
+                                'try again.',
+                        ),
+                    );
+                }
+                return await runDataRequest(
+                    'note',
+                    { action, file, id, title, text, newName },
+                    page,
+                );
+            } catch (error) {
+                return toErrorResult(error);
+            }
+        },
+    );
+
+    server.registerTool(
+        'owa_undo',
+        {
+            description:
+                'Put back a change made through these tools -- a song, slide ' +
+                'document, slide, note or saved passage that was deleted, ' +
+                'changed, renamed or created. `list` shows the recent ' +
+                'changes, newest first, each with an `id`; `undo` puts back ' +
+                'change `id`, or with no `id` the newest one not yet undone. ' +
+                'An undo is itself a change in the list, so it can be undone ' +
+                "too. The user's own edits in the app are undone with Ctrl+Z, " +
+                'not this.',
+            inputSchema: {
+                action: z.enum(AGENT_UNDO_ACTIONS),
+                id: z.string().optional().describe('A change id from list'),
+                page: z.string().optional(),
+            },
+        },
+        async ({ action, id, page }) => {
+            try {
+                return await runDataRequest('undo', { action, id }, page);
+            } catch (error) {
+                return toErrorResult(error);
+            }
+        },
+    );
 
     server.registerTool(
         'owa_pick_element',
@@ -1438,10 +1690,7 @@ export function registerOwaTools(server) {
                 page: z
                     .string()
                     .optional()
-                    .describe(
-                        'Substring of the window URL to look in, e.g. ' +
-                            '"reader.html". Defaults to the main window.',
-                    ),
+                    .describe(PAGE_TEXT),
                 anyPage: z
                     .boolean()
                     .optional()
@@ -1556,10 +1805,7 @@ export function registerOwaTools(server) {
                 page: z
                     .string()
                     .optional()
-                    .describe(
-                        'Substring of the window URL to list, e.g. ' +
-                            '"reader.html". Defaults to the main window.',
-                    ),
+                    .describe(PAGE_TEXT),
                 limit: z.number().int().min(1).max(200).optional(),
             },
         },
@@ -1605,10 +1851,7 @@ export function registerOwaTools(server) {
                 page: z
                     .string()
                     .optional()
-                    .describe(
-                        'Substring of the window URL to click in, e.g. ' +
-                            '"reader.html". Defaults to the main window.',
-                    ),
+                    .describe(PAGE_TEXT),
             },
         },
         async ({ find, page }) => {
@@ -1622,9 +1865,18 @@ export function registerOwaTools(server) {
                 const { value } = await evaluateInApp(
                     genClickExpression(
                         withTranslations(finds, await readAppLanguage(page)),
+                        undefined,
+                        undefined,
+                        { guard: genPressGuard() },
                     ),
                     { match: page },
                 );
+                // Refused in the page, off the control itself: said the way
+                // the firewall says it, and logged beside its refusals.
+                if (typeof value?.refused === 'string') {
+                    recordPressRefusal('owa_click', value);
+                    throw new Error(genPressRefusalReason(value));
+                }
                 return value;
             });
         },
@@ -1661,10 +1913,7 @@ export function registerOwaTools(server) {
                 page: z
                     .string()
                     .optional()
-                    .describe(
-                        'Substring of the window URL to type in, e.g. ' +
-                            '"reader.html". Defaults to the main window.',
-                    ),
+                    .describe(PAGE_TEXT),
             },
         },
         async ({ find, value, submit, page }) => {
@@ -1679,10 +1928,14 @@ export function registerOwaTools(server) {
                     genTypeExpression(
                         withTranslations(finds, await readAppLanguage(page)),
                         value,
-                        { submit: submit === true },
+                        { submit: submit === true, guard: genPressGuard() },
                     ),
                     { match: page },
                 );
+                if (typeof result?.refused === 'string') {
+                    recordPressRefusal('owa_type', result);
+                    throw new Error(genPressRefusalReason(result));
+                }
                 return result;
             });
         },
@@ -1694,104 +1947,62 @@ export function registerOwaTools(server) {
     server.registerTool(
         'owa_guide_start',
         {
+            // MC-07 (2026-09-18): 1 211 characters, the model's biggest
+            // schema, and it carried a rule the chatbot's prompt reverses --
+            // "offer this whenever the answer is more than one step", where
+            // the prompt says start it only when ASKED (the window offers the
+            // buttons itself). Cut to what a caller cannot learn elsewhere.
+            // `labels` went too: the card's own button words, in the user's
+            // language -- which nothing ever passed (the chatbot answers in
+            // English by rule), paid for on every round all the same.
             description:
                 'Walk the user through a task IN THE APP WINDOW: a numbered ' +
-                'card appears in the corner, the control each step is about ' +
-                'is ringed in red, and the user presses Next (or just does ' +
-                'the step -- clicking the ringed control advances it). Give ' +
-                'either `manualId` (a W-xx recipe, whose numbered steps are ' +
-                'used) or your own `steps`. Write each step as ONE plain ' +
-                'instruction a volunteer can follow without knowing anything ' +
-                'about computers, in plain English, and set `find` to the ' +
-                'exact label written on the button it means. Offer this ' +
-                'whenever the answer is more than one step. With ' +
-                '`mode: "demo"` the card DOES each step for the user when ' +
-                'they press **Do it** -- one press per step, never a run of ' +
-                'them -- using each step\'s `action` (`click`, the default, ' +
-                '`type` with a `value`, or `rightClick` for one whose ' +
-                'control lives in a right-click menu), or `press` for a ' +
-                'step that is a ' +
-                'keyboard shortcut rather than a button. Offer the demo ' +
-                'rather than ' +
-                'assuming it -- but a user who has just ASKED you to do it ' +
-                'for them has already said yes, so pass `mode: "demo"` and ' +
-                'get on with it instead of offering again. Never demo a ' +
-                'step that changes what the congregation sees (presenting, ' +
-                'clearing, hiding a screen) without asking first.',
+                "card in the corner, each step's control ringed in red; the " +
+                'user presses Next or just does the step. The default ' +
+                '`show` presses NOTHING, so start it when they ask to be ' +
+                'walked through, whatever the task. Pass `manualId` ' +
+                '(a recipe id from owa_help_search) or your own `steps`: ' +
+                'each ONE plain instruction for a volunteer, its `find` the ' +
+                'exact words on the control it means. `mode: "demo"` adds ' +
+                '**Do it**, which performs one step per press: a click, ' +
+                'a `type` with its `value`, a `rightClick` menu item, or a ' +
+                '`press` shortcut. A user who asked you to do it FOR them ' +
+                'has said yes to the demo already. Never demo a step that ' +
+                'changes what the congregation sees without asking first. ' +
+                "The answer is owa_guide_status's: whether step 1's control " +
+                'was found, with `nearMisses` when it was not.',
             inputSchema: {
                 title: z.string().optional(),
-                manualId: z
-                    .string()
-                    .optional()
-                    .describe('A manual id from owa_help_search, e.g. "W-06"'),
+                manualId: z.string().optional(),
                 steps: z
                     .array(
                         z.object({
                             text: z.string(),
-                            find: z
-                                .string()
-                                .nullable()
-                                .optional()
-                                .describe(
-                                    'Visible label of the control this step ' +
-                                        'is about, to ring in the window',
-                                ),
+                            find: z.string().nullable().optional(),
                             action: z
                                 .enum(['click', 'type', 'rightClick'])
                                 .optional()
                                 .describe(
-                                    'What "Do it" does in demo mode; ' +
-                                        'defaults to click. Use rightClick ' +
-                                        'for a step whose control is in a ' +
-                                        'right-click menu: the first press ' +
-                                        'opens the menu, the next chooses ' +
-                                        'the `find` in it.',
+                                    'demo; click by default. rightClick: ' +
+                                        'the first press opens the menu, ' +
+                                        'the next chooses `find` in it.',
                                 ),
-                            value: z
-                                .string()
-                                .optional()
-                                .describe('What to type, for action "type"'),
+                            value: z.string().optional(),
                             press: z
                                 .string()
                                 .optional()
                                 .describe(
-                                    'A keyboard shortcut this step is ' +
-                                        'about, e.g. "Ctrl+S", "F9" or ' +
-                                        '"Escape". Set it whenever the step ' +
-                                        'names one: the card can press it, ' +
-                                        'so a step with no button to click ' +
-                                        'still works in demo mode.',
+                                    'The shortcut the step names ("Ctrl+S", ' +
+                                        '"F9"), so demo can press it.',
                                 ),
                         }),
                     )
                     .optional(),
-                mode: z
-                    .enum(['show', 'demo'])
-                    .optional()
-                    .describe(
-                        '`show` (default) rings the control and lets the ' +
-                            'user do it; `demo` adds a **Do it** button that ' +
-                            'performs the step for them.',
-                    ),
-                labels: z
-                    .object({
-                        next: z.string().optional(),
-                        back: z.string().optional(),
-                        done: z.string().optional(),
-                        step: z.string().optional(),
-                    })
-                    .optional()
-                    .describe('Button words, in the language of the user'),
-                page: z
-                    .string()
-                    .optional()
-                    .describe(
-                        'Substring of the window URL to guide in, e.g. ' +
-                            '"reader.html". Defaults to the main window.',
-                    ),
+                mode: z.enum(['show', 'demo']).optional(),
+                page: z.string().optional().describe(PAGE_TEXT),
             },
         },
-        async ({ title, manualId, steps, labels, page, mode }) => {
+        async ({ title, manualId, steps, page, mode }) => {
             return await attempt(async () => {
                 // The model writes a shortcut the way a person says it
                 // ("Ctrl+S"); the card needs the fields a key event carries.
@@ -1874,8 +2085,10 @@ export function registerOwaTools(server) {
                         `start(${JSON.stringify({
                             title: guideTitle ?? 'Step by step',
                             steps: guideSteps,
-                            labels: labels ?? {},
                             mode: mode ?? 'show',
+                            // What its Do it is judged by -- the card's own
+                            // press as much as a tool's "do".
+                            guard: genPressGuard(),
                         })})`,
                     ),
                     { match: page },
@@ -1910,6 +2123,13 @@ export function registerOwaTools(server) {
                 const { value } = await evaluateInApp(genGuideExpression(call), {
                     match: page,
                 });
+                const refusal = value?.lastResult;
+                if (action === 'do' && typeof refusal?.refused === 'string') {
+                    recordPressRefusal('owa_guide_step', refusal);
+                    throw new Error(
+                        genPressRefusalReason(refusal, { isGuide: true }),
+                    );
+                }
                 return value;
             });
         },

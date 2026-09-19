@@ -1,7 +1,10 @@
-import { useCallback, useState } from 'react';
+import { lazy, Suspense, useCallback, useState } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
-import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import {
+    type ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { tran } from '../lang/langHelpers';
@@ -16,11 +19,19 @@ import {
     checkIsResourceLinksName,
     readResourceLinks,
 } from './resourceLinksHelpers';
+import { toResourcePreviewKind } from './resourcePreviewHelpers';
 import {
     checkIsBookLevelName,
     toResourceIcon,
     toResourceNameParts,
 } from './resourcesScanHelpers';
+
+// Loaded when a note file is first opened: what it draws -- notes, marked
+// verses in their bible's face, the view a mark opens in -- is nothing the
+// panel needs for a shelf of rows nobody has opened.
+const LazyResourcesFileNotesComp = lazy(() => {
+    return import('./ResourcesFileNotesComp');
+});
 
 export default function ResourcesFileRowComp({
     filePath,
@@ -54,6 +65,13 @@ export default function ResourcesFileRowComp({
     // list of links stays an ordinary file -- same icon, same click, opened by
     // whatever application the machine uses for it.
     const isLinksCandidate = checkIsResourceLinksName(fileFullName);
+    // Shown INSIDE the app: a `.md` in the Markdown Preview window, a `.own`
+    // by opening the row onto the notes it holds.
+    const previewKind = toResourcePreviewKind(fileFullName);
+    // Closed until pressed, unlike a link list: a note file is read only when
+    // somebody opens it, because it holds whole notes and not a few links.
+    const [isNotesShowing, setIsNotesShowing] = useState(false);
+    const isNoteFile = previewKind === 'note';
     const [linksResult, setLinksResult] =
         useState<ResourceLinksResultType | null>(null);
     // Open once the links are known, and toggled from there. Not persisted per
@@ -67,6 +85,8 @@ export default function ResourcesFileRowComp({
     const isLinksShowingRef = useAppCurrentRef(isLinksShowing);
     const linksResultRef = useAppCurrentRef(linksResult);
     const filePathRef = useAppCurrentRef(filePath);
+    const previewKindRef = useAppCurrentRef(previewKind);
+    const isNotesShowingRef = useAppCurrentRef(isNotesShowing);
     useAppEffect(() => {
         if (!isLinksCandidate || !canAutoExpandLinks) {
             // Nothing is read here for a row that is not a candidate, and
@@ -92,7 +112,23 @@ export default function ResourcesFileRowComp({
         appProvider.systemUtils.openFile(filePathRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handlePreviewing = useCallback(async () => {
+        // Loaded at the press: the lookup panel carries no window helpers for
+        // a file nobody opens.
+        const { openMarkdownPreview } =
+            await import('./resourcePreviewOpenHelpers');
+        openMarkdownPreview(filePathRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleClicking = useCallback(async () => {
+        if (previewKindRef.current === 'note') {
+            setIsNotesShowing(!isNotesShowingRef.current);
+            return;
+        }
+        if (previewKindRef.current === 'markdown') {
+            await handlePreviewing();
+            return;
+        }
         if (!isLinksCandidateRef.current) {
             handleOpening();
             return;
@@ -125,17 +161,32 @@ export default function ResourcesFileRowComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleContextMenuOpening = useCallback((event: any) => {
-        showAppContextMenu(event, [
-            {
+        const menuItems: ContextMenuItemType[] = [];
+        if (previewKindRef.current === 'markdown') {
+            menuItems.push({
+                childBefore: genContextMenuItemIcon('eye'),
+                menuElement: tran('Preview'),
+                onSelect: () => {
+                    void handlePreviewing();
+                },
+            });
+        }
+        // Not for a note file: no application but this one reads a `.own`,
+        // and the operating system would only ask which program to use.
+        if (previewKindRef.current !== 'note') {
+            menuItems.push({
                 childBefore: genContextMenuItemIcon('box-arrow-up-right'),
-                // The OS route stays in the menu for a link list too: its row
-                // expands instead of opening, and editing the file is still a
-                // thing to want.
+                // The OS route stays in the menu for a link list and a
+                // markdown file too: their rows do something else when
+                // pressed, and editing the file is still a thing to want.
                 menuElement: tran('Open'),
                 onSelect: () => {
                     handleOpening();
                 },
-            },
+            });
+        }
+        showAppContextMenu(event, [
+            ...menuItems,
             // The two items `genCommonMenu` builds, inline rather than
             // imported: that helper lives in `FileItemHandlerComp`, a whole
             // file-list ROW component, and importing it here would pull
@@ -175,19 +226,28 @@ export default function ResourcesFileRowComp({
                     // two subfolders apart -- and the folder it sits in is usually what
                     // says which one this is.
                     title={filePath}
-                    aria-expanded={isLinkList ? isLinksShowing : undefined}
+                    aria-expanded={
+                        isLinkList
+                            ? isLinksShowing
+                            : isNoteFile
+                              ? isNotesShowing
+                              : undefined
+                    }
                     onClick={handleClickingSync}
                     onContextMenu={handleContextMenuOpening}
                 >
-                    {isLinkList ? (
+                    {isLinkList || isNoteFile ? (
                         // Only once the content has PROVED to be a list of
                         // links: a chevron on a row that turns out to open in
                         // another application would be a promise the row
-                        // cannot keep.
+                        // cannot keep. A note file always opens here, so its
+                        // name is proof enough.
                         <i
                             className={
                                 'app-resources-file-chevron bi bi-chevron-' +
-                                (isLinksShowing ? 'down' : 'right')
+                                ((isLinkList ? isLinksShowing : isNotesShowing)
+                                    ? 'down'
+                                    : 'right')
                             }
                         />
                     ) : null}
@@ -233,6 +293,13 @@ export default function ResourcesFileRowComp({
             </div>
             {isLinkList && isLinksShowing && linksResult !== null ? (
                 <ResourcesFileLinksComp result={linksResult} />
+            ) : null}
+            {isNoteFile && isNotesShowing ? (
+                // No loading picture: the list below appears once, when the
+                // file has been read.
+                <Suspense fallback={null}>
+                    <LazyResourcesFileNotesComp filePath={filePath} />
+                </Suspense>
             ) : null}
         </div>
     );

@@ -11,8 +11,13 @@ import {
 } from './helper/domHelpers';
 import { getReactRoot } from './others/rootHelpers';
 import { initAllLangCss } from './lang/langHelpers';
+import { appLocalStorage } from './setting/directory-setting/appLocalStorage';
 
 function main() {
+    // The screen never runs `init()` (boot.ts), and its managers read settings
+    // while rendering.
+    appProvider.sessionData.defaultStorageDirPath =
+        appLocalStorage.defaultStorageDirPath;
     const root = getReactRoot();
     addDomChangeEventListener(removeDomTitle);
     root.render(

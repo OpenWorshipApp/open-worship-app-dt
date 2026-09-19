@@ -4,13 +4,17 @@
 //   node .claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs
 //   node .../audit-mcp-tools.mjs --json          # machine-readable
 //   node .../audit-mcp-tools.mjs --rounds=10     # what a full tool loop costs
+//   node .../audit-mcp-tools.mjs --stdio         # the code on disk, no restart
+//   node .../audit-mcp-tools.mjs --ratchet       # fail if the bill has grown
+//   node .../audit-mcp-tools.mjs --ratchet=8200  # ...against your own ceiling
 //
 // It asks the app's own MCP host for `tools/list` exactly the way
 // `src/chatbot/mcpClient.ts` does, then reports what each tool costs in the
 // prompt and whether it announces itself in the window when it acts.
 //
-// Read-only: it lists tools, it never calls one. Exits 1 only when it cannot
-// reach a running app, so it is safe to run at any point in a session.
+// Read-only: it lists tools, it never calls one. Exits 1 when it cannot reach
+// a running app, and -- with `--ratchet` -- when the MODEL's bill has crossed
+// the recorded ceiling. Otherwise safe to run at any point in a session.
 
 import { readdirSync, readFileSync } from 'node:fs';
 import os from 'node:os';
@@ -30,6 +34,28 @@ const isJson = argv.includes('--json');
 const roundsArg = argv.find((one) => one.startsWith('--rounds='));
 // `MAX_TOOL_ROUNDS` in src/chatbot/llmBotHelpers.ts.
 const rounds = roundsArg ? Number(roundsArg.split('=')[1]) : 10;
+
+// `MC-14` -- the ratchet. The surface grew 19% in a day because adding a tool
+// is easy and nobody is billed at the time, and the only thing standing
+// against that was this file asking people to run a script.
+//
+// The ceiling is on the MODEL's bill, not the host's: the developer's door may
+// grow, and a tool added "for the developer" that quietly reaches the model is
+// exactly the regression this catches. Measured 2026-09-17 at 24 tools /
+// ~7 990 tokens; the headroom is one small tool, so a deliberate addition
+// raises this line IN THE SAME CHANGE and says why -- which is the point. It
+// is not a budget to spend down to.
+//
+// Lowered 2026-09-18 from 8 200 to 7 450 when MC-07's description cut took
+// the bill to ~7 253: a ceiling left where it was would have handed the
+// saving straight back as ~950 tokens of room nobody decided to spend.
+const MODEL_TOKEN_CEILING = 7450;
+const ratchetArg = argv.find((one) => {
+    return one === '--ratchet' || one.startsWith('--ratchet=');
+});
+const ratchetCeiling = ratchetArg
+    ? (Number(ratchetArg.split('=')[1]) || MODEL_TOKEN_CEILING)
+    : null;
 
 // The published instance file carries `mcpUrl`; the default port is a default,
 // never a promise. OWA_MCP_URL wins, for a bridged or a second instance.
@@ -104,6 +130,66 @@ async function post(mcpUrl, body) {
         throw new Error(data.error.message ?? 'The call failed');
     }
     return data?.result ?? null;
+}
+
+// `--stdio`: ask a FRESH server spawned from the code on disk instead of the
+// app's HTTP host. The host cached `server.mjs` on its first session, so after
+// an edit it reports the surface the app STARTED with -- measuring a change
+// used to mean restarting the operator's app (memory:
+// `mcp-tool-edit-two-processes`). The fresh server still finds the running app
+// for anything that needs one; `tools/list` needs none.
+async function listToolsOverStdio() {
+    const { spawn } = await import('node:child_process');
+    const binPath = path.join(REPO_ROOT, 'tools', 'owa-devtools-mcp', 'bin.mjs');
+    const child = spawn(process.execPath, [binPath], {
+        stdio: ['pipe', 'pipe', 'ignore'],
+        cwd: REPO_ROOT,
+    });
+    try {
+        const answerMap = new Map();
+        let buffer = '';
+        child.stdout.on('data', (chunk) => {
+            buffer += chunk.toString();
+            let index = buffer.indexOf('\n');
+            while (index !== -1) {
+                const line = buffer.slice(0, index).trim();
+                buffer = buffer.slice(index + 1);
+                index = buffer.indexOf('\n');
+                try {
+                    const message = JSON.parse(line);
+                    answerMap.get(message.id)?.(message);
+                } catch {
+                    // Not a protocol line.
+                }
+            }
+        });
+        const send = (id, method, params) => {
+            return new Promise((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                    reject(new Error(`${method} timed out`));
+                }, 60000);
+                answerMap.set(id, (message) => {
+                    clearTimeout(timeoutId);
+                    resolve(message);
+                });
+                child.stdin.write(
+                    `${JSON.stringify({ jsonrpc: '2.0', id, method, params })}\n`,
+                );
+            });
+        };
+        await send(1, 'initialize', {
+            protocolVersion: '2025-06-18',
+            capabilities: {},
+            clientInfo: { name: 'owa-enhance-chatbot-audit', version: '1.0.0' },
+        });
+        child.stdin.write(
+            `${JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' })}\n`,
+        );
+        const listed = await send(2, 'tools/list', {});
+        return listed.result?.tools ?? [];
+    } finally {
+        child.kill();
+    }
 }
 
 async function listTools(mcpUrl) {
@@ -183,8 +269,11 @@ function padStart(text, width) {
 }
 
 async function main() {
-    const mcpUrl = resolveMcpUrl();
-    const tools = await listTools(mcpUrl);
+    const isStdio = argv.includes('--stdio');
+    const mcpUrl = isStdio
+        ? 'a fresh stdio server (the code on disk)'
+        : resolveMcpUrl();
+    const tools = isStdio ? await listToolsOverStdio() : await listTools(mcpUrl);
     const describeToolCall = (await loadPackageModule('notify.mjs'))
         ?.describeToolCall;
     const checkIsModelHiddenTool = (await loadPackageModule('modelTools.mjs'))
@@ -248,8 +337,18 @@ async function main() {
         warnings,
         tools: rows,
     };
+    // Read before the table is printed so `--json --ratchet` still exits 1.
+    const overBy =
+        ratchetCeiling === null
+            ? 0
+            : report.modelTokensPerRound - ratchetCeiling;
     if (isJson) {
-        console.log(JSON.stringify(report, null, 2));
+        console.log(
+            JSON.stringify({ ...report, ratchetCeiling, overBy }, null, 2),
+        );
+        if (overBy > 0) {
+            process.exitCode = 1;
+        }
         return;
     }
 
@@ -299,6 +398,39 @@ async function main() {
             console.log(`  ! ${warning}`);
         }
     }
+    if (ratchetCeiling === null) {
+        return;
+    }
+    console.log('');
+    if (overBy > 0) {
+        // Named tools, not just a number: the person reading this is deciding
+        // what to withhold, and the biggest row is usually the answer.
+        const biggest = rows
+            .filter((row) => {
+                return !row.isModelHidden;
+            })
+            .slice(0, 3)
+            .map((row) => {
+                return `${row.name} (~${row.tokens})`;
+            })
+            .join(', ');
+        console.log(
+            `RATCHET FAILED  the model's bill is ~${report.modelTokensPerRound} ` +
+                `tokens/round, ~${overBy} over the ${ratchetCeiling} ceiling ` +
+                `-- ~${overBy * rounds} tokens a question.`,
+        );
+        console.log(
+            `                Cut a description, withhold a tool in ` +
+                `modelTools.mjs, or raise MODEL_TOKEN_CEILING in this script ` +
+                `and say why. Biggest: ${biggest}.`,
+        );
+        process.exitCode = 1;
+        return;
+    }
+    console.log(
+        `Ratchet         ok -- ~${report.modelTokensPerRound} of ` +
+            `${ratchetCeiling} tokens/round (${-overBy} to spare)`,
+    );
 }
 
 main().catch((error) => {

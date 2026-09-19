@@ -151,7 +151,7 @@ export async function readFromUrl(
     try {
         messageCallback('Downloading file...');
         const response = await initHttpRequest(url);
-        const userWritablePath = appLocalStorage.defaultStorage;
+        const userWritablePath = appLocalStorage.defaultStorageDirPath;
         let fileFullName = appProvider.pathUtils.basename(url.pathname);
         if (fileFullName.toLocaleLowerCase().endsWith('.xml') === false) {
             fileFullName += '.xml';

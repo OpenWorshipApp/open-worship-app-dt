@@ -8,9 +8,14 @@ import { isBlankDragArea } from '../app-modal/floatingWidgetHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { handleError } from '../helper/errorHelpers';
 import { mapInYieldingBatches } from '../helper/helpers';
+import {
+    MERMAID_LIVE_LABEL,
+    openMermaidLiveEditor,
+} from '../helper/mermaidLiveHelpers';
 import { tran } from '../lang/langHelpers';
 import { openDetailPanel } from '../location-name-lookup/detailPanelHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import { copyToClipboard } from '../server/appHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
@@ -50,10 +55,20 @@ import GraphDockComp from './GraphDockComp';
 import GraphToolbarComp from './GraphToolbarComp';
 import {
     buildGraphSvg,
+    COPY_MARKDOWN_LABEL,
     PRINT_PALETTE,
     printGraph,
     saveGraphImage,
 } from './graphExportHelpers';
+import {
+    buildGraphDiagram,
+    buildGraphMarkdown,
+    GRAPH_DIAGRAM_FORMAT_LIST,
+} from './graphTextExportHelpers';
+import type {
+    GraphDiagramFormatType,
+    GraphTextExportOptionsType,
+} from './graphTextExportHelpers';
 import { getGraphEngine } from './graphViewStore';
 
 type GraphPointListType = readonly { x: number; y: number }[];
@@ -1195,48 +1210,71 @@ export default function GraphSurfaceComp<TContext>({
     );
 
     /**
+     * What every export starts from: the boxes that are on screen with their
+     * records resolved, and a reader for the live panel's own colours.
+     *
+     * Run only when an export is actually asked for — never per render — and
+     * shared by all four so a picture, a printout and a copy can never
+     * disagree about which boxes are in the graph.
+     */
+    const readExportModel = useCallback(() => {
+        const currentGraph = graphRef.current;
+        const visible = getVisibleGraph(currentGraph);
+        const root = viewportRef.current;
+        const style =
+            root === null
+                ? null
+                : globalThis.getComputedStyle(
+                      root.closest('.graph-view') ?? root,
+                  );
+        const readColor = (name: string, fallback: string) => {
+            const value = style?.getPropertyValue(name).trim();
+            return value === undefined || value === '' ? fallback : value;
+        };
+        return {
+            currentGraph,
+            edgeList: visible.edgeList,
+            nodeList: visible.nodeList.map((node) => {
+                const view = sourceRef.current.getNodeView(
+                    contextRef.current,
+                    node,
+                );
+                return {
+                    node,
+                    view,
+                    typeColor: readColor(
+                        `--graph-type-${view?.typeKey ?? 'unknown'}`,
+                        readColor('--graph-edge-default', '#8d949e'),
+                    ),
+                };
+            }),
+            readColor,
+        };
+    }, [contextRef, graphRef, sourceRef]);
+
+    const resolveExportEdge = useCallback(
+        (edge: { relation: string; toKey: string }) => {
+            const { label, isDirected } = resolveEdgeLabel(edge);
+            return { label, isDirected };
+        },
+        [resolveEdgeLabel],
+    );
+
+    /**
      * The current graph as a standalone SVG.
      *
-     * Built only when an export is actually asked for — never per render — and
-     * it reads the palette off the live element so the picture matches what is
+     * The palette is read off the live element so the picture matches what is
      * on screen in whichever theme the user is in.
      */
     const buildExportSvg = useCallback(
         (isForPrint = false) => {
-            const currentGraph = graphRef.current;
-            const visible = getVisibleGraph(currentGraph);
-            const root = viewportRef.current;
-            const style =
-                root === null
-                    ? null
-                    : globalThis.getComputedStyle(
-                          root.closest('.graph-view') ?? root,
-                      );
-            const readColor = (name: string, fallback: string) => {
-                const value = style?.getPropertyValue(name).trim();
-                return value === undefined || value === '' ? fallback : value;
-            };
+            const { currentGraph, nodeList, edgeList, readColor } =
+                readExportModel();
             return buildGraphSvg({
                 title: currentGraph.title,
-                nodeList: visible.nodeList.map((node) => {
-                    const view = sourceRef.current.getNodeView(
-                        contextRef.current,
-                        node,
-                    );
-                    return {
-                        node,
-                        view,
-                        typeColor: readColor(
-                            `--graph-type-${view?.typeKey ?? 'unknown'}`,
-                            readColor('--graph-edge-default', '#8d949e'),
-                        ),
-                    };
-                }),
-                edgeList: visible.edgeList,
-                resolveEdge: (edge) => {
-                    const { label, isDirected } = resolveEdgeLabel(edge);
-                    return { label, isDirected };
-                },
+                nodeList,
+                edgeList,
+                resolveEdge: resolveExportEdge,
                 pathEdgeKeySet: getPathEdgeKeySet(currentGraph),
                 palette: isForPrint
                     ? PRINT_PALETTE
@@ -1251,8 +1289,24 @@ export default function GraphSurfaceComp<TContext>({
                 fontFamily: fontFamily ?? 'sans-serif',
             });
         },
-        [resolveEdgeLabel, fontFamily, contextRef, graphRef, sourceRef],
+        [readExportModel, resolveExportEdge, fontFamily],
     );
+
+    /** The same graph as words, for a note or somebody else's tool. */
+    const buildExportTextOptions =
+        useCallback((): GraphTextExportOptionsType => {
+            const { currentGraph, nodeList, edgeList } = readExportModel();
+            return {
+                title: currentGraph.title,
+                rootKey: currentGraph.rootKey,
+                nodeList,
+                edgeList,
+                relationDefList: sourceRef.current.relationDefList,
+                resolveEdge: resolveExportEdge,
+                translate,
+            };
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [readExportModel, resolveExportEdge, translate]);
 
     const handleSaveImage = useCallback(() => {
         saveGraphImage(buildExportSvg()).catch(handleError);
@@ -1262,6 +1316,48 @@ export default function GraphSurfaceComp<TContext>({
         printGraph(buildExportSvg(true), graphRef.current.title);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [buildExportSvg]);
+
+    // The toast is titled with the FORMAT: six rows sit on one menu, and a
+    // confirmation reading `Copy` for any of them leaves the user checking
+    // their clipboard to find out which one landed.
+    const handleCopyMarkdown = useCallback(() => {
+        copyToClipboard(
+            buildGraphMarkdown(buildExportTextOptions()),
+            tran(COPY_MARKDOWN_LABEL),
+        );
+    }, [buildExportTextOptions]);
+
+    const handleCopyDiagram = useCallback(
+        (format: GraphDiagramFormatType) => {
+            const definition = GRAPH_DIAGRAM_FORMAT_LIST.find((item) => {
+                return item.key === format;
+            });
+            copyToClipboard(
+                buildGraphDiagram(buildExportTextOptions(), format),
+                tran(definition?.title ?? COPY_MARKDOWN_LABEL),
+            );
+        },
+        [buildExportTextOptions],
+    );
+
+    /**
+     * The same diagram, drawn — in the editor Mermaid itself publishes.
+     *
+     * Built here, from the same `buildExportTextOptions` every other copy
+     * reads, so what the editor opens on is what the canvas is showing. The
+     * link carries the whole diagram in its fragment, which never leaves the
+     * browser, and the helper says whether it went to the browser or to the
+     * clipboard.
+     */
+    const handleOpenMermaidLive = useCallback(
+        (format: GraphDiagramFormatType) => {
+            openMermaidLiveEditor(
+                buildGraphDiagram(buildExportTextOptions(), format),
+                tran(MERMAID_LIVE_LABEL),
+            ).catch(handleError);
+        },
+        [buildExportTextOptions],
+    );
 
     return (
         // The font is set ONCE, here, for the whole panel: the boxes, the edge
@@ -1276,6 +1372,9 @@ export default function GraphSurfaceComp<TContext>({
                 context={context}
                 onSaveImage={handleSaveImage}
                 onPrint={handlePrint}
+                onCopyMarkdown={handleCopyMarkdown}
+                onCopyDiagram={handleCopyDiagram}
+                onOpenMermaidLive={handleOpenMermaidLive}
                 viewportRef={viewportRef}
             />
             <div

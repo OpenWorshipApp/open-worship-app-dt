@@ -16,6 +16,7 @@ export const htmlFiles = {
     experiment: 'experiment.html',
     lyricEditor: 'lyricEditor.html',
     bibleNote: 'bibleNote.html',
+    markdownPreview: 'markdownPreview.html',
     webEditor: 'webEditor.html',
     chatbot: 'chatbot.html',
     aichat: 'aichat.html',

@@ -428,7 +428,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
                     tran(
                         'Failed to apply to screen. Please make sure the screen is open.',
                     ),
-                    'error',
+                    tran('Error'),
                 );
                 continue;
             }
@@ -529,6 +529,9 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         const { screenId } = message;
         const screenBibleManager = this.getInstance(screenId);
         if (screenBibleManager === null) {
+            // English on purpose: this receiver also runs in the screen
+            // window, and a `tran()` there before its language data has loaded
+            // throws in dev (see `ScreenCloseButtonComp`).
             showSimpleToast(
                 'Failed to apply to screen. Please make sure the screen is open.',
                 'error',

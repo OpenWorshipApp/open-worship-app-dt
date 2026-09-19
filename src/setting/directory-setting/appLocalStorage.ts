@@ -1,5 +1,6 @@
 import { handleError } from '../../helper/errorHelpers';
 import CacheManager from '../../others/CacheManager';
+import appProvider from '../../server/appProvider';
 import { appHomeStorage } from '../../server/appHomeStorage';
 import { appSecureStorage } from '../../server/appSecureStorage';
 import {
@@ -24,7 +25,7 @@ const cache = new CacheManager<string>(10);
 // so a cached "this key has no file" cannot live in the value cache.
 const absentCache = new CacheManager<boolean>(10);
 class AppLocalStorage {
-    get defaultStorage() {
+    get defaultStorageDirPath() {
         const cachedDefaultStorage = cache.getSync(
             SELECTED_PARENT_DIR_SETTING_NAME,
         );
@@ -47,9 +48,9 @@ class AppLocalStorage {
         if (cachedLocalStorageDir !== null) {
             return cachedLocalStorageDir;
         }
-        const defaultStorage = this.defaultStorage;
+        const defaultStorageDirPath = this.defaultStorageDirPath;
         const localStorageDir = pathJoin(
-            defaultStorage,
+            defaultStorageDirPath,
             LOCAL_STORAGE_FOLDER_NAME,
         );
         if (!fsExistSync(localStorageDir)) {
@@ -61,7 +62,7 @@ class AppLocalStorage {
 
     get tmpFilesDir() {
         const tmpFilesDir = pathJoin(
-            this.defaultStorage,
+            this.defaultStorageDirPath,
             TMP_FILES_FOLDER_NAME,
         );
         if (!fsExistSync(tmpFilesDir)) {
@@ -83,6 +84,10 @@ class AppLocalStorage {
     async setSelectedParentDirectory(dirPath: string) {
         cache.setSync(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);
         appHomeStorage.setItem(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);
+        // The window can keep running on the new folder without a reload
+        // (answering No to setting the child folders), so its `$DATA_DIR_PATH`
+        // must follow at once.
+        appProvider.sessionData.defaultStorageDirPath = dirPath || null;
     }
 
     toFullPath(key: string): string {

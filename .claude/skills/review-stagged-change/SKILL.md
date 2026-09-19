@@ -115,7 +115,7 @@ Every candidate finding must survive this before it goes in the report:
 - **Confirm it is in the staged diff.** Pre-existing problems in an untouched part of
   the file are out of scope; mention at most a short "adjacent, pre-existing" list at
   the end, clearly separated.
-- **Prefer running the check over asserting it.** `npx tsc --noEmit` /
+- **Prefer running the check over asserting it.** `npm run lint:all:error` (src + electron) /
   `npx vitest run <file>` / `npm run lint:es` on the touched files turns a guess into a
   fact. Note in the report which findings were machine-verified.
 
@@ -161,7 +161,7 @@ Only when the argument contains `fix`: after reporting, apply the **High and Med
 findings to the working tree, leave Low/Nit for the user unless they were trivial and
 you note them. Then:
 
-- Re-run the relevant tests / `npx tsc --noEmit`.
+- Re-run the relevant tests / `npm run lint:all:error` (src + electron).
 - Say clearly that the fixes are **unstaged** — the user decides whether to
   `git add` them. Never stage or commit on your own.
 

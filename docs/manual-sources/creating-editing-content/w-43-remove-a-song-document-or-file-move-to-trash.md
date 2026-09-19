@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [CM-06, EX-05, PL-03, PL-20, PM-35]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-12"
+workflowsVersion: "2026-09-18"
 ---
 # W-43 — Remove a song, document or file (Move to Trash)
 
@@ -37,5 +37,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CM-06` · `EX-05` · `PL-03` · `PL-20` · `PM-35`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
 :::

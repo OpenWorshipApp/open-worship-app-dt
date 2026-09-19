@@ -14,14 +14,12 @@ import { useAppCurrentRef } from '../../helper/appHooks';
 import { addDragPayload, handleDragStart } from '../../helper/dragHelpers';
 import { tran } from '../../lang/langHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
-import {
-    toVerseBibleItem,
-    toVerseBibleKey,
-} from '../../bible-reader/verseAnnotationActionHelpers';
+import { toVerseBibleItem } from '../../bible-reader/verseAnnotationActionHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 import { saveBibleItem } from '../bibleHelpers';
 import type Note from './Note';
 import type NoteItem from './NoteItem';
+import { toVerseBibleKey } from './noteItemHelpers';
 import { moveNoteItemTo } from './noteHelpers';
 import RenderVerseAnnotationComp from './RenderVerseAnnotationComp';
 

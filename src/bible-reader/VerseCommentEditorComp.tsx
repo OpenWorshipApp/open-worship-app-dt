@@ -4,12 +4,10 @@ import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { tran } from '../lang/langHelpers';
+import { toVerseBibleKey } from '../bible-list/note/noteItemHelpers';
 import { updateVerseComment } from '../bible-list/note/verseAnnotationHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
-import {
-    toVerseBibleKey,
-    type VerseCommentTargetType,
-} from './verseAnnotationActionHelpers';
+import { type VerseCommentTargetType } from './verseAnnotationActionHelpers';
 
 /**
  * A plain `textarea` in a floating widget — deliberately not the `bible-note`

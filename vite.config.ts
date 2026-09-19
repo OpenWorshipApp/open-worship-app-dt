@@ -99,6 +99,11 @@ export default defineConfig({
     },
     server: {
         port: 3000,
+        // Dev Electron always loads `https://localhost:3000`
+        // (`electron/protocolHelpers.ts`), so a server that quietly moved to
+        // 3001 because a leftover one held 3000 left the app on the OTHER
+        // server's code (EN-15). Fail loudly instead.
+        strictPort: true,
     },
     optimizeDeps: {
         // `src/lang/data/km/index.ts` is only reached through the template

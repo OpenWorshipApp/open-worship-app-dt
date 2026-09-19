@@ -116,3 +116,13 @@
     }
   }
 }
+
+// Hosted inside a modal — the Presenter's Bible Lookup popup is one. There the
+// band above is `#modal-container` itself, so both surfaces were drawn BEHIND
+// the popup whose words were selected and looked as if they never appeared.
+// Just under the blocking band, mirroring the plain case: above the modal and
+// anything it raised, below an alert/confirm that must be answered first.
+// Declared after both blocks so it wins over the placeholder's `z-index`.
+.app-verse-floating-surface--above-modal {
+  z-index: $z-index-blocking-modal - 1;
+}

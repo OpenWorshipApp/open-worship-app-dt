@@ -20,7 +20,7 @@ vi.mock('../server/fileHelpers', () => ({
     pathJoin: (...paths: string[]) => paths.join('/'),
 }));
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
-    appLocalStorage: { defaultStorage: '/tmp/data' },
+    appLocalStorage: { defaultStorageDirPath: '/tmp/data' },
 }));
 
 import { findTranslatedLookupMatches } from './verseTextTranslatedHelpers';

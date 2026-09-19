@@ -58,7 +58,7 @@ export type ExtraBinPathsType = {
  * this is called by an existence check, and a user who never downloads media
  * must not end up with an empty folder in their data directory.
  *
- * `defaultStorage` rather than `ensureDataDirectory`: that one creates the
+ * `defaultStorageDirPath` rather than `ensureDataDirectory`: that one creates the
  * folder and answers null before a parent directory has been picked, while this
  * one falls back to `getUserWritablePath()`, so the pack always has a home and
  * the read path can never disagree with the write path. Same shape as the
@@ -66,7 +66,7 @@ export type ExtraBinPathsType = {
  */
 export function getExtraBinDirPath() {
     return pathJoin(
-        appLocalStorage.defaultStorage,
+        appLocalStorage.defaultStorageDirPath,
         appManagedDataDirNames.EXTRA_BIN,
     );
 }

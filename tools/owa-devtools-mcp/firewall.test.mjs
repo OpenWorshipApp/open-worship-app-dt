@@ -2,13 +2,17 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
     checkIsAppUrl,
+    checkIsRemovingCall,
     checkToolCall,
     filterToolList,
     findDestructiveLabel,
     findDestructiveUid,
+    genPressGuard,
+    genPressRefusalReason,
     genUidLabelMemory,
     getFirewallLog,
     guardToolCalls,
+    recordPressRefusal,
     redactSecrets,
     resetFirewallState,
 } from './firewall.mjs';
@@ -140,6 +144,174 @@ describe('checkToolCall', () => {
         expect(
             checkToolCall('owa_click', { find: 'Delete' }).isAllowed,
         ).toBe(true);
+    });
+});
+
+// Measured 2026-09-14: the label list was English, and every tool that names a
+// control to the model names it in the language the window shows.
+describe('a press that cannot be undone, in the words the window shows', () => {
+    it('refuses it in Khmer', () => {
+        for (const find of [
+            'ផ្លាស់ទីទៅធុងសំរាម',
+            'លុបទាំងអស់',
+            'Mini Screen > លុបទាំងអស់ [F6]',
+            'បោះបង់ការផ្លាស់ប្តូរ',
+        ]) {
+            expect(checkToolCall('owa_click', { find }).rule, find).toBe(
+                'destructive-label',
+            );
+        }
+    });
+
+    // Clear Bible's Khmer is ALSO Delete Bible's. The window cannot tell them
+    // apart, so the ordinary move stays pressable and the app's confirm
+    // stands behind the other.
+    it('still presses the ordinary Khmer controls', () => {
+        for (const find of ['លុបព្រះគម្ពីរ [F9]', 'លុបស្លាយ', 'បង្ហាញ']) {
+            expect(checkToolCall('owa_click', { find }).isAllowed, find).toBe(
+                true,
+            );
+        }
+    });
+
+    // The matcher folds these before it compares; the patterns did not.
+    it('refuses it however the words are spaced', () => {
+        for (const find of ['Clear All', 'Clear  All', 'Sign out']) {
+            expect(checkToolCall('owa_click', { find }).isAllowed, find).toBe(
+                false,
+            );
+        }
+    });
+
+    it('remembers a Khmer control out of a snapshot', () => {
+        const memory = genUidLabelMemory();
+        memory.remember(
+            [
+                'uid=3_0 RootWebArea "x"',
+                '  uid=3_7 menuitem "ផ្លាស់ទីទៅធុងសំរាម"',
+                '  uid=3_8 button "ចាកចេញពីគណនី" description="SongSelect"',
+                '  uid=3_9 button "លុបព្រះគម្ពីរ" description="[F9]"',
+            ].join('\n'),
+        );
+        expect(memory.lookup('3_7')).not.toBeNull();
+        // Sign out's Khmer sits inside an ordinary sentence of the
+        // dictionary, so it is refused only as a WHOLE name -- which the
+        // quotes around it and the description beside it must not hide.
+        expect(memory.lookup('3_8')).not.toBeNull();
+        expect(memory.lookup('3_9')).toBeNull();
+    });
+});
+
+describe('the guard a press carries into the page', () => {
+    it('carries the rule, and nothing when switched off', () => {
+        const guard = genPressGuard();
+        expect(guard.rule.patterns.length).toBeGreaterThan(5);
+        expect(guard.rule.containPhrases).toContain('ផ្លាស់ទីទៅធុងសំរាម');
+        process.env.OWA_MCP_FIREWALL = 'off';
+        expect(genPressGuard()).toBeNull();
+    });
+
+    it('says a refusal the page made the way a firewall refusal is said', () => {
+        const destructive = genPressRefusalReason({
+            refused: 'destructive',
+            label: 'Delete this preset',
+        });
+        expect(destructive).toContain('"Delete this preset"');
+        expect(destructive).toContain('owa_find_ui');
+        expect(
+            genPressRefusalReason(
+                { refused: 'destructive', label: 'Clear All [F6]' },
+                { isGuide: true },
+            ),
+        ).toContain('walkthrough card is already ringing it');
+        expect(genPressRefusalReason({ refused: 'question' })).toContain(
+            'question the app is asking',
+        );
+    });
+
+    it('logs it beside the refusals made here', () => {
+        recordPressRefusal('owa_click', { refused: 'question' });
+        expect(getFirewallLog().at(-1)).toMatchObject({
+            name: 'owa_click',
+            rule: 'question-press',
+            isAllowed: false,
+        });
+    });
+});
+
+// Every removal the data tools make goes to the trash with a backup, which is
+// why they exist -- and still has a budget of its own, because a loop that
+// empties a Documents folder into the trash costs a volunteer their morning.
+describe('removing something of the user', () => {
+    it('knows a removal by its action, not by its tool', () => {
+        expect(
+            checkIsRemovingCall('owa_slide_file', { action: 'delete-slide' }),
+        ).toBe(true);
+        expect(checkIsRemovingCall('owa_lyric_file', { action: 'delete' })).toBe(
+            true,
+        );
+        expect(checkIsRemovingCall('owa_undo', { action: 'undo' })).toBe(true);
+        expect(checkIsRemovingCall('owa_bible_item', { action: 'list' })).toBe(
+            false,
+        );
+        expect(checkIsRemovingCall('owa_click', { action: 'delete' })).toBe(
+            false,
+        );
+    });
+
+    it('rations removals far more tightly than presses', () => {
+        let last = null;
+        for (let index = 0; index < 12; index += 1) {
+            last = checkToolCall(
+                'owa_bible_note',
+                { action: 'delete', id: index },
+                { now: 1000 },
+            );
+        }
+        expect(last.isAllowed).toBe(false);
+        expect(last.rule).toBe('rate-limit');
+        // ...and says what was removed can be put back.
+        expect(last.reason).toContain('owa_undo');
+        // A change that removes nothing is not charged to it.
+        expect(
+            checkToolCall(
+                'owa_bible_note',
+                { action: 'add', title: 'x' },
+                { now: 1000 },
+            ).isAllowed,
+        ).toBe(true);
+    });
+
+    it('does not spend a press on a removal it refuses', () => {
+        for (let index = 0; index < 10; index += 1) {
+            checkToolCall('owa_undo', { action: 'undo' }, { now: 1000 });
+        }
+        expect(
+            checkToolCall('owa_undo', { action: 'undo' }, { now: 1000 })
+                .isAllowed,
+        ).toBe(false);
+        // Ten removals spent ten presses; the refused eleventh spent none, so
+        // exactly fifteen of the twenty-five are left.
+        for (let index = 0; index < 15; index += 1) {
+            expect(
+                checkToolCall('owa_click', { find: 'Next' }, { now: 1000 })
+                    .isAllowed,
+            ).toBe(true);
+        }
+        expect(
+            checkToolCall('owa_click', { find: 'Next' }, { now: 1000 })
+                .isAllowed,
+        ).toBe(false);
+    });
+
+    it('is off with the firewall', () => {
+        process.env.OWA_MCP_FIREWALL = 'off';
+        for (let index = 0; index < 20; index += 1) {
+            expect(
+                checkToolCall('owa_undo', { action: 'undo' }, { now: 1000 })
+                    .isAllowed,
+            ).toBe(true);
+        }
     });
 });
 

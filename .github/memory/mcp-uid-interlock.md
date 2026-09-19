@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: bf38e379-ea3a-4f16-a163-451460ad6c66
-  modified: 2026-09-01T22:36:57.259Z
+  modified: 2026-09-14T15:46:48.634Z
 ---
 
 The destructive interlock in `tools/owa-devtools-mcp/firewall.mjs` refuses a
@@ -41,7 +41,14 @@ The model does not get those tools at all any more
 ([[mcp-model-hidden-tools]]), so this is the guard for the developer's door and
 for any other HTTP client (`MC-01`: that door still has no credential).
 
-Still unguarded: `press_key`. Enter on a focused *Move to Trash* names no label
-at any point (`MC-13`).
+The rows are no longer read in English only: since 2026-09-14 the label rule is
+derived from the app's own `tran()` dictionary, so a Khmer snapshot row is
+remembered too, and the same rule is applied in the page to the control a press
+lands on ([[mcp-interlock-reads-the-control]]).
+
+`press_key` is withheld from the model (2026-09-08); on the developer's door it
+is still unguarded (`MC-13`). Its twin -- a walkthrough step's `press`, which
+`owa_guide_step do` presses -- is judged by the control whose title names that
+key since 2026-09-14.
 
 Related: [[agent-access-mcp-chatbot]], [[hover-hidden-controls]].

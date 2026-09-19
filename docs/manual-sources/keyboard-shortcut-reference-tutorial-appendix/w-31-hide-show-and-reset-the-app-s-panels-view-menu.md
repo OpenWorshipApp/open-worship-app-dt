@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [NAV-20, NAV-21, ST-22, GL-17, GL-18]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-12"
+workflowsVersion: "2026-09-18"
 ---
 # W-31 — Hide, show, and reset the app's panels (View menu)
 
@@ -48,9 +48,11 @@ in a popup window:
    app has this menu) — and choose **[en:tran:Close First Widget]**. 📸 The first of
    the two panels (the left one, or the upper one) collapses to its green strip and the
    other takes its space. `Close Second Widget` does the same to the other panel.
-   Hovering the divider shows the same two choices as small arrows. A collapsed
-   panel has no divider — if one of the two is already a strip, click the strip
-   first.
+   Hovering the divider shows the same two choices as small arrows, each named for
+   the side it closes — **[en:tran:Collapse left panel]** / **[en:tran:Collapse right panel]**,
+   or **[en:tran:Collapse top panel]** / **[en:tran:Collapse bottom panel]** on a
+   divider between an upper and a lower panel. A collapsed panel has no divider — if
+   one of the two is already a strip, click the strip first.
 8. Click the green **Document List** strip — the panel comes straight back.
 9. Right-click the **divider between Document List and Presenting Flow List** again and
    choose **[en:tran:Reset Size]** — just those two panels return to the sizes they
@@ -66,5 +68,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-20` · `NAV-21` · `ST-22` · `GL-17` · `GL-18`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
 :::

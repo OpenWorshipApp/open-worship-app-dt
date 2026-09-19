@@ -44,7 +44,7 @@ vi.mock('../server/fileHelpers', () => ({
     pathJoin: (...paths: string[]) => paths.join('/'),
 }));
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
-    appLocalStorage: { defaultStorage: '/data' },
+    appLocalStorage: { defaultStorageDirPath: '/data' },
 }));
 vi.mock('../server/unlockingHelpers', () => ({
     unlocking: async (_key: string, callback: () => any) => await callback(),

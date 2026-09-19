@@ -57,6 +57,39 @@ describe('aiHelpers', () => {
         rmSync(dirPath, { recursive: true, force: true });
     });
 
+    // Every preload reaches this module (electronHelpers -> webCaptureHelpers),
+    // and a page whose CSP has no 'unsafe-eval' -- chatbot.html in dev, EVERY
+    // page in a packaged build -- throws on a string evaluated while it loads.
+    // It did: the chatbot opened on "Standing by" with no provider (2026-09-18).
+    test('loading it evaluates no string, so a strict page CSP survives', async () => {
+        vi.resetModules();
+        const RealFunction = globalThis.Function;
+        const evaluated: string[] = [];
+        const refuse = (_target: unknown, args: unknown[]) => {
+            evaluated.push(String(args[args.length - 1]));
+            throw new EvalError('refused by the page CSP');
+        };
+        globalThis.Function = new Proxy(RealFunction, {
+            construct: refuse,
+            apply: (target, _self, args) => refuse(target, args),
+        });
+        let caught: unknown = null;
+        try {
+            await import('./aiHelpers');
+            // The net is shown to catch one the way module code writes it,
+            // or the empty list below would prove nothing.
+            try {
+                new Function('return 1');
+            } catch (error) {
+                caught = error;
+            }
+        } finally {
+            globalThis.Function = RealFunction;
+        }
+        expect(caught).toBeInstanceOf(EvalError);
+        expect(evaluated).toEqual(['return 1']);
+    });
+
     // The doors this opens drive a renderer with node integration, so an
     // install that has never been asked gets none of them. Nobody acquires a
     // local code execution surface by upgrading; they opt in, once, knowingly.

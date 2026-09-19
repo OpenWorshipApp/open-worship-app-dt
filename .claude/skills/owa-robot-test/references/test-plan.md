@@ -185,7 +185,10 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
   mouse off lets the held one go ~2 s later; the container unmounts once the last toast is
   gone → **Unlock**. Screenshot the stack. The 5-toast cap has no cheap organic trigger
   (five refusals ≥1 s apart, each hovered) — mark it PARTIAL unless done. See ui-map
-  "Toasts".
+  "Toasts". ⚠️ A toast lives **4 s**, so the `hover` must be the very next tool call after
+  the press with nothing else in that turn; when the session is slower than that (three
+  misses on 2026-09-15) the row is `PARTIAL: one toast verified, stacking not reached at
+  this session's latency`, not FAIL and not an unseen PASS.
 - Console stays clean after each interaction (diff against baseline).
 - No new failed network requests.
 - Icon-only buttons have accessible names in the snapshot (flag unnamed ones).
@@ -322,11 +325,16 @@ before continuing.
    no download.
 4. Optional runtime proof: while yt-dlp runs, read its command line — it must carry
    `--no-js-runtimes --js-runtimes quickjs:<…>\extra-bin\qjs\qjs.exe`.
-5. **MD-04 teardown (right after step 3's evidence is captured)** — 🖱️R the new video row
-   → **Move to Trash** → **Yes**; same for the new `.mp3`. The row must leave the tab
-   without a manual reload (this also covers CM-06 on a background media row, against a
-   scratch file this run created). **Move to Trash is hidden while the item is on a
-   screen** — clear/hide first. For anything that never reached the list, delete on disk;
+5. **MD-04 teardown (right after step 3's evidence is captured)** — for a HUMAN tester:
+   🖱️R the new video row → **Move to Trash** → **Yes**; same for the new `.mp3`. The row
+   must leave the tab without a manual reload (this also covers CM-06 on a background media
+   row, against a scratch file this run created). ⚠️ **An AGENT cannot press it** — the MCP
+   firewall refuses a label that cannot be undone, for `owa_click` and for uid-aimed
+   `click` alike — so the agent's path is the on-disk Recycle Bin below and CM-06 is
+   `BLOCKED: destructive-label interlock, human-only` (verified 2026-09-15; the rows still
+   leave both lists on their own through `fs.watch`). **Move to Trash is hidden while the
+   item is on a screen** — clear/hide first. For anything that never reached the list
+   (its partial lives in `%TEMP%\temp-<ms>.*`, not in the media dir), delete on disk;
    the names start with `[MV]` and `[` is a PowerShell wildcard, so pipe objects instead
    of globbing: `Get-ChildItem -LiteralPath $dir | Where-Object { $_.Name -like '*Flowers
    by*Official Music Video - YouTube*' -or $_.Name -like 'temp-*' } | Remove-Item`. End

@@ -534,6 +534,23 @@ export function checkIsFreeProvider(provider: LlmProviderType | null) {
 }
 
 /**
+ * The setting a provider's key is typed into, or null for the one that needs
+ * none. Asked at a press -- a head-row pick, or a button a saved conversation
+ * carries -- so anything that is not a provider is null rather than a throw.
+ */
+export function getLlmProviderKeyField(
+    provider: unknown,
+): AISecretKeyNameType | null {
+    if (
+        typeof provider !== 'string' ||
+        !Object.hasOwn(LLM_PROVIDER_MAP, provider)
+    ) {
+        return null;
+    }
+    return LLM_PROVIDER_MAP[provider as LlmProviderType].keyField ?? null;
+}
+
+/**
  * What the user needs to be told before they read an answer from this
  * provider, or null when there is nothing to tell them. Null for every provider
  * they are paying for themselves.

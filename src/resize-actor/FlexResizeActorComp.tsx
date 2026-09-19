@@ -36,6 +36,24 @@ const ICON_MAP: Record<'h' | 'v', [CloseType, string, string][]> = {
     ],
 };
 
+// What an arrow on the divider does, in words: it collapses the panel on that
+// side (the menu's Close First / Second Widget). It used to say "Disable left",
+// in English in every language. Deliberately NOT the menu's own words, so the
+// app's tools do not find a hover-only arrow where a walkthrough means the menu
+// item. Literal keys, so `tranKeyCoverage.test.ts` can check each one.
+function genCollapseTitle(direction: CloseType) {
+    if (direction === 'left') {
+        return tran('Collapse left panel');
+    }
+    if (direction === 'right') {
+        return tran('Collapse right panel');
+    }
+    if (direction === 'up') {
+        return tran('Collapse top panel');
+    }
+    return tran('Collapse bottom panel');
+}
+
 type PointerLikeEvent = MouseEvent | TouchEvent;
 
 export type ResizeKindType = 'v' | 'h';
@@ -434,12 +452,13 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         const moverChildren = props.isDisableQuickResize
             ? null
             : ICON_MAP[type].map(([direction, src, margin]) => {
+                  const title = genCollapseTitle(direction);
                   return (
                       <img
                           key={direction}
-                          alt={`Disable ${direction}`}
+                          alt={title}
                           src={src}
-                          title={`Disable ${direction}`}
+                          title={title}
                           className="disabling-arrow"
                           style={{ margin }}
                           onClick={(event) => {

@@ -1,6 +1,8 @@
 import SettingManager from '../helper/SettingManager';
 import {
+    getSetting,
     removeSettingsByPrefix,
+    setSetting,
     toFilePathSettingKey,
 } from '../helper/settingHelpers';
 import { pathResolve, selectDirs } from '../server/fileHelpers';
@@ -25,6 +27,13 @@ const RESOURCES_FOLDER_SETTING_PREFIXES = ['resources-folder-expanded'];
  */
 export const RESOURCES_SEARCH_SHOWING_SETTING_NAME = 'resources-search-showing';
 
+/**
+ * Whether the Others box is ticked -- every file named after no chapter at
+ * all, listed under each folder. Panel-wide for the same reasons as the search
+ * box above, and kept out of the folder prefixes for the same reason too.
+ */
+export const RESOURCES_OTHERS_SHOWING_SETTING_NAME = 'resources-others-showing';
+
 export function toResourcesFolderExpandedSettingName(dirPath: string) {
     return `resources-folder-expanded-${toFilePathSettingKey(dirPath)}`;
 }
@@ -37,7 +46,7 @@ export function toResourcesFolderExpandedSettingName(dirPath: string) {
  * scan the same tree twice. Only the comparison is case-folded -- the stored
  * path keeps the casing the picker returned, which is what the user recognises.
  */
-function toDirPathCompareKey(dirPath: string) {
+export function toDirPathCompareKey(dirPath: string) {
     return appProvider.systemUtils.isLinux ? dirPath : dirPath.toLowerCase();
 }
 
@@ -137,6 +146,29 @@ export function addResourcesFolders(
 }
 
 /**
+ * The list with one folder swapped for another IN ITS PLACE.
+ *
+ * For a folder that was copied somewhere else: the copy takes over the box the
+ * user was looking at rather than being appended at the bottom, where it would
+ * read as a second library instead of the same one, moved. Sanitized after the
+ * swap, so a copy that was somehow already on the list is kept once.
+ */
+export function replaceResourcesFolder(
+    dirPathList: string[],
+    oldDirPath: string,
+    newDirPath: string,
+) {
+    const oldKey = toDirPathCompareKey(pathResolve(oldDirPath));
+    return sanitizeResourcesFolderList(
+        dirPathList.map((dirPath) => {
+            return toDirPathCompareKey(pathResolve(dirPath)) === oldKey
+                ? newDirPath
+                : dirPath;
+        }),
+    );
+}
+
+/**
  * Ask the user for folders and return the list with them appended.
  *
  * Returns `null` when nothing changed -- the dialog was cancelled, or every
@@ -150,6 +182,22 @@ export async function promptAddResourcesFolders(existingDirPathList: string[]) {
     }
     return addResourcesFolders(existingDirPathList, pickedDirPaths)
         .newDirPathList;
+}
+
+/**
+ * Hand a folder's open/collapsed state to the folder replacing it, so the box
+ * the user was looking at stays the way they left it. Written before the new
+ * box mounts, because that is the only time it reads the setting.
+ */
+export function carryResourcesFolderSettings(
+    oldDirPath: string,
+    newDirPath: string,
+) {
+    const value = getSetting(toResourcesFolderExpandedSettingName(oldDirPath));
+    if (!value) {
+        return;
+    }
+    setSetting(toResourcesFolderExpandedSettingName(newDirPath), value);
 }
 
 /**

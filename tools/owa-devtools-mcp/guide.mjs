@@ -23,6 +23,7 @@ import {
     detectBotFocus,
     getBotFocus,
 } from './botFocus.mjs';
+import { PRESS_GUARD_SOURCE } from './destructiveLabel.mjs';
 import { DOM_MATCH_RUNTIME } from './domMatch.mjs';
 import { toEnglishOnly } from './help.mjs';
 
@@ -83,6 +84,11 @@ const GUIDE_RUNTIME = `
         // match so a guide restarted in the meantime is not written on by an
         // answer to a question its predecessor asked.
         help: null,
+        // What a press is judged by (destructiveLabel.mjs), handed over by
+        // owa_guide_start and held for the walkthrough. Null when the
+        // operator switched the firewall off -- or when the card was started
+        // by a caller from before this existed, which presses as it did.
+        guard: null,
         labels: {
             next: 'Next', back: 'Back', done: 'Done', step: 'Step',
             act: 'Do it', skip: 'Skip',
@@ -582,6 +588,39 @@ const GUIDE_RUNTIME = `
     // and owa_type alike, so a label one tool can see they all can.
     const dm = ${DOM_MATCH_RUNTIME};
 
+    // The interlock every press the tools make carries. The card's own Do it
+    // and a tool's "do" press the same way, so they are judged the same way --
+    // by what the control IS, never by who asked: a step naming something
+    // that cannot be undone is ringed and left for the person to press, a
+    // keystroke is as destructive as the control whose title names it, and a
+    // question the app is asking is never answered.
+    const pressGuard = ${PRESS_GUARD_SOURCE};
+    const refusalOf = (step, target) => {
+        if (state.guard === null || state.guard === undefined) {
+            return null;
+        }
+        if (target !== null && target !== undefined) {
+            return pressGuard.findPressRefusal(target, state.guard.rule);
+        }
+        return step !== undefined && step.keys != null
+            ? pressGuard.findKeyRefusal(step.keys, state.guard.rule, document)
+            : null;
+    };
+    const toRefusedResult = (refusal, named) => {
+        const label = refusal.label ?? named;
+        return {
+            done: false,
+            reason: refusal.refused === 'question'
+                ? '"' + named + '" is the app asking you a question, and ' +
+                    'that is yours to answer'
+                : '"' + label + '" cannot be undone, so it is yours to press',
+            refused: refusal.refused,
+            label: label,
+            // Nobody to ask for help: the assistant may not press it either.
+            isUserTurn: true,
+        };
+    };
+
     // Every candidate the step offered, in order, until one is actually on
     // screen: a step reads "Press Ctrl+B (or click Bible Lookup in the
     // header)", and only the second half of that is a thing to point at.
@@ -761,11 +800,18 @@ const GUIDE_RUNTIME = `
             if (step.keys != null) {
                 watchedKeys = step.keys;
                 addEventListener('keydown', handleWatchedKey, true);
-                parts.hint.textContent = state.isDemo
-                    ? 'Press ' + state.labels.act + ' and I will press ' +
-                        step.keys.label + ' for you.'
-                    : 'Press ' + step.keys.label + ' — I will notice when ' +
-                        'you do.';
+                // Demo mode only: a show-mode card never presses, and this
+                // looks the key up on every titled control in the window.
+                const keyRefusal = state.isDemo ? refusalOf(step, null) : null;
+                parts.hint.textContent = keyRefusal !== null
+                    ? step.keys.label + ' does something that cannot be ' +
+                        'undone, so I will not press it for you. Press it ' +
+                        'yourself if you want it — I will notice when you do.'
+                    : (state.isDemo
+                        ? 'Press ' + state.labels.act + ' and I will press ' +
+                            step.keys.label + ' for you.'
+                        : 'Press ' + step.keys.label + ' — I will notice ' +
+                            'when you do.');
                 return;
             }
             if (state.isDemo && step.action === 'rightClick') {
@@ -859,10 +905,12 @@ const GUIDE_RUNTIME = `
         }
         const shown = target.getBoundingClientRect();
         ring.style.display = 'block';
-        // Demo mode is about to press this for them; anything else is the
-        // guide standing still until they do.
+        // Demo mode is about to press this for them -- unless it is theirs to
+        // press; anything else is the guide standing still until they do.
+        const refusal = state.isDemo ? refusalOf(step, target) : null;
         ring.dataset.waiting =
-            !state.isDemo || state.lastAction === 'demo-could-not'
+            !state.isDemo || state.lastAction === 'demo-could-not' ||
+                refusal !== null
                 ? 'yes'
                 : 'no';
         ring.style.left = (shown.x - 3) + 'px';
@@ -879,12 +927,18 @@ const GUIDE_RUNTIME = `
         // press that does nothing on a divider.
         const isRightClick = step.action === 'rightClick' &&
             target.getAttribute('role') === 'separator';
-        parts.hint.textContent = (state.isDemo
-            ? 'Press ' + state.labels.act + ' and I will ' +
-                (step.action === 'type' ? 'type it' :
-                    (isRightClick ? 'right-click it' : 'click it')) +
-                ' for you. '
-            : '') + (isHeldVisible
+        parts.hint.textContent = (refusal !== null
+            ? (refusal.refused === 'question'
+                ? 'This is the app asking you a question, so I will not ' +
+                    'answer it for you. '
+                : 'This one cannot be undone, so I will not press it for ' +
+                    'you — press it yourself if you want it. ')
+            : (state.isDemo
+                ? 'Press ' + state.labels.act + ' and I will ' +
+                    (step.action === 'type' ? 'type it' :
+                        (isRightClick ? 'right-click it' : 'click it')) +
+                    ' for you. '
+                : '')) + (isHeldVisible
             ? 'This one only shows while the mouse is over it, so I ' +
                 'am holding it up for you. '
             : '') + 'The ringed control is ' +
@@ -1126,6 +1180,10 @@ const GUIDE_RUNTIME = `
                 // The control is not there -- but the step may still have
                 // said how to do it without one.
                 if (step.keys != null) {
+                    const keyRefusal = refusalOf(step, null);
+                    if (keyRefusal !== null) {
+                        return toRefusedResult(keyRefusal, step.keys.label);
+                    }
                     unwatch();
                     return pressKeys(step.keys);
                 }
@@ -1155,6 +1213,12 @@ const GUIDE_RUNTIME = `
                     (step.finds ?? [step.find]).filter(Boolean),
                 ),
             };
+        }
+        // Judged before anything is closed out of its way: a control that is
+        // not the card's to press must not cost the user a popup first.
+        const refusal = refusalOf(step, target);
+        if (refusal !== null) {
+            return toRefusedResult(refusal, nameOf(step, match));
         }
         // In the way: a popup is closed by this press and the step by the
         // next, one press one action, the same shape as the right-click
@@ -1237,6 +1301,7 @@ const GUIDE_RUNTIME = `
             state.steps = (payload.steps ?? []).slice(0, ${MAX_STEPS});
             state.title = payload.title ?? 'Step by step';
             state.labels = Object.assign(state.labels, payload.labels ?? {});
+            state.guard = payload.guard ?? null;
             // A recipe whose steps name no control at all can be walked
             // through but never performed: EVERY press of "Do it" would
             // apologise, which is what a dead button looks like from the
@@ -1376,6 +1441,15 @@ const GUIDE_RUNTIME = `
                     found !== null ||
                     (step !== undefined &&
                         (step.keys != null || step.action === 'rightClick')),
+                // Found, and not the card's to press -- 'destructive' or
+                // 'question' -- said up front, so a caller does not learn it
+                // from a refused "do".
+                pressRefused: (() => {
+                    const refusal = state.isRunning && step !== undefined
+                        ? refusalOf(step, found)
+                        : null;
+                    return refusal === null ? null : refusal.refused;
+                })(),
                 nearMisses:
                     state.isRunning && step !== undefined && found === null
                         ? dm.nearMisses(
