@@ -39,6 +39,8 @@ import {
     getDownloadPath,
     pathJoin,
     pathSeparator,
+    splitPathRoot,
+    toPathCompareKey,
 } from '../../server/fileHelpers';
 import { tran } from '../../lang/langHelpers';
 import {
@@ -116,12 +118,6 @@ export type ExportableDataFolderType = {
     fileNames?: string[];
 };
 
-function toPathSegments(dirPath: string) {
-    return dirPath.split(pathSeparator).filter((part) => {
-        return part.length > 0;
-    });
-}
-
 /**
  * The deepest folder every selected directory lives under, plus each one's path
  * relative to it. That folder becomes tar's `cwd`, which is what lets the
@@ -129,18 +125,36 @@ function toPathSegments(dirPath: string) {
  *
  * The prefix is always cut at least one segment short of the shortest path, so
  * a single selected folder still has a name of its own inside the archive.
+ *
+ * The ROOT is kept whole (`splitPathRoot`): splitting on the separator alone
+ * turned `/Volumes/USB/data` into the relative `Volumes/USB/data`, which only
+ * resolved when the app was started from `/` -- so Export Data failed on a
+ * Linux desktop and in dev on macOS -- and stripped a share's `\\`.
  */
 export function toCommonAncestor(dirPaths: string[]) {
-    const segmentsList = dirPaths.map(toPathSegments);
-    let commonLength = Math.min(
-        ...segmentsList.map((segments) => {
-            return segments.length - 1;
-        }),
-    );
+    const splitPaths = dirPaths.map((dirPath) => {
+        return splitPathRoot(dirPath);
+    });
+    const root = splitPaths[0]?.root ?? '';
+    const segmentsList = splitPaths.map(({ segments }) => {
+        return segments;
+    });
+    const isSameRoot = splitPaths.every((splitPath) => {
+        return toPathCompareKey(splitPath.root) === toPathCompareKey(root);
+    });
+    let commonLength = isSameRoot
+        ? Math.min(
+              ...segmentsList.map((segments) => {
+                  return segments.length - 1;
+              }),
+          )
+        : 0;
     for (let index = 0; index < commonLength; index++) {
-        const segment = segmentsList[0][index].toLocaleLowerCase();
+        // Compared the way this computer's disks compare names: `Docs` and
+        // `docs` are one folder on Windows and two on Linux.
+        const segment = toPathCompareKey(segmentsList[0][index]);
         const isSame = segmentsList.every((segments) => {
-            return segments[index].toLocaleLowerCase() === segment;
+            return toPathCompareKey(segments[index]) === segment;
         });
         if (!isSame) {
             commonLength = index;
@@ -153,7 +167,8 @@ export function toCommonAncestor(dirPaths: string[]) {
                 ' different drives?), so they cannot go in one archive',
         );
     }
-    const ancestorDir = pathJoin(...segmentsList[0].slice(0, commonLength));
+    const ancestorDir =
+        root + segmentsList[0].slice(0, commonLength).join(pathSeparator);
     const entries = segmentsList.map((segments) => {
         return segments.slice(commonLength).join('/');
     });

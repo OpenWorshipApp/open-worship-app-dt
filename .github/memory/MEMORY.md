@@ -59,7 +59,7 @@
 - [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) — it also kills the user's open-lyric dev app
 - [View menu widget toggles](view-menu-widget-toggles.md) — View → Widgets ticks each pane; Reset Widgets Size
 - [`appFilePath` is a prototype getter](appfilepath-is-a-prototype-getter.md) — plain assignment silently no-ops
-- [Media binaries install on demand](extra-bin-on-demand.md) — yt-dlp/ffmpeg/qjs live in `<data parent>/extra-bin`
+- [Media binaries install on demand](extra-bin-on-demand.md) — yt-dlp/ffmpeg/qjs live in `<data parent>/extra-bin/<platform>` (one folder per OS since EN-29)
 - [SongSelect plugin](song-select-plugin.md) — all frontend in src/plugins/song-select by user request
 - [Public Domain Songs plugin](public-domain-songs-plugin.md) — 36 embedded PD hymns, no sign-in
 - [open-lyric fence ground truth](open-lyric-fence-ground-truth.md) — probed structure codes (P not PC, IS/S split)
@@ -139,4 +139,5 @@
 - [CRLF checkout breaks line regexes](crlf-checkout-line-regex.md) — split repo text on `/\r?\n/`; an anchored `(.*)$` silently matches nothing
 - [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — an `infinite` color/border keyframe repaints a whole window at 60 fps; cap iterations; trace the Presenter with a screen SHOWING (EN-19)
 - [Own font list with weights](own-font-list-with-weights.md) — `font-list` is gone; the macOS/Linux branches never ran on a real machine
-- [Data folder path is aliased in file contents](portable-data-dir-alias.md) — `$DATA_DIR_PATH` in every escape level; raw readers (copy, tar, iframe) see the alias
+- [Data folder path is aliased in file contents](portable-data-dir-alias.md) — `$DATA_DIR_PATH` in every escape level; raw readers see the alias; a marker re-finds the folder, setting NAMES go `@data_`, Repair Links fixes old paths
+- [Path handling lives in fileHelpers](path-handling-lives-in-filehelpers.md) — the user's rule: every path/file-name helper in `src/server/fileHelpers.ts`, no ad-hoc separator splits

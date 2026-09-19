@@ -99,6 +99,7 @@ vi.mock('./extraBinHelpers', () => ({
     checkIsExtraBinInstalled: checkIsExtraBinInstalledMock,
     getExtraBinDirPath: () => '/data/extra-bin',
     getInstalledExtraBinVersion: getInstalledExtraBinVersionMock,
+    moveLegacyExtraBinPack: vi.fn(async () => {}),
 }));
 
 function stubExtraBinInfo(extraBin: any) {

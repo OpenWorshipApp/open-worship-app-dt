@@ -21,7 +21,22 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-19** (**W-25 steps 2 and 5 — the backup carries the Resources
+**workflowsVersion: 2026-09-19a** (**W-16 step 2 — Repair Links.** From `/owa-enhance
+reliability` (`EN-33`), the user's ask: *my data portable and supported on both Windows and
+POSIX*. A data folder carried between computers still held links naming where it used to be —
+files saved before `$DATA_DIR_PATH` existed, or while the folder lived elsewhere — and those
+pictures and videos showed as missing. **Repair Links**, in the Child Directories header of
+Path Settings, points every such link at the folder where it is now, and only a link whose
+own path is gone and whose file exists here. Verified live 2026-09-19 on the dev data folder:
+*Links repaired: 381. Files changed: 127.* for the lyric backgrounds and their editing history
+written on a Mac, then 6 more in 4 files (folder links); no old path left, every file still
+parses, the Documents folder kept in another folder untouched, and every window reloaded with
+no errors. The rest of that change — a missing data folder named at start-up with Retry, one
+on a new drive letter found by itself, a new computer offered one found on a drive, the
+permanent-delete question on a USB stick, file names checked for every OS — is in
+`coverage-matrix.md` as rows still to be seen live, not as steps here.)
+
+Previous: **workflowsVersion: 2026-09-19** (**W-25 steps 2 and 5 — the backup carries the Resources
 folder.** Asked for by the user: *add `$DATA_DIR_PATH/resources` part of export/import data as
 well*. **Export Data** lists a **Resources** row, the app-managed `<data folder>/resources`
 where the Resources panel's **Copy to Data Directory** puts a folder, and archives ALL of it,
@@ -1479,6 +1494,11 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
      than one weight, a second list beside it picks one (`400 Regular`, `700 Bold`…);
      **[en:tran:Default]** keeps the font's own weight.
    - **Directories:** where documents, lyrics, and bibles are stored on disk.
+   - **[en:tran:Repair Links]** (beside **Reset All Child Directories**): after you
+     bring the data folder from another computer — a USB stick, a copied folder — press
+     it once. Pictures, videos and songs still pointing at where the folder USED to be
+     are pointed at where it is now; a link to something that still exists is left as it
+     is. A box says how many links it repaired, and the app reloads to show them. 📸
    - **Reset buttons** (`Reset All Child Directories` / `Clear All Settings`):
      **these erase configuration; use with care.** `Reset All Child Directories`
      asks for confirmation first; `Clear All Settings` does **not**.
@@ -1487,7 +1507,7 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
    downloaded ones. 📸
 4. Click **Apply Settings** (top-right) to apply — the app windows reload.
 
-_Verify: ST-01..09, LT-02..04._
+_Verify: ST-01..09, ST-52, LT-02..04._
 
 ### W-17 — Find text anywhere (Find bar) & About
 

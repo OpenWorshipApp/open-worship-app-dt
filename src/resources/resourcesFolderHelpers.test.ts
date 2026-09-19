@@ -28,6 +28,17 @@ vi.mock('../server/fileHelpers', () => ({
         const resolved = dirPath.startsWith('/') ? dirPath : `/cwd/${dirPath}`;
         return resolved.endsWith('/') ? resolved.slice(0, -1) : resolved;
     },
+    // Mirror the real ones on macOS/Linux (tested in `fileHelpers.test.ts`).
+    checkIsForeignAbsolutePath: (dirPath: string) => {
+        return /^[A-Za-z]:[\\/]/.test(dirPath);
+    },
+    toPathCompareKey: (dirPath: string) => {
+        return state.isLinux ? dirPath : dirPath.toLowerCase();
+    },
+    // No data folder here: every path keeps its absolute form.
+    toDataDirRelativePath: (filePath: string) => {
+        return filePath;
+    },
 }));
 
 vi.mock('../helper/settingHelpers', async (importOriginal) => {
@@ -65,6 +76,15 @@ describe('sanitizeResourcesFolderList', () => {
                 'relative',
             ]),
         ).toEqual(['/a/songs', '/cwd/relative']);
+    });
+
+    test('keeps a folder from the other OS exactly as written', () => {
+        // Resolved, `D:\Songs` became `/cwd/D:\Songs` -- saved back, the
+        // Windows folder was gone from the list for good.
+        expect(sanitizeResourcesFolderList(['D:\\Songs', '/a/songs'])).toEqual([
+            'D:\\Songs',
+            '/a/songs',
+        ]);
     });
 
     test('treats a trailing separator as the same folder', () => {

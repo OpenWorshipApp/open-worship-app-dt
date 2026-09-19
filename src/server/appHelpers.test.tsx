@@ -56,6 +56,9 @@ const {
             systemUtils: {
                 copyToClipboard,
             },
+            // Read by the real `fileHelpers` on load, which the mock below
+            // borrows its name rule from.
+            pathUtils: { sep: '/' },
             messageUtils: {
                 sendData,
                 sendDataSync,
@@ -116,7 +119,11 @@ vi.mock('../router/routeHelpers', () => ({
     goToPath: goToPathMock,
 }));
 
-vi.mock('./fileHelpers', () => ({
+vi.mock('./fileHelpers', async (importOriginal) => ({
+    // The real rule, not a stub: what a title becomes on disk is what the
+    // download tests are about.
+    toPortableFileName: (await importOriginal<typeof import('./fileHelpers')>())
+        .toPortableFileName,
     fsCheckFileExist: fsCheckFileExistMock,
     fsCheckDirExist: vi.fn(() => Promise.resolve(false)),
     fsDeleteFile: vi.fn(() => Promise.resolve()),
@@ -549,6 +556,37 @@ describe('appHelpers', () => {
             77,
         );
         expect(showProgressBarMessageMock).toHaveBeenCalledWith('all done');
+    });
+
+    test('names a download after its title in a form every OS accepts', async () => {
+        const module = await loadModule();
+        vi.spyOn(Date, 'now').mockReturnValue(444);
+        const emitter = createYtEmitter((handlers) => {
+            handlers.ytDlpEvent('Merger', 'Merging formats into "/out/v.mp4"');
+            handlers.close();
+        });
+        appProviderMock.ytUtils.getYTHelper.mockResolvedValue({
+            exec: vi.fn().mockReturnValueOnce(emitter),
+        });
+        fileSourceGetInstanceMock.mockImplementation(() => ({
+            dotExtension: '.mp4',
+        }));
+        // `|`, `:` and `/` are refused by Windows and by an exFAT stick, and
+        // the raw `<title>` still carries its HTML entities.
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({
+                text: async () =>
+                    '<title>Way Maker | Live &amp; Loud: 10/10</title>',
+            })),
+        );
+
+        await expect(
+            module.downloadVideoOrAudio('https://video', '/out', true),
+        ).resolves.toEqual({
+            filePath: '/out/v.mp4',
+            fileFullName: 'Way Maker Live & Loud 10 10.mp4',
+        });
     });
 
     test('points yt-dlp at the installed media pack', async () => {

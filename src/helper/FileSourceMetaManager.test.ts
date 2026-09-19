@@ -43,6 +43,17 @@ vi.mock('../lang/langHelpers', () => ({
 vi.mock('../server/fileHelpers', () => ({
     checkIsAppFile: checkIsAppFileMock,
     fsCheckFileExist: fsCheckFileExistMock,
+    // Only `/docs` is here: the stick holding `/Volumes/USB` is unplugged.
+    fsCheckDirExist: async (dirPath: string) => {
+        return dirPath === '/docs';
+    },
+    // Mirror the real ones on macOS/Linux (tested in `fileHelpers.test.ts`).
+    checkIsNativeAbsolutePath: (filePath: string) => {
+        return filePath.startsWith('/');
+    },
+    pathDirname: (filePath: string) => {
+        return filePath.substring(0, filePath.lastIndexOf('/'));
+    },
     KEY_SEPARATOR: '::',
 }));
 
@@ -203,6 +214,25 @@ describe('FileSourceMetaManager', () => {
 
         expect(settingState.value).toEqual({
             '/docs/keep.txt': 'red',
+        });
+    });
+
+    test('keeps the note of a file that is out of reach, not gone', async () => {
+        settingState.value = {
+            // Its drive is not plugged in.
+            '/Volumes/USB/songs/a.ows': 'red',
+            // Written on Windows; names nothing on this Mac.
+            'C:\\songs\\b.ows::2': 'blue',
+            // Its folder is here and it is not: really gone.
+            '/docs/gone.txt': 'green',
+        };
+        fsCheckFileExistMock.mockResolvedValue(false);
+
+        await FileSourceMetaManager.checkAllColorNotes();
+
+        expect(settingState.value).toEqual({
+            '/Volumes/USB/songs/a.ows': 'red',
+            'C:\\songs\\b.ows::2': 'blue',
         });
     });
     test('the persisted meta store only accepts JSON objects', () => {

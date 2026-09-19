@@ -4,6 +4,7 @@ import kjvdBibleJson from '../helper/bible-helpers/kjvdBible.json';
 import CacheManager from '../others/CacheManager';
 import {
     checkIsHiddenName,
+    checkIsSystemFileName,
     fsListDirents,
     getMimetypeExtensions,
     pathBasename,
@@ -287,7 +288,10 @@ export function checkIsResourceFileListed(
     searchText: string,
     isOthersShowing: boolean,
 ) {
-    if (checkIsHiddenName(fileFullName)) {
+    if (
+        checkIsHiddenName(fileFullName) ||
+        checkIsSystemFileName(fileFullName)
+    ) {
         return false;
     }
     const isMatched = targets.some(({ bookKey, chapter }) => {
@@ -592,7 +596,9 @@ async function walkForMatches(
         directoryCount += 1;
         entryCount += direntList.length;
         for (const { name, isFile, isDirectory } of direntList) {
-            if (checkIsHiddenName(name)) {
+            // `Thumbs.db` and `desktop.ini` are Windows', not the user's: a
+            // folder browsed in Explorer, or a stick, holds them everywhere.
+            if (checkIsHiddenName(name) || checkIsSystemFileName(name)) {
                 continue;
             }
             if (isFile) {

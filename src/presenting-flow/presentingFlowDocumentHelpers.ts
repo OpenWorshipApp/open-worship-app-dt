@@ -12,6 +12,7 @@ import type {
 import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/presenterRendererHelpers';
 import { previewingEventListener } from '../event/PreviewingEventListener';
 import { handleError } from '../helper/errorHelpers';
+import { fsCheckFileExist } from '../server/fileHelpers';
 
 export { checkIsLyricFilePath };
 
@@ -59,12 +60,19 @@ export function useVaryAppDocumentOpener() {
  * The document behind a referenced file. Lyrics resolve to their rendering
  * stage document — the plain `LyricAppDocument` only yields empty placeholder
  * slides.
+ *
+ * Null for a file that is not on disk, as the Presenter's own selection is
+ * checked before it is opened: a run sheet can outlive a document it names,
+ * and its row then says the file cannot be read rather than "No slides".
  */
 export async function loadVaryAppDocument(
     filePath: string,
     stage = 0,
 ): Promise<VaryAppDocumentType | null> {
     try {
+        if (!(await fsCheckFileExist(filePath))) {
+            return null;
+        }
         if (checkIsLyricFilePath(filePath)) {
             const { getLyricAppDocumentStageByStage } =
                 await import('../lyric-list/lyricHelpers');

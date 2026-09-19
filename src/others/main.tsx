@@ -32,6 +32,12 @@ import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { unlocking } from '../server/unlockingHelpers';
 import { useAppEffectAsync } from '../helper/appHooks';
 import { openGeneralSetting } from '../setting/settingHelpers';
+import {
+    findDataDirsOnVolumesSync,
+    getDesktopPath,
+    pathJoin,
+} from '../server/fileHelpers';
+import { escapeHtmlText } from '../helper/sanitizeHelpers';
 import { useThemeSource } from './themeHelpers';
 import { getReactRoot } from './rootHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
@@ -44,23 +50,84 @@ import { initWidgetAppMenu } from '../resize-actor/widgetAppMenuHelpers';
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;
 
+/**
+ * The chosen data folder was not there as the app started, and was found on no
+ * other drive either. Said in words, with the folder named: running quietly on
+ * the app's own folder looked like every song had been lost.
+ */
+async function askAboutMissingDataDir(missingDirPath: string) {
+    const isRetrying = await showAppConfirm(
+        tran('Data Folder Not Found'),
+        `"${escapeHtmlText(missingDirPath)}" ` +
+            tran(
+                'is not available. If it is on a USB flash drive, plug it in and press Retry. Until then the app is using a folder of its own; your data is not touched.',
+            ),
+        {
+            confirmButtonLabel: 'Retry',
+            cancelButtonLabel: 'Choose Another Folder',
+        },
+    );
+    if (isRetrying) {
+        appProvider.reload();
+    } else {
+        openGeneralSetting();
+    }
+}
+
+/**
+ * A computer that has never had a data folder chosen, with one on a plugged-in
+ * drive (or in the default Desktop folder): offered, rather than leaving the
+ * volunteer to know where Path Settings is.
+ */
+async function offerFoundDataDir() {
+    const [foundDirPath] = findDataDirsOnVolumesSync([
+        pathJoin(getDesktopPath(), 'open-worship-data'),
+    ]);
+    if (foundDirPath === undefined) {
+        return false;
+    }
+    const isOk = await showAppConfirm(
+        tran('Data Folder Found'),
+        `${tran('Use the data folder found at')} ` +
+            `"${escapeHtmlText(foundDirPath)}"?`,
+        {
+            confirmButtonLabel: 'Yes',
+            cancelButtonLabel: 'No',
+        },
+    );
+    if (!isOk) {
+        return false;
+    }
+    await appLocalStorage.setSelectedParentDirectory(foundDirPath);
+    appProvider.reload();
+    return true;
+}
+
 function useCheckSetting() {
     useAppEffectAsync(async () => {
-        if (
-            appProvider.isMainPage &&
-            !(await appLocalStorage.getSelectedParentDirectory())
-        ) {
-            const isOk = await showAppConfirm(
-                tran('No Parent Directory Selected'),
-                tran(
-                    'You will be redirected to the General Settings page to ' +
-                        'select a parent directory.',
-                ),
-            );
-            if (isOk) {
-                openGeneralSetting();
-            }
+        if (!appProvider.isMainPage) {
             return;
+        }
+        const missingDirPath = appLocalStorage.missingParentDirPath;
+        if (missingDirPath !== null) {
+            await askAboutMissingDataDir(missingDirPath);
+            return;
+        }
+        if (await appLocalStorage.getSelectedParentDirectory()) {
+            return;
+        }
+        if (await offerFoundDataDir()) {
+            return;
+        }
+        const isOk = await showAppConfirm(
+            tran('No Parent Directory Selected'),
+            tran(
+                'You will be redirected to the General Settings page to ' +
+                    'select a parent directory.',
+            ),
+        );
+        if (isOk) {
+            openGeneralSetting();
         }
     }, []);
 }

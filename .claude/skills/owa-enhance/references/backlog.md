@@ -283,3 +283,63 @@ and on the verse numbers, `Tab ដើម្បីបំពេញ`, `បំបែ
 console errors in both windows; English restored. Not seen live: the Bible
 Note window's buttons, and *Click to remove extra Bible* (no extra Bible was
 open). Found and applied in run `20260918-1758`.
+
+## EN-22 · Importing a Windows-made bundle on macOS/Linux named the file after the whole Windows path — `done` · S2 · reliability
+
+**Evidence.** `importArchiveFiles` took `FileSource.getInstance(originalPath).fullName`, and `FileSource` split on the running OS's separator only: on POSIX `C:\Users\x\data\documents\Song.ows` became a file NAMED that (reproduced with Node's `path.posix`). **Shipped.** The name comes from `toBaseNameOfAnyOs` (either separator) and `toPortableFileFullName` (name and extension cleaned apart: a Linux `What?.owl` lands as `What.owl`), both in `fileHelpers`. `FileSource.getInstanceNoCache` now splits through `splitFilePath`, which on Windows takes either separator. **Proof.** `src/helper/appArchiveHelpers.test.ts` (the first test for the import) imports a Windows bundle under POSIX rules: `Song.ows` lands in the documents folder. Found and applied in run `20260919-1215`.
+
+## EN-23 · Export Data handed tar a RELATIVE folder on macOS/Linux — `done` · S2 · reliability
+
+**Evidence.** `toCommonAncestor` split on the separator and dropped empty parts, so `/Volumes/USB/data/lyrics` gave the ancestor `Volumes/USB/data` — right only when the app was started from `/`; a Windows share lost its `\\`. Folder names were compared case-insensitively on Linux too. **Shipped.** `splitPathRoot` in `fileHelpers` keeps the root (`/`, `C:\`, `\\server\share\`); names compare by `toPathCompareKey` (exact on Linux). **Proof.** `src/setting/data-archive/dataArchiveHelpers.test.ts` (new): `/media/me/USB/data` stays absolute; `Data` and `data` are two folders on Linux. Not driven live: the dev machine is Windows. Found and applied in run `20260919-1215`.
+
+## EN-24 · A data folder missing at startup was FORGOTTEN, and the app opened on an empty one — `done` · S2 · reliability
+
+**Evidence.** `appLocalStorage.defaultStorageDirPath` deleted `selected-parent-dir` from the host `setting.json` whenever the folder was not there (a stick plugged in late, a new drive letter) and fell back to `userData` in silence. **Shipped.** The choice is kept; the session runs on the app's own folder; `useCheckSetting` (`src/others/main.tsx`) names the missing folder with **Retry** / **Choose Another Folder**. Picking a folder also clears the 10-second `local-storage` cache, which had sent the child-folder settings written right after a pick into the OLD folder. **Not done:** the list of recent data folders the report proposed — EN-30's search covers the drive-letter case and the dialog the unplugged one. **Proof.** `appLocalStorage.test.ts` (new): a missing folder stays the choice and is reported; a moved one is adopted. The dialog was not seen live (nothing was unplugged). Found and applied in run `20260919-1215`.
+
+## EN-25 · Colour notes were deleted at every start for files whose drive was not connected — `done` · S2 · reliability
+
+**Evidence.** `checkAllColorNotes` deleted any note whose file answered ENOENT, and an unplugged drive or another OS's path answers exactly that. **Shipped.** A note is pruned only when its file's folder is here and the file is not (`checkIsNativeAbsolutePath`, `fsCheckDirExist(pathDirname(…))`). **Proof.** `FileSourceMetaManager.test.ts` — failed first on the old code, passes after. Found and applied in run `20260919-1215`.
+
+## EN-26 · Downloaded videos were named after the raw page `<title>` — `done` · S2 · reliability
+
+**Evidence.** `getPageTitle` kept HTML entities and illegal characters; `Way Maker | Official Music Video` failed the final move on Windows and exFAT after the whole download. **Shipped.** `decodeHtmlEntities` (`sanitizeHelpers`) then `toPortableFileName` (`fileHelpers`). **Proof.** `appHelpers.test.tsx`: `<title>Way Maker | Live &amp; Loud: 10/10</title>` → `Way Maker Live & Loud 10 10.mp4` — failed first. Found and applied in run `20260919-1215`.
+
+## EN-27 · Delete failed for every file on a USB flash drive under Windows — `done` · S2 · reliability
+
+**Evidence.** Electron's `trashItem` aborts (`Operation was aborted`; `platform_util_win.cc` `PreDeleteItem`) for an item that cannot be recycled, and Windows keeps no Recycle Bin on a flash drive; the app retried 5 × 1 s, then said "try again". **Shipped (option a, chosen at apply).** The main process stops retrying on that error; `FileSource.trash('ask')` asks **Delete Permanently** (Move to Trash in the file menu, the file-read error card, Delete Bible XML), and the side files follow the answer. An agent's delete (`trashAgentFile`) still refuses, with a sentence saying why. **Proof.** `FileSource.test.ts` (asked → kept / deleted; agent refused), `FileItemHandlerComp.test.tsx`, `electronEventListener.coverage.test.ts` (one attempt, no retries). Not seen on a real USB stick. Found and applied in run `20260919-1215`.
+
+## EN-28 · Since `$DATA_DIR_PATH`, importing a bundle elsewhere no longer re-pointed a slide's media — `done` · S2 · reliability
+
+**Evidence.** The manifest keyed files by the exporter's real paths; the imported document read back as `$DATA_DIR_PATH` expanded to the IMPORTER's folder, so nothing matched and a renamed `intro (1).mp4` left the slide on the importer's other `intro.mp4`. **Shipped.** `writeArchiveManifest` records `dataDirPath`; `importArchiveFiles` keys each file a second time by `rebaseDataDirPath` onto this machine's folder. **Proof.** `appArchiveHelpers.test.ts`: a Windows export imported on POSIX finds `intro (1).mp4`; a bundle without `dataDirPath` keys as before. Found and applied in run `20260919-1215`.
+
+## EN-29 · The media-tool pack on a stick was for one OS but named and checked as if for all — `done` · S2 · reliability
+
+**Evidence.** One `extra-bin/` for every OS: a Mac re-extracted the kept Windows `bin-<ver>.tar.gz` and failed each time; a Mac pack on Linux read as installed. **Shipped.** `extra-bin/<platform>/`, named as `buildPlatformHelpers.mjs` names packs (`win`, `mac`, `mac-int`, `linux-arm64` …); an older single-folder pack whose `info.json` names this OS is moved in (`moveLegacyExtraBinPack`), another OS's is left for that OS. **Proof.** `extraBinHelpers.test.ts`: per-platform paths and names; a Windows pack moved on Windows and left alone on a Mac. `MD-05` not re-run. Found and applied in run `20260919-1215`.
+
+## EN-30 · Nothing found the data folder again on another drive letter or computer — `done` · S2 · reliability
+
+**Shipped (option c + a).** A marker `.owa-data-folder.json` with an id is written into the chosen folder, and the host keeps `selected-parent-dir-id`. A missing folder is looked for under every other mount point (drive letters, `/Volumes`, `/media/<user>`, `/run/media/<user>`, `/mnt`) and adopted when the id matches (`findMovedDataDirSync`). A computer with nothing chosen is offered a marked folder found on a drive (`findDataDirsOnVolumesSync`). Picking a folder that already has `local-storage` no longer asks to reset its child folders; the question for a new one is worded and translated. Needs `readdirSync` in the preload (`electron/client/fileUtils.ts`). **Proof.** `fileHelpers.test.ts` (a stick back as F: found by its id, another church's on G: not, a new computer finding one). Live: the dev folder got its marker and the host its id on the first start. Found and applied in run `20260919-1215`.
+
+## EN-31 · The Resources list rewrote another OS's folders into broken paths — `done` · S3 · reliability
+
+**Shipped.** `checkIsForeignAbsolutePath` (`fileHelpers`): a folder written on the other OS family is kept as written instead of `pathResolve`d (`D:\Songs` had become `/D:\Songs`, then `C:\D:\Songs`). **Proof.** `resourcesFolderHelpers.test.ts`. Found and applied in run `20260919-1215`.
+
+## EN-32 · Per-file settings were named after the file's absolute path — `done` · S3 · reliability
+
+**Shipped.** `toFilePathSettingKey` writes a file inside the data folder relative to it (`@data_documents_song_ows`, via `toDataDirRelativePath`) and cuts a key over 150 bytes with an FNV hash. A one-off per data folder (`settingKeyPathMigration.ts`, marker `setting-key-path-migration`) renames old names: this folder's path exactly, another computer's where it meets one of the folder's own top-level folders — never inside a folder the data folder is set to use OUTSIDE itself. **Before → after** (live dev data): 52 path-named setting files → 0. The two for a document kept in another folder were moved by a first version without that exception and were put back by hand. **Not done:** pruning names no file matches — a sanitized key cannot be turned back into a path. **Proof.** `settingKeyPathMigration.test.ts`, `settingHelpers.test.tsx`. Found and applied in run `20260919-1215`.
+
+## EN-33 · Paths from before the alias, or an older folder location, were never re-based — `done` · S3 · reliability
+
+**Shipped.** **Repair Links** in Settings → Path Settings (`repairDataDirLinks` in `directoryHelpers`, `repairDataDirLinksInText` in `fileHelpers`): a link whose own path is gone and whose file (or folder) exists under this data folder is rewritten as `$DATA_DIR_PATH`, in its own form and escape level; a link that still points at something is never touched. Only on the press. **Before → after** (live dev data): stale Mac paths in lyric side files 4 → 0 and in their editing history 123 → 0 (381 + 6 links in 127 + 4 files); every repaired JSON parses; the Documents folder kept elsewhere untouched. **Proof.** `fileHelpers.test.ts` (Mac paths, JSON escape level, URLs, folder links, whole names only, a round trip through the reader). Found and applied in run `20260919-1215`.
+
+## EN-34 · macOS `._` files broke a document's undo history and PDF preview reuse — `done` · S3 · reliability
+
+**Shipped.** `fsListFiles` leaves hidden names out (the one-line fix memory `data-archive-owadata` had kept in reserve); the Resources scan also skips `Thumbs.db` / `desktop.ini` / the macOS `Icon` file (`checkIsSystemFileName`). **Proof.** `fileHelpers.test.ts` (`._3-head` left out). Not seen on a Mac. Found and applied in run `20260919-1215`.
+
+## EN-35 · File names were not checked against what every OS accepts — `done` · S3 · reliability
+
+**Shipped.** `getPortableFileNameProblem` / `describePortableFileNameProblem` / `toPortableFileName` in `fileHelpers`, used by the name box (Enter AND the button — Enter had applied names unchecked), `createNewFileDetail` (the old TODO; its toast no longer says "Creating Presenting Flow" for every type), `FileSource.renameTo`, Download From URL (`toFileFullNameFromUrl`: `song.ows?dl=1` → `song.ows`) and both song imports. The agent's reserved-name gap (`nul.old`) is filed in `owa-enhance-mcp`. **Proof.** `AskingNewNameComp.test.tsx` (new): `Service 10:30` + Enter is refused. Found and applied in run `20260919-1215`.
+
+## EN-36 · A run sheet naming a deleted document "reset" it on every load — `done` · S3 · reliability
+
+**Evidence.** Reported by the user as an error in the console: `File …\documents\a.ows does not exist`, 2× per Presenter load, from a run-sheet row whose `a.ows` is gone. The stack showed the real fault one level up: `AppDocument.getJsonData` read the missing file as CORRUPTED, toasted "Corrupted Document", and "reset" it through `setJsonData`, where `EditingHistoryManager.ensureHistoriesDir` made `<doc>.histories` before checking the file and then threw. The reset could not be saved, so the row listed a made-up default slide (`#0 Slide`) that a click would present, and an empty `a.ows.histories` came back on every load. The run sheet was the one reader that did not check first: the Presenter's own selection does (`getSelectedFilePathWithEnsure`). **Shipped.** `AppDocument.getJsonData`: a file that is not on disk is missing, not corrupted, and answers an empty document with no toast and no write (a document on disk that cannot be parsed is still reset). `ensureHistoriesDir` checks the document before making anything. `loadVaryAppDocument` answers null for a missing file, so the tree row, the run player and the assistant's run-sheet view show `Fail to read file data`, as `PL-50` already specified. **Before → after** (live, Presenter reload): console errors 2 → 0; the row `#0 Slide` → `⚠ Fail to read file data`; `a.ows.histories` re-created → not. **Proof.** `AppDocument.test.ts` (new), `presentingFlowDocumentHelpers.test.ts` (new), `EditingHistoryManager.test.ts` — all failed first. Found in run `20260919-1215`, applied 2026-09-19.

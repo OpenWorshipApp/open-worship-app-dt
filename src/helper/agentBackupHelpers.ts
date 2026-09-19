@@ -328,9 +328,15 @@ export async function trashAgentFile(
     const fileSource = FileSourceClass.getInstance(filePath);
     await fileSource.trash();
     if (await fsCheckFileExist(filePath)) {
+        // Never deleted outright from here: on a drive with no trash (a USB
+        // stick on Windows) only a PERSON may agree to that, through the
+        // app's own Move to Trash, which then asks them.
         throw new Error(
             `"${fileSource.name}" could not be moved to the trash, so it was ` +
-                'left where it is.',
+                'left where it is. If it is on a USB flash drive, Windows ' +
+                'keeps no Recycle Bin there: the person can remove it with ' +
+                'Move to Trash in the app, which asks before deleting it ' +
+                'permanently.',
         );
     }
     const { trashAllMaterialFiles } = await import('../server/appHelpers');

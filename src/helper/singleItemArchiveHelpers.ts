@@ -136,6 +136,9 @@ type ArchiveManifestType = {
     files: ArchiveFileEntryType[];
     backgroundMetas: ArchiveBackgroundMetaType[];
     colorNotes: { [key: string]: string };
+    // The exporting machine's data folder (`writeArchiveManifest`); absent
+    // from a bundle written before it was recorded.
+    dataDirPath?: string | null;
 };
 
 export function toSingleItemArchiveFileName(
@@ -323,6 +326,10 @@ function validateManifest(
             colorNotes !== null && typeof colorNotes === 'object'
                 ? colorNotes
                 : {},
+        dataDirPath:
+            typeof manifest.dataDirPath === 'string'
+                ? manifest.dataDirPath
+                : null,
     };
 }
 
@@ -383,7 +390,12 @@ export async function importSingleItemArchive(
             await toPresetDirPathByKind(config),
         );
         const { localFilePathByOriginalPath, writtenItemFilePaths } =
-            await importArchiveFiles(extractDir, manifest.files, dirPathByKind);
+            await importArchiveFiles(
+                extractDir,
+                manifest.files,
+                dirPathByKind,
+                manifest.dataDirPath,
+            );
         const itemFilePath = localFilePathByOriginalPath.get(manifest.item);
         if (itemFilePath === undefined) {
             throw new Error(`The archive holds no ${config.itemLabel}`);

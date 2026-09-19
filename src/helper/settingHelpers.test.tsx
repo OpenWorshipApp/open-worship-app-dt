@@ -59,6 +59,13 @@ vi.mock('../server/appProvider', () => ({
 vi.mock('../server/fileHelpers', () => ({
     pathJoin: (...parts: string[]) => parts.join('/'),
     fsCheckFileExist: fsCheckFileExistMock,
+    // The real one against a data folder at `/data` (tested in
+    // `fileHelpers.test.ts`).
+    toDataDirRelativePath: (filePath: string) => {
+        return filePath.startsWith('/data/')
+            ? `@data${filePath.slice('/data'.length)}`
+            : filePath;
+    },
 }));
 
 import {
@@ -66,11 +73,41 @@ import {
     getSettingForce,
     getSettingPrefix,
     setSetting,
+    toFilePathSettingKey,
     useStateSettingBoolean,
     useStateSettingNumber,
     useStateSettingString,
     useWatchStateSettingString,
 } from './settingHelpers';
+
+describe('toFilePathSettingKey', () => {
+    test('a file in the data folder is named relative to it', () => {
+        // The same name whatever drive or computer the folder is on.
+        expect(toFilePathSettingKey('/data/documents/song 74.ows')).toBe(
+            '@data_documents_song_74_ows',
+        );
+        expect(toFilePathSettingKey('/elsewhere/a.ows')).toBe(
+            '_elsewhere_a_ows',
+        );
+    });
+
+    test('a key too long for a file name is cut and given a hash', () => {
+        const longPath = `/data/documents/${'សេចក្តីស្រឡាញ់'.repeat(8)}.ows`;
+        const key = toFilePathSettingKey(
+            '/data/presenting-flows/a.owpf',
+            longPath,
+        );
+        expect(new TextEncoder().encode(key).length).toBeLessThanOrEqual(150);
+        expect(key).toMatch(/-[0-9a-f]{8}$/);
+        // Stable, and different for a different file.
+        expect(
+            toFilePathSettingKey('/data/presenting-flows/a.owpf', longPath),
+        ).toBe(key);
+        expect(
+            toFilePathSettingKey('/data/presenting-flows/b.owpf', longPath),
+        ).not.toBe(key);
+    });
+});
 
 describe('helper settingHelpers', () => {
     let container: HTMLDivElement | null = null;

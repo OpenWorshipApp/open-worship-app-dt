@@ -220,6 +220,9 @@ describe('EditingHistoryManager', () => {
         await expect(missingHandler.ensureHistoriesDir()).rejects.toThrow(
             'File /docs/missing.owa does not exist',
         );
+        // A run sheet naming a deleted document reads it on every load, so a
+        // folder made before the check piled up one per missing file.
+        expect(mocks.dirs.has('/docs/missing.owa.histories')).toBe(false);
     });
 
     test('adds histories, clears redo states, supports undo redo, and discards histories', async () => {

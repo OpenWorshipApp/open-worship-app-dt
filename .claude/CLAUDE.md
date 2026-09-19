@@ -717,7 +717,13 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   nodemon on `electron-build` AND `tools/owa-devtools-mcp`, so a knowledge
   rebuild — or any save in that package — relaunches a dev app another session
   may be driving, and that relaunch can quit at once; touch a watched file to
-  get it back (2026-09-14, three sessions on one dev app).
+  get it back (2026-09-14, three sessions on one dev app). With no nodemon
+  config it watches `js,mjs,cjs,json` only, so what relaunches it is the
+  rebuild's `index.json`. An edit that leaves a note's index entry alone —
+  past its first 3 000 characters of body and 1 500 of `#`/`**` lines, title
+  and front matter untouched — can be copied as that one `.md` to the same
+  path under `electron-build/knowledge/internal/` instead: the same bundle,
+  and no relaunch (2026-09-19).
 - **Labels are i18n templates**: the knowledge is English, the buttons are not.
   A document names a control as `[en:tran:Clear Bible]`, never as an English
   label with a hand-written Khmer twin beside it, and `tran.mjs` fills it in
@@ -1914,9 +1920,12 @@ recorded in the matrix. (The matrix lives at
 
 **Those three binaries are NOT bundled with the app** (refactor27). They ship as
 a separate `bin-<ver>.tar.gz` the user installs from **Settings → Others → Extra
-Binaries** into `<data parent dir>/extra-bin/` (`yt/`, `ffmpeg/bin/`, `qjs/`,
-plus `info.json` and the archive itself, which is kept on purpose so a corrupted
-binary can be re-extracted offline). Consequences:
+Binaries** into `<data parent dir>/extra-bin/<platform>/` (`yt/`, `ffmpeg/bin/`,
+`qjs/`, plus `info.json` and the archive itself, which is kept on purpose so a
+corrupted binary can be re-extracted offline). `<platform>` is the build's own
+name for the pack (`win`, `mac`, `mac-int`, `linux-arm64` …): the data folder
+travels between OSes on a stick, and one shared folder mixed their packs
+(`EN-29`, memory `extra-bin-on-demand`). Consequences:
 
 - A run on a fresh machine must **install the pack first** (`MD-05`) — a media
   download with it absent raises a confirm dialog that jumps to that panel

@@ -552,6 +552,16 @@ export function initEventOther(appController: ElectronAppController) {
                 return true;
             } catch (error) {
                 console.error('Error trashing item:', error);
+                // Electron's words when Windows will not recycle the item: a
+                // USB flash drive has no Recycle Bin. Retrying cannot change
+                // that, and the renderer is waiting to ask the person whether
+                // to delete it outright (`FileSource.trash`).
+                if (
+                    error instanceof Error &&
+                    error.message.includes('Operation was aborted')
+                ) {
+                    return false;
+                }
             }
             console.log('Retrying trashing item:', resolvedFilePath);
             await new Promise((resolve) => setTimeout(resolve, 1000));

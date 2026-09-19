@@ -10,7 +10,7 @@ import {
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { defaultDataDirNames, dirSourceSettingNames } from './constants';
 import { handleError } from './errorHelpers';
-import { toFilePathSettingKey } from './settingHelpers';
+import { toAbsoluteFilePathSettingKey } from './settingHelpers';
 
 /**
  * ONE-OFF migration for the rename of the run-sheet subsystem.
@@ -159,8 +159,10 @@ async function migrateSettings(
     legacyDirPath: string,
     dirPath: string,
 ) {
-    const legacyDirKey = toFilePathSettingKey(legacyDirPath);
-    const dirKey = toFilePathSettingKey(dirPath);
+    // The ABSOLUTE form: the keys being migrated were written before setting
+    // keys became relative to the data folder.
+    const legacyDirKey = toAbsoluteFilePathSettingKey(legacyDirPath);
+    const dirKey = toAbsoluteFilePathSettingKey(dirPath);
     const keys = await appLocalStorage.listKeys();
     for (const key of keys) {
         if (!key.includes(token)) {

@@ -30,6 +30,7 @@ export type FileUtilsType = {
     createWriteStream: typeof fs.createWriteStream;
     createReadStream: typeof fs.createReadStream;
     readdir: typeof fs.readdir;
+    readdirSync: typeof fs.readdirSync;
     stat: typeof fs.stat;
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;

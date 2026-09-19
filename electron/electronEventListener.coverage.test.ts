@@ -663,6 +663,21 @@ describe('electronEventListener handlers', () => {
             await vi.advanceTimersByTimeAsync(5000);
             await failing;
             expect(sender.send).toHaveBeenCalledWith('reply:t', false);
+
+            // A drive with no Recycle Bin (a USB stick on Windows) is refused
+            // at once: no five seconds of retries before the renderer can ask
+            // whether to delete it outright.
+            electronMockState.shell.trashItem.mockReset();
+            electronMockState.shell.trashItem.mockRejectedValue(
+                new Error('Operation was aborted'),
+            );
+            sender.send.mockClear();
+            await trashPath(
+                { sender },
+                { replyEventName: 'reply:t', path: '/tmp/a.txt' },
+            );
+            expect(sender.send).toHaveBeenCalledWith('reply:t', false);
+            expect(electronMockState.shell.trashItem).toHaveBeenCalledTimes(1);
         } finally {
             vi.useRealTimers();
         }

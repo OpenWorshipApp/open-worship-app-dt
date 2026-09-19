@@ -60,12 +60,37 @@ async function initPresentingFlowRenameMigration() {
     }
 }
 
+// Kept in the DATA folder's own settings, so the folder is migrated once
+// whichever computer first opens it with this version.
+const SETTING_KEY_PATH_MIGRATION_SETTING_NAME = 'setting-key-path-migration';
+
+/**
+ * Per data folder, once: setting names made from an absolute path are renamed
+ * to the relative form (`settingKeyPathMigration`), so panel sizes and run-sheet
+ * rows survive the folder moving to another drive or computer. Same claim-first
+ * pattern as the migration above.
+ */
+async function initSettingKeyPathMigration() {
+    if (getSetting(SETTING_KEY_PATH_MIGRATION_SETTING_NAME) !== null) {
+        return;
+    }
+    setSetting(SETTING_KEY_PATH_MIGRATION_SETTING_NAME, 'true');
+    try {
+        const { default: migrateSettingKeyPaths } =
+            await import('./helper/settingKeyPathMigration');
+        await migrateSettingKeyPaths();
+    } catch (error) {
+        handleError(error);
+    }
+}
+
 export async function init(callback: () => void = () => {}) {
     // First, before anything reads a file: the migration below reads settings,
     // and some windows (`lyricEditor`) read their data without awaiting `init`.
     appProvider.sessionData.defaultStorageDirPath =
         appLocalStorage.defaultStorageDirPath;
     await initPresentingFlowRenameMigration();
+    await initSettingKeyPathMigration();
     initFontFamily();
     const currentLocale = getCurrentLocale();
     // Keep the document language in sync with the app locale so assistive tech

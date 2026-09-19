@@ -11,12 +11,22 @@ import {
 import DirSource from '../../helper/DirSource';
 import { selectableDataDirectories } from './dataDirectories';
 import {
+    checkIsUsedDataDir,
     checkShouldSelectChildDir,
     getDefaultDataDir,
     removePathForChildDir,
+    repairDataDirLinks,
     selectPathForChildDir,
 } from './directoryHelpers';
 import { fsCheckDirExist, fsCreateDir } from '../../server/fileHelpers';
+import appProvider from '../../server/appProvider';
+import {
+    hideProgressBar,
+    showProgressBar,
+} from '../../progress-bar/progressBarHelpers';
+import { showSimpleToast } from '../../toast/toastHelpers';
+import { showAppAlert } from '../../popup-widget/popupWidgetHelpers';
+import { forceReloadAppWindows } from '../settingHelpers';
 import {
     appLocalStorage,
     SELECTED_PARENT_DIR_SETTING_NAME,
@@ -178,12 +188,49 @@ function RenderChildDirectoriesComp({
         selectPathForChildDir(parentDirPathRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handleRepairLinks = useCallback(async () => {
+        const progressKey = 'repair-data-dir-links';
+        showProgressBar(progressKey);
+        const result = await repairDataDirLinks().finally(() => {
+            hideProgressBar(progressKey);
+        });
+        if (result === null) {
+            return;
+        }
+        if (result.linkCount === 0) {
+            showSimpleToast(
+                tran('Repair Links'),
+                tran(
+                    'No links to an old location of this data folder were found.',
+                ),
+            );
+            return;
+        }
+        await showAppAlert(
+            tran('Repair Links'),
+            `${tran('Links repaired:')} ${result.linkCount}. ` +
+                `${tran('Files changed:')} ${result.fileCount}. ` +
+                tran('The app reloads to show them.'),
+        );
+        // Every open window read these files before they were repaired.
+        forceReloadAppWindows();
+    }, []);
     return (
         <>
             <SettingCardHeaderComp
                 iconClassName="bi-diagram-3"
                 title="Child Directories"
             >
+                <button
+                    className="btn btn-sm btn-outline-info d-flex align-items-center me-1"
+                    title={tran(
+                        'Point links to pictures, videos and songs that still name an old location of this data folder at where it is now',
+                    )}
+                    onClick={handleRepairLinks}
+                >
+                    <i className="bi bi-link-45deg me-1" />
+                    {tran('Repair Links')}
+                </button>
                 <button
                     className="btn btn-sm btn-warning d-flex align-items-center"
                     title={tran('Reset All Child Directories')}
@@ -255,9 +302,21 @@ export default function SettingGeneralDirectoryPathComp() {
             // nothing else can name it afterwards, and an orphaned watch keeps
             // firing file events for a folder the app no longer uses.
             unwatchDataDir();
+            // Asked BEFORE the choice is saved: from then on any setting read
+            // creates `local-storage` in the new folder, and a brand-new one
+            // would pass for a used one.
+            const isUsedDataDir =
+                dirPath !== '' && (await checkIsUsedDataDir(dirPath));
             await appLocalStorage.setSelectedParentDirectory(dirPath);
             if (dirPath === '' || !(await fsCheckDirExist(dirPath))) {
                 await removePathForChildDir();
+            } else if (isUsedDataDir) {
+                // A data folder brought from another computer (a stick)
+                // already says where its documents, videos and the rest are.
+                // Asking to reset them was a question with a wrong answer:
+                // "Yes" pointed every one of them at a default folder.
+                appProvider.reload();
+                return;
             } else {
                 await selectPathForChildDir(dirPath);
             }

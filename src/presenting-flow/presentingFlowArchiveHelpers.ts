@@ -83,6 +83,9 @@ type ArchiveManifestType = {
     presentingFlow: string;
     files: ArchiveFileEntryType[];
     backgroundMetas: ArchiveBackgroundMetaType[];
+    // The exporting machine's data folder (`writeArchiveManifest`); absent
+    // from a bundle written before it was recorded.
+    dataDirPath?: string | null;
 };
 
 /**
@@ -325,6 +328,10 @@ function validateManifest(jsonData: unknown): ArchiveManifestType {
         backgroundMetas: validateArchiveBackgroundMetas(
             manifest.backgroundMetas,
         ),
+        dataDirPath:
+            typeof manifest.dataDirPath === 'string'
+                ? manifest.dataDirPath
+                : null,
     };
 }
 
@@ -434,7 +441,12 @@ export async function importPresentingFlowArchive(archiveFilePath: string) {
         }
         const dirPathByKind = resolveKindDirPaths(manifest.files);
         const { localFilePathByOriginalPath, writtenItemFilePaths } =
-            await importArchiveFiles(extractDir, manifest.files, dirPathByKind);
+            await importArchiveFiles(
+                extractDir,
+                manifest.files,
+                dirPathByKind,
+                manifest.dataDirPath,
+            );
         await applyImportedPaths(jsonData.items, localFilePathByOriginalPath);
         await applyImportedCanvasMedia(
             writtenItemFilePaths,

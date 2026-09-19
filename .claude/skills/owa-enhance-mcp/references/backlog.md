@@ -475,6 +475,19 @@ start, the way help pages are. It needs dictionary keys first — `km` has
 `Next` and `Back`, not `Done`, `Step`, `Do it` or `Skip` — and a missing key
 THROWS in dev, so it is a change to `src/lang` as much as to this package.
 
+### `MC-37` — `checkAgentFileName` passes a Windows device name with an extension · open
+
+`RESERVED_NAME_PATTERN` in `agentFileName.mjs` matches the WHOLE name, so
+`nul.old` and `CON.backup` pass — and Windows reserves them whatever follows
+the first dot, so such a file cannot be created or opened there. The app's own
+rule for names a person types has had this since `EN-35` (2026-09-19,
+`getPortableFileNameProblem` in `src/server/fileHelpers.ts`), and
+`createNewFileDetail` now refuses such a name at the disk boundary, so an
+agent's `create` fails there rather than making the file — but it fails with
+the app's toast, not with this module's sentence for the model. Fix: match
+`/^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(\.|$)/i`, and add `nul.old` to
+`agentFileName.test.mjs`.
+
 ---
 
 ## Done

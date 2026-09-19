@@ -4,16 +4,19 @@ import {
     getFileDotExtension,
     fsCheckFileExist,
     fsCreateFile,
+    fsDeleteFile,
     fsReadFile,
     fsRenameFile,
     fsWriteFile,
     getFileMetaData,
-    pathBasename,
     pathJoin,
-    pathSeparator,
     getFileName,
+    splitFilePath,
+    toFilePathFromFileUrl,
     writeFileFromBase64Sync,
     fsCloneFile,
+    describePortableFileNameProblem,
+    getPortableFileNameProblem,
 } from '../server/fileHelpers';
 import { isValidJson } from './helpers';
 import { pathToFileURL } from '../server/calcHelpers';
@@ -35,6 +38,7 @@ import {
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { watchDataDir } from './dirWatchingHelpers';
+import { escapeHtmlText } from './sanitizeHelpers';
 
 export type SrcData = `data:${string}`;
 
@@ -273,15 +277,11 @@ export default class FileSource
     }
 
     static getInstanceNoCache(filePath: string, fileFullName?: string) {
-        let baseFullPath;
         if (fileFullName) {
-            baseFullPath = filePath;
-        } else {
-            const index = filePath.lastIndexOf(pathSeparator);
-            baseFullPath = filePath.substring(0, index);
-            fileFullName = pathBasename(filePath);
+            return new FileSource(filePath, fileFullName);
         }
-        return new FileSource(baseFullPath, fileFullName);
+        const splitPath = splitFilePath(filePath);
+        return new FileSource(splitPath.dirPath, splitPath.fileFullName);
     }
 
     static getInstance(
@@ -301,12 +301,7 @@ export default class FileSource
     }
 
     static async getInstanceBySrc(src: string) {
-        const pathname = new URL(src).pathname;
-        let filePath = decodeURIComponent(pathname);
-        if (appProvider.systemUtils.isWindows) {
-            filePath = filePath.substring(1);
-            filePath = filePath.replaceAll('/', pathSeparator);
-        }
+        const filePath = toFilePathFromFileUrl(src);
         if ((await fsCheckFileExist(filePath)) === false) {
             return null;
         }
@@ -326,6 +321,14 @@ export default class FileSource
 
     async renameTo(newName: string) {
         if (newName === this.name) {
+            return null;
+        }
+        const problem = getPortableFileNameProblem(newName);
+        if (problem !== null) {
+            showSimpleToast(
+                tran('Renaming File'),
+                describePortableFileNameProblem(problem),
+            );
             return null;
         }
         try {
@@ -469,7 +472,20 @@ export default class FileSource
         return nextFilePath;
     }
 
-    async trash() {
+    /**
+     * Move this file to the OS trash. `permanentFallback` says what happens
+     * when the trash REFUSES it -- a USB flash drive on Windows has no Recycle
+     * Bin, so every delete on one used to fail after five seconds of retries:
+     * - `ask`: put the question to the person, as Windows Explorer does there;
+     * - `delete`: delete outright, for the side files of a file the person
+     *   already answered for;
+     * - `none`: report the failure. What an agent gets: only a person decides
+     *   that something cannot be undone.
+     * Answers what happened, `null` when the file is still there.
+     */
+    async trash(
+        permanentFallback: 'none' | 'ask' | 'delete' = 'none',
+    ): Promise<'trashed' | 'deleted' | null> {
         const filePath = this.filePath;
         const progressBarKey = 'trash-file-' + filePath;
         showProgressBar(progressBarKey);
@@ -486,15 +502,54 @@ export default class FileSource
         } finally {
             hideProgressBar(progressBarKey);
         }
-        if (!isTrashed) {
-            showSimpleToast(
-                tran('Trashing File'),
-                tran('Unable to trash file. Please try again.'),
-            );
-            return;
+        if (isTrashed) {
+            this.fireDeleteEvent();
+            instantCache.delete(filePath);
+            return 'trashed';
         }
-        this.fireDeleteEvent();
-        instantCache.delete(filePath);
+        if (
+            permanentFallback !== 'none' &&
+            (await fsCheckFileExist(filePath))
+        ) {
+            const isDeleting =
+                permanentFallback === 'delete' ||
+                (await this.askToDeletePermanently());
+            if (!isDeleting) {
+                // Kept on the person's own word: nothing failed.
+                return null;
+            }
+            try {
+                await fsDeleteFile(filePath);
+                this.fireDeleteEvent();
+                instantCache.delete(filePath);
+                return 'deleted';
+            } catch (error) {
+                handleError(error);
+            }
+        }
+        showSimpleToast(
+            tran('Trashing File'),
+            tran('Unable to trash file. Please try again.'),
+        );
+        return null;
+    }
+
+    private async askToDeletePermanently() {
+        // Loaded on the question, not with `FileSource`, which every window
+        // imports at start.
+        const { showAppConfirm } =
+            await import('../popup-widget/popupWidgetHelpers');
+        return showAppConfirm(
+            tran('Delete Permanently'),
+            `"${escapeHtmlText(this.fullName)}" ` +
+                tran(
+                    'could not be moved to the Recycle Bin or Trash. A USB flash drive has none on Windows. Delete it permanently? This cannot be undone.',
+                ),
+            {
+                cancelButtonLabel: 'Cancel',
+                confirmButtonLabel: 'Delete Permanently',
+            },
+        );
     }
 
     static getSrcDataFromFrom(file: File | Blob) {

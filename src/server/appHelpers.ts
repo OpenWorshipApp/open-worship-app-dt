@@ -14,7 +14,9 @@ import {
     isSupportedMimetype,
     pathJoin,
     pathResolve,
+    toPortableFileName,
 } from './fileHelpers';
+import { decodeHtmlEntities } from '../helper/sanitizeHelpers';
 import FileSource, { type SrcData } from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { appError as logError } from '../helper/loggerHelpers';
@@ -227,7 +229,15 @@ export async function renameAllMaterialFiles(
         }),
     );
 }
-export async function trashAllMaterialFiles(fileSource: FileSource) {
+/**
+ * A file's side files go the way the file itself went: `delete` when the
+ * person agreed to delete it permanently, because it sat on a drive with no
+ * trash, where the side files cannot be trashed either.
+ */
+export async function trashAllMaterialFiles(
+    fileSource: FileSource,
+    permanentFallback: 'none' | 'delete' = 'none',
+) {
     await Promise.all(
         FILE_EXTENSIONS.map(async (ext) => {
             const currentPath = pathJoin(
@@ -238,7 +248,7 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
                 return;
             }
             const currentFileSource = FileSource.getInstance(currentPath);
-            await currentFileSource.trash();
+            await currentFileSource.trash(permanentFallback);
         }),
     );
 }
@@ -255,8 +265,8 @@ async function getPageTitle(url: string) {
     }
     const titleMatch = /<title>(.*?)<\/title>/.exec(rawHtml);
     if (titleMatch?.[1]) {
-        let title = titleMatch[1].trim();
-        title = decodeURIComponent(encodeURIComponent(title));
+        // As the page reads, not as its HTML is escaped: `&amp;` is `&`.
+        const title = decodeHtmlEntities(titleMatch[1]).trim();
         return title.length > 0 ? title : null;
     }
     return null;
@@ -394,7 +404,10 @@ export function downloadVideoOrAudio(
                     const fileSource = FileSource.getInstance(resolvedFilePath);
                     resolve({
                         filePath: resolvedFilePath,
-                        fileFullName: `${title || temptName}${fileSource.dotExtension}`,
+                        // A title is not a file name: `Way Maker | Live`
+                        // fails the final move on Windows and on an exFAT
+                        // stick, after the whole download.
+                        fileFullName: `${toPortableFileName(title ?? '', temptName)}${fileSource.dotExtension}`,
                     });
                 };
                 const temptName = `temp-${Date.now()}`;

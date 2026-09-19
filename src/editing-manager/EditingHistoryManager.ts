@@ -273,18 +273,18 @@ export class FileLineHandler {
     }
 
     async ensureHistoriesDir() {
-        if (!(await fsCheckDirExist(this.dirPath))) {
-            await fsCreateDir(this.dirPath);
-        }
         let currentFilePath = await this.getCurrentFileFullPath();
         if (currentFilePath !== null) {
             return;
         }
-        await this.clearHistories();
-        await fsCreateDir(this.dirPath);
+        // Asked before anything is made: a run sheet still naming a deleted
+        // document reads it on every load, and a folder made first was left
+        // behind, empty, each time.
         if (!(await fsCheckFileExist(this.filePath))) {
             throw new Error(`File ${this.filePath} does not exist`);
         }
+        await this.clearHistories();
+        await fsCreateDir(this.dirPath);
         currentFilePath = this.toCurrentFileFullPath(0);
         await fsCloneFile(this.filePath, currentFilePath);
         // A history cleared and rebuilt reuses `0-head` -- a path that may

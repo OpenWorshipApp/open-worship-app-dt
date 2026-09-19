@@ -21,6 +21,13 @@ vi.mock('../server/fileHelpers', () => ({
         const resolved = dirPath.startsWith('/') ? dirPath : `/cwd/${dirPath}`;
         return resolved.endsWith('/') ? resolved.slice(0, -1) : resolved;
     },
+    // Mirror the real ones on macOS/Linux (tested in `fileHelpers.test.ts`).
+    checkIsForeignAbsolutePath: (dirPath: string) => {
+        return /^[A-Za-z]:[\\/]/.test(dirPath);
+    },
+    toPathCompareKey: (dirPath: string) => {
+        return state.isLinux ? dirPath : dirPath.toLowerCase();
+    },
     selectDirs: vi.fn(),
 }));
 

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 7cc13309-067b-48ac-94f6-322589474419
-  modified: 2026-08-13T01:39:20.814Z
+  modified: 2026-09-19T17:27:35.582Z
 ---
 
 As of refactor27 (2026-08-10) the three media binaries are **no longer bundled**.
@@ -19,8 +19,17 @@ app whose whole point is running on weak church hardware.
 
 **How to apply:**
 
+- **One folder per OS since 2026-09-19 (`EN-29`):**
+  `<data parent>/extra-bin/<platform>/{yt,ffmpeg/bin,qjs,info.json,bin-*.tar.gz}`,
+  `<platform>` named exactly as `extra-work/buildPlatformHelpers.mjs` names packs (`win`,
+  `win-arm64`, `mac` = Apple silicon, `mac-int`, `linux`, `linux-arm64`, …) by
+  `getExtraBinPlatformName`. The pack lives in the DATA folder, which a stick carries
+  between OSes: in one shared folder a Mac re-extracted the kept Windows archive on every
+  Download and Install, and a Mac pack on Linux read as installed. An older flat install
+  whose `info.json` `platform` names this OS is moved in by `moveLegacyExtraBinPack`
+  (called by `checkIsExtraBinInstalled` and `installExtraBin`); another OS's is left.
 - Runtime paths come from `src/helper/extra-bin/extraBinHelpers.ts`
-  (`<appLocalStorage.defaultStorage>/extra-bin/{yt,ffmpeg/bin,qjs}`), and the renderer
+  (`<appLocalStorage.defaultStorage>/extra-bin/<platform>/{yt,ffmpeg/bin,qjs}`), and the renderer
   hands the yt-dlp path to `appProvider.ytUtils.getYTHelper(path)` —
   `electron/client/ytUtils.ts` resolves nothing any more and caches keyed on the path.
   Anything reaching for `bin-helper/yt|ffmpeg|qjs` is stale by definition.

@@ -15,6 +15,7 @@ const {
     pathToFileURLMock,
     unlockingMock,
     watchDataDirMock,
+    showAppConfirmMock,
 } = vi.hoisted(() => {
     return {
         state: {
@@ -45,8 +46,13 @@ const {
         pathToFileURLMock: vi.fn(),
         unlockingMock: vi.fn(),
         watchDataDirMock: vi.fn(),
+        showAppConfirmMock: vi.fn(),
     };
 });
+
+vi.mock('../popup-widget/popupWidgetHelpers', () => ({
+    showAppConfirm: showAppConfirmMock,
+}));
 
 function normalizePath(...parts: string[]) {
     let normalizedPath = parts.join('/').replaceAll('\\', '/');
@@ -166,6 +172,27 @@ vi.mock('../server/fileHelpers', () => ({
     },
     pathJoin: (...paths: string[]) => normalizePath(...paths),
     pathSeparator: '/',
+    // The real rules are tested in `fileHelpers.test.ts`; these stand-ins keep
+    // this file's `/`-separated test paths.
+    splitFilePath: (filePath: string) => {
+        const index = filePath.lastIndexOf('/');
+        return {
+            dirPath: index === -1 ? '' : filePath.substring(0, index),
+            fileFullName: filePath.substring(index + 1),
+        };
+    },
+    toFilePathFromFileUrl: (src: string) => {
+        const filePath = decodeURIComponent(new URL(src).pathname);
+        return state.isWindows ? filePath.substring(1) : filePath;
+    },
+    getPortableFileNameProblem: (name: string) => {
+        return name.includes(':') ? 'characters' : null;
+    },
+    describePortableFileNameProblem: () => 'refused name',
+    fsDeleteFile: vi.fn(async (filePath: string) => {
+        state.existingPaths.delete(normalizePath(filePath));
+        state.files.delete(normalizePath(filePath));
+    }),
     getFileName: (fileFullName: string) => {
         return fileFullName.substring(0, fileFullName.lastIndexOf('.'));
     },
@@ -553,6 +580,14 @@ describe('FileSource', () => {
         const fileSource = FileSource.getInstance('/docs/old.txt');
         expect(await fileSource.renameTo('old')).toBeNull();
 
+        // A name another computer refuses is refused before the disk is.
+        expect(await fileSource.renameTo('Service 10:30')).toBeNull();
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Renaming File',
+            'refused name',
+        );
+        expect(state.files.get('/docs/old.txt')).toBe('old');
+
         const renamedFile = await fileSource.renameTo('renamed');
         expect(renamedFile?.filePath).toBe('/docs/renamed.txt');
         expect(state.files.get('/docs/renamed.txt')).toBe('old');
@@ -717,6 +752,36 @@ describe('FileSource', () => {
             'Trashing File',
             'Unable to trash file. Please try again.',
         );
+    });
+
+    test('on a drive with no trash, asks before deleting for good', async () => {
+        const { default: FileSource } = await loadFileSourceModule();
+        // Windows keeps no Recycle Bin on a USB flash drive.
+        electronSendAsyncMock.mockResolvedValue(false);
+        setFile('/usb/keep.ows', 'a');
+        setFile('/usb/delete.ows', 'b');
+        setFile('/usb/agent.ows', 'c');
+
+        showAppConfirmMock.mockResolvedValueOnce(false);
+        expect(await FileSource.getInstance('/usb/keep.ows').trash('ask')).toBe(
+            null,
+        );
+        expect(state.existingPaths.has('/usb/keep.ows')).toBe(true);
+        // Kept on the person's own word: that is not a failure to report.
+        expect(showSimpleToastMock).not.toHaveBeenCalled();
+
+        showAppConfirmMock.mockResolvedValueOnce(true);
+        expect(
+            await FileSource.getInstance('/usb/delete.ows').trash('ask'),
+        ).toBe('deleted');
+        expect(state.existingPaths.has('/usb/delete.ows')).toBe(false);
+
+        // An agent's delete is never turned into a permanent one.
+        expect(await FileSource.getInstance('/usb/agent.ows').trash()).toBe(
+            null,
+        );
+        expect(state.existingPaths.has('/usb/agent.ows')).toBe(true);
+        expect(showAppConfirmMock).toHaveBeenCalledTimes(2);
     });
 
     test('reads src data from blobs through FileReader', async () => {

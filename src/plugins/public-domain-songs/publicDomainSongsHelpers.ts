@@ -2,20 +2,13 @@ import type {
     PublicDomainSongSourceType,
     PublicDomainSongType,
 } from './publicDomainSongsData';
+import { toPortableFileName } from '../../server/fileHelpers';
 
-// Windows-illegal characters plus control chars; the rest of the name is kept
-// as typed so the document row still reads like the song title.
+// The shared rule in `fileHelpers`: what Windows and an exFAT stick refuse is
+// dropped, the rest of the name is kept as typed so the document row still
+// reads like the song title.
 export function sanitizeFileName(name: string): string {
-    const sanitized = name
-        .replace(/[<>:"/\\|?*]/g, ' ')
-        // eslint-disable-next-line no-control-regex
-        .replace(/[\u0000-\u001f]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .replace(/[. ]+$/, '')
-        .slice(0, 120)
-        .trim();
-    return sanitized || 'Public Domain Song';
+    return toPortableFileName(name, 'Public Domain Song');
 }
 
 // The texts are curated, but they were fetched from the web — keep the same

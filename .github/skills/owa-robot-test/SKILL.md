@@ -681,24 +681,25 @@ Notes:
 
 **No other product flow runs the external binaries.** `downloadVideoOrAudio`
 ([src/server/appHelpers.ts](../../../src/server/appHelpers.ts)) is the only product
-caller of `extra-bin/yt/yt-dlp` — `resolveMediaStreamUrl` in the same file
+caller of `extra-bin/<platform>/yt/yt-dlp` — `resolveMediaStreamUrl` in the same file
 (appHelpers.ts:336) also runs it, but only from the dev-only experiments page
 (`src/experiments/html-in-canvas/youtubeDemo.tsx`), and `checkIsExtraBinInstalled` only
 checks file existence, never executes — and `downloadVideoOrAudio` is what points yt-dlp
-at `extra-bin/ffmpeg/bin` and `extra-bin/qjs/qjs` — so a wrong/missing/stale binary
+at `extra-bin/<platform>/ffmpeg/bin` and `extra-bin/<platform>/qjs/qjs` — so a wrong/missing/stale binary
 passes typecheck, tests, build and every other matrix row, and only shows up here. Rows `MD-01..06`; recipe:
 test-plan.md §S19.
 
 **The binaries are NOT in the app package.** They are installed on demand from
-**Settings → Others → Extra Binaries** into `<data parent dir>/extra-bin/`
-(dev: `Desktop\open-worship-data-dev\extra-bin`), which is why the block now starts at
-`MD-05`:
+**Settings → Others → Extra Binaries** into `<data parent dir>/extra-bin/<platform>/`
+(dev on Windows: `Desktop\open-worship-data-dev\extra-bin\win`; one folder per OS since
+`EN-29`, and an older flat install for this OS is moved in on the first check), which is
+why the block now starts at `MD-05`:
 
 - **`MD-05` runs first** whenever the panel says *Not installed* — press **Download and
   Install**, then **Re-extract** (it must work with no network, because the
   `bin-*.tar.gz` is kept on disk on purpose). If the panel offers **Update to `<ver>`**,
   take it: the superseded archive must disappear.
-- **`MD-06`** proves the guard: with `extra-bin\yt` moved aside, a download raises a
+- **`MD-06`** proves the guard: with `extra-bin\<platform>\yt` moved aside, a download raises a
   **Media Tools Required** confirm that jumps to the panel, spawns no yt-dlp, and does
   **not** stack a second "download failed" toast on a `No`. Restore the folder after.
 - In **dev the install is mocked** — it copies
@@ -750,7 +751,7 @@ sweep/teardown pair 0 + 5 is what keeps the block idempotent):
    and an **`.mp3`** in the audios dir, plus the new thumbnail/row in the panel.
 4. Optional but cheap — prove the JS runtime is really QuickJS by reading the spawned
    command line (`Get-CimInstance Win32_Process -Filter "Name='yt-dlp.exe'"`): it must
-   carry `--no-js-runtimes --js-runtimes quickjs:<…>\extra-bin\qjs\qjs.exe`.
+   carry `--no-js-runtimes --js-runtimes quickjs:<…>\extra-bin\<platform>\qjs\qjs.exe`.
 5. **Delete both again (MD-04, part 2)** — once step 3's evidence (screenshot + on-disk
    listing) is captured. Three gotchas:
    - ⚠️ **An agent cannot press Move to Trash, and that is the firewall working**

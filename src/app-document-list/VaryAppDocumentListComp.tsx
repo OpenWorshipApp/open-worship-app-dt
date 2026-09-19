@@ -15,6 +15,7 @@ import {
     mimetypePdf,
     mimetypePptx,
     pathJoin,
+    toFileFullNameFromUrl,
 } from '../server/fileHelpers';
 import FileSource from '../helper/FileSource';
 import {
@@ -224,10 +225,10 @@ async function genContextMenuItems(
                     response,
                     messageCallback,
                 );
-                let fileFullName = getFileFullName(documentUrl);
-                if (!fileFullName) {
-                    fileFullName = `downloaded-document-${Date.now()}`;
-                }
+                const fileFullName = toFileFullNameFromUrl(
+                    documentUrl,
+                    `downloaded-document-${Date.now()}`,
+                );
                 const destFilePath = pathJoin(dirSource.dirPath, fileFullName);
                 const fileSource = FileSource.getInstance(destFilePath);
                 const nextDestFilePath = await fileSource.genNextFilePath();

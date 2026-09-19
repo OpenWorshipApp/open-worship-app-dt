@@ -5,8 +5,12 @@ import {
     setSetting,
     toFilePathSettingKey,
 } from '../helper/settingHelpers';
-import { pathResolve, selectDirs } from '../server/fileHelpers';
-import appProvider from '../server/appProvider';
+import {
+    checkIsForeignAbsolutePath,
+    pathResolve,
+    selectDirs,
+    toPathCompareKey,
+} from '../server/fileHelpers';
 
 const RESOURCES_FOLDER_LIST_SETTING_NAME = 'resources-folder-list';
 
@@ -47,7 +51,7 @@ export function toResourcesFolderExpandedSettingName(dirPath: string) {
  * path keeps the casing the picker returned, which is what the user recognises.
  */
 export function toDirPathCompareKey(dirPath: string) {
-    return appProvider.systemUtils.isLinux ? dirPath : dirPath.toLowerCase();
+    return toPathCompareKey(dirPath);
 }
 
 export function sanitizeResourcesFolderList(dirPathList: unknown): string[] {
@@ -61,8 +65,13 @@ export function sanitizeResourcesFolderList(dirPathList: unknown): string[] {
             continue;
         }
         // `pathResolve` also strips the trailing separator, so `D:\a` and
-        // `D:\a\` are one folder rather than two scans of one tree.
-        const resolved = pathResolve(dirPath.trim());
+        // `D:\a\` are one folder rather than two scans of one tree. A folder
+        // from the other OS family is kept as written: resolving it here broke
+        // it for good once the list was saved (`checkIsForeignAbsolutePath`).
+        const trimmed = dirPath.trim();
+        const resolved = checkIsForeignAbsolutePath(trimmed)
+            ? trimmed
+            : pathResolve(trimmed);
         const key = toDirPathCompareKey(resolved);
         if (seenKeys.has(key)) {
             continue;

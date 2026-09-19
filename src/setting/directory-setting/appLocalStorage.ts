@@ -4,6 +4,8 @@ import appProvider from '../../server/appProvider';
 import { appHomeStorage } from '../../server/appHomeStorage';
 import { appSecureStorage } from '../../server/appSecureStorage';
 import {
+    ensureDataDirMarkerIdSync,
+    findMovedDataDirSync,
     fsCheckDirExist,
     fsDeleteFile,
     fsExistSync,
@@ -17,6 +19,9 @@ import {
 } from '../../server/fileHelpers';
 
 export const SELECTED_PARENT_DIR_SETTING_NAME = 'selected-parent-dir';
+// The chosen folder's marker id (`ensureDataDirMarkerIdSync`), kept beside its
+// path on this computer so the folder can be recognised on another drive.
+export const SELECTED_PARENT_DIR_ID_SETTING_NAME = 'selected-parent-dir-id';
 
 export const LOCAL_STORAGE_FOLDER_NAME = 'local-storage';
 export const TMP_FILES_FOLDER_NAME = 'tmp-files';
@@ -24,6 +29,59 @@ const cache = new CacheManager<string>(10);
 // Separate from `cache` because `CacheManager.getSync` uses null for "miss",
 // so a cached "this key has no file" cannot live in the value cache.
 const absentCache = new CacheManager<boolean>(10);
+// The chosen data folder when it was NOT there as this window started, for the
+// start-up check to name (`useCheckSetting`). Per window, like the rest here.
+let missingParentDirPath: string | null = null;
+// Once per window: the marker costs a stat, and this getter runs every time
+// its 10-second cache lapses.
+let checkedMarkerDirPath: string | null = null;
+
+/**
+ * The chosen data folder, or null when there is none to use. A folder that is
+ * not where it was is looked for on the other drives first (a stick that came
+ * back as `F:`); one found nowhere is KEPT as the choice, never deleted --
+ * forgetting it meant a stick plugged in late opened the app on an empty
+ * folder, and stayed forgotten after it was plugged back in.
+ */
+function resolveSelectedParentDir() {
+    const selectedParentDir = appHomeStorage.getItem(
+        SELECTED_PARENT_DIR_SETTING_NAME,
+    );
+    if (!selectedParentDir) {
+        missingParentDirPath = null;
+        return null;
+    }
+    if (fsExistSync(selectedParentDir)) {
+        missingParentDirPath = null;
+        return selectedParentDir;
+    }
+    const movedDirPath = findMovedDataDirSync(
+        selectedParentDir,
+        appHomeStorage.getItem(SELECTED_PARENT_DIR_ID_SETTING_NAME),
+    );
+    if (movedDirPath !== null) {
+        appHomeStorage.setItem(SELECTED_PARENT_DIR_SETTING_NAME, movedDirPath);
+        missingParentDirPath = null;
+        return movedDirPath;
+    }
+    missingParentDirPath = selectedParentDir;
+    return null;
+}
+
+function rememberDataDirMarker(dirPath: string) {
+    if (checkedMarkerDirPath === dirPath) {
+        return;
+    }
+    checkedMarkerDirPath = dirPath;
+    const id = ensureDataDirMarkerIdSync(dirPath);
+    if (
+        id !== null &&
+        appHomeStorage.getItem(SELECTED_PARENT_DIR_ID_SETTING_NAME) !== id
+    ) {
+        appHomeStorage.setItem(SELECTED_PARENT_DIR_ID_SETTING_NAME, id);
+    }
+}
+
 class AppLocalStorage {
     get defaultStorageDirPath() {
         const cachedDefaultStorage = cache.getSync(
@@ -32,15 +90,26 @@ class AppLocalStorage {
         if (cachedDefaultStorage !== null) {
             return cachedDefaultStorage;
         }
-        let selectedParentDir = appHomeStorage.getItem(
-            SELECTED_PARENT_DIR_SETTING_NAME,
-        );
-        if (!selectedParentDir || !fsExistSync(selectedParentDir)) {
-            appHomeStorage.removeItem(SELECTED_PARENT_DIR_SETTING_NAME);
+        let selectedParentDir = resolveSelectedParentDir();
+        if (selectedParentDir === null) {
+            // This session runs on the app's own folder; the choice stands.
             selectedParentDir = getUserWritablePath();
+        } else {
+            rememberDataDirMarker(selectedParentDir);
         }
         cache.setSync(SELECTED_PARENT_DIR_SETTING_NAME, selectedParentDir);
         return selectedParentDir;
+    }
+
+    /**
+     * The chosen data folder when it could not be found as this window
+     * started -- a stick not plugged in -- or null. The app is running on its
+     * own folder meanwhile, and says so rather than looking empty.
+     */
+    get missingParentDirPath() {
+        // Set by `defaultStorageDirPath`, which `init()` reads before a
+        // window renders anything.
+        return missingParentDirPath;
     }
 
     get localStorageDir() {
@@ -83,7 +152,18 @@ class AppLocalStorage {
 
     async setSelectedParentDirectory(dirPath: string) {
         cache.setSync(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);
+        // The settings folder moves with the choice. Left cached, a setting
+        // written in the next ten seconds -- the child folders the choice
+        // asks about -- went into the OLD folder's settings.
+        cache.deleteSync(LOCAL_STORAGE_FOLDER_NAME);
+        missingParentDirPath = null;
         appHomeStorage.setItem(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);
+        if (dirPath) {
+            checkedMarkerDirPath = null;
+            rememberDataDirMarker(dirPath);
+        } else {
+            appHomeStorage.removeItem(SELECTED_PARENT_DIR_ID_SETTING_NAME);
+        }
         // The window can keep running on the new folder without a reload
         // (answering No to setting the child folders), so its `$DATA_DIR_PATH`
         // must follow at once.

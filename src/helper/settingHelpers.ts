@@ -3,7 +3,11 @@ import { useState, useCallback } from 'react';
 
 import appProvider from '../server/appProvider';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
-import { pathJoin, fsCheckFileExist } from '../server/fileHelpers';
+import {
+    pathJoin,
+    fsCheckFileExist,
+    toDataDirRelativePath,
+} from '../server/fileHelpers';
 import { useAppEffectAsync } from './appHooks';
 import { useAppCurrentRef } from './appHooks';
 
@@ -36,11 +40,58 @@ export function getSettingForce(key: string) {
  * setting name becomes a path with directory separators in it and every read
  * logs an ENOENT.
  */
-export function toFilePathSettingKey(...parts: string[]) {
+export function toAbsoluteFilePathSettingKey(...parts: string[]) {
     return parts
         .join('-')
         .replace(/[\\/:*?"<>|.]/g, '_')
         .replace(/\s+/g, '_');
+}
+
+// Under every file system's 255-byte name limit with room for any prefix a
+// caller puts in front: two paths in one key, under a `/media/<user>/<label>`
+// mount, with Khmer names at three bytes a character, went past it.
+const MAX_SETTING_KEY_BYTES = 150;
+const HASH_LENGTH = 8;
+
+// FNV-1a: tiny, stable and synchronous -- a name, not a secret.
+function toShortHash(text: string) {
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < text.length; i++) {
+        hash ^= text.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193);
+    }
+    return (hash >>> 0).toString(16).padStart(HASH_LENGTH, '0');
+}
+
+function toBoundedSettingKey(key: string) {
+    const encoder = new TextEncoder();
+    if (encoder.encode(key).length <= MAX_SETTING_KEY_BYTES) {
+        return key;
+    }
+    let kept = '';
+    let byteCount = 0;
+    for (const character of key) {
+        byteCount += encoder.encode(character).length;
+        if (byteCount > MAX_SETTING_KEY_BYTES - HASH_LENGTH - 1) {
+            break;
+        }
+        kept += character;
+    }
+    return `${kept}-${toShortHash(key)}`;
+}
+
+/**
+ * A setting key for the file(s) at these paths. A path inside the data folder
+ * is written relative to it (`@data_documents_song_ows`), so the key is the
+ * same on every computer the folder visits: made from the absolute path, it
+ * changed with every drive letter and OS, and each computer started every
+ * panel size and run-sheet row from scratch while the old keys piled up. A key
+ * too long for a file name is cut and given a hash of the whole.
+ */
+export function toFilePathSettingKey(...parts: string[]) {
+    return toBoundedSettingKey(
+        toAbsoluteFilePathSettingKey(...parts.map(toDataDirRelativePath)),
+    );
 }
 
 export function toFilePathSettingName(prefix: string, ...parts: string[]) {

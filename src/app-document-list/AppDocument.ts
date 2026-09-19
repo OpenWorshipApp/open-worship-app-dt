@@ -10,6 +10,7 @@ import {
 } from './appDocumentHelpers';
 import { checkIsSameValues, toMaxId } from '../helper/helpers';
 import type { MimetypeNameType } from '../server/fileHelpers';
+import { fsCheckFileExist } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type ItemSourceInf from '../others/ItemSourceInf';
 import type { OptionalPromise, AnyObjectType } from '../helper/typeHelpers';
@@ -80,6 +81,13 @@ export default class AppDocument
             if (jsonData !== null) {
                 return jsonData;
             }
+        }
+        // Missing is not corrupted. A run sheet can outlive a document it
+        // names, and resetting one that is gone toasted "Corrupted Document",
+        // failed to write it, and handed back a made-up slide that could be
+        // presented on a live screen.
+        if (!(await fsCheckFileExist(this.filePath))) {
+            return AppDocument.genNewJsonData<AppDocumentType>({ items: [] });
         }
         showSimpleToast(
             tran('Corrupted Document'),

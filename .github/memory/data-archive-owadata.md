@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 18527600-8c55-4e7d-aba1-6af7ebfc4f6c
-  modified: 2026-09-19T15:03:12.165Z
+  modified: 2026-09-19T17:27:45.686Z
 ---
 
 Added 2026-08-05. `src/setting/data-archive/` — the backup / move-machines counterpart of
@@ -40,10 +40,18 @@ Other non-obvious bits:
   hidden-name rule, now shared by `fsListDirectories`, `getAllXMLFileKeys`, the bible
   download scan and the archive. What it really catches is the `._*` AppleDouble stubs a
   macOS machine or a USB round-trip leaves behind. `copyFilesInto` skips them on IMPORT
-  too, because archives written before this still hold them. NOTE `fsListFiles` itself
-  does NOT filter them, so those stubs still show up in the app's own file lists (a
-  `._clock.html` is offered as a web background) — deliberately left alone, but it is a
-  one-line fix if it ever matters.
+  too, because archives written before this still hold them. **`fsListFiles` filters them
+  too since 2026-09-19 (`EN-34`)**: it mattered — a `._3-head` beside an editing history's
+  `3-head` made two "current" files and undo gave up, and `._page-1.png` stubs kept a PDF's
+  page images from ever matching its page count, so it re-rendered on every open. Nothing
+  in the app keeps a dot-file of its own in a folder it lists; the data folder's marker
+  (`.owa-data-folder.json`, [[portable-data-dir-alias]]) relies on this being invisible.
+- **Per-item bundles record `dataDirPath` (2026-09-19, `EN-28`).** `writeArchiveManifest`
+  adds the exporting machine's data folder; `importArchiveFiles` keys every imported file a
+  second time by `rebaseDataDirPath` onto THIS machine's folder, because a document inside
+  the data folder stores `$DATA_DIR_PATH` and reads back as the importer's path, never the
+  exporter's the manifest is keyed by. The file name comes from `toBaseNameOfAnyOs` +
+  `toPortableFileFullName` (`EN-22`): a Windows `originalPath` read on macOS was ONE name.
 - Regenerable caches are excluded by REGEX per path segment, because the real names are
   `<doc>.histories`, `<doc>.pdf-images`, `<doc>.pptx-htmls` and `<doc>.docx-docx-htmls` —
   a plain suffix list misses the docx one, and requiring the `.<ext>` is what keeps a

@@ -1666,6 +1666,42 @@ const dictionary = {
     'Open in Markdown Editor': 'បើកក្នុងកម្មវិធីកែ Markdown',
     'Open Bible Lookup': 'បើកផ្ទាំងស្វែងរកព្រះគម្ពីរ',
     'Change Bible Key': 'ប្ដូរកូនសោរព្រះគម្ពីរ',
+    // --- A data folder carried between computers and operating systems
+    // (EN-22..35, 2026-09-19): file names every computer accepts, deleting on
+    // a USB stick with no Recycle Bin. Machine-authored Khmer following the
+    // dictionary's existing conventions; a native speaker should review.
+    'Please type a name.': 'សូមវាយឈ្មោះ។',
+    'A name cannot contain these characters, which some computers refuse:':
+        'ឈ្មោះមិនអាចមានតួអក្សរទាំងនេះបានទេ ព្រោះកុំព្យូទ័រខ្លះមិនទទួលយក៖',
+    'A name cannot start with a dot.': 'ឈ្មោះមិនអាចចាប់ផ្តើមដោយចំណុចបានទេ។',
+    'A name cannot end with a dot or a space.':
+        'ឈ្មោះមិនអាចបញ្ចប់ដោយចំណុច ឬដកឃ្លាបានទេ។',
+    'This name is reserved by Windows. Please choose another one.':
+        'ឈ្មោះនេះត្រូវបាន Windows បម្រុងទុក។ សូមជ្រើសរើសឈ្មោះផ្សេង។',
+    'This name is too long. Please use a shorter one.':
+        'ឈ្មោះនេះវែងពេក។ សូមប្រើឈ្មោះខ្លីជាងនេះ។',
+    'Creating File': 'កំពុងបង្កើតឯកសារ',
+    'Delete Permanently': 'លុបជាអចិន្ត្រៃយ៍',
+    'could not be moved to the Recycle Bin or Trash. A USB flash drive has none on Windows. Delete it permanently? This cannot be undone.':
+        'មិនអាចផ្លាស់ទីទៅធុងសំរាមបានទេ។ ឧបករណ៍ផ្ទុក USB គ្មានធុងសំរាមនៅលើ Windows ទេ។ លុបវាជាអចិន្ត្រៃយ៍ឬ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។',
+    'Data Folder Not Found': 'រកមិនឃើញថតទិន្នន័យ',
+    'is not available. If it is on a USB flash drive, plug it in and press Retry. Until then the app is using a folder of its own; your data is not touched.':
+        'មិនអាចប្រើបានទេ។ ប្រសិនបើវានៅលើឧបករណ៍ផ្ទុក USB សូមដោតវាចូល ហើយចុច ព្យាយាមម្តងទៀត។ រហូតដល់ពេលនោះ កម្មវិធីកំពុងប្រើថតផ្ទាល់ខ្លួន ហើយទិន្នន័យរបស់អ្នកមិនត្រូវបានប៉ះពាល់ទេ។',
+    Retry: 'ព្យាយាមម្តងទៀត',
+    'Choose Another Folder': 'ជ្រើសរើសថតផ្សេង',
+    'Data Folder Found': 'បានរកឃើញថតទិន្នន័យ',
+    'Use the data folder found at': 'ប្រើថតទិន្នន័យដែលបានរកឃើញនៅ',
+    'Create and use the standard folders (Documents, Videos, Images and the rest) inside':
+        'បង្កើត និងប្រើថតស្តង់ដារ (ឯកសារ វីដេអូ រូបភាព និងផ្សេងទៀត) នៅក្នុង',
+    'Repair Links': 'ជួសជុលតំណភ្ជាប់',
+    'Point links to pictures, videos and songs that still name an old location of this data folder at where it is now':
+        'ភ្ជាប់តំណទៅរូបភាព វីដេអូ និងចម្រៀង ដែលនៅតែចង្អុលទៅទីតាំងចាស់នៃថតទិន្នន័យនេះ ទៅកាន់ទីតាំងបច្ចុប្បន្នវិញ',
+    'No links to an old location of this data folder were found.':
+        'រកមិនឃើញតំណទៅទីតាំងចាស់នៃថតទិន្នន័យនេះទេ។',
+    'Links repaired:': 'តំណដែលបានជួសជុល៖',
+    'Files changed:': 'ឯកសារដែលបានកែប្រែ៖',
+    'The app reloads to show them.':
+        'កម្មវិធីនឹងផ្ទុកឡើងវិញ ដើម្បីបង្ហាញពួកវា។',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();
