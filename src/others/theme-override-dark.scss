@@ -3,13 +3,52 @@
 $dragging-color-full: rgb(0, 174, 162);
 $resizer-color: rgb(73, 103, 123);
 
-#app[data-bs-theme='dark'] {
-  --app-color-presenter: #ffd500;
-  --app-color-reader: #ff00d4;
+.app[data-bs-theme='dark'] {
+  // -- App-owned semantic tokens.
+  // `open-lyric` publishes a whole LIGHT design system on `:root` (`--ink`,
+  // `--muted`, `--line`, `--surface`, `--accent`, `--page-background`, ...).
+  // Nothing here may override those: they are correct as published, because the
+  // plugin paints light SLIDE surfaces inside its own shadow roots, and a slide
+  // is light whatever theme the console is wearing. The app therefore keeps its
+  // own semantics under `--app-*`, so `var(--app-muted)` always means "muted on
+  // THIS theme" and can never be confused with the plugin's `var(--muted)`.
+  --app-ink: #f8f9fa;
+  --app-muted: #adb5bd;
+  --app-line: #495057;
+  --app-surface: #2b3035;
+
+  // Selection is not liveness. Selected/highlighted rows take the cool accent;
+  // only the on-air hue below is allowed to be warm-bright.
+  --app-accent: #5eead4;
+  --app-accent-halo: #5eead43d;
+
+  // -- THE reserved hue.
+  // Exactly one thing in this app is allowed to be this colour: content that is
+  // live on a screen the congregation can see. Anything else that wants to
+  // stand out uses `--app-accent`. Retiring the presenter/reader mode colours
+  // (which were #ffd500 / #ff00d4) is what frees the magenta family to mean
+  // one thing, so an operator can find what is live without reading a label.
+  --app-on-air: #ff2bbf;
+  --app-on-air-halo: #ff2bbf59;
+
+  // Mode identity now rides the tab icon and the active-tab state, not a second
+  // saturated colour competing with on-air.
+  --app-color-presenter: #dee2e6;
+  --app-color-reader: #dee2e6;
   --app-yellow-green: yellowgreen;
+
+  // `.text-muted` shipped as #6c757d here, which is 3.29:1 on this shell -- and
+  // it is used for the screen-id readout and the transition labels, i.e. the
+  // state an operator most needs to read in a dark booth. gray-500 is 7.3:1.
+  --bs-secondary-color: #adb5bd;
 
   background-color: var(--bs-gray-800);
   color: white;
+
+  .text-muted,
+  .text-secondary {
+    color: var(--app-muted) !important;
+  }
 
   // Start: Bootstrap
 
@@ -18,27 +57,27 @@ $resizer-color: rgb(73, 103, 123);
   }
 
   .receiving-data-drop {
-    border: 1px solid $dragging-color-full !important;
+    border-color: $dragging-color-full !important;
   }
 
   .receiving-data-drop-left {
-    border-left: 1px dashed var(--app-yellow-green) !important;
+    border-left-color: var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-right {
-    border-right: 1px dashed var(--app-yellow-green) !important;
+    border-right-color: var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-top {
-    border-top: 1px dashed var(--app-yellow-green) !important;
+    border-top-color: var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-bottom {
-    border-bottom: 1px dotted var(--app-yellow-green) !important;
+    border-bottom-color: var(--app-yellow-green) !important;
   }
 
   .list-group-item {
-    border: 1px solid var(--bs-gray-700);
+    border: 1px solid #ffffff0e;
 
     &:not(.active):hover {
       border: 1px solid #0d6dfd83;
@@ -93,7 +132,10 @@ $resizer-color: rgb(73, 103, 123);
     box-shadow: 0 3px 10px rgb(0, 0, 0, 0.2);
 
     &.active {
-      border: 2px solid var(--bs-gray-300);
+      border: 1px solid var(--bs-gray-300);
+    }
+    &.holding {
+      border: 1px dashed var(--bs-gray-300);
     }
 
     .vary-app-document-item-header {
@@ -110,10 +152,6 @@ $resizer-color: rgb(73, 103, 123);
       .index {
         background-color: rgba(0, 255, 255, 0.418);
       }
-    }
-
-    &:not(.app-highlight-selected):not(.active):hover {
-      border: 1px dotted var(--bs-gray-500);
     }
 
     .index {
@@ -262,9 +300,9 @@ $resizer-color: rgb(73, 103, 123);
     }
   }
 
-  .playlist-list {
+  .presenting-flow-list {
     .card-body {
-      .playlist-file {
+      .presenting-flow-file {
         &:hover {
           border: 1px solid var(--bs-gray-800);
         }
@@ -273,6 +311,19 @@ $resizer-color: rgb(73, 103, 123);
   }
 
   #app-setting {
+    // Others tab service rows: the hue of the state rail and its pill. These
+    // need a value per theme -- Bootstrap's mid-tone success/warning read on a
+    // light shell but sink into this one, and the `-text-emphasis` pair does
+    // the reverse. Neither is `--app-on-air`: nothing in Settings is live on a
+    // congregation screen.
+    .app-setting-others-ready {
+      --app-setting-others-state: #75b798;
+    }
+
+    .app-setting-others-attention {
+      --app-setting-others-state: #ffda6a;
+    }
+
     .lang {
       .options {
         background-color: var(--bs-gray-800);
@@ -332,29 +383,14 @@ $resizer-color: rgb(73, 103, 123);
     }
   }
 
-  #bible-list {
-    .item {
-      .bible {
-        &:hover {
-          border-color: var(--bs-gray-500);
-        }
-      }
-    }
-  }
-
   .presenter-foreground {
     background-color: var(--bs-gray-800);
   }
 
   .app-caught-hover-pointer {
-    cursor: pointer;
     &:hover {
       text-shadow: 0 0 2px rgba(255, 255, 255, 0.198);
     }
-  }
-
-  .app-found-highlight {
-    color: #88ff00;
   }
 
   .bible-lookup-chapter-option,
@@ -362,5 +398,13 @@ $resizer-color: rgb(73, 103, 123);
     &:hover {
       color: #88ff00;
     }
+  }
+
+  .editing-menu {
+    background-color: var(--bs-gray-900);
+  }
+
+  .mini-screen {
+    box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.2);
   }
 }

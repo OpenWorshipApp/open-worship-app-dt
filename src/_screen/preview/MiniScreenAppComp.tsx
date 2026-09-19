@@ -1,11 +1,13 @@
 import ScreenForegroundComp from '../ScreenForegroundComp';
 import ScreenBackgroundComp from '../ScreenBackgroundComp';
-import ScreenSlideComp from '../ScreenVaryAppDocumentComp';
+import ScreenVaryAppDocumentComp from '../ScreenVaryAppDocumentComp';
 import ScreenBibleComp from '../ScreenBibleComp';
 import { getScreenManagerByScreenId } from '../managers/screenManagerHelpers';
 import { ScreenManagerBaseContext } from '../managers/screenManagerHooks';
-import ScreenEffectManager from '../managers/ScreenEffectManager';
-import { checkIsDarkMode } from '../../others/initHelpers';
+import type ScreenEffectManager from '../managers/ScreenEffectManager';
+import { checkIsDarkMode } from '../../others/themeHelpers';
+import ScreenDrawComp from '../ScreenDrawComp';
+import ScreenFocusComp from '../ScreenFocusComp';
 
 const genBGBlank = () => {
     const isDarkMode = checkIsDarkMode();
@@ -60,9 +62,11 @@ export default function MiniScreenAppComp({
                 }}
             />
             <ScreenBackgroundComp />
-            <ScreenSlideComp />
+            <ScreenVaryAppDocumentComp />
             <ScreenBibleComp />
             <ScreenForegroundComp />
+            <ScreenDrawComp />
+            <ScreenFocusComp />
         </ScreenManagerBaseContext>
     );
 }

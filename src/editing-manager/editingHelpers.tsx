@@ -1,33 +1,67 @@
-import { useState, ReactNode } from 'react';
+import './editingHelpers.scss';
+
+import type { ReactNode } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import EditingHistoryManager from './EditingHistoryManager';
-import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
-import {
-    useKeyboardRegistering,
-    EventMapper as KeyboardEventMapper,
-    toShortcutKey,
-} from '../event/KeyboardEventListener';
+import type AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
+import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
+import { toShortcutKey } from '../event/KeyboardEventListener';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
+function sanitizeForUpdatingComparison(jsonText: string | null) {
+    if (jsonText === null) {
+        return null;
+    }
+    try {
+        const jsonData = JSON.parse(jsonText);
+        jsonData.metadata ??= {};
+        jsonData.metadata.lastEditDate = '';
+        return JSON.stringify(jsonData);
+    } catch (_error) {}
+    return jsonText;
+}
 export function useEditingHistoryStatus(filePath: string) {
     const [status, setStatus] = useState({
         canUndo: false,
         canRedo: false,
         canSave: false,
     });
+    // per-instance: this hook mounts once per document/lyric list item, and a
+    // shared module-level timer would leave N-1 items with stale status
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const update = async () => {
-        const editingHistoryManager = new EditingHistoryManager(filePath);
+        const editingHistoryManager =
+            EditingHistoryManager.getInstance(filePath);
+        if (!(await editingHistoryManager.checkHasHistories())) {
+            // nothing recorded yet — one cheap stat instead of repeated
+            // readdirs plus two full file reads per list item
+            setStatus({ canUndo: false, canRedo: false, canSave: false });
+            return;
+        }
         const canUndo = await editingHistoryManager.checkCanUndo();
         const canRedo = await editingHistoryManager.checkCanRedo();
         const historyText = await editingHistoryManager.getCurrentHistory();
         const text = await editingHistoryManager.getOriginalData();
-        const canSave = historyText !== null && historyText !== text;
+        const sanitizedHistoryText = sanitizeForUpdatingComparison(historyText);
+        const sanitizedText = sanitizeForUpdatingComparison(text);
+        const canSave =
+            sanitizedHistoryText !== null &&
+            sanitizedHistoryText !== sanitizedText;
         setStatus({ canUndo, canRedo, canSave });
     };
-    useFileSourceEvents(['update'], update, [], filePath);
+    useFileSourceEvents(
+        ['update'],
+        () => {
+            attemptTimeout(update);
+        },
+        [],
+        filePath,
+    );
     useAppEffect(() => {
         update();
     }, [filePath]);
@@ -57,6 +91,26 @@ function MenuIsModifying({
     caDiscard: boolean;
     canSave: boolean;
 }>) {
+    const editableDocumentRef = useAppCurrentRef(editableDocument);
+    const handleDiscard = useCallback(async () => {
+        const isOk = await showAppConfirm(
+            tran('Discard changed'),
+            tran('Are you sure to discard all change histories?'),
+            {
+                cancelButtonLabel: 'No',
+                confirmButtonLabel: 'Yes',
+            },
+        );
+        if (!isOk) {
+            return;
+        }
+        editableDocumentRef.current.historyDiscard();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSave = useCallback(() => {
+        editableDocumentRef.current.save();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <>
             <button
@@ -64,20 +118,9 @@ function MenuIsModifying({
                 type="button"
                 disabled={!caDiscard}
                 title={tran('Discard changed')}
+                aria-label={tran('Discard changed')}
                 style={genDisabledStyle(!caDiscard)}
-                onClick={async () => {
-                    const isOk = await showAppConfirm(
-                        tran('Discard changed'),
-                        tran('Are you sure to discard all histories?'),
-                        {
-                            confirmButtonLabel: 'Yes',
-                        },
-                    );
-                    if (!isOk) {
-                        return;
-                    }
-                    editableDocument.editingHistoryManager.discard();
-                }}
+                onClick={handleDiscard}
             >
                 <i className="bi bi-x-octagon" />
             </button>
@@ -85,11 +128,10 @@ function MenuIsModifying({
                 className="btn btn-sm btn-success"
                 type="button"
                 disabled={!canSave}
-                title={tran`Save [${toShortcutKey(savingEventMapper)}]`}
+                title={tran('Save') + ` [${toShortcutKey(savingEventMapper)}]`}
+                aria-label={tran('Save')}
                 style={genDisabledStyle(!canSave)}
-                onClick={() => {
-                    editableDocument.save();
-                }}
+                onClick={handleSave}
             >
                 <i className="bi bi-floppy" />
             </button>
@@ -107,57 +149,49 @@ export function FileEditingMenuComp({
     const { canUndo, canRedo, canSave } = useEditingHistoryStatus(
         editableDocument.filePath,
     );
-    useKeyboardRegistering(
-        [savingEventMapper],
-        () => {
-            editableDocument.save();
-        },
-        [editableDocument],
-    );
     const isShowingTools = canUndo || canRedo || canSave;
+    const editableDocumentRef = useAppCurrentRef(editableDocument);
+    const handleUndo = useCallback(() => {
+        editableDocumentRef.current.historyUndo();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleRedo = useCallback(() => {
+        editableDocumentRef.current.historyRedo();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (!(isShowingTools || extraChildren)) {
         return null;
     }
     return (
-        <div
-            style={{
-                borderBottom: '1px solid #00000024',
-                backgroundColor: '#00000020',
-                minHeight: '35px',
-            }}
-        >
-            <div className="btn-group control d-flex justify-content-center">
-                <button
-                    className="btn btn-sm btn-info"
-                    type="button"
-                    title="Undo"
-                    disabled={!canUndo}
-                    style={genDisabledStyle(!canUndo)}
-                    onClick={() => {
-                        editableDocument.editingHistoryManager.undo();
-                    }}
-                >
-                    <i className="bi bi-arrow-90deg-left" />
-                </button>
-                <button
-                    className="btn btn-sm btn-info"
-                    type="button"
-                    title="Redo"
-                    disabled={!canRedo}
-                    style={genDisabledStyle(!canRedo)}
-                    onClick={() => {
-                        editableDocument.editingHistoryManager.redo();
-                    }}
-                >
-                    <i className="bi bi-arrow-90deg-right" />
-                </button>
-                <MenuIsModifying
-                    editableDocument={editableDocument}
-                    caDiscard={isShowingTools}
-                    canSave={canSave}
-                />
-                {extraChildren}
-            </div>
+        <div className="editing-menu-body btn-group control d-flex justify-content-center">
+            <button
+                className="btn btn-sm btn-info"
+                type="button"
+                title={tran('Undo')}
+                aria-label={tran('Undo')}
+                disabled={!canUndo}
+                style={genDisabledStyle(!canUndo)}
+                onClick={handleUndo}
+            >
+                <i className="bi bi-arrow-90deg-left" />
+            </button>
+            <button
+                className="btn btn-sm btn-info"
+                type="button"
+                title={tran('Redo')}
+                aria-label={tran('Redo')}
+                disabled={!canRedo}
+                style={genDisabledStyle(!canRedo)}
+                onClick={handleRedo}
+            >
+                <i className="bi bi-arrow-90deg-right" />
+            </button>
+            <MenuIsModifying
+                editableDocument={editableDocument}
+                caDiscard={isShowingTools}
+                canSave={canSave}
+            />
+            {extraChildren}
         </div>
     );
 }

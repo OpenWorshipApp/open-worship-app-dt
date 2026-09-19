@@ -11,24 +11,21 @@ import {
 import {
     fromLocaleNum,
     fromStringNum,
-    getFontFamilyByLocale,
-    getLangAsync,
-    LocaleType,
+    getLangDataAsync,
     toLocaleNum,
     toStringNum,
 } from '../../lang/langHelpers';
-import { useAppEffect } from '../debuggerHelpers';
+import { useAppEffect } from '../appHooks';
 import BibleItem from '../../bible-list/BibleItem';
 import { getModelChapterCount } from './bibleLogicHelpers1';
 import CacheManager from '../../others/CacheManager';
-import {
-    BibleMinimalInfoType,
-    getAllLocalBibleInfoList,
-} from './bibleDownloadHelpers';
+import type { BibleMinimalInfoType } from './bibleDownloadHelpers';
+import { getAllLocalBibleInfoList } from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
-import { log } from '../loggerHelpers';
+import { appLog } from '../loggerHelpers';
 import { getBibleModelInfo, modelNewLinerInfo } from './bibleModelHelpers';
+import { getBibleLocale, getLangDataFromBibleKey } from './bibleStyleHelpers';
 
 export async function toInputText(
     bibleKey: string,
@@ -67,28 +64,7 @@ export async function toInputText(
     return text;
 }
 
-export async function getBibleLocale(bibleKey: string) {
-    const bibleInfo = await getBibleInfo(bibleKey);
-    if (bibleInfo === null) {
-        return 'en' as LocaleType;
-    }
-    return bibleInfo.locale;
-}
-
-export async function getLangFromBibleKey(bibleKey: string) {
-    const locale = await getBibleLocale(bibleKey);
-    const langData =
-        (await getLangAsync(locale)) || (await getLangAsync('en-US'));
-    return langData;
-}
-
-export async function getBibleFontFamily(bibleKey: string) {
-    const locale = await getBibleLocale(bibleKey);
-    const fontFamily = await getFontFamilyByLocale(locale);
-    return fontFamily;
-}
-
-const toLocaleNumCache = new CacheManager<string>(60); // 1 minute
+const toLocaleNumCache = new CacheManager<string>(10);
 export async function toLocaleNumBible(bibleKey: string, n: number | null) {
     const cacheKey = `${bibleKey}:${n}`;
     const cached = await toLocaleNumCache.get(cacheKey);
@@ -121,7 +97,7 @@ export function useToLocaleNumBible(bibleKey: string, nString: number | null) {
     return str;
 }
 
-const localeNumCache = new CacheManager<number | null>(60); // 1 minute
+const localeNumCache = new CacheManager<number | null>(10);
 export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
     const cacheKey = `${bibleKey}:${localeNum}`;
     if (await localeNumCache.has(cacheKey)) {
@@ -193,7 +169,7 @@ export async function parseChapterFromGuessing(
     return chapterNum;
 }
 
-const verseCountCacher = new CacheManager<number>(60); // 1 minute
+const verseCountCacher = new CacheManager<number>(10);
 export async function getVersesCount(
     bibleKey: string,
     bookKey: string,
@@ -228,9 +204,23 @@ async function transformExtracted(
     if (book === null) {
         return result;
     }
-    const bookKey = await bookToKey(bibleKey, book);
+    let bookKey: string | null = await bookToKey(bibleKey, book);
     if (bookKey === null) {
-        return null;
+        const langData = await getLangDataFromBibleKey(bibleKey);
+        if (langData === null) {
+            return null;
+        } else {
+            const transformedBooks = langData.transformBibleBookName(book);
+            for (const transformedBook of transformedBooks) {
+                bookKey = await bookToKey(bibleKey, transformedBook);
+                if (bookKey !== null) {
+                    break;
+                }
+            }
+            if (bookKey === null) {
+                return null;
+            }
+        }
     }
     result.bookKey = bookKey;
     result.guessingBook = null;
@@ -383,8 +373,8 @@ const regexTitleMap: [
             if (matches.length !== 5) {
                 return null;
             }
-            const [_, booKey, chapter, verseStart, verseEnd] = matches;
-            const book = await keyToBook(bibleKey, booKey);
+            const [_, bookKey, chapter, verseStart, verseEnd] = matches;
+            const book = await keyToBook(bibleKey, bookKey);
             if (book === null) {
                 return null;
             }
@@ -404,8 +394,8 @@ const regexTitleMap: [
             if (matches.length !== 4) {
                 return null;
             }
-            const [_, booKey, chapter, verseStart] = matches;
-            const book = await keyToBook(bibleKey, booKey);
+            const [_, bookKey, chapter, verseStart] = matches;
+            const book = await keyToBook(bibleKey, bookKey);
             if (book === null) {
                 return null;
             }
@@ -425,8 +415,8 @@ const regexTitleMap: [
             if (matches.length !== 3) {
                 return null;
             }
-            const [_, booKey, chapter] = matches;
-            const book = await keyToBook(bibleKey, booKey);
+            const [_, bookKey, chapter] = matches;
+            const book = await keyToBook(bibleKey, bookKey);
             if (book === null) {
                 return null;
             }
@@ -440,8 +430,8 @@ const regexTitleMap: [
             if (matches.length !== 2) {
                 return null;
             }
-            const [_, booKey] = matches;
-            const book = await keyToBook(bibleKey, booKey);
+            const [_, bookKey] = matches;
+            const book = await keyToBook(bibleKey, bookKey);
             if (book === null) {
                 return null;
             }
@@ -464,7 +454,7 @@ async function checkExtractedAndReturn(bibleKey: string, inputText: string) {
 const attemptInputTextCache = new CacheManager<{
     bibleKey: string;
     inputText: string;
-} | null>(60); // 1 minute
+} | null>(10);
 async function attemptExtractBibleKey1(
     inputText: string,
     allLocalBibleInfoList: BibleMinimalInfoType[],
@@ -649,7 +639,7 @@ async function genExtraBibleItems(
             `${book} ${chapterNum}:`,
         );
         if (newBibleItem === null) {
-            log(
+            appLog(
                 'Failed to generate extra bible item for',
                 `${book} ${chapterNum}:`,
             );
@@ -682,7 +672,7 @@ export async function extractBibleTitle(
         const brokenInputText = breakText(cleanText);
         cleanText = brokenInputText.inputText;
         const locale = await getBibleLocale(bibleKey);
-        const lang = await getLangAsync(locale);
+        const lang = await getLangDataAsync(locale);
         if (lang !== null) {
             cleanText = lang.sanitizeText(cleanText);
         }

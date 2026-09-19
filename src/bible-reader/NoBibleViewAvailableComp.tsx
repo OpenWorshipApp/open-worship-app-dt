@@ -1,46 +1,55 @@
+import { useCallback } from 'react';
+
 import { tran } from '../lang/langHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { RECEIVING_DROP_CLASSNAME } from '../helper/helpers';
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function NoBibleViewAvailableComp() {
     const viewController = useBibleItemsViewControllerContext();
+    const handleDragOver = useCallback((event: any) => {
+        event.preventDefault();
+        event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
+    }, []);
+    const handleDragLeave = useCallback((event: any) => {
+        event.preventDefault();
+        event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
+    }, []);
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const handleDrop = useCallback(async (event: any) => {
+        event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
+        const data = event.dataTransfer.getData('text');
+        try {
+            const json = JSON.parse(data);
+            if (json.type === 'bibleItem') {
+                const bibleItem = ReadIdOnlyBibleItem.fromJson(json.data);
+                viewControllerRef.current.addBibleItem(
+                    null,
+                    bibleItem,
+                    false,
+                    false,
+                    false,
+                );
+            }
+        } catch (error) {
+            handleError(error);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
-            className="bible-view card flex-fill"
+            className={
+                'bible-view card flex-fill d-flex align-items-center ' +
+                'justify-content-center'
+            }
             style={{ minWidth: '30%' }}
-            onDragOver={(event) => {
-                event.preventDefault();
-                event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
-            }}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
-            }}
-            onDrop={async (event) => {
-                event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
-                const data = event.dataTransfer.getData('text');
-                try {
-                    const json = JSON.parse(data);
-                    if (json.type === 'bibleItem') {
-                        const bibleItem = ReadIdOnlyBibleItem.fromJson(
-                            json.data,
-                        );
-                        viewController.addBibleItem(
-                            null,
-                            bibleItem,
-                            false,
-                            false,
-                            false,
-                        );
-                    }
-                } catch (error) {
-                    handleError(error);
-                }
-            }}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
         >
-            {tran('No Bible Available')}
+            <h3>{tran('No Bible Available')}</h3>
         </div>
     );
 }

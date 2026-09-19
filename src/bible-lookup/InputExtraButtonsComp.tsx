@@ -1,16 +1,20 @@
-import { CSSProperties, createRef, useMemo, useState } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
+import { createRef, useCallback, useMemo, useState } from 'react';
 
 import {
     checkIsBibleLookupInputFocused,
     INPUT_TEXT_CLASS,
     setBibleLookupInputFocus,
 } from './selectionHelpers';
-import { useAppEffect, useAppEffectAsync } from '../helper/debuggerHelpers';
-import LookupBibleItemController, {
-    useLookupBibleItemControllerContext,
-} from '../bible-reader/LookupBibleItemController';
 import {
-    EventMapper as KeyboardEventMapper,
+    useAppEffect,
+    useAppEffectAsync,
+    useAppCurrentRef,
+} from '../helper/appHooks';
+import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
+import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
+import {
     toShortcutKey,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
@@ -103,17 +107,20 @@ export default function InputExtraButtonsComp() {
         wrapper.style.right = `${parentRect.right - inputRect.right + 5}px`;
         wrapper.style.zIndex = '5';
     }, []);
-    const handleTabbing = async (event?: any) => {
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const inputTextRef = useAppCurrentRef(inputText);
+    const handleTabbing = useCallback(async (event?: any) => {
         const newInputText = await checkNewTabInputText(
-            viewController,
-            inputText,
+            viewControllerRef.current,
+            inputTextRef.current,
             event,
         );
         if (newInputText === null) {
             return;
         }
-        viewController.inputText = newInputText;
-    };
+        viewControllerRef.current.inputText = newInputText;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     useKeyboardRegistering([tabEventMap], handleTabbing, []);
     useKeyboardRegistering(
         [escapeEventMap],
@@ -136,7 +143,9 @@ export default function InputExtraButtonsComp() {
         },
         [],
     );
-    const removeInputTextChunk = () => {
+    const removeInputTextChunk = useCallback(() => {
+        const inputText = inputTextRef.current;
+        const viewController = viewControllerRef.current;
         const arr = inputText.split(' ').filter((str) => str !== '');
         if (arr.length === 1) {
             viewController.inputText = '';
@@ -146,11 +155,18 @@ export default function InputExtraButtonsComp() {
         const newInputText = arr.join(' ') + (arr.length > 0 ? ' ' : '');
         viewController.inputText = newInputText;
         setBibleLookupInputFocus();
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const removeInputText = () => {
         viewController.inputText = '';
         setBibleLookupInputFocus();
     };
+    const removeInputTextChunkRef = useAppCurrentRef(removeInputTextChunk);
+    const handleClearInputChunk = useCallback((event: MouseEvent) => {
+        event.stopPropagation();
+        removeInputTextChunkRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             ref={extractButtonsRef}
@@ -162,7 +178,10 @@ export default function InputExtraButtonsComp() {
         >
             <i
                 className="bi bi-x app-caught-hover-pointer"
-                title={tran`Clear input [${toShortcutKey(ctrlEscapeEventMap)}]`}
+                title={
+                    tran('Clear input') +
+                    ` [${toShortcutKey(ctrlEscapeEventMap)}]`
+                }
                 style={{
                     color: 'red',
                     ...availableStyle,
@@ -171,26 +190,26 @@ export default function InputExtraButtonsComp() {
             />
             <i
                 className="bi bi-x app-caught-hover-pointer"
-                title={tran`Clear input chunk [${toShortcutKey(escapeEventMap)}]`}
+                title={
+                    tran('Clear input chunk') +
+                    ` [${toShortcutKey(escapeEventMap)}]`
+                }
                 style={{
                     color: 'var(--bs-danger-text-emphasis)',
                     ...availableStyle,
                 }}
-                onClick={(event) => {
-                    event.stopPropagation();
-                    removeInputTextChunk();
-                }}
+                onClick={handleClearInputChunk}
             />
             <i
                 className="bi bi-arrow-bar-right app-caught-hover-pointer"
-                title={`Tab to complete [${toShortcutKey(tabEventMap)}]`}
+                title={
+                    tran('Tab to complete') + ` [${toShortcutKey(tabEventMap)}]`
+                }
                 style={{
                     color: 'var(--bs-secondary-text-emphasis)',
                     ...genAvailableStyle(!isTabAvailable),
                 }}
-                onClick={() => {
-                    handleTabbing();
-                }}
+                onClick={handleTabbing}
             />
         </div>
     );

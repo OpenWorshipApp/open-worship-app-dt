@@ -1,8 +1,9 @@
-import { useState, CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
+import { useState } from 'react';
 
-import { useAppEffect } from '../helper/debuggerHelpers';
-import ScreenEffectManager from './managers/ScreenEffectManager';
-import { StyleAnimType, PTFEventType } from './screenTypeHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
+import type ScreenEffectManager from './managers/ScreenEffectManager';
+import type { StyleAnimType, PTFEventType } from './screenTypeHelpers';
 
 const ZOOM_CONTAINER_CLASS = 'zoom-container';
 export const ANIM_END_DELAY_MILLISECOND = 500;
@@ -41,6 +42,50 @@ function genCssProps(duration: number) {
         animationFillMode: 'forwards',
     };
     return cssProps;
+}
+
+// TODO: make none effect work without animation to prevent flash when
+// changing screen during animation
+function none(prefix: string): StyleAnimType {
+    const uniqueId = crypto.randomUUID();
+    const animationNameOut = `${prefix}-animation-fade-${uniqueId}-out`;
+    const styleText = `
+        @keyframes ${animationNameOut} {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+    `;
+    const anim: StyleAnimType = {
+        duration: 500,
+        styleText,
+        animIn: (targetElement: HTMLElement, parentElement: HTMLElement) => {
+            parentElement.appendChild(targetElement);
+            return Promise.resolve();
+        },
+        animOut: (targetElement: HTMLElement) => {
+            return new Promise((resolve) => {
+                if (checkIsZoomContainer(targetElement)) {
+                    return resolve();
+                }
+                Object.assign(targetElement.style, {
+                    ...genCssProps(anim.duration),
+                    animationName: animationNameOut,
+                    opacity: 1,
+                });
+                setTimeout(() => {
+                    Object.assign(targetElement.style, {
+                        opacity: '0',
+                    });
+                    resolve();
+                }, anim.duration + ANIM_END_DELAY_MILLISECOND);
+            });
+        },
+    };
+    return anim;
 }
 
 function fade(prefix: string) {
@@ -289,23 +334,32 @@ function zoom(prefix: string): StyleAnimType {
 }
 
 export const styleAnimList = {
+    none,
     fade,
     move,
     zoom,
 };
+export const transitionEffect = {
+    none: ['bi bi-ban'],
+    fade: ['bi bi-shadows'],
+    move: ['bi bi-align-end'],
+    zoom: ['bi bi-arrows-fullscreen'],
+} as const;
+export type TransitionEffectType = keyof typeof transitionEffect;
 
 export function useScreenEffectEvents(
     events: PTFEventType[],
     screenEffectManager: ScreenEffectManager,
     callback?: () => void,
 ) {
-    const [n, setN] = useState(0);
+    const [_n, setN] = useState(Date.now());
+
+    const callbackRef = useAppCurrentRef(callback);
+
     useAppEffect(() => {
-        const update = () => {
-            setN((n) => {
-                return n + 1;
-            });
-            callback?.();
+        const update = (_data: any, time: number) => {
+            setN(time);
+            callbackRef.current?.();
         };
         const instanceEvents = screenEffectManager.registerEventListener(
             events,
@@ -314,6 +368,5 @@ export function useScreenEffectEvents(
         return () => {
             screenEffectManager.unregisterEventListener(instanceEvents);
         };
-    }, [screenEffectManager, callback]);
-    return n;
+    }, [JSON.stringify(events)]);
 }

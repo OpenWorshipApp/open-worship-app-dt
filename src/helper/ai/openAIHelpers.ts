@@ -1,24 +1,27 @@
 import OpenAI from 'openai';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 
-import { getAISetting, useAISetting } from './aiHelpers';
-
-export type AISettingType = {
-    openAIAPIKey: string;
-    anthropicAPIKey: string;
-    isAutoPlay: boolean;
-};
-
-export const DATA_DIR_NAME = 'ai-openai-data';
+import { getAISetting, getIsAIEnabled } from './aiHelpers';
 
 let instance: OpenAI | null = null;
 let key: string | null = null;
 export function getOpenAIInstance() {
     const { openAIAPIKey } = getAISetting();
+    // The master switch in Settings > Others turns every AI feature off,
+    // stored keys or not -- and says so. Blaming a missing key sends the user
+    // to re-enter one that is already there.
+    if (!getIsAIEnabled()) {
+        showSimpleToast(
+            tran('Fail to get OpenAI instance'),
+            tran('AI features are turned off in Settings.'),
+        );
+        return null;
+    }
     if (!openAIAPIKey) {
         showSimpleToast(
-            'Fail to get OpenAI instance',
-            'Missing OpenAI API Key.',
+            tran('Fail to get OpenAI instance'),
+            tran('Missing OpenAI API Key.'),
         );
         return null;
     }
@@ -33,12 +36,11 @@ export function getOpenAIInstance() {
     return instance;
 }
 
-export function checkIsAvailable(aiSetting?: AISettingType) {
-    const setting = aiSetting ?? getAISetting();
-    return setting.openAIAPIKey.trim().length > 0;
-}
-
-export function useAvailable() {
-    const aiSetting = useAISetting();
-    return checkIsAvailable(aiSetting);
-}
+// Re-exported so existing callers keep one import site. Import them from
+// `openAIAvailabilityHelpers` DIRECTLY in anything that merely draws a control:
+// reaching them through this module pulls the `openai` SDK into that chunk.
+export {
+    checkIsAvailable,
+    DATA_DIR_NAME,
+    useAvailable,
+} from './openAIAvailabilityHelpers';

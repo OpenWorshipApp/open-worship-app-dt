@@ -1,15 +1,17 @@
-import { cloneJson, isValidJson } from '../helper/helpers';
+import { cloneJson } from '../helper/helpers';
 import { ItemBase } from '../helper/ItemBase';
-import { setSetting, getSetting } from '../helper/settingHelpers';
-import DragInf, { DragTypeEnum } from '../helper/DragInf';
+import SettingManager from '../helper/SettingManager';
+import type DragInf from '../helper/DragInf';
+import { DragTypeEnum } from '../helper/DragInf';
 import { handleError } from '../helper/errorHelpers';
 import * as loggerHelpers from '../helper/loggerHelpers';
-import { BibleTargetType, bibleRenderHelper } from './bibleRenderHelpers';
-import { BibleItemType } from './bibleItemHelpers';
+import type { BibleTargetType } from './bibleRenderHelpers';
+import { bibleRenderHelper } from './bibleRenderHelpers';
+import type { BibleItemType } from './bibleItemHelpers';
 import { copyToClipboard } from '../server/appHelpers';
-import { ItemSourceInfBasic } from '../others/ItemSourceInf';
-import DocumentInf from '../others/DocumentInf';
-import { AnyObjectType } from '../helper/typeHelpers';
+import type { ItemSourceInfBasic } from '../others/ItemSourceInf';
+import type DocumentInf from '../others/DocumentInf';
+import type { AnyObjectType } from '../helper/typeHelpers';
 import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
 import {
     fromVerseKey,
@@ -17,7 +19,20 @@ import {
     toVerseFullKeyFormat,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 
-const BIBLE_PRESENT_SETTING_NAME = 'bible-presenter';
+const biblePresenterSettingManager = new SettingManager<AnyObjectType[]>({
+    settingName: 'bible-presenter',
+    defaultValue: [],
+    isErrorToDefault: true,
+    validate: (jsonString) => {
+        try {
+            return Array.isArray(JSON.parse(jsonString));
+        } catch (_error) {
+            return false;
+        }
+    },
+    serialize: (jsonData) => JSON.stringify(jsonData),
+    deserialize: (jsonString) => JSON.parse(jsonString),
+});
 
 export default class BibleItem
     extends ItemBase
@@ -184,7 +199,7 @@ export default class BibleItem
             typeof json.target.verseStart !== 'number' ||
             typeof json.target.verseEnd !== 'number'
         ) {
-            loggerHelpers.error(json);
+            loggerHelpers.appError(json);
             throw new Error('Invalid bible item data');
         }
     }
@@ -232,16 +247,15 @@ export default class BibleItem
         const jsonData = bibleItems.map((bibleItem) => {
             return bibleItem.toJson();
         });
-        setSetting(BIBLE_PRESENT_SETTING_NAME, JSON.stringify(jsonData));
+        biblePresenterSettingManager.setSetting(jsonData);
     }
     static getBiblePresenterSetting() {
+        // The manager guarantees an array; `fromJson` validates each ENTRY and
+        // still throws on a bad one, so the catch stays.
         try {
-            const str = getSetting(BIBLE_PRESENT_SETTING_NAME) ?? '';
-            if (isValidJson(str, true)) {
-                return JSON.parse(str).map((item: any) => {
-                    return this.fromJson(item);
-                }) as BibleItem[];
-            }
+            return biblePresenterSettingManager.getSetting().map((item) => {
+                return this.fromJson(item as any);
+            });
         } catch (error) {
             handleError(error);
         }
@@ -256,8 +270,17 @@ export default class BibleItem
     toTitle() {
         return bibleRenderHelper.toTitle(this.bibleKey, this.target);
     }
+    async toTitleWithBibleKey() {
+        const title = await this.toTitle();
+        return `${this.getCopyingBibleKey()} ${title}`;
+    }
     toText() {
         return bibleRenderHelper.toText(this.bibleKey, this.target, true);
+    }
+    async toFullText() {
+        const text = await this.toText();
+        const fullTitle = await this.toTitleWithBibleKey();
+        return `${fullTitle}\n${text}`;
     }
     toVerseTextList() {
         return bibleRenderHelper.toVerseTextList(this.bibleKey, this.target);
@@ -276,16 +299,16 @@ export default class BibleItem
         return `(${this.bibleKey})`;
     }
     async copyTitleToClipboard() {
-        const title = await this.toTitle();
-        copyToClipboard(`${this.getCopyingBibleKey()} ${title}`);
+        const fullTitle = await this.toTitleWithBibleKey();
+        copyToClipboard(fullTitle);
     }
     async copyTextToClipboard() {
         const text = await this.toText();
         copyToClipboard(text);
     }
     async copyToClipboard() {
-        const { title, text } = await this.toTitleText();
-        copyToClipboard(`${this.getCopyingBibleKey()} ${title}\n${text}`);
+        const fullText = await this.toFullText();
+        copyToClipboard(fullText);
     }
     copyVerseFullKeyToClipboard() {
         copyToClipboard(this.toVerseFullKey());
@@ -304,11 +327,11 @@ export default class BibleItem
     syncData(bibleItem: BibleItem) {
         this.originalJson = bibleItem.originalJson;
     }
-    dragSerialize() {
+    dragSerialize(dragType: DragTypeEnum = DragTypeEnum.BIBLE_ITEM) {
         const data = this.toJson() as any;
         data.filePath = this.filePath;
         return {
-            type: DragTypeEnum.BIBLE_ITEM,
+            type: dragType,
             data,
         };
     }

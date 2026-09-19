@@ -1,9 +1,20 @@
-import { ReactNode, CSSProperties, LazyExoticComponent } from 'react';
+import type { ReactNode, CSSProperties, LazyExoticComponent } from 'react';
 
 import { handleError } from '../helper/errorHelpers';
-import { isValidJson } from '../helper/helpers';
-import { setSetting, getSetting } from '../helper/settingHelpers';
+import { parseJsonSafely } from '../helper/helpers';
+import {
+    setSetting,
+    getSetting,
+    removeSettingsByPrefix,
+    toFilePathSettingName,
+} from '../helper/settingHelpers';
 
+export const settingPrefix = 'widget-size';
+export const disablingTargetTypeList = ['first', 'second'] as const;
+export type DisablingTargetType = (typeof disablingTargetTypeList)[number];
+export type DisabledType = [DisablingTargetType, number];
+
+export type CloseType = 'left' | 'right' | 'up' | 'down';
 export type FlexSizeType = {
     [key: string]: [string, DisabledType?];
 };
@@ -15,15 +26,21 @@ export type DataInputType = {
           };
     key: string;
     widgetName: string;
+    // The pane's English name, stamped into the DOM as `data-widget-name` so
+    // anything reading the window -- the help chatbot's control matcher, a
+    // screen reader -- can name the panel whatever language the app is in,
+    // and whether it is open or collapsed. Falls back to `widgetName` for the
+    // panes named after a file or a slide, which have no English twin.
+    widgetKey?: string;
+    // Bootstrap-icon name (without the `bi bi-` prefix) shown next to
+    // `widgetName` when the widget is collapsed. Use `toWidgetLabel` in
+    // `others/labelIconHelpers` to fill both fields consistently.
+    widgetIconName?: string;
     className?: string;
     extraStyle?: CSSProperties;
     isOnScreen?: boolean;
 };
 
-export const settingPrefix = 'widget-size';
-export const disablingTargetTypeList = ['first', 'second'] as const;
-export type DisablingTargetType = (typeof disablingTargetTypeList)[number];
-export type DisabledType = [DisablingTargetType, number];
 export const resizeSettingNames = {
     appEditor: 'app-editor-main',
     appEditorLeft: 'app-editor-left',
@@ -36,12 +53,59 @@ export const resizeSettingNames = {
     bibleReader: 'bible-reader',
     bibleLookupPopup: 'bible-lookup-popup',
     presenterBiblePreviewer: 'presenter-bible-previewer',
+    bibleReadingLeft: 'bible-reading-left',
+    // The bible-lookup popup overlays the presenter, whose right column already
+    // mounts a `BibleReadingLeftComp` under the name above. Two actors sharing a
+    // name is exactly what the note below forbids, and here it also collides in
+    // the widget registry, which is keyed by `flexSizeName::key`.
+    bibleReadingLeftLookup: 'bible-reading-left-lookup',
 };
 
-export function clearWidgetSizeSetting() {
-    for (const name of Object.values(resizeSettingNames)) {
-        setSetting(`${toSettingString(name)}`, '');
-    }
+/**
+ * One prefix per ResizeActor that is keyed to a document file.
+ *
+ * Two actors must never share a `flexSizeName`: `getFlexSizeSetting` rejects a
+ * stored blob whose keys don't match its own defaults and immediately rewrites
+ * it with them, so the note pane (`v1`/`v2`) and the note split inside it
+ * (`h1`/`h2`) — both keyed by the file's full name before — wiped each other's
+ * collapsed state on every mount, and the pane could never stay closed.
+ */
+export const appDocumentFlexSizeNames = {
+    presenterPreviewer: 'app-document-previewer',
+    presenterNote: 'app-document-presenter-note',
+    slideEditorCanvas: 'slide-editor-canvas',
+    slideEditorNote: 'slide-editor-note',
+};
+
+/**
+ * Per FILE PATH, not per file name: two documents of the same name in
+ * different folders are different documents and remember their own layout.
+ *
+ * `namePrefix` separates a second live copy of the same pane over the same
+ * document (a floating preview beside the main panel), which would otherwise
+ * fight over one key while both are on screen.
+ */
+export function toAppDocumentFlexSizeName(
+    flexSizeName: string,
+    filePath: string,
+    namePrefix = '',
+) {
+    return toFilePathSettingName(`${namePrefix}${flexSizeName}`, filePath);
+}
+
+/**
+ * Every widget size the app has ever stored, not just the registered names.
+ *
+ * A name list can never be complete here: `ResizeActorDynamicComp` appends
+ * `-dyn-h`/`-dyn-v`, several actors pass an ad-hoc literal, and the
+ * document-keyed ones mint a name per file path. They all land under
+ * `settingPrefix` by construction (`toSettingString`), so sweeping the prefix is
+ * the only way to leave nothing behind. It also DELETES the keys rather than
+ * blanking them, which drops the `appLocalStorage` cache entry too — a blanked
+ * value keeps its cached string and its file on disk.
+ */
+export async function clearWidgetSizeSetting() {
+    return await removeSettingsByPrefix(settingPrefix);
 }
 export function toSettingString(flexSizeName: string) {
     return `${settingPrefix}-${flexSizeName}`;
@@ -110,40 +174,54 @@ function doubleFlexGrow(size: string) {
     parts[0] = flexGrow.toString();
     return parts.join(' ');
 }
-function sanitizeFlexSizeValue(flexSize: FlexSizeType) {
-    if (
-        Object.values(flexSize).reduce((acc, [size1, size2]) => {
-            if (size2 === undefined) {
-                // size1: '0.1 1 20%'
-                return Number(size1.split(' ')[0]) + acc;
-            }
+function sanitizeFlexSizeValue(
+    flexSize: FlexSizeType,
+    dataInputKeys?: string[],
+) {
+    const entries = Object.entries(flexSize);
+    const totalFlexGrow = entries.reduce((acc, [key, [size, disabledSize]]) => {
+        if (disabledSize || !dataInputKeys?.includes(key)) {
             return acc;
-        }, 0) >= 1
-    ) {
+        }
+        // size1: '0.1 1 20%'
+        const flexGrowStr = size.split(' ')[0];
+        let flexGrow = Number(flexGrowStr);
+        if (Number.isNaN(flexGrow)) {
+            flexGrow = 0;
+        }
+        return flexGrow + acc;
+    }, 0);
+    if (totalFlexGrow >= 1 || totalFlexGrow === 0) {
         return flexSize;
     }
     const newFlexSize: FlexSizeType = {};
-    for (const [key, [size1, size2]] of Object.entries(flexSize)) {
-        if (size2 === undefined) {
-            newFlexSize[key] = [doubleFlexGrow(size1)];
+    for (const [key, [size, disabledSize]] of Object.entries(flexSize)) {
+        if (disabledSize) {
+            newFlexSize[key] = [doubleFlexGrow(size), disabledSize];
         } else {
-            newFlexSize[key] = [doubleFlexGrow(size1), size2];
+            newFlexSize[key] = [doubleFlexGrow(size)];
         }
     }
-    return sanitizeFlexSizeValue(newFlexSize);
+    return sanitizeFlexSizeValue(newFlexSize, dataInputKeys);
 }
 
 export function getFlexSizeSetting(
     flexSizeName: string,
     defaultSize: FlexSizeType,
+    dataInput?: DataInputType[],
 ): FlexSizeType {
     const settingString = toSettingString(flexSizeName);
     const str = getSetting(settingString) ?? '';
+    const defaultKeys = Object.keys(defaultSize);
+    if (defaultKeys.length === 0) {
+        throw new Error('defaultSize should have at least one key');
+    }
     try {
-        if (isValidJson(str, true)) {
-            const flexSize = JSON.parse(str);
+        const flexSize = parseJsonSafely(str, true);
+        if (flexSize !== null) {
             if (
-                Object.keys(defaultSize).every((k) => {
+                Object.keys(flexSize).length === defaultKeys.length &&
+                defaultKeys.every((k) => {
                     const flexSizeValue = flexSize[k];
                     // TODO: use schema validation
                     if (
@@ -160,14 +238,15 @@ export function getFlexSizeSetting(
                     return true;
                 })
             ) {
-                return sanitizeFlexSizeValue(flexSize);
+                const dataInputKeys = dataInput?.map((item) => item.key);
+                return sanitizeFlexSizeValue(flexSize, dataInputKeys);
             }
         }
     } catch (error) {
         handleError(error);
     }
     setSetting(settingString, JSON.stringify(defaultSize));
-    return getFlexSizeSetting(flexSizeName, defaultSize);
+    return getFlexSizeSetting(flexSizeName, defaultSize, dataInput);
 }
 
 function checkIsHiddenWidget(
@@ -196,7 +275,7 @@ export function checkIsThereNotHiddenWidget(
 }
 
 export function calcShowingHiddenWidget(
-    event: any,
+    event: { currentTarget: HTMLDivElement },
     key: string,
     flexSizeName: string,
     defaultFlexSize: FlexSizeType,

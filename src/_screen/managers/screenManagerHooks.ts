@@ -1,21 +1,29 @@
-import { createContext, use } from 'react';
+import { createContext, use, useState } from 'react';
 
 import ScreenManager from './ScreenManager';
-import ScreenManagerBase, { ScreenManagerEventType } from './ScreenManagerBase';
+import type { ScreenManagerEventType } from './ScreenManagerBase';
+import ScreenManagerBase from './ScreenManagerBase';
 import {
     useScreenEvents,
     useScreenBackgroundManagerEvents,
     useScreenVaryAppDocumentManagerEvents,
     useScreenBibleManagerEvents,
     useScreenForegroundManagerEvents,
+    useScreenDrawManagerEvents,
+    useScreenFocusManagerEvents,
 } from './screenEventHelpers';
+import { genVideoIDFromSrc } from '../screenHelpers';
 
 export const ScreenManagerBaseContext = createContext<ScreenManagerBase | null>(
     null,
 );
 
+export function useOptionalScreenManagerBaseContext(): ScreenManagerBase | null {
+    return use(ScreenManagerBaseContext);
+}
+
 export function useScreenManagerBaseContext(): ScreenManagerBase {
-    const screenManagerBase = use(ScreenManagerBaseContext);
+    const screenManagerBase = useOptionalScreenManagerBaseContext();
     if (screenManagerBase === null) {
         throw new Error(
             'useScreenManager must be used within a ScreenManagerBase ' +
@@ -48,7 +56,15 @@ export function useScreenManagerEvents(
 
 export function useScreenUpdateEvents(
     screenManagerBase?: ScreenManagerBase,
-    callback?: () => void,
+    callback?: (
+        eventType:
+            | 'background'
+            | 'varyAppDocument'
+            | 'bible'
+            | 'foreground'
+            | 'draw'
+            | 'focus',
+    ) => void,
 ) {
     useScreenEvents(
         ['update'],
@@ -56,8 +72,55 @@ export function useScreenUpdateEvents(
         screenManagerBase,
         callback,
     );
-    useScreenBackgroundManagerEvents(['update'], undefined, callback);
-    useScreenVaryAppDocumentManagerEvents(['update'], undefined, callback);
-    useScreenBibleManagerEvents(['update'], undefined, callback);
-    useScreenForegroundManagerEvents(['update'], undefined, callback);
+    useScreenBackgroundManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'background'),
+    );
+    useScreenVaryAppDocumentManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'varyAppDocument'),
+    );
+    useScreenBibleManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'bible'),
+    );
+    useScreenForegroundManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'foreground'),
+    );
+    useScreenDrawManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'draw'),
+    );
+    useScreenFocusManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'focus'),
+    );
+}
+
+function getVideoSources(screenManager: ScreenManager): [string, string][] {
+    const backgroundSrc = screenManager.screenBackgroundManager.backgroundSrc;
+    if (backgroundSrc?.type !== 'video' || !backgroundSrc.src) {
+        return [];
+    }
+    const newVideoId = genVideoIDFromSrc(backgroundSrc.src);
+    return [[backgroundSrc.src, newVideoId]] as const;
+}
+export function useScreenVideoSources() {
+    const screenManager = useScreenManagerContext();
+    const [videoSources, setVideoSources] = useState<[string, string][]>(
+        getVideoSources(screenManager),
+    );
+    const update = () => {
+        const newVideoSources = getVideoSources(screenManager);
+        setVideoSources(newVideoSources);
+    };
+    useScreenBackgroundManagerEvents(['update'], undefined, update);
+    return videoSources;
 }

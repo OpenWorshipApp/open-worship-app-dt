@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import AppContextMenuComp from '../context-menu/AppContextMenuComp';
 import HandleAlertComp from '../popup-widget/HandleAlertComp';

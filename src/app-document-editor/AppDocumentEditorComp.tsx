@@ -1,7 +1,14 @@
-import { lazy } from 'react';
+import { lazy, use, useEffect, useRef } from 'react';
 
+import AppDocument from '../app-document-list/AppDocument';
+import { SelectedVaryAppDocumentContext } from '../app-document-list/appDocumentHelpers';
+import appProvider from '../server/appProvider';
+import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
+import { goToPath } from '../router/routeHelpers';
+import { tran } from '../lang/langHelpers';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('../app-document-presenter/items/AppDocumentPreviewerComp');
@@ -11,6 +18,53 @@ const LazyAppDocumentEditorRightComp = lazy(() => {
 });
 
 export default function AppDocumentEditorComp() {
+    const selectedAppDocumentContext = use(SelectedVaryAppDocumentContext);
+    const redirectedFilePathRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        const selectedVaryAppDocument =
+            selectedAppDocumentContext?.selectedVaryAppDocument ?? null;
+        // `isEditable` and not just the type test: `LyricAppDocument` extends
+        // `AppDocument`, so `checkIsThisType` (an `instanceof`) passes for a
+        // lyric and the guard never fired — leaving a dead "No slide selected"
+        // editor with no way back. Same reasoning as
+        // `checkIsAppDocumentSelected`.
+        if (
+            selectedVaryAppDocument === null ||
+            (AppDocument.checkIsThisType(selectedVaryAppDocument) &&
+                selectedVaryAppDocument.isEditable)
+        ) {
+            return;
+        }
+        if (
+            redirectedFilePathRef.current === selectedVaryAppDocument.filePath
+        ) {
+            return;
+        }
+        redirectedFilePathRef.current = selectedVaryAppDocument.filePath;
+
+        let isActive = true;
+        void (async () => {
+            const isOk = await showAppConfirm(
+                tran('Open Worship slide required'),
+                tran(
+                    'The selected document is not an Open Worship slide.' +
+                        ' Return to Presenter?',
+                ),
+                {
+                    confirmButtonLabel: 'Return to Presenter',
+                },
+            );
+            if (isOk && isActive) {
+                goToPath(appProvider.presenterHomePage);
+            }
+        })();
+
+        return () => {
+            isActive = false;
+        };
+    }, [selectedAppDocumentContext]);
+
     return (
         <ResizeActorComp
             flexSizeName={resizeSettingNames.appEditor}
@@ -23,12 +77,12 @@ export default function AppDocumentEditorComp() {
                 {
                     children: LazyAppDocumentPreviewerComp,
                     key: 'h1',
-                    widgetName: 'App Editor Left',
+                    ...toWidgetLabel('App Editor Left'),
                 },
                 {
                     children: LazyAppDocumentEditorRightComp,
                     key: 'h2',
-                    widgetName: 'App Editor Right',
+                    ...toWidgetLabel('App Editor Right'),
                 },
             ]}
         />

@@ -1,34 +1,38 @@
+import { useMemo } from 'react';
+
 import * as loggerHelpers from '../helper/loggerHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { screenManagerSettingNames } from '../helper/constants';
 import { handleError } from '../helper/errorHelpers';
-import { isValidJson } from '../helper/helpers';
-import { getSetting, setSetting } from '../helper/settingHelpers';
-import { checkIsValidLocale } from '../lang/langHelpers';
+import { parseJsonSafely } from '../helper/helpers';
+import { setSetting } from '../helper/settingHelpers';
+import { genDerivedSettingReader } from '../helper/derivedSettingHelpers';
+import { checkIsValidLocale, tran } from '../lang/langHelpers';
 import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
 import { electronSendAsync } from '../server/appHelpers';
 import { getValidOnScreen } from './managers/screenManagerBaseHelpers';
 import appProvider from '../server/appProvider';
 import {
     PLAY_TO_BOTTOM_CLASSNAME,
+    PLAY_TO_BOTTOM_MENU_CLASSNAME,
     TO_THE_TOP_CLASSNAME,
     TO_THE_TOP_STYLE_STRING,
     applyPlayToBottom,
     applyToTheTop,
 } from '../scrolling/scrollingHandlerHelpers';
+import { showPlayToBottomContextMenu } from '../scrolling/playToBottomMenuHelpers';
 import { unlocking } from '../server/unlockingHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppCurrentRef, useAppStateAsync } from '../helper/appHooks';
 import { useScreenUpdateEvents } from './managers/screenManagerHooks';
-import {
+import type {
     ImageScaleType,
-    AllDisplayType,
     ForegroundSrcListType,
     BackgroundSrcListType,
     BibleListType,
-    bibleDataTypeList,
     SetDisplayType,
 } from './screenTypeHelpers';
-import { checkIsDarkMode } from '../others/initHelpers';
+import { bibleDataTypeList } from './screenTypeHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 const messageUtils = appProvider.messageUtils;
 
@@ -68,7 +72,7 @@ export function calMediaSizes(
             offsetV: (parentHeight - newHeight) / 2,
         };
     }
-    loggerHelpers.log(scaleType);
+    loggerHelpers.appLog(scaleType);
     const scale = Math.max(parentWidth / width, parentHeight / height);
     const newWidth = Math.round(width * scale);
     const newHeight = Math.round(height * scale);
@@ -91,9 +95,6 @@ export function setDisplay({ screenId, displayId }: SetDisplayType) {
 
 export function getAllShowingScreenIds(): number[] {
     return messageUtils.sendDataSync('main:app:get-screens');
-}
-export function getAllDisplays(): AllDisplayType {
-    return messageUtils.sendDataSync('main:app:get-displays');
 }
 
 export function showScreen({ screenId, displayId }: SetDisplayType) {
@@ -123,34 +124,61 @@ export function genScreenMouseEvent(event?: any): MouseEvent {
     return createMouseEvent(0, 0);
 }
 
-export function getForegroundDataListOnScreenSetting(): ForegroundSrcListType {
-    const string = getSetting(screenManagerSettingNames.FOREGROUND) ?? '';
-    try {
-        if (!isValidJson(string, true)) {
+// All three on-screen readers below are memoized on their raw setting strings
+// (plus the screen-list setting, which `getValidOnScreen` filters against).
+// They are read from React render bodies and from `checkIsAnythingOnScreen`,
+// which asks all four at once — un-memoized that was eight full `JSON.parse`
+// passes per presenting flow row per screen event. Each getter still returns a COPY,
+// because the persist paths read the map, add or delete their own screen's key
+// and write the whole thing back.
+const readForegroundDataListOnScreen =
+    genDerivedSettingReader<ForegroundSrcListType>(
+        [
+            screenManagerSettingNames.FOREGROUND,
+            screenManagerSettingNames.MANAGERS,
+        ],
+        ([string]) => {
+            try {
+                const json = parseJsonSafely(string, true);
+                if (json === null) {
+                    return {};
+                }
+                return getValidOnScreen(json);
+            } catch (error) {
+                handleError(error);
+            }
             return {};
-        }
-        const json = JSON.parse(string);
-        return getValidOnScreen(json);
-    } catch (error) {
-        handleError(error);
-    }
-    return {};
+        },
+    );
+
+export function getForegroundDataListOnScreenSetting(): ForegroundSrcListType {
+    return { ...readForegroundDataListOnScreen() };
 }
 
+const readBackgroundSrcListOnScreen =
+    genDerivedSettingReader<BackgroundSrcListType>(
+        [
+            screenManagerSettingNames.BACKGROUND,
+            screenManagerSettingNames.MANAGERS,
+        ],
+        ([str]) => {
+            const json = parseJsonSafely(str, true);
+            if (json !== null) {
+                const items = Object.values(json);
+                if (
+                    items.every((item: any) => {
+                        return item.type && item.src;
+                    })
+                ) {
+                    return getValidOnScreen(json);
+                }
+            }
+            return {};
+        },
+    );
+
 export function getBackgroundSrcListOnScreenSetting(): BackgroundSrcListType {
-    const str = getSetting(screenManagerSettingNames.BACKGROUND) ?? '';
-    if (isValidJson(str, true)) {
-        const json = JSON.parse(str);
-        const items = Object.values(json);
-        if (
-            items.every((item: any) => {
-                return item.type && item.src;
-            })
-        ) {
-            return getValidOnScreen(json);
-        }
-    }
-    return {};
+    return { ...readBackgroundSrcListOnScreen() };
 }
 
 const validateBible = ({ renderedList, bibleItem }: any) => {
@@ -171,31 +199,102 @@ const validateBible = ({ renderedList, bibleItem }: any) => {
     );
 };
 
-export function getBibleListOnScreenSetting(): BibleListType {
-    const str = getSetting(screenManagerSettingNames.FULL_TEXT) ?? '';
-    try {
-        if (!isValidJson(str, true)) {
-            return {};
-        }
-        const json = JSON.parse(str);
-        for (const item of Object.values(json)) {
-            if (
-                !bibleDataTypeList.includes((item as any).type) ||
-                ((item as any).type === 'bible-item' &&
-                    validateBible((item as any).bibleItemData))
-            ) {
-                loggerHelpers.error(item);
-                throw new Error('Invalid bible-screen-view data');
+const readBibleListOnScreen = genDerivedSettingReader<BibleListType>(
+    [screenManagerSettingNames.FULL_TEXT, screenManagerSettingNames.MANAGERS],
+    ([str]) => {
+        try {
+            const json = parseJsonSafely(str, true);
+            if (json === null) {
+                return {};
             }
+            for (const item of Object.values(json)) {
+                if (
+                    !bibleDataTypeList.includes((item as any).type) ||
+                    ((item as any).type === 'bible-item' &&
+                        validateBible((item as any).bibleItemData))
+                ) {
+                    loggerHelpers.appError(item);
+                    throw new Error('Invalid bible-screen-view data');
+                }
+            }
+            return getValidOnScreen(json);
+        } catch (error) {
+            unlocking(screenManagerSettingNames.FULL_TEXT, () => {
+                setSetting(screenManagerSettingNames.FULL_TEXT, '');
+            });
+            handleError(error);
         }
-        return getValidOnScreen(json);
-    } catch (error) {
-        unlocking(screenManagerSettingNames.FULL_TEXT, () => {
-            setSetting(screenManagerSettingNames.FULL_TEXT, '');
-        });
-        handleError(error);
-    }
-    return {};
+        return {};
+    },
+);
+
+export function getBibleListOnScreenSetting(): BibleListType {
+    return { ...readBibleListOnScreen() };
+}
+
+function genCircleUpSVG(width = 16) {
+    return `
+<svg
+    width="${width}"
+    height="${width}"
+    fill="currentColor"
+    class="bi bi-arrow-up-circle"
+    viewBox="0 0 16 16"
+    version="1.1"
+    id="svg1"
+    sodipodi:docname="arrow-up-circle.svg"
+    inkscape:export-filename="arrow-up-circle.png"
+    inkscape:export-xdpi="450"
+    inkscape:export-ydpi="450"
+    inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:svg="http://www.w3.org/2000/svg">
+<defs
+    id="defs1" />
+<sodipodi:namedview
+    id="namedview1"
+    pagecolor="#999999"
+    bordercolor="#666666"
+    borderopacity="1.0"
+    inkscape:showpageshadow="2"
+    inkscape:pageopacity="0.0"
+    inkscape:pagecheckerboard="0"
+    inkscape:deskcolor="#d1d1d1"
+    inkscape:zoom="36.681164"
+    inkscape:cx="5.1525082"
+    inkscape:cy="8.2058464"
+    inkscape:window-width="1920"
+    inkscape:window-height="979"
+    inkscape:window-x="1920"
+    inkscape:window-y="25"
+    inkscape:window-maximized="1"
+    inkscape:current-layer="svg1" />
+<path
+    fill-rule="evenodd"
+    d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-7.5 3.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707z"
+    id="path1"
+    style="fill:#77777777" />
+<circle
+    cx="8"
+    cy="8"
+    r="7"
+    id="circle2"
+    style="fill:none;stroke:#77777777;stroke-width:1" />
+</svg>
+    `;
+}
+
+// Built once at module level as a static data URI; a per-render
+// `URL.createObjectURL` blob would pin memory on every verse change unless
+// revoked.
+let toTheTopImageDataUrl: string | null = null;
+function getToTheTopImageDataUrl() {
+    toTheTopImageDataUrl ??=
+        'data:image/svg+xml;charset=utf-8,' +
+        encodeURIComponent(genCircleUpSVG(70));
+    return toTheTopImageDataUrl;
 }
 
 export function addToTheTop(div: HTMLDivElement) {
@@ -212,13 +311,99 @@ export function addToTheTop(div: HTMLDivElement) {
     div.appendChild(style);
     const target = document.createElement('img');
     target.className = TO_THE_TOP_CLASSNAME;
-    target.title = 'Scroll to the top';
-    const isDarkMode = checkIsDarkMode();
-    target.src = `assets/arrow-up-circle${isDarkMode ? '-dark' : '-light'}.png`;
+    target.title = tran('Scroll to the top');
+    target.src = getToTheTopImageDataUrl();
     target.style.position = 'fixed';
     target.style.bottom = '80px';
     div.appendChild(target);
     applyToTheTop(target);
+}
+
+function genChevronDoubleDownSVG(width = 16) {
+    return `
+<svg
+   width="${width}"
+   height="${width}"
+   fill="currentColor"
+   class="bi bi-chevron-double-down"
+   viewBox="0 0 16 16"
+   version="1.1"
+   id="svg2"
+   sodipodi:docname="chevron-double-down.svg"
+   inkscape:export-filename="chevron-double-down.png"
+   inkscape:export-xdpi="450"
+   inkscape:export-ydpi="450"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="namedview2"
+     pagecolor="#888888"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="51.875"
+     inkscape:cx="8.0096386"
+     inkscape:cy="8"
+     inkscape:window-width="1920"
+     inkscape:window-height="979"
+     inkscape:window-x="1920"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <path
+     fill-rule="evenodd"
+     d="M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"
+     id="path1"
+     style="fill:#777777" />
+  <path
+     fill-rule="evenodd"
+     d="M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"
+     id="path2"
+     style="fill:#999999" />
+</svg>
+    `;
+}
+
+// Same reason as `getToTheTopImageDataUrl`: this used to mint a
+// `URL.createObjectURL` blob per call, and the bible container is rebuilt on
+// every verse change, so nothing ever revoked them.
+let playToBottomImageDataUrl: string | null = null;
+function getPlayToBottomImageDataUrl() {
+    playToBottomImageDataUrl ??=
+        'data:image/svg+xml;charset=utf-8,' +
+        encodeURIComponent(genChevronDoubleDownSVG(70));
+    return playToBottomImageDataUrl;
+}
+
+function genThreeDotsSVG(width = 16) {
+    return `
+<svg
+   width="${width}"
+   height="${width}"
+   fill="#777777"
+   viewBox="0 0 16 16"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg">
+  <path
+     d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3" />
+</svg>
+    `;
+}
+
+let threeDotsImageDataUrl: string | null = null;
+function getThreeDotsImageDataUrl() {
+    threeDotsImageDataUrl ??=
+        'data:image/svg+xml;charset=utf-8,' +
+        encodeURIComponent(genThreeDotsSVG(44));
+    return threeDotsImageDataUrl;
 }
 
 export function addPlayToBottom(div: HTMLDivElement) {
@@ -231,13 +416,44 @@ export function addPlayToBottom(div: HTMLDivElement) {
     div.appendChild(style);
     const target = document.createElement('img');
     target.className = PLAY_TO_BOTTOM_CLASSNAME;
-    target.title = 'Play to bottom';
-    const isDarkMode = checkIsDarkMode();
-    target.src = `assets/chevron-double-down${isDarkMode ? '-dark' : '-light'}.png`;
+    target.title = tran('Play to bottom');
+    target.src = getPlayToBottomImageDataUrl();
     target.style.position = 'fixed';
     target.style.bottom = '0px';
     div.appendChild(target);
     applyPlayToBottom(target);
+    // The same menu the app's own auto-scroll button carries, for the copy of
+    // this DOM that the presenter's mini previewer renders and the operator
+    // actually clicks. Out there it is the only way the four gestures are ever
+    // stated: the control is a bare image with no tooltip anyone reads off a
+    // preview and no right-click anybody would think to try.
+    //
+    // NOT on the projected screen itself. That window mounts no context-menu
+    // host (`screen.tsx` renders `ScreenAppComp` alone), so the button would be
+    // dead there — and it would be dead in front of a congregation.
+    if (appProvider.isPageScreen) {
+        return;
+    }
+    // Appended AFTER the button it belongs to, which is what the stylesheet's
+    // sibling selector reveals it on.
+    const menuTarget = document.createElement('img');
+    menuTarget.className = PLAY_TO_BOTTOM_MENU_CLASSNAME;
+    menuTarget.title = tran('Auto Scroll Options');
+    menuTarget.src = getThreeDotsImageDataUrl();
+    Object.assign(menuTarget.style, {
+        position: 'fixed',
+        // Clear of the 70px chevron pinned at right: 5px, and centred on it.
+        right: '79px',
+        bottom: '13px',
+        width: '44px',
+        height: '44px',
+    });
+    menuTarget.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        showPlayToBottomContextMenu(event, target);
+    };
+    div.appendChild(menuTarget);
 }
 
 export function useFileSourceIsOnScreen(
@@ -245,15 +461,58 @@ export function useFileSourceIsOnScreen(
     checkIsOnScreen: (filePaths: string[]) => Promise<boolean>,
     onUpdate?: (isOnScreen: boolean) => void,
 ) {
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    // Callers rebuild the array every render, so identity says nothing — the
+    // joined paths are what "same subject" means here.
+    const filePathsKey = filePaths.join('|');
+    const filePathsKeyRef = useAppCurrentRef(filePathsKey);
     const [isOnScreen, setIsOnScreen] = useAppStateAsync(async () => {
+        if (filePaths.length === 0) {
+            return false;
+        }
         const isOnScreen = await checkIsOnScreen(filePaths);
         onUpdate?.(isOnScreen);
         return isOnScreen;
-    }, [filePaths]);
-    useScreenUpdateEvents(undefined, async () => {
-        const isOnScreen = await checkIsOnScreen(filePaths);
-        onUpdate?.(isOnScreen);
-        setIsOnScreen(isOnScreen);
+    }, [filePathsKey]);
+    useScreenUpdateEvents(undefined, () => {
+        attemptTimeout(async () => {
+            const isOnScreen = await checkIsOnScreen(filePaths);
+            // Answered for the paths held when the event fired. Being re-fed
+            // different ones mid-check re-runs the guarded read above, so this
+            // answer is not just stale — `onUpdate` would leak it out of the
+            // hook to a caller now asking about another file.
+            if (filePathsKey !== filePathsKeyRef.current) {
+                return;
+            }
+            onUpdate?.(isOnScreen);
+            setIsOnScreen(isOnScreen);
+        });
     });
     return isOnScreen ?? false;
+}
+
+export function genVideoIDFromSrc(src: string) {
+    const md5 = appProvider.systemUtils.generateMD5(src);
+    return `video-${md5}`;
+}
+
+// Each stage gets its own accent, worn by BOTH its chip and the border around
+// its preview pane — with several stages side by side that is the only quick
+// way to tell which pane belongs to which chip. Fixed hexes rather than theme
+// variables: these have to stay distinguishable from each other in light and
+// dark alike, which the semantic bootstrap colours do not guarantee.
+const STAGE_ACCENT_COLOR_LIST = [
+    '#4dabf7',
+    '#51cf66',
+    '#ffa94d',
+    '#cc5de8',
+    '#ff6b6b',
+    '#22b8cf',
+    '#fcc419',
+    '#f783ac',
+];
+
+export function getStageAccentColor(stage: number) {
+    const index = Math.abs(stage) % STAGE_ACCENT_COLOR_LIST.length;
+    return STAGE_ACCENT_COLOR_LIST[index];
 }

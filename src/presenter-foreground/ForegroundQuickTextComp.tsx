@@ -1,5 +1,6 @@
-import { CSSProperties } from 'react';
+import { type ChangeEvent, useCallback, type CSSProperties } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import {
     useStateSettingNumber,
@@ -14,11 +15,14 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
-import { ForegroundQuickTextDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundQuickTextDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
+import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
 import { renderMarkdown } from '../lyric-list/markdownHelpers';
-import { dragStore } from '../helper/dragHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllQuickText(
@@ -69,8 +73,7 @@ export default function ForegroundQuickTextComp() {
     )
         .map(
             ([screenId, data]):
-                | [number, ForegroundQuickTextDataType]
-                | null => {
+                [number, ForegroundQuickTextDataType] | null => {
                 if (data.quickTextData === null) {
                     return null;
                 }
@@ -80,43 +83,102 @@ export default function ForegroundQuickTextComp() {
         .filter((item) => {
             return item !== null;
         });
-    const { genStyle, element: propsSetting } = useForegroundPropsSetting({
+    const {
+        genStyle,
+        fontFamily,
+        fontWeight,
+        element: propsSetting,
+    } = useForegroundPropsSetting({
         prefix: 'quick-text',
         onChange: (extraStyle) => {
             refreshAllQuickText(showingScreenIdDataList, extraStyle);
         },
         isFontSize: true,
     });
-    const getRenderedHtml = async () => {
-        const htmlText = await renderMarkdown(markdownText);
-        return htmlText.html;
-    };
-    const handleShowing = async (event: any, isForceChoosing = false) => {
-        ScreenForegroundManager.setQuickText(
+    const getRenderedHtml = useCallback(async () => {
+        const { html } = await renderMarkdown(markdownText);
+        return html;
+    }, [markdownText]);
+    const handleShowing = useCallback(
+        async (event: any, isForceChoosing = false) => {
+            ScreenForegroundManager.setQuickText(
+                event,
+                await getRenderedHtml(),
+                timeSecondDelay,
+                timeSecondToLive,
+                genStyle(),
+                isForceChoosing,
+            );
+        },
+        [getRenderedHtml, timeSecondDelay, timeSecondToLive, genStyle],
+    );
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleByDropped = useCallback(
+        async (event: any) => {
+            const screenForegroundManager =
+                getScreenForegroundManagerByDropped(event);
+            if (screenForegroundManager === null) {
+                return;
+            }
+            screenForegroundManager.setQuickTextData({
+                htmlText: await getRenderedHtml(),
+                timeSecondDelay,
+                timeSecondToLive,
+                extraStyle: genStyle(),
+            });
+        },
+        [getRenderedHtml, timeSecondDelay, timeSecondToLive, genStyle],
+    );
+    const setTimeSecondDelayRef = useAppCurrentRef(setTimeSecondDelay);
+    const handleTimeSecondDelayChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            setTimeSecondDelayRef.current(Number.parseInt(e.target.value, 10));
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const setTimeSecondToLiveRef = useAppCurrentRef(setTimeSecondToLive);
+    const handleTimeSecondToLiveChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            setTimeSecondToLiveRef.current(Number.parseInt(e.target.value, 10));
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const setMarkdownTextRef = useAppCurrentRef(setMarkdownText);
+    const handleMarkdownTextChange = useCallback(
+        (event: ChangeEvent<HTMLTextAreaElement>) => {
+            setMarkdownTextRef.current(event.target.value);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleByDroppedRef = useAppCurrentRef(handleByDropped);
+    const markdownTextRef = useAppCurrentRef(markdownText);
+    const timeSecondDelayRef = useAppCurrentRef(timeSecondDelay);
+    const timeSecondToLiveRef = useAppCurrentRef(timeSecondToLive);
+    const genStyleRef = useAppCurrentRef(genStyle);
+    const handleQuickTextDragStart = useCallback((event: any) => {
+        dragStore.onDropped = handleByDroppedRef.current;
+        // The markdown source travels, not the rendered html: rendering is
+        // async and a drag payload has to be built synchronously.
+        handleDragStart(
             event,
-            await getRenderedHtml(),
-            timeSecondDelay,
-            timeSecondToLive,
-            genStyle(),
-            isForceChoosing,
+            genForegroundDragInf('quick-text', () => {
+                return {
+                    markdownText: markdownTextRef.current,
+                    timeSecondDelay: timeSecondDelayRef.current,
+                    timeSecondToLive: timeSecondToLiveRef.current,
+                    extraStyle: genStyleRef.current(),
+                };
+            }),
         );
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleShowing(event, true);
-    };
-    const handleByDropped = async (event: any) => {
-        const screenForegroundManager =
-            getScreenForegroundManagerByDropped(event);
-        if (screenForegroundManager === null) {
-            return;
-        }
-        screenForegroundManager.setQuickTextData({
-            htmlText: await getRenderedHtml(),
-            timeSecondDelay,
-            timeSecondToLive,
-            extraStyle: genStyle(),
-        });
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}
@@ -130,49 +192,62 @@ export default function ForegroundQuickTextComp() {
             target="quick-text"
             fullChildHeaders={<h4>{tran('Quick Text')}</h4>}
             childHeadersOnHidden={genHidingElement(true)}
+            isOnScreen={showingScreenIdDataList.length > 0}
         >
             {propsSetting}
             <hr />
-            <div className="d-flex flex-column gap-1">
-                <div className="d-flex flex-wrap gap-1">
+            <div className="d-flex flex-column gap-2">
+                <div className="d-flex flex-wrap gap-2">
                     <div
-                        className="input-group input-group-sm"
-                        title="Stage number"
+                        className="input-group"
+                        title={tran('Seconds to wait before showing the text')}
                         style={{
-                            width: '250px',
+                            width: '220px',
                         }}
                     >
-                        <small>{tran('Time Second Delay:')}</small>
+                        <span className="input-group-text">
+                            <i className="bi bi-hourglass-top" />
+                        </span>
+                        <span className="input-group-text">
+                            {tran('Delay')}
+                        </span>
                         <input
-                            className="form-control form-control-sm"
+                            className="form-control"
                             type="number"
                             min="0"
                             value={timeSecondDelay}
-                            onChange={(e) => {
-                                setTimeSecondDelay(
-                                    Number.parseInt(e.target.value, 10),
-                                );
-                            }}
+                            onChange={handleTimeSecondDelayChange}
                         />
+                        <span className="input-group-text">s</span>
                     </div>
                     <div
-                        className="input-group input-group-sm"
-                        title="Stage number"
+                        className="input-group"
+                        title={tran('Seconds the text stays on screen')}
                         style={{
-                            width: '250px',
+                            width: '220px',
                         }}
                     >
-                        <small>{tran('Time Second to Live:')}</small>
+                        <span className="input-group-text">
+                            <i className="bi bi-clock" />
+                        </span>
+                        <span className="input-group-text">{tran('Live')}</span>
                         <input
-                            className="form-control form-control-sm"
+                            className="form-control"
                             type="number"
                             min="1"
                             value={timeSecondToLive}
-                            onChange={(e) => {
-                                setTimeSecondToLive(
-                                    Number.parseInt(e.target.value, 10),
-                                );
-                            }}
+                            onChange={handleTimeSecondToLiveChange}
+                        />
+                        <span className="input-group-text">s</span>
+                    </div>
+                </div>
+                <div className="d-flex">
+                    <div className="ms-auto d-flex gap-2">
+                        <SavedTextSessionButtonsComp
+                            settingName="foreground-quick-text-saved-sessions"
+                            label="Quick Text"
+                            text={markdownText}
+                            onPickText={setMarkdownText}
                         />
                     </div>
                 </div>
@@ -183,23 +258,34 @@ export default function ForegroundQuickTextComp() {
                         cols={150}
                         rows={20}
                         value={markdownText}
-                        onChange={(event) => {
-                            setMarkdownText(event.target.value);
+                        onChange={handleMarkdownTextChange}
+                        placeholder={tran('Leave a markdown text here')}
+                        style={{
+                            fontFamily: fontFamily || undefined,
+                            fontWeight: fontWeight || undefined,
+                            height: '150px',
                         }}
-                        placeholder="Leave a markdown text here"
                     />
-                    <label htmlFor="quick-text-textarea">Markdown</label>
+                    <label htmlFor="quick-text-textarea">
+                        {tran('Markdown')}
+                    </label>
+                </div>
+                <div className="d-flex">
                     <button
-                        className="btn btn-secondary"
+                        className="btn btn-primary"
+                        title={tran('Show Quick Text')}
                         onClick={handleShowing}
                         onContextMenu={handleContextMenuOpening}
                         draggable
-                        onDragStart={() => {
-                            dragStore.onDropped = handleByDropped;
-                        }}
+                        onDragStart={handleQuickTextDragStart}
                     >
-                        `Show Quick Text
+                        <i className="bi bi-display" />{' '}
+                        {tran('Show Quick Text')}
                     </button>
+                    <ContextMenuDotsButtonComp
+                        label={tran('Show on Screens')}
+                        onOpening={handleContextMenuOpening}
+                    />
                 </div>
             </div>
             <div>{genHidingElement(false)}</div>

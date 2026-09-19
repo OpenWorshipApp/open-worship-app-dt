@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/appHooks';
 import LoadingComp from '../others/LoadingComp';
 import BibleFindBodyComp from './BibleFindBodyComp';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import BibleFindController, {
     BibleFindControllerContext,
 } from './BibleFindController';
+import { tran } from '../lang/langHelpers';
 
 export default function BibleFindBodyPreviewerComp() {
     const selectedBibleKey = useBibleKeyContext();
@@ -20,10 +21,10 @@ export default function BibleFindBodyPreviewerComp() {
     const [bibleFindController, setBibleFindController] = useState<
         BibleFindController | null | undefined
     >(undefined);
-    const setBibleKey1 = (_: string, newBibleKey: string) => {
+    const setBibleKey1 = useCallback((_: string, newBibleKey: string) => {
         setBibleFindController(undefined);
         setBibleKey(newBibleKey);
-    };
+    }, []);
     useAppEffectAsync(
         async (methodContext) => {
             if (bibleKey !== 'Unknown' && bibleFindController === undefined) {
@@ -39,6 +40,9 @@ export default function BibleFindBodyPreviewerComp() {
         [bibleFindController, bibleKey],
         { setBibleFindController },
     );
+    const handleReloading = useCallback(() => {
+        setBibleFindController(undefined);
+    }, []);
     if (bibleFindController === undefined) {
         return <LoadingComp />;
     }
@@ -46,14 +50,12 @@ export default function BibleFindBodyPreviewerComp() {
         return (
             <div className="alert alert-warning">
                 <i className="bi bi-info-circle" />
-                <div className="ms-2">Fail to get find controller!</div>
-                <button
-                    className="btn btn-info"
-                    onClick={() => {
-                        setBibleFindController(undefined);
-                    }}
-                >
-                    Reload
+                <div className="ms-2">
+                    {tran('Fail to get find controller!')}
+                </div>
+                <br />
+                <button className="btn btn-info" onClick={handleReloading}>
+                    {tran('Reload')}
                 </button>
             </div>
         );

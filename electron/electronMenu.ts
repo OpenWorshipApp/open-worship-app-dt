@@ -1,14 +1,65 @@
-import { app, Menu, shell } from 'electron';
+import {
+    app,
+    BrowserWindow,
+    dialog,
+    Menu,
+    shell,
+    type MenuItemConstructorOptions,
+} from 'electron';
 
-import ElectronAppController from './ElectronAppController';
+import type ElectronAppController from './ElectronAppController';
+import { checkIsAiEnabled } from './aiHelpers';
 import {
     copyDebugInfoToClipboard,
     goDownload,
+    isWindowsStore,
+    previewPrintCurrentWindow,
+    printCurrentWindow,
     toShortcutKey,
+    type CustomMenusDataType,
+    type CustomMenuItemType,
 } from './electronHelpers';
+
+import {
+    checkIsFindOverlayHost,
+    openFindOverlay,
+} from './finderOverlayHelpers';
+import {
+    RESET_WINDOW_BOUNDS_LABEL,
+    relaunchApp,
+    resetWindowsBounds,
+} from './taskbarHelpers';
 
 import packageInfo from '../package.json';
 import appInfo from './client/appInfo';
+
+/**
+ * Asked before the whole app closes.
+ *
+ * Reload and Force Reload sit either side of Relaunch and cost a window; this
+ * one costs every window in the app, including whatever is on a screen in
+ * front of a congregation. Native rather than the app's own confirm popup: the
+ * menu belongs to the main process, and the window it would be drawn in is one
+ * of the windows about to go.
+ */
+async function confirmRelaunching() {
+    const options = {
+        type: 'question' as const,
+        title: 'Relaunch',
+        message: 'Close and open the app again?',
+        detail: 'Anything not saved is lost.',
+        buttons: ['Relaunch', 'Cancel'],
+        defaultId: 0,
+        cancelId: 1,
+    };
+    const win = BrowserWindow.getFocusedWindow();
+    const { response } = await (win
+        ? dialog.showMessageBox(win, options)
+        : dialog.showMessageBox(options));
+    if (response === 0) {
+        relaunchApp();
+    }
+}
 
 const findingShortcut = toShortcutKey({
     wControlKey: ['Ctrl'],
@@ -17,8 +68,90 @@ const findingShortcut = toShortcutKey({
     key: 'f',
 });
 
+const printShortcut = toShortcutKey({
+    wControlKey: ['Ctrl'],
+    lControlKey: ['Ctrl'],
+    mControlKey: ['Meta'],
+    key: 'p',
+});
+
+function formatMenuItems(
+    items: CustomMenuItemType[],
+    clickHandler: (clickData: any) => void,
+) {
+    const genItems: MenuItemConstructorOptions[] = items
+        .filter((item) => {
+            return item.label !== undefined && item.label.trim() !== '';
+        })
+        .map((item) => {
+            const submenu = item.submenu;
+            let genSubmenu: MenuItemConstructorOptions[] | undefined;
+            if (submenu !== undefined) {
+                genSubmenu = formatMenuItems(submenu, clickHandler);
+            }
+            const clickData = item.clickData;
+            delete item.clickData;
+            return {
+                ...item,
+                submenu: genSubmenu,
+                click: () => {
+                    clickHandler(clickData);
+                },
+            };
+        });
+    return genItems;
+}
+
+type CustomMenusDataEntryType = {
+    menusData: CustomMenusDataType;
+    clickMenu: (clickData: any) => void;
+};
+const customMenusData: {
+    [key: string]: CustomMenusDataEntryType;
+} = {};
+export function setCustomMenusData(
+    key: string,
+    data: CustomMenusDataEntryType | null,
+) {
+    if (data === null) {
+        delete customMenusData[key];
+    } else {
+        customMenusData[key] = data;
+    }
+}
+
+export function sendMenuClicked(menuData: any, win?: BrowserWindow | null) {
+    const targetWin = win ?? BrowserWindow.getFocusedWindow();
+    // The owner window may already be gone (a popup that registered its own
+    // menu items and was then closed); touching `webContents` on a destroyed
+    // window throws.
+    if (targetWin === null || targetWin.isDestroyed()) {
+        return false;
+    }
+    targetWin.webContents.send('app:main:menu-item-clicked', menuData);
+    return true;
+}
+
+function getCustomMenuItems(key: string) {
+    const items = Object.entries(customMenusData)
+        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+        .map(([_, value]) => {
+            return value;
+        });
+    const menuItems = items.flatMap(({ menusData = {}, clickMenu }) => {
+        let data =
+            (menusData as Record<string, CustomMenuItemType[]>)[key] || [];
+        data = JSON.parse(JSON.stringify(data));
+        return formatMenuItems(data, clickMenu);
+    });
+    return menuItems;
+}
+
 export function initMenu(appController: ElectronAppController) {
     const isMac = process.platform === 'darwin';
+    const fileMenuItems = getCustomMenuItems('file');
+    const insertMenuItems = getCustomMenuItems('insert');
+    const viewMenuItems = getCustomMenuItems('view');
 
     const template: any[] = [
         // { role: 'appMenu' }
@@ -30,9 +163,7 @@ export function initMenu(appController: ElectronAppController) {
                           {
                               label: `About ${appInfo.title}`,
                               click: () => {
-                                  appController.aboutController.open(
-                                      appController.mainWin,
-                                  );
+                                  appController.openAboutPage();
                               },
                           },
                           { type: 'separator' },
@@ -57,7 +188,39 @@ export function initMenu(appController: ElectronAppController) {
         // { role: 'fileMenu' }
         {
             label: 'File',
-            submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
+            submenu: [
+                {
+                    label: 'Print',
+                    accelerator: printShortcut,
+                    click: (
+                        _menuItem: unknown,
+                        browserWindow?: BrowserWindow,
+                    ) => {
+                        void previewPrintCurrentWindow(browserWindow).catch(
+                            (error) => {
+                                console.log('Print preview failed:', error);
+                            },
+                        );
+                    },
+                },
+                {
+                    label: 'Print Without Preview',
+                    click: (
+                        _menuItem: unknown,
+                        browserWindow?: BrowserWindow,
+                    ) => {
+                        printCurrentWindow(browserWindow);
+                    },
+                },
+                // Renderer-owned entries (Export/Import Data). Same mechanism
+                // the Tools menu uses for the language packs' own items, so the
+                // labels are translated where `tran` actually works.
+                ...(fileMenuItems.length === 0
+                    ? []
+                    : [{ type: 'separator' }, ...fileMenuItems]),
+                { type: 'separator' },
+                isMac ? { role: 'close' } : { role: 'quit' },
+            ],
         },
         // { role: 'editMenu' }
         {
@@ -71,10 +234,26 @@ export function initMenu(appController: ElectronAppController) {
                 { role: 'paste' },
                 {
                     label: `Find`,
-                    click: () => {
-                        appController.finderController.open(
-                            appController.mainWin,
-                        );
+                    // Every window searches in place. App pages get the find
+                    // bar pinned into the window as its own `WebContentsView`
+                    // (`openFindOverlay`); the bible note has its own in-page
+                    // search and only wants the request. Use the window
+                    // electron hands the click, not `getFocusedWindow()` — it
+                    // is the window the menu action actually targets.
+                    click: (
+                        _menuItem: unknown,
+                        browserWindow?: BrowserWindow,
+                    ) => {
+                        const targetWin =
+                            browserWindow ?? BrowserWindow.getFocusedWindow();
+                        if (targetWin === null) {
+                            return;
+                        }
+                        if (checkIsFindOverlayHost(targetWin)) {
+                            openFindOverlay(targetWin);
+                            return;
+                        }
+                        sendMenuClicked({ isOpenSearch: true }, targetWin);
                     },
                     accelerator: findingShortcut,
                 },
@@ -107,11 +286,27 @@ export function initMenu(appController: ElectronAppController) {
                       ]),
             ],
         },
+        // Entirely renderer-owned: the slide editor contributes what can be
+        // added to a canvas, so the whole menu is absent on pages that have no
+        // canvas rather than sitting there empty and dead.
+        ...(insertMenuItems.length === 0
+            ? []
+            : [{ label: 'Insert', submenu: insertMenuItems }]),
         // { role: 'viewMenu' }
         {
             label: 'View',
             submenu: [
                 { role: 'reload' },
+                {
+                    // Reload re-reads the PAGE; this re-reads the app. The AI
+                    // master switch is decided before any window exists, so
+                    // Settings can only ask for a restart -- and this is the
+                    // menu a user already opens to reload, one row down.
+                    label: 'Relaunch',
+                    click: () => {
+                        void confirmRelaunching();
+                    },
+                },
                 { role: 'forceReload' },
                 { role: 'toggleDevTools' },
                 { type: 'separator' },
@@ -120,6 +315,12 @@ export function initMenu(appController: ElectronAppController) {
                 { role: 'zoomOut' },
                 { type: 'separator' },
                 { role: 'togglefullscreen' },
+                // Renderer-owned entries (the widget open/close checkboxes and
+                // `Reset Widgets Size`). Same mechanism the File and Tools menus
+                // use, so the labels are translated where `tran` actually works.
+                ...(viewMenuItems.length === 0
+                    ? []
+                    : [{ type: 'separator' }, ...viewMenuItems]),
             ],
         },
         {
@@ -151,6 +352,7 @@ export function initMenu(appController: ElectronAppController) {
                         shell.openExternal('https://fonts.google.com/');
                     },
                 },
+                ...getCustomMenuItems('tools'),
             ],
         },
         // { role: 'windowMenu' }
@@ -168,11 +370,11 @@ export function initMenu(appController: ElectronAppController) {
                       ]
                     : [{ role: 'close' }]),
                 {
-                    label: 'Reset Position and Size',
+                    // shared with the taskbar jump list task so the two entries
+                    // can never drift apart
+                    label: RESET_WINDOW_BOUNDS_LABEL,
                     click: () => {
-                        appController.settingManager.restoreMainBounds(
-                            appController.mainWin,
-                        );
+                        resetWindowsBounds(appController);
                     },
                 },
             ],
@@ -180,6 +382,29 @@ export function initMenu(appController: ElectronAppController) {
         {
             role: 'help',
             submenu: [
+                // Hidden outright when AI is switched off in Settings ->
+                // Others: the window it opens would have nothing to talk to.
+                ...(checkIsAiEnabled()
+                    ? [
+                          {
+                              label: 'App Help (Chatbot)',
+                              click: () => {
+                                  appController.openChatbotPage();
+                              },
+                          },
+                          { type: 'separator' },
+                      ]
+                    : []),
+                // Not gated on the switch: this window is a company's own chat
+                // site in a box, with no key, no assistant and no door of the
+                // app's opened for it.
+                {
+                    label: 'AI Chat',
+                    click: () => {
+                        appController.openAiChatPage();
+                    },
+                },
+                { type: 'separator' },
                 {
                     label: 'Learn More',
                     click: () => {
@@ -189,9 +414,26 @@ export function initMenu(appController: ElectronAppController) {
                 {
                     label: 'Check for Updates',
                     click: () => {
-                        goDownload();
+                        appController.mainController.sendMessage(
+                            'main:app:check-update',
+                        );
                     },
                 },
+                // A Store install has ONE honest way to update -- the Store --
+                // and `Check for Updates` above opens it. The website download
+                // page beside it would hand a Store user an installer that
+                // cannot update their copy and leaves two apps on the machine,
+                // which is also what Store policy asks us not to offer.
+                ...(isWindowsStore
+                    ? []
+                    : [
+                          {
+                              label: 'Check for Updates Online',
+                              click: () => {
+                                  goDownload();
+                              },
+                          },
+                      ]),
                 ...(isMac
                     ? []
                     : [
@@ -199,9 +441,7 @@ export function initMenu(appController: ElectronAppController) {
                           {
                               label: `About ${appInfo.title}`,
                               click: () => {
-                                  appController.aboutController.open(
-                                      appController.mainWin,
-                                  );
+                                  appController.openAboutPage();
                               },
                           },
                       ]),

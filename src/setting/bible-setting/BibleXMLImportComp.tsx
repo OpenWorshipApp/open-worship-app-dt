@@ -1,4 +1,5 @@
-import { useState, useTransition, FormEvent } from 'react';
+import { useCallback, useState, useTransition } from 'react';
+import type { SyntheticEvent, MouseEvent } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -12,6 +13,7 @@ import {
 } from './bibleXMLHelpers';
 import { xmlFormatExample } from './bibleXMLAttributesGuessing';
 import { xmlTextToJson } from './bibleXMLJsonDataHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function BibleXMLImportComp({
     loadBibleKeys,
@@ -24,7 +26,7 @@ export default function BibleXMLImportComp({
     const [isPending, startTransition] = useTransition();
     const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
     const isValidUrl = checkIsValidUrl(urlText);
-    const handleFileCanceling = (form: any) => {
+    const handleFileCanceling = useCallback((form: any) => {
         if (form instanceof HTMLFormElement) {
             const inputFile = getInputByName(form, 'file');
             if (inputFile instanceof HTMLInputElement) {
@@ -32,59 +34,96 @@ export default function BibleXMLImportComp({
             }
         }
         setIsFileSelected(false);
-    };
-    const handleFormSubmitting = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        startTransition(async () => {
-            try {
-                const form = event.currentTarget;
-                if (!(form instanceof HTMLFormElement)) {
-                    return;
+    }, []);
+    const isFileSelectedRef = useAppCurrentRef(isFileSelected);
+    const isValidUrlRef = useAppCurrentRef(isValidUrl);
+    const loadBibleKeysRef = useAppCurrentRef(loadBibleKeys);
+    const handleFileCancelingRef = useAppCurrentRef(handleFileCanceling);
+    const handleFormSubmitting = useCallback(
+        async (event: SyntheticEvent<HTMLFormElement>) => {
+            event.preventDefault();
+            startTransition(async () => {
+                try {
+                    const form = event.currentTarget;
+                    if (!(form instanceof HTMLFormElement)) {
+                        return;
+                    }
+                    let dataText: string | null = null;
+                    if (isFileSelectedRef.current) {
+                        dataText = await readFromFile(form, setLoadingMessage);
+                    } else if (isValidUrlRef.current) {
+                        dataText = await readFromUrl(form, setLoadingMessage);
+                    }
+                    if (dataText === null) {
+                        showSimpleToast(
+                            tran('No Data'),
+                            tran('No data to process'),
+                        );
+                        return;
+                    }
+                    const dataJson = await xmlTextToJson(dataText);
+                    if (dataJson === null) {
+                        showSimpleToast(
+                            tran('Parsing XML'),
+                            tran('Failed to parse XML data'),
+                        );
+                        return;
+                    }
+                    const isSuccess = await saveJsonDataToXMLfile(dataJson);
+                    if (isSuccess) {
+                        handleFileCancelingRef.current(form);
+                        setUrlText('');
+                        loadBibleKeysRef.current();
+                    }
+                } catch (error) {
+                    showSimpleToast(
+                        tran('Format Submit Error'),
+                        `Error: ${error}`,
+                    );
                 }
-                let dataText: string | null = null;
-                if (isFileSelected) {
-                    dataText = await readFromFile(form, setLoadingMessage);
-                } else if (isValidUrl) {
-                    dataText = await readFromUrl(form, setLoadingMessage);
-                }
-                if (dataText === null) {
-                    showSimpleToast('No Data', 'No data to process');
-                    return;
-                }
-                const dataJson = await xmlTextToJson(dataText);
-                if (dataJson === null) {
-                    showSimpleToast('Parsing XML', 'Failed to parse XML data');
-                    return;
-                }
-                const isSuccess = await saveJsonDataToXMLfile(dataJson);
-                if (isSuccess) {
-                    handleFileCanceling(form);
-                    setUrlText('');
-                    loadBibleKeys();
-                }
-            } catch (error) {
-                showSimpleToast('Format Submit Error', `Error: ${error}`);
-            }
-        });
-    };
+            });
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const isShowingExampleRef = useAppCurrentRef(isShowingExample);
+    const handleToggleExample = useCallback(() => {
+        setIsShowingExample(!isShowingExampleRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleFileSelected = useCallback(() => {
+        setIsFileSelected(true);
+    }, []);
+    const handleCancelSelection = useCallback(
+        (event: MouseEvent<HTMLButtonElement>) => {
+            const form = event.currentTarget.form;
+            handleFileCancelingRef.current(form);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleUrlChange = useCallback((event: any) => {
+        setUrlText(event.target.value);
+    }, []);
+    const handleClearUrl = useCallback(() => {
+        setUrlText('');
+    }, []);
     return (
         <div className="app-border-white-round p-1" style={{ margin: 'auto' }}>
             <h3>
-                Import XML File{' '}
+                {tran('Import XML File')}{' '}
                 <button
-                    title="XML format example"
+                    title={tran('XML format example')}
                     className={
                         'btn btn-sm ms-2' +
                         ` btn${isShowingExample ? '' : '-outline'}-info`
                     }
-                    onClick={() => {
-                        setIsShowingExample(!isShowingExample);
-                    }}
+                    onClick={handleToggleExample}
                 >
                     <i className="bi bi-question-lg" />
                 </button>
             </h3>
-            {!isShowingExample ? null : (
+            {isShowingExample ? (
                 <div>
                     <textarea
                         className="form-control"
@@ -96,7 +135,7 @@ export default function BibleXMLImportComp({
                         readOnly
                     />
                 </div>
-            )}
+            ) : null}
             <form onSubmit={handleFormSubmitting}>
                 <div className="p-1">
                     <div
@@ -110,19 +149,14 @@ export default function BibleXMLImportComp({
                             className="form-control"
                             type="file"
                             name="file"
-                            onChange={() => {
-                                setIsFileSelected(true);
-                            }}
+                            onChange={handleFileSelected}
                         />
                         {isFileSelected ? (
                             <button
                                 className="btn btn-sm btn-danger"
                                 type="button"
-                                title="Cancel selection"
-                                onClick={(event) => {
-                                    const form = event.currentTarget.form;
-                                    handleFileCanceling(form);
-                                }}
+                                title={tran('Cancel selection')}
+                                onClick={handleCancelSelection}
                             >
                                 <i className="bi bi-x-lg" />
                             </button>
@@ -144,23 +178,19 @@ export default function BibleXMLImportComp({
                                         ? ''
                                         : ' is-invalid')
                                 }
-                                title={isValidUrl ? '' : 'Invalid URL'}
+                                title={isValidUrl ? '' : tran('Invalid URL')}
                                 type="text"
                                 name="url"
                                 placeholder="http://example.com/file.xml"
                                 value={urlText}
-                                onChange={(event: any) => {
-                                    setUrlText(event.target.value);
-                                }}
+                                onChange={handleUrlChange}
                             />
                             {isValidUrl ? (
                                 <button
                                     className="btn btn-sm btn-danger"
                                     type="button"
-                                    title="Clear url"
-                                    onClick={() => {
-                                        setUrlText('');
-                                    }}
+                                    title={tran('Clear url')}
+                                    onClick={handleClearUrl}
                                 >
                                     <i className="bi bi-x-lg" />
                                 </button>

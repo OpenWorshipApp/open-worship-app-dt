@@ -1,10 +1,14 @@
 import { Fragment } from 'react';
 
-import { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderCustomVerseComp from '../RenderCustomVerseComp';
 import AudioPlayerComp from './AudioPlayerComp';
 import { HoverMotionHandler } from '../../helper/domHelpers';
+import RenderVerseLookupTextComp from '../../location-name-lookup/RenderVerseLookupTextComp';
+import RenderCustomVerseLookupComp from '../../location-name-lookup/RenderCustomVerseLookupComp';
+import { getVerseTextLookupLangCode } from '../../location-name-lookup/verseTextIndexHelpers';
+import { VERSE_ANNOTATION_ANCHOR_ATTR } from '../bibleVerseAnnotationHelpers';
 
 export default function RenderVerseTextViewComp({
     bibleItem,
@@ -27,15 +31,48 @@ export default function RenderVerseTextViewComp({
 }>) {
     const { bibleKey, text, customText, bibleVersesKey, isRtl, style } =
         verseInfo;
-    const textElement =
-        customText === null ? (
-            text
-        ) : (
-            <RenderCustomVerseComp
-                bibleItem={bibleItem}
-                customHtml={customText}
+    // The verse's mark anchor. Per BIBLE key, not per verse: a mark is a
+    // character range in one translation's text, so each comparison column
+    // carries its own marks and never the neighbouring column's.
+    const verseKey = bibleVersesKey;
+    // Only mounted when the text can actually carry matches: mounting it is what
+    // subscribes to — and therefore loads — the in-text lookup index. Keyed on
+    // THIS row's bible, so in a multi-version view each column is decorated in
+    // its own language, or not at all.
+    const lookupLangCode = getVerseTextLookupLangCode(
+        bibleKey,
+        verseInfo.locale,
+    );
+    let textElement;
+    if (customText !== null) {
+        // Custom HTML still gets decorated — the words-of-Christ markup makes
+        // most gospel verses "custom", so skipping them would leave the feature
+        // absent exactly where the names are densest.
+        textElement =
+            lookupLangCode !== null ? (
+                <RenderCustomVerseLookupComp
+                    bibleItem={bibleItem}
+                    customHtml={customText}
+                    kjvShortVerse={verseInfo.kjvBibleVersesKey}
+                    lookupLangCode={lookupLangCode}
+                />
+            ) : (
+                <RenderCustomVerseComp
+                    bibleItem={bibleItem}
+                    customHtml={customText}
+                />
+            );
+    } else if (lookupLangCode !== null) {
+        textElement = (
+            <RenderVerseLookupTextComp
+                text={text}
+                kjvShortVerse={verseInfo.kjvBibleVersesKey}
+                lookupLangCode={lookupLangCode}
             />
         );
+    } else {
+        textElement = text;
+    }
     return (
         <Fragment key={bibleKey}>
             {isAudioEnabled &&
@@ -50,7 +87,7 @@ export default function RenderVerseTextViewComp({
             {isExtraVerses ? (
                 <div
                     className="text d-flex"
-                    data-bible-key={bibleKey}
+                    data-dict-locale={verseInfo.locale}
                     style={style}
                 >
                     <div
@@ -59,9 +96,18 @@ export default function RenderVerseTextViewComp({
                             (isRtl ? ' rtl' : '')
                         }
                     >
-                        {textElement}
+                        {/* Its own wrapper here, unlike the single-version
+                            branch below: the marks are character offsets into
+                            this element's text, and the muted bible-key label
+                            after it would otherwise count as verse text. */}
+                        <span {...{ [VERSE_ANNOTATION_ANCHOR_ATTR]: verseKey }}>
+                            {textElement}
+                        </span>
                         <span
-                            className={`text-muted px-1 ${HoverMotionHandler.lowVisibleClassname}-10`}
+                            className={
+                                `text-muted px-1 ` +
+                                `${HoverMotionHandler.lowVisibleClassname}-10`
+                            }
                             style={{
                                 fontSize: '0.8em',
                                 opacity: '0.6',
@@ -72,7 +118,11 @@ export default function RenderVerseTextViewComp({
                     </div>
                 </div>
             ) : (
-                <span data-bible-key={bibleKey} style={style}>
+                <span
+                    style={style}
+                    data-dict-locale={verseInfo.locale}
+                    {...{ [VERSE_ANNOTATION_ANCHOR_ATTR]: verseKey }}
+                >
                     {textElement}
                 </span>
             )}

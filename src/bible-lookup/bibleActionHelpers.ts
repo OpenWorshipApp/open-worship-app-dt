@@ -1,35 +1,28 @@
 import { tran } from '../lang/langHelpers';
-import {
-    EventMapper as KeyboardEventMapper,
-    useKeyboardRegistering,
-} from '../event/KeyboardEventListener';
+import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
-import BibleItem from '../bible-list/BibleItem';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type BibleItem from '../bible-list/BibleItem';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import appProvider from '../server/appProvider';
-import {
-    elementDivider,
-    genContextMenuItemIcon,
-    genContextMenuItemShortcutKey,
-} from '../context-menu/AppContextMenuComp';
-import LookupBibleItemController, {
-    useLookupBibleItemControllerContext,
-} from '../bible-reader/LookupBibleItemController';
+import { elementDivider } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
 
-export const presenterEventMapper: KeyboardEventMapper = {
+export const ctrlShiftEnterEventMapper: KeyboardEventMapper = {
     allControlKey: ['Ctrl', 'Shift'],
     key: 'Enter',
 };
 
-export const addListEventMapper: KeyboardEventMapper = {
+export const ctrlEnterEventMapper: KeyboardEventMapper = {
     allControlKey: ['Ctrl'],
     key: 'Enter',
 };
 
-function showAddingBibleItemFail() {
-    showSimpleToast('Adding Bible Item', 'Fail to add bible item');
+export function showAddingBibleItemFail() {
+    showSimpleToast(tran('Adding Bible Item'), tran('Fail to add bible item'));
 }
 
 export async function addBibleItemAndPresent(
@@ -45,43 +38,12 @@ export async function addBibleItemAndPresent(
     }
 }
 
-export function useFoundActionKeyboard(bibleItem: BibleItem) {
-    const viewController = useLookupBibleItemControllerContext();
-    const onDone = () => {
-        viewController.onLookupSaveBibleItem();
-    };
-    useKeyboardRegistering(
-        [addListEventMapper],
-        async () => {
-            const addedBibleItem = await saveBibleItem(bibleItem, onDone);
-            if (addedBibleItem === null) {
-                showAddingBibleItemFail();
-            }
-        },
-        [bibleItem],
-    );
-    useKeyboardRegistering(
-        [presenterEventMapper],
-        (event) => {
-            if (!appProvider.isPagePresenter) {
-                return;
-            }
-            addBibleItemAndPresent(event, bibleItem, onDone);
-        },
-        [bibleItem],
-    );
-}
-
 export function genFoundBibleItemContextMenu(
     event: any,
     viewController: LookupBibleItemController,
     bibleItem: BibleItem,
     isKeyboardShortcut?: boolean,
 ): ContextMenuItemType[] {
-    // TODO: fix slide select editing
-    if (appProvider.isPageAppDocumentEditor) {
-        return [];
-    }
     let verseKey: string | null = null;
     if (event.target instanceof HTMLElement) {
         verseKey =
@@ -99,8 +61,8 @@ export function genFoundBibleItemContextMenu(
         {
             childBefore: genContextMenuItemIcon('floppy'),
             menuElement: tran('Save bible item'),
-            childAfter: isKeyboardShortcut
-                ? genContextMenuItemShortcutKey(addListEventMapper)
+            keyboardShortcut: isKeyboardShortcut
+                ? ctrlEnterEventMapper
                 : undefined,
             onSelect: async () => {
                 const addedBibleItem = await saveBibleItem(bibleItem, onDone);
@@ -109,16 +71,17 @@ export function genFoundBibleItemContextMenu(
                 }
             },
         },
-        ...(verseKey === null
+        ...(verseKey === null || appProvider.isPageAppDocumentEditor
             ? []
             : [
                   {
+                      childBefore: genContextMenuItemIcon('link-45deg'),
                       menuElement: tran('Open in Cross Reference'),
                       title: verseKey,
                       onSelect: () => {
-                          viewController.bibleCrossReferenceVerseKey = verseKey;
+                          viewController.selectedVerseKey = verseKey;
                           viewController.openBibleSearch('c');
-                          viewController.setIsBibleSearching(true);
+                          viewController.setIsAdvanceLookupOpened(true);
                       },
                   },
               ]),
@@ -136,12 +99,30 @@ export function genFoundBibleItemContextMenu(
                       },
                   },
                   {
-                      childAfter: isKeyboardShortcut
-                          ? genContextMenuItemShortcutKey(presenterEventMapper)
+                      childBefore: genContextMenuItemIcon('floppy'),
+                      childAfter: genContextMenuItemIcon('display'),
+                      keyboardShortcut: isKeyboardShortcut
+                          ? ctrlShiftEnterEventMapper
                           : undefined,
                       menuElement: tran('Save bible item and show on screen'),
                       onSelect: async (event: any) => {
                           addBibleItemAndPresent(event, bibleItem, onDone);
+                      },
+                  },
+              ]
+            : []),
+        ...(appProvider.isPageAppDocumentEditor
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon(
+                          'file-earmark-slides',
+                      ),
+                      menuElement: tran('Insert bible item'),
+                      onSelect: () => {
+                          CanvasBibleItemEventListener.insertBibleItem(
+                              bibleItem,
+                          );
+                          onDone();
                       },
                   },
               ]

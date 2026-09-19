@@ -1,9 +1,11 @@
 import { useState } from 'react';
+
 import BibleCrossRefRendererComp from '../bible-cross-refs/BibleCrossRefRendererComp';
 import BibleItem from '../bible-list/BibleItem';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
+import { tran } from '../lang/langHelpers';
 
 export default function BibleCrossReferencePreviewerComp() {
     const viewController = useLookupBibleItemControllerContext();
@@ -34,12 +36,22 @@ export default function BibleCrossReferencePreviewerComp() {
         return () => {
             viewController.setBibleVerseKey = (_: string) => {};
         };
-    }, []);
+    }, [viewController]);
     if (bileItem === null) {
+        // An empty panel is an invitation to act, so it names the one thing
+        // that fills it. It used to read "Wait..." -- which describes nothing
+        // the app is doing and nothing the user can do about it.
         return (
-            <div>
-                <h4>Wait...</h4>
-                <p>Please select any bible verse.</p>
+            <div className="app-xref-placeholder">
+                <h4 className="app-xref-placeholder-title">
+                    {tran('No verse selected')}
+                </h4>
+                <p className="app-xref-placeholder-body">
+                    {tran(
+                        'Choose a verse in the reader to see what else in ' +
+                            'scripture speaks to it.',
+                    )}
+                </p>
             </div>
         );
     }

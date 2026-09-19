@@ -1,4 +1,5 @@
-import { ReactNode, Suspense } from 'react';
+import type { ReactNode } from 'react';
+import { Suspense } from 'react';
 import LoadingComp from './LoadingComp';
 
 export default function AppSuspenseComp({

@@ -1,19 +1,28 @@
 import './ModalComp.scss';
 
-import { PropsWithChildren, ReactNode } from 'react';
+import type { PropsWithChildren, ReactNode } from 'react';
 
-import { EventMapper, toShortcutKey } from '../event/KeyboardEventListener';
+import type { EventMapperType } from '../event/KeyboardEventListener';
+import {
+    toShortcutKey,
+    useKeyboardRegistering,
+} from '../event/KeyboardEventListener';
+import { tran } from '../lang/langHelpers';
+import { ModalLayerContext } from './modalLayerContext';
 
 interface MyProps {
     children?: ReactNode;
 }
 
-const quittingEventMap: EventMapper = {
+const quittingEventMap: EventMapperType = {
     allControlKey: ['Ctrl'],
     key: 'q',
 };
 
-export function ModalCloseButton({ close }: Readonly<{ close: () => void }>) {
+export function ModalCloseButtonComp({
+    close,
+}: Readonly<{ close: () => void }>) {
+    useKeyboardRegistering([quittingEventMap], close, []);
     return (
         <div
             style={{
@@ -29,7 +38,8 @@ export function ModalCloseButton({ close }: Readonly<{ close: () => void }>) {
                     height: '38px',
                 }}
                 onClick={close}
-                title={`Close [${toShortcutKey(quittingEventMap)}]`}
+                title={`${tran('Close')} [${toShortcutKey(quittingEventMap)}]`}
+                aria-label={tran('Close')}
             >
                 <i className="bi bi-x-lg" />
             </button>
@@ -38,5 +48,12 @@ export function ModalCloseButton({ close }: Readonly<{ close: () => void }>) {
 }
 
 export function ModalComp({ children }: PropsWithChildren<MyProps>) {
-    return <div id="modal-container">{children}</div>;
+    return (
+        // Anything this modal opens — a floating widget above all — has to know
+        // it is on top of the modal layer so it can render ABOVE it instead of
+        // being hidden behind the very thing that opened it.
+        <ModalLayerContext value={true}>
+            <div id="modal-container">{children}</div>
+        </ModalLayerContext>
+    );
 }

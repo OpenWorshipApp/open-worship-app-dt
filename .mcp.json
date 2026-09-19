@@ -1,0 +1,8 @@
+{
+    "mcpServers": {
+        "owa-devtools": {
+            "command": "node",
+            "args": ["tools/owa-devtools-mcp/bin.mjs"]
+        }
+    }
+}

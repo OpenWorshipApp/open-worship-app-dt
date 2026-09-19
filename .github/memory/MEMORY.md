@@ -1,0 +1,142 @@
+<!-- Only what CLAUDE.md and the code do not already say. -->
+
+- [Foreground sync shared refs](foreground-sync-shared-refs.md) — sync-grouped screens share one foreground-data object · [Screen sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky; color-note groups go silent
+- [Screen draw feature](screen-draw-feature.md) — FreeShow-style Draw overlay · [Screen focus spotlight](screen-focus-spotlight.md) — Focusing = its own `#focus` layer/manager, NOT a draw mode
+- [Codebase audit 2026-07](codebase-audit-2026-07.md) — audit findings FIXED 2026-07-22 (since committed)
+- [Dev HMR stale state during QA](dev-hmr-stale-state-qa.md) — an HMR reload kills keyboard layers
+- [`build` kills the running dev app](build-kills-running-dev-app.md) — `electron:build` rm -rf's `electron-build/`; `npm run lint` only checks now and is safe beside the app
+- [CDP dynamic import hijack](cdp-dynamic-import-hijack.md) — never `import()` app modules in evaluate_script
+- [Bible Note popup CDP mechanics](bible-note-floating-toolbar-width.md) — plain textarea now, no Lexical popup
+- [On-screen slide setting all-or-nothing — FIXED](screen-onscreen-setting-all-or-nothing.md) — drops only invalid entries
+- [Apply Settings skips popups — FIXED](apply-settings-skips-popups.md) — refactor22 reloads popups too
+- [Injected renderer URL params — FIXED](injected-app-document-file-param.md) — `?file=` gated on the editor page
+- [Missing km key throws in dev](tran-missing-key-throws-in-dev.md) — `tran()` throws (blanks the page) on a missing key; `tranKeyCoverage.test.ts` catches STATIC keys since 2026-09-18
+- [Confirm popup labels are auto-tran'd](confirm-popup-labels-auto-tran.md) — ConfirmPopupComp `tran()`s the button labels
+- [Vitest env-leak flakes](vitest-env-leak-flakes.md) — node-env tests importing `appProvider` need a jsdom sibling
+- [npm 12 install gotchas](npm-12-install-gotchas.md) — plain `npm i` fails on git deps and leaves electron broken
+- [open-lyric dist-repo dep](open-lyric-subtree-branch-dep.md) — a pre-built dist repo pinned to a tag
+- [Blob downloads pop a Save As dialog](blob-download-pops-save-dialog.md) — no will-download handler; orphans a .tmp
+- [Screen change-bible IPC — FIXED](screen-change-bible-dead-ipc.md) — refactor22 added the `src/` receiver
+- [TypeScript 7 side-by-side](typescript-7-side-by-side.md) — `tsc` is TS7 via `@typescript/native`
+- [Dev data dir is separate](dev-data-dir-is-separate.md) — only `userData` gets the `-dev` suffix
+- [Lyric subsystem architecture](lyric-subsystem-architecture.md) — lyric slides are HTML from the `open-lyric` dep
+- [On-screen check must not parse](onscreen-check-must-not-parse.md) — it runs per row per screen event
+- [QA: intentional, not bugs](qa-intentional-not-bugs.md) — PPTX blank slide0, bible-present swaps the background
+- [`app-ellipsis-left` reverses names](app-ellipsis-left-reverses-names.md) — `direction:rtl` shows `12_cv.mp4` as `cv_12`
+- [Vite dep-optimizer 504 → touch config](vite-dep-optimizer-504-restart.md) — a 504 on a `.vite/deps` chunk is a stale cache
+- [Full view toggle collapses a widget](full-view-toggle-collapses-widget.md) — it persists a zero-height Background panel
+- [Lyrics live in the Documents list](lyric-in-documents-list.md) — refactor24: ONE selection, ONE previewer
+- [appDocumentHelpers ↛ LyricAppDocument](app-document-helpers-lyric-cycle.md) — importing it closes a cycle and throws
+- [Presenting Flow: references vs presets](presenting-flow-references-vs-presets.md) — slides/documents are file references · [Presenting flow rename](presenting-flow-rename.md) — `--no-playlist` and `displayListeners` are lookalikes
+- [Lyric slides need their fonts registered first — FIXED](screen-window-has-no-app-fonts.md) — screen had none; Presenter raced; `initOpenLyric` awaits `initAllLangCss()`
+- [On-screen setting parse amplification — FIXED](onscreen-setting-parse-amplification.md) — getters MUST return a copy
+- [Reveal Original is a context item](reveal-original-context-menu.md) — `genRevealOriginal(reveal)` takes the ACTION
+- [Presenting Flows panel is no longer dev-only](presenting-flow-panel-no-longer-dev-only.md) — `203d35cc` dropped the gate · [Presenting Flow on-screen marking design](presenting-flow-onscreen-marking-design.md) — ONE shared subscription + debounce · [Presenting Flow preview is a run player](presenting-flow-preview-run-player.md) — forward-only focus-gated keys
+- [Presenting Flow screen pinning](presenting-flow-screen-pinning.md) — `Set Specific Screen` rides `chooseScreenIds` · [Presenting Flow screen actions](presenting-flow-screen-actions.md) — a run sheet can hold things to DO · [Presenting Flow `Screen: Show` / `Screen: Hide`](presenting-flow-screen-show-hide.md) — the only actions that NAME screens · [Presenting Flow `Slide: Media Control`](presenting-flow-media-control.md) — CC-only action, settings on the ATTACHMENT
+- [Presenting Flow auto next](presenting-flow-auto-next.md) — a cursor move restarts the timers · [Presenting Flow CC elements](presenting-flow-cc-elements.md) — followers that ride a host's present · [Presenting Flow Keyboard Event](presenting-flow-keyboard-event.md) — Ctrl/Shift only, unique per sheet
+- [Downloads are protocol-aware now](http-downloads-protocol-aware.md) — only `initHttpRequest` speaks plain http
+- [`.owapf.tar.gz` presenting flow archive](presenting-flow-archive-owapf.md) — bundles whole documents behind references · [Single-item archives (`.owadoc` / `.owbible` / `.owanote`)](document-archive-owadoc.md) — one file + everything attached · [Whole-data archive (`.owadata.tar`)](data-archive-owadata.md) — File → Export/Import Data · [Archive password protection](archive-password-protection.md) — every export asks
+- [Bible XML archive (`.owabdata`)](bible-xml-archive-owabdata.md) — import REFUSES a colliding item · [Bible XML import from a link](bible-xml-import-from-url.md) — the key is guessed from the file's attributes
+- [Presenting Flow drag & setting rules](presenting-flow-drag-and-settings-rules.md) — `presentingFlowDraggingStore` rules · [Presenting flow cue gutter](presenting-flow-cue-gutter.md) — one left column shared by the tree and the run player
+- [Full reference resolves in both lookups](bible-lookup-full-ref-resolves.md) — `John 3:16` renders in the modal AND the Reader
+- [PDF preload decodes all pages — FIXED](pdf-preload-decodes-all-pages.md) — file-scoped; sizes from the PNG header
+- [Dev Electron hardcodes port 3000](dev-electron-hardcodes-port-3000.md) — FIXED: `strictPort` makes a busy :3000 stop `npm run dev` instead of sliding to :3001
+- [`document` at module scope breaks node tests](appprovider-mock-node-env.md) — `appProvider` touches `document` on load
+- [CacheManager expiry was sliding — FIXED](filesource-cache-sliding-ttl.md) — every read pushed the timestamp forward
+- [Editable docs read their editing-history HEAD](presenting-flow-reads-editing-history-head.md) — not the saved file
+- [Presenting Flow lyric attachment slide — FIXED](presenting-flow-lyric-slide-dead-row.md) — `getSlideById` searched Quick only · [Expanded doc rows went stale — FIXED](presenting-flow-expanded-doc-stale.md) — keep the re-subscribe timer PER-INSTANCE · [Expansion followed the position — FIXED](presenting-flow-expansion-follows-position.md) — rows keyed by uuid now
+- [`/owa-robot-test presentingFlow` is a MODE](owa-robot-test-presenting-flow-mode.md) — 11 phases over 69 run-sheet rows
+- [Canvas audio & media links](canvas-audio-and-media-links.md) — `audio` item is preview-only
+- [Lyric passes the AppDocument type check](lyric-passes-appdocument-typecheck.md) — `checkIsThisType` is `instanceof`
+- [Settings write race corrupts the on-screen map](settings-write-race-corrupts-onscreen-map.md) — OPEN: non-atomic write
+- [Monaco `.css` test failure — importable now](monaco-css-test-failure-local-open-lyric.md) — ONE test imports real open-lyric
+- [Console design system tokens](console-design-system-tokens.md) — `--app-*` tokens
+- [Vite caches a failed import resolution](vite-caches-failed-import-resolution.md) — serves an OLD module past a reload
+- [Drag-kind mime & dim target](drag-kind-mime-and-dim-target.md) — dragover gates on `application/x-owa-drag-<kind>`
+- [Canceled pointerdown kills click](canceled-pointerdown-kills-click.md) — a drag surface gets no click/dblclick
+- [Website items are screenshots, not iframes](website-screenshot-not-iframe.md) — live only on the projected screen
+- [vi.mock factory survives resetModules](vitest-mock-factory-survives-resetmodules.md) — test and module on different mocks
+- [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) — it also kills the user's open-lyric dev app
+- [View menu widget toggles](view-menu-widget-toggles.md) — View → Widgets ticks each pane; Reset Widgets Size
+- [`appFilePath` is a prototype getter](appfilepath-is-a-prototype-getter.md) — plain assignment silently no-ops
+- [Media binaries install on demand](extra-bin-on-demand.md) — yt-dlp/ffmpeg/qjs live in `<data parent>/extra-bin`
+- [SongSelect plugin](song-select-plugin.md) — all frontend in src/plugins/song-select by user request
+- [Public Domain Songs plugin](public-domain-songs-plugin.md) — 36 embedded PD hymns, no sign-in
+- [open-lyric fence ground truth](open-lyric-fence-ground-truth.md) — probed structure codes (P not PC, IS/S split)
+- [Credentials use safeStorage](secure-storage-safestorage.md) — secrets sit in a SECOND `-secret` store
+- [Lookup has its own language](lookup-language-selection.md) — one dataset at a time
+- [In-verse names follow the bible](in-verse-names-follow-the-bible.md) — a Khmer verse is underlined in Khmer
+- [Bible view controller hands out live arrays](bible-view-controller-live-arrays.md) — spliced in place before the event
+- [Connection graph (graph-view)](graph-view-connection-graph.md) — pure core + one `GraphSourceType` per dataset; copies as Markdown or one of five diagram languages, and opens in `mermaid.live` (payload in the fragment; `openExternal` drops a long URL in silence)
+- [The renderer has no `clipboard` module](renderer-has-no-clipboard-module.md) — every Copy threw "Reload is needed"; it goes through main now
+- [Resources panel](resources-panel.md) — 4th Bible-Find entry listing the user's own files · [Markdown & note previews from Resources](markdown-preview-window.md) — `.md` → locked-down preview (HTML DOMPurify-sanitized, lazy mermaid); `.own` lists notes + marked verses, notes open READ-ONLY · [A Resources `.json` is a link list](resources-json-link-list.md) — decided by CONTENT, not extension; http(s) only
+- [useAppCurrentRef race guard](useappcurrentref-race-guard.md) — second use: post-await staleness oracle
+- [Modal layer & above-modal widgets](modal-layer-above-modal.md) — ModalLayerContext for widgets in the modal's tree
+- [Bible-XML cache is key-scoped](bible-xml-cache-key-scoped.md) — every writer must call `clearBibleXMLCache`
+- [experiments/html-in-canvas is dev-only](experiments-html-in-canvas.md) — build-excluded scratch harness
+- [Verse marks are note items](verse-marks-note-items.md) — highlights/comments live in `.note` files as a second kind
+- [Agent access & in-app chatbot](agent-access-mcp-chatbot.md) — no fixed CDP port
+- [`.claude/` edits need a knowledge rebuild](claude-dir-edits-need-knowledge-rebuild.md) — `node extra-work/build-knowledge.mjs`
+- [`evaluate_script` is gone for good](evaluate-script-disposablestack.md) — the MCP firewall REFUSES it
+- [MCP tool edits leave two processes out of step](mcp-tool-edit-two-processes.md) — your own tools serve STALE code
+- [DOM matcher is memoised in the page](dom-match-memoised-in-page.md) — `window.__owaDomMatch`/`__owaGuide` survive an edit
+- [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md) — a page-made KeyboardEvent fires them
+- [Glassy popup windows](glassy-popup-windows.md) — the chatbot popup is frosted by the OS compositor, not CSS
+- [Panels are named in the DOM](panel-name-in-dom.md) — an OPEN pane drew its name nowhere
+- [A guide tucks the help window away](guide-tucks-help-window.md) — a walkthrough minimises the chatbot popup
+- [Hover-hidden controls](hover-hidden-controls.md) — clickable but painted only under the mouse
+- [Knowledge label i18n templates](knowledge-label-i18n-templates.md) — docs name controls as `[en:tran:Clear Bible]`
+- [Chatbot question corpus](question-corpus-maintenance.md) — `questions/*.json` is the supported-question list
+- [Stuck guide step asks the chatbot](guide-stuck-step-rescue.md) — an unpressable step is asked of the chat window
+- [Window tools on every page](app-window-tools-everywhere.md) — `AppWindowToolsComp` on all nine entries
+- [Chatbot answer options](chatbot-answer-options.md) — every answer ends with buttons to press instead of typing · [Chatbot Stop](chatbot-stop-answer.md) — an answer on its way is ABORTED on the wire, said at the press
+- [Kimi is the third chatbot provider](kimi-third-llm-provider.md) — rides the OpenAI loop with its OWN budget rule · [Kimi free tier is ~3 rounds a minute](kimi-free-tier-round-budget.md) — ~11k tokens a request against ~32k a minute
+- [Manual search read a word as a prefix](help-search-prefix-overmatch.md) — "screen" matched "Screencast" in a TITLE
+- [Walkthrough followed the first search](chatbot-walkthrough-follows-first-search.md) — buttons PRESSED before the model is asked
+- [Chatbot attachments](chatbot-attachments.md) — pictures, files and a pointed-at control; every asset opens one preview with Download
+- [Adding to an answer in flight](chatbot-mid-flight-additions.md) — the box stays live
+- [Free keyless chatbot provider](free-keyless-chatbot-provider.md) — no API key, via Kilo Code only (LLM7 went paid 2026-09-12)
+- [Chatbot Report button](chatbot-report-button.md) — says WHO wants it (help page address first); Copy / Email it buttons
+- [The wait says what it is doing](chatbot-progress-log.md) — phrases hand-written per tool · [Chatbot ask history & tips](chatbot-ask-history-and-tips.md) — Alt+↑/↓ walks what was asked (one list per window)
+- [MCP uid interlock](mcp-uid-interlock.md) — point-don't-press covers chrome-devtools' uid-aimed tools
+- [Tools the chatbot's model never sees](mcp-model-hidden-tools.md) — the model gets `owa_*` tools only (24 of 53); 29 withheld
+- [Chatbot cost measured on the wire](chatbot-cost-measured-on-the-wire.md) — `cache_read_input_tokens` proves the cache
+- [Writing songs and slide documents](mcp-document-write-tools.md) — `owa_lyric_file` / `owa_slide_file`; delete goes to the trash
+- [The interlock reads the control](mcp-interlock-reads-the-control.md) — in every language, in the page; a Khmer Delete got through
+- [Agent data tools back up first](agent-data-tools-backup-undo.md) — no backup, no change; `owa_undo` puts any change back
+- [History paths vs the read cache](history-read-cache-stale-paths.md) — a rename onto a cached path read back OLD bytes
+- [Reading a web page](mcp-read-website-tool.md) — `owa_read_website` is the only tool that reaches OUT
+- [A slide website loads in a box](slide-website-loads-in-a-box.md) — a shared document was the whole delivery; same-host exemption keeps an intranet slide working
+- [A CDP pin is exclusive](cdp-pin-is-exclusive.md) — a dead `OWA_CDP_PORT` used to fall through to the packaged app
+- [A preload must not eval at load](preload-must-not-eval-at-load.md) — a strict page CSP (chatbot dev, EVERY page packaged) kills the preload; the window never mounts
+- [The chatbot opens the window](chatbot-opens-the-window.md) — a walkthrough of a window that is not up opens it
+- [A press says what it CHANGED](click-reports-effect-not-action.md) — `owa_click` answers `isOnNow`/`didChange`/`unverified`
+- [An exact label beats everything](dom-match-exact-label-beats-everything.md) — `tier` is `checkIsBetter`'s primary key
+- [Checking a song](open-lyric-validator-in-mcp.md) — `owa_lyric_validate` writes the Open Lyric grammar out
+- [A model cannot write Open Lyric](model-cannot-write-open-lyric.md) — a CAREFUL attempt still fails on `CC`
+- [Chatbot built-in commands](chatbot-builtin-commands.md) — `/screen-show`, `/clear-all`, `/find` … run with NO model
+- [Driving the chatbot window over CDP](chatbot-cdp-driver-gotchas.md) — Git Bash rewrites `/screen`; tools drive the PACKAGED app if up; on macOS a backgrounded app runs no renderer timers, so owa_* calls time out
+- [A supported question is a label](help-search-known-question.md) — an exact corpus question routes to its filed recipe
+- [No user-entered references in notes](no-user-specific-references-in-notes.md) — a site/URL/name the user typed is their data
+- [Recipe ids scrubbed in code](chatbot-recipe-id-scrub.md) — a prompt rule against "W-08" failed 2 of 2
+- [Bash commands halve backslashes here](bash-heredoc-halves-backslashes.md) — a doubled backslash arrives single, heredoc or quoted argument
+- [Guide press safety & covers](guide-press-safety-and-covers.md) — Do it presses only an exact, uncovered label
+- [A song page goes in as a URL](song-page-goes-in-as-url.md) — the model drops every chord; hand over the URL
+- [Grade the panic shapes in both screen states](chatbot-grade-panic-in-both-states.md) — the screens tool says what each HOLDS
+- [The assistant knows what the user is in the middle of](chatbot-in-the-middle-of.md) — selectedDocument + next ride owa_app_state
+- [Kind noun trimmed off an exact name](dom-match-kind-noun-exact.md) — `Presenting Flow List` was a loose fit
+- [Wrong-window route is a page fact](chatbot-wrong-window-route-is-a-page-fact.md) — the Reader has no Documents list
+- [Grade on the window's own default](chatbot-grade-on-the-window-default.md) — a dead key hands the question to the next key
+- [A verse is presented by its reference](chatbot-verse-by-reference.md) — `owa_present_bible`, `/verse`, the offline button
+- [Chatbot spend guard](chatbot-spend-guard.md) — a rolling-hour cap paused until a PERSON presses Allow more
+- [Provider failure comes with its door](chatbot-provider-issue-door.md) — read off the BODY; buttons carry a page NAME
+- [/lyric, and a song link drafted offline](chatbot-lyric-command.md) — `/lyric <address>` needs no model; a bot check is refused
+- [Foreground extras by their words](chatbot-foreground-door.md) — `owa_foreground` in one call; `/countdown`, `/marquee`
+- [AI Chat window](aichat-window.md) — a company's site in a sandboxed `<webview>`; Sign out empties it; the microphone is ASKED per site
+- [A name with a twin has no selector](selector-name-with-a-twin.md) — two same-named SIBLINGS defeated `selectorOf`
+- [The AI Chat guest cannot reach this machine](aichat-guest-cannot-reach-loopback.md) — local/private addresses are cancelled
+- [A confirm needs a popup host](confirm-needs-a-popup-host.md) — `showAppConfirm` is `false` with no host; gates FAIL OPEN · [Popup deep link rides a setting](popup-deep-link-by-setting.md) — a URL param opens a DUPLICATE window; read on mount + focus via `getSettingForce`
+- [CRLF checkout breaks line regexes](crlf-checkout-line-regex.md) — split repo text on `/\r?\n/`; an anchored `(.*)$` silently matches nothing
+- [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — an `infinite` color/border keyframe repaints a whole window at 60 fps; cap iterations; trace the Presenter with a screen SHOWING (EN-19)
+- [Own font list with weights](own-font-list-with-weights.md) — `font-list` is gone; the macOS/Linux branches never ran on a real machine
+- [Data folder path is aliased in file contents](portable-data-dir-alias.md) — `$DATA_DIR_PATH` in every escape level; raw readers (copy, tar, iframe) see the alias

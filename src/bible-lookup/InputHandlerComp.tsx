@@ -1,21 +1,32 @@
-import { createContext, createRef, Fragment, use } from 'react';
+import {
+    type ChangeEvent,
+    createContext,
+    createRef,
+    Fragment,
+    use,
+    useCallback,
+    type KeyboardEvent,
+} from 'react';
 
-import BibleSelectionComp from './BibleSelectionComp';
+import BibleKeySelectionComp from './BibleKeySelectionComp';
 import {
     BIBLE_LOOKUP_INPUT_ID,
     INPUT_TEXT_CLASS,
     focusRenderFound,
 } from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
-import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
+import {
+    useAppEffect,
+    useAppStateAsync,
+    useAppCurrentRef,
+} from '../helper/appHooks';
 import { toInputText } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { getBookKVList } from '../helper/bible-helpers/bibleInfoHelpers';
 import InputExtraButtonsComp from './InputExtraButtonsComp';
-import {
-    BIBLE_XML_CACHE_DURATION_SEC,
-    getBibleXMLDataFromKeyCaching,
-} from '../setting/bible-setting/bibleXMLHelpers';
+import { pasteTextToInput } from '../server/appHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import { tran } from '../lang/langHelpers';
 
 export const InputTextContext = createContext<{
     inputText: string;
@@ -49,19 +60,58 @@ export default function InputHandlerComp({
         }
     }, [inputText]);
     const viewController = useLookupBibleItemControllerContext();
+    const handleInputKeyUp = useCallback(
+        (event: KeyboardEvent<HTMLInputElement>) => {
+            if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
+                event.stopPropagation();
+                event.preventDefault();
+                event.currentTarget.blur();
+                focusRenderFound();
+            }
+        },
+        [],
+    );
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const handleInputChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            const value = event.target.value;
+            if (value.trim().includes(' (')) {
+                // `(kjv) Genesis 1:1 (1): In the beginning ...`
+                // will change to `(kjv) Genesis 1:1`
+                const lines = value
+                    .split(' (')
+                    .map((line) => {
+                        return line.trim();
+                    })
+                    .filter(Boolean);
+                if (lines.length > 0) {
+                    pasteTextToInput(event.target, lines[0]);
+                    return;
+                }
+            }
+            viewControllerRef.current.inputText = value;
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handlePreviousChapter = useCallback(() => {
+        viewControllerRef.current.tryJumpingChapter(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleNextChapter = useCallback(() => {
+        viewControllerRef.current.tryJumpingChapter(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const bibleKey = useBibleKeyContext();
-    useAppEffect(() => {
-        // keep bible data in cache
-        const intervalId = setInterval(
-            () => {
-                getBibleXMLDataFromKeyCaching(bibleKey);
-            },
-            (BIBLE_XML_CACHE_DURATION_SEC - 5) * 1000,
-        );
-        return () => {
-            clearInterval(intervalId);
-        };
-    }, [bibleKey]);
+    const fontFamily = useBibleFontFamily(bibleKey);
+    // Deliberately NO keep-alive of the parsed bible here. Until 2026-09-15 an
+    // interval re-asked `getBibleXMLDataFromKeyCaching` every 5 s to "keep
+    // bible data in cache", against a 10 s cache whose expiry is absolute from
+    // the write -- so every second tick MISSED and re-read and re-parsed the
+    // whole bible (4.7 MB KJV, 14.8 MB Khmer) on the main thread, with a
+    // "Loading Bible Data" progress bar, for as long as this box was mounted
+    // and nobody typed (`EN-11`). The 10 s cache serves a burst of keystrokes;
+    // the first lookup after a pause pays one parse, which is the rule.
     const [books] = useAppStateAsync(() => {
         return getBookKVList(bibleKey);
     }, [bibleKey]);
@@ -71,7 +121,7 @@ export default function InputHandlerComp({
     });
     return (
         <Fragment>
-            <BibleSelectionComp
+            <BibleKeySelectionComp
                 bibleKey={bibleKey}
                 onBibleKeyChange={onBibleKeyChange}
             />
@@ -79,41 +129,34 @@ export default function InputHandlerComp({
                 id={BIBLE_LOOKUP_INPUT_ID}
                 className={`form-control form-control-sm ${INPUT_TEXT_CLASS}`}
                 ref={inputRef}
-                data-bible-key={bibleKey}
                 type="text"
                 autoFocus
                 placeholder={placeholder ?? ''}
-                onKeyUp={(event) => {
-                    if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
-                        event.stopPropagation();
-                        event.preventDefault();
-                        event.currentTarget.blur();
-                        focusRenderFound();
-                    }
-                }}
-                onChange={(event) => {
-                    const value = event.target.value;
-                    viewController.inputText = value;
-                }}
+                // The one box a "type a verse" step is about; it is named
+                // only by the verse inside it, which no matcher (or screen
+                // reader) can find it by.
+                title={tran('Bible Reference')}
+                aria-label={tran('Bible Reference')}
+                style={{ fontFamily }}
+                onKeyUp={handleInputKeyUp}
+                onChange={handleInputChange}
             />
             <InputExtraButtonsComp />
             <button
                 className="btn btn-sm btn-outline-secondary"
                 data-previous-chapter-button="1"
-                title="Previous"
-                onClick={() => {
-                    viewController.tryJumpingChapter(false);
-                }}
+                title={tran('Previous')}
+                aria-label={tran('Previous')}
+                onClick={handlePreviousChapter}
             >
                 <i className="bi bi-caret-left" />
             </button>
             <button
                 className="btn btn-sm btn-outline-secondary"
-                title="Next"
+                title={tran('Next')}
+                aria-label={tran('Next')}
                 data-next-chapter-button="1"
-                onClick={() => {
-                    viewController.tryJumpingChapter(true);
-                }}
+                onClick={handleNextChapter}
             >
                 <i className="bi bi-caret-right" />
             </button>

@@ -1,0 +1,228 @@
+@use '../others/variables.scss' as *;
+
+$resize-edge-thickness: 8px;
+$resize-corner-size: 16px;
+
+.floating-widget {
+  position: fixed;
+  // The component writes `--floating-widget-z-offset` so the last-focused
+  // widget stacks above its siblings; the base and the band stay owned by the
+  // stylesheet, and the `min()` keeps the whole stack inside the band no matter
+  // what the component sends. A widget that never got an offset (a bare test
+  // render) falls back to the floor.
+  z-index: calc(
+    #{$z-index-floating-widget} +
+      min(var(--floating-widget-z-offset, 0), #{$z-index-floating-widget-band})
+  );
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  background-color: rgba(var(--bs-body-bg-rgb), 0.9);
+  backdrop-filter: blur(8px);
+  color: var(--bs-body-color, #212529);
+  border-radius: 8px;
+  box-shadow: 2px 5px 16px 0px rgba(0, 0, 0, 0.7);
+  border: 1px inset rgba(var(--bs-secondary-rgb), 0.6);
+  &[data-has-onscreen-child='true'] {
+    border-color: var(--app-on-air) !important;
+  }
+}
+
+// A widget opened from inside a modal keeps the same in-band stacking, only on
+// top of the modal that hosts it — without this it is drawn (and blurred by the
+// modal's `backdrop-filter`) behind the popup its own toggle lives in.
+.floating-widget--above-modal {
+  z-index: calc(
+    #{$z-index-floating-widget-above-modal} +
+      min(var(--floating-widget-z-offset, 0), #{$z-index-floating-widget-band})
+  );
+}
+
+// While actively dragging, force a consistent cursor over the whole widget and
+// suppress text selection so the move feels smooth from any blank area.
+.floating-widget--moving,
+.floating-widget--moving * {
+  cursor: move !important;
+  user-select: none !important;
+}
+
+.floating-widget--resizing,
+.floating-widget--resizing * {
+  user-select: none !important;
+}
+
+.floating-widget__toolbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.4;
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// A titled header bar doubles as the drag handle; it flows above the content
+// (unlike the overlay toolbar) so the title and buttons never cover children.
+.floating-widget__header {
+  z-index: 5;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 0.25rem 0 0.75rem;
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+  border-bottom: 1px solid
+    var(--bs-border-color-translucent, rgb(108 117 125 / 40%));
+}
+
+.floating-widget__title {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Inside the header the actions blend in instead of floating as an overlay pill.
+.floating-widget__header .floating-widget__actions {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.floating-widget__actions {
+  display: inline-flex;
+  gap: 0.125rem;
+  pointer-events: auto;
+  color: var(--bs-secondary-color, #6c757d);
+  background-color: rgba(var(--bs-body-bg-rgb, 255, 255, 255), 0.88);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 16%);
+}
+
+.floating-widget__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  color: inherit;
+  background-color: transparent;
+  border: 0;
+  border-radius: 4px;
+}
+
+.floating-widget__button:hover,
+.floating-widget__button:focus-visible {
+  background-color: rgba(var(--bs-secondary-rgb, 108, 117, 125), 0.16);
+}
+
+.floating-widget__content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+
+  .card {
+    background-color: transparent !important;
+    .card-body {
+      background-color: transparent !important;
+    }
+  }
+}
+
+// Resize handles cover every edge and corner of the widget.
+.floating-widget__resize-handle {
+  position: absolute;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+  border: 0;
+  touch-action: none;
+  user-select: none;
+  &::after {
+    position: absolute;
+    inset: 0;
+    content: '';
+    background-color: rgba(var(--bs-primary-rgb, 13, 110, 253), 0.2);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+  }
+  &:hover::after {
+    opacity: 1;
+  }
+}
+
+.floating-widget__resize-handle--top,
+.floating-widget__resize-handle--bottom {
+  left: 0;
+  right: 0;
+  height: $resize-edge-thickness;
+  cursor: ns-resize;
+}
+
+.floating-widget__resize-handle--top {
+  top: 0;
+}
+
+.floating-widget__resize-handle--bottom {
+  bottom: 0;
+}
+
+.floating-widget__resize-handle--left,
+.floating-widget__resize-handle--right {
+  top: 0;
+  bottom: 0;
+  width: $resize-edge-thickness;
+  cursor: ew-resize;
+}
+
+.floating-widget__resize-handle--left {
+  left: 0;
+}
+
+.floating-widget__resize-handle--right {
+  right: 0;
+}
+
+.floating-widget__resize-handle--top-left,
+.floating-widget__resize-handle--top-right,
+.floating-widget__resize-handle--bottom-left,
+.floating-widget__resize-handle--bottom-right {
+  z-index: 3;
+  width: $resize-corner-size;
+  height: $resize-corner-size;
+}
+
+.floating-widget__resize-handle--top-left {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+
+.floating-widget__resize-handle--top-right {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+
+.floating-widget__resize-handle--bottom-left {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}
+
+.floating-widget__resize-handle--bottom-right {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+}

@@ -1,20 +1,22 @@
+import { useCallback } from 'react';
+
 import {
     genCommonMenu,
     genShowOnScreensContextMenu,
     genTrashContextMenu,
 } from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
-import { DragTypeEnum } from '../helper/DragInf';
+import type { DragTypeEnum } from '../helper/DragInf';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { handleDragStart } from '../helper/dragHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
-import {
-    genBackgroundMediaItemData,
-    RenderChildType,
-} from './backgroundHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import type { RenderChildType } from './backgroundHelpers';
+import { genBackgroundMediaItemData } from './backgroundHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
+import BackgroundListItemComp from './BackgroundListItemComp';
+import type { BackgroundViewModeType } from './BackgroundViewModeComp';
 
 function genFileNameElement(fileName: string) {
     return (
@@ -41,6 +43,7 @@ export default function BackgroundMediaItemComp({
     thumbnailWidth,
     thumbnailHeight,
     filePath,
+    viewMode = 'thumbnail',
 }: Readonly<{
     rendChild: RenderChildType;
     genExtraItemContextMenuItems: (filePath: string) => ContextMenuItemType[];
@@ -51,6 +54,7 @@ export default function BackgroundMediaItemComp({
     thumbnailWidth: number;
     thumbnailHeight: number;
     filePath: string;
+    viewMode?: BackgroundViewModeType;
 }>) {
     const fileSource = FileSource.getInstance(filePath);
     const {
@@ -65,6 +69,63 @@ export default function BackgroundMediaItemComp({
         fileSource.src,
         dragType,
     );
+    const fileSourceRef = useAppCurrentRef(fileSource);
+    const dragTypeRef = useAppCurrentRef(dragType);
+    const handleMediaDragStart = useCallback((event: any) => {
+        // An audio row holds a real <audio controls>; dragging its scrubber or
+        // volume slider must stay a scrub, not start a file drag.
+        if (event.target?.closest?.('audio') !== null) {
+            event.preventDefault();
+            return;
+        }
+        handleDragStart(event, fileSourceRef.current, dragTypeRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const filePathRef = useAppCurrentRef(filePath);
+    const handleSelectingRef = useAppCurrentRef(handleSelecting);
+    const genExtraItemContextMenuItemsRef = useAppCurrentRef(
+        genExtraItemContextMenuItems,
+    );
+    const isInScreenRef = useAppCurrentRef(isInScreen);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        showAppContextMenu(event, [
+            ...genCommonMenu(filePathRef.current),
+            ...genShowOnScreensContextMenu((event) => {
+                handleSelectingRef.current(event, true);
+            }),
+            ...genExtraItemContextMenuItemsRef.current(filePathRef.current),
+            ...(isInScreenRef.current
+                ? []
+                : genTrashContextMenu(filePathRef.current)),
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const onClickRef = useAppCurrentRef(onClick);
+    const handleClicking = useCallback((event: any) => {
+        if (onClickRef.current) {
+            onClickRef.current(event, fileSourceRef.current);
+        } else {
+            handleSelectingRef.current(event);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    if (viewMode === 'list') {
+        return (
+            <BackgroundListItemComp
+                backgroundType={backgroundType}
+                name={fileSource.fullName}
+                title={title}
+                selectedCN={selectedCN}
+                src={fileSource.src}
+                isDraggable={!noDraggable}
+                selectedBackgroundSrcList={selectedBackgroundSrcList}
+                onDragStart={handleMediaDragStart}
+                onContextMenu={handleContextMenuOpening}
+                onClick={handleClicking}
+                colorNoteChild={<ItemColorNoteComp item={fileSource} />}
+            />
+        );
+    }
     return (
         <div
             className={`${backgroundType}-thumbnail card ${selectedCN}`}
@@ -72,27 +133,11 @@ export default function BackgroundMediaItemComp({
             style={{
                 width: `${thumbnailWidth}px`,
             }}
+            data-file-item-file-src={fileSource.src}
             draggable={!noDraggable}
-            onDragStart={(event) => {
-                handleDragStart(event, fileSource, dragType);
-            }}
-            onContextMenu={(event) => {
-                showAppContextMenu(event as any, [
-                    ...genCommonMenu(filePath),
-                    ...genShowOnScreensContextMenu((event) => {
-                        handleSelecting(event, true);
-                    }),
-                    ...genExtraItemContextMenuItems(filePath),
-                    ...(isInScreen ? [] : genTrashContextMenu(filePath)),
-                ]);
-            }}
-            onClick={(event) => {
-                if (onClick) {
-                    onClick(event, fileSource);
-                } else {
-                    handleSelecting(event);
-                }
-            }}
+            onDragStart={handleMediaDragStart}
+            onContextMenu={handleContextMenuOpening}
+            onClick={handleClicking}
         >
             {isNameOnTop && (
                 <div className="app-ellipsis-left pe-4">
@@ -105,12 +150,17 @@ export default function BackgroundMediaItemComp({
                 thumbnailWidth,
                 thumbnailHeight,
                 <div
+                    className="d-flex align-items-start"
                     style={{
                         position: 'absolute',
                         top: 0,
                         right: 0,
+                        zIndex: 2,
                     }}
                 >
+                    <ContextMenuDotsButtonComp
+                        onOpening={handleContextMenuOpening}
+                    />
                     <ItemColorNoteComp item={fileSource} />
                 </div>,
             )}

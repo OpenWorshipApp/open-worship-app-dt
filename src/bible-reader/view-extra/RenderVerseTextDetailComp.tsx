@@ -1,18 +1,19 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { VERSE_TEXT_CLASS } from '../../helper/bibleViewHelpers';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
-import { BIBLE_VERSE_TEXT_TITLE } from '../../helper/helpers';
-import { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { getSelectedText } from '../../helper/textSelectionHelpers';
 import FileSource from '../../helper/FileSource';
 import {
     bibleTextToSpeech,
     checkIsAIAudioAvailableForBible,
 } from '../../helper/ai/openAIAudioHelpers';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderVerseTextDetailListComp from './RenderVerseTextDetailListComp';
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
+import appProvider from '../../server/appProvider';
 
 export default function RenderVerseTextDetailComp({
     bibleItem,
@@ -51,50 +52,69 @@ export default function RenderVerseTextDetailComp({
     };
     const viewController = useBibleItemsViewControllerContext();
     const isExtraVerses = extraVerseInfoList.length > 0;
-    const loadAudio = async (isForce?: boolean) => {
-        const isAudioEnabled = await checkIsAIAudioAvailableForBible(bibleItem);
-        if (!isAudioEnabled) {
-            return;
-        }
-        const { bibleVersesKey } = verseInfo;
-        setAudioSrcMap1(bibleVersesKey, undefined);
-        const speechFile = await bibleTextToSpeech(verseInfo, isForce);
-        if (speechFile === null) {
-            setAudioSrcMap1(bibleVersesKey, null);
-            return;
-        }
-        setAudioSrcMap1(bibleVersesKey, FileSource.getInstance(speechFile).src);
-    };
-    const handleVerseClicking = (event: any) => {
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const verseInfoRef = useAppCurrentRef(verseInfo);
+    const loadAudio = useCallback(
+        async (isForce?: boolean) => {
+            const isAudioEnabled = await checkIsAIAudioAvailableForBible(
+                bibleItemRef.current,
+            );
+            if (!isAudioEnabled) {
+                return;
+            }
+            const { bibleVersesKey } = verseInfoRef.current;
+            setAudioSrcMap1(bibleVersesKey, undefined);
+            const speechFile = await bibleTextToSpeech(
+                verseInfoRef.current,
+                isForce,
+            );
+            if (speechFile === null) {
+                setAudioSrcMap1(bibleVersesKey, null);
+                return;
+            }
+            setAudioSrcMap1(
+                bibleVersesKey,
+                FileSource.getInstance(speechFile).src,
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const loadAudioRef = useAppCurrentRef(loadAudio);
+    const handleVerseClicking = useCallback((event: any) => {
         if (getSelectedText()) {
             return;
         }
-        viewController.handleVersesSelecting(
+        viewControllerRef.current.handleVersesSelecting(
             event.currentTarget,
             event.altKey,
             false,
-            bibleItem,
+            bibleItemRef.current,
         );
-        loadAudio();
-    };
-    const handleVerseDBClicking = (event: any) => {
+        loadAudioRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleVerseDBClicking = useCallback((event: any) => {
         event.stopPropagation();
         event.preventDefault();
         const selection = globalThis.getSelection();
         if (selection !== null && selection.rangeCount > 0) {
             selection.removeAllRanges();
         }
-        viewController.handleVersesSelecting(
+        viewControllerRef.current.handleVersesSelecting(
             event.currentTarget,
             true,
             false,
-            bibleItem,
+            bibleItemRef.current,
         );
-        loadAudio();
-    };
-    const handleAudioRefreshing = () => {
-        loadAudio(true);
-    };
+        loadAudioRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleAudioRefreshing = useCallback(() => {
+        loadAudioRef.current(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             ref={verseTextRef}
@@ -105,10 +125,20 @@ export default function RenderVerseTextDetailComp({
             data-verse-key={verseInfo.bibleVersesKey}
             data-is-first={verseInfo.isFirst ? '1' : '0'}
             data-is-last={verseInfo.isLast ? '1' : '0'}
-            title={BIBLE_VERSE_TEXT_TITLE}
             onClick={handleVerseClicking}
             onDoubleClick={handleVerseDBClicking}
         >
+            {/* This verse's ⋮ — the menu a right-click on the verse already
+                opens, made reachable for a touch screen and for anyone who
+                never learned that the menu was there at all. No handler: the
+                bible view around this verse owns that menu, and a dispatched
+                `contextmenu` reaches it from here exactly as a real one would.
+
+                FIRST child, and absolutely positioned by the stylesheet: with
+                no `top`, an out-of-flow box falls back to its static position,
+                so being first is what puts it on THIS verse's own line while
+                costing the verse no reflow. See `BibleViewComp.scss`. */}
+            {appProvider.readerHomePage ? <ContextMenuDotsButtonComp /> : null}
             <RenderVerseTextDetailListComp
                 bibleItem={bibleItem}
                 verseInfo={verseInfo}

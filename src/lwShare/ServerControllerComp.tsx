@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { type ChangeEvent, useCallback, useState } from 'react';
 
-import { controller, StatusDataType, StatusType } from './lwShareHelpers';
-import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
+import type { StatusDataType, StatusType } from './lwShareHelpers';
+import { controller } from './lwShareHelpers';
+import {
+    useAppEffect,
+    useAppStateAsync,
+    useAppCurrentRef,
+} from '../helper/appHooks';
 import { ensureDataDirectory } from '../setting/directory-setting/directoryHelpers';
 import LoadingComp from '../others/LoadingComp';
 import appProvider from '../server/appProvider';
-import { showExplorer } from '../server/appHelpers';
+import { showFileOrDirExplorer } from '../server/appHelpers';
 
 function genStatusMessage({ status, message, data }: StatusDataType) {
     if (status === 'stopped') {
@@ -39,7 +44,7 @@ function genStatusMessage({ status, message, data }: StatusDataType) {
 }
 
 const statusViewMap: { [key in StatusType]: { btn: string; text: string } } = {
-    stopped: { btn: 'danger', text: 'Start Server' },
+    stopped: { btn: 'warning', text: 'Start Server' },
     starting: { btn: 'info', text: 'Starting Server...' },
     running: { btn: 'success', text: 'Stop Server' },
     error: { btn: 'warning', text: 'Restart Server' },
@@ -68,11 +73,30 @@ function CustomPortInputComp({
     port,
     setPort,
 }: Readonly<{
-    port: number | undefined;
-    setPort: (port: number | undefined) => void;
+    port: number;
+    setPort: (port: number) => void;
 }>) {
+    const setPortRef = useAppCurrentRef(setPort);
+    const handlePortChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            const newPort = Number(event.target.value);
+            setPortRef.current(newPort);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleGenerateRandomPort = useCallback(() => {
+        setPortRef.current(
+            Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleUseDefaultPort = useCallback(() => {
+        setPortRef.current(8080);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <div>
+        <div className="d-flex align-items-center p-2">
             <label htmlFor="port-input">Custom Port:</label>
             <input
                 id="port-input"
@@ -80,25 +104,24 @@ function CustomPortInputComp({
                 style={{
                     width: '80px',
                 }}
-                type="text"
-                placeholder="Random"
-                value={port ?? ''}
-                onChange={(event) => {
-                    const newPort = Number(event.target.value);
-                    if (Number.isNaN(newPort) || newPort <= 0) {
-                        setPort(undefined);
-                        return;
-                    }
-                    setPort(newPort);
-                }}
+                type="number"
+                min={0}
+                max={65535}
+                placeholder="8080"
+                value={port}
+                onChange={handlePortChange}
             />
             <button
                 className="btn btn-sm btn-primary"
-                onClick={() => {
-                    setPort(8080);
-                }}
+                onClick={handleGenerateRandomPort}
             >
-                User 8080
+                Gen Randomly
+            </button>
+            <button
+                className="btn btn-sm btn-primary"
+                onClick={handleUseDefaultPort}
+            >
+                Use 8080
             </button>
         </div>
     );
@@ -109,7 +132,7 @@ export default function ServerControllerComp() {
         status: 'stopped',
     });
     const [status, setStatus] = useState<StatusType>('stopped');
-    const [port, setPort] = useState<number | undefined>(undefined);
+    const [port, setPort] = useState<number>(8080);
     const [serverData, setServerData] = useAppStateAsync(async () => {
         return genNewServerData(port, setStatus, setStatusData);
     });
@@ -124,21 +147,24 @@ export default function ServerControllerComp() {
             },
         );
     }, [port]);
+    const statusRef = useAppCurrentRef(status);
+    const serverDataRef = useAppCurrentRef(serverData);
+    const handleServer = useCallback(async () => {
+        if (statusRef.current === 'starting') {
+            return;
+        } else if (statusRef.current === 'running') {
+            serverDataRef.current?.stop();
+        } else {
+            serverDataRef.current?.restart();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (serverData === undefined) {
         return <LoadingComp />;
     }
     if (serverData === null) {
         return <p>Fail to start server.</p>;
     }
-    const handleServer = async () => {
-        if (status === 'starting') {
-            return;
-        } else if (status === 'running') {
-            serverData.stop();
-        } else {
-            serverData.restart();
-        }
-    };
     const statusView = statusViewMap[status];
     return (
         <div className="w-100 h-100 d-flex flex-column overflow-hidden">
@@ -153,7 +179,7 @@ export default function ServerControllerComp() {
                     }}
                     title={serverData.targetDir}
                     onClick={() => {
-                        showExplorer(serverData.targetDir);
+                        showFileOrDirExplorer(serverData.targetDir);
                     }}
                 >
                     <div
@@ -186,7 +212,9 @@ export default function ServerControllerComp() {
                             className="spinner-border spinner-border-sm ms-2"
                             role="status"
                             aria-hidden="true"
-                        ></span>
+                        >
+                            Unknown
+                        </span>
                     )}
                 </button>
             </div>

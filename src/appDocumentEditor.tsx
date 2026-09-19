@@ -1,9 +1,17 @@
-import AppDocumentEditorComp from './app-document-editor/AppDocumentEditorComp';
-import { main } from './others/appInitHelpers';
+import './bootstrapCss';
+import { init } from './boot';
+import { run } from './others/main';
 import AppLayoutComp from './router/AppLayoutComp';
+import AppWindowToolsComp from './others/AppWindowToolsComp';
 
-main(
-    <AppLayoutComp>
-        <AppDocumentEditorComp />
-    </AppLayoutComp>,
-);
+init(async () => {
+    const AppDocumentEditorComp = (
+        await import('./app-document-editor/AppDocumentEditorComp')
+    ).default;
+    run(
+        <AppLayoutComp>
+            <AppDocumentEditorComp />
+            <AppWindowToolsComp />
+        </AppLayoutComp>,
+    );
+});

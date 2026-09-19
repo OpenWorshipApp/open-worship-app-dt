@@ -1,22 +1,27 @@
-import { CSSProperties, MouseEvent } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
 
-import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
+import type { DroppedDataType } from '../../helper/DragInf';
+import { DragTypeEnum } from '../../helper/DragInf';
 import { getImageDim, getVideoDim } from '../../helper/helpers';
+import { tran } from '../../lang/langHelpers';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { genHtmlBackground } from '../ScreenBackgroundComp';
 import { getBackgroundSrcListOnScreenSetting } from '../screenHelpers';
 import { handleError } from '../../helper/errorHelpers';
+import { showSimpleToast } from '../../toast/toastHelpers';
 import {
     dirSourceSettingNames,
     screenManagerSettingNames,
 } from '../../helper/constants';
-import ScreenEventHandler from './ScreenEventHandler';
-import ScreenManagerBase from './ScreenManagerBase';
-import ScreenEffectManager from './ScreenEffectManager';
+import ScreenEventHandler, {
+    type GroupMembershipInf,
+} from './ScreenEventHandler';
+import type ScreenManagerBase from './ScreenManagerBase';
+import type ScreenEffectManager from './ScreenEffectManager';
 import appProvider from '../../server/appProvider';
 import { unlocking } from '../../server/unlockingHelpers';
 import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
-import {
+import type {
     BackgroundDataType,
     BackgroundSrcType,
     BackgroundType,
@@ -26,8 +31,9 @@ import {
 } from '../screenTypeHelpers';
 import { ANIM_END_DELAY_MILLISECOND } from '../transitionEffectHelpers';
 import { getIsFadingAtTheEndSetting } from '../../background/videoBackgroundHelpers';
+import { appLog } from '../../helper/loggerHelpers';
 
-export type ScreenBackgroundManagerEventType = 'update';
+export type ScreenBackgroundManagerEventType = 'update' | 'color-set';
 
 const FADING_DURATION_SECOND = 3;
 const FADING_DURATION_MILLISECOND = FADING_DURATION_SECOND * 1000;
@@ -38,7 +44,10 @@ export function getIsFadingAtEndSetting() {
     return getSetting(BACKGROUND_VIDEO_FADING_SETTING_NAME) !== 'false';
 }
 
-class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManagerEventType> {
+class ScreenBackgroundManager
+    extends ScreenEventHandler<ScreenBackgroundManagerEventType>
+    implements GroupMembershipInf
+{
     static readonly eventNamePrefix: string = 'screen-bg-m';
     private _backgroundSrc: BackgroundSrcType | null = null;
     private _rootContainer: HTMLDivElement | null = null;
@@ -82,6 +91,9 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
             return;
         }
         this._backgroundSrc = backgroundSrc;
+        if (backgroundSrc?.type === 'color') {
+            this.addPropEvent('color-set', backgroundSrc.src);
+        }
         this.render();
         unlocking(screenManagerSettingNames.BACKGROUND, () => {
             const allBackgroundSrcList = getBackgroundSrcListOnScreenSetting();
@@ -97,6 +109,16 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         this.sendSyncScreen();
     }
 
+    async getMemberInstances(): Promise<ScreenBackgroundManager[]> {
+        return [];
+    }
+    async getMemberIds(): Promise<number[]> {
+        return [];
+    }
+    async checkIsMainInstance(): Promise<boolean> {
+        return false;
+    }
+
     toSyncMessage(): BasicScreenMessageType {
         return {
             type: 'background',
@@ -106,6 +128,133 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
 
     receiveSyncScreen(message: ScreenMessageType) {
         this.backgroundSrc = message.data;
+    }
+
+    sendSyncVideoTime(
+        videoId: string,
+        videoTime: number,
+        isFromScreen: boolean,
+    ) {
+        setTimeout(() => {
+            this.screenManagerBase.sendScreenMessage(
+                {
+                    screenId: this.screenId,
+                    type: 'background-video-time',
+                    data: {
+                        videoId,
+                        videoTime,
+                        timestamp: Date.now(),
+                        isFromScreen,
+                    },
+                },
+                true,
+            );
+        }, 0);
+    }
+
+    setVideoCurrentTime(data: {
+        videoId: string;
+        videoTime: number;
+        timestamp: number;
+        isFromScreen: boolean;
+    }) {
+        // If audio is playing for the video, it means the video time is
+        // controlled by the audio.
+        if (data.isFromScreen && this._checkIsVideoAudioPlaying(data.videoId)) {
+            return;
+        }
+        const rootContainer = this.rootContainer;
+        if (rootContainer === null) {
+            return;
+        }
+        const { videoId, videoTime, timestamp, isFromScreen } = data;
+        const videoElements = rootContainer.querySelectorAll<HTMLVideoElement>(
+            `video#${videoId}`,
+        );
+        const timeThreshold = FADING_DURATION_SECOND + 0.1;
+        for (const videoElement of videoElements) {
+            // Disable syncing when the video is in transition mode
+            if (
+                videoElement.currentTime < timeThreshold ||
+                videoElement.duration - videoElement.currentTime < timeThreshold
+            ) {
+                continue;
+            }
+            const latency = (Date.now() - timestamp) / 1000;
+            const exactVideoTime = videoTime + latency;
+            const timeDiff = videoElement.currentTime - exactVideoTime;
+            // 24 fps, 1000/24 = 0.04166..., for 0.15 second threshold, it can be 3
+            // frames, which is good enough for syncing video.
+            if (Math.abs(timeDiff) > 0.15) {
+                appLog(
+                    'Syncing video time',
+                    isFromScreen ? '(from screen)' : '',
+                    `Screen ID: ${this.screenId}`,
+                    timeDiff.toFixed(4),
+                    exactVideoTime.toFixed(4),
+                );
+                videoElement.currentTime = exactVideoTime;
+            }
+        }
+    }
+
+    setVideoCurrentTimeForce(videoId: string, videoTime: number) {
+        // Should be from presenter to screen
+        this.sendSyncVideoTime(videoId, videoTime, false);
+        this.setVideoCurrentTime({
+            videoId,
+            videoTime,
+            timestamp: Date.now(),
+            isFromScreen: false,
+        });
+    }
+
+    async setBackgroundVideoCurrentTimeForce(
+        videoId: string,
+        videoTime: number,
+        isSyncingGroup: boolean,
+    ) {
+        if (isSyncingGroup && !(await this.checkIsMainInstance())) {
+            // An instance with smaller screenId is the main instance to sync
+            // to, to avoid loop syncing
+            return;
+        }
+        const groupScreenManagers = await this.getMemberInstances();
+        if (!isSyncingGroup) {
+            groupScreenManagers.push(this);
+        }
+        for (const screenBackgroundManager of groupScreenManagers) {
+            screenBackgroundManager.setVideoCurrentTimeForce(
+                videoId,
+                videoTime,
+            );
+        }
+    }
+
+    receiveSyncVideoTime(message: ScreenMessageType) {
+        if (message.screenId !== this.screenId) {
+            return;
+        }
+        const { data } = message;
+        const { videoId, videoTime, timestamp, isFromScreen } = data;
+        if (
+            !videoId ||
+            typeof videoTime !== 'number' ||
+            typeof timestamp !== 'number' ||
+            typeof isFromScreen !== 'boolean'
+        ) {
+            return;
+        }
+        this.setVideoCurrentTime(data);
+    }
+
+    static receiveSyncVideoTime(message: ScreenMessageType) {
+        const { screenId } = message;
+        const screenBackgroundManager = this.getInstance(screenId);
+        if (screenBackgroundManager === null) {
+            return;
+        }
+        screenBackgroundManager.receiveSyncVideoTime(message);
     }
 
     fireUpdateEvent() {
@@ -183,6 +332,15 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         const screenIds = await this.chooseScreenIds(event, isForceChoosing);
         for (const screenId of screenIds) {
             const screenBackgroundManager = this.getInstance(screenId);
+            if (screenBackgroundManager === null) {
+                showSimpleToast(
+                    tran(
+                        'Failed to apply to screen. Please make sure the screen is open.',
+                    ),
+                    tran('Error'),
+                );
+                continue;
+            }
             screenBackgroundManager.applyBackgroundSrc(backgroundType, data);
         }
     }
@@ -223,38 +381,67 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         });
     }
 
-    _checkVideoFadingAtEnd(container: HTMLDivElement) {
-        const video = container.querySelector('video');
-        if (video !== null) {
-            const fadeOutListener = async () => {
-                const duration = video.duration;
-                if (
-                    !(Number.isNaN(duration) || duration === Infinity) &&
-                    duration - video.currentTime <= FADING_DURATION_SECOND
-                ) {
-                    const isFadingAtTheEnd = getIsFadingAtTheEndSetting(
-                        video.src,
-                    );
-                    if (!isFadingAtTheEnd) {
-                        return;
-                    }
-                    video.removeEventListener('timeupdate', fadeOutListener);
-                    this.render({
-                        ...this.effectManager.styleAnimList.fade,
-                        animOut: async () => {
-                            const duration =
-                                FADING_DURATION_MILLISECOND +
-                                ANIM_END_DELAY_MILLISECOND;
-                            await new Promise<void>((resolve) => {
-                                setTimeout(resolve, duration);
-                            });
-                        },
-                        duration: FADING_DURATION_MILLISECOND,
-                    });
-                }
-            };
-            video.addEventListener('timeupdate', fadeOutListener);
+    _checkIsVideoAudioPlaying(videoId: string) {
+        const audioElements = document.querySelectorAll<HTMLAudioElement>(
+            `audio[data-video-id="${videoId}"]`,
+        );
+        for (const audioElement of audioElements) {
+            if (!audioElement.paused) {
+                return true;
+            }
         }
+        return false;
+    }
+
+    _handleBackgroundVideo(container: HTMLDivElement) {
+        const videoElement = container.querySelector('video[id^="video-"]');
+        if (videoElement instanceof HTMLVideoElement === false) {
+            return;
+        }
+        videoElement.dataset.ignoreMediaGuarding = 'true';
+        const fadeOutListener = async () => {
+            const videoId = videoElement.id;
+            const currentTime = videoElement.currentTime;
+            // Should sync from screen to main to audience glitching on user's side.
+            if (appProvider.isPageScreen) {
+                this.sendSyncVideoTime(videoId, currentTime, true);
+            } else {
+                // TODO: should follow screen's instance
+                this.setBackgroundVideoCurrentTimeForce(
+                    videoId,
+                    currentTime,
+                    true,
+                );
+            }
+            const duration = videoElement.duration;
+            const isFadingAtTheEnd = getIsFadingAtTheEndSetting(
+                videoElement.src,
+            );
+            if (
+                !isFadingAtTheEnd ||
+                !(
+                    !(Number.isNaN(duration) || duration === Infinity) &&
+                    duration - videoElement.currentTime <=
+                        FADING_DURATION_SECOND
+                )
+            ) {
+                return;
+            }
+            videoElement.removeEventListener('timeupdate', fadeOutListener);
+            this.render({
+                ...this.effectManager.styleAnimList.fade,
+                animOut: async () => {
+                    const duration =
+                        FADING_DURATION_MILLISECOND +
+                        ANIM_END_DELAY_MILLISECOND;
+                    await new Promise<void>((resolve) => {
+                        setTimeout(resolve, duration);
+                    });
+                },
+                duration: FADING_DURATION_MILLISECOND,
+            });
+        };
+        videoElement.addEventListener('timeupdate', fadeOutListener);
     }
 
     render(overrideAnimData?: StyleAnimType) {
@@ -274,7 +461,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
                 },
             );
             promise.then((clearTracks) => {
-                this._checkVideoFadingAtEnd(newDiv);
+                this._handleBackgroundVideo(newDiv);
                 aminData.animIn(newDiv, rootContainer);
                 this.removeOldElements(aminData, childList, this.clearTracks);
                 this.clearTracks = clearTracks;
@@ -320,11 +507,38 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
     static receiveSyncScreen(message: ScreenMessageType) {
         const { screenId } = message;
         const screenBackgroundManager = this.getInstance(screenId);
+        if (screenBackgroundManager === null) {
+            // English on purpose: this receiver also runs in the screen
+            // window, and a `tran()` there before its language data has loaded
+            // throws in dev (see `ScreenCloseButtonComp`).
+            showSimpleToast(
+                'Failed to apply to screen. Please make sure the screen is open.',
+                'error',
+            );
+            return;
+        }
         screenBackgroundManager.receiveSyncScreen(message);
     }
 
     clear() {
         this.applyBackgroundSrcWithSyncGroup(null);
+    }
+
+    delete() {
+        // Local teardown only — deliberately NOT clear(). clear() routes through
+        // the backgroundSrc setter, which broadcasts to every screen sharing
+        // this one's color note (so deleting one screen blanked the whole
+        // group's background) and which a locked screen rejects outright,
+        // leaving its camera tracks running and its entry on disk. The persisted
+        // entry is dropped centrally by deleteScreenPersistedData.
+        this.clearTracks();
+        this.clearTracks = () => {};
+        if (this._rootContainer !== null) {
+            this._rootContainer.replaceChildren();
+            this._rootContainer = null;
+        }
+        this._backgroundSrc = null;
+        super.delete();
     }
 
     static getInstance(screenId: number) {

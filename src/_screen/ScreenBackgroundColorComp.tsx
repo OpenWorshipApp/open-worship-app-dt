@@ -1,4 +1,4 @@
-import { AppColorType } from '../others/color/colorHelpers';
+import type { AppColorType } from '../others/color/colorHelpers';
 
 export default function ScreenBackgroundColorComp({
     color,

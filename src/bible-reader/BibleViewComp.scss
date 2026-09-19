@@ -1,7 +1,39 @@
 @use '../others/variables.scss' as *;
 
+// A verse a bible note talks about, calling for the eye across a wall of text.
+//
+// A cycling underline colour rather than a cycling text colour: the number keeps
+// the reader's own verse-number colour, so the theme still reads as itself and
+// the marking is plainly laid over it rather than a different kind of verse.
+// Mid-lightness hues, legible against both the dark and light reader.
+//
+// It runs a FEW times, never `infinite`. Measured 2026-09-15 (`EN-09`): a
+// `text-decoration-color` keyframe is a paint property, and with ONE marked
+// number in the chapter the idle Reader repainted the whole `bible-view-text`
+// column (1092×2157 px) at 235 paints/s -- 5 CPU-seconds a minute doing nothing,
+// 23 % of the main thread at 4× CPU throttle. After the last cycle the number
+// rests on its steady dotted underline, which is the marking anyway (see the
+// reduced-motion branch); a compositor-only shimmer would cost a layer per
+// marked number instead.
+@keyframes app-bible-note-verse-hint {
+  0%,
+  100% {
+    text-decoration-color: hsl(170deg 70% 45%);
+  }
+  25% {
+    text-decoration-color: hsl(265deg 70% 62%);
+  }
+  50% {
+    text-decoration-color: hsl(35deg 90% 50%);
+  }
+  75% {
+    text-decoration-color: hsl(330deg 75% 58%);
+  }
+}
+
 .bible-view {
   min-width: 200px;
+  border: 1px solid transparent;
 
   .card-header {
     .bible-extra-key:hover {
@@ -27,7 +59,7 @@
 
   .card-body {
     .btn.active {
-      border: 1px dashed $hight-light-color;
+      border: 1px dashed var(--app-accent);
     }
   }
 
@@ -38,6 +70,11 @@
   }
 
   .bible-view-text {
+    // Containing block for the selected verse's ⋮ (see `.verse-text` below).
+    // It has to be INSIDE the scroller: positioned against the card, that button
+    // would sit still while the verses scrolled out from under it.
+    position: relative;
+
     .verse-number,
     .verse-text {
       display: inline;
@@ -59,10 +96,67 @@
           margin: 0 2px;
           line-height: 0;
         }
+        // A verse some bible note mentions. The attribute IS the marking: it
+        // carries the notes the click reveals, so a number without it is a
+        // verse with nothing to reveal, and cannot be styled as if it had.
+        .verse-number-text[data-bible-id] {
+          font-weight: bold;
+          text-decoration: underline dotted currentColor;
+          text-underline-offset: 0.25em;
+          text-decoration-thickness: 0.1em;
+          animation: app-bible-note-verse-hint 6s ease-in-out 3;
+          &:hover {
+            text-decoration-style: solid;
+          }
+          // The marking must survive the animation being refused, so the glow
+          // cycle is the decoration and the underline is the statement.
+          @media (prefers-reduced-motion: reduce) {
+            animation: none;
+            text-shadow: 0 0 0.35rem var(--app-accent-halo);
+          }
+        }
       }
     }
 
     .verse-text {
+      // The selected verse's ⋮, floated to the right edge of the text column.
+      //
+      // `top` is deliberately left `auto`. An absolutely positioned box with no
+      // `top` falls back to its STATIC position — where it would have sat in
+      // the flow — and this button is the verse's FIRST child, so that is the
+      // verse's own first line. WHICH verse it belongs to is the one thing no
+      // selector here could otherwise say, and it costs no script.
+      //
+      // It brings NO ground of its own — no slab, no lift, and the app-wide
+      // 0.1 alpha it inherits from `.app-context-menu-dots`. Ragged-right prose
+      // does reach this column, and a filled box there covers the words it is
+      // meant to serve; a glyph at 0.1 lets them through and comes up to full
+      // strength under the pointer, which is the same bargain every other ⋮ in
+      // the app makes.
+      //
+      // Every verse carries one and only the selected verse draws it:
+      // `selected` is a class `handleVersesSelecting` toggles straight onto the
+      // element, which React never sees, so CSS is the only thing that can
+      // answer this. A `display: none` button costs no layout and no paint —
+      // the same trick `.verse-audio` below has always used — so a 176-verse
+      // psalm pays nothing for the 175 it is not showing.
+      > .app-context-menu-dots {
+        display: none;
+      }
+
+      &.selected > .app-context-menu-dots {
+        display: inline-flex;
+        // Out of flow, which is the whole point: in flow, the button appeared
+        // and vanished with the selection and shoved the verse sideways under
+        // the reader's eye each time.
+        position: absolute;
+        // Hard against the text column's right edge, clear of the words.
+        right: 4px;
+        // Above the verse it floats over, so the glyph is never half-painted.
+        z-index: 1;
+        padding: 0;
+      }
+
       &.extra-verses {
         display: inline-block;
         &.selected {
@@ -98,6 +192,34 @@
       &.selected {
         .verse-audio {
           display: inline-block;
+        }
+      }
+
+      // Names and locations that resolve to exactly one record. Deliberately a
+      // plain `span` and NOT a button/[role=button]: `.app-selectable-text`
+      // forces `user-select: none` onto those, which would drop every name out
+      // of a copied verse. Styling stays subtractive (a faint underline that
+      // only strengthens on hover) so scripture still reads as scripture.
+      .verse-lookup-link {
+        cursor: pointer;
+        text-decoration: underline;
+        text-decoration-style: dotted;
+        text-underline-offset: 0.18em;
+        text-decoration-thickness: from-font;
+        text-decoration-color: rgba(125, 190, 255, 0.45);
+        transition: text-decoration-color 0.12s ease-in-out;
+
+        &.location {
+          text-decoration-color: rgba(120, 220, 170, 0.45);
+        }
+
+        &:hover {
+          text-decoration-style: solid;
+          text-decoration-color: rgba(125, 190, 255, 0.95);
+        }
+
+        &.location:hover {
+          text-decoration-color: rgba(120, 220, 170, 0.95);
         }
       }
     }

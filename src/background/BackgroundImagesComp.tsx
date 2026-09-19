@@ -1,5 +1,7 @@
 import './BackgroundImagesComp.scss';
 
+import type { ReactElement } from 'react';
+
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -7,17 +9,15 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import {
     checkIsImagesInClipboard,
     downloadImage,
     readImagesFromClipboard,
 } from '../server/appHelpers';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import {
@@ -33,8 +33,7 @@ import {
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { handleError } from '../helper/errorHelpers';
-import { ReactElement } from 'react';
-import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
+import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
 
 function rendChild(
     filePath: string,
@@ -53,7 +52,7 @@ function rendChild(
                 borderRadius: '5px 5px 0px 0px',
             }}
         >
-            <RenderBackgroundScreenIds
+            <RenderBackgroundScreenIdsComp
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return Number.parseInt(key);
                 })}
@@ -83,6 +82,7 @@ async function genContextMenuItems(dirSource: DirSource) {
     if (isClipboardHasImage) {
         const pastImageTitle = tran('Paste Image');
         contextMenuItems.push({
+            childBefore: genContextMenuItemIcon('card-image'),
             menuElement: pastImageTitle,
             onSelect: async () => {
                 for await (const blob of readImagesFromClipboard()) {
@@ -90,7 +90,9 @@ async function genContextMenuItems(dirSource: DirSource) {
                     if (srcData === null) {
                         showSimpleToast(
                             pastImageTitle,
-                            'Error occurred during reading image data from clipboard',
+                            tran(
+                                'Error occurred during reading image data from clipboard',
+                            ),
                         );
                         continue;
                     }
@@ -98,7 +100,9 @@ async function genContextMenuItems(dirSource: DirSource) {
                     if (dotExt === null) {
                         showSimpleToast(
                             pastImageTitle,
-                            'Error occurred during getting image file extension',
+                            tran(
+                                'Error occurred during getting image file extension',
+                            ),
                         );
                         continue;
                     }
@@ -106,7 +110,7 @@ async function genContextMenuItems(dirSource: DirSource) {
                     if (filePath === null) {
                         showSimpleToast(
                             pastImageTitle,
-                            'Error occurred during generating file name',
+                            tran('Error occurred during generating file name'),
                         );
                         continue;
                     }
@@ -117,7 +121,7 @@ async function genContextMenuItems(dirSource: DirSource) {
                     if (!isSuccess) {
                         showSimpleToast(
                             pastImageTitle,
-                            'Error occurred during pasting image',
+                            tran('Error occurred during pasting image'),
                         );
                     }
                 }
@@ -127,6 +131,7 @@ async function genContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
     contextMenuItems.push(
         {
+            childBefore: genContextMenuItemIcon('download'),
             menuElement: title,
             onSelect: async () => {
                 const imageUrl = await askForURL(title, 'Image URL:');
@@ -148,19 +153,21 @@ async function genContextMenuItems(dirSource: DirSource) {
                         dirSource.dirPath,
                         fileFullName,
                     );
-                    if (await fsCheckFileExist(destFileSource.filePath)) {
-                        await fsDeleteFile(destFileSource.filePath);
+                    const downloadedFilePath = destFileSource.filePath;
+                    if (await fsCheckFileExist(downloadedFilePath)) {
+                        await fsDeleteFile(downloadedFilePath);
                     }
-                    await fsMove(filePath, destFileSource.filePath);
+                    await fsMove(filePath, downloadedFilePath);
                     showSimpleToast(
                         title,
-                        `Image downloaded successfully, file path: "${destFileSource.filePath}"`,
+                        'Image downloaded successfully, ' +
+                            `file path: "${downloadedFilePath}"`,
                     );
                 } catch (error) {
                     handleError(error);
                     showSimpleToast(
                         title,
-                        'Error occurred during downloading image',
+                        tran('Error occurred during downloading image'),
                     );
                 } finally {
                     hideProgressBar(imageUrl);
@@ -173,17 +180,6 @@ async function genContextMenuItems(dirSource: DirSource) {
 }
 
 export default function BackgroundImagesComp() {
-    const handleItemsAdding = async (
-        dirSource: DirSource,
-        defaultContextMenuItems: ContextMenuItemType[],
-        event: any,
-    ) => {
-        const contextMenuItems = await genContextMenuItems(dirSource);
-        showAppContextMenu(event, [
-            ...defaultContextMenuItems,
-            ...contextMenuItems,
-        ]);
-    };
     return (
         <BackgroundMediaComp
             defaultFolderName={defaultDataDirNames.BACKGROUND_IMAGE}
@@ -191,7 +187,7 @@ export default function BackgroundImagesComp() {
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_IMAGE}
             genContextMenuItems={genContextMenuItems}
-            onItemsAdding={handleItemsAdding}
+            itemFillingClassname="image-thumbnail"
         />
     );
 }

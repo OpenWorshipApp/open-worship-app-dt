@@ -1,23 +1,32 @@
+import './popupWidget.scss';
 import './InputPopupComp.scss';
 
+import { useCallback } from 'react';
 import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
-import { closeAlert, InputDataType } from './popupWidgetHelpers';
+import { popupWidgetManager, type InputDataType } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import { tran } from '../lang/langHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
-export default function ConfirmPopupComp({
+export default function InputPopupComp({
     inputData,
 }: Readonly<{
     inputData: InputDataType;
 }>) {
-    const handleClosing = () => {
-        inputData.onConfirm(false);
-        closeAlert();
-    };
-    const handleOkClicking = () => {
-        inputData.onConfirm(true);
-        closeAlert();
-    };
+    const inputDataRef = useAppCurrentRef(inputData);
+    const handleClosing = useCallback(() => {
+        // Close first, then run the callback (see AlertPopupComp): a callback
+        // that opens the next popup must win the slot over this async close.
+        popupWidgetManager.openInput?.(null);
+        inputDataRef.current.onConfirm(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleOkClicking = useCallback(() => {
+        popupWidgetManager.openInput?.(null);
+        inputDataRef.current.onConfirm(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     useKeyboardRegistering(
         [{ key: 'Escape' }],
         (event) => {
@@ -41,43 +50,36 @@ export default function ConfirmPopupComp({
         <PrimitiveModalComp>
             <div
                 id="app-input-popup"
-                className="shadow card"
+                className="app-popup-widget card"
                 style={inputData.extraStyles}
             >
                 <HeaderAlertPopupComp
+                    title={inputData.title}
                     header={
-                        <div className="app-ellipsis" title={inputData.title}>
-                            <i className="bi bi-exclamation-circle" />
+                        <>
+                            <i className="app-popup-header-icon icon-input bi bi-input-cursor-text" />
                             {inputData.title}
-                        </div>
+                        </>
                     }
                     onClose={handleClosing}
                 />
-                <div className="card-body d-flex flex-column w-100 h-100">
-                    <div
-                        className="w-100"
-                        style={{
-                            maxHeight: '500px',
-                            overflow: 'auto',
-                        }}
-                    >
-                        {inputData.body}
-                    </div>
-                </div>
-                <div className="card-footer btn-group float-end">
+                <div className="app-popup-body">{inputData.body}</div>
+                <div className="app-popup-footer">
                     <button
-                        className="btn btn-sm"
+                        className="btn"
                         type="button"
                         onClick={handleClosing}
                     >
-                        Cancel
+                        <i className="bi bi-x-lg" />
+                        {tran('Cancel')}
                     </button>
                     <button
-                        className="btn btn-sm btn-info"
+                        className="btn btn-info"
                         type="button"
                         onClick={handleOkClicking}
                     >
-                        Ok
+                        <i className="bi bi-check-lg" />
+                        {tran('Ok')}
                     </button>
                 </div>
             </div>

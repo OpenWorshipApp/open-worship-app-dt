@@ -1,0 +1,47 @@
+@use '../others/variables.scss' as *;
+
+// A caption strip across the bottom of the window: it never takes the pointer,
+// never participates in the app's layout (fixed), and is only in the DOM while
+// keys are actually being shown.
+#keyboard-screencast {
+  position: fixed;
+  left: 50%;
+  bottom: 6vh;
+  transform: translateX(-50%);
+  z-index: $z-index-keyboard-screencast;
+  pointer-events: none;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  max-width: 90vw;
+  // The oldest pill is dropped in JS, but a single very long label (a chord on a
+  // narrow window) must still not push the strip off screen.
+  overflow: hidden;
+
+  // Deliberately its own dark pill rather than a themed one: this is read from
+  // across a room, over whatever the app happens to be showing underneath, so it
+  // has to stay legible in both themes and over a bright slide preview.
+  .keyboard-screencast-key {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  }
+
+  // The `×N` repeat counter is context, not the key — it must never be mistaken
+  // for part of the chord.
+  .keyboard-screencast-count {
+    font-size: 14px;
+    font-weight: 400;
+    opacity: 0.75;
+  }
+}

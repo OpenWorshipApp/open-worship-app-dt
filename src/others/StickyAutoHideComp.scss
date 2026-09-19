@@ -1,0 +1,20 @@
+.app-sticky-auto-hide {
+  position: sticky;
+
+  // Sticky offsets start at the scroll container's padding edge, so `0` would
+  // leave the container's 1px padding strip uncovered and let the list bleed
+  // through above the bar. The padding gives that pixel back to the content.
+  top: -1px;
+  padding-top: 1px;
+  z-index: 3;
+  background-color: var(--bs-card-bg, var(--bs-body-bg));
+  transition:
+    transform 0.2s ease-in-out,
+    opacity 0.2s ease-in-out;
+
+  &.app-sticky-hidden {
+    transform: translateY(-105%);
+    opacity: 0;
+    pointer-events: none;
+  }
+}

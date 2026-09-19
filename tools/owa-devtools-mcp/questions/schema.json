@@ -1,0 +1,159 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Open Worship App question corpus",
+    "description": "One file per PAGE of the app. `questions.mjs` reads every *.json in this directory except this one, so adding a page is adding a file. Every question must be answerable from the recipe or the tools it names -- a suggestion the assistant cannot answer is worse than no suggestion.",
+    "type": "object",
+    "required": ["page", "label", "focus", "sections"],
+    "additionalProperties": false,
+    "properties": {
+        "page": {
+            "type": "string",
+            "description": "Stable id, and the first part of every question id in the file."
+        },
+        "label": {
+            "type": "string",
+            "description": "What a user would call this page."
+        },
+        "window": {
+            "type": ["string", "null"],
+            "description": "The window it lives in, e.g. \"reader.html\". Null when it is not one window."
+        },
+        "focus": {
+            "oneOf": [
+                { "$ref": "#/definitions/focusKey" },
+                { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/focusKey" } },
+                { "type": "null" }
+            ],
+            "description": "Which window of the app it belongs to, named by that page's html base name -- the same keys `botFocus.mjs` declares, because the key is spliced into `page: \"<key>.html\"` by the tools. A LIST when one page belongs to several: the slide editor is a tab of the main window, so its questions answer from the Presenter too. Null means EVERY window -- settings and the find bar read the same wherever they are asked from."
+        },
+        "description": { "type": "string" },
+        "updated": {
+            "type": "string",
+            "description": "ISO date of the last content change, bumped whenever a question is added, reworded or removed."
+        },
+        "sections": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": ["id", "label", "questions"],
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique within the file; the middle part of a question id."
+                    },
+                    "label": {
+                        "type": "string",
+                        "description": "Shown beside a suggestion, so it must say WHICH of several right answers is theirs."
+                    },
+                    "panel": {
+                        "type": "string",
+                        "description": "The panel it lives in, as `data-widget-name` spells it."
+                    },
+                    "recipes": {
+                        "type": "array",
+                        "items": { "$ref": "#/definitions/recipeId" },
+                        "description": "The manual recipes this whole section is drawn from."
+                    },
+                    "questions": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": { "$ref": "#/definitions/question" }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "focusKey": {
+            "enum": [
+                "presenter",
+                "reader",
+                "appDocumentEditor",
+                "bibleNote",
+                "setting",
+                "webEditor",
+                "lyricEditor",
+                "lwShare"
+            ],
+            "description": "A window of the app, by its html base name. Declared once in `botFocus.mjs`; `questions.test.mjs` fails on a page file naming one that is not there."
+        },
+        "recipeId": {
+            "type": "string",
+            "pattern": "^W-[0-9]{2}[a-z]?$",
+            "description": "A manual recipe id, the same one `owa_help_search` and `owa_help_page` use."
+        },
+        "question": {
+            "type": "object",
+            "required": ["id", "text", "kind", "keywords"],
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique within the section. STABLE: a scoreboard row and a regression test may name it, so reword `text` freely and leave this alone."
+                },
+                "text": {
+                    "type": "string",
+                    "description": "The question as a volunteer would type it, ending in a question mark. No file paths, ids or code names -- the person asking is running a service, not reading the source."
+                },
+                "kind": {
+                    "enum": ["howto", "where", "what", "state", "fix"],
+                    "description": "`state` and `fix` are the ones that need the live app, not just the manual."
+                },
+                "keywords": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "type": "string" },
+                    "description": "The words they would type INSTEAD -- what they call it, and what they say when it is going wrong. Not a restatement of `text`, which is already matched."
+                },
+                "starter": {
+                    "type": "boolean",
+                    "description": "May be offered as a chip in the empty window."
+                },
+                "template": {
+     "type": "boolean",
+     "description": "The chip fills the ask box instead of asking. For a question that cannot be asked as it stands because it carries a placeholder the user has to replace -- an address, a name. Pressing one is the start of typing, not the end of it."
+    },
+    "starterRank": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Which starters lead, lowest first. Ranks are compared ACROSS every file a focus can see, not within one file, so a rank must be unique among the pages that share a focus -- and a rank in a `focus: null` file (`common.json`, `troubleshooting.json`) competes in EVERY window at once. Leave it unset to land after every ranked one."
+                },
+                "resources": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "description": "Everything needed to answer it WITHOUT a search round.",
+                    "properties": {
+                        "recipe": { "$ref": "#/definitions/recipeId" },
+                        "related": {
+                            "type": "array",
+                            "items": { "$ref": "#/definitions/recipeId" }
+                        },
+                        "find": {
+                            "type": "string",
+                            "description": "The exact visible control, in `owa_find_ui` syntax -- \"Background > Videos\" when a bare word is ambiguous."
+                        },
+                        "menu": {
+                            "type": "string",
+                            "description": "A native menu path (\"View → Widgets\"). Use this instead of `find` for menu bar items: they are not in the DOM and cannot be ringed."
+                        },
+                        "shortcut": {
+                            "type": "string",
+                            "description": "The keystroke, written the way the manual writes it. Only ones the shortcut table actually lists."
+                        },
+                        "tools": {
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "description": "The `owa_*` tools that answer it from the live app."
+                        },
+                        "guide": {
+                            "type": "boolean",
+                            "description": "Whether a step-by-step walkthrough can be run for it."
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

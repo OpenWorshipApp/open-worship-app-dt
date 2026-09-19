@@ -1,8 +1,14 @@
-import { DependencyList } from 'react';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import {
+    useMemo,
+    type DependencyList,
+    type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
+
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import appProvider from '../server/appProvider';
 import EventHandler from './EventHandler';
-import { AppWidgetType } from './WindowEventListener';
+import type { AppWidgetType } from './WindowEventListener';
+import { cloneJson } from '../helper/helpers';
 
 function getLastItem<T>(arr: T[]) {
     return arr.at(-1) ?? null;
@@ -32,24 +38,46 @@ export type AllControlType = 'Ctrl' | 'Shift';
 
 export enum PlatformEnum {
     Windows = 'Windows',
-    Mac = 'Mac',
+    MacOS = 'MacOS',
     Linux = 'Linux',
 }
 
-export interface EventMapper {
-    wControlKey?: WindowsControlType[];
-    mControlKey?: MacControlType[];
-    lControlKey?: LinuxControlType[];
-    allControlKey?: AllControlType[];
-    platforms?: PlatformEnum[];
-    key: string;
-}
-export interface RegisteredEventMapper extends EventMapper {
-    listener: ListenerType;
-}
-export type ListenerType = ((event: KeyboardEvent) => void) | (() => void);
+export type EventMapperType =
+    | {
+          key: string;
+      }
+    | {
+          allControlKey: AllControlType[];
+          key: string;
+      }
+    | {
+          platform: PlatformEnum.Windows;
+          wControlKey: WindowsControlType[];
+          key: string;
+      }
+    | {
+          platform: PlatformEnum.Linux;
+          lControlKey: LinuxControlType[];
+          key: string;
+      }
+    | {
+          platform: PlatformEnum.MacOS;
+          mControlKey: MacControlType[];
+          key: string;
+      }
+    | {
+          wControlKey: WindowsControlType[];
+          mControlKey: MacControlType[];
+          lControlKey: LinuxControlType[];
+          key: string;
+      };
+export type RegisteredEventMapperType = EventMapperType & {
+    listener: KeyboardListenerType;
+};
+export type KeyboardListenerType =
+    ((event: KeyboardEvent | ReactKeyboardEvent<any>) => void) | (() => void);
 
-export function toShortcutKey(eventMapper: EventMapper) {
+export function toShortcutKey(eventMapper: EventMapperType) {
     return KeyboardEventListener.toShortcutKey(eventMapper);
 }
 
@@ -57,78 +85,138 @@ const keyNameMap: { [key: string]: string } = {
     Meta: 'Command',
 };
 
+const macKeyMap: { [key: string]: string } = {
+    ctrl: '⌃',
+    alt: '⌥',
+    meta: '⌘',
+    command: '⌘',
+    shift: '⇧',
+};
+
 export default class KeyboardEventListener extends EventHandler<string> {
     static readonly eventNamePrefix: string = 'keyboard';
     static readonly _layers: AppWidgetType[] = ['root'];
+    public static onMacQuitting: (() => void) | null = null;
 
-    static async checkShouldNext(event: KeyboardEvent) {
+    static async checkShouldNext(
+        event: KeyboardEvent | ReactKeyboardEvent<any>,
+    ) {
         if (event.defaultPrevented) {
             return false;
         }
         return true;
     }
-    async checkShouldNext(event: KeyboardEvent) {
+
+    async checkShouldNext(event: KeyboardEvent | ReactKeyboardEvent<any>) {
         return await KeyboardEventListener.checkShouldNext(event);
     }
 
     static getLastLayer() {
         return getLastItem(this._layers);
     }
+
     static addLayer(layer: AppWidgetType) {
         this._layers.push(layer);
     }
+
     static removeLayer(layer: AppWidgetType) {
-        this._layers.splice(this._layers.indexOf(layer), 1);
-    }
-    static fireEvent(event: KeyboardEvent) {
-        const option = {
-            key: event.key,
-        };
-        this.addControlKey(option, event);
-        const eventName = KeyboardEventListener.toEventMapperKey(option);
-        this.addPropEvent(eventName, event);
-    }
-    static addControlKey(option: EventMapper, event: KeyboardEvent) {
-        if (appProvider.systemUtils.isWindows) {
-            option.wControlKey = [];
-            if (event.ctrlKey) {
-                option.wControlKey.push('Ctrl');
-            }
-            if (event.altKey) {
-                option.wControlKey.push('Alt');
-            }
-            if (event.shiftKey) {
-                option.wControlKey.push('Shift');
-            }
-        } else if (appProvider.systemUtils.isMac) {
-            option.mControlKey = [];
-            if (event.ctrlKey) {
-                option.mControlKey.push('Ctrl');
-            }
-            if (event.altKey) {
-                option.mControlKey.push('Option');
-            }
-            if (event.shiftKey) {
-                option.mControlKey.push('Shift');
-            }
-            if (event.metaKey) {
-                option.mControlKey.push('Meta');
-            }
-        } else if (appProvider.systemUtils.isLinux) {
-            option.lControlKey = [];
-            if (event.ctrlKey) {
-                option.lControlKey.push('Ctrl');
-            }
-            if (event.altKey) {
-                option.lControlKey.push('Alt');
-            }
-            if (event.shiftKey) {
-                option.lControlKey.push('Shift');
-            }
+        const index = this._layers.indexOf(layer);
+        // indexOf(-1) would splice the LAST layer — a double remove must not
+        // corrupt the layer stack app-wide
+        if (index > -1) {
+            this._layers.splice(index, 1);
         }
     }
-    static toShortcutKey(eventMapper: EventMapper) {
-        let key = eventMapper.key;
+
+    // Force key to en-US layout by using the physical key code, to avoid
+    // different key names in different layouts, e.g. 'ü' in German keyboard.
+    static toEnUsKey(event: KeyboardEvent | ReactKeyboardEvent<any>) {
+        const { key, code } = event;
+        if (key.length !== 1 || !code) {
+            // Named keys (e.g. 'ArrowUp', 'Enter') are layout independent.
+            return key;
+        }
+        const letterMatch = /^Key([A-Z])$/.exec(code);
+        if (letterMatch !== null) {
+            const letter = letterMatch[1];
+            return key === key.toLocaleUpperCase()
+                ? letter
+                : letter.toLowerCase();
+        }
+        const digitMatch = /^(?:Digit|Numpad)(\d)$/.exec(code);
+        if (digitMatch !== null) {
+            return digitMatch[1];
+        }
+        return key;
+    }
+
+    static genEventKeyFromFiredEvent(
+        event: KeyboardEvent | ReactKeyboardEvent<any>,
+    ) {
+        const enKey = this.toEnUsKey(event);
+        const eventMapper = this.addControlKey(
+            {
+                key: enKey,
+            },
+            event,
+        );
+        const eventKey = this.toEventMapperKey(eventMapper);
+        return eventKey;
+    }
+
+    static fireEvent(event: KeyboardEvent | ReactKeyboardEvent<any>) {
+        const eventKey = this.genEventKeyFromFiredEvent(event);
+        this.addPropEvent(eventKey, event);
+    }
+
+    static addControlKey(
+        eventMapper: EventMapperType,
+        event: KeyboardEvent | ReactKeyboardEvent<any>,
+    ) {
+        const clonedEventMapper = cloneJson(eventMapper) as any;
+        if (appProvider.systemUtils.isWindows) {
+            clonedEventMapper.wControlKey = [];
+            if (event.ctrlKey) {
+                clonedEventMapper.wControlKey.push('Ctrl');
+            }
+            if (event.altKey) {
+                clonedEventMapper.wControlKey.push('Alt');
+            }
+            if (event.shiftKey) {
+                clonedEventMapper.wControlKey.push('Shift');
+            }
+        } else if (appProvider.systemUtils.isMac) {
+            clonedEventMapper.mControlKey = [];
+            if (event.ctrlKey) {
+                clonedEventMapper.mControlKey.push('Ctrl');
+            }
+            if (event.altKey) {
+                clonedEventMapper.mControlKey.push('Option');
+            }
+            if (event.shiftKey) {
+                clonedEventMapper.mControlKey.push('Shift');
+            }
+            if (event.metaKey) {
+                clonedEventMapper.mControlKey.push('Meta');
+            }
+        } else if (appProvider.systemUtils.isLinux) {
+            clonedEventMapper.lControlKey = [];
+            if (event.ctrlKey) {
+                clonedEventMapper.lControlKey.push('Ctrl');
+            }
+            if (event.altKey) {
+                clonedEventMapper.lControlKey.push('Alt');
+            }
+            if (event.shiftKey) {
+                clonedEventMapper.lControlKey.push('Shift');
+            }
+        }
+        return clonedEventMapper;
+    }
+
+    static toShortcutKey(eventMapper: EventMapperType) {
+        const clonedEventMapper = cloneJson(eventMapper);
+        let key = clonedEventMapper.key;
         if (!key) {
             return '';
         }
@@ -136,72 +224,169 @@ export default class KeyboardEventListener extends EventHandler<string> {
             key = key.toUpperCase();
         }
         const { wControlKey, mControlKey, lControlKey, allControlKey } =
-            eventMapper;
+            clonedEventMapper as any;
         const allControls: string[] = allControlKey ?? [];
         if (appProvider.systemUtils.isWindows) {
-            allControls.push(...(wControlKey ?? []));
+            if (wControlKey) {
+                allControls.push(...wControlKey);
+            } else if (mControlKey || lControlKey) {
+                throw new Error(
+                    'mControlKey and lControlKey are ignored on Windows platform',
+                );
+            }
         } else if (appProvider.systemUtils.isMac) {
-            allControls.push(...(mControlKey ?? []));
+            if (mControlKey) {
+                allControls.push(...mControlKey);
+            } else if (wControlKey || lControlKey) {
+                throw new Error(
+                    'wControlKey and lControlKey are ignored on Mac platform',
+                );
+            }
         } else if (appProvider.systemUtils.isLinux) {
-            allControls.push(...(lControlKey ?? []));
+            if (lControlKey) {
+                allControls.push(...lControlKey);
+            } else if (wControlKey || mControlKey) {
+                throw new Error(
+                    'wControlKey and mControlKey are ignored on Linux platform',
+                );
+            }
         }
-        if (allControls.length > 0) {
-            const allControlKeys = allControls.map((key) => {
-                return keyNameMap[key] ?? key;
+        if (allControls.length === 0) {
+            return key;
+        }
+        const allControlKeys = allControls.map((key) => {
+            return keyNameMap[key] ?? key;
+        });
+        let sorted = [...allControlKeys].sort((a, b) => {
+            return a.localeCompare(b);
+        });
+        if (appProvider.systemUtils.isMac) {
+            // Meta+C -> ⌘ C
+            sorted = sorted.map((key) => {
+                return macKeyMap[key.toLocaleLowerCase()] ?? key;
             });
-            const sorted = [...allControlKeys].sort((a, b) => {
-                return a.localeCompare(b);
-            });
-            key = `${sorted.join(' + ')} + ${key}`;
+            key = `${sorted.join('')} ${key}`;
+        } else {
+            key = `${sorted.join('+')}+${key}`;
         }
         return key;
     }
-    static toEventMapperKey(eventMapper: EventMapper) {
+
+    static filterEventMappersByPlatform(eventMappers: EventMapperType[]) {
+        return eventMappers.filter((eventMapper) => {
+            const { platform } = eventMapper as any;
+            if (!platform) {
+                return true;
+            }
+            if (
+                (platform === PlatformEnum.Windows &&
+                    appProvider.systemUtils.isWindows) ||
+                (platform === PlatformEnum.MacOS &&
+                    appProvider.systemUtils.isMac) ||
+                (platform === PlatformEnum.Linux &&
+                    appProvider.systemUtils.isLinux)
+            ) {
+                return true;
+            }
+            return false;
+        });
+    }
+
+    static toEventMapperKey(eventMapper: EventMapperType, layer?: string) {
         const key = toShortcutKey(eventMapper);
-        return `${this.getLastLayer()}>${key}`;
+        const lastLayer = layer ?? this.getLastLayer();
+        return `${lastLayer}>${key}`;
     }
 }
 
-export function useKeyboardRegistering(
-    eventMappers: EventMapper[],
-    listener: ListenerType,
-    deps: DependencyList,
+export function checkIsControlKeys(
+    event: KeyboardEvent | ReactKeyboardEvent<any>,
 ) {
+    return ['Meta', 'Alt', 'Control', 'Shift'].includes(event.key);
+}
+
+export function checkIsKeyboardEventMatch(
+    eventMappers: EventMapperType[],
+    event: KeyboardEvent | ReactKeyboardEvent<any>,
+) {
+    for (const eventMapper of KeyboardEventListener.filterEventMappersByPlatform(
+        eventMappers,
+    )) {
+        const expectEventKey =
+            KeyboardEventListener.toEventMapperKey(eventMapper);
+        const actualEventKey =
+            KeyboardEventListener.genEventKeyFromFiredEvent(event);
+        if (expectEventKey === actualEventKey) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function genEventNames(eventMappers: EventMapperType[], layer?: string) {
+    const eventNames = KeyboardEventListener.filterEventMappersByPlatform(
+        eventMappers,
+    ).map((eventMapper) => {
+        return KeyboardEventListener.toEventMapperKey(eventMapper, layer);
+    });
+    return eventNames;
+}
+export function useKeyboardRegistering(
+    eventMappers: EventMapperType[],
+    listener: KeyboardListenerType,
+    deps: DependencyList,
+    layer?: AppWidgetType,
+) {
+    // Pin the layer at mount. Callers pass inline mapper arrays, so the memo
+    // recomputes every render — if a background component re-renders while a
+    // modal layer is on top, deriving the layer lazily would re-register its
+    // keys under the modal's layer and hijack keys the modal should own.
+    // A component that manages a layer itself (the context-menu host stays
+    // mounted across open/close) passes its layer explicitly instead.
+    const mountLayer = useMemo(() => {
+        return KeyboardEventListener.getLastLayer() ?? undefined;
+    }, []);
+    const targetLayer = layer ?? mountLayer;
+    const eventNames = useMemo(() => {
+        const eventNames = genEventNames(eventMappers, targetLayer);
+        return eventNames;
+    }, [eventMappers, targetLayer]);
+    const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
-        const eventNames = eventMappers
-            .filter((eventMapper) => {
-                const { platforms } = eventMapper;
-                if (platforms) {
-                    if (
-                        (platforms.includes(PlatformEnum.Windows) &&
-                            appProvider.systemUtils.isWindows) ||
-                        (platforms.includes(PlatformEnum.Mac) &&
-                            appProvider.systemUtils.isMac) ||
-                        (platforms.includes(PlatformEnum.Linux) &&
-                            appProvider.systemUtils.isLinux)
-                    ) {
-                        return true;
-                    }
-                    return false;
-                }
-                return true;
-            })
-            .map((eventMapper) => {
-                return KeyboardEventListener.toEventMapperKey(eventMapper);
-            });
         const registeredEvents = KeyboardEventListener.registerEventListener(
             eventNames,
-            listener,
+            (event: KeyboardEvent | ReactKeyboardEvent<any>) => {
+                listenerRef.current(event);
+            },
         );
         return () => {
             KeyboardEventListener.unregisterEventListener(registeredEvents);
         };
-    }, [listener, ...deps]);
+    }, [...deps, ...eventNames]);
 }
 
-document.onkeydown = function (event) {
-    if (['Meta', 'Alt', 'Control', 'Shift'].includes(event.key)) {
-        return;
-    }
-    KeyboardEventListener.fireEvent(event);
-};
+if (typeof document !== 'undefined') {
+    document.onkeydown = function (event) {
+        if (checkIsControlKeys(event)) {
+            return;
+        }
+        if (
+            KeyboardEventListener.onMacQuitting !== null &&
+            checkIsKeyboardEventMatch(
+                [
+                    {
+                        platform: PlatformEnum.MacOS,
+                        key: 'q',
+                        mControlKey: ['Meta'],
+                    },
+                ],
+                event,
+            )
+        ) {
+            event.preventDefault();
+            KeyboardEventListener.onMacQuitting();
+            return;
+        }
+        KeyboardEventListener.fireEvent(event);
+    };
+}

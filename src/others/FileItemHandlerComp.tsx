@@ -1,41 +1,45 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import FileReadErrorComp from './FileReadErrorComp';
 import {
     copyToClipboard,
-    showExplorer,
+    showFileOrDirExplorer,
     trashAllMaterialFiles,
 } from '../server/appHelpers';
 import FileSource from '../helper/FileSource';
-import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
+import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import appProvider from '../server/appProvider';
 import { useFileSourceRefreshEvents } from '../helper/dirSourceHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from './ItemColorNoteComp';
 import {
-    menuTitleRevealFile,
+    getMenuTitleRevealFile,
     RECEIVING_DROP_CLASSNAME,
 } from '../helper/helpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useFileSourceIsOnScreen } from '../_screen/screenHelpers';
 import RenderRenamingComp from './RenderRenamingComp';
+import LoadingComp from './LoadingComp';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export const genCommonMenu = (filePath: string): ContextMenuItemType[] => {
     return [
         {
-            menuElement: 'Copy Path to Clipboard',
+            childBefore: genContextMenuItemIcon('clipboard'),
+            menuElement: tran('Copy Path to Clipboard'),
             onSelect: () => {
                 copyToClipboard(filePath);
             },
         },
         {
-            menuElement: menuTitleRevealFile,
+            childBefore: genContextMenuItemIcon('folder2-open'),
+            menuElement: getMenuTitleRevealFile(),
             onSelect: () => {
-                showExplorer(filePath);
+                showFileOrDirExplorer(filePath);
             },
         },
     ];
@@ -48,19 +52,22 @@ function genContextMenu(
 ): ContextMenuItemType[] {
     return [
         {
-            menuElement: 'Duplicate',
+            childBefore: genContextMenuItemIcon('files'),
+            menuElement: tran('Duplicate'),
             onSelect: () => {
                 FileSource.getInstance(filePath).duplicate();
             },
         },
         {
-            menuElement: 'Rename',
+            childBefore: genContextMenuItemIcon('input-cursor-text'),
+            menuElement: tran('Rename'),
             onSelect: () => {
                 setIsRenaming(true);
             },
         },
         {
-            menuElement: 'Reload',
+            childBefore: genContextMenuItemIcon('arrow-clockwise'),
+            menuElement: tran('Reload'),
             onSelect: () => {
                 reload();
             },
@@ -74,14 +81,19 @@ export function genTrashContextMenu(
 ): ContextMenuItemType[] {
     return [
         {
+            childBefore: genContextMenuItemIcon('trash3', {
+                color: 'var(--bs-danger)',
+            }),
             menuElement: tran('Move to Trash'),
             onSelect: async () => {
                 const fileSource = FileSource.getInstance(filePath);
                 const isOk = await showAppConfirm(
-                    'Moving File to Trash',
-                    'Are you sure you want to move ' +
-                        `"${fileSource.fullName}" to trash?`,
+                    tran('Moving File to Trash'),
+                    tran('Are you sure you want to move') +
+                        ` "${fileSource.fullName}" ` +
+                        tran('to trash?'),
                     {
+                        cancelButtonLabel: 'No',
                         confirmButtonLabel: 'Yes',
                     },
                 );
@@ -96,22 +108,44 @@ export function genTrashContextMenu(
     ];
 }
 
+/**
+ * "Reveal Original" — point at wherever this element actually lives in the app.
+ *
+ * Takes the whole reveal action rather than an element getter: some origins need
+ * their panel opened before they have an element at all (see
+ * `notifyPresentingFlowItemOrigin`), and a getter-only signature had no way to say so.
+ */
+export function genRevealOriginal(reveal: () => void): ContextMenuItemType {
+    return {
+        childBefore: genContextMenuItemIcon('eye'),
+        menuElement: tran('Reveal Original'),
+        onSelect: reveal,
+    };
+}
+
+/**
+ * `label` is for the things that reach a screen without being SHOWN there — a
+ * presenting flow's clear actions are run on it — so the menu says what will actually
+ * happen while keeping one screen-choosing entry point.
+ */
 export function genShowOnScreensContextMenu(
     onClick: (event: any) => void,
+    label = 'Show on Screens',
 ): ContextMenuItemType[] {
     if (!appProvider.isPagePresenter) {
         return [];
     }
     return [
         {
-            menuElement: 'Show on Screens',
+            childBefore: genContextMenuItemIcon('display'),
+            menuElement: tran(label),
             onSelect: onClick,
         },
     ];
 }
 
 export default function FileItemHandlerComp({
-    data,
+    fileData,
     reload,
     index,
     filePath,
@@ -126,15 +160,16 @@ export default function FileItemHandlerComp({
     isSelected,
     renamedCallback,
     checkIsOnScreen,
+    onDragStart,
 }: Readonly<{
-    data: AppDocumentSourceAbs | null | undefined;
+    fileData: AppDocumentSourceAbs | null | undefined;
     reload: () => void;
     index: number;
     filePath: string;
     className?: string;
     contextMenuItems?: ContextMenuItemType[];
     onDrop?: (event: any) => void;
-    onClick?: () => void;
+    onClick?: (event: any) => void;
     renderChild: (data: AppDocumentSourceAbs) => any;
     preDelete?: () => void;
     isDisabledColorNote?: boolean;
@@ -142,6 +177,8 @@ export default function FileItemHandlerComp({
     isSelected: boolean;
     renamedCallback?: (newFileSource: FileSource) => void;
     checkIsOnScreen?: (filePath: string) => Promise<boolean>;
+    // Set to make the row draggable (a document dragged into a presenting flow).
+    onDragStart?: (event: any) => void;
 }>) {
     const isOnScreen = useFileSourceIsOnScreen(
         [filePath],
@@ -154,26 +191,70 @@ export default function FileItemHandlerComp({
     );
     const [isRenaming, setIsRenaming] = useState(false);
     useFileSourceRefreshEvents(['select']);
-
-    if (data === null) {
-        return null;
-    }
-    const selfContextMenu = genContextMenu(filePath, setIsRenaming, reload);
-    const preDelete1 = () => {
-        data?.preDelete();
-        preDelete?.();
-    };
-    selfContextMenu.push(...genTrashContextMenu(filePath, preDelete1));
-    if (data === undefined) {
-        const handleContextMenuOpening = (event: any) => {
-            showAppContextMenu(event, selfContextMenu);
+    const filePathRef = useAppCurrentRef(filePath);
+    const onClickRef = useAppCurrentRef(onClick);
+    // The event is forwarded so a row can read its modifiers — a Ctrl/⌘ click on
+    // a document opens its floating slides preview instead of selecting it.
+    const handleClicking = useCallback((event: any) => {
+        FileSource.getInstance(filePathRef.current).fireSelectEvent();
+        onClickRef.current?.(event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const reloadRef = useAppCurrentRef(reload);
+    const fileDataRef = useAppCurrentRef(fileData);
+    const preDeleteRef = useAppCurrentRef(preDelete);
+    const contextMenuItemsRef = useAppCurrentRef(contextMenuItems);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        const selfContextMenu = genContextMenu(
+            filePathRef.current,
+            setIsRenaming,
+            reloadRef.current,
+        );
+        const preDelete1 = () => {
+            fileDataRef.current?.preDelete();
+            preDeleteRef.current?.();
         };
-        return <FileReadErrorComp onContextMenu={handleContextMenuOpening} />;
+        selfContextMenu.push(
+            ...genTrashContextMenu(filePathRef.current, preDelete1),
+        );
+        showAppContextMenu(event, [
+            ...(contextMenuItemsRef.current ?? []),
+            ...genCommonMenu(filePathRef.current),
+            ...selfContextMenu,
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const onDropRef = useAppCurrentRef(onDrop);
+    const handleDragOver = useCallback((event: any) => {
+        if (onDropRef.current) {
+            event.preventDefault();
+            event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleDragLeave = useCallback((event: any) => {
+        if (onDropRef.current) {
+            event.preventDefault();
+            event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleDropEvent = useCallback((event: any) => {
+        if (onDropRef.current) {
+            event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
+            onDropRef.current(event);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    if (fileData === null) {
+        return (
+            <FileReadErrorComp
+                reload={reload}
+                fileSource={FileSource.getInstance(filePath)}
+            />
+        );
     }
-    const handleClicking = () => {
-        FileSource.getInstance(filePath).fireSelectEvent();
-        onClick?.();
-    };
     const moreClassName =
         `${isSelected ? 'active' : ''} ` + `${className ?? ''}`;
     const fileSource = FileSource.getInstance(filePath);
@@ -182,40 +263,19 @@ export default function FileItemHandlerComp({
         <li
             className={
                 `list-group-item ${moreClassName} app-overflow-hidden` +
+                ' app-has-action-rail' +
                 ` ${userClassName ?? ''} ${isPointer ? 'pointer' : ''}`
             }
             onClick={handleClicking}
             data-index={index + 1}
-            title={filePath}
-            onContextMenu={(event) => {
-                showAppContextMenu(event as any, [
-                    ...(contextMenuItems ?? []),
-                    ...genCommonMenu(filePath),
-                    ...selfContextMenu,
-                ]);
-            }}
-            onDragOver={(event) => {
-                if (onDrop) {
-                    event.preventDefault();
-                    event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
-                }
-            }}
-            onDragLeave={(event) => {
-                if (onDrop) {
-                    event.preventDefault();
-                    event.currentTarget.classList.remove(
-                        RECEIVING_DROP_CLASSNAME,
-                    );
-                }
-            }}
-            onDrop={(event) => {
-                if (onDrop) {
-                    event.currentTarget.classList.remove(
-                        RECEIVING_DROP_CLASSNAME,
-                    );
-                    onDrop(event);
-                }
-            }}
+            data-file-item-file-src={fileSource.src}
+            title={fileSource.fullName}
+            onContextMenu={isRenaming ? undefined : handleContextMenuOpening}
+            draggable={!isRenaming && onDragStart !== undefined}
+            onDragStart={onDragStart}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDropEvent}
         >
             {isRenaming ? (
                 <RenderRenamingComp
@@ -230,13 +290,34 @@ export default function FileItemHandlerComp({
                             'd-flex ' + (isOnScreen ? 'app-on-screen' : '')
                         }
                     >
-                        {renderChild(data)}
+                        {fileData === undefined ? (
+                            <div
+                                className="w-100 app-overflow-hidden p-1"
+                                style={{ maxHeight: '45px' }}
+                            >
+                                <LoadingComp />
+                            </div>
+                        ) : (
+                            renderChild(fileData)
+                        )}
                     </div>
-                    {isDisabledColorNote ? null : (
-                        <div className="color-note-container">
+                    {/* The row's action rail: the ⋮ that opens the menu a
+                        right-click gives, then the colour note. Centred on the
+                        row rather than hung off its top corner — both act on
+                        the whole row, not on its first line. */}
+                    <div
+                        className={
+                            'color-note-container app-action-rail' +
+                            ' app-action-rail--pinned'
+                        }
+                    >
+                        <ContextMenuDotsButtonComp
+                            onOpening={handleContextMenuOpening}
+                        />
+                        {isDisabledColorNote ? null : (
                             <ItemColorNoteComp item={fileSource} />
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </>
             )}
         </li>

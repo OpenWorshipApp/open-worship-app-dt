@@ -1,5 +1,6 @@
 import appProvider from '../../server/appProvider';
-import { IndexedDbController, ItemParamsType } from '../../db/databaseHelpers';
+import type { ItemParamsType } from '../../db/databaseHelpers';
+import { IndexedDbController } from '../../db/databaseHelpers';
 
 const { base64Encode } = appProvider.appUtils;
 
@@ -28,6 +29,6 @@ export default class BibleDatabaseController extends IndexedDbController {
 
     static async getInstance() {
         const instance = await super.getInstance();
-        return instance as any as BibleDatabaseController;
+        return instance as BibleDatabaseController;
     }
 }

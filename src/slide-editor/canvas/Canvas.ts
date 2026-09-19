@@ -1,10 +1,16 @@
 import { toMaxId } from '../../helper/helpers';
-import CanvasItem, { CanvasItemError } from './CanvasItem';
+import type CanvasItem from './CanvasItem';
+import { CanvasItemError } from './CanvasItem';
 import CanvasItemBibleItem from './CanvasItemBibleItem';
+import CanvasItemHtml from './CanvasItemHtml';
 import CanvasItemImage from './CanvasItemImage';
 import CanvasItemText from './CanvasItemText';
 import CanvasItemVideo from './CanvasItemVideo';
-import Slide from '../../app-document-list/Slide';
+import CanvasItemAudio from './CanvasItemAudio';
+import CanvasItemYouTube from './CanvasItemYouTube';
+import CanvasItemWebsite from './CanvasItemWebsite';
+import CanvasItemCamera from './CanvasItemCamera';
+import type Slide from '../../app-document-list/Slide';
 
 export default class Canvas {
     slide: Slide;
@@ -52,9 +58,18 @@ export default class Canvas {
                 return CanvasItemImage.fromJson(json);
             case 'video':
                 return CanvasItemVideo.fromJson(json);
+            case 'audio':
+                return CanvasItemAudio.fromJson(json);
+            case 'youtube':
+                return CanvasItemYouTube.fromJson(json);
+            case 'website':
+                return CanvasItemWebsite.fromJson(json);
+            case 'camera':
+                return CanvasItemCamera.fromJson(json);
             case 'text':
-            case 'html':
                 return CanvasItemText.fromJson(json);
+            case 'html':
+                return CanvasItemHtml.fromJson(json);
             case 'bible':
                 return CanvasItemBibleItem.fromJson(json);
             default:
@@ -81,20 +96,28 @@ export default class Canvas {
         const copiedCanvasItems: CanvasItem<any>[] = [];
         const textPlainType = 'text/plain';
         for (const clipboardItem of clipboardItems) {
-            if (
-                clipboardItem.types.some((type) => {
-                    return type === textPlainType;
-                })
-            ) {
+            if (clipboardItem.types.includes(textPlainType)) {
                 const blob = await clipboardItem.getType(textPlainType);
-                const json = await blob.text();
-                const copiedCanvasItem =
-                    this.clipboardDeserializeCanvasItem(json);
-                if (copiedCanvasItem !== null) {
-                    copiedCanvasItems.push(copiedCanvasItem);
+                const text = await blob.text();
+                const texts = text.split('\n');
+                for (const text of texts) {
+                    const copiedCanvasItem =
+                        this.clipboardDeserializeCanvasItem(text);
+                    if (copiedCanvasItem !== null) {
+                        copiedCanvasItems.push(copiedCanvasItem);
+                    }
                 }
             }
         }
         return copiedCanvasItems;
+    }
+
+    static setCopiedItems(items: CanvasItem<any>[]) {
+        const data = items
+            .map((item) => {
+                return item.clipboardSerialize();
+            })
+            .join('\n');
+        navigator.clipboard.writeText(data);
     }
 }

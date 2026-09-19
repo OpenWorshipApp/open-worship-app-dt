@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { handleError } from '../errorHelpers';
 import {
     fsCheckDirExist,
@@ -12,17 +14,22 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import { getBibleInfo } from '../bible-helpers/bibleInfoHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
-import { useState } from 'react';
-import { useAppEffectAsync, useAppStateAsync } from '../debuggerHelpers';
-import BibleItem from '../../bible-list/BibleItem';
-import { getLangFromBibleKey } from '../bible-helpers/bibleLogicHelpers2';
-import { LocaleType } from '../../lang/langHelpers';
+import { useAppEffectAsync, useAppStateAsync } from '../appHooks';
+import type BibleItem from '../../bible-list/BibleItem';
+import type { LocaleType } from '../../lang/langHelpers';
+import { tran } from '../../lang/langHelpers';
+// Availability and the folder name come from the light module: this file is
+// reached by components that only DRAW an audio control (AudioAIEnablingComp,
+// and through it the bible view's title row), and importing `openAIHelpers`
+// here put the OpenAI SDK in their chunk -- which is how the Presenter came to
+// fetch it on a cold boot with no key set. The SDK is loaded below, at the two
+// places that actually call it.
 import {
     checkIsAvailable,
     DATA_DIR_NAME,
-    getOpenAIInstance,
     useAvailable,
-} from './openAIHelpers';
+} from './openAIAvailabilityHelpers';
+import { getLangDataFromBibleKey } from '../bible-helpers/bibleStyleHelpers';
 
 export type SpeakableTextDataType = {
     text: string;
@@ -34,7 +41,7 @@ export async function textToSpeech(
     { text, locale, filePath }: SpeakableTextDataType,
     isForce = false,
 ) {
-    return unlocking(filePath, async () => {
+    return unlocking('tts-' + filePath, async () => {
         try {
             // voice:
             // 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'coral', 'verse',
@@ -45,6 +52,7 @@ export async function textToSpeech(
                 }
                 await fsDeleteFile(filePath);
             }
+            const { getOpenAIInstance } = await import('./openAIHelpers');
             const client = getOpenAIInstance();
             if (client === null) {
                 return null;
@@ -63,7 +71,7 @@ export async function textToSpeech(
             return filePath;
         } catch (error) {
             showSimpleToast(
-                'Text to Speech',
+                tran('Text to Speech'),
                 'Fail to convert text to speech. Please check your OpenAI ' +
                     'API Key and network connection.',
             );
@@ -89,13 +97,14 @@ export async function bibleTextToSpeech(
     },
     isForce?: boolean,
 ) {
+    const { getOpenAIInstance } = await import('./openAIHelpers');
     if (getOpenAIInstance() === null) {
         return null;
     }
     const bibleInfo = await getBibleInfo(bibleKey);
     if (bibleInfo === null) {
         showSimpleToast(
-            'Bible Text to Speech',
+            tran('Bible Text to Speech'),
             `Fail to get Bible info for bible key "${bibleKey}".`,
         );
         return null;
@@ -103,8 +112,8 @@ export async function bibleTextToSpeech(
     const baseDir = await ensureDataDirectory(DATA_DIR_NAME);
     if (baseDir === null) {
         showSimpleToast(
-            'Text to Speech',
-            'Fail to ensure data directory for AI data.',
+            tran('Text to Speech'),
+            tran('Fail to ensure data directory for AI data.'),
         );
         return null;
     }
@@ -134,8 +143,8 @@ export async function checkIsAIAudioAvailableForBible(bibleItem: BibleItem) {
     if (!checkIsAvailable()) {
         return false;
     }
-    const langData = await getLangFromBibleKey(bibleItem.bibleKey);
-    if (langData === null || !langData.bibleAudioAvailable) {
+    const langData = await getLangDataFromBibleKey(bibleItem.bibleKey);
+    if (!langData?.bibleAudioAvailable) {
         return false;
     }
     return bibleItem.isAudioEnabled;
@@ -143,8 +152,8 @@ export async function checkIsAIAudioAvailableForBible(bibleItem: BibleItem) {
 
 export function useIsAudioAIEnabled(bibleItem: BibleItem) {
     const [isAvailable] = useAppStateAsync(async () => {
-        const langData = await getLangFromBibleKey(bibleItem.bibleKey);
-        if (langData === null || !langData.bibleAudioAvailable) {
+        const langData = await getLangDataFromBibleKey(bibleItem.bibleKey);
+        if (!langData?.bibleAudioAvailable) {
             return false;
         }
         return true;

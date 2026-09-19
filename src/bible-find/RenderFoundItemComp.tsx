@@ -1,13 +1,19 @@
+import { useCallback } from 'react';
+
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
-import { handleDragStart } from '../helper/dragHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
+import { handleDragStart as handleDragStartHelper } from '../helper/dragHelpers';
+import { tran } from '../lang/langHelpers';
 import { useBibleFindController } from './BibleFindController';
 import {
     breakItem,
     openContextMenu,
     openInBibleLookup,
 } from './bibleFindHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export default function RenderFoundItemComp({
     findText,
@@ -18,40 +24,62 @@ export default function RenderFoundItemComp({
     text: string;
     bibleKey: string;
 }>) {
+    const fontFamily = useBibleFontFamily(bibleKey);
     const viewController = useLookupBibleItemControllerContext();
     const bibleFindController = useBibleFindController();
     const [data] = useAppStateAsync(() => {
         return breakItem(bibleFindController.locale, findText, text, bibleKey);
     }, [bibleFindController.locale, findText, text, bibleKey]);
+    const dataRef = useAppCurrentRef(data);
+    const handleDragStart = useCallback((event: any) => {
+        handleDragStartHelper(event, dataRef.current!.bibleItem);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        openContextMenu(event, {
+            viewController: viewControllerRef.current,
+            bibleItem: dataRef.current!.bibleItem,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleClicking = useCallback((event: any) => {
+        openInBibleLookup(
+            event,
+            viewControllerRef.current,
+            dataRef.current!.bibleItem,
+            true,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (data === undefined) {
-        return <div>Loading...</div>;
+        return <div>{tran('Loading')}...</div>;
     }
     if (data === null) {
-        return <div>Fail to get data</div>;
+        return <div>{tran('Fail to get data')}</div>;
     }
     const { newItem, bibleItem } = data;
     return (
         <div
-            className="w-100 app-border-white-round my-2 p-2 app-caught-hover-pointer"
+            className="w-100 app-find-item app-caught-hover-pointer"
             draggable
-            onDragStart={(event) => {
-                handleDragStart(event, bibleItem);
-            }}
-            onContextMenu={(event) => {
-                openContextMenu(event, {
-                    viewController,
-                    bibleItem,
-                });
-            }}
-            onClick={(event) => {
-                openInBibleLookup(event, viewController, bibleItem);
-            }}
+            onDragStart={handleDragStart}
+            onContextMenu={handleContextMenuOpening}
+            onClick={handleClicking}
         >
-            <BibleDirectViewTitleComp bibleItem={bibleItem} />
+            <div className="d-flex align-items-start">
+                <div className="flex-fill app-overflow-hidden">
+                    <BibleDirectViewTitleComp bibleItem={bibleItem} />
+                </div>
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
+            </div>
             <span
-                data-bible-key={bibleItem.bibleKey}
+                className="app-find-text"
+                style={{ fontFamily }}
                 dangerouslySetInnerHTML={{
-                    __html: newItem,
+                    __html: sanitizeHtml(newItem),
                 }}
             />
         </div>

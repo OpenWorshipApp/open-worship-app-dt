@@ -1,3 +1,5 @@
+import { parsePatch, reversePatch, applyPatch, createPatch } from 'diff';
+
 import { handleError } from '../helper/errorHelpers';
 import {
     fsCheckDirExist,
@@ -11,15 +13,32 @@ import {
     pathBasename,
     pathJoin,
 } from '../server/fileHelpers';
-import GarbageCollectableCacher from '../others/GarbageCollectableCacher';
 import FileSource from '../helper/FileSource';
-import { parsePatch, reversePatch, applyPatch, createPatch } from 'diff';
 import { unlocking } from '../server/unlockingHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+// From the LEAF, not from `DirSource`: this module is reachable from node-env
+// tests, and `DirSource` drags the browser-only `appProvider` in behind it.
+import { toEditingHistoryFolderPath } from './editingHistoryPathHelpers';
 
+type HistoryMovementType = 'undo' | 'redo' | 'discard';
+const HISTORY_MOVEMENT_TYPES: HistoryMovementType[] = [
+    'undo',
+    'redo',
+    'discard',
+];
+export function checkIsHistoryMovementEventType(
+    eventType: unknown,
+): eventType is HistoryMovementType {
+    return HISTORY_MOVEMENT_TYPES.includes(eventType as HistoryMovementType);
+}
 const CURRENT_FILE_SIGN = '-head';
+const MAX_HISTORY_FILES = 100;
 export class FileLineHandler {
     filePath: string;
     dirPath: string;
+    // per-file: a module-level timer would let edits to one document starve
+    // another document's pending history cleanup
+    private readonly cleanupAttemptTimeout = genTimeoutAttempt(5000);
 
     constructor(filePath: string, dirPath: string) {
         this.filePath = filePath;
@@ -60,6 +79,40 @@ export class FileLineHandler {
 
     private toFileFullPath(index: number) {
         return pathJoin(this.dirPath, index.toString());
+    }
+
+    cleanupHistory() {
+        return unlocking(`cleanup-history-${this.dirPath}`, async () => {
+            while (true) {
+                const fileNames = (await this.getAllHistoryFiles()).sort(
+                    (a, b) => this.toFileIndex(a) - this.toFileIndex(b),
+                );
+                if (
+                    fileNames.length < MAX_HISTORY_FILES ||
+                    fileNames.length <= 1
+                ) {
+                    break;
+                }
+                const fileFullName = fileNames[0];
+                if (fileFullName.endsWith(CURRENT_FILE_SIGN)) {
+                    break;
+                }
+                try {
+                    const filePath = pathJoin(this.dirPath, fileFullName);
+                    if (
+                        !filePath.endsWith(CURRENT_FILE_SIGN) &&
+                        (await fsCheckFileExist(filePath))
+                    ) {
+                        await fsDeleteFile(filePath);
+                        FileSource.forgetCachedData(filePath);
+                        continue;
+                    }
+                } catch (error) {
+                    handleError(error);
+                }
+                break;
+            }
+        });
     }
 
     async getCurrentFileFullPath() {
@@ -118,6 +171,12 @@ export class FileLineHandler {
 
     private async moveFile(fileFullPath: string, newFileFullPath: string) {
         await fsMove(fileFullPath, newFileFullPath);
+        // A rename changes what BOTH paths hold without `writeFileData`, so the
+        // short read cache would otherwise hand back what either path held a
+        // moment ago -- and `N-head` is read straight after this to write the
+        // diff patch (`FileSource.forgetCachedData`).
+        FileSource.forgetCachedData(fileFullPath);
+        FileSource.forgetCachedData(newFileFullPath);
         return newFileFullPath;
     }
 
@@ -201,6 +260,9 @@ export class FileLineHandler {
                 );
                 if (isSuccess) {
                     await this.changeCurrent(currentFilePath);
+                    this.cleanupAttemptTimeout(async () => {
+                        await this.cleanupHistory();
+                    });
                     return true;
                 }
             } catch (error) {
@@ -225,10 +287,17 @@ export class FileLineHandler {
         }
         currentFilePath = this.toCurrentFileFullPath(0);
         await fsCloneFile(this.filePath, currentFilePath);
+        // A history cleared and rebuilt reuses `0-head` -- a path that may
+        // have been read, holding another document state, moments ago.
+        FileSource.forgetCachedData(currentFilePath);
     }
 
-    clearHistories() {
-        return fsDeleteDir(this.dirPath);
+    async clearHistories() {
+        // Forgotten on both sides of the delete: a read already under way may
+        // cache what it found just after the first forget.
+        FileSource.forgetCachedDataUnder(this.dirPath);
+        await fsDeleteDir(this.dirPath);
+        FileSource.forgetCachedDataUnder(this.dirPath);
     }
 
     async clearNextHistories(index: number) {
@@ -237,8 +306,10 @@ export class FileLineHandler {
             .filter((fileIndex) => {
                 return fileIndex > index;
             })
-            .map((fileIndex) => {
-                return fsDeleteFile(this.toFileFullPath(fileIndex));
+            .map(async (fileIndex) => {
+                const filePath = this.toFileFullPath(fileIndex);
+                await fsDeleteFile(filePath);
+                FileSource.forgetCachedData(filePath);
             });
         await Promise.all(promises);
     }
@@ -248,8 +319,6 @@ const cache = new Map<string, EditingHistoryManager>();
 export default class EditingHistoryManager {
     filePath: string;
     fileLineHandler: FileLineHandler;
-    private static readonly garbageCacher =
-        new GarbageCollectableCacher<string>(3);
 
     constructor(filePath: string) {
         this.filePath = filePath;
@@ -257,9 +326,11 @@ export default class EditingHistoryManager {
         this.fileLineHandler = new FileLineHandler(this.filePath, dirPath);
     }
 
-    fireEvent() {
-        EditingHistoryManager.garbageCacher.delete(this.filePath);
-        this.fileLineHandler.fileSource.fireUpdateEvent();
+    fireEvent(eventType?: HistoryMovementType) {
+        this.fileLineHandler.fileSource.fireUpdateEvent({
+            isHistoryEditing: true,
+            eventType,
+        });
     }
 
     async checkCanUndo() {
@@ -273,7 +344,10 @@ export default class EditingHistoryManager {
         return nextFilePath !== null;
     }
 
-    private async moveHistory(filePath: string | null) {
+    private async moveHistory(
+        filePath: string | null,
+        eventType: HistoryMovementType,
+    ) {
         if (filePath === null) {
             return false;
         }
@@ -282,22 +356,27 @@ export default class EditingHistoryManager {
             return false;
         }
         await this.fileLineHandler.changeCurrent(filePath);
-        this.fireEvent();
+        this.fireEvent(eventType);
         return true;
     }
 
     async undo() {
         const filePath = await this.fileLineHandler.getPreviousFileFullPath();
-        return await this.moveHistory(filePath);
+        return await this.moveHistory(filePath, 'undo');
     }
 
     async redo() {
         const filePath = await this.fileLineHandler.getNextFileFullPath();
-        return await this.moveHistory(filePath);
+        return await this.moveHistory(filePath, 'redo');
     }
 
     async addHistory(dataText: string) {
-        await this.fileLineHandler.ensureHistoriesDir();
+        try {
+            await this.fileLineHandler.ensureHistoriesDir();
+        } catch (error) {
+            handleError(error);
+            return;
+        }
         await this.fileLineHandler.appendHistory(dataText);
         this.fireEvent();
     }
@@ -307,42 +386,41 @@ export default class EditingHistoryManager {
     }
 
     async getCurrentHistory() {
-        const dataText = EditingHistoryManager.garbageCacher.get(this.filePath);
-        if (dataText !== null) {
-            return dataText;
+        const isHavingHistory =
+            (await this.fileLineHandler.getCurrentFileFullPath()) !== null;
+        if (!isHavingHistory) {
+            return await this.getOriginalData();
         }
-        return await unlocking(
-            `get-current-history-${this.filePath}`,
-            async () => {
-                let dataText = EditingHistoryManager.garbageCacher.get(
-                    this.filePath,
-                );
+        let retryCount = 0;
+        // Wait for a short period to allow any pending writes to complete
+        while (retryCount < 300) {
+            const headerFilepath =
+                await this.fileLineHandler.getCurrentFileFullPath();
+            if (headerFilepath !== null) {
+                const dataText = await FileSource.readFileData(headerFilepath!);
                 if (dataText !== null) {
                     return dataText;
                 }
-                const currentFilePath =
-                    await this.fileLineHandler.getCurrentFileFullPath();
-                dataText =
-                    currentFilePath !== null
-                        ? await FileSource.readFileData(currentFilePath)
-                        : await this.getOriginalData();
-                if (dataText === null) {
-                    return null;
-                }
+            }
+            await new Promise((resolve) => setTimeout(resolve, 10));
+            retryCount++;
+        }
+        return null;
+    }
 
-                EditingHistoryManager.garbageCacher.set(
-                    this.filePath,
-                    dataText,
-                );
-                return dataText;
-            },
+    async checkHasHistories() {
+        return await fsCheckDirExist(
+            EditingHistoryManager.genFolderPath(this.filePath),
         );
     }
 
     async discard() {
+        if (!((await this.checkCanRedo()) || (await this.checkCanUndo()))) {
+            return true;
+        }
         try {
             await this.fileLineHandler.clearHistories();
-            this.fireEvent();
+            this.fireEvent('discard');
             return true;
         } catch (error) {
             handleError(error);
@@ -390,6 +468,6 @@ export default class EditingHistoryManager {
     }
 
     static genFolderPath(filePath: string) {
-        return `${filePath}.histories`;
+        return toEditingHistoryFolderPath(filePath);
     }
 }

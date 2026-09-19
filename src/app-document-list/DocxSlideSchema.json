@@ -1,0 +1,27 @@
+{
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "number"
+        },
+        "htmlFilePath": {
+            "type": "string"
+        },
+        "html": {
+            "type": "string"
+        },
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "width": {
+                    "type": "number"
+                },
+                "height": {
+                    "type": "number"
+                }
+            },
+            "required": ["width", "height"]
+        }
+    },
+    "required": ["id", "htmlFilePath", "metadata"]
+}

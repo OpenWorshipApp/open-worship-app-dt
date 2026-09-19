@@ -1,6 +1,6 @@
-import { tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
+import SettingCardHeaderComp from './SettingCardHeaderComp';
 import { applyStore } from './SettingApplyComp';
 import {
     APP_FONT_FAMILY_SETTING_NAME,
@@ -24,7 +24,10 @@ export default function SettingGeneralFontFamilyComp() {
     };
     return (
         <div className="card m-1">
-            <div className="card-header">{tran('Font Family')}</div>
+            <SettingCardHeaderComp
+                iconClassName="bi-fonts"
+                title="Font Family"
+            />
             <div className="card-body">
                 <FontFamilyControlComp
                     fontFamily={fontFamily}

@@ -1,177 +1,167 @@
-import { DragEvent } from 'react';
+import './SlideEditorCanvasComp.scss';
 
-import { BoxEditorComp } from './box/BoxEditorComp';
-import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
-import { showCanvasContextMenu } from './canvasContextMenuHelpers';
-import CanvasController, {
-    defaultRangeSize,
-    useCanvasControllerContext,
-} from './CanvasController';
+import { useCallback, useRef } from 'react';
+
+import { defaultRangeSize } from './CanvasController';
 import { useSlideCanvasScale } from './canvasEventHelpers';
-import { showSimpleToast } from '../../toast/toastHelpers';
-import {
-    CanvasItemContext,
-    useCanvasItemsContext,
-    useStopAllModes,
-} from './CanvasItem';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
-import { handleCtrlWheel } from '../../others/AppRangeComp';
-import { changeDragEventStyle } from '../../helper/helpers';
-import { readDroppedFiles } from '../../others/droppingFileHelpers';
-import { checkIsSupportMediaType } from './canvasHelpers';
+import { useZoomingRegistering } from '../../others/AppRangeComp';
+import { onCanvasKeyboardEvent } from '../slideEditingKeyboardEventHelpers';
+import { MultiContextRenderComp } from '../../helper/MultiContextRenderComp';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
+import { type useEditingCanvasContextValue } from '../canvasEditingHelpers';
+import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
+import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
+import CanvasNoteContainerHandlerComp from '../note/CanvasNoteContainerHandlerComp';
+import ResizeActorComp from '../../resize-actor/ResizeActorComp';
+import {
+    appDocumentFlexSizeNames,
+    toAppDocumentFlexSizeName,
+} from '../../resize-actor/flexSizeHelpers';
+import CanvasContainerComp from './canvas-container/CanvasContainerComp';
+import { toWidgetLabel } from '../../others/labelIconHelpers';
+import SlideEditorInsertToolbarComp from './tools/SlideEditorInsertToolbarComp';
 
-function dragOverHandling(event: any) {
-    event.preventDefault();
-    const items: DataTransferItemList = event.dataTransfer.items;
-    if (
-        Array.from(items).every((item) => {
-            return checkIsSupportMediaType(item.type);
-        })
-    ) {
-        event.currentTarget.style.opacity = '0.5';
-    }
-}
-
-async function handleDropping(
-    canvasController: CanvasController,
-    event: DragEvent,
-) {
-    changeDragEventStyle(event, 'opacity', '1');
-    for await (const file of readDroppedFiles(event)) {
-        if (checkIsSupportMediaType(file.type)) {
-            canvasController
-                .genNewImageItemFromFile(file, event)
-                .then((newCanvasItem) => {
-                    if (!newCanvasItem) {
-                        return;
-                    }
-                    canvasController.addNewItem(newCanvasItem);
-                });
-        } else {
-            showSimpleToast('Insert Image or Video', 'Unsupported file type!');
-        }
-    }
-}
-
-async function handleContextMenuOpening(
-    canvasController: CanvasController,
-    event: any,
-    stopAllModes: () => void,
-) {
-    (event.target as HTMLDivElement).focus();
-    stopAllModes();
-    showCanvasContextMenu(event, canvasController);
-}
-
-function BodyRendererComp() {
-    const canvasController = useCanvasControllerContext();
-    const { canvas } = canvasController;
-    const canvasItems = useCanvasItemsContext();
-    const stopAllModes = useStopAllModes();
+function EditorComp({
+    contextData,
+}: Readonly<{
+    contextData: ReturnType<typeof useEditingCanvasContextValue>;
+}>) {
+    const { canvasController } = contextData;
+    const { appDocument, canvas } = canvasController;
+    const fileSource = appDocument.fileSource;
+    const { slide } = canvas;
     return (
-        <div
-            className="editor app-blank-bg app-border-white-round"
-            style={{
-                width: `${canvas.width}px`,
-                height: `${canvas.height}px`,
-                transform: 'translate(-50%, -50%)',
+        <ResizeActorComp
+            flexSizeName={toAppDocumentFlexSizeName(
+                appDocumentFlexSizeNames.slideEditorCanvas,
+                fileSource.filePath,
+            )}
+            isHorizontal={false}
+            flexSizeDefault={{
+                v1: ['6'],
+                v2: ['1'],
             }}
-            onDragOver={dragOverHandling}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                event.currentTarget.style.opacity = '1';
-            }}
-            onDrop={(event) => {
-                event.preventDefault();
-                handleDropping(canvasController, event);
-            }}
-            onContextMenu={(event) => {
-                event.preventDefault();
-                handleContextMenuOpening(canvasController, event, stopAllModes);
-            }}
-            // import onclick by mouse down/up
-            onMouseDown={(event) => {
-                event.stopPropagation();
-                (event.target as HTMLDivElement).dataset.mouseDown =
-                    JSON.stringify({
-                        time: Date.now(),
-                        x: event.clientX,
-                        y: event.clientY,
-                    });
-            }}
-            onMouseUp={(event) => {
-                if (event.target instanceof HTMLTextAreaElement) {
-                    return;
-                }
-                const dataset = (event.target as HTMLDivElement).dataset;
-                if (dataset.mouseDown) {
-                    const mouseDown = JSON.parse(dataset.mouseDown);
-                    const timeDiff = Date.now() - mouseDown.time;
-                    const distance = Math.sqrt(
-                        Math.pow(event.clientX - mouseDown.x, 2) +
-                            Math.pow(event.clientY - mouseDown.y, 2),
-                    );
-                    if (timeDiff < 500 && distance < 10) {
-                        stopAllModes();
-                    }
-                }
-                dataset.mouseDown = '';
-            }}
-        >
-            {canvasItems.map((canvasItem) => {
-                return (
-                    <CanvasItemContext key={canvasItem.id} value={canvasItem}>
-                        <BoxEditorComp />
-                    </CanvasItemContext>
-                );
-            })}
-        </div>
+            dataInput={[
+                {
+                    children: {
+                        render: () => {
+                            return (
+                                <CanvasContainerComp
+                                    contextData={contextData}
+                                />
+                            );
+                        },
+                    },
+                    key: 'v1',
+                    ...toWidgetLabel('Canvas'),
+                    className: 'app-flex-item',
+                },
+                {
+                    children: {
+                        render: () => {
+                            return (
+                                <CanvasNoteContainerHandlerComp
+                                    appDocument={appDocument}
+                                    slide={slide}
+                                />
+                            );
+                        },
+                    },
+                    key: 'v2',
+                    ...toWidgetLabel('Note'),
+                    className: 'app-flex-item',
+                },
+            ]}
+        />
     );
 }
 
-export default function SlideEditorCanvasComp() {
-    const canvasController = useCanvasControllerContext();
-    const stopAllModes = useStopAllModes();
-    const { canvas } = canvasController;
-    const scale = useSlideCanvasScale();
-    useKeyboardRegistering([{ key: 'Escape' }], stopAllModes, []);
+export default function SlideEditorCanvasComp({
+    contextData,
+}: Readonly<{ contextData: ReturnType<typeof useEditingCanvasContextValue> }>) {
+    const {
+        contextValue: allCanvasContextValue,
+        selectedCanvasItems,
+        setSelectedCanvasItems,
+        canvasController,
+        stopAllModes,
+    } = contextData;
+
+    const stopAllModesRef = useAppCurrentRef(stopAllModes);
+    const canvasControllerRef = useAppCurrentRef(canvasController);
+    const selectedCanvasItemsRef = useAppCurrentRef(selectedCanvasItems);
+    const setSelectedCanvasItemsRef = useAppCurrentRef(setSelectedCanvasItems);
+    const handleKeyDownEvent = useCallback((event: any) => {
+        if (document.activeElement !== event.currentTarget) {
+            return;
+        }
+        onCanvasKeyboardEvent(
+            {
+                stopAllModes: stopAllModesRef.current,
+                canvasController: canvasControllerRef.current,
+                selectedCanvasItems: selectedCanvasItemsRef.current,
+                setSelectedCanvasItems: setSelectedCanvasItemsRef.current,
+            },
+            event,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // `useZoomingRegistering` snapshots `value` into a ref that is only
+    // refreshed when this component re-renders. Reading
+    // `canvasController.scale` directly here would never re-render on its
+    // own scale changes (only the sibling `SlideEditorCanvasScalingComp`
+    // subscribes to those), so every Ctrl+Scroll after the first would
+    // recompute from a stale base value and appear to do nothing.
+    const scale = useSlideCanvasScale(canvasController);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    useZoomingRegistering(containerRef, {
+        value: scale * 10,
+        setValue: (newScale) => {
+            canvasController.scale = newScale / 10;
+        },
+        defaultSize: defaultRangeSize,
+    });
+
+    useAppEffect(() => {
+        canvasController.focusEditor = () => {
+            containerRef.current?.focus();
+        };
+        return () => {
+            canvasController.focusEditor = () => {};
+        };
+    }, [canvasController]);
+
     return (
-        <div className="card w-100 h-100">
-            <div
-                className="card-body editor-container"
-                onWheel={(event) => {
-                    event.stopPropagation();
-                    handleCtrlWheel({
-                        event,
-                        value: canvasController.scale * 10,
-                        setValue: (scale) => {
-                            canvasController.scale = scale / 10;
-                        },
-                        defaultSize: defaultRangeSize,
-                    });
-                }}
-            >
-                <div
-                    className="app-overflow-hidden"
-                    style={{
-                        width: `${Math.round(canvas.width * scale + 20)}px`,
-                        height: `${Math.round(canvas.height * scale + 20)}px`,
-                    }}
-                >
-                    <div
-                        className="w-100 h-100"
-                        style={{
-                            transform:
-                                `scale(${scale.toFixed(2)}) ` +
-                                'translate(50%, 50%)',
-                        }}
-                    >
-                        <BodyRendererComp />
-                    </div>
-                </div>
+        <div className="card w-100 h-100 app-overflow-hidden">
+            <div className="card-header w-100 m-0 p-0">
+                <SlideEditorInsertToolbarComp
+                    canvasController={canvasController}
+                />
             </div>
-            <div className="card-footer">
-                <SlideEditorCanvasScalingComp />
+            <div
+                className={
+                    'card-body w-100 m-0 p-0 editor-container app-focusable ' +
+                    'app-overflow-hidden'
+                }
+                tabIndex={0}
+                onKeyDown={handleKeyDownEvent}
+                ref={containerRef}
+            >
+                <EditorComp contextData={contextData} />
+            </div>
+            <div className="card-footer w-100 m-0 p-0">
+                <div className="slide-editor-canvas-footer w-100 d-flex">
+                    <VaryAppDocumentContext
+                        value={canvasController.appDocument}
+                    >
+                        <SlidesMenuComp />
+                    </VaryAppDocumentContext>
+                    <MultiContextRenderComp contexts={allCanvasContextValue}>
+                        <SlideEditorCanvasScalingComp />
+                    </MultiContextRenderComp>
+                </div>
             </div>
         </div>
     );

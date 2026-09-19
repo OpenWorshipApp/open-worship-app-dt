@@ -1,19 +1,19 @@
-import { useState } from 'react';
+import './BibleFindComp.scss';
 
-import {
-    doFinding,
-    FindDataType,
-    SelectedBookKeyType,
-} from './bibleFindHelpers';
+import { useCallback, useState } from 'react';
+
+import type { FindDataType, SelectedBookKeyType } from './bibleFindHelpers';
+import { doFinding } from './bibleFindHelpers';
 import BibleFindRenderDataComp from './BibleFindRenderDataComp';
-import BibleSelectionComp from '../bible-lookup/BibleSelectionComp';
+import BibleKeySelectionComp from '../bible-lookup/BibleKeySelectionComp';
 import BibleFindHeaderComp from './BibleFindHeaderComp';
 import { useBibleFindController } from './BibleFindController';
 import {
     useAppEffect,
     useAppEffectAsync,
     useAppStateAsync,
-} from '../helper/debuggerHelpers';
+    useAppCurrentRef,
+} from '../helper/appHooks';
 import RenderFindingInfoHeaderComp from './RenderFindingInfoHeaderComp';
 
 export default function BibleFindBodyComp({
@@ -52,15 +52,23 @@ export default function BibleFindBodyComp({
         });
         setSelectedBooks(newSelectedBooks);
     };
-    const handleFinding = (text: string, isFresh?: boolean) => {
-        if (text === findText) {
+    const findTextRef = useAppCurrentRef(findText);
+    const bibleFindControllerRef = useAppCurrentRef(bibleFindController);
+    const handleFinding = useCallback((text: string, isFresh?: boolean) => {
+        if (text === findTextRef.current) {
             if (isFresh) {
-                doFinding(bibleFindController, findText, undefined, setData);
+                doFinding(
+                    bibleFindControllerRef.current,
+                    findTextRef.current,
+                    undefined,
+                    setData,
+                );
             }
             return;
         }
         setFindText(text);
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="card app-overflow-hidden w-100 h-100">
             <div
@@ -70,7 +78,7 @@ export default function BibleFindBodyComp({
                     minWidth: '200px',
                 }}
             >
-                <BibleSelectionComp
+                <BibleKeySelectionComp
                     onBibleKeyChange={setBibleKey}
                     bibleKey={bibleFindController.bibleKey}
                 />

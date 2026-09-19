@@ -1,11 +1,20 @@
-import { useState } from 'react';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import DirSource from '../helper/DirSource';
+import { type ChangeEvent, useCallback, useId, useState } from 'react';
+
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import type DirSource from '../helper/DirSource';
 import { tran } from '../lang/langHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 import { readTextFromClipboard } from '../server/appHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import appProvider from '../server/appProvider';
+import {
+    type MessageCallbackType,
+    writeStreamToFile,
+} from '../helper/bible-helpers/downloadHelpers';
+import { genBlockUnload } from '../helper/blockUnloadHelpers';
+import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function InputUrlComp({
     defaultUrl,
@@ -17,24 +26,67 @@ function InputUrlComp({
     title: string;
 }>) {
     const [url, setUrl] = useState(defaultUrl);
-    const invalidMessage = url.trim() === '' ? 'Cannot be empty' : '';
+    // Complained about only once the box has been touched. It used to open
+    // already marked wrong -- red border, warning icon and "Cannot be empty"
+    // -- before the user had had any chance to type in it.
+    const [isTouched, setIsTouched] = useState(false);
+    const invalidMessage =
+        isTouched && url.trim() === '' ? 'Cannot be empty' : '';
+    const onChangeRef = useAppCurrentRef(onChange);
+    const handleUrlChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setIsTouched(true);
+        setUrl(e.target.value);
+        onChangeRef.current(e.target.value);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // The box is NAMED by the words beside it. It used to carry no
+    // accessible name at all -- "Video URL:" was a plain div next to it --
+    // so a screen reader announced an unnamed edit box, and `owa_type` (which
+    // finds a box by its label) could not target it either: a walkthrough
+    // card could open this dialog and then had no way to fill it in. The
+    // reason it is BOTH `htmlFor` and `aria-label` is that the label element
+    // names it for assistive tech while the attribute is what the app's own
+    // matcher reads.
+    const inputId = useId();
+    const messageId = `${inputId}-message`;
+    const label = tran(title);
+    const isInvalid = invalidMessage !== '';
     return (
         <div className="w-100 h-100">
-            <div className="input-group" title={invalidMessage}>
-                <div className="input-group-text">{title}</div>
+            <div className="input-group">
+                <label className="input-group-text" htmlFor={inputId}>
+                    {label}
+                </label>
                 <input
+                    id={inputId}
+                    // The dialog opens from a list's ⋮ menu, and focus used to
+                    // stay on that ⋮ BEHIND the modal: the first thing typed
+                    // went nowhere.
+                    autoFocus
+                    aria-label={label}
+                    aria-invalid={isInvalid}
+                    aria-describedby={isInvalid ? messageId : undefined}
                     className={
                         'form-control form-control-sm' +
-                        (invalidMessage ? ' is-invalid' : '')
+                        (isInvalid ? ' is-invalid' : '')
                     }
                     type="text"
                     value={url}
-                    onChange={(e) => {
-                        setUrl(e.target.value);
-                        onChange(e.target.value);
-                    }}
+                    onChange={handleUrlChange}
                 />
             </div>
+            {/*
+                Said in words under the box rather than as a tooltip on the
+                group around it. A tooltip has to be hovered to be read, and
+                it was also gluing itself onto the group's label -- the near
+                miss a failed `owa_type` came back with was the invented
+                "Video URL: Cannot be empty", which is on no control anywhere.
+            */}
+            {isInvalid ? (
+                <div id={messageId} className="invalid-feedback d-block">
+                    {tran(invalidMessage)}
+                </div>
+            ) : null}
         </div>
     );
 }
@@ -42,7 +94,7 @@ function InputUrlComp({
 export async function askForURL(title: string, subTitle: string) {
     let url = '';
     const clipboardText = await readTextFromClipboard();
-    if (clipboardText !== null && clipboardText.trim().startsWith('http')) {
+    if (clipboardText?.trim().startsWith('http')) {
         url = clipboardText.trim();
     }
     const isConfirmInput = await showAppInput(
@@ -59,10 +111,85 @@ export async function askForURL(title: string, subTitle: string) {
         return null;
     }
     if (!url.trim().startsWith('http')) {
-        showSimpleToast(tran('Download From URL'), 'Invalid URL');
+        showSimpleToast(tran('Download From URL'), tran('Invalid URL'));
         return null;
     }
     return url;
+}
+
+// Long enough to carry a real reason, short enough that the toast stays a
+// toast — yt-dlp likes to append a wiki URL and a flag suggestion.
+const MAX_FAILURE_REASON_LENGTH = 200;
+
+/**
+ * The single line of a failed download worth putting in front of the operator.
+ *
+ * The failure toasts used to read only "Error occurred during downloading
+ * video", which is the same sentence for a typo'd URL, a private video and a
+ * temporary rate limit — three problems with three different responses. The
+ * real cause is already in the rejection: `downloadVideoOrAudio` rejects with
+ * `'Download failed: ' + error.message`, and for the yt-dlp path that message
+ * is the whole stderr transcript.
+ *
+ * yt-dlp prints its warnings first and the fatal reason last, so the LAST
+ * `ERROR:` line is the one that actually stopped the download — taking the
+ * first would surface a retry warning and hide the real answer. Non-yt-dlp
+ * callers have no such line and fall back to the message's first line.
+ *
+ * Returns `''` when there is nothing useful to add, so callers can keep their
+ * translated sentence exactly as it was.
+ */
+export function toDownloadFailureReason(error: any) {
+    const lines = `${error?.message ?? error ?? ''}`
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+    const errorLine = lines.filter((line) => line.startsWith('ERROR:')).pop();
+    const reason = (errorLine ?? lines[0] ?? '')
+        .replace(/^ERROR:\s*/, '')
+        // `downloadVideoOrAudio` already wraps its rejection in this, so the
+        // fallback line carries it. Left in, the toast reads "Error occurred
+        // during downloading video: Download failed: …" — two prefixes stacked
+        // in front of the one thing the operator wanted to read.
+        .replace(/^Download failed:\s*/, '')
+        // yt-dlp scopes its errors as `[youtube] <video id>: …`; the extractor
+        // and the id mean nothing to the person reading the toast.
+        .replace(/^\[[^\]]+\]\s*[^:]*:\s*/, '')
+        .trim();
+    if (reason.length <= MAX_FAILURE_REASON_LENGTH) {
+        return reason;
+    }
+    return `${reason.slice(0, MAX_FAILURE_REASON_LENGTH).trimEnd()}…`;
+}
+
+/**
+ * `<translated sentence>: <reason>`, or just the sentence when the error
+ * carries nothing worth showing. The reason stays untranslated on purpose — it
+ * is upstream tool output, and a half-translated sentence would be worse than
+ * an English one.
+ */
+/**
+ * What a media failure looks like when the SHIPPED yt-dlp is simply too old for
+ * the site: extraction and format selection succeed, then the media fetch is
+ * refused. Observed 2026-09-11 on the published pack 0.0.2 (yt-dlp 2026.07.04),
+ * where every download 403'd while the newer 0.0.3 pack (2026.08.19) fetched the
+ * same URL fine on the same machine and network. The reason alone
+ * ("HTTP Error 403: Forbidden") reads as somebody else's outage, so the toast
+ * has to name the one thing the operator can actually do about it.
+ */
+const STALE_MEDIA_TOOLS_REGEX =
+    /http error 403|unable to download video data|requested format is not available/i;
+
+export function toDownloadFailureMessage(message: string, error: any) {
+    const reason = toDownloadFailureReason(error);
+    const failureMessage = reason === '' ? message : `${message}: ${reason}`;
+    if (!STALE_MEDIA_TOOLS_REGEX.test(reason)) {
+        return failureMessage;
+    }
+    return (
+        `${failureMessage}. ${tran('The media tools may be out of date')} ` +
+        `(${tran('Extra Binaries')} → ${tran('Reinstall')})`
+    );
 }
 
 export function getOpenSharedLinkMenuItem(
@@ -70,6 +197,7 @@ export function getOpenSharedLinkMenuItem(
 ): ContextMenuItemType {
     const sharedLink = `${appProvider.appInfo.homepage}/shared#${sharedKey}`;
     return {
+        childBefore: genContextMenuItemIcon('share'),
         menuElement: tran('Open Shared Link'),
         title: sharedLink,
         onSelect: async () => {
@@ -89,6 +217,7 @@ export async function genDownloadContextMenuItems(
     }
     const contextMenuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('download'),
             menuElement: tran('Download From URL'),
             onSelect: async () => {
                 const url = await askForURL(title, subTitle);
@@ -101,4 +230,69 @@ export async function genDownloadContextMenuItems(
         ...(sharedKey ? [getOpenSharedLinkMenuItem(sharedKey)] : []),
     ];
     return contextMenuItems;
+}
+
+const blockUnload = genBlockUnload(() => {
+    showSimpleToast(
+        tran('Downloading in progress'),
+        tran("Can't leave the page while downloading.") +
+            ' ' +
+            tran('Please wait until the download is complete.') +
+            ' ' +
+            tran('Or attempt 3 times to force leaving.'),
+    );
+});
+
+/**
+ * `isSilentSuccess` is for callers that download into a temp location as one
+ * step of a bigger flow: the completion toast would name a path the user never
+ * sees, and the flow's own outcome toast is the meaningful one. Failures still
+ * toast either way.
+ */
+export function streamDownloadFile(
+    filePath: string,
+    response: any,
+    messageCallback: MessageCallbackType,
+    isSilentSuccess = false,
+) {
+    return new Promise<void>((resolve, reject) => {
+        writeStreamToFile(
+            filePath,
+            {
+                onStart: (total) => {
+                    globalThis.addEventListener('beforeunload', blockUnload);
+                    const fileSize = Number.parseInt(total.toFixed(2));
+                    messageCallback(
+                        `Start downloading (File size: ${fileSize}MB)...`,
+                    );
+                },
+                onProgress: (progress) => {
+                    messageCallback(`${(progress * 100).toFixed(2)}% done`);
+                },
+                onDone: (error) => {
+                    globalThis.removeEventListener('beforeunload', blockUnload);
+                    if (error) {
+                        showSimpleToast(
+                            tran('Download Error'),
+                            `Error: ${error}`,
+                        );
+                        reject(error);
+                        return;
+                    }
+                    if (!isSilentSuccess) {
+                        showSimpleToast(
+                            tran('Download Completed'),
+                            `File saved at: ${filePath}`,
+                        );
+                    }
+                    resolve();
+                },
+            },
+            response,
+        );
+    });
+}
+
+export function messageCallback(message: string | null) {
+    showProgressBarMessage(message ?? '');
 }

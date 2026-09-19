@@ -10,17 +10,19 @@ export default function FullScreenButtonComp({
     const fullScreenClassname = isFulledScreen
         ? 'fullscreen-exit'
         : 'arrows-fullscreen';
+    const label = isFulledScreen ? tran('Exit Full') : tran('Full');
     return (
-        <div style={{ overflow: 'hidden' }}>
-            <button
-                className="btn btn-info btn-sm"
-                onClick={async () => {
-                    toggleFullScreen(!isFulledScreen);
-                }}
-            >
-                <i className={`bi bi-${fullScreenClassname}`} />
-                {isFulledScreen ? tran('Exit Full') : tran('Full')}
-            </button>
-        </div>
+        <button
+            className={
+                'btn btn-info btn-sm text-nowrap d-flex align-items-center gap-1'
+            }
+            title={label}
+            onClick={async () => {
+                toggleFullScreen(!isFulledScreen);
+            }}
+        >
+            <i className={`bi bi-${fullScreenClassname}`} />
+            <span>{label}</span>
+        </button>
     );
 }

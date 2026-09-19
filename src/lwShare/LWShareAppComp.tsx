@@ -1,14 +1,16 @@
+import { useThemeSource } from '../others/themeHelpers';
 import './LWShareAppComp.scss';
 
 import { handleForkingOnGithub, lwSharePackage } from './lwShareHelpers';
 import ServerControllerComp from './ServerControllerComp';
 
 export default function LWShareAppComp() {
+    const { theme } = useThemeSource();
     return (
         <div
             id="app"
-            data-bs-theme="dark"
-            className="lw-share-container w-100 h-100 d-flex overflow-hidden"
+            data-bs-theme={theme}
+            className="app lw-share-container w-100 h-100 d-flex overflow-hidden"
         >
             <div className="card w-100 h-100">
                 <div className="card-header p-2">

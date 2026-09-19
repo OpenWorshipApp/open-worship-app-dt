@@ -1,23 +1,31 @@
 import { useRef } from 'react';
 
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import {
     useScreenManagerContext,
     useScreenManagerEvents,
 } from './managers/screenManagerHooks';
 
-export default function ScreenSlideComp() {
+export default function ScreenVaryAppDocumentComp() {
     const screenManager = useScreenManagerContext();
+    const { screenVaryAppDocumentManager } = screenManager;
+    const screenVaryAppDocumentManagerRef = useAppCurrentRef(
+        screenVaryAppDocumentManager,
+    );
     useScreenManagerEvents(['refresh'], screenManager, () => {
-        screenManager.screenVaryAppDocumentManager.render();
+        const isPlaying =
+            screenVaryAppDocumentManagerRef.current.checkIsMediaPlaying();
+        if (isPlaying) {
+            return;
+        }
+        screenVaryAppDocumentManagerRef.current.render();
     });
     const div = useRef<HTMLDivElement>(null);
-    const { screenVaryAppDocumentManager } = screenManager;
     useAppEffect(() => {
         if (div.current) {
             screenVaryAppDocumentManager.div = div.current;
         }
-    }, [div.current]);
+    }, [screenVaryAppDocumentManager, div.current]);
     return (
         <div
             id="slide"

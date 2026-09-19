@@ -1,5 +1,7 @@
-import { CSSProperties } from 'react';
+import { type ChangeEvent, type CSSProperties } from 'react';
+import { useCallback } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
@@ -11,10 +13,12 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
-import { ForegroundCountdownDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundCountdownDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import { dragStore } from '../helper/dragHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function useTiming() {
     const nowArray = () => {
@@ -64,73 +68,123 @@ function CountDownOnDatetimeComp({
 }>) {
     const { date, setDate, time, setTime, nowString, todayString } =
         useTiming();
-    const getTargetDateTime = () => {
+    const getTargetDateTime = useCallback(() => {
         return new Date(date + ' ' + time);
-    };
-    const handleDateTimeShowing = (event: any, isForceChoosing = false) => {
-        ScreenForegroundManager.setCountdown(
-            event,
-            getTargetDateTime(),
-            genStyle(),
-            isForceChoosing,
+    }, [date, time]);
+    const handleDateTimeShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            ScreenForegroundManager.setCountdown(
+                event,
+                getTargetDateTime(),
+                genStyle(),
+                isForceChoosing,
+            );
+        },
+        [getTargetDateTime, genStyle],
+    );
+    const setDateRef = useAppCurrentRef(setDate);
+    const setTimeRef = useAppCurrentRef(setTime);
+    const todayStringRef = useAppCurrentRef(todayString);
+    const nowStringRef = useAppCurrentRef(nowString);
+    const handleResetting = useCallback(() => {
+        setDateRef.current(todayStringRef.current());
+        setTimeRef.current(nowStringRef.current());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleDateTimeShowingRef = useAppCurrentRef(handleDateTimeShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleDateTimeShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleDateChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setDateRef.current(event.target.value);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleTimeChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setTimeRef.current(event.target.value);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
+    const genStyleRef = useAppCurrentRef(genStyle);
+    const handleDraggingStart = useCallback((event: any) => {
+        const targetDateTime = getTargetDateTimeRef.current();
+        const extraStyle = genStyleRef.current();
+        dragStore.onDropped = handleByDropped.bind(
+            null,
+            targetDateTime,
+            extraStyle,
         );
-    };
-    const handleResetting = () => {
-        setDate(todayString());
-        setTime(nowString());
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleDateTimeShowing(event, true);
-    };
+        handleDragStart(
+            event,
+            genForegroundDragInf('countdown', () => {
+                return {
+                    dateTime: targetDateTime.toJSON(),
+                    extraStyle,
+                };
+            }),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <div className="d-flex">
-            <div>
+        <div className="app-border-white-round p-2">
+            <div className="d-flex align-items-center gap-1 mb-2 text-muted">
+                <i className="bi bi-calendar-event" />
+                <small>{tran('Count down to a specific date & time')}</small>
+            </div>
+            <div className="d-flex flex-wrap align-items-center gap-2">
                 <button
-                    title="Reset Date and Time to Now"
+                    title={tran('Reset Date and Time to Now')}
                     className="btn btn-outline-warning"
                     onClick={handleResetting}
                 >
-                    `Reset
+                    <i className="bi bi-arrow-counterclockwise" />{' '}
+                    {tran('Reset')}
                 </button>
-            </div>
-            <div>
-                <input
-                    type="date"
-                    className="form-control"
-                    value={date}
-                    onChange={(event) => {
-                        setDate(event.target.value);
-                    }}
-                    min={todayString()}
-                />
-            </div>
-            <div>
-                <input
-                    type="time"
-                    className="form-control"
-                    value={time}
-                    onChange={(event) => {
-                        setTime(event.target.value);
-                    }}
-                    min={nowString()}
-                />
-            </div>
-            <div>
+                <div className="input-group" style={{ width: 'auto' }}>
+                    <span className="input-group-text">
+                        <i className="bi bi-calendar3" />
+                    </span>
+                    <input
+                        type="date"
+                        className="form-control"
+                        value={date}
+                        onChange={handleDateChange}
+                        min={todayString()}
+                    />
+                </div>
+                <div className="input-group" style={{ width: 'auto' }}>
+                    <span className="input-group-text">
+                        <i className="bi bi-clock" />
+                    </span>
+                    <input
+                        type="time"
+                        className="form-control"
+                        value={time}
+                        onChange={handleTimeChange}
+                        min={nowString()}
+                    />
+                </div>
                 <button
-                    className="btn btn-secondary"
+                    className="btn btn-primary"
+                    title={tran('Start Countdown to DateTime')}
                     onClick={handleDateTimeShowing}
                     onContextMenu={handleContextMenuOpening}
                     draggable
-                    onDragStart={() => {
-                        dragStore.onDropped = handleByDropped.bind(
-                            null,
-                            getTargetDateTime(),
-                            genStyle(),
-                        );
-                    }}
+                    onDragStart={handleDraggingStart}
                 >
-                    `Start Countdown to DateTime
+                    <i className="bi bi-play-fill" />{' '}
+                    {tran('Start Countdown to DateTime')}
                 </button>
+                <ContextMenuDotsButtonComp
+                    label={tran('Show on Screens')}
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
         </div>
     );
@@ -149,80 +203,128 @@ function CountDownInSetComp({
         'foreground-minutes-setting',
         '5',
     );
-    const getTargetDateTime = () => {
+    const getDurationSecond = useCallback(() => {
+        return (
+            60 * Number.parseInt(minutes) + 3600 * Number.parseInt(hours) + 1
+        );
+    }, [minutes, hours]);
+    const getTargetDateTime = useCallback(() => {
         const targetDatetime = new Date();
         targetDatetime.setSeconds(
-            targetDatetime.getSeconds() +
-                60 * Number.parseInt(minutes) +
-                3600 * Number.parseInt(hours) +
-                1,
+            targetDatetime.getSeconds() + getDurationSecond(),
         );
         return targetDatetime;
-    };
-    const handleShowing = (event: any, isForceChoosing = false) => {
-        const targetDateTime = getTargetDateTime();
-        const style = genStyle();
-        ScreenForegroundManager.setCountdown(
-            event,
-            targetDateTime,
-            style,
-            isForceChoosing,
+    }, [getDurationSecond]);
+    const handleShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            const targetDateTime = getTargetDateTime();
+            const style = genStyle();
+            ScreenForegroundManager.setCountdown(
+                event,
+                targetDateTime,
+                style,
+                isForceChoosing,
+            );
+        },
+        [getTargetDateTime, genStyle],
+    );
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setHoursRef = useAppCurrentRef(setHours);
+    const handleHoursChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setHoursRef.current(event.target.value);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const setMinutesRef = useAppCurrentRef(setMinutes);
+    const handleMinutesChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setMinutesRef.current(event.target.value);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
+    const getDurationSecondRef = useAppCurrentRef(getDurationSecond);
+    const genStyleRef = useAppCurrentRef(genStyle);
+    const handleInSetDragStart = useCallback((event: any) => {
+        const extraStyle = genStyleRef.current();
+        dragStore.onDropped = handleByDropped.bind(
+            null,
+            getTargetDateTimeRef.current(),
+            extraStyle,
         );
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleShowing(event, true);
-    };
+        // A duration countdown must restart from the moment it lands on a
+        // screen, so the duration travels rather than the resolved date.
+        handleDragStart(
+            event,
+            genForegroundDragInf('countdown', () => {
+                return {
+                    durationSecond: getDurationSecondRef.current(),
+                    extraStyle,
+                };
+            }),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <div className="d-flex">
-            <div
-                className="input-group"
-                style={{ width: '120px' }}
-                title="Hours"
-            >
-                <div className="input-group-text">H:</div>
-                <input
-                    className="form-control form-control-sm"
-                    type="number"
-                    value={hours}
-                    onChange={(event) => {
-                        setHours(event.target.value);
-                    }}
-                    min="0"
-                />
+        <div className="app-border-white-round p-2">
+            <div className="d-flex align-items-center gap-1 mb-2 text-muted">
+                <i className="bi bi-hourglass-split" />
+                <small>{tran('Count down for a duration')}</small>
             </div>
-            <div
-                className="input-group"
-                style={{ width: '120px' }}
-                title="Minutes"
-            >
-                <div className="input-group-text">M:</div>
-                <input
-                    className="form-control form-control-sm"
-                    type="number"
-                    value={minutes}
-                    onChange={(event) => {
-                        setMinutes(event.target.value);
-                    }}
-                    min="0"
-                    max="59"
-                />
-            </div>
-            <div>
+            <div className="d-flex flex-wrap align-items-center gap-2">
+                <div
+                    className="input-group"
+                    style={{ width: '130px' }}
+                    title={tran('Hours')}
+                >
+                    <span className="input-group-text">
+                        <i className="bi bi-clock-history" />
+                    </span>
+                    <input
+                        className="form-control"
+                        type="number"
+                        value={hours}
+                        onChange={handleHoursChange}
+                        min="0"
+                    />
+                    <span className="input-group-text">h</span>
+                </div>
+                <div
+                    className="input-group"
+                    style={{ width: '130px' }}
+                    title={tran('Minutes')}
+                >
+                    <input
+                        className="form-control"
+                        type="number"
+                        value={minutes}
+                        onChange={handleMinutesChange}
+                        min="0"
+                        max="59"
+                    />
+                    <span className="input-group-text">m</span>
+                </div>
                 <button
-                    className="btn btn-secondary"
+                    className="btn btn-primary"
+                    title={tran('Start Countdown')}
                     onClick={handleShowing}
                     onContextMenu={handleContextMenuOpening}
                     draggable
-                    onDragStart={() => {
-                        dragStore.onDropped = handleByDropped.bind(
-                            null,
-                            getTargetDateTime(),
-                            genStyle(),
-                        );
-                    }}
+                    onDragStart={handleInSetDragStart}
                 >
-                    `Start Countdown
+                    <i className="bi bi-play-fill" /> {tran('Start Countdown')}
                 </button>
+                <ContextMenuDotsButtonComp
+                    label={tran('Show on Screens')}
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
         </div>
     );
@@ -264,8 +366,7 @@ export default function ForegroundCountDownComp() {
     )
         .map(
             ([screenId, data]):
-                | [number, ForegroundCountdownDataType]
-                | null => {
+                [number, ForegroundCountdownDataType] | null => {
                 if (data.countdownData === null) {
                     return null;
                 }
@@ -295,16 +396,15 @@ export default function ForegroundCountDownComp() {
             target="countdown"
             fullChildHeaders={<h4>{tran('Countdown')}</h4>}
             childHeadersOnHidden={genHidingElement(true)}
+            isOnScreen={showingScreenIdDataList.length > 0}
         >
             {propsSetting}
             <hr />
-            <div>
+            <div className="d-flex flex-column gap-2">
                 <CountDownOnDatetimeComp genStyle={genStyle} />
-            </div>
-            <div>
                 <CountDownInSetComp genStyle={genStyle} />
             </div>
-            <div>{genHidingElement(false)}</div>
+            <div className="mt-2">{genHidingElement(false)}</div>
         </ForegroundLayoutComp>
     );
 }

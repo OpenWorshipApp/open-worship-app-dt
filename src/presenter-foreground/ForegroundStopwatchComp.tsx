@@ -1,5 +1,6 @@
-import { CSSProperties } from 'react';
+import { useCallback, type CSSProperties } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
@@ -10,10 +11,12 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
-import { ForegroundStopwatchDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundStopwatchDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import { dragStore } from '../helper/dragHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllStopwatches(
@@ -51,8 +54,7 @@ export default function ForegroundStopwatchComp() {
     )
         .map(
             ([screenId, data]):
-                | [number, ForegroundStopwatchDataType]
-                | null => {
+                [number, ForegroundStopwatchDataType] | null => {
                 if (data.stopwatchData === null) {
                     return null;
                 }
@@ -77,54 +79,81 @@ export default function ForegroundStopwatchComp() {
             isMini={isMini}
         />
     );
-    const handleShowing = (event: any, isForceChoosing = false) => {
-        ScreenForegroundManager.setStopwatch(
+    const handleShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            ScreenForegroundManager.setStopwatch(
+                event,
+                new Date(),
+                genStyle(),
+                isForceChoosing,
+            );
+        },
+        [genStyle],
+    );
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleByDropped = useCallback(
+        (event: any) => {
+            const screenForegroundManager =
+                getScreenForegroundManagerByDropped(event);
+            if (screenForegroundManager === null) {
+                return;
+            }
+            screenForegroundManager.setStopwatchData({
+                dateTime: new Date(),
+                extraStyle: genStyle(),
+            });
+        },
+        [genStyle],
+    );
+    const handleByDroppedRef = useAppCurrentRef(handleByDropped);
+    const genStyleRef = useAppCurrentRef(genStyle);
+    const handleDraggingStart = useCallback((event: any) => {
+        dragStore.onDropped = handleByDroppedRef.current;
+        handleDragStart(
             event,
-            new Date(),
-            genStyle(),
-            isForceChoosing,
+            genForegroundDragInf('stopwatch', () => {
+                return { extraStyle: genStyleRef.current() };
+            }),
         );
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleShowing(event, true);
-    };
-    const handleByDropped = (event: any) => {
-        const screenForegroundManager =
-            getScreenForegroundManagerByDropped(event);
-        if (screenForegroundManager === null) {
-            return;
-        }
-        screenForegroundManager.setStopwatchData({
-            dateTime: new Date(),
-            extraStyle: genStyle(),
-        });
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <ForegroundLayoutComp
             target="stopwatch"
             fullChildHeaders={<h4>{tran('Stopwatch')}</h4>}
             childHeadersOnHidden={genHidingElement(true)}
+            isOnScreen={showingScreenIdDataList.length > 0}
         >
             {propsSetting}
             <hr />
-            <div>
+            <div className="app-border-white-round p-2">
+                <div className="d-flex align-items-center gap-1 mb-2 text-muted">
+                    <i className="bi bi-stopwatch" />
+                    <small>{tran('Count up from zero')}</small>
+                </div>
                 <div className="d-flex">
-                    <div>
-                        <button
-                            className="btn btn-secondary"
-                            onClick={handleShowing}
-                            onContextMenu={handleContextMenuOpening}
-                            draggable
-                            onDragStart={() => {
-                                dragStore.onDropped = handleByDropped;
-                            }}
-                        >
-                            `Start Stopwatch
-                        </button>
-                    </div>
+                    <button
+                        className="btn btn-primary"
+                        title={tran('Start Stopwatch')}
+                        onClick={handleShowing}
+                        onContextMenu={handleContextMenuOpening}
+                        draggable
+                        onDragStart={handleDraggingStart}
+                    >
+                        <i className="bi bi-play-fill" />{' '}
+                        {tran('Start Stopwatch')}
+                    </button>
+                    <ContextMenuDotsButtonComp
+                        label={tran('Show on Screens')}
+                        onOpening={handleContextMenuOpening}
+                    />
                 </div>
             </div>
-            <div>{genHidingElement(false)}</div>
+            <div className="mt-2">{genHidingElement(false)}</div>
         </ForegroundLayoutComp>
     );
 }

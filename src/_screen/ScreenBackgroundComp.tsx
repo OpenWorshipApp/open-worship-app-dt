@@ -4,36 +4,22 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import ScreenBackgroundColorComp from './ScreenBackgroundColorComp';
 import ScreenBackgroundImageComp from './ScreenBackgroundImageComp';
 import ScreenBackgroundVideoComp from './ScreenBackgroundVideoComp';
-import { AppColorType } from '../others/color/colorHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import type { AppColorType } from '../others/color/colorHelpers';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { getScreenManagerBase } from './managers/screenManagerBaseHelpers';
 import {
     useScreenManagerContext,
     ScreenManagerBaseContext,
     useScreenManagerEvents,
 } from './managers/screenManagerHooks';
-import { BackgroundSrcType } from './screenTypeHelpers';
-
-export default function ScreenBackgroundComp() {
-    const screenManager = useScreenManagerContext();
-    const { screenBackgroundManager } = screenManager;
-    useScreenManagerEvents(['refresh'], screenManager, () => {
-        screenBackgroundManager.render();
-    });
-    const div = useRef<HTMLDivElement>(null);
-    useAppEffect(() => {
-        if (div.current) {
-            screenBackgroundManager.rootContainer = div.current;
-        }
-    }, [div.current]);
-    return (
-        <div
-            id="background"
-            ref={div}
-            style={screenBackgroundManager.containerStyle}
-        />
-    );
-}
+import type { BackgroundSrcType } from './screenTypeHelpers';
+import { getCameraStream } from '../helper/cameraHelpers';
+import { handleError } from '../helper/errorHelpers';
+import { playMediaElement } from '../helper/mediaHelpers';
+import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
+import { tran } from '../lang/langHelpers';
+import appProvider from '../server/appProvider';
+import { genWebBackgroundElement } from './managers/screenWebsiteHelpers';
 
 export function genHtmlBackground(
     screenId: number,
@@ -50,42 +36,46 @@ export function genHtmlBackground(
         });
         child.appendChild(video);
         promise = new Promise<() => void>((resolve) => {
-            navigator.mediaDevices
-                .getUserMedia({
-                    audio: false,
-                    video: {
-                        deviceId: { exact: backgroundSrc.src },
-                    },
-                })
+            getCameraStream(backgroundSrc.src)
                 .then((mediaStream) => {
-                    const clearTracks = () => {
-                        mediaStream.getTracks().forEach((track) => {
-                            track.stop();
-                        });
-                    };
                     video.srcObject = mediaStream;
+                    const clearTracks = () => {
+                        const tracks = mediaStream.getTracks();
+                        for (const track of tracks) {
+                            track.stop();
+                        }
+                    };
                     video.onloadedmetadata = () => {
-                        video.play();
+                        playMediaElement(video);
                         resolve(clearTracks);
                     };
+                })
+                .catch((error) => {
+                    handleError(error);
+                    showAppAlert(
+                        tran('Camera Error'),
+                        tran(
+                            'Unable to access the camera for background. ' +
+                                'Please check your camera settings.',
+                        ),
+                    );
                 });
         });
     } else if (backgroundSrc.type === 'web') {
-        const iframe = document.createElement('iframe');
-        Object.assign(iframe.style, {
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            backgroundColor: 'transparent',
-        });
-        iframe.src = backgroundSrc.src;
-        child = iframe;
+        // Live on the projected screen, a screenshot on the presenter's mini
+        // screen — a background covers the whole output, so it is the most
+        // expensive live page in the app to load into a preview nobody
+        // presents from.
+        child = genWebBackgroundElement(
+            backgroundSrc.src,
+            appProvider.isPageScreen,
+        ) as HTMLDivElement;
     } else {
         const div = document.createElement('div');
         const screenManagerBase = getScreenManagerBase(screenId);
         const htmlStr = renderToStaticMarkup(
             <ScreenManagerBaseContext value={screenManagerBase}>
-                <RenderBackground backgroundSrc={backgroundSrc} />
+                <RenderBackgroundComp backgroundSrc={backgroundSrc} />
             </ScreenManagerBaseContext>,
         );
         div.innerHTML = htmlStr;
@@ -99,7 +89,7 @@ export function genHtmlBackground(
     return { newDiv: child, promise };
 }
 
-export function RenderBackground({
+export function RenderBackgroundComp({
     backgroundSrc,
 }: Readonly<{
     backgroundSrc: BackgroundSrcType;
@@ -141,4 +131,28 @@ function RenderScreenBackground({
         default:
             return null;
     }
+}
+
+export default function ScreenBackgroundComp() {
+    const screenManager = useScreenManagerContext();
+    const { screenBackgroundManager } = screenManager;
+    const screenBackgroundManagerRef = useAppCurrentRef(
+        screenBackgroundManager,
+    );
+    useScreenManagerEvents(['refresh'], screenManager, () => {
+        screenBackgroundManagerRef.current.render();
+    });
+    const div = useRef<HTMLDivElement>(null);
+    useAppEffect(() => {
+        if (div.current) {
+            screenBackgroundManager.rootContainer = div.current;
+        }
+    }, [screenBackgroundManager, div.current]);
+    return (
+        <div
+            id="background"
+            ref={div}
+            style={screenBackgroundManager.containerStyle}
+        />
+    );
 }

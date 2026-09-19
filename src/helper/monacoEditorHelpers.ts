@@ -1,35 +1,21 @@
 import { useMemo } from 'react';
-import { editor, KeyMod, KeyCode, Uri } from 'monaco-editor';
+import type { Uri } from 'monaco-editor';
+import { editor, KeyMod, KeyCode } from 'monaco-editor';
 
 import { tran } from '../lang/langHelpers';
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
-import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
-import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
-import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+// monaco-editor 0.56 reorganized its ESM entry points behind an `exports` map,
+// so the old `monaco-editor/esm/vs/...` specifiers no longer resolve.
+import editorWorker from 'monaco-editor/editor/editor.worker?worker';
+import jsonWorker from 'monaco-editor/languages/features/json/json.worker?worker';
+import cssWorker from 'monaco-editor/languages/features/css/css.worker?worker';
+import htmlWorker from 'monaco-editor/languages/features/html/html.worker?worker';
+import tsWorker from 'monaco-editor/languages/features/typescript/ts.worker?worker';
 
 import { useStateSettingBoolean } from './settingHelpers';
-import { useAppEffect } from './debuggerHelpers';
-import { genTimeoutAttempt } from './helpers';
-import { checkIsDarkMode } from '../others/initHelpers';
-
-globalThis.MonacoEnvironment = {
-    getWorker(_, label) {
-        if (label === 'json') {
-            return new jsonWorker();
-        }
-        if (label === 'css' || label === 'scss' || label === 'less') {
-            return new cssWorker();
-        }
-        if (label === 'html' || label === 'handlebars' || label === 'razor') {
-            return new htmlWorker();
-        }
-        if (label === 'typescript' || label === 'javascript') {
-            return new tsWorker();
-        }
-        return new editorWorker();
-    },
-};
+import { useAppEffect } from './appHooks';
+import { checkIsDarkMode } from '../others/themeHelpers';
+import { appError as logError } from './loggerHelpers';
+import { genTimeoutAttempt } from './timeoutHelpers';
 
 async function getCopiedText() {
     try {
@@ -39,10 +25,10 @@ async function getCopiedText() {
                 return text;
             }
         } else {
-            console.error('Clipboard API not supported in this browser.');
+            logError('Clipboard API not supported in this browser.');
         }
     } catch (err) {
-        console.error('Failed to read clipboard contents:', err);
+        logError('Failed to read clipboard contents:', err);
     }
     return null;
 }
@@ -56,18 +42,36 @@ export type EditorStoreType = {
         x: number;
         y: number;
     };
+    isDisposeScheduled: boolean;
 };
 
-const modelsMap: Record<string, editor.ITextModel> = {};
+// Keep a few recent models so undo stacks survive editor close/reopen, but
+// bound the cache — models hold full text + undo history.
+const MAX_CACHED_MODELS = 5;
+const modelsMap = new Map<string, editor.ITextModel>();
 function getModel(value: string, uri: Uri, language: string) {
     const key = uri.toString();
-    if (modelsMap[key] !== undefined) {
-        return modelsMap[key];
+    const cachedModel = modelsMap.get(key);
+    if (cachedModel !== undefined) {
+        modelsMap.delete(key);
+        modelsMap.set(key, cachedModel);
+        return cachedModel;
     }
     const model = editor.createModel(value, language, uri);
-    modelsMap[key] = model;
+    modelsMap.set(key, model);
+    for (const [oldKey, oldModel] of modelsMap) {
+        if (modelsMap.size <= MAX_CACHED_MODELS) {
+            break;
+        }
+        if (oldModel.isAttachedToEditor()) {
+            continue;
+        }
+        modelsMap.delete(oldKey);
+        oldModel.dispose();
+    }
     return model;
 }
+let workerInitialized = false;
 function createEditor({
     options,
     language,
@@ -81,6 +85,31 @@ function createEditor({
     onInit?: (editor: editor.IStandaloneCodeEditor) => void;
     onStore?: (editorStore: EditorStoreType) => void;
 }) {
+    if (workerInitialized === false) {
+        workerInitialized = true;
+        globalThis.MonacoEnvironment = {
+            getWorker(_, label) {
+                if (label === 'json') {
+                    return new jsonWorker();
+                }
+                if (label === 'css' || label === 'scss' || label === 'less') {
+                    return new cssWorker();
+                }
+                if (
+                    label === 'html' ||
+                    label === 'handlebars' ||
+                    label === 'razor'
+                ) {
+                    return new htmlWorker();
+                }
+                if (label === 'typescript' || label === 'javascript') {
+                    return new tsWorker();
+                }
+                return new editorWorker();
+            },
+        };
+    }
+
     const div = document.createElement('div');
     Object.assign(div.style, {
         width: '100%',
@@ -108,6 +137,7 @@ function createEditor({
         systemContent: '',
         editorInstance,
         div,
+        isDisposeScheduled: false,
         toggleIsWrapText: () => {},
         lastMouseClickPos: {
             x: 0,
@@ -203,19 +233,6 @@ export function useInitMonacoEditor({
             language,
         });
         const { editorInstance } = newEditorStore;
-        editor.onDidChangeMarkers((uriList) => {
-            const currentUri = editorInstance.getModel()?.uri;
-            if (currentUri === undefined) {
-                return;
-            }
-            if (
-                uriList.some(
-                    (uri) => uri.toString() === currentUri?.toString(),
-                ) === false
-            ) {
-                return;
-            }
-        });
         if (onContentChange !== undefined) {
             editorInstance.onDidChangeModelContent(async () => {
                 const editorContent = editorInstance.getValue();
@@ -223,7 +240,23 @@ export function useInitMonacoEditor({
             });
         }
         return newEditorStore;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    useAppEffect(() => {
+        editorStore.isDisposeScheduled = false;
+        return () => {
+            // Deferred so a StrictMode remount cancels the dispose; on a real
+            // unmount the editor (workers, listeners, view) is released.
+            editorStore.isDisposeScheduled = true;
+            setTimeout(() => {
+                if (!editorStore.isDisposeScheduled) {
+                    return;
+                }
+                editorStore.isDisposeScheduled = false;
+                editorStore.editorInstance.dispose();
+            }, 0);
+        };
+    }, [editorStore]);
     useAppEffect(() => {
         editorStore.toggleIsWrapText = () => {
             setIsWrapText(!isWrapText);

@@ -1,20 +1,19 @@
-import { DragEvent, MouseEvent } from 'react';
+import type { DragEvent, MouseEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
+import type { MimetypeNameType } from '../server/fileHelpers';
 import {
     fsCopyFilePathToPath,
     isSupportedExt,
-    MimetypeNameType,
     selectFiles,
 } from '../server/fileHelpers';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import { showSimpleToast } from '../toast/toastHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { changeDragEventStyle } from '../helper/helpers';
-import { OptionalPromise } from '../helper/typeHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
 
 export function genOnDragOver(dirSource: DirSource) {
     return (event: DragEvent) => {
@@ -108,7 +107,10 @@ export function genOnDrop({
         changeDragEventStyle(event, 'opacity', '1');
         event.preventDefault();
         if (dirSource.dirPath === null) {
-            showSimpleToast('Open Folder', 'Please open a folder first');
+            showSimpleToast(
+                tran('Open Folder'),
+                tran('Please open a folder first'),
+            );
             return;
         }
         const promises = [];
@@ -148,7 +150,7 @@ export async function handleFilesSelectionMenuItem(
         onFileSelected,
         takeSelectedFile,
     } = fileSelectionOption;
-    const filePaths = selectFiles([{ name: windowTitle, extensions }]);
+    const filePaths = await selectFiles([{ name: windowTitle, extensions }]);
     onFileSelected?.(filePaths);
     const promises = [];
     for (const filePath of filePaths) {
@@ -169,59 +171,77 @@ export async function handleFilesSelectionMenuItem(
     await Promise.all(promises);
 }
 
-export function genItemsAddingContextMenuItems(addItems?: () => void) {
-    if (addItems === undefined) {
-        return [];
-    }
-    return [
-        {
-            menuElement: tran('Add Items'),
-            onSelect: addItems,
-        },
-    ];
-}
+export type DirSourceContextMenuOptionsType = {
+    contextMenuItems?: ContextMenuItemType[];
+    genContextMenuItems?: (
+        dirSource: DirSource,
+        event?: MouseEvent<HTMLElement>,
+    ) => OptionalPromise<ContextMenuItemType[]>;
+    // The ways the list can be filled: picking local files, plus whatever the
+    // list itself offers (importing an archive, downloading from a URL, a song
+    // catalog...). They used to hide behind an "Add Items" sub menu; they are
+    // spread into the menu itself so every way in is one click away, and so an
+    // empty folder advertises all of them as its own rows.
+    genItemsAddingMenuItems?: () => OptionalPromise<ContextMenuItemType[]>;
+    // One entry per kind of file the list can create. The list owns the
+    // labels because a list holding more than one kind (documents + lyrics)
+    // names each one instead of a generic "New File". Generated per menu
+    // opening so the labels follow a locale switch, like every other item
+    // here does.
+    genNewFileMenuItems?: () => ContextMenuItemType[];
+};
 
-export function genDroppingFileOnContextMenu(
+/**
+ * Every action a file list offers for its directory. Built on each use so
+ * `tran` runs after a locale switch. `event` is optional because the same items
+ * are also rendered as buttons in the body of an empty list, where there is no
+ * opening event to hand over — see `EmptyFileListComp`.
+ */
+export async function genDirSourceContextMenuItems(
     dirSource: DirSource,
     {
         contextMenuItems,
         genContextMenuItems,
-        addItems,
-        onStartNewFile,
-    }: {
-        contextMenuItems?: ContextMenuItemType[];
-        genContextMenuItems?: (
-            dirSource: DirSource,
-            event: MouseEvent<HTMLElement>,
-        ) => OptionalPromise<ContextMenuItemType[]>;
-        addItems?: () => void;
-        onStartNewFile?: () => void;
-    },
+        genItemsAddingMenuItems,
+        genNewFileMenuItems,
+    }: DirSourceContextMenuOptionsType,
+    event?: MouseEvent<HTMLElement>,
+) {
+    const menuItems: ContextMenuItemType[] = [
+        {
+            childBefore: genContextMenuItemIcon('arrow-clockwise'),
+            menuElement: tran('Reload'),
+            onSelect: () => {
+                dirSource.fireReloadEvent();
+            },
+        },
+        ...(contextMenuItems ?? []),
+    ];
+    if (genItemsAddingMenuItems !== undefined) {
+        menuItems.push(...(await genItemsAddingMenuItems()));
+    }
+    if (genNewFileMenuItems !== undefined) {
+        menuItems.push(...genNewFileMenuItems());
+    }
+    if (genContextMenuItems !== undefined) {
+        menuItems.push(...(await genContextMenuItems(dirSource, event)));
+    }
+    return menuItems;
+}
+
+export function genDroppingFileOnContextMenu(
+    dirSource: DirSource,
+    options: DirSourceContextMenuOptionsType,
 ) {
     if (!dirSource.dirPath) {
         return;
     }
     return async (event: MouseEvent<any>) => {
-        const menuItems: ContextMenuItemType[] = [...(contextMenuItems ?? [])];
-        if (addItems !== undefined) {
-            menuItems.push(...genItemsAddingContextMenuItems(addItems));
-        }
-        if (onStartNewFile !== undefined) {
-            menuItems.push({
-                menuElement: tran('Create New File'),
-                onSelect: onStartNewFile,
-            });
-        }
-        if (genContextMenuItems !== undefined) {
-            const subContextMenuItems = await genContextMenuItems(
-                dirSource,
-                event,
-            );
-            menuItems.push(...subContextMenuItems);
-        }
-        if (menuItems.length === 0) {
-            return;
-        }
+        const menuItems = await genDirSourceContextMenuItems(
+            dirSource,
+            options,
+            event,
+        );
         showAppContextMenu(event as any, menuItems);
     };
 }

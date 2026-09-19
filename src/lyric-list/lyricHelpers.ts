@@ -1,68 +1,160 @@
-import { createContext, use } from 'react';
-import { getMimetypeExtensions } from '../server/fileHelpers';
+import { OpenLyric } from 'open-lyric';
+import type { OpenLyricTheme, OpenLyricPreviewSetting } from 'open-lyric';
+
 import Lyric from './Lyric';
-import { dirSourceSettingNames } from '../helper/constants';
-import {
-    getSelectedFilePath,
-    setSelectedFilePath,
-} from '../others/selectedHelpers';
+import LyricAppDocumentStage0 from './LyricAppDocumentStage0';
+import LyricAppDocumentStage1 from './LyricAppDocumentStage1';
+import { genOpenLyricFontFaces, initAllLangCss } from '../lang/langHelpers';
+import SettingManager from '../helper/SettingManager';
+import FileSource from '../helper/FileSource';
+import type LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
+import { checkIsDarkMode } from '../others/themeHelpers';
+import { installOpenLyricPrintPopupHandler } from './lyricPrintHelpers';
 
-const SELECTED_LYRIC_SETTING_NAME = 'selected-lyric';
+interface ThemeTargetInf {
+    get theme(): OpenLyricTheme;
+    set theme(theme: OpenLyricTheme);
+}
+export function applyOpenLyricTheme(
+    target: ThemeTargetInf | null,
+    isDarkMode?: boolean,
+) {
+    if (target === null) {
+        return;
+    }
+    isDarkMode ??= checkIsDarkMode();
+    target.theme = isDarkMode ? 'dark-bs' : 'light-bs';
+}
 
-export async function getSelectedLyricFilePath() {
-    return await getSelectedFilePath(
-        SELECTED_LYRIC_SETTING_NAME,
-        dirSourceSettingNames.LYRIC,
+export const DEFAULT_OPEN_LYRIC_FONT_SIZE = 16;
+const openLyricPreviewerSettingManager =
+    new SettingManager<OpenLyricPreviewSetting>({
+        settingName: 'open-lyric-previewer-setting',
+        defaultValue: {},
+        isErrorToDefault: true,
+        validate: (jsonString) => {
+            try {
+                return JSON.parse(jsonString) instanceof Object;
+            } catch (_error) {
+                return false;
+            }
+        },
+        serialize: (setting) => JSON.stringify(setting),
+        deserialize: (jsonString) => JSON.parse(jsonString),
+    });
+function loadOpenLyricSetting() {
+    return openLyricPreviewerSettingManager.getSetting();
+}
+function saveOpenLyricSetting(setting: OpenLyricPreviewSetting) {
+    openLyricPreviewerSettingManager.setSetting(setting);
+}
+
+/**
+ * The persisted font settings, readable without an `OpenLyric` instance.
+ *
+ * Slide HTML is generated from renderers where no previewer component has
+ * mounted (the screen window, a stage instance built on demand), so the font
+ * settings must not be reachable only through a live `OpenLyric` object —
+ * otherwise those renderers silently fall back to open-lyric's own default.
+ */
+export function getOpenLyricFontSetting(): {
+    fontSize: number;
+    fontFamily?: string;
+} {
+    const setting: OpenLyricPreviewSetting = loadOpenLyricSetting();
+    return {
+        fontSize: setting.fontSize ?? DEFAULT_OPEN_LYRIC_FONT_SIZE,
+        fontFamily: setting.fontFamily,
+    };
+}
+
+export async function initOpenLyric(filePath: string, isNoLangInit = false) {
+    installOpenLyricPrintPopupHandler();
+    const lyric = Lyric.getInstance(filePath);
+    // `initAllLangCss`, not just the language list: open-lyric freezes every
+    // line of a slide into pixel boxes measured in whatever faces the window
+    // has REGISTERED at that moment. A song set in `app-Battambang`, built
+    // before any other panel had registered the Khmer faces, was measured in
+    // the browser's fallback (Times New Roman) and then drawn in Battambang,
+    // whose Latin letters run ~19% wider — the long lines wrapped inside their
+    // frozen boxes and printed over the next line, in the Stage Previewer and
+    // on the projector alike, until a reload happened to win the race.
+    // Registered first, open-lyric's own `document.fonts` wait loads the face
+    // before anything is measured.
+    const [content, langDataList] = await Promise.all([
+        lyric.getContent(),
+        initAllLangCss(),
+    ]);
+    const openLyricPreviewer = new OpenLyric();
+    openLyricPreviewer.value = content;
+
+    openLyricPreviewer.loadSetting = () => {
+        const setting = loadOpenLyricSetting();
+        return setting;
+    };
+    openLyricPreviewer.saveSetting = (setting: OpenLyricPreviewSetting) => {
+        saveOpenLyricSetting(setting);
+        const fileSource = FileSource.getInstance(filePath);
+        fileSource.fireUpdateEvent();
+    };
+    const { fontSize, fontFamily } = getOpenLyricFontSetting();
+    openLyricPreviewer.fontSize = fontSize + 'px';
+    if (fontFamily) {
+        openLyricPreviewer.fontFamily = fontFamily;
+    }
+
+    if (!isNoLangInit) {
+        for (const langData of langDataList) {
+            langData.initOpenLyricPlugins?.({
+                openLyric: openLyricPreviewer,
+                genOpenLyricFontFaces,
+            });
+        }
+    }
+    return openLyricPreviewer;
+}
+
+/**
+ * Stage number -> the class that renders it, indexed by stage.
+ *
+ * The instance cache keys on the CLASS name + file path
+ * (`AppDocumentSourceAbs._getInstance`), so a stage only gets an identity of
+ * its own by having a class of its own. This list is therefore also the
+ * authoritative answer to "how many stages exist" — `getAvailableLyricStages`
+ * below is what the previewer offers, so adding a layout here is all it takes
+ * to make another stage selectable.
+ */
+const LYRIC_APP_DOCUMENT_STAGE_CLASSES = [
+    LyricAppDocumentStage0,
+    LyricAppDocumentStage1,
+];
+
+export function getAvailableLyricStages() {
+    return LYRIC_APP_DOCUMENT_STAGE_CLASSES.map((_, stage) => {
+        return stage;
+    });
+}
+
+/**
+ * Resolves to a REGISTERED stage, and reports which one it landed on.
+ *
+ * The returned number is the stage actually rendered, not the one asked for:
+ * every unregistered stage used to fall through to `LyricAppDocumentStage1`,
+ * which handed back the very same cached instance stage 1 was already using —
+ * so a second pane rendered a byte-identical clone under a label claiming it
+ * was something else, and `genCacheKey`'s `stage:` part could not tell the two
+ * apart either. Callers that resolve a PERSISTED stage (presenting flow items,
+ * `lyricSlideScreenHelpers`) need this to stay total, so an out-of-range stage
+ * clamps to the nearest registered one instead of failing.
+ */
+export function getLyricAppDocumentStageByStage(
+    filePath: string,
+    stage: number,
+): [number, LyricAppDocumentStageAbstract] {
+    const resolvedStage = Math.min(
+        Math.max(Number.isFinite(stage) ? Math.trunc(stage) : 0, 0),
+        LYRIC_APP_DOCUMENT_STAGE_CLASSES.length - 1,
     );
-}
-
-export function setSelectedLyricFilePath(filePath: string | null) {
-    setSelectedFilePath(
-        SELECTED_LYRIC_SETTING_NAME,
-        dirSourceSettingNames.LYRIC,
-        filePath,
-    );
-}
-
-export async function getSelectedLyric() {
-    const selectedAppDocumentFilePath = await getSelectedLyricFilePath();
-    if (selectedAppDocumentFilePath === null) {
-        return null;
-    }
-    return Lyric.getInstance(selectedAppDocumentFilePath);
-}
-
-export async function setSelectedLyric(lyric: Lyric | null) {
-    setSelectedLyricFilePath(lyric?.filePath ?? null);
-}
-
-export function checkIsMarkdown(extension: string): boolean {
-    const markdownExtensions = getMimetypeExtensions('markdown');
-    return markdownExtensions.includes(extension.toLowerCase());
-}
-
-export const SelectedLyricContext = createContext<{
-    selectedLyric: Lyric | null;
-    setSelectedLyric: (newLyric: Lyric | null) => void;
-} | null>(null);
-
-function useContext() {
-    const context = use(SelectedLyricContext);
-    if (context === null) {
-        throw new Error('No SelectedLyricContext found');
-    }
-    return context;
-}
-
-export function useSelectedLyricContext() {
-    const context = useContext();
-    if (context.selectedLyric === null) {
-        throw new Error('No selected lyric');
-    }
-    return context.selectedLyric;
-}
-
-export function useSelectedLyricSetterContext() {
-    const context = useContext();
-    return context.setSelectedLyric;
+    const StageClass = LYRIC_APP_DOCUMENT_STAGE_CLASSES[resolvedStage];
+    return [resolvedStage, StageClass.getInstance(filePath)];
 }

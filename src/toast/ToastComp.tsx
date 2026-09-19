@@ -1,50 +1,48 @@
 import './ToastComp.scss';
 
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { useToastSimpleShowing } from '../event/ToastEventListener';
-import SimpleToastComp, { SimpleToastType } from './SimpleToastComp';
+import type { SimpleToastType } from './SimpleToastComp';
+import SimpleToastComp from './SimpleToastComp';
 
-let timeoutId: any = null;
+// Keep the stack bounded, a burst of toasts must not grow the DOM unbounded.
+export const MAX_STACKED_TOAST_COUNT = 5;
+
+type StackedToastType = SimpleToastType & { id: number };
+
 export default function ToastComp() {
-    const handleMouseEntering = () => {
-        clearTimer();
-    };
-    const handleMouseLeaving = () => {
-        initTimeout(2e3);
-    };
-    const handleClosing = () => {
-        setSimpleToast(null);
-    };
-    const [simpleToast, setSimpleToast] = useState<SimpleToastType | null>(
-        null,
-    );
-    const clearTimer = () => {
-        if (timeoutId !== null) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-        }
-    };
-    const initTimeout = (timer: number) => {
-        clearTimer();
-        timeoutId = setTimeout(() => {
-            timeoutId = null;
-            setSimpleToast(null);
-        }, timer);
-    };
+    const [toasts, setToasts] = useState<StackedToastType[]>([]);
+    const lastIdRef = useRef(0);
+    const handleClosing = useCallback((id: number) => {
+        setToasts((oldToasts) => {
+            return oldToasts.filter((toast) => {
+                return toast.id !== id;
+            });
+        });
+    }, []);
     useToastSimpleShowing((toast: SimpleToastType) => {
-        setSimpleToast(toast);
-        initTimeout(toast.timeout ?? 4e3);
+        lastIdRef.current += 1;
+        const newToast = { ...toast, id: lastIdRef.current };
+        setToasts((oldToasts) => {
+            // newest at the bottom of the stack, oldest ones are dropped
+            return [...oldToasts, newToast].slice(-MAX_STACKED_TOAST_COUNT);
+        });
     });
-    if (!simpleToast) {
+    if (toasts.length === 0) {
         return null;
     }
     return (
-        <SimpleToastComp
-            onMouseEnter={handleMouseEntering}
-            onMouseLeave={handleMouseLeaving}
-            onClose={handleClosing}
-            toast={simpleToast}
-        />
+        <div className="app-toast-stack">
+            {toasts.map((toast) => {
+                return (
+                    <SimpleToastComp
+                        key={toast.id}
+                        toast={toast}
+                        onClose={handleClosing.bind(null, toast.id)}
+                    />
+                );
+            })}
+        </div>
     );
 }

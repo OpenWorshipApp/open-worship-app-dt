@@ -3,19 +3,23 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import { get_api_url, get_api_key } from '../../_owa-crypto';
 import appProvider from '../../server/appProvider';
 import {
+    checkIsHiddenName,
     fsDeleteFile,
     fsListDirectories,
     fsCheckDirExist,
     pathBasename,
     getFileName,
+    pathJoin,
 } from '../../server/fileHelpers';
 import { getBibleInfo } from './bibleInfoHelpers';
 import { appApiFetch } from '../networkHelpers';
 import { tarExtract } from '../../server/appHelpers';
-import { DownloadOptionsType, writeStreamToFile } from './downloadHelpers';
+import type { DownloadOptionsType } from './downloadHelpers';
+import { writeStreamToFile } from './downloadHelpers';
 import { getBibleXMLCacheInfoList } from '../../setting/bible-setting/bibleXMLHelpers';
 import { bibleDataReader } from './BibleDataReader';
-import { LocaleType } from '../../lang/langHelpers';
+import type { LocaleType } from '../../lang/langHelpers';
+import { tran } from '../../lang/langHelpers';
 import CacheManager from '../../others/CacheManager';
 
 export const BIBLE_DOWNLOAD_TOAST_TITLE = 'Bible Download';
@@ -104,26 +108,32 @@ export async function extractDownloadedBible(filePath: string) {
     let isExtracted = false;
     try {
         showSimpleToast(
-            BIBLE_DOWNLOAD_TOAST_TITLE,
+            tran(BIBLE_DOWNLOAD_TOAST_TITLE),
             `Start extracting bible from file "${filePath}"`,
         );
         const downloadPath = await bibleDataReader.getWritableBiblePath();
         await tarExtract(filePath, downloadPath);
         const fileFullName = pathBasename(filePath);
         const fileName = getFileName(fileFullName);
-        isExtracted = await fsCheckDirExist(
-            appProvider.pathUtils.join(downloadPath, fileName),
-        );
+        isExtracted = await fsCheckDirExist(pathJoin(downloadPath, fileName));
+        if (isExtracted) {
+            showSimpleToast(
+                tran(BIBLE_DOWNLOAD_TOAST_TITLE),
+                tran('Bible extracted'),
+            );
+        }
     } catch (error: any) {
         handleError(error);
-        showSimpleToast(BIBLE_DOWNLOAD_TOAST_TITLE, 'Fail to extract bible');
+        showSimpleToast(
+            tran(BIBLE_DOWNLOAD_TOAST_TITLE),
+            tran('Fail to extract bible'),
+        );
     } finally {
-        showSimpleToast(BIBLE_DOWNLOAD_TOAST_TITLE, 'Bible extracted');
         fsDeleteFile(filePath).catch((error) => {
             handleError(error);
             showSimpleToast(
-                BIBLE_DOWNLOAD_TOAST_TITLE,
-                'Fail to delete downloaded file',
+                tran(BIBLE_DOWNLOAD_TOAST_TITLE),
+                tran('Fail to delete downloaded file'),
             );
         });
     }
@@ -163,7 +173,11 @@ export async function getDownloadedBibleInfoList() {
     }
     const directoryNames = await fsListDirectories(writableBiblePath);
     const promises = directoryNames.map(async (fileName) => {
-        if (fileName.endsWith('.cache')) {
+        // A downloaded bible dir is named by its bible key (e.g. `KJV`); skip
+        // the XML-preview `.cache` dirs and any hidden/dot dir (`.git`,
+        // `.DS_Store`, …) — those are never bibles, so probing them is wasted
+        // I/O on the low-spec target.
+        if (fileName.endsWith('.cache') || checkIsHiddenName(fileName)) {
             return null;
         }
         return getBibleInfo(fileName, true);
@@ -179,7 +193,7 @@ export async function getDownloadedBibleInfoList() {
     return null;
 }
 
-const allBibleInfoCache = new CacheManager<BibleMinimalInfoType[]>(60); // 1 minute
+const allBibleInfoCache = new CacheManager<BibleMinimalInfoType[]>(10);
 export async function getAllLocalBibleInfoList() {
     const cached = await allBibleInfoCache.get('allLocalBibleInfoList');
     if (cached !== null) {

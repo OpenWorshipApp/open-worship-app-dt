@@ -1,23 +1,33 @@
+import './popupWidget.scss';
 import './ConfirmPopupComp.scss';
 
+import { useCallback } from 'react';
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
-import { closeAlert, ConfirmDataType } from './popupWidgetHelpers';
+import { popupWidgetManager, type ConfirmDataType } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import { tran } from '../lang/langHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function ConfirmPopupComp({
     confirmData,
 }: Readonly<{
     confirmData: ConfirmDataType;
 }>) {
-    const handleClosing = () => {
-        confirmData.onConfirm(false);
-        closeAlert();
-    };
-    const handleOkClicking = () => {
-        confirmData.onConfirm(true);
-        closeAlert();
-    };
+    const confirmDataRef = useAppCurrentRef(confirmData);
+    const handleClosing = useCallback(() => {
+        // Close first, then run the callback (see AlertPopupComp): a callback
+        // that opens the next popup must win the slot over this async close.
+        popupWidgetManager.openConfirm?.(null);
+        confirmDataRef.current.onConfirm(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleOkClicking = useCallback(() => {
+        popupWidgetManager.openConfirm?.(null);
+        confirmDataRef.current.onConfirm(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     useKeyboardRegistering(
         [{ key: 'Escape' }],
         (event) => {
@@ -41,45 +51,46 @@ export default function ConfirmPopupComp({
         <PrimitiveModalComp>
             <div
                 id="app-confirm-popup"
-                className="shadow card"
+                className="app-popup-widget card"
                 style={confirmData.extraStyles}
             >
                 <HeaderAlertPopupComp
+                    title={confirmData.title}
                     header={
-                        <div className="app-ellipsis" title={confirmData.title}>
-                            <i className="bi bi-exclamation-circle" />
+                        <>
+                            <i className="app-popup-header-icon icon-question bi bi-question-circle-fill" />
                             {confirmData.title}
-                        </div>
+                        </>
                     }
                     onClose={handleClosing}
                 />
-                <div className="card-body d-flex flex-column">
-                    {typeof confirmData.body === 'string' ? (
-                        <div
-                            className="p-2 flex-fill app-selectable-text"
-                            dangerouslySetInnerHTML={{
-                                __html: confirmData.body,
-                            }}
-                        />
-                    ) : (
-                        <>{confirmData.body}</>
-                    )}
-                    <div className="btn-group float-end">
-                        <button
-                            className="btn btn-sm"
-                            type="button"
-                            onClick={handleClosing}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            className="btn btn-sm btn-info"
-                            type="button"
-                            onClick={handleOkClicking}
-                        >
-                            {confirmData.confirmButtonLabel ?? 'OK'}
-                        </button>
-                    </div>
+                {typeof confirmData.body === 'string' ? (
+                    <div
+                        className="app-popup-body app-selectable-text"
+                        dangerouslySetInnerHTML={{
+                            __html: sanitizeHtml(confirmData.body),
+                        }}
+                    />
+                ) : (
+                    <div className="app-popup-body">{confirmData.body}</div>
+                )}
+                <div className="app-popup-footer">
+                    <button
+                        className="btn"
+                        type="button"
+                        onClick={handleClosing}
+                    >
+                        <i className="bi bi-x-lg" />
+                        {tran(confirmData.cancelButtonLabel ?? 'Cancel')}
+                    </button>
+                    <button
+                        className="btn btn-info"
+                        type="button"
+                        onClick={handleOkClicking}
+                    >
+                        <i className="bi bi-check-lg" />
+                        {tran(confirmData.confirmButtonLabel ?? 'Ok')}
+                    </button>
                 </div>
             </div>
         </PrimitiveModalComp>

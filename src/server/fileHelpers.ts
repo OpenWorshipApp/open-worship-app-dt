@@ -1,4 +1,4 @@
-import { Stats } from 'node:fs';
+import { type Dirent, type Stats } from 'node:fs';
 
 import appProvider from './appProvider';
 import FileSource from '../helper/FileSource';
@@ -6,20 +6,28 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 
 import mimeBibleList from './mime/bible-types.json';
+import mimeNoteList from './mime/note-types.json';
 import mimeLyricList from './mime/lyric-types.json';
 import mimeMarkdownList from './mime/markdown-types.json';
 import mimeAppDocumentList from './mime/app-document-types.json';
 import mimeImageList from './mime/image-types.json';
-import mimePlaylistList from './mime/playlist-types.json';
+import mimePresentingFlowList from './mime/presenting-flow-types.json';
 import mimeVideoList from './mime/video-types.json';
 import mimeAudioList from './mime/audio-types.json';
 import mimeWebList from './mime/web-types.json';
-import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import {
     hideProgressBar,
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { cloneJson, freezeObject } from '../helper/helpers';
+import { electronSendAsync } from './appHelpers';
+import { tran } from '../lang/langHelpers';
+import {
+    type DataDirAliasType,
+    fromPortableText,
+    genDataDirAlias,
+    toPortableText,
+} from './dataDirAliasHelpers';
 
 for (const ml of [
     mimeBibleList,
@@ -27,7 +35,7 @@ for (const ml of [
     mimeMarkdownList,
     mimeAppDocumentList,
     mimeImageList,
-    mimePlaylistList,
+    mimePresentingFlowList,
     mimeVideoList,
     mimeAudioList,
     mimeWebList,
@@ -38,9 +46,29 @@ for (const ml of [
 export const mimetypePdf: AppMimetypeType = {
     type: 'PDF File',
     title: 'PDF File',
-    mimetypeSignature: 'application/pdf',
+    mimetypeSignatures: ['application/pdf'],
     mimetypeName: 'other',
     extensions: ['.pdf'],
+};
+
+export const mimetypePptx: AppMimetypeType = {
+    type: 'PPTX File',
+    title: 'PPTX File',
+    mimetypeSignatures: [
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ],
+    mimetypeName: 'other',
+    extensions: ['.pptx'],
+};
+
+export const mimetypeDocx: AppMimetypeType = {
+    type: 'DOCX File',
+    title: 'DOCX File',
+    mimetypeSignatures: [
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+    mimetypeName: 'other',
+    extensions: ['.docx'],
 };
 
 const appMimeTypesMapper = {
@@ -62,12 +90,16 @@ const appExtensions = _mimeTypes.reduce((acc: string[], cur) => {
 
 const mimeTypesMapper = {
     bible: mimeBibleList,
+    note: mimeNoteList,
     lyric: mimeLyricList,
+    lyricAppDocument: mimeLyricList,
     markdown: mimeMarkdownList,
     appDocument: mimeAppDocumentList,
     pdf: [mimetypePdf],
+    pptx: [mimetypePptx],
+    docx: [mimetypeDocx],
     image: mimeImageList,
-    playlist: mimePlaylistList,
+    presentingFlow: mimePresentingFlowList,
     video: mimeVideoList,
     web: mimeWebList,
     audio: mimeAudioList,
@@ -76,7 +108,7 @@ const mimeTypesMapper = {
 export type AppMimetypeType = {
     type: string;
     title: string;
-    mimetypeSignature: string;
+    mimetypeSignatures: string[];
     mimetypeName: MimetypeNameType;
     extensions: string[];
 };
@@ -109,6 +141,10 @@ export function pathBasename(filePath: string) {
     return appProvider.pathUtils.basename(filePath);
 }
 
+export function pathDirname(filePath: string) {
+    return appProvider.pathUtils.dirname(filePath);
+}
+
 export function getFileName(fileFullName: string) {
     return fileFullName.substring(0, fileFullName.lastIndexOf('.'));
 }
@@ -137,7 +173,7 @@ export const createNewFileDetail = async (
         const filePath = pathJoin(dir, fileFullName);
         return await fsCreateFile(filePath, content);
     } catch (error: any) {
-        showSimpleToast('Creating Playlist', error.message);
+        showSimpleToast(tran('Creating Presenting Flow'), error.message);
     }
     return null;
 };
@@ -146,16 +182,32 @@ export const mimetypeNameTypeList = [
     'image',
     'video',
     'appDocument',
+    'pptx',
     'pdf',
-    'playlist',
+    'docx',
+    'presentingFlow',
     'lyric',
+    'lyricAppDocument',
     'markdown',
     'bible',
+    'note',
     'audio',
     'web',
     'other',
 ] as const;
 export type MimetypeNameType = (typeof mimetypeNameTypeList)[number];
+
+/**
+ * A name the app does not look at: anything dot-prefixed. Mostly the `._*`
+ * AppleDouble stubs a macOS machine or a USB round-trip leaves in a folder,
+ * plus whatever the OS hides there. Written once because every list that has
+ * ever needed it — directory listings, the XML bibles, the bible download
+ * cache, the data archive — has to agree, or a file skipped by one shows up
+ * through another.
+ */
+export function checkIsHiddenName(fileFullName: string) {
+    return fileFullName.startsWith('.');
+}
 
 export function getFileMetaData(
     fileFullName: string,
@@ -163,11 +215,14 @@ export function getFileMetaData(
 ): FileMetadataType | null {
     mimetypeList = mimetypeList ?? getAllAppMimetype();
     const dotExtension = getFileDotExtension(fileFullName);
-    const foundMT = mimetypeList.find((mt) => {
-        return mt.extensions.includes(dotExtension);
+    const foundMimetype = mimetypeList.find((mimetype) => {
+        const lowerExtensions = mimetype.extensions.map((ext) => {
+            return ext.toLowerCase();
+        });
+        return lowerExtensions.includes(dotExtension.toLowerCase());
     });
-    if (foundMT) {
-        return { fileFullName: fileFullName, appMimetype: foundMT };
+    if (foundMimetype) {
+        return { fileFullName: fileFullName, appMimetype: foundMimetype };
     }
     return null;
 }
@@ -210,11 +265,9 @@ export function isSupportedMimetype(
     mimetypeName: MimetypeNameType,
 ) {
     const mimetypeList = getAppMimetype(mimetypeName);
-    return mimetypeList
-        .map((newMimetype) => {
-            return newMimetype.mimetypeSignature;
-        })
-        .includes(fileMimetype);
+    return mimetypeList.some((newMimetype) => {
+        return newMimetype.mimetypeSignatures.includes(fileMimetype);
+    });
 }
 
 export function isSupportedExt(
@@ -285,42 +338,173 @@ function _fsReaddir(dirPath: string) {
     return fsFilePromise<string[]>(appProvider.fileUtils.readdir, dirPath);
 }
 
-function _fsReadFile(filePath: string, options?: any) {
-    return fsFilePromise<string>(
+// A data folder carried between computers keeps no absolute path of its own in
+// any file: text written inside it stores the folder as `$DATA_DIR_PATH`, and
+// every text read expands it (see `dataDirAliasHelpers`). Web files are loaded
+// by an <iframe> straight from disk, where nothing would expand it, so they
+// keep real paths.
+const webFileExtensions = mimeWebList.flatMap(({ extensions }) => {
+    return extensions;
+});
+// One entry, rebuilt only when the data folder changes.
+let dataDirAlias: DataDirAliasType | null = null;
+function getDataDirAlias(filePath: string) {
+    // `?.`: the test doubles of `appProvider` carry no `sessionData`.
+    const dirPath = appProvider.sessionData?.defaultStorageDirPath;
+    if (
+        !dirPath ||
+        webFileExtensions.includes(getFileDotExtension(filePath).toLowerCase())
+    ) {
+        return null;
+    }
+    if (dataDirAlias?.dirPath !== dirPath) {
+        dataDirAlias = genDataDirAlias(
+            dirPath,
+            pathSeparator,
+            appProvider.browserUtils.pathToFileURL,
+        );
+    }
+    return dataDirAlias;
+}
+function toRealFileText(filePath: string, text: string) {
+    const alias = getDataDirAlias(filePath);
+    return alias === null ? text : fromPortableText(text, alias);
+}
+function toPortableFileText(filePath: string, text: string) {
+    const alias = getDataDirAlias(filePath);
+    // Only what is written INSIDE the data folder: an export, a temp file or
+    // a download stays readable by whatever opens it. Reads resolve the alias
+    // anywhere, so a file copied off the drive still works.
+    if (alias === null || !filePath.startsWith(alias.prefix)) {
+        return text;
+    }
+    return toPortableText(text, alias);
+}
+
+// const rwState: { [key: string]: { r: number; w: number } } = {};
+// for debugging read/write operation count, not used for logic
+// (globalThis as any).rwState = rwState;
+async function _fsReadFile(filePath: string, options?: any) {
+    // rwState[filePath] = rwState[filePath] ?? { r: 0, w: 0 };
+    // rwState[filePath].r++;
+    // console.log('read-file', filePath);
+    const text = await fsFilePromise<string>(
         appProvider.fileUtils.readFile,
         filePath,
         options,
     );
+    return toRealFileText(filePath, text);
 }
-
 function _fsWriteFile(filePath: string, data: string | Buffer, options?: any) {
+    // rwState[filePath] = rwState[filePath] ?? { r: 0, w: 0 };
+    // rwState[filePath].w++;
     return fsFilePromise<void>(
         appProvider.fileUtils.writeFile,
         filePath,
-        data,
+        typeof data === 'string' ? toPortableFileText(filePath, data) : data,
         options,
     );
 }
 
-export function fsMove(oldFullPath: string, newFullPath: string) {
-    return fsFilePromise<void>(
-        appProvider.fileUtils.rename,
-        oldFullPath,
-        newFullPath,
-    );
+// `rename` cannot cross a volume boundary — it fails with EXDEV. Media
+// downloads stage into the OS temp dir (`C:\...\Temp`) while the data dir often
+// lives on another drive (`D:\open-worship-data`), so those moves need a copy
+// followed by deleting the source. Only reached on EXDEV: a same-volume move
+// stays a cheap metadata-only rename with no bytes read or written.
+async function _fsMoveAcrossDevices(
+    oldFullPath: string,
+    newFullPath: string,
+    isDirectory: boolean,
+) {
+    if (!isDirectory) {
+        try {
+            // `copyFile` streams inside libuv — the file never lands in the
+            // renderer's memory, which matters for a ~100MB video.
+            await fsFilePromise<void>(
+                appProvider.fileUtils.copyFile,
+                oldFullPath,
+                newFullPath,
+            );
+        } catch (error) {
+            // A half-written destination is worse than none: everything
+            // downstream would read it as a finished file.
+            try {
+                await _fsUnlink(newFullPath);
+            } catch (_error) {}
+            throw error;
+        }
+        await _fsUnlink(oldFullPath);
+        return;
+    }
+    await _fsMkdir(newFullPath, true);
+    // One entry at a time: copying a whole directory in parallel would hold N
+    // file handles and N disk queues open at once on a weak machine.
+    for (const entry of await fsList(oldFullPath)) {
+        await _fsMoveAcrossDevices(
+            entry.filePath,
+            pathJoin(newFullPath, entry.name),
+            entry.isDirectory,
+        );
+    }
+    await _fsRmdir(oldFullPath);
+}
+
+export async function fsMove(oldFullPath: string, newFullPath: string) {
+    try {
+        await fsFilePromise<void>(
+            appProvider.fileUtils.rename,
+            oldFullPath,
+            newFullPath,
+        );
+    } catch (error: any) {
+        if (error?.code !== 'EXDEV') {
+            throw error;
+        }
+        await _fsMoveAcrossDevices(
+            oldFullPath,
+            newFullPath,
+            await fsCheckDirExist(oldFullPath),
+        );
+    }
 }
 
 function _fsUnlink(filePath: string) {
     return fsFilePromise<void>(appProvider.fileUtils.unlink, filePath);
 }
 
-export function fsCloneFile(file: File | string, dest: string) {
+export function fsCloneFile(file: File | Blob | string, dest: string) {
     if (file instanceof File) {
         return new Promise<void>((resolve, reject) => {
             const writeStream = fsCreateWriteStream(dest);
+            // Settle exactly once: a disk error (e.g. disk full) must reject
+            // instead of leaving the promise pending forever.
+            let isSettled = false;
+            const fail = (error: Error) => {
+                if (isSettled) {
+                    return;
+                }
+                isSettled = true;
+                writeStream.destroy();
+                reject(error);
+            };
+            writeStream.on('error', fail);
+            writeStream.once('close', () => {
+                if (isSettled) {
+                    return;
+                }
+                isSettled = true;
+                resolve();
+            });
             const writableStream = new WritableStream({
                 write(chunk) {
-                    writeStream.write(chunk);
+                    // Honor backpressure: on a slow disk the source must
+                    // wait, or the whole file buffers in memory.
+                    if (writeStream.write(chunk)) {
+                        return;
+                    }
+                    return new Promise<void>((resolveDrain) => {
+                        writeStream.once('drain', resolveDrain);
+                    });
                 },
                 close() {
                     writeStream.end();
@@ -329,8 +513,7 @@ export function fsCloneFile(file: File | string, dest: string) {
                     writeStream.destroy();
                 },
             });
-            writeStream.once('close', resolve);
-            file.stream().pipeTo(writableStream).catch(reject);
+            file.stream().pipeTo(writableStream).catch(fail);
         });
     }
     return fsFilePromise<void>(appProvider.fileUtils.copyFile, file, dest);
@@ -359,7 +542,9 @@ async function _fsCheckExist(
             return false;
         } else {
             handleError(error);
-            throw new Error('Error during checking file exist');
+            throw new Error('Error during checking file exist', {
+                cause: error,
+            });
         }
     }
 }
@@ -370,6 +555,14 @@ export function fsCheckDirExist(dirPath: string) {
 
 export function fsCheckFileExist(filePath: string, fileFullName?: string) {
     return _fsCheckExist(true, filePath, fileFullName);
+}
+
+export async function fsGetFileSize(filePath: string) {
+    const stat = await _fsStat(filePath);
+    if (!stat.isFile()) {
+        throw new Error('Path is not a file');
+    }
+    return stat.size;
 }
 
 export async function fsList(dir: string) {
@@ -393,6 +586,52 @@ export async function fsList(dir: string) {
     return fileList;
 }
 
+export type DirentResultType = {
+    name: string;
+    isFile: boolean;
+    isDirectory: boolean;
+};
+
+/**
+ * The entries of one directory, WITHOUT a `stat` per entry.
+ *
+ * `fsList` costs one `readdir` plus one `stat` for every entry it returns;
+ * `readdir(…, { withFileTypes: true })` answers the same is-it-a-file question
+ * from the single directory read the kernel already did. On a weak disk that is
+ * the difference between one syscall and one-plus-N for a folder the user only
+ * wants NAMES from -- which is what a recursive name-match search wants.
+ *
+ * Two ways this deliberately differs from `fsList`, because a `Dirent` does not
+ * follow links the way `stat` does:
+ * - A SYMLINK is neither `isFile` nor `isDirectory` here. Callers that must
+ *   resolve links want `fsList`.
+ * - Nothing is skipped or sorted. Hidden names are the caller's to filter
+ *   (`checkIsHiddenName`).
+ *
+ * Rejects rather than swallowing: a caller walking a tree has to tell "this
+ * folder is unreadable" (EACCES) from "this folder is gone" (ENOENT) to say
+ * anything useful, and `fsList`'s per-entry `catch` cannot.
+ */
+export async function fsListDirents(
+    dirPath: string,
+): Promise<DirentResultType[]> {
+    if (!dirPath) {
+        return [];
+    }
+    const direntList = await fsFilePromise<Dirent[]>(
+        appProvider.fileUtils.readdir,
+        dirPath,
+        { withFileTypes: true },
+    );
+    return direntList.map((dirent) => {
+        return {
+            name: dirent.name,
+            isFile: dirent.isFile(),
+            isDirectory: dirent.isDirectory(),
+        };
+    });
+}
+
 export async function fsListFiles(dirPath: string) {
     const foundFileList = await fsList(dirPath);
     return foundFileList
@@ -408,7 +647,7 @@ export async function fsListDirectories(dirPath: string) {
     const foundFileList = await fsList(dirPath);
     return foundFileList
         .filter(({ name, isDirectory }) => {
-            if (name.startsWith('.')) {
+            if (checkIsHiddenName(name)) {
                 return false;
             }
             return isDirectory;
@@ -442,8 +681,8 @@ export async function fsListFilesWithMimetype(
     } catch (error) {
         handleError(error);
         showSimpleToast(
-            'Getting File List',
-            'Error occurred during listing file',
+            tran('Getting File List'),
+            tran('Error occurred during listing file'),
         );
     }
     return null;
@@ -472,10 +711,15 @@ export async function fsWriteFile(
 }
 
 export function fsWriteFileSync(filePath: string, txt: string, encoding?: any) {
-    return appProvider.fileUtils.writeFileSync(filePath, txt, {
-        encoding: encoding ?? 'utf8',
-        flag: 'w',
-    });
+    // Settings go through here, and they hold most of the data folder's paths.
+    return appProvider.fileUtils.writeFileSync(
+        filePath,
+        toPortableFileText(filePath, txt),
+        {
+            encoding: encoding ?? 'utf8',
+            flag: 'w',
+        },
+    );
 }
 
 export async function fsCreateFile(
@@ -526,65 +770,73 @@ export function fsUnlinkSync(filePath: string) {
     return appProvider.fileUtils.unlinkSync(filePath);
 }
 
-export async function fsDeleteDir(filePath: string) {
-    if (await fsCheckFileExist(filePath)) {
-        throw new Error(`${filePath} is not a directory`);
+export async function fsDeleteDir(dirPath: string) {
+    if (await fsCheckFileExist(dirPath)) {
+        throw new Error(`${dirPath} is not a directory`);
     }
-    if (await fsCheckDirExist(filePath)) {
-        await _fsRmdir(filePath);
+    if (await fsCheckDirExist(dirPath)) {
+        await _fsRmdir(dirPath);
     }
 }
 
-export function fsReadFile(filePath: string) {
-    return _fsReadFile(filePath, 'utf8');
+export async function fsReadFile(filePath: string) {
+    let text = await _fsReadFile(filePath, 'utf8');
+    // remove `\uFEFF`
+    text = text.replace(/^\uFEFF/, '');
+    return text;
 }
 
 export function fsReadSync(filePath: string) {
-    return appProvider.fileUtils.readFileSync(filePath, 'utf8');
+    return toRealFileText(
+        filePath,
+        appProvider.fileUtils.readFileSync(filePath, 'utf8'),
+    );
+}
+
+// The bytes of a file as base64 -- a saved picture on its way back to the
+// clipboard, which takes a data URL and never a path.
+export function fsReadFileBase64Sync(filePath: string) {
+    return appProvider.fileUtils.readFileSync(filePath, 'base64');
 }
 
 export async function fsCopyFilePathToPath(
-    file: File | string,
+    file: File | Blob | string,
     destinationPath: string,
     fileFullName?: string,
 ) {
-    const progressKey = 'Copying File';
-    showProgressBar(progressKey);
-    fileFullName = fileFullName ?? getFileFullName(file);
-    const targetPath = pathJoin(destinationPath, fileFullName);
-    try {
-        const isFileExist = await fsCheckFileExist(targetPath);
-        if (isFileExist) {
-            const isConfirm = await showAppConfirm(
-                'Copy File',
-                `File path "${targetPath}" exist, do you want to override it?`,
-                {
-                    confirmButtonLabel: 'Yes',
-                },
-            );
-            if (!isConfirm) {
-                throw new Error('Canceled by user');
-            }
+    let distFileFullName = fileFullName;
+    if (!distFileFullName) {
+        if (file instanceof File) {
+            distFileFullName = getFileFullName(file);
         }
-        await fsCloneFile(file, targetPath);
-        hideProgressBar(progressKey);
-        return targetPath;
-    } catch (error: any) {
-        if (error.message !== 'Canceled by user') {
-            handleError(error);
-            showSimpleToast('Copying File', 'Error: ' + error.message);
-            try {
-                await fsDeleteFile(targetPath);
-            } catch (error) {
-                handleError(error);
-            }
+        if (distFileFullName === undefined && typeof file === 'string') {
+            distFileFullName = FileSource.getInstance(file).fullName;
         }
     }
-    hideProgressBar(progressKey);
-    return null;
+    const progressKey = 'Copying File:' + distFileFullName;
+    showProgressBar(progressKey);
+    try {
+        if (!distFileFullName) {
+            throw new Error('Cannot get file name');
+        }
+        const targetFilePath = pathJoin(destinationPath, distFileFullName);
+        const targetFileSource = FileSource.getInstance(targetFilePath);
+        const nextFilePath = await targetFileSource.genNextFilePath();
+        await fsCloneFile(file, nextFilePath);
+        return nextFilePath;
+    } catch (error: any) {
+        handleError(error);
+        showSimpleToast(
+            progressKey,
+            tran('Error occurred during copying file') + ': ' + error.message,
+        );
+        return null;
+    } finally {
+        hideProgressBar(progressKey);
+    }
 }
 
-export function getFileFullName(file: File | string) {
+export function getFileFullName(file: File | string): string | undefined {
     if (file instanceof File) {
         return file.name;
     }
@@ -592,21 +844,25 @@ export function getFileFullName(file: File | string) {
     return fileFullName;
 }
 
-export function selectDirs() {
-    return appProvider.messageUtils.sendDataSync(
-        'main:app:select-dirs',
-    ) as string[];
+export async function selectDirs() {
+    showProgressBar('Selecting Directory');
+    const dirs = await electronSendAsync<string[]>('main:app:select-dirs');
+    hideProgressBar('Selecting Directory');
+    return dirs;
 }
-export function selectFiles(
+export async function selectFiles(
     filters: {
         name: string;
         extensions: string[];
     }[],
 ) {
-    return appProvider.messageUtils.sendDataSync(
+    showProgressBar('Selecting File');
+    const filePaths = await electronSendAsync<string[]>(
         'main:app:select-files',
-        filters,
-    ) as string[];
+        { filters },
+    );
+    hideProgressBar('Selecting File');
+    return filePaths;
 }
 
 export function getUserWritablePath(): string {
@@ -614,15 +870,26 @@ export function getUserWritablePath(): string {
 }
 
 export function getDesktopPath(): string {
-    return appProvider.messageUtils.sendDataSync('main:app:get-desktop-path');
+    return appProvider.messageUtils.sendDataSync(
+        'main:app:get-special-path',
+        'desktop',
+    );
 }
-
+export function getDownloadPath(): string {
+    return appProvider.messageUtils.sendDataSync(
+        'main:app:get-special-path',
+        'downloads',
+    );
+}
 export function getTempPath(): string {
-    return appProvider.messageUtils.sendDataSync('main:app:get-temp-path');
+    return appProvider.messageUtils.sendDataSync(
+        'main:app:get-special-path',
+        'temp',
+    );
 }
 
-export function writeFileFromBase64(filePath: string, base64: string) {
-    return appProvider.fileUtils.writeFileFromBase64(filePath, base64);
+export function writeFileFromBase64Sync(filePath: string, base64: string) {
+    return appProvider.fileUtils.writeFileFromBase64Sync(filePath, base64);
 }
 
 export function getDotExtensionFromBase64Data(base64Data: string) {
@@ -632,7 +899,7 @@ export function getDotExtensionFromBase64Data(base64Data: string) {
         const mimeType = mimeMatch[1].toLowerCase();
         const allMimeTypes = Object.values(mimeTypesMapper).flat();
         const foundMime = allMimeTypes.find((mt) => {
-            return mt.mimetypeSignature === mimeType;
+            return mt.mimetypeSignatures.includes(mimeType);
         });
         if (foundMime) {
             return foundMime.extensions[0];
@@ -643,16 +910,19 @@ export function getDotExtensionFromBase64Data(base64Data: string) {
 
 export async function ensureDirectory(dirPath: string) {
     if (await fsCheckFileExist(dirPath)) {
-        return;
+        throw new Error(
+            `Cannot ensure directory "${dirPath}", ` +
+                'a file already exists at that path',
+        );
     }
     if (!(await fsCheckDirExist(dirPath))) {
         fsMkDirSync(dirPath, true);
     }
 }
 
-export function getFileMD5(filePath: string) {
+export function getFileChecksum(filePath: string, algorithm: string) {
     return new Promise<string | null>((resolve) => {
-        const hash = appProvider.cryptoUtils.createHash('md5');
+        const hash = appProvider.cryptoUtils.createHash(algorithm);
         const stream = appProvider.fileUtils.createReadStream(filePath);
         stream.on('error', (err) => {
             handleError(err);
@@ -667,4 +937,28 @@ export function getFileMD5(filePath: string) {
     });
 }
 
+export function getFileMD5(filePath: string) {
+    return getFileChecksum(filePath, 'md5');
+}
+
 export const KEY_SEPARATOR = '<id>';
+
+export function getFileBase64(src: string) {
+    return new Promise<string>((resolve, reject) => {
+        fetch(src)
+            .then((response) => response.blob())
+            .then((blob) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    resolve(reader.result as string);
+                };
+                reader.onerror = (error: any) => {
+                    reject(new Error('Error reading blob as base64: ' + error));
+                };
+                reader.readAsDataURL(blob);
+            })
+            .catch((error) => {
+                reject(error);
+            });
+    });
+}

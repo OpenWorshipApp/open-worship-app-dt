@@ -1,7 +1,7 @@
+import type { MimetypeNameType } from '../server/fileHelpers';
 import {
     createNewFileDetail,
     fsListFilesWithMimetype,
-    MimetypeNameType,
 } from '../server/fileHelpers';
 import FileSource from '../helper/FileSource';
 import { cloneJson, toMaxId } from '../helper/helpers';
@@ -9,13 +9,15 @@ import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { getSetting } from '../helper/settingHelpers';
 import BibleItem from './BibleItem';
 import { showSimpleToast } from '../toast/toastHelpers';
-import { BibleItemType } from './bibleItemHelpers';
+import { tran } from '../lang/langHelpers';
+import type { BibleItemType } from './bibleItemHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import appProvider from '../server/appProvider';
-import DocumentInf from '../others/DocumentInf';
+import type DocumentInf from '../others/DocumentInf';
 import { handleError } from '../helper/errorHelpers';
-import { ItemSourceInfBasic } from '../others/ItemSourceInf';
-import { AnyObjectType } from '../helper/typeHelpers';
+import type { ItemSourceInfBasic } from '../others/ItemSourceInf';
+import type { AnyObjectType } from '../helper/typeHelpers';
+import { notifyElementHighlight } from '../helper/domHelpers';
 
 export type BibleType = {
     items: BibleItemType[];
@@ -61,7 +63,10 @@ export default class Bible
                 bibleItem.bible = this;
                 return bibleItem;
             } catch (error: any) {
-                showSimpleToast('Instantiating Bible Item', error.message);
+                showSimpleToast(
+                    tran('Instantiating Bible Item'),
+                    error.message,
+                );
             }
             return BibleItem.fromJsonError(json, this.filePath);
         });
@@ -162,6 +167,7 @@ export default class Bible
         const bibleItems = this.items;
         bibleItems.push(newBibleItem);
         this.items = bibleItems;
+        this.notifyNewBibleItemAdded(newBibleItem.id);
     }
 
     swapItems(fromIndex: number, toIndex: number) {
@@ -218,22 +224,25 @@ export default class Bible
         try {
             const fromBible = await Bible.fromFilePath(filePath);
             if (!fromBible) {
-                showSimpleToast('Moving Bible Item', 'Cannot source Bible');
+                showSimpleToast(
+                    tran('Moving Bible Item'),
+                    tran('Cannot source Bible'),
+                );
                 return;
             }
             const backupBibleItems = fromBible.items;
             let targetBibleItems: BibleItem[] = backupBibleItems;
             const index =
-                bibleItem !== undefined
-                    ? fromBible.items.findIndex((item) => {
+                bibleItem === undefined
+                    ? undefined
+                    : fromBible.items.findIndex((item) => {
                           return item.id === bibleItem.id;
-                      })
-                    : undefined;
+                      });
             if (index !== undefined) {
                 if (!backupBibleItems[index]) {
                     showSimpleToast(
-                        'Moving Bible Item',
-                        'Cannot find Bible Item',
+                        tran('Moving Bible Item'),
+                        tran('Cannot find Bible Item'),
                     );
                     return;
                 }
@@ -244,7 +253,7 @@ export default class Bible
                 await fromBible.deleteBibleItem(item);
             }
         } catch (error: any) {
-            showSimpleToast('Moving Bible Item', error.message);
+            showSimpleToast(tran('Moving Bible Item'), error.message);
         }
     }
 
@@ -272,8 +281,8 @@ export default class Bible
             : null;
         if (!defaultBible) {
             showSimpleToast(
-                'Getting Default Bible File',
-                'Fail to get default bible file',
+                tran('Getting Default Bible File'),
+                tran('Fail to get default bible file'),
             );
             return null;
         }
@@ -314,6 +323,14 @@ export default class Bible
         const jsonData = this.toJson();
         const jsonString = JSON.stringify(jsonData);
         return await this.fileSource.writeFileData(jsonString);
+    }
+
+    notifyNewBibleItemAdded(bibleItemId: number) {
+        notifyElementHighlight(() => {
+            return document.querySelector(
+                `[data-bible-item-id="${this.fileSource.name}-${bibleItemId}"]`,
+            );
+        });
     }
 
     static async fromFilePath(filePath: string) {

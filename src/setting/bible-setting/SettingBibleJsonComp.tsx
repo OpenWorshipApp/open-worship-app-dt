@@ -2,6 +2,7 @@ import {
     useDownloadedBibleInfoList,
     useOnlineBibleInfoList,
 } from './bibleSettingHelpers';
+import { tran } from '../../lang/langHelpers';
 import SettingDownloadedBibleComp from './SettingDownloadedBibleComp';
 import SettingOnlineBibleComp from './SettingOnlineBibleComp';
 
@@ -17,7 +18,7 @@ export default function SettingBibleJsonComp() {
                 margin: 'auto',
             }}
         >
-            <h3>Downloaded Bible List</h3>
+            <h3>{tran('Downloaded Bible List')}</h3>
             <SettingDownloadedBibleComp
                 onlineBibleInfoList={onlineBbInfoList}
                 downloadedBibleInfoList={downloadedBibleInfoList}
@@ -25,14 +26,14 @@ export default function SettingBibleJsonComp() {
             />
             <hr />
             <div>
-                <h4>Online Bible List</h4>
+                <h4>{tran('Online Bible List')}</h4>
                 <div
                     style={{
                         color: 'purple',
                         fontStyle: 'italic',
                     }}
                 >
-                    (Under development, please use XML instead)
+                    {tran('(Under development, please use XML instead)')}
                 </div>
             </div>
             <SettingOnlineBibleComp

@@ -1,17 +1,22 @@
-import http from 'node:http';
-import fs from 'node:fs';
-import path from 'node:path';
-import * as nodeCrypto from 'node:crypto';
+import type http from 'node:http';
+import type fs from 'node:fs';
+import type zlip from 'node:zlib';
+import type path from 'node:path';
+import type * as nodeCrypto from 'node:crypto';
 
 export type MessageEventType = {
     returnValue: any;
 };
 
 export type MessageUtilsType = {
-    channels: { screenMessageChannel: string };
+    messageChannels: { screenMessage: string };
     sendData: (channel: string, ...args: any[]) => void;
     sendDataSync: (channel: string, ...args: any[]) => any;
     listenForData: (
+        channel: string,
+        callback: (event: MessageEventType, ...args: any[]) => void,
+    ) => void;
+    removeListener: (
         channel: string,
         callback: (event: MessageEventType, ...args: any[]) => void,
     ) => void;
@@ -32,6 +37,10 @@ export type FileUtilsType = {
     unlink: typeof fs.unlink;
     rmdir: typeof fs.rmdir;
     readFile: typeof fs.readFile;
+    openSync: typeof fs.openSync;
+    readSync: typeof fs.readSync;
+    fstatSync: typeof fs.fstatSync;
+    closeSync: typeof fs.closeSync;
     readFileSync: typeof fs.readFileSync;
     writeFileSync: typeof fs.writeFileSync;
     unlinkSync: typeof fs.unlinkSync;
@@ -44,7 +53,8 @@ export type FileUtilsType = {
         callback: fs.NoParamCallback,
     ) => void;
     watch: typeof fs.watch;
-    writeFileFromBase64: (filePath: string, base64: string) => void;
+    writeFileFromBase64Sync: (filePath: string, base64: string) => void;
+    gunzipSync: typeof zlip.gunzipSync;
 };
 
 export type PathUtilsType = {
@@ -57,12 +67,22 @@ export type PathUtilsType = {
 
 export type SystemUtilsType = {
     copyToClipboard: (str: string) => void;
+    commitHash?: string;
     isDev: boolean;
     isWindows: boolean;
+    isWindowsStore: boolean;
     is64System: boolean;
     isMac: boolean;
     isArm64: boolean;
     isLinux: boolean;
+    isUbuntu: boolean;
+    isFedora: boolean;
+    // Whether the OS compositor can put a translucent backdrop behind a
+    // window, i.e. whether the `appGlassy` popup feature does anything. A
+    // renderer that styles itself for glass must read this and not assume it.
+    isGlassCapable: boolean;
+    openFile: (filePath: string) => void;
+    generateFileMD5: (filePath: string) => Promise<string>;
     generateMD5: (input: string) => string;
 };
 
@@ -77,6 +97,8 @@ export type AppInfoType = {
     version: string;
     versionNumber: number;
 };
+// An installed family and the CSS font weights it ships, `['400', '700']`
+// (`electron/fontListHelpers.ts`).
 export type FontListType = {
     [key: string]: string[];
 };
@@ -108,8 +130,22 @@ export type PagePropsType = {
     isPageExperiment: boolean;
     isPageLyricEditor: boolean;
     lyricEditorHomePage: string;
+    isPageAbout: boolean;
+    aboutHomePage: string;
+    isPageChatbot: boolean;
+    chatbotHomePage: string;
+    isPageAichat: boolean;
+    aichatHomePage: string;
+    isPageLWShare: boolean;
+    isMainPage: boolean;
+    lwShareHomePage: string;
+    bibleNoteHomePage: string;
+    isPageMarkdownPreview: boolean;
+    markdownPreviewHomePage: string;
     webEditorHomePage: string;
     experimentHomePage: string;
+    getIsMouseOverApp: () => boolean;
+    getIsWindowFocused: () => boolean;
 };
 
 interface SQLite3DatabaseType {
@@ -130,9 +166,6 @@ export type SQLiteDatabaseType = {
     close: () => void;
 };
 
-type PowerPointHelperType = {
-    countSlides: (filePath: string) => number | null;
-};
 type YTHelper = {
     on: (event: string, listener: (...args: any[]) => void) => YTHelper;
     off: (event: string, listener: (...args: any[]) => void) => YTHelper;
@@ -140,9 +173,19 @@ type YTHelper = {
         args: string[],
         options?: { cwd?: string; env?: NodeJS.ProcessEnv },
     ) => YTHelper;
+    // For the calls that only want yt-dlp's stdout (`-g`, `-J`, ...) rather
+    // than a download to follow along with.
+    execPromise: (
+        args: string[],
+        options?: { cwd?: string; env?: NodeJS.ProcessEnv },
+    ) => Promise<string>;
     ytDlpProcess: {
         pid: number;
     };
+};
+
+type EnvUtilsType = {
+    isFEUseEffectWarning: boolean;
 };
 
 export type AppProviderType = Readonly<
@@ -164,6 +207,7 @@ export type AppProviderType = Readonly<
         messageUtils: MessageUtilsType;
         httpUtils: {
             request: typeof http.request;
+            requestHttp: typeof http.request;
         };
         fileUtils: FileUtilsType;
         pathUtils: PathUtilsType;
@@ -179,23 +223,52 @@ export type AppProviderType = Readonly<
         presenterHomePage: string;
         readerHomePage: string;
         currentHomePage: string;
-        powerPointUtils: {
-            getPowerPointHelper: (
-                dotNetRoot?: string,
-            ) => Promise<PowerPointHelperType | null>;
-        };
         ytUtils: {
-            getYTHelper: () => Promise<YTHelper>;
-            ffmpegBinPath: string;
-            jsRuntimeBinPath: string | null;
+            // The path is passed in: the binaries live in the user's data
+            // directory now, which the preload cannot resolve. See
+            // `src/helper/extra-bin/extraBinHelpers.tsx`.
+            getYTHelper: (ytDlpBinPath: string) => Promise<YTHelper>;
         };
         windowTitle: string;
+        POPUP_FRAME_NAME_PREFIX: string;
+        init: () => Promise<void>;
+        envUtils: EnvUtilsType;
+        // The one field that changes while the window runs (`Readonly` is
+        // shallow). Filled at start-up, never by the preload, which is frozen.
+        sessionData: {
+            // The data folder that `fileHelpers` aliases as `$DATA_DIR_PATH`
+            // in file contents; `null` turns the aliasing off.
+            defaultStorageDirPath: string | null;
+        };
     }
 >;
 
+let isMouseOverApp = false;
+document.addEventListener('mouseenter', () => {
+    isMouseOverApp = true;
+});
+document.addEventListener('mouseleave', () => {
+    isMouseOverApp = false;
+});
+
+const providerSource = (globalThis as any).provider;
+
 const appProvider = {
-    ...(globalThis as any).provider,
+    ...providerSource,
     windowTitle: document.title,
+    sessionData: { defaultStorageDirPath: null },
+    isMainPage: providerSource.isPageReader || providerSource.isPagePresenter,
+    getIsMouseOverApp: () => {
+        return isMouseOverApp;
+    },
+    getIsWindowFocused: () => {
+        return document.hasFocus();
+    },
 } as AppProviderType;
+
+// for security reason, appProvider should not be accessible globally
+if (providerSource) {
+    delete (globalThis as any).provider;
+}
 
 export default appProvider;

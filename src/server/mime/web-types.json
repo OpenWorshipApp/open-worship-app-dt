@@ -2,13 +2,13 @@
     {
         "type": "HTML",
         "title": "HyperText Markup Language",
-        "mimetypeSignature": "text/html",
+        "mimetypeSignatures": ["text/html"],
         "extensions": [".html", ".htm"]
     },
     {
         "type": "XML",
         "title": "Extensible Markup Language",
-        "mimetypeSignature": "application/xml",
+        "mimetypeSignatures": ["application/xml"],
         "extensions": [".xml", ".xhtml", ".xht"]
     }
 ]

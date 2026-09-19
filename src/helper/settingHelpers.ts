@@ -1,7 +1,11 @@
-import { useState, useCallback, SetStateAction, Dispatch } from 'react';
+import type { SetStateAction, Dispatch } from 'react';
+import { useState, useCallback } from 'react';
 
 import appProvider from '../server/appProvider';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
+import { pathJoin, fsCheckFileExist } from '../server/fileHelpers';
+import { useAppEffectAsync } from './appHooks';
+import { useAppCurrentRef } from './appHooks';
 
 export function setSetting(key: string, value: string | null) {
     // TODO: Change to use SettingManager
@@ -15,9 +19,84 @@ export function getSetting(key: string) {
     // TODO: Change to use SettingManager
     return appLocalStorage.getItem(key);
 }
+// Deletes the key outright. `setSetting(key, null)` only blanks it, which still
+// reads back as an empty string and keeps the file on disk — not enough when
+// the thing the key belonged to (e.g. a screen) is gone for good and its id can
+// be handed to a different screen later.
+export function removeSetting(key: string) {
+    appLocalStorage.removeItem(key);
+}
 export function getSettingForce(key: string) {
     // TODO: Change to use SettingManager
     return appLocalStorage.getItemForce(key);
+}
+
+/**
+ * Settings are stored as files named after their key, so a raw file path in a
+ * setting name becomes a path with directory separators in it and every read
+ * logs an ENOENT.
+ */
+export function toFilePathSettingKey(...parts: string[]) {
+    return parts
+        .join('-')
+        .replace(/[\\/:*?"<>|.]/g, '_')
+        .replace(/\s+/g, '_');
+}
+
+export function toFilePathSettingName(prefix: string, ...parts: string[]) {
+    return `${prefix}-${toFilePathSettingKey(...parts)}`;
+}
+
+/**
+ * Drop every setting whose key is `prefix` itself or starts with `prefix-`.
+ *
+ * For cleaning up after a file that is gone: settings are named after the thing
+ * they belong to, so deleting a presenting flow otherwise leaves its
+ * `presenting-flow-opened-…`, `presenting-flow-item-expanded-…-<doc>` and
+ * `presenting-flow-preview-collapsed-…` files behind forever, one per presenting flow per
+ * setting, on machines that are usually tight on disk.
+ *
+ * The `-` is required so a prefix cannot swallow a longer, unrelated key that
+ * merely starts with the same characters.
+ */
+export async function removeSettingsByPrefix(prefix: string) {
+    const keys = await appLocalStorage.listKeys();
+    const removedKeys = keys.filter((key) => {
+        return key === prefix || key.startsWith(`${prefix}-`);
+    });
+    for (const key of removedKeys) {
+        appLocalStorage.removeItem(key);
+    }
+    return removedKeys;
+}
+
+function useWatchSetting(settingName: string, callback: () => void) {
+    useAppEffectAsync(async () => {
+        const settingFile = pathJoin(
+            appLocalStorage.localStorageDir,
+            settingName,
+        );
+        if (!(await fsCheckFileExist(settingFile))) {
+            setSetting(settingName, '');
+        }
+        const abortController = new AbortController();
+        appProvider.fileUtils.watch(
+            settingFile,
+            {
+                signal: abortController.signal,
+            },
+            async (eventType: string, ..._args: any[]) => {
+                if (eventType !== 'change') {
+                    return;
+                }
+                appLocalStorage.removeItemCache(settingName);
+                callback();
+            },
+        );
+        return () => {
+            abortController.abort();
+        };
+    }, []);
 }
 
 export function useStateSettingBoolean(
@@ -30,47 +109,76 @@ export function useStateSettingBoolean(
             ? !!defaultValue
             : originalSettingName === 'true';
     const [data, setData] = useState(defaultData);
+    const dataRef = useAppCurrentRef(data);
+    const settingNameRef = useAppCurrentRef(settingName);
     const setDataSetting = useCallback(
         (b: boolean | ((prev: boolean) => boolean)) => {
-            const newValue = typeof b === 'function' ? b(data) : b;
+            const newValue = typeof b === 'function' ? b(dataRef.current) : b;
             setData(newValue);
-            setSetting(settingName, `${newValue}`);
+            setSetting(settingNameRef.current, `${newValue}`);
         },
-        [data, settingName],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return [data, setDataSetting];
 }
 export function useStateSettingString<T extends string>(
     settingName: string,
     defaultString: T = '' as T,
-): [T, Dispatch<SetStateAction<T>>] {
+): [T, (text: string | ((prev: T) => T), isSkipSetSetting?: boolean) => void] {
     const defaultData = getSetting(settingName) || defaultString;
     const [data, setData] = useState<T>(defaultData as T);
+    const dataRef = useAppCurrentRef(data);
+    const settingNameRef = useAppCurrentRef(settingName);
     const setDataSetting = useCallback(
-        (text: string | ((prev: T) => T)) => {
-            const newValue = typeof text === 'function' ? text(data) : text;
+        (text: string | ((prev: T) => T), isSkipSetSetting = false) => {
+            const newValue =
+                typeof text === 'function' ? text(dataRef.current) : text;
             setData(newValue as T);
-            setSetting(settingName, `${newValue}`);
+            if (!isSkipSetSetting) {
+                setSetting(settingNameRef.current, `${newValue}`);
+            }
         },
-        [data, settingName],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return [data, setDataSetting];
 }
+export function useWatchStateSettingString<T extends string>(
+    settingName: string,
+    defaultString: T = '' as T,
+): [T, Dispatch<SetStateAction<T>>] {
+    const [data, setData] = useStateSettingString(settingName, defaultString);
+    useWatchSetting(settingName, () => {
+        const newValue = getSetting(settingName) || defaultString;
+        setData(newValue, true);
+    });
+    return [data, setData];
+}
 export function useStateSettingNumber(
     settingName: string,
-    defaultNumber: number,
+    defaultNumber: number | (() => number),
 ): [number, Dispatch<SetStateAction<number>>] {
-    const defaultData = Number.parseInt(getSetting(settingName) ?? '', 10);
-    const [data, setData] = useState(
-        Number.isNaN(defaultData) ? defaultNumber : defaultData,
-    );
+    let defaultData = Number.parseInt(getSetting(settingName) ?? '', 10);
+    if (Number.isNaN(defaultData)) {
+        const resolvedDefault =
+            typeof defaultNumber === 'function'
+                ? defaultNumber()
+                : defaultNumber;
+        defaultData = resolvedDefault;
+    }
+    const [data, setData] = useState(defaultData);
+    const dataRef = useAppCurrentRef(data);
+    const settingNameRef = useAppCurrentRef(settingName);
     const setDataSetting = useCallback(
         (num: number | ((prev: number) => number)) => {
-            const newValue = typeof num === 'function' ? num(data) : num;
+            const newValue =
+                typeof num === 'function' ? num(dataRef.current) : num;
             setData(newValue);
-            setSetting(settingName, `${newValue}`);
+            setSetting(settingNameRef.current, `${newValue}`);
         },
-        [data, settingName],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return [data, setDataSetting];
 }

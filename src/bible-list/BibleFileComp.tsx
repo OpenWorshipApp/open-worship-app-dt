@@ -1,17 +1,21 @@
-import { lazy, useState } from 'react';
+import { lazy, useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
 import Bible from './Bible';
 import AppSuspenseComp from '../others/AppSuspenseComp';
-import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
+import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
-import { moveBibleItemTo, useIsOnScreen } from './bibleHelpers';
+import { useAppEffectAsync, useAppCurrentRef } from '../helper/appHooks';
+import {
+    exportToWordDocument,
+    moveBibleItemTo,
+    useIsOnScreen,
+} from './bibleHelpers';
 import { copyToClipboard } from '../server/appHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import {
     extractDropData,
     genRemovingAttachedBackgroundMenu,
@@ -20,8 +24,10 @@ import {
 } from '../helper/dragHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { stopDraggingState } from '../helper/helpers';
-import BibleItem from './BibleItem';
-import AttachBackgroundIconComponent from '../others/AttachBackgroundIconComponent';
+import type BibleItem from './BibleItem';
+import AttachBackgroundIconComp from '../others/AttachBackgroundIconComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { exportBible } from './bibleArchiveHelpers';
 
 const LazyRenderBibleItemsComp = lazy(() => {
     return import('./RenderBibleItemsComp');
@@ -38,42 +44,70 @@ function genContextMenu(
     if (!bible) {
         return [];
     }
+    const hasItems = !!bible?.items.length;
     return [
+        ...(hasItems
+            ? [
+                  {
+                      menuElement: tran('Export to MS Word'),
+                      childBefore: genContextMenuItemIcon('file-earmark-word', {
+                          color: 'blue',
+                      }),
+                      onSelect: () => {
+                          const bibleItems = bible.items;
+                          exportToWordDocument(bibleItems);
+                      },
+                  },
+                  {
+                      childBefore: genContextMenuItemIcon('eraser', {
+                          color: 'var(--bs-danger)',
+                      }),
+                      menuElement: tran('Empty'),
+                      onSelect: () => {
+                          showAppConfirm(
+                              tran('Empty Bible List'),
+                              tran('Are you sure to empty this bible list?'),
+                              {
+                                  cancelButtonLabel: 'No',
+                                  confirmButtonLabel: 'Yes',
+                              },
+                          ).then((isOk) => {
+                              if (!isOk) {
+                                  return;
+                              }
+                              bible.empty();
+                              bible.save();
+                          });
+                      },
+                  },
+                  {
+                      childBefore: genContextMenuItemIcon('copy'),
+                      menuElement: tran('Copy All Items'),
+                      onSelect: async () => {
+                          const promises = bible.items.map((item) => {
+                              return item.toTitleText();
+                          });
+                          const renderedItems = await Promise.all(promises);
+                          const text = renderedItems.map(({ title, text }) => {
+                              return `${title}\n${text}`;
+                          });
+                          copyToClipboard(text.join('\n\n'));
+                      },
+                  },
+                  {
+                      childBefore: genContextMenuItemIcon('folder-symlink'),
+                      menuElement: tran('Move All Items To'),
+                      onSelect: (event: any) => {
+                          moveBibleItemTo(event, bible);
+                      },
+                  },
+              ]
+            : []),
         {
-            menuElement: tran('Empty'),
+            childBefore: genContextMenuItemIcon('file-earmark-arrow-down'),
+            menuElement: tran('Export'),
             onSelect: () => {
-                showAppConfirm(
-                    'Empty Bible List',
-                    'Are you sure to empty this bible list?',
-                    {
-                        confirmButtonLabel: 'Yes',
-                    },
-                ).then((isOk) => {
-                    if (!isOk) {
-                        return;
-                    }
-                    bible.empty();
-                    bible.save();
-                });
-            },
-        },
-        {
-            menuElement: tran('Copy All Items'),
-            onSelect: async () => {
-                const promises = bible.items.map((item) => {
-                    return item.toTitleText();
-                });
-                const renderedItems = await Promise.all(promises);
-                const text = renderedItems.map(({ title, text }) => {
-                    return `${title}\n${text}`;
-                });
-                copyToClipboard(text.join('\n\n'));
-            },
-        },
-        {
-            menuElement: tran('Move All Items To'),
-            onSelect: (event: any) => {
-                moveBibleItemTo(event, bible);
+                exportBible(bible.filePath);
             },
         },
         ...(isAttachedBackgroundElement
@@ -85,13 +119,20 @@ function genContextMenu(
 function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
     const fileSource = FileSource.getInstance(bible.filePath);
     const isOnScreen = useIsOnScreen(bible.items);
+    const bibleRef = useAppCurrentRef(bible);
+    const handleToggleOpened = useCallback(() => {
+        bibleRef.current.setIsOpened(!bibleRef.current.isOpened);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <div className="w-100 accordion accordion-flush py-1 ms-2 pointer">
+        <div className="w-100 accordion accordion-flush">
             <div
-                className={`accordion-header d-flex ${isOnScreen ? 'app-on-screen' : ''}`}
-                onClick={() => {
-                    bible.setIsOpened(!bible.isOpened);
-                }}
+                className={
+                    'accordion-header d-flex app-caught-hover-pointer' +
+                    ' app-cue-group' +
+                    ` ${isOnScreen ? 'app-on-screen' : ''}`
+                }
+                onClick={handleToggleOpened}
             >
                 <div className="flex-fill">
                     <i
@@ -101,17 +142,15 @@ function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
                                 : 'bi-chevron-right'
                         }`}
                     />
-                    <span className="w-100 text-center">
-                        <i
-                            className={`bi bi-book${
-                                bible.isOpened ? '-fill' : ''
-                            } px-1`}
-                        />
-                        {fileSource.name}
-                    </span>
+                    <i
+                        className={`bi bi-book${
+                            bible.isOpened ? '-fill' : ''
+                        } px-1`}
+                    />
+                    <span className="app-ellipsis">{fileSource.name}</span>
                 </div>
                 <div className="float-end">
-                    <AttachBackgroundIconComponent filePath={bible.filePath} />
+                    <AttachBackgroundIconComp filePath={bible.filePath} />
                 </div>
             </div>
             <div
@@ -142,54 +181,66 @@ export default function BibleFileComp({
     filePath: string;
 }>) {
     const attachedBackgroundData = useAttachedBackgroundData(filePath);
-    const [data, setData] = useState<Bible | null | undefined>(null);
+    const [bible, setBible] = useState<Bible | null | undefined>(undefined);
     useAppEffectAsync(
         async (methodContext) => {
-            if (data === null) {
-                const bible = await Bible.fromFilePath(filePath);
-                methodContext.setData(bible);
+            if (bible !== undefined) {
+                return;
             }
+            const newBible = await Bible.fromFilePath(filePath);
+            methodContext.setData(newBible);
         },
-        [data],
-        { setData },
+        [bible],
+        { setData: setBible },
     );
-    const handlerChildRendering = (bible: AppDocumentSourceAbs) => {
+    const handlerChildRendering = useCallback((bible: AppDocumentSourceAbs) => {
         return <BiblePreview bible={bible as Bible} />;
-    };
-    const handleReloading = () => {
-        setData(null);
-    };
-    useFileSourceEvents(['update'], handleReloading, [data], filePath);
-    const handleDataDropping = (event: any) => {
+    }, []);
+    const handleReloading = useCallback(() => {
+        setBible(undefined);
+    }, []);
+    useFileSourceEvents(
+        ['update'],
+        async () => {
+            const newBible = await Bible.fromFilePath(filePath);
+            setBible(newBible);
+        },
+        [bible],
+        filePath,
+    );
+    const bibleRef = useAppCurrentRef(bible);
+    const filePathRef = useAppCurrentRef(filePath);
+    const handleDataDropping = useCallback((event: any) => {
         const droppedData = extractDropData(event);
         if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
             stopDraggingState(event);
             const bibleItem = droppedData.item as BibleItem;
-            if (bibleItem.filePath !== undefined) {
-                data?.moveItemFrom(bibleItem.filePath, bibleItem);
+            if (bibleItem.filePath === undefined) {
+                bibleRef.current?.saveBibleItem(droppedData.item);
             } else {
-                data?.saveBibleItem(droppedData.item);
+                bibleRef.current?.moveItemFrom(bibleItem.filePath, bibleItem);
             }
         } else {
             handleAttachBackgroundDrop(event, {
-                filePath,
+                filePath: filePathRef.current,
             });
         }
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <FileItemHandlerComp
             index={index}
-            data={data}
+            fileData={bible}
             reload={handleReloading}
             filePath={filePath}
             className="bible-file"
             renderChild={handlerChildRendering}
             isDisabledColorNote
-            userClassName={`p-0 ${data?.isOpened ? 'flex-fill' : ''}`}
-            contextMenuItems={genContextMenu(data, {
+            userClassName={`p-0 ${bible?.isOpened ? 'flex-fill' : ''}`}
+            contextMenuItems={genContextMenu(bible, {
                 isAttachedBackgroundElement: !!attachedBackgroundData,
             })}
-            isSelected={!!data?.isOpened}
+            isSelected={!!bible?.isOpened}
             onDrop={handleDataDropping}
         />
     );

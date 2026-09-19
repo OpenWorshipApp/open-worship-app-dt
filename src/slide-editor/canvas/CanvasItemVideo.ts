@@ -1,16 +1,17 @@
 import { getVideoDim } from '../../helper/helpers';
 import FileSource from '../../helper/FileSource';
-import {
-    CanvasItemMediaPropsType,
-    genTextDefaultBoxStyle,
-    validateMediaProps,
-} from './canvasHelpers';
-import CanvasItem, { CanvasItemError, CanvasItemPropsType } from './CanvasItem';
+import { getAppFilePathFromFile } from '../../helper/localFileHelpers';
+import type { CanvasItemVideoMediaPropsType } from './canvasHelpers';
+import { genMediaDefaultBoxStyle, validateMediaProps } from './canvasHelpers';
+import type { UrlMediaSourceType } from '../../helper/mediaSourceHelpers';
+import { checkIsRemoteMediaSource } from '../../helper/mediaSourceHelpers';
+import type { CanvasItemBoxPropsType, CanvasItemPropsType } from './CanvasItem';
+import CanvasItem, { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 
-export type CanvasItemVideoPropsType = CanvasItemPropsType &
-    CanvasItemMediaPropsType;
+export type CanvasItemVideoPropsType = { type: 'video' } & CanvasItemPropsType &
+    CanvasItemVideoMediaPropsType;
 class CanvasItemVideo extends CanvasItem<CanvasItemVideoPropsType> {
     static gegStyle(_props: CanvasItemVideoPropsType) {
         return {};
@@ -18,15 +19,21 @@ class CanvasItemVideo extends CanvasItem<CanvasItemVideoPropsType> {
     getStyle() {
         return CanvasItemVideo.gegStyle(this.props);
     }
-    static async genFromInsertion(x: number, y: number, filePath: string) {
-        const fileSource = FileSource.getInstance(filePath);
-        const [mediaWidth, mediaHeight] = await getVideoDim(fileSource.src);
-        const srcData = await fileSource.getSrcData();
+    get shouldLockAspectRatio() {
+        return true;
+    }
+    static async genCanvasItem(
+        filePath: string,
+        mediaWidth: number,
+        mediaHeight: number,
+        x: number,
+        y: number,
+    ) {
         const props: CanvasItemVideoPropsType = {
-            srcData,
-            mediaWidth: mediaWidth,
-            mediaHeight: mediaHeight,
-            ...genTextDefaultBoxStyle(),
+            filePath,
+            mediaWidth,
+            mediaHeight,
+            ...genMediaDefaultBoxStyle(),
             left: x - mediaWidth / 2,
             top: y - mediaHeight / 2,
             width: mediaWidth,
@@ -35,12 +42,55 @@ class CanvasItemVideo extends CanvasItem<CanvasItemVideoPropsType> {
         };
         return this.fromJson(props);
     }
+    static async genFromInsertion(x: number, y: number, filePath: string) {
+        const fileSource = FileSource.getInstance(filePath);
+        const [mediaWidth, mediaHeight] = await getVideoDim(fileSource.src);
+        return this.genCanvasItem(filePath, mediaWidth, mediaHeight, x, y);
+    }
+    // A remote link is kept as the source verbatim; only the metadata is read
+    // (`getVideoDim` caches it) so the box gets the video's own ratio.
+    static async genCanvasItemFromLink(x: number, y: number, url: string) {
+        if (!checkIsRemoteMediaSource(url)) {
+            throw new Error(`Invalid video link: ${url}`);
+        }
+        const [mediaWidth, mediaHeight] = await getVideoDim(url);
+        return this.genCanvasItem(url, mediaWidth, mediaHeight, x, y);
+    }
+    // The props for a video item that fills a box chosen by the caller. Unlike
+    // `genCanvasItemFromLink` the metadata is NOT read: the box is already
+    // decided, so the media's own ratio would be measured only to be thrown
+    // away — `mediaWidth`/`mediaHeight` therefore describe the box itself.
+    static genCanvasItemPropsFromLink(
+        url: UrlMediaSourceType,
+        boxProps: CanvasItemBoxPropsType,
+    ): CanvasItemVideoPropsType {
+        return {
+            ...boxProps,
+            type: 'video',
+            filePath: url,
+            mediaWidth: boxProps.width,
+            mediaHeight: boxProps.height,
+        };
+    }
+    static async genFromFile(x: number, y: number, file: File | Blob) {
+        // Videos are referenced by their on-disk path rather than inlined, so
+        // a blob without a resolvable file path (e.g. clipboard paste) cannot
+        // become a video item.
+        const filePath = getAppFilePathFromFile(file);
+        if (filePath === null) {
+            throw new Error(
+                'Error occurred during resolving video file path from blob',
+            );
+        }
+        return this.genFromInsertion(x, y, filePath);
+    }
     toJson(): CanvasItemVideoPropsType {
         return {
-            srcData: this.props.srcData,
+            filePath: this.props.filePath,
             mediaWidth: this.props.mediaWidth,
             mediaHeight: this.props.mediaHeight,
             ...super.toJson(),
+            type: 'video',
         };
     }
     static fromJson(json: CanvasItemVideoPropsType) {
@@ -54,7 +104,7 @@ class CanvasItemVideo extends CanvasItem<CanvasItemVideoPropsType> {
     }
     static validate(json: AnyObjectType) {
         super.validate(json);
-        validateMediaProps(json);
+        validateMediaProps(json, 'filePath');
     }
 }
 

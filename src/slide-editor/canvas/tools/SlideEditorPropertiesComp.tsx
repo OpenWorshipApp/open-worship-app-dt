@@ -1,5 +1,5 @@
 import { tran } from '../../../lang/langHelpers';
-import CanvasItem from '../CanvasItem';
+import type CanvasItem from '../CanvasItem';
 import CanvasItemPropsEditorComp from './CanvasItemPropsEditorComp';
 import SlidePropertyEditorComp from './SlidePropertyEditorComp';
 

@@ -3,13 +3,36 @@
 $dragging-color-full: rgb(0, 117, 109);
 $resizer-color: rgb(123, 173, 205);
 
-#app[data-bs-theme='light'] {
-  --app-color-presenter: #877000;
-  --app-color-reader: #81006c;
+.app[data-bs-theme='light'] {
+  // See the matching block in `theme-override-dark.scss` for why the app keeps
+  // its semantics under `--app-*` instead of overriding open-lyric's `:root`
+  // tokens: those are the plugin's LIGHT slide palette and are correct as-is.
+  --app-ink: #212529;
+  --app-muted: #495057;
+  --app-line: #ced4da;
+  --app-surface: #ffffff;
+
+  --app-accent: #0f766e;
+  --app-accent-halo: #0f766e33;
+
+  // THE reserved hue -- on-air only. See the dark theme for the full note.
+  --app-on-air: #a3007f;
+  --app-on-air-halo: #a3007f40;
+
+  --app-color-presenter: #212529;
+  --app-color-reader: #212529;
   --app-yellow-green: rgb(118, 178, 0);
+
+  // #6c757d is 3.79:1 on gray-200; #495057 is 6.3:1.
+  --bs-secondary-color: #495057;
 
   background-color: var(--bs-gray-200);
   color: black;
+
+  .text-muted,
+  .text-secondary {
+    color: var(--app-muted) !important;
+  }
 
   // Start: Bootstrap
 
@@ -18,27 +41,27 @@ $resizer-color: rgb(123, 173, 205);
   }
 
   .receiving-data-drop {
-    border: 1px solid $dragging-color-full !important;
+    border-color: $dragging-color-full !important;
   }
 
   .receiving-data-drop-left {
-    border-left: 1px dashed var(--app-yellow-green) !important;
+    border-left-color: var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-right {
-    border-right: 1px dashed var(--app-yellow-green) !important;
+    border-right-color: var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-top {
-    border-top: 1px dashed var(--app-yellow-green) !important;
+    border-top-color: var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-bottom {
-    border-bottom: 1px dotted var(--app-yellow-green) !important;
+    border-bottom-color: var(--app-yellow-green) !important;
   }
 
   .list-group-item {
-    border: 1px solid var(--bs-gray-300);
+    border: 1px solid #0000000e;
 
     &:not(.active):hover {
       border: 1px solid #04204b83;
@@ -53,8 +76,10 @@ $resizer-color: rgb(123, 173, 205);
 
   // End: Bootstrap
 
-  .toast-body {
-    word-wrap: break-word;
+  .toast {
+    .toast-body {
+      word-wrap: break-word;
+    }
   }
 
   .active .text-muted,
@@ -98,7 +123,10 @@ $resizer-color: rgb(123, 173, 205);
     box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
 
     &.active {
-      border: 2px solid var(--bs-gray-700);
+      border: 1px solid var(--bs-gray-700);
+    }
+    &.holding {
+      border: 1px dashed var(--bs-gray-700);
     }
 
     .vary-app-document-item-header {
@@ -115,10 +143,6 @@ $resizer-color: rgb(123, 173, 205);
       .index {
         background-color: rgba(0, 53, 53, 0.513);
       }
-    }
-
-    &:not(.app-highlight-selected):not(.active):hover {
-      border: 1px dotted var(--bs-gray-500);
     }
 
     .index {
@@ -267,9 +291,9 @@ $resizer-color: rgb(123, 173, 205);
     }
   }
 
-  .playlist-list {
+  .presenting-flow-list {
     .card-body {
-      .playlist-file {
+      .presenting-flow-file {
         &:hover {
           border: 1px solid var(--bs-gray-200);
         }
@@ -278,6 +302,16 @@ $resizer-color: rgb(123, 173, 205);
   }
 
   #app-setting {
+    // See the matching block in `theme-override-dark.scss` for why the Others
+    // tab's state hue is set per theme rather than from one shared token.
+    .app-setting-others-ready {
+      --app-setting-others-state: #146c43;
+    }
+
+    .app-setting-others-attention {
+      --app-setting-others-state: #997404;
+    }
+
     .lang {
       .options {
         background-color: var(--bs-gray-200);
@@ -304,7 +338,7 @@ $resizer-color: rgb(123, 173, 205);
           border-top: 3px solid rgba(0, 0, 0, 0.121);
         }
         div {
-          color: rgba(62, 104, 0, 0.878);
+          color: rgba(48, 80, 0, 0.878);
         }
       }
 
@@ -337,22 +371,11 @@ $resizer-color: rgb(123, 173, 205);
     }
   }
 
-  #bible-list {
-    .item {
-      .bible {
-        &:hover {
-          border-color: var(--bs-gray-400);
-        }
-      }
-    }
-  }
-
   .presenter-foreground {
     background-color: var(--bs-gray-200);
   }
 
   .app-caught-hover-pointer {
-    cursor: pointer;
     &:hover {
       text-shadow: 0 0 2px rgba(0, 0, 0, 0.198);
     }
@@ -367,5 +390,13 @@ $resizer-color: rgb(123, 173, 205);
     &:hover {
       color: #3d680b;
     }
+  }
+
+  .editing-menu {
+    background-color: var(--bs-gray-100);
+  }
+
+  .mini-screen {
+    box-shadow: 0 0 2px 1px rgba(255, 255, 255, 0.2);
   }
 }

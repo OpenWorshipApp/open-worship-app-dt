@@ -1,0 +1,645 @@
+@use '../others/variables.scss' as *;
+
+// The one grey this panel mixes for itself. Every other colour here is a
+// semantic token owned by the theme (`--app-accent` for where the run is,
+// `--app-on-air` for what the congregation can see, `--app-line`, `--app-muted`)
+// — but a hover wash has to lift a row on a dark shell and on a light one alike,
+// and neither theme publishes a token for that. Stated once so the four places
+// that lift a row cannot drift apart.
+$row-hover-wash: rgba(127, 127, 127, 0.25);
+$row-press-wash: rgba(127, 127, 127, 0.45);
+
+.presenting-flow-list {
+  .card-body {
+    height: calc(100% - $card-header-height);
+
+    .presenting-flow-file {
+      &:before {
+        display: block;
+        position: absolute;
+        content: attr(data-index);
+        white-space: nowrap;
+        opacity: 0.5;
+        transform: translate(-10px, 7px);
+        text-align: right;
+        width: 12px;
+        font-size: var(--app-text-sm);
+        // The file index is a number in a 12px box, so proportional digits made
+        // the column ragged — the same reason the console pins the figures of
+        // every other index it draws.
+        font-variant-numeric: tabular-nums;
+        top: -6px;
+        left: 6.5px;
+      }
+    }
+  }
+}
+
+// -- The cue gutter ----------------------------------------------------------
+// What it is and why, in `PresentingFlowRowGutterComp`. Declared out here rather
+// than inside either block below, because the tree row and the floating
+// preview's element header are two drawings of ONE run sheet: a number that sat
+// at a different x in each would leave neither readable against the other.
+.app-presenting-flow-gutter {
+  flex: 0 0 auto;
+  // Full row height, which is what lets the border below read as a continuous
+  // rule down the sheet rather than as a mark per row.
+  align-self: stretch;
+  // Two tabular digits exactly — `ch` IS the digit advance once the figures are
+  // pinned, so this is "room for 10..99" stated in the only unit that stays true
+  // if the type scale moves.
+  //
+  // `content-box` is load-bearing, not tidiness: the app is border-box
+  // throughout, and under that the padding and the rail ate the whole 2ch, so a
+  // one-digit row measured 12.6px and a two-digit row 18.5px. The rail stepped
+  // 6px sideways at line 10 — the exact raggedness this column exists to
+  // prevent, and invisible on any sheet shorter than ten lines.
+  //
+  // A sheet long enough to reach three digits steps the column one figure wider
+  // from that row down, which is the right way round: widening every sheet for
+  // the rare long one would cost the label its space in a panel this narrow.
+  box-sizing: content-box;
+  min-width: 2ch;
+  padding: 0 4px 0 2px;
+  // THE RAIL. A border rather than an element: free, and unbroken because the
+  // rows sit flush against each other.
+  border-right: 1px solid var(--app-line);
+  color: var(--app-muted);
+  font-size: var(--app-text-xs);
+  text-align: right;
+  user-select: none;
+}
+
+// A COMMAND's number — a line that does something rather than one that goes to a
+// screen. Held back in the same column, by weight alone. See the component's
+// note on why this panel may not spend another colour on it.
+//
+// 0.65 and not lower, measured rather than judged by eye: `--app-muted` reads
+// 6.4:1 on the dark shell and 8.2:1 on the light one, and against those
+// backgrounds 0.5 falls to 2.8 / 2.4 — under 3:1, i.e. a number an operator has
+// to lean in to read. 0.65 lands at 3.6 / 3.3, still a step of nearly half the
+// contrast, which is all the register needs to be legible as a difference.
+.app-presenting-flow-gutter-command {
+  opacity: 0.65;
+}
+
+// WHERE THE RUN IS. The cursor rides the rail: an inset shadow rather than a
+// thicker border, so the whole column does not step sideways as the run passes
+// it, and at full strength even on a command, whose number is otherwise held
+// back. Worn by the tree row and by the preview's element header alike — one
+// run, one cursor, drawn the same in both places.
+.app-presenting-flow-row-run-cursor > .app-presenting-flow-gutter,
+.app-presenting-flow-preview-item-selected
+  > .app-presenting-flow-preview-item-label
+  > .app-presenting-flow-gutter {
+  box-shadow: inset -2px 0 0 var(--app-accent);
+  color: var(--app-accent);
+  opacity: 1;
+}
+
+.app-presenting-flow {
+  font-size: var(--app-text-md);
+
+  .app-presenting-flow-header {
+    cursor: pointer;
+    font-weight: 600;
+    // `.color-note-container` is absolutely pinned to the row's top-right, so
+    // the header has to stop short of it or the preview icon covers the dot.
+    padding-right: 18px;
+  }
+
+  .app-presenting-flow-preview-showing {
+    color: var(--app-accent);
+  }
+}
+
+.app-presenting-flow-row {
+  gap: 3px;
+  // No VERTICAL padding, deliberately: the gutter stretches to the row's content
+  // box, so a pixel of it above and below would break the rail into a dash per
+  // row. The row keeps its height from the line box instead.
+  padding: 0 2px 0 0;
+  border-radius: 3px;
+  cursor: pointer;
+
+  // Painted on the GROUP rather than on the row: an element and the CCs riding
+  // with it go to a screen together, so pointing at any of them has to light all
+  // of them — hovering a follower while its host stayed dark read as though the
+  // two were unrelated lines. A row outside a group (a placeholder, an error
+  // line) still answers on its own.
+  .app-presenting-flow-row-group:hover &,
+  &:hover {
+    background-color: $row-hover-wash;
+  }
+
+  // Acknowledge the press itself. The hover background is already painted
+  // before the click (the pointer is on the row), so without this the row's
+  // only reaction to being clicked is the on-screen mark that appears once the
+  // slide has actually reached a screen — and a click that never presents
+  // (a document row, or one the drag gesture swallowed) looks identical to one
+  // the app simply has not got to yet.
+  &:active {
+    background-color: $row-press-wash;
+  }
+
+  // The nesting a row sits at, applied AFTER the gutter rather than to the row —
+  // see the row component. What a document holds and what rides with a line are
+  // stepped in from the label; the numbered column they belong to is not.
+  .app-presenting-flow-row-indent {
+    flex: 0 0 auto;
+  }
+
+  .app-presenting-flow-row-chevron {
+    display: inline-block;
+    width: 12px;
+    flex: 0 0 12px;
+    font-size: var(--app-text-xs);
+    opacity: 0.7;
+  }
+
+  .app-presenting-flow-row-icon {
+    flex: 0 0 auto;
+  }
+
+  .app-presenting-flow-row-id {
+    opacity: 0.6;
+    font-size: var(--app-text-xs);
+    flex: 0 0 auto;
+  }
+
+  .app-presenting-flow-row-color-note {
+    flex: 0 0 auto;
+    font-size: var(--app-text-xs);
+  }
+}
+
+// The row the run is on, found without reading. A background IMAGE, not a
+// colour: the hover and press washes above are colours, so the two composite
+// instead of one replacing the other — the cursor row still answers the pointer.
+.app-presenting-flow-row-run-cursor {
+  background-image: linear-gradient(
+    var(--app-accent-halo),
+    var(--app-accent-halo)
+  );
+}
+
+// Parked out of the run: still fully readable — an operator has to be able to
+// find it again to put it back — but plainly not something the next click will
+// send anywhere. The pointer says so before the click does.
+.app-presenting-flow-row-disabled {
+  opacity: 0.45;
+  cursor: default;
+  font-style: italic;
+
+  // The row is still the way BACK (right-click → Enable), so the hover feedback
+  // stays; only the pressed state goes, since nothing happens on press.
+  &:active {
+    background-color: $row-hover-wash;
+  }
+}
+
+// Parked by THIS run sheet, as against a slide its own document hides. Both are
+// dimmed the same, so the difference has to be carried by something dimming
+// cannot touch: the label is struck through — crossed out of the run, which is
+// exactly what happened — and the mark at the end of the row is a different
+// glyph in a different colour. An operator can undo this park and only this one
+// from here, so telling the two apart at a glance is what says whether
+// right-clicking the row is going to help.
+//
+// On the label rather than the row: a line-through set on the row propagates to
+// every inline descendant, striking the id badge and drawing through the icon
+// glyphs as well.
+.app-presenting-flow-row-label-parked {
+  text-decoration: line-through;
+}
+
+// Also worn by the floating preview's element header, hence outside the block.
+.app-presenting-flow-row-disabled-icon {
+  flex: 0 0 auto;
+  font-size: var(--app-text-xs);
+  color: var(--bs-secondary-color);
+}
+
+// Tinted — the row is already at 0.45 opacity, so the colour lands muted rather
+// than shouting, while still reading as deliberate against the plain grey the
+// document's own hidden slides wear.
+.app-presenting-flow-row-disabled-icon-presenting-flow {
+  color: var(--bs-warning);
+}
+
+// Also used by the floating preview's element header, which is why this sits
+// outside the row block.
+.app-presenting-flow-row-screen-pin {
+  flex: 0 0 auto;
+  font-size: var(--app-text-xs);
+  white-space: nowrap;
+  padding: 0 2px;
+  // Only the pin glyph and the separators are tinted here — each id carries
+  // its OWN screen's colour inline, and a colour on this element would lose
+  // that contrast against a dark or light row alike.
+  color: var(--bs-secondary-color);
+  font-weight: bold;
+
+  i {
+    margin-right: 1px;
+  }
+}
+
+// The CLICKABLE trailing icons a CC row carries: the settings of a
+// `Slide: Media Control`, and the clock of a `Next: Timeout` armed for this one
+// attachment. Sized like the pin beside them so the group reads as one, and each
+// tinted with its OWN action's colour — set inline, since the colour is the
+// action's rather than this class's — so it is findable at a glance in a sheet of
+// otherwise grey trailing marks.
+.app-presenting-flow-row-settings-icon {
+  flex: 0 0 auto;
+  font-size: var(--app-text-xs);
+  padding: 0 3px;
+
+  &:hover {
+    filter: brightness(1.3);
+  }
+}
+
+.app-presenting-flow-row-empty {
+  opacity: 0.5;
+  font-style: italic;
+  cursor: default;
+}
+
+.app-presenting-flow-row-error {
+  color: var(--bs-danger);
+}
+
+// The two things a drag can do to an element row, and they must not look alike:
+// the EDGES of a row reorder the run sheet, its MIDDLE attaches what is being
+// dragged as a CC element. A line BETWEEN rows says "this line moves here"; an
+// outline round the whole row says "this goes ONTO that line".
+// The app's own drop colour (`.receiving-data-drop-*` wears it everywhere else),
+// not the accent: the accent says WHERE THE RUN IS, and the one row most likely
+// to be dragged onto is the one the run is on — two meanings in one hue, on one
+// row, at the one moment an operator has no time to read.
+.app-presenting-flow-row-dragging-over {
+  box-shadow:
+    inset 0 2px 0 var(--app-yellow-green),
+    inset 0 -2px 0 var(--app-yellow-green);
+}
+
+.app-presenting-flow-row-dragging-over-cc {
+  outline: 2px dashed var(--bs-warning);
+  outline-offset: -2px;
+}
+
+// A CC row. Reads as belonging to the row above it rather than as a line of the
+// run sheet in its own right: the run never stops on one, so it is held back
+// from the lines the operator actually walks. Held back CONSTANTLY — including
+// under the hover its group shares — because it is not a line that becomes
+// walkable when pointed at.
+.app-presenting-flow-cc-row {
+  opacity: 0.7;
+
+  .app-presenting-flow-row-chevron::before {
+    content: '\21B3';
+    opacity: 0.6;
+    font-size: 0.8em;
+  }
+
+  // A follower is not a line of the run sheet, so it has no number — but the
+  // rail still runs past it, which is exactly what says it belongs to the line
+  // above rather than sitting between two of them.
+  .app-presenting-flow-gutter {
+    opacity: 0.7;
+  }
+}
+
+// The CC rows drawn inside the floating preview — under an element's own
+// preview, and under a slide's card. Boxed off so they do not read as part of
+// the thing they are attached to.
+.app-presenting-flow-preview-cc-rows {
+  width: 100%;
+  border-top: 1px dashed var(--app-line);
+  margin-top: 2px;
+  padding-top: 2px;
+  font-size: 0.9em;
+}
+
+.app-presenting-flow-preview {
+  padding: 4px;
+  // Room for the footer, which overlays the widget's bottom edge.
+  padding-bottom: 30px;
+
+  // The floating preview is portaled to <body>, OUTSIDE `#app` — and the shared
+  // `.app-auto-hide` rules in appInit.scss are scoped under `#app`, so none of
+  // them reach here: without this the footer never faded out and, being
+  // unpositioned, scrolled away with the list. Same behaviour, re-declared for
+  // this widget.
+  .app-auto-hide {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
+    pointer-events: none;
+
+    & > div {
+      visibility: hidden;
+    }
+
+    &.auto-hide-show {
+      pointer-events: all;
+      opacity: 1;
+
+      & > div {
+        visibility: visible;
+      }
+    }
+
+    // Pins to `.floating-widget` (the nearest positioned ancestor), so it stays
+    // on the widget's bottom edge instead of riding the scrolling list.
+    &.app-auto-hide-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+    }
+  }
+
+  // Sits on the widget's bottom edge, immediately right of the footer's `...`
+  // handle (`handleAutoHide` pins that at `left: 7px`, 25px wide) — the reading
+  // controls grouped in one corner, leaving the far end to the to-the-top
+  // button. Absolute like the handle, so both stay put while the list scrolls
+  // underneath.
+  .app-presenting-flow-preview-collapsing-buttons {
+    position: absolute;
+    left: 36px;
+    bottom: 7px;
+    display: flex;
+    gap: 2px;
+    // Over the footer bar, whose left end is empty flex space (the zoom range
+    // is pushed to the far end), so nothing of it lands underneath.
+    z-index: 3;
+
+    > button {
+      width: 25px;
+      padding: 0;
+      border: none;
+      border-radius: 3px;
+      background-color: transparent;
+      color: inherit;
+      // Faded like the `...` handle it sits beside, so a folded run sheet is
+      // never read through these.
+      opacity: 0.3;
+      transition: opacity 0.5s ease-out;
+
+      &:hover:not(:disabled) {
+        opacity: 1;
+      }
+
+      // Already all folded (or all open): left visible, so the pair does not
+      // jump about, but plainly inert.
+      &:disabled {
+        opacity: 0.12;
+        cursor: default;
+      }
+    }
+  }
+
+  // 7px offset + the 45px to-the-top button below: what the far end of the
+  // footer is covered by.
+  .app-presenting-flow-preview-collapsing-spacer {
+    flex: 0 0 52px;
+  }
+
+  // The shared to-the-top affordance, moved onto the widget's bottom-right
+  // corner — its own rule pins it to `right: 5px; bottom: 5px`, which is where
+  // the widget's resize handle lives. Over the footer bar like the buttons
+  // opposite it, which keeps its matching width clear.
+  .app-to-the-top {
+    right: 7px;
+    bottom: 7px;
+    z-index: 3;
+  }
+
+  // The run's own clock, pinned at the top-right of the widget. Absolute rather
+  // than in the flow: it appears and disappears while the operator is reading
+  // the sheet, and nothing under it may shift when it does. Fully opaque —
+  // unlike the faded corner buttons below, this is the one thing here that is
+  // about to change what is on the screen.
+  // The clock's own colour, matching the element that armed it (amber waits
+  // once, teal keeps going) — set as a variable so the border, the text and the
+  // hover fill all follow the one declaration.
+  .app-presenting-flow-preview-auto-next {
+    --app-auto-next-color: var(--bs-warning);
+    position: absolute;
+    // Pins to `.floating-widget` like the corner buttons below (nothing in this
+    // list is positioned), so it stays put while the sheet scrolls under it —
+    // clear of the widget's own 40px header, which paints above it.
+    top: 45px;
+    right: 7px;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    border: 1px solid var(--app-auto-next-color);
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.55);
+    color: var(--app-auto-next-color);
+    font-size: var(--app-text-sm);
+    line-height: 1.4rem;
+  }
+
+  // Two controls now (hold it, end it), so the hover fill belongs to whichever
+  // one is under the pointer — filling the whole pill would no longer say which
+  // of them is about to be pressed. Bare buttons: the pill IS the chrome.
+  .app-presenting-flow-preview-auto-next-button {
+    display: flex;
+    align-items: center;
+    padding: 0 2px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: inherit;
+    line-height: 1;
+
+    &:hover {
+      background-color: var(--app-auto-next-color);
+      color: #000;
+    }
+  }
+
+  .app-presenting-flow-preview-auto-next-interval {
+    --app-auto-next-color: var(--bs-teal);
+    background-color: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(5px);
+  }
+
+  // Held: the count is frozen, and a frozen number that looked exactly like a
+  // running one is the one thing an operator must not have to guess at
+  // mid-service. Dashed rather than dimmed — the pill still has to be readable
+  // from a distance.
+  .app-presenting-flow-preview-auto-next-paused {
+    border-style: dashed;
+    opacity: 0.85;
+  }
+
+  .app-presenting-flow-preview-item {
+    display: flex;
+    flex-direction: column;
+
+    // Pins to the top of `.floating-widget__content` (the widget's only
+    // scroller, and it has no padding, so `top: 0` sits flush) while its own
+    // item scrolls by, so a long body never leaves the reader wondering which
+    // element these slides belong to. The item box is the containing block, so
+    // the next item's header displaces this one on its own.
+    .app-presenting-flow-preview-item-label {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      gap: 2px;
+      font-size: var(--app-text-md);
+      // Dimmed via `color` rather than `opacity`: element opacity would
+      // composite the background too and let the slides scroll through it.
+      color: rgba(var(--bs-body-color-rgb), 0.85);
+      // Must be opaque for the same reason. The widget is portaled outside
+      // `#app`, but it carries `data-bs-theme`, so this still follows the theme.
+      background-color: var(--bs-body-bg);
+      // Nothing on the LEFT: the gutter carries its own, and padding here would
+      // step the number column away from the colour-note stripe that the tree
+      // row butts it against.
+      padding: 2px 4px 2px 0;
+      // The same channel the tree row reserves, so the number sits at the same
+      // offset in both panels and a colour note lands in the same place rather
+      // than shifting the column on the rows that have one. The component writes
+      // the coloured border inline, which wins over this.
+      border-left: 3px solid transparent;
+      border-radius: 3px;
+
+      // Layered as an image so it tints the opaque base instead of replacing it.
+      &:hover {
+        background-image: linear-gradient($row-hover-wash, $row-hover-wash);
+      }
+    }
+
+    // The only part of the header that folds the element — the rest of it
+    // selects. Padded out to a clickable target: the glyph alone is ~10px wide
+    // in a 12px-font header, which is a miss waiting to happen.
+    .app-presenting-flow-preview-item-chevron {
+      flex: 0 0 auto;
+      padding: 0 3px;
+      opacity: 0.7;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+
+    // Where the next-key steps from. Marked on the LABEL, not the whole box:
+    // the label is the part that stays pinned while a long element scrolls, so
+    // the mark cannot scroll out of sight during a run. Drawn as an outline so
+    // it neither shifts the layout nor covers the colour-note border, which is
+    // an inline `border-left` on this very element.
+    &.app-presenting-flow-preview-item-selected
+      > .app-presenting-flow-preview-item-label {
+      outline: 1px solid var(--app-accent);
+      color: var(--bs-body-color);
+      background-image: linear-gradient(
+        var(--app-accent-halo),
+        var(--app-accent-halo)
+      );
+    }
+
+    // Parked. Dimmed on the LABEL and the body separately rather than on the
+    // item box: the label is opaque on purpose (the slides scroll under it), and
+    // fading the box would composite that background away with it.
+    &.app-presenting-flow-preview-item-disabled {
+      > .app-presenting-flow-preview-item-label {
+        opacity: 0.5;
+        font-style: italic;
+      }
+
+      > .app-presenting-flow-preview-item-body {
+        opacity: 0.4;
+      }
+    }
+
+    .app-presenting-flow-preview-item-body {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 4px 0 0 14px;
+    }
+
+    .app-presenting-flow-preview-divider {
+      margin: 4px 0;
+      opacity: 0.35;
+    }
+  }
+
+  // A slide thumbnail that is pinned in its OWN right. The badge is overlaid
+  // rather than added beside the card: the card is the presenter's own
+  // component at a zoom-driven size, so anything in the flow would reshuffle
+  // the grid.
+  //
+  // BOTTOM-right, not top: the card's own header already holds its index badge
+  // and its expand button up there, and this would sit on top of them.
+  .app-presenting-flow-preview-slide {
+    position: relative;
+
+    // One slide of a document parked on its own. The card keeps its pointer
+    // events — its right-click menu is the way back — and only the click that
+    // would present it is caught, on the way down.
+    &.app-presenting-flow-preview-slide-disabled {
+      opacity: 0.4;
+    }
+
+    // Says WHICH park, in the same two glyphs the tree rows use. Bottom-LEFT:
+    // the pin owns the opposite corner and the card's own header holds its index
+    // and expand button along the top. Plated like the pin for the same reason —
+    // a slide projects anything at all behind it.
+    .app-presenting-flow-preview-slide-disabled-icon {
+      position: absolute;
+      bottom: 2px;
+      left: 2px;
+      z-index: 1;
+      font-size: var(--app-text-xs);
+      color: var(--bs-secondary-color);
+      background-color: rgb(0 0 0 / 65%);
+      border-radius: 3px;
+      padding: 0 3px;
+
+      // Re-stated here: the shared single-class rule loses to this nested one,
+      // and the tint is the whole point of the badge.
+      &.app-presenting-flow-row-disabled-icon-presenting-flow {
+        color: var(--bs-warning);
+      }
+    }
+
+    // Where the run is, in the same accent the element label and the tree row's
+    // gutter carry — the panel's own cursor, and only ever on ONE card.
+    //
+    // Drawn as an OUTLINE so it shifts no layout, and offset inwards so it
+    // lands in the card's own 2px margin rather than on top of the magenta
+    // "live on a screen" border. The two answer different questions — where the
+    // run is, versus what the audience is looking at — and a slide is regularly
+    // both, so both have to stay readable at once. No background wash either:
+    // the label can afford one over a flat bar, a slide thumbnail cannot.
+    &.app-presenting-flow-preview-item-selected {
+      outline: 2px solid var(--app-accent);
+      outline-offset: -1px;
+      border-radius: 3px;
+    }
+
+    .app-presenting-flow-row-screen-pin {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      z-index: 1;
+      // Slides project anything at all behind this corner, so the chip carries
+      // its own dark plate instead of trusting the artwork underneath.
+      background-color: rgb(0 0 0 / 65%);
+      border-radius: 3px;
+      padding: 0 3px;
+      // Never in the way of the click that presents the slide.
+      pointer-events: none;
+    }
+  }
+}

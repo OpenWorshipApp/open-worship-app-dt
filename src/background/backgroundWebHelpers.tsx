@@ -1,12 +1,14 @@
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import DirSource from '../helper/DirSource';
-import { openPopupEditorWindow } from '../helper/domHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import type DirSource from '../helper/DirSource';
+import { openPopupWindow, setParamFileFullName } from '../helper/domHelpers';
 import FileSource from '../helper/FileSource';
 import { tran } from '../lang/langHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 import appProvider from '../server/appProvider';
 import { fsWriteFile } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
+import { getOpenSharedLinkMenuItem } from './downloadHelper';
 
 export function genNewFileNameInput(
     fieName: string,
@@ -64,9 +66,11 @@ function genDefaultHtml(fileFullName: string) {
 
 export function genBackgroundWebContextMenuItems(
     dirSource: DirSource,
+    extraContextMenuItems: ContextMenuItemType[] = [],
 ): ContextMenuItemType[] {
     return [
         {
+            childBefore: genContextMenuItemIcon('file-earmark-plus'),
             menuElement: tran('New File'),
             onSelect: async () => {
                 let fileName = '';
@@ -86,8 +90,8 @@ export function genBackgroundWebContextMenuItems(
                         await dirSource.getAllFileFullNames();
                     if (existFileFullNames.includes(fileFullName)) {
                         showSimpleToast(
-                            'Create New Web File',
-                            'File already exists',
+                            tran('Create New Web File'),
+                            tran('File already exists'),
                         );
                         return;
                     }
@@ -100,20 +104,29 @@ export function genBackgroundWebContextMenuItems(
                 }
             },
         },
+        ...extraContextMenuItems,
+        getOpenSharedLinkMenuItem('webs'),
     ];
 }
 
 function openPopupWebEditorWindow(filePath: string) {
     const fileSource = FileSource.getInstance(filePath);
     const fileFullName = fileSource.fullName;
-    const fileFullNameEncoded = encodeURIComponent(fileFullName);
-    const pathName = `${appProvider.webEditorHomePage}?file=${fileFullNameEncoded}`;
-    return openPopupEditorWindow(pathName);
+    const pathname = setParamFileFullName(
+        appProvider.webEditorHomePage,
+        fileFullName,
+    );
+    return openPopupWindow(
+        pathname,
+        `${fileFullName}_${Date.now()}`,
+        crypto.randomUUID(),
+    );
 }
 
 export function genBackgroundWebExtraItemContextMenuItems(filePath: string) {
     return [
         {
+            childBefore: genContextMenuItemIcon('pencil-square'),
             menuElement: tran('Edit'),
             title: tran('Edit this web file'),
             onSelect: () => {

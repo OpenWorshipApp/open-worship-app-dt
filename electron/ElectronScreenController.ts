@@ -1,12 +1,14 @@
 import { BrowserWindow } from 'electron';
 
-import { AnyObjectType, channels } from './electronEventListener';
+import { type AnyObjectType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
 import {
+    applyRendererRecovery,
     attemptClosing,
     genWebPreferences,
     guardBrowsing,
+    messageChannels,
 } from './electronHelpers';
 
 const routeProps = genRoutProps(htmlFiles.screen);
@@ -25,14 +27,17 @@ export default class ElectronScreenController {
         const isScreenCanFullScreen = isWin32;
         const webPreferences = genWebPreferences(routeProps.preloadFilePath);
         const win = new BrowserWindow({
-            transparent: true,
             x: 0,
             y: 0,
+            transparent: true,
             frame: false,
             webPreferences,
         });
         guardBrowsing(win, webPreferences);
         const query = `?screenId=${this.screenId}`;
+        applyRendererRecovery(win, () => {
+            routeProps.loadURL(win, query);
+        });
         routeProps.loadURL(win, query);
         if (isScreenCanFullScreen) {
             win.setFullScreen(true);
@@ -60,9 +65,24 @@ export default class ElectronScreenController {
     }
 
     setDisplay(display: Electron.Display) {
-        const bounds = display.bounds;
+        const { bounds } = display;
         this.win.setBounds(bounds);
-        this.win.webContents.executeJavaScript('window.location.reload();');
+        const actualBounds = this.win.getBounds();
+        const actualAspectRatio = Math.min(
+            actualBounds.width / bounds.width,
+            actualBounds.height / bounds.height,
+        );
+        const newWidth = Math.floor(bounds.width * actualAspectRatio);
+        const newHeight = Math.floor(bounds.height * actualAspectRatio);
+        const newX = Math.floor(bounds.x + (bounds.width - newWidth) / 2);
+        const newBounds = {
+            x: newX,
+            y: actualBounds.y,
+            width: newWidth,
+            height: newHeight,
+        };
+        this.win.setBounds(newBounds);
+        this.win.webContents.reload();
     }
 
     sendData(channel: string, data: any) {
@@ -70,7 +90,7 @@ export default class ElectronScreenController {
     }
 
     sendMessage(type: string, data: AnyObjectType) {
-        this.win.webContents.send(channels.screenMessageChannel, {
+        this.win.webContents.send(messageChannels.screenMessage, {
             screenId: this.screenId,
             type,
             data,
@@ -92,7 +112,7 @@ export default class ElectronScreenController {
         return cache.get(key) as ElectronScreenController;
     }
 
-    static getInstance(screenId: number): ElectronScreenController | null {
+    static getInstance(screenId: number) {
         const key = screenId.toString();
         if (!cache.has(key)) {
             return null;

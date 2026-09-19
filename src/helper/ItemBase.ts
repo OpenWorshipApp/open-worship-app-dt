@@ -1,7 +1,7 @@
-import ColorNoteInf from './ColorNoteInf';
+import type ColorNoteInf from './ColorNoteInf';
 import FileSource from './FileSource';
 import { cloneJson } from './helpers';
-import { AnyObjectType } from './typeHelpers';
+import type { AnyObjectType } from './typeHelpers';
 
 export abstract class ItemBase implements ColorNoteInf {
     abstract id: number;
@@ -69,5 +69,22 @@ export abstract class ItemBase implements ColorNoteInf {
 
     static validate(_json: AnyObjectType) {
         throw new Error('Method not implemented.');
+    }
+}
+
+export abstract class ItemBaseFilePath extends ItemBase {
+    abstract filePath: string;
+    abstract getItemFilePath(): Promise<string | null>;
+
+    /**
+     * Extra classes stamped on this item's card by the vary-slide renderer.
+     *
+     * Defaulted here — the four vary-slide classes all extend this base, so a
+     * new slide kind cannot forget it, and only the kinds that actually need a
+     * hook in the DOM (`LyricSlide`, which the lyric previewer looks its cards
+     * up by) pay for one.
+     */
+    get extraClassnames(): string {
+        return '';
     }
 }

@@ -1,32 +1,29 @@
 import { useState } from 'react';
 
-import { useAppEffect } from '../helper/debuggerHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
-import appProvider, { FontListType } from './appProvider';
+import { useAppEffectAsync } from '../helper/appHooks';
+import type { FontListType } from './appProvider';
+import appProvider from './appProvider';
 import CacheManager from '../others/CacheManager';
-import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
-import FileSource from '../helper/FileSource';
+import { electronSendAsync } from './appHelpers';
+import { unlocking } from './unlockingHelpers';
 
-function showLoadingFontFail() {
-    showSimpleToast('Loading Fonts', 'Fail to load font list');
+const cacheManager = new CacheManager<FontListType | null>(10);
+export async function getFontFamilyMapByNodeFont() {
+    return await unlocking('getFontFamilyMapByNodeFont', async () => {
+        const cachedFontList = await cacheManager.get('fontList');
+        if (cachedFontList !== null) {
+            return cachedFontList;
+        }
+        const result = await electronSendAsync<FontListType | null>(
+            'main:app:get-font-list',
+        );
+        await cacheManager.set('fontList', result);
+        return result;
+    });
 }
 
-const cache = new CacheManager<FontListType | null>(60 * 10); // 10 minutes
-export function getFontFamilyMapByNodeFont() {
-    const cached = cache.getSync('fontList');
-    if (cached !== null) {
-        return cached;
-    }
-    appProvider.messageUtils.sendData('main:app:get-font-list');
-    const result = appProvider.messageUtils.sendDataSync(
-        'main:app:get-font-list',
-    ) as FontListType | null;
-    cache.set('fontList', result);
-    return result;
-}
-
-export function getFontFamilies() {
-    const fontMap = getFontFamilyMapByNodeFont();
+export async function getFontFamilies() {
+    const fontMap = await getFontFamilyMapByNodeFont();
     if (fontMap === null) {
         return [];
     }
@@ -36,60 +33,78 @@ export function getFontFamilies() {
 }
 
 export function useFontList() {
-    const [fontList, setFontList] = useState<FontListType | null>(null);
-    useAppEffect(() => {
-        if (fontList === null) {
-            const fonts = getFontFamilyMapByNodeFont();
-            if (fonts === null) {
-                showLoadingFontFail();
-            } else {
-                setFontList(fonts);
+    const [fontList, setFontList] = useState<FontListType | null | undefined>(
+        undefined,
+    );
+    useAppEffectAsync(
+        async (contextMethods) => {
+            if (fontList !== undefined) {
+                return;
             }
-        }
-    }, [fontList]);
+            const fonts = await getFontFamilyMapByNodeFont();
+            contextMethods.setFontList(fonts);
+        },
+        [fontList],
+        { setFontList },
+    );
     return fontList;
 }
 
-const handledFontFamilies = new Set<string>();
-export async function fixMissingFontFamilies(
-    fontFamilies: Set<string>,
-    filePath: string,
+// The typographic names of the standard weights. They are not run through
+// `tran()`: like a font's own name they are what the font calls itself, and the
+// Khmer dictionary's `Light` already means the light THEME.
+const FONT_WEIGHT_NAME_MAP = new Map<string, string>([
+    ['100', 'Thin'],
+    ['200', 'Extra Light'],
+    ['300', 'Light'],
+    ['350', 'Semi Light'],
+    ['400', 'Regular'],
+    ['500', 'Medium'],
+    ['600', 'Semi Bold'],
+    ['700', 'Bold'],
+    ['800', 'Extra Bold'],
+    ['900', 'Black'],
+    ['950', 'Extra Black'],
+]);
+
+// The weight picker used to store `--` for "no weight"; it stores nothing now.
+export function toCleanFontWeight(fontWeight: string | null | undefined) {
+    const cleanFontWeight = (fontWeight ?? '').trim();
+    return cleanFontWeight === '--' ? '' : cleanFontWeight;
+}
+
+export function toFontWeightLabel(fontWeight: string) {
+    const name = FONT_WEIGHT_NAME_MAP.get(fontWeight);
+    return name === undefined ? fontWeight : `${fontWeight} ${name}`;
+}
+
+export function genFontWeightOptions(
+    fontWeights: string[],
+    fontWeight: string,
+    // The caller translates it: this module is imported by every window, and
+    // `tran` would drag the whole language layer in for one word.
+    missingLabel = '(Missing)',
 ) {
-    fontFamilies = new Set(
-        Array.from(fontFamilies).filter((fontFamily) => {
-            return !handledFontFamilies.has(fontFamily);
-        }),
+    const options: [string, string][] = fontWeights.map((weight) => {
+        return [weight, toFontWeightLabel(weight)];
+    });
+    if (fontWeight !== '' && !fontWeights.includes(fontWeight)) {
+        // A `<select>` whose value matches no option shows its FIRST, which
+        // would read as though the saved weight were the default.
+        options.unshift([
+            fontWeight,
+            `${toFontWeightLabel(fontWeight)} ${missingLabel}`,
+        ]);
+    }
+    return options;
+}
+
+export function getMissingFontSearchUrl(fontFamily: string) {
+    return `https://www.google.com/search?q=font+download: "${fontFamily}"`;
+}
+
+export function searchMissingFontFamily(fontFamily: string) {
+    appProvider.browserUtils.openExternalURL(
+        getMissingFontSearchUrl(fontFamily),
     );
-    if (fontFamilies.size === 0) {
-        return;
-    }
-    for (const fontFamily of fontFamilies) {
-        handledFontFamilies.add(fontFamily);
-    }
-    const fileSource = FileSource.getInstance(filePath);
-    const isConfirmed = await showAppConfirm(
-        `Missing Fonts in "${fileSource.name}"`,
-        `The document is using fonts that are not installed on your system:<br><br>${Array.from(
-            fontFamilies,
-        )
-            .map((font) => `"${font}"`)
-            .join(
-                ', ',
-            )}<br><br>Would you like to find and install from Google Fonts?`,
-        {
-            confirmButtonLabel: 'Yes',
-        },
-    );
-    if (!isConfirmed) {
-        return;
-    }
-    showSimpleToast(
-        'Opening Google Fonts',
-        'Please install the missing fonts from the opened pages. and restart the app after installation.',
-    );
-    for (const fontFamily of fontFamilies) {
-        appProvider.browserUtils.openExternalURL(
-            `https://fonts.google.com/specimen/${encodeURIComponent(fontFamily)}`,
-        );
-    }
 }

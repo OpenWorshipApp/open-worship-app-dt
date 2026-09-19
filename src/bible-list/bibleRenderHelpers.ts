@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
 import {
     keyToBook,
@@ -14,7 +14,6 @@ import {
 import {
     checkShouldNewLine,
     checkShouldNewLineModel,
-    getLangFromBibleKey,
     toLocaleNumBible,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import CacheManager from '../others/CacheManager';
@@ -24,6 +23,8 @@ import {
     getNewLineTitlesHtmlText,
 } from '../helper/bible-helpers/bibleLogicHelpers3';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
+import { type LocaleType } from '../lang/langHelpers';
+import { getLangDataFromBibleKey } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export type BibleTargetType = {
     bookKey: string;
@@ -49,10 +50,11 @@ export type CompiledVerseType = {
     isLast: boolean;
     isRtl: boolean;
     style: CSSProperties;
+    locale: LocaleType;
 };
 
-const titleCache = new CacheManager<string>(60); // 1 minute
-const compiledVerseListCache = new CacheManager<CompiledVerseType[]>(60); // 1 minute
+const titleCache = new CacheManager<string>(10);
+const compiledVerseListCache = new CacheManager<CompiledVerseType[]>(10);
 class BibleRenderHelper {
     toKJVBibleVersesKey(
         bibleTarget: BibleTargetType,
@@ -175,7 +177,7 @@ class BibleRenderHelper {
             };
         }
         const isNewLine =
-            verse == 1 ||
+            verse === 1 ||
             (await checkShouldNewLine(bibleKey, bookKey, chapter, verse));
         const isModelNewLine = await checkShouldNewLineModel(
             bibleKey,
@@ -213,7 +215,7 @@ class BibleRenderHelper {
             bibleKey,
             target,
         );
-        const langData = await getLangFromBibleKey(bibleKey);
+        const langData = await getLangDataFromBibleKey(bibleKey);
         return unlocking(bibleVersesKey, async () => {
             const { bookKey, chapter, verseStart, verseEnd } = target;
             const verses = await getVerses(bibleKey, bookKey, chapter);
@@ -248,6 +250,11 @@ class BibleRenderHelper {
                 );
                 const isFirst = i === verseStart;
                 const isLast = i === verseEnd;
+                const style =
+                    langData === null
+                        ? {}
+                        : { fontFamily: langData.fontFamily };
+                const locale: LocaleType = langData?.locale ?? 'en-US';
                 compiledVersesList.push({
                     verse: i,
                     localeVerse: localNum ?? iString,
@@ -260,11 +267,9 @@ class BibleRenderHelper {
                     isFirst,
                     isLast,
                     isRtl,
-                    style:
-                        langData === null
-                            ? {}
-                            : { fontFamily: langData.fontFamily },
+                    style,
                     ...extra,
+                    locale,
                 });
             }
             await compiledVerseListCache.set(

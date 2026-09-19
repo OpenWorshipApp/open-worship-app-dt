@@ -1,12 +1,13 @@
 import './SlideAutoPlayComp.scss';
 
-import { CSSProperties } from 'react';
+import { type ChangeEvent, useCallback, type CSSProperties } from 'react';
 
 import {
     useStateSettingBoolean,
     useStateSettingNumber,
 } from '../helper/settingHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
+import { tran } from '../lang/langHelpers';
 
 export type NextDataType = {
     isNext: boolean;
@@ -23,6 +24,11 @@ function PlayingIconComp({
     setIsPlaying: (isPlaying: boolean) => void;
     timerSeconds: number;
 }>) {
+    const setIsPlayingRef = useAppCurrentRef(setIsPlaying);
+    const handleStopPlaying = useCallback(() => {
+        setIsPlayingRef.current(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     useAppEffect(() => {
         if (timerSeconds <= 0) {
             return;
@@ -37,14 +43,9 @@ function PlayingIconComp({
         return () => {
             clearInterval(timerId);
         };
-    }, [timerSeconds]);
+    }, [onNext, timerSeconds]);
     return (
-        <button
-            className="btn btn-sm btn-primary"
-            onClick={() => {
-                setIsPlaying(false);
-            }}
-        >
+        <button className="btn btn-sm btn-primary" onClick={handleStopPlaying}>
             <i className="bi bi-pause-circle-fill" />
         </button>
     );
@@ -63,13 +64,16 @@ function PlayerComp({
         `${prefix}-slide-auto-play-playing`,
         false,
     );
+    const setIsPlayingRef = useAppCurrentRef(setIsPlaying);
+    const handleStartPlaying = useCallback(() => {
+        setIsPlayingRef.current(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (!isPlaying) {
         return (
             <button
                 className="btn btn-sm btn-outline-primary"
-                onClick={() => {
-                    setIsPlaying(true);
-                }}
+                onClick={handleStartPlaying}
             >
                 <i className="bi bi-play" />
             </button>
@@ -101,6 +105,25 @@ export default function SlideAutoPlayComp({
         `${prefix}-slide-auto-play-timer-seconds`,
         5,
     );
+    const setIsShowingRef = useAppCurrentRef(setIsShowing);
+    const handleShowAutoPlay = useCallback(() => {
+        setIsShowingRef.current(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleHideAutoPlay = useCallback(() => {
+        setIsShowingRef.current(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setTimerSecondsRef = useAppCurrentRef(setTimerSeconds);
+    const handleTimerChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setTimerSecondsRef.current(
+                Math.max(0, Number.parseInt(event.target.value) || 0),
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     if (!isShowing) {
         return (
             <i
@@ -108,9 +131,7 @@ export default function SlideAutoPlayComp({
                     'slide-auto-play-icon bi bi-stopwatch-fill' +
                     ' app-caught-hover-pointer'
                 }
-                onClick={() => {
-                    setIsShowing(true);
-                }}
+                onClick={handleShowAutoPlay}
                 style={style}
             />
         );
@@ -124,9 +145,7 @@ export default function SlideAutoPlayComp({
                 <i
                     className="bi bi-x-lg app-caught-hover-pointer"
                     style={{ color: 'red' }}
-                    onClick={() => {
-                        setIsShowing(false);
-                    }}
+                    onClick={handleHideAutoPlay}
                 />
             </div>
             <div className="mx-2">
@@ -137,19 +156,14 @@ export default function SlideAutoPlayComp({
                 />
             </div>
             <div className="input-group" style={{ width: '120px' }}>
-                <div className="input-group-text">M:</div>
+                <div className="input-group-text" title={tran('Seconds')}>
+                    S:
+                </div>
                 <input
                     className="form-control form-control-sm"
                     type="number"
                     value={timerSeconds}
-                    onChange={(event) => {
-                        setTimerSeconds(
-                            Math.max(
-                                0,
-                                Number.parseInt(event.target.value) || 0,
-                            ),
-                        );
-                    }}
+                    onChange={handleTimerChange}
                     min="0"
                 />
             </div>

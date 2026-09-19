@@ -1,0 +1,215 @@
+{
+    "page": "lyric-editor",
+    "label": "Lyric Editor",
+    "window": "lyricEditor.html",
+    "focus": "lyricEditor",
+    "description": "The window a song's words and chords are written in: the text on one side, the verses it becomes on the other.",
+    "updated": "2026-09-03",
+    "sections": [
+        {
+            "id": "writing",
+            "label": "Writing the song",
+            "panel": "Editor",
+            "recipes": [
+                "W-15",
+                "W-05"
+            ],
+            "questions": [
+                {
+                    "id": "lyric-structure",
+                    "text": "How do I mark verses and choruses in a song?",
+                    "kind": "howto",
+                    "keywords": [
+                        "verse",
+                        "chorus",
+                        "bridge",
+                        "structure",
+                        "sections"
+                    ],
+                    "starter": true,
+                    "starterRank": 1,
+                    "resources": {
+                        "recipe": "W-05",
+                        "related": [
+                            "W-15"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "save-lyric",
+                    "text": "How do I save the song I am editing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "save",
+                        "keep",
+                        "ctrl s",
+                        "store"
+                    ],
+                    "starter": true,
+                    "starterRank": 2,
+                    "resources": {
+                        "recipe": "W-15",
+                        "shortcut": "Ctrl+S",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "lyric-reset-style",
+                    "text": "How do I put a song's styling back the way it was?",
+                    "kind": "howto",
+                    "keywords": [
+                        "reset",
+                        "default",
+                        "undo styling",
+                        "back to normal",
+                        "plain"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "song-from-text",
+                    "text": "Can you write the notation for words I paste in?",
+                    "kind": "howto",
+                    "keywords": [
+                        "paste lyrics",
+                        "raw words",
+                        "import words",
+                        "turn words into a song",
+                        "draft a song",
+                        "write the notation for me"
+                    ],
+                    "resources": {
+                        "tools": [
+                            "owa_lyric_validate",
+                            "owa_lyric_file"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "seeing-it",
+            "label": "Seeing what it becomes",
+            "panel": "Previewer",
+            "recipes": [
+                "W-05"
+            ],
+            "questions": [
+                {
+                    "id": "lyric-preview",
+                    "text": "How do I see what a song will look like on screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "preview",
+                        "look like",
+                        "check",
+                        "stage",
+                        "before presenting"
+                    ],
+                    "starter": true,
+                    "starterRank": 3,
+                    "resources": {
+                        "recipe": "W-05",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "edit-while-presenting",
+                    "text": "Can I change the words while the song is on the screen?",
+                    "kind": "what",
+                    "keywords": [
+                        "live",
+                        "while presenting",
+                        "during service",
+                        "follow",
+                        "update"
+                    ],
+                    "starter": true,
+                    "starterRank": 4,
+                    "resources": {
+                        "recipe": "W-05"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "not-accepted",
+            "label": "When the song will not go in",
+            "panel": "Editor",
+            "recipes": [
+                "W-05"
+            ],
+            "questions": [
+                {
+                    "id": "lyric-not-accepted",
+                    "text": "Why will the editor not accept my song?",
+                    "kind": "fix",
+                    "keywords": [
+                        "red",
+                        "squiggle",
+                        "underline",
+                        "error",
+                        "invalid",
+                        "will not save",
+                        "rejected",
+                        "wrong"
+                    ],
+                    "starter": true,
+                    "starterRank": 6,
+                    "resources": {
+                        "recipe": "W-05",
+                        "tools": [
+                            "owa_lyric_validate"
+                        ]
+                    }
+                },
+                {
+                    "id": "lyric-chord-wrong",
+                    "text": "Why is one of my chords marked as wrong?",
+                    "kind": "fix",
+                    "keywords": [
+                        "chord",
+                        "bracket",
+                        "square brackets",
+                        "Cm7b5",
+                        "sus",
+                        "slash chord",
+                        "marked red"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "tools": [
+                            "owa_lyric_validate"
+                        ]
+                    }
+                },
+                {
+                    "id": "lyric-structure-order",
+                    "text": "What order will my song play in?",
+                    "kind": "what",
+                    "keywords": [
+                        "structure",
+                        "play order",
+                        "running order",
+                        "sequence",
+                        "repeat",
+                        "twice"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "related": [
+                            "W-15"
+                        ],
+                        "tools": [
+                            "owa_lyric_validate"
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,17 +1,19 @@
+import { useCallback } from 'react';
+
 import { tran } from '../../lang/langHelpers';
 import PathSelectorComp from '../../others/PathSelectorComp';
 import {
+    useAppEffect,
     useAppEffectAsync,
     useAppStateAsync,
-} from '../../helper/debuggerHelpers';
-import {
-    defaultDataDirNames,
-    dirSourceSettingNames,
-} from '../../helper/constants';
+    useAppCurrentRef,
+} from '../../helper/appHooks';
 import DirSource from '../../helper/DirSource';
+import { selectableDataDirectories } from './dataDirectories';
 import {
     checkShouldSelectChildDir,
     getDefaultDataDir,
+    removePathForChildDir,
     selectPathForChildDir,
 } from './directoryHelpers';
 import { fsCheckDirExist, fsCreateDir } from '../../server/fileHelpers';
@@ -20,15 +22,15 @@ import {
     SELECTED_PARENT_DIR_SETTING_NAME,
 } from './appLocalStorage';
 import { SelectDefaultDirButton } from '../../others/NoDirSelectedComp';
-import { useGenDirSource } from '../../helper/dirSourceHelpers';
-import { OptionalPromise } from '../../helper/typeHelpers';
+import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
+import { unwatchDataDir, watchDataDir } from '../../helper/dirWatchingHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
+import { type OptionalPromise } from '../../helper/typeHelpers';
+import SettingCardHeaderComp from '../SettingCardHeaderComp';
 
 class ParentDirSource extends DirSource {
     _dirPath: string;
-    setDirPath: (dirPath: string) => OptionalPromise<void> = (
-        _dirPath: string,
-    ) => {};
+    setParentDirPath: (newFilePath: string) => OptionalPromise<void> = () => {};
     constructor(dirPath: string) {
         super(SELECTED_PARENT_DIR_SETTING_NAME);
         this._dirPath = dirPath;
@@ -40,19 +42,22 @@ class ParentDirSource extends DirSource {
 
     set dirPath(dirPath: string) {
         this.setDirPath(dirPath);
+        this.setParentDirPath(dirPath);
     }
 }
 
 function RenderPathElementComp({
     title,
+    iconClassName,
     settingName,
     defaultFolderName,
 }: Readonly<{
     title: string;
+    iconClassName: string;
     settingName: string;
     defaultFolderName: string;
 }>) {
-    const dirSource = useGenDirSource(settingName);
+    const dirSource = useGenDirSourceReload(settingName);
     const [isValidDirPath] = useAppStateAsync(() => {
         return fsCheckDirExist(dirSource?.dirPath ?? '');
     }, [dirSource]);
@@ -60,8 +65,25 @@ function RenderPathElementComp({
         return null;
     }
     return (
-        <div className="d-flex w-100 flex-column">
-            <div>{title}:</div>
+        <div
+            className={
+                'app-setting-path-item app-border-white-round d-flex w-100' +
+                ' flex-column p-2 mb-2'
+            }
+        >
+            <div className="d-flex align-items-center mb-1">
+                <i
+                    className={`bi ${iconClassName} app-setting-path-item-icon me-2`}
+                />
+                <span className="app-setting-path-item-title flex-grow-1">
+                    {title}
+                </span>
+                {isValidDirPath ? null : (
+                    <span className="badge rounded-pill text-bg-danger">
+                        {tran('Missing')}
+                    </span>
+                )}
+            </div>
             <div className="d-flex flex-column">
                 <div className="flex-grow-1">
                     <PathSelectorComp
@@ -79,7 +101,6 @@ function RenderPathElementComp({
                     </div>
                 )}
             </div>
-            <hr />
         </div>
     );
 }
@@ -88,89 +109,100 @@ function RenderParentDirectoryComp({
     dirSource,
 }: Readonly<{ dirSource: DirSource }>) {
     const defaultPath = getDefaultDataDir();
+    const defaultPathRef = useAppCurrentRef(defaultPath);
+    const dirSourceRef = useAppCurrentRef(dirSource);
+    const handleSetDefault = useCallback(async () => {
+        await fsCreateDir(defaultPathRef.current);
+        dirSourceRef.current.dirPath = defaultPathRef.current;
+        await selectPathForChildDir(defaultPathRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="d-flex flex-column">
-            <div className={`${HIGHLIGHT_SELECTED_CLASSNAME} p-2`}>
-                <div>{tran('Parent Directory:')}</div>
+            <div
+                className={`${HIGHLIGHT_SELECTED_CLASSNAME} app-border-white-round p-2`}
+            >
+                <div className="app-setting-path-item-title d-flex align-items-center mb-1">
+                    <i className="bi bi-folder-symlink me-2" />
+                    {tran('Parent Directory:')}
+                </div>
                 <div>
                     <PathSelectorComp
                         prefix="path-parent-dir"
                         dirSource={dirSource}
+                        placeholder={defaultPath}
                     />
                 </div>
             </div>
             {dirSource.dirPath ? null : (
                 <div>
                     <hr />
-                    <button
-                        className="btn btn-sm btn-info ms-2"
-                        onClick={async () => {
-                            await fsCreateDir(defaultPath);
-                            dirSource.dirPath = defaultPath;
-                            await selectPathForChildDir(defaultPath);
+                    <div className="d-flex align-items-center">
+                        <div className="hand-pointing-right">👉</div>
+                        <button
+                            className="btn btn-sm btn-success ms-2 d-flex align-items-center"
+                            onClick={handleSetDefault}
+                        >
+                            <div className="d-flex align-items-center me-2">
+                                <strong
+                                    style={{
+                                        textShadow: '0 0 2px var(--bs-danger)',
+                                    }}
+                                >
+                                    {tran(
+                                        'Click here to set default data on "Desktop"',
+                                    )}{' '}
+                                </strong>
+                            </div>
+                        </button>
+                    </div>
+                    <strong
+                        className="app-selectable-text"
+                        style={{
+                            marginLeft: '30px',
                         }}
                     >
-                        Set Default Data ({defaultPath})
-                    </button>
+                        "{defaultPath}"
+                    </strong>
                 </div>
             )}
         </div>
     );
 }
 
-const titleSettingNames = {
-    Documents: [
-        dirSourceSettingNames.APP_DOCUMENT,
-        defaultDataDirNames.APP_DOCUMENT,
-    ],
-    Lyrics: [dirSourceSettingNames.LYRIC, defaultDataDirNames.LYRIC],
-    Playlists: [dirSourceSettingNames.PLAYLIST, defaultDataDirNames.PLAYLIST],
-    'Background Images': [
-        dirSourceSettingNames.BACKGROUND_IMAGE,
-        defaultDataDirNames.BACKGROUND_IMAGE,
-    ],
-    'Background Videos': [
-        dirSourceSettingNames.BACKGROUND_VIDEO,
-        defaultDataDirNames.BACKGROUND_VIDEO,
-    ],
-    'Background Audios': [
-        dirSourceSettingNames.BACKGROUND_AUDIO,
-        defaultDataDirNames.BACKGROUND_AUDIO,
-    ],
-    'Bible Present': [
-        dirSourceSettingNames.BIBLE_PRESENT,
-        defaultDataDirNames.BIBLE_PRESENT,
-    ],
-    'Bible Reader': [
-        dirSourceSettingNames.BIBLE_READ,
-        defaultDataDirNames.BIBLE_READ,
-    ],
-};
-
 function RenderChildDirectoriesComp({
     parentDirPath,
 }: Readonly<{ parentDirPath: string }>) {
+    const parentDirPathRef = useAppCurrentRef(parentDirPath);
+    const handleResetChildDirs = useCallback(() => {
+        selectPathForChildDir(parentDirPathRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <>
-            <div className="card-header">
+            <SettingCardHeaderComp
+                iconClassName="bi-diagram-3"
+                title="Child Directories"
+            >
                 <button
-                    className="btn btn-sm btn-warning"
-                    onClick={() => {
-                        selectPathForChildDir(parentDirPath);
-                    }}
+                    className="btn btn-sm btn-warning d-flex align-items-center"
+                    title={tran('Reset All Child Directories')}
+                    onClick={handleResetChildDirs}
                 >
+                    <i className="bi bi-arrow-counterclockwise me-1" />
                     {tran('Reset All Child Directories')}
                 </button>
-            </div>
+            </SettingCardHeaderComp>
             <div className="card-body">
-                {Object.entries(titleSettingNames).map(
-                    ([title, [settingName, defaultFolderName]]) => {
+                {selectableDataDirectories.map(
+                    ({ title, settingName, defaultDirName, iconClassName }) => {
                         return (
                             <RenderPathElementComp
                                 key={title}
-                                title={title}
+                                title={tran(title)}
+                                iconClassName={iconClassName}
                                 settingName={settingName}
-                                defaultFolderName={defaultFolderName}
+                                defaultFolderName={defaultDirName}
                             />
                         );
                     },
@@ -188,7 +220,10 @@ function RenderBodyComp({ dirSource }: Readonly<{ dirSource: DirSource }>) {
     }, [dirSource]);
     return (
         <div className="card h-100">
-            <div className="card-header">{tran('Path Settings')}</div>
+            <SettingCardHeaderComp
+                iconClassName="bi-folder2-open"
+                title="Path Settings"
+            />
             <div className="card-body w-100 p-2">
                 <RenderParentDirectoryComp dirSource={dirSource} />
                 <div className="card app-border-white-round p-1">
@@ -210,14 +245,32 @@ export default function SettingGeneralDirectoryPathComp() {
         const dirSource = new ParentDirSource(selectedParentDir ?? '');
         return dirSource;
     });
+    useAppEffect(() => {
+        if (!dirSource) {
+            return;
+        }
+        dirSource.setParentDirPath = async (dirPath: string) => {
+            // The recursive watch is keyed to the directory it was started on,
+            // so the OLD tree has to be released before the selection moves —
+            // nothing else can name it afterwards, and an orphaned watch keeps
+            // firing file events for a folder the app no longer uses.
+            unwatchDataDir();
+            await appLocalStorage.setSelectedParentDirectory(dirPath);
+            if (dirPath === '' || !(await fsCheckDirExist(dirPath))) {
+                await removePathForChildDir();
+            } else {
+                await selectPathForChildDir(dirPath);
+            }
+            await watchDataDir();
+            const newDirSource = new ParentDirSource(dirPath);
+            setDirSource(newDirSource);
+        };
+        return () => {
+            dirSource.setParentDirPath = () => {};
+        };
+    }, [dirSource]);
     if (!dirSource) {
         return null;
     }
-    dirSource.setDirPath = async (dirPath: string) => {
-        await appLocalStorage.setSelectedParentDirectory(dirPath);
-        await selectPathForChildDir(dirPath);
-        const newDirSource = new ParentDirSource(dirPath);
-        setDirSource(newDirSource);
-    };
     return <RenderBodyComp dirSource={dirSource} />;
 }

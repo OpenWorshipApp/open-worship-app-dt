@@ -1,0 +1,128 @@
+import { app } from 'electron';
+
+import type ElectronAppController from './ElectronAppController';
+import {
+    isDev,
+    isWindows,
+    isWindowsStore,
+    resetPopupWindowsBounds,
+} from './electronHelpers';
+
+import packageInfo from '../package.json';
+
+export const RESET_WINDOW_BOUNDS_LABEL = 'Reset Position and Size';
+export const RESET_WINDOW_BOUNDS_ARG = '--owa-reset-window-bounds';
+export const USER_DATA_PATH_ARG_PREFIX = '--owa-user-data-path=';
+
+export function findUserDataPathArg(argv: string[]) {
+    const arg = argv.find((item) => {
+        return item.startsWith(USER_DATA_PATH_ARG_PREFIX);
+    });
+    const userDataPath = arg?.slice(USER_DATA_PATH_ARG_PREFIX.length);
+    return userDataPath ? userDataPath : null;
+}
+
+export function resetWindowsBounds(appController: ElectronAppController) {
+    appController.settingManager.restoreMainBounds(appController.mainWin);
+    // Popups follow the main window, so whatever stranded it stranded them too
+    // -- and unlike the main window they have no menu bar of their own to be
+    // rescued from.
+    resetPopupWindowsBounds(appController.mainWin);
+}
+
+// The jump list attaches to the process' Application User Model ID. For the
+// installed app it must be exactly the `build.appId` that electron-builder's
+// NSIS stamps on the shortcut, or the taskbar treats the running app and its
+// pinned shortcut as two different things. Dev keeps its own identity, matching
+// how it already keeps its own `userData` dir and single-instance lock.
+//
+// A Store (MSIX) install is the one case with NOTHING to claim: Windows gives
+// the package its own id and forbids replacing it -- "you may only use the
+// AUMID generated for it by the application model environment" -- and setting
+// one anyway is documented to make the jump list entries disappear, which is
+// exactly the reset task below.
+export function initAppUserModelId() {
+    if (!isWindows || isWindowsStore) {
+        return;
+    }
+    const appId = packageInfo.build.appId;
+    app.setAppUserModelId(isDev ? `${appId}.dev` : appId);
+}
+
+// A jump list task cannot call into the running app: Windows launches `program`
+// with `arguments` and the single-instance lock forwards that argv to us. The
+// relaunched process inherits no environment, so `isDev` is false there and
+// `applyLaunchOverrides` would aim it at the packaged `userData` — a different
+// lock, which would open a whole second app instead of signalling this one.
+// Naming the already-resolved dir on the command line keeps dev talking to dev.
+//
+// A LIST, not a command line: `app.relaunch` takes the arguments already split
+// and quoting them there would make the quotes part of the path. Only the jump
+// list, which hands Windows one string, joins and quotes them.
+function genRelaunchArgList(extraArgs: string[] = []) {
+    return [
+        // in dev `process.execPath` is electron.exe, which needs the app path
+        ...(isDev ? [app.getAppPath()] : []),
+        `${USER_DATA_PATH_ARG_PREFIX}${app.getPath('userData')}`,
+        ...extraArgs,
+    ];
+}
+
+function genRelaunchArguments() {
+    return genRelaunchArgList([RESET_WINDOW_BOUNDS_ARG])
+        .map((part) => {
+            return part.includes(' ') ? `"${part}"` : part;
+        })
+        .join(' ');
+}
+
+/**
+ * Close this app and open it again.
+ *
+ * The one setting that CANNOT be applied any other way is the AI master
+ * switch: the main process reads it before `ready` to decide whether the
+ * debugging endpoint and the MCP host open at all, so no amount of reloading
+ * renderers (`Apply Settings`) can change it. Electron starts the new process
+ * only once this one has exited, so the single-instance lock is free by then.
+ *
+ * The window reset a jump list task carries is deliberately NOT passed on: a
+ * restart asked for in Settings must leave the user's window where they put it.
+ */
+export function relaunchApp() {
+    app.relaunch({ args: genRelaunchArgList() });
+    // `quit`, not `exit`: `will-quit` is where the agent endpoint file is
+    // swept and the settings are flushed.
+    app.quit();
+}
+
+// Adds the entry under "Tasks" when the taskbar icon is right-clicked. Must run
+// after `app.whenReady()`.
+export function initUserTasks() {
+    if (!isWindows) {
+        return;
+    }
+    app.setUserTasks([
+        {
+            program: process.execPath,
+            arguments: genRelaunchArguments(),
+            iconPath: process.execPath,
+            iconIndex: 0,
+            title: RESET_WINDOW_BOUNDS_LABEL,
+            description: 'Move the main window back onto the primary display',
+        },
+    ]);
+}
+
+export function initSecondInstance(appController: ElectronAppController) {
+    app.on('second-instance', (_event, argv) => {
+        const win = appController.mainWin;
+        if (win.isMinimized()) {
+            win.restore();
+        }
+        if (argv.includes(RESET_WINDOW_BOUNDS_ARG)) {
+            resetWindowsBounds(appController);
+        }
+        // a plain relaunch means "give me the app I already have running"
+        win.focus();
+    });
+}

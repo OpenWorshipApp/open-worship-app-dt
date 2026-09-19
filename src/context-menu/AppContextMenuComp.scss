@@ -11,7 +11,7 @@
   .app-context-menu {
     position: fixed;
     max-width: 210px;
-    min-width: 50px;
+    min-width: 120px;
     border-radius: var(--bs-border-radius);
     padding: 10px 0;
     z-index: $z-index-context-menu + 1;
@@ -24,6 +24,15 @@
         cursor: not-allowed !important;
       }
 
+      &:hover {
+        .context-menu-shortcut-key {
+          opacity: 0.8;
+          span {
+            font-size: 9px;
+          }
+        }
+      }
+
       font-size: 14px;
       text-decoration: none;
       padding: 10px 5px;
@@ -32,7 +41,6 @@
       transition: 0.2s;
       position: relative;
       margin-bottom: 2px;
-      font-weight: 500;
       display: flex;
       align-items: center;
       outline: none;
@@ -41,5 +49,57 @@
         margin-left: 10px;
       }
     }
+  }
+}
+
+.context-menu-shortcut-key {
+  position: absolute;
+  right: 0;
+  padding: 0;
+  margin: 0;
+  transform: translateY(-14px);
+  opacity: 0.3;
+  span {
+    background: rgba(var(--bs-body-bg-rgb), 0.65);
+    border-radius: 4px;
+    transition: font-size 0.2s;
+    padding: 1px 2px;
+    margin: 0;
+    font-size: 8px;
+  }
+  &:hover {
+    opacity: 1;
+    span {
+      background: var(--bs-body-bg) !important;
+    }
+  }
+}
+
+// The mouse-gesture twin of `.context-menu-shortcut-key`, in the flow rather
+// than absolute over the label — see `genContextMenuItemGestureHint`.
+//
+// Written out under the full `#app-context-menu-container` path, not on its own:
+// the item's `span { margin-left: 10px }` above carries an id in its selector,
+// so a bare `.context-menu-gesture-hint span` would lose to it and the chip
+// would sit 10px off the item's right edge.
+#app-context-menu-container .app-context-menu .app-context-menu-item {
+  .context-menu-gesture-hint {
+    flex: 0 0 auto;
+    padding: 0;
+    margin: 0 0 0 6px;
+    opacity: 0.5;
+
+    span {
+      margin: 0;
+      padding: 0 3px;
+      background: #00000059;
+      border-radius: 4px;
+      font-size: 9px;
+      white-space: nowrap;
+    }
+  }
+
+  &:hover .context-menu-gesture-hint {
+    opacity: 1;
   }
 }

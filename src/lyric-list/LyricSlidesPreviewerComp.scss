@@ -1,0 +1,144 @@
+.lyric-slides-previewer {
+  & > .card-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    // Never let the card column squeeze the header below its own line box -
+    // Khmer glyphs are taller than the Latin ones, so a shrunk header clips
+    // them even on a single line.
+    flex-shrink: 0;
+    // Keep everything on one line and let the label - not the stage controls -
+    // give way when space runs out.
+    white-space: nowrap;
+    overflow: hidden;
+
+    .stage-previewer-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    // The chips may outgrow the header once a few stages exist. Scroll them
+    // instead of pushing the Add button out of reach - the button is the only
+    // way to get a stage back, so it must never be the thing that disappears.
+    .stage-previewer-stages {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 0 1 auto;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    .stage-previewer-add {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1px 8px;
+      line-height: 1.4;
+    }
+
+    // Pinned to the right edge, away from the stage controls: it acts on the
+    // whole previewer, not on any one stage. The auto margin collapses on its
+    // own once the chips fill the header, so it never pushes anything out.
+    .stage-previewer-more {
+      flex: 0 0 auto;
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1px 4px;
+      line-height: 1.4;
+    }
+  }
+
+  // `--stage-accent` is set inline per stage and is what ties a chip to its
+  // preview pane. Both read the same variable, so they can never drift apart.
+  .stage-previewer-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 4px 1px 8px;
+    border: 1px solid var(--stage-accent);
+    border-radius: 999px;
+    line-height: 1.4;
+    color: var(--stage-accent);
+    // A tint of the same accent, so the chip reads as a colour swatch rather
+    // than as an outline that happens to be coloured.
+    background-color: color-mix(in srgb, var(--stage-accent) 18%, transparent);
+    height: 26px;
+
+    // The base stage keeps its own accent but cannot be removed: the padlock
+    // and the missing remove button are what say so. It still ends in the gear
+    // button, so it takes the same right padding as every other chip.
+    &.is-base {
+      & > .bi-lock-fill {
+        font-size: 0.75em;
+        opacity: 0.8;
+      }
+    }
+  }
+
+  // The border the stage's preview area wears, in its chip's colour.
+  .stage-previewer-pane {
+    border-width: 1px;
+    border-color: var(--stage-accent);
+    border-style: inset;
+    position: relative;
+  }
+
+  // Both chip buttons share one box so a chip's height never changes with the
+  // number of controls on it - the header is a single unshrinkable line.
+  .stage-previewer-chip-remove,
+  .stage-previewer-chip-config {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.7em;
+    opacity: 0.75;
+  }
+
+  .stage-previewer-chip-remove {
+    &:hover,
+    &:focus-visible {
+      background-color: var(--bs-secondary);
+      color: var(--bs-white);
+      opacity: 1;
+    }
+  }
+
+  // The gear wears its own stage's accent rather than a warning colour: it
+  // configures the stage, it does not destroy anything.
+  .stage-previewer-chip-config {
+    &:hover,
+    &:focus-visible {
+      background-color: var(--stage-accent);
+      color: var(--bs-body-bg);
+      opacity: 1;
+    }
+
+    // While this stage's panel is the one showing.
+    &.is-active {
+      opacity: 1;
+      background-color: color-mix(
+        in srgb,
+        var(--stage-accent) 35%,
+        transparent
+      );
+    }
+  }
+}

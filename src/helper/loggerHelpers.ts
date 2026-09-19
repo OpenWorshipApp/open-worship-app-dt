@@ -1,3 +1,5 @@
+import appProvider from '../server/appProvider';
+
 const logLevelMapper = {
     verbose: ['error', 'warn', 'log', 'trace'],
     minimal: ['error', 'warn'],
@@ -11,23 +13,36 @@ function callConsole(method: string, ...args: any[]) {
         return;
     }
     const callable = (console as any)[method] as
-        | ((...args: any) => void)
-        | undefined;
+        ((...args: any) => void) | undefined;
     callable?.call(console, ...args);
+    if (
+        method !== 'warn' &&
+        !(
+            appProvider.isPagePresenter ||
+            appProvider.isPageAppDocumentEditor ||
+            appProvider.isPageReader ||
+            appProvider.isPageExperiment
+        )
+    ) {
+        appProvider.messageUtils.sendData('all:app:log', [
+            `:${appProvider.currentHomePage}:`,
+            ...args,
+        ]);
+    }
 }
 
-export function log(...args: any[]) {
+export function appLog(...args: any[]) {
     callConsole('log', ...args);
 }
 
-export function error(...args: any[]) {
+export function appError(...args: any[]) {
     callConsole('error', ...args);
 }
 
-export function warn(...args: any[]) {
+export function appWarning(...args: any[]) {
     callConsole('warn', ...args);
 }
 
-export function trace(...args: any[]) {
+export function appTrace(...args: any[]) {
     callConsole('trace', ...args);
 }

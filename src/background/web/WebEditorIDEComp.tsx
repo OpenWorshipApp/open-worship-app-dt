@@ -6,9 +6,9 @@ import FileSource from '../../helper/FileSource';
 import { useSelectedWebContext } from './webEditorHelpers';
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
 import appProvider from '../../server/appProvider';
-import { useAppEffectAsync } from '../../helper/debuggerHelpers';
-import { genTimeoutAttempt } from '../../helper/helpers';
+import { useAppEffectAsync } from '../../helper/appHooks';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
+import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 
 async function loadWebContent(filePath: string, editorInstance: any) {
     const fileSource = FileSource.getInstance(filePath);

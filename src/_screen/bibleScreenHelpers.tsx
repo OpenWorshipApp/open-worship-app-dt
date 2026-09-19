@@ -1,19 +1,17 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { getVerses } from '../helper/bible-helpers/bibleInfoHelpers';
-import {
-    getBibleLocale,
-    toLocaleNumBible,
-} from '../helper/bible-helpers/bibleLogicHelpers2';
-import BibleItem from '../bible-list/BibleItem';
-import {
+import { toLocaleNumBible } from '../helper/bible-helpers/bibleLogicHelpers2';
+import type BibleItem from '../bible-list/BibleItem';
+import type {
     BibleItemRenderingType,
-    BibleBibleTable,
     BibleRenderVerseType,
 } from './bibleScreenComps';
+import { BibleBibleTableComp } from './bibleScreenComps';
 import { getHTMLChild } from '../helper/helpers';
 import appProvider from '../server/appProvider';
-import { getLangAsync } from '../lang/langHelpers';
+import { DEFAULT_LOCALE, getLangDataAsync } from '../lang/langHelpers';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
 const bibleScreenHelper = {
     async genHtmlFromScreenViewBibleItem(
@@ -25,8 +23,8 @@ const bibleScreenHelper = {
         }
         const bibleRenderingLangList = await Promise.all(
             bibleRenderingList.map(async (item) => {
-                let langData = await getLangAsync(item.locale, true);
-                langData ??= await getLangAsync('en-US', true);
+                let langData = await getLangDataAsync(item.locale);
+                langData ??= await getLangDataAsync(DEFAULT_LOCALE);
                 return {
                     ...item,
                     langData: langData!,
@@ -35,7 +33,7 @@ const bibleScreenHelper = {
         );
         const versesCount = bibleRenderingList[0].verses.length;
         const htmlString = renderToStaticMarkup(
-            <BibleBibleTable
+            <BibleBibleTableComp
                 bibleRenderingList={bibleRenderingLangList}
                 isLineSync={isLineSync}
                 versesCount={versesCount}

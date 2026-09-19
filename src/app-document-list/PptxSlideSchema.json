@@ -1,0 +1,44 @@
+{
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "number"
+        },
+        "htmlFilePath": {
+            "type": "string"
+        },
+        "subHtmlFilePaths": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "html": {
+            "type": "string"
+        },
+        "subHtmls": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "isDisabled": {
+            "type": "boolean"
+        },
+        "note": {
+            "type": ["string", "null"]
+        },
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "width": {
+                    "type": "number"
+                },
+                "height": {
+                    "type": "number"
+                }
+            }
+        }
+    },
+    "required": ["id", "htmlFilePath", "isDisabled", "note", "metadata"]
+}

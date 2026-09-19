@@ -1,6 +1,9 @@
-import { ReactNode, useState } from 'react';
+import type { ChangeEvent, ReactNode, KeyboardEvent, MouseEvent } from 'react';
+import { useCallback, useState } from 'react';
 
 import { showSimpleToast } from '../toast/toastHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
+import { tran } from '../lang/langHelpers';
 
 export default function AskingNewNameComp({
     defaultName,
@@ -13,47 +16,59 @@ export default function AskingNewNameComp({
 }>) {
     const [creatingNewName, setCreatingNewName] = useState(defaultName ?? '');
     const isValid = /^[^\\\/:\*\?"<>\|]+$/.test(creatingNewName);
+    const handleDivClick = useCallback((event: MouseEvent) => {
+        event.stopPropagation();
+    }, []);
+    const creatingNewNameRef = useAppCurrentRef(creatingNewName);
+    const applyNameRef = useAppCurrentRef(applyName);
+    const handleKeyDown = useCallback(
+        (event: KeyboardEvent<HTMLInputElement>) => {
+            if (event.key === 'Enter' && creatingNewNameRef.current) {
+                applyNameRef.current(creatingNewNameRef.current);
+            } else if (event.key === 'Escape') {
+                applyNameRef.current(null);
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleInputChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setCreatingNewName(event.target.value);
+        },
+        [],
+    );
+    const isValidRef = useAppCurrentRef(isValid);
+    const handleApplyClick = useCallback(() => {
+        if (!isValidRef.current) {
+            showSimpleToast(
+                tran('Invalid file name'),
+                'File name cannot contain any of the following ' +
+                    'characters: \\ / : * ? " < > |',
+            );
+            return;
+        }
+        applyNameRef.current(creatingNewNameRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <div
-            className="input-group"
-            onClick={(event) => {
-                event.stopPropagation();
-            }}
-        >
+        <div className="input-group" onClick={handleDivClick}>
             <input
                 type="text"
                 className="form-control form-control-sm"
-                placeholder="title"
+                placeholder={tran('title')}
                 value={creatingNewName}
-                aria-label="file name"
+                aria-label={tran('file name')}
                 aria-describedby="button-addon2"
                 autoFocus
-                onKeyDown={(event) => {
-                    if (event.key === 'Enter' && creatingNewName) {
-                        applyName(creatingNewName);
-                    } else if (event.key === 'Escape') {
-                        applyName(null);
-                    }
-                }}
-                onChange={(event) => {
-                    setCreatingNewName(event.target.value);
-                }}
+                onKeyDown={handleKeyDown}
+                onChange={handleInputChange}
             />
             <button
                 id="button-addon2"
                 className={`btn btn-outline-${isValid ? 'success' : 'danger'}`}
                 type="button"
-                onClick={() => {
-                    if (!isValid) {
-                        showSimpleToast(
-                            'Invalid file name',
-                            'File name cannot contain any of the following ' +
-                                'characters: \\ / : * ? " < > |',
-                        );
-                        return;
-                    }
-                    applyName(creatingNewName || null);
-                }}
+                onClick={handleApplyClick}
             >
                 {customIcon || <i className="bi bi-check" />}
             </button>

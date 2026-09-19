@@ -1,20 +1,21 @@
-import { CSSProperties } from 'react';
-
 import { handleError } from '../../helper/errorHelpers';
-import { AppColorType } from '../../others/color/colorHelpers';
+import type { AppColorType } from '../../others/color/colorHelpers';
+import { HEX_COLOR_WHITE } from '../../others/color/colorHelpers';
 import appProvider from '../../server/appProvider';
+import type { TextStylePropsType } from './canvasHelpers';
 import {
+    checkIsValidTextStyleProps,
     genTextDefaultBoxStyle,
-    HAlignmentType,
-    VAlignmentType,
+    genTextStyle,
 } from './canvasHelpers';
-import CanvasItem, { CanvasItemError, CanvasItemPropsType } from './CanvasItem';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { CanvasItemPropsType } from './CanvasItem';
+import CanvasItem, { CanvasItemError } from './CanvasItem';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 
 export function genTextDefaultProps(): TextPropsType {
     return {
         text: appProvider.appInfo.titleFull,
-        color: '#ffffff',
+        color: HEX_COLOR_WHITE,
         fontSize: 60,
         fontFamily: null,
         fontWeight: null,
@@ -22,43 +23,16 @@ export function genTextDefaultProps(): TextPropsType {
         textVerticalAlignment: 'center',
     };
 }
-export type TextPropsType = {
+export type TextPropsType = TextStylePropsType & {
     text: string;
-    color: AppColorType;
-    fontSize: number;
-    fontFamily: string | null;
-    fontWeight: string | null;
-    textHorizontalAlignment: HAlignmentType;
-    textVerticalAlignment: VAlignmentType;
 };
-export type CanvasItemTextPropsType = CanvasItemPropsType & TextPropsType;
-export type CanvasItemTextHtmlPropsType = CanvasItemTextPropsType & {
-    htmlText: string;
-};
-export type ToolingTextType = {
-    color?: AppColorType;
-    fontSize?: number;
-    fontFamily?: string | null;
-    fontWeight?: string | null;
-    textHorizontalAlignment?: HAlignmentType;
-    textVerticalAlignment?: VAlignmentType;
-};
+export type CanvasItemTextPropsType = { type: 'text' } & CanvasItemPropsType &
+    TextPropsType;
+export type ToolingTextType = Partial<TextStylePropsType>;
+
 class CanvasItemText extends CanvasItem<CanvasItemTextPropsType> {
     static genStyle(props: CanvasItemTextPropsType) {
-        const style: CSSProperties = {
-            display: 'flex',
-            width: '100%',
-            height: '100%',
-            fontSize: `${props.fontSize}px`,
-            fontFamily: props.fontFamily ?? '',
-            fontWeight: props.fontWeight ?? '',
-            color: props.color,
-            alignItems: props.textVerticalAlignment,
-            justifyContent: props.textHorizontalAlignment,
-            textAlign: props.textHorizontalAlignment,
-            padding: `${props.fontSize / 10}px`,
-        };
-        return style;
+        return genTextStyle(props);
     }
     getStyle() {
         return CanvasItemText.genStyle(this.props);
@@ -67,6 +41,23 @@ class CanvasItemText extends CanvasItem<CanvasItemTextPropsType> {
         return CanvasItemText.fromJson({
             ...genTextDefaultProps(),
             ...genTextDefaultBoxStyle(),
+            type: 'text',
+        }) as CanvasItemText;
+    }
+    // A plain colored rectangle — what dropping a color from the Background
+    // panel onto empty canvas produces. There is no "color" item kind, and
+    // there does not need to be: an empty text box already paints its
+    // `backgroundColor`, keeps the shape/rounding tooling, and stays editable
+    // by double-click if the operator then wants words in it.
+    static genColorBoxItem(x: number, y: number, color: AppColorType) {
+        const boxStyle = genTextDefaultBoxStyle();
+        return CanvasItemText.fromJson({
+            ...genTextDefaultProps(),
+            text: '',
+            ...boxStyle,
+            backgroundColor: color,
+            left: x - boxStyle.width / 2,
+            top: y - boxStyle.height / 2,
             type: 'text',
         }) as CanvasItemText;
     }
@@ -89,10 +80,7 @@ class CanvasItemText extends CanvasItem<CanvasItemTextPropsType> {
         super.validate(json);
         if (
             typeof json.text !== 'string' ||
-            typeof json.color !== 'string' ||
-            typeof json.fontSize !== 'number' ||
-            (json.fontFamily !== null && typeof json.fontFamily !== 'string') ||
-            (json.fontWeight !== null && typeof json.fontWeight !== 'string')
+            !checkIsValidTextStyleProps(json)
         ) {
             throw new Error('Invalid canvas item text data');
         }

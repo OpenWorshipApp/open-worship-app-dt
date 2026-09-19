@@ -1,7 +1,7 @@
 import { useScreenBackgroundManagerEvents } from './managers/screenEventHelpers';
 import { useScreenManagerContext } from './managers/screenManagerHooks';
-import { calMediaSizes } from './screenHelpers';
-import { BackgroundSrcType } from './screenTypeHelpers';
+import { calMediaSizes, genVideoIDFromSrc } from './screenHelpers';
+import type { BackgroundSrcType } from './screenTypeHelpers';
 
 export default function ScreenBackgroundVideoComp({
     backgroundSrc,
@@ -18,8 +18,10 @@ export default function ScreenBackgroundVideoComp({
         },
         backgroundSrc,
     );
+    const videoId = genVideoIDFromSrc(backgroundSrc.src);
     return (
         <video
+            id={videoId}
             src={backgroundSrc.src}
             style={{
                 width: `${width}px`,

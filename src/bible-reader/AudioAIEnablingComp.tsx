@@ -1,4 +1,4 @@
-import BibleItem from '../bible-list/BibleItem';
+import type BibleItem from '../bible-list/BibleItem';
 import {
     checkIsAIAudioAvailableForBible,
     useIsAudioAIEnabled,

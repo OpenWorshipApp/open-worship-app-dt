@@ -1,31 +1,45 @@
-import Slide, { SlideType } from './Slide';
-import AppEditableDocumentSourceAbs, {
-    AppDocumentMetadataType,
-} from '../helper/AppEditableDocumentSourceAbs';
+import type { SlidePropsType } from './Slide';
+import Slide from './Slide';
+import type { AppDocumentMetadataType } from '../helper/AppEditableDocumentSourceAbs';
+import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
 import { tran } from '../lang/langHelpers';
-import { gemSlideContextMenuItems } from './appDocumentHelpers';
-import { checkIsSameValues, toMaxId } from '../helper/helpers';
-import { MimetypeNameType } from '../server/fileHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
-import EditingHistoryManager from '../editing-manager/EditingHistoryManager';
-import ItemSourceInf from '../others/ItemSourceInf';
-import { OptionalPromise, AnyObjectType } from '../helper/typeHelpers';
 import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
-import { DisplayType } from '../_screen/screenTypeHelpers';
+    genSelectedSlidesContextMenuItems,
+    genSlideContextMenuItems,
+    getSelectedVaryAppDocument,
+} from './appDocumentHelpers';
+import { checkIsSameValues, toMaxId } from '../helper/helpers';
+import type { MimetypeNameType } from '../server/fileHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
+import type ItemSourceInf from '../others/ItemSourceInf';
+import type { OptionalPromise, AnyObjectType } from '../helper/typeHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import type { DisplayType } from '../_screen/screenTypeHelpers';
 import {
     checkIsImagesInClipboard,
     readImagesFromClipboard,
 } from '../server/appHelpers';
-import { createNewSlidesFromDroppedData } from '../app-document-presenter/items/appDocumentHelpers';
-import { fixMissingFontFamilies } from '../server/fontHelpers';
+import {
+    APP_DOCUMENT_ITEM_CLASS,
+    createNewSlidesFromDroppedData,
+} from '../app-document-presenter/items/appDocumentHelpers';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
+import {
+    notifyElementHighlight,
+    openPopupWindow,
+    setParamFileFullName,
+    setParamIdNum,
+} from '../helper/domHelpers';
+import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import { type VaryAppDocumentType } from './appDocumentTypeHelpers';
+import appProvider from '../server/appProvider';
+import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
-    items: SlideType[];
+    items: SlidePropsType[];
 };
 
 export type WrongDimensionType = {
@@ -46,41 +60,86 @@ export default class AppDocument
     static readonly mimetypeName: MimetypeNameType = 'appDocument';
     isEditable = true;
 
+    static genNewExtraJsonData() {
+        const newCanvasItem = CanvasItemText.genDefaultItem();
+        const appDocumentJson = Slide.defaultSlideData(0);
+        appDocumentJson.canvasItems.push(newCanvasItem.toJson());
+        const jsonData = {
+            items: [appDocumentJson],
+        };
+        return jsonData;
+    }
+
+    async getJsonData(isOriginal = false): Promise<AppDocumentType> {
+        let jsonData = await super.getJsonData(isOriginal);
+        if (jsonData !== null) {
+            return jsonData;
+        }
+        if (!isOriginal) {
+            jsonData = await this.getJsonData(true);
+            if (jsonData !== null) {
+                return jsonData;
+            }
+        }
+        showSimpleToast(
+            tran('Corrupted Document'),
+            tran(
+                'The document data is corrupted and cannot be loaded. ' +
+                    'We will reset the document data to a new state.',
+            ),
+        );
+        const extraJsonData = AppDocument.genNewExtraJsonData();
+        const newJsonData =
+            AppDocument.genNewJsonData<AppDocumentType>(extraJsonData);
+        await this.setJsonData(newJsonData);
+        await this.save();
+        return newJsonData;
+    }
+
     async getSlides() {
         let jsonData = await this.getJsonData();
-        if (jsonData === null) {
-            return [];
-        }
         const slides = jsonData.items.map((json: any) => {
             try {
                 return Slide.fromJson(json, this.filePath);
             } catch (error: any) {
-                showSimpleToast('Instantiating Slide', error.message);
+                showSimpleToast(tran('Instantiating Slide'), error.message);
             }
             return Slide.fromJsonError(json, this.filePath);
         });
-        jsonData = await this.getJsonData(true);
-        if (jsonData !== null) {
-            for (const [index, slide] of slides.entries()) {
-                this.checkSlideIsChanged(index, slide, jsonData.items);
+        // A bible key's font lives in lazily loaded language data, so resolve
+        // every key up front or its verses first render in a fallback font.
+        const bibleKeys = new Set<string>();
+        for (const slide of slides) {
+            for (const bibleKey of slide.getBibleKeys()) {
+                bibleKeys.add(bibleKey);
             }
         }
-        const unavailableFontFamiliesSet = slides.reduce((acc, slide) => {
-            const unavailableFonts = slide.getUnavailableFontFamilies();
-            for (const font of unavailableFonts) {
-                acc.add(font);
-            }
-            return acc;
-        }, new Set<string>());
-        fixMissingFontFamilies(unavailableFontFamiliesSet, this.filePath);
+        await Promise.all(
+            Array.from(bibleKeys).map((bibleKey) => {
+                return getBibleFontFamily(bibleKey);
+            }),
+        );
+        jsonData = await this.getJsonData(true);
+        for (const [index, slide] of slides.entries()) {
+            this.checkSlideIsChanged(index, slide, jsonData.items);
+        }
         return slides;
+    }
+
+    async getMissingFontFamilyList() {
+        const slides = await this.getSlides();
+        const unavailableFontFamiliesSet = new Set<string>();
+        for (const slide of slides) {
+            const unavailableFonts = await slide.getUnavailableFontFamilies();
+            for (const font of unavailableFonts) {
+                unavailableFontFamiliesSet.add(font);
+            }
+        }
+        return Array.from(unavailableFontFamiliesSet);
     }
 
     async setSlides(newSlides: Slide[]) {
         const jsonData = await this.getJsonData();
-        if (jsonData === null) {
-            return;
-        }
         jsonData.items = newSlides.map((slide) => {
             return slide.toJson();
         });
@@ -110,6 +169,7 @@ export default class AppDocument
         return slides[index] ?? null;
     }
 
+    // Required by ItemSourceInf but not used in AppDocument
     async getItemById(id: number) {
         const slides = await this.getSlides();
         return (
@@ -119,18 +179,15 @@ export default class AppDocument
         );
     }
 
+    // Required by ItemSourceInf but not used in AppDocument, so just throw error
     setItemById(_id: number, _slide: Slide): OptionalPromise<void> {
         throw new Error('Method not implemented.');
-    }
-
-    get editingHistoryManager() {
-        return EditingHistoryManager.getInstance(this.filePath);
     }
 
     async checkSlideIsChanged(
         index: number,
         slide: Slide,
-        jsonItems: SlideType[],
+        jsonItems: SlidePropsType[],
     ) {
         const originalSlide = jsonItems[index];
         slide.isChanged =
@@ -149,16 +206,39 @@ export default class AppDocument
         return 0;
     }
 
-    async duplicateSlide(slide: Slide) {
-        const index = await this.getSlideIndex(slide);
+    notifyNewSlidesAdded(slideIds: number[]) {
+        for (const slideId of slideIds) {
+            const key =
+                `.${APP_DOCUMENT_ITEM_CLASS}` +
+                `[data-vary-app-document-item-id="${slideId}"]`;
+            notifyElementHighlight(() => {
+                return document.querySelector(key);
+            });
+        }
+    }
+
+    async duplicateSlides(targetSlides: Slide[]) {
+        if (targetSlides.length === 0) {
+            return;
+        }
+        const index = await this.getSlideIndex(targetSlides.at(-1) as Slide);
         if (index === -1) {
             return;
         }
-        const newSlide = slide.clone();
         const maxSlideId = await this.getMaxSlideId();
-        newSlide.id = maxSlideId + 1;
+        const newSlides = targetSlides.map((slide, i) => {
+            const newSlide = slide.clone(true);
+            newSlide.id = maxSlideId + i + 1;
+            newSlide.filePath = this.filePath;
+            return newSlide;
+        });
+        this.notifyNewSlidesAdded(
+            newSlides.map((slide) => {
+                return slide.id;
+            }),
+        );
         const slides = await this.getSlides();
-        slides.splice(index + 1, 0, newSlide);
+        slides.splice(index + 1, 0, ...newSlides);
         await this.setSlides(slides);
     }
 
@@ -171,17 +251,22 @@ export default class AppDocument
         if (fromIndex === -1 || fromIndex === toIndex) {
             return;
         }
+        this.notifyNewSlidesAdded([slide.id]);
         const [item] = slides.splice(fromIndex, 1);
         slides.splice(toIndex, 0, item);
         await this.setSlides(slides);
     }
 
     async addSlides(newSlides: Slide[]) {
+        if (newSlides.length === 0) {
+            return;
+        }
         const slides = await this.getSlides();
         for (let i = 0; i < newSlides.length; i++) {
             const newSlide = newSlides[i];
             const maxSlideId = (await this.getMaxSlideId()) + i;
             newSlide.id = maxSlideId + 1;
+            this.notifyNewSlidesAdded([newSlide.id]);
             newSlide.filePath = this.filePath;
             slides.push(newSlide);
         }
@@ -196,6 +281,7 @@ export default class AppDocument
         if (toIndex < 0 || toIndex >= slides.length) {
             return;
         }
+        this.notifyNewSlidesAdded([slides[fromIndex].id, slides[toIndex].id]);
         const fromSlide = slides[fromIndex];
         const toSlide = slides[toIndex];
         slides[fromIndex] = toSlide;
@@ -208,13 +294,11 @@ export default class AppDocument
         if (index === -1) {
             return;
         }
+        this.notifyNewSlidesAdded([slide.id]);
         const slides = await this.getSlides();
-        let toIndex = 0;
-        if (isForward) {
-            toIndex = (index + 1) % slides.length;
-        } else {
-            toIndex = (index - 1 + slides.length) % slides.length;
-        }
+        const toIndex = isForward
+            ? (index + 1) % slides.length
+            : (index - 1 + slides.length) % slides.length;
         return this.moveSlideToIndex(slide, toIndex);
     }
 
@@ -222,16 +306,17 @@ export default class AppDocument
         const maxSlideId = await this.getMaxSlideId();
         const defaultSlideData = Slide.defaultSlideData(maxSlideId + 1);
         const { width, height } = Slide.getDefaultDim();
-        const json = {
+        const json: SlidePropsType = {
             id: defaultSlideData.id,
             metadata: {
                 width,
                 height,
             },
             canvasItems: [], // TODO: add default canvas item
+            type: 'slide',
         };
-        const newSlide = new Slide(this.filePath, json);
-        return newSlide;
+        const slide = new Slide(this.filePath, json);
+        return slide;
     }
 
     async addNewSlide() {
@@ -239,10 +324,15 @@ export default class AppDocument
         await this.addSlides([newSlide]);
     }
 
-    async deleteSlide(slide: Slide) {
+    async deleteSlides(slidesToDelete: Slide[]) {
+        if (slidesToDelete.length === 0) {
+            return;
+        }
         const slides = await this.getSlides();
-        const newSlides = slides.filter((newSlide) => {
-            return newSlide.id !== slide.id;
+        const newSlides = slides.filter((slide) => {
+            return !slidesToDelete.some((slideToDelete) =>
+                slide.checkIsSame(slideToDelete),
+            );
         });
         await this.setSlides(newSlides);
     }
@@ -291,19 +381,17 @@ export default class AppDocument
     ) {
         const slides = await this.getSlides();
         const newSlides = await Promise.all(
-            slides.map((slide) => {
-                return (async () => {
-                    const json = slide.toJson();
-                    if (
-                        targetSlide === undefined ||
-                        (slide.checkIsSame(targetSlide) &&
-                            slide.checkIsWrongDimension(dim))
-                    ) {
-                        json.metadata.width = dim.width;
-                        json.metadata.height = dim.height;
-                    }
-                    return Slide.fromJson(json, this.filePath);
-                })();
+            slides.map(async (slide) => {
+                const json = slide.toJson();
+                if (
+                    targetSlide === undefined ||
+                    (slide.checkIsSame(targetSlide) &&
+                        slide.checkIsWrongDimension(dim))
+                ) {
+                    json.metadata.width = dim.width;
+                    json.metadata.height = dim.height;
+                }
+                return Slide.fromJson(json, this.filePath);
             }),
         );
         await this.setSlides(newSlides);
@@ -311,18 +399,14 @@ export default class AppDocument
 
     async fixSlidesDimensionForDisplay(display: DisplayType) {
         const slides = await this.getSlides();
-        const newSlides = await Promise.all(
-            slides.map((slide) => {
-                return (async () => {
-                    const json = slide.toJson();
-                    if (slide.checkIsWrongDimension(display.bounds)) {
-                        json.metadata.width = display.bounds.width;
-                        json.metadata.height = display.bounds.height;
-                    }
-                    return Slide.fromJson(json, this.filePath);
-                })();
-            }),
-        );
+        const newSlides = slides.map((slide) => {
+            const json = slide.toJson();
+            if (slide.checkIsWrongDimension(display.bounds)) {
+                json.metadata.width = display.bounds.width;
+                json.metadata.height = display.bounds.height;
+            }
+            return Slide.fromJson(json, this.filePath);
+        });
         await this.setSlides(newSlides);
     }
 
@@ -330,11 +414,20 @@ export default class AppDocument
         event: any,
         slide: Slide,
         extraMenuItems: ContextMenuItemType[] = [],
+        isSelectedEditing = false,
     ) {
-        const contextMenuItems = gemSlideContextMenuItems(
+        const contextMenuItems = genSlideContextMenuItems(
             this,
             slide,
-            extraMenuItems,
+            isSelectedEditing,
+        );
+        showAppContextMenu(event, [...contextMenuItems, ...extraMenuItems]);
+    }
+
+    showHoldingSlidesContextMenu(event: any, slides: Slide[]) {
+        const contextMenuItems = genSelectedSlidesContextMenuItems(
+            this,
+            slides,
         );
         showAppContextMenu(event, contextMenuItems);
     }
@@ -342,47 +435,69 @@ export default class AppDocument
     async showContextMenu(event: any) {
         const isClipboardHasImage = await checkIsImagesInClipboard();
         const copiedSlides = await AppDocument.getCopiedSlides();
-        showAppContextMenu(event, [
+        const contextMenuItems: ContextMenuItemType[] = [
             {
-                menuElement: 'New Slide',
+                childBefore: genContextMenuItemIcon('plus-square'),
+                menuElement: tran('New Slide'),
                 onSelect: () => {
                     this.addNewSlide();
                 },
             },
-            ...(copiedSlides.length > 0
-                ? [
-                      {
-                          menuElement: 'Paste',
-                          onSelect: () => {
-                              for (const copiedSlide of copiedSlides) {
-                                  this.addSlides([copiedSlide]);
-                              }
-                          },
-                      },
-                  ]
-                : []),
-            ...(isClipboardHasImage
-                ? [
-                      {
-                          menuElement: tran('Paste Image'),
-                          onSelect: async () => {
-                              const blobs: Blob[] = [];
-                              for await (const blob of readImagesFromClipboard()) {
-                                  blobs.push(blob);
-                              }
-                              await createNewSlidesFromDroppedData(this, blobs);
-                          },
-                      },
-                  ]
-                : []),
-        ]);
+            {
+                childBefore: genContextMenuItemIcon('arrow-clockwise'),
+                menuElement: tran('Reload'),
+                onSelect: () => {
+                    this.fileSource.fireUpdateEvent();
+                },
+            },
+        ];
+        if (copiedSlides.length > 0) {
+            contextMenuItems.unshift({
+                childBefore: genContextMenuItemIcon('clipboard'),
+                menuElement: tran('Paste'),
+                onSelect: () => {
+                    for (const copiedSlide of copiedSlides) {
+                        this.addSlides([copiedSlide]);
+                    }
+                },
+            });
+        }
+        if (isClipboardHasImage) {
+            contextMenuItems.push({
+                childBefore: genContextMenuItemIcon('card-image'),
+                menuElement: tran('Paste Image'),
+                onSelect: async () => {
+                    const blobs: Blob[] = [];
+                    for await (const blob of readImagesFromClipboard()) {
+                        blobs.push(blob);
+                    }
+                    await createNewSlidesFromDroppedData(this, blobs);
+                },
+            });
+        }
+        showAppContextMenu(event, contextMenuItems);
     }
 
     static async create(dir: string, name: string) {
-        const newCanvasItem = CanvasItemText.genDefaultItem();
-        const appDocumentJson = Slide.defaultSlideData(0);
-        appDocumentJson.canvasItems.push(newCanvasItem.toJson());
-        return super.create(dir, name, { items: [appDocumentJson] });
+        const jsonData = this.genNewExtraJsonData();
+        return super.create(dir, name, jsonData);
+    }
+
+    /**
+     * A document created with slides already in it, landing CLEAN on disk.
+     *
+     * The twin of `Lyric.createWithContent`, and for the same reason its
+     * comment gives: create-then-`setJsonData` would route the content through
+     * the editing history and leave a brand-new document already unsaved.
+     * `items` is validated by the caller -- `AppDocument.validate` is what says
+     * whether the app can open it at all.
+     */
+    static async createWithContent(
+        dir: string,
+        name: string,
+        items: AnyObjectType[],
+    ) {
+        return super.create(dir, name, { items });
     }
 
     static async getCopiedSlides() {
@@ -392,9 +507,13 @@ export default class AppDocument
         for (const clipboardSlide of clipboardSlides) {
             if (clipboardSlide.types.includes(textPlainType)) {
                 const blob = await clipboardSlide.getType(textPlainType);
-                const json = await blob.text();
-                const copiedSlideSlide = Slide.clipboardDeserialize(json);
-                if (copiedSlideSlide !== null) {
+                const text = await blob.text();
+                const texts = text.split('\n');
+                for (const text of texts) {
+                    const copiedSlideSlide = Slide.clipboardDeserialize(text);
+                    if (copiedSlideSlide === null) {
+                        continue;
+                    }
                     copiedSlides.push(copiedSlideSlide);
                 }
             }
@@ -402,9 +521,54 @@ export default class AppDocument
         return copiedSlides;
     }
 
+    static setCopiedSlides(slides: Slide[]) {
+        const data = slides
+            .map((slide) => {
+                return slide.clipboardSerialize();
+            })
+            .join('\n');
+        navigator.clipboard.writeText(data);
+    }
+
     static getInstance(filePath: string) {
         return this._getInstance(filePath, () => {
             return new this(filePath);
         });
     }
+}
+
+export async function checkIsAppDocumentSelected() {
+    const varyAppDocument = await getSelectedVaryAppDocument();
+    // `isEditable` and not just the type test: `LyricAppDocument` extends this
+    // class but cannot be edited or saved.
+    if (
+        !AppDocument.checkIsThisType(varyAppDocument) ||
+        !varyAppDocument.isEditable
+    ) {
+        showAppAlert(
+            tran('No slide selected'),
+            tran('Please select an Open Worship slide first'),
+        );
+        return false;
+    }
+    return true;
+}
+
+export async function openAppDocumentEditorExternal(
+    varyAppDocument: VaryAppDocumentType,
+    quickEditItemId: number | null = null,
+) {
+    const fileFullName = varyAppDocument!.fileSource.fullName;
+    let pathname = setParamFileFullName(
+        appProvider.appDocumentEditorHomePage,
+        fileFullName,
+    );
+    if (quickEditItemId !== null) {
+        pathname = setParamIdNum(pathname, quickEditItemId);
+    }
+    openPopupWindow(
+        pathname,
+        `app_document_editor_${Date.now()}`,
+        'app_document_editor',
+    );
 }

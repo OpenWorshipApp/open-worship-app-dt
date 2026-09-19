@@ -1,31 +1,35 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { checkIsOldTestament } from '../helper/bible-helpers/bibleInfoHelpers';
-import {
-    BookMatchDataType,
-    genBookMatches,
-} from '../helper/bible-helpers/bibleLogicHelpers1';
+import type { BookMatchDataType } from '../helper/bible-helpers/bibleLogicHelpers1';
+import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { showSimpleToast } from '../toast/toastHelpers';
-import { SelectedBookKeyType } from './bibleFindHelpers';
+import type { SelectedBookKeyType } from './bibleFindHelpers';
+import { tran } from '../lang/langHelpers';
+import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import BibleFindController from './BibleFindController';
+import appProvider from '../server/appProvider';
+import { useAppCurrentRef } from '../helper/appHooks';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 function genMenuItem(
-    bibleKey: string,
     selectedBooks: SelectedBookKeyType[],
     setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void,
-    { bookKey, book, modelBook, isAvailable }: BookMatchDataType,
+    { bibleKey, bookKey, book, modelBook, isAvailable }: BookMatchDataType,
 ) {
     const extraName = book === modelBook ? '' : ` (${modelBook})`;
     return {
+        childBefore: genContextMenuItemIcon('book'),
         menuElement: (
-            <span data-bible-key={bibleKey}>{`${book}${extraName}`}</span>
+            <span data-bible-key-ff={bibleKey}>{`${book}${extraName}`}</span>
         ),
         disabled:
             !isAvailable ||
-            selectedBooks.some((book) => book.bookKey === bookKey),
+            (selectedBooks.length === 1 &&
+                selectedBooks[0].bookKey === bookKey),
         onSelect: (event: any) => {
             if (event.shiftKey) {
                 setSelectedBooks([...selectedBooks, { bookKey, book }]);
@@ -41,9 +45,12 @@ async function selectBookKeys(
     selectedBooks: SelectedBookKeyType[],
     setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void,
 ) {
-    const bookList = await genBookMatches(bibleKey, '');
+    const bookList = await genBookMatches(bibleKey);
     if (bookList === null) {
-        showSimpleToast('Getting bible list', 'Fail to get bible list');
+        showSimpleToast(
+            tran('Getting bible list'),
+            tran('Fail to get bible list'),
+        );
         return;
     }
     const oldBookList = bookList.filter((book) => {
@@ -54,7 +61,8 @@ async function selectBookKeys(
     });
     const contextMenuItems: ContextMenuItemType[] = [
         {
-            menuElement: 'All Books',
+            childBefore: genContextMenuItemIcon('collection'),
+            menuElement: tran('All Books'),
             onSelect: () => {
                 setSelectedBooks([]);
             },
@@ -62,11 +70,15 @@ async function selectBookKeys(
         ...(selectedBooks.length > 0
             ? [
                   {
-                      menuElement: 'Shift + Click to select multiple',
+                      childBefore: genContextMenuItemIcon('info-circle'),
+                      menuElement: tran('Shift + Click to select multiple'),
                   },
               ]
             : []),
         {
+            childBefore: genContextMenuItemIcon('journals', {
+                color: 'maroon',
+            }),
             menuElement: (
                 <span
                     style={{
@@ -74,7 +86,7 @@ async function selectBookKeys(
                         borderBottom: '1px dotted gray',
                     }}
                 >
-                    Old Testament
+                    {tran('Old Testament')}
                 </span>
             ),
             onSelect: () => {
@@ -82,9 +94,12 @@ async function selectBookKeys(
             },
         },
         ...oldBookList.map((book) => {
-            return genMenuItem(bibleKey, selectedBooks, setSelectedBooks, book);
+            return genMenuItem(selectedBooks, setSelectedBooks, book);
         }),
         {
+            childBefore: genContextMenuItemIcon('journals', {
+                color: 'maroon',
+            }),
             menuElement: (
                 <span
                     style={{
@@ -92,7 +107,7 @@ async function selectBookKeys(
                         borderBottom: '1px dotted gray',
                     }}
                 >
-                    New Testament
+                    {tran('New Testament')}
                 </span>
             ),
             onSelect: () => {
@@ -100,8 +115,59 @@ async function selectBookKeys(
             },
         },
         ...newBookList.map((book) => {
-            return genMenuItem(bibleKey, selectedBooks, setSelectedBooks, book);
+            return genMenuItem(selectedBooks, setSelectedBooks, book);
         }),
+    ];
+    showAppContextMenu(event, contextMenuItems);
+}
+
+function showExtraActions(
+    event: any,
+    bibleKey: string,
+    setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void,
+    isDisabledFilterResetting = false,
+) {
+    const contextMenuItems: ContextMenuItemType[] = [
+        {
+            childBefore: genContextMenuItemIcon('arrow-counterclockwise', {
+                color: 'var(--bs-danger)',
+            }),
+            menuElement: (
+                <span style={{ color: 'var(--bs-danger)' }}>
+                    {tran('Reset Search Data')}
+                </span>
+            ),
+            onSelect: async () => {
+                const isOk = await showAppConfirm(
+                    tran('Reset Search Data'),
+                    tran(
+                        'Are you sure to reset search data? This will take a ' +
+                            'moment to restore',
+                    ),
+                );
+                if (!isOk) {
+                    return;
+                }
+                const isSuccess =
+                    await BibleFindController.resetSearchingDatabase(bibleKey);
+                if (isSuccess) {
+                    appProvider.reload();
+                } else {
+                    showSimpleToast(
+                        tran('Reset Search Data'),
+                        tran('Fail to reset search data, please try again'),
+                    );
+                }
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('funnel'),
+            menuElement: tran('Reset Selected Books'),
+            disabled: isDisabledFilterResetting,
+            onSelect: () => {
+                setSelectedBooks([]);
+            },
+        },
     ];
     showAppContextMenu(event, contextMenuItems);
 }
@@ -115,34 +181,65 @@ export default function RenderFindingInfoHeaderComp({
     selectedBooks: SelectedBookKeyType[];
     setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void;
 }>) {
+    const fontFamily = useBibleFontFamily(bibleKey);
     const text = useMemo(() => {
         return selectedBooks.length === 0
-            ? 'All Books'
+            ? tran('All Books')
             : `${selectedBooks
                   .map(({ book }) => {
                       return book;
                   })
                   .join(', ')}`;
     }, [selectedBooks]);
+    const bibleKeyRef = useAppCurrentRef(bibleKey);
+    const selectedBooksRef = useAppCurrentRef(selectedBooks);
+    const setSelectedBooksRef = useAppCurrentRef(setSelectedBooks);
+    const handleSelectBookKeys = useCallback((event: any) => {
+        selectBookKeys(
+            event,
+            bibleKeyRef.current,
+            selectedBooksRef.current,
+            setSelectedBooksRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleExtraActions = useCallback((event: any) => {
+        showExtraActions(
+            event,
+            bibleKeyRef.current,
+            setSelectedBooksRef.current,
+            selectedBooksRef.current.length === 0,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const isFiltered = selectedBooks.length > 0;
     return (
-        <div className="w-100 d-flex overflow-hidden app-inner-shadow p-1">
-            <div className="w-100 overflow-hidden">
-                <button
-                    className="btn btn-sm btn-info app-ellipsis"
-                    title={text}
-                    style={{ maxWidth: '100%' }}
-                    onClick={(event) => {
-                        selectBookKeys(
-                            event,
-                            bibleKey,
-                            selectedBooks,
-                            setSelectedBooks,
-                        );
-                    }}
-                >
-                    <span data-bible-key={bibleKey}>{text}</span>
-                </button>
-            </div>
+        <div className="app-find-filter-bar">
+            <button
+                className="app-ghost-button"
+                type="button"
+                aria-label={tran('More Options')}
+                title={tran('More Options')}
+                onClick={handleExtraActions}
+            >
+                <i className="bi bi-three-dots-vertical" />
+            </button>
+            <button
+                className={
+                    'app-find-filter app-ellipsis' +
+                    (isFiltered ? ' is-filtered' : '')
+                }
+                type="button"
+                title={text}
+                onClick={handleSelectBookKeys}
+            >
+                {/*
+                 * The funnel appears only when one is actually on, so the state
+                 * survives a grayscale screen and a colour-blind reader.
+                 */}
+                {isFiltered ? <i className="bi bi-funnel-fill pe-1" /> : null}
+                <span style={{ fontFamily }}>{text}</span>
+            </button>
         </div>
     );
 }

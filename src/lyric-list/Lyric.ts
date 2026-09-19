@@ -1,19 +1,9 @@
-import { MimetypeNameType } from '../server/fileHelpers';
-import AppEditableDocumentSourceAbs, {
-    AppDocumentMetadataType,
-} from '../helper/AppEditableDocumentSourceAbs';
-import { AnyObjectType } from '../helper/typeHelpers';
+import { MARCH_OF_GRACE_EXAMPLE } from 'open-lyric';
 
-const DEFAULT_CONTENT = `
----
-# Test1
----
-c1:                    Am     G  F          G      Esus4  E
-l1: All the leaves are brown        and the sky is gray
-
-c1: F               C     E  Am       F        Esus4  E
-l1: I've been for a walk         on a winter's day
-`;
+import type { MimetypeNameType } from '../server/fileHelpers';
+import type { AppDocumentMetadataType } from '../helper/AppEditableDocumentSourceAbs';
+import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
+import type { AnyObjectType } from '../helper/typeHelpers';
 
 type LyricType = {
     metadata: AppDocumentMetadataType;
@@ -57,12 +47,27 @@ export default class Lyric extends AppEditableDocumentSourceAbs<LyricType> {
         await this.setJsonData(jsonData);
     }
 
+    static getDefaultContentJsonData(): LyricType {
+        return {
+            metadata: this.genMetadata(),
+            content: MARCH_OF_GRACE_EXAMPLE,
+        };
+    }
+
     static async create(dir: string, name: string) {
-        return super.create(dir, name, { content: DEFAULT_CONTENT });
+        return super.create(dir, name, this.getDefaultContentJsonData());
+    }
+
+    // Content passed at creation lands clean on disk; create-then-setContent
+    // would route through the editing history and leave the file unsaved.
+    static async createWithContent(dir: string, name: string, content: string) {
+        const jsonData = this.getDefaultContentJsonData();
+        jsonData.content = content;
+        return super.create(dir, name, jsonData);
     }
 
     async save(): Promise<boolean> {
-        return await this.editingHistoryManager.save((dataText) => {
+        return await this.historySave((dataText) => {
             return dataText;
         });
     }

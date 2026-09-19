@@ -1,9 +1,9 @@
 import './FlexResizeActorComp.scss';
 
-import { Component, RefObject, createRef } from 'react';
+import type { RefObject } from 'react';
+import { Component, createRef } from 'react';
 
-import { DisabledType } from './flexSizeHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
+import type { DisabledType, CloseType } from './flexSizeHelpers';
 
 export const HIDDEN_WIDGET_CLASS = 'app-hidden-widget';
 export const ACTIVE_HIDDEN_WIDGET_CLASS = `active-${HIDDEN_WIDGET_CLASS}`;
@@ -15,8 +15,17 @@ import imageUp from './images/up.png';
 import imageDown from './images/down.png';
 import imageLeft from './images/left.png';
 import imageRight from './images/right.png';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import {
+    type ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { tran } from '../lang/langHelpers';
+import { checkMediaPlaying } from '../helper/mediaControlHelpers';
 
-const ICON_MAP = {
+const CloseTypeListLeft: CloseType[] = ['left', 'up'] as const;
+const ICON_MAP: Record<'h' | 'v', [CloseType, string, string][]> = {
     h: [
         ['left', imageLeft, '0 5px 0 0'],
         ['right', imageRight, '0 0 0 5px'],
@@ -27,12 +36,33 @@ const ICON_MAP = {
     ],
 };
 
+// What an arrow on the divider does, in words: it collapses the panel on that
+// side (the menu's Close First / Second Widget). It used to say "Disable left",
+// in English in every language. Deliberately NOT the menu's own words, so the
+// app's tools do not find a hover-only arrow where a walkthrough means the menu
+// item. Literal keys, so `tranKeyCoverage.test.ts` can check each one.
+function genCollapseTitle(direction: CloseType) {
+    if (direction === 'left') {
+        return tran('Collapse left panel');
+    }
+    if (direction === 'right') {
+        return tran('Collapse right panel');
+    }
+    if (direction === 'up') {
+        return tran('Collapse top panel');
+    }
+    return tran('Collapse bottom panel');
+}
+
+type PointerLikeEvent = MouseEvent | TouchEvent;
+
 export type ResizeKindType = 'v' | 'h';
 export interface Props {
     type: ResizeKindType;
     isDisableQuickResize: boolean;
     checkSize: () => void;
     disableWidget: (dataFlexSizeKey: string, target: DisabledType) => void;
+    checkCanClose: () => CloseType | null;
 }
 export default class FlexResizeActorComp extends Component<Props, object> {
     myRef: RefObject<HTMLDivElement | null>;
@@ -47,7 +77,10 @@ export default class FlexResizeActorComp extends Component<Props, object> {
     sumSize: number = 0;
     mouseMoveListener: (event: MouseEvent) => void;
     mouseUpListener: (event: MouseEvent) => void;
+    touchMoveListener: (event: TouchEvent) => void;
+    touchEndListener: (event: TouchEvent) => void;
     attemptTimeout: (func: () => void, isImmediate?: boolean) => void;
+
     constructor(props: Props) {
         super(props);
         this.myRef = createRef();
@@ -57,20 +90,29 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         this.mouseUpListener = (event) => {
             this.onMouseUp(event);
         };
+        this.touchMoveListener = (event: TouchEvent) => {
+            this.onMouseMove(event);
+        };
+        this.touchEndListener = (event: TouchEvent) => {
+            this.onMouseUp(event);
+        };
         this.attemptTimeout = genTimeoutAttempt(100);
     }
+
     private get currentNode() {
         if (this.myRef.current === null) {
             throw new Error('currentNode is null');
         }
         return this.myRef.current;
     }
+
     private getSiblingFromNode(node: HTMLDivElement, isNext: boolean) {
         if (isNext) {
             return node.nextElementSibling as HTMLDivElement;
         }
         return node.previousElementSibling as HTMLDivElement;
     }
+
     private getSibling(isNext: boolean) {
         let node = this.getSiblingFromNode(this.currentNode, isNext);
         while (checkIsActiveHiddenWidgetNode(node)) {
@@ -78,31 +120,40 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         }
         return node;
     }
+
     get preNode() {
         return this.getSibling(false);
     }
+
     get nextNode() {
         return this.getSibling(true);
     }
+
     get isVertical() {
         return this.props.type === 'v';
     }
-    getMousePagePos(me: MouseEvent) {
-        return this.isVertical ? me.pageY : me.pageX;
+
+    getMousePagePos(event: PointerLikeEvent) {
+        const point = 'touches' in event ? event.touches[0] : event;
+        return this.isVertical ? point.pageY : point.pageX;
     }
+
     getOffsetSize(div: HTMLDivElement) {
         return this.isVertical ? div.offsetHeight : div.offsetWidth;
     }
+
     setActive() {
         this.currentNode.classList.add('active');
         this.preNode.style.pointerEvents = 'none';
         this.nextNode.style.pointerEvents = 'none';
     }
+
     setInactive() {
         this.currentNode.classList.remove('active');
         this.preNode.style.pointerEvents = 'auto';
         this.nextNode.style.pointerEvents = 'auto';
     }
+
     init() {
         if (!this.currentNode) {
             return;
@@ -127,10 +178,16 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         this.nextGrow = Number(next.style.flexGrow);
         this.sumGrow = this.previousGrow + this.nextGrow;
     }
-    isShouldIgnore(md: MouseEvent) {
-        return (md.target as any).tagName === 'I';
+
+    isShouldIgnore(event: PointerLikeEvent) {
+        const target = event.target as HTMLElement;
+        return (
+            target.tagName === 'I' ||
+            target.classList.contains('disabling-arrow')
+        );
     }
-    onMouseDown(event: MouseEvent) {
+
+    onMouseDown(event: PointerLikeEvent) {
         if (this.isShouldIgnore(event)) {
             return;
         }
@@ -139,16 +196,27 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         this.lastPos = this.getMousePagePos(event);
         globalThis.addEventListener('mousemove', this.mouseMoveListener);
         globalThis.addEventListener('mouseup', this.mouseUpListener);
+        globalThis.addEventListener('touchmove', this.touchMoveListener, {
+            passive: false,
+        });
+        globalThis.addEventListener('touchend', this.touchEndListener);
+        globalThis.addEventListener('touchcancel', this.touchEndListener);
     }
+
     get isPreReachMinSize() {
         return this.preSize <= this.previousMinSize;
     }
+
     get isNextReachMinSize() {
         return this.nextSize <= this.nextMinSize;
     }
-    onMouseMove(event: MouseEvent) {
+
+    onMouseMove(event: PointerLikeEvent) {
         if (this.isShouldIgnore(event)) {
             return;
+        }
+        if ('touches' in event) {
+            event.preventDefault();
         }
         let pos = this.getMousePagePos(event);
         const posDiff = pos - this.lastPos;
@@ -178,7 +246,10 @@ export default class FlexResizeActorComp extends Component<Props, object> {
             this.removeHiddenWidgetClassname(this.preNode);
         }
         if (this.isNextReachMinSize) {
-            this.addHiddenWidgetClassName(this.nextNode);
+            const hiddenAdded = this.addHiddenWidgetClassName(this.nextNode);
+            if (!hiddenAdded) {
+                return;
+            }
         } else {
             this.removeHiddenWidgetClassname(this.nextNode);
         }
@@ -190,16 +261,30 @@ export default class FlexResizeActorComp extends Component<Props, object> {
 
         this.lastPos = pos;
     }
+
     addHiddenWidgetClassName(divElement: HTMLDivElement) {
+        // Runs on every pointer move while dragging, so guard silently — the
+        // panel visibly resists collapsing; the discrete close() path toasts.
+        const isPlaying = checkMediaPlaying({
+            targetElement: divElement,
+            withMessage: false,
+            includeYouTube: true,
+        });
+        if (isPlaying) {
+            return false;
+        }
         if (this.props.isDisableQuickResize) {
-            return;
+            return false;
         }
         divElement.classList.add(HIDDEN_WIDGET_CLASS);
+        return true;
     }
+
     removeHiddenWidgetClassname(divElement: HTMLDivElement) {
         divElement.classList.remove(HIDDEN_WIDGET_CLASS);
     }
-    onMouseUp(event: MouseEvent) {
+
+    onMouseUp(event: PointerLikeEvent) {
         if (this.isShouldIgnore(event)) {
             return;
         }
@@ -208,21 +293,32 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         }
         globalThis.removeEventListener('mousemove', this.mouseMoveListener);
         globalThis.removeEventListener('mouseup', this.mouseUpListener);
+        globalThis.removeEventListener('touchmove', this.touchMoveListener);
+        globalThis.removeEventListener('touchend', this.touchEndListener);
+        globalThis.removeEventListener('touchcancel', this.touchEndListener);
 
         this.setInactive();
         if (this.preNode.classList.contains(HIDDEN_WIDGET_CLASS)) {
-            this.quicMove('left');
+            this.close('left');
             return;
         }
         if (this.nextNode.classList.contains(HIDDEN_WIDGET_CLASS)) {
-            this.quicMove('right');
+            this.close('right');
             return;
         }
         this.props.checkSize();
     }
-    quicMove(type: string) {
+
+    close(closeType: CloseType) {
+        const isFirst = CloseTypeListLeft.includes(closeType);
+        const isPlaying = checkMediaPlaying({
+            targetElement: isFirst ? this.preNode : this.nextNode,
+            includeYouTube: true,
+        });
+        if (isPlaying) {
+            return;
+        }
         this.init();
-        const isFirst = ['left', 'up'].includes(type);
         const dataFlexSizeKey = isFirst
             ? this.preNode.dataset['fs']
             : this.nextNode.dataset['fs'];
@@ -239,31 +335,135 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         }
         this.setInactive();
     }
+
+    resetSize() {
+        const prevDefault = this.preNode.dataset['fsDefault'] ?? '1';
+        const nextDefault = this.nextNode.dataset['fsDefault'] ?? '1';
+        this.preNode.style.flexGrow = '';
+        this.preNode.style.flex = prevDefault;
+        this.nextNode.style.flexGrow = '';
+        this.nextNode.style.flex = nextDefault;
+        this.props.checkSize();
+    }
+
+    handleContextMenuOpening(event: any) {
+        const menuItems: ContextMenuItemType[] = [
+            {
+                childBefore: genContextMenuItemIcon('aspect-ratio'),
+                menuElement: tran('Reset Size'),
+                onSelect: () => {
+                    this.resetSize();
+                },
+            },
+            {
+                childBefore: genContextMenuItemIcon('x-square'),
+                menuElement: tran('Close First Widget'),
+                onSelect: () => {
+                    this.close('left');
+                },
+            },
+            {
+                childBefore: genContextMenuItemIcon('x-square'),
+                menuElement: tran('Close Second Widget'),
+                onSelect: () => {
+                    this.close('right');
+                },
+            },
+        ];
+        showAppContextMenu(event, menuItems);
+    }
+
+    // The divider between two panes had no name at all. The help chatbot's
+    // control matcher (`owa_find_ui`, the walkthrough card) reads a name off
+    // `title` / `aria-label` / `data-widget-name`, so a step about this
+    // divider's right-click menu -- Reset Size, Close First Widget, Close
+    // Second Widget -- had nothing on screen to ring, and the View-menu
+    // route it fell back on lives in the native menu bar, which no card can
+    // press. Named after its neighbours' ENGLISH widget names, the same
+    // `data-widget-name` the panes carry open or collapsed, so it answers to
+    // the words a recipe writes whatever language the app is displaying (a
+    // screen reader gets the same name). Read once, at mount: a pane and its
+    // collapsed strip swap places beside the divider but keep the name.
+    private stampAccessibleName() {
+        const node = this.myRef.current;
+        if (node === null) {
+            return;
+        }
+        node.setAttribute('role', 'separator');
+        node.setAttribute(
+            'aria-orientation',
+            this.isVertical ? 'horizontal' : 'vertical',
+        );
+        // Not the `preNode`/`nextNode` getters: those step OVER a collapsed
+        // strip (and throw on the edge of the container), where the strip
+        // is exactly the neighbour wanted here -- it carries the same name
+        // as the pane it stands for.
+        const nameBeside = (isNext: boolean) => {
+            let sibling = isNext
+                ? node.nextElementSibling
+                : node.previousElementSibling;
+            while (sibling !== null) {
+                const name = (sibling as HTMLElement).dataset['widgetName'];
+                if (name !== undefined) {
+                    return name;
+                }
+                sibling = isNext
+                    ? sibling.nextElementSibling
+                    : sibling.previousElementSibling;
+            }
+            return undefined;
+        };
+        const preName = nameBeside(false);
+        const nextName = nameBeside(true);
+        if (preName === undefined || nextName === undefined) {
+            return;
+        }
+        node.setAttribute(
+            'aria-label',
+            `Divider between ${preName} and ${nextName}`,
+        );
+    }
+
     componentDidMount() {
         const target = this.currentNode;
-        if (target) {
-            target.addEventListener('mousedown', (md) => {
-                this.onMouseDown(md);
-            });
+        this.stampAccessibleName();
+        target.addEventListener('mousedown', (event) => {
+            if (event.button === 2) {
+                return;
+            }
+            this.onMouseDown(event);
+        });
+        target.addEventListener(
+            'touchstart',
+            (event) => {
+                this.onMouseDown(event);
+            },
+            { passive: false },
+        );
+        const closeType = this.props.checkCanClose();
+        if (closeType !== null) {
+            this.close(closeType);
         }
     }
+
     render() {
         const props = this.props;
         const type = this.props.type;
         const moverChildren = props.isDisableQuickResize
             ? null
             : ICON_MAP[type].map(([direction, src, margin]) => {
+                  const title = genCollapseTitle(direction);
                   return (
                       <img
                           key={direction}
-                          alt={`Disable ${direction}`}
+                          alt={title}
                           src={src}
-                          title={`Disable ${direction}`}
+                          title={title}
                           className="disabling-arrow"
                           style={{ margin }}
                           onClick={(event) => {
                               event.stopPropagation();
-                              this.quicMove(direction);
+                              this.close(direction);
                           }}
                       />
                   );
@@ -294,17 +494,8 @@ export default class FlexResizeActorComp extends Component<Props, object> {
                         mover.style.top = `${event.pageY}px`;
                     }
                 }}
-                onDoubleClick={() => {
-                    const prevDefault =
-                        this.preNode.dataset['fsDefault'] ?? '1';
-                    const nextDefault =
-                        this.nextNode.dataset['fsDefault'] ?? '1';
-                    this.preNode.style.flexGrow = '';
-                    this.preNode.style.flex = prevDefault;
-                    this.nextNode.style.flexGrow = '';
-                    this.nextNode.style.flex = nextDefault;
-                    props.checkSize();
-                }}
+                onDoubleClick={this.resetSize.bind(this)}
+                onContextMenu={this.handleContextMenuOpening.bind(this)}
                 ref={this.myRef}
             >
                 <div

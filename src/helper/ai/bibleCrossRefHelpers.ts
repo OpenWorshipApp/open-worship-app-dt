@@ -1,5 +1,7 @@
-import { createContext, RefObject, use, useState } from 'react';
-import { compileSchema, SchemaNode } from 'json-schema-library';
+import type { RefObject } from 'react';
+import { createContext, use, useState } from 'react';
+import type { SchemaNode } from 'json-schema-library';
+import { compileSchema } from 'json-schema-library';
 
 import {
     fsCheckDirExist,
@@ -12,15 +14,21 @@ import {
 } from '../../server/fileHelpers';
 import { ensureDataDirectory } from '../../setting/directory-setting/directoryHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
-import { useAppEffect, useAppEffectAsync } from '../debuggerHelpers';
-import { bibleCrossRefSchemaJson, RefreshingRefType } from './aiHelpers';
+import { useAppEffect, useAppEffectAsync } from '../appHooks';
+import type { RefreshingRefType } from './aiHelpers';
+import { bibleCrossRefSchemaJson } from './aiHelpers';
 import { handleError } from '../errorHelpers';
 import { getModelKeyBookMap } from '../bible-helpers/bibleLogicHelpers1';
 import { cloneJson } from '../helpers';
 import { toVerseFullKeyFormat } from '../bible-helpers/bibleInfoHelpers';
-import { getBibleModelInfoSetting } from '../bible-helpers/bibleModelHelpers';
+import {
+    BIBLE_KJV_KEY,
+    getBibleModelInfoSetting,
+} from '../bible-helpers/bibleModelHelpers';
+import { appError as logError } from '../loggerHelpers';
 
 type GetBibleCrossRefParamsType = {
     bookKey: string;
@@ -68,8 +76,8 @@ export async function getBibleCrossRef(
         const baseDir = await ensureDataDirectory(dataDir);
         if (baseDir === null) {
             showSimpleToast(
-                'Bible Cross Reference',
-                'Fail to ensure data directory for AI data.',
+                tran('Bible Cross Reference'),
+                tran('Fail to ensure data directory for AI data.'),
             );
             return null;
         }
@@ -102,7 +110,7 @@ export async function getBibleCrossRef(
                         }
                     }
                 } catch (error) {
-                    console.error('Error reading cross reference file:', error);
+                    logError('Error reading cross reference file:', error);
                 }
             }
             await fsDeleteFile(filePath);
@@ -223,7 +231,7 @@ export type CrossReferenceType = {
     verses: string[];
 };
 
-export const BibleKeyContext = createContext<string>('KJV');
+export const BibleKeyContext = createContext<string>(BIBLE_KJV_KEY);
 export function useBibleKeyContext() {
     return use(BibleKeyContext);
 }

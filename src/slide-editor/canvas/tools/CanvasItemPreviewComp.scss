@@ -1,0 +1,44 @@
+.canvas-item-preview {
+  .cip-source {
+    padding: 2px 0 4px;
+    font-size: 0.72rem;
+    color: rgba(var(--bs-body-color-rgb, 222, 226, 230), 0.75);
+
+    > .badge {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+    }
+  }
+
+  .cip-dim {
+    font-size: 0.68rem;
+    opacity: 0.6;
+  }
+
+  .cip-camera-actions {
+    padding: 0 0 4px;
+    font-size: 0.72rem;
+  }
+
+  // Fixed height (set inline from MAX_PREVIEW_HEIGHT so there is one source of
+  // truth) with the scaled item absolutely positioned inside it.
+  .cip-fit {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--bs-border-color, #cccccc2f);
+    border-radius: var(--bs-border-radius);
+    // A faint ground so a fully transparent item reads as transparent rather
+    // than as "nothing rendered".
+    background-color: rgba(var(--bs-body-color-rgb, 222, 226, 230), 0.04);
+  }
+
+  // The video item's play badge is an `svg[data-preview-only]` drawn over the
+  // media; here the native controls do its job and it would sit on top of them.
+  // Precise on purpose: the audio player IS an `audio[data-preview-only]` and
+  // the camera badge is a DIV whose inner svg carries no attribute, so neither
+  // is touched and `setCameraBadgeVisibility` still owns the camera one.
+  svg[data-preview-only] {
+    display: none;
+  }
+}

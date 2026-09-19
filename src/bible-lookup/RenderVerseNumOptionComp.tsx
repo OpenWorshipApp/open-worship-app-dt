@@ -1,64 +1,98 @@
-import BibleItem from '../bible-list/BibleItem';
+import { useCallback, useMemo } from 'react';
+import { useAppCurrentRef } from '../helper/appHooks';
 
-let mouseDownInd: number | null = null;
+let mouseDownObj: {
+    indStart: number;
+    indEnd: number;
+    onMouseUp: () => void;
+} | null = null;
 export function mouseUp() {
-    mouseDownInd = null;
+    mouseDownObj?.onMouseUp();
 }
 
+function genVerseObject(): [number, number] {
+    const { indStart, indEnd } = mouseDownObj!;
+    return [Math.min(indStart, indEnd), Math.max(indStart, indEnd)];
+}
 export default function RenderVerseNumOptionComp({
-    bibleItem,
     index,
     verseNum,
     verseNumText,
+    verseStart,
+    verseEnd,
     onVerseChange,
+    onApply,
 }: Readonly<{
-    bibleItem: BibleItem;
     index: number;
     verseNum: number;
     verseNumText: string;
+    verseStart: number;
+    verseEnd: number;
     onVerseChange: (verseStart: number, verseEnd?: number) => void;
+    onApply: (verseStart: number, verseEnd?: number) => void;
 }>) {
-    const { target } = bibleItem;
-    const verseStart = target.verseStart;
-    const verseEnd = target.verseEnd;
-    const ind = index + 1;
-    const started = verseStart === ind;
-    const inside = verseStart <= ind && ind <= verseEnd;
-    const ended = verseEnd === ind;
-    let select = `${started ? 'selected-start' : ''}`;
-    select += ` ${inside ? 'selected' : ''}`;
-    select += ` ${ended ? 'selected-end' : ''}`;
+    const { selectedNS, ind } = useMemo(() => {
+        const ind = index + 1;
+        const started = verseStart === ind;
+        const isInside = verseStart <= ind && ind <= verseEnd;
+        const ended = verseEnd === ind;
+        let selectedNS = `${started ? 'selected-start' : ''}`;
+        selectedNS += ` ${isInside ? 'selected' : ''}`;
+        selectedNS += ` ${ended ? 'selected-end' : ''}`;
+        return { selectedNS, ind };
+    }, [index, verseStart, verseEnd]);
+    const indRef = useAppCurrentRef(ind);
+    const verseStartRef = useAppCurrentRef(verseStart);
+    const verseEndRef = useAppCurrentRef(verseEnd);
+    const onVerseChangeRef = useAppCurrentRef(onVerseChange);
+    const onApplyRef = useAppCurrentRef(onApply);
+    const handleMouseDown = useCallback((event: any) => {
+        if (event.shiftKey) {
+            const arr = [
+                indRef.current,
+                verseStartRef.current,
+                verseEndRef.current,
+            ].sort((a, b) => {
+                return a - b;
+            });
+            const verse = arr.shift();
+            if (verse === undefined) {
+                return;
+            }
+            onApplyRef.current(verse, arr.pop());
+            mouseDownObj = null;
+            return;
+        }
+        onVerseChangeRef.current(indRef.current);
+        mouseDownObj = {
+            indStart: indRef.current,
+            indEnd: indRef.current,
+            onMouseUp: () => {
+                onApplyRef.current(...genVerseObject());
+                mouseDownObj = null;
+            },
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleMouseEnter = useCallback(() => {
+        if (mouseDownObj === null) {
+            return;
+        }
+        mouseDownObj.indEnd = indRef.current;
+        onVerseChangeRef.current(...genVerseObject());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
-            className={`item alert app-caught-hover-pointer text-center ${select}`}
+            className={`item alert app-caught-hover-pointer text-center ${selectedNS}`}
+            data-verse-index={ind}
             title={
                 `${verseNum}` === verseNumText ? undefined : `Verse ${verseNum}`
             }
-            onMouseDown={(event) => {
-                if (event.shiftKey) {
-                    const arr = [ind, verseStart, verseEnd].sort((a, b) => {
-                        return a - b;
-                    });
-                    const verse = arr.shift();
-                    if (verse === undefined) {
-                        return;
-                    }
-                    onVerseChange(verse, arr.pop());
-                } else {
-                    onVerseChange(ind);
-                    mouseDownInd = ind;
-                }
-            }}
-            onMouseEnter={() => {
-                if (mouseDownInd !== null) {
-                    onVerseChange(
-                        Math.min(mouseDownInd, ind),
-                        Math.max(mouseDownInd, ind),
-                    );
-                }
-            }}
+            onMouseDown={handleMouseDown}
+            onMouseEnter={handleMouseEnter}
         >
-            <span>{verseNumText}</span>
+            <div className="number">{verseNumText}</div>
         </div>
     );
 }

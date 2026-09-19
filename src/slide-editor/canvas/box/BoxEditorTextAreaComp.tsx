@@ -1,36 +1,62 @@
-import { CSSProperties, useState } from 'react';
-
-import { useAppEffect } from '../../../helper/debuggerHelpers';
-import CanvasItemText, { CanvasItemTextPropsType } from '../CanvasItemText';
+import type { ChangeEvent, CSSProperties, FocusEvent } from 'react';
+import { useCallback } from 'react';
+import type { CanvasItemTextPropsType } from '../CanvasItemText';
+import CanvasItemText from '../CanvasItemText';
+import { SCRIPT_SAFE_LINE_HEIGHT } from '../canvasHelpers';
+import { useAppCurrentRef } from '../../../helper/appHooks';
 
 function calcAlignmentStyle(props: CanvasItemTextPropsType) {
-    let height = 0;
-    if (props.textVerticalAlignment !== 'start') {
-        height = props.height / 2 - props.fontSize;
+    const basePadding = props.fontSize / 10;
+    const lineHeight = props.fontSize * SCRIPT_SAFE_LINE_HEIGHT;
+    const lineCount = Math.max(1, props.text.split('\n').length);
+    const estimatedTextHeight = lineHeight * lineCount;
+    const availableHeight = Math.max(0, props.height - basePadding * 2);
+    const extraHeight = Math.max(0, availableHeight - estimatedTextHeight);
+
+    let topPadding = basePadding;
+    if (props.textVerticalAlignment === 'center') {
+        topPadding += extraHeight / 2;
+    } else if (props.textVerticalAlignment === 'end') {
+        topPadding += extraHeight;
     }
+
     const style: CSSProperties = {
-        ...{
-            textAlign: props.textHorizontalAlignment,
-        },
-        ...{
-            padding: height + 'px 0',
-            overflow: 'hidden',
-        },
+        textAlign: props.textHorizontalAlignment,
+        paddingTop: `${topPadding}px`,
+        paddingRight: `${basePadding}px`,
+        paddingBottom: `${basePadding}px`,
+        paddingLeft: `${basePadding}px`,
     };
-    return style as CSSProperties;
+    return style;
 }
 
 export default function BoxEditorTextAreaComp({
     props,
-    setText,
+    text,
+    onTextChange,
+    onBlur,
 }: Readonly<{
     props: CanvasItemTextPropsType;
-    setText: (newText: string) => void;
+    text: string;
+    onTextChange: (newText: string) => void;
+    onBlur: () => void;
 }>) {
-    const [localText, setLocalText] = useState(props.text);
-    useAppEffect(() => {
-        setLocalText(props.text);
-    }, [props.text]);
+    const handleTextAreaFocus = useCallback(
+        (event: FocusEvent<HTMLTextAreaElement>) => {
+            const target = event.target as HTMLTextAreaElement;
+            target.selectionStart = target.selectionEnd = target.value.length;
+        },
+        [],
+    );
+    const onTextChangeRef = useAppCurrentRef(onTextChange);
+    const handleTextChange = useCallback(
+        (event: ChangeEvent<HTMLTextAreaElement>) => {
+            const newText = event.target.value;
+            onTextChangeRef.current(newText);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     const style = CanvasItemText.genStyle(props);
     return (
         <textarea
@@ -39,20 +65,22 @@ export default function BoxEditorTextAreaComp({
                 height: '100%',
                 ...style,
                 ...calcAlignmentStyle(props),
-                overflow: 'auto',
+                display: 'block',
+                margin: 0,
+                border: 'none',
+                borderRadius: 0,
+                outline: 'none',
+                boxShadow: 'none',
+                background: 'transparent',
+                resize: 'none',
+                boxSizing: 'border-box',
+                overflow: 'hidden',
             }}
-            value={localText}
+            value={text}
             autoFocus
-            onFocus={(event) => {
-                const target = event.target as HTMLTextAreaElement;
-                target.selectionStart = target.selectionEnd =
-                    target.value.length;
-            }}
-            onChange={(event) => {
-                const newText = event.target.value;
-                setLocalText(newText);
-                setText(newText);
-            }}
+            onFocus={handleTextAreaFocus}
+            onChange={handleTextChange}
+            onBlur={onBlur}
         />
     );
 }

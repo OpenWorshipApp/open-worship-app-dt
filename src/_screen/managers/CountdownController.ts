@@ -43,6 +43,12 @@ export default class CountdownController {
         return this.getDivChild('second');
     }
 
+    get divBox() {
+        return this.divContainer.querySelector(
+            '.foreground-countdown-container > div',
+        ) as HTMLDivElement;
+    }
+
     toTimeString(n: number) {
         return ('0' + n.toString()).slice(-2);
     }
@@ -75,6 +81,7 @@ export default class CountdownController {
     }
 
     setHtml(isReset: boolean) {
+        this.divBox.dataset.timeDiff = Math.max(0, this.timeDiff).toString();
         this.divHour.innerHTML = isReset ? '00' : this.hourStr;
         this.divMinute.innerHTML = isReset ? '00' : this.minuteStr;
         this.divSecond.innerHTML = isReset ? '00' : this.secondStr;

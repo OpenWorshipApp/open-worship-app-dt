@@ -5,33 +5,54 @@ import {
     getAllScreenManagers,
     getScreenManagersFromSetting,
 } from '../managers/screenManagerHelpers';
-import ScreenManager from '../managers/ScreenManager';
+import type ScreenManager from '../managers/ScreenManager';
 import {
     ScreenManagerBaseContext,
     useScreenManagerEvents,
 } from '../managers/screenManagerHooks';
-import BibleItemsViewController, {
-    useBibleItemsViewControllerContext,
-} from '../../bible-reader/BibleItemsViewController';
+import type BibleItemsViewController from '../../bible-reader/BibleItemsViewController';
+import { useBibleItemsViewControllerContext } from '../../bible-reader/BibleItemsViewController';
 import BibleItem from '../../bible-list/BibleItem';
-import { previewingEventListener } from '../../event/PreviewingEventListener';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
-import { BibleItemDataType } from '../screenTypeHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
+import type { BibleItemDataType } from '../screenTypeHelpers';
+import { tran } from '../../lang/langHelpers';
+import { Fragment, useCallback, useMemo } from 'react';
+import {
+    genColorBar,
+    genColorMap,
+    genColorNoteDataList,
+} from '../../helper/colorNoteHelpers';
+import { setIsBibleCustomStyleFloatingShowing } from '../../screen-setting/bibleCustomStyleFloatingHelpers';
 
-function openContextMenu(event: any) {
+// Also opened by the floating ⋮ that `MiniScreenComp` parks at the bottom-right
+// of the card, so the menu is reachable without a right-click.
+export function openMiniScreenContextMenu(event: any) {
     showAppContextMenu(event, [
         {
-            menuElement: 'Add New Screen',
+            childBefore: genContextMenuItemIcon('window-plus'),
+            menuElement: tran('Add New Screen'),
             onSelect() {
                 genNewScreenManagerBase();
             },
         },
         {
-            menuElement: 'Refresh Preview',
+            childBefore: genContextMenuItemIcon('arrow-clockwise'),
+            menuElement: tran('Refresh Preview'),
             onSelect() {
                 for (const screenManager of getAllScreenManagers()) {
                     screenManager.fireRefreshEvent();
                 }
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('book'),
+            menuElement: tran('Bible Properties'),
+            // Opens, never toggles: the footer button that owns the toggle
+            // auto-hides, so reaching this menu with the panel already open must
+            // not close it.
+            onSelect() {
+                setIsBibleCustomStyleFloatingShowing(true);
             },
         },
     ]);
@@ -71,7 +92,6 @@ function viewControllerAndScreenManagers(
                         metadata: {},
                     });
                     bibleItemViewController.appendBibleItem(bibleItem);
-                    previewingEventListener.showBibleItem(bibleItem);
                 }
             }
         };
@@ -89,39 +109,93 @@ function viewControllerAndScreenManagers(
     }
 }
 
+function genScreenManagersRenderer(
+    screenManagers: ScreenManager[],
+    previewWidth: number,
+) {
+    return screenManagers.map((screenManager) => {
+        return (
+            <ScreenManagerBaseContext
+                key={screenManager.key}
+                value={screenManager}
+            >
+                <ScreenPreviewerItemComp width={previewWidth} />
+            </ScreenManagerBaseContext>
+        );
+    });
+}
+
+function RenderWithColorNoteComp({
+    screenManagers,
+    previewWidth,
+}: Readonly<{
+    previewWidth: number;
+    screenManagers: ScreenManager[];
+}>) {
+    const screenManagerColorMap = useMemo(() => {
+        return genColorMap(screenManagers);
+    }, [screenManagers]);
+    const colorNotes = useMemo(() => {
+        return genColorNoteDataList(screenManagerColorMap);
+    }, [screenManagerColorMap]);
+
+    // ONE flat keyed list, never a Fragment per group. Nesting each group made a
+    // screen changing its color note move to a different parent, which React can
+    // only do by unmounting and remounting the whole previewer card: the
+    // shadow-root React root is destroyed and rebuilt, taking the draw canvas
+    // (and its supersampled backing store) and any playing background video with
+    // it. Flat, every card is a keyed sibling, so joining/leaving a group is just
+    // a reorder of the existing nodes.
+    const isSingleGroup = Object.keys(screenManagerColorMap).length === 1;
+    return colorNotes.flatMap((colorNote) => {
+        const subScreenManagers = screenManagerColorMap[colorNote] ?? [];
+        const renderedScreenManagers = genScreenManagersRenderer(
+            subScreenManagers,
+            previewWidth,
+        );
+        if (isSingleGroup) {
+            return renderedScreenManagers;
+        }
+        return [
+            <Fragment key={`color-bar-${colorNote}`}>
+                {genColorBar(colorNote)}
+            </Fragment>,
+            ...renderedScreenManagers,
+        ];
+    });
+}
+
 export default function MiniScreenBodyComp({
     previewScale,
 }: Readonly<{
     previewScale: number;
 }>) {
     useScreenManagerEvents(['instance']);
+    useScreenManagerEvents(['color-note-update']);
     const screenManagers = getScreenManagersFromSetting();
     const bibleItemViewController = useBibleItemsViewControllerContext();
     viewControllerAndScreenManagers(screenManagers, bibleItemViewController);
 
     const previewWidth = DEFAULT_PREVIEW_SIZE * previewScale;
+
+    const handleContextMenuOpening = useCallback((event: any) => {
+        openMiniScreenContextMenu(event);
+    }, []);
+
     return (
         <div
-            className={'card-body d-flex flex-column'}
+            className="card-body d-flex flex-column"
             style={{
                 overflow: 'auto',
-                paddingBottom: '50px',
+                paddingBottom: 30,
             }}
-            onContextMenu={(event) => {
-                openContextMenu(event);
-            }}
+            onContextMenu={handleContextMenuOpening}
         >
             <div className="w-100 flex-fill">
-                {screenManagers.map((screenManager) => {
-                    return (
-                        <ScreenManagerBaseContext
-                            key={screenManager.key}
-                            value={screenManager}
-                        >
-                            <ScreenPreviewerItemComp width={previewWidth} />
-                        </ScreenManagerBaseContext>
-                    );
-                })}
+                <RenderWithColorNoteComp
+                    screenManagers={screenManagers}
+                    previewWidth={previewWidth}
+                />
             </div>
         </div>
     );

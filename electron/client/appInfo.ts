@@ -10,11 +10,14 @@ function toVersionNumber(version: string) {
 const appInfo = {
     name: packageInfo.name,
     title: packageInfo.build.productName,
-    titleFull: `${packageInfo.build.productName} (Desktop version)`,
+    titleFull: `${packageInfo.build.productName} (desktop version)`,
     description: packageInfo.description,
     author: packageInfo.author,
     homepage: packageInfo.homepage.replace(/\/+$/, ''),
     gitRepository: packageInfo.gitRepository,
+    // The Store ID Partner Center assigns at name reservation (empty until
+    // then). It is what an `ms-windows-store://pdp/` link aims at.
+    msStoreProductId: packageInfo.msStoreProductId,
     version: packageInfo.version,
     versionNumber: toVersionNumber(packageInfo.version),
 };

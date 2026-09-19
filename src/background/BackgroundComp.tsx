@@ -1,6 +1,6 @@
 import './BackgroundComp.scss';
 
-import { lazy, useCallback, useState } from 'react';
+import { lazy, useCallback, useMemo, useState } from 'react';
 
 import {
     useStateSettingBoolean,
@@ -10,18 +10,19 @@ import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { getBackgroundSrcListOnScreenSetting } from '../_screen/screenHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { tran } from '../lang/langHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { toIconedLabel, toWidgetLabel } from '../others/labelIconHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import {
-    audioEvent,
+    AUDIO_PLAYING_CHANGE_EVENT,
     checkAudioPlaying,
     showAudioPlayingToast,
-} from './audioBackgroundHelpers';
-import {
+} from '../helper/mediaControlHelpers';
+import type {
     BackgroundSrcListType,
     BackgroundType,
 } from '../_screen/screenTypeHelpers';
-import appProvider from '../server/appProvider';
+import EventHandler from '../event/EventHandler';
+import { OPEN_BACKGROUND_AUDIO_TAB_EVENT } from './backgroundAudioTabHelpers';
 
 const LazyBackgroundColorsComp = lazy(() => {
     return import('./BackgroundColorsComp');
@@ -51,10 +52,29 @@ function RenderAudiosTabComp({
 }>) {
     const [isPlaying, setIsPlaying] = useState(false);
     useAppEffect(() => {
-        audioEvent.onChange = setIsPlaying;
+        const registerEvent = EventHandler.registerEventListener(
+            [AUDIO_PLAYING_CHANGE_EVENT],
+            (audio: HTMLAudioElement | null) => {
+                if (
+                    audio !== null &&
+                    audio.dataset.isBackgroundAudio === 'true' &&
+                    !audio.paused
+                ) {
+                    setIsPlaying(true);
+                    return;
+                }
+                setIsPlaying(false);
+            },
+        );
         return () => {
-            audioEvent.onChange = () => {};
+            EventHandler.unregisterEventListener(registerEvent);
         };
+    }, []);
+    const isActiveRef = useAppCurrentRef(isActive);
+    const setIsActiveRef = useAppCurrentRef(setIsActive);
+    const handleToggleActive = useCallback(() => {
+        setIsActiveRef.current(!isActiveRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
         <ul className={'nav nav-tabs flex-fill d-flex justify-content-end'}>
@@ -65,11 +85,9 @@ function RenderAudiosTabComp({
                         ` ${isActive ? 'active' : ''}` +
                         ` ${isPlaying ? ' app-on-screen' : ''}`
                     }
-                    onClick={() => {
-                        setIsActive(!isActive);
-                    }}
+                    onClick={handleToggleActive}
                 >
-                    ♫{tran('Audios')}♫
+                    {toIconedLabel('Audios')}
                 </button>
             </li>
         </ul>
@@ -87,11 +105,11 @@ const genIsSelected = (
 };
 
 const tabTypeList = [
-    ['color', 'Colors', LazyBackgroundColorsComp],
-    ['image', 'Images', LazyBackgroundImagesComp],
-    ['video', 'Videos', LazyBackgroundVideosComp],
-    ['camera', 'Cameras', LazyBackgroundCamerasComp],
-    ['web', 'Webs', LazyBackgroundWebComp],
+    ['color', toIconedLabel('Colors'), LazyBackgroundColorsComp],
+    ['image', toIconedLabel('Images'), LazyBackgroundImagesComp],
+    ['video', toIconedLabel('Videos'), LazyBackgroundVideosComp],
+    ['camera', toIconedLabel('Cameras'), LazyBackgroundCamerasComp],
+    ['web', toIconedLabel('Webs'), LazyBackgroundWebComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0] | 'audio';
 export default function BackgroundComp() {
@@ -99,60 +117,72 @@ export default function BackgroundComp() {
         'background-audio-active',
         false,
     );
-    const setIsAudioTabActive1 = useCallback(
-        (newValue: boolean) => {
-            const isAudioPlaying = checkAudioPlaying();
-            if (!newValue && isAudioPlaying) {
-                showAudioPlayingToast();
-                return;
-            }
-            setIsAudioTabActive(newValue);
-        },
-        [isAudioTabActive],
-    );
+    const setIsAudioTabActiveRef = useAppCurrentRef(setIsAudioTabActive);
+    const setIsAudioTabActive1 = useCallback((newValue: boolean) => {
+        const isAudioPlaying = checkAudioPlaying();
+        if (!newValue && isAudioPlaying) {
+            showAudioPlayingToast();
+            return;
+        }
+        setIsAudioTabActiveRef.current(newValue);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // Somewhere else in the app is pointing at a track (a presenting flow entry), so
+    // the split has to be open before it can be scrolled to and flashed.
+    useAppEffect(() => {
+        const registeredEvent = EventHandler.registerEventListener(
+            [OPEN_BACKGROUND_AUDIO_TAB_EVENT],
+            () => {
+                setIsAudioTabActiveRef.current(true);
+            },
+        );
+        return () => {
+            EventHandler.unregisterEventListener(registeredEvent);
+        };
+    }, []);
     const [tabKey, setTabKey] = useStateSettingString<TabKeyType>(
         'background-tab',
         'image',
     );
     useScreenBackgroundManagerEvents(['update']);
 
-    const normalBackgroundChild = tabTypeList.map(([type, _, target]) => {
-        return genTabBody<TabKeyType>(tabKey, [type, target]);
-    });
+    const normalBackgroundChild = useMemo(() => {
+        return tabTypeList.map(([type, _, target]) => {
+            return genTabBody<TabKeyType>(tabKey, [type, target]);
+        });
+    }, [tabKey]);
+    const tabs = useMemo(() => {
+        return tabTypeList.map(([key, name]) => {
+            return {
+                key,
+                title: name,
+                checkIsOnScreen: (targeKey: TabKeyType) => {
+                    const backgroundSrcList =
+                        getBackgroundSrcListOnScreenSetting();
+                    return genIsSelected(backgroundSrcList, targeKey);
+                },
+            };
+        });
+    }, []);
     return (
         <div className="background w-100 h-100 d-flex flex-column">
             <div className="header d-flex">
                 <TabRenderComp<TabKeyType>
-                    tabs={tabTypeList.map(([key, name]) => {
-                        return {
-                            key,
-                            title: name,
-                            checkIsOnScreen: (targeKey) => {
-                                const backgroundSrcList =
-                                    getBackgroundSrcListOnScreenSetting();
-                                return genIsSelected(
-                                    backgroundSrcList,
-                                    targeKey,
-                                );
-                            },
-                        };
-                    })}
-                    activeTab={tabKey}
-                    setActiveTab={setTabKey}
+                    tabs={tabs}
+                    activeTabs={[tabKey]}
+                    setActiveTab={(key) => setTabKey(key)}
                 />
-                {appProvider.isPagePresenter ? (
-                    <RenderAudiosTabComp
-                        isActive={isAudioTabActive}
-                        setIsActive={setIsAudioTabActive1}
-                    />
-                ) : null}
+                <RenderAudiosTabComp
+                    isActive={isAudioTabActive}
+                    setIsActive={setIsAudioTabActive1}
+                />
             </div>
-            <div className="body flex-fill d-flex">
-                {appProvider.isPagePresenter && isAudioTabActive ? (
+            <div className="body flex-fill d-flex overflow-hidden">
+                {isAudioTabActive ? (
                     <ResizeActorComp
                         flexSizeName={'flex-size-background'}
                         isHorizontal
-                        isDisableQuickResize={true}
+                        isDisableQuickResize
                         flexSizeDefault={{
                             h1: ['1'],
                             h2: ['1'],
@@ -165,12 +195,12 @@ export default function BackgroundComp() {
                                     },
                                 },
                                 key: 'h1',
-                                widgetName: 'Background',
+                                ...toWidgetLabel('Background'),
                             },
                             {
                                 children: LazyBackgroundAudiosComp,
                                 key: 'h2',
-                                widgetName: 'Background Audio',
+                                ...toWidgetLabel('Background Audio'),
                             },
                         ]}
                     />

@@ -1,5 +1,6 @@
-import { LanguageDataType, LocaleType } from '../lang/langHelpers';
-import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';
+import { useMemo } from 'react';
+
+import type { LanguageDataType, LocaleType } from '../lang/langHelpers';
 
 export type BibleRenderVerseType = {
     num: string;
@@ -25,19 +26,15 @@ export type LyricRenderedType = {
 };
 
 function VerseTextElementComp({
-    bibleKey,
     langData,
     verseInfo,
 }: Readonly<{
-    bibleKey: string;
     langData: LanguageDataType;
     verseInfo: BibleRenderVerseType;
 }>) {
     return (
         <span
             className="highlight"
-            title={BIBLE_VERSE_TEXT_TITLE}
-            data-bible-key={bibleKey}
             data-kjv-verse-key={verseInfo.kjvVerseKey}
             data-verse-key={verseInfo.verseKey}
             style={{
@@ -50,7 +47,7 @@ function VerseTextElementComp({
     );
 }
 
-export function BibleBibleTable({
+export function BibleBibleTableComp({
     bibleRenderingList,
     isLineSync,
     versesCount,
@@ -59,9 +56,11 @@ export function BibleBibleTable({
     isLineSync: boolean;
     versesCount: number;
 }>) {
-    const fontFaceList = bibleRenderingList.map(({ langData }) => {
-        return langData.genCss();
-    });
+    const fontFaceList = useMemo(() => {
+        return bibleRenderingList.map(({ langData }) => {
+            return langData.genCss();
+        });
+    }, [bibleRenderingList]);
     const rendTableHeader = (
         { langData, bibleKey, title }: BibleItemRenderingLangType,
         i: number,
@@ -72,9 +71,15 @@ export function BibleBibleTable({
                 className="header"
                 style={{
                     fontFamily: langData.fontFamily,
+                    height: '118px',
+                    overflow: 'hidden',
                 }}
             >
-                <div style={{ display: 'flex' }}>
+                <div
+                    style={{
+                        display: 'flex',
+                    }}
+                >
                     <div
                         className="bible highlight bible-name bible-key"
                         data-index={i}
@@ -91,11 +96,10 @@ export function BibleBibleTable({
     const renderTrBody = (_: any, i: number) => {
         return (
             <tr key={i}>
-                {bibleRenderingList.map(({ langData, verses, bibleKey }, j) => {
+                {bibleRenderingList.map(({ langData, verses }, j) => {
                     return (
                         <td key={j}>
                             <VerseTextElementComp
-                                bibleKey={bibleKey}
                                 langData={langData}
                                 verseInfo={verses[i]}
                             />
@@ -106,7 +110,7 @@ export function BibleBibleTable({
         );
     };
     const renderTdBody = (
-        { langData, verses, bibleKey }: BibleItemRenderingLangType,
+        { langData, verses }: BibleItemRenderingLangType,
         i: number,
     ) => {
         return (
@@ -115,7 +119,6 @@ export function BibleBibleTable({
                     return (
                         <VerseTextElementComp
                             key={j}
-                            bibleKey={bibleKey}
                             langData={langData}
                             verseInfo={verseInfo}
                         />

@@ -1,27 +1,38 @@
+import { useCallback } from 'react';
+
 import { tran } from '../lang/langHelpers';
-import { saveBibleItem } from '../bible-list/bibleHelpers';
-import BibleItem from '../bible-list/BibleItem';
+import {
+    exportToWordDocument,
+    saveBibleItem,
+} from '../bible-list/bibleHelpers';
+import type BibleItem from '../bible-list/BibleItem';
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
-import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import appProvider from '../server/appProvider';
 import { addBibleItemAndPresent } from './bibleActionHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
+import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
 
 export function RenderCopyBibleItemActionButtonsComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const handleCopying = useCallback((event: any) => {
+        showAppContextMenu(
+            event,
+            genBibleItemCopyingContextMenu(bibleItemRef.current),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className="btn btn-sm btn-success"
             type="button"
             title={tran('Copy')}
-            onClick={(event: any) => {
-                showAppContextMenu(
-                    event,
-                    genBibleItemCopyingContextMenu(bibleItem),
-                );
-            }}
+            aria-label={tran('Copy')}
+            onClick={handleCopying}
         >
             <i className="bi bi-copy" />
         </button>
@@ -32,6 +43,49 @@ export default function RenderActionButtonsComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
     const viewController = useBibleItemsViewControllerContext();
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const handleSplitHorizontal = useCallback(() => {
+        viewControllerRef.current.addBibleItemLeft(
+            bibleItemRef.current,
+            bibleItemRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSplitVertical = useCallback(() => {
+        viewControllerRef.current.addBibleItemBottom(
+            bibleItemRef.current,
+            bibleItemRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSaveBibleItem = useCallback(() => {
+        const lookupViewController =
+            viewControllerRef.current as LookupBibleItemController;
+        saveBibleItem(bibleItemRef.current, () => {
+            lookupViewController.onLookupSaveBibleItem();
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSaveAndPresent = useCallback((event: any) => {
+        const lookupViewController =
+            viewControllerRef.current as LookupBibleItemController;
+        addBibleItemAndPresent(event, bibleItemRef.current, () => {
+            lookupViewController.onLookupSaveBibleItem();
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleExportToWord = useCallback(() => {
+        exportToWordDocument([bibleItemRef.current]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleBibleItemInserting = useCallback(() => {
+        const lookupViewController =
+            viewControllerRef.current as LookupBibleItemController;
+        CanvasBibleItemEventListener.insertBibleItem(bibleItemRef.current);
+        lookupViewController.onLookupSaveBibleItem();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="btn-group mx-1">
             <RenderCopyBibleItemActionButtonsComp bibleItem={bibleItem} />
@@ -39,9 +93,8 @@ export default function RenderActionButtonsComp({
                 type="button"
                 className="btn btn-sm btn-info"
                 title={tran('Split horizontal')}
-                onClick={() => {
-                    viewController.addBibleItemLeft(bibleItem, bibleItem);
-                }}
+                aria-label={tran('Split horizontal')}
+                onClick={handleSplitHorizontal}
             >
                 <i className="bi bi-vr" />
             </button>
@@ -49,25 +102,19 @@ export default function RenderActionButtonsComp({
                 className="btn btn-sm btn-info"
                 type="button"
                 title={tran('Split vertical')}
-                onClick={() => {
-                    viewController.addBibleItemBottom(bibleItem, bibleItem);
-                }}
+                aria-label={tran('Split vertical')}
+                onClick={handleSplitVertical}
             >
                 <i className="bi bi-hr" />
             </button>
-            {viewController.isLookup ? (
+            {!viewController.isMinimized && viewController.isLookup ? (
                 <>
                     <button
                         className="btn btn-sm btn-primary"
                         type="button"
                         title={tran('Save bible item')}
-                        onClick={() => {
-                            const lookupViewController =
-                                viewController as LookupBibleItemController;
-                            saveBibleItem(bibleItem, () => {
-                                lookupViewController.onLookupSaveBibleItem();
-                            });
-                        }}
+                        aria-label={tran('Save bible item')}
+                        onClick={handleSaveBibleItem}
                     >
                         <i className="bi bi-floppy" />
                     </button>
@@ -76,19 +123,46 @@ export default function RenderActionButtonsComp({
                             className="btn btn-sm btn-primary"
                             type="button"
                             title={tran('Save bible item and show on screen')}
-                            onClick={(event) => {
-                                const lookupViewController =
-                                    viewController as LookupBibleItemController;
-                                addBibleItemAndPresent(event, bibleItem, () => {
-                                    lookupViewController.onLookupSaveBibleItem();
-                                });
-                            }}
+                            aria-label={tran(
+                                'Save bible item and show on screen',
+                            )}
+                            onClick={handleSaveAndPresent}
                         >
                             <i className="bi bi-cast" />
                         </button>
                     ) : null}
+                    {appProvider.isPageAppDocumentEditor ? (
+                        <button
+                            className="btn btn-sm btn-primary"
+                            type="button"
+                            title={tran(
+                                'Insert bible item into selected slide',
+                            )}
+                            aria-label={tran(
+                                'Insert bible item into selected slide',
+                            )}
+                            onClick={handleBibleItemInserting}
+                        >
+                            <i className="bi bi-file-earmark-slides" />
+                        </button>
+                    ) : null}
+                    <button
+                        className="btn btn-sm btn-secondary"
+                        type="button"
+                        title={tran('Export to MS Word')}
+                        aria-label={tran('Export to MS Word')}
+                        onClick={handleExportToWord}
+                    >
+                        <i
+                            className="bi bi-file-earmark-word"
+                            style={{
+                                color: 'blue',
+                            }}
+                        />
+                    </button>
                 </>
             ) : null}
+            {viewController.extraActionButtons}
         </div>
     );
 }

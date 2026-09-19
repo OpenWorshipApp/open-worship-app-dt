@@ -1,17 +1,19 @@
-import { RefObject } from 'react';
+import type { RefObject } from 'react';
+import { useCallback } from 'react';
 
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
-import { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
-import LookupBibleItemController from '../LookupBibleItemController';
-import BibleItem from '../../bible-list/BibleItem';
+import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
+import type LookupBibleItemController from '../LookupBibleItemController';
+import type BibleItem from '../../bible-list/BibleItem';
 import {
     bibleTextToSpeech,
     useIsAudioAIEnabled,
 } from '../../helper/ai/openAIAudioHelpers';
 import RenderVerseTextViewComp from './RenderVerseTextViewComp';
-import { getAISetting } from '../../helper/ai/aiHelpers';
+import { getAIIsAutoPlay } from '../../helper/ai/aiHelpers';
 import { checkIsVerticalPartialInvisible } from '../../helper/helpers';
 import appProvider from '../../server/appProvider';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function handleNextChapterSelection(
     lookupBibleItemController: LookupBibleItemController,
@@ -26,8 +28,7 @@ function handleNextVersionSelection(
     currentTarget: HTMLDivElement,
     nextKjvVerseKey: string,
 ) {
-    const audioAISetting = getAISetting();
-    if (!audioAISetting.isAutoPlay || !appProvider.isPageReader) {
+    if (!getAIIsAutoPlay() || !appProvider.isPageReader) {
         return;
     }
     const parentElement = currentTarget.parentElement;
@@ -79,30 +80,42 @@ export default function RenderVerseTextDetailListComp({
     const { isAudioEnabled } = useIsAudioAIEnabled(bibleItem);
     const bibleItemViewController = useBibleItemsViewControllerContext();
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
-    const handleAudioStarting = () => {
-        if (nextVerseInfo === null) {
+    const nextVerseInfoRef = useAppCurrentRef(nextVerseInfo);
+    const handleAudioStarting = useCallback(() => {
+        if (nextVerseInfoRef.current === null) {
             return;
         }
-        bibleTextToSpeech(nextVerseInfo);
-    };
-    const handleAudioEnding = () => {
-        if (verseTextRef.current === null) {
+        bibleTextToSpeech(nextVerseInfoRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const verseTextRefRef = useAppCurrentRef(verseTextRef);
+    const verseInfoRef = useAppCurrentRef(verseInfo);
+    const bibleItemViewControllerRef = useAppCurrentRef(
+        bibleItemViewController,
+    );
+    const handleAudioEnding = useCallback(() => {
+        const verseTextElement = verseTextRefRef.current.current;
+        if (verseTextElement === null) {
             return;
         }
-        if (verseInfo.isLast && bibleItemViewController.isLookup) {
+        if (
+            verseInfoRef.current.isLast &&
+            bibleItemViewControllerRef.current.isLookup
+        ) {
             handleNextChapterSelection(
-                bibleItemViewController as LookupBibleItemController,
-                verseTextRef.current,
+                bibleItemViewControllerRef.current as LookupBibleItemController,
+                verseTextElement,
             );
         }
-        if (nextVerseInfo === null) {
+        if (nextVerseInfoRef.current === null) {
             return;
         }
         handleNextVersionSelection(
-            verseTextRef.current,
-            nextVerseInfo.kjvBibleVersesKey,
+            verseTextElement,
+            nextVerseInfoRef.current.kjvBibleVersesKey,
         );
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return verseInfoList.map((verseInfo) => {
         return (
             <RenderVerseTextViewComp

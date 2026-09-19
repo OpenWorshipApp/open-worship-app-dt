@@ -1,11 +1,17 @@
 export default class TimingController {
     readonly divContainer: HTMLDivElement;
     readonly timezoneMinuteOffset: number;
+    readonly is24HourFormat: boolean;
     isRunning = true;
 
-    constructor(divContainer: HTMLDivElement, timezoneMinuteOffset: number) {
+    constructor(
+        divContainer: HTMLDivElement,
+        timezoneMinuteOffset: number,
+        is24HourFormat = false,
+    ) {
         this.divContainer = divContainer;
         this.timezoneMinuteOffset = timezoneMinuteOffset;
+        this.is24HourFormat = is24HourFormat;
         this.setHtml(false);
     }
 
@@ -46,12 +52,25 @@ export default class TimingController {
         return this.getDivChild('second');
     }
 
+    get divAmPm() {
+        return this.divContainer.querySelector(
+            '#ampm',
+        ) as HTMLDivElement | null;
+    }
+
     toTimeString(n: number) {
         return ('0' + n.toString()).slice(-2);
     }
 
     get hourStr() {
-        return this.toTimeString(this.hours);
+        if (this.is24HourFormat) {
+            return this.toTimeString(this.hours);
+        }
+        return this.toTimeString(this.hours % 12 || 12);
+    }
+
+    get periodStr() {
+        return this.hours >= 12 ? 'PM' : 'AM';
     }
 
     get minuteStr() {
@@ -77,6 +96,9 @@ export default class TimingController {
         this.divHour.innerHTML = isReset ? '00' : this.hourStr;
         this.divMinute.innerHTML = isReset ? '00' : this.minuteStr;
         this.divSecond.innerHTML = isReset ? '00' : this.secondStr;
+        if (this.divAmPm !== null) {
+            this.divAmPm.innerHTML = isReset ? '' : this.periodStr;
+        }
     }
 
     pause() {
@@ -88,7 +110,11 @@ export default class TimingController {
         this.setHtml(true);
     }
 
-    static init(divContainer: HTMLDivElement, timezoneMinuteOffset: number) {
-        return new this(divContainer, timezoneMinuteOffset);
+    static init(
+        divContainer: HTMLDivElement,
+        timezoneMinuteOffset: number,
+        is24HourFormat = false,
+    ) {
+        return new this(divContainer, timezoneMinuteOffset, is24HourFormat);
     }
 }

@@ -4,6 +4,7 @@
   flex: 0 0 5px;
   transition: opacity 0.2s ease-in;
   opacity: 0.5;
+  touch-action: none;
 
   .mover {
     position: fixed;

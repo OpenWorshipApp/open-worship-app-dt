@@ -1,19 +1,24 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
-import BibleItem from '../../bible-list/BibleItem';
-import { DroppedDataType, DragTypeEnum } from '../../helper/DragInf';
+import type BibleItem from '../../bible-list/BibleItem';
+import type { DroppedDataType } from '../../helper/DragInf';
+import { DragTypeEnum } from '../../helper/DragInf';
+import { showSimpleToast } from '../../toast/toastHelpers';
 import {
     bringDomToCenterView,
     bringDomToNearestView,
     bringDomToTopView,
     checkIsVerticalPartialInvisible,
     cloneJson,
-    isValidJson,
 } from '../../helper/helpers';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
-import bibleScreenHelper from '../bibleScreenHelpers';
 import {
-    ScreenBibleManagerEventType,
+    getSetting,
+    removeSetting,
+    setSetting,
+} from '../../helper/settingHelpers';
+import bibleScreenHelper from '../bibleScreenHelpers';
+import type { ScreenBibleManagerEventType } from '../screenBibleHelpers';
+import {
     SCREEN_BIBLE_SETTING_PREFIX,
     renderScreenBibleManager,
     bibleItemJsonToScreenViewData,
@@ -24,36 +29,61 @@ import {
     getBibleListOnScreenSetting,
 } from '../screenHelpers';
 import * as loggerHelpers from '../../helper/loggerHelpers';
-import { handleError } from '../../helper/errorHelpers';
 import { screenManagerSettingNames } from '../../helper/constants';
 import ScreenEventHandler from './ScreenEventHandler';
-import ScreenManagerBase from './ScreenManagerBase';
+import type ScreenManagerBase from './ScreenManagerBase';
 import { getAllScreenManagerBases } from './screenManagerBaseHelpers';
 import appProvider from '../../server/appProvider';
 import { applyAttachBackground } from './screenBackgroundHelpers';
-import { BibleItemType } from '../../bible-list/bibleItemHelpers';
+import type { BibleItemType } from '../../bible-list/bibleItemHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
+import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import Bible from '../../bible-list/Bible';
-import { AnyObjectType } from '../../helper/typeHelpers';
-import {
+import type { AnyObjectType } from '../../helper/typeHelpers';
+import SettingManager from '../../helper/SettingManager';
+import type {
     BasicScreenMessageType,
     BibleItemDataType,
     ScreenMessageType,
 } from '../screenTypeHelpers';
-import { getColorParts } from '../../others/initHelpers';
+import { registerScrollingSyncEvent } from './screenEventHelpers';
+import {
+    HEX_COLOR_BLACK,
+    checkIsColorDark,
+    HEX_COLOR_WHITE,
+} from '../../others/color/colorHelpers';
+import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
+import { tran } from '../../lang/langHelpers';
+
+const textStyleSettingManager = new SettingManager<AnyObjectType>({
+    settingName: `${SCREEN_BIBLE_SETTING_PREFIX}-style-text`,
+    defaultValue: {},
+    isErrorToDefault: true,
+    validate: (jsonString) => {
+        try {
+            return JSON.parse(jsonString) instanceof Object;
+        } catch (_error) {
+            return false;
+        }
+    },
+    serialize: (style) => JSON.stringify(style),
+    deserialize: (jsonString) => JSON.parse(jsonString),
+});
 
 class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType> {
     static readonly eventNamePrefix: string = 'screen-ft-m';
     private _screenViewData: BibleItemDataType | null = null;
     private _div: HTMLDivElement | null = null;
-    private _syncScrollTimeout: any = null;
-    private _divScrollListenerBind: (() => void) | null = null;
     public isToTop = false;
     applyBibleViewData = (_bibleData: BibleItemDataType | null) => {};
     handleBibleViewVersesHighlighting = (
         _kjvVerseKey: string,
         _isToTop: boolean,
     ) => {};
+
+    // Per screen, not module-level: a shared timer would collapse every
+    // screen's metadata write into one and leave the others unpersisted.
+    private readonly saveMetadataAttempt = genTimeoutAttempt(500);
 
     constructor(screenManagerBase: ScreenManagerBase) {
         super(screenManagerBase);
@@ -68,39 +98,40 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     applyHeaderEffectOnScroll(div: HTMLDivElement) {
-        const { colorPart } = getColorParts();
-        for (const th of div.querySelectorAll('th.header')) {
-            if (th instanceof HTMLElement) {
-                th.style.fontSize = this.scroll > 0 ? '0.5em' : '1em';
-                th.style.backgroundColor =
-                    this.scroll > 0 ? `#${colorPart}da` : `#${colorPart}53`;
+        // multiple bibles view wil have multiple header,
+        // so apply effect on all headers
+        const thElements = div.querySelectorAll<HTMLElement>('th.header');
+        for (const thElement of thElements) {
+            const percentage = Math.min(div.scrollTop, 118) / 118;
+            const fontSize = `${1 - 0.5 * percentage}em`;
+            if (thElement.style.fontSize !== fontSize) {
+                thElement.style.fontSize = fontSize;
+            }
+
+            const firstChild = thElement.children[0];
+            if (firstChild instanceof HTMLElement) {
+                const hexAlpha = Math.round(83 + 100 * percentage).toString(16);
+                const backgroundColor = `#999999${hexAlpha}`;
+                if (firstChild.style.backgroundColor !== backgroundColor) {
+                    firstChild.style.backgroundColor = backgroundColor;
+                }
             }
         }
     }
 
-    private _divScrollListener() {
-        if (this.div === null) {
-            return;
-        }
-        this.scroll = this.div.scrollTop / this.div.scrollHeight;
-        this.applyHeaderEffectOnScroll(this.div);
-
-        this.sendSyncScroll();
+    private get lineSyncKey() {
+        return `${SCREEN_BIBLE_SETTING_PREFIX}-line-sync-${this.screenId}`;
     }
 
     get isLineSync() {
-        const settingKey = `${SCREEN_BIBLE_SETTING_PREFIX}-line-sync-${this.screenId}`;
-        return getSetting(settingKey) === 'true';
+        return getSetting(this.lineSyncKey) === 'true';
     }
 
     set isLineSync(isLineSync: boolean) {
         if (this.screenManagerBase.checkIsLockedWithMessage()) {
             return;
         }
-        setSetting(
-            `${SCREEN_BIBLE_SETTING_PREFIX}-line-sync-${this.screenId}`,
-            `${isLineSync}`,
-        );
+        setSetting(this.lineSyncKey, `${isLineSync}`);
         this.screenViewData = cloneJson(this.screenViewData);
     }
 
@@ -110,14 +141,31 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     set div(div: HTMLDivElement | null) {
         this._div = div;
-        this._div?.addEventListener('wheel', (event) => {
-            if (event.ctrlKey) {
+        if (div !== null) {
+            div.addEventListener('wheel', (event) => {
+                if (!event.ctrlKey) {
+                    return;
+                }
                 event.preventDefault();
+                event.stopPropagation();
                 const isUp = event.deltaY < 0;
                 ScreenBibleManager.changeTextStyleTextFontSize(isUp);
-            }
-        });
-        this.registerScrollListener();
+            });
+            div.addEventListener('scroll', () => {
+                this.scroll =
+                    div.scrollTop / (div.scrollHeight - div.clientHeight);
+                this.applyHeaderEffectOnScroll(div);
+            });
+            div.classList.add('screen-bible-container-scroll');
+            registerScrollingSyncEvent(div, (scroll) => {
+                this.sendSyncScrollPercentage(
+                    '.screen-bible-container-scroll',
+                    scroll,
+                );
+            });
+            this.applyHeaderEffectOnScroll(div);
+        }
+
         this.render();
     }
 
@@ -153,21 +201,35 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     private _setMetadata(key: string, value: any) {
-        if (this._screenViewData !== null) {
-            (this._screenViewData as any)[key] = value;
-            if (!appProvider.isPageScreen) {
-                unlocking(
-                    `set-meta-${screenManagerSettingNames.FULL_TEXT}`,
-                    () => {
-                        const allBibleDataList = getBibleListOnScreenSetting();
-                        allBibleDataList[this.key] = this
-                            ._screenViewData as any;
-                        const string = JSON.stringify(allBibleDataList);
-                        setSetting(screenManagerSettingNames.FULL_TEXT, string);
-                    },
-                );
-            }
+        if (this._screenViewData === null) {
+            return;
         }
+        // Replaced, never written through. `_screenViewData` is seeded from
+        // `getBibleListOnScreenSetting()` (see the constructor), and that map's
+        // nested values are shared with the memoized parse of the setting — so
+        // writing `scroll` in place put this screen's scroll position into
+        // every other reader's view of the setting.
+        this._screenViewData = { ...this._screenViewData, [key]: value };
+        if (appProvider.isPageScreen) {
+            return;
+        }
+        // `scroll` is driven by the bible view's scroll listener, so this used
+        // to stringify the whole on-screen map and do a synchronous whole-file
+        // write on every scroll frame. Only the final position matters, and the
+        // trailing run re-reads `_screenViewData`, so it always persists the
+        // latest one.
+        this.saveMetadataAttempt(() => {
+            const screenViewData = this._screenViewData;
+            if (screenViewData === null) {
+                return;
+            }
+            unlocking(`set-meta-${screenManagerSettingNames.FULL_TEXT}`, () => {
+                const allBibleDataList = getBibleListOnScreenSetting();
+                allBibleDataList[this.key] = screenViewData as any;
+                const string = JSON.stringify(allBibleDataList);
+                setSetting(screenManagerSettingNames.FULL_TEXT, string);
+            });
+        });
     }
 
     get containerStyle(): CSSProperties {
@@ -198,61 +260,6 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     set scroll(scroll: number) {
         this._setMetadata('scroll', scroll);
     }
-
-    registerScrollListener() {
-        this.unregisterScrollListener();
-        this._divScrollListenerBind = this._divScrollListener.bind(this);
-        this.div?.addEventListener('scroll', this._divScrollListenerBind);
-    }
-
-    unregisterScrollListener() {
-        if (this._divScrollListenerBind === null) {
-            return;
-        }
-        this.div?.removeEventListener('scroll', this._divScrollListenerBind);
-        this._divScrollListenerBind = null;
-    }
-
-    async sendSyncScroll() {
-        setTimeout(() => {
-            this.screenManagerBase.sendScreenMessage(
-                {
-                    screenId: this.screenId,
-                    type: 'bible-screen-view-scroll',
-                    data: {
-                        scroll: this.scroll,
-                    },
-                },
-                true,
-            );
-        }, 100);
-    }
-
-    static receiveSyncScroll(message: ScreenMessageType) {
-        const { data, screenId } = message;
-        const screenBibleManager = this.getInstance(screenId);
-        if (screenBibleManager === null) {
-            return;
-        }
-        if (screenBibleManager._syncScrollTimeout !== null) {
-            clearTimeout(screenBibleManager._syncScrollTimeout);
-        }
-        screenBibleManager.unregisterScrollListener();
-        const reRegisterScrollListener = () => {
-            if (screenBibleManager._syncScrollTimeout !== null) {
-                clearTimeout(screenBibleManager._syncScrollTimeout);
-            }
-            screenBibleManager._syncScrollTimeout = null;
-            screenBibleManager.registerScrollListener();
-        };
-        screenBibleManager._syncScrollTimeout = setTimeout(
-            reRegisterScrollListener,
-            3e3,
-        );
-        screenBibleManager.scroll = data.scroll;
-        screenBibleManager.renderScroll();
-    }
-
     sendSyncSelectedIndex() {
         this.screenManagerBase.sendScreenMessage(
             {
@@ -323,7 +330,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         const textStyle = this.textStyle;
         return typeof textStyle.color === 'string'
             ? textStyle.color
-            : '#ffffff';
+            : HEX_COLOR_WHITE;
     }
 
     static get textStyleTextTextShadow(): string {
@@ -342,29 +349,11 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     static get textStyle(): AnyObjectType {
-        const str =
-            getSetting(`${SCREEN_BIBLE_SETTING_PREFIX}-style-text`) ?? '';
-        try {
-            if (isValidJson(str, true)) {
-                const style = JSON.parse(str);
-                if (typeof style !== 'object') {
-                    loggerHelpers.error(style);
-                    throw new Error('Invalid style data');
-                }
-                return style;
-            }
-        } catch (error) {
-            handleError(error);
-        }
-        return {};
+        return textStyleSettingManager.getSetting();
     }
 
     static set textStyle(style: AnyObjectType) {
-        setSetting(
-            `${SCREEN_BIBLE_SETTING_PREFIX}-style-text`,
-            JSON.stringify(style),
-        );
-        this.sendSynTextStyle();
+        textStyleSettingManager.setSetting(style);
         this.addPropEvent('text-style');
     }
 
@@ -372,17 +361,21 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         const textStyle = this.textStyle;
         Object.assign(textStyle, style);
         this.textStyle = textStyle;
+        this.sendSynTextStyle();
     }
 
     static sendSynTextStyle() {
         for (const screenManagerBase of getAllScreenManagerBases()) {
-            screenManagerBase.sendScreenMessage({
-                screenId: screenManagerBase.screenId,
-                type: 'bible-screen-view-text-style',
-                data: {
-                    textStyle: this.textStyle,
+            screenManagerBase.sendScreenMessage(
+                {
+                    screenId: screenManagerBase.screenId,
+                    type: 'bible-screen-view-text-style',
+                    data: {
+                        textStyle: this.textStyle,
+                    },
                 },
-            });
+                true,
+            );
         }
     }
 
@@ -430,6 +423,15 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         }
         for (const screenId of screenIds) {
             const screenBibleManager = this.getInstance(screenId);
+            if (screenBibleManager === null) {
+                showSimpleToast(
+                    tran(
+                        'Failed to apply to screen. Please make sure the screen is open.',
+                    ),
+                    tran('Error'),
+                );
+                continue;
+            }
             await screenBibleManager.applyNewBibleItemJson(
                 bibleItemJson,
                 filePath,
@@ -439,22 +441,6 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     render() {
         renderScreenBibleManager(this);
-    }
-
-    renderScroll(isImmediate = false) {
-        if (this.div === null) {
-            return;
-        }
-        const scrollTop = this.scroll * this.div.scrollHeight;
-        if (isImmediate) {
-            this.div.scrollTop = scrollTop;
-        }
-        this.div.scroll({
-            behavior: 'smooth',
-            top: scrollTop,
-            left: 0,
-        });
-        this.applyHeaderEffectOnScroll(this.div);
     }
 
     handleScreenVersesHighlighting(kjvVerseKey: string, isToTop: boolean) {
@@ -499,6 +485,34 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         }
     }
 
+    async reflectBackgroundColor(backgroundColor: string) {
+        const isBackgroundColorDark = checkIsColorDark(backgroundColor);
+        const isTextColorDark = checkIsColorDark(
+            ScreenBibleManager.textStyleTextColor,
+        );
+        if (isBackgroundColorDark !== isTextColorDark) {
+            return;
+        }
+        const isOk = await showAppConfirm(
+            tran('Background and Color'),
+            tran(
+                'The current text color may not be visible with the new ' +
+                    'background color.',
+            ) +
+                ' ' +
+                tran('Do you want to change the text color as well?'),
+        );
+        if (!isOk) {
+            return;
+        }
+        const contrastingColor = isBackgroundColorDark
+            ? HEX_COLOR_WHITE
+            : HEX_COLOR_BLACK;
+        ScreenBibleManager.applyTextStyle({
+            color: contrastingColor,
+        });
+    }
+
     async receiveScreenDropped(droppedData: DroppedDataType) {
         if (droppedData.type === DragTypeEnum.BIBLE_ITEM) {
             const bibleItem: BibleItem = droppedData.item;
@@ -507,18 +521,43 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
                 droppedData.item.filePath,
             );
         } else {
-            loggerHelpers.log(droppedData);
+            loggerHelpers.appLog(droppedData);
         }
     }
 
     static receiveSyncScreen(message: ScreenMessageType) {
         const { screenId } = message;
         const screenBibleManager = this.getInstance(screenId);
+        if (screenBibleManager === null) {
+            // English on purpose: this receiver also runs in the screen
+            // window, and a `tran()` there before its language data has loaded
+            // throws in dev (see `ScreenCloseButtonComp`).
+            showSimpleToast(
+                'Failed to apply to screen. Please make sure the screen is open.',
+                'error',
+            );
+            return;
+        }
         screenBibleManager.receiveSyncScreen(message);
     }
 
     clear() {
         this.applyFullDataSrcWithSyncGroup(null);
+    }
+
+    delete() {
+        // Local teardown only — no `clear()`. clear() goes through
+        // applyFullDataSrcWithSyncGroup, which broadcasts to every screen
+        // sharing this one's color note (deleting one screen would blank its
+        // group's bible) and which a locked screen rejects outright with a
+        // toast, leaving its data behind. The persisted entry is dropped
+        // centrally by deleteScreenPersistedData.
+        removeSetting(this.lineSyncKey);
+        this._screenViewData = null;
+        this._div = null;
+        this.applyBibleViewData = () => {};
+        this.handleBibleViewVersesHighlighting = () => {};
+        super.delete();
     }
 
     static getInstance(screenId: number) {

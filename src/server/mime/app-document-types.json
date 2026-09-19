@@ -2,7 +2,7 @@
     {
         "type": "OpenWorship Slide",
         "title": "Json file for OpenWorship slide",
-        "mimetypeSignature": "application/json",
+        "mimetypeSignatures": ["application/json"],
         "extensions": [".ows", ".preview"]
     }
 ]

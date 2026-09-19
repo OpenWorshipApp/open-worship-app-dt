@@ -1,33 +1,42 @@
-import { compileSchema, SchemaNode } from 'json-schema-library';
+import type { SchemaNode } from 'json-schema-library';
+import { compileSchema } from 'json-schema-library';
 
-import { ItemBase } from '../helper/ItemBase';
+import { ItemBaseFilePath } from '../helper/ItemBase';
 import { cloneJson } from '../helper/helpers';
-import DragInf, { DragTypeEnum } from '../helper/DragInf';
-import { ClipboardInf } from '../server/appHelpers';
-import { AnyObjectType } from '../helper/typeHelpers';
+import { DragTypeEnum } from '../helper/DragInf';
+import type DragInf from '../helper/DragInf';
+import type { ClipboardInf } from '../server/appHelpers';
+import type { AnyObjectType } from '../helper/typeHelpers';
 
-import slideSchemaJson from './PDFSlideSchema.json';
+import slideSchemaJson from './PdfSlideSchema.json';
+import FileSource from '../helper/FileSource';
 const pdfSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
-export type PdfSlideType = {
+export type PdfSlidePropsType = {
     id: number;
     name?: string;
     imagePreviewSrc: string;
     pdfPageNumber: number;
     metadata: { width: number; height: number };
+    type: 'pdf-slide';
 };
 
 export default class PdfSlide
-    extends ItemBase
+    extends ItemBaseFilePath
     implements DragInf<string>, ClipboardInf
 {
-    private _originalJson: PdfSlideType;
+    private _originalJson: PdfSlidePropsType;
     filePath: string;
 
-    constructor(filePath: string, json: PdfSlideType) {
+    constructor(filePath: string, json: PdfSlidePropsType) {
         super();
         this._originalJson = cloneJson(json);
+        this._originalJson.type = 'pdf-slide';
         this.filePath = filePath;
+    }
+
+    get isDisabled() {
+        return false;
     }
 
     get id() {
@@ -43,7 +52,7 @@ export default class PdfSlide
         return this.originalJson.name ?? '';
     }
 
-    clone(): ItemBase {
+    clone(): ItemBaseFilePath {
         throw new Error('Method not implemented.');
     }
 
@@ -51,16 +60,26 @@ export default class PdfSlide
         return this.originalJson.imagePreviewSrc ?? null;
     }
 
+    async getImageFilePath() {
+        const fileSource = await FileSource.getInstanceBySrc(
+            this.pdfPreviewSrc,
+        );
+        if (fileSource === null) {
+            return null;
+        }
+        return fileSource.filePath;
+    }
+
     get originalJson() {
         return this._originalJson;
     }
-    set originalJson(json: PdfSlideType) {
+    set originalJson(json: PdfSlidePropsType) {
         this._originalJson = json;
     }
 
-    checkIsSame(varyAppDocumentItem: any) {
-        if (PdfSlide.checkIsThisType(varyAppDocumentItem)) {
-            return this.id === varyAppDocumentItem.id;
+    checkIsSame(varySlide: any) {
+        if (PdfSlide.checkIsThisType(varySlide)) {
+            return this.id === varySlide.id;
         }
         return false;
     }
@@ -77,11 +96,11 @@ export default class PdfSlide
         return this.metadata.height;
     }
 
-    static fromJson(json: PdfSlideType, filePath: string) {
+    static fromJson(json: PdfSlidePropsType, filePath: string) {
         return new this(filePath, json);
     }
 
-    toJson(): PdfSlideType {
+    toJson(): PdfSlidePropsType {
         return this._originalJson;
     }
 
@@ -122,9 +141,17 @@ export default class PdfSlide
         return imageData;
     }
 
+    getItemFilePath() {
+        return this.getImageFilePath();
+    }
+
+    get dragType(): DragTypeEnum {
+        return DragTypeEnum.PDF_SLIDE;
+    }
+
     dragSerialize() {
         return {
-            type: DragTypeEnum.PDF_SLIDE,
+            type: this.dragType,
             data: JSON.stringify({
                 filePath: this.filePath,
                 data: this.toJson(),

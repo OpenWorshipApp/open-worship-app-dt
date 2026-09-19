@@ -1,20 +1,32 @@
-import { languages } from 'monaco-editor';
+import { useCallback } from 'react';
 
-import BibleXMLInfoEditorComp, {
-    schemaHandler as infoEditorSchemaHandler,
-    uri as bibleInfoUri,
-} from './BibleXMLInfoEditorComp';
-import BibleXMLExtraEditorComp, {
-    schemaHandler as extraEditorSchemaHandler,
-    uri as bibleExtraUri,
-} from './BibleXMLExtraEditorComp';
-import BibleXMLBookChapterEditorComp, {
-    schemaHandler as bookChapterEditorSchemaHandler,
-    uri as bibleBookChapterUri,
-} from './BibleXMLBookChapterEditorComp';
+import { json } from 'monaco-editor';
+
+import BibleXMLInfoEditorComp from './BibleXMLInfoEditorComp';
 import { useStateSettingString } from '../../helper/settingHelpers';
+import {
+    bookChapterEditorSchemaHandler,
+    extraEditorSchemaHandler,
+    infoEditorSchemaHandler,
+} from './schemas/bibleSchemaHelpers';
+import BibleXMLBookChapterEditorComp from './BibleXMLBookChapterEditorComp';
+import BibleXMLExtraEditorComp from './BibleXMLExtraEditorComp';
+import {
+    bibleBookChapterUri,
+    bibleExtraUri,
+    bibleInfoUri,
+} from './schemas/bibleEditorUriHelpers';
+import { getBibleXMLDataFromKey } from './bibleXMLHelpers';
+import { tran } from '../../lang/langHelpers';
+import { showSimpleToast } from '../../toast/toastHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
+import { warnIfBibleKeyDirty } from './bibleEditorDirtyHelpers';
+import {
+    BIBLE_EDITOR_BODY_HEIGHT,
+    BIBLE_EDITOR_FOOTER_HEIGHT,
+} from './BibleXMLEditorComp';
 
-languages.json.jsonDefaults.setDiagnosticsOptions({
+json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
     allowComments: false,
     trailingCommas: 'error',
@@ -52,18 +64,41 @@ function RenderChoiceComp({
     targetEditingType: string;
 }>) {
     const isActive = editingType === targetEditingType;
+    const setEditingTypeRef = useAppCurrentRef(setEditingType);
+    const targetEditingTypeRef = useAppCurrentRef(targetEditingType);
+    const handleClick = useCallback(() => {
+        setEditingTypeRef.current(targetEditingTypeRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className={'btn btn-sm ' + (isActive ? 'btn-light' : 'btn-primary')}
-            onClick={() => {
-                setEditingType(targetEditingType);
-            }}
+            onClick={handleClick}
         >
             {title}
         </button>
     );
 }
 
+async function downloadBibleJSON(bibleKey: string) {
+    const bibleXMLData = await getBibleXMLDataFromKey(bibleKey);
+    if (bibleXMLData === null) {
+        showSimpleToast(
+            'error',
+            `Bible XML data for key "${bibleKey}" not found.`,
+        );
+        return;
+    }
+    const blob = new Blob([JSON.stringify(bibleXMLData, null, 2)], {
+        type: 'application/json',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${bibleKey}.json`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
 export default function BibleXMLDataPreviewComp({
     bibleKey,
 }: Readonly<{
@@ -73,7 +108,22 @@ export default function BibleXMLDataPreviewComp({
         `bible-setting-${bibleKey}-xml-data-editing-type`,
         'info',
     );
-    let element: any = null;
+    // Block switching tabs while the current editor has unsaved changes,
+    // mirroring the reload/close guards, so edits are not silently discarded
+    // when the editor unmounts.
+    const handleSetEditingType = (newEditingType: string) => {
+        if (
+            newEditingType !== editingType &&
+            warnIfBibleKeyDirty(
+                bibleKey,
+                'Save or discard unsaved Bible changes before switching tabs.',
+            )
+        ) {
+            return;
+        }
+        setEditingType(newEditingType);
+    };
+    let element: any;
     if (editingType === 'info') {
         element = <BibleXMLInfoEditorComp bibleKey={bibleKey} />;
     } else if (editingType === 'book-chapter') {
@@ -89,26 +139,51 @@ export default function BibleXMLDataPreviewComp({
                     height: '30px',
                 }}
             >
-                <RenderChoiceComp
-                    setEditingType={setEditingType}
-                    title="Info"
-                    targetEditingType="info"
-                    editingType={editingType}
-                />
-                <RenderChoiceComp
-                    setEditingType={setEditingType}
-                    title="Extra"
-                    targetEditingType="extra"
-                    editingType={editingType}
-                />
-                <RenderChoiceComp
-                    setEditingType={setEditingType}
-                    title="Book Chapter"
-                    targetEditingType="book-chapter"
-                    editingType={editingType}
-                />
+                <div className="btn-group" role="group">
+                    <RenderChoiceComp
+                        setEditingType={handleSetEditingType}
+                        title={tran('Info')}
+                        targetEditingType="info"
+                        editingType={editingType}
+                    />
+                    <RenderChoiceComp
+                        setEditingType={handleSetEditingType}
+                        title={tran('Extra')}
+                        targetEditingType="extra"
+                        editingType={editingType}
+                    />
+                    <RenderChoiceComp
+                        setEditingType={handleSetEditingType}
+                        title={tran('Book Chapter')}
+                        targetEditingType="book-chapter"
+                        editingType={editingType}
+                    />
+                </div>
+                {/* add download button here, when click then download the whole bible json data to Download */}
+                <button
+                    className="btn btn-sm btn-success ms-2"
+                    onClick={() => {
+                        downloadBibleJSON(bibleKey);
+                    }}
+                >
+                    {tran('Download')}
+                    <i className="bi bi-download ms-1" />
+                </button>
             </div>
-            <div className="card-body">{element}</div>
+            <div
+                className="card-body"
+                style={{
+                    // Reserve the editor card's height (body + footer +
+                    // borders) so the card does not collapse to the small
+                    // loading spinner and then snap to full size.
+                    minHeight:
+                        BIBLE_EDITOR_BODY_HEIGHT +
+                        BIBLE_EDITOR_FOOTER_HEIGHT +
+                        3,
+                }}
+            >
+                {element}
+            </div>
         </div>
     );
 }

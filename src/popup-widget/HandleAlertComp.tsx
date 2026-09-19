@@ -1,11 +1,11 @@
 import { lazy, useState, useCallback, useMemo } from 'react';
 
-import {
+import type {
     PopupAlertDataType,
-    popupWidgetManager,
     ConfirmDataType,
     InputDataType,
 } from './popupWidgetHelpers';
+import { attemptLocking, popupWidgetManager } from './popupWidgetHelpers';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 
 const LazyConfirmPopupComp = lazy(() => {
@@ -28,21 +28,24 @@ export default function HandleAlertComp() {
     const [alertData, setAlertData] = useState<PopupAlertDataType | null>(null);
 
     popupWidgetManager.openConfirm = useCallback(
-        (newConfirmData: ConfirmDataType | null) => {
+        async (newConfirmData: ConfirmDataType | null) => {
+            await attemptLocking('confirm', newConfirmData === null);
             setConfirmData(newConfirmData);
         },
         [],
     );
 
     popupWidgetManager.openInput = useCallback(
-        (newInputData: InputDataType | null) => {
+        async (newInputData: InputDataType | null) => {
+            await attemptLocking('input', newInputData === null);
             setInputData(newInputData);
         },
         [],
     );
 
     popupWidgetManager.openAlert = useCallback(
-        (newAlertData: PopupAlertDataType | null) => {
+        async (newAlertData: PopupAlertDataType | null) => {
+            await attemptLocking('alert', newAlertData === null);
             setAlertData(newAlertData);
         },
         [],

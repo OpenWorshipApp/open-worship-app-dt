@@ -1,28 +1,32 @@
 import EventHandler from '../event/EventHandler';
+import { tran } from '../lang/langHelpers';
+import type { FileMetadataType, MimetypeNameType } from '../server/fileHelpers';
 import {
-    FileMetadataType,
     getFileMetaData,
-    MimetypeNameType,
     getAppMimetype,
     fsListFiles,
     fsCheckDirExist,
     pathResolve,
     fsCheckFileExist,
 } from '../server/fileHelpers';
+import { unlocking } from '../server/unlockingHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
 import { getSetting, setSetting } from './settingHelpers';
+import { type OptionalPromise } from './typeHelpers';
 
-export type DirSourceEventType = 'reload';
+export type DirSourceEventType = 'refresh' | 'reload' | 'file-update';
 
-const fileCacheKeys: string[] = [];
 const cache = new Map<string, DirSource>();
+const initPromises = new Map<string, Promise<void>>();
 export default class DirSource extends EventHandler<DirSourceEventType> {
     settingName: string;
     static readonly eventNamePrefix: string = 'dir-source';
     checkExtraFile: ((fName: string) => FileMetadataType | null) | null = null;
     private _isDirPathValid: boolean | null = null;
+    filePathsMap: Record<string, string[]> = {};
+    setDirPath: (newFilePath: string) => OptionalPromise<void> = () => {};
 
     constructor(settingName: string) {
         super();
@@ -58,26 +62,22 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     }
 
     set dirPath(newDirPath: string) {
+        this.setDirPath(newDirPath);
         setSetting(this.settingName, newDirPath);
         this.fireReloadEvent();
     }
 
     static toCacheKey(settingName: string) {
-        const cacheKey = `${settingName}-${getSetting(settingName) ?? ''}`;
-        fileCacheKeys.push(cacheKey);
-        return cacheKey;
-    }
-
-    static getCacheKeyByDirPath(dirPath: string) {
-        return (
-            fileCacheKeys.find((cacheKey) => {
-                return cacheKey.includes(dirPath);
-            }) ?? null
-        );
+        return `${settingName}-${getSetting(settingName) ?? ''}`;
     }
 
     getFileSourceInstance(fileFullName: string) {
         return FileSource.getInstance(this.dirPath, fileFullName);
+    }
+
+    fireRefreshEvent() {
+        this.filePathsMap = {};
+        this.addPropEvent('refresh');
     }
 
     fireReloadEvent() {
@@ -123,61 +123,116 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         return files;
     }
 
-    async getFilePaths(mimetypeName: MimetypeNameType) {
-        if (!this.dirPath) {
+    async getFilePathsQuick(
+        mimetypeName: MimetypeNameType,
+        isNoExtraFileCheck = false,
+    ) {
+        const mimetypeList = getAppMimetype(mimetypeName);
+        const fileFullNames = await this.getAllFileFullNames();
+        const matchedFileFullNames = fileFullNames
+            .filter((fileFullName) => {
+                // MacOS creates hidden files that start with '._'
+                return !fileFullName.startsWith('._');
+            })
+            .map((fileFullName) => {
+                const fileMetadata = getFileMetaData(
+                    fileFullName,
+                    mimetypeList,
+                );
+                if (
+                    fileMetadata === null &&
+                    this.checkExtraFile &&
+                    !isNoExtraFileCheck
+                ) {
+                    return this.checkExtraFile(fileFullName);
+                }
+                return fileMetadata;
+            })
+            .filter((fileMetadata) => {
+                return fileMetadata !== null;
+            });
+        const filePaths = matchedFileFullNames.map((fileMetadata) => {
+            const fileSource = this.getFileSourceInstance(
+                fileMetadata.fileFullName,
+            );
+            return fileSource.filePath;
+        });
+        return filePaths;
+    }
+
+    async getFilePaths(mimetypeName: MimetypeNameType, isForce = false) {
+        if (!this.dirPath || (await fsCheckDirExist(this.dirPath)) === false) {
             return [];
         }
-        try {
-            const mimetypeList = getAppMimetype(mimetypeName);
-            const fileFullNames = await this.getAllFileFullNames();
-            const matchedFileFullNames = fileFullNames
-                .filter((fileFullName) => {
-                    // MacOS creates hidden files that start with '._'
-                    return !fileFullName.startsWith('._');
-                })
-                .map((fileFullName) => {
-                    const fileMetadata = getFileMetaData(
-                        fileFullName,
-                        mimetypeList,
-                    );
-                    if (fileMetadata === null && this.checkExtraFile) {
-                        return this.checkExtraFile(fileFullName);
-                    }
-                    return fileMetadata;
-                })
-                .filter((fileMetadata) => {
-                    return fileMetadata !== null;
-                });
-            const filePaths = matchedFileFullNames.map((fileMetadata) => {
-                const fileSource = this.getFileSourceInstance(
-                    fileMetadata.fileFullName,
+        const getFilePaths = async () => {
+            const filePathsInMap = this.filePathsMap[mimetypeName];
+            if (filePathsInMap?.length && !isForce) {
+                return filePathsInMap;
+            }
+            try {
+                const newFilePaths = await this.getFilePathsQuick(mimetypeName);
+                this.filePathsMap[mimetypeName] = newFilePaths;
+            } catch (error) {
+                handleError(error);
+                showSimpleToast(
+                    tran('Getting File List'),
+                    tran('Error occurred during listing file'),
                 );
-                return fileSource.filePath;
-            });
+            }
+            const filePaths = this.filePathsMap[mimetypeName];
+            if (filePaths === undefined) {
+                return null;
+            }
             return filePaths;
-        } catch (error) {
-            handleError(error);
-            showSimpleToast(
-                'Getting File List',
-                'Error occurred during listing file',
-            );
-        }
+        };
+        const result = await unlocking(
+            `get-file-paths-${mimetypeName}-${this.dirPath}`,
+            getFilePaths,
+        );
+        return result;
     }
 
     static async getInstance(settingName: string) {
         const cacheKey = this.toCacheKey(settingName);
-        if (!cache.has(cacheKey)) {
-            const dirSource = new DirSource(settingName);
-            await dirSource.init();
+        let dirSource = cache.get(cacheKey);
+        if (dirSource === undefined) {
+            // cache before awaiting init — the old check-then-set spanned the
+            // await, so concurrent callers each built their own instance and
+            // the losers' event listeners never received any events
+            dirSource = new DirSource(settingName);
             cache.set(cacheKey, dirSource);
+            const initPromise = dirSource.init().finally(() => {
+                initPromises.delete(cacheKey);
+            });
+            initPromises.set(cacheKey, initPromise);
         }
-        return cache.get(cacheKey) as DirSource;
+        const pendingInit = initPromises.get(cacheKey);
+        if (pendingInit !== undefined) {
+            await pendingInit;
+        }
+        return dirSource;
+    }
+
+    /**
+     * Every directory a list is CURRENTLY mounted on, and nothing else.
+     *
+     * The watcher needs this for the one case where the filesystem reports a
+     * change without naming it (`fs.watch` may hand back a null filename): the
+     * change cannot be attributed to a directory, so every mounted list has to
+     * reconcile. Reading the cache is what makes that bounded — a directory
+     * nobody is looking at has no instance here and is correctly left alone.
+     */
+    static getAllInstances() {
+        return Array.from(cache.values());
     }
 
     static getInstanceByDirPath(dirPath: string) {
-        const cacheKey = this.getCacheKeyByDirPath(dirPath);
-        if (cacheKey !== null && cache.has(cacheKey)) {
-            return cache.get(cacheKey) as DirSource;
+        // resolved-path equality — substring matching returned the wrong
+        // DirSource when one directory path was a substring of another
+        for (const dirSource of cache.values()) {
+            if (dirSource.checkIsSameDirPath(dirPath)) {
+                return dirSource;
+            }
         }
         return null;
     }

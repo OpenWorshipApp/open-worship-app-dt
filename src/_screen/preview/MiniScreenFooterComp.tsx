@@ -1,11 +1,13 @@
 import { handleAutoHide } from '../../helper/domHelpers';
+import { tran } from '../../lang/langHelpers';
 import AppRangeComp from '../../others/AppRangeComp';
+import BibleCustomStyleFloatingToggleComp from '../../screen-setting/BibleCustomStyleFloatingToggleComp';
 
 export const DEFAULT_PREVIEW_SIZE = 50;
 export const defaultRangeSize = {
     size: 9,
     min: 1,
-    max: 20,
+    max: 30,
     step: 1,
 };
 export default function MiniScreenFooterComp({
@@ -17,23 +19,26 @@ export default function MiniScreenFooterComp({
 }>) {
     return (
         <div
-            className={'card-footer w-100 app-auto-hide-bottom'}
+            className={'card-footer w-100 p-0 app-auto-hide-bottom'}
             ref={(element) => {
                 if (element !== null) {
-                    handleAutoHide(element, false);
+                    handleAutoHide(element);
                 }
             }}
         >
-            <div className="d-flex w-100 h-100">
+            <div className="d-flex w-100 h-100 align-items-center">
                 <div className="row">
                     <div className="col-auto">
                         <AppRangeComp
                             value={previewSizeScale}
-                            title="Preview Size Scale"
+                            title={tran('Preview Size Scale')}
                             setValue={setPreviewSizeScale}
                             defaultSize={defaultRangeSize}
                         />
                     </div>
+                </div>
+                <div className="ms-auto me-1 flex-shrink-0">
+                    <BibleCustomStyleFloatingToggleComp />
                 </div>
             </div>
         </div>

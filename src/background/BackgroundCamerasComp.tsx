@@ -1,31 +1,29 @@
-import { useMemo } from 'react';
+import { useRef } from 'react';
 
 import { useCameraInfoList } from '../helper/cameraHelpers';
-import {
-    defaultRangeSize,
-    useThumbnailWidthSetting,
-} from './BackgroundMediaComp';
-import AppRangeComp, { handleCtrlWheel } from '../others/AppRangeComp';
+import { useThumbnailWidthSetting } from './BackgroundMediaComp';
+import { useZoomingRegistering } from '../others/AppRangeComp';
 import BackgroundCameraItemComp from './BackgroundCameraItemComp';
+import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
+import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 
 export default function BackgroundCamerasComp() {
+    useScreenBackgroundManagerEvents(['update']);
     const [thumbnailWidth, setThumbnailWidth] = useThumbnailWidthSetting();
     const cameraInfoList = useCameraInfoList();
-    const thumbnailHeight = useMemo(() => {
-        const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
-        return thumbnailHeight;
-    }, [thumbnailWidth]);
+    const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    useZoomingRegistering(containerRef, {
+        value: thumbnailWidth,
+        setValue: setThumbnailWidth,
+        defaultSize: defaultRangeSize,
+    });
+
     return (
         <div
             className="card w-100 h-100 app-zero-border-radius"
-            onWheel={(event) => {
-                handleCtrlWheel({
-                    event,
-                    value: thumbnailWidth,
-                    setValue: setThumbnailWidth,
-                    defaultSize: defaultRangeSize,
-                });
-            }}
+            ref={containerRef}
         >
             <div className="card-body d-flex flex-wrap">
                 {cameraInfoList.map((cameraInfo) => {
@@ -39,17 +37,10 @@ export default function BackgroundCamerasComp() {
                     );
                 })}
             </div>
-            <div className="card-footer d-flex p-0">
-                <div className="flex-fill" />
-                <div>
-                    <AppRangeComp
-                        value={thumbnailWidth}
-                        title="Thumbnail Size"
-                        setValue={setThumbnailWidth}
-                        defaultSize={defaultRangeSize}
-                    />
-                </div>
-            </div>
+            <BackgroundFooterComp
+                thumbnailWidth={thumbnailWidth}
+                setThumbnailWidth={setThumbnailWidth}
+            />
         </div>
     );
 }

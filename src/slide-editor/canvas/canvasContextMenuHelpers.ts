@@ -1,65 +1,66 @@
 import { tran } from '../../lang/langHelpers';
-import { getMimetypeExtensions, selectFiles } from '../../server/fileHelpers';
-import CanvasItem from './CanvasItem';
-import CanvasController from './CanvasController';
+import type CanvasItem from './CanvasItem';
+import type CanvasController from './CanvasController';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import Canvas from './Canvas';
-import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import {
+    type ContextMenuItemType,
+    showAppContextMenu,
+} from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import {
     checkIsImagesInClipboard,
     readImagesFromClipboard,
 } from '../../server/appHelpers';
+import {
+    lookupBibleItemProps,
+    readBibleItemFromClipboard,
+} from './canvasBibleItemHelpers';
+import type { CanvasItemBiblePropsType } from './CanvasItemBibleItem';
+import { getMenuTitleRevealFile } from '../../helper/helpers';
+import {
+    copyToClipboard,
+    downloadImageBase64Data,
+    showFileOrDirExplorer,
+} from '../../server/appHelpers';
+import appProvider from '../../server/appProvider';
+import { checkIsFilePathCanvasItemType } from './canvasHelpers';
+import { checkIsRemoteMediaSource } from '../../helper/mediaSourceHelpers';
+import { refreshWebCapturing } from '../../helper/capturingHelpers';
+import { genCanvasInsertContextMenuItems } from './canvasInsertActionHelpers';
 
 export async function showCanvasContextMenu(
     event: any,
     canvasController: CanvasController,
 ) {
-    const isClipboardHasImage = await checkIsImagesInClipboard();
-    const copiedCanvasItems = await Canvas.getCopiedCanvasItems();
+    // The menu waits for these, so read the clipboard forms in parallel.
+    const [isClipboardHasImage, clipboardBibleItem, copiedCanvasItems] =
+        await Promise.all([
+            checkIsImagesInClipboard(),
+            readBibleItemFromClipboard(),
+            Canvas.getCopiedCanvasItems(),
+        ]);
     showAppContextMenu(event, [
-        {
-            menuElement: 'New',
-            onSelect: () => {
-                canvasController.addNewTextItem();
-            },
-        },
+        // Everything a user can ADD, shared verbatim with the app's Insert
+        // menu so the two never drift.
+        ...genCanvasInsertContextMenuItems(canvasController, event),
         ...(copiedCanvasItems.length > 0
             ? [
                   {
-                      menuElement: 'Paste',
+                      childBefore: genContextMenuItemIcon('clipboard'),
+                      menuElement: tran('Paste'),
                       onSelect: () => {
                           for (const copiedCanvasItem of copiedCanvasItems) {
-                              canvasController.addNewItem(copiedCanvasItem);
+                              canvasController.addNewItems([copiedCanvasItem]);
                           }
                       },
                   },
               ]
             : []),
-        {
-            menuElement: 'Insert Medias',
-            onSelect: () => {
-                const imageExtensions = getMimetypeExtensions('image');
-                const videoExtension = getMimetypeExtensions('video');
-                const filePaths = selectFiles([
-                    {
-                        name: 'All Files',
-                        extensions: [...imageExtensions, ...videoExtension],
-                    },
-                ]);
-                for (const filePath of filePaths) {
-                    canvasController
-                        .genNewMediaItemFromFilePath(filePath, event)
-                        .then((newCanvasItem) => {
-                            if (newCanvasItem) {
-                                canvasController.addNewItem(newCanvasItem);
-                            }
-                        });
-                }
-            },
-        },
         ...(isClipboardHasImage
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('card-image'),
                       menuElement: tran('Paste Image'),
                       onSelect: async () => {
                           for await (const blob of readImagesFromClipboard()) {
@@ -71,8 +72,22 @@ export async function showCanvasContextMenu(
                               if (!newCanvasItem) {
                                   return;
                               }
-                              canvasController.addNewItem(newCanvasItem);
+                              canvasController.addNewItems([newCanvasItem]);
                           }
+                      },
+                  },
+              ]
+            : []),
+        ...(clipboardBibleItem !== null
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon('book'),
+                      menuElement: tran('Paste Bible Item'),
+                      onSelect: () => {
+                          canvasController.addNewBibleItem(
+                              clipboardBibleItem,
+                              event,
+                          );
                       },
                   },
               ]
@@ -85,32 +100,191 @@ export function showCanvasItemContextMenu(
     canvasController: CanvasController,
     canvasItem: CanvasItem<any>,
     handleCanvasItemEditing: () => void,
+    isSelected: boolean,
+    // Absent on pages without the bible lookup popup.
+    openBibleLookup: (() => void) | null = null,
 ) {
-    showAppContextMenu(event, [
+    const isLocked = canvasItem.props.locked === true;
+    const isEditable = !isLocked && canvasItem.type === 'text';
+    const isAbleForLookup =
+        canvasItem.type === 'bible' && openBibleLookup !== null;
+    // Video and audio items name their source: a path to a local file or a
+    // remote link. Image items instead hold their source in `srcData`, which is
+    // either inlined base64 pixels or — when the image was inserted from a link
+    // — that link.
+    const mediaSource =
+        canvasItem.type === 'image'
+            ? canvasItem.props.srcData
+            : checkIsFilePathCanvasItemType(canvasItem.type)
+              ? canvasItem.props.filePath
+              : null;
+    const isLocalFileSource =
+        typeof mediaSource === 'string' &&
+        mediaSource !== '' &&
+        !checkIsRemoteMediaSource(mediaSource);
+    // Reveal-in-file-manager needs a resolvable path on disk, so it applies to
+    // local video/audio sources alone.
+    const isRevealable =
+        isLocalFileSource && checkIsFilePathCanvasItemType(canvasItem.type);
+    // YouTube and website items are backed by a URL, and so is any media item
+    // inserted from a link; offer to open it in the browser or copy it to the
+    // clipboard, the URL counterpart of revealing a video's file.
+    const itemUrl =
+        (canvasItem.type === 'youtube' || canvasItem.type === 'website') &&
+        typeof canvasItem.props.url === 'string'
+            ? canvasItem.props.url
+            : typeof mediaSource === 'string' &&
+                checkIsRemoteMediaSource(mediaSource)
+              ? mediaSource
+              : null;
+    const hasUrl = itemUrl !== null;
+    // A website item shows a screenshot that never self-invalidates, so a clock
+    // or a scoreboard page stays frozen until the cache TTL lapses AND the
+    // component remounts. This is the only way to force a re-capture. A YouTube
+    // item shares the `url` prop but renders a real embed, so it is excluded.
+    const isRefreshable = hasUrl && canvasItem.type === 'website';
+    // An inlined image carries its pixels rather than referencing a file, so
+    // the file-oriented reveal doesn't apply; offer to save it to disk instead.
+    // A linked image has nothing to write out — it is offered its URL above.
+    const isDownloadable = canvasItem.type === 'image' && isLocalFileSource;
+    const menuItems: ContextMenuItemType[] = [
+        ...(isAbleForLookup
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon('search'),
+                      menuElement: tran('Lookup'),
+                      onSelect: () => {
+                          lookupBibleItemProps(
+                              canvasItem.props as CanvasItemBiblePropsType,
+                              openBibleLookup,
+                          );
+                      },
+                  },
+              ]
+            : []),
         {
-            menuElement: 'Copy',
+            childBefore: genContextMenuItemIcon(isLocked ? 'unlock' : 'lock'),
+            menuElement: tran(isLocked ? 'Unlock' : 'Lock'),
             onSelect: () => {
-                navigator.clipboard.writeText(canvasItem.clipboardSerialize());
-                showSimpleToast('Copied', 'Canvas item copied');
+                canvasController.editCanvasItemById(
+                    canvasItem.id,
+                    (latestCanvasItem) => {
+                        latestCanvasItem.applyProps({ locked: !isLocked });
+                    },
+                );
             },
         },
         {
-            menuElement: 'Duplicate',
+            childBefore: genContextMenuItemIcon('copy'),
+            menuElement: tran('Copy'),
+            keyboardShortcut: isSelected
+                ? {
+                      mControlKey: ['Meta'],
+                      wControlKey: ['Ctrl'],
+                      lControlKey: ['Ctrl'],
+                      key: 'c',
+                  }
+                : undefined,
             onSelect: () => {
-                canvasController.duplicate(canvasItem);
+                Canvas.setCopiedItems([canvasItem]);
+                showSimpleToast(tran('Copied'), tran('Canvas item copied'));
             },
         },
         {
-            menuElement: 'Edit',
+            childBefore: genContextMenuItemIcon('files'),
+            menuElement: tran('Duplicate'),
+            keyboardShortcut: isSelected
+                ? {
+                      mControlKey: ['Meta', 'Shift'],
+                      wControlKey: ['Ctrl', 'Shift'],
+                      lControlKey: ['Ctrl', 'Shift'],
+                      key: 'd',
+                  }
+                : undefined,
             onSelect: () => {
-                handleCanvasItemEditing();
+                canvasController.duplicateItems([canvasItem]);
             },
         },
-        {
-            menuElement: 'Delete',
-            onSelect: () => {
-                canvasController.deleteItem(canvasItem);
-            },
-        },
-    ]);
+        ...(isRevealable
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon('folder2-open'),
+                      menuElement: getMenuTitleRevealFile(),
+                      onSelect: () => {
+                          showFileOrDirExplorer(mediaSource as string);
+                      },
+                  },
+              ]
+            : []),
+        ...(hasUrl
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon('box-arrow-up-right'),
+                      menuElement: tran('Open URL'),
+                      onSelect: () => {
+                          appProvider.browserUtils.openExternalURL(itemUrl);
+                      },
+                  },
+                  {
+                      childBefore: genContextMenuItemIcon('clipboard'),
+                      menuElement: tran('Copy URL'),
+                      onSelect: () => {
+                          copyToClipboard(itemUrl);
+                      },
+                  },
+              ]
+            : []),
+        ...(isRefreshable
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon('arrow-clockwise'),
+                      menuElement: tran('Refresh Preview'),
+                      onSelect: () => {
+                          refreshWebCapturing(itemUrl as string);
+                      },
+                  },
+              ]
+            : []),
+        ...(isDownloadable
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon('download'),
+                      menuElement: tran('Download'),
+                      onSelect: () => {
+                          downloadImageBase64Data(canvasItem.props.srcData);
+                      },
+                  },
+              ]
+            : []),
+        ...(isEditable
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon('pencil-square'),
+                      menuElement: tran('Edit'),
+                      onSelect: () => {
+                          handleCanvasItemEditing();
+                      },
+                  },
+              ]
+            : []),
+        ...(isLocked
+            ? []
+            : [
+                  {
+                      childBefore: genContextMenuItemIcon('trash3', {
+                          color: 'var(--bs-danger)',
+                      }),
+                      menuElement: tran('Delete'),
+                      keyboardShortcut: isSelected
+                          ? {
+                                key: 'Delete',
+                            }
+                          : undefined,
+                      onSelect: () => {
+                          canvasController.deleteItems([canvasItem]);
+                      },
+                  },
+              ]),
+    ];
+    showAppContextMenu(event, menuItems);
 }

@@ -1,21 +1,27 @@
 import EventHandler from '../../event/EventHandler';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
 import {
+    getSetting,
+    removeSetting,
+    setSetting,
+} from '../../helper/settingHelpers';
+import type {
     PTEffectDataType,
     PTFEventType,
     ScreenMessageType,
-    ScreenTransitionEffectType,
     StyleAnimType,
-    transitionEffect,
 } from '../screenTypeHelpers';
-import { styleAnimList } from '../transitionEffectHelpers';
-import ScreenManagerBase from './ScreenManagerBase';
+import {
+    styleAnimList,
+    transitionEffect,
+    type TransitionEffectType,
+} from '../transitionEffectHelpers';
+import type ScreenManagerBase from './ScreenManagerBase';
 
 const cache = new Map<string, ScreenEffectManager>();
 class ScreenEffectManager extends EventHandler<PTFEventType> {
     screenManagerBase: ScreenManagerBase;
     readonly target: string;
-    private _effectType: ScreenTransitionEffectType;
+    private _effectType: TransitionEffectType;
     styleAnimList: Record<string, StyleAnimType>;
 
     constructor(screenManagerBase: ScreenManagerBase, target: string) {
@@ -29,7 +35,7 @@ class ScreenEffectManager extends EventHandler<PTFEventType> {
             }),
         );
         this._effectType = Object.keys(transitionEffect).includes(effectType)
-            ? (effectType as ScreenTransitionEffectType)
+            ? (effectType as TransitionEffectType)
             : 'fade';
         cache.set(this.toCacheKey(), this);
     }
@@ -46,10 +52,10 @@ class ScreenEffectManager extends EventHandler<PTFEventType> {
         return `pt-effect-${this.screenId}-${this.target}`;
     }
 
-    get effectType(): ScreenTransitionEffectType {
+    get effectType(): TransitionEffectType {
         return this._effectType;
     }
-    set effectType(value: ScreenTransitionEffectType) {
+    set effectType(value: TransitionEffectType) {
         this._effectType = value;
         setSetting(this.settingName, value);
         this.sendSyncScreen();
@@ -63,14 +69,17 @@ class ScreenEffectManager extends EventHandler<PTFEventType> {
     }
 
     sendSyncScreen() {
-        this.screenManagerBase.sendScreenMessage({
-            screenId: this.screenId,
-            type: 'effect',
-            data: {
-                target: this.target,
-                effect: this.effectType,
+        this.screenManagerBase.sendScreenMessage(
+            {
+                screenId: this.screenId,
+                type: 'effect',
+                data: {
+                    target: this.target,
+                    effect: this.effectType,
+                },
             },
-        });
+            false,
+        );
     }
 
     static receiveSyncScreen(message: ScreenMessageType) {
@@ -84,6 +93,9 @@ class ScreenEffectManager extends EventHandler<PTFEventType> {
 
     delete() {
         cache.delete(this.toCacheKey());
+        // This instance owns `pt-effect-<screenId>-<target>`, and screen ids are
+        // reused, so the chosen transition has to go with the screen.
+        removeSetting(this.settingName);
         this.screenManagerBase =
             this.screenManagerBase.createScreenManagerBaseGhost(this.screenId);
     }

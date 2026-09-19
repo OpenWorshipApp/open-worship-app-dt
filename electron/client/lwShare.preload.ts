@@ -9,5 +9,4 @@ const lwShareController = {
     initServer,
 };
 
-(global as any).lwShareController = (window as any).lwShareController =
-    lwShareController;
+(globalThis as any).lwShareController = lwShareController;

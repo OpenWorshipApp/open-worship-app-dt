@@ -1,0 +1,138 @@
+import { type MouseEvent, useCallback } from 'react';
+
+import SlideRenderComp from './SlideRenderComp';
+import PdfSlideRenderComp from './PdfSlideRenderComp';
+import PptxSlideRenderComp from './PptxSlideRenderComp';
+import DocxSlideRenderComp from './DocxSlideRenderComp';
+import {
+    fireOnSlideItemSelectedEvent,
+    handleVarySlideSelecting,
+} from './varyAppDocumentHelpers';
+import { usePresetScreenIds } from '../../_screen/managers/screenChoosingHelpers';
+import { useSelectedEditingSlideSetterContext } from '../../app-document-list/appDocumentHelpers';
+import PdfSlide from '../../app-document-list/PdfSlide';
+import PptxSlide from '../../app-document-list/PptxSlide';
+import DocxSlide from '../../app-document-list/DocxSlide';
+import Slide from '../../app-document-list/Slide';
+import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
+import { type AllControlType as KeyboardControlType } from '../../event/KeyboardEventListener';
+import type { OptionalPromise } from '../../helper/typeHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
+
+function selectVarySlide(
+    {
+        index,
+        varySlide,
+        setVarySlides,
+        presetScreenIds,
+    }: {
+        index: number;
+        varySlide: VarySlideType;
+        setVarySlides: (
+            newSlide: Slide | null,
+            controlType?: KeyboardControlType,
+        ) => OptionalPromise<void>;
+        presetScreenIds: number[];
+    },
+    event: MouseEvent,
+) {
+    fireOnSlideItemSelectedEvent(event);
+    event.stopPropagation();
+    setTimeout(() => {
+        handleVarySlideSelecting(
+            event,
+            index + 1,
+            varySlide,
+            (selectedVarySlide) => {
+                if (selectedVarySlide instanceof Slide === false) {
+                    return;
+                }
+                let controlType: KeyboardControlType | undefined = undefined;
+                if (event.ctrlKey) {
+                    controlType = 'Ctrl';
+                } else if (event.shiftKey) {
+                    controlType = 'Shift';
+                }
+                setVarySlides(selectedVarySlide, controlType);
+            },
+            presetScreenIds,
+        );
+    }, 0);
+}
+
+export default function VarySlideRenderWrapperComp({
+    thumbSize,
+    varySlide,
+    index,
+}: Readonly<{
+    thumbSize: number;
+    varySlide: VarySlideType;
+    index: number;
+}>) {
+    const setSelectedVarySlide = useSelectedEditingSlideSetterContext();
+    const setSelectedVarySlideRef = useAppCurrentRef(setSelectedVarySlide);
+    // Empty everywhere but inside something that has already decided which
+    // screens its content belongs on (a presenting flow entry pinned to a screen).
+    const presetScreenIds = usePresetScreenIds();
+    const presetScreenIdsRef = useAppCurrentRef(presetScreenIds);
+    const handleClicking = useCallback(
+        (
+            event: MouseEvent<HTMLDivElement>,
+            index: number,
+            varySlide: VarySlideType,
+        ) => {
+            selectVarySlide(
+                {
+                    index,
+                    varySlide,
+                    setVarySlides: setSelectedVarySlideRef.current,
+                    presetScreenIds: presetScreenIdsRef.current,
+                },
+                event,
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    if (PdfSlide.checkIsThisType(varySlide)) {
+        return (
+            <PdfSlideRenderComp
+                key={varySlide.id}
+                onClick={handleClicking}
+                pdfSlide={varySlide}
+                width={thumbSize}
+                index={index}
+            />
+        );
+    }
+    if (PptxSlide.checkIsThisType(varySlide)) {
+        return (
+            <PptxSlideRenderComp
+                key={varySlide.id}
+                onClick={handleClicking}
+                pptxSlide={varySlide}
+                width={thumbSize}
+                index={index}
+            />
+        );
+    }
+    if (DocxSlide.checkIsThisType(varySlide)) {
+        return (
+            <DocxSlideRenderComp
+                key={varySlide.id}
+                onClick={handleClicking}
+                docxSlide={varySlide}
+                width={thumbSize}
+                index={index}
+            />
+        );
+    }
+    return (
+        <SlideRenderComp
+            index={index}
+            slide={varySlide}
+            width={thumbSize}
+            onClick={handleClicking}
+        />
+    );
+}

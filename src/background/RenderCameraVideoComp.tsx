@@ -1,8 +1,8 @@
 import { useRef } from 'react';
 
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/appHooks';
 import LoadingComp from '../others/LoadingComp';
-import { getCameraAndShowMedia } from '../_screen/screenForegroundHelpers';
+import { getCameraAndShowMedia } from '../helper/cameraHelpers';
 
 export default function RenderCameraVideoComp({
     deviceId,
@@ -25,7 +25,7 @@ export default function RenderCameraVideoComp({
                 borderBottomRightRadius: 'var(--bs-border-radius)',
             },
         });
-    }, [containerRef.current, width]);
+    }, [deviceId, containerRef.current, width]);
     return (
         <div className="w-100 h-100" ref={containerRef}>
             <LoadingComp />

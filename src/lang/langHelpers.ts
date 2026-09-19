@@ -1,13 +1,18 @@
-import { handleError } from '../helper/errorHelpers';
-import { AppProviderType } from '../server/appProvider';
-import { AnyObjectType } from '../helper/typeHelpers';
+import type { AppProviderType, MessageEventType } from '../server/appProvider';
+import type { AnyObjectType } from '../helper/typeHelpers';
+import appProvider from '../server/appProvider';
+import { unlocking } from '../server/unlockingHelpers';
+import { globalCacheManager10Seconds } from '../others/CacheManager';
+import { useAppStateAsync } from '../helper/appHooks';
+import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
+import SettingManager from '../helper/SettingManager';
+import type { Editor, OpenLyric, OpenLyricMarkdownManager } from 'open-lyric';
+import { resolveGzBundleFilePath } from './gzBundleFilePath';
 
-import kmLangData from './data/km';
-import enLangData from './data/en';
-import { log } from '../helper/loggerHelpers';
-
-const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
+export const DEFAULT_LANG_CODE = 'en';
+export const supportedLangCodes = [DEFAULT_LANG_CODE, 'km'];
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
+export const supportedLocales = [DEFAULT_LOCALE, 'km-KH'];
 
 export const allLocalesMap = {
     arc: 'arc',
@@ -437,23 +442,65 @@ export function getLangCode(locale: LocaleType): string | null {
     return (allLocalesMap as any)[locale] ?? null;
 }
 
-export const langDataMap: { [key: string]: LanguageDataType } = {
-    km: kmLangData,
-    en: enLangData,
+export type BibleBookType = {
+    keys: string[];
+    books: string[];
 };
 
-export const langCodes = ['km', 'en'] as const;
 export type LocaleType = keyof typeof allLocalesMap;
 export type LanguageDataType = {
+    packageDir: string;
+    version: string;
     locale: LocaleType;
     langCode: string;
-    dirPath?: string;
+    customMenusData?: CustomMenusDataType;
+    editorLink?: string;
+    bibleBooks: BibleBookType[];
+    checkIsThisLang: (text: string) => boolean;
+    getFontFamilyFiles?: () => string[];
     genCss: () => string;
-    fontFamily: string;
+    fontFamily?: string;
+    globalFontFamily?: string;
+    stickyNoteFontFamily?: string;
     numList: string[];
     dictionary: AnyObjectType;
     name: string;
+    /**
+     * The language's name written in ITS OWN language — `ខ្មែរ`, not `Khmer`.
+     *
+     * The language picker must stay legible to someone who cannot read the
+     * locale currently in force, which is exactly the person who needs it: a
+     * mis-click or a shared machine leaves them in a script they do not read,
+     * and a list translated into that script offers them no way back. So the
+     * picker renders THIS, never `tran(name)`.
+     *
+     * Optional so a language package that predates it still loads; the picker
+     * falls back to `name`, which is at least Latin script.
+     */
+    nativeName?: string;
     flagSVG: string;
+    getLookupData?: (_args: {
+        readJsonFile: (url: string) => Promise<any>;
+        packageDir: string;
+    }) => Promise<{
+        namesMap: AnyObjectType;
+        locationsMap: AnyObjectType;
+    } | null>;
+    /**
+     * The dataset's own version numbers, read WITHOUT loading the dataset.
+     *
+     * The derived lookup index is cached on disk, and the only cheap way to tell
+     * a cache built from an older dataset apart is to ask the package what its
+     * maps are stamped with. A package that cannot answer (or predates this)
+     * leaves the cache keyed on the app version alone.
+     */
+    getLookupDataVersion?: (_args: {
+        readJsonFileVersion: (url: string) => Promise<number | null>;
+        packageDir: string;
+    }) => Promise<{
+        namesMap: number;
+        locationsMap: number;
+    } | null>;
     sanitizeText: (text: string) => string;
     sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;
@@ -465,93 +512,227 @@ export type LanguageDataType = {
         appProvider: AppProviderType,
     ) => any[];
     bibleAudioAvailable: boolean;
+    sanitizeTranKey: (key: string) => string;
+    transformBibleBookName: (bookName: string) => string[];
+    getBibleCrossRefBundleFilePath: (
+        resolveGzBundleFilePath: (bundle: {
+            filePath: string;
+            fileName: string | null;
+        }) => string,
+    ) => string;
+    initOpenLyricPlugins?: (data: {
+        editor?: Editor;
+        openLyric?: OpenLyric;
+        openLyricMarkdownManager?: OpenLyricMarkdownManager;
+        genOpenLyricFontFaces: (
+            fontFacesList: OpenLyricFontFace,
+            fontFaceData: {
+                title: string;
+                fontFaces: string[];
+                indexRange: number;
+            },
+        ) => {
+            title: string;
+            fontFaces: string[];
+            indexRange: number;
+        }[];
+    }) => void;
+};
+
+type CustomMenuItemType = {
+    label: string;
+    // Optional because a submenu PARENT is not clickable — it only groups the
+    // items under it (see the Khmer Tools entry in `data/km`). Matches the
+    // electron-side `CustomMenuItemType`, which also has it optional.
+    clickData?: AnyObjectType;
+    accelerator?: string;
+    submenu?: CustomMenuItemType[];
+    // `formatMenuItems` spreads the item into the electron template, so the
+    // native checkbox rendering comes for free. `checked` is only read when
+    // `type` is `'checkbox'`.
+    type?: 'checkbox';
+    checked?: boolean;
+};
+export type CustomMenusDataType = {
+    tools?: CustomMenuItemType[];
+    // Renderer-contributed **File** menu entries (Export/Import Data). Same
+    // mechanism as `tools`, so the label is translated where `tran` works.
+    file?: CustomMenuItemType[];
+    // The top-level **Insert** menu, owned entirely by the slide editor. The
+    // menu itself only exists while something contributes to it.
+    insert?: CustomMenuItemType[];
+    // Renderer-contributed **View** entries: the per-widget open/close
+    // checkboxes and `Reset Widgets Size`. See `resize-actor/widgetAppMenuHelpers`.
+    view?: CustomMenuItemType[];
 };
 
 export function checkIsValidLangCode(text: string) {
-    return langCodes.includes(text as any);
+    return supportedLangCodes.includes(text as any);
 }
 export function checkIsValidLocale(text: string) {
     return !!(allLocalesMap as any)[text];
 }
 
-let currentLocale: LocaleType = DEFAULT_LOCALE;
+let localeSettingManager: SettingManager<LocaleType> | null = null;
+/**
+ * Built on first use, NOT at module load. This module sits inside the
+ * `SettingManager` -> `appLocalStorage` -> `fileHelpers` -> `FileSource` ->
+ * `FileSourceMetaManager` -> `langHelpers` import cycle, so when
+ * `SettingManager` is the module that starts the cycle, a top-level `new` here
+ * reaches the class while it is still in its temporal dead zone and throws
+ * "default is not a constructor".
+ */
+function getLocaleSettingManager() {
+    localeSettingManager ??= new SettingManager<LocaleType>({
+        settingName: 'language-locale',
+        defaultValue: DEFAULT_LOCALE,
+        isErrorToDefault: true,
+        validate: checkIsValidLocale,
+    });
+    return localeSettingManager;
+}
+export function getCurrentLocale(): LocaleType {
+    return getLocaleSettingManager().getSetting();
+}
 export function setCurrentLocale(locale: LocaleType) {
+    // Coerced BEFORE the manager sees it: `setSetting` throws on an invalid
+    // value, and this is called from the language picker, which has always
+    // silently fallen back rather than failing.
     if (!checkIsValidLocale(locale)) {
         locale = DEFAULT_LOCALE;
     }
-    localStorage.setItem(LANGUAGE_LOCALE_SETTING_NAME, locale);
-    currentLocale = locale;
+    getLocaleSettingManager().setSetting(locale);
 }
-export function getCurrentLocale(): LocaleType {
-    const locale =
-        localStorage.getItem(LANGUAGE_LOCALE_SETTING_NAME) ?? DEFAULT_LOCALE;
-    if (checkIsValidLocale(locale)) {
-        return locale as LocaleType;
+
+const langCache = new Map<string, LanguageDataType>();
+export function getLangData(langCodeOrLocale: string) {
+    return langCache.get(langCodeOrLocale) ?? null;
+}
+
+export function initLangCss(langData: LanguageDataType) {
+    const elementId = `lang-${langData.langCode}`;
+    let styleElement = document.querySelector(`style#${elementId}`);
+    if (styleElement === null) {
+        styleElement = document.createElement('style');
+        styleElement.id = elementId;
+        document.head.appendChild(styleElement);
     }
-    return DEFAULT_LOCALE;
-}
-currentLocale = getCurrentLocale();
-
-const langCache = new Map<string, LanguageDataType | null>();
-export function getLang(langCodeOrLocale: string) {
-    // TODO: change to completely locale
-    const langCode = checkIsValidLocale(langCodeOrLocale)
-        ? getLangCode(langCodeOrLocale as any)
-        : langCodeOrLocale;
-    return langCache.get(langCode ?? langCodeOrLocale) ?? null;
+    styleElement.innerHTML = langData.genCss();
 }
 
-export function getLangDataByLocaleOrByLangCode(
-    localeOrLangCode: string,
-): LanguageDataType | null {
-    return (
-        langDataMap[localeOrLangCode] ??
-        langDataMap[allLocalesMap[localeOrLangCode as LocaleType] ?? ''] ??
-        null
+async function fetchLangData(langCode: string) {
+    if (!supportedLangCodes.includes(langCode)) {
+        // TODO: implement loading language data from server
+        return null;
+    }
+    const module = await import(`./data/${langCode}/index.ts`);
+    return module.default as LanguageDataType;
+}
+
+/**
+ * ONE language package, addressed by its code.
+ *
+ * The point of not going through `getAllLangsAsync` is that this imports a
+ * single language chunk: anything that only needs, say, the lookup dataset of
+ * the language the user picked must not pay to import every other language's
+ * module for nothing.
+ */
+export async function getLangDataByCodeAsync(
+    langCode: string,
+): Promise<LanguageDataType | null> {
+    const cachedLangData = langCache.get(langCode);
+    if (cachedLangData !== undefined) {
+        return cachedLangData;
+    }
+    const langData = await fetchLangData(langCode);
+    if (langData === null) {
+        return null;
+    }
+    langCache.set(langData.locale, langData);
+    langCache.set(langCode, langData);
+    initLangCss(langData);
+    return langData;
+}
+
+export async function getLangDataAsync(
+    locale: LocaleType,
+): Promise<LanguageDataType | null> {
+    const cachedLangData = langCache.get(locale);
+    if (cachedLangData !== undefined) {
+        return cachedLangData;
+    }
+    const langCode = getLangCode(locale);
+    if (langCode === null) {
+        return null;
+    }
+    const langData = await getLangDataByCodeAsync(langCode);
+    if (langData === null) {
+        return null;
+    }
+    // The REQUESTED locale, which is not necessarily the package's own: every
+    // `en-*` resolves to the same English package, and each has to hit the cache
+    // under the key it was asked for.
+    langCache.set(locale, langData);
+    return langData;
+}
+
+export async function getAllLangsAsync() {
+    const allLangData = await Promise.all(
+        supportedLangCodes.map((langCode) => fetchLangData(langCode)),
     );
+    return allLangData.filter((data) => data !== null);
 }
 
-export async function getLangAsync(locale: LocaleType, isForce = false) {
-    if (!langCache.has(locale)) {
-        try {
-            const langData = getLangDataByLocaleOrByLangCode(locale);
-            langCache.set(locale, langData);
-            let langCode = getLangCode(locale);
-            if (langCode === null && isForce) {
-                langCode = getLangCode(DEFAULT_LOCALE);
+// The renderers that call this render CONTENT in a language other than their
+// own UI locale (lyric slides, bible notes), and that content asks for the
+// language's font by name — e.g. the `app-Battambang` frozen into open-lyric's
+// generated markup. So the `@font-face` rules have to be registered here too,
+// not only for the locale the window's UI happens to use: the screen window
+// loads no locale of its own, and a missing face silently falls back to a
+// system font with other metrics, which reflows and clips the whole slide.
+// The modules are already loaded at this point, so this costs nothing extra.
+//
+// ONE registration per window, shared by every caller: open-lyric awaits this
+// before each song it builds, and rewriting a `<style>` of `@font-face` rules
+// re-creates those faces for the whole window. A failed attempt is forgotten,
+// so the next caller tries again.
+let allLangCssPromise: ReturnType<typeof getAllLangsAsync> | null = null;
+export function initAllLangCss() {
+    allLangCssPromise ??= getAllLangsAsync()
+        .then((allLangData) => {
+            for (const langData of allLangData) {
+                initLangCss(langData);
             }
-            if (langCode === 'km' && langData !== null) {
-                // TODO: implement downloadable lang package
-                langData.dirPath = '/fonts/km/Battambang';
-            }
-            if (langCode !== null) {
-                langCache.set(langCode, langData);
-                if (langData !== null) {
-                    const elementID = `lang-${langCode}`;
-                    let styleElement = document.querySelector(
-                        `style#${elementID}`,
-                    );
-                    if (styleElement === null) {
-                        styleElement = document.createElement('style');
-                        styleElement.id = elementID;
-                        document.head.appendChild(styleElement);
-                    }
-                    styleElement.innerHTML = langData.genCss();
-                }
-            }
-        } catch (error) {
-            handleError(error);
+            return allLangData;
+        })
+        .catch((error) => {
+            allLangCssPromise = null;
+            throw error;
+        });
+    return allLangCssPromise;
+}
+
+function getDictValue(
+    langData: LanguageDataType,
+    text: string,
+    currentLocale: LocaleType,
+) {
+    const { dictionary } = langData;
+    const sanitizedKey = langData.sanitizeTranKey(text);
+    if (dictionary[sanitizedKey] === undefined) {
+        if (appProvider.systemUtils.isDev) {
+            throw new Error(
+                `Translation for text "${text}" not found in ` +
+                    `locale ${currentLocale}.`,
+            );
         }
+        return text;
     }
-    return getLang(locale);
+    return dictionary[sanitizedKey];
 }
-getLangAsync(currentLocale).then(() => {
-    log(`Loaded language data for locale: ${currentLocale}`);
-});
-export function getAllLangsAsync() {
-    return Object.values(langDataMap);
-}
-
+// e.g. " a b " => "a b", but " a  b " => "a  b ", to preserve multiple spaces
+// in the middle
+const regex = /^([ \n]*)([^ \n].+[^ \n])([ \n]*)$/;
 export function tran(...args: any[]): string {
     const text = args[0];
     if (Array.isArray(text)) {
@@ -565,12 +746,71 @@ export function tran(...args: any[]): string {
     if (typeof text !== 'string') {
         return `${text}`;
     }
-    const langData = getLang(currentLocale);
+    const currentLocale = getCurrentLocale();
+    if (currentLocale === DEFAULT_LOCALE) {
+        return text;
+    }
+    const langData = getLangData(currentLocale);
     if (langData === null) {
+        if (appProvider.systemUtils.isDev) {
+            throw new Error(
+                `Language data for locale ${currentLocale} not found when ` +
+                    `translating text.`,
+            );
+        }
         return text;
     }
     const dictionary = langData.dictionary;
-    return dictionary[text] ?? text;
+    const sanitizedKey = langData.sanitizeTranKey(text);
+    if (dictionary[sanitizedKey] === undefined) {
+        if (appProvider.systemUtils.isDev) {
+            throw new Error(
+                `Translation for text "${text}" not found in ` +
+                    `locale ${currentLocale}.`,
+            );
+        }
+        return text;
+    }
+    if (regex.test(text)) {
+        const translated = text.replace(
+            regex,
+            (_match: string, p1: string, matchText: string, p2: string) => {
+                const value = getDictValue(langData, matchText, currentLocale);
+                return `${p1}${value}${p2}`;
+            },
+        );
+        return translated;
+    }
+    const value = getDictValue(langData, text, currentLocale);
+    return value;
+}
+
+/**
+ * `tran`, but into a NAMED language instead of the interface locale.
+ *
+ * For text that describes CONTENT the user chose a language for separately from
+ * the UI — the names-and-locations lookup is the case this exists for: its
+ * records may be Khmer while the menus around them are English, and a record's
+ * category then has to read in the language of the record, not of the menu.
+ *
+ * Unlike `tran` it does NOT throw on a missing key in dev. The interface locale
+ * is guaranteed to translate every string the app renders; a language picked for
+ * its DATA is not, and a package that ships a dataset without a complete UI
+ * dictionary must degrade to English rather than blank the panel.
+ */
+export function tranByLangData(
+    langData: LanguageDataType | null | undefined,
+    text: string,
+): string {
+    if (
+        langData === null ||
+        langData === undefined ||
+        langData.langCode === DEFAULT_LANG_CODE
+    ) {
+        return text;
+    }
+    const sanitizedKey = langData.sanitizeTranKey(text);
+    return langData.dictionary[sanitizedKey] ?? text;
 }
 
 export function toStringNum(numList: string[], n: number): string {
@@ -583,7 +823,7 @@ export function toStringNum(numList: string[], n: number): string {
 }
 
 export async function toLocaleNum(locale: LocaleType, n: number) {
-    const langData = await getLangAsync(locale);
+    const langData = await getLangDataAsync(locale);
     if (langData === null) {
         return `${n}`;
     }
@@ -609,7 +849,7 @@ export function fromStringNum(numList: string[], localeNum: string) {
 }
 
 export async function fromLocaleNum(locale: LocaleType, localeNum: string) {
-    const langData = await getLangAsync(locale);
+    const langData = await getLangDataAsync(locale);
     if (langData === null) {
         return null;
     }
@@ -618,8 +858,8 @@ export async function fromLocaleNum(locale: LocaleType, localeNum: string) {
 }
 
 export async function sanitizePreviewText(locale: LocaleType, text: string) {
-    let langData = await getLangAsync(locale);
-    langData ??= await getLangAsync(DEFAULT_LOCALE);
+    let langData = await getLangDataAsync(locale);
+    langData ??= await getLangDataAsync(DEFAULT_LOCALE);
     if (langData === null) {
         return text;
     }
@@ -627,8 +867,8 @@ export async function sanitizePreviewText(locale: LocaleType, text: string) {
 }
 
 export async function sanitizeFindingText(locale: LocaleType, text: string) {
-    let langData = await getLangAsync(locale);
-    langData ??= await getLangAsync(DEFAULT_LOCALE);
+    let langData = await getLangDataAsync(locale);
+    langData ??= await getLangDataAsync(DEFAULT_LOCALE);
     if (langData === null) {
         return text;
     }
@@ -636,7 +876,7 @@ export async function sanitizeFindingText(locale: LocaleType, text: string) {
 }
 
 export function quickTrimText(locale: LocaleType, text: string) {
-    const langData = getLang(locale);
+    const langData = getLangData(locale);
     if (langData === null) {
         return text;
     }
@@ -644,7 +884,7 @@ export function quickTrimText(locale: LocaleType, text: string) {
 }
 
 export function checkIsStopWord(locale: LocaleType, text: string) {
-    const langData = getLang(locale);
+    const langData = getLangData(locale);
     if (langData === null) {
         return false;
     }
@@ -652,7 +892,7 @@ export function checkIsStopWord(locale: LocaleType, text: string) {
 }
 
 export function quickEndWord(locale: LocaleType, text: string) {
-    const langData = getLang(locale);
+    const langData = getLangData(locale);
     if (langData === null) {
         return text;
     }
@@ -664,11 +904,25 @@ export function quickEndWord(locale: LocaleType, text: string) {
 }
 
 export async function getFontFamilyByLocale(locale: LocaleType) {
-    const langData = await getLangAsync(locale);
-    if (langData === null) {
-        return '';
-    }
-    return langData.fontFamily;
+    const key = `FontFamilyLocale:${locale}`;
+    return await unlocking(key, async () => {
+        const cachedFontFamily = await globalCacheManager10Seconds.get(key);
+        if (cachedFontFamily) {
+            return cachedFontFamily;
+        }
+        const langData = await getLangDataAsync(locale);
+        if (langData === null) {
+            return undefined;
+        }
+        await globalCacheManager10Seconds.set(key, langData.fontFamily);
+        return langData.fontFamily;
+    });
+}
+export function useFontFamilyByLocale(locale: LocaleType): string | undefined {
+    const [fontFamily] = useAppStateAsync(() => {
+        return getFontFamilyByLocale(locale);
+    }, [locale]);
+    return fontFamily ?? undefined;
 }
 
 export function checkIsRtl(locale: LocaleType) {
@@ -687,7 +941,7 @@ export function getLanguageTitle(
         return 'Unknown';
     }
     langCode ??= getLangCode(locale as LocaleType);
-    let languageName = '';
+    let languageName: string;
     if (langCode === null || !(langCode in languageNameMap)) {
         languageName = 'Unknown';
     } else {
@@ -697,4 +951,152 @@ export function getLanguageTitle(
         languageName += isWithLocale ? ` <${locale}>` : '';
     }
     return languageName;
+}
+
+// Constructing a BibleCrossRefBundleReader costs an fd open plus a ~1MB
+// synchronous index read per call, so keep a single-entry cache (most
+// sessions use one bundle) and reuse it while the path matches.
+let cachedCrossRefReader: {
+    bundleFilePath: string;
+    reader: BibleCrossRefBundleReader;
+} | null = null;
+function getBibleCrossRefBundleReader(bundleFilePath: string) {
+    if (cachedCrossRefReader?.bundleFilePath === bundleFilePath) {
+        return cachedCrossRefReader.reader;
+    }
+    cachedCrossRefReader?.reader.close();
+    cachedCrossRefReader = null;
+    const reader = new BibleCrossRefBundleReader(bundleFilePath);
+    cachedCrossRefReader = { bundleFilePath, reader };
+    return reader;
+}
+
+export async function getLocalBibleCrossRef(
+    locale: LocaleType,
+    targetVerse: {
+        bookKey: string;
+        chapter: number;
+        verse: number;
+    },
+) {
+    const langData = await getLangDataAsync(locale);
+    if (langData === null) {
+        return null;
+    }
+    const bundleFilePath = langData.getBibleCrossRefBundleFilePath(
+        resolveGzBundleFilePath,
+    );
+    const db = getBibleCrossRefBundleReader(bundleFilePath);
+    return db.getVerse(
+        targetVerse.bookKey,
+        targetVerse.chapter,
+        targetVerse.verse,
+    );
+}
+
+export function registerAppMenuClicked<T>(
+    handler: (event: MessageEventType, data: T) => void,
+) {
+    appProvider.messageUtils.listenForData(
+        'app:main:menu-item-clicked',
+        handler,
+    );
+    return () => {
+        appProvider.messageUtils.removeListener(
+            'app:main:menu-item-clicked',
+            handler,
+        );
+    };
+}
+
+export type AppMenuItemsOptionsType = {
+    /**
+     * Send the click to the window the user is LOOKING AT, not to the one that
+     * registered the items.
+     *
+     * For anything route-scoped the default is right: only the registrant has a
+     * handler for its own `clickData`. But the native menu keeps ONE entry per
+     * key, so a key every window contributes -- an app-wide feature like the
+     * presenting control or the assistant -- is owned by whichever window
+     * happened to load last, and every other one's press is dropped by its own
+     * `getIsWindowFocused()` guard. Opening Settings used to take
+     * *Tools → Start Controlling* away from the presenter for exactly that
+     * reason.
+     */
+    isRoutedToFocusedWindow?: boolean;
+};
+
+/**
+ * Contribute this window's items to the native menu, or pass `null` to withdraw
+ * them.
+ *
+ * Withdrawing matters for anything route-scoped: the native menu is global and
+ * outlives the page, so items left behind after a route change keep showing but
+ * their clicks land in a renderer that no longer listens.
+ */
+export function setAppMenuItems(
+    key: string,
+    menusData: CustomMenusDataType | null,
+    options?: AppMenuItemsOptionsType,
+) {
+    appProvider.messageUtils.sendData('main:app:set-menu-items', {
+        key,
+        menusData,
+        options,
+    });
+}
+
+function handleLangAppMenusClick(
+    _event: any,
+    clickData: { openExternalUrl?: string },
+) {
+    const { openExternalUrl } = clickData ?? {};
+    if (openExternalUrl) {
+        appProvider.browserUtils.openExternalURL(openExternalUrl);
+    }
+}
+
+// Separate from `initLangAppMenu` so the caller can unregister it: the async
+// menu build cannot be undone from an effect cleanup, but a listener left
+// behind by StrictMode's double mount would open every tools link twice.
+export function registerLangAppMenuClicked() {
+    return registerAppMenuClicked(handleLangAppMenusClick);
+}
+
+export async function initLangAppMenu() {
+    const menusData: AnyObjectType = {};
+    const langDataList = await getAllLangsAsync();
+    for (const langData of langDataList) {
+        const customMenusData = langData.customMenusData ?? {};
+        Object.entries(customMenusData).forEach(([key, value]) => {
+            menusData[key] ??= [];
+            menusData[key] = menusData[key].concat(value);
+        });
+    }
+    setAppMenuItems('lang', menusData as CustomMenusDataType);
+}
+
+type OpenLyricFontFace = {
+    title: string;
+    fontFaces: string[];
+    indexRange: number;
+}[];
+export function genOpenLyricFontFaces(
+    fontFacesList: OpenLyricFontFace,
+    fontFaceData: {
+        title: string;
+        fontFaces: string[];
+        indexRange: number;
+    },
+) {
+    const fontFaceMap = Object.fromEntries(
+        fontFacesList.map((item) => {
+            return [item.title, item];
+        }),
+    );
+    fontFaceMap[fontFaceData.title] = fontFaceData;
+    const newFontFacesList = Object.values(fontFaceMap);
+    return newFontFacesList.sort((a, b) => {
+        return a.indexRange - b.indexRange;
+    });
 }

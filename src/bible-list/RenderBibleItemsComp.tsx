@@ -1,7 +1,11 @@
-import Bible from './Bible';
+import { useCallback } from 'react';
+
+import type Bible from './Bible';
 import BibleItemRenderComp from './BibleItemRenderComp';
 import { genDuplicatedMessage } from './bibleItemHelpers';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
+import { tran } from '../lang/langHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function RenderBibleItemsComp({
     bible,
@@ -10,14 +14,14 @@ export default function RenderBibleItemsComp({
 }>) {
     const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     const items = bible.items;
+    const shouldAddBibleItem = bible.isDefault && showBibleLookupPopup !== null;
+    const showBibleLookupPopupRef = useAppCurrentRef(showBibleLookupPopup);
+    const handleAddBibleItem = useCallback(() => {
+        showBibleLookupPopupRef.current?.();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <ul
-            className="list-group"
-            style={{
-                minWidth: '220px',
-                maxWidth: '420px',
-            }}
-        >
+        <ul className="list-group">
             {items.map((bibleItem, i1) => {
                 return (
                     <BibleItemRenderComp
@@ -33,7 +37,7 @@ export default function RenderBibleItemsComp({
                     />
                 );
             })}
-            {bible.isDefault && showBibleLookupPopup !== null && (
+            {shouldAddBibleItem && (
                 <button
                     type="button"
                     className={
@@ -44,12 +48,10 @@ export default function RenderBibleItemsComp({
                         margin: 'auto',
                         fontSize: '0.8rem',
                     }}
-                    onClick={() => {
-                        showBibleLookupPopup();
-                    }}
+                    onClick={handleAddBibleItem}
                 >
                     <i className="bi bi-book px-1" />
-                    {'`'}Add Bible Item
+                    {' ' + tran('Add Bible Item')}
                 </button>
             )}
         </ul>

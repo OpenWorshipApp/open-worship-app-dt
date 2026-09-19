@@ -1,4 +1,7 @@
-import { CameraInfoType } from '../helper/cameraHelpers';
+import { useCallback } from 'react';
+
+import type { CameraInfoType } from '../helper/cameraHelpers';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -7,9 +10,10 @@ import {
     genBackgroundMediaItemData,
 } from './backgroundHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
-import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
+import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
 import { handleDragStart } from '../helper/dragHelpers';
 import RenderCameraVideoComp from './RenderCameraVideoComp';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const TITLE_HEIGHT = 30;
 
@@ -33,6 +37,33 @@ export default function BackgroundCameraItemComp({
         cameraInfo.deviceId,
         DragTypeEnum.BACKGROUND_CAMERA,
     );
+    const cameraInfoRef = useAppCurrentRef(cameraInfo);
+    const handleCameraDragStart = useCallback((event: any) => {
+        handleDragStart(event, {
+            dragSerialize: () => {
+                return cameraDragSerialize(cameraInfoRef.current);
+            },
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSelectingRef = useAppCurrentRef(handleSelecting);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        showAppContextMenu(event, [
+            ...genShowOnScreensContextMenu((event) => {
+                handleSelectingRef.current(event, true);
+            }),
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleClicking = useCallback((event: any) => {
+        ScreenBackgroundManager.handleBackgroundSelecting(
+            event,
+            'camera',
+            { src: cameraInfoRef.current.deviceId },
+            false,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className={`${backgroundType}-thumbnail card ${selectedCN}`}
@@ -43,33 +74,19 @@ export default function BackgroundCameraItemComp({
                 margin: '2px',
             }}
             draggable
-            onDragStart={(event) => {
-                handleDragStart(event, {
-                    dragSerialize: () => {
-                        return cameraDragSerialize(cameraInfo);
-                    },
-                });
-            }}
-            onContextMenu={(event) => {
-                showAppContextMenu(event as any, [
-                    ...genShowOnScreensContextMenu((event) => {
-                        handleSelecting(event, true);
-                    }),
-                ]);
-            }}
-            onClick={(event) => {
-                ScreenBackgroundManager.handleBackgroundSelecting(
-                    event,
-                    'camera',
-                    { src: cameraInfo.deviceId },
-                    false,
-                );
-            }}
+            onDragStart={handleCameraDragStart}
+            onContextMenu={handleContextMenuOpening}
+            onClick={handleClicking}
         >
+            <ContextMenuDotsButtonComp
+                isCorner
+                onOpening={handleContextMenuOpening}
+            />
             <div
                 className="card-header w-100 app-ellipsis p-0 px-1"
                 style={{
                     height: `${TITLE_HEIGHT}px`,
+                    paddingRight: '18px',
                 }}
                 title={cameraInfo.label}
             >
@@ -84,7 +101,7 @@ export default function BackgroundCameraItemComp({
                     height: `${height}px`,
                 }}
             >
-                <RenderBackgroundScreenIds
+                <RenderBackgroundScreenIdsComp
                     screenIds={selectedBackgroundSrcList.map(([key]) => {
                         return Number.parseInt(key);
                     })}

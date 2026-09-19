@@ -1,9 +1,10 @@
 import './BibleViewComp.scss';
 
+import { use, useCallback, type DragEvent as ReactDragEvent } from 'react';
+
 import { tran } from '../lang/langHelpers';
-import BibleItemsViewController, {
-    useBibleItemsViewControllerContext,
-} from './BibleItemsViewController';
+import type BibleItemsViewController from './BibleItemsViewController';
+import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 import {
     applyDropped,
     genDraggingClass,
@@ -11,28 +12,42 @@ import {
 } from './readBibleHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
-import RenderBibleEditingHeader from '../bible-lookup/RenderBibleEditingHeader';
+import RenderBibleEditingHeaderComp from '../bible-lookup/RenderBibleEditingHeaderComp';
 import RenderBibleLookupBodyComp from '../bible-lookup/RenderBibleLookupBodyComp';
-import { use } from 'react';
-import LookupBibleItemController, {
-    EditingResultContext,
-} from './LookupBibleItemController';
+import type LookupBibleItemController from './LookupBibleItemController';
+import { EditingResultContext } from './LookupBibleItemController';
 import { useBibleViewFontSizeContext } from '../helper/bibleViewHelpers';
 import {
     bringDomToNearestView,
     checkIsVerticalPartialVisible,
     HIGHLIGHT_SELECTED_CLASSNAME,
 } from '../helper/helpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
-import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
-import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import BibleViewTextComp from './view-extra/BibleViewTextComp';
 import BibleViewRenderHeaderComp from './view-extra/BibleViewRenderHeaderComp';
+import { useAppCurrentRef } from '../helper/appHooks';
+
+function checkIsParentPlayToBottom(verseElement: HTMLElement) {
+    const containerElements = Array.from(
+        document.querySelectorAll('div.bible-view'),
+    ).filter((element) => {
+        return element.contains(verseElement);
+    });
+    if (containerElements.length !== 1) {
+        return false;
+    }
+    const playToBottomElement =
+        containerElements[0].querySelector('i.play-to-bottom');
+    if (!(playToBottomElement instanceof HTMLElement)) {
+        return false;
+    }
+    return !!playToBottomElement.dataset.speed;
+}
 
 function handMovedChecking(
     viewController: BibleItemsViewController,
@@ -67,6 +82,9 @@ function handMovedChecking(
             kjvVerseKey,
         );
         for (const element of elements) {
+            if (checkIsParentPlayToBottom(element)) {
+                continue;
+            }
             bringDomToNearestView(element);
         }
     }
@@ -98,7 +116,7 @@ async function openContextMenu(
                 const lookupController =
                     viewController as LookupBibleItemController;
                 lookupController.openBibleSearch('s');
-                lookupController.setIsBibleSearching(true);
+                lookupController.setIsAdvanceLookupOpened(true);
             },
         });
     }
@@ -134,6 +152,52 @@ export default function BibleViewComp({
     const foundBibleItem = isEditing
         ? (editingResult?.result.bibleItem ?? null)
         : bibleItem;
+    const handleDragOver = useCallback(
+        (event: ReactDragEvent<HTMLDivElement>) => {
+            const currentTarget = event.currentTarget;
+            if (currentTarget.dataset.doNotAllowDrop === '1') {
+                return;
+            }
+            event.preventDefault();
+            removeDraggingClass(event);
+            const className = genDraggingClass(event);
+            event.currentTarget.classList.add(className);
+        },
+        [],
+    );
+    const handleDragLeaving = useCallback(
+        (event: ReactDragEvent<HTMLDivElement>) => {
+            event.preventDefault();
+            removeDraggingClass(event);
+        },
+        [],
+    );
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const handleDropping = useCallback(
+        async (event: ReactDragEvent<HTMLDivElement>) => {
+            applyDropped(
+                event,
+                viewControllerRef.current,
+                bibleItemRef.current,
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const foundBibleItemRef = useAppCurrentRef(foundBibleItem);
+    const uuidRef = useAppCurrentRef(uuid);
+    const handleContextMenu = useCallback((event: any) => {
+        if (foundBibleItemRef.current === null) {
+            return;
+        }
+        openContextMenu(event, {
+            viewController: viewControllerRef.current,
+            foundBibleItem: foundBibleItemRef.current,
+            uuid: uuidRef.current,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             id={id}
@@ -142,32 +206,13 @@ export default function BibleViewComp({
                 (isEditing ? ` ${HIGHLIGHT_SELECTED_CLASSNAME} ` : '')
             }
             style={{ minWidth: '30%' }}
-            onDragOver={(event) => {
-                event.preventDefault();
-                removeDraggingClass(event);
-                const className = genDraggingClass(event);
-                event.currentTarget.classList.add(className);
-            }}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                removeDraggingClass(event);
-            }}
-            onDrop={async (event) => {
-                applyDropped(event, viewController, bibleItem);
-            }}
-            onContextMenu={(event) => {
-                if (foundBibleItem === null) {
-                    return;
-                }
-                openContextMenu(event, {
-                    viewController,
-                    foundBibleItem,
-                    uuid,
-                });
-            }}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeaving}
+            onDrop={handleDropping}
+            onContextMenu={handleContextMenu}
         >
             {isEditing ? (
-                <RenderBibleEditingHeader />
+                <RenderBibleEditingHeaderComp />
             ) : (
                 <BibleViewRenderHeaderComp bibleItem={bibleItem} />
             )}
@@ -188,7 +233,11 @@ export default function BibleViewComp({
                     <BibleViewTextComp bibleItem={bibleItem} />
                 )}
                 <ScrollingHandlerComp
-                    style={{ bottom: '60px' }}
+                    // Both buttons stack in the bottom-right corner, 30px
+                    // apart. Kept low so the pair hugs the card's foot rather
+                    // than floating up over the verse text.
+                    style={{ bottom: '30px' }}
+                    playToBottomStyle={{ bottom: 0 }}
                     shouldShowPlayToBottom
                     movedCheck={{
                         check: (container: HTMLElement) => {

@@ -1,16 +1,28 @@
-import HandleAlertComp from './popup-widget/HandleAlertComp';
-import { main } from './others/appInitHelpers';
-import TopProgressBarComp from './progress-bar/TopProgressBarComp';
-import SettingComp from './setting/SettingComp';
-import ToastComp from './toast/ToastComp';
+import './bootstrapCss';
+import { init } from './boot';
+import { run } from './others/main';
 import AppContextMenuComp from './context-menu/AppContextMenuComp';
+import HandleAlertComp from './popup-widget/HandleAlertComp';
+import TopProgressBarComp from './progress-bar/TopProgressBarComp';
+import { forceReloadAppWindows } from './setting/settingHelpers';
+import ToastComp from './toast/ToastComp';
+import AppWindowToolsComp from './others/AppWindowToolsComp';
 
-main(
-    <>
-        <SettingComp />
-        <TopProgressBarComp />
-        <ToastComp />
-        <HandleAlertComp />
-        <AppContextMenuComp />
-    </>,
-);
+globalThis.addEventListener('beforeunload', () => {
+    forceReloadAppWindows();
+});
+
+init(async () => {
+    // Problem with language object initialization order
+    const SettingComp = (await import('./setting/SettingComp')).default;
+    run(
+        <>
+            <SettingComp />
+            <TopProgressBarComp />
+            <ToastComp />
+            <HandleAlertComp />
+            <AppContextMenuComp />
+            <AppWindowToolsComp />
+        </>,
+    );
+});

@@ -8,78 +8,206 @@ import {
 import AppDocumentListEventListener from '../event/VaryAppDocumentEventListener';
 import DirSource from '../helper/DirSource';
 import { handleError } from '../helper/errorHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import appProvider from '../server/appProvider';
 import {
     fsCheckFileExist,
     fsCopyFilePathToPath,
+    fsExistSync,
     getFileDotExtension,
     getFileFullName,
     getFileName,
+    getMimetypeExtensions,
     getTempPath,
     KEY_SEPARATOR,
+    mimetypeDocx,
     mimetypePdf,
+    mimetypePptx,
     pathBasename,
+    pathJoin,
 } from '../server/fileHelpers';
-import { openSlideQuickEdit } from '../app-document-presenter/SlideEditHandlerComp';
 import { showSimpleToast } from '../toast/toastHelpers';
-import AppDocument, { WrongDimensionType } from './AppDocument';
+import type { WrongDimensionType } from './AppDocument';
+import AppDocument, { openAppDocumentEditorExternal } from './AppDocument';
 import Slide from './Slide';
-import { DroppedFileType } from '../others/droppingFileHelpers';
+import type { DroppedFileType } from '../others/droppingFileHelpers';
 import {
     hideProgressBar,
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
-import { convertToPdf, getSlidesCount } from '../server/appHelpers';
+import { convertToPdf, showFileOrDirExplorer } from '../server/appHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
 import PdfAppDocument from './PdfAppDocument';
-import { createContext, use, useState } from 'react';
+import PptxAppDocument from './PptxAppDocument';
+import DocxAppDocument from './DocxAppDocument';
+import { createContext, use, useCallback, useState } from 'react';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import PdfSlide from './PdfSlide';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import { useScreenVaryAppDocumentManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
-import {
-    checkSelectedFilePathExist,
-    getSelectedFilePath,
-    setSelectedFilePath,
-} from '../others/selectedHelpers';
-import { DisplayType } from '../_screen/screenTypeHelpers';
-import {
+import { useVarySlideOnScreenChangeEffect } from '../_screen/managers/varySlideOnScreenHelpers';
+import { useAppEffect } from '../helper/appHooks';
+import { checkSelectedFilePathExist } from '../others/selectedHelpers';
+import type { DisplayType } from '../_screen/screenTypeHelpers';
+import type {
     VaryAppDocumentType,
-    VaryAppDocumentItemType,
+    VarySlideType,
 } from './appDocumentTypeHelpers';
-import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPreviewerHelpers';
+import {
+    type EventMapperType,
+    type AllControlType as KeyboardControlType,
+} from '../event/KeyboardEventListener';
 
 import libOfficeLogo from './liboffice-logo.png';
 import FileSource from '../helper/FileSource';
+import { appLog } from '../helper/loggerHelpers';
+import { attachBackgroundManager } from '../others/AttachBackgroundManager';
+import {
+    SELECTED_APP_DOCUMENT_SETTING_NAME,
+    getSelectedVaryAppDocumentFilePathWithEnsure,
+    setSelectedVaryAppDocumentFilePath,
+} from './selectedVaryAppDocumentHelpers';
+import { type OptionalPromise } from '../helper/typeHelpers';
+import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
+import { getMenuTitleRevealFile } from '../helper/helpers';
+import { getSlidesCount } from '../server/pptxHelpers';
+import { type ItemBaseFilePath } from '../helper/ItemBase';
+import {
+    getParamFileFullName,
+    getParamIdNum,
+    setParamIdNum,
+} from '../helper/domHelpers';
 
-export function showPdfDocumentContextMenu(
+export const BLANK_HTML_SLIDE_SRC = '/assets/slide0.html';
+export const BLANK_IMAGE_SLIDE_SRC = '/assets/blank.png';
+
+export async function showStaticSlideContextMenu(
     event: any,
-    pdfSlide: PdfSlide,
+    slide: ItemBaseFilePath,
     extraMenuItems: ContextMenuItemType[],
 ) {
     const menuItemOnScreens = genShowOnScreensContextMenu((event) => {
         ScreenVaryAppDocumentManager.handleSlideSelecting(
             event,
-            pdfSlide.filePath,
-            pdfSlide.toJson(),
+            slide.filePath,
+            (slide as any).toJson(),
             true,
         );
     });
-    showAppContextMenu(event, [...menuItemOnScreens, ...extraMenuItems]);
+    const imageFilePath = await slide.getItemFilePath();
+    showAppContextMenu(event, [
+        ...menuItemOnScreens,
+        ...(imageFilePath === null
+            ? []
+            : [
+                  {
+                      childBefore: genContextMenuItemIcon('folder2-open'),
+                      menuElement: getMenuTitleRevealFile(),
+                      onSelect: () => {
+                          showFileOrDirExplorer(imageFilePath);
+                      },
+                  },
+              ]),
+        ...extraMenuItems,
+    ]);
 }
 
-export function gemSlideContextMenuItems(
+const copyShortcutMapper: EventMapperType = {
+    wControlKey: ['Ctrl'],
+    lControlKey: ['Ctrl'],
+    mControlKey: ['Meta'],
+    key: 'c',
+};
+const duplicateShortcutMapper: EventMapperType = {
+    wControlKey: ['Ctrl', 'Shift'],
+    lControlKey: ['Ctrl', 'Shift'],
+    mControlKey: ['Meta', 'Shift'],
+    key: 'd',
+};
+const deleteShortcutMapper: EventMapperType = {
+    key: 'Delete',
+};
+
+export function genEditSlideContextMenuItem(
+    onSelect: () => void,
+): ContextMenuItemType {
+    return {
+        childBefore: genContextMenuItemIcon('pencil-square'),
+        menuElement: (
+            <span className="m-0">
+                {tran('Edit')}
+                <i className="bi bi-box-arrow-up-right ms-2" />
+            </span>
+        ),
+        onSelect,
+    };
+}
+
+export function genSlideContextMenuItems(
     appDocument: AppDocument,
     slide: Slide,
-    extraMenuItems: ContextMenuItemType[],
+    isSelectedEditing: boolean,
 ) {
+    const menuItems: ContextMenuItemType[] = [
+        {
+            childBefore: genContextMenuItemIcon('copy'),
+            menuElement: tran('Copy'),
+            keyboardShortcut: isSelectedEditing
+                ? copyShortcutMapper
+                : undefined,
+            onSelect: async () => {
+                AppDocument.setCopiedSlides([slide]);
+                showSimpleToast(tran('Copied'), tran('Slide is copied'));
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('files'),
+            menuElement: tran('Duplicate'),
+            keyboardShortcut: isSelectedEditing
+                ? duplicateShortcutMapper
+                : undefined,
+            onSelect: () => {
+                appDocument.duplicateSlides([slide]);
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('arrow-right-circle'),
+            menuElement: tran('Move forward'),
+            onSelect: () => {
+                appDocument.moveSlide(slide, true);
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('arrow-left-circle'),
+            menuElement: tran('Move backward'),
+            onSelect: () => {
+                appDocument.moveSlide(slide, false);
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon(
+                slide.isDisabled ? 'eye' : 'eye-slash',
+            ),
+            menuElement: slide.isDisabled ? tran('Enable') : tran('Disable'),
+            onSelect: () => {
+                slide.isDisabled = !slide.isDisabled;
+                appDocument.updateSlide(slide);
+            },
+        },
+    ];
+    if (appProvider.isPagePresenter) {
+        menuItems.push(
+            genEditSlideContextMenuItem(() => {
+                if (appProvider.isPageAppDocumentEditor) {
+                    AppDocumentListEventListener.selectVarySlide(slide);
+                } else {
+                    openAppDocumentEditorExternal(appDocument, slide.id);
+                }
+            }),
+        );
+    }
     const menuItemOnScreens = genShowOnScreensContextMenu((event) => {
         ScreenVaryAppDocumentManager.handleSlideSelecting(
             event,
@@ -88,61 +216,75 @@ export function gemSlideContextMenuItems(
             true,
         );
     });
+    menuItems.push(...menuItemOnScreens, {
+        childBefore: genContextMenuItemIcon('trash3', {
+            color: 'var(--bs-danger)',
+        }),
+        menuElement: tran('Delete'),
+        keyboardShortcut: isSelectedEditing ? deleteShortcutMapper : undefined,
+        onSelect: () => {
+            appDocument.deleteSlides([slide]);
+        },
+    });
+    return menuItems;
+}
+
+export function genSelectedSlidesContextMenuItems(
+    appDocument: AppDocument,
+    slides: Slide[],
+) {
     const menuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('copy'),
             menuElement: tran('Copy'),
+            keyboardShortcut: copyShortcutMapper,
             onSelect: async () => {
-                navigator.clipboard.writeText(slide.clipboardSerialize());
-                showSimpleToast('Copied', 'Slide is copied');
+                AppDocument.setCopiedSlides(slides);
+                showSimpleToast(tran('Copied'), tran('Slides are copied'));
             },
         },
         {
+            childBefore: genContextMenuItemIcon('files'),
             menuElement: tran('Duplicate'),
+            keyboardShortcut: duplicateShortcutMapper,
             onSelect: () => {
-                appDocument.duplicateSlide(slide);
+                appDocument.duplicateSlides(slides);
             },
         },
         {
-            menuElement: tran('Move forward'),
-            onSelect: () => {
-                appDocument.moveSlide(slide, true);
-            },
-        },
-        {
-            menuElement: tran('Move backward'),
-            onSelect: () => {
-                appDocument.moveSlide(slide, false);
-            },
-        },
-        ...(appProvider.isPagePresenter
-            ? [
-                  {
-                      menuElement: tran('Quick Edit'),
-                      onSelect: () => {
-                          if (appProvider.isPageAppDocumentEditor) {
-                              AppDocumentListEventListener.selectAppDocumentItem(
-                                  slide,
-                              );
-                          } else {
-                              openSlideQuickEdit(slide);
-                          }
-                      },
-                  },
-              ]
-            : []),
-        ...menuItemOnScreens,
-        {
+            childBefore: genContextMenuItemIcon('trash3', {
+                color: 'var(--bs-danger)',
+            }),
             menuElement: tran('Delete'),
+            keyboardShortcut: deleteShortcutMapper,
             onSelect: () => {
-                appDocument.deleteSlide(slide);
+                appDocument.deleteSlides(slides);
             },
         },
     ];
-    return [...menuItems, ...extraMenuItems];
+    return menuItems;
 }
 
 export function checkIsPdf(ext: string) {
     return mimetypePdf.extensions.includes(ext.toLocaleLowerCase());
+}
+
+export function checkIsPptx(ext: string) {
+    return mimetypePptx.extensions.includes(ext.toLocaleLowerCase());
+}
+
+export function checkIsDocx(ext: string) {
+    return mimetypeDocx.extensions.includes(ext.toLocaleLowerCase());
+}
+
+export function checkIsLyric(ext: string) {
+    return getMimetypeExtensions('lyric').includes(
+        ext.replace('.', '').toLocaleLowerCase(),
+    );
+}
+
+export function checkIsLyricFilePath(filePath: string) {
+    return checkIsLyric(getFileDotExtension(filePath));
 }
 
 const docFileInfo = {
@@ -158,8 +300,6 @@ const docFileInfo = {
     '.otp': 'OpenDocument Presentation Template',
     '.sxi': 'OpenOffice.org 1.x Presentation',
     '.sti': 'OpenOffice.org 1.x Presentation Template',
-    '.ppt': 'Microsoft PowerPoint 97/2000/XP/2003',
-    '.pptx': 'Microsoft PowerPoint 2007/2010/2013/2016',
     // Draw (Drawing)
     '.odg': 'OpenDocument Drawing',
     '.otg': 'OpenDocument Drawing Template',
@@ -196,7 +336,7 @@ function genAlertMessage() {
                             padding: '2px',
                             borderRadius: '3px',
                             margin: '0 5px',
-                            backgroundColor: '#00000074',
+                            backgroundColor: `${HEX_COLOR_BLACK}74`,
                         }}
                     />
                 </a>
@@ -206,26 +346,27 @@ function genAlertMessage() {
     );
 }
 
-const WIDGET_TITLE = 'Converting to PDF';
+const getWidgetTitle = () => tran('Converting to PDF');
 
 function showConfirmPdfConvert(dirPath: string, file: DroppedFileType) {
     const fileFullName = getFileFullName(file);
     const confirmMessage = renderToStaticMarkup(
         <div>
             <b>"{fileFullName}"</b>
-            {' will be converted to PDF into '}
+            {tran(' will be converted to PDF into ')}
             <b>{dirPath}</b>
         </div>,
     );
-    return showAppConfirm(WIDGET_TITLE, confirmMessage);
+    return showAppConfirm(getWidgetTitle(), confirmMessage);
 }
 
-async function getTempFilePath() {
-    const tempDir = getTempPath();
+async function genTempFilePath(dotExt: string | null) {
+    dotExt ??= '.tmp';
+    const tempDirPath = getTempPath();
     let tempFilePath: string | null = null;
     let i = 0;
     while (tempFilePath === null || (await fsCheckFileExist(tempFilePath))) {
-        tempFilePath = appProvider.pathUtils.join(tempDir, `temp-to-pdf-${i}`);
+        tempFilePath = pathJoin(tempDirPath, `temp-to-pdf-${i}${dotExt}`);
         i++;
     }
     return tempFilePath;
@@ -238,7 +379,7 @@ function toHtmlBold(text: string) {
 async function getPdfFilePath(dirPath: string, fileName: string) {
     let i = 0;
     while (true) {
-        const targetPdfFilePath = appProvider.pathUtils.join(
+        const targetPdfFilePath = pathJoin(
             dirPath,
             `${fileName}${i === 0 ? '' : '-' + i}.pdf`,
         );
@@ -253,59 +394,82 @@ async function startConvertingOfficeFile(
     file: DroppedFileType,
     dirSource: DirSource,
 ) {
-    const tempFilePath = await getTempFilePath();
-    const fileFullName = getFileFullName(file);
-    const targetPdfFilePath = await getPdfFilePath(
-        dirSource.dirPath,
-        getFileName(fileFullName),
-    );
+    const droppedFileFullName = (file as any).name ?? null;
+    const dotExt =
+        droppedFileFullName === null
+            ? null
+            : getFileDotExtension(droppedFileFullName);
+    let tempFilePath: string | null = await genTempFilePath(dotExt);
+    appLog('Temp file path for converting:', tempFilePath);
     try {
-        showProgressBar(WIDGET_TITLE);
-        if (!(await fsCopyFilePathToPath(file, tempFilePath, ''))) {
+        const fileFullName = getFileFullName(file);
+        if (!fileFullName) {
+            throw new Error('Failed to get file name');
+        }
+        const targetPdfFilePath = await getPdfFilePath(
+            dirSource.dirPath,
+            getFileName(fileFullName),
+        );
+        showProgressBar(getWidgetTitle());
+        const fileSource = FileSource.getInstance(tempFilePath);
+        tempFilePath = await fsCopyFilePathToPath(
+            file,
+            fileSource.baseDirPath,
+            fileSource.fullName,
+        );
+        if (tempFilePath === null) {
             throw new Error('Fail to copy file');
         }
         let slidesCount: number | null = null;
         try {
             slidesCount = await getSlidesCount(tempFilePath);
         } catch {}
-        const slideMessage =
-            slidesCount === null
-                ? 'unknown slides count'
-                : slidesCount + ' slides';
+        const slideMessage = slidesCount
+            ? slidesCount + ' slides'
+            : 'unknown slides count';
         showSimpleToast(
-            WIDGET_TITLE,
+            getWidgetTitle(),
             `Document with ${slideMessage} is being converted. ` +
                 'Do not close application',
         );
-        await convertToPdf(tempFilePath, targetPdfFilePath);
+        const error = await convertToPdf(tempFilePath, targetPdfFilePath);
+        if (error !== null) {
+            showSimpleToast(
+                getWidgetTitle(),
+                `Failed to convert ${toHtmlBold(fileFullName)} to PDF. ` +
+                    `Error: ${error.message}`,
+            );
+            return;
+        }
         const pdfPagesCount = await getSlidesCount(targetPdfFilePath);
         if (slidesCount != null && pdfPagesCount !== slidesCount) {
             showSimpleToast(
-                WIDGET_TITLE,
+                getWidgetTitle(),
                 `Warning: Slides count mismatch. ` +
                     `Original: ${slidesCount}, Converted: ${pdfPagesCount}`,
             );
         }
         showSimpleToast(
-            WIDGET_TITLE,
+            getWidgetTitle(),
             `${toHtmlBold(fileFullName)} is converted to PDF ` +
                 `"${targetPdfFilePath}"`,
         );
     } catch (error: any) {
         const regex = /Could not find .+ binary/i;
         if (regex.test(error.message)) {
-            showAppAlert('LibreOffice is not installed', genAlertMessage());
+            showAppAlert(
+                tran('LibreOffice is not installed'),
+                genAlertMessage(),
+            );
         } else {
             handleError(error);
-            const pdfFileSource = FileSource.getInstance(targetPdfFilePath);
             showSimpleToast(
-                WIDGET_TITLE,
-                'Something wrong during converting, please check converted ' +
-                    `file "${pdfFileSource.fullName}" and try again.`,
+                getWidgetTitle(),
+                tran('Something wrong during converting, please try again.'),
             );
         }
     }
-    hideProgressBar(WIDGET_TITLE);
+    hideProgressBar(getWidgetTitle());
 }
 
 export async function convertOfficeFile(
@@ -334,6 +498,7 @@ export async function selectSlide(event: any, currentFilePath: string) {
             })
             .map((filePath) => {
                 return {
+                    childBefore: genContextMenuItemIcon('file-earmark-slides'),
                     menuElement: pathBasename(filePath),
                     title: filePath,
                     onSelect: () => {
@@ -346,12 +511,28 @@ export async function selectSlide(event: any, currentFilePath: string) {
     });
 }
 
-export const SelectedVaryAppDocumentContext = createContext<{
+export type SetSelectedVaryAppDocumentOptionsType = {
+    /**
+     * Bypass the pin. Only for a change the user did not initiate as a SWITCH —
+     * a rename of the pinned document, which the selection has to follow.
+     */
+    isForce?: boolean;
+};
+
+export type SelectedAppDocumentContextType = {
     selectedVaryAppDocument: VaryAppDocumentType | null;
+    /**
+     * Answers `false` when the pin refused the switch (it has already toasted).
+     * The return value is not the guard — it is how a caller learns to skip its
+     * own follow-up side effects.
+     */
     setSelectedVaryAppDocument: (
         newVaryAppDocument: VaryAppDocumentType | null,
-    ) => void;
-} | null>(null);
+        options?: SetSelectedVaryAppDocumentOptionsType,
+    ) => OptionalPromise<boolean>;
+};
+export const SelectedVaryAppDocumentContext =
+    createContext<SelectedAppDocumentContextType | null>(null);
 
 function useContext() {
     const context = use(SelectedVaryAppDocumentContext);
@@ -378,10 +559,17 @@ export function useSelectedAppDocumentSetterContext() {
     return context.setSelectedVaryAppDocument;
 }
 
-export const SelectedEditingSlideContext = createContext<{
-    selectedSlide: Slide | null;
-    setSelectedDocument: (newSlide: Slide | null) => void;
-} | null>(null);
+export type SelectedSlideContextType = {
+    selectedSlideEditing: Slide | null;
+    holdingSlides: Slide[];
+    setSelectedSlide: (
+        newSlide: Slide | null,
+        controlType?: KeyboardControlType,
+    ) => OptionalPromise<void>;
+    onSlideItemsKeyboardEvent: (event: any) => OptionalPromise<void>;
+};
+export const SelectedEditingSlideContext =
+    createContext<SelectedSlideContextType | null>(null);
 
 function useContextItem() {
     const context = use(SelectedEditingSlideContext);
@@ -397,17 +585,22 @@ function useContextItem() {
 export function useSelectedEditingSlideContext() {
     const context = useContextItem();
     if (
-        context.selectedSlide === null ||
-        !(context.selectedSlide instanceof Slide)
+        context.selectedSlideEditing === null ||
+        !(context.selectedSlideEditing instanceof Slide)
     ) {
         throw new Error('No selected slide');
     }
-    return context.selectedSlide;
+    return context.selectedSlideEditing;
 }
 
 export function useSelectedEditingSlideSetterContext() {
     const context = useContextItem();
-    return context.setSelectedDocument;
+    return context.setSelectedSlide;
+}
+
+export function useSlideItemsControlEventContext() {
+    const context = useContextItem();
+    return context.onSlideItemsKeyboardEvent;
 }
 
 export function useSlideWrongDimension(
@@ -415,22 +608,22 @@ export function useSlideWrongDimension(
     display: DisplayType,
 ) {
     const [wrong, setWrong] = useState<WrongDimensionType | null>(null);
-    const checkWrongDimension = async () => {
+    const checkWrongDimension = useCallback(async () => {
         if (!AppDocument.checkIsThisType(varyAppDocument)) {
             return;
         }
         const wrong = await varyAppDocument.getIsWrongDimension(display);
         setWrong(wrong);
-    };
+    }, [varyAppDocument, display]);
     useFileSourceEvents(
         ['update'],
         checkWrongDimension,
-        [varyAppDocument, display],
+        [checkWrongDimension],
         varyAppDocument.filePath,
     );
     useAppEffect(() => {
         checkWrongDimension();
-    }, [varyAppDocument, display]);
+    }, [checkWrongDimension]);
     return wrong;
 }
 
@@ -438,7 +631,7 @@ export function toKeyByFilePath(filePath: string, id: number) {
     return `${filePath}${KEY_SEPARATOR}${id}`;
 }
 
-export function appDocumentItemExtractKey(key: string) {
+export function toVarySlideExtractKey(key: string) {
     const [filePath, id] = key.split(KEY_SEPARATOR);
     if (filePath === undefined || id === undefined) {
         return null;
@@ -449,8 +642,8 @@ export function appDocumentItemExtractKey(key: string) {
     };
 }
 
-export async function appDocumentItemFromKey(key: string) {
-    const extracted = appDocumentItemExtractKey(key);
+export async function toSlideFromKey(key: string) {
+    const extracted = toVarySlideExtractKey(key);
     if (extracted === null) {
         return null;
     }
@@ -462,30 +655,63 @@ export async function appDocumentItemFromKey(key: string) {
     return await varyAppDocument.getItemById(id);
 }
 
-const SELECTED_APP_DOCUMENT_SETTING_NAME = 'selected-vary-app-document';
+function getInjectedAppDocumentFilePath(): string | null {
+    try {
+        // Only the app-document editor is opened with an app document injected
+        // through `?file=` (`openAppDocumentEditorExternal`). The bible-note,
+        // lyric-editor and web-editor popups reuse the SAME `?file=` param for
+        // their own files, which live in other directories — without this gate
+        // every one of those windows resolved `<documents>/<their file>`, missed,
+        // and logged "App document file not found" on load. Worse, a documents
+        // file that happened to share the name would have made those popups
+        // believe they host an injected app document.
+        if (!appProvider.isPageAppDocumentEditor) {
+            return null;
+        }
+        const fileFullName = getParamFileFullName(globalThis.location.href);
+        if (fileFullName === null) {
+            return null;
+        }
+        const dirPath = DirSource.getDirPathBySettingName(
+            dirSourceSettingNames.APP_DOCUMENT,
+        );
+        if (dirPath === null) {
+            throw new Error('App document directory not set');
+        }
+        const filePath = pathJoin(dirPath, fileFullName);
+        if (fsExistSync(filePath) === false) {
+            throw new Error(`App document file not found: ${fileFullName}`);
+        }
+        return filePath;
+    } catch (error) {
+        handleError(error);
+    }
+    return null;
+}
+
+const injectedAppDocumentFilePath = getInjectedAppDocumentFilePath();
+export const isInjectedAppDocumentFilePath =
+    injectedAppDocumentFilePath !== null;
+
 const SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME =
     SELECTED_APP_DOCUMENT_SETTING_NAME + '-item';
 
-export async function getSelectedVaryAppDocumentFilePath() {
-    return await getSelectedFilePath(
-        SELECTED_APP_DOCUMENT_SETTING_NAME,
-        dirSourceSettingNames.APP_DOCUMENT,
-    );
-}
-
-export function setSelectedVaryAppDocumentFilePath(filePath: string | null) {
-    setSelectedFilePath(
-        SELECTED_APP_DOCUMENT_SETTING_NAME,
-        dirSourceSettingNames.APP_DOCUMENT,
-        filePath,
-    );
-}
-
 export async function getSelectedVaryAppDocument() {
+    if (injectedAppDocumentFilePath !== null) {
+        const fileSource = FileSource.getInstance(injectedAppDocumentFilePath);
+        document.title = `${appProvider.windowTitle} - ${fileSource.name}`;
+        return AppDocument.getInstance(injectedAppDocumentFilePath);
+    }
     const selectedAppDocumentFilePath =
-        await getSelectedVaryAppDocumentFilePath();
+        await getSelectedVaryAppDocumentFilePathWithEnsure();
     if (selectedAppDocumentFilePath === null) {
         return null;
+    }
+    if (checkIsLyricFilePath(selectedAppDocumentFilePath)) {
+        // Restoring a lyric from the setting can run before any lyric module
+        // has been evaluated, so its getter may not be registered yet. A
+        // dynamic import keeps the static cycle broken.
+        await import('../lyric-list/LyricAppDocument');
     }
     return varyAppDocumentFromFilePath(selectedAppDocumentFilePath);
 }
@@ -496,13 +722,40 @@ export async function setSelectedVaryAppDocument(
     setSelectedVaryAppDocumentFilePath(varyAppDocument?.filePath ?? null);
 }
 
-export async function getSelectedEditingSlideFilePath() {
+export async function getSelectedEditingSlideFilePath(): Promise<{
+    filePath: string;
+    id: number;
+} | null> {
+    if (injectedAppDocumentFilePath !== null) {
+        const appDocument = AppDocument.getInstance(
+            injectedAppDocumentFilePath,
+        );
+        const id = getParamIdNum(globalThis.location.href);
+        const slides = await appDocument.getSlides();
+        let selectedSlide = slides[0];
+        if (id !== null) {
+            const foundSlide = slides.find((slide) => {
+                return slide.id === id;
+            });
+            if (foundSlide) {
+                selectedSlide = foundSlide;
+            }
+        }
+        return {
+            filePath: injectedAppDocumentFilePath,
+            id: selectedSlide?.id ?? -1,
+        };
+    }
+
     const selectedKey =
         getSetting(SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME) ?? '';
     const [filePath, idString] = selectedKey.split(KEY_SEPARATOR);
     const selectedAppDocument = await getSelectedVaryAppDocument();
     const isValid =
         AppDocument.checkIsThisType(selectedAppDocument) &&
+        // A lyric passes the type test but has no editable slide, and resolving
+        // one would render the whole song on boot.
+        selectedAppDocument.isEditable &&
         (await checkSelectedFilePathExist(
             SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME,
             dirSourceSettingNames.APP_DOCUMENT,
@@ -524,6 +777,10 @@ export function setSelectedEditingSlideFilePath(
     filePath: string | null,
     id: number,
 ) {
+    if (isInjectedAppDocumentFilePath) {
+        const url = setParamIdNum(globalThis.location.href, id);
+        globalThis.history.replaceState(null, '', url);
+    }
     const keyPath = filePath === null ? '' : toKeyByFilePath(filePath, id);
     setSetting(SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME, keyPath);
 }
@@ -535,7 +792,10 @@ export async function getSelectedEditingSlide() {
     }
     const { filePath, id } = selected;
     const varyAppDocument = varyAppDocumentFromFilePath(filePath);
-    if (!AppDocument.checkIsThisType(varyAppDocument)) {
+    if (
+        !AppDocument.checkIsThisType(varyAppDocument) ||
+        !varyAppDocument.isEditable
+    ) {
         return null;
     }
     return await varyAppDocument.getItemById(id);
@@ -545,61 +805,109 @@ export function setSelectedEditingSlide(slide: Slide | null) {
     setSelectedEditingSlideFilePath(slide?.filePath ?? null, slide?.id ?? -1);
 }
 
+// NOTE: `LyricAppDocument` cannot be imported here. It extends `AppDocument`,
+// and `AppDocument` imports this module — a static import would close the cycle
+// and evaluate `class ... extends undefined` whenever `AppDocument` happens to
+// be the first module loaded. The dependency is inverted instead: importing
+// `LyricAppDocument` is what registers its getter, which adds no new edge.
+type LyricAppDocumentGetterType = (filePath: string) => VaryAppDocumentType;
+let lyricAppDocumentGetter: LyricAppDocumentGetterType | null = null;
+export function setLyricAppDocumentGetter(
+    getter: LyricAppDocumentGetterType | null,
+) {
+    lyricAppDocumentGetter = getter;
+}
+
 export function varyAppDocumentFromFilePath(filePath: string) {
     if (checkIsPdf(getFileDotExtension(filePath))) {
         return PdfAppDocument.getInstance(filePath);
     }
+    if (checkIsPptx(getFileDotExtension(filePath))) {
+        return PptxAppDocument.getInstance(filePath);
+    }
+    if (checkIsDocx(getFileDotExtension(filePath))) {
+        return DocxAppDocument.getInstance(filePath);
+    }
+    if (lyricAppDocumentGetter !== null && checkIsLyricFilePath(filePath)) {
+        return lyricAppDocumentGetter(filePath);
+    }
     return AppDocument.getInstance(filePath);
 }
 
-export function useAnyItemSelected(
-    varyAppDocumentItems?: VaryAppDocumentItemType[] | null,
-) {
+export function useAnyItemSelected(varySlides?: VarySlideType[] | null) {
     const [isAnyItemSelected, setIsAnyItemSelected] = useState(false);
     const refresh = () => {
-        if (!varyAppDocumentItems || varyAppDocumentItems.length === 0) {
+        if (!varySlides || varySlides.length === 0) {
             return;
         }
-        const isSelected = varyAppDocumentItems.some((varyAppDocumentItem) => {
+        const isSelected = varySlides.some((varySlide) => {
             const dataList = ScreenVaryAppDocumentManager.getDataList(
-                varyAppDocumentItem.filePath,
-                varyAppDocumentItem.id,
+                varySlide.filePath,
+                varySlide.id,
             );
             return dataList.length > 0;
         });
         setIsAnyItemSelected(isSelected);
     };
-    useScreenVaryAppDocumentManagerEvents(['update'], undefined, refresh);
-    useAppEffect(refresh, [varyAppDocumentItems]);
+    // Deliberately NOT `useScreenVaryAppDocumentManagerEvents`: that hook
+    // re-renders its component on every screen event regardless of what the
+    // callback finds, and this one sits on `VarySlidesComp`, the parent of
+    // every slide preview. Here the boolean is the only thing that can move the
+    // list, so a present that does not change it costs nothing.
+    useVarySlideOnScreenChangeEffect(refresh);
+    useAppEffect(refresh, [varySlides?.map((item) => item.id).join('|')]);
     return isAnyItemSelected;
 }
 
-export function checkIsAppDocumentItemOnScreen(
-    varyAppDocumentItem: VaryAppDocumentItemType,
-) {
+export function checkIsVarySlideOnScreen(varySlide: VarySlideType) {
     const data = ScreenVaryAppDocumentManager.getDataList(
-        varyAppDocumentItem.filePath,
-        varyAppDocumentItem.id,
+        varySlide.filePath,
+        varySlide.id,
     );
     return data.length > 0;
+}
+
+// Deliberately does NOT call `getSlides()`. This runs for every row of every
+// document/lyric list on every screen update, and `getSlides()` is a full
+// document parse — for a lyric that means re-reading the file and every language
+// module, for a PDF/PPTX re-reading the rendered slides. The on-screen entries
+// already carry `filePath`, so matching on that answers "is this document on a
+// screen" without materialising a single slide.
+// `getDataList` already reads (and copies) the on-screen map, so an emptiness
+// pre-check here would only read it a second time — this runs once per row per
+// screen update.
+export async function checkIsVaryAppDocumentFilePathOnScreen(filePath: string) {
+    return ScreenVaryAppDocumentManager.getDataList(filePath).length > 0;
 }
 
 export async function checkIsVaryAppDocumentOnScreen(
     varyAppDocument: VaryAppDocumentType,
 ) {
-    const dataList = getAppDocumentListOnScreenSetting();
-    if (Object.keys(dataList).length === 0) {
-        return false;
-    }
-    const varyAppDocumentItems = await varyAppDocument.getSlides();
-    for (const varyAppDocumentItem of varyAppDocumentItems) {
-        const data = ScreenVaryAppDocumentManager.getDataList(
-            varyAppDocumentItem.filePath,
-            varyAppDocumentItem.id,
-        );
-        if (data !== null && data.length > 0) {
-            return true;
-        }
-    }
-    return false;
+    return await checkIsVaryAppDocumentFilePathOnScreen(
+        varyAppDocument.filePath,
+    );
+}
+
+// The attached-background cache is keyed by `filePath` ALONE:
+// `getAttachedBackground` stores the whole `<filePath>.bg.json` map with
+// `cached.set(filePath, data)` and the `id` argument only indexes into that
+// already-loaded object (`../others/AttachBackgroundManager.ts`). Every slide
+// of a document carries that same document `filePath`, so ONE call warms the
+// entry for every id.
+// Do NOT reintroduce a per-slide loop. It forced `getSlides()` — a full
+// document parse — purely for ids it then discarded: for an 88-page PDF that
+// decoded every page PNG in parallel (162MB of bitmap) and forked a
+// `main:app:pdf-pages-count` child that read the whole PDF, all to warm a
+// 5-second cache entry; for PPTX/DOCX it MD5s the entire file. The redundant
+// calls also queued behind the same per-file mutex, delaying the very preview
+// reads this preload exists to accelerate.
+export async function preloadAttachedBackground(
+    varyAppDocument: VaryAppDocumentType,
+) {
+    // Destructure outside the timer so the closure retains a string rather
+    // than the whole document instance.
+    const { filePath } = varyAppDocument;
+    setTimeout(() => {
+        attachBackgroundManager.getAttachedBackground(filePath);
+    }, 0);
 }

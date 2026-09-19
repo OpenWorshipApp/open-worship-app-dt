@@ -1,11 +1,17 @@
 import './MiniScreen.scss';
 
+import { useCallback, useRef } from 'react';
+
 import MiniScreenFooterComp, { defaultRangeSize } from './MiniScreenFooterComp';
 import { useStateSettingNumber } from '../../helper/settingHelpers';
-import { handleCtrlWheel } from '../../others/AppRangeComp';
+import { useZoomingRegistering } from '../../others/AppRangeComp';
 import { getAllScreenManagers } from '../managers/screenManagerHelpers';
 import ScreenManager from '../managers/ScreenManager';
-import MiniScreenBodyComp from './MiniScreenBodyComp';
+import MiniScreenBodyComp, {
+    openMiniScreenContextMenu,
+} from './MiniScreenBodyComp';
+import { useAppCurrentRef } from '../../helper/appHooks';
+import { tran } from '../../lang/langHelpers';
 
 ScreenManager.initReceiveScreenMessage();
 export default function MiniScreenComp() {
@@ -13,25 +19,44 @@ export default function MiniScreenComp() {
         'mini-screen-previewer',
         defaultRangeSize.size,
     );
-    const setPreviewScale1 = (size: number) => {
-        setPreviewScale(size);
+    const setPreviewScaleRef = useAppCurrentRef(setPreviewScale);
+    const setPreviewScale1 = useCallback((size: number) => {
+        setPreviewScaleRef.current(size);
         for (const screenManager of getAllScreenManagers()) {
-            screenManager.fireRefreshEvent();
+            screenManager.fireScaleEvent();
         }
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    useZoomingRegistering(containerRef, {
+        value: previewScale,
+        setValue: setPreviewScale1,
+        defaultSize: defaultRangeSize,
+    });
+
     return (
         <div
             className="card w-100 h-100 app-zero-border-radius"
-            onWheel={(event) => {
-                handleCtrlWheel({
-                    event,
-                    value: previewScale,
-                    setValue: setPreviewScale1,
-                    defaultSize: defaultRangeSize,
-                });
-            }}
+            ref={containerRef}
         >
             <MiniScreenBodyComp previewScale={previewScale} />
+            <i
+                className={
+                    'bi bi-three-dots-vertical' +
+                    ' app-caught-hover-pointer app-round-icon'
+                }
+                title={tran('More Options')}
+                onClick={openMiniScreenContextMenu}
+                style={{
+                    right: '7px',
+                    bottom: '7px',
+                    position: 'absolute',
+                    width: '25px',
+                    textAlign: 'center',
+                    padding: '0px',
+                }}
+            />
             <MiniScreenFooterComp
                 previewSizeScale={previewScale}
                 setPreviewSizeScale={setPreviewScale1}

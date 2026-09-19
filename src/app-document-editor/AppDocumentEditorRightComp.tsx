@@ -2,6 +2,7 @@ import { lazy } from 'react';
 
 import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazySlideEditorGroundComp = lazy(() => {
     return import('../slide-editor/SlideEditorGroundComp');
@@ -23,12 +24,12 @@ export default function AppDocumentEditorRightComp() {
                 {
                     children: LazySlideEditorGroundComp,
                     key: 'v1',
-                    widgetName: 'Slide Editor Ground',
+                    ...toWidgetLabel('Slide Editor Ground'),
                 },
                 {
                     children: LazyBackgroundComp,
                     key: 'v2',
-                    widgetName: 'Background',
+                    ...toWidgetLabel('Background'),
                 },
             ]}
         />

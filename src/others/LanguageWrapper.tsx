@@ -1,25 +1,22 @@
-import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
-import { MutationType } from '../helper/helpers';
-import {
-    checkIsValidLocale,
-    getFontFamilyByLocale,
-    LocaleType,
-} from '../lang/langHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
+import type { MutationType } from '../helper/helpers';
+import type { LocaleType } from '../lang/langHelpers';
+import { checkIsValidLocale, getFontFamilyByLocale } from '../lang/langHelpers';
 
 export async function applyFontFamily(element: Node, type: MutationType) {
     if (!(element instanceof HTMLElement)) {
         return;
     }
-    let locale = element.dataset.locale;
+    let locale = element.dataset.localeFf;
     if (!locale) {
-        const bibleKey = element.dataset.bibleKey;
+        const bibleKey = element.dataset.bibleKeyFf;
         if (bibleKey) {
             locale = await getBibleLocale(bibleKey);
         }
     }
     if (locale && checkIsValidLocale(locale)) {
         const fontFamily = await getFontFamilyByLocale(locale as LocaleType);
-        if (fontFamily) {
+        if (fontFamily != undefined) {
             element.style.fontFamily = fontFamily;
         }
     }

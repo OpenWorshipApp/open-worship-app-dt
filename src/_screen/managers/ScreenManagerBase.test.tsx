@@ -1,0 +1,344 @@
+// @vitest-environment jsdom
+
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+
+const mocks = vi.hoisted(() => ({
+    getWindowDim: vi.fn(() => ({ width: 1440, height: 900 })),
+    getSetting: vi.fn(),
+    setSetting: vi.fn(),
+    getAllShowingScreenIds: vi.fn(() => [1]),
+    hideScreen: vi.fn(),
+    setDisplay: vi.fn(),
+    showScreen: vi.fn(),
+    getDisplayByScreenId: vi.fn((screenId: number) => ({
+        id: screenId + 100,
+        bounds: {
+            x: 0,
+            y: 0,
+            width: 1920,
+            height: 1080,
+        },
+    })),
+    getDisplayIdByScreenId: vi.fn((screenId: number) => screenId + 100),
+    showSimpleToast: vi.fn(),
+    enableBackgroundSyncGroup: vi.fn(),
+    enableVarySyncGroup: vi.fn(),
+    enableBibleSyncGroup: vi.fn(),
+    enableForegroundSyncGroup: vi.fn(),
+    appProvider: {
+        isPagePresenter: true,
+        isPageScreen: false,
+        systemUtils: {
+            isDev: false,
+        },
+        // langHelpers registers a menu listener at module load.
+        messageUtils: {
+            listenForData: vi.fn(),
+            sendData: vi.fn(),
+        },
+    },
+}));
+
+let TestScreenManagerBase: any;
+
+vi.mock('../../helper/helpers', () => ({
+    getWindowDim: mocks.getWindowDim,
+}));
+
+vi.mock('../../helper/settingHelpers', () => ({
+    getSetting: mocks.getSetting,
+    setSetting: mocks.setSetting,
+}));
+vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: mocks.getSetting,
+        setItem: mocks.setSetting,
+    },
+}));
+
+vi.mock('../screenHelpers', () => ({
+    getAllShowingScreenIds: mocks.getAllShowingScreenIds,
+    hideScreen: mocks.hideScreen,
+    setDisplay: mocks.setDisplay,
+    showScreen: mocks.showScreen,
+}));
+
+vi.mock('./screenHelpers', () => ({
+    getDisplayByScreenId: mocks.getDisplayByScreenId,
+    getDisplayIdByScreenId: mocks.getDisplayIdByScreenId,
+    SCREEN_MANAGER_SETTING_NAME: 'screen-manager',
+}));
+
+vi.mock('../../server/appProvider', () => ({
+    default: mocks.appProvider,
+}));
+
+vi.mock('../../toast/toastHelpers', () => ({
+    showSimpleToast: mocks.showSimpleToast,
+}));
+
+vi.mock('./ScreenBackgroundManager', () => ({
+    default: class ScreenBackgroundManager {
+        static enableSyncGroup = mocks.enableBackgroundSyncGroup;
+    },
+}));
+
+vi.mock('./ScreenVaryAppDocumentManager', () => ({
+    default: class ScreenVaryAppDocumentManager {
+        static enableSyncGroup = mocks.enableVarySyncGroup;
+    },
+}));
+
+vi.mock('./ScreenBibleManager', () => ({
+    default: class ScreenBibleManager {
+        static enableSyncGroup = mocks.enableBibleSyncGroup;
+    },
+}));
+
+vi.mock('./ScreenForegroundManager', () => ({
+    default: class ScreenForegroundManager {
+        static enableSyncGroup = mocks.enableForegroundSyncGroup;
+    },
+}));
+
+describe('ScreenManagerBase', () => {
+    beforeAll(async () => {
+        const { default: ScreenManagerBase } =
+            await import('./ScreenManagerBase');
+
+        TestScreenManagerBase = class extends ScreenManagerBase {
+            sendSyncScreen = vi.fn();
+            clear = vi.fn();
+            delete = vi.fn(async () => {});
+            receiveScreenDropped = vi.fn();
+            sendScreenMessage = vi.fn();
+            createScreenManagerBaseGhost = vi.fn((screenId: number) => {
+                return new TestScreenManagerBase(screenId);
+            });
+            getScreenManagerBaseForce = vi.fn((screenId: number) => {
+                return new TestScreenManagerBase(screenId);
+            });
+        };
+    });
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mocks.appProvider.isPagePresenter = true;
+        mocks.appProvider.isPageScreen = false;
+        mocks.getAllShowingScreenIds.mockReturnValue([1]);
+        mocks.getWindowDim.mockReturnValue({ width: 1440, height: 900 });
+    });
+
+    test('parses keys, derives dimensions, and toggles visibility', () => {
+        const manager = new TestScreenManagerBase(1);
+
+        expect(TestScreenManagerBase.idFromKey('42')).toBe(42);
+        expect(() => TestScreenManagerBase.idFromKey('nope')).toThrow(
+            'Invalid screen key: nope',
+        );
+        expect(manager.width).toBe(1920);
+        expect(manager.height).toBe(1080);
+        expect(manager.checkIsLockedWithMessage()).toBe(false);
+        expect(mocks.showSimpleToast).not.toHaveBeenCalled();
+
+        const target = document.createElement('div');
+        const scrollToMock = vi.fn();
+        Object.defineProperties(target, {
+            scrollWidth: { configurable: true, value: 600 },
+            clientWidth: { configurable: true, value: 200 },
+            scrollHeight: { configurable: true, value: 500 },
+            clientHeight: { configurable: true, value: 100 },
+            scrollTo: { configurable: true, value: scrollToMock },
+        });
+        manager.getElementsByDomSelector = vi.fn(() => [target]);
+        manager.syncScrollPercentage({
+            domSelector: '.sync-target',
+            scroll: { x: 0.25, y: 0.5 },
+        });
+        expect(scrollToMock).toHaveBeenCalledWith({ left: 100, top: 200 });
+
+        manager.isShowing = true;
+        manager.isShowing = false;
+
+        expect(mocks.showScreen).toHaveBeenCalledWith({
+            screenId: 1,
+            displayId: 101,
+        });
+        expect(mocks.hideScreen).toHaveBeenCalledWith(1);
+    });
+
+    test('uses window dimensions on screen pages and reports locked state', () => {
+        mocks.appProvider.isPageScreen = true;
+        const manager = new TestScreenManagerBase(2);
+        expect(manager.width).toBe(1440);
+        expect(manager.height).toBe(900);
+
+        manager.isLocked = true;
+        expect(manager.isLocked).toBe(true);
+        expect(manager.checkIsLockedWithMessage()).toBe(true);
+        expect(mocks.showSimpleToast).toHaveBeenCalledOnce();
+
+        mocks.appProvider.isPagePresenter = false;
+        expect(manager.isLocked).toBe(false);
+    });
+
+    test('says the lock refusal once for a burst of refused changes', () => {
+        const nowSpy = vi.spyOn(Date, 'now');
+        const manager = new TestScreenManagerBase(4);
+        manager.isLocked = true;
+        nowSpy.mockReturnValue(50_000);
+        // Clear All reaches the check from every layer in one press: all of
+        // them refused, one message.
+        expect(manager.checkIsLockedWithMessage()).toBe(true);
+        expect(manager.checkIsLockedWithMessage()).toBe(true);
+        expect(manager.checkIsLockedWithMessage()).toBe(true);
+        expect(mocks.showSimpleToast).toHaveBeenCalledOnce();
+        // A separate press a moment later is told again.
+        nowSpy.mockReturnValue(51_500);
+        expect(manager.checkIsLockedWithMessage()).toBe(true);
+        expect(mocks.showSimpleToast).toHaveBeenCalledTimes(2);
+        nowSpy.mockRestore();
+    });
+
+    test('validates stage numbers, persists display ids, and checks sync groups', () => {
+        const manager = new TestScreenManagerBase(3);
+        manager.stage = 2;
+        expect(manager.stage).toBe(2);
+        expect(() => {
+            manager.stage = -1;
+        }).toThrow('Stage number cannot be negative');
+
+        manager.noSyncGroupMap.set('test-sync', true);
+        expect(
+            manager.checkIsSyncGroupEnabled({ eventNamePrefix: 'test-sync' }),
+        ).toBe(false);
+        expect(
+            manager.checkIsSyncGroupEnabled({
+                eventNamePrefix: 'missing-sync',
+            }),
+        ).toBe(true);
+
+        manager.displayId = 66;
+        expect(mocks.setDisplay).not.toHaveBeenCalled();
+
+        manager.isShowing = true;
+        manager.displayId = 77;
+
+        expect(mocks.setSetting).toHaveBeenCalledWith(
+            'screen-manager-pid-3',
+            '77',
+        );
+        expect(mocks.setDisplay).toHaveBeenCalledWith({
+            screenId: 3,
+            displayId: 77,
+        });
+    });
+
+    test('syncs color notes across managers and fires events safely', async () => {
+        const manager = new TestScreenManagerBase(4);
+
+        await manager.setColorNote('amber');
+        expect(manager.colorNote).toBe('amber');
+        expect(mocks.enableBackgroundSyncGroup).toHaveBeenCalledWith(4);
+        expect(mocks.enableVarySyncGroup).toHaveBeenCalledWith(4);
+        expect(mocks.enableBibleSyncGroup).toHaveBeenCalledWith(4);
+        expect(mocks.enableForegroundSyncGroup).toHaveBeenCalledWith(4);
+        expect(manager.sendSyncScreen).toHaveBeenCalledOnce();
+
+        expect(() => {
+            manager.fireUpdateEvent();
+            manager.fireColorNoteUpdateEvent();
+            manager.fireInstanceEvent();
+            manager.fireVisibleEvent();
+            manager.fireRefreshEvent();
+            manager.fireScaleEvent();
+            TestScreenManagerBase.fireUpdateEvent();
+            TestScreenManagerBase.fireColorNoteUpdateEvent();
+            TestScreenManagerBase.fireInstanceEvent();
+            TestScreenManagerBase.fireVisibleEvent();
+            TestScreenManagerBase.fireRefreshEvent();
+            TestScreenManagerBase.fireScaleEvent();
+        }).not.toThrow();
+
+        await expect(manager.getColorNote()).resolves.toBe('amber');
+    });
+
+    test('exposes the screen key, selection, and lock state', async () => {
+        const manager = new TestScreenManagerBase(5);
+
+        expect(manager.key).toBe('5');
+        expect(manager.isSelected).toBe(false);
+        manager.isSelected = true;
+        expect(manager.isSelected).toBe(true);
+
+        await manager.setIsLockedWithSyncGroup(true);
+        expect(manager.isLocked).toBe(true);
+    });
+
+    test('media playback is only checked against a mounted screen div', () => {
+        const manager = new TestScreenManagerBase(6);
+
+        // nothing mounted yet
+        expect(manager.checkIsMediaPlaying()).toBe(false);
+
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        manager.divRef = new WeakRef(div);
+        expect(manager.checkIsMediaPlaying(false)).toBe(false);
+
+        // the default selector lookup finds nothing until a screen wires it up
+        expect(manager.getElementsByDomSelector('.anything')).toEqual([]);
+        div.remove();
+    });
+
+    test('the base class refuses every screen action it does not implement', async () => {
+        const { default: ScreenManagerBase } =
+            await import('./ScreenManagerBase');
+        const manager = new (ScreenManagerBase as any)(7);
+
+        expect(() => manager.sendSyncScreen()).toThrow(
+            'sendSyncScreen is not implemented.',
+        );
+        expect(() => manager.clear()).toThrow('clear is not implemented.');
+        await expect(manager.delete()).rejects.toThrow(
+            'delete is not implemented.',
+        );
+        expect(() => manager.receiveScreenDropped({} as any)).toThrow(
+            'receiveScreenDropped is not implemented.',
+        );
+        expect(() => manager.sendScreenMessage({} as any, false)).toThrow(
+            'sendScreenMessage is not implemented.',
+        );
+        expect(() => manager.createScreenManagerBaseGhost(7)).toThrow(
+            'createScreenManagerGhost is not implemented.',
+        );
+        expect(() => manager.getScreenManagerBaseForce(7)).toThrow(
+            'getScreenManagerForce is not implemented.',
+        );
+    });
+
+    test('the ghost stand-in for a deleted screen is inert', async () => {
+        const { ScreenManagerBaseGhost } = await import('./ScreenManagerBase');
+        const ghost = new ScreenManagerBaseGhost(8);
+
+        expect(ghost.isDeleted).toBe(true);
+        expect(ghost.isShowing).toBe(false);
+        // a ghost never asks the main process anything
+        expect(mocks.getAllShowingScreenIds).not.toHaveBeenCalled();
+
+        expect(() => {
+            ghost.sendSyncScreen();
+            ghost.clear();
+            ghost.receiveScreenDropped({} as any);
+            ghost.sendScreenMessage({} as any, false);
+        }).not.toThrow();
+        await expect(ghost.delete()).resolves.toBeUndefined();
+
+        expect(ghost.createScreenManagerBaseGhost(9)).toBeInstanceOf(
+            ScreenManagerBaseGhost,
+        );
+        expect(ghost.getScreenManagerBaseForce(9)).toBeInstanceOf(
+            ScreenManagerBaseGhost,
+        );
+    });
+});

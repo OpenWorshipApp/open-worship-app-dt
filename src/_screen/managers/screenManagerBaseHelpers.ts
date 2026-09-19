@@ -1,7 +1,8 @@
 import { screenManagerSettingNames } from '../../helper/constants';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
-import ScreenManagerBase from './ScreenManagerBase';
-import { isValidJson } from '../../helper/helpers';
+import { setSetting } from '../../helper/settingHelpers';
+import type ScreenManagerBase from './ScreenManagerBase';
+import { parseJsonSafely } from '../../helper/helpers';
+import { genDerivedSettingReader } from '../../helper/derivedSettingHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
 export type TypeScreenManagerSettingType = {
@@ -20,25 +21,36 @@ export function setScreenManagerBaseCache(
     cache.set(screenManagerBase.key, screenManagerBase);
 }
 
-export function getScreenManagersInstanceSetting(): TypeScreenManagerSettingType[] {
-    const settingString = getSetting(screenManagerSettingNames.MANAGERS) ?? '';
-    if (isValidJson(settingString, true)) {
-        const json = JSON.parse(settingString);
-        let instanceSettingList = json.filter(({ screenId }: any) => {
-            return typeof screenId === 'number';
-        });
-        instanceSettingList = instanceSettingList.filter(
-            (value: any, index: number, self: any) => {
-                return (
-                    self.findIndex((t: any) => {
-                        return t.screenId === value.screenId;
-                    }) === index
-                );
-            },
-        );
-        return instanceSettingList;
+// Memoized because it is the SECOND parse hiding behind every on-screen read:
+// `getValidOnScreen` calls it to filter the maps against the live screens, and
+// `getScreenManagerByScreenId` calls it once per screen per present.
+const readScreenManagersInstanceSetting = genDerivedSettingReader<
+    TypeScreenManagerSettingType[]
+>([screenManagerSettingNames.MANAGERS], ([settingString]) => {
+    const json = parseJsonSafely(settingString, true);
+    if (json === null) {
+        return [];
     }
-    return [];
+    let instanceSettingList = json.filter(({ screenId }: any) => {
+        return typeof screenId === 'number';
+    });
+    instanceSettingList = instanceSettingList.filter(
+        (value: any, index: number, self: any) => {
+            return (
+                self.findIndex((t: any) => {
+                    return t.screenId === value.screenId;
+                }) === index
+            );
+        },
+    );
+    return instanceSettingList;
+});
+
+export function getScreenManagersInstanceSetting(): TypeScreenManagerSettingType[] {
+    // Copied for the same reason as the on-screen maps: `saveScreenManagersSetting`
+    // reads this list and rebuilds it, and callers must not be able to reach the
+    // memoized array.
+    return readScreenManagersInstanceSetting().slice();
 }
 
 export function getValidOnScreen(data: { [key: string]: any }) {
@@ -65,7 +77,7 @@ export function saveScreenManagersSetting(deletedScreenId?: number) {
                 screenId: screenManagerBase.screenId,
                 isSelected: screenManagerBase.isSelected,
                 isLocked: screenManagerBase.isLocked,
-                stageNumber: screenManagerBase.stageNumber,
+                stageNumber: screenManagerBase.stage,
                 colorNote,
             });
         }
@@ -99,7 +111,7 @@ export function saveScreenManagersSetting(deletedScreenId?: number) {
 }
 
 export function getSelectedScreenManagerBases() {
-    return Array.from(cache.values()).filter((screenManagerBase) => {
+    return getAllScreenManagerBases().filter((screenManagerBase) => {
         return screenManagerBase.isSelected;
     });
 }
@@ -122,5 +134,11 @@ export function deleteScreenManagerBaseCache(key: string) {
 }
 
 export function getAllScreenManagerBases(): ScreenManagerBase[] {
-    return Array.from(cache.values());
+    // Sorted by screenId, not Map insertion order: this list drives the
+    // "which screen?" picker, which otherwise listed screens as 0, 2, 1 while
+    // the previewer cards render 0, 1, 2 — an easy mis-click under service
+    // pressure.
+    return Array.from(cache.values()).sort((a, b) => {
+        return a.screenId - b.screenId;
+    });
 }

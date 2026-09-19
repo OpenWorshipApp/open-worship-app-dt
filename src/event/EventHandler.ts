@@ -1,6 +1,6 @@
-import { OptionalPromise } from '../helper/typeHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
 
-export type ListenerType<T> = (data: T) => OptionalPromise<void>;
+export type ListenerType<T> = (data: T, time: number) => OptionalPromise<void>;
 
 export type RegisteredEventType<T, F> = {
     eventName: T;
@@ -35,7 +35,8 @@ export class BasicEventHandler<T extends string> {
     }
 
     addPropEvent(eventName: T, data?: any) {
-        this.propEvent.push({ eventName, data });
+        const eventData = { eventName, data };
+        this.propEvent.push(eventData);
         this.checkPropEvent();
     }
 
@@ -67,6 +68,7 @@ export class BasicEventHandler<T extends string> {
 
     private async checkOnEvent(eventName: T, data?: any) {
         this.guardEventName(eventName);
+        const time = Date.now();
         const listeners = [
             ...(this.eventListenersMapper.get(eventName) ?? []),
         ].reverse();
@@ -74,7 +76,7 @@ export class BasicEventHandler<T extends string> {
             if (!(await this.checkShouldNext(data))) {
                 break;
             }
-            listener(data);
+            listener(data, time);
             if (data?.defaultPrevented) {
                 break;
             }
@@ -102,7 +104,7 @@ export default class EventHandler<
     T extends string,
 > extends BasicEventHandler<T> {
     static readonly eventNamePrefix: string = 'event';
-    static eventHandler: EventHandler<any> | null = null;
+    private static eventHandler: EventHandler<any> | null = null;
 
     static async checkShouldNext(_data: any) {
         return true;
@@ -124,17 +126,16 @@ export default class EventHandler<
     ): RegisteredEventType<T, F>[] {
         const eventHandler = this.getEventHandler();
         return eventNames.map((eventName) => {
-            eventHandler.addOnEventListener(
-                this.prefixEventName(eventName),
-                listener,
-            );
+            const prefixedEventName = this.prefixEventName(eventName);
+            eventHandler.addOnEventListener(prefixedEventName, listener);
             return { eventName, listener };
         });
     }
 
     static addPropEvent<T extends string>(eventName: T, data?: any) {
         const eventHandler = this.getEventHandler();
-        eventHandler.addPropEvent(this.prefixEventName(eventName), data);
+        const prefixedEventName = this.prefixEventName(eventName);
+        eventHandler.addPropEvent(prefixedEventName, data);
     }
 
     static unregisterEventListener<T extends string, F>(

@@ -1,8 +1,11 @@
+import { useCallback } from 'react';
 import DownloadedBibleItemComp from './DownloadedBibleItemComp';
-import { BibleListType } from './bibleSettingHelpers';
+import type { BibleListType } from './bibleSettingHelpers';
 import OnlineBibleItemComp from './OnlineBibleItemComp';
 import LoadingComp from '../../others/LoadingComp';
-import { LocaleType } from '../../lang/langHelpers';
+import type { LocaleType } from '../../lang/langHelpers';
+import { tran } from '../../lang/langHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 type DownloadingBibleInfoType = {
     isUpdatable: boolean;
@@ -22,11 +25,18 @@ export default function SettingDownloadedBibleComp({
     downloadedBibleInfoList: BibleListType;
     setDownloadedBibleInfoList: (bbList: BibleListType) => void;
 }>) {
+    const setDownloadedBibleInfoListRef = useAppCurrentRef(
+        setDownloadedBibleInfoList,
+    );
+    const handleRefresh = useCallback(() => {
+        setDownloadedBibleInfoListRef.current(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (downloadedBibleInfoList === null) {
         return <LoadingComp />;
     }
     if (downloadedBibleInfoList === undefined) {
-        return <div>Unable to get downloaded bible list</div>;
+        return <div>{tran('Unable to get downloaded bible list')}</div>;
     }
     const bibleInfoList = downloadedBibleInfoList.map<DownloadingBibleInfoType>(
         (bibleInfo) => {
@@ -49,18 +59,13 @@ export default function SettingDownloadedBibleComp({
     return (
         <div className="w-100">
             <div>
-                <button
-                    className="btn btn-info"
-                    onClick={() => {
-                        setDownloadedBibleInfoList(null);
-                    }}
-                >
-                    <i className="bi bi-arrow-clockwise" /> Refresh
+                <button className="btn btn-info" onClick={handleRefresh}>
+                    <i className="bi bi-arrow-clockwise" /> {tran('Refresh')}
                 </button>
             </div>
             <ul className="list-group d-flex flex-fill">
                 {bibleInfoList.length === 0 ? (
-                    <div>No bible downloaded</div>
+                    <div>{tran('No bible downloaded')}</div>
                 ) : (
                     <>
                         {bibleInfoList.map((bibleInfo, i) => {
@@ -94,16 +99,24 @@ function RenderItem({
     index: number;
     setDownloadedBibleInfoList: (bbList: BibleListType) => void;
 }>) {
-    const handleDownloadedEvent = () => {
-        setDownloadedBibleInfoList(null);
-    };
-    const handleDeleting = () => {
-        setDownloadedBibleInfoList(null);
-    };
-    const handleUpdating = () => {
-        bibleInfo.isDownloading = true;
-        setDownloadedBibleInfoList([...bibleInfoList]);
-    };
+    const setDownloadedBibleInfoListRef = useAppCurrentRef(
+        setDownloadedBibleInfoList,
+    );
+    const handleDownloadedEvent = useCallback(() => {
+        setDownloadedBibleInfoListRef.current(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleDeleting = useCallback(() => {
+        setDownloadedBibleInfoListRef.current(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const bibleInfoRef = useAppCurrentRef(bibleInfo);
+    const bibleInfoListRef = useAppCurrentRef(bibleInfoList);
+    const handleUpdating = useCallback(() => {
+        bibleInfoRef.current.isDownloading = true;
+        setDownloadedBibleInfoListRef.current([...bibleInfoListRef.current]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (bibleInfo.isDownloading) {
         return (
             <OnlineBibleItemComp

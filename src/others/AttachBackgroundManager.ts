@@ -1,11 +1,12 @@
 import { dirSourceSettingNames } from '../helper/constants';
-import { DragTypeEnum, DroppedDataType } from '../helper/DragInf';
+import type { DroppedDataType } from '../helper/DragInf';
+import { DragTypeEnum } from '../helper/DragInf';
 import FileSource from '../helper/FileSource';
 import {
-    fsCheckFileExist,
-    fsDeleteFile,
-    fsWriteFile,
-} from '../server/fileHelpers';
+    BackgroundWebUrlSource,
+    isBackgroundWebUrlItemData,
+} from '../background/backgroundWebUrlHelpers';
+import { fsCheckFileExist, fsDeleteFile } from '../server/fileHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { BaseDirFileSource } from '../setting/directory-setting/directoryHelpers';
 import CacheManager from './CacheManager';
@@ -13,6 +14,13 @@ import CacheManager from './CacheManager';
 export type AttachBackgroundType = { [key: string]: DroppedDataType };
 
 const cached = new CacheManager<AttachBackgroundType | null>(5);
+
+function filterNotNullEntries<T>(
+    entry: [string, T | null],
+): entry is [string, T] {
+    return entry[1] !== null;
+}
+
 export default class AttachBackgroundManager {
     static genMetaDataFilePath(filePath: string) {
         return `${filePath}.bg.json`;
@@ -34,7 +42,7 @@ export default class AttachBackgroundManager {
             AttachBackgroundManager.genMetaDataFilePath(filePath);
         const newData = Object.fromEntries(
             Object.entries(data)
-                .map(([key, value]) => {
+                .map(([key, value]): [string, DroppedDataType | null] => {
                     if (
                         [
                             DragTypeEnum.BACKGROUND_COLOR,
@@ -42,6 +50,18 @@ export default class AttachBackgroundManager {
                         ].includes(value.type)
                     ) {
                         return [key, value];
+                    }
+                    if (
+                        value.type === DragTypeEnum.BACKGROUND_WEB &&
+                        value.item instanceof BackgroundWebUrlSource
+                    ) {
+                        return [
+                            key,
+                            {
+                                ...value,
+                                item: value.item.toData(),
+                            },
+                        ];
                     }
                     const fileSource = value.item as FileSource;
                     const baseDirSettingName =
@@ -62,9 +82,7 @@ export default class AttachBackgroundManager {
                         },
                     ];
                 })
-                .filter(([_, value]) => {
-                    return value !== null;
-                }),
+                .filter(filterNotNullEntries),
         );
         await FileSource.getInstance(metaDataFilePath).writeFileData(
             JSON.stringify(newData),
@@ -76,8 +94,11 @@ export default class AttachBackgroundManager {
         const metaDataFilePath =
             AttachBackgroundManager.genMetaDataFilePath(filePath);
         const fileSource = FileSource.getInstance(metaDataFilePath);
+        // Never create the meta file on the read path — merely listing files
+        // must not write `.bg.json` next to every item. `saveData` creates it
+        // on actual attach.
         if (!(await fsCheckFileExist(metaDataFilePath))) {
-            await fsWriteFile(metaDataFilePath, JSON.stringify({}));
+            return {};
         }
         const data = await fileSource.readFileJsonData();
         if (data === null) {
@@ -85,7 +106,7 @@ export default class AttachBackgroundManager {
         }
         const newData = Object.fromEntries(
             Object.entries(data)
-                .map(([key, value]) => {
+                .map(([key, value]): [string, DroppedDataType | null] => {
                     if (
                         [
                             DragTypeEnum.BACKGROUND_COLOR,
@@ -93,6 +114,21 @@ export default class AttachBackgroundManager {
                         ].includes(value.type)
                     ) {
                         return [key, value];
+                    }
+                    if (
+                        value.type === DragTypeEnum.BACKGROUND_WEB &&
+                        isBackgroundWebUrlItemData(value.item)
+                    ) {
+                        return [
+                            key,
+                            {
+                                ...value,
+                                item: new BackgroundWebUrlSource(value.item),
+                            },
+                        ];
+                    }
+                    if (typeof value.item !== 'string') {
+                        return [key, null];
                     }
                     const baseDirFileSource = new BaseDirFileSource(
                         this.getBaseDirSettingName(value),
@@ -110,9 +146,7 @@ export default class AttachBackgroundManager {
                         },
                     ];
                 })
-                .filter(([_, value]) => {
-                    return value !== null;
-                }),
+                .filter(filterNotNullEntries),
         );
         return newData;
     }
@@ -128,13 +162,30 @@ export default class AttachBackgroundManager {
         return `attached-background-${filePath}`;
     }
 
+    public getAttachedBackgroundSync(filePath: string, id?: string | number) {
+        const cachedData = cached.getSync(filePath);
+        if (cachedData !== null) {
+            const data = cachedData;
+            const attachedData = data[this.toKey(id)] ?? null;
+            return attachedData;
+        }
+    }
+
     public async getAttachedBackground(
         filePath: string,
         id?: string | number,
     ): Promise<DroppedDataType | null> {
         return await unlocking(this.toLockingKey(filePath), async () => {
-            const cachedData = await cached.get(filePath);
-            const data = cachedData ?? (await this.readData(filePath));
+            let data: AttachBackgroundType | null;
+            if (await cached.has(filePath)) {
+                data = await cached.get(filePath);
+            } else {
+                data = await this.readData(filePath);
+                await cached.set(filePath, data);
+            }
+            if (data === null) {
+                return null;
+            }
             const attachedData = data[this.toKey(id)] ?? null;
             return attachedData;
         });

@@ -1,10 +1,15 @@
-import { ReactElement, ReactNode } from 'react';
+import { useState, type ReactElement, type ReactNode } from 'react';
 
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
-import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
-import { CameraInfoType } from '../helper/cameraHelpers';
+import type { CameraInfoType } from '../helper/cameraHelpers';
+import { useAppEffect } from '../helper/appHooks';
+import PptxAppDocument from '../app-document-list/PptxAppDocument';
+import { dirSourceSettingNames } from '../helper/constants';
+import type DirSource from '../helper/DirSource';
+import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
 
 export type RenderChildType = (
     filePath: string,
@@ -66,4 +71,75 @@ export function cameraDragDeserialize(data: string) {
     return {
         src: data,
     };
+}
+
+export type VarySlideAudioDataType = {
+    slideIndex: number;
+    slideId: number;
+    filePaths: string[];
+    slideFilePath: string;
+};
+export type VaryAppDocumentAudioDataType = {
+    [key: string]: VarySlideAudioDataType[];
+};
+async function getAudioDataList(dirSource: DirSource) {
+    if (!dirSource.dirPath) {
+        return null;
+    }
+    const filePaths = await dirSource.getFilePathsQuick('pptx', true);
+    const audioDataList = await Promise.all(
+        filePaths.map(async (filePath) => {
+            const pptxAppDocument = PptxAppDocument.getInstance(filePath);
+            const audioSlideDataList =
+                await pptxAppDocument.getAudioFilePaths();
+            if (audioSlideDataList.length === 0) {
+                return null;
+            }
+            const fileName = pptxAppDocument.fileSource.name;
+            return [fileName, audioSlideDataList] as [
+                string,
+                VarySlideAudioDataType[],
+            ];
+        }),
+    );
+    const audioDataObject = Object.fromEntries(
+        audioDataList.filter((item) => {
+            return item !== null;
+        }),
+    );
+    const dataEntries = Object.entries(audioDataObject);
+    if (
+        dataEntries.every(
+            ([, audioSlideDataList]) => audioSlideDataList.length === 0,
+        )
+    ) {
+        return null;
+    }
+    return audioDataObject;
+}
+export function useAppDocumentAudioData() {
+    const [audioData, setAudioData] =
+        useState<VaryAppDocumentAudioDataType | null>(null);
+    const dirSource = useGenDirSourceReload(dirSourceSettingNames.APP_DOCUMENT);
+
+    useAppEffect(() => {
+        if (dirSource === null) {
+            return;
+        }
+        getAudioDataList(dirSource).then((audioDataObject) => {
+            setAudioData(audioDataObject);
+        });
+        const registeredEvent = dirSource.registerEventListener(
+            ['refresh', 'reload'],
+            async () => {
+                const audioDataObject = await getAudioDataList(dirSource);
+                setAudioData(audioDataObject);
+            },
+        );
+        return () => {
+            dirSource.unregisterEventListener(registeredEvent);
+        };
+    }, [dirSource]);
+
+    return audioData;
 }

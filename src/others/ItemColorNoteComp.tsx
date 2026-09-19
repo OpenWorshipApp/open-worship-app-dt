@@ -2,13 +2,12 @@ import { useMemo, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import colorList from './color-list.json';
-import ColorNoteInf from '../helper/ColorNoteInf';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import type ColorNoteInf from '../helper/ColorNoteInf';
+import { useAppEffectAsync } from '../helper/appHooks';
 import { freezeObject } from '../helper/helpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 
 freezeObject(colorList);
 
@@ -27,7 +26,7 @@ export function chooseColorNote(
     // unique colors by key
     const items: ContextMenuItemType[] = [
         {
-            childBefore: <i className="bi bi-x-lg" style={{ color: 'red' }} />,
+            childBefore: genContextMenuItemIcon('x-lg', { color: 'red' }),
             menuElement: tran('No Color'),
             title: tran('Clear Color Note'),
             disabled: colorNote === null,
@@ -37,19 +36,16 @@ export function chooseColorNote(
         },
         ...colors.map(([name, colorCode]): ContextMenuItemType => {
             return {
+                // The swatch leads the row so it lines up with the icon column
+                // every other menu uses — and with "No Color" right above it.
+                childBefore: genContextMenuItemIcon('record-circle', {
+                    color: colorCode,
+                }),
                 menuElement: name,
                 disabled: colorNote === colorCode,
                 onSelect: () => {
                     setColorNote(colorCode);
                 },
-                childAfter: (
-                    <div className="flex-fill">
-                        <i
-                            className="bi bi-record-circle float-end"
-                            style={{ color: colorCode }}
-                        />
-                    </div>
-                ),
             };
         }),
     ];
@@ -58,8 +54,10 @@ export function chooseColorNote(
 
 export default function ItemColorNoteComp({
     item,
+    onChange,
 }: Readonly<{
     item: ColorNoteInf;
+    onChange?: (colorNote: string | null) => void;
 }>) {
     const [colorNote, setColorNote] = useState<string | null>(null);
     useAppEffectAsync(
@@ -73,6 +71,7 @@ export default function ItemColorNoteComp({
     const setColorNote1 = (colorNote: string | null) => {
         setColorNote(colorNote);
         item.setColorNote(colorNote);
+        onChange?.(colorNote);
     };
     const title = useMemo(() => {
         const reverseColorMap: Record<string, string> = Object.entries({
@@ -85,24 +84,26 @@ export default function ItemColorNoteComp({
             },
             {} as Record<string, string>,
         );
-        return reverseColorMap[colorNote ?? ''] ?? 'No Color';
+        return reverseColorMap[colorNote ?? ''] ?? tran('No Color');
     }, [colorNote]);
 
     return (
         <span
-            className={`color-note app-caught-hover-pointer ${colorNote ? 'active' : ''}`}
+            className={`color-note ${colorNote ? 'active' : ''}`}
             title={title}
-            onClick={chooseColorNote.bind(null, colorNote, setColorNote1)}
         >
             <i
-                className="bi bi-record-circle"
-                style={
-                    colorNote
+                className="bi bi-record-circle app-caught-hover-pointer"
+                onClick={chooseColorNote.bind(null, colorNote, setColorNote1)}
+                style={{
+                    textShadow: '0 0 2px var(--bs-info-text-emphasis)',
+                    ...(colorNote
                         ? {
                               color: colorNote,
                           }
-                        : {}
-                }
+                        : {}),
+                    opacity: colorNote ? 1 : 0.2,
+                }}
             />
         </span>
     );

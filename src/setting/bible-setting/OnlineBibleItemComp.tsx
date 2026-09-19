@@ -1,7 +1,11 @@
-import { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
+import { useCallback } from 'react';
+
+import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
+import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { useDownloadBible } from './bibleDownloadingHelpers';
 import { getAllXMLFileKeys } from './bibleXMLJsonDataHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function OnlineBibleItemComp({
     bibleInfo,
@@ -18,21 +22,28 @@ export default function OnlineBibleItemComp({
         bibleInfo,
         onDownloaded,
     );
-    const handleDownloadStarting = async () => {
+    const bibleInfoRef = useAppCurrentRef(bibleInfo);
+    const startDownloadBibleRef = useAppCurrentRef(startDownloadBible);
+    const refreshRef = useAppCurrentRef(refresh);
+    const handleDownloadStarting = useCallback(async () => {
         const keysMap = await getAllXMLFileKeys();
-        if (keysMap[bibleInfo.key]) {
-            showSimpleToast('Already in XML', 'This bible is already in XML');
-            refresh?.();
+        if (keysMap[bibleInfoRef.current.key]) {
+            showSimpleToast(
+                tran('Already in XML'),
+                tran('This bible is already in XML'),
+            );
+            refreshRef.current?.();
             return;
         }
-        startDownloadBible();
-    };
+        startDownloadBibleRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const isBibleXMLExist = !!bibleXMLKeysMap[bibleInfo.key];
     return (
         <li className="list-group-item">
             <div
                 className="w-100"
-                title={isBibleXMLExist ? 'Already in XML' : ''}
+                title={isBibleXMLExist ? tran('Already in XML') : ''}
             >
                 <span>
                     {bibleInfo.title} ({bibleInfo.key})
@@ -44,7 +55,8 @@ export default function OnlineBibleItemComp({
                             disabled={isBibleXMLExist}
                             onClick={handleDownloadStarting}
                         >
-                            Download <i className="bi bi-cloud-arrow-down" />
+                            {tran('Download')}{' '}
+                            <i className="bi bi-cloud-arrow-down" />
                         </button>
                     </div>
                 ) : (

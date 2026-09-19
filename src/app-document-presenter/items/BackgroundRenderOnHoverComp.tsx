@@ -1,10 +1,13 @@
-import { ReactNode, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useCallback, useState } from 'react';
 
 export default function BackgroundRenderOnHoverComp({
     genChildren,
     src,
+    opacity = 0.3,
 }: Readonly<{
     src: string;
+    opacity?: number;
     genChildren: (dim: { width: number; height: number }) => ReactNode;
 }>) {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -12,21 +15,25 @@ export default function BackgroundRenderOnHoverComp({
         width: 0,
         height: 0,
     });
+    const handleMouseOver = useCallback((event: any) => {
+        setIsPlaying(true);
+        const { clientWidth, clientHeight } = event.currentTarget;
+        setDim({
+            width: clientWidth,
+            height: clientHeight,
+        });
+    }, []);
+    const handleMouseOut = useCallback(() => {
+        setIsPlaying(false);
+    }, []);
     return (
         <div
-            className="w-100 h-100"
-            onMouseEnter={(event) => {
-                setIsPlaying(true);
-                setDim({
-                    width: event.currentTarget.clientWidth,
-                    height: event.currentTarget.clientHeight,
-                });
-            }}
-            onMouseLeave={() => {
-                setIsPlaying(false);
-            }}
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
             style={{
-                opacity: isPlaying ? 1 : 0.3,
+                width: '100%',
+                height: '100%',
+                opacity: isPlaying ? 1 : opacity,
                 backgroundImage: `url(${src})`,
                 backgroundSize: 'cover',
                 backgroundRepeat: 'no-repeat',

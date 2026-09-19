@@ -1,32 +1,32 @@
 import { useState } from 'react';
 
-import { useAppEffect } from '../../helper/debuggerHelpers';
-import {
-    CanvasItemEventDataType,
-    useCanvasControllerContext,
-} from './CanvasController';
-import { CanvasControllerEventType } from './canvasHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
+import type { CanvasItemEventDataType } from './CanvasController';
+import type CanvasController from './CanvasController';
+import { useCanvasControllerContext } from './CanvasController';
+import type { CanvasControllerEventType } from './canvasHelpers';
+import { type ListenerType } from '../../event/EventHandler';
 
 export function useCanvasControllerEvents(
     eventTypes: CanvasControllerEventType[],
-    callback?: (data: CanvasItemEventDataType) => void,
+    callback?: ListenerType<CanvasItemEventDataType>,
 ) {
     const canvasController = useCanvasControllerContext();
+    const callbackRef = useAppCurrentRef(callback);
     useAppEffect(() => {
         const regEvents = canvasController.itemRegisterEventListener(
             eventTypes,
-            (data) => {
-                callback?.(data);
+            (data, time) => {
+                callbackRef.current?.(data, time);
             },
         );
         return () => {
             canvasController.unregisterEventListener(regEvents);
         };
-    }, [canvasController]);
+    }, [JSON.stringify(eventTypes), canvasController]);
 }
 
-export function useSlideCanvasScale() {
-    const canvasController = useCanvasControllerContext();
+export function useSlideCanvasScale(canvasController: CanvasController) {
     const [scale, setScale] = useState(canvasController.scale);
     useAppEffect(() => {
         const regEvents = canvasController.itemRegisterEventListener(
@@ -45,12 +45,9 @@ export function useSlideCanvasScale() {
 export function useCanvasControllerRefreshEvents(
     eventTypes?: CanvasControllerEventType[],
 ) {
-    if (eventTypes === undefined) {
-        eventTypes = ['update', 'scale'];
-    }
-    const [n, setN] = useState(0);
-    useCanvasControllerEvents(eventTypes, () => {
-        setN((n) => n + 1);
+    eventTypes ??= ['update', 'scale'];
+    const [_n, setN] = useState(Date.now());
+    useCanvasControllerEvents(eventTypes, (_data, time) => {
+        setN(time);
     });
-    return n;
 }

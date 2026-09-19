@@ -1,31 +1,48 @@
+import { useCallback } from 'react';
+
 import InputHandlerComp from './InputHandlerComp';
-import RenderExtraButtonsRightComp from './RenderExtraButtonsRightComp';
+import RenderExtraButtonsRightComp, {
+    AdvanceLookupHandlerComp,
+} from './RenderExtraButtonsRightComp';
 import BibleLookupInputHistoryComp from './BibleLookupInputHistoryComp';
 import appProvider from '../server/appProvider';
-import { ModalCloseButton } from '../app-modal/ModalComp';
+import { ModalCloseButtonComp } from '../app-modal/ModalComp';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { AIConfigComp } from '../bible-reader/AIConfigComp';
 import RenderOpenWikiDictionaryComp from './RenderOpenWikiDictionaryComp';
+import RenderExportWordComp from './RenderExportWordComp';
+import { useAppCurrentRef } from '../helper/appHooks';
+import LocationNameLookupToggleComp from '../location-name-lookup/LocationNameLookupToggleComp';
+
+// The history strip beside the input group is sized against half of this, and
+// `.app-input-group-header` in `BibleReaderComp.scss` caps it at the same value
+// — change all three together.
+const INPUT_GROUP_WIDTH = 395;
 
 export default function RenderBibleLookupHeaderComp({
-    isLookupOnline,
-    setIsLookupOnline,
+    setIsAdvanceLookupOpened,
+    isAdvanceLookupOpened,
 }: Readonly<{
-    isLookupOnline: boolean;
-    setIsLookupOnline: (isLookupOnline: boolean) => void;
+    setIsAdvanceLookupOpened: (isAdvanceLookupOpened: boolean) => void;
+    isAdvanceLookupOpened: boolean;
 }>) {
     const viewController = useLookupBibleItemControllerContext();
     const hideBibleLookupPopup = useToggleBibleLookupPopupContext(false);
 
-    const handleBibleKeyChanging = async (
-        _oldBibleKey: string,
-        newBibleKey: string,
-    ) => {
-        viewController.applyTargetOrBibleKey(viewController.selectedBibleItem, {
-            bibleKey: newBibleKey,
-        });
-    };
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const handleBibleKeyChanging = useCallback(
+        async (_oldBibleKey: string, newBibleKey: string) => {
+            viewControllerRef.current.applyTargetOrBibleKey(
+                viewControllerRef.current.selectedBibleItem,
+                {
+                    bibleKey: newBibleKey,
+                },
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     return (
         <div
             className="card-header d-flex w-100 p-0 overflow-hidden align-items-center"
@@ -33,43 +50,62 @@ export default function RenderBibleLookupHeaderComp({
                 height: '38px',
             }}
         >
+            {viewController.isMinimized ? null : (
+                <div
+                    className="app-flex-item h-100 overflow-hidden d-flex align-items-center"
+                    style={{
+                        width: `calc(50% - ${INPUT_GROUP_WIDTH / 2}px)`,
+                    }}
+                >
+                    <BibleLookupInputHistoryComp />
+                </div>
+            )}
             <div
-                className="flex-item h-100 overflow-hidden d-flex align-items-center"
-                style={{
-                    width: 'calc(50% - 175px)',
-                }}
-            >
-                <BibleLookupInputHistoryComp />
-            </div>
-            <div
-                className="flex-item input-group app-input-group-header"
-                style={{ width: 350 }}
+                className="app-flex-item input-group app-input-group-header"
+                style={{ width: INPUT_GROUP_WIDTH }}
             >
                 <InputHandlerComp onBibleKeyChange={handleBibleKeyChanging} />
             </div>
-            <div className="mx-2">
-                <AIConfigComp />
+            <div className="mx-1">
+                <LocationNameLookupToggleComp />
             </div>
-            <div
-                className={
-                    'flex-item flex-fill justify-content-end' +
-                    (appProvider.isPageReader ? '' : ' pe-5')
-                }
-            >
-                <RenderOpenWikiDictionaryComp />
-                <div className="float-start">
-                    <RenderExtraButtonsRightComp
-                        setIsLookupOnline={setIsLookupOnline}
-                        isLookupOnline={isLookupOnline}
+            {viewController.isMinimized ? (
+                <div className="mx-2">
+                    <AdvanceLookupHandlerComp
+                        isAdvanceLookupOpened={isAdvanceLookupOpened}
+                        handleToggleLookupOnline={() =>
+                            setIsAdvanceLookupOpened(!isAdvanceLookupOpened)
+                        }
                     />
                 </div>
-            </div>
-            {hideBibleLookupPopup === null ? null : (
-                <ModalCloseButton
-                    close={() => {
-                        hideBibleLookupPopup();
-                    }}
-                />
+            ) : (
+                <>
+                    <div className="mx-2">
+                        <AIConfigComp />
+                    </div>
+                    <div
+                        className={
+                            'app-flex-item flex-fill justify-content-end' +
+                            ' align-items-center' +
+                            (appProvider.isPageReader ? '' : ' pe-5')
+                        }
+                    >
+                        <RenderExtraButtonsRightComp
+                            setIsAdvanceLookupOpened={setIsAdvanceLookupOpened}
+                            isAdvanceLookupOpened={isAdvanceLookupOpened}
+                        >
+                            <RenderExportWordComp />
+                            <RenderOpenWikiDictionaryComp />
+                        </RenderExtraButtonsRightComp>
+                    </div>
+                    {hideBibleLookupPopup === null ? null : (
+                        <ModalCloseButtonComp
+                            close={() => {
+                                hideBibleLookupPopup();
+                            }}
+                        />
+                    )}
+                </>
             )}
         </div>
     );

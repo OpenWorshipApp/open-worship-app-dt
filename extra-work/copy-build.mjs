@@ -1,41 +1,16 @@
 'use strict';
 /* eslint-disable */
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  unlinkSync,
-  readdirSync,
-  statSync,
-} from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import process from 'node:process';
 
-const { platform, arch } = process;
-const systemUtils = {
-  isWindows: platform === 'win32',
-  isMac: platform === 'darwin',
-  isLinux: platform === 'linux',
-  is64System: process.env.FORCE_ARCH_32 == 'true' ? false : arch === 'x64',
-  isArm64: arch === 'arm64',
-  isMacUniversal: process.env.FORCE_UNIVERSAL == 'true',
-};
+import {
+  genBinFileName,
+  getFileSuffix,
+  getOsName,
+  systemUtils,
+} from './buildPlatformHelpers.mjs';
 
-function getFileSuffix() {
-  let suffix = '';
-  if (systemUtils.isMac) {
-    if (systemUtils.isMacUniversal || !systemUtils.isArm64) {
-      suffix = '-int';
-    }
-  } else {
-    if (systemUtils.isArm64) {
-      suffix = '-arm64';
-    } else if (!systemUtils.is64System) {
-      suffix = '-i386';
-    }
-  }
-  return suffix;
-}
+const fileSuffix = getFileSuffix();
 function genLibFileName(baseName) {
   let ext;
   if (systemUtils.isWindows) {
@@ -45,21 +20,9 @@ function genLibFileName(baseName) {
   } else {
     ext = 'so';
   }
-  const suffix = getFileSuffix();
   return {
-    sourceFileName: `${baseName}${suffix}.${ext}`,
+    sourceFileName: `${baseName}${fileSuffix}.${ext}`,
     destFileName: `${baseName}.${ext}`,
-  };
-}
-function genBinFileName(baseName) {
-  let ext = '';
-  if (systemUtils.isWindows) {
-    ext = '.exe';
-  }
-  const suffix = getFileSuffix();
-  return {
-    sourceFileName: `${baseName}${suffix}${ext}`,
-    destFileName: `${baseName}${ext}`,
   };
 }
 
@@ -72,89 +35,54 @@ function copyFile(basePath, fileFullName, destFileFullName) {
   copyFileSync(join(basePath.source, fileFullName), destFilePath);
 }
 
+copyFile(
+  {
+    source: resolve('.'),
+    destination: resolve('./electron-build'),
+  },
+  'package-lock.json',
+  'package-lock.json',
+);
+console.log('"package-lock.json" file is copied');
+
+const binHelperSourceRootDir = resolve('./extra-work/bin-helper');
+const binHelperDestRootDir = resolve('./electron-build/bin-helper');
+
+const {
+  sourceFileName: eot2ttfSourceFileName,
+  destFileName: eot2ttfDestFileName,
+} = genBinFileName('eot2ttf', true);
+copyFile(
+  {
+    source: resolve(
+      binHelperSourceRootDir,
+      'tools',
+      `${getOsName()}${fileSuffix}`,
+    ),
+    destination: resolve(
+      binHelperDestRootDir,
+      'ms-helpers',
+      'tools',
+      'eot2ttf',
+    ),
+  },
+  eot2ttfSourceFileName,
+  eot2ttfDestFileName,
+);
+console.log('"eot2ttf" is copied');
+
+// The media helpers (yt-dlp, its ffmpeg, and the QuickJS runtime it needs to
+// solve YouTube's nsig challenges) are deliberately NOT copied in here: they are
+// ~36 MB per platform that only the media-download flow ever runs, so they ship
+// as a separately downloaded pack instead. See extra-work/build-extra-bin.mjs
+// (builds the pack) and src/helper/extra-bin/ (installs and resolves it).
+
 const basePath = {
   source: resolve('./extra-work/db-exts'),
   destination: resolve('./electron-build/db-exts'),
 };
 ['fts5', 'spellfix1'].forEach((baseName) => {
   const { sourceFileName, destFileName } = genLibFileName(baseName);
-  console.log('Copy:', sourceFileName, destFileName);
   copyFile(basePath, sourceFileName, destFileName);
 });
-
-function checkIsFile(filePath) {
-  const stats = existsSync(filePath) ? statSync(filePath) : null;
-  return stats && stats.isFile();
-}
-function copyAllChildren(source, dest) {
-  if (!existsSync(dest)) {
-    mkdirSync(dest, { recursive: true });
-  }
-  const children = readdirSync(source);
-  for (const child of children) {
-    const sourceChild = join(source, child);
-    const destChild = join(dest, child);
-    if (checkIsFile(sourceChild)) {
-      copyFileSync(sourceChild, destChild);
-    } else {
-      copyAllChildren(sourceChild, destChild);
-    }
-  }
-}
-
-const binHelperSourceRootDir = resolve('./extra-work/bin-helper/dist');
-const binHelperDestRootDir = resolve('./electron-build/bin-helper');
-
-copyAllChildren(
-  resolve(binHelperSourceRootDir, 'net8.0'),
-  resolve(binHelperDestRootDir, 'net8.0'),
-);
-console.log('PowerPoint lib files are copied');
-copyAllChildren(
-  resolve(binHelperSourceRootDir, `bin${getFileSuffix()}`),
-  resolve(binHelperDestRootDir, 'bin'),
-);
-console.log('PowerPoint bin files are copied');
-
-const { sourceFileName, destFileName } = genBinFileName('yt-dlp');
-copyFile(
-  {
-    source: resolve(binHelperSourceRootDir, 'yt'),
-    destination: resolve(binHelperDestRootDir, 'yt'),
-  },
-  sourceFileName,
-  destFileName,
-);
-console.log('yt-dlp file is copied');
-
-// TODO: copy only needed files
-copyAllChildren(
-  resolve('./node_modules/node-api-dotnet'),
-  resolve(binHelperDestRootDir, 'node-api-dotnet'),
-);
-console.log('node-api-dotnet files are copied');
-
-if (systemUtils.isMac) {
-  copyAllChildren(
-    resolve(
-      './extra-work/ffmpeg/mac' +
-      (systemUtils.isMacUniversal || !systemUtils.isArm64 ? '-intel' : ''),
-    ),
-    resolve(binHelperDestRootDir, 'ffmpeg', 'bin'),
-  );
-} else {
-  copyAllChildren(
-    resolve(binHelperSourceRootDir, 'ffmpeg'),
-    resolve(binHelperDestRootDir, 'ffmpeg'),
-  );
-}
-console.log('ffmpeg file is copied');
-
-// package-lock.json
-copyFile(
-  {
-    source: resolve('.'),
-    destination: resolve('./electron-build'),
-  },
-  'package-lock.json', 'package-lock.json'
-);
+console.log('"db-exts" files are copied');

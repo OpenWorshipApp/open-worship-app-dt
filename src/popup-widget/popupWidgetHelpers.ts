@@ -1,9 +1,37 @@
-import { CSSProperties, ReactElement } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
+import appProvider from '../server/appProvider';
 
-export function closeAlert() {
-    popupWidgetManager.openConfirm?.(null);
-    popupWidgetManager.openInput?.(null);
-    popupWidgetManager.openAlert?.(null);
+type LockedPopupType = 'confirm' | 'input' | 'alert';
+
+const lockedPopup: { current: LockedPopupType | null } = {
+    current: null,
+};
+
+async function attemptUnlocking(newType: LockedPopupType) {
+    while (lockedPopup.current !== newType) {
+        if (lockedPopup.current === null) {
+            return;
+        }
+        await new Promise((resolve) => {
+            setTimeout(resolve, 1000);
+        });
+    }
+    lockedPopup.current = null;
+}
+
+export async function attemptLocking(
+    newType: LockedPopupType,
+    isUnlock: boolean,
+) {
+    if (isUnlock) {
+        return await attemptUnlocking(newType);
+    }
+    while (lockedPopup.current !== null) {
+        await new Promise((resolve) => {
+            setTimeout(resolve, 1000);
+        });
+    }
+    lockedPopup.current = newType;
 }
 
 export type ConfirmDataType = {
@@ -13,6 +41,7 @@ export type ConfirmDataType = {
     escToCancel?: boolean;
     enterToOk?: boolean;
     extraStyles?: CSSProperties;
+    cancelButtonLabel?: string;
     confirmButtonLabel?: string;
 };
 
@@ -48,10 +77,11 @@ export function showAppConfirm(
         escToCancel?: boolean;
         enterToOk?: boolean;
         extraStyles?: CSSProperties;
+        cancelButtonLabel?: string;
         confirmButtonLabel?: string;
     },
 ) {
-    const openConfirm = popupWidgetManager.openConfirm;
+    const { openConfirm } = popupWidgetManager;
     if (openConfirm === null) {
         return Promise.resolve(false);
     }
@@ -106,4 +136,32 @@ export function showAppAlert(title: string, message: string) {
             },
         });
     });
+}
+
+if (appProvider.systemUtils.isDev) {
+    (globalThis as any).tryPopup = async () => {
+        await showAppConfirm(
+            '1: Confirm Title',
+            'Are you sure you want to proceed?',
+            {
+                escToCancel: true,
+                enterToOk: true,
+                extraStyles: { color: 'blue' },
+                confirmButtonLabel: 'Yes, proceed',
+            },
+        );
+        await showAppAlert('2: Alert Title', 'This is an alert message.');
+        await showAppAlert('3: Alert Title', 'This is an alert message.');
+        await showAppConfirm(
+            '4: Confirm Title',
+            'Are you sure you want to proceed?',
+            {
+                escToCancel: true,
+                enterToOk: true,
+                extraStyles: { color: 'blue' },
+                confirmButtonLabel: 'Yes, proceed',
+            },
+        );
+        await showAppAlert('5: Alert Title', 'This is an alert message.');
+    };
 }

@@ -1,0 +1,111 @@
+@use '../others/variables.scss' as *;
+
+// Shared UX/UI for the popup widgets (alert / confirm / input).
+// Pure-CSS layout + entrance only: no JS work, no extra assets, so it stays
+// cheap on the low-spec target machines.
+
+.app-popup-widget {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 14px 40px rgba(0, 0, 0, 0.45),
+    0 3px 10px rgba(0, 0, 0, 0.3);
+  animation: app-popup-widget-in 0.18s cubic-bezier(0.2, 0.8, 0.3, 1);
+
+  // Header: title stays visually centered while the close button is pinned to
+  // the trailing edge, vertically centered (no fragile transform offset).
+  & > .app-popup-header.card-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    .app-popup-header-title {
+      flex: 1 1 auto;
+      min-width: 0;
+      text-align: center;
+      padding: 0 28px;
+      font-weight: 600;
+
+      .app-popup-header-icon {
+        margin-right: 5px;
+
+        &.icon-info {
+          color: var(--bs-info);
+        }
+        &.icon-question {
+          color: var(--bs-warning);
+        }
+        &.icon-input {
+          color: var(--bs-primary);
+        }
+      }
+    }
+
+    .app-popup-close {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0.55;
+      transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
+
+      &:hover {
+        opacity: 1;
+        transform: translateY(-50%) scale(1.12);
+      }
+
+      &:focus-visible {
+        opacity: 1;
+      }
+    }
+  }
+
+  .app-popup-body {
+    flex: 1 1 auto;
+    padding: 16px 18px;
+    overflow: auto;
+    line-height: 1.55;
+  }
+
+  .app-popup-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    padding: 10px 12px;
+    border-top: 1px solid rgba(128, 128, 128, 0.22);
+
+    .btn {
+      min-width: 92px;
+      padding: 0.34rem 0.95rem;
+
+      .bi {
+        margin-right: 5px;
+      }
+    }
+  }
+}
+
+@keyframes app-popup-widget-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-popup-widget {
+    animation: none;
+  }
+}

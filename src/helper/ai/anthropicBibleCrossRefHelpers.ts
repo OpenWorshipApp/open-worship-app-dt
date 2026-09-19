@@ -1,8 +1,6 @@
 import { DATA_DIR_NAME, getAnthropicInstance } from './anthropicHelpers';
-import {
-    CrossReferenceType,
-    useGetBibleCrossRef,
-} from './bibleCrossRefHelpers';
+import type { CrossReferenceType } from './bibleCrossRefHelpers';
+import { useGetBibleCrossRef } from './bibleCrossRefHelpers';
 
 // 'claude-sonnet-4-20250514';
 const MODEL = 'claude-sonnet-4-5-20250929';

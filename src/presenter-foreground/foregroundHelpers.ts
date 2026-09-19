@@ -2,10 +2,11 @@ import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager
 import { getForegroundDataListOnScreenSetting } from '../_screen/screenHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import {
+    getAllScreenManagers,
     getScreenManagerByKey,
     getScreenManagerByScreenId,
 } from '../_screen/managers/screenManagerHelpers';
-import {
+import type {
     ForegroundDataType,
     ForegroundSrcListType,
 } from '../_screen/screenTypeHelpers';
@@ -41,6 +42,12 @@ export function getScreenForegroundManagerInstances(
     }
     const { screenForegroundManager } = screenManager;
     callback(screenForegroundManager);
+}
+
+export function getIsAnyForegroundShowing() {
+    return getAllScreenManagers().some((screenManager) => {
+        return screenManager.screenForegroundManager.isShowing;
+    });
 }
 
 export function getScreenForegroundManagerByDropped(event: any) {

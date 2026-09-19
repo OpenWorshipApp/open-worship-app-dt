@@ -1,0 +1,410 @@
+import './VarySlideComp.scss';
+
+import type { CSSProperties, ReactNode, MouseEvent } from 'react';
+import { useCallback, useMemo } from 'react';
+
+import Slide from '../../app-document-list/Slide';
+import type { OnScreenListType } from '../../_screen/managers/varySlideOnScreenHelpers';
+import { useVarySlideOnScreenList } from '../../_screen/managers/varySlideOnScreenHelpers';
+import {
+    genRemovingAttachedBackgroundMenu,
+    handleDragStart,
+    handleAttachBackgroundDrop,
+    useAttachedBackgroundData,
+    extractDropData,
+} from '../../helper/dragHelpers';
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
+import ShowingScreenIconComp from '../../_screen/preview/ShowingScreenIcon';
+import appProvider from '../../server/appProvider';
+import { changeDragEventStyle } from '../../helper/helpers';
+import { DragTypeEnum } from '../../helper/DragInf';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import AppDocument from '../../app-document-list/AppDocument';
+import AttachBackgroundIconComp from '../../others/AttachBackgroundIconComp';
+import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
+import RenderSlideIndexComp from './RenderSlideIndexComp';
+import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
+import { getColorNoteFilePathSetting } from '../../helper/FileSourceMetaManager';
+import {
+    genAttachBackgroundComponent,
+    genChooseColorNoteOption,
+    getSlideItemShadowingStyle,
+    toClassNameHighlight,
+} from './slideItemRenderHelpers';
+import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
+import ShadowingFillParentWidthComp, {
+    useShadowingParentWidth,
+} from '../../others/ShadowingFillParentWidthComp';
+import VaryAppDocumentScaleContainerComp from './VaryAppDocumentScaleContainerComp';
+import { useThemeSource } from '../../others/themeHelpers';
+import { tran } from '../../lang/langHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
+import { toKeyByFilePath } from '../../app-document-list/appDocumentHelpers';
+import { toSlideAccessibleName } from './slideAccessibleNameHelpers';
+import { useSlidesPreviewerScope } from './slidesPreviewerScopeHelpers';
+import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
+import { showSimpleToast } from '../../toast/toastHelpers';
+
+function RenderScreenInfoComp({
+    onScreenList,
+}: Readonly<{ onScreenList: OnScreenListType }>) {
+    if (!appProvider.isPagePresenter) {
+        return null;
+    }
+    if (onScreenList.length === 0) {
+        return null;
+    }
+    return (
+        <div className="d-flex app-border-white-round px-1">
+            {onScreenList.map(([key]) => {
+                const screenId = Number.parseInt(key);
+                const onClick = (event: any, screenId: number) => {
+                    event.stopPropagation();
+                    const screenManager =
+                        ScreenVaryAppDocumentManager.getInstance(screenId);
+                    screenManager?.clear();
+                };
+                return (
+                    <ShowingScreenIconComp
+                        key={key}
+                        screenId={screenId}
+                        onClick={onClick}
+                        title={tran('Remove from screen ') + screenId}
+                    />
+                );
+            })}
+        </div>
+    );
+}
+
+function VarySlideHeaderComp({
+    varySlide,
+    viewIndex,
+    name,
+    onScreenList,
+}: Readonly<{
+    varySlide: VarySlideType;
+    viewIndex: number;
+    name?: string;
+    onScreenList: OnScreenListType;
+}>) {
+    const isChanged =
+        Slide.checkIsThisType(varySlide) && (varySlide as Slide).isChanged;
+    const colorNote = getColorNoteFilePathSetting(
+        varySlide.filePath,
+        varySlide.id,
+    );
+    const handleDimInfoClicking = useCallback((event: any) => {
+        event.stopPropagation();
+        showSimpleToast(tran('Dimensions'), event.currentTarget.title);
+    }, []);
+    return (
+        <div
+            className="card-header vary-app-document-item-header d-flex"
+            style={{
+                borderColor: colorNote || undefined,
+            }}
+        >
+            <div className="d-flex w-100 overflow-hidden">
+                <div className="d-flex overflow-hidden flex-grow-1">
+                    <RenderSlideIndexComp
+                        viewIndex={viewIndex}
+                        isInSlide
+                        dataKey={toKeyByFilePath(
+                            varySlide.filePath,
+                            varySlide.id,
+                        )}
+                    />
+                    <span className="mx-1 app-ellipsis">{name}</span>
+                </div>
+                <div className="d-flex justify-content-end">
+                    <RenderScreenInfoComp onScreenList={onScreenList} />
+                    <AttachBackgroundIconComp
+                        filePath={varySlide.filePath}
+                        id={varySlide.id}
+                    />
+                    <span
+                        title={
+                            `width:${varySlide.width}, ` +
+                            `height:${varySlide.height}`
+                        }
+                    >
+                        <i
+                            className="bi bi-aspect-ratio-fill app-caught-hover-pointer"
+                            title={`width:${varySlide.width}, height:${varySlide.height}`}
+                            onClick={handleDimInfoClicking}
+                        />
+                    </span>
+                    {isChanged && <span style={{ color: 'red' }}>*</span>}
+                    {/* Everything a slide can do — attach a background, colour
+                        note it, disable it, present it — lives in the menu the
+                        header ends with. It carries no handler on purpose: a
+                        presenting flow's preview wraps this card and CAPTURES
+                        `contextmenu` to answer with the run's menu instead, so
+                        the button has to ask the same way a right-click does. */}
+                    <ContextMenuDotsButtonComp />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+const style: CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    margin: 0,
+    padding: 0,
+    overflow: 'hidden',
+    border: 'none',
+};
+function VarySlideBodyRenderComp({
+    varySlideData,
+    children,
+}: Readonly<{
+    varySlideData: VarySlideType;
+    children: ReactNode;
+}>) {
+    const parentWidth = useShadowingParentWidth();
+    const actualParentWidth = parentWidth ?? varySlideData.width;
+    const attachedBackgroundData = useAttachedBackgroundData(
+        varySlideData.filePath,
+        varySlideData.id,
+    );
+    const attachedBackgroundElement = useMemo(() => {
+        return genAttachBackgroundComponent(attachedBackgroundData);
+    }, [attachedBackgroundData]);
+    const actualStyle = useMemo(() => {
+        const scale = actualParentWidth / varySlideData.width;
+        const height = varySlideData.height * scale;
+        return {
+            ...style,
+            width: `${actualParentWidth}px`,
+            height: `${height}px`,
+        };
+    }, [actualParentWidth, varySlideData.width, varySlideData.height]);
+    const { theme } = useThemeSource();
+    return (
+        <div
+            style={{
+                width: '100%',
+                height: actualStyle.height,
+                position: 'relative',
+            }}
+        >
+            <div style={actualStyle}>
+                <VaryAppDocumentScaleContainerComp
+                    varySlide={varySlideData}
+                    width={actualParentWidth}
+                >
+                    <div
+                        className="shadow-blank-bg"
+                        data-shadow-theme={theme}
+                        style={{
+                            width: `${varySlideData.width}px`,
+                            height: `${varySlideData.height}px`,
+                            margin: 0,
+                            padding: 0,
+                            border: 'none',
+                        }}
+                    >
+                        {attachedBackgroundElement}
+                    </div>
+                </VaryAppDocumentScaleContainerComp>
+            </div>
+            <div style={{ ...actualStyle, pointerEvents: 'none' }}>
+                <VaryAppDocumentScaleContainerComp
+                    varySlide={varySlideData}
+                    width={actualParentWidth}
+                >
+                    {children}
+                </VaryAppDocumentScaleContainerComp>
+            </div>
+        </div>
+    );
+}
+
+export default function VarySlideRenderComp({
+    varySlide,
+    width,
+    index,
+    onClick,
+    onContextMenu,
+    onCopy,
+    selectedItemEditing,
+    holdingItems,
+    children,
+}: Readonly<{
+    varySlide: VarySlideType;
+    width: number;
+    index: number;
+    onClick?: (
+        event: MouseEvent<HTMLDivElement>,
+        index: number,
+        varySlide: VarySlideType,
+    ) => void;
+    onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
+    onCopy?: () => void;
+    selectedItemEditing?: VarySlideType | null;
+    holdingItems?: VarySlideType[];
+    children: ReactNode;
+}>) {
+    // The ONLY screen subscription left in a slide preview, and it is scoped to
+    // this one slide. React bails out on an unchanged snapshot, so presenting a
+    // slide now wakes that slide and the one it replaced — not every preview in
+    // the window.
+    const onScreenList = useVarySlideOnScreenList(varySlide);
+    // A touch drag autoscrolls the container named here. Without the scope it
+    // named the first previewer in the document, so dragging inside a floating
+    // preview scrolled the main panel behind it.
+    const slidesPreviewerScope = useSlidesPreviewerScope();
+    const {
+        activeCN: activeClassName,
+        presenterCN: presenterClassName,
+        holdingCN: holdingClassName,
+    } = toClassNameHighlight(
+        varySlide,
+        selectedItemEditing ?? null,
+        holdingItems ?? [],
+        onScreenList,
+    );
+    const attachedBackgroundData = useAttachedBackgroundData(
+        varySlide.filePath,
+        varySlide.id,
+    );
+    const varySlideRef = useAppCurrentRef(varySlide);
+    const handleDataDropping = useCallback(async (event: any) => {
+        changeDragEventStyle(event, 'opacity', '1');
+        const droppedData = extractDropData(event);
+        if (droppedData?.type === DragTypeEnum.SLIDE) {
+            if (
+                !Slide.checkIsThisType(varySlideRef.current) ||
+                droppedData.item.filePath !== varySlideRef.current.filePath
+            ) {
+                return;
+            }
+            const appDocument = AppDocument.getInstance(
+                varySlideRef.current.filePath,
+            );
+            const toIndex = await appDocument.getSlideIndex(
+                varySlideRef.current as Slide,
+            );
+            appDocument.moveSlideToIndex(droppedData.item as Slide, toIndex);
+        } else {
+            handleAttachBackgroundDrop(event, varySlideRef.current);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleDragOver = useCallback((event: any) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '0.5');
+    }, []);
+    const handleDragLeave = useCallback((event: any) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '1');
+    }, []);
+    const handleDragStartEvent = useCallback((event: any) => {
+        handleDragStart(event, varySlideRef.current);
+        event.stopPropagation();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleDragEnd = useCallback((event: any) => {
+        changeDragEventStyle(event, 'opacity', '1');
+    }, []);
+    const attachedBackgroundDataRef = useAppCurrentRef(attachedBackgroundData);
+    const onContextMenuRef = useAppCurrentRef(onContextMenu);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        const menuItems: ContextMenuItemType[] = [];
+        if (attachedBackgroundDataRef.current) {
+            menuItems.push(
+                ...genRemovingAttachedBackgroundMenu(
+                    varySlideRef.current.filePath,
+                    varySlideRef.current.id,
+                ),
+            );
+        }
+        menuItems.push(
+            ...genChooseColorNoteOption(
+                varySlideRef.current.filePath,
+                varySlideRef.current.id,
+            ),
+        );
+        onContextMenuRef.current(event, menuItems);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return (
+        <div
+            className={
+                `${APP_DOCUMENT_ITEM_CLASS} card ` +
+                ' app-overflow-hidden' +
+                ` ${presenterClassName} ${activeClassName} ${holdingClassName}` +
+                (varySlide.isDisabled
+                    ? ' disabled'
+                    : ' app-caught-hover-pointer') +
+                (varySlide.extraClassnames
+                    ? ` ${varySlide.extraClassnames}`
+                    : '')
+            }
+            title={
+                varySlide.isDisabled
+                    ? tran('This slide is disabled')
+                    : undefined
+            }
+            // The card's one accessible name -- number and slide name, as
+            // the header shows them. Also what the presenter state hands an
+            // agent as the words to press this slide with; see the helper.
+            aria-label={toSlideAccessibleName(index + 1, varySlide.name)}
+            style={{
+                width: `${width}px`,
+                ...(varySlide.isDisabled
+                    ? {
+                          // Editable slides must keep pointer events so the
+                          // context menu can re-enable them; file-based
+                          // slides (e.g. pptx) cannot be re-enabled in-app.
+                          ...(Slide.checkIsThisType(varySlide)
+                              ? {}
+                              : { pointerEvents: 'none' as const }),
+                      }
+                    : {}),
+            }}
+            data-vary-app-document-item-id={varySlide.id}
+            data-scroll-container-selector={
+                slidesPreviewerScope?.containerSelector ??
+                `.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`
+            }
+            data-touch-drag-label={varySlide.name || `#${index + 1}`}
+            draggable={!varySlide.isDisabled}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDataDropping}
+            onDragStart={handleDragStartEvent}
+            onDragEnd={handleDragEnd}
+            onClick={(event) => {
+                if (
+                    varySlide.isDisabled &&
+                    !appProvider.isPageAppDocumentEditor
+                ) {
+                    return;
+                }
+                onClick?.(event, index, varySlide);
+            }}
+            onContextMenu={handleContextMenuOpening}
+            onCopy={onCopy ?? (() => {})}
+        >
+            <VarySlideHeaderComp
+                varySlide={varySlide}
+                viewIndex={index + 1}
+                name={varySlide.name}
+                onScreenList={onScreenList}
+            />
+            <div className="card-body app-overflow-hidden w-100 p-0 m-0">
+                <ShadowingFillParentWidthComp width={width}>
+                    <VarySlideBodyRenderComp varySlideData={varySlide}>
+                        {getSlideItemShadowingStyle()}
+                        {children}
+                    </VarySlideBodyRenderComp>
+                </ShadowingFillParentWidthComp>
+            </div>
+        </div>
+    );
+}

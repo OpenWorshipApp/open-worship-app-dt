@@ -1,13 +1,36 @@
-import { useState } from 'react';
+import { lazy, useCallback, useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
-import { useScreenManagerBaseContext } from '../managers/screenManagerHooks';
-import DisplayControl from './DisplayControl';
-import ScreenEffectControlComp from './ScreenEffectControlComp';
 import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
+    useScreenManagerBaseContext,
+    useScreenManagerContext,
+    useScreenVideoSources,
+} from '../managers/screenManagerHooks';
+import DisplayControlComp from './DisplayControlComp';
+import ScreenEffectControlComp from './ScreenEffectControlComp';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
+import AppSuspenseComp from '../../others/AppSuspenseComp';
+import { showSimpleToast } from '../../toast/toastHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
+import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
+import { useStateSettingString } from '../../helper/settingHelpers';
+import { DRAW_MODE_SETTING_PREFIX } from '../managers/screenSettingKeyHelpers';
+import type { DrawModeType } from '../screenTypeHelpers';
+import { getStageAccentColor } from '../screenHelpers';
+
+const LazyMiniScreenAudioHandlersComp = lazy(() => {
+    return import('./MiniScreenAudioHandlersComp');
+});
+
+const LazyMiniScreenDrawHandlersComp = lazy(() => {
+    return import('./MiniScreenDrawHandlersComp');
+});
+
+const LazyMiniScreenFocusHandlersComp = lazy(() => {
+    return import('./MiniScreenFocusHandlersComp');
+});
 
 function getNewStageNumber(
     event: any,
@@ -19,6 +42,7 @@ function getNewStageNumber(
         (_, i) => i,
     ).map((i) => {
         return {
+            childBefore: genContextMenuItemIcon(`${i}-circle`),
             menuElement: `${i}`,
             disabled: i === currentStageNumber,
             onSelect: () => {
@@ -28,6 +52,7 @@ function getNewStageNumber(
     });
     items.push(
         {
+            childBefore: genContextMenuItemIcon('dash-circle'),
             menuElement: tran('Decrement'),
             disabled: currentStageNumber <= 0,
             onSelect: () => {
@@ -35,6 +60,7 @@ function getNewStageNumber(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('plus-circle'),
             menuElement: tran('Increment'),
             onSelect: () => {
                 onChange(currentStageNumber + 1);
@@ -44,47 +70,314 @@ function getNewStageNumber(
     showAppContextMenu(event, items);
 }
 
-export default function ScreenPreviewerFooterComp() {
-    const screenManagerBase = useScreenManagerBaseContext();
-    const [stageNumber, setStageNumber] = useState(
-        screenManagerBase.stageNumber,
+function BackgroundAudioSwitchComp({
+    isAudioHandlersVisible,
+    setIsAudioHandlersVisible,
+}: Readonly<{
+    isAudioHandlersVisible: boolean;
+    setIsAudioHandlersVisible: (isVisible: boolean) => void;
+}>) {
+    const isAudioHandlersVisibleRef = useAppCurrentRef(isAudioHandlersVisible);
+    const setIsAudioHandlersVisibleRef = useAppCurrentRef(
+        setIsAudioHandlersVisible,
     );
-    const setStageNumber1 = (newStageNumber: number) => {
-        screenManagerBase.stageNumber = newStageNumber;
-        setStageNumber(newStageNumber);
-    };
+    const handleToggleAudioHandlers = useCallback(() => {
+        if (isAudioHandlersVisibleRef.current) {
+            const isPlaying = checkMediaPlaying({
+                query: 'audio[data-video-id]',
+                withMessage: false,
+            });
+            if (isPlaying) {
+                showSimpleToast(
+                    tran('Audio is Playing'),
+                    tran(
+                        'Please pause all background audios before disabling audio handlers',
+                    ),
+                );
+                return;
+            }
+        }
+        setIsAudioHandlersVisibleRef.current(
+            !isAudioHandlersVisibleRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return (
+        <button
+            className={`btn btn-sm btn-${isAudioHandlersVisible ? 'primary' : 'outline-secondary'}`}
+            onClick={handleToggleAudioHandlers}
+            title={tran('Enable Background Audio Handlers')}
+            aria-label={tran('Enable Background Audio Handlers')}
+        >
+            <i className="bi bi-soundwave" />
+        </button>
+    );
+}
+
+// The two draw controls, in 3-dots menu order. Icon doubles as the toggle
+// button's face so the button always shows which one it will turn on.
+const drawModeInfoList: {
+    mode: DrawModeType;
+    icon: string;
+    title: string;
+}[] = [
+    { mode: 'paint', icon: 'bi-brush', title: 'Drawing' },
+    { mode: 'focus', icon: 'bi-record-circle', title: 'Focusing' },
+];
+
+function DrawSwitchComp({
+    isDrawHandlersVisible,
+    setIsDrawHandlersVisible,
+    drawMode,
+    setDrawMode,
+}: Readonly<{
+    isDrawHandlersVisible: boolean;
+    setIsDrawHandlersVisible: (isVisible: boolean) => void;
+    drawMode: DrawModeType;
+    setDrawMode: (drawMode: DrawModeType) => void;
+}>) {
+    const { screenDrawManager, screenFocusManager } = useScreenManagerContext();
+    const screenDrawManagerRef = useAppCurrentRef(screenDrawManager);
+    const screenFocusManagerRef = useAppCurrentRef(screenFocusManager);
+    const isDrawHandlersVisibleRef = useAppCurrentRef(isDrawHandlersVisible);
+    const setIsDrawHandlersVisibleRef = useAppCurrentRef(
+        setIsDrawHandlersVisible,
+    );
+    const drawModeRef = useAppCurrentRef(drawMode);
+    // The on/off state is ONE user-level idea ("this screen's overlay panel is
+    // on"), but each control persists it in its own manager — Drawing in
+    // `isDrawEnabled` (inside the draw blob), Focusing in `isPanelOpen`. Push it
+    // into whichever one owns the given mode, so what reopens after a reload is
+    // the control that was actually showing.
+    const applyEnabledState = useCallback(
+        (mode: DrawModeType, isEnabled: boolean) => {
+            if (mode === 'focus') {
+                // Nothing to arm here: the focus panel arms its own overlay on
+                // mount, and arming the draw canvas as well would just fight it
+                // for pointer input.
+                screenFocusManagerRef.current?.setIsPanelOpen(isEnabled);
+                return;
+            }
+            if (isEnabled) {
+                // Enable also requests the group's existing drawing.
+                screenDrawManagerRef.current.enableDraw();
+            } else {
+                screenDrawManagerRef.current.disableDraw();
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleToggleDrawHandlers = useCallback(() => {
+        const isEnabling = !isDrawHandlersVisibleRef.current;
+        setIsDrawHandlersVisibleRef.current(isEnabling);
+        if (isEnabling) {
+            applyEnabledState(drawModeRef.current, true);
+            return;
+        }
+        // Off is off, WHICHEVER control is showing — so turning off always tears
+        // down BOTH. Skipping the draw layer for Focusing stranded any drawing
+        // made before the mode switch: the strokes stayed on screen with no
+        // visible way to clear them, since the focus panel has no Clear and this
+        // button is the only other control. Disabling the drawing clears it only
+        // if no other group member still has draw enabled.
+        screenFocusManagerRef.current?.setIsPanelOpen(false);
+        screenDrawManagerRef.current.disableDraw();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setDrawModeRef = useAppCurrentRef(setDrawMode);
+    // Picks WHICH control is shown. It must not CHANGE the on/off state — an
+    // enabled Drawing becomes an enabled Focusing, a disabled one stays disabled
+    // — but it does re-home where that state is persisted, or a panel enabled
+    // before the switch would come back closed on the next launch.
+    const handleShowDrawOptions = useCallback((event: any) => {
+        const items: ContextMenuItemType[] = drawModeInfoList.map(
+            ({ mode, icon, title }) => {
+                return {
+                    childBefore: genContextMenuItemIcon(
+                        icon.replace(/^bi-/, ''),
+                    ),
+                    menuElement: tran(title),
+                    disabled: mode === drawModeRef.current,
+                    onSelect: () => {
+                        setDrawModeRef.current(mode);
+                        applyEnabledState(
+                            mode,
+                            isDrawHandlersVisibleRef.current,
+                        );
+                    },
+                };
+            },
+        );
+        showAppContextMenu(event, items);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // Looked up by value, not by index: a persisted setting is untrusted input,
+    // and an unknown mode must fall back to Drawing rather than read past the
+    // end of the list.
+    const drawModeInfo =
+        drawModeInfoList.find(({ mode }) => {
+            return mode === drawMode;
+        }) ?? drawModeInfoList[0];
+    // Name the action this click will PERFORM, not the feature it belongs to:
+    // a fixed "Enable Drawing" read as a lie while drawing was already enabled,
+    // and left the on/off state carried by the button fill alone — invisible to
+    // a screen reader. aria-pressed exposes the same state to assistive tech.
+    const toggleTitle =
+        `${tran(isDrawHandlersVisible ? 'Disable' : 'Enable')}` +
+        ` ${tran(drawModeInfo.title)}`;
+    const optionsTitle = tran('Choose Drawing or Focusing');
+    return (
+        <div className="btn-group" onContextMenu={handleShowDrawOptions}>
+            <button
+                className={`btn btn-sm btn-${isDrawHandlersVisible ? 'primary' : 'outline-secondary'}`}
+                style={{
+                    width: 25,
+                }}
+                onClick={handleToggleDrawHandlers}
+                title={toggleTitle}
+                aria-label={toggleTitle}
+                aria-pressed={isDrawHandlersVisible}
+            >
+                <i className={`bi ${drawModeInfo.icon}`} />
+            </button>
+            <button
+                className="btn btn-sm btn-outline-secondary p-0"
+                onClick={handleShowDrawOptions}
+                title={optionsTitle}
+                aria-label={optionsTitle}
+            >
+                <i className="bi bi-three-dots-vertical" />
+            </button>
+        </div>
+    );
+}
+
+export default function ScreenPreviewerFooterComp() {
+    const [isAudioHandlersVisible, setIsAudioHandlersVisible] = useState(false);
+    const screenManager = useScreenManagerContext();
+    // Restore the draw panel's on/off state persisted for this screen.
+    // Which overlay control the panel shows. Persisted per screen so the
+    // previewer reopens on the one that was last used; independent of the on/off
+    // state below, which switching must never touch.
+    const [drawMode, setDrawMode] = useStateSettingString<DrawModeType>(
+        `${DRAW_MODE_SETTING_PREFIX}${screenManager.screenId}`,
+        'paint',
+    );
+    // Seeded from whichever manager persists the on/off state for the restored
+    // mode (the `?.` matters — preview test mocks omit these managers).
+    const [isDrawHandlersVisible, setIsDrawHandlersVisible] = useState(() => {
+        return drawMode === 'focus'
+            ? (screenManager.screenFocusManager?.isPanelOpen ?? false)
+            : (screenManager.screenDrawManager?.isDrawEnabled ?? false);
+    });
+    const videoSources = useScreenVideoSources();
+    const screenManagerBase = useScreenManagerBaseContext();
+    const [stageNumber, setStageNumber] = useState(screenManagerBase.stage);
+    const screenManagerBaseRef = useAppCurrentRef(screenManagerBase);
+    const setStageNumber1 = useCallback(
+        (newStageNumber: number) => {
+            screenManagerBaseRef.current.stage = newStageNumber;
+            setStageNumber(newStageNumber);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const stageNumberRef = useAppCurrentRef(stageNumber);
+    const setStageNumber1Ref = useAppCurrentRef(setStageNumber1);
+    const handleStageNumberChange = useCallback((event: any) => {
+        getNewStageNumber(
+            event,
+            stageNumberRef.current,
+            setStageNumber1Ref.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="card-footer w-100"
             style={{
                 overflowX: 'auto',
-                overflowY: 'hidden',
-                height: '25px',
                 padding: '1px',
             }}
         >
-            <div className="d-flex w-100 h-100">
+            <div
+                className="d-flex w-100 "
+                style={{
+                    height: '25px',
+                    overflowY: 'hidden',
+                }}
+            >
                 <div className="d-flex justify-content-start">
-                    <DisplayControl />
+                    <div>
+                        <DisplayControlComp />
+                    </div>
                     <ScreenEffectControlComp />
+                    {videoSources.length > 0 ? (
+                        <div>
+                            <BackgroundAudioSwitchComp
+                                isAudioHandlersVisible={isAudioHandlersVisible}
+                                setIsAudioHandlersVisible={
+                                    setIsAudioHandlersVisible
+                                }
+                            />
+                        </div>
+                    ) : null}
+                    <div className="ms-1">
+                        <DrawSwitchComp
+                            isDrawHandlersVisible={isDrawHandlersVisible}
+                            setIsDrawHandlersVisible={setIsDrawHandlersVisible}
+                            drawMode={drawMode}
+                            setDrawMode={setDrawMode}
+                        />
+                    </div>
                 </div>
-                <div className="flex-grow-1 d-flex justify-content-end">
+                <div
+                    className="flex-grow-1 d-flex justify-content-end"
+                    title={`${tran('Stage')} ${stageNumber}`}
+                >
                     <div
-                        className="d-flex app-caught-hover-pointer"
-                        title={tran('Click to change Stage Number')}
-                        onClick={(event) => {
-                            getNewStageNumber(
-                                event,
-                                stageNumber,
-                                setStageNumber1,
-                            );
+                        className="d-flex app-caught-hover-pointer me-1"
+                        title={`${tran('Stage')} ${stageNumber}: ${tran('Click to change Stage Number')}`}
+                        style={{
+                            color: getStageAccentColor(stageNumber),
                         }}
+                        onClick={handleStageNumberChange}
                     >
-                        <small>{tran('Stage:')}</small>
-                        <div className="px-1 text-muted">{stageNumber}</div>
+                        <small className="mx-1">St:</small>
+                        <div
+                            className="px-0"
+                            style={{
+                                fontSize: '0.9em',
+                            }}
+                        >
+                            {stageNumber}
+                        </div>
                     </div>
                 </div>
             </div>
+            {videoSources.length > 0 && isAudioHandlersVisible ? (
+                <AppSuspenseComp>
+                    <div className="w-100">
+                        {videoSources.map(([videoSource, videoId]) => (
+                            <LazyMiniScreenAudioHandlersComp
+                                key={videoSource}
+                                src={videoSource}
+                                videoId={videoId}
+                            />
+                        ))}
+                    </div>
+                </AppSuspenseComp>
+            ) : null}
+            {isDrawHandlersVisible ? (
+                <AppSuspenseComp>
+                    {drawMode === 'focus' ? (
+                        <LazyMiniScreenFocusHandlersComp />
+                    ) : (
+                        <LazyMiniScreenDrawHandlersComp />
+                    )}
+                </AppSuspenseComp>
+            ) : null}
         </div>
     );
 }

@@ -1,18 +1,18 @@
-import { MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
 
 import EventHandler from '../../event/EventHandler';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import appProvider from '../../server/appProvider';
-import ScreenManagerBase from './ScreenManagerBase';
+import {
+    genScreenIdMenuItems,
+    notifyChosenScreenIds,
+} from './screenChoosingHelpers';
+import type ScreenManagerBase from './ScreenManagerBase';
 import {
     getSelectedScreenManagerBases,
-    getAllScreenManagerBases,
     getScreenManagerBase,
 } from './screenManagerBaseHelpers';
-import {
+import type {
     BasicScreenMessageType,
     ScreenMessageType,
 } from '../screenTypeHelpers';
@@ -30,7 +30,8 @@ export default abstract class ScreenEventHandler<
     }
 
     protected toCacheKey() {
-        return `${this.screenId}-${this.constructor.name}`;
+        const constructor = this.constructor as typeof ScreenEventHandler;
+        return `${this.screenId}-${constructor.eventNamePrefix}`;
     }
 
     abstract get isShowing(): boolean;
@@ -46,10 +47,38 @@ export default abstract class ScreenEventHandler<
     abstract toSyncMessage(): BasicScreenMessageType;
 
     sendSyncScreen() {
-        this.screenManagerBase.sendScreenMessage({
-            screenId: this.screenId,
-            ...this.toSyncMessage(),
-        });
+        this.screenManagerBase.sendScreenMessage(
+            {
+                screenId: this.screenId,
+                ...this.toSyncMessage(),
+            },
+            false,
+        );
+    }
+
+    sendSyncScrollPercentage(
+        domSelector: string,
+        scroll: { x: number; y: number },
+    ) {
+        if (
+            !appProvider.getIsMouseOverApp() ||
+            !appProvider.getIsWindowFocused()
+        ) {
+            return;
+        }
+        setTimeout(() => {
+            this.screenManagerBase.sendScreenMessage(
+                {
+                    screenId: this.screenId,
+                    type: 'sync-scroll-percentage',
+                    data: {
+                        domSelector,
+                        scroll,
+                    },
+                },
+                true,
+            );
+        }, 0);
     }
 
     abstract receiveSyncScreen(message: ScreenMessageType): void;
@@ -89,20 +118,67 @@ export default abstract class ScreenEventHandler<
     static getInstanceBase<T extends ScreenEventHandler<any>>(
         screenId: number,
     ) {
-        const instance = cache.get(`${screenId}-${this.name}`) as T;
+        const instance = cache.get(`${screenId}-${this.eventNamePrefix}`) as T;
         if (instance === undefined) {
-            throw new Error('instance is not found.');
+            return null;
         }
         return instance;
+    }
+
+    static getAllInstancesBase<T extends ScreenEventHandler<any>>(): T[] {
+        const instances: T[] = [];
+        for (const instance of cache.values()) {
+            const constructor =
+                instance.constructor as typeof ScreenEventHandler;
+            if (constructor.eventNamePrefix === this.eventNamePrefix) {
+                instances.push(instance as T);
+            }
+        }
+        return instances;
     }
 
     static getInstance(_screenId: number) {
         throw new Error('getInstance is not implemented.');
     }
 
-    static async chooseScreenIds(event: MouseEvent, isForceChoosing: boolean) {
+    /**
+     * Which screens the operator meant, answered here and nowhere else.
+     *
+     * `isForceChoosing` is "ignore the default, ASK"; `presetScreenIds` is its
+     * mirror image — "ignore the default, use THESE" — and is how an item
+     * pinned to a screen reaches it whatever happens to be selected. Force
+     * wins over a preset on purpose: the menu entry that passes it is the
+     * operator explicitly overriding the pin for one present.
+     */
+    static async chooseScreenIds(
+        event: MouseEvent,
+        isForceChoosing: boolean,
+        presetScreenIds: number[] = [],
+    ) {
+        const screenIds = await this.resolveScreenIds(
+            event,
+            isForceChoosing,
+            presetScreenIds,
+        );
+        // Published so a FOLLOWER of this same gesture — a presenting flow element's CC
+        // elements — can land on exactly these screens without asking a second
+        // question. Every exit above goes through here, the empty ones included:
+        // a follower has to be told "nowhere" as plainly as it is told "screen 2",
+        // or it sits armed holding its closure.
+        notifyChosenScreenIds(event, screenIds);
+        return screenIds;
+    }
+
+    private static async resolveScreenIds(
+        event: MouseEvent,
+        isForceChoosing: boolean,
+        presetScreenIds: number[] = [],
+    ) {
         if (!appProvider.isPagePresenter) {
             return [];
+        }
+        if (!isForceChoosing && presetScreenIds.length > 0) {
+            return presetScreenIds;
         }
         const selectedScreenManagerBases = isForceChoosing
             ? []
@@ -113,20 +189,18 @@ export default abstract class ScreenEventHandler<
             });
         }
         return new Promise<number[]>((resolve) => {
-            const screenManagerBases = getAllScreenManagerBases();
-            const menuItems: ContextMenuItemType[] = screenManagerBases.map(
-                (screenManagerBase) => {
-                    return {
-                        menuElement: `Screen id: ${screenManagerBase.screenId}`,
-                        onSelect: () => {
-                            resolve([screenManagerBase.screenId]);
-                        },
-                    };
-                },
-            );
+            const menuItems = genScreenIdMenuItems((screenId) => {
+                resolve([screenId]);
+            });
             showAppContextMenu(event as any, menuItems).promiseDone.then(() => {
                 resolve([]);
             });
         });
     }
+}
+
+export interface GroupMembershipInf {
+    getMemberInstances(): Promise<ScreenEventHandler<any>[]>;
+    getMemberIds(): Promise<number[]>;
+    checkIsMainInstance(): Promise<boolean>;
 }

@@ -1,17 +1,12 @@
-import { useState, DragEvent } from 'react';
+import type { DragEvent } from 'react';
 
-import { useAppEffect } from './debuggerHelpers';
+import type { OptionalPromise } from './typeHelpers';
 import { handleError } from './errorHelpers';
-import FileSource from './FileSource';
-import { AppDocumentSourceAbs } from './AppEditableDocumentSourceAbs';
-import { trace } from './loggerHelpers';
+import { appTrace } from './loggerHelpers';
 import appProvider from '../server/appProvider';
-import {
-    pathJoin,
-    fsCheckFileExist,
-    fsDeleteFile,
-    fsCopyFilePathToPath,
-} from '../server/fileHelpers';
+import { tran } from '../lang/langHelpers';
+import { unlocking } from '../server/unlockingHelpers';
+import { globalCacheManager10Seconds } from '../others/CacheManager';
 
 export type MutationType = 'added' | 'attr-modified' | 'removed';
 
@@ -21,7 +16,8 @@ export const RECEIVING_DROP_CLASSNAME = 'receiving-data-drop';
 export const HIGHLIGHT_SELECTED_CLASSNAME = 'app-highlight-selected';
 
 export const BIBLE_VERSE_TEXT_TITLE =
-    'Click to highlight, double click or ' + 'Alt + click to bring to view';
+    'Click on verse to highlight, double click or Alt + click ' +
+    'on verse to bring to view';
 
 export function getRandomUUID() {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -31,7 +27,7 @@ export function getRandomColor() {
     const letters = '0123456789ABCDEF';
     let color = '#';
     for (let i = 0; i < 6; i++) {
-        color += letters[Math.round(Math.random() * 16)];
+        color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
 }
@@ -102,7 +98,7 @@ export function genRandomString(length: number = 5) {
     const charactersLength = characters.length;
     for (let i = 0; i < length; i++) {
         result += characters.charAt(
-            Math.round(Math.random() * charactersLength),
+            Math.floor(Math.random() * charactersLength),
         );
     }
     return result;
@@ -121,21 +117,6 @@ export function getWindowDim() {
     return { width, height };
 }
 
-export function useReadFileToData<T extends AppDocumentSourceAbs>(
-    filePath: string | null,
-) {
-    const [data, setData] = useState<T | null | undefined>(null);
-    useAppEffect(() => {
-        if (filePath !== null) {
-            const fileSource = FileSource.getInstance(filePath);
-            fileSource.readFileJsonData().then((itemSource: any) => {
-                setData(itemSource);
-            });
-        }
-    }, [filePath]);
-    return data;
-}
-
 export function getImageDim(src: string) {
     return new Promise<[number, number]>((resolve, reject) => {
         const img = document.createElement('img');
@@ -150,19 +131,30 @@ export function getImageDim(src: string) {
 }
 
 export function getVideoDim(src: string) {
-    return new Promise<[number, number]>((resolve, reject) => {
-        const video = document.createElement('video');
-        video.addEventListener(
-            'loadedmetadata',
-            () => {
+    const key = `video-dim-${src}`;
+    return unlocking(key, async () => {
+        const cachedDim = await globalCacheManager10Seconds.get(key);
+        if (cachedDim) {
+            return cachedDim;
+        }
+        const dim = await new Promise<[number, number]>((resolve, reject) => {
+            const video = document.createElement('video');
+            const loadMetadata = () => {
                 resolve([video.videoWidth, video.videoHeight]);
-            },
-            false,
-        );
-        video.onerror = () => {
-            reject(new Error('Fail to load video:' + src));
-        };
-        video.src = src;
+                video.removeEventListener(
+                    'loadedmetadata',
+                    loadMetadata,
+                    false,
+                );
+            };
+            video.addEventListener('loadedmetadata', loadMetadata, false);
+            video.onerror = () => {
+                reject(new Error('Fail to load video:' + src));
+            };
+            video.src = src;
+        });
+        await globalCacheManager10Seconds.set(key, dim);
+        return dim;
     });
 }
 
@@ -173,19 +165,67 @@ export function toMaxId(ids: number[]) {
     return Math.max(...ids);
 }
 
-export function isValidJson(json: any, isSilent: boolean = false) {
+/**
+ * `Promise.all` over a long list, without freezing the window.
+ *
+ * When each task ends in synchronous work — parsing a bible book, building a
+ * title — handing the whole list to one `Promise.all` drains the microtask
+ * queue in a single uninterrupted run. Microtasks never yield to the event
+ * loop, so timers, painting and input all wait for the LAST item: measured on
+ * the names/locations lookup, resolving one record's 712 verse titles blocked
+ * the renderer for 4.2 seconds in one contiguous stall.
+ *
+ * Running a batch at a time with a real macrotask in between costs a few
+ * milliseconds and keeps the window answering the user throughout — which
+ * matters most on the low-spec machines this app targets. Results keep the
+ * order of `items`.
+ */
+export async function mapInYieldingBatches<TItem, TResult>(
+    items: TItem[],
+    callee: (item: TItem, index: number) => OptionalPromise<TResult>,
+    batchSize: number = 24,
+): Promise<TResult[]> {
+    const results: TResult[] = [];
+    for (let offset = 0; offset < items.length; offset += batchSize) {
+        const batchResults = await Promise.all(
+            items.slice(offset, offset + batchSize).map((item, index) => {
+                return callee(item, offset + index);
+            }),
+        );
+        for (const result of batchResults) {
+            results.push(result);
+        }
+        if (offset + batchSize < items.length) {
+            // A macrotask, NOT `Promise.resolve()`: only this lets the renderer
+            // paint and answer input between batches.
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        }
+    }
+    return results;
+}
+
+export function parseJsonSafely<T = any>(
+    json: any,
+    isSilent: boolean = false,
+): T | null {
     if (!json) {
-        return false;
+        return null;
     }
     try {
         return JSON.parse(json);
     } catch (error) {
         handleError(error);
-        if (!isSilent && json === '') {
-            trace('Invalid Json:', json);
+        if (!isSilent) {
+            appTrace('Invalid Json:', json);
         }
-        return false;
+        return null;
     }
+}
+
+export function isValidJson(json: any, isSilent: boolean = false) {
+    return parseJsonSafely(json, isSilent) !== null;
 }
 
 export function isColor(strColor: string) {
@@ -267,60 +307,11 @@ export function checkIsSameValues(value1: any, value2: any) {
     return value1 === value2;
 }
 
-export const menuTitleRevealFile = `Reveal in ${
-    appProvider.systemUtils.isMac ? 'Finder' : 'File Explorer'
-}`;
-
-export function genTimeoutAttempt(
-    timeMilliseconds: number = 1e3,
-    shouldWait = true,
-) {
-    let timeoutId: any = null;
-    let lastSchedule = Date.now() - timeMilliseconds - 1;
-    return function (func: () => void, isImmediate: boolean = false) {
-        if (!shouldWait && Date.now() - lastSchedule > timeMilliseconds) {
-            isImmediate = true;
-        }
-        lastSchedule = Date.now();
-        if (timeoutId !== null) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-        }
-        if (isImmediate) {
-            func();
-            return;
-        }
-        timeoutId = setTimeout(() => {
-            timeoutId = null;
-            func();
-        }, timeMilliseconds);
-    };
-}
-
-export function downloadFile(
-    url: string,
-    filename: string,
-    type: string,
-    destinationPath: string,
-    isOverwrite = true,
-) {
-    return new Promise<string>((resolve, reject) => {
-        fetch(url)
-            .then((response) => response.blob())
-            .then(async (blob) => {
-                const file = new File([blob], filename, { type });
-                const dllPath = pathJoin(destinationPath, filename);
-
-                if (isOverwrite && (await fsCheckFileExist(dllPath))) {
-                    await fsDeleteFile(dllPath);
-                }
-                if (!(await fsCheckFileExist(dllPath))) {
-                    await fsCopyFilePathToPath(file, destinationPath, filename);
-                }
-                resolve(dllPath);
-            })
-            .catch(reject);
-    });
+// the slowness of getting lang data, need to call as a function
+export function getMenuTitleRevealFile() {
+    return tran(
+        `Reveal in ${appProvider.systemUtils.isMac ? 'Finder' : 'File Explorer'}`,
+    );
 }
 
 export function cumulativeOffset(element: HTMLElement | null) {
@@ -355,6 +346,7 @@ export function stopDraggingState(event: any) {
     changeDragEventStyle(event, 'opacity', '1');
 }
 
+// TODO: move to domHelpers
 export function bringDomToView(dom: Element, block: ScrollLogicalPosition) {
     dom.scrollIntoView({
         behavior: 'smooth',
@@ -433,4 +425,53 @@ export function checkIsVerticalAtBottom(
     const containerBottom = containerRect.bottom;
     const targetBottom = targetRect.bottom;
     return targetBottom > containerBottom;
+}
+
+/**
+ * Enter/Space on a styled `div` that is standing in for a button, delivered as
+ * a real click AT THE ELEMENT.
+ *
+ * The usual hand-written handler calls the click callback directly with the
+ * `KeyboardEvent`, which is fine only while nothing downstream reads the
+ * event. Several of ours do: choosing a background colour ends in
+ * `ScreenEventHandler.chooseScreenIds`, which opens the "which screen?" menu
+ * AT the event's coordinates — and a `KeyboardEvent` has none, so the menu
+ * would open in the window's top-left corner, nowhere near the swatch pressed.
+ *
+ * Dispatching a `click` with the element's own centre makes the keyboard path
+ * take exactly the mouse path, menu position included. Returns whether it
+ * acted, so a caller can keep its own `event.repeat` guard.
+ */
+export function pressElementLikeButton(event: {
+    key: string;
+    repeat?: boolean;
+    currentTarget: unknown;
+    preventDefault: () => void;
+}) {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+        return false;
+    }
+    // Holding the key must not fire the action over and over.
+    if (event.repeat === true) {
+        return false;
+    }
+    const element = event.currentTarget as HTMLElement | null;
+    if (
+        element === null ||
+        typeof element.getBoundingClientRect !== 'function'
+    ) {
+        return false;
+    }
+    // Space would scroll the panel out from under the control otherwise.
+    event.preventDefault();
+    const rect = element.getBoundingClientRect();
+    element.dispatchEvent(
+        new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2,
+        }),
+    );
+    return true;
 }

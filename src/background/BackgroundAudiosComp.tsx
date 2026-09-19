@@ -1,5 +1,7 @@
 import './BackgroundAudiosComp.scss';
 
+import { useCallback, useState } from 'react';
+
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -7,98 +9,27 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import {
-    handleAudioPlaying,
-    handleAudioPausing,
-    handleAudioEnding,
-    getAudioRepeatSettingName,
-    showAudioPlayingToast,
-} from './audioBackgroundHelpers';
-import { useMemo, useState } from 'react';
+import { showAudioPlayingToast } from '../helper/mediaControlHelpers';
 import { tran } from '../lang/langHelpers';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
-import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import { useStateSettingBoolean } from '../helper/settingHelpers';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import { handleError } from '../helper/errorHelpers';
 import {
     showProgressBar,
     hideProgressBar,
 } from '../progress-bar/progressBarHelpers';
-import { fsCheckFileExist, fsDeleteFile, fsMove } from '../server/fileHelpers';
-import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
-import { genDownloadContextMenuItems } from './downloadHelper';
-import { downloadVideoOrAudio } from '../server/appHelpers';
+import { fsMove, getTempPath } from '../server/fileHelpers';
 import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
-
-function RendBodyComp({
-    filePath,
-}: Readonly<{
-    filePath: string;
-    selectedBackgroundSrcList: [string, BackgroundSrcType][];
-}>) {
-    const fileSource = FileSource.getInstance(filePath);
-    const settingName = useMemo(() => {
-        return getAudioRepeatSettingName(fileSource.src);
-    }, [fileSource.src]);
-    const [isRepeating, setIsRepeating] = useStateSettingBoolean(
-        settingName,
-        false,
-    );
-    return (
-        <div className="w-100" data-file-path={filePath}>
-            <div className="d-flex align-items-center w-100 my-2">
-                <audio
-                    className="flex-fill"
-                    data-repeat-setting-name={settingName}
-                    controls
-                    onPlay={handleAudioPlaying}
-                    onPause={handleAudioPausing}
-                    onEnded={handleAudioEnding}
-                >
-                    <source src={fileSource.src} />
-                    <track kind="captions" />
-                    Browser does not support audio.
-                </audio>
-                <div>
-                    <i
-                        className="bi bi-repeat-1 p-1"
-                        title={tran('Repeat this audio')}
-                        style={{
-                            fontSize: '1.5rem',
-                            opacity: isRepeating ? 1 : 0.5,
-                            color: isRepeating ? 'green' : 'inherit',
-                        }}
-                        onClick={() => {
-                            setIsRepeating(!isRepeating);
-                        }}
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function rendChild(
-    activeMap: { [key: string]: boolean },
-    filePath: string,
-    selectedBackgroundSrcList: [string, BackgroundSrcType][],
-) {
-    if (!activeMap[filePath]) {
-        return (
-            <div data-file-path={filePath} style={{ display: 'none' }}></div>
-        );
-    }
-    return (
-        <RendBodyComp
-            filePath={filePath}
-            selectedBackgroundSrcList={selectedBackgroundSrcList}
-        />
-    );
-}
+    genDownloadContextMenuItems,
+    toDownloadFailureMessage,
+} from './downloadHelper';
+import { downloadVideoOrAudio } from '../server/appHelpers';
+import VaryAppDocumentAudiosComp from './VaryAppDocumentAudiosComp';
+import { genAudioBodyChild } from './AudioBodyComp';
+import { useAppDocumentAudioData } from './backgroundHelpers';
+import ResizeActorComp from '../resize-actor/ResizeActorComp';
+import { checkIsExtraBinMissingError } from '../helper/extra-bin/extraBinErrors';
 
 async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
@@ -109,27 +40,40 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
                 `Downloading audio from "${audioUrl}", please wait...`,
             );
             showProgressBar(audioUrl);
-            const defaultPath = getDefaultDataDir();
+            // See BackgroundVideosComp: stage in the OS temp dir rather than the
+            // hardcoded getDefaultDataDir().
             const { filePath, fileFullName } = await downloadVideoOrAudio(
                 audioUrl,
-                defaultPath,
+                getTempPath(),
                 false,
             );
             const destFileSource = FileSource.getInstance(
                 dirSource.dirPath,
                 fileFullName,
             );
-            if (await fsCheckFileExist(destFileSource.filePath)) {
-                await fsDeleteFile(destFileSource.filePath);
-            }
-            await fsMove(filePath, destFileSource.filePath);
+            // Never overwrite: the file name comes from the remote page title,
+            // so a collision with an existing audio is not something the user
+            // can predict. Deleting it here silently destroyed the original —
+            // `genNextFilePath` suffixes instead, matching the video flow.
+            const downloadedFilePath = await destFileSource.genNextFilePath();
+            await fsMove(filePath, downloadedFilePath);
             showSimpleToast(
                 title,
-                `Audio downloaded successfully, file path: "${destFileSource.filePath}"`,
+                `Audio downloaded successfully, file path: "${downloadedFilePath}"`,
             );
         } catch (error) {
+            // See BackgroundVideosComp: the guard's dialog is the message.
+            if (checkIsExtraBinMissingError(error)) {
+                return;
+            }
             handleError(error);
-            showSimpleToast(title, 'Error occurred during downloading video');
+            showSimpleToast(
+                title,
+                toDownloadFailureMessage(
+                    tran('Error occurred during downloading audio'),
+                    error,
+                ),
+            );
         } finally {
             hideProgressBar(audioUrl);
         }
@@ -147,7 +91,7 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
 
 export default function BackgroundAudiosComp() {
     const [activeMap, setActiveMap] = useState<{ [key: string]: boolean }>({});
-    const handleItemClicking = (event: any) => {
+    const handleItemClicking = useCallback((event: any) => {
         const target = event.target;
         const parentElement = target.parentElement;
         // check is audio playing
@@ -170,31 +114,60 @@ export default function BackgroundAudiosComp() {
                 [filePath]: !preActiveMap[filePath],
             };
         });
-    };
-    const handleItemsAdding = async (
-        dirSource: DirSource,
-        defaultContextMenuItems: ContextMenuItemType[],
-        event: any,
-    ) => {
-        const contextMenuItems =
-            await genAudioDownloadContextMenuItems(dirSource);
-        showAppContextMenu(event, [
-            ...defaultContextMenuItems,
-            ...contextMenuItems,
-        ]);
-    };
-    return (
+    }, []);
+    const mainElement = (
         <BackgroundMediaComp
-            rendChild={rendChild.bind(null, activeMap)}
+            rendChild={genAudioBodyChild.bind(null, activeMap)}
             defaultFolderName={defaultDataDirNames.BACKGROUND_AUDIO}
             dragType={DragTypeEnum.BACKGROUND_AUDIO}
+            extraMimetypeNames={['video']}
             onClick={handleItemClicking}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_AUDIO}
-            noDraggable={true}
             isNameOnTop={true}
             genContextMenuItems={genAudioDownloadContextMenuItems}
-            onItemsAdding={handleItemsAdding}
             shouldHideFooter
+        />
+    );
+
+    const appDocumentAudioData = useAppDocumentAudioData();
+
+    if (appDocumentAudioData === null) {
+        return mainElement;
+    }
+
+    return (
+        <ResizeActorComp
+            flexSizeName={'flex-size-background'}
+            isHorizontal={false}
+            isDisableQuickResize
+            flexSizeDefault={{
+                v1: ['3'],
+                v2: ['1'],
+            }}
+            dataInput={[
+                {
+                    children: {
+                        render: () => {
+                            return mainElement;
+                        },
+                    },
+                    key: 'v1',
+                    ...toWidgetLabel('Background'),
+                },
+                {
+                    children: {
+                        render: () => {
+                            return (
+                                <VaryAppDocumentAudiosComp
+                                    appDocumentAudioData={appDocumentAudioData}
+                                />
+                            );
+                        },
+                    },
+                    key: 'v2',
+                    ...toWidgetLabel('Background Audio'),
+                },
+            ]}
         />
     );
 }

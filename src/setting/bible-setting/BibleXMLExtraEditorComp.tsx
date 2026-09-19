@@ -1,5 +1,4 @@
-import { compileSchema, SchemaNode } from 'json-schema-library';
-import { Uri } from 'monaco-editor';
+import { useCallback, useMemo } from 'react';
 
 import LoadingComp from '../../others/LoadingComp';
 import {
@@ -7,17 +6,15 @@ import {
     saveJsonDataToXMLfile,
 } from './bibleXMLHelpers';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
-import { useAppStateAsync } from '../../helper/debuggerHelpers';
-import { useMemo } from 'react';
-import { BibleXMLExtraType } from './bibleXMLJsonDataHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../../helper/appHooks';
+import type { BibleXMLExtraType } from './bibleXMLJsonDataHelpers';
+import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 
-import bibleNewLinesSchemaJson from './schemas/bibleExtraSchema.json';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 import { forceReloadAppWindows } from '../settingHelpers';
-
-export const schemaHandler: SchemaNode = compileSchema(bibleNewLinesSchemaJson);
-export const uri = Uri.parse('bible-extra');
+import { extraEditorSchemaHandler } from './schemas/bibleSchemaHelpers';
+import { bibleExtraUri } from './schemas/bibleEditorUriHelpers';
 
 type DataType = BibleXMLExtraType & {
     bibleKey: string;
@@ -27,7 +24,7 @@ async function handleSaving(bibleKey: string, newJsonData: BibleXMLExtraType) {
     const xmlBibleData = await getBibleXMLDataFromKey(bibleKey);
     if (!xmlBibleData) {
         showSimpleToast(
-            'Saving Bible Data',
+            tran('Saving Bible Data'),
             `Bible Data not found for key ${bibleKey}`,
         );
         return;
@@ -62,7 +59,20 @@ export default function BibleXMLExtraEditorComp({
             newLinesTitleMap: xmlBibleData.newLinesTitleMap,
             customVersesMap: xmlBibleData.customVersesMap,
         };
-    }, [xmlBibleData]);
+    }, [xmlBibleData, bibleKey]);
+    const handleStore = useCallback(() => {}, []);
+    const bibleKeyRef = useAppCurrentRef(bibleKey);
+    const handleSave = useCallback((newJsonData: DataType) => {
+        if (newJsonData.bibleKey !== bibleKeyRef.current) {
+            showSimpleToast(
+                tran('Saving Bible Data'),
+                `Invalid Bible Key ${newJsonData.bibleKey}`,
+            );
+            return;
+        }
+        handleSaving(bibleKeyRef.current, newJsonData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (xmlBibleData === undefined) {
         return <LoadingComp />;
     }
@@ -73,19 +83,10 @@ export default function BibleXMLExtraEditorComp({
         <BibleXMLEditorComp
             id={bibleKey}
             jsonData={jsonData}
-            onStore={() => {}}
-            jsonDataSchema={schemaHandler}
-            save={(newJsonData: DataType) => {
-                if (newJsonData.bibleKey !== bibleKey) {
-                    showSimpleToast(
-                        'Saving Bible Data',
-                        `Invalid Bible Key ${newJsonData.bibleKey}`,
-                    );
-                    return;
-                }
-                handleSaving(bibleKey, newJsonData);
-            }}
-            editorUri={uri}
+            onStore={handleStore}
+            jsonDataSchema={extraEditorSchemaHandler}
+            save={handleSave}
+            editorUri={bibleExtraUri}
         />
     );
 }

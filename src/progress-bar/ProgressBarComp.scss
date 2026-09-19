@@ -18,6 +18,10 @@
   animation-duration: 1s;
   animation-name: fade-in;
 
+  &.progress {
+    border-radius: 0 !important;
+  }
+
   div {
     animation-duration: 0.2s !important;
     animation-direction: reverse !important;

@@ -1,6 +1,7 @@
-import { createContext, use, useState } from 'react';
+import { createContext, use, useMemo, useState } from 'react';
 
-import { tran } from '../lang/langHelpers';
+import type { LanguageDataType } from '../lang/langHelpers';
+import { getLangDataAsync, tran } from '../lang/langHelpers';
 import BibleItem from './BibleItem';
 import {
     checkIsBookAvailable,
@@ -16,13 +17,18 @@ import Bible from './Bible';
 import { showSimpleToast } from '../toast/toastHelpers';
 import DirSource from '../helper/DirSource';
 import FileSource from '../helper/FileSource';
-import { addExtension } from '../server/fileHelpers';
-import appProvider from '../server/appProvider';
-import { BibleVerseList } from '../helper/bible-helpers/BibleDataReader';
 import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+    addExtension,
+    fsCheckFileExist,
+    getDownloadPath,
+    getFileBase64,
+    pathJoin,
+    writeFileFromBase64Sync,
+} from '../server/fileHelpers';
+import type { BibleVerseList } from '../helper/bible-helpers/BibleDataReader';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
@@ -30,10 +36,17 @@ import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { genBibleItemCopyingContextMenu } from './bibleItemHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppCurrentRef, useAppEffectAsync } from '../helper/appHooks';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
+import { handleError } from '../helper/errorHelpers';
+import { cloneJson } from '../helper/helpers';
+import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
+import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import { showFileOrDirExplorer } from '../server/appHelpers';
 
-export const SelectedBibleKeyContext = createContext<string>('KJV');
+export const SelectedBibleKeyContext = createContext<string>(BIBLE_KJV_KEY);
 export function useBibleKeyContext() {
     const bibleKey = use(SelectedBibleKeyContext);
     if (!bibleKey) {
@@ -64,18 +77,16 @@ export async function genInputText(
 }
 
 export async function saveBibleItem(bibleItem: BibleItem, onDone?: () => void) {
-    if (appProvider.isPageAppDocumentEditor) {
-        // TODO: Implement this, find canvasController
-        // canvasController.addNewBibleItem(bibleItem);
-        return null;
-    }
     const savedBibleItem = await Bible.addBibleItemToDefault(bibleItem);
-    if (savedBibleItem !== null) {
-        showSimpleToast('Adding bible', 'Bible item is added');
+    if (savedBibleItem === null) {
+        showSimpleToast(
+            tran('Adding bible'),
+            tran('Fail to add bible to list'),
+        );
+    } else {
+        showSimpleToast(tran('Adding bible'), tran('Bible item is added'));
         onDone?.();
         return savedBibleItem;
-    } else {
-        showSimpleToast('Adding bible', 'Fail to add bible to list');
     }
     return null;
 }
@@ -130,19 +141,21 @@ export async function moveBibleItemTo(
             return name !== fileSource.name;
         });
     if (targetNames.length === 0) {
-        showSimpleToast('Move Bible Item', 'No other bibles found');
+        showSimpleToast(tran('Move Bible Item'), tran('No other bibles found'));
         return;
     }
     showAppContextMenu(
         event,
         targetNames.map((name) => {
             return {
+                childBefore: genContextMenuItemIcon('book'),
                 menuElement: name,
                 onSelect: async () => {
                     const bibleFileSource = FileSource.getInstance(
                         bible.filePath,
                     );
-                    const { basePath, dotExtension } = bibleFileSource;
+                    const { baseDirPath: basePath, dotExtension } =
+                        bibleFileSource;
                     const fileSource = FileSource.getInstance(
                         basePath,
                         addExtension(name, dotExtension),
@@ -152,8 +165,8 @@ export async function moveBibleItemTo(
                     );
                     if (!targetBible) {
                         showSimpleToast(
-                            'Move Bible Item',
-                            'Target bible not found',
+                            tran('Move Bible Item'),
+                            tran('Target bible not found'),
                         );
                         return;
                     }
@@ -171,18 +184,35 @@ export async function openBibleItemContextMenu(
     openBibleLookup: (() => void) | null,
     extraMenuItems: ContextMenuItemType[],
 ) {
+    // A bible item does not have to belong to a file — one dragged out of the
+    // lookup window into a presenting flow has no `filePath`. Only the file-editing
+    // entries need the bible; bailing out here took the whole menu away from
+    // such an item, "Show on Screens" included, leaving a dead-end toast.
     const bible = bibleItem.filePath
         ? await Bible.fromFilePath(bibleItem.filePath)
         : null;
-    if (bible === null) {
-        showSimpleToast('Open Bible Item Context Menu', 'Unable to get bible');
-        return;
-    }
+    // Mutating actions re-read the file at action time — the menu can stay
+    // open indefinitely, and saving the open-time snapshot would clobber any
+    // item added to the same file in between.
+    const mutateFreshBible = async (callback: (freshBible: Bible) => void) => {
+        if (bible === null) {
+            return;
+        }
+        const freshBible = await Bible.fromFilePath(bible.filePath);
+        if (freshBible === null) {
+            showSimpleToast(tran('Bible Item'), tran('Unable to get bible'));
+            return;
+        }
+        callback(freshBible);
+        await freshBible.save();
+    };
     const menuItem: ContextMenuItemType[] = [
         ...genBibleItemCopyingContextMenu(bibleItem),
-        ...(openBibleLookup !== null
-            ? [
+        ...(openBibleLookup === null
+            ? []
+            : [
                   {
+                      childBefore: genContextMenuItemIcon('search'),
                       menuElement: tran('Lookup'),
                       onSelect: async () => {
                           const viewController =
@@ -191,60 +221,75 @@ export async function openBibleItemContextMenu(
                               viewController.selectedBibleItem,
                               {
                                   bibleKey: bibleItem.bibleKey,
+                                  target: cloneJson(bibleItem.target),
                               },
-                          );
-                          await viewController.setLookupContentFromBibleItem(
-                              bibleItem,
                           );
                           openBibleLookup();
                       },
                   },
-              ]
-            : []),
-        {
-            menuElement: tran('Duplicate'),
-            onSelect: () => {
-                bible.duplicate(index);
-                bible.save();
-            },
-        },
+              ]),
+        ...(bible === null
+            ? []
+            : [
+                  {
+                      childBefore: genContextMenuItemIcon('files'),
+                      menuElement: tran('Duplicate'),
+                      onSelect: async () => {
+                          await mutateFreshBible((freshBible) => {
+                              freshBible.duplicate(index);
+                          });
+                      },
+                  },
+              ]),
         ...genShowOnScreensContextMenu((event) => {
             ScreenBibleManager.handleBibleItemSelecting(event, bibleItem, true);
         }),
-        {
-            menuElement: tran('Move To'),
-            onSelect: (event1: any) => {
-                moveBibleItemTo(event1, bible, bibleItem);
-            },
-        },
-        {
-            menuElement: tran('Delete'),
-            onSelect: async () => {
-                await bible.deleteBibleItem(bibleItem);
-                if (bibleItem.filePath !== undefined) {
-                    attachBackgroundManager.detachBackground(
-                        bibleItem.filePath,
-                        bibleItem.id,
-                    );
-                }
-            },
-        },
+        ...(bible === null
+            ? []
+            : [
+                  {
+                      childBefore: genContextMenuItemIcon('folder-symlink'),
+                      menuElement: tran('Move To'),
+                      onSelect: (event1: any) => {
+                          moveBibleItemTo(event1, bible, bibleItem);
+                      },
+                  },
+                  {
+                      childBefore: genContextMenuItemIcon('trash3', {
+                          color: 'var(--bs-danger)',
+                      }),
+                      menuElement: tran('Delete'),
+                      onSelect: async () => {
+                          await bible.deleteBibleItem(bibleItem);
+                          if (bibleItem.filePath !== undefined) {
+                              attachBackgroundManager.detachBackground(
+                                  bibleItem.filePath,
+                                  bibleItem.id,
+                              );
+                          }
+                      },
+                  },
+              ]),
     ];
-    if (index !== 0) {
+    if (bible !== null && index !== 0) {
         menuItem.push({
+            childBefore: genContextMenuItemIcon('arrow-up'),
             menuElement: tran('Move up'),
-            onSelect: () => {
-                bible.swapItems(index, index - 1);
-                bible.save();
+            onSelect: async () => {
+                await mutateFreshBible((freshBible) => {
+                    freshBible.swapItems(index, index - 1);
+                });
             },
         });
     }
-    if (index !== bible.itemsLength - 1) {
+    if (bible !== null && index !== bible.itemsLength - 1) {
         menuItem.push({
+            childBefore: genContextMenuItemIcon('arrow-down'),
             menuElement: tran('Move down'),
-            onSelect: () => {
-                bible.swapItems(index, index + 1);
-                bible.save();
+            onSelect: async () => {
+                await mutateFreshBible((freshBible) => {
+                    freshBible.swapItems(index, index + 1);
+                });
             },
         });
     }
@@ -280,7 +325,8 @@ export async function getOnScreenBibleItems() {
 export async function checkIsBibleItemOnScreen(items: BibleItem[]) {
     const titleList = await getOnScreenBibleItems();
     for (const bibleItem of items) {
-        if (titleList.includes(await bibleItem.toTitle())) {
+        const title = await bibleItem.toTitle();
+        if (titleList.includes(title)) {
             return true;
         }
     }
@@ -289,11 +335,153 @@ export async function checkIsBibleItemOnScreen(items: BibleItem[]) {
 
 export function useIsOnScreen(items: BibleItem[]) {
     const [isOnScreen, setIsOnScreen] = useState(false);
-    useAppEffectAsync(async () => {
-        setIsOnScreen(await checkIsBibleItemOnScreen(items));
-    }, [items]);
-    useScreenUpdateEvents(undefined, async () => {
-        setIsOnScreen(await checkIsBibleItemOnScreen(items));
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    const itemsRef = useAppCurrentRef(items);
+    // callers build the array (and its items) fresh each render, so keying
+    // the effect on identity re-ran the async on-screen check every render
+    const itemsKey = items
+        .map((item) => {
+            return `${item.id}-${item.bibleKey}-${JSON.stringify(item.target)}`;
+        })
+        .join(',');
+    const itemsKeyRef = useAppCurrentRef(itemsKey);
+    // `setValue` goes through the method context so being re-fed other verses
+    // mid-check neuters this write instead of letting the old answer land.
+    useAppEffectAsync(
+        async (methodContext) => {
+            const newIsOnScreen = await checkIsBibleItemOnScreen(
+                itemsRef.current,
+            );
+            methodContext.setValue(newIsOnScreen);
+        },
+        [itemsKey],
+        { setValue: setIsOnScreen },
+    );
+    useScreenUpdateEvents(undefined, () => {
+        attemptTimeout(async () => {
+            const newIsOnScreen = await checkIsBibleItemOnScreen(
+                itemsRef.current,
+            );
+            // Answered for the verses held when the event fired — building
+            // their titles is itself async. Being re-fed others mid-check
+            // re-runs the guarded read above, so letting this land would
+            // report the PREVIOUS verses' on-screen state.
+            if (itemsKey !== itemsKeyRef.current) {
+                return;
+            }
+            setIsOnScreen(newIsOnScreen);
+        });
     });
     return isOnScreen;
+}
+
+async function exportFontFile(fontFile: string, baseDirPath: string) {
+    try {
+        const fileFullName = fontFile.split('/').pop() as string;
+        const filePath = pathJoin(baseDirPath, fileFullName);
+        if (await fsCheckFileExist(filePath)) {
+            return;
+        }
+        // read after the existence check: skipping an already exported font
+        // must not pay for loading its bytes
+        const base64Data = await getFileBase64(fontFile);
+        writeFileFromBase64Sync(filePath, base64Data);
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+export async function exportToWordDocument(bibleItems: BibleItem[]) {
+    if (bibleItems.length === 0) {
+        return;
+    }
+    const bibleKeys = Array.from(
+        new Set(bibleItems.map((bibleItem) => bibleItem.bibleKey)),
+    );
+    const langDataMap: Record<string, LanguageDataType | null> = {};
+    for (const bibleKey of bibleKeys) {
+        const locale = await getBibleLocale(bibleKey);
+        const langData = await getLangDataAsync(locale);
+        langDataMap[bibleKey] = langData;
+    }
+    const bibleData = await Promise.all(
+        bibleItems.map(async (bibleItem) => {
+            const text = await bibleItem.toText();
+            const title = await bibleItem.toTitleWithBibleKey();
+            const langData = langDataMap[bibleItem.bibleKey];
+            const fontFamily = langData?.globalFontFamily ?? null;
+            return { title, body: text, fontFamily };
+        }),
+    );
+    showSimpleToast(tran('Exporting'), tran('Export to MS Word') + '...');
+    const { exportBibleMSWord } = await import('../ms-office/docxHelpers');
+    const downloadDirPath = getDownloadPath();
+    const filePath = await exportBibleMSWord(bibleData, downloadDirPath);
+    // only some bible languages ship font files; asking about fonts that do not
+    // exist would be a dead-end question, and two keys can share one font
+    const fontFileList = Array.from(
+        new Set(
+            bibleKeys.flatMap((bibleKey) => {
+                return langDataMap[bibleKey]?.getFontFamilyFiles?.() ?? [];
+            }),
+        ),
+    );
+    const isExportingFonts =
+        fontFileList.length > 0 &&
+        (await showAppConfirm(
+            tran('Exporting Fonts'),
+            tran('Would you like to export the fonts?'),
+            {
+                cancelButtonLabel: 'No',
+                confirmButtonLabel: 'Yes',
+            },
+        ));
+    if (isExportingFonts) {
+        for (const fontFile of fontFileList) {
+            await exportFontFile(fontFile, downloadDirPath);
+        }
+    }
+    // the document itself, not the folder: `showItemInFolder` on a directory
+    // selects it inside its parent instead of opening it
+    showFileOrDirExplorer(filePath);
+}
+
+export function improveBibleItemTitleOnHover<T extends HTMLElement>(
+    bibleKey: string,
+    verseFullKey: string,
+    element: T | null,
+) {
+    if (element === null) {
+        return;
+    }
+    element.addEventListener('mouseover', async () => {
+        if (element.title) {
+            return;
+        }
+        element.title = tran('Loading') + '...';
+        const bibleItem = await BibleItem.fromVerseKey(bibleKey, verseFullKey);
+        if (bibleItem === null) {
+            return;
+        }
+        let text = await bibleItem.toText();
+        text = text.substring(0, 1000);
+        element.title = text;
+    });
+}
+
+export function sortBibleFilePaths(filePaths: string[]) {
+    // move default file to the top
+    const newFilePath = [...filePaths];
+    newFilePath.sort((a, b) => {
+        const aIsDefault = Bible.checkIsDefault(a);
+        const bIsDefault = Bible.checkIsDefault(b);
+        if (aIsDefault && !bIsDefault) {
+            return -1;
+        }
+        if (!aIsDefault && bIsDefault) {
+            return 1;
+        }
+        return 0;
+    });
+    return newFilePath;
 }

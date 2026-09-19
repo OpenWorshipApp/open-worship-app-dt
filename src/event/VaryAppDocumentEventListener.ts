@@ -1,55 +1,66 @@
+import type { VarySlideType } from '../app-document-list/appDocumentTypeHelpers';
 import {
-    VaryAppDocumentItemType,
     THUMBNAIL_WIDTH_SETTING_NAME,
     DEFAULT_THUMBNAIL_SIZE_FACTOR,
 } from '../app-document-list/appDocumentTypeHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { getSetting, useStateSettingNumber } from '../helper/settingHelpers';
-import EventHandler, { ListenerType } from './EventHandler';
+import type { ListenerType } from './EventHandler';
+import EventHandler from './EventHandler';
 
 export type AppDocumentListEventType =
-    | 'app-document-item-select'
-    | 'app-document-item-sizing';
+    'app-document-item-select' | 'app-document-item-sizing';
 
 export default class AppDocumentListEventListener extends EventHandler<AppDocumentListEventType> {
     static readonly eventNamePrefix: string = 'app-document-list';
-    static selectAppDocumentItem(
-        varyAppDocumentItem: VaryAppDocumentItemType | null,
-    ) {
-        this.addPropEvent('app-document-item-select', varyAppDocumentItem);
+    static selectVarySlide(varySlide: VarySlideType | null) {
+        this.addPropEvent('app-document-item-select', varySlide);
     }
-    static appDocumentItemSizing() {
+    static fireEventVarySlideSizing() {
         this.addPropEvent('app-document-item-sizing');
     }
 }
 
-export function useAppDocumentItemSelecting(
-    listener: ListenerType<VaryAppDocumentItemType | null>,
+export function useVarySlideSelecting(
+    listener: ListenerType<VarySlideType | null>,
 ) {
+    const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
         const event = AppDocumentListEventListener.registerEventListener(
             ['app-document-item-select'],
-            listener,
+            (data: VarySlideType | null, time: number) => {
+                listenerRef.current(data, time);
+            },
         );
         return () => {
             AppDocumentListEventListener.unregisterEventListener(event);
         };
-    }, [listener]);
+    }, []);
 }
 
-export function useAppDocumentItemThumbnailSizeScale(
+export function useVarySlideThumbnailSizeScale({
     settingName = THUMBNAIL_WIDTH_SETTING_NAME,
     defaultSize = Math.fround(DEFAULT_THUMBNAIL_SIZE_FACTOR / 30),
-): [number, (newScale: number) => void] {
+}: {
+    settingName?: string;
+    defaultSize?: number;
+} = {}): [number, (newScale: number) => void] {
     const getDefaultSize = () => {
-        return Number.parseInt(
-            getSetting(settingName) ?? defaultSize.toString(),
-        );
+        const settingN = getSetting(settingName);
+        if (settingN === null) {
+            return defaultSize;
+        }
+        const n = Number.parseInt(settingN ?? '', 10);
+        if (Number.isNaN(n)) {
+            return defaultSize;
+        }
+        return n;
     };
     const [thumbnailSizeScale, setThumbnailSizeScale] = useStateSettingNumber(
         settingName,
-        getDefaultSize(),
+        getDefaultSize,
     );
+
     useAppEffect(() => {
         const event = AppDocumentListEventListener.registerEventListener(
             ['app-document-item-sizing'],
@@ -58,10 +69,10 @@ export function useAppDocumentItemThumbnailSizeScale(
         return () => {
             AppDocumentListEventListener.unregisterEventListener(event);
         };
-    }, []);
+    }, [settingName, defaultSize]);
     const applyThumbnailSizeScale = (size: number) => {
         setThumbnailSizeScale(size);
-        AppDocumentListEventListener.appDocumentItemSizing();
+        AppDocumentListEventListener.fireEventVarySlideSizing();
     };
     return [thumbnailSizeScale, applyThumbnailSizeScale];
 }

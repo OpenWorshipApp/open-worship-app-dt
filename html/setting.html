@@ -7,10 +7,10 @@
         <!-- TODO: change logo192.png -->
         <link rel="apple-touch-icon" href="/logo192.png" />
         <link rel="manifest" href="/manifest.json" />
-        <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'">prod -->
+        <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; worker-src 'self' blob:">prod -->
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="Open Worship App" />
-        <title>Settings</title>
+        <title>Open Worship app - Setting (⚙️)</title>
     </head>
 
     <body style="background-color: transparent !important">
@@ -30,7 +30,6 @@
                 alt="loading"
             />
         </div>
-        <script type="module" src="/src/appInit.ts"></script>
         <script type="module" src="/src/setting.tsx"></script>
     </body>
 </html>

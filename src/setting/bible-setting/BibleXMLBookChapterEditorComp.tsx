@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react';
-import { compileSchema, SchemaNode } from 'json-schema-library';
-import { Uri } from 'monaco-editor';
+import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
 
-import { useAppEffect, useAppStateAsync } from '../../helper/debuggerHelpers';
+import {
+    useAppEffect,
+    useAppStateAsync,
+    useAppCurrentRef,
+} from '../../helper/appHooks';
 import {
     genBookMatches,
     useChapterMatch,
@@ -10,19 +12,18 @@ import {
 import LoadingComp from '../../others/LoadingComp';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
 
-import bookChapterSchemaJson from './schemas/bibleBookChapterSchema.json';
+import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { getChapterData } from '../../helper/bible-helpers/bibleInfoHelpers';
-import { BibleChapterType } from '../../helper/bible-helpers/BibleDataReader';
+import type { BibleChapterType } from '../../helper/bible-helpers/BibleDataReader';
 import {
     getBibleXMLDataFromKey,
     saveJsonDataToXMLfile,
 } from './bibleXMLHelpers';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 import { forceReloadAppWindows } from '../settingHelpers';
-
-export const schemaHandler: SchemaNode = compileSchema(bookChapterSchemaJson);
-export const uri = Uri.parse('book-chapter');
+import { bookChapterEditorSchemaHandler } from './schemas/bibleSchemaHelpers';
+import { bibleBookChapterUri } from './schemas/bibleEditorUriHelpers';
 
 function RenderBookOptionsComp({
     bibleKey,
@@ -51,6 +52,14 @@ function RenderBookOptionsComp({
         }
         setSelectedBookKey(book.bookKey);
     }, [selectedBookKey, booksAvailable]);
+    const setSelectedBookKeyRef = useAppCurrentRef(setSelectedBookKey);
+    const handleBookChange = useCallback(
+        (e: ChangeEvent<HTMLSelectElement>) => {
+            setSelectedBookKeyRef.current(e.target.value);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     if (booksAvailable === undefined) {
         return <LoadingComp />;
     }
@@ -63,10 +72,8 @@ function RenderBookOptionsComp({
                 <select
                     className="form-select"
                     value={selectedBookKey}
-                    data-bible-key={bibleKey}
-                    onChange={(e) => {
-                        setSelectedBookKey(e.target.value);
-                    }}
+                    data-bible-key-ff={bibleKey}
+                    onChange={handleBookChange}
                 >
                     {booksAvailable.map(({ bookKey, book, isAvailable }) => {
                         return (
@@ -74,7 +81,7 @@ function RenderBookOptionsComp({
                                 key={bookKey}
                                 value={bookKey}
                                 disabled={!isAvailable}
-                                data-bible-key={bibleKey}
+                                data-bible-key-ff={bibleKey}
                             >
                                 {book}
                                 {book === bookKey ? '' : ` (${bookKey})`}
@@ -99,6 +106,14 @@ function RenderChapterOptionsComp({
     setSelectedChapter: (chapter: number) => void;
 }>) {
     const chapterList = useChapterMatch(bibleKey, selectedBookKey, null);
+    const setSelectedChapterRef = useAppCurrentRef(setSelectedChapter);
+    const handleChapterChange = useCallback(
+        (e: ChangeEvent<HTMLSelectElement>) => {
+            setSelectedChapterRef.current(Number(e.target.value));
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     if (chapterList === null) {
         return <div>Unable to load chapter list.</div>;
     }
@@ -108,17 +123,15 @@ function RenderChapterOptionsComp({
                 <select
                     className="form-select"
                     value={selectedChapter}
-                    data-bible-key={bibleKey}
-                    onChange={(e) => {
-                        setSelectedChapter(Number(e.target.value));
-                    }}
+                    data-bible-key-ff={bibleKey}
+                    onChange={handleChapterChange}
                 >
                     {chapterList.map(({ chapter, chapterLocaleString }) => {
                         return (
                             <option
                                 key={chapter}
                                 value={chapter}
-                                data-bible-key={bibleKey}
+                                data-bible-key-ff={bibleKey}
                             >
                                 {chapterLocaleString}
                                 {chapterLocaleString === `${chapter}`
@@ -148,7 +161,7 @@ async function handleSaving(
     const xmlBibleData = await getBibleXMLDataFromKey(bibleKey);
     if (!xmlBibleData) {
         showSimpleToast(
-            'Saving Bible Data',
+            tran('Saving Bible Data'),
             `Bible Data not found for key ${bibleKey}`,
         );
         return;
@@ -218,44 +231,44 @@ function EditorComp({
             newLinesTitleMap: chapterData.newLinesTitleMap ?? {},
             customVersesMap: chapterData.customVersesMap ?? {},
         };
-    }, [chapterData]);
+    }, [chapterData, bibleKey, bookKey, chapter]);
     if (chapterData === undefined) {
         return <LoadingComp />;
     }
     if (chapterData === null) {
-        return <div>Chapter data not found.</div>;
+        return <div>{tran('Chapter data not found.')}</div>;
     }
     return (
         <BibleXMLEditorComp
             id={bibleKey}
             jsonData={jsonData}
             onStore={() => {}}
-            jsonDataSchema={schemaHandler}
+            jsonDataSchema={bookChapterEditorSchemaHandler}
             save={(newJsonData: DataType) => {
                 if (newJsonData.bibleKey !== bibleKey) {
                     showSimpleToast(
-                        'Saving Bible Data',
+                        tran('Saving Bible Data'),
                         `Invalid Bible Key ${newJsonData.bibleKey}`,
                     );
                     return;
                 }
                 if (newJsonData.bookKey !== bookKey) {
                     showSimpleToast(
-                        'Saving Bible Data',
+                        tran('Saving Bible Data'),
                         `Invalid Book Key ${newJsonData.bookKey}`,
                     );
                     return;
                 }
                 if (newJsonData.chapter !== chapter) {
                     showSimpleToast(
-                        'Saving Bible Data',
+                        tran('Saving Bible Data'),
                         `Invalid Chapter Number ${newJsonData.chapter}`,
                     );
                     return;
                 }
                 handleSaving(bibleKey, bookKey, chapter, newJsonData);
             }}
-            editorUri={uri}
+            editorUri={bibleBookChapterUri}
         />
     );
 }

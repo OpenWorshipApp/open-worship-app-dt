@@ -1,6 +1,7 @@
-import { useAppEffect } from '../helper/debuggerHelpers';
-import { SimpleToastType } from '../toast/SimpleToastComp';
-import EventHandler, { ListenerType } from './EventHandler';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
+import type { SimpleToastType } from '../toast/SimpleToastComp';
+import type { ListenerType } from './EventHandler';
+import EventHandler from './EventHandler';
 
 export type ToastEventType = 'simple';
 
@@ -12,13 +13,16 @@ export default class ToastEventListener extends EventHandler<ToastEventType> {
 }
 
 export function useToastSimpleShowing(listener: ListenerType<SimpleToastType>) {
+    const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
         const event = ToastEventListener.registerEventListener(
             ['simple'],
-            listener,
+            (data: SimpleToastType, time: number) => {
+                listenerRef.current(data, time);
+            },
         );
         return () => {
             ToastEventListener.unregisterEventListener(event);
         };
-    }, [listener]);
+    }, []);
 }

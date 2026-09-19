@@ -2,22 +2,21 @@ import { getChapterData, toVerseFullKeyFormat } from './bibleInfoHelpers';
 import BibleItem from '../../bible-list/BibleItem';
 import CacheManager from '../../others/CacheManager';
 import { unlocking } from '../../server/unlockingHelpers';
-import {
+import type {
     ContentTitleType,
     CustomTitlesVerseType,
     CustomVerseContentType,
 } from './BibleDataReader';
 import appProvider from '../../server/appProvider';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import type LookupBibleItemController from '../../bible-reader/LookupBibleItemController';
 import type BibleItemsViewController from '../../bible-reader/BibleItemsViewController';
 import { copyToClipboard } from '../../server/appHelpers';
 import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
 import { elementDivider } from '../../context-menu/AppContextMenuComp';
-import { getLangFromBibleKey } from './bibleLogicHelpers2';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
+import { getBibleLocale, getLangDataFromBibleKey } from './bibleStyleHelpers';
 
 async function getBibleItemsFromTitleVerseKey(
     bibleKey: string,
@@ -62,19 +61,19 @@ async function getBibleItemsFromTitleVerseKey(
 }
 
 async function compileVerseTitle(bibleKey: string, content: string) {
-    const dom = document.createElement('div');
-    dom.innerHTML = content;
-    const spans = dom.querySelectorAll<HTMLSpanElement>(
+    const divElement = document.createElement('div');
+    divElement.innerHTML = content;
+    const spanElements = divElement.querySelectorAll<HTMLSpanElement>(
         'span[data-title-verse-key]',
     );
-    for (const span of spans) {
-        const verseKey = span.dataset.titleVerseKey;
+    for (const spanElement of spanElements) {
+        const verseKey = spanElement.dataset.titleVerseKey;
         if (!verseKey) {
             continue;
         }
-        span.classList.add('app-caught-hover-pointer');
-        span.title = verseKey;
-        span.dataset.bibleKey = bibleKey;
+        spanElement.classList.add('app-caught-hover-pointer');
+        spanElement.title = verseKey;
+        spanElement.dataset.bibleKey = bibleKey;
         const { bibleItem1, bibleItem2 } = await getBibleItemsFromTitleVerseKey(
             bibleKey,
             verseKey,
@@ -90,9 +89,9 @@ async function compileVerseTitle(bibleKey: string, content: string) {
             const title2 = await bibleItem2.toTitle();
             title += `\n${title2}  ${text2}`;
         }
-        span.title = title;
+        spanElement.title = title;
     }
-    return dom.innerHTML;
+    return divElement.innerHTML;
 }
 
 function genContextMenuItems(
@@ -109,8 +108,8 @@ function genContextMenuItems(
             disabled: true,
         },
         {
-            childBefore: <i className="bi bi-eye" />,
-            menuElement: <span data-bible-key={bibleKey}>{title}</span>,
+            childBefore: genContextMenuItemIcon('eye'),
+            menuElement: <span data-bible-key-ff={bibleKey}>{title}</span>,
             title: `Open "${title}"`,
             onSelect:
                 onSelect ??
@@ -122,8 +121,8 @@ function genContextMenuItems(
                 }),
         },
         {
-            childBefore: <i className="bi bi-copy" />,
-            menuElement: <span data-bible-key={bibleKey}>{title}</span>,
+            childBefore: genContextMenuItemIcon('copy'),
+            menuElement: <span data-bible-key-ff={bibleKey}>{title}</span>,
             title: `Copy "${title}" to clipboard`,
             onSelect: () => {
                 copyToClipboard(`${bibleItem.getCopyingBibleKey()} ${title}`);
@@ -133,8 +132,7 @@ function genContextMenuItems(
 }
 async function handleCustomTitleVerseClicking(
     bibleItemViewController:
-        | BibleItemsViewController
-        | LookupBibleItemController,
+        BibleItemsViewController | LookupBibleItemController,
     bibleItem: BibleItem,
     event: MouseEvent,
 ) {
@@ -221,8 +219,25 @@ export async function reformCustomTitle(
 }
 
 const defaultCssStyle =
-    'width: 100%; display: inline-block; padding: 0.2em 0.4em; font-weight: bold; ';
-const newLineTitleCache = new CacheManager<string>(60); // 1 minute
+    'width: 100%; display: inline-block; ' +
+    'padding: 0.2em 0.4em; font-weight: bold; ';
+async function genTitleHtml(
+    bibleKey: string,
+    title: ContentTitleType,
+    fontFamily?: string,
+) {
+    let style = `${defaultCssStyle} ${title.cssStyle ?? ''};`;
+    if (fontFamily !== undefined) {
+        style += ` font-family: ${fontFamily};`;
+    }
+    const compiledTitle = await compileVerseTitle(bibleKey, title.content);
+    const locale = await getBibleLocale(bibleKey);
+    return `<div data-dict-locale="${locale}"
+            style="${style}">
+            ${compiledTitle}
+        </div>`;
+}
+const newLineTitleCache = new CacheManager<string>(10);
 export async function genNewLineTitlesHtmlText(
     bibleKey: string,
     titles: ContentTitleType[],
@@ -234,19 +249,10 @@ export async function genNewLineTitlesHtmlText(
         if (cachedData !== null) {
             return cachedData;
         }
-        const langData = await getLangFromBibleKey(bibleKey);
+        const langData = await getLangDataFromBibleKey(bibleKey);
         const list = await Promise.all(
-            titles.map(async (title) => {
-                let style = `${defaultCssStyle} ${title.cssStyle ?? ''};`;
-                if (langData !== null) {
-                    style += ` font-family: ${langData.fontFamily};`;
-                }
-                return `
-                        <div data-bible-key="${bibleKey}"
-                        style="${style}">
-                        ${await compileVerseTitle(bibleKey, title.content)}
-                        </div>
-                        `;
+            titles.map((title) => {
+                return genTitleHtml(bibleKey, title, langData?.fontFamily);
             }),
         );
         const verseText = list.join('');
@@ -288,11 +294,11 @@ export async function getCustomVerseText(
         customVerseList.map(async (item) => {
             if ((item as any).isTitle) {
                 const itemTitle = item as CustomTitlesVerseType;
-                return `
-            <div class="mt-2">
-                ${await genNewLineTitlesHtmlText(bibleKey, itemTitle.titles)}
-            </div>
-            `;
+                const customTitleHtml = await genNewLineTitlesHtmlText(
+                    bibleKey,
+                    itemTitle.titles,
+                );
+                return `<div class="mt-2">${customTitleHtml}</div>`;
             }
             if (!(item as any).content) {
                 return '';

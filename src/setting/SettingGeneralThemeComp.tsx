@@ -1,54 +1,32 @@
-import { useState, useCallback, ChangeEvent } from 'react';
+import { type ChangeEvent, useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
-import {
-    applyDarkModeToApp,
-    darkModeHook,
-    getThemeSourceSetting,
-    setThemeSourceSetting,
-    ThemeOptionType,
-} from '../others/initHelpers';
+import type { ThemeOptionType } from '../others/themeHelpers';
+import { useThemeSource } from '../others/themeHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
+import SettingCardHeaderComp from './SettingCardHeaderComp';
 
 export default function SettingGeneralThemeComp() {
-    const [themeSource, setThemeSource] = useState<ThemeOptionType>(
-        getThemeSourceSetting(),
-    );
-
-    const setMode1 = useCallback((newThemeSource: ThemeOptionType) => {
-        setThemeSource(newThemeSource);
-        setThemeSourceSetting(newThemeSource);
-        applyDarkModeToApp();
-    }, []);
-
-    const handleChange = useCallback(
+    const { themeSource, setThemeSource } = useThemeSource();
+    const setThemeSourceRef = useAppCurrentRef(setThemeSource);
+    const handleThemeChange = useCallback(
         (event: ChangeEvent<HTMLSelectElement>) => {
             const value = event.target.value;
-            setMode1(value as ThemeOptionType);
+            setThemeSourceRef.current(value as ThemeOptionType);
         },
-        [setMode1],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
-
-    useAppEffect(() => {
-        darkModeHook.check = () => {
-            const themeSourceSetting = getThemeSourceSetting();
-            setThemeSource(themeSourceSetting);
-        };
-        darkModeHook.check();
-        return () => {
-            darkModeHook.check = () => {};
-        };
-    }, []);
 
     return (
         <div className="card m-1">
-            <div className="card-header">{tran('Theme')}</div>
+            <SettingCardHeaderComp iconClassName="bi-palette" title="Theme" />
             <div className="card-body">
                 <select
                     className="form-select"
-                    aria-label="Default select example"
+                    aria-label={tran('Theme')}
                     value={themeSource}
-                    onChange={handleChange}
+                    onChange={handleThemeChange}
                 >
                     <option value="light">{tran('Light')}</option>
                     <option value="dark">{tran('Dark')}</option>

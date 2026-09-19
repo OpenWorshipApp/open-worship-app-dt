@@ -1,3 +1,4 @@
+import ContextMenuDotsButtonComp from '../../../context-menu/ContextMenuDotsButtonComp';
 import CanvasItemRendererComp from '../../CanvasItemRendererComp';
 import { useCanvasControllerContext } from '../CanvasController';
 import {
@@ -8,12 +9,18 @@ import {
     useSetEditingCanvasItem,
     useSetSelectedCanvasItems,
 } from '../CanvasItem';
+import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
+import { useToggleBibleLookupPopupContext } from '../../../others/commonButtons';
+
+const PREVIEW_WIDTH = 280;
+const PREVIEW_HEIGHT = 150;
 
 export default function ToolCanvasItemsComp() {
     const canvasController = useCanvasControllerContext();
     const canvasItems = useCanvasItemsContext();
     const handleCanvasItemControlling = useSetSelectedCanvasItems();
     const handleCanvasItemEditing = useSetEditingCanvasItem();
+    const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     const { canvasItems: selectedCanvasItems } =
         useSelectedCanvasItemsAndSetterContext();
     return (
@@ -42,25 +49,49 @@ export default function ToolCanvasItemsComp() {
                         }}
                         onClick={(event) => {
                             event.stopPropagation();
-                            handleCanvasItemControlling(canvasItem);
+                            const isAppend =
+                                checkIsAppendSelectionModifier(event);
+                            handleCanvasItemControlling(canvasItem, {
+                                isAppend,
+                            });
                         }}
                         onContextMenu={canvasController.genHandleContextMenuOpening(
                             canvasItem,
                             handleCanvasItemEditing.bind(null, canvasItem),
+                            false,
+                            showBibleLookupPopup,
                         )}
                     >
-                        <div className="card-header">
-                            {canvasItem.id}:{props.width}x{props.height}
+                        <div className="card-header d-flex align-items-center">
+                            <span className="flex-fill app-ellipsis">
+                                {canvasItem.id}:{props.width}x{props.height}
+                            </span>
+                            {/* No handler: the card around this header owns
+                                the item's menu. */}
+                            <ContextMenuDotsButtonComp />
                         </div>
                         <div
                             className="card-body"
                             style={{
-                                overflow: 'auto',
+                                overflow: 'hidden',
+                                position: 'relative',
                             }}
                         >
-                            <CanvasItemContext value={canvasItem}>
-                                <CanvasItemRendererComp />
-                            </CanvasItemContext>
+                            <div
+                                style={{
+                                    width: `${props.width}px`,
+                                    height: `${props.height}px`,
+                                    transform: `scale(${Math.min(
+                                        PREVIEW_WIDTH / props.width,
+                                        PREVIEW_HEIGHT / props.height,
+                                    )})`,
+                                    transformOrigin: 'top left',
+                                }}
+                            >
+                                <CanvasItemContext value={canvasItem}>
+                                    <CanvasItemRendererComp />
+                                </CanvasItemContext>
+                            </div>
                         </div>
                     </div>
                 );

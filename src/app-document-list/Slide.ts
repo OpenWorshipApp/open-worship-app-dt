@@ -1,40 +1,58 @@
-import { compileSchema, SchemaNode } from 'json-schema-library';
+import type { SchemaNode } from 'json-schema-library';
+import { compileSchema } from 'json-schema-library';
 
-import { ItemBase } from '../helper/ItemBase';
+import { ItemBaseFilePath } from '../helper/ItemBase';
 import { cloneJson } from '../helper/helpers';
-import { CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
-import DragInf, { DragTypeEnum } from '../helper/DragInf';
+import type { CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
+import type { CanvasItemBiblePropsType } from '../slide-editor/canvas/CanvasItemBibleItem';
+import type DragInf from '../helper/DragInf';
+import { DragTypeEnum } from '../helper/DragInf';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
-import { ClipboardInf } from '../server/appHelpers';
+import type { ClipboardInf } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';
-import { AnyObjectType } from '../helper/typeHelpers';
+import type { AnyObjectType } from '../helper/typeHelpers';
 import { getFontFamilies } from '../server/fontHelpers';
+import FileSource from '../helper/FileSource';
 
 import slideSchemaJson from './SlideSchema.json';
 const slideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
-export type SlideType = {
+type MetadataType = {
+    width: number;
+    height: number;
+    note?: string;
+};
+export type SlidePropsType = {
     id: number;
     name?: string;
+    isDisabled?: boolean;
     canvasItems: CanvasItemPropsType[];
-    metadata: {
-        width: number;
-        height: number;
-    };
+    metadata: MetadataType;
+    type: 'slide';
 };
 
 export default class Slide
-    extends ItemBase
+    extends ItemBaseFilePath
     implements DragInf<string>, ClipboardInf
 {
-    private _originalJson: SlideType;
+    _originalJson: SlidePropsType;
     filePath: string;
     isChanged = false;
 
-    constructor(filePath: string, json: SlideType) {
+    constructor(filePath: string, json: SlidePropsType) {
         super();
         this._originalJson = cloneJson(json);
+        this._originalJson.type = 'slide';
         this.filePath = filePath;
+    }
+
+    get isDisabled() {
+        return this.originalJson.isDisabled ?? false;
+    }
+    set isDisabled(isDisabled: boolean) {
+        const json = this.cloneOriginalJson;
+        json.isDisabled = isDisabled;
+        this.originalJson = json;
     }
 
     get cloneOriginalJson() {
@@ -55,6 +73,11 @@ export default class Slide
         return this.originalJson.id;
     }
 
+    get uuid() {
+        const fileSource = FileSource.getInstance(this.filePath);
+        return `${fileSource.fullName}-${this.id}`;
+    }
+
     set id(id: number) {
         const json = this.cloneOriginalJson;
         json.id = id;
@@ -65,7 +88,7 @@ export default class Slide
         return this._originalJson;
     }
 
-    set originalJson(json: SlideType) {
+    set originalJson(json: SlidePropsType) {
         this.isChanged = true;
         this._originalJson = json;
     }
@@ -74,7 +97,7 @@ export default class Slide
         return this.originalJson.metadata;
     }
 
-    set metadata(metadata: { width: number; height: number }) {
+    set metadata(metadata: MetadataType) {
         const json = this.cloneOriginalJson;
         json.metadata = metadata;
         this.originalJson = json;
@@ -110,6 +133,20 @@ export default class Slide
         this.metadata = metadata;
     }
 
+    get note() {
+        return this.originalJson.metadata.note ?? '';
+    }
+
+    set note(note: string) {
+        const metadata = this.metadata;
+        metadata.note = note;
+        this.metadata = metadata;
+    }
+
+    getItemFilePath(): Promise<string> {
+        return Promise.resolve(this.filePath);
+    }
+
     fontFamilies() {
         const fontFamilies = new Set<string>();
         for (const canvasItem of this.canvasItemsJson) {
@@ -123,8 +160,23 @@ export default class Slide
         return fontFamilies;
     }
 
-    getUnavailableFontFamilies() {
-        const availableFontFamilies = getFontFamilies();
+    getBibleKeys() {
+        const bibleKeys = new Set<string>();
+        for (const canvasItem of this.canvasItemsJson) {
+            if (canvasItem.type !== 'bible') {
+                continue;
+            }
+            const { bibleKeys: itemBibleKeys } =
+                canvasItem as CanvasItemBiblePropsType;
+            for (const bibleKey of itemBibleKeys ?? []) {
+                bibleKeys.add(bibleKey);
+            }
+        }
+        return bibleKeys;
+    }
+
+    async getUnavailableFontFamilies() {
+        const availableFontFamilies = await getFontFamilies();
         if (availableFontFamilies === null) {
             return [];
         }
@@ -147,7 +199,7 @@ export default class Slide
         return { width, height };
     }
 
-    static defaultSlideData(id: number) {
+    static defaultSlideData(id: number): SlidePropsType {
         const { width, height } = this.getDefaultDim();
         const canvasItems: CanvasItemPropsType[] = [];
         return {
@@ -157,10 +209,11 @@ export default class Slide
                 height,
             },
             canvasItems,
+            type: 'slide',
         };
     }
 
-    toJson(): SlideType {
+    toJson(): SlidePropsType {
         if (this.isError) {
             return this.jsonError;
         }
@@ -199,15 +252,25 @@ export default class Slide
         }
         try {
             const { filePath, data } = JSON.parse(jsonString);
+            if (typeof data !== 'object') {
+                throw new Error('Invalid clipboard data');
+            }
             this.validate(data);
             return this.fromJson(data, filePath);
         } catch (_error) {}
         return null;
     }
 
+    // The drag TYPE alone, without building the payload. Lists ask for it on
+    // every render just to pick an icon, and the payload is a full
+    // `JSON.stringify` of the slide.
+    get dragType(): DragTypeEnum {
+        return DragTypeEnum.SLIDE;
+    }
+
     dragSerialize() {
         return {
-            type: DragTypeEnum.SLIDE,
+            type: this.dragType,
             data: this.clipboardSerialize(),
         };
     }
@@ -221,7 +284,7 @@ export default class Slide
         return null;
     }
 
-    static fromJson(json: SlideType, filePath: string) {
+    static fromJson(json: SlidePropsType, filePath: string) {
         return new this(filePath, json);
     }
 
@@ -233,17 +296,21 @@ export default class Slide
                 height: 0,
             },
             canvasItems: [],
+            type: 'slide' as const,
         };
         const slide = new Slide(filePath, newJson);
         slide.jsonError = json;
         return slide;
     }
 
-    static checkIsThisType(anyAppDocumentItem: any): boolean {
-        return anyAppDocumentItem instanceof Slide;
+    static checkIsThisType(anyVarySlide: any): boolean {
+        if (anyVarySlide._originalJson?.type !== 'slide') {
+            return false;
+        }
+        return anyVarySlide instanceof Slide;
     }
 
-    checkIsSame(item: ItemBase) {
+    checkIsSame(item: ItemBaseFilePath) {
         if (Slide.checkIsThisType(item)) {
             return super.checkIsSame(item);
         }

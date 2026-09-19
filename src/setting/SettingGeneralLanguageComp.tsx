@@ -1,15 +1,18 @@
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppStateAsync } from '../helper/appHooks';
+import type { LanguageDataType, LocaleType } from '../lang/langHelpers';
 import {
     getAllLangsAsync,
     getCurrentLocale,
-    LanguageDataType,
-    LocaleType,
+    getLangDataAsync,
     setCurrentLocale,
     tran,
 } from '../lang/langHelpers';
 import { applyStore } from './SettingApplyComp';
+import LoadingComp from '../others/LoadingComp';
+import SettingCardHeaderComp from './SettingCardHeaderComp';
 
 function RenderLanguageButtonComp({
     currentLocale,
@@ -20,21 +23,30 @@ function RenderLanguageButtonComp({
     langData: LanguageDataType;
     setLocale: (newLocale: LocaleType) => void;
 }>) {
-    const btnType =
-        langData.locale === currentLocale ? 'btn-info' : 'btn-outline-info';
+    const { locale } = langData;
+    const btnType = locale === currentLocale ? 'btn-info' : 'btn-outline-info';
     return (
         <button
-            key={langData.locale}
-            onClick={() => {
-                setCurrentLocale(langData.locale);
-                setLocale(langData.locale);
+            key={locale}
+            onClick={async () => {
+                setCurrentLocale(locale);
+                await getLangDataAsync(locale);
+                setLocale(locale);
                 applyStore.pendingApply();
             }}
             className={`item btn ${btnType}`}
+            title={langData.name}
         >
-            {langData.name}
+            {/*
+             * Deliberately NOT `tran(...)`: translating each language's name
+             * into the locale currently in force renders the whole list in one
+             * script, so a user who cannot read that script has no legible way
+             * back out of it. `title` still carries the English name for
+             * anyone hovering. See `LanguageDataType.nativeName`.
+             */}
+            {langData.nativeName ?? langData.name}
             <div
-                className="icon"
+                className="icon pe-1"
                 dangerouslySetInnerHTML={{
                     __html: langData.flagSVG,
                 }}
@@ -44,31 +56,39 @@ function RenderLanguageButtonComp({
 }
 
 export default function SettingGeneralLanguageComp() {
-    const [allLangs, setAllLangs] = useState<LanguageDataType[]>([]);
+    const [allLangs] = useAppStateAsync(() => {
+        return getAllLangsAsync();
+    });
     const [locale, setLocale] = useState(getCurrentLocale());
-    useAppEffect(() => {
-        if (allLangs.length === 0) {
-            const newAllLangs = getAllLangsAsync();
-            setAllLangs(newAllLangs);
-        }
-    }, [allLangs]);
+    let element: ReactNode;
+    if (allLangs === undefined) {
+        element = <LoadingComp />;
+    } else if (allLangs === null || allLangs.length === 0) {
+        element = <div>{tran('No languages available.')}</div>;
+    } else {
+        element = (
+            <div className="options d-flex flex-wrap">
+                {allLangs.map((langData) => {
+                    return (
+                        <RenderLanguageButtonComp
+                            key={langData.locale}
+                            currentLocale={locale}
+                            langData={langData}
+                            setLocale={setLocale}
+                        />
+                    );
+                })}
+            </div>
+        );
+    }
+
     return (
         <div className="card lang m-1">
-            <div className="card-header">{tran('Language')}</div>
-            <div className="card-body">
-                <div className="options d-flex flex-wrap">
-                    {allLangs.map((langData) => {
-                        return (
-                            <RenderLanguageButtonComp
-                                key={langData.locale}
-                                currentLocale={locale}
-                                langData={langData}
-                                setLocale={setLocale}
-                            />
-                        );
-                    })}
-                </div>
-            </div>
+            <SettingCardHeaderComp
+                iconClassName="bi-translate"
+                title="Language"
+            />
+            <div className="card-body">{element}</div>
         </div>
     );
 }

@@ -1,0 +1,542 @@
+{
+    "title": "King James Version Standard",
+    "bookKeysOrder": [
+        "GEN",
+        "EXO",
+        "LEV",
+        "NUM",
+        "DEU",
+        "JOS",
+        "JDG",
+        "RUT",
+        "1SA",
+        "2SA",
+        "1KI",
+        "2KI",
+        "1CH",
+        "2CH",
+        "EZR",
+        "NEH",
+        "EST",
+        "JOB",
+        "PSA",
+        "PRO",
+        "ECC",
+        "SNG",
+        "ISA",
+        "JER",
+        "LAM",
+        "EZK",
+        "DAN",
+        "HOS",
+        "JOL",
+        "AMO",
+        "OBA",
+        "JON",
+        "MIC",
+        "NAM",
+        "HAB",
+        "ZEP",
+        "HAG",
+        "ZEC",
+        "MAL",
+        "MAT",
+        "MRK",
+        "LUK",
+        "JHN",
+        "ACT",
+        "ROM",
+        "1CO",
+        "2CO",
+        "GAL",
+        "EPH",
+        "PHP",
+        "COL",
+        "1TH",
+        "2TH",
+        "1TI",
+        "2TI",
+        "TIT",
+        "PHM",
+        "HEB",
+        "JAS",
+        "1PE",
+        "2PE",
+        "1JN",
+        "2JN",
+        "3JN",
+        "JUD",
+        "REV"
+    ],
+    "bookKeysOld": [
+        "GEN",
+        "EXO",
+        "LEV",
+        "NUM",
+        "DEU",
+        "JOS",
+        "JDG",
+        "RUT",
+        "1SA",
+        "2SA",
+        "1KI",
+        "2KI",
+        "1CH",
+        "2CH",
+        "EZR",
+        "NEH",
+        "EST",
+        "JOB",
+        "PSA",
+        "PRO",
+        "ECC",
+        "SNG",
+        "ISA",
+        "JER",
+        "LAM",
+        "EZK",
+        "DAN",
+        "HOS",
+        "JOL",
+        "AMO",
+        "OBA",
+        "JON",
+        "MIC",
+        "NAM",
+        "HAB",
+        "ZEP",
+        "HAG",
+        "ZEC",
+        "MAL"
+    ],
+    "books": {
+        "GEN": {
+            "key": "GEN",
+            "chapterCount": 50
+        },
+        "EXO": {
+            "key": "EXO",
+            "chapterCount": 40
+        },
+        "LEV": {
+            "key": "LEV",
+            "chapterCount": 27
+        },
+        "NUM": {
+            "key": "NUM",
+            "chapterCount": 36
+        },
+        "DEU": {
+            "key": "DEU",
+            "chapterCount": 34
+        },
+        "JOS": {
+            "key": "JOS",
+            "chapterCount": 24
+        },
+        "JDG": {
+            "key": "JDG",
+            "chapterCount": 21
+        },
+        "RUT": {
+            "key": "RUT",
+            "chapterCount": 4
+        },
+        "1SA": {
+            "key": "1SA",
+            "chapterCount": 31
+        },
+        "2SA": {
+            "key": "2SA",
+            "chapterCount": 24
+        },
+        "1KI": {
+            "key": "1KI",
+            "chapterCount": 22
+        },
+        "2KI": {
+            "key": "2KI",
+            "chapterCount": 25
+        },
+        "1CH": {
+            "key": "1CH",
+            "chapterCount": 29
+        },
+        "2CH": {
+            "key": "2CH",
+            "chapterCount": 36
+        },
+        "EZR": {
+            "key": "EZR",
+            "chapterCount": 10
+        },
+        "NEH": {
+            "key": "NEH",
+            "chapterCount": 13
+        },
+        "EST": {
+            "key": "EST",
+            "chapterCount": 10
+        },
+        "JOB": {
+            "key": "JOB",
+            "chapterCount": 42
+        },
+        "PSA": {
+            "key": "PSA",
+            "chapterCount": 150
+        },
+        "PRO": {
+            "key": "PRO",
+            "chapterCount": 31
+        },
+        "ECC": {
+            "key": "ECC",
+            "chapterCount": 12
+        },
+        "SNG": {
+            "key": "SNG",
+            "chapterCount": 8
+        },
+        "ISA": {
+            "key": "ISA",
+            "chapterCount": 66
+        },
+        "JER": {
+            "key": "JER",
+            "chapterCount": 52
+        },
+        "LAM": {
+            "key": "LAM",
+            "chapterCount": 5
+        },
+        "EZK": {
+            "key": "EZK",
+            "chapterCount": 48
+        },
+        "DAN": {
+            "key": "DAN",
+            "chapterCount": 12
+        },
+        "HOS": {
+            "key": "HOS",
+            "chapterCount": 14
+        },
+        "JOL": {
+            "key": "JOL",
+            "chapterCount": 3
+        },
+        "AMO": {
+            "key": "AMO",
+            "chapterCount": 9
+        },
+        "OBA": {
+            "key": "OBA",
+            "chapterCount": 1
+        },
+        "JON": {
+            "key": "JON",
+            "chapterCount": 4
+        },
+        "MIC": {
+            "key": "MIC",
+            "chapterCount": 7
+        },
+        "NAM": {
+            "key": "NAM",
+            "chapterCount": 3
+        },
+        "HAB": {
+            "key": "HAB",
+            "chapterCount": 3
+        },
+        "ZEP": {
+            "key": "ZEP",
+            "chapterCount": 3
+        },
+        "HAG": {
+            "key": "HAG",
+            "chapterCount": 2
+        },
+        "ZEC": {
+            "key": "ZEC",
+            "chapterCount": 14
+        },
+        "MAL": {
+            "key": "MAL",
+            "chapterCount": 4
+        },
+        "MAT": {
+            "key": "MAT",
+            "chapterCount": 28
+        },
+        "MRK": {
+            "key": "MRK",
+            "chapterCount": 16
+        },
+        "LUK": {
+            "key": "LUK",
+            "chapterCount": 24
+        },
+        "JHN": {
+            "key": "JHN",
+            "chapterCount": 21
+        },
+        "ACT": {
+            "key": "ACT",
+            "chapterCount": 28
+        },
+        "ROM": {
+            "key": "ROM",
+            "chapterCount": 16
+        },
+        "1CO": {
+            "key": "1CO",
+            "chapterCount": 16
+        },
+        "2CO": {
+            "key": "2CO",
+            "chapterCount": 13
+        },
+        "GAL": {
+            "key": "GAL",
+            "chapterCount": 6
+        },
+        "EPH": {
+            "key": "EPH",
+            "chapterCount": 6
+        },
+        "PHP": {
+            "key": "PHP",
+            "chapterCount": 4
+        },
+        "COL": {
+            "key": "COL",
+            "chapterCount": 4
+        },
+        "1TH": {
+            "key": "1TH",
+            "chapterCount": 5
+        },
+        "2TH": {
+            "key": "2TH",
+            "chapterCount": 3
+        },
+        "1TI": {
+            "key": "1TI",
+            "chapterCount": 6
+        },
+        "2TI": {
+            "key": "2TI",
+            "chapterCount": 4
+        },
+        "TIT": {
+            "key": "TIT",
+            "chapterCount": 3
+        },
+        "PHM": {
+            "key": "PHM",
+            "chapterCount": 1
+        },
+        "HEB": {
+            "key": "HEB",
+            "chapterCount": 13
+        },
+        "JAS": {
+            "key": "JAS",
+            "chapterCount": 5
+        },
+        "1PE": {
+            "key": "1PE",
+            "chapterCount": 5
+        },
+        "2PE": {
+            "key": "2PE",
+            "chapterCount": 3
+        },
+        "1JN": {
+            "key": "1JN",
+            "chapterCount": 5
+        },
+        "2JN": {
+            "key": "2JN",
+            "chapterCount": 1
+        },
+        "3JN": {
+            "key": "3JN",
+            "chapterCount": 1
+        },
+        "JUD": {
+            "key": "JUD",
+            "chapterCount": 1
+        },
+        "REV": {
+            "key": "REV",
+            "chapterCount": 22
+        }
+    },
+    "keyBookMap": {
+        "GEN": "Genesis",
+        "EXO": "Exodus",
+        "LEV": "Leviticus",
+        "NUM": "Numbers",
+        "DEU": "Deuteronomy",
+        "JOS": "Joshua",
+        "JDG": "Judges",
+        "RUT": "Ruth",
+        "1SA": "1 Samuel",
+        "2SA": "2 Samuel",
+        "1KI": "1 Kings",
+        "2KI": "2 Kings",
+        "1CH": "1 Chronicles",
+        "2CH": "2 Chronicles",
+        "EZR": "Ezra",
+        "NEH": "Nehemiah",
+        "EST": "Esther",
+        "JOB": "Job",
+        "PSA": "Psalm",
+        "PRO": "Proverbs",
+        "ECC": "Ecclesiastes",
+        "SNG": "Song of Solomon",
+        "ISA": "Isaiah",
+        "JER": "Jeremiah",
+        "LAM": "Lamentations",
+        "EZK": "Ezekiel",
+        "DAN": "Daniel",
+        "HOS": "Hosea",
+        "JOL": "Joel",
+        "AMO": "Amos",
+        "OBA": "Obadiah",
+        "JON": "Jonah",
+        "MIC": "Micah",
+        "NAM": "Nahum",
+        "HAB": "Habakkuk",
+        "ZEP": "Zephaniah",
+        "HAG": "Haggai",
+        "ZEC": "Zechariah",
+        "MAL": "Malachi",
+        "MAT": "Matthew",
+        "MRK": "Mark",
+        "LUK": "Luke",
+        "JHN": "John",
+        "ACT": "Acts",
+        "ROM": "Romans",
+        "1CO": "1 Corinthians",
+        "2CO": "2 Corinthians",
+        "GAL": "Galatians",
+        "EPH": "Ephesians",
+        "PHP": "Philippians",
+        "COL": "Colossians",
+        "1TH": "1 Thessalonians",
+        "2TH": "2 Thessalonians",
+        "1TI": "1 Timothy",
+        "2TI": "2 Timothy",
+        "TIT": "Titus",
+        "PHM": "Philemon",
+        "HEB": "Hebrews",
+        "JAS": "James",
+        "1PE": "1 Peter",
+        "2PE": "2 Peter",
+        "1JN": "1 John",
+        "2JN": "2 John",
+        "3JN": "3 John",
+        "JUD": "Jude",
+        "REV": "Revelation"
+    },
+    "oneChapterBooks": ["OBA", "PHM", "2JN", "3JN", "JUD"],
+    "flippingKey": {
+        "JAM": "JAS"
+    },
+    "bookKeysSubtype": [
+        {
+            "title": "The Law (Pentateuch or Torah)",
+            "type": "law",
+            "bookKeys": ["GEN", "EXO", "LEV", "NUM", "DEU"]
+        },
+        {
+            "title": "History",
+            "type": "history",
+            "bookKeys": [
+                "JOS",
+                "JDG",
+                "RUT",
+                "1SA",
+                "2SA",
+                "1KI",
+                "2KI",
+                "1CH",
+                "2CH",
+                "EZR",
+                "NEH",
+                "EST"
+            ]
+        },
+        {
+            "title": "Poetry and Wisdom",
+            "type": "poetry",
+            "bookKeys": ["JOB", "PSA", "PRO", "ECC", "SNG"]
+        },
+        {
+            "title": "Major Prophets",
+            "type": "majorProphets",
+            "bookKeys": ["ISA", "JER", "LAM", "EZK", "DAN"]
+        },
+        {
+            "title": "Minor Prophets",
+            "type": "minorProphets",
+            "bookKeys": [
+                "HOS",
+                "JOL",
+                "AMO",
+                "OBA",
+                "JON",
+                "MIC",
+                "NAM",
+                "HAB",
+                "ZEP",
+                "HAG",
+                "ZEC",
+                "MAL"
+            ]
+        },
+        {
+            "title": "Gospels",
+            "type": "gospels",
+            "bookKeys": ["MAT", "MRK", "LUK", "JHN"]
+        },
+        {
+            "title": "History (Acts of the Apostles)",
+            "type": "historyActs",
+            "bookKeys": ["ACT"]
+        },
+        {
+            "title": "Pauline Epistles",
+            "type": "paulineEpistles",
+            "bookKeys": [
+                "ROM",
+                "1CO",
+                "2CO",
+                "GAL",
+                "EPH",
+                "PHP",
+                "COL",
+                "1TH",
+                "2TH",
+                "1TI",
+                "2TI",
+                "TIT",
+                "PHM"
+            ]
+        },
+        {
+            "title": "General Epistles",
+            "type": "generalEpistles",
+            "bookKeys": ["HEB", "JAS", "1PE", "2PE", "1JN", "2JN", "3JN", "JUD"]
+        },
+        {
+            "title": "Prophecy (Revelation)",
+            "type": "prophecyRevelation",
+            "bookKeys": ["REV"]
+        }
+    ]
+}

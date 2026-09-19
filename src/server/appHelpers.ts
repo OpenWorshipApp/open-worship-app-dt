@@ -1,22 +1,29 @@
+import { useState } from 'react';
+
 import appProvider from './appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
-import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
-import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
-import { goToPath } from '../router/routeHelpers';
+import { tran } from '../lang/langHelpers';
+import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import {
     fsCheckFileExist,
+    fsDeleteFile,
+    fsListFiles,
     getDotExtensionFromBase64Data,
+    getDownloadPath,
     isSupportedMimetype,
     pathJoin,
     pathResolve,
 } from './fileHelpers';
-import FileSource from '../helper/FileSource';
+import FileSource, { type SrcData } from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
-import { log } from '../helper/loggerHelpers';
+import { appError as logError } from '../helper/loggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
+import type { ExtraBinPathsType } from '../helper/extra-bin/extraBinHelpers';
+import { EXTRA_BIN_MISSING_ERROR_MESSAGE } from '../helper/extra-bin/extraBinErrors';
 
 export function genReturningEventName(eventName: string) {
-    return `${eventName}-return-${Date.now()}`;
+    return `${eventName}-return-${crypto.randomUUID()}`;
 }
 
 export function electronSendAsync<T>(
@@ -27,11 +34,11 @@ export function electronSendAsync<T>(
         const replyEventName = genReturningEventName(eventName);
         appProvider.messageUtils.listenOnceForData(
             replyEventName,
-            (_event, data: T) => {
-                if (data instanceof Error) {
-                    return reject(data);
+            (_event, imageData: T) => {
+                if (imageData instanceof Error) {
+                    return reject(imageData);
                 }
-                resolve(data);
+                resolve(imageData);
             },
         );
         appProvider.messageUtils.sendData(eventName, {
@@ -41,184 +48,148 @@ export function electronSendAsync<T>(
     });
 }
 
-export function showExplorer(dir: string) {
+export function showFileOrDirExplorer(dir: string) {
     appProvider.messageUtils.sendData('main:app:reveal-path', dir);
 }
 
-export function previewPdf(src: string) {
-    appProvider.messageUtils.sendData('main:app:preview-pdf', src);
+// Save an embedded base64 image (e.g. an image canvas item, which inlines its
+// data rather than referencing a file) into the Downloads folder and reveal it.
+export function downloadImageBase64Data(srcData: SrcData) {
+    const dotExtension = getDotExtensionFromBase64Data(srcData);
+    if (dotExtension === null) {
+        showSimpleToast(tran('Download'), tran('Unsupported image data'));
+        return null;
+    }
+    const filePath = pathJoin(
+        getDownloadPath(),
+        `owa-image_${Date.now()}${dotExtension}`,
+    );
+    const fileSource = FileSource.getInstance(filePath);
+    if (!fileSource.writeFileBase64DataSync(srcData)) {
+        showSimpleToast(tran('Download'), tran('Failed to save image'));
+        return null;
+    }
+    showSimpleToast('Download', `Image saved at: ${filePath}`);
+    showFileOrDirExplorer(filePath);
+    return filePath;
 }
 
 export function convertToPdf(officeFilePath: string, pdfFilePath: string) {
-    return electronSendAsync<void>('main:app:convert-to-pdf', {
+    return electronSendAsync<Error | null>('main:app:convert-to-pdf', {
         officeFilePath,
         pdfFilePath,
     });
 }
 
-export function tarExtract(filePath: string, outputDir: string) {
+// `entries` unpacks only those paths — a whole-data archive is read for its
+// manifest long before the user has said which folders to restore.
+export function tarExtract(
+    filePath: string,
+    outputDir: string,
+    entries?: string[],
+) {
     return electronSendAsync<void>('main:app:tar-extract', {
         filePath,
         outputDir,
+        entries,
     });
 }
 
-export function copyToClipboard(str: string) {
+// `excludeNamePatterns` are regex sources matched against each path segment;
+// a matching folder (the regenerable per-document caches) is left out.
+export function tarCreate(
+    inputDir: string,
+    outputFilePath: string,
+    files: string[],
+    isGzip = false,
+    excludeNamePatterns?: string[],
+) {
+    return electronSendAsync<void>('main:app:tar-create', {
+        inputDir,
+        outputFilePath,
+        files,
+        isGzip,
+        excludeNamePatterns,
+    });
+}
+
+// Append to an existing UNCOMPRESSED tar; see the electron side for why the
+// data archive is built this way.
+export function tarAppend(
+    archiveFilePath: string,
+    inputDir: string,
+    files: string[],
+) {
+    return electronSendAsync<void>('main:app:tar-append', {
+        archiveFilePath,
+        inputDir,
+        files,
+    });
+}
+
+// Password protection for an exported archive. The work is done in the main
+// process and both directions stream disk to disk — an archive can be gigabytes
+// and must never be carried across the bridge or held in memory.
+export function encryptFile(
+    filePath: string,
+    outputFilePath: string,
+    password: string,
+) {
+    return electronSendAsync<void>('main:app:file-encrypt', {
+        filePath,
+        outputFilePath,
+        password,
+    });
+}
+
+// A wrong password comes back as a RESULT rather than a rejection: only an
+// `Error`'s message survives the IPC clone, and recognising a wrong password by
+// matching text anyone might reword is a bug waiting to happen. Genuine I/O
+// failures still reject.
+export type ArchiveDecryptResultType =
+    | { isOk: true }
+    | {
+          isOk: false;
+          reason: 'wrong-password' | 'not-encrypted' | 'unsupported';
+      };
+
+export function decryptFile(
+    filePath: string,
+    outputFilePath: string,
+    password: string,
+) {
+    return electronSendAsync<ArchiveDecryptResultType>(
+        'main:app:file-decrypt',
+        { filePath, outputFilePath, password },
+    );
+}
+
+// By the container magic, not by the file name: a bundle mailed around or
+// downloaded from a URL arrives under whatever name that service gave it.
+export function checkIsEncryptedFile(filePath: string) {
+    return electronSendAsync<boolean>('main:app:check-is-encrypted-file', {
+        filePath,
+    });
+}
+
+/**
+ * `title` names WHAT was copied, for a caller that copies more than one thing
+ * — the connection graph's Markdown and its Mermaid diagram sit on one menu,
+ * and a confirmation reading `Copy` for either leaves the user checking their
+ * clipboard to find out which landed. It is the TOAST's title, so it arrives
+ * already translated.
+ */
+export function copyToClipboard(str: string, title?: string) {
     appProvider.systemUtils.copyToClipboard(str);
-    showSimpleToast('Copy', 'Text has been copied to clip');
+    showSimpleToast(
+        title ?? tran('Copy'),
+        tran('Text has been copied to clip'),
+    );
     return true;
 }
 
 export interface ClipboardInf {
     clipboardSerialize(): OptionalPromise<string | null>;
-}
-
-function checkIsVersionOutdated(
-    // 2025.06.25 vs 2025.06.26
-    currentVersion: string,
-    latestVersion: string,
-) {
-    const currentParts = currentVersion.split('.').map(Number);
-    const latestParts = latestVersion.split('.').map(Number);
-
-    for (
-        let i = 0;
-        i < Math.max(currentParts.length, latestParts.length);
-        i++
-    ) {
-        const currentPart = currentParts[i] || 0;
-        const latestPart = latestParts[i] || 0;
-
-        if (currentPart < latestPart) {
-            return true;
-        } else if (currentPart > latestPart) {
-            return false;
-        }
-    }
-    return false; // Versions are equal
-}
-
-async function getDownloadTargetUrl() {
-    const downloadInfo = await fetch(
-        `${appProvider.appInfo.homepage}/download/info.json`,
-        {
-            method: 'GET',
-            cache: 'no-cache',
-        },
-    )
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(
-                    `Failed to fetch update download info: ${response.statusText}`,
-                );
-            }
-            return response.json();
-        })
-        .catch((error) => {
-            console.error('Error fetching update download info:', error);
-            return null;
-        });
-    if (downloadInfo === null) {
-        return null;
-    }
-    const { systemUtils } = appProvider;
-    const targetInfo =
-        Object.entries(downloadInfo).find(([_key, item]: [string, any]) => {
-            return (
-                (systemUtils.isWindows && item.isWindows) ||
-                (systemUtils.isMac &&
-                    item.isMac &&
-                    ((systemUtils.isArm64 && item.isArm64) ||
-                        (!systemUtils.is64System && !item.isArm64))) ||
-                (systemUtils.isLinux && item.isLinux)
-            );
-        }) ?? null;
-    if (targetInfo === null) {
-        return null;
-    }
-    return `${appProvider.appInfo.homepage}/download/${targetInfo[0]}/info.json`;
-}
-
-export async function checkForUpdateSilently() {
-    const url = await getDownloadTargetUrl();
-    if (url === null) {
-        return;
-    }
-    const updateData = await fetch(url, {
-        method: 'GET',
-        cache: 'no-cache',
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(
-                    `Failed to fetch update info: ${response.statusText}`,
-                );
-            }
-            return response.json();
-        })
-        .catch((error) => {
-            console.error('Error fetching update info:', error);
-            return null;
-        });
-    if (updateData === null) {
-        return;
-    }
-    try {
-        const version = updateData.version as string;
-        log(
-            `Current version: ${appProvider.appInfo.version}, ` +
-                `Latest version: ${version}`,
-        );
-
-        if (checkIsVersionOutdated(appProvider.appInfo.version, version)) {
-            const isOk = await showAppConfirm(
-                'Update Available',
-                `A new version of the app is available: "${version}". ` +
-                    'Would you like to check for update?',
-                {
-                    confirmButtonLabel: 'Yes',
-                },
-            );
-            if (isOk) {
-                appProvider.messageUtils.sendData('main:app:go-download');
-            }
-        }
-    } catch (error) {
-        handleError(error);
-    }
-}
-
-const DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME = 'decided-reader-home-page';
-function setDecided() {
-    globalThis.localStorage.setItem(
-        DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME,
-        'true',
-    );
-}
-export async function checkDecidedBibleReaderHomePage() {
-    if (appProvider.isPageSetting) {
-        return;
-    }
-    if (appProvider.isPageReader) {
-        setDecided();
-    }
-    const decided = globalThis.localStorage.getItem(
-        DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME,
-    );
-    if (decided !== null) {
-        return;
-    }
-    const isOk = await showAppConfirm(
-        'The application is started first time',
-        'This will set the home page to "📖 Bible Reader🔎"?',
-        {
-            confirmButtonLabel: 'Yes',
-        },
-    );
-    setDecided();
-    if (isOk) {
-        goToPath(appProvider.readerHomePage);
-    }
 }
 
 export function pasteTextToInput(inputElement: HTMLInputElement, text: string) {
@@ -241,7 +212,7 @@ export async function renameAllMaterialFiles(
     await Promise.all(
         FILE_EXTENSIONS.map(async (ext) => {
             const currentPath = pathJoin(
-                oldFileSource.basePath,
+                oldFileSource.baseDirPath,
                 `${oldFileSource.fullName}${ext}`,
             );
             if (!(await fsCheckFileExist(currentPath))) {
@@ -260,7 +231,7 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
     await Promise.all(
         FILE_EXTENSIONS.map(async (ext) => {
             const currentPath = pathJoin(
-                fileSource.basePath,
+                fileSource.baseDirPath,
                 `${fileSource.fullName}${ext}`,
             );
             if (!(await fsCheckFileExist(currentPath))) {
@@ -272,24 +243,11 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
     );
 }
 
-export async function getSlidesCount(
-    powerPointFilePath: string,
-    dotNetRootDir?: string,
-) {
-    const powerPointHelper =
-        await appProvider.powerPointUtils.getPowerPointHelper(dotNetRootDir);
-    if (powerPointHelper === null) {
-        log('PowerPoint helper is not available');
-        return null;
-    }
-    return powerPointHelper.countSlides(powerPointFilePath);
-}
-
 async function getPageTitle(url: string) {
     const rawHtml = await fetch(url)
         .then((response) => response.text())
         .catch((error) => {
-            console.error('Error fetching page:', error);
+            logError('Error fetching page:', error);
             return null;
         });
     if (rawHtml === null) {
@@ -327,7 +285,7 @@ export function downloadImage(targetUrl: string, outputDir: string) {
                         `${Date.now()}${dotExt}`,
                     );
                     const fileSource = FileSource.getInstance(filePath);
-                    if (await fileSource.writeFileBase64Data(srcData)) {
+                    if (fileSource.writeFileBase64DataSync(srcData)) {
                         resolve({
                             filePath,
                             fileFullName: fileSource.fullName,
@@ -343,6 +301,77 @@ export function downloadImage(targetUrl: string, outputDir: string) {
     );
 }
 
+/**
+ * The flags that make yt-dlp use the binaries we ship instead of whatever the
+ * user happens to have installed. Shared by every yt-dlp call so a fix to one
+ * of them cannot miss the other.
+ */
+function toYtDlpRuntimeArgs(extraBinPaths: ExtraBinPathsType) {
+    return [
+        '--no-playlist',
+        '--ffmpeg-location',
+        `${extraBinPaths.ffmpegBinDirPath}`,
+        // yt-dlp enables deno by default and prefers it over every other
+        // runtime, so clear the defaults before pointing it at the QuickJS we
+        // ship - otherwise a deno on the user's PATH silently wins.
+        '--no-js-runtimes',
+        '--js-runtimes',
+        `quickjs:${extraBinPaths.qjsBinPath}`,
+    ];
+}
+
+/**
+ * The media helpers are installed on demand rather than bundled, so every
+ * yt-dlp caller has to go through this first. Imported lazily: this module is on
+ * the launch path and must not statically pull in the storage helpers and the
+ * confirm dialog the guard needs.
+ */
+async function requireExtraBinPathsLazily() {
+    const { requireExtraBinPaths } =
+        await import('../helper/extra-bin/extraBinHelpers');
+    return await requireExtraBinPaths();
+}
+
+/**
+ * The direct media URL behind a page URL, without downloading anything: `-g`
+ * makes yt-dlp print the stream it would have fetched. `b` selects a *muxed*
+ * format, so the one URL that comes back carries both tracks and a single
+ * `<video>` element can play it.
+ *
+ * What comes back is short-lived and tied to the requesting IP (the URL carries
+ * an `expire` stamp), so it is for playing now — never for storing. Google
+ * serves it with `access-control-allow-origin` echoing our own origin, so a
+ * `crossOrigin="anonymous"` video stays canvas-readable.
+ */
+export async function resolveMediaStreamUrl(targetUrl: string) {
+    const extraBinPaths = await requireExtraBinPathsLazily();
+    if (extraBinPaths === null) {
+        throw new Error(EXTRA_BIN_MISSING_ERROR_MESSAGE);
+    }
+    const ytDlpWrap = await appProvider.ytUtils.getYTHelper(
+        extraBinPaths.ytDlpBinPath,
+    );
+    const output = await ytDlpWrap.execPromise([
+        targetUrl.trim(),
+        '-g',
+        '-f',
+        'b[ext=mp4]/b',
+        ...toYtDlpRuntimeArgs(extraBinPaths),
+    ]);
+    const streamUrl = output
+        .split('\n')
+        .map((line) => {
+            return line.trim();
+        })
+        .find((line) => {
+            return line.startsWith('http');
+        });
+    if (streamUrl === undefined) {
+        throw new Error('yt-dlp returned no playable stream URL');
+    }
+    return streamUrl;
+}
+
 export function downloadVideoOrAudio(
     targetUrl: string,
     outputDir: string,
@@ -351,6 +380,14 @@ export function downloadVideoOrAudio(
     return new Promise<{ filePath: string; fileFullName: string }>(
         (resolve, reject) => {
             (async () => {
+                // Before `getPageTitle`, today's first network call: a user who
+                // has not installed the media pack should not wait on a request
+                // that cannot lead anywhere.
+                const extraBinPaths = await requireExtraBinPathsLazily();
+                if (extraBinPaths === null) {
+                    reject(new Error(EXTRA_BIN_MISSING_ERROR_MESSAGE));
+                    return;
+                }
                 const videoOrAudioUrl = targetUrl.trim();
                 const title = await getPageTitle(videoOrAudioUrl);
                 const resolvedSuccess = (resolvedFilePath: string) => {
@@ -364,15 +401,31 @@ export function downloadVideoOrAudio(
                 const outputFormat = pathResolve(
                     `${outputDir}/${temptName}.%(ext)s`,
                 );
-                const { ytUtils } = appProvider;
-                const ytDlpWrap = await ytUtils.getYTHelper();
+                // A failed/aborted yt-dlp run leaves its staging artifacts
+                // behind — the merged output, the per-format streams, and
+                // `.part` fragments — all sharing the `temp-<ts>` prefix. Sweep
+                // them so a broken download does not silently accumulate (see
+                // the stale `temp-*.mp4` orphans found in the data dir).
+                const cleanupTempArtifacts = async () => {
+                    try {
+                        const fileNames = await fsListFiles(outputDir);
+                        await Promise.all(
+                            fileNames
+                                .filter((name) => name.startsWith(temptName))
+                                .map((name) =>
+                                    fsDeleteFile(pathJoin(outputDir, name)),
+                                ),
+                        );
+                    } catch (cleanupError) {
+                        handleError(cleanupError);
+                    }
+                };
+                const ytDlpWrap = await appProvider.ytUtils.getYTHelper(
+                    extraBinPaths.ytDlpBinPath,
+                );
                 let filePath: string | null = null;
                 const args = [videoOrAudioUrl, '-o', outputFormat];
-                args.push(
-                    '--no-playlist',
-                    '--ffmpeg-location',
-                    `${ytUtils.ffmpegBinPath}`,
-                );
+                args.push(...toYtDlpRuntimeArgs(extraBinPaths));
                 if (!isVideo) {
                     args.push(
                         '-x',
@@ -403,7 +456,7 @@ export function downloadVideoOrAudio(
                         } else if (eventType === 'Merger') {
                             const regex = /Merging formats into "(.+?)"/;
                             const match = eventData.match(regex);
-                            if (match[1]) {
+                            if (match?.[1]) {
                                 filePath = match[1];
                             }
                         } else if (eventType === 'download') {
@@ -425,14 +478,16 @@ export function downloadVideoOrAudio(
                         ) {
                             resolvedSuccess(filePath);
                         } else {
+                            await cleanupTempArtifacts();
                             reject(
                                 new Error('Download failed: ' + error.message),
                             );
                         }
                     })
-                    .on('close', () => {
+                    .on('close', async () => {
                         showProgressBarMessage('all done');
                         if (filePath === null) {
+                            await cleanupTempArtifacts();
                             reject(new Error('Unable to determine file path'));
                         } else {
                             resolvedSuccess(filePath);
@@ -454,11 +509,15 @@ function checkClipboardHasImage(clipboardItem: ClipboardItem) {
 }
 
 export async function checkIsImagesInClipboard() {
-    const clipboardItems = await navigator.clipboard.read();
-    const isPastingImage = clipboardItems.some((clipboardItem) => {
-        return checkClipboardHasImage(clipboardItem);
-    });
-    return isPastingImage;
+    try {
+        const clipboardItems = await navigator.clipboard.read();
+        const isPastingImage = clipboardItems.some((clipboardItem) => {
+            return checkClipboardHasImage(clipboardItem);
+        });
+        return isPastingImage;
+    } catch (_error) {
+        return false;
+    }
 }
 
 export async function* readImagesFromClipboard() {
@@ -488,4 +547,153 @@ export function removeOpacityFromHexColor(hexColor: string) {
         return hexColor.substring(0, 7);
     }
     return hexColor;
+}
+
+export function printHtmlText() {
+    appProvider.messageUtils.sendData('all:app:print');
+}
+(globalThis as any).printHtmlText = printHtmlText;
+console.log('printHtmlText');
+
+export function timeToTimeString(time: number) {
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = Math.floor(time % 60);
+    return `${hours}:${minutes}:${seconds}`;
+}
+
+export function useIsOnTop() {
+    const [isOnTop, setIsOnTop] = useState(false);
+    const setIsOnTop1 = async (
+        newIsOnTop: boolean | ((prev: boolean) => boolean),
+    ) => {
+        appProvider.messageUtils.sendData('all:app:set-is-window-on-top', {
+            isOnTop:
+                typeof newIsOnTop === 'function'
+                    ? newIsOnTop(isOnTop)
+                    : newIsOnTop,
+        });
+        setIsOnTop(newIsOnTop);
+    };
+    useAppEffect(() => {
+        const isOnTop = appProvider.messageUtils.sendDataSync(
+            'all:app:check-is-window-on-top',
+        );
+        setIsOnTop(isOnTop === true);
+    }, []);
+    return [isOnTop, setIsOnTop1] as const;
+}
+
+export function checkIsMainWindow() {
+    return (
+        appProvider.messageUtils.sendDataSync(
+            'all:app:check-is-main-window',
+        ) === true
+    );
+}
+
+export function getHelpPageUrl() {
+    return `${appProvider.appInfo.homepage}/help`;
+}
+
+/**
+ * The maintainers' address, read out of the package's `author` field -- the
+ * `Name <email> (site)` form npm documents -- so it is declared ONCE, in
+ * `package.json`, and everything that says "write to us" (the chatbot's
+ * Report button first) agrees on it. `null` when the field carries no
+ * address, and the caller says so rather than inventing one.
+ */
+export function parseContactEmail(author: string) {
+    const matched = /<\s*([^\s<>@]+@[^\s<>@]+\.[^\s<>@]+)\s*>/.exec(author);
+    return matched?.[1] ?? null;
+}
+
+export function getContactEmail() {
+    return parseContactEmail(appProvider.appInfo.author ?? '');
+}
+
+export type ContactEmailType = {
+    email: string;
+    // Where it came from: the app's own help page, read live, or the address
+    // this build was made with. The page wins because a build goes stale --
+    // the package named one address while the site had moved to another.
+    source: 'help page' | 'app';
+};
+
+const EMAIL_PATTERN =
+    /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/;
+
+/**
+ * The address a help page names: a `mailto:` link first, then the first
+ * address written in its words ("please contact us at …"). The page reader
+ * keeps only http(s) links, so in practice it is the words that carry it.
+ */
+export function readContactEmailFromPage(
+    page: { text?: unknown; links?: unknown } | null | undefined,
+) {
+    if (page === null || page === undefined) {
+        return null;
+    }
+    const links: unknown[] = Array.isArray(page.links) ? page.links : [];
+    for (const link of links) {
+        const href =
+            typeof (link as any)?.href === 'string' ? (link as any).href : '';
+        if (href.toLowerCase().startsWith('mailto:')) {
+            const email = EMAIL_PATTERN.exec(href.slice('mailto:'.length))?.[0];
+            if (email !== undefined) {
+                return email;
+            }
+        }
+    }
+    const text = typeof page.text === 'string' ? page.text : '';
+    return EMAIL_PATTERN.exec(text)?.[0] ?? null;
+}
+
+// Short-lived, deliberately: the buttons under a report are pressed within
+// minutes of it being written, and each would otherwise load the page again.
+const HELP_PAGE_CONTACT_TTL_MILLISECONDS = 10 * 60 * 1000;
+let helpPageContact: { email: string | null; readAt: number } | null = null;
+
+async function readHelpPageContactEmail() {
+    const now = Date.now();
+    if (
+        helpPageContact !== null &&
+        now - helpPageContact.readAt < HELP_PAGE_CONTACT_TTL_MILLISECONDS
+    ) {
+        return helpPageContact.email;
+    }
+    let email: string | null = null;
+    try {
+        // The same locked-down reader `owa_read_website` uses: the page is
+        // RENDERED (the site is a script that paints its own text, so a plain
+        // fetch of the HTML finds nothing), and nothing of it but the address
+        // is kept here.
+        const page = await electronSendAsync<{
+            text?: unknown;
+            links?: unknown;
+        }>('main:app:read-web-page', {
+            url: getHelpPageUrl(),
+            maxChars: 20000,
+        });
+        email = readContactEmailFromPage(page);
+    } catch (error) {
+        logError('Could not read the help page for a contact address:', error);
+    }
+    // A failed read is remembered for the same window: a machine with no
+    // internet must not wait on the page again at every press.
+    helpPageContact = { email, readAt: now };
+    return email;
+}
+
+/**
+ * Where a report should go: the address the app's help page names TODAY,
+ * and only when that cannot be read, the one this build was made with.
+ */
+export async function findContactEmail(): Promise<ContactEmailType | null> {
+    const fromHelpPage = await readHelpPageContactEmail();
+    if (fromHelpPage !== null) {
+        return { email: fromHelpPage, source: 'help page' };
+    }
+    const fromApp = getContactEmail();
+    return fromApp === null ? null : { email: fromApp, source: 'app' };
 }

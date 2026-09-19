@@ -1,15 +1,19 @@
 import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
-import { MimetypeNameType } from '../server/fileHelpers';
-import ItemSourceInf from '../others/ItemSourceInf';
+import type { MimetypeNameType } from '../server/fileHelpers';
+import type ItemSourceInf from '../others/ItemSourceInf';
 import {
     genPdfImagesPreview,
     removePdfImagesPreview,
 } from '../helper/pdfHelpers';
 import PdfSlide from './PdfSlide';
-import { showPdfDocumentContextMenu } from './appDocumentHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import {
+    BLANK_IMAGE_SLIDE_SRC,
+    showStaticSlideContextMenu,
+} from './appDocumentHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
-import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
+import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
+import { appLog } from '../helper/loggerHelpers';
 
 export default class PdfAppDocument
     extends AppDocumentSourceAbs
@@ -37,11 +41,11 @@ export default class PdfAppDocument
         item: PdfSlide,
         extraMenuItems: ContextMenuItemType[] = [],
     ) {
-        showPdfDocumentContextMenu(event, item, extraMenuItems);
+        return showStaticSlideContextMenu(event, item, extraMenuItems);
     }
 
     async showContextMenu(_event: any) {
-        throw new Error('Method not implemented.');
+        appLog('Method not implemented.');
     }
 
     async getMetadata() {
@@ -54,16 +58,29 @@ export default class PdfAppDocument
             if (imageFileInfoList === null) {
                 return [];
             }
-            return imageFileInfoList.map(
+            const dataList = imageFileInfoList.map(
                 ({ src, pageNumber, width, height }) => {
                     return new PdfSlide(this.filePath, {
-                        id: pageNumber,
+                        id: pageNumber + 1,
                         imagePreviewSrc: src,
                         pdfPageNumber: pageNumber,
                         metadata: { width, height },
+                        type: 'pdf-slide',
                     });
                 },
             );
+            if (dataList.length === 0) {
+                return [];
+            }
+            const slide1 = dataList[0];
+            const slide0 = new PdfSlide(this.filePath, {
+                id: 0,
+                imagePreviewSrc: BLANK_IMAGE_SLIDE_SRC,
+                pdfPageNumber: 0,
+                metadata: { width: slide1.width, height: slide1.height },
+                type: 'pdf-slide',
+            });
+            return [slide0, ...dataList];
         } catch (error) {
             handleError(error);
         }

@@ -1,7 +1,11 @@
+import { useCallback, useMemo } from 'react';
+
+import { tran } from '../../lang/langHelpers';
 import LoadingComp from '../../others/LoadingComp';
-import { BibleListType } from './bibleSettingHelpers';
+import type { BibleListType } from './bibleSettingHelpers';
 import { useBibleXMLKeys } from './bibleXMLHelpers';
 import OnlineBibleItemComp from './OnlineBibleItemComp';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function SettingOnlineBibleComp({
     downloadedBibleInfoList,
@@ -19,20 +23,41 @@ export default function SettingOnlineBibleComp({
         isPending: isPendingBibleXMLKeys,
         loadBibleKeys: loadBibleXMLKeys,
     } = useBibleXMLKeys();
-    const handleDownloadedEvent = () => {
-        setDownloadedBibleInfoList(null);
-    };
+    const setDownloadedBibleInfoListRef = useAppCurrentRef(
+        setDownloadedBibleInfoList,
+    );
+    const handleDownloadedEvent = useCallback(() => {
+        setDownloadedBibleInfoListRef.current(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setOnlineBibleInfoListRef = useAppCurrentRef(setOnlineBibleInfoList);
+    const loadBibleXMLKeysRef = useAppCurrentRef(loadBibleXMLKeys);
+    const handleRefreshing = useCallback(() => {
+        setOnlineBibleInfoListRef.current(null);
+        loadBibleXMLKeysRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const bibleInfoList = useMemo(() => {
+        if (!onlineBibleInfoList) {
+            return [];
+        }
+        return onlineBibleInfoList.filter((bibleInfo) => {
+            return (
+                bibleInfo.filePath &&
+                (!downloadedBibleInfoList ||
+                    downloadedBibleInfoList.every((bible1) => {
+                        return bible1.key !== bibleInfo.key;
+                    }))
+            );
+        });
+    }, [onlineBibleInfoList, downloadedBibleInfoList]);
     if (onlineBibleInfoList === null || isPendingBibleXMLKeys) {
         return <LoadingComp />;
     }
-    const handleRefreshing = () => {
-        setOnlineBibleInfoList(null);
-        loadBibleXMLKeys();
-    };
     const getRefresher = () => {
         return (
             <button className="btn btn-info" onClick={handleRefreshing}>
-                <i className="bi bi-arrow-clockwise" /> Refresh
+                <i className="bi bi-arrow-clockwise" /> {tran('Refresh')}
             </button>
         );
     };
@@ -40,19 +65,11 @@ export default function SettingOnlineBibleComp({
         return (
             <div>
                 <div>{getRefresher()}</div>
-                Unable to get online bible list
+                <br />
+                {tran('Unable to get online bible list')}
             </div>
         );
     }
-    const bibleInfoList = onlineBibleInfoList.filter((bibleInfo) => {
-        return (
-            bibleInfo.filePath &&
-            (!downloadedBibleInfoList ||
-                downloadedBibleInfoList.every((bible1) => {
-                    return bible1.key !== bibleInfo.key;
-                }))
-        );
-    });
 
     return (
         <div className="w-100">

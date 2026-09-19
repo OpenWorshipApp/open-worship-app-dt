@@ -1,13 +1,13 @@
 import EditingHistoryManager from '../editing-manager/EditingHistoryManager';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
+import type { MimetypeNameType } from '../server/fileHelpers';
 import {
-    MimetypeNameType,
     createNewFileDetail,
     getMimetypeExtensions,
 } from '../server/fileHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
-import { AnyObjectType } from './typeHelpers';
+import type { AnyObjectType } from './typeHelpers';
 
 export type AppDocumentMetadataType = {
     app: string;
@@ -15,6 +15,7 @@ export type AppDocumentMetadataType = {
     initDate: string;
     lastEditDate?: string;
     renderProps?: AnyObjectType;
+    note?: string;
 };
 
 function validateAppMeta(metadata: any) {
@@ -66,19 +67,27 @@ export abstract class AppDocumentSourceAbs {
                     `expected extensions: ${extensions.join(', ')}`,
             );
         }
-        if (!cache.has(filePath)) {
+        const cacheKey = `${this.name}:${this.mimetypeName}:${filePath}`;
+        if (!cache.has(cacheKey)) {
             const instance = createInstance();
-            cache.set(filePath, instance as any);
+            cache.set(cacheKey, instance as any);
         }
-        const instance = cache.get(filePath) as any as T;
+        const instance = cache.get(cacheKey) as T;
         if (instance instanceof this === false) {
-            throw new Error('Invalid Instance');
+            throw new TypeError('Invalid Instance');
         }
         return instance;
     }
 
     async preDelete() {
-        attachBackgroundManager.deleteMetaDataFile(this.filePath);
+        await attachBackgroundManager.deleteMetaDataFile(this.filePath);
+    }
+
+    // Fonts the document references that aren't installed on this system.
+    // Surfaced as a non-blocking banner in the slides preview; defaults to
+    // none and is overridden by document types that can detect missing fonts.
+    async getMissingFontFamilyList(): Promise<string[]> {
+        return [];
     }
 
     static getInstance(_filePath: string) {
@@ -97,8 +106,11 @@ export abstract class AppDocumentSourceAbs {
 export default abstract class AppEditableDocumentSourceAbs<
     T extends { metadata: AppDocumentMetadataType },
 > extends AppDocumentSourceAbs {
-    get editingHistoryManager() {
-        return EditingHistoryManager.getInstance(this.filePath);
+    private get editingHistoryManager() {
+        const editingHistoryManager = EditingHistoryManager.getInstance(
+            this.filePath,
+        );
+        return editingHistoryManager;
     }
 
     static fromDataText<
@@ -138,7 +150,7 @@ export default abstract class AppEditableDocumentSourceAbs<
     async setJsonData(jsonData: T) {
         const Class = this.constructor as typeof AppEditableDocumentSourceAbs;
         const jsonString = Class.toJsonString(jsonData);
-        this.editingHistoryManager.addHistory(jsonString);
+        return this.editingHistoryManager.addHistory(jsonString);
     }
 
     async getMetadata() {
@@ -155,6 +167,20 @@ export default abstract class AppEditableDocumentSourceAbs<
         await this.setJsonData(jsonData);
     }
 
+    async getNote() {
+        const jsonData = await this.getJsonData();
+        return jsonData?.metadata?.note ?? '';
+    }
+
+    async setNote(note: string) {
+        const jsonData = await this.getJsonData();
+        if (jsonData === null) {
+            return;
+        }
+        jsonData.metadata.note = note;
+        await this.setJsonData(jsonData);
+    }
+
     static checkIsThisType(appDocument: any) {
         return appDocument instanceof this;
     }
@@ -166,28 +192,41 @@ export default abstract class AppEditableDocumentSourceAbs<
         }
     }
 
+    _sanitizeDataText(dataText: string): string | null {
+        const Class = this.constructor as typeof AppEditableDocumentSourceAbs;
+        const jsonData = Class.fromDataText(dataText);
+        if (jsonData === null) {
+            return null;
+        }
+        jsonData.metadata.lastEditDate = new Date().toISOString();
+        return Class.toJsonString(jsonData);
+    }
+
     async save() {
-        return await this.editingHistoryManager.save((dataText) => {
-            const Class = this
-                .constructor as typeof AppEditableDocumentSourceAbs;
-            const jsonData = Class.fromDataText(dataText);
-            if (jsonData === null) {
-                return null;
-            }
-            jsonData.metadata.lastEditDate = new Date().toISOString();
-            return Class.toJsonString(jsonData);
-        });
+        const isSuccess = await this.editingHistoryManager.save(
+            this._sanitizeDataText.bind(this),
+        );
+        return isSuccess;
+    }
+
+    static genNewJsonData<
+        T extends {
+            metadata: AppDocumentMetadataType;
+        },
+    >(extraData: AnyObjectType = {}): T {
+        const jsonData = {
+            metadata: super.genMetadata(),
+            ...extraData,
+        };
+        return jsonData as T;
     }
 
     static async create(dir: string, name: string, extraData: AnyObjectType) {
-        const data = JSON.stringify({
-            metadata: super.genMetadata(),
-            ...extraData,
-        });
+        const jsonData = JSON.stringify(this.genNewJsonData(extraData));
         const filePath = await createNewFileDetail(
             dir,
             name,
-            data,
+            jsonData,
             this.mimetypeName,
         );
         if (filePath !== null) {
@@ -197,7 +236,23 @@ export default abstract class AppEditableDocumentSourceAbs<
     }
 
     async preDelete() {
-        super.preDelete();
-        this.editingHistoryManager.discard();
+        // Awaited, both: a caller that goes on to make a file of the same name
+        // -- `owa_undo` putting a deleted document back, moments later -- must
+        // not find the old history folder half-deleted underneath it.
+        await super.preDelete();
+        await this.editingHistoryManager.discard();
+    }
+
+    historyUndo() {
+        return this.editingHistoryManager.undo();
+    }
+    historyRedo() {
+        return this.editingHistoryManager.redo();
+    }
+    historyDiscard() {
+        return this.editingHistoryManager.discard();
+    }
+    historySave(sanitizeData?: (data: string) => string | null) {
+        return this.editingHistoryManager.save(sanitizeData);
     }
 }

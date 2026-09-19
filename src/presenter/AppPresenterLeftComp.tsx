@@ -2,16 +2,13 @@ import { lazy } from 'react';
 
 import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import appProvider from '../server/appProvider';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazyAppDocumentListComp = lazy(() => {
-    return import('../app-document-list/AppDocumentListComp');
+    return import('../app-document-list/VaryAppDocumentListComp');
 });
-const LazyLyricListComp = lazy(() => {
-    return import('../lyric-list/LyricListComp');
-});
-const LazyPlaylistListComp = lazy(() => {
-    return import('../playlist/PlaylistListComp');
+const LazyPresentingFlowListComp = lazy(() => {
+    return import('../presenting-flow/PresentingFlowListComp');
 });
 
 export default function AppPresenterLeftComp() {
@@ -20,33 +17,22 @@ export default function AppPresenterLeftComp() {
             flexSizeName={resizeSettingNames.appPresenterLeft}
             isHorizontal={false}
             flexSizeDefault={{
-                v1: ['1'],
-                v2: ['1'],
-                ...(appProvider.systemUtils.isDev ? { v3: ['1'] } : {}),
+                v1: ['3'],
+                v2: ['2'],
             }}
             dataInput={[
                 {
                     children: LazyAppDocumentListComp,
                     key: 'v1',
-                    widgetName: 'Document List',
-                    className: 'flex-item',
+                    ...toWidgetLabel('Document List'),
+                    className: 'app-flex-item',
                 },
                 {
-                    children: LazyLyricListComp,
+                    children: LazyPresentingFlowListComp,
                     key: 'v2',
-                    widgetName: 'Lyric List',
-                    className: 'flex-item',
+                    ...toWidgetLabel('Presenting Flow List'),
+                    className: 'app-flex-item',
                 },
-                ...(appProvider.systemUtils.isDev
-                    ? [
-                          {
-                              children: LazyPlaylistListComp,
-                              key: 'v3',
-                              widgetName: 'Playlist List',
-                              className: 'flex-item',
-                          },
-                      ]
-                    : []),
             ]}
         />
     );

@@ -1,76 +1,25 @@
-import { CSSProperties } from 'react';
-
-import CanvasItemVideo, { CanvasItemVideoPropsType } from '../CanvasItemVideo';
+import type { CanvasItemVideoPropsType } from '../CanvasItemVideo';
+import CanvasItemVideo from '../CanvasItemVideo';
 import img404 from '../404.png';
-import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
+import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
-import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
+import { pathToFileURL } from '../../../server/calcHelpers';
+import { PREVIEW_ONLY_ATTR } from '../../../helper/constants';
+import { checkIsUrlMediaSource } from '../../../helper/mediaSourceHelpers';
 
-export default function BoxEditorNormalViewVideoModeComp({
-    style,
-}: Readonly<{
-    style: CSSProperties;
-}>) {
-    return (
-        <BoxEditorNormalWrapperComp style={style}>
-            <BoxEditorNormalVideoRender />
-        </BoxEditorNormalWrapperComp>
-    );
-}
-
-export function BoxEditorNormalVideoRender() {
-    const props = useCanvasItemPropsContext<CanvasItemVideoPropsType>();
-    try {
-        CanvasItemVideo.validate(props);
-    } catch (error) {
-        handleError(error);
-        return <BENViewErrorRender />;
-    }
-    const pWidth = props.width;
-    const pHeight = props.height;
-    const rWidth = pWidth / props.mediaWidth;
-    const rHeight = pHeight / props.mediaHeight;
-    const mR = Math.min(rWidth, rHeight);
-    const width = mR * props.mediaWidth;
-    const minSize = Math.min(width, pWidth) / 4;
-    return (
-        <div
-            title={props.id.toString()}
-            style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                pointerEvents: 'none',
-            }}
-        >
-            <video
-                src={props.srcData || img404}
-                width={width}
-                loop
-                muted
-                playsInline
-            />
-            <div
-                style={{
-                    position: 'absolute',
-                }}
-            >
-                <PlayIcon width={minSize} />
-            </div>
-        </div>
-    );
-}
-
-function PlayIcon({ width }: Readonly<{ width: number }>) {
+function genPlayIcon(width: number) {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
+            {...{ [PREVIEW_ONLY_ATTR]: '' }}
             width={width}
             filter="drop-shadow(3px 5px 2px rgb(0 0 0 / 0.4))"
             viewBox="0 0 16 16"
+            // Outline keeps the icon legible on dark/black video frames.
+            stroke="white"
+            strokeWidth={0.5}
+            paintOrder="stroke"
         >
             <path
                 d={
@@ -85,5 +34,60 @@ function PlayIcon({ width }: Readonly<{ width: number }>) {
                 }
             />
         </svg>
+    );
+}
+
+export function BoxEditorNormalVideoRender() {
+    const props = useCanvasItemPropsContext<CanvasItemVideoPropsType>();
+    try {
+        CanvasItemVideo.validate(props);
+    } catch (error) {
+        handleError(error);
+        return <BoxEditorNormalViewErrorRenderComp />;
+    }
+    const minSize = Math.min(props.width, props.height) / 4;
+    const videoSrc = props.filePath
+        ? checkIsUrlMediaSource(props.filePath)
+            ? props.filePath
+            : pathToFileURL(props.filePath)
+        : img404;
+    return (
+        <div
+            title={props.id.toString()}
+            style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                pointerEvents: 'none',
+            }}
+        >
+            <video
+                src={videoSrc}
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    // Always fill the box exactly rather than
+                    // letterboxing to the media's own ratio, so the box's
+                    // background color never shows through around the
+                    // video (same as the image render).
+                    objectFit: 'fill',
+                    display: 'block',
+                    cursor: 'pointer',
+                }}
+                loop
+                muted
+                playsInline
+            />
+            <div
+                style={{
+                    position: 'absolute',
+                    pointerEvents: 'none',
+                }}
+            >
+                {genPlayIcon(minSize)}
+            </div>
+        </div>
     );
 }

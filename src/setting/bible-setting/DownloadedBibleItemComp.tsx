@@ -1,5 +1,8 @@
+import { useCallback } from 'react';
+
 import { fsCheckDirExist, fsDeleteDir } from '../../server/fileHelpers';
-import { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
+import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
+import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import {
     hideProgressBar,
@@ -7,6 +10,7 @@ import {
 } from '../../progress-bar/progressBarHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function DownloadedBibleItemComp({
     bibleInfo,
@@ -18,11 +22,15 @@ export default function DownloadedBibleItemComp({
     onUpdate: () => void;
 }>) {
     const { key, title } = bibleInfo;
-    const handleBibleDeleting = async () => {
+    const keyRef = useAppCurrentRef(key);
+    const titleRef = useAppCurrentRef(title);
+    const onDeletedRef = useAppCurrentRef(onDeleted);
+    const handleBibleDeleting = useCallback(async () => {
         const isOk = await showAppConfirm(
-            'Delete Bible',
-            `Are you sure to delete bible "${title}"?`,
+            tran('Delete Bible'),
+            `Are you sure to delete bible "${titleRef.current}"?`,
             {
+                cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',
             },
         );
@@ -30,22 +38,30 @@ export default function DownloadedBibleItemComp({
             return;
         }
         try {
-            const progressKey = `Deleting bible "${title}"`;
+            const progressKey = `Deleting bible "${titleRef.current}"`;
             showProgressBar(progressKey);
-            const bibleDestination = await bibleDataReader.toBiblePath(key);
+            const bibleDestination = await bibleDataReader.toBiblePath(
+                keyRef.current,
+            );
             if (
                 bibleDestination !== null &&
                 (await fsCheckDirExist(bibleDestination))
             ) {
                 await fsDeleteDir(bibleDestination);
-                await bibleDataReader.clearBibleDatabaseData(key);
+                await bibleDataReader.clearBibleDatabaseData(keyRef.current);
             }
             hideProgressBar(progressKey);
-            onDeleted();
+            onDeletedRef.current();
         } catch (error: any) {
-            showSimpleToast('Deleting', error.message);
+            showSimpleToast(tran('Deleting'), error.message);
         }
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const onUpdateRef = useAppCurrentRef(onUpdate);
+    const handleUpdate = useCallback(() => {
+        onUpdateRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <li className="list-group-item">
             <div>
@@ -58,16 +74,14 @@ export default function DownloadedBibleItemComp({
                             className="btn btn-danger"
                             onClick={handleBibleDeleting}
                         >
-                            Delete
+                            {tran('Delete')}
                         </button>
                         {bibleInfo.isUpdatable && (
                             <button
                                 className="btn btn-warning"
-                                onClick={() => {
-                                    onUpdate();
-                                }}
+                                onClick={handleUpdate}
                             >
-                                Update
+                                {tran('Update')}
                             </button>
                         )}
                     </div>

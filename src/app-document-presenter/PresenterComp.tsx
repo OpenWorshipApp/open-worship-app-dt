@@ -1,34 +1,41 @@
 import './PresenterComp.scss';
 
-import { lazy, useState, useCallback, useMemo } from 'react';
+import { lazy, useState, useCallback, useMemo, type MouseEvent } from 'react';
 
 import {
     useBibleItemShowing,
-    useLyricSelecting,
     useVaryAppDocumentSelecting,
 } from '../event/PreviewingEventListener';
-import { useAppDocumentItemSelecting } from '../event/VaryAppDocumentEventListener';
+import { useVarySlideSelecting } from '../event/VaryAppDocumentEventListener';
 import {
-    getSetting,
-    useStateSettingBoolean,
     useStateSettingString,
+    useStateSettingBoolean,
 } from '../helper/settingHelpers';
-import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
-import {
-    checkIsVaryAppDocumentOnScreen,
-    getSelectedVaryAppDocument,
-} from '../app-document-list/appDocumentHelpers';
-import LyricAppDocument from '../lyric-list/LyricAppDocument';
-import { getSelectedLyric } from '../lyric-list/lyricHelpers';
+import TabRenderComp from '../others/TabRenderComp';
+import type { TabHeaderPropsType } from '../others/TabRenderComp';
+import AppSuspenseComp from '../others/AppSuspenseComp';
+import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
 import { tran } from '../lang/langHelpers';
+import { toIconedLabel, toWidgetLabel } from '../others/labelIconHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
-import BibleItemsViewController, {
+import {
     useBibleItemsViewControllerContext,
     useBibleItemViewControllerUpdateEvent,
 } from '../bible-reader/BibleItemsViewController';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
-import { getOnScreenBibleItems } from '../bible-list/bibleHelpers';
+import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
+import { getIsAnyForegroundShowing } from '../presenter-foreground/foregroundHelpers';
+import {
+    checkIsOnScreen,
+    PRESENT_TAB_SETTING_NAME,
+    PRESENT_FOREGROUND_FLOATING_SETTING_NAME,
+} from './presenterRendererHelpers';
+import type {
+    DataInputType,
+    FlexSizeType,
+} from '../resize-actor/flexSizeHelpers';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
+import VaryAppDocumentPinComp from './VaryAppDocumentPinComp';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('./items/AppDocumentPreviewerComp');
@@ -36,67 +43,9 @@ const LazyAppDocumentPreviewerComp = lazy(() => {
 const LazyPresenterBiblePreviewerRenderComp = lazy(() => {
     return import('./PresenterBiblePreviewerRenderComp');
 });
-const LazyLyricHandlerComp = lazy(() => {
-    return import('../lyric-list/LyricHandlerComp');
-});
 const LazyPresenterForegroundComp = lazy(() => {
     return import('../presenter-foreground/PresenterForegroundComp');
 });
-
-const PRESENT_TAB_SETTING_NAME = 'presenter-tab';
-
-export function getIsShowingVaryAppDocumentPreviewer() {
-    return getSetting(PRESENT_TAB_SETTING_NAME) === 'd';
-}
-export function getIsShowingLyricPreviewer() {
-    return getSetting(PRESENT_TAB_SETTING_NAME) === 'l';
-}
-export function getIsShowingBiblePreviewer() {
-    return getSetting(PRESENT_TAB_SETTING_NAME) === 'f';
-}
-
-async function checkIsOnScreen<T>(
-    targeKey: T,
-    viewController: BibleItemsViewController,
-) {
-    if (targeKey === 'd') {
-        const varyAppDocument = await getSelectedVaryAppDocument();
-        if (varyAppDocument === null) {
-            return false;
-        }
-        const isOnScreen =
-            await checkIsVaryAppDocumentOnScreen(varyAppDocument);
-        return isOnScreen;
-    } else if (targeKey === 'l') {
-        const selectedLyric = await getSelectedLyric();
-        if (selectedLyric === null) {
-            return false;
-        }
-        const lyricAppDocument = LyricAppDocument.getInstanceFromLyricFilePath(
-            selectedLyric.filePath,
-        );
-        if (lyricAppDocument === null) {
-            return false;
-        }
-        const isOnScreen =
-            await checkIsVaryAppDocumentOnScreen(lyricAppDocument);
-        return isOnScreen;
-    } else if (targeKey === 'f') {
-        const allScreenManager = getAllScreenManagers();
-        return allScreenManager.some((screenManager) => {
-            return screenManager.screenForegroundManager.isShowing;
-        });
-    } else if (targeKey === 'b') {
-        const titleList = await getOnScreenBibleItems();
-        const bibleItems = viewController.straightBibleItems;
-        for (const bibleItem of bibleItems) {
-            if (titleList.includes(await bibleItem.toTitle())) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
 
 function RenderToggleFullViewComp({
     isFullWidget,
@@ -108,15 +57,21 @@ function RenderToggleFullViewComp({
     const fullScreenClassname = isFullWidget
         ? 'fullscreen-exit'
         : 'arrows-fullscreen';
+    const label = isFullWidget ? tran('Exit full view') : tran('Full view');
 
+    const isFullWidgetRef = useAppCurrentRef(isFullWidget);
+    const setIsFullWidgetRef = useAppCurrentRef(setIsFullWidget);
     const handleClick = useCallback(async () => {
-        setIsFullWidget(!isFullWidget);
-    }, [isFullWidget, setIsFullWidget]);
+        setIsFullWidgetRef.current(!isFullWidgetRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <div>
             <button
                 className={`btn btn-${isFullWidget ? '' : 'outline-'}info `}
+                title={label}
+                aria-label={label}
                 onClick={handleClick}
             >
                 <i className={`bi bi-${fullScreenClassname}`} />
@@ -125,86 +80,167 @@ function RenderToggleFullViewComp({
     );
 }
 
-function RenderForegroundTabComp({
-    isActive,
-    setIsActive,
-    isOnScreen,
-}: Readonly<{
-    isActive: boolean;
-    setIsActive: (isActive: boolean) => void;
-    isOnScreen: boolean;
-}>) {
-    const handleClick = useCallback(() => {
-        setIsActive(!isActive);
-    }, [isActive, setIsActive]);
-
-    return (
-        <ul className={'nav nav-tabs flex-fill d-flex justify-content-end'}>
-            <li className={'nav-item '}>
-                <button
-                    className={
-                        'btn btn-sm btn-link nav-link' +
-                        ` ${isActive ? 'active' : ''}` +
-                        (isOnScreen ? ' app-on-screen' : '')
-                    }
-                    onClick={handleClick}
-                >
-                    {tran('Foreground')}
-                </button>
-            </li>
-        </ul>
-    );
+function genReElements(tabKeys: string) {
+    const arr = tabKeys.split('') as TabKeyType[];
+    // `h2` was the Lyrics tab. Lyrics are previewed by the Documents previewer
+    // now, but the remaining keys keep their slots so saved flex sizes survive.
+    const flexSizeDefault: FlexSizeType = {
+        h1: ['1'],
+        h3: ['1'],
+    };
+    const dataInput: DataInputType[] = [];
+    if (arr.includes('d')) {
+        dataInput.push({
+            children: LazyAppDocumentPreviewerComp,
+            key: 'h1',
+            ...toWidgetLabel('Documents'),
+        });
+    }
+    if (arr.includes('b')) {
+        dataInput.push({
+            children: LazyPresenterBiblePreviewerRenderComp,
+            key: 'h3',
+            ...toWidgetLabel('Bible'),
+        });
+    }
+    return {
+        flexSizeDefault,
+        dataInput,
+    };
 }
 
 const tabTypeList = [
-    ['d', 'Documents', LazyAppDocumentPreviewerComp],
-    ['l', 'Lyrics', LazyLyricHandlerComp],
-    ['b', 'Bibles', LazyPresenterBiblePreviewerRenderComp],
-    ['f', 'Foreground', LazyPresenterForegroundComp],
+    ['d', toIconedLabel('Documents'), LazyAppDocumentPreviewerComp],
+    ['b', toIconedLabel('Bibles'), LazyPresenterBiblePreviewerRenderComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
+
+// Module scope so the element identity survives every recompute of the `tabs`
+// memo. React still routes context updates into a bailed-out subtree, so the
+// pin keeps reacting to the selection.
+const PIN_ELEMENT = <VaryAppDocumentPinComp />;
+
+function ForegroundFloatingComp() {
+    const viewController = useBibleItemsViewControllerContext();
+    const [isShowing, setIsShowing] = useStateSettingBoolean(
+        PRESENT_FOREGROUND_FLOATING_SETTING_NAME,
+        false,
+    );
+    useScreenForegroundManagerEvents(['update']);
+    const isOnScreen = getIsAnyForegroundShowing();
+    const foregroundTabs = useMemo<TabHeaderPropsType<'f'>[]>(
+        () => [
+            {
+                key: 'f',
+                title: toIconedLabel('Foreground'),
+                checkIsOnScreen: async () => {
+                    return checkIsOnScreen('f', viewController);
+                },
+            },
+        ],
+        [viewController],
+    );
+    return (
+        <>
+            <TabRenderComp<'f'>
+                tabs={foregroundTabs}
+                activeTabs={isShowing ? ['f'] : []}
+                setActiveTab={() => {
+                    setIsShowing((prev) => !prev);
+                }}
+            />
+            {isShowing ? (
+                <FloatingWidgetComp
+                    title={
+                        <span className={isOnScreen ? 'app-on-screen' : ''}>
+                            {toIconedLabel('Foreground')}
+                        </span>
+                    }
+                    persistKey="floating-widget-rect-foreground"
+                    onClose={() => {
+                        setIsShowing(false);
+                    }}
+                    options={{
+                        width: 420,
+                        height: 560,
+                        minWidth: 300,
+                        minHeight: 220,
+                    }}
+                >
+                    <AppSuspenseComp>
+                        <LazyPresenterForegroundComp />
+                    </AppSuspenseComp>
+                </FloatingWidgetComp>
+            ) : null}
+        </>
+    );
+}
 export default function PresenterComp() {
-    const [isOnScreen, setIsOnScreen] = useState<boolean>(false);
-    const [tabKey, setTabKey] = useStateSettingString<TabKeyType>(
+    const [tabKeys, setTabKeys] = useStateSettingString<string>(
         PRESENT_TAB_SETTING_NAME,
         'd',
     );
+    const setTabKeys1 = useCallback(
+        (
+            value: string,
+            { isSolo, isForce }: { isSolo?: boolean; isForce?: boolean } = {},
+        ) => {
+            setTabKeys((prev) => {
+                if (isSolo) {
+                    return value;
+                }
+                const arr = prev.split('');
+                if (arr.includes(value)) {
+                    if (!isForce) {
+                        arr.splice(arr.indexOf(value), 1);
+                    }
+                } else {
+                    arr.push(value);
+                }
+                if (arr.length === 0) {
+                    return prev;
+                }
+                return arr.join('');
+            });
+        },
+        [setTabKeys],
+    );
 
     const setTabKey1 = useCallback(
-        (value: TabKeyType) => {
-            if (value === 'f') {
-                setIsForegroundActive(false);
+        (
+            value: TabKeyType,
+            {
+                event,
+                isForce,
+            }: {
+                event?: MouseEvent<HTMLButtonElement>;
+                isForce?: boolean;
+            } = {},
+        ) => {
+            if (event?.type === 'contextmenu') {
+                event.preventDefault();
+                setTabKeys1(value, { isSolo: true });
+            } else {
+                setTabKeys1(value, { isForce });
             }
-            setTabKey(value);
         },
-        [setTabKey],
-    );
-
-    const [isForegroundActive, setIsForegroundActive] = useStateSettingBoolean(
-        'foreground-active',
-        false,
-    );
-
-    const setIsForegroundActive1 = useCallback(
-        (value: boolean) => {
-            if (tabKey === 'f') {
-                setTabKey('d');
-            }
-            setIsForegroundActive(value);
-        },
-        [tabKey, setTabKey, setIsForegroundActive],
+        [setTabKeys1],
     );
 
     const [isFullWidget, setIsFullWidget] = useState(false);
 
-    const handleLyricSelect = useCallback(() => setTabKey('l'), [setTabKey]);
-    const handleBibleShow = useCallback(() => setTabKey('b'), [setTabKey]);
-    const handleDocumentSelect = useCallback(() => setTabKey('d'), [setTabKey]);
+    const handleBibleShow = useCallback(() => {
+        setTabKey1('b', { isForce: true });
+    }, [setTabKey1]);
+    const setTabKey1Ref = useAppCurrentRef(setTabKey1);
+    const handleDocumentSelect = useCallback(() => {
+        setTabKey1Ref.current('d', { isForce: true });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    useLyricSelecting(handleLyricSelect, [handleLyricSelect]);
     useBibleItemShowing(handleBibleShow, [handleBibleShow]);
     useVaryAppDocumentSelecting(handleDocumentSelect);
-    useAppDocumentItemSelecting(handleDocumentSelect);
+    useVarySlideSelecting(handleDocumentSelect);
 
     const viewController = useBibleItemsViewControllerContext();
 
@@ -214,54 +250,48 @@ export default function PresenterComp() {
 
     useBibleItemViewControllerUpdateEvent(handleBibleUpdate);
 
-    const normalPresenterChild = useMemo(
-        () =>
-            tabTypeList.map(([type, _, target]) => {
-                return genTabBody<TabKeyType>(tabKey, [type, target]);
-            }),
-        [tabKey],
-    );
-
     const tabs = useMemo(
         () =>
             tabTypeList.map(([key, name]) => {
                 return {
                     key,
-                    title: name,
+                    title:
+                        key === 'd' ? (
+                            <>
+                                {name}
+                                {PIN_ELEMENT}
+                            </>
+                        ) : (
+                            name
+                        ),
                     checkIsOnScreen: async () => {
                         const isOnScreen = await checkIsOnScreen(
                             key,
                             viewController,
                         );
-                        if (key === 'f') {
-                            setIsOnScreen(isOnScreen);
-                        }
                         return isOnScreen;
                     },
                 };
             }),
         [viewController],
     );
-
-    const resizeActorData = useMemo(
-        () => [
-            {
-                children: {
-                    render: () => {
-                        return normalPresenterChild;
-                    },
-                },
-                key: 'h1',
-                widgetName: 'Presenter',
-            },
-            {
-                children: LazyPresenterForegroundComp,
-                key: 'h2',
-                widgetName: 'Foreground',
-            },
-        ],
-        [normalPresenterChild],
-    );
+    const mainTabKeys = useMemo(() => {
+        const filtered = tabKeys
+            .split('')
+            .filter((key) => tabTypeList.some(([tabKey]) => tabKey === key));
+        return filtered.length > 0 ? filtered.join('') : 'd';
+    }, [tabKeys]);
+    // A setting saved while the removed Lyrics tab existed still holds its `l`.
+    // Rendering already ignores it, but `setTabKeys1` toggles the RAW string, so
+    // without this write-back the dead key comes back on the next toggle.
+    useAppEffect(() => {
+        if (mainTabKeys !== tabKeys) {
+            setTabKeys(mainTabKeys);
+        }
+    }, [mainTabKeys, tabKeys]);
+    const { flexSizeDefault, dataInput } = useMemo(() => {
+        return genReElements(mainTabKeys);
+    }, [mainTabKeys]);
 
     return (
         <div
@@ -273,36 +303,25 @@ export default function PresenterComp() {
             <div className="header d-flex w-100">
                 <TabRenderComp<TabKeyType>
                     tabs={tabs}
-                    activeTab={tabKey}
-                    setActiveTab={setTabKey1}
+                    activeTabs={mainTabKeys.split('') as TabKeyType[]}
+                    setActiveTab={(key, event) => {
+                        setTabKey1(key, { event });
+                    }}
                     className="flex-fill"
                 />
-                <RenderForegroundTabComp
-                    isActive={isForegroundActive}
-                    setIsActive={setIsForegroundActive1}
-                    isOnScreen={isOnScreen}
-                />
+                <ForegroundFloatingComp />
                 <RenderToggleFullViewComp
                     isFullWidget={isFullWidget}
                     setIsFullWidget={setIsFullWidget}
                 />
             </div>
-            <div className="body flex-fill app-overflow-hidden">
-                {isForegroundActive ? (
-                    <ResizeActorComp
-                        flexSizeName={'flex-size-background'}
-                        isHorizontal
-                        isDisableQuickResize={true}
-                        flexSizeDefault={{
-                            h1: ['1'],
-                            h2: ['1'],
-                        }}
-                        dataInput={resizeActorData}
-                    />
-                ) : (
-                    normalPresenterChild
-                )}
-            </div>
+            <ResizeActorComp
+                flexSizeName={'flex-size-control-center'}
+                isHorizontal
+                isDisableQuickResize
+                flexSizeDefault={flexSizeDefault}
+                dataInput={dataInput}
+            />
         </div>
     );
 }

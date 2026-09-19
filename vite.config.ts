@@ -1,9 +1,12 @@
 import { resolve } from 'node:path';
 import { readdirSync } from 'node:fs';
 
-import { defineConfig } from 'vite';
+import { defineConfig, normalizePath, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import basicSsl from '@vitejs/plugin-basic-ssl';
+
+import { compNameAttributePlugin } from './vite-plugin-comp-name';
+import { gzBundlePlugin } from './vite-plugin-gz-bundle';
 
 const htmlPlugin = () => {
     return {
@@ -33,10 +36,42 @@ const htmlPlugin = () => {
     };
 };
 
+/**
+ * Dev-only playground code. The `(dev)Experiment` tab is gated on
+ * `systemUtils.isDev`, so the page and its sources are never reachable from a
+ * packaged build — keep them out of `dist` entirely instead of shipping dead
+ * weight. The dev server still serves `html/experiment.html` as usual.
+ */
+const excludedHtmlFileNames = ['experiment.html'];
+const excludedSrcDirPattern = /[\\/]src[\\/]experiments[\\/]/;
+
+// `apply: 'build'` + the hook filter keep this free: the hook is never called
+// during dev and, in a build, only for the excluded sources themselves.
+const excludeExperimentsPlugin = (): Plugin => {
+    return {
+        name: 'exclude-experiments',
+        apply: 'build',
+        enforce: 'pre',
+        load: {
+            filter: { id: excludedSrcDirPattern },
+            handler(id) {
+                this.error(
+                    `"${normalizePath(id)}" is excluded from the production ` +
+                        'build, but something imported it. Move shared code ' +
+                        'out of "src/experiments" instead.',
+                );
+            },
+        },
+    };
+};
+
 const htmlDir = resolve(__dirname, 'html');
 const htmlFiles = readdirSync(htmlDir)
     .filter((fileName) => {
-        return fileName.endsWith('.html');
+        return (
+            fileName.endsWith('.html') &&
+            !excludedHtmlFileNames.includes(fileName)
+        );
     })
     .map((fileFullName) => {
         return [fileFullName, resolve(htmlDir, fileFullName)];
@@ -46,6 +81,9 @@ const htmlFiles = readdirSync(htmlDir)
 export default defineConfig({
     assetsInclude: ['**/*.dll'],
     plugins: [
+        excludeExperimentsPlugin(),
+        gzBundlePlugin(),
+        compNameAttributePlugin(),
         react(),
         htmlPlugin(),
         basicSsl({
@@ -61,6 +99,24 @@ export default defineConfig({
     },
     server: {
         port: 3000,
+        // Dev Electron always loads `https://localhost:3000`
+        // (`electron/protocolHelpers.ts`), so a server that quietly moved to
+        // 3001 because a leftover one held 3000 left the app on the OTHER
+        // server's code (EN-15). Fail loudly instead.
+        strictPort: true,
+    },
+    optimizeDeps: {
+        // `src/lang/data/km/index.ts` is only reached through the template
+        // `import(`./data/${langCode}/index.ts`)`, which the dep scanner cannot
+        // follow, so its package was discovered on first use and the re-optimize
+        // that set off 504'd the in-flight import ("Reload is needed").
+        // The plugin itself stays unbundled: it loads its fonts, dictionaries
+        // and spellcheck worker with `new URL('assets/…', import.meta.url)`,
+        // which would point into `.vite/deps/` once pre-bundled. What it
+        // imports is bundled up front, next to `open-lyric`, so both share one
+        // plugin registry.
+        exclude: ['open-lyric-plugin-km-kh'],
+        include: ['open-lyric/internal'],
     },
 
     root: './html',
@@ -73,6 +129,12 @@ export default defineConfig({
     build: {
         outDir: '../dist',
         emptyOutDir: true,
+        // Shipped on purpose: an agent driving the packaged app through
+        // DevTools sees real file names and line numbers instead of
+        // `index-Bq7f.js:1`, and so does a stack trace in a bug report. They
+        // are only fetched when something opens DevTools, so the runtime cost
+        // on a low-spec machine is nil -- it is install size we are paying.
+        sourcemap: true,
         rollupOptions: {
             input: Object.fromEntries(htmlFiles),
         },

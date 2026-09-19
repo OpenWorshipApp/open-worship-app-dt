@@ -2,47 +2,57 @@ import './_screen/screen.scss';
 
 import { StrictMode } from 'react';
 
-import { createRoot } from 'react-dom/client';
 import ScreenAppComp from './_screen/ScreenAppComp';
 import appProvider from './server/appProvider';
 import {
     addDomChangeEventListener,
-    checkIsZoomed,
+    getParamKeyValue,
     removeDomTitle,
 } from './helper/domHelpers';
-import { log } from './helper/loggerHelpers';
+import { getReactRoot } from './others/rootHelpers';
+import { initAllLangCss } from './lang/langHelpers';
+import { appLocalStorage } from './setting/directory-setting/appLocalStorage';
 
 function main() {
-    const container = document.getElementById('root');
-    if (container === null) {
-        throw new Error('Root container not found');
-    }
+    // The screen never runs `init()` (boot.ts), and its managers read settings
+    // while rendering.
+    appProvider.sessionData.defaultStorageDirPath =
+        appLocalStorage.defaultStorageDirPath;
+    const root = getReactRoot();
     addDomChangeEventListener(removeDomTitle);
-    const root = createRoot(container);
     root.render(
         <StrictMode>
             <ScreenAppComp />
         </StrictMode>,
     );
 
+    // The stepping is applied by the main window, which owns the authoritative
+    // screen managers, so the screen has to say which output it is.
+    const screenIdParam = getParamKeyValue(
+        globalThis.location.search,
+        'screenId',
+    );
+    const screenId = Number.parseInt(screenIdParam ?? '');
     document.addEventListener('keyup', function (event) {
         if (
-            (event.ctrlKey || event.altKey) &&
-            ['ArrowLeft', 'ArrowRight'].includes(event.key)
+            Number.isNaN(screenId) ||
+            !(event.ctrlKey || event.altKey) ||
+            !['ArrowLeft', 'ArrowRight'].includes(event.key)
         ) {
-            const isNext = event.key === 'ArrowRight';
-            appProvider.messageUtils.sendData(
-                'screen:app:change-bible',
-                isNext,
-            );
+            return;
         }
+        appProvider.messageUtils.sendData('screen:app:change-bible', {
+            screenId,
+            isNext: event.key === 'ArrowRight',
+        });
     });
 
     document.body.style.backgroundColor = 'transparent';
 
-    log('Is zoom', checkIsZoomed());
     window.addEventListener('resize', () => {
         appProvider.reload();
     });
 }
+
 main();
+void initAllLangCss();

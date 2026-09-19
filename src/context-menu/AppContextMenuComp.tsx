@@ -1,15 +1,18 @@
 import './AppContextMenuComp.scss';
 
-import { CSSProperties } from 'react';
+import { useCallback } from 'react';
+import type { MouseEvent } from 'react';
 
-import { EventMapper, toShortcutKey } from '../event/KeyboardEventListener';
+import type { EventMapperType } from '../event/KeyboardEventListener';
+import { toShortcutKey } from '../event/KeyboardEventListener';
+import type { ContextMenuItemType } from './appContextMenuHelpers';
 import {
-    ContextMenuItemType,
     setPositionMenu,
     useAppContextMenuData,
     APP_CONTEXT_MENU_ITEM_CLASS,
     APP_CONTEXT_MENU_ID,
 } from './appContextMenuHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export const elementDivider = (
     <hr className="w-100" style={{ padding: 0, margin: 0 }} />
@@ -22,10 +25,26 @@ function ContextMenuItemComp({
     item: ContextMenuItemType;
     onClose: () => void;
 }>) {
+    const isDisabled = (item.disabled ?? false) || item.onSelect === undefined;
+    const itemRef = useAppCurrentRef(item);
+    const isDisabledRef = useAppCurrentRef(isDisabled);
+    const onCloseRef = useAppCurrentRef(onClose);
+    const handleClick = useCallback((event: MouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const { onSelect } = itemRef.current;
+        if (isDisabledRef.current) {
+            return;
+        }
+        setTimeout(() => {
+            onCloseRef.current();
+            onSelect?.(event as any);
+        }, 0);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (item.menuElement === elementDivider) {
         return item.menuElement;
     }
-    const isDisabled = (item.disabled ?? false) || item.onSelect === undefined;
     return (
         <div
             className={
@@ -37,21 +56,13 @@ function ContextMenuItemComp({
                 item.title ??
                 (typeof item.menuElement === 'string' ? item.menuElement : '')
             }
-            onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                const { onSelect } = item;
-                if (isDisabled) {
-                    return;
-                }
-                setTimeout(() => {
-                    onClose();
-                    onSelect?.(event as any);
-                }, 0);
-            }}
+            onClick={handleClick}
         >
             {item.childBefore || null}
             <div className="app-ellipsis flex-fill">{item.menuElement}</div>
+            {item.keyboardShortcut !== undefined
+                ? genContextMenuItemShortcutKey(item.keyboardShortcut)
+                : null}
             {item.childAfter || null}
         </div>
     );
@@ -59,18 +70,19 @@ function ContextMenuItemComp({
 
 export default function AppContextMenuComp() {
     const data = useAppContextMenuData();
+    const dataRef = useAppCurrentRef(data);
+    const handleClose = useCallback(() => {
+        dataRef.current?.onClose();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (data === null) {
         return null;
     }
     return (
         <div
             id={APP_CONTEXT_MENU_ID}
-            onClick={() => {
-                data.onClose();
-            }}
-            onContextMenu={() => {
-                data.onClose();
-            }}
+            onClick={handleClose}
+            onContextMenu={handleClose}
         >
             <div
                 tabIndex={0}
@@ -79,6 +91,9 @@ export default function AppContextMenuComp() {
                         return;
                     }
                     setPositionMenu(div, data.event, data.options);
+                    if (data.options?.shouldAutoFocusContainer) {
+                        div.focus();
+                    }
                 }}
                 className="app-context-menu app-focusable"
             >
@@ -96,25 +111,28 @@ export default function AppContextMenuComp() {
     );
 }
 
-export function genContextMenuItemShortcutKey(eventMapper: EventMapper) {
+export function genContextMenuItemShortcutKey(eventMapper: EventMapperType) {
+    const text = toShortcutKey(eventMapper);
     return (
-        <div className="align-self-end">
-            <span className="text-muted badge text-bg-primary">
-                {toShortcutKey(eventMapper)}
-            </span>
+        <div className="context-menu-shortcut-key" title={text}>
+            <span className="">{text}</span>
         </div>
     );
 }
 
-export function genContextMenuItemIcon(name: string, style?: CSSProperties) {
+/**
+ * The chip that says which MOUSE gesture does what this item does.
+ *
+ * Kept apart from `genContextMenuItemShortcutKey` above on purpose. That one is
+ * absolutely positioned over the item's right edge, which is fine for `Ctrl + S`
+ * but not for `Alt + Right Click` — and least of all in Khmer, where the label
+ * beneath it is far longer than its English key. This one stays in the flow and
+ * takes its own width, so the label ellipsizes at the chip instead of under it.
+ */
+export function genContextMenuItemGestureHint(text: string) {
     return (
-        <i
-            className={`bi bi-${name}`}
-            style={{
-                color: 'var(--bs-info-text-emphasis)',
-                marginRight: '2px',
-                ...style,
-            }}
-        />
+        <div className="context-menu-gesture-hint">
+            <span>{text}</span>
+        </div>
     );
 }

@@ -6,13 +6,10 @@
   }
 
   .app-add-items-button {
-    color: green;
-    border: 1px solid rgba(0, 128, 0, 0.244);
-    border-radius: 50%;
-    margin-left: 3px;
+    border-radius: var(--bs-border-radius);
     padding: 0;
     &:hover {
-      background-color: rgba(0, 128, 0, 0.244);
+      color: green;
     }
   }
 

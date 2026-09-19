@@ -1,6 +1,6 @@
-import { lazy, use } from 'react';
+import { lazy, use, useCallback } from 'react';
 
-import BibleItem from '../bible-list/BibleItem';
+import type BibleItem from '../bible-list/BibleItem';
 import BibleViewComp from '../bible-reader/BibleViewComp';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import {
@@ -16,6 +16,8 @@ import { BibleViewTitleEditingComp } from '../bible-reader/view-extra/BibleViewT
 import BibleViewTitleWrapperComp from '../bible-reader/view-extra/BibleViewTitleWrapperComp';
 import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewExtraHelpers';
 import { HoverMotionHandler } from '../helper/domHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
+import { tran } from '../lang/langHelpers';
 
 const LazyBiblePreviewerRenderComp = lazy(() => {
     return import('../bible-reader/BiblePreviewerRenderComp');
@@ -26,6 +28,20 @@ function RenderBodyEditingComp() {
     const selectedBibleItem = viewController.selectedBibleItem;
     const editingResult = use(EditingResultContext);
     const foundBibleItem = editingResult?.result.bibleItem ?? null;
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const foundBibleItemRef = useAppCurrentRef(foundBibleItem);
+    const handleTargetChange = useCallback(async (newBibleTarget: any) => {
+        viewControllerRef.current.applyTargetOrBibleKey(
+            foundBibleItemRef.current!,
+            {
+                target: newBibleTarget,
+            },
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleFocusInput = useCallback(() => {
+        setBibleLookupInputFocus();
+    }, []);
     return (
         <BibleViewTitleMaterialContext
             value={{
@@ -39,20 +55,15 @@ function RenderBodyEditingComp() {
                     ) : (
                         <BibleViewTitleEditingComp
                             bibleItem={foundBibleItem}
-                            onTargetChange={async (newBibleTarget) => {
-                                viewController.applyTargetOrBibleKey(
-                                    foundBibleItem,
-                                    { target: newBibleTarget },
-                                );
-                            }}
+                            onTargetChange={handleTargetChange}
                         >
                             <span
                                 className="app-caught-hover-pointer app-opacity-hover"
-                                title='Hit "Escape" to jump back to editing input'
+                                title={tran(
+                                    'Hit "Escape" to jump back to editing input',
+                                )}
                                 data-opacity-hover="0.2"
-                                onClick={() => {
-                                    setBibleLookupInputFocus();
-                                }}
+                                onClick={handleFocusInput}
                             >
                                 <i
                                     className={
@@ -76,28 +87,34 @@ function RenderBodyComp({
     bibleItem: BibleItem;
 }>) {
     const viewController = useLookupBibleItemControllerContext();
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const handleTargetChange = useCallback((newBibleTarget: any) => {
+        viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
+            target: newBibleTarget,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleEditBibleItem = useCallback(() => {
+        viewControllerRef.current.editBibleItem(bibleItemRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <BibleViewTitleMaterialContext
             value={{
                 titleElement: (
                     <BibleViewTitleEditingComp
                         bibleItem={bibleItem}
-                        onTargetChange={(newBibleTarget) => {
-                            viewController.applyTargetOrBibleKey(bibleItem, {
-                                target: newBibleTarget,
-                            });
-                        }}
+                        onTargetChange={handleTargetChange}
                     >
                         <span
                             className={
                                 `pointer ${HoverMotionHandler.lowVisibleClassname}-0 ` +
                                 'app-caught-hover-pointer app-opacity-hover'
                             }
-                            title="Click to edit this section"
+                            title={tran('Click to edit this section')}
                             data-opacity-hover="0.2"
-                            onClick={() => {
-                                viewController.editBibleItem(bibleItem);
-                            }}
+                            onClick={handleEditBibleItem}
                         >
                             <i
                                 style={{ color: 'green' }}

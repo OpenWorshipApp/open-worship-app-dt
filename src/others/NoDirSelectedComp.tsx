@@ -1,5 +1,5 @@
 import { tran } from '../lang/langHelpers';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import { selectDefaultDataDirName } from '../setting/directory-setting/directoryHelpers';
 import { openGeneralSetting } from '../setting/settingHelpers';
 
@@ -17,7 +17,7 @@ export function SelectDefaultDirButton({
                 selectDefaultDataDirName(dirSource, defaultFolderName);
             }}
         >
-            `Select Default "{defaultFolderName}"
+            {tran('Select Default')} "{defaultFolderName}"
         </button>
     );
 }
@@ -47,24 +47,24 @@ export default function NoDirSelectedComp({
 }>) {
     return (
         <div className="card p-1 w-100 app-overflow-hidden">
-            <div className="card-body">
+            <div className="card-body w-100">
                 <div
                     className="ms-2"
                     style={{
                         color: 'purple',
                     }}
                 >
-                    <i className="bi bi-info-circle" />
-                    <span>No directory selected</span>
+                    <i className="bi bi-info-circle me-1" />
+                    <span>{tran('No directory selected')}</span>
                 </div>
-                <div className="d-flex flex-column">
-                    <div className="m-2">
+                <div className="w-100 d-flex flex-column align-items-center justify-content-center">
+                    <div className="m-1">
                         <SelectDefaultDirButton
                             dirSource={dirSource}
                             defaultFolderName={defaultFolderName}
                         />
                     </div>
-                    <div className="m-2">
+                    <div>
                         <GotoSettingDirectoryPathComp />
                     </div>
                 </div>

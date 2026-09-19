@@ -1,20 +1,23 @@
-import { CSSProperties, createContext, use, useOptimistic } from 'react';
+import type { CSSProperties } from 'react';
+import { createContext, use, useOptimistic } from 'react';
 
 import { cloneJson } from '../../helper/helpers';
-import { AppColorType } from '../../others/color/colorHelpers';
 import {
-    ToolingBoxType,
+    HEX_COLOR_BLACK,
+    type AppColorType,
+} from '../../others/color/colorHelpers';
+import type { ToolingBoxType, CanvasItemKindType } from './canvasHelpers';
+import {
     tooling2BoxProps,
     canvasItemList,
     genTextDefaultBoxStyle,
-    CanvasItemKindType,
     cleanupProps,
 } from './canvasHelpers';
 import EventHandler from '../../event/EventHandler';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect } from '../../helper/appHooks';
 import { useProgressBarComp } from '../../progress-bar/ProgressBarComp';
-import { ClipboardInf } from '../../server/appHelpers';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { ClipboardInf } from '../../server/appHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 
 export type CanvasItemPropsType = {
     id: number;
@@ -28,7 +31,15 @@ export type CanvasItemPropsType = {
     roundSizePercentage: number;
     roundSizePixel: number;
     type: CanvasItemKindType;
+    // Absent on items saved before locking existed; absent means unlocked.
+    locked?: boolean;
 };
+
+// Everything about an item except what KIND it is: the box alone. Handed to a
+// `genCanvasItemProps*` factory by a caller that has already decided where the
+// item goes — a lyric slide gives every item the slide's own content bounds —
+// so the factory fills in only what its kind adds.
+export type CanvasItemBoxPropsType = Omit<CanvasItemPropsType, 'type'>;
 
 export type CanvasItemEventType = 'edit';
 
@@ -46,7 +57,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             rotate: props.rotate ?? 0,
             width: props.width ?? 0,
             height: props.height ?? 0,
-            backgroundColor: props.backgroundColor ?? '#00000000',
+            backgroundColor: props.backgroundColor ?? `${HEX_COLOR_BLACK}00`,
             backdropFilter: props.backdropFilter ?? 0,
             roundSizePercentage: props.roundSizePercentage ?? 0,
             roundSizePixel: props.roundSizePixel ?? 0,
@@ -60,6 +71,17 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
 
     get type(): CanvasItemKindType {
         return this.props.type;
+    }
+
+    // Whether resizing this item's box should preserve its aspect ratio.
+    get shouldLockAspectRatio() {
+        return false;
+    }
+
+    // A locked item cannot be moved, resized, rotated, edited or deleted
+    // until it is unlocked again.
+    get isLocked() {
+        return this.props.locked === true;
     }
 
     static genStyle(_props: CanvasItemPropsType) {
@@ -114,7 +136,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             parentWidth: number;
             parentHeight: number;
         },
-        boxData: ToolingBoxType,
+        boxData: ToolingBoxType = {},
     ) {
         const boxProps = tooling2BoxProps(
             { ...this.props, ...boxData },
@@ -168,6 +190,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             typeof json.height !== 'number' ||
             (json.backgroundColor !== null &&
                 typeof json.backgroundColor !== 'string') ||
+            typeof (json.locked ?? false) !== 'boolean' ||
             !canvasItemList.includes(json.type)
         ) {
             throw new Error('Invalid canvas item data');
@@ -247,13 +270,24 @@ export function checkCanvasItemsIncludes(
 export function useSetSelectedCanvasItems() {
     const { canvasItems, setCanvasItems } =
         useSelectedCanvasItemsAndSetterContext();
-    return (targetCanvasItem: CanvasItem<any>, isControlling = true) => {
-        let newCanvasItems = [targetCanvasItem];
-        if (
-            !isControlling &&
-            checkCanvasItemsIncludes(canvasItems, targetCanvasItem)
-        ) {
-            newCanvasItems = [];
+    return (
+        targetCanvasItem: CanvasItem<any>,
+        { isAppend = false }: { isAppend?: boolean } = {},
+    ) => {
+        const isAlreadySelected = checkCanvasItemsIncludes(
+            canvasItems,
+            targetCanvasItem,
+        );
+        let newCanvasItems: CanvasItem<any>[];
+        if (isAppend) {
+            // Shift/Ctrl click toggles the item within the current selection.
+            newCanvasItems = isAlreadySelected
+                ? canvasItems.filter((item) => {
+                      return !item.checkIsSame(targetCanvasItem);
+                  })
+                : [...canvasItems, targetCanvasItem];
+        } else {
+            newCanvasItems = [targetCanvasItem];
         }
         setCanvasItems(newCanvasItems);
     };
@@ -338,18 +372,7 @@ export function useCanvasItemPropsSetterContext<
 
 export function useIsCanvasItemSelected() {
     const canvasItem = useCanvasItemContext();
-    const { canvasItems: selectedCasItems } =
+    const { canvasItems: selectedCanvasItems } =
         useSelectedCanvasItemsAndSetterContext();
-    return checkCanvasItemsIncludes(selectedCasItems, canvasItem);
-}
-
-export function useStopAllModes() {
-    const { setCanvasItem: setEditingCanvasItem } =
-        useEditingCanvasItemAndSetterContext();
-    const { setCanvasItems: setSelectedCanvasItems } =
-        useSelectedCanvasItemsAndSetterContext();
-    return () => {
-        setEditingCanvasItem(null);
-        setSelectedCanvasItems([]);
-    };
+    return checkCanvasItemsIncludes(selectedCanvasItems, canvasItem);
 }

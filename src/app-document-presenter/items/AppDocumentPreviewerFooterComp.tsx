@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import './AppDocumentPreviewerFooterComp.scss';
+
+import { useCallback, useState } from 'react';
 
 import { PathPreviewerComp } from '../../others/PathPreviewerComp';
 import {
@@ -6,24 +8,28 @@ import {
     useSelectedAppDocumentSetterContext,
     toKeyByFilePath,
     useVaryAppDocumentContext,
+    isInjectedAppDocumentFilePath,
 } from '../../app-document-list/appDocumentHelpers';
 import AppRangeComp from '../../others/AppRangeComp';
-import { useAppDocumentItemThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
+import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import appProvider from '../../server/appProvider';
 import { showAppAlert } from '../../popup-widget/popupWidgetHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { tran } from '../../lang/langHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
+import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import {
-    VaryAppDocumentItemType,
     MIN_THUMBNAIL_SCALE,
     MAX_THUMBNAIL_SCALE,
     THUMBNAIL_SCALE_STEP,
 } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderSlideIndexComp from './RenderSlideIndexComp';
+import { useThumbnailScaleSettingOptions } from './slidesPreviewerScopeHelpers';
+import { checkIsVaryAppDocumentSwitchRefused } from '../../app-document-list/varyAppDocumentLockHelpers';
 
 export const slidePreviewerMethods = {
     handleSlideItemSelected: (
         _viewIndex: number,
-        _varyAppDocumentItem: VaryAppDocumentItemType,
+        _varySlide: VarySlideType,
     ) => {},
 };
 
@@ -33,17 +39,14 @@ function HistoryPreviewerFooterComp() {
     useAppEffect(() => {
         slidePreviewerMethods.handleSlideItemSelected = (
             viewIndex: number,
-            varyAppDocumentItem: VaryAppDocumentItemType,
+            varySlide: VarySlideType,
         ) => {
             setSelectedSlideItemHistories((oldHistories) => {
                 const newHistories = [
                     ...oldHistories,
                     [
                         viewIndex,
-                        toKeyByFilePath(
-                            varyAppDocumentItem.filePath,
-                            varyAppDocumentItem.id,
-                        ),
+                        toKeyByFilePath(varySlide.filePath, varySlide.id),
                     ],
                 ];
                 while (newHistories.length > 3) {
@@ -55,7 +58,7 @@ function HistoryPreviewerFooterComp() {
         return () => {
             slidePreviewerMethods.handleSlideItemSelected = (
                 _viewIndex,
-                _varyAppDocumentItem,
+                _varySlide,
             ) => {};
         };
     }, []);
@@ -66,6 +69,7 @@ function HistoryPreviewerFooterComp() {
                     <RenderSlideIndexComp
                         key={itemKey + i}
                         viewIndex={index}
+                        dataKey={itemKey}
                         title={itemKey}
                     />
                 );
@@ -82,54 +86,80 @@ export const defaultRangeSize = {
 };
 export default function AppDocumentPreviewerFooterComp({
     isDisableChanging,
+    // `slidePreviewerMethods.handleSlideItemSelected` is one module-level slot
+    // that the history strip claims on mount and clears on unmount, so a second
+    // mounted strip steals it and closing that one leaves the first dead. A
+    // floating preview opts out rather than fighting for the slot.
+    shouldShowHistory = appProvider.isPagePresenter,
 }: Readonly<{
     isDisableChanging?: boolean;
+    shouldShowHistory?: boolean;
 }>) {
     const selectedVaryAppDocument = useVaryAppDocumentContext();
-    const setSelectedDocument = useSelectedAppDocumentSetterContext();
+    const setSelectedAppDocument = useSelectedAppDocumentSetterContext();
+    const thumbnailScaleSettingOptions = useThumbnailScaleSettingOptions();
     const [thumbnailSizeScale, setThumbnailSizeScale] =
-        useAppDocumentItemThumbnailSizeScale();
-    const handleSlideChoosing = async (event: any) => {
+        useVarySlideThumbnailSizeScale(thumbnailScaleSettingOptions);
+    const selectedVaryAppDocumentRef = useAppCurrentRef(
+        selectedVaryAppDocument,
+    );
+    const setSelectedAppDocumentRef = useAppCurrentRef(setSelectedAppDocument);
+    const handleSlideChoosing = useCallback(async (event: any) => {
+        // Checked before the menu opens: the funnel guard would only refuse
+        // after the operator had already picked a file.
+        if (
+            checkIsVaryAppDocumentSwitchRefused(
+                selectedVaryAppDocumentRef.current,
+                null,
+            )
+        ) {
+            return;
+        }
         const slide = await selectSlide(
             event,
-            selectedVaryAppDocument.filePath,
+            selectedVaryAppDocumentRef.current.filePath,
         );
         if (slide === null) {
             showAppAlert(
-                'No Slide Available',
-                'No other slide found in the slide directory',
+                tran('No Slide Available'),
+                tran('No other slide found in the slide directory'),
             );
         } else {
-            setSelectedDocument(slide);
+            setSelectedAppDocumentRef.current(slide);
         }
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
-            className="card-footer w-100 p-0"
+            className="app-document-previewer-footer card-footer w-100 p-0"
             style={{
                 height: '28px',
             }}
         >
             <div className="d-flex w-100 h-100">
-                <div className="flex-item">
+                <div className="app-flex-item">
                     <AppRangeComp
                         value={thumbnailSizeScale}
-                        title="Slide Thumbnail Size Scale"
+                        title={tran('Slide Thumbnail Size Scale')}
                         setValue={setThumbnailSizeScale}
                         defaultSize={defaultRangeSize}
                     />
-                    <PathPreviewerComp
-                        dirPath={selectedVaryAppDocument.filePath}
-                        isShowingNameOnly
-                        onClick={
-                            isDisableChanging ? undefined : handleSlideChoosing
-                        }
-                        shouldNotValidate
-                        canOpenFileExplorer
-                    />
+                    {isInjectedAppDocumentFilePath ? null : (
+                        <PathPreviewerComp
+                            dirOrFilePath={selectedVaryAppDocument.filePath}
+                            isShowingNameOnly
+                            onClick={
+                                isDisableChanging
+                                    ? undefined
+                                    : handleSlideChoosing
+                            }
+                            canOpenFileExplorer
+                            isFile
+                        />
+                    )}
                 </div>
-                {appProvider.isPagePresenter ? (
-                    <div className="flex-item">
+                {shouldShowHistory ? (
+                    <div className="app-flex-item">
                         <HistoryPreviewerFooterComp />
                     </div>
                 ) : null}

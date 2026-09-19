@@ -1,14 +1,16 @@
-import { CSSProperties, useMemo, useRef, useState } from 'react';
+import { useCallback, type CSSProperties, type MouseEvent } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { ForegroundWebDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundWebDataType } from '../_screen/screenTypeHelpers';
 import { backgroundTypeMapper } from '../background/backgroundHelpers';
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { useGenDirSource } from '../helper/dirSourceHelpers';
+import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import FileSource from '../helper/FileSource';
 import FileListHandlerComp from '../others/FileListHandlerComp';
@@ -21,12 +23,12 @@ import {
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import ScreensRendererComp from './ScreensRendererComp';
-import { genTimeoutAttempt } from '../helper/helpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import RenderBackgroundWebIframeComp, {
     BackgroundWebPlaceHolderComp,
 } from '../background/RenderBackgroundWebIframeComp';
-import { dragStore } from '../helper/dragHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
 import {
     genBackgroundWebContextMenuItems,
     genBackgroundWebExtraItemContextMenuItems,
@@ -36,6 +38,9 @@ import {
     genCommonMenu,
     genShowOnScreensContextMenu,
 } from '../others/FileItemHandlerComp';
+import { useWebCapturing } from '../helper/capturingHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function getAllShowingScreenIdDataList() {
     const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
@@ -61,25 +66,22 @@ function handleWebHiding(screenId: number, data: ForegroundWebDataType) {
     });
 }
 
-const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllWebs(
     showingScreenIdDataList: [number, ForegroundWebDataType][],
     extraStyle: CSSProperties,
 ) {
-    attemptTimeout(() => {
-        for (const [screenId, data] of showingScreenIdDataList) {
-            getScreenForegroundManagerInstances(
-                screenId,
-                (screenForegroundManager) => {
-                    screenForegroundManager.removeWebData(data);
-                    screenForegroundManager.addWebData({
-                        ...data,
-                        extraStyle,
-                    });
-                },
-            );
-        }
-    });
+    for (const [screenId, data] of showingScreenIdDataList) {
+        getScreenForegroundManagerInstances(
+            screenId,
+            (screenForegroundManager) => {
+                screenForegroundManager.removeWebData(data);
+                screenForegroundManager.addWebData({
+                    ...data,
+                    extraStyle,
+                });
+            },
+        );
+    }
 }
 
 function genDimScale(getWidthScale: () => number) {
@@ -120,47 +122,97 @@ function RenderWebInfoComp({
     getWidthScale: () => number;
 }>) {
     const [isPlaying, setIsPlaying] = useState(false);
-    const height = useMemo(() => {
-        return Math.round((width * 9) / 16);
-    }, [width]);
+    const height = Math.round((width * 9) / 16);
     const fileSource = useMemo(() => {
         return FileSource.getInstance(filePath);
     }, [filePath]);
     const containerRef = useRef<HTMLDivElement>(null);
-    const handleShowing = (event: any, isForceChoosing = false) => {
-        const { widthScale, heightScale } = genDimScale(getWidthScale);
-        ScreenForegroundManager.addWebData(
-            event,
-            {
+    const handleShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            const { widthScale, heightScale } = genDimScale(getWidthScale);
+            ScreenForegroundManager.addWebData(
+                event,
+                {
+                    filePath,
+                    widthScale,
+                    heightScale,
+                    extraStyle: genStyle(),
+                },
+                isForceChoosing,
+            );
+        },
+        [filePath, getWidthScale, genStyle],
+    );
+    const handleByDropped = useCallback(
+        (event: any) => {
+            const screenForegroundManager =
+                getScreenForegroundManagerByDropped(event);
+            if (screenForegroundManager === null) {
+                return;
+            }
+            const { widthScale, heightScale } = genDimScale(getWidthScale);
+            screenForegroundManager.addWebData({
                 filePath,
                 widthScale,
                 heightScale,
                 extraStyle: genStyle(),
-            },
-            isForceChoosing,
+            });
+        },
+        [filePath, getWidthScale, genStyle],
+    );
+    const imageData = useWebCapturing(fileSource.src, { width, height });
+    const filePathRef = useAppCurrentRef(filePath);
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: MouseEvent) => {
+        showAppContextMenu(event as any, [
+            ...genCommonMenu(filePathRef.current),
+            ...genShowOnScreensContextMenu((event) => {
+                handleShowingRef.current(event, true);
+            }),
+            ...genBackgroundWebExtraItemContextMenuItems(filePathRef.current),
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleByDroppedRef = useAppCurrentRef(handleByDropped);
+    const getWidthScaleRef = useAppCurrentRef(getWidthScale);
+    const genStyleRef = useAppCurrentRef(genStyle);
+    const handleDraggingStart = useCallback((event: any) => {
+        dragStore.onDropped = handleByDroppedRef.current;
+        handleDragStart(
+            event,
+            genForegroundDragInf('web', () => {
+                const { widthScale, heightScale } = genDimScale(
+                    getWidthScaleRef.current,
+                );
+                return {
+                    filePath: filePathRef.current,
+                    widthScale,
+                    heightScale,
+                    extraStyle: genStyleRef.current(),
+                };
+            }),
         );
-    };
-    const handleByDropped = (event: any) => {
-        const screenForegroundManager =
-            getScreenForegroundManagerByDropped(event);
-        if (screenForegroundManager === null) {
-            return;
-        }
-        const { widthScale, heightScale } = genDimScale(getWidthScale);
-        screenForegroundManager.addWebData({
-            filePath,
-            widthScale,
-            heightScale,
-            extraStyle: genStyle(),
-        });
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleMouseOver = useCallback(() => {
+        setIsPlaying(true);
+    }, []);
+    const handleMouseOut = useCallback(() => {
+        setIsPlaying(false);
+    }, []);
     return (
         <div className="card m-1" style={{ width: `${width}px` }}>
             <div
-                className="card-header app-ellipsis"
+                className="card-header app-ellipsis d-flex align-items-center"
                 title={fileSource.filePath}
             >
-                {fileSource.fullName}
+                <span className="flex-fill app-ellipsis">
+                    {fileSource.fullName}
+                </span>
+                <ContextMenuDotsButtonComp
+                    label={tran('Show on Screens')}
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
             <div
                 className={
@@ -169,35 +221,25 @@ function RenderWebInfoComp({
                 }
                 style={{ height: `${height}px` }}
                 onClick={handleShowing}
-                onContextMenu={(event) => {
-                    showAppContextMenu(event as any, [
-                        ...genCommonMenu(filePath),
-                        ...genShowOnScreensContextMenu((event) => {
-                            handleShowing(event, true);
-                        }),
-                        ...genBackgroundWebExtraItemContextMenuItems(filePath),
-                    ]);
-                }}
+                onContextMenu={handleContextMenuOpening}
                 ref={containerRef}
                 draggable
-                onDragStart={() => {
-                    dragStore.onDropped = handleByDropped;
-                }}
-                onMouseEnter={() => {
-                    setIsPlaying(true);
-                }}
-                onMouseLeave={() => {
-                    setIsPlaying(false);
-                }}
+                onDragStart={handleDraggingStart}
+                onMouseOver={handleMouseOver}
+                onMouseOut={handleMouseOut}
             >
                 {isPlaying ? (
                     <RenderBackgroundWebIframeComp
-                        fileSource={fileSource}
+                        iframeSource={fileSource}
                         width={width}
                         height={height}
                     />
                 ) : (
-                    <BackgroundWebPlaceHolderComp height={height} />
+                    <BackgroundWebPlaceHolderComp
+                        height={height}
+                        imageData={imageData}
+                        isPlaying={isPlaying}
+                    />
                 )}
             </div>
         </div>
@@ -214,6 +256,9 @@ function ForegroundWebItemComp({
         ([, data]) => data.filePath === filePath,
     );
     const fileSource = FileSource.getInstance(filePath);
+    // per-instance: one item per web file — a shared module timer would drop
+    // the earlier item's refresh when two are adjusted within 500ms
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const {
         genStyle,
         getWidthScale,
@@ -221,7 +266,9 @@ function ForegroundWebItemComp({
     } = useForegroundPropsSetting({
         prefix: `web-${fileSource.fullName}`,
         onChange: (extraStyle) => {
-            refreshAllWebs(showingScreenIdDataList, extraStyle);
+            attemptTimeout(() => {
+                refreshAllWebs(showingScreenIdDataList, extraStyle);
+            });
         },
     });
     return (
@@ -264,8 +311,11 @@ function renderChildren(filePaths: string[]) {
 }
 
 export default function ForegroundWebComp() {
-    const dirSource = useGenDirSource(dirSourceSettingNames.BACKGROUND_WEB);
+    const dirSource = useGenDirSourceReload(
+        dirSourceSettingNames.BACKGROUND_WEB,
+    );
     useScreenForegroundManagerEvents(['update']);
+    const isOnScreen = getAllShowingScreenIdDataList().length > 0;
     if (dirSource === null) {
         return null;
     }
@@ -275,6 +325,7 @@ export default function ForegroundWebComp() {
             target="web"
             fullChildHeaders={<h4>{tran('Web Show')}</h4>}
             childHeadersOnHidden={<RenderShownMiniComp />}
+            isOnScreen={isOnScreen}
             extraBodyStyle={{
                 maxHeight: '500px',
             }}
@@ -285,7 +336,9 @@ export default function ForegroundWebComp() {
                 defaultFolderName={defaultDataDirNames.BACKGROUND_WEB}
                 dirSource={dirSource}
                 bodyHandler={renderChildren}
-                genContextMenuItems={genBackgroundWebContextMenuItems}
+                genContextMenuItems={(currentDirSource) =>
+                    genBackgroundWebContextMenuItems(currentDirSource)
+                }
                 fileSelectionOption={
                     backgroundType === 'color'
                         ? undefined

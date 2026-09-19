@@ -1,15 +1,17 @@
+import { useCallback } from 'react';
+
 import { tran } from '../lang/langHelpers';
+import type { BibleModelInfoEnum } from '../helper/bible-helpers/bibleModelHelpers';
 import {
-    BibleModelInfoEnum,
     bibleModelInfoTitleMap,
     getBibleModelInfoSetting,
     setBibleModelInfoSetting,
 } from '../helper/bible-helpers/bibleModelHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import appProvider from '../server/appProvider';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function chooseModel(
     event: any,
@@ -21,6 +23,7 @@ function chooseModel(
     ).map((key) => {
         const title = bibleModelInfoTitleMap[key as BibleModelInfoEnum];
         return {
+            childBefore: genContextMenuItemIcon('cpu'),
             menuElement: `${key} - (${title})`,
             title,
             disabled: key === currentModel,
@@ -34,24 +37,27 @@ function chooseModel(
 
 export default function BibleModelInfoSettingComp() {
     const model = getBibleModelInfoSetting();
-    const setModel1 = (newModel: BibleModelInfoEnum) => {
+    const setModel1 = useCallback((newModel: BibleModelInfoEnum) => {
         setBibleModelInfoSetting(newModel);
         appProvider.reload();
-    };
+    }, []);
+    const modelRef = useAppCurrentRef(model);
+    const setModel1Ref = useAppCurrentRef(setModel1);
+    const handleClick = useCallback((event: any) => {
+        chooseModel(event, modelRef.current, setModel1Ref.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <div className="d-flex mx-1" title={tran('Change Bible Model Info')}>
-            <label htmlFor="change-bible-model-info" className="form-label">
-                Change Bible Model Info:
-            </label>
-            <button
-                className="btn btn-sm p-1"
-                title={bibleModelInfoTitleMap[model]}
-                onClick={(event) => {
-                    chooseModel(event, model, setModel1);
-                }}
-            >
-                {model}
-            </button>
-        </div>
+        <button
+            className={
+                'btn btn-sm btn-outline-secondary p-1 text-nowrap ' +
+                'd-flex align-items-center gap-1'
+            }
+            title={`${tran('Change Bible Model Info')} (${bibleModelInfoTitleMap[model]})`}
+            onClick={handleClick}
+        >
+            <i className="bi bi-book" />
+            {model}
+        </button>
     );
 }

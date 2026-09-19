@@ -1,14 +1,14 @@
-import { createContext } from 'react';
+import { createContext, type ReactNode } from 'react';
 
 import { showSimpleToast } from '../toast/toastHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { closeCurrentEditingBibleItem } from './readBibleHelpers';
-import { EventMapper } from '../event/KeyboardEventListener';
+import type { EventMapperType } from '../event/KeyboardEventListener';
 import {
     elementDivider,
-    genContextMenuItemIcon,
     genContextMenuItemShortcutKey,
 } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import BibleItemsViewController, {
     applyBibleItemHistoryPendingText,
     attemptAddingHistory,
@@ -18,22 +18,20 @@ import BibleItemsViewController, {
 } from './BibleItemsViewController';
 import { setBibleLookupInputFocus } from '../bible-lookup/selectionHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import {
-    EditingResultType,
-    extractBibleTitle,
-} from '../helper/bible-helpers/bibleLogicHelpers2';
-import {
-    bibleRenderHelper,
-    BibleTargetType,
-} from '../bible-list/bibleRenderHelpers';
+import type { EditingResultType } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
+import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import CacheManager from '../others/CacheManager';
-import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
+import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { genFoundBibleItemContextMenu } from '../bible-lookup/bibleActionHelpers';
-import { setBibleSearchingTabType } from '../bible-find/BibleFindPreviewerComp';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import { setBibleSearchingTabType } from '../bible-find/bibleFindHelpers';
+import { tran } from '../lang/langHelpers';
+import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 
-export const closeEventMapper: EventMapper = {
+export const closeEventMapper: EventMapperType = {
     wControlKey: ['Ctrl'],
     lControlKey: ['Ctrl'],
     mControlKey: ['Meta'],
@@ -81,6 +79,7 @@ class FoundBibleItem extends ReadIdOnlyBibleItem {
 const editingResultCacher = new CacheManager<EditingResultType>(3);
 class LookupBibleItemController extends BibleItemsViewController {
     isLookup = true;
+    extraEditingActionButtons: ReactNode | null = null;
     setInputText: (inputText: string) => OptionalPromise<void> = (
         _: string,
     ) => {};
@@ -88,15 +87,15 @@ class LookupBibleItemController extends BibleItemsViewController {
     setBibleKey = (_bibleKey: string) => {};
     reloadEditingResult = (_inputText: string) => {};
     onLookupSaveBibleItem = () => {};
-    setIsBibleSearching = (_isLookupOnline: boolean) => {};
+    setIsAdvanceLookupOpened = (_isLookupOnline: boolean) => {};
     openBibleSearch = setBibleSearchingTabType;
 
-    constructor() {
-        super('lookup');
+    constructor(settingNameSuffix = '') {
+        super('lookup' + settingNameSuffix);
         if (this.straightBibleItems.length === 0) {
             const bibleItem = this.bibleItemFromJson({
                 id: this.genBibleItemUniqueId(),
-                bibleKey: 'KJV',
+                bibleKey: BIBLE_KJV_KEY,
                 metadata: {},
                 target: {
                     bookKey: 'GEN',
@@ -108,12 +107,14 @@ class LookupBibleItemController extends BibleItemsViewController {
             this.nestedBibleItems = [bibleItem];
         }
     }
+
     bibleItemFromJson(json: any): ReadIdOnlyBibleItem {
         if (json.id === this.getSavedBibleId()) {
             return EditingBibleItem.fromJson(json);
         }
         return super.bibleItemFromJson(json);
     }
+
     getSavedBibleId() {
         const settingId = getSetting(
             this.toSettingName('-selected-bible-item'),
@@ -121,10 +122,12 @@ class LookupBibleItemController extends BibleItemsViewController {
         const bibleItemId = settingId ? Number.parseInt(settingId) : -1;
         return bibleItemId;
     }
+
     forceReloadEditingResult() {
         editingResultCacher.clear();
         this.reloadEditingResult(this.inputText);
     }
+
     setSelectedBibleItem(bibleItemId: number) {
         setSetting(
             this.toSettingName('-selected-bible-item'),
@@ -132,6 +135,45 @@ class LookupBibleItemController extends BibleItemsViewController {
         );
         this.forceReloadEditingResult();
     }
+
+    /**
+     * The open bible items with the editing one — whose `target` deliberately
+     * throws — swapped for whatever the lookup input currently resolves to.
+     *
+     * Synchronous, so a consumer already holding the editing result (through
+     * `EditingResultContext`) can use it during render instead of awaiting a
+     * lookup it has in hand.
+     */
+    resolveStraightBibleItems(foundBibleItem: ReadIdOnlyBibleItem | null) {
+        // The editing pane is known by its ID, not by its class.
+        // `EditingBibleItem` is stamped only when the tree is re-parsed from
+        // the setting (`bibleItemFromJson`); a split or a retarget rebuilds
+        // the tree from the instances the caller held, after which the
+        // editing pane is a plain item carrying the target it had when it was
+        // LAST selected, not what the input resolves to now. Seen live: the
+        // input on Genesis 29, the pane's stored Genesis 27 in the list, and
+        // that deduped away against the pane it had been split from.
+        const selectedId = this.selectedBibleItem.id;
+        return this.straightBibleItems
+            .map((bibleItem) => {
+                if (
+                    bibleItem instanceof EditingBibleItem ||
+                    bibleItem.id === selectedId
+                ) {
+                    return foundBibleItem;
+                }
+                return bibleItem;
+            })
+            .filter((bibleItem): bibleItem is ReadIdOnlyBibleItem => {
+                return bibleItem !== null;
+            });
+    }
+
+    async getStraightBibleItemsForExportingMSWord() {
+        const editingResult = await this.getEditingResult();
+        return this.resolveStraightBibleItems(editingResult.result.bibleItem);
+    }
+
     get selectedBibleItem() {
         const bibleItemId = this.getSavedBibleId();
         if (bibleItemId !== -1) {
@@ -145,19 +187,24 @@ class LookupBibleItemController extends BibleItemsViewController {
         this.selectedBibleItem = this.straightBibleItems[0];
         return this.selectedBibleItem;
     }
+
     set selectedBibleItem(bibleItem: ReadIdOnlyBibleItem) {
         this.setSelectedBibleItem(bibleItem.id);
         this.applyTargetOrBibleKey(this.selectedBibleItem, bibleItem);
+        this._loadNestedBibleItemsFromSetting();
         this.fireUpdateEvent();
     }
+
     checkIsBibleItemSelected(bibleItem: ReadIdOnlyBibleItem) {
         return bibleItem.id === this.selectedBibleItem.id;
     }
+
     get selectedIndex() {
         return this.straightBibleItems.findIndex((bibleItem) => {
             return this.checkIsBibleItemSelected(bibleItem);
         });
     }
+
     protected syncTargetByColorNote(bibleItem: ReadIdOnlyBibleItem) {
         if (this.checkIsBibleItemSelected(bibleItem)) {
             this.getEditingResult().then(({ result }) => {
@@ -170,6 +217,7 @@ class LookupBibleItemController extends BibleItemsViewController {
         }
         super.syncTargetByColorNote(bibleItem);
     }
+
     setColorNote(bibleItem: ReadIdOnlyBibleItem, color: string | null) {
         super._setColorNote(bibleItem, color);
         const selectedColorNote = this.getColorNote(this.selectedBibleItem);
@@ -182,15 +230,18 @@ class LookupBibleItemController extends BibleItemsViewController {
             this.syncTargetByColorNote(bibleItem);
         }
     }
+
     get inputText() {
         return getSetting(this.toSettingName('-input-text')) ?? '';
     }
+
     _setInputText(inputText: string) {
         this.inputTextTime = Date.now();
         setSetting(this.toSettingName('-input-text'), inputText);
         this.setInputText(inputText);
         setBibleLookupInputFocus();
     }
+
     set inputText(inputText: string) {
         this._setInputText(inputText);
         this.syncTargetByColorNote(this.selectedBibleItem);
@@ -215,7 +266,6 @@ class LookupBibleItemController extends BibleItemsViewController {
     async setLookupContentFromBibleItem(bibleItem: ReadIdOnlyBibleItem) {
         applyBibleItemHistoryPendingText();
         this.applyTargetOrBibleKey(this.selectedBibleItem, bibleItem);
-        this.inputText = await bibleItem.toTitle();
     }
 
     private syncFoundBibleItem(editingResult: EditingResultType) {
@@ -229,6 +279,7 @@ class LookupBibleItemController extends BibleItemsViewController {
         }
         return { ...editingResult };
     }
+
     async getEditingResult(inputText?: string) {
         inputText = inputText ?? this.inputText;
         const cachedKey = `${this.selectedBibleItem.bibleKey}-${inputText}`;
@@ -387,8 +438,9 @@ class LookupBibleItemController extends BibleItemsViewController {
             }
         } else {
             menus2.push({
-                menuElement: 'Edit',
-                title: 'Double click on header to edit',
+                childBefore: genContextMenuItemIcon('pencil-square'),
+                menuElement: tran('Edit'),
+                title: tran('Double click on header to edit'),
                 onSelect: () => {
                     this.editBibleItem(bibleItem);
                 },
@@ -404,9 +456,9 @@ class LookupBibleItemController extends BibleItemsViewController {
                       childBefore: genContextMenuItemIcon('x-lg', {
                           color: 'var(--bs-danger-text-emphasis)',
                       }),
-                      menuElement: 'Close',
-                      childAfter: isBibleItemSelected
-                          ? genContextMenuItemShortcutKey(closeEventMapper)
+                      menuElement: tran('Close'),
+                      keyboardShortcut: isBibleItemSelected
+                          ? closeEventMapper
                           : undefined,
                       onSelect: () => {
                           if (this.checkIsBibleItemSelected(bibleItem)) {
@@ -419,19 +471,21 @@ class LookupBibleItemController extends BibleItemsViewController {
               ];
         return [...menu1, ...menus2, ...menu3];
     }
+
     deleteBibleItem(bibleItem: ReadIdOnlyBibleItem) {
         if (this.isAlone) {
             return;
         }
         super.deleteBibleItem(bibleItem);
     }
+
     async tryJumpingChapter(isNext: boolean) {
         const editingResult = await this.getEditingResult();
         const foundBibleItem = editingResult.result.bibleItem;
         if (foundBibleItem === null) {
             showSimpleToast(
-                'Jumping Chapter',
-                'Unable to find the target bible item',
+                tran('Jumping Chapter'),
+                tran('Unable to find the target bible item'),
             );
             return;
         }
@@ -467,6 +521,30 @@ export function useLookupBibleItemControllerContext() {
         );
     }
     return viewController as LookupBibleItemController;
+}
+
+// The window's live lookup controller, reachable WITHOUT React context.
+//
+// The names & locations detail panels are window-level floating widgets (they
+// are opened by clicking a name in any verse, from trees that have no lookup
+// controller of their own), but one of their actions — "open in bible lookup" —
+// genuinely needs the controller. Rather than force the panels to live inside a
+// provider, the provider publishes itself here for as long as it is mounted.
+let currentLookupBibleItemController: LookupBibleItemController | null = null;
+
+export function registerLookupBibleItemController(
+    viewController: LookupBibleItemController,
+) {
+    currentLookupBibleItemController = viewController;
+    return () => {
+        if (currentLookupBibleItemController === viewController) {
+            currentLookupBibleItemController = null;
+        }
+    };
+}
+
+export function getCurrentLookupBibleItemController() {
+    return currentLookupBibleItemController;
 }
 
 export const EditingResultContext = createContext<EditingResultType | null>(

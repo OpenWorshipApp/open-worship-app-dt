@@ -1,14 +1,14 @@
 import { useState } from 'react';
 
 import { handleError } from '../../helper/errorHelpers';
+import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import {
     BIBLE_DOWNLOAD_TOAST_TITLE,
-    BibleMinimalInfoType,
     downloadBible,
     extractDownloadedBible,
 } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import { getBibleInfo } from '../../helper/bible-helpers/bibleInfoHelpers';
-import { getLangAsync } from '../../lang/langHelpers';
+import { getLangDataAsync, tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
 
@@ -16,10 +16,10 @@ async function syncBibleLanguage(bibleKey: string) {
     const bibleInfo = await getBibleInfo(bibleKey, true);
     if (bibleInfo === null) {
         const message = 'Cannot get bible info';
-        showSimpleToast('Getting Bible Info', message);
+        showSimpleToast(tran('Getting Bible Info'), tran(message));
         throw new Error('Cannot get bible info');
     }
-    await getLangAsync(bibleInfo.locale);
+    await getLangDataAsync(bibleInfo.locale);
 }
 
 export function useDownloadBible(
@@ -30,21 +30,34 @@ export function useDownloadBible(
         number | null
     >(null);
     const handleDoneDownloaded = async (error: any, filePath?: string) => {
-        if (error) {
-            handleError(error);
-        } else {
+        try {
+            if (error) {
+                handleError(error);
+                return;
+            }
             const isSuccess = await extractDownloadedBible(filePath as string);
             if (isSuccess) {
                 await syncBibleLanguage(bibleInfo.key);
             } else {
-                showSimpleToast('Extracting Bible', 'Fail to extract bible');
+                showSimpleToast(
+                    tran('Extracting Bible'),
+                    tran('Fail to extract bible'),
+                );
             }
             onDownloaded();
+        } catch (error1) {
+            handleError(error1);
+            showSimpleToast(
+                tran(BIBLE_DOWNLOAD_TOAST_TITLE),
+                tran('Error occurred during finishing bible download'),
+            );
+            onDownloaded();
+        } finally {
+            setDownloadingProgress(null);
         }
-        setDownloadingProgress(null);
     };
-    const startDownloadBible = () => {
-        bibleDataReader.clearBibleDatabaseData(bibleInfo.key);
+    const startDownloadBible = async () => {
+        await bibleDataReader.clearBibleDatabaseData(bibleInfo.key);
         setDownloadingProgress(0);
         downloadBible({
             bibleInfo,
@@ -52,7 +65,7 @@ export function useDownloadBible(
                 onStart: (total) => {
                     const fileSize = Number.parseInt(total.toFixed(2));
                     showSimpleToast(
-                        BIBLE_DOWNLOAD_TOAST_TITLE,
+                        tran(BIBLE_DOWNLOAD_TOAST_TITLE),
                         `Start downloading "${bibleInfo.key}". ` +
                             `File size ${fileSize}mb`,
                     );

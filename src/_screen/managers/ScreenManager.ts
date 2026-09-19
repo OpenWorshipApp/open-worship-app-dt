@@ -1,5 +1,7 @@
-import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
-import { log } from '../../helper/loggerHelpers';
+import type { DroppedDataType } from '../../helper/DragInf';
+import { DragTypeEnum } from '../../helper/DragInf';
+import { appLog } from '../../helper/loggerHelpers';
+import { handleError } from '../../helper/errorHelpers';
 import ScreenForegroundManager from './ScreenForegroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
 import ScreenBibleManager from './ScreenBibleManager';
@@ -11,16 +13,59 @@ import {
     getScreenManagerBase,
     saveScreenManagersSetting,
 } from './screenManagerBaseHelpers';
-import ScreenManagerBase from './ScreenManagerBase';
-import { RegisteredEventType } from '../../event/EventHandler';
+import { deleteScreenPersistedData } from './screenManagerDeleteHelpers';
+import ScreenManagerBase, { ScreenManagerBaseGhost } from './ScreenManagerBase';
+import type { RegisteredEventType } from '../../event/EventHandler';
 import appProvider from '../../server/appProvider';
-import { ScreenMessageType } from '../screenTypeHelpers';
+import type { ScreenMessageType } from '../screenTypeHelpers';
+import { type GroupMembershipInf } from './ScreenEventHandler';
+import type ScreenEventHandler from './ScreenEventHandler';
+import ScreenDrawManager from './ScreenDrawManager';
+import ScreenFocusManager from './ScreenFocusManager';
+import { initScreenBibleStepping } from '../screenBibleSteppingHelpers';
+import { applyForegroundDragData } from '../../presenter-foreground/foregroundDragHelpers';
+
+function setGroupMembershipInf(
+    screenManagerBase: ScreenManagerBase,
+    targetInstance: GroupMembershipInf,
+    screenId: number,
+    getPropertyInstance: (
+        screenManagerBase: ScreenManagerBase,
+    ) => ScreenEventHandler<any>,
+) {
+    targetInstance.getMemberInstances = async () => {
+        const groupScreenManagers =
+            await ScreenManager.getGroupScreenManagers(screenManagerBase);
+        const instances = [];
+        for (const screenManager of groupScreenManagers) {
+            if (screenManager instanceof ScreenManager === false) {
+                continue;
+            }
+            instances.push(getPropertyInstance(screenManager));
+        }
+        return instances;
+    };
+    targetInstance.getMemberIds = async () => {
+        const instances = await targetInstance.getMemberInstances();
+        return instances.map((instance) => {
+            return instance.screenId;
+        });
+    };
+    targetInstance.checkIsMainInstance = async () => {
+        const memberIds = await targetInstance.getMemberIds();
+        memberIds.push(screenId);
+        const minId = Math.min(...memberIds);
+        return screenId === minId;
+    };
+}
 
 export default class ScreenManager extends ScreenManagerBase {
     readonly screenBackgroundManager: ScreenBackgroundManager;
     readonly screenVaryAppDocumentManager: ScreenVaryAppDocumentManager;
     readonly screenBibleManager: ScreenBibleManager;
     readonly screenForegroundManager: ScreenForegroundManager;
+    readonly screenDrawManager: ScreenDrawManager;
+    readonly screenFocusManager: ScreenFocusManager;
     readonly backgroundEffectManager: ScreenEffectManager;
     readonly varyAppDocumentEffectManager: ScreenEffectManager;
     readonly foregroundEffectManager: ScreenEffectManager;
@@ -40,18 +85,56 @@ export default class ScreenManager extends ScreenManagerBase {
             this,
             'foreground',
         );
+
         this.screenBackgroundManager = new ScreenBackgroundManager(
             this,
             this.backgroundEffectManager,
         );
+        setGroupMembershipInf(
+            this,
+            this.screenBackgroundManager,
+            this.screenId,
+            (screenManagerBase) => {
+                return (screenManagerBase as ScreenManager)
+                    .screenBackgroundManager;
+            },
+        );
+
         this.screenVaryAppDocumentManager = new ScreenVaryAppDocumentManager(
             this,
             this.varyAppDocumentEffectManager,
+        );
+        setGroupMembershipInf(
+            this,
+            this.screenVaryAppDocumentManager,
+            this.screenId,
+            (screenManagerBase) => {
+                return (screenManagerBase as ScreenManager)
+                    .screenVaryAppDocumentManager;
+            },
         );
         this.screenBibleManager = new ScreenBibleManager(this);
         this.screenForegroundManager = new ScreenForegroundManager(
             this,
             this.foregroundEffectManager,
+        );
+        this.screenDrawManager = new ScreenDrawManager(this);
+        setGroupMembershipInf(
+            this,
+            this.screenDrawManager,
+            this.screenId,
+            (screenManagerBase) => {
+                return (screenManagerBase as ScreenManager).screenDrawManager;
+            },
+        );
+        this.screenFocusManager = new ScreenFocusManager(this);
+        setGroupMembershipInf(
+            this,
+            this.screenFocusManager,
+            this.screenId,
+            (screenManagerBase) => {
+                return (screenManagerBase as ScreenManager).screenFocusManager;
+            },
         );
         this.registeredEventListeners = [];
         this.registeredEventListeners.push(
@@ -69,6 +152,17 @@ export default class ScreenManager extends ScreenManagerBase {
                 }
             }),
         );
+
+        this.initEvent();
+    }
+
+    initEvent() {
+        this.screenBackgroundManager.registerEventListener(
+            ['color-set'],
+            (color: string) => {
+                this.screenBibleManager.reflectBackgroundColor(color);
+            },
+        );
     }
 
     get isLocked() {
@@ -76,19 +170,40 @@ export default class ScreenManager extends ScreenManagerBase {
     }
     set isLocked(isLocked: boolean) {
         super.isLocked = isLocked;
-        saveScreenManagersSetting().then(() => {
-            this.fireInstanceEvent();
-        });
+        saveScreenManagersSetting()
+            .catch(handleError)
+            .finally(() => {
+                this.fireInstanceEvent();
+            });
     }
 
-    get stageNumber() {
-        return super.stageNumber;
+    async setIsLockedWithSyncGroup(isLocked: boolean) {
+        const groupScreenManagers =
+            await ScreenManager.getGroupScreenManagers(this);
+        const affectedScreenManagers = [this, ...groupScreenManagers];
+        for (const screenManagerBase of affectedScreenManagers) {
+            screenManagerBase._isLocked = isLocked;
+        }
+        await saveScreenManagersSetting();
+        for (const screenManagerBase of affectedScreenManagers) {
+            screenManagerBase.fireInstanceEvent();
+        }
     }
-    set stageNumber(stageNumber: number) {
-        super.stageNumber = stageNumber;
-        saveScreenManagersSetting().then(() => {
-            this.fireInstanceEvent();
-        });
+
+    get stage() {
+        return super.stage;
+    }
+    set stage(stageNumber: number) {
+        const isChanged = super.stage !== stageNumber;
+        super.stage = stageNumber;
+        if (isChanged) {
+            this.screenVaryAppDocumentManager.reapplyForStage();
+        }
+        saveScreenManagersSetting()
+            .catch(handleError)
+            .finally(() => {
+                this.fireInstanceEvent();
+            });
     }
 
     get isSelected() {
@@ -96,18 +211,53 @@ export default class ScreenManager extends ScreenManagerBase {
     }
     set isSelected(isSelected: boolean) {
         super.isSelected = isSelected;
-        saveScreenManagersSetting().then(() => {
-            this.fireInstanceEvent();
-        });
+        saveScreenManagersSetting()
+            .catch(handleError)
+            .finally(() => {
+                this.fireInstanceEvent();
+            });
     }
 
     async setColorNote(color: string | null) {
         await super.setColorNote(color);
+        await this.syncIsLockedFromGroup();
         await saveScreenManagersSetting();
-        this.fireUpdateEvent();
+        this.fireColorNoteUpdateEvent();
     }
 
-    sendSyncScreen() {
+    // When this screen joins a color-note group, adopt the group's lock state
+    // so a newly added member matches the rest of the group (a locked group
+    // stays locked when a screen is added to it).
+    private async syncIsLockedFromGroup() {
+        const groupScreenManagers =
+            await ScreenManager.getGroupScreenManagers(this);
+        if (groupScreenManagers.length === 0) {
+            return;
+        }
+        const isLocked = groupScreenManagers.some((screenManagerBase) => {
+            return screenManagerBase._isLocked;
+        });
+        if (this._isLocked !== isLocked) {
+            this._isLocked = isLocked;
+            this.fireInstanceEvent();
+        }
+    }
+    async getMemberInstances(): Promise<ScreenManager[]> {
+        const groupScreenManagers =
+            await ScreenManager.getGroupScreenManagers(this);
+        return groupScreenManagers.filter((screenManagerBase) => {
+            return screenManagerBase instanceof ScreenManager;
+        }) as ScreenManager[];
+    }
+
+    async sendSyncScreen(shouldFromOtherGroupMember = false) {
+        if (shouldFromOtherGroupMember) {
+            const otherGroupMembers = await this.getMemberInstances();
+            if (otherGroupMembers.length > 0) {
+                await otherGroupMembers[0].sendSyncScreen();
+                return;
+            }
+        }
         ScreenBibleManager.sendSynTextStyle();
         this.backgroundEffectManager.sendSyncScreen();
         this.screenBackgroundManager.sendSyncScreen();
@@ -115,6 +265,8 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenVaryAppDocumentManager.sendSyncScreen();
         this.varyAppDocumentEffectManager.sendSyncScreen();
         this.screenBibleManager.sendSyncScreen();
+        this.screenDrawManager.sendSyncScreen();
+        this.screenFocusManager.sendSyncScreen();
     }
 
     clear() {
@@ -122,28 +274,74 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenVaryAppDocumentManager.clear();
         this.screenForegroundManager.clear();
         this.screenBackgroundManager.clear();
+        this.screenDrawManager.clear();
+        this.screenFocusManager.clear();
         this.fireUpdateEvent();
     }
 
+    // Deleting a screen is permanent, and the id is handed straight back out:
+    // `genNewScreenManagerBase` picks the lowest free id, so the next screen the
+    // user adds inherits everything still stored under this one's id. Every
+    // layer therefore drops its own live state and its own persisted keys here,
+    // and `deleteScreenPersistedData` sweeps the keys no layer owns.
+    //
+    // Note what is NOT called: `clear()`. Each layer's clear() routes through
+    // its `*WithSyncGroup` setter, which (a) broadcasts to every screen sharing
+    // this screen's color note — so deleting one member blanked the whole
+    // group's background/slide/bible — and (b) is refused outright on a locked
+    // screen, which left the deleted screen's data on disk and its timers,
+    // camera tracks and YouTube listeners running. The per-layer delete() does
+    // the same teardown locally instead.
     async delete() {
+        if (this.isDeleted) {
+            return;
+        }
         this.isDeleted = true;
         this.hide();
         for (const { eventName, listener } of this.registeredEventListeners) {
             this.removeOnEventListener(eventName, listener);
         }
-        this.clear();
+        this.registeredEventListeners.length = 0;
         this.varyAppDocumentEffectManager.delete();
         this.backgroundEffectManager.delete();
+        this.foregroundEffectManager.delete();
         this.screenBackgroundManager.delete();
         this.screenVaryAppDocumentManager.delete();
         this.screenBibleManager.delete();
         this.screenForegroundManager.delete();
+        this.screenDrawManager.delete();
+        this.screenFocusManager.delete();
+        this.divRef = null;
+        this.getElementsByDomSelector = () => [];
+        this.noSyncGroupMap.clear();
+        this.colorNote = null;
         deleteScreenManagerBaseCache(this.key);
+        // Drop the id from the manager list FIRST: `getValidOnScreen` treats
+        // that list as the set of live screens, so any later read of the
+        // content settings already ignores this screen even if the sweep below
+        // is interrupted.
         await saveScreenManagersSetting(this.screenId);
+        await deleteScreenPersistedData(this.screenId);
+        // The "on screen" badges in the document / background / foreground
+        // lists are driven by each LAYER's static update event, not by the
+        // screen manager's. Nothing here goes through a layer setter (that is
+        // the whole point — see above), so without firing them by hand the
+        // badges keep advertising a screen that no longer exists.
+        ScreenBackgroundManager.fireUpdateEvent();
+        ScreenVaryAppDocumentManager.fireUpdateEvent();
+        ScreenBibleManager.fireUpdateEvent();
+        ScreenForegroundManager.fireUpdateEvent();
+        // Instance for the previewer list, update for anything showing
+        // "is this on screen?" state for the content this screen was holding.
         this.fireInstanceEvent();
+        this.fireUpdateEvent();
+        this.destroy();
     }
 
-    receiveScreenDropped(droppedData: DroppedDataType) {
+    // Returns the promise of the layer that took the drop, so a caller can wait
+    // for the content to actually be on the screen before doing anything else.
+    // Callers that only want to fire it off may keep ignoring the result.
+    receiveScreenDropped(droppedData: DroppedDataType): Promise<void> {
         if (
             [
                 DragTypeEnum.BACKGROUND_COLOR,
@@ -153,22 +351,35 @@ export default class ScreenManager extends ScreenManagerBase {
                 DragTypeEnum.BACKGROUND_CAMERA,
             ].includes(droppedData.type)
         ) {
-            this.screenBackgroundManager.receiveScreenDropped(droppedData);
+            return this.screenBackgroundManager.receiveScreenDropped(
+                droppedData,
+            );
         } else if (
-            [DragTypeEnum.SLIDE, DragTypeEnum.PDF_SLIDE].includes(
-                droppedData.type,
-            )
+            [
+                DragTypeEnum.SLIDE,
+                DragTypeEnum.LYRIC_SLIDE,
+                DragTypeEnum.PDF_SLIDE,
+                DragTypeEnum.PPTX_SLIDE,
+                DragTypeEnum.DOCX_SLIDE,
+            ].includes(droppedData.type)
         ) {
-            this.screenVaryAppDocumentManager.receiveScreenDropped(droppedData);
+            return this.screenVaryAppDocumentManager.receiveScreenDropped(
+                droppedData,
+            );
         } else if (
             [DragTypeEnum.BIBLE_ITEM, DragTypeEnum.LYRIC_ITEM].includes(
                 droppedData.type,
             )
         ) {
-            this.screenBibleManager.receiveScreenDropped(droppedData);
-        } else {
-            log(droppedData);
+            return this.screenBibleManager.receiveScreenDropped(droppedData);
+        } else if (droppedData.type === DragTypeEnum.FOREGROUND) {
+            return applyForegroundDragData(
+                this.screenForegroundManager,
+                droppedData.item,
+            );
         }
+        appLog(droppedData);
+        return Promise.resolve();
     }
 
     static getSyncGroupScreenEventHandler(message: ScreenMessageType) {
@@ -181,6 +392,10 @@ export default class ScreenManager extends ScreenManagerBase {
             return ScreenBibleManager;
         } else if (type === 'foreground') {
             return ScreenForegroundManager;
+        } else if (type === 'draw') {
+            return ScreenDrawManager;
+        } else if (type === 'focus') {
+            return ScreenFocusManager;
         }
         return null;
     }
@@ -188,7 +403,8 @@ export default class ScreenManager extends ScreenManagerBase {
     static applyScreenManagerSyncScreen(message: ScreenMessageType) {
         const ScreenHandler = this.getSyncGroupScreenEventHandler(message);
         if (ScreenHandler !== null) {
-            return ScreenHandler.receiveSyncScreen(message);
+            ScreenHandler.receiveSyncScreen(message);
+            return;
         }
         const { type, data, screenId } = message;
         const screenManagerBase = getScreenManagerBase(screenId);
@@ -197,44 +413,56 @@ export default class ScreenManager extends ScreenManagerBase {
         }
         if (type === 'init') {
             screenManagerBase.sendSyncScreen();
+            // with some reason Bible rendering has some issue with styling
+            // should fire init again to make sure the styling is applied correctly
+            setTimeout(() => {
+                screenManagerBase.sendSyncScreen();
+            }, 2e3);
         } else if (type === 'visible') {
-            screenManagerBase.isShowing = data?.isShowing;
+            screenManagerBase.isShowing = data.isShowing;
         } else if (type === 'effect') {
             ScreenEffectManager.receiveSyncScreen(message);
-        } else if (type === 'bible-screen-view-scroll') {
-            ScreenBibleManager.receiveSyncScroll(message);
         } else if (type === 'bible-screen-view-selected-index') {
             ScreenBibleManager.receiveSyncSelectedIndex(message);
         } else if (type === 'bible-screen-view-text-style') {
             ScreenBibleManager.receiveSyncTextStyle(message);
+        } else if (type === 'background-video-time') {
+            ScreenBackgroundManager.receiveSyncVideoTime(message);
+        } else if (type === 'vary-app-document-video-time') {
+            ScreenVaryAppDocumentManager.receiveSyncVideoTime(message);
+        } else if (type === 'sync-scroll-percentage') {
+            screenManagerBase.syncScrollPercentage(data);
         } else {
-            log(message);
+            appLog(message);
         }
     }
 
     static initReceiveScreenMessage() {
         const messageUtils = appProvider.messageUtils;
-        const channel = messageUtils.channels.screenMessageChannel;
+        const channel = messageUtils.messageChannels.screenMessage;
         messageUtils.listenForData(channel, (_, message: ScreenMessageType) => {
             this.applyScreenManagerSyncScreen(message);
         });
+        initScreenBibleStepping();
     }
 
-    static async getAllScreenManagersByColorNote(
-        colorNote: string | null,
-        excludeScreenIds: number[] = [],
+    static async getGroupScreenManagers(
+        targetScreenManager: ScreenManagerBase,
     ): Promise<ScreenManagerBase[]> {
-        if (colorNote === null) {
+        const targetScreenManagerId = targetScreenManager.screenId;
+        const targetColorNote = await targetScreenManager.getColorNote();
+        if (targetColorNote === null) {
             return [];
         }
-        const allScreenManagers = getAllScreenManagerBases();
+        const screenManagers = getAllScreenManagerBases().filter(
+            (screenManager) => {
+                return screenManager.screenId !== targetScreenManagerId;
+            },
+        );
         const instances: ScreenManagerBase[] = [];
-        for (const screenManager of allScreenManagers) {
-            if (excludeScreenIds.includes(screenManager.screenId)) {
-                continue;
-            }
-            const note = await screenManager.getColorNote();
-            if (note === colorNote) {
+        for (const screenManager of screenManagers) {
+            const colorNote = await screenManager.getColorNote();
+            if (colorNote === targetColorNote) {
                 instances.push(screenManager);
             }
         }
@@ -246,12 +474,9 @@ export default class ScreenManager extends ScreenManagerBase {
         if (currentScreenManager === null || currentScreenManager.isDeleted) {
             return;
         }
-        const colorNote = await currentScreenManager.getColorNote();
-        const screenManagers = await this.getAllScreenManagersByColorNote(
-            colorNote,
-            [currentScreenManager.screenId],
-        );
-        for (const screenManagerBase of screenManagers) {
+        const groupScreenManagers =
+            await this.getGroupScreenManagers(currentScreenManager);
+        for (const screenManagerBase of groupScreenManagers) {
             const newMessage: ScreenMessageType = {
                 ...message,
                 screenId: screenManagerBase.screenId,
@@ -273,24 +498,23 @@ export default class ScreenManager extends ScreenManagerBase {
         }
     }
 
-    sendScreenMessage(message: ScreenMessageType, isForce?: boolean) {
+    sendScreenMessage(message: ScreenMessageType, isForce: boolean) {
         if (appProvider.isPageScreen && !isForce) {
             return;
         }
-        const messageUtils = appProvider.messageUtils;
-        const channel = messageUtils.channels.screenMessageChannel;
-        const isSent = messageUtils.sendDataSync(channel, {
+        const { messageUtils } = appProvider;
+        const channel = messageUtils.messageChannels.screenMessage;
+        // async send — sendDataSync blocks the renderer on a main-process
+        // round-trip for every message (paid every 60ms mid draw-stroke)
+        messageUtils.sendData(channel, {
             ...message,
             isScreen: appProvider.isPageScreen,
         });
-        console.assert(isSent, JSON.stringify({ channel, message }));
         ScreenManager.syncScreenManagerGroup(message);
     }
 
-    createScreenManagerBaseGhost(screenId: number) {
-        const ghostScreenManager = new ScreenManager(screenId);
-        ghostScreenManager.isDeleted = true;
-        return ghostScreenManager;
+    createScreenManagerBaseGhost(screenId: number): ScreenManagerBase {
+        return new ScreenManagerBaseGhost(screenId);
     }
 
     getScreenManagerBaseForce(screenId: number) {

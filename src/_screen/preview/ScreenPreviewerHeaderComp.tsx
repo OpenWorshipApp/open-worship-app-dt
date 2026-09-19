@@ -1,24 +1,63 @@
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import ShowHideScreen from './ShowHideScreen';
 import MiniScreenClearControlComp from './MiniScreenClearControlComp';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
-import { useScreenManagerBaseContext } from '../managers/screenManagerHooks';
-import { useState } from 'react';
-import ShowingScreenIcon from './ShowingScreenIcon';
+import {
+    useScreenManagerBaseContext,
+    useScreenManagerEvents,
+} from '../managers/screenManagerHooks';
+import { type KeyboardEvent, useCallback, useState } from 'react';
+import ShowingScreenIconComp from './ShowingScreenIcon';
+import { tran } from '../../lang/langHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
-export default function ScreenPreviewerHeaderComp() {
+export default function ScreenPreviewerHeaderComp({
+    isFullView,
+    setIsFullView,
+}: Readonly<{
+    isFullView: boolean;
+    setIsFullView: (value: boolean) => void;
+}>) {
     const screenManagerBase = useScreenManagerBaseContext();
     const [isLocked, setIsLocked] = useState(screenManagerBase.isLocked);
-    const setIsLocked1 = (newIsLocked: boolean) => {
-        screenManagerBase.isLocked = newIsLocked;
+    // A group member's lock is toggled from a sibling; re-sync from the
+    // instance event that its setter fires.
+    useScreenManagerEvents(['instance'], screenManagerBase, () => {
+        setIsLocked(screenManagerBase.isLocked);
+    });
+    const screenManagerBaseRef = useAppCurrentRef(screenManagerBase);
+    const handleToggleLock = useCallback(() => {
+        const screenManagerBase = screenManagerBaseRef.current;
+        const newIsLocked = !screenManagerBase.isLocked;
         setIsLocked(newIsLocked);
-    };
+        screenManagerBase.setIsLockedWithSyncGroup(newIsLocked);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const isFullViewRef = useAppCurrentRef(isFullView);
+    const setIsFullViewRef = useAppCurrentRef(setIsFullView);
+    const handleToggleFullView = useCallback(() => {
+        setIsFullViewRef.current(!isFullViewRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleLockKeyingUp = useCallback(
+        (event: KeyboardEvent<HTMLElement>) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                handleToggleLock();
+            }
+        },
+        [handleToggleLock],
+    );
+    const fullViewLabel = isFullView
+        ? tran('Exit full view')
+        : tran('Full view');
+    const lockLabel = isLocked ? tran('Unlock') : tran('Lock');
     return (
         <div
             className="card-header w-100"
             style={{
                 overflowX: 'auto',
                 overflowY: 'hidden',
-                height: '30px',
+                height: '26px',
                 padding: '2px',
             }}
         >
@@ -27,22 +66,52 @@ export default function ScreenPreviewerHeaderComp() {
                     <ShowHideScreen />
                     <MiniScreenClearControlComp />
                 </div>
-                <div className="flex-fill d-flex justify-content-end ms-2">
-                    <ShowingScreenIcon screenId={screenManagerBase.screenId} />
+                <div className="flex-fill d-flex justify-content-end align-items-center ms-2">
+                    <ShowingScreenIconComp
+                        screenId={screenManagerBase.screenId}
+                    />
                     <div className="ms-2">
                         <ItemColorNoteComp item={screenManagerBase} />
                     </div>
-                    <div className="ms-2" title="TODO: implement this feature">
+                    <div className="ms-2">
+                        {/* Named, focusable and key-operable on purpose: this
+                            was an anonymous <i> with an onClick, so a screen
+                            reader announced nothing, the keyboard could not
+                            reach it, and no tool could find it by label. */}
                         <i
                             className={
                                 `bi bi-${isLocked ? 'lock-fill' : 'unlock'}` +
                                 ' app-caught-hover-pointer'
                             }
                             style={{ color: isLocked ? 'red' : 'green' }}
-                            onClick={() => {
-                                setIsLocked1(!isLocked);
-                            }}
+                            role="button"
+                            tabIndex={0}
+                            title={lockLabel}
+                            aria-label={lockLabel}
+                            aria-pressed={isLocked}
+                            onClick={handleToggleLock}
+                            onKeyUp={handleLockKeyingUp}
                         />
+                    </div>
+                    <div className="ms-2">
+                        <i
+                            className={
+                                `bi bi-${
+                                    isFullView
+                                        ? 'fullscreen-exit'
+                                        : 'arrows-fullscreen'
+                                }` + ' app-caught-hover-pointer'
+                            }
+                            title={fullViewLabel}
+                            aria-label={fullViewLabel}
+                            onClick={handleToggleFullView}
+                        />
+                    </div>
+                    {/* The screen's own menu — the one a right-click anywhere on
+                        the preview gives. No handler: the card around this
+                        header owns it. */}
+                    <div className="ms-2">
+                        <ContextMenuDotsButtonComp />
                     </div>
                 </div>
             </div>

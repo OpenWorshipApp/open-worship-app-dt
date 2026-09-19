@@ -1,3 +1,4 @@
+import { openPopupWindow } from '../helper/domHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import appProvider from '../server/appProvider';
 import { getFontFamilyMapByNodeFont } from '../server/fontHelpers';
@@ -5,7 +6,14 @@ import { getFontFamilyMapByNodeFont } from '../server/fontHelpers';
 export const SETTING_SETTING_NAME = 'setting-tabs';
 
 export function openSettingPage() {
-    appProvider.messageUtils.sendData('main:app:open-setting');
+    openPopupWindow(
+        appProvider.settingHomePage,
+        `setting_${Date.now()}`,
+        'setting',
+        {
+            appTopToMain: true,
+        },
+    );
 }
 
 export function openGeneralSetting() {
@@ -17,13 +25,20 @@ export function openBibleSetting() {
     setSetting(SETTING_SETTING_NAME, 'b');
     openSettingPage();
 }
-(globalThis as any).openBibleSetting = openBibleSetting;
+
+export function openOthersSetting() {
+    setSetting(SETTING_SETTING_NAME, 'o');
+    openSettingPage();
+}
+appProvider.messageUtils.listenForData('app:main:go-to-setting-home', () => {
+    openBibleSetting();
+});
 
 export const APP_FONT_FAMILY_SETTING_NAME = 'app-font-family';
 export const APP_FONT_WEIGHT_SETTING_NAME = 'app-font-weight';
 
-export function getAppFontFamily() {
-    const fonts = getFontFamilyMapByNodeFont();
+export async function getAppFontFamily() {
+    const fonts = await getFontFamilyMapByNodeFont();
     const fontFamily = getSetting(APP_FONT_FAMILY_SETTING_NAME);
     if (!fontFamily || !fonts?.[fontFamily]) {
         return null;
@@ -31,10 +46,10 @@ export function getAppFontFamily() {
     return fontFamily;
 }
 
-export function getAppFontWeight() {
-    const fonts = getFontFamilyMapByNodeFont();
+export async function getAppFontWeight() {
+    const fonts = await getFontFamilyMapByNodeFont();
     const fontWeight = getSetting(APP_FONT_WEIGHT_SETTING_NAME);
-    const fontFamily = getAppFontFamily();
+    const fontFamily = await getAppFontFamily();
     if (
         !fontWeight ||
         !fontFamily ||
@@ -47,4 +62,17 @@ export function getAppFontWeight() {
 
 export function forceReloadAppWindows() {
     appProvider.messageUtils.sendData('all:app:force-reload');
+}
+
+/**
+ * The heavier sibling of `forceReloadAppWindows`: the whole process closes and
+ * opens again, not just its renderers.
+ *
+ * Reloading a window re-reads every setting the RENDERER owns. It cannot
+ * re-read one the main process read before `ready` -- the AI master switch is
+ * the only such setting -- so that panel needs this instead. Nothing comes
+ * back: the window asking is gone with the process.
+ */
+export function relaunchApp() {
+    appProvider.messageUtils.sendData('main:app:relaunch');
 }

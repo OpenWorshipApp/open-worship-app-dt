@@ -1,9 +1,20 @@
 @use './variables.scss' as *;
 
-#app {
+.app {
   .btn {
     white-space: nowrap;
     padding: 0.25rem;
+
+    --bs-btn-hover-color: var(--bs-btn-color);
+    --bs-btn-hover-bg: var(--bs-btn-bg);
+    --bs-btn-hover-border-color: var(--bs-btn-border-color);
+    text-shadow: none;
+    transition-property:
+      color, background-color, border-color, box-shadow, text-shadow;
+
+    &:hover:not(:disabled):not(.disabled) {
+      text-shadow: 0 0 0.48rem color-mix(in srgb, currentColor 42%, transparent);
+    }
   }
 
   .form-range {
@@ -20,13 +31,9 @@
     overflow-y: auto;
   }
 
-  .receiving-data-drop {
-    box-sizing: content-box !important;
-  }
-
   .list-group-item {
     border-radius: var(--bs-border-radius);
-    padding: 0.25rem 0.5rem;
+    padding: 1px 8px;
     margin: 0.15rem;
 
     &:before {

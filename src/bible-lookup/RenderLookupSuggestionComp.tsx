@@ -1,16 +1,19 @@
+import { use, useCallback, type MouseEvent } from 'react';
+
 import { tran } from '../lang/langHelpers';
-import RenderBookOptionsComp from './RenderBookOptionsComp';
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';
-import { BibleSelectionMiniComp } from './BibleSelectionComp';
+import { BibleKeySelectionMiniComp } from './BibleKeySelectionComp';
 import { RENDER_FOUND_CLASS } from './selectionHelpers';
 import {
     EditingResultContext,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
 import RenderVerseOptionsComp from './RenderVerseOptionsComp';
-import { use } from 'react';
 import { openBibleSetting } from '../setting/settingHelpers';
 import BibleViewTextComp from '../bible-reader/view-extra/BibleViewTextComp';
+import RenderBookOptionsComp from './RenderBookOptionsComp';
+import { useAppCurrentRef } from '../helper/appHooks';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export default function RenderLookupSuggestionComp({
     applyChapterSelection,
@@ -20,8 +23,11 @@ export default function RenderLookupSuggestionComp({
     applyBookSelection: (newBookKey: string, newBook: string) => void;
 }>) {
     const editingResult = use(EditingResultContext);
+    const handleFocusing = useCallback((event: MouseEvent<HTMLDivElement>) => {
+        event.currentTarget.focus();
+    }, []);
     if (editingResult === null) {
-        return <div>Loading...</div>;
+        return <div>{tran('Loading')}...</div>;
     }
     const {
         bookKey,
@@ -48,27 +54,27 @@ export default function RenderLookupSuggestionComp({
             className={`app-render-found w-100 h-100 app-focusable ${RENDER_FOUND_CLASS}`}
             style={{ overflowY: 'auto' }}
             tabIndex={0}
-            onClick={(event) => {
-                event.currentTarget.focus();
-            }}
+            onClick={handleFocusing}
         >
             <div
                 className={
-                    'w-100  d-flex flex-wrap align-items-start ' +
-                    'justify-content-start'
+                    'w-100  d-flex flex-wrap align-items-center ' +
+                    'justify-content-center'
                 }
             >
-                <RenderBookOptionsComp
-                    bookKey={bookKey}
-                    guessingBook={guessingBook}
-                    onSelect={applyBookSelection}
-                />
-                <RenderChapterOptionsComp
-                    bookKey={bookKey}
-                    chapter={chapter}
-                    guessingChapter={guessingChapter}
-                    onSelect={applyChapterSelection}
-                />
+                {bookKey === null ? (
+                    <RenderBookOptionsComp
+                        onSelect={applyBookSelection}
+                        guessingBook={guessingBook ?? ''}
+                    />
+                ) : null}
+                {bookKey === null || chapter !== null ? null : (
+                    <RenderChapterOptionsComp
+                        bookKey={bookKey}
+                        guessingChapter={guessingChapter}
+                        onSelect={applyChapterSelection}
+                    />
+                )}
             </div>
         </div>
     );
@@ -79,16 +85,28 @@ export function BibleNotAvailableComp({
 }: Readonly<{
     bibleKey: string;
 }>) {
+    const fontFamily = useBibleFontFamily(bibleKey);
     const viewController = useLookupBibleItemControllerContext();
-    const handleBibleKeyChanging = (
-        _isContextMenu: boolean,
-        _oldBibleKey: string,
-        newBibleKey: string,
-    ) => {
-        viewController.applyTargetOrBibleKey(viewController.selectedBibleItem, {
-            bibleKey: newBibleKey,
-        });
-    };
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const handleBibleKeyChanging = useCallback(
+        (
+            _isContextMenu: boolean,
+            _oldBibleKey: string,
+            newBibleKey: string,
+        ) => {
+            viewControllerRef.current.applyTargetOrBibleKey(
+                viewControllerRef.current.selectedBibleItem,
+                {
+                    bibleKey: newBibleKey,
+                },
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleBibleSettingOpening = useCallback(() => {
+        openBibleSetting();
+    }, []);
 
     return (
         <div
@@ -98,21 +116,29 @@ export function BibleNotAvailableComp({
             <div className="body card-body w-100 p-3">
                 <h2>
                     {tran('Bible key ')}
-                    <span data-bible-key={bibleKey}>"{bibleKey}"</span>
+                    <span style={{ fontFamily }}>"{bibleKey}"</span>
                     {' is not available!'}
                 </h2>
-                Please change bible key here:{' '}
-                <BibleSelectionMiniComp
-                    bibleKey={bibleKey}
-                    onBibleKeyChange={handleBibleKeyChanging}
-                />
-                ??
+                <div className="d-flex">
+                    <h4
+                        style={{
+                            color: 'var(--bs-warning-text-emphasis)',
+                        }}
+                    >
+                        {tran('Please change bible key here')} 👉
+                    </h4>
+                    <div>
+                        <BibleKeySelectionMiniComp
+                            bibleKey={bibleKey}
+                            onBibleKeyChange={handleBibleKeyChanging}
+                        />
+                    </div>
+                </div>
                 <hr />
+                {tran('Or add bible ')}
                 <button
                     className="btn btn-primary"
-                    onClick={() => {
-                        openBibleSetting();
-                    }}
+                    onClick={handleBibleSettingOpening}
                 >
                     <span>{tran('Go to Bible Setting ')}</span>
                     <i className="bi bi-gear-wide-connected" />

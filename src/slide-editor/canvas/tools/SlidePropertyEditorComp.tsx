@@ -1,14 +1,20 @@
-import { useMemo, useState } from 'react';
+import './SlidePropertyEditorComp.scss';
+
+import { type ChangeEvent, useCallback, useState } from 'react';
 
 import { tran } from '../../../lang/langHelpers';
 import AppDocument from '../../../app-document-list/AppDocument';
-import { useSelectedEditingSlideContext } from '../../../app-document-list/appDocumentHelpers';
+import {
+    toKeyByFilePath,
+    useSelectedEditingSlideContext,
+} from '../../../app-document-list/appDocumentHelpers';
 import RenderSlideIndexComp from '../../../app-document-presenter/items/RenderSlideIndexComp';
-import { useAppStateAsync } from '../../../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../../../helper/appHooks';
 import { getDefaultScreenDisplay } from '../../../_screen/managers/screenHelpers';
 import { showAppConfirm } from '../../../popup-widget/popupWidgetHelpers';
-import Slide from '../../../app-document-list/Slide';
+import type Slide from '../../../app-document-list/Slide';
 import { useFileSourceEvents } from '../../../helper/dirSourceHelpers';
+import { ExpandChevronComp, useExpandToggle } from './useExpandToggle';
 
 async function checkIsDiffOtherSlides(
     slide: Slide,
@@ -30,10 +36,24 @@ function useIsDiffOtherSlides(slide: Slide, width: number, height: number) {
     const [isDiffOther, setIsDiffOther] = useAppStateAsync(() => {
         return checkIsDiffOtherSlides(slide, width, height);
     }, [slide, width, height]);
+    // The closure below holds the dimension as it was when the event FIRED;
+    // this ref holds it as it is when the read resolves.
+    const subjectRef = useAppCurrentRef({ slide, width, height });
     useFileSourceEvents(
         ['update'],
         async () => {
             const isDiff = await checkIsDiffOtherSlides(slide, width, height);
+            // Typing a new width/height (or moving to another slide) mid-read
+            // re-runs the guarded read above; letting this one land too would
+            // answer for the PREVIOUS size and flip the warning wrongly.
+            const subject = subjectRef.current;
+            if (
+                slide !== subject.slide ||
+                width !== subject.width ||
+                height !== subject.height
+            ) {
+                return;
+            }
             setIsDiffOther(isDiff);
         },
         [width, height, slide],
@@ -51,24 +71,24 @@ function RenderDimElementComp({
     value: number;
     setValue: (value: number) => void;
 }>) {
+    const setValueRef = useAppCurrentRef(setValue);
+    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        const newValue = Number.parseInt(e.target.value, 10);
+        if (!Number.isNaN(newValue)) {
+            setValueRef.current(newValue);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <div className="m-1 p-1 d-flex align-items-center">
-            {name}:
+        <div className="d-flex align-items-center gap-1">
+            <label className="spe-label">{tran(name)}</label>
             <input
-                className="form-control form-control-sm"
+                className="form-control form-control-sm spe-dim-input"
                 type="number"
-                style={{
-                    maxWidth: '70px',
-                }}
                 value={value}
-                onChange={(e) => {
-                    const newValue = Number.parseInt(e.target.value, 10);
-                    if (!Number.isNaN(newValue)) {
-                        setValue(newValue);
-                    }
-                }}
+                onChange={handleChange}
             />
-            px
+            <span className="spe-unit">px</span>
         </div>
     );
 }
@@ -77,101 +97,116 @@ function RenderDimEditComp() {
     const slide = useSelectedEditingSlideContext();
     const [width, setWidth] = useState(slide.metadata.width);
     const [height, setHeight] = useState(slide.metadata.height);
-    const hasChanged = useMemo(() => {
-        return (
-            width !== slide.metadata.width || height !== slide.metadata.height
-        );
-    }, [width, height, slide]);
-    const isScreenDiff = useMemo(() => {
-        const { bounds } = getDefaultScreenDisplay();
-        return width !== bounds.width || height !== bounds.height;
-    }, [width, height, slide]);
+    const hasChanged =
+        width !== slide.metadata.width || height !== slide.metadata.height;
+    const { bounds: screenBounds } = getDefaultScreenDisplay();
+    const isScreenDiff =
+        width !== screenBounds.width || height !== screenBounds.height;
     const isDiffOther = useIsDiffOtherSlides(slide, width, height);
-    const applyDim = async (
-        newWidth: number,
-        newHeight: number,
-        isAll = false,
-    ) => {
-        setWidth(newWidth);
-        setHeight(newHeight);
-        const appDocument = AppDocument.getInstance(slide.filePath);
-        await appDocument.changeSlidesDimension(
+    const slideRef = useAppCurrentRef(slide);
+    const applyDim = useCallback(
+        async (newWidth: number, newHeight: number, isAll = false) => {
+            setWidth(newWidth);
+            setHeight(newHeight);
+            const appDocument = AppDocument.getInstance(
+                slideRef.current.filePath,
+            );
+            await appDocument.changeSlidesDimension(
+                {
+                    width: newWidth,
+                    height: newHeight,
+                },
+                isAll ? undefined : slideRef.current,
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const applyDimRef = useAppCurrentRef(applyDim);
+    const widthRef = useAppCurrentRef(width);
+    const heightRef = useAppCurrentRef(height);
+    const handleApply = useCallback(() => {
+        applyDimRef.current(widthRef.current, heightRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleReset = useCallback(() => {
+        const { bounds } = getDefaultScreenDisplay();
+        if (
+            bounds.width !== slideRef.current.metadata.width ||
+            bounds.height !== slideRef.current.metadata.height
+        ) {
+            applyDimRef.current(bounds.width, bounds.height);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleApplyAll = useCallback(async () => {
+        const isConfirmed = await showAppConfirm(
+            tran('This will change all Slides'),
+            tran('Are you sure to apply this dimension to all slides?'),
             {
-                width: newWidth,
-                height: newHeight,
+                cancelButtonLabel: 'No',
+                confirmButtonLabel: 'Yes',
             },
-            isAll ? undefined : slide,
         );
-    };
+        if (!isConfirmed) {
+            return;
+        }
+        applyDimRef.current(widthRef.current, heightRef.current, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <div className="d-flex flex-column">
-            <div className="d-flex flex-wrap">
-                <RenderDimElementComp
-                    name="Width"
-                    value={width}
-                    setValue={setWidth}
-                />
-                <RenderDimElementComp
-                    name="Height"
-                    value={height}
-                    setValue={setHeight}
-                />
+        <div className="spe-field d-flex flex-column">
+            <div className="d-flex align-items-start gap-2">
+                <label className="spe-label">{tran('Size')}</label>
+                <div className="d-flex flex-column gap-1">
+                    <RenderDimElementComp
+                        name="Width"
+                        value={width}
+                        setValue={setWidth}
+                    />
+                    <RenderDimElementComp
+                        name="Height"
+                        value={height}
+                        setValue={setHeight}
+                    />
+                </div>
             </div>
-            <div>
-                {hasChanged ? (
-                    <button
-                        className="btn btn-primary btn-sm m-1"
-                        title={tran('Apply changed dimension to this slide')}
-                        onClick={() => {
-                            applyDim(width, height);
-                        }}
-                    >
-                        {tran('Apply')}
-                    </button>
-                ) : null}
-                {isScreenDiff ? (
-                    <button
-                        className="btn btn-primary btn-sm m-1"
-                        title={tran('Reset to default display dimension')}
-                        onClick={() => {
-                            const { bounds } = getDefaultScreenDisplay();
-                            if (
-                                bounds.width !== slide.metadata.width ||
-                                bounds.height !== slide.metadata.height
-                            ) {
-                                applyDim(bounds.width, bounds.height);
-                            }
-                        }}
-                    >
-                        {tran('Reset')}
-                    </button>
-                ) : null}
-                {isDiffOther ? (
-                    <button
-                        className="btn btn-danger btn-sm m-1"
-                        title={tran(
-                            'Apply this dimension to all slides in this document',
-                        )}
-                        onClick={async () => {
-                            const isConfirmed = await showAppConfirm(
-                                tran('This will change all Slides'),
-                                tran(
-                                    'Are you sure to apply this dimension to all slides?',
-                                ),
-                                {
-                                    confirmButtonLabel: 'Yes',
-                                },
-                            );
-                            if (!isConfirmed) {
-                                return;
-                            }
-                            applyDim(width, height, true);
-                        }}
-                    >
-                        {tran('Apply All Slides')}
-                    </button>
-                ) : null}
-            </div>
+            {hasChanged || isScreenDiff || isDiffOther ? (
+                <div className="spe-actions d-flex flex-wrap mt-2">
+                    {hasChanged ? (
+                        <button
+                            className="btn btn-primary btn-sm"
+                            title={tran(
+                                'Apply changed dimension to this slide',
+                            )}
+                            onClick={handleApply}
+                        >
+                            {tran('Apply')}
+                        </button>
+                    ) : null}
+                    {isScreenDiff ? (
+                        <button
+                            className="btn btn-outline-secondary btn-sm"
+                            title={tran('Reset to default display dimension')}
+                            onClick={handleReset}
+                        >
+                            {tran('Reset')}
+                        </button>
+                    ) : null}
+                    {isDiffOther ? (
+                        <button
+                            className="btn btn-outline-danger btn-sm"
+                            title={tran(
+                                'Apply this dimension to all slides in this' +
+                                    ' document',
+                            )}
+                            onClick={handleApplyAll}
+                        >
+                            {tran('Apply All Slides')}
+                        </button>
+                    ) : null}
+                </div>
+            ) : null}
         </div>
     );
 }
@@ -179,32 +214,34 @@ function RenderDimEditComp() {
 function RenderNameEditorComp() {
     const slide = useSelectedEditingSlideContext();
     const [name, setName] = useState(slide.name);
-    const hasChanged = useMemo(() => {
-        return name !== slide.name;
-    }, [name, slide]);
-    const handleNameChanging = () => {
-        const appDocument = AppDocument.getInstance(slide.filePath);
-        slide.name = name;
-        appDocument.updateSlide(slide);
-    };
+    const hasChanged = name !== slide.name;
+    const slideRef = useAppCurrentRef(slide);
+    const nameRef = useAppCurrentRef(name);
+    const handleNameChanging = useCallback(() => {
+        const appDocument = AppDocument.getInstance(slideRef.current.filePath);
+        slideRef.current.name = nameRef.current;
+        appDocument.updateSlide(slideRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setName(e.target.value);
+    }, []);
     return (
-        <div className="m-1 p-1 d-flex align-items-center">
-            Name:{' '}
+        <div className="spe-field d-flex align-items-center">
+            <label className="spe-label">{tran('Name')}</label>
             <input
                 className="form-control form-control-sm"
                 type="text"
-                placeholder="name"
+                placeholder={tran('name')}
                 style={{
                     maxWidth: '200px',
                 }}
                 value={name}
-                onChange={(e) => {
-                    setName(e.target.value);
-                }}
+                onChange={handleNameChange}
             />
             {hasChanged ? (
                 <button
-                    className="btn btn-primary btn-sm m-1"
+                    className="btn btn-primary btn-sm"
                     title={tran('Apply changed name to this slide')}
                     onClick={handleNameChanging}
                 >
@@ -217,23 +254,45 @@ function RenderNameEditorComp() {
 
 export default function SlidePropertyEditorComp() {
     const slide = useSelectedEditingSlideContext();
+    const { isExpanded, headerProps } = useExpandToggle(
+        false,
+        'slide-property-editor',
+    );
     const [index] = useAppStateAsync(() => {
         const appDocument = AppDocument.getInstance(slide.filePath);
         return appDocument.getSlideIndex(slide);
     }, [slide]);
     return (
-        <div className="m-1 app-border-white-round">
-            <div className="d-flex flex-wrap">
-                <div className="d-flex flex-row m-1 p-1">
-                    Index:
-                    <RenderSlideIndexComp viewIndex={index ?? -1} />
+        <div className="slide-property-editor m-1 app-border-white-round">
+            <div
+                className="spe-header d-flex align-items-center justify-content-between px-2 py-1"
+                {...headerProps}
+            >
+                <div className="d-flex align-items-center gap-2">
+                    <ExpandChevronComp
+                        isExpanded={isExpanded}
+                        className="spe-toggle-icon"
+                    />
+                    <span className="spe-title">{tran('Slide')}</span>
+                    <RenderSlideIndexComp
+                        viewIndex={index ?? -1}
+                        dataKey={toKeyByFilePath(slide.filePath, slide.id)}
+                        title={tran('Slide index')}
+                    />
                 </div>
-                <div className="m-1 p-1 app-border-white-round">
-                    Id: {slide.id}
-                </div>
-                <RenderNameEditorComp />
+                <span
+                    className="spe-id badge text-bg-secondary"
+                    title={tran('Slide Id')}
+                >
+                    ID {slide.id}
+                </span>
             </div>
-            <RenderDimEditComp />
+            {isExpanded ? (
+                <div className="d-flex flex-column gap-2 p-2">
+                    <RenderNameEditorComp />
+                    <RenderDimEditComp />
+                </div>
+            ) : null}
         </div>
     );
 }

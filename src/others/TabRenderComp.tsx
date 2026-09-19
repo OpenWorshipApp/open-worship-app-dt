@@ -1,14 +1,17 @@
-import { ReactNode, LazyExoticComponent, useMemo } from 'react';
+import type { ReactNode, LazyExoticComponent, MouseEvent } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { tran } from '../lang/langHelpers';
 import AppSuspenseComp from './AppSuspenseComp';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
-import { OptionalPromise } from '../helper/typeHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
 
 export type TabHeaderPropsType<T> = {
     key: T;
-    title: string;
+    // `ReactNode` so a title can carry a leading `bi bi-*` icon; see
+    // `toIconedLabel` in `labelIconHelpers`.
+    title: ReactNode;
     className?: string;
     checkIsOnScreen?: (key: T) => OptionalPromise<boolean>;
 };
@@ -20,12 +23,24 @@ function useIsOnScreen<T>(tab: TabHeaderPropsType<T>) {
         }
         return tab.checkIsOnScreen(tab.key);
     }, [tab.key]);
-    useScreenUpdateEvents(undefined, async () => {
-        if (tab.checkIsOnScreen === undefined) {
-            return;
-        }
-        const isOnScreen = await tab.checkIsOnScreen(tab.key);
-        setIsOnScreen(isOnScreen);
+    const tabKeyRef = useAppCurrentRef(tab.key);
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    useScreenUpdateEvents(undefined, () => {
+        attemptTimeout(async () => {
+            if (tab.checkIsOnScreen === undefined) {
+                return;
+            }
+            const tabKey = tab.key;
+            const isOnScreen = await tab.checkIsOnScreen(tabKey);
+            // Answered for the tab held when the event fired. Being re-fed a
+            // different key mid-check re-runs the guarded read above, so
+            // letting this land would light the new tab's dot from the old
+            // tab's answer.
+            if (tabKey !== tabKeyRef.current) {
+                return;
+            }
+            setIsOnScreen(isOnScreen);
+        });
     });
     return isOnScreen;
 }
@@ -33,28 +48,33 @@ function useIsOnScreen<T>(tab: TabHeaderPropsType<T>) {
 function RendTabComp<T>({
     tab,
     setActiveTab,
-    activeTab,
+    activeTabs,
 }: Readonly<{
     tab: TabHeaderPropsType<T>;
-    setActiveTab?: (key: T) => void;
-    activeTab: T;
+    setActiveTab?: (key: T, event: MouseEvent<HTMLButtonElement>) => void;
+    activeTabs: T[];
 }>) {
-    const activeClass = useMemo(() => {
-        return activeTab === tab.key ? 'active' : '';
-    }, [activeTab, tab.key]);
+    const activeClass = activeTabs.includes(tab.key) ? 'active' : '';
     const isOnScreen = useIsOnScreen(tab);
+    const setActiveTabRef = useAppCurrentRef(setActiveTab);
+    const tabRef = useAppCurrentRef(tab);
+    const handleClick = useCallback((event: MouseEvent<HTMLButtonElement>) => {
+        setActiveTabRef.current?.(tabRef.current.key, event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <li key={tab.title} className={'nav-item ' + (tab.className ?? '')}>
+        // No `key` here: this `li` is the root of `RendTabComp`, which is the
+        // mapped element and already carries `key={tab.key}`.
+        <li className={'nav-item ' + (tab.className ?? '')}>
             <button
                 className={
                     `btn btn-sm btn-link nav-link ${activeClass}` +
                     (isOnScreen ? ' app-on-screen' : '')
                 }
-                onClick={() => {
-                    setActiveTab?.(tab.key);
-                }}
+                onClick={handleClick}
+                onContextMenu={handleClick}
             >
-                {tran(tab.title)}
+                {tab.title}
             </button>
         </li>
     );
@@ -62,29 +82,36 @@ function RendTabComp<T>({
 
 export default function TabRenderComp<T extends string>({
     tabs,
-    activeTab,
+    activeTabs,
     setActiveTab,
-    className,
+    className = '',
+    isVertical = false,
 }: Readonly<{
     tabs: TabHeaderPropsType<T>[];
-    activeTab: T;
-    setActiveTab?: (key: T) => void;
+    activeTabs: T[];
+    setActiveTab?: (key: T, event: MouseEvent<HTMLButtonElement>) => void;
     className?: string;
+    isVertical?: boolean;
 }>) {
     return (
         <ul
-            className={`nav nav-tabs ${className} d-flex flex-nowrap`}
-            style={{
-                overflowY: 'hidden',
-                overflowX: 'auto',
-            }}
+            className={
+                'nav d-flex flex-nowrap ' +
+                (isVertical ? 'flex-column' : 'nav-tabs') +
+                ` ${className}`
+            }
+            style={
+                isVertical
+                    ? { overflowY: 'auto', overflowX: 'hidden' }
+                    : { overflowY: 'hidden', overflowX: 'auto' }
+            }
         >
             {tabs.map((tab) => {
                 return (
                     <RendTabComp
                         key={tab.key}
                         tab={tab}
-                        activeTab={activeTab}
+                        activeTabs={activeTabs}
                         setActiveTab={setActiveTab}
                     />
                 );

@@ -1,16 +1,17 @@
 import { createContext, use } from 'react';
-import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
+
 import { handleError } from '../helper/errorHelpers';
 import FileSource from '../helper/FileSource';
 import { appApiFetch } from '../helper/networkHelpers';
+import type { LocaleType } from '../lang/langHelpers';
 import {
     checkIsStopWord,
-    LocaleType,
     quickEndWord,
     quickTrimText,
     sanitizeFindingText,
 } from '../lang/langHelpers';
-import appProvider, { SQLiteDatabaseType } from '../server/appProvider';
+import type { SQLiteDatabaseType } from '../server/appProvider';
+import appProvider from '../server/appProvider';
 import {
     fsCheckFileExist,
     fsDeleteFile,
@@ -25,25 +26,24 @@ import {
     getAllXMLFileKeys,
     xmlTextToJson,
 } from '../setting/bible-setting/bibleXMLJsonDataHelpers';
-import {
+import type {
     APIDataMapType,
     APIDataType,
     BibleFindForType,
     BibleFindResultType,
-    calcPerPage,
-    findOnline,
     SelectedBookKeyType,
 } from './bibleFindHelpers';
-import {
-    AppContextMenuControlType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import { calcPerPage, findOnline } from './bibleFindHelpers';
+import type { AppContextMenuControlType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { cumulativeOffset } from '../helper/helpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
-import { getSetting, setSetting } from '../helper/settingHelpers';
+import { genStringListSettingManager } from '../helper/SettingManager';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
-import { log } from '../helper/loggerHelpers';
+import { appLog } from '../helper/loggerHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
 const DEFAULT_ROW_LIMIT = 20;
 const SUCCESS_FILE_SUFFIX = '-success';
@@ -71,7 +71,7 @@ function flushBucket(
     bucket.length = 0;
 }
 
-async function initDatabase(
+async function initSearchingDatabase(
     bibleKey: string,
     databaseFilePath: string,
     successFileSuffix: string,
@@ -92,7 +92,7 @@ async function initDatabase(
     const bucket = [];
     const words: { [key: string]: Set<string> } = {};
     for (const [bookKey, book] of Object.entries(jsonData.books)) {
-        log(`DB: Processing ${bookKey}`);
+        appLog(`DB: Processing ${bookKey}`);
         for (const [chapterKey, verses] of Object.entries(book)) {
             for (const verse in verses) {
                 let sanitizedText = await sanitizeFindingText(
@@ -130,7 +130,7 @@ async function initDatabase(
     }
     const wordsLength = Object.keys(words).length;
     if (wordsLength > 0) {
-        log(`DB: Inserting ${wordsLength} words`);
+        appLog(`DB: Inserting ${wordsLength} words`);
         const values = Object.entries(words)
             .map(([word, bookKeys]) => {
                 const text = word.split('').join(' ');
@@ -169,6 +169,9 @@ class DatabaseFindingHandler {
     constructor(database: SQLiteDatabaseType) {
         this.database = database;
     }
+    close() {
+        this.database.close();
+    }
     async doFinding(
         bibleKey: string,
         findData: BibleFindForType,
@@ -194,10 +197,11 @@ class DatabaseFindingHandler {
             .filter((part) => quickTrimText(locale, part))
             .filter((part) => part.length > 0)
             .map((part) => `%${part}%`)
-            .join('');
+            .join('')
+            .replaceAll("'", '');
         const sqlFrom = `FROM verses WHERE sText LIKE '%${wildCardText}%'${sqlBookKey}`;
         let sql = `SELECT text ${sqlFrom}`;
-        if (fromLineNumber == undefined || toLineNumber == undefined) {
+        if (fromLineNumber === undefined || toLineNumber === undefined) {
             fromLineNumber = 0;
             toLineNumber = DEFAULT_ROW_LIMIT - 1;
         }
@@ -262,7 +266,9 @@ class DatabaseFindingHandler {
     }
 }
 
-const BIBLE_FIND_SELECTED_BOOK_SETTING_NAME = 'bible-find-selected-book-key';
+const selectedBookSettingManager = genStringListSettingManager(
+    'bible-find-selected-book-key',
+);
 
 const instanceCache: Record<string, BibleFindController | null> = {};
 const VERSIONS = ['', '1', '2'];
@@ -286,18 +292,10 @@ export default class BibleFindController {
     }
 
     get selectedBookKeys() {
-        const settingStr =
-            getSetting(BIBLE_FIND_SELECTED_BOOK_SETTING_NAME) ?? '[]';
-        try {
-            return JSON.parse(settingStr) as string[];
-        } catch (_error) {}
-        return [];
+        return selectedBookSettingManager.getSetting();
     }
     set selectedBookKeys(bookKeys: string[]) {
-        setSetting(
-            BIBLE_FIND_SELECTED_BOOK_SETTING_NAME,
-            JSON.stringify(bookKeys),
-        );
+        selectedBookSettingManager.setSetting(bookKeys);
     }
 
     async getSelectedBooks() {
@@ -379,17 +377,67 @@ export default class BibleFindController {
         return databaseFilePath;
     }
 
-    static async checkDatabaseValid(filePath: string) {
+    static toSearchingDatabaseSuccessFilePath(dbFilePath: string) {
+        return dbFilePath + SUCCESS_FILE_SUFFIX;
+    }
+
+    static async checkSearchingDatabaseValid(filePath: string) {
+        const successFilePath =
+            this.toSearchingDatabaseSuccessFilePath(filePath);
         if (
             !(await fsCheckFileExist(filePath)) ||
-            !(await fsCheckFileExist(filePath + SUCCESS_FILE_SUFFIX))
+            !(await fsCheckFileExist(successFilePath))
         ) {
             try {
                 await fsDeleteFile(filePath);
-                await fsDeleteFile(filePath + SUCCESS_FILE_SUFFIX);
+                await fsDeleteFile(successFilePath);
             } catch (_error) {}
             return false;
         }
+        return true;
+    }
+
+    static async getXMLFilePath(bibleKey: string) {
+        const keysMap = await getAllXMLFileKeys();
+        if (keysMap[bibleKey] === undefined) {
+            return null;
+        }
+        return keysMap[bibleKey] ?? null;
+    }
+
+    static async getSearchingDatabaseFilePath(bibleKey: string) {
+        const xmlFilePath = await this.getXMLFilePath(bibleKey);
+        if (xmlFilePath === null) {
+            return null;
+        }
+        const databaseFilePath = await this.getDatabaseFilePath(xmlFilePath);
+        return databaseFilePath;
+    }
+
+    static async resetSearchingDatabase(bibleKey: string) {
+        const databaseFilePath =
+            await this.getSearchingDatabaseFilePath(bibleKey);
+        if (databaseFilePath === null) {
+            return false;
+        }
+        const cachedInstance = instanceCache[bibleKey];
+        try {
+            await fsDeleteFile(
+                this.toSearchingDatabaseSuccessFilePath(databaseFilePath),
+            );
+        } catch (error) {
+            handleError(error);
+            return false;
+        }
+        try {
+            cachedInstance?.databaseFindHandler?.close();
+        } catch (error) {
+            handleError(error);
+        }
+        if (cachedInstance) {
+            cachedInstance.databaseFindHandler = null;
+        }
+        delete instanceCache[bibleKey];
         return true;
     }
 
@@ -401,22 +449,24 @@ export default class BibleFindController {
         if (databaseFilePath === null) {
             return null;
         }
-        let database: SQLiteDatabaseType | null = null;
-        if (await this.checkDatabaseValid(databaseFilePath)) {
+        let searchingDatabase: SQLiteDatabaseType | null;
+        if (await this.checkSearchingDatabaseValid(databaseFilePath)) {
             const databaseUtils = appProvider.databaseUtils;
-            database =
+            searchingDatabase =
                 await databaseUtils.getSQLiteDatabaseInstance(databaseFilePath);
         } else {
-            database = await initDatabase(
+            searchingDatabase = await initSearchingDatabase(
                 instance.bibleKey,
                 databaseFilePath,
                 SUCCESS_FILE_SUFFIX,
             );
         }
-        if (database === null) {
+        if (searchingDatabase === null) {
             return null;
         }
-        instance.databaseFindHandler = new DatabaseFindingHandler(database);
+        instance.databaseFindHandler = new DatabaseFindingHandler(
+            searchingDatabase,
+        );
         return instance;
     }
 
@@ -430,14 +480,11 @@ export default class BibleFindController {
                 bibleKey,
                 locale,
             );
-            const keysMap = await getAllXMLFileKeys();
-            if (keysMap[bibleKey] === undefined) {
+            const xmlFilePath = await this.getXMLFilePath(bibleKey);
+            if (xmlFilePath === null) {
                 instance = await this.getOnlineInstant(instance);
             } else {
-                instance = await this.getXMLInstant(
-                    instance,
-                    keysMap[bibleKey],
-                );
+                instance = await this.getXMLInstant(instance, xmlFilePath);
             }
             instanceCache[bibleKey] = instance;
             return instance as BibleFindController;
@@ -480,7 +527,10 @@ export default class BibleFindController {
             event,
             suggestWords.map((text) => {
                 return {
-                    menuElement: <span data-locale={this.locale}>{text}</span>,
+                    childBefore: genContextMenuItemIcon('search'),
+                    menuElement: (
+                        <span data-locale-ff={this.locale}>{text}</span>
+                    ),
                     onSelect: () => {
                         let newText = quickEndWord(this.locale, oldValue);
                         const trimText = quickTrimText(this.locale, text);
@@ -502,7 +552,7 @@ export default class BibleFindController {
             },
         );
         this.menuControllerSession.promiseDone.then(() => {
-            log('Closed suggestion menu');
+            appLog('Closed suggestion menu');
         });
     }
 

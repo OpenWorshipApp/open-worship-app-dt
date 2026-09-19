@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useCallback, useRef } from 'react';
 
 import {
     BIBLE_VIEW_TEXT_CLASS,
@@ -6,24 +6,29 @@ import {
 } from '../../helper/bibleViewHelpers';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
-import { useAppStateAsync } from '../../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../../helper/appHooks';
 import { getVersesCount } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import LoadingComp from '../../others/LoadingComp';
 import { getBibleInfoIsRtl } from '../../helper/bible-helpers/bibleInfoHelpers';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderRestVerseNumListComp from './RenderRestVerseNumListComp';
 import RenderVerseTextComp from './RenderVerseTextComp';
+import { tran } from '../../lang/langHelpers';
+import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
+import { useVerseHighlightPainting } from '../verseHighlightPainter';
+import { useVerseCommentHover } from '../verseCommentHoverHelpers';
 
 function RenderVerseTitleComp({
     bibleItem,
 }: Readonly<{ bibleItem: ReadIdOnlyBibleItem }>) {
+    const fontFamily = useBibleFontFamily(bibleItem.bibleKey);
     const [title] = useAppStateAsync(() => {
         return bibleItem.toTitle();
     }, [bibleItem]);
     return (
         <>
             <hr />
-            <span className="text-muted " data-bible-key={bibleItem.bibleKey}>
+            <span className="text-muted " style={{ fontFamily }}>
                 {title}
             </span>
         </>
@@ -63,7 +68,7 @@ function RenderVerseListDetailComp({
         return (
             <div className={`${BIBLE_VIEW_TEXT_CLASS} p-1`}>
                 <span className="text-danger">
-                    `No verses found for this Bible item.
+                    {tran('No verses found for this Bible item')}
                 </span>
             </div>
         );
@@ -113,8 +118,37 @@ export default function BibleViewTextComp({
         return getBibleInfoIsRtl(bibleKey);
     }, [bibleKey]);
     const isExtraVerses = extraBibleKeys.length > 0;
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const handleSelectVerseStart = useCallback((verse: number) => {
+        viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
+            target: { ...bibleItemRef.current.target, verseStart: verse },
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const targetRef = useAppCurrentRef(target);
+    const handleVerseStartTitle = useCallback((verse: number) => {
+        return `${verse}-${targetRef.current.verseStart}`;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSelectVerseEnd = useCallback((verse: number) => {
+        viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
+            target: { ...bibleItemRef.current.target, verseEnd: verse },
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleVerseEndTitle = useCallback((verse: number) => {
+        return `${targetRef.current.verseStart}-${verse}`;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // ONE per bible view, not one per verse: the painter watches this whole
+    // container for the DOM changes that invalidate a mark's range.
+    const containerRef = useRef<HTMLDivElement>(null);
+    useVerseHighlightPainting(containerRef);
+    useVerseCommentHover(containerRef);
     return (
         <div
+            ref={containerRef}
             className={`${BIBLE_VIEW_TEXT_CLASS} app-selectable-text p-1`}
             data-bible-item-id={bibleItem.id}
             dir={isRtl && !isExtraVerses ? 'rtl' : undefined}
@@ -127,14 +161,8 @@ export default function BibleViewTextComp({
                 to={target.verseStart - 1}
                 bibleItem={bibleItem}
                 verseCount={verseCount ?? 0}
-                onSelect={(verse) => {
-                    viewController.applyTargetOrBibleKey(bibleItem, {
-                        target: { ...bibleItem.target, verseStart: verse },
-                    });
-                }}
-                toTitle={(verse) => {
-                    return `${verse}-${target.verseStart}`;
-                }}
+                onSelect={handleSelectVerseStart}
+                toTitle={handleVerseStartTitle}
             />
             <RenderVerseListDetailComp
                 bibleItem={bibleItem}
@@ -144,14 +172,8 @@ export default function BibleViewTextComp({
                 from={target.verseEnd + 1}
                 bibleItem={bibleItem}
                 verseCount={verseCount ?? 0}
-                onSelect={(verse) => {
-                    viewController.applyTargetOrBibleKey(bibleItem, {
-                        target: { ...bibleItem.target, verseEnd: verse },
-                    });
-                }}
-                toTitle={(verse) => {
-                    return `${target.verseStart}-${verse}`;
-                }}
+                onSelect={handleSelectVerseEnd}
+                toTitle={handleVerseEndTitle}
             />
             {extraBibleItems?.length
                 ? extraBibleItems.map((extraBibleItem, i) => {

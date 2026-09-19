@@ -1,11 +1,11 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import {
     toShortcutKey,
     useKeyboardRegistering,
 } from '../../event/KeyboardEventListener';
-import ScreenManager from '../managers/ScreenManager';
+import type ScreenManager from '../managers/ScreenManager';
 import {
     useScreenManagerContext,
     useScreenUpdateEvents,
@@ -31,6 +31,7 @@ function RenderButtonComp({
             className={`btn btn-${isEnabled ? '' : 'outline-'}${btnType}`}
             type="button"
             title={`${title} [${toShortcutKey(eventMap)}]`}
+            aria-label={title}
             onClick={onClickCallback}
         >
             {text}
@@ -44,17 +45,23 @@ function genBtnMaps(screenManager: ScreenManager) {
         screenVaryAppDocumentManager,
         screenBibleManager,
         screenForegroundManager,
+        screenDrawManager,
+        screenFocusManager,
     } = screenManager;
 
     const isShowingBackground = screenBackgroundManager.isShowing;
     const isShowingSlide = screenVaryAppDocumentManager.isShowing;
     const isShowingBible = screenBibleManager.isShowing;
     const isShowingForeground = screenForegroundManager.isShowing;
+    // draw/focus have no dedicated clear button but Clear All clears them,
+    // so a drawing or spotlight alone must still enable it
     const isShowing =
         isShowingBackground ||
         isShowingSlide ||
         isShowingBible ||
-        isShowingForeground;
+        isShowingForeground ||
+        screenDrawManager.isShowing ||
+        screenFocusManager.isShowing;
     return [
         {
             text: <i className="bi bi-eraser" />,
@@ -114,7 +121,7 @@ export default function MiniScreenClearControlComp() {
     const screenManager = useScreenManagerContext();
     const btnMaps = genBtnMaps(screenManager);
     return (
-        <div className="btn-group control">
+        <div className="control-buttons btn-group control">
             {btnMaps.map((btnMaps) => {
                 return (
                     <RenderButtonComp key={btnMaps.title} btnMaps={btnMaps} />

@@ -1,0 +1,172 @@
+# MCP tools — catalogue and authoring rules
+
+Everything the assistant can DO. Read this before adding, changing or removing a
+tool. Numbers here are a snapshot: re-measure with
+`node .claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs`.
+
+## Why the tool surface is a performance problem
+
+`src/chatbot/llmBotHelpers.ts` calls `listTools()` and hands **every** tool to the
+model, then re-sends them on **every round** of the loop (`MAX_TOOL_ROUNDS = 10`).
+
+Measured 2026-08-31 against the running dev app:
+
+| | tools | tokens/round |
+| --- | ---: | ---: |
+| `owa_*` (this app) | 13 | ~2 800 |
+| chrome-devtools-mcp | 29 | ~5 750 |
+| **total** | **42** | **~8 550** |
+
+That is up to **~85 000 tokens of tool schema for one question** before a single
+word of manual is read — paid by the user, on their own key, on a machine chosen
+for being cheap. Every tool you add is charged to every question anybody ever
+asks, including the ones it is irrelevant to.
+
+So: **prune before you sharpen, sharpen before you add.**
+
+## The `owa_*` catalogue
+
+`*` marks a required parameter. "Acts" means it is in `ACTING_TOOLS` in
+`notify.mjs` and puts a banner in the user's window.
+
+| Tool | Parameters | Does | Acts |
+| --- | --- | --- | :-: |
+| `owa_help_search` | `query*`, `limit`, `kind`, `focus` | Searches the bundled knowledge. `kind` splits `manual` (user-facing, verified) from `internal` (developer notes, ranked below and never quoted to a user). `focus` biases to presenter/reader. | |
+| `owa_help_page` | `id*` | Reads one page whole, by the id a search hit carries. | |
+| `owa_app_state` | `page` | What is on screen right now: page, language, theme, tabs, mounted components. DOM read only. | |
+| `owa_list_screens` | — | Showing screen ids + attached displays via `main:app:get-screens` / `get-displays`, PLUS what each screen holds (`screens[]`: slide with its first words, passage, background, foreground, lock — from the presenter's screen managers over the `owa-agent-screens` relay), the exact words on its show/hide and Clear buttons (`controls`) and where the Mini Screen panel sits (`previewCard`). Basics + `note` off the Presenter page. | The one tool a state question is answered from; before 2026-09-09 it said "showing" and nothing about what, and the model said "blank" (`EC-124`). |
+| `owa_hide_screens` | `screenId` | Takes content OFF a projector. Destructive to a live service — always confirm first. | ✔ |
+| `owa_present_bible` | `reference*`, `version`, `action` (`present` | `check`) | Puts a passage on the projector by its reference through the app's own parser (`BibleItem.fromTitleText`, in the lookup's version then any installed one that reads it) and the lookup's own present path (`ScreenBibleManager.handleBibleItemSelecting`, ticked screens, nothing saved to the Bibles list), over the `owa-agent-bible` relay; answers what the screens hold AFTER. `check` resolves and quotes without a screen. Refusals (locked, no ticked screen, unknown version, unreadable reference, not on the Presenter) are sentences for a person: the `/verse` command and the offline bot print them. | ✔ |
+| `owa_foreground` | `widget`, `action` (`start` | `stop` | `check`), `minutes`, `at`, `text`, `seconds` | Starts or stops a foreground extra — countdown, stopwatch, clock, marquee-top / marquee-bottom, quick-text (`all` stops every one, as F10 does) — by doing what the widget's own Start button does (`ScreenForegroundManager.setCountdownData` and its siblings on the ticked screens, the widget's defaults) over the `owa-agent-foreground` relay, and answers what each screen holds AFTER (`did`, `detail` in words, `foreground` per screen, an OFF note saying to offer the show button). Refusals (no length, a time gone by, no words, no ticked screen, locked, not on the Presenter) are sentences for a person: `/countdown`, `/marquee` and the offline bot print them. | ✔ |
+| `owa_goto_page` | `page*` | Switches the main window between `presenter.html` and `reader.html`. | ✔ |
+| `owa_find_ui` | `text*`, `highlight`, `page`, `anyPage` | Locates a control by its visible text; `highlight` rings it in red in the real window. `anyPage` searches the other window too and says which one. | ✔ |
+| `owa_list_ui` | `filter`, `page`, `limit` | Enumerates the visible controls of a window. The cure for guessing a label. | |
+| `owa_click` | `find*`, `page` | Clicks a control by its label. Answers `nearMisses` when it cannot match. | ✔ |
+| `owa_type` | `find*`, `value*`, `submit`, `page` | Types into a control by its label, optionally submitting. | ✔ |
+| `owa_guide_start` | `title`, `manualId`, `steps`, `mode`, `page` | Draws the numbered walkthrough card in the app window, each step's control ringed. `mode: "demo"` lets the card DO each step. `manualId` builds steps from a recipe; `canDemo: false` comes back when the recipe's bolding cannot be pressed. Answers with the same shape as `owa_guide_status`, so the aim is checked by the start itself. (`labels` left the schema 2026-09-18 — nothing passed it; `MC-36`.) | ✔ |
+| `owa_guide_step` | `action*`, `stepNumber`, `page` | Advances / goes back / performs the current step. | ✔ |
+| `owa_guide_status` | `page` | Where the guide is, whether the target was found, and `nearMisses` when it was not. | |
+| `owa_lyric_file` | `action*`, `name`, `newName`, `content`, `page` | The user's songs: list / info / create / update / rename / delete. `content` is an Open Lyric document, checked by `validateOpenLyric` in the tool (line numbers) and by the app at the disk boundary. `update` goes to the editing history, so it is undoable and UNSAVED — the model must say so. `delete` moves the song to the trash; every change is backed up first and `owa_undo` puts it back. | ✔ |
+| `owa_slide_file` | `action*`, `name`, `newName`, `content`, `slide`, `to`, `items`, `page` | The same six actions over slide documents (`content` is the document JSON, checked by `AppDocument.validate`), plus one slide at a time: `slides` reads every slide with its text boxes and their style; `add-slide`; `update-slide`, where an item with `id` changes that box — text, font, size, colour, alignment, position — or removes it, and one without adds a text box; `delete-slide`, `move-slide`, `duplicate-slide`. A slide change is one editing-history entry, unsaved; the pure rules are `src/helper/agentSlideHelpers.ts`. | ✔ |
+| `owa_bible_item` | `action*`, `list`, `id`, `reference`, `version`, `newName`, `page` | The user's saved Bible passages (the Presenter's Bibles list, or the Reader's): list, add a reference as the user says it (read by `owa_present_bible`'s own resolvers), update its reference or version, delete, and whole lists — create-list, rename-list, delete-list to the trash. A list file has no editing history, so every write is backed up first. Nothing reaches a screen. | ✔ |
+| `owa_bible_note` | `action*`, `file`, `id`, `title`, `text`, `newName`, `page` | The user's Bible notes: list, read, add (plain text written as the note editor's own content), update, delete, and whole files. A verse-marks item is removed or renamed whole. Refused while that file is open in its own window. Backed up first. | ✔ |
+| `owa_undo` | `action*` (`list` \| `undo`), `id`, `page` | Put back a change the data tools made: the recent changes newest first, each with an id; undo one, or the newest not yet undone. An undo backs itself up, so it can be undone too. | ✔ |
+| `owa_read_website` | `url*`, `maxChars`, `screenshot`, `links`, `page` | Reads a page on the public web — text, optionally its links and a picture. For the world OUTSIDE the app only; app questions come from `owa_help_search`. https and public addresses only, both halves of the policy in `webUrlPolicy.mjs`. The result is fenced as a document that was read, never as anything talking to the model. | ✔ |
+| `owa_lyric_validate` | `text*`, `mode`, `title`, `artist`, `from`, `to` | `mode: "draft"` turns RAW words into Open Lyric — a paste, a page that was read, an attached file — and is the ONLY way a song should ever be written: a careful hand-written attempt still fails on `CC` (must be `Cx2`) and on free text inside `Instrumental`. The draft is round-tripped through the validator below, so it cannot ship an invalid document; `openLyricDraft.mjs` holds the emitter and `Breakdown` is the tier-2 fence nothing can fail in. Otherwise checks song text against the Open Lyric notation the Lyric Editor uses: every mistake with its line, its section and what to write instead, then the song itself — title, key, tempo, sections, play order. `problems` are what the editor refuses the song for; `warnings` are what it accepts and a musician still wants. A whole SONG PAGE can be handed in as `text`: `lyricPageText.mjs` finds the song among the toolbars, charts and footers, rejoins the lines a chord layout breaks into fragments, reads the key/tempo/time strip, keeps a second language as a translation line, and REPORTS the area it chose -- `from`/`to` override it, `title`/`artist` override what it read. Gated so a plain paste is untouched. The ONE tool here that reaches nothing — no CDP, no window, no network — so it answers with the app shut. Its grammar is guarded against open-lyric drift by two tests, see `openLyric.mjs`. | |
+
+The other 26 tools come from `chrome-devtools-mcp` via `createMcpServer` in
+`server.mjs` and are not ours to edit — only to include or exclude. **Since
+2026-09-08 none of them reaches the chatbot's model**: `modelTools.mjs`
+withholds all 26 plus the window's own three, so the model is offered the 19
+`owa_*` tools above and nothing else (the developer's stdio door keeps all
+48). The last ten went on the standing corpus's evidence — `press_key`
+pressed F5 unasked and the projector came on; three `take_snapshot`s ran a
+panic question to the round cap — and on a grep of every score file: no
+chrome-devtools tool had ever been called on an answer that passed.
+
+## Adding a tool — the checklist
+
+A tool is not "added" until every line is true.
+
+1. **Justify it against the alternatives.** Can `owa_list_ui` + `owa_click`
+   already do it? Would a better *description* on an existing tool fix the
+   behaviour instead? A new tool is the most expensive answer.
+2. **Register it** in `registerOwaTools` (`owaTools.mjs`), beside its family.
+3. **Name it `owa_<verb>_<noun>`**, lower snake case. The `owa_` prefix is load
+   bearing: the audit script, the chatbot and CLAUDE.md all key on it.
+4. **Write the description for two readers** (see below).
+5. **Keep the schema small.** Every property, description and enum is re-sent
+   every round. Required only what is truly required; no free-form object bags.
+6. **Page-scope it.** Anything that touches the window takes `page` and behaves
+   sanely when the window is showing the other half — say so in the answer
+   (`no open page matching "presenter.html"`), never silently act on the wrong one.
+7. **Return JSON the model can act on**, through `toTextResult`. On a miss, return
+   `nearMisses` — that one field is why the model recovers instead of guessing
+   twice.
+8. **Fail with `toErrorResult`/`attempt`**, never a thrown stack. The chatbot hands
+   tool errors back to the model as text so it can route around them.
+9. **If it acts, add it to `ACTING_TOOLS`** in `notify.mjs`, with the phrase a
+   volunteer would use ("clicked something", not "dispatched a click"). Run the
+   audit script — it warns on an acting-looking tool that is missing.
+10. **Page expressions stay dependency-free strings.** No `import()` of app
+    modules (it re-runs `document.onkeydown` and kills every shortcut), no app
+    state mutation, and anything drawn goes in its own shadow root.
+11. **Test what can be tested without the app** — put pure logic in a sibling
+    module with a `*.test.mjs` (they run in `npm test` via the
+    `tools/**/*.test.mjs` include). `domMatch.mjs`, `guide.mjs` and `notify.mjs`
+    are the precedent; `owaTools.mjs` itself is mostly CDP glue and is verified
+    live.
+12. **Verify live**: audit shows it → call it through the MCP → the app reacts →
+    the banner appears if it acts → the chatbot can be asked a question that makes
+    a model choose it.
+13. **Document it**: `tools/owa-devtools-mcp/README.md` tool table, the `owa_*`
+    list in `.claude/CLAUDE.md` §*Agent access*, a `CB-xx` row if a user can
+    notice it, and the `.github/` mirror of all of the above.
+
+## Description voice — two readers, one string
+
+A tool description is read by a model deciding whether to call it, and its
+consequences are felt by a volunteer minutes before a service. Write for both:
+
+- **Say when to use it and when NOT to.** Most wrong tool calls are the model
+  picking a plausible neighbour. `owa_help_search`'s description earns its length
+  by explaining that `internal` hits must never be repeated to the user.
+- **Name the failure mode.** "Answers `nearMisses` when nothing matches — retry
+  with one of those, do not guess again" prevents a whole class of loop.
+- **Say what the user will SEE.** A tool that rings a control in red or takes a
+  screen down has to say so, or the model will use it casually.
+- **Do not restate the schema in prose.** The parameters are already sent.
+- **Length is a budget.** `owa_guide_start` cost ~725 tokens, more than any other
+  tool in the server, because it teaches a whole interaction -- and a rule the
+  prompt reverses had crept in with the length. Cut to ~430 (`MC-07`,
+  2026-09-18), with the one sentence that turned out load-bearing put back: the
+  default `show` presses NOTHING, so start it when asked. A 400-token
+  description on a tool that reads one value is not defensible.
+- **Read a description against the prompt.** The chatbot's model reads both,
+  and a long description drifts: two of the biggest disagreed with the prompt
+  until `MC-07`. The prompt serves one caller; the description serves both, so
+  a rule only the chatbot needs belongs in the prompt.
+- **Results are compact JSON** (`MC-33`). A result stays in front of the model
+  for every later round; indentation was ~31% of the characters.
+
+## Pruning and scoping
+
+The biggest available win WAS not sending 29 browser-debugging tools to a help
+bot for church volunteers — taken in two steps (2026-09-02, 2026-09-08; `EC-02`
+in [backlog.md](./backlog.md), done). What is left to prune is inside the
+`owa_*` set itself, and the second-biggest win, prompt caching, is also taken
+(`EC-57`): on Anthropic the tools + system prefix is a cache read on every
+round after the first and every question after the first, so a description
+trim now saves a tenth of what it used to — measure a change against
+`usage.cache_read_input_tokens`, not the audit's estimate. The constraints
+below still bind any change to the list:
+
+- **The outside agent must keep the full set.** The robot-test skill and Claude
+  Code drive the app through the same server. Filter on the CALLER (the chatbot's
+  own client), not in `server.mjs`, unless you are deliberately narrowing both.
+- The natural place is `mcpClient.ts`/`llmBotHelpers.ts`: `listTools()` already
+  exists as the single choke point, and an allowlist there is one small,
+  reviewable function.
+- **Allowlist, never denylist** — same reasoning as the knowledge corpus. A tool
+  added upstream must not reach a volunteer's window because nobody updated an
+  exclusion list. (What shipped is a denylist declared once, held by
+  `modelTools.test.mjs` and the audit script: on a chrome-devtools-mcp upgrade,
+  run the audit and look for a tool the model is newly offered.)
+- Keep the read/act split visible: a chatbot allowlist that quietly includes
+  `evaluate_script` has handed a language model arbitrary code execution in a
+  renderer with node integration.
+
+## When a tool exists but the model never calls it
+
+Before writing a new one, check which of these it is:
+
+1. **It is not in the round** — the loop ran out of rounds first, or the model
+   answered from the manual. Look at the terminal log.
+2. **The description does not match the question's words.** Fix the description.
+3. **The system prompt tells it not to.** `genSystemPrompt` explicitly budgets
+   tool calls ("spend them on doing it") — that is deliberate and stops a run of
+   `owa_find_ui` checks eating the whole loop.
+4. **It returned something unusable once** and the model routed around it. Call it
+   by hand and read the raw text it produces.
+
+Only after all four is "the tool is missing" the right conclusion.

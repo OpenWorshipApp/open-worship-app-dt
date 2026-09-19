@@ -1,22 +1,20 @@
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import './ColorPicker.scss';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import colorList from '../color-list.json';
-import {
-    AppColorType,
-    transparentColor,
-    colorToTransparent,
-} from './colorHelpers';
-import OpacitySlider from './OpacitySlider';
-import RenderColors from './RenderColors';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import type { AppColorType } from './colorHelpers';
+import { transparentColor, colorToTransparent } from './colorHelpers';
+import OpacitySliderComp from './OpacitySliderComp';
+import RenderColorsComp from './RenderColorsComp';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { freezeObject } from '../../helper/helpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { copyToClipboard } from '../../server/appHelpers';
+import { tran } from '../../lang/langHelpers';
 
 freezeObject(colorList);
 
@@ -32,7 +30,7 @@ function setOpacity(color: string, opacity: number) {
     return newColor.join('');
 }
 
-export default function ColorPicker({
+export default function ColorPickerComp({
     defaultColor,
     color,
     onColorChange,
@@ -53,53 +51,76 @@ export default function ColorPicker({
     useAppEffect(() => {
         setLocalColor(color);
     }, [color]);
-    const applyNewColor = (newColor: string, event: MouseEvent) => {
-        const upperColor = newColor.toUpperCase() as AppColorType;
-        if (!onColorChange) {
+    const applyNewColor = useCallback(
+        (newColor: string, event: MouseEvent) => {
+            const upperColor = newColor.toUpperCase() as AppColorType;
+            if (!onColorChange) {
+                return;
+            }
+            setLocalColor(upperColor);
+            onColorChange(upperColor, event);
+        },
+        [onColorChange],
+    );
+    const onNoColorRef = useAppCurrentRef(onNoColor);
+    const defaultColorRef = useAppCurrentRef(defaultColor);
+    const opacityRef = useAppCurrentRef(opacity);
+    const applyNewColorRef = useAppCurrentRef(applyNewColor);
+    const handleColorChanging = useCallback(
+        (newColor: AppColorType | null, event: any) => {
+            if (newColor === null) {
+                onNoColorRef.current?.(defaultColorRef.current, event);
+                return;
+            }
+            const newColorStr = setOpacity(
+                newColor as string,
+                opacityRef.current,
+            );
+            applyNewColorRef.current(newColorStr, event);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const localColorRef = useAppCurrentRef(localColor);
+    const handleOpacityChanging = useCallback((value: number, event: any) => {
+        if (!localColorRef.current) {
             return;
         }
-        setLocalColor(upperColor);
-        onColorChange(upperColor, event);
-    };
-    const handleColorChanging = (newColor: AppColorType | null, event: any) => {
-        if (newColor === null) {
-            onNoColor?.(defaultColor, event);
-            return;
-        }
-        const newColorStr = setOpacity(newColor as string, opacity);
-        applyNewColor(newColorStr, event);
-    };
-    const handleOpacityChanging = (value: number, event: any) => {
-        if (!localColor) {
-            return;
-        }
-        const newColor = setOpacity(localColor, value);
-        applyNewColor(newColor, event);
-    };
-    const handleContextMenuOpening = (event: any) => {
-        if (!localColor) {
+        const newColor = setOpacity(localColorRef.current, value);
+        applyNewColorRef.current(newColor, event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        const currentLocalColor = localColorRef.current;
+        if (!currentLocalColor) {
             return;
         }
         const contextMenuItems: ContextMenuItemType[] = [];
         // TODO: paste color
-        if (localColor) {
-            contextMenuItems.push({
-                menuElement: 'Copy Color',
-                onSelect: () => {
-                    copyToClipboard(localColor);
-                },
-            });
-        }
+        contextMenuItems.push({
+            childBefore: genContextMenuItemIcon('clipboard', {
+                color: currentLocalColor,
+            }),
+            menuElement: tran('Copy Color'),
+            onSelect: () => {
+                copyToClipboard(currentLocalColor);
+            },
+        });
         showAppContextMenu(event, contextMenuItems);
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleOpen = useCallback(() => {
+        setIsOpened(true);
+    }, []);
+    const handleClose = useCallback(() => {
+        setIsOpened(false);
+    }, []);
     if (isCollapsable && !isOpened) {
         return (
             <div
-                className="flex-item color-picker app-caught-hover-pointer "
+                className="app-flex-item color-picker app-caught-hover-pointer "
                 onContextMenu={handleContextMenuOpening}
-                onClick={() => {
-                    setIsOpened(true);
-                }}
+                onClick={handleOpen}
             >
                 <i className="bi bi-chevron-right" />
                 <div
@@ -111,31 +132,36 @@ export default function ColorPicker({
                 >
                     {color}
                 </div>
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
         );
     }
     return (
         <div
-            className="flex-item color-picker"
+            className="app-flex-item color-picker"
             onContextMenu={handleContextMenuOpening}
         >
             {isCollapsable ? (
                 <i
                     className="app-caught-hover-pointer bi bi-chevron-down"
-                    onClick={() => {
-                        setIsOpened(false);
-                    }}
+                    onClick={handleClose}
                 />
             ) : null}
+            <ContextMenuDotsButtonComp
+                className="float-end"
+                onOpening={handleContextMenuOpening}
+            />
             <div className="p-1 app-overflow-hidden">
-                <RenderColors
+                <RenderColorsComp
                     colors={colorList.main}
                     selectedColor={localColor}
                     onColorChange={handleColorChanging}
                     isNoImmediate={isNoImmediate}
                 />
                 {localColor !== null && (
-                    <OpacitySlider
+                    <OpacitySliderComp
                         value={opacity}
                         onOpacityChanged={handleOpacityChanging}
                     />

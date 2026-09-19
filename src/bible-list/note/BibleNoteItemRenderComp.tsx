@@ -1,0 +1,243 @@
+import { useCallback, type MouseEvent, type DragEvent, useState } from 'react';
+
+import type NoteItem from './NoteItem';
+import { type ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
+import { useFileSourceRefreshEvents } from '../../helper/dirSourceHelpers';
+import {
+    genRemovingAttachedBackgroundMenu,
+    extractDropDataOfType,
+    handleAttachBackgroundDrop,
+    handleDragStart as handleDragStartHelper,
+} from '../../helper/dragHelpers';
+import { DragTypeEnum } from '../../helper/DragInf';
+import FileSource from '../../helper/FileSource';
+import { changeDragEventStyle, stopDraggingState } from '../../helper/helpers';
+import { attachBackgroundManager } from '../../others/AttachBackgroundManager';
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
+import ItemColorNoteComp from '../../others/ItemColorNoteComp';
+import ItemReadErrorComp from '../../others/ItemReadErrorComp';
+import Note from './Note';
+import { openNoteItemContextMenu } from './noteHelpers';
+import { tran } from '../../lang/langHelpers';
+import appProvider from '../../server/appProvider';
+import {
+    openPopupWindow,
+    setParamFileFullName,
+    setParamIdNum,
+} from '../../helper/domHelpers';
+import { NoteTitleEditorComp } from './NoteEditorComp';
+import { exportBibleNoteItem } from './bibleNoteItemArchiveHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
+
+export function handleOpening(note: Note, noteItem: NoteItem) {
+    const fileFullName = note.fileSource.fullName;
+    let pathname = setParamFileFullName(
+        appProvider.bibleNoteHomePage,
+        fileFullName,
+    );
+    const noteId = noteItem.id;
+    pathname = setParamIdNum(pathname, noteId);
+    return openPopupWindow(
+        pathname,
+        `${fileFullName}-${noteId}_${Date.now()}`,
+        crypto.randomUUID(),
+        {
+            width: 870,
+        },
+    );
+}
+
+export default function BibleNoteItemRenderComp({
+    index,
+    noteItem,
+    filePath,
+    note,
+}: Readonly<{
+    index: number;
+    noteItem: NoteItem;
+    filePath: string;
+    note: Note;
+}>) {
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    useFileSourceRefreshEvents(['select'], filePath);
+
+    const noteRef = useAppCurrentRef(note);
+    const noteItemRef = useAppCurrentRef(noteItem);
+    const filePathRef = useAppCurrentRef(filePath);
+    const indexRef = useAppCurrentRef(index);
+    const setIsEditingTitle1 = useCallback(
+        (isOpened: boolean) => {
+            setIsEditingTitle(isOpened);
+            noteItemRef.current.isOpened = isOpened;
+            noteRef.current.updateAndSaveNoteItem(noteItemRef.current, true);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleContextMenuOpening = useCallback(
+        async (event: MouseEvent<any>) => {
+            const menuItems: ContextMenuItemType[] = [
+                {
+                    childBefore: genContextMenuItemIcon('box-arrow-up-right'),
+                    menuElement: tran('Open'),
+                    onSelect: () => {
+                        handleOpening(noteRef.current, noteItemRef.current);
+                    },
+                },
+                {
+                    childBefore: genContextMenuItemIcon('pencil-square'),
+                    menuElement: tran('Edit Title'),
+                    onSelect: () => {
+                        setIsEditingTitle1(true);
+                    },
+                },
+                {
+                    childBefore: genContextMenuItemIcon(
+                        'file-earmark-arrow-down',
+                    ),
+                    menuElement: tran('Export'),
+                    onSelect: () => {
+                        exportBibleNoteItem(noteItemRef.current);
+                    },
+                },
+            ];
+            const attachedBackgroundData =
+                await attachBackgroundManager.getAttachedBackground(
+                    filePathRef.current,
+                    noteItemRef.current.id,
+                );
+            if (attachedBackgroundData !== null) {
+                menuItems.push(
+                    ...genRemovingAttachedBackgroundMenu(
+                        filePathRef.current,
+                        noteItemRef.current.id,
+                    ),
+                );
+            }
+            openNoteItemContextMenu(
+                event,
+                noteItemRef.current,
+                indexRef.current,
+                menuItems,
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleDataDropping = useCallback(async (event: any) => {
+        changeDragEventStyle(event, 'opacity', '1');
+        // Typed: a verse row carries a bible-item payload in `text` as well, and
+        // dropped inside this list it is the note item that is meant.
+        const droppedData = extractDropDataOfType(
+            event,
+            DragTypeEnum.NOTE_ITEM,
+        );
+        if (droppedData !== null) {
+            const note = await Note.fromFilePath(filePathRef.current);
+            if (note === null) {
+                return;
+            }
+            const droppedNoteItem = droppedData.item as NoteItem;
+            if (droppedNoteItem.filePath !== undefined) {
+                if (droppedNoteItem.filePath === noteItemRef.current.filePath) {
+                    const toIndex = note.getItemIndex(noteItemRef.current);
+                    note.moveItemToIndex(droppedNoteItem, toIndex);
+                    stopDraggingState(event);
+                    note.save();
+                }
+            }
+        } else {
+            handleAttachBackgroundDrop(event, {
+                filePath: filePathRef.current,
+                id: noteItemRef.current.id,
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleDragStartEvent = useCallback(
+        (event: DragEvent<HTMLLIElement>) => {
+            handleDragStartHelper(event, noteItemRef.current);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleDragOver = useCallback((event: DragEvent<HTMLLIElement>) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '0.5');
+    }, []);
+    const handleDragLeave = useCallback((event: DragEvent<HTMLLIElement>) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '1');
+    }, []);
+    const handleBibleNoteOpening = useCallback(() => {
+        handleOpening(noteRef.current, noteItemRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    if (noteItem.isError) {
+        return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
+    }
+    const fileSource = FileSource.getInstance(filePath);
+    return (
+        <li
+            className="list-group-item item app-has-action-rail"
+            title={tran('Double click to open note')}
+            data-note-item-id={`${fileSource.name}-${noteItem.id}`}
+            data-index={index + 1}
+            draggable={!isEditingTitle}
+            onDragStart={handleDragStartEvent}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDataDropping}
+            onDoubleClick={isEditingTitle ? undefined : handleBibleNoteOpening}
+            onContextMenu={
+                isEditingTitle ? undefined : handleContextMenuOpening
+            }
+        >
+            <div className="d-flex ps-1">
+                <ItemColorNoteComp item={noteItem} />
+                <i
+                    className={'bi bi-journal mx-1 app-caught-hover-pointer'}
+                    title={tran('Open BibleNote')}
+                    onClick={handleBibleNoteOpening}
+                />
+                {isEditingTitle ? (
+                    <div className="flex-fill">
+                        <NoteTitleEditorComp
+                            note={note}
+                            noteItem={noteItem}
+                            onEscape={() => {
+                                setIsEditingTitle1(false);
+                            }}
+                            onEnter={() => {
+                                setIsEditingTitle1(false);
+                            }}
+                            onBlur={() => {
+                                setIsEditingTitle1(false);
+                            }}
+                        />
+                    </div>
+                ) : (
+                    <div className="d-flex flex-fill app-ellipsis">
+                        {noteItem.title ? (
+                            noteItem.title
+                        ) : (
+                            <span className="fst-italic text-warning">
+                                {tran('No title')}
+                            </span>
+                        )}
+                    </div>
+                )}
+            </div>
+            {isEditingTitle ? null : (
+                <div className="app-action-rail app-action-rail--pinned">
+                    <ContextMenuDotsButtonComp
+                        onOpening={handleContextMenuOpening}
+                    />
+                </div>
+            )}
+        </li>
+    );
+}

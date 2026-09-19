@@ -1,0 +1,1069 @@
+{
+    "page": "reader",
+    "label": "Bible Reader",
+    "window": "reader.html",
+    "focus": "reader",
+    "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
+    "updated": "2026-09-17",
+    "sections": [
+        {
+            "id": "reading",
+            "label": "Reading a passage",
+            "panel": "Bible Lookup",
+            "recipes": [
+                "W-11",
+                "W-39"
+            ],
+            "questions": [
+                {
+                    "id": "look-up-verse",
+                    "text": "How do I look up a verse?",
+                    "kind": "howto",
+                    "keywords": [
+                        "find passage",
+                        "reference",
+                        "chapter",
+                        "open verse",
+                        "go to",
+                        "read"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-11",
+                        "related": [
+                            "W-12"
+                        ],
+                        "find": "Bible Lookup",
+                        "guide": true
+                    },
+                    "starterRank": 1
+                },
+                {
+                    "id": "type-reference",
+                    "text": "How do I type a full reference like John 3:16?",
+                    "kind": "howto",
+                    "keywords": [
+                        "reference",
+                        "book chapter verse",
+                        "shorthand",
+                        "typing",
+                        "colon"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "shortcut": "Tab to complete, Escape to clear",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "reader-versions",
+                    "text": "How do I compare Bible versions?",
+                    "kind": "howto",
+                    "keywords": [
+                        "translation",
+                        "side by side",
+                        "parallel",
+                        "two bibles",
+                        "kjv",
+                        "compare"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-11",
+                        "related": [
+                            "W-32",
+                            "W-34"
+                        ],
+                        "guide": true
+                    },
+                    "starterRank": 2
+                },
+                {
+                    "id": "add-version",
+                    "text": "How do I add another version to what I am reading?",
+                    "kind": "howto",
+                    "keywords": [
+                        "add bible",
+                        "another translation",
+                        "more versions",
+                        "extra column"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "related": [
+                            "W-34"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "reader-history",
+                    "text": "How do I get back to what I was reading before?",
+                    "kind": "howto",
+                    "keywords": [
+                        "history",
+                        "recent",
+                        "previous",
+                        "back",
+                        "last passage"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "reader-clear-input",
+                    "text": "How do I clear the reference box?",
+                    "kind": "howto",
+                    "keywords": [
+                        "clear",
+                        "reset",
+                        "start again",
+                        "wrong reference",
+                        "escape"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "shortcut": "Escape / Ctrl+Escape",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "reader-text-size",
+                    "text": "How do I make the reading text bigger?",
+                    "kind": "howto",
+                    "keywords": [
+                        "font size",
+                        "zoom",
+                        "too small",
+                        "readable",
+                        "bigger text"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "related": [
+                            "W-16"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "auto-scroll",
+                    "text": "How do I make the passage scroll itself while I read?",
+                    "kind": "howto",
+                    "keywords": [
+                        "auto scroll",
+                        "hands free",
+                        "scroll speed",
+                        "teleprompter",
+                        "moving"
+                    ],
+                    "resources": {
+                        "recipe": "W-39",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "auto-scroll-stop",
+                    "text": "How do I stop the passage scrolling on its own?",
+                    "kind": "howto",
+                    "keywords": [
+                        "stop scrolling",
+                        "too fast",
+                        "pause",
+                        "turn off",
+                        "slow down"
+                    ],
+                    "resources": {
+                        "recipe": "W-39",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "full-screen-read",
+                    "text": "How do I read without the panels in the way?",
+                    "kind": "howto",
+                    "keywords": [
+                        "full screen",
+                        "distraction free",
+                        "hide panels",
+                        "bigger view",
+                        "maximise"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "related": [
+                            "W-31"
+                        ],
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "find",
+            "label": "Searching the whole Bible",
+            "recipes": [
+                "W-12"
+            ],
+            "questions": [
+                {
+                    "id": "search-words",
+                    "text": "How do I search the Bible for a word?",
+                    "kind": "howto",
+                    "keywords": [
+                        "find",
+                        "search",
+                        "word",
+                        "phrase",
+                        "look for",
+                        "concordance"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-12",
+                        "find": "Find",
+                        "guide": true
+                    },
+                    "starterRank": 6
+                },
+                {
+                    "id": "search-button",
+                    "text": "Where is the search button?",
+                    "kind": "where",
+                    "keywords": [
+                        "find button",
+                        "magnifier",
+                        "search box",
+                        "where",
+                        "cannot find"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-12",
+                        "find": "Find",
+                        "guide": true
+                    },
+                    "starterRank": 4
+                },
+                {
+                    "id": "search-limit-books",
+                    "text": "How do I search only the New Testament?",
+                    "kind": "howto",
+                    "keywords": [
+                        "old testament",
+                        "new testament",
+                        "narrow",
+                        "limit",
+                        "which books",
+                        "filter"
+                    ],
+                    "resources": {
+                        "recipe": "W-12",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "search-more-results",
+                    "text": "How do I see more search results?",
+                    "kind": "howto",
+                    "keywords": [
+                        "next page",
+                        "more",
+                        "results",
+                        "paging",
+                        "only twenty"
+                    ],
+                    "resources": {
+                        "recipe": "W-12",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "search-reset",
+                    "text": "How do I clear the search and start again?",
+                    "kind": "howto",
+                    "keywords": [
+                        "reset",
+                        "clear search",
+                        "start over",
+                        "wrong word",
+                        "deselect"
+                    ],
+                    "resources": {
+                        "recipe": "W-12",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "search-present",
+                    "text": "How do I put a search result on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "present result",
+                        "project verse",
+                        "show found verse",
+                        "send to screen"
+                    ],
+                    "resources": {
+                        "recipe": "W-12",
+                        "related": [
+                            "W-06"
+                        ],
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "cross-reference",
+            "label": "Cross references",
+            "recipes": [
+                "W-13"
+            ],
+            "questions": [
+                {
+                    "id": "cross-ref-what",
+                    "text": "What are cross references?",
+                    "kind": "what",
+                    "keywords": [
+                        "related verses",
+                        "links",
+                        "elsewhere",
+                        "themes",
+                        "parallel passages"
+                    ],
+                    "resources": {
+                        "recipe": "W-13",
+                        "find": "Cross Reference"
+                    }
+                },
+                {
+                    "id": "cross-ref-open",
+                    "text": "How do I see what else in scripture speaks to this verse?",
+                    "kind": "howto",
+                    "keywords": [
+                        "cross reference",
+                        "related",
+                        "similar verses",
+                        "study",
+                        "connections"
+                    ],
+                    "resources": {
+                        "recipe": "W-13",
+                        "find": "Cross Reference",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "cross-ref-ai",
+                    "text": "What are AI cross references and do I need a key?",
+                    "kind": "what",
+                    "keywords": [
+                        "ai",
+                        "claude",
+                        "openai",
+                        "api key",
+                        "themes",
+                        "generated"
+                    ],
+                    "resources": {
+                        "recipe": "W-13",
+                        "related": [
+                            "W-42"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "cross-ref-refresh",
+                    "text": "How do I refresh the cross references?",
+                    "kind": "howto",
+                    "keywords": [
+                        "refresh",
+                        "reload",
+                        "no verse selected",
+                        "empty",
+                        "again"
+                    ],
+                    "resources": {
+                        "recipe": "W-13",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "notes",
+            "label": "Notes & marks",
+            "panel": "Bibles / Notes",
+            "recipes": [
+                "W-14",
+                "W-40",
+                "W-41"
+            ],
+            "questions": [
+                {
+                    "id": "verse-marks",
+                    "text": "What are verse marks?",
+                    "kind": "what",
+                    "keywords": [
+                        "highlight",
+                        "colour",
+                        "comment",
+                        "mark up",
+                        "annotation",
+                        "underline"
+                    ],
+                    "starter": true,
+                    "resources": {
+                        "recipe": "W-40",
+                        "related": [
+                            "W-14"
+                        ]
+                    },
+                    "starterRank": 3
+                },
+                {
+                    "id": "highlight-verse",
+                    "text": "How do I highlight words in a passage?",
+                    "kind": "howto",
+                    "keywords": [
+                        "highlight",
+                        "yellow",
+                        "colour",
+                        "mark",
+                        "pen",
+                        "emphasise"
+                    ],
+                    "resources": {
+                        "recipe": "W-40",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "comment-verse",
+                    "text": "How do I attach a note to a phrase I am reading?",
+                    "kind": "howto",
+                    "keywords": [
+                        "comment",
+                        "speech bubble",
+                        "annotation",
+                        "remark",
+                        "thought"
+                    ],
+                    "resources": {
+                        "recipe": "W-40",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "remove-highlight",
+                    "text": "How do I remove a highlight or a note?",
+                    "kind": "howto",
+                    "keywords": [
+                        "erase",
+                        "delete",
+                        "undo",
+                        "rub out",
+                        "clear mark",
+                        "mistake"
+                    ],
+                    "resources": {
+                        "recipe": "W-40",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "bible-notes",
+                    "text": "How do I keep my own Bible notes?",
+                    "kind": "howto",
+                    "keywords": [
+                        "notes",
+                        "study notes",
+                        "write",
+                        "journal",
+                        "sermon prep"
+                    ],
+                    "resources": {
+                        "recipe": "W-14",
+                        "find": "Notes",
+                        "shortcut": "Ctrl+S to save",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "notes-save",
+                    "text": "How do I save a note I am writing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "save",
+                        "keep",
+                        "lost work",
+                        "unsaved",
+                        "ctrl s"
+                    ],
+                    "resources": {
+                        "recipe": "W-14",
+                        "shortcut": "Ctrl+S",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "notes-share",
+                    "text": "How do I share a page of Bible notes with another machine?",
+                    "kind": "howto",
+                    "keywords": [
+                        "export",
+                        "import",
+                        "send notes",
+                        "another computer",
+                        "backup",
+                        "usb"
+                    ],
+                    "resources": {
+                        "recipe": "W-41",
+                        "related": [
+                            "W-25"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "bible-list-add",
+                    "text": "How do I add a verse to a Bible list?",
+                    "kind": "howto",
+                    "keywords": [
+                        "bible list",
+                        "collection",
+                        "save verse",
+                        "shortlist",
+                        "prepare"
+                    ],
+                    "resources": {
+                        "recipe": "W-40",
+                        "related": [
+                            "W-24"
+                        ],
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lookup",
+            "label": "People & places",
+            "recipes": [
+                "W-29",
+                "W-30"
+            ],
+            "questions": [
+                {
+                    "id": "who-is",
+                    "text": "How do I look up who someone in the Bible was?",
+                    "kind": "howto",
+                    "keywords": [
+                        "person",
+                        "name",
+                        "who is",
+                        "character",
+                        "biography",
+                        "family"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "where-is",
+                    "text": "How do I find where a Bible place is?",
+                    "kind": "howto",
+                    "keywords": [
+                        "place",
+                        "city",
+                        "map",
+                        "location",
+                        "geography",
+                        "where"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "names-in-passage",
+                    "text": "Who and where is named in the passage I am reading?",
+                    "kind": "howto",
+                    "keywords": [
+                        "names in reading",
+                        "people here",
+                        "places here",
+                        "list",
+                        "who appears"
+                    ],
+                    "resources": {
+                        "recipe": "W-30",
+                        "related": [
+                            "W-29"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "lookup-to-bible",
+                    "text": "How do I jump from a name to the verses it appears in?",
+                    "kind": "howto",
+                    "keywords": [
+                        "verses",
+                        "open in bible",
+                        "references",
+                        "go to passage",
+                        "occurrences"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "graph",
+            "label": "Connection graph",
+            "recipes": [
+                "W-38"
+            ],
+            "questions": [
+                {
+                    "id": "graph-what",
+                    "text": "How do I see how people and places connect?",
+                    "kind": "howto",
+                    "keywords": [
+                        "connection graph",
+                        "family tree",
+                        "relationships",
+                        "diagram",
+                        "map of names"
+                    ],
+                    "resources": {
+                        "recipe": "W-38",
+                        "related": [
+                            "W-29"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "graph-find-connection",
+                    "text": "How do I find how two people are related?",
+                    "kind": "howto",
+                    "keywords": [
+                        "find connection",
+                        "related",
+                        "path",
+                        "between",
+                        "cousins",
+                        "family"
+                    ],
+                    "resources": {
+                        "recipe": "W-38",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "graph-save",
+                    "text": "How do I save or print a connection graph?",
+                    "kind": "howto",
+                    "keywords": [
+                        "save image",
+                        "print",
+                        "export",
+                        "picture",
+                        "handout",
+                        "preset"
+                    ],
+                    "resources": {
+                        "recipe": "W-38",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "graph-copy-text",
+                    "text": "How do I copy a connection graph into my notes?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy as markdown",
+                        "copy as mermaid",
+                        "mermaid diagram",
+                        "mindmap",
+                        "graphviz dot",
+                        "plantuml",
+                        "copy graph",
+                        "paste into notes",
+                        "clipboard",
+                        "open in mermaid live"
+                    ],
+                    "resources": {
+                        "recipe": "W-38",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "graph-open-mermaid-live",
+                    "text": "How do I open a connection graph in the Mermaid Live Editor?",
+                    "kind": "howto",
+                    "keywords": [
+                        "mermaid live",
+                        "mermaid.live",
+                        "open in mermaid",
+                        "draw the diagram",
+                        "see the diagram",
+                        "diagram editor",
+                        "export as png",
+                        "share link"
+                    ],
+                    "resources": {
+                        "recipe": "W-38",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "graph-undo",
+                    "text": "How do I undo a change in the connection graph?",
+                    "kind": "howto",
+                    "keywords": [
+                        "undo",
+                        "redo",
+                        "back",
+                        "re-layout",
+                        "reset",
+                        "messed up"
+                    ],
+                    "resources": {
+                        "recipe": "W-38",
+                        "shortcut": "Ctrl+Z / Ctrl+Y",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "resources",
+            "label": "Your own files beside the verse",
+            "recipes": [
+                "W-37"
+            ],
+            "questions": [
+                {
+                    "id": "resources-what",
+                    "text": "How do I keep my own files beside a passage?",
+                    "kind": "howto",
+                    "keywords": [
+                        "resources",
+                        "my documents",
+                        "attach",
+                        "commentary",
+                        "handout",
+                        "outline"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "find": "Resources",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "resources-naming",
+                    "text": "What do I have to name a file for Resources to find it?",
+                    "kind": "what",
+                    "keywords": [
+                        "file name",
+                        "naming",
+                        "chapter",
+                        "book key",
+                        "pattern",
+                        "not showing"
+                    ],
+                    "resources": {
+                        "recipe": "W-37"
+                    }
+                },
+                {
+                    "id": "resources-folder",
+                    "text": "How do I add a folder to Resources?",
+                    "kind": "howto",
+                    "keywords": [
+                        "add folder",
+                        "directory",
+                        "point at",
+                        "location",
+                        "my files"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "find": "Add Folder",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "resources-drop-folder",
+                    "text": "Can I drag a folder into Resources instead of picking it?",
+                    "kind": "howto",
+                    "keywords": [
+                        "drag",
+                        "drop",
+                        "drag and drop",
+                        "folder",
+                        "explorer",
+                        "finder"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "find": "Resources"
+                    }
+                },
+                {
+                    "id": "resources-open",
+                    "text": "How do I open one of my Resources files?",
+                    "kind": "howto",
+                    "keywords": [
+                        "open",
+                        "reveal",
+                        "file explorer",
+                        "double click",
+                        "view"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "resources-links",
+                    "text": "Can I keep web links for a chapter in Resources?",
+                    "kind": "howto",
+                    "keywords": [
+                        "link",
+                        "url",
+                        "website",
+                        "youtube",
+                        "video",
+                        "json",
+                        "browser",
+                        "open in browser"
+                    ],
+                    "resources": {
+                        "recipe": "W-37"
+                    }
+                },
+                {
+                    "id": "resources-others",
+                    "text": "How do I see my files in Resources that are not named after a chapter?",
+                    "kind": "howto",
+                    "keywords": [
+                        "others",
+                        "other files",
+                        "not named",
+                        "all files",
+                        "picture",
+                        "map",
+                        "without searching"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "find": "Others"
+                    }
+                },
+                {
+                    "id": "resources-copy-to-data",
+                    "text": "How do I move a Resources folder into my data folder?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy",
+                        "move",
+                        "data folder",
+                        "data directory",
+                        "parent directory",
+                        "manage",
+                        "organize"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "find": "Copy to Data Directory"
+                    }
+                },
+                {
+                    "id": "resources-add-files",
+                    "text": "How do I copy files into a Resources folder?",
+                    "kind": "howto",
+                    "keywords": [
+                        "add files",
+                        "copy files",
+                        "put files in",
+                        "import",
+                        "move into folder",
+                        "add a pdf"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "find": "Add Files"
+                    }
+                },
+                {
+                    "id": "resources-markdown-preview",
+                    "text": "How do I read a markdown file from Resources inside the app?",
+                    "kind": "howto",
+                    "keywords": [
+                        "markdown",
+                        "md",
+                        "preview",
+                        "mermaid",
+                        "diagram",
+                        "readme"
+                    ],
+                    "resources": {
+                        "recipe": "W-37"
+                    }
+                },
+                {
+                    "id": "resources-markdown-escaped",
+                    "text": "Why does my markdown preview show # and ** instead of headings and bold?",
+                    "kind": "what",
+                    "keywords": [
+                        "markdown not rendered",
+                        "shows hashtags",
+                        "stars",
+                        "backslash",
+                        "notepad",
+                        "plain text"
+                    ],
+                    "resources": {
+                        "recipe": "W-37"
+                    }
+                },
+                {
+                    "id": "resources-note-preview",
+                    "text": "Can I open a bible note file that is in a Resources folder?",
+                    "kind": "howto",
+                    "keywords": [
+                        "own",
+                        "bible note",
+                        "note file",
+                        "read-only",
+                        "read only",
+                        "someone else's notes",
+                        "highlights",
+                        "comments"
+                    ],
+                    "resources": {
+                        "recipe": "W-37"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "versions",
+            "label": "Bible translations",
+            "recipes": [
+                "W-32",
+                "W-33",
+                "W-34"
+            ],
+            "questions": [
+                {
+                    "id": "version-info",
+                    "text": "Who published the Bible version I am reading?",
+                    "kind": "what",
+                    "keywords": [
+                        "publisher",
+                        "copyright",
+                        "edition",
+                        "legal",
+                        "licence",
+                        "info"
+                    ],
+                    "resources": {
+                        "recipe": "W-32",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "add-translation",
+                    "text": "How do I add a Bible translation from the internet?",
+                    "kind": "howto",
+                    "keywords": [
+                        "download bible",
+                        "xml",
+                        "new version",
+                        "link",
+                        "install translation"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "translation-language",
+                    "text": "My new Bible reads in English — how do I make it read in its own language?",
+                    "kind": "fix",
+                    "keywords": [
+                        "locale",
+                        "numbers map",
+                        "books map",
+                        "wrong language",
+                        "khmer",
+                        "book names"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "share-translations",
+                    "text": "How do I share my Bible translations with another machine?",
+                    "kind": "howto",
+                    "keywords": [
+                        "export",
+                        "import",
+                        "xml",
+                        "another computer",
+                        "backup",
+                        "usb"
+                    ],
+                    "resources": {
+                        "recipe": "W-33",
+                        "related": [
+                            "W-25"
+                        ],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "share-bible-list",
+                    "text": "How do I share a Bible list with another machine?",
+                    "kind": "howto",
+                    "keywords": [
+                        "bible list",
+                        "export",
+                        "import",
+                        "send",
+                        "another computer",
+                        "collection"
+                    ],
+                    "resources": {
+                        "recipe": "W-24",
+                        "related": [
+                            "W-25"
+                        ],
+                        "guide": true
+                    }
+                }
+            ]
+        }
+    ]
+}

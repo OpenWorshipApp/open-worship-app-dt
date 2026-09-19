@@ -1,0 +1,1601 @@
+# OWA Robot Test — Observation Knowledge Base
+
+docVersion: 2026-09-12
+
+Field notes for agents/skills doing black-box QA of the **running** Open Worship App.
+Everything here was **verified against the live app**, not inferred. Read this before a run
+so you (a) know what a real bug looks like vs. expected noise, and (b) avoid the traps that
+waste a run or disrupt the user's window.
+
+Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./test-plan.md)
+(scenarios/severity/report), [SKILL.md](../SKILL.md) (procedure).
+
+---
+
+## 0. TL;DR — the five things that bite you
+
+1. **Locale is dynamic.** The UI may be **Khmer** or **English** (user setting). Never target
+   by hard-coded visible text — target by role/structure/CSS class, or map labels (§1).
+2. **Settings/About/editors are POPUP windows, not main-window routes.** Do **NOT**
+   `navigate_page` the main window to `setting.html` — it traps the window (§2). Open them via
+   their button and pick up the **new page target** with `list_pages`.
+3. **A locale change or content change mid-run may be the USER**, who is often watching. Don't
+   file it as a bug without confirming (this exact thing happened — the Khmer→English switch
+   was the user).
+4. **Most console output is expected dev noise** (Electron security warnings, React DevTools,
+   `printHtmlText`, empty `[log]`). Don't report it (§5).
+5. **Restore what you change** (live background, selected doc, shown screens). Screen
+   controlling & presenting is **mandatory in every run** (SKILL §6a): show the screen
+   briefly, drive its `screen.html` CDP target, then **hide it again** — only leaving it
+   taken over (or touching a display the user says is in live use) is off-limits (§10).
+
+---
+
+## 1. Localization is dynamic — target by structure, not text
+
+- The app renders in **Khmer (`km-KH`)** or **English (`en`)**, switchable in
+  Settings → Language (`Khmer` / `English` buttons).
+- ⚠️ **Do NOT trust `window.localStorage['language-locale']`** — it is a stale leftover key
+  (verified 2026-07-08: it read `"km-KH"` while the UI rendered English). Settings now go
+  through `appLocalStorage` (`src/helper/settingHelpers.ts` → `getSetting`), which is a
+  separate store.
+- ⚠️ **Nor `document.documentElement.lang`** — verified 2026-07-26: it read `"en"` while the
+  entire presenter rendered Khmer (the attribute is never updated on locale change; filed as
+  a Low a11y finding). **The only reliable read is Settings → Language: whichever of
+  `Khmer`/`English` is the solid (non-`outline`) button is active.**
+- **Consequence:** the same button reads `ស្វែងរកព្រះគម្ពីរ` or `Bible Lookup` depending on
+  locale. Snapshot `uid`s and text both shift.
+- **Do:** click by `button.nav-link` + CSS state (`.active`, `.app-on-screen`), by icon class
+  (`bi-*`), by `role`/accessible name, or by position. Read state with `evaluate_script` on
+  classes. **Don't:** match literal Khmer/English strings unless you first read the current
+  locale.
+- If the locale changes during your run and you didn't change it, **assume the user did** and
+  confirm before reporting.
+
+### 1.1 A missing Khmer key THROWS in dev — so every run must switch locale
+
+`tran()` (`src/lang/langHelpers.ts`) returns the input string immediately when the locale
+is `en-US` (`DEFAULT_LOCALE`) — **it never looks anything up**. In `km-KH` the same call
+`throw`s `Translation for text "…" not found in locale km-KH` when the key is missing,
+and because nothing wraps these components in an error boundary, **the whole subtree
+renders blank**.
+
+Consequences for a run:
+
+- An **English-only pass cannot detect a missing translation at all** — this is why the
+  locale switch (`LT-01..02`, SKILL.md §6d / test-plan §S15) is part of the mandatory
+  core, not an optional spot-check.
+- `npm run lint` (tests + typecheck + prettier + eslint + build) stays **fully green**
+  while a screen is broken in Khmer. Only running the app in Khmer finds it.
+- **Verified 2026-07-26:** `PositionSizeFieldComp` (`BoxPositionSizeComp.tsx`) called
+  `tran(name)` with `name="X:"`; selecting a canvas item blanked the entire slide-editor
+  tools panel. Fixed by not translating axis abbreviations.
+- Symptom to recognize: a panel that is **blank** in one locale and populated in the
+  other → open the console, find the `Translation for text` error, and read the component
+  name from the React warning logged right after it. File as **Critical**.
+- **Verified 2026-08-03:** `LyricHandlerComp` called `tran('Loading...')` — the **ellipsis
+  inside the key**. Every other site in the repo writes `{tran('Loading')}...`, and the km
+  dictionary defines `Loading` only. Because that branch renders on every cold load of the
+  Lyrics tab, the **entire Presenter came up blank** (`#root` 0 children, body 80 chars).
+  Fixed by moving the ellipsis outside `tran()`.
+- Distinguish from **hardcoded** English (a string that never calls `tran()` at all — e.g.
+  `title="Drag to resize"`, `SlideEditorToolTitleComp title="…"`). Those merely stay
+  English in Khmer mode: **Low/Info**, not Critical, and not a throw.
+
+In production the same missing key silently falls back to English, so this is a
+dev-visible-only failure — which is exactly why the robot run has to catch it.
+
+#### Keys are sanitized — `trim().toLowerCase()` — before lookup ⚠️
+
+`sanitizeTranKey` (`src/lang/data/km/index.ts`) is `key.trim().toLowerCase()`, and the
+dictionary is re-keyed through it at module load (which also **throws on duplicates after
+sanitization** — that guard is how a bad "fix" gets caught).
+
+So `tran('Remove from screen ')`, `tran('Add items')` and `tran('auto')` all resolve fine
+against `'Remove from screen'`, `'Add Items'` and `'Auto'`. **Do not report padded or
+differently-cased keys as missing** — a naive grep of `tran('…')` against the dictionary
+produces a pile of false positives (11 of them on 2026-08-03, all bogus). Only a
+difference that survives trim+lowercase is real, e.g. `'loading...'` vs `'loading'`.
+
+To audit properly, sanitize both sides:
+
+```js
+const sanitize = (k) => k.trim().toLowerCase();
+// collect every literal tran('…') key, sanitize, compare against the
+// sanitized dictionary keys taken from BEFORE `function sanitizeTranKey`
+```
+
+#### ⚠️ Half the dictionary keys are UNQUOTED identifiers — match them too
+
+Verified 2026-08-07 (this trap nearly produced two false **Critical** findings). The km
+dictionary is a plain object literal, so any key that is a valid JS identifier is written
+**without quotes**:
+
+```ts
+Seconds: 'វិនាទី',        // line 354 — NOT 'Seconds':
+Stage: 'ស្ទែជ',           // line 601 — NOT 'Stage':
+'Change Seconds': '…',    // quoted only because of the space
+```
+
+A sweep whose regex is `/^\s*'([^']*)'\s*:/gm` therefore sees **only the multi-word keys**
+and reports every single-word key as missing — `Stage`, `Seconds`, `Loading`, `Auto`, … .
+Match both shapes:
+
+```js
+const re = /^\s*(?:'([^']*)'|([A-Za-z_$][\w$]*))\s*:/gm;
+// key = m[1] ?? m[2]
+```
+
+**Never file a missing-key Critical from a static sweep alone.** Confirm it live: switch the
+app to Khmer, reach the component, and look for the actual
+`Translation for text "…" not found in locale km-KH` in the console. A key that renders (e.g.
+the mini-screen footer showing `ស្ទែជ 0`) is present, whatever a grep says.
+
+Both sweeps only cover **literal** keys; dynamic `tran(someVariable)` sites (e.g.
+`SettingCardHeaderComp` doing `tran(title)`) stay invisible to any static sweep and remain
+the residual risk.
+
+Also beware: clicking the `Khmer`/`English` button re-renders **some** components
+immediately, before `Apply Settings` reloads the windows. A screenshot taken in that gap
+shows a believable mix of both languages — that is a **partial re-render, not an
+untranslated-string bug**. Always judge translation coverage *after* `Apply Settings`.
+
+### Khmer ↔ English label map (verified)
+| English | Khmer | Where |
+|---|---|---|
+| Slide Editor | កែសម្រួលស្លាយ | header tab |
+| Bible Reader | អានព្រះគម្ពីរ | header tab |
+| (dev)Experiment | (dev)ការសាកល្បង | header tab (dev) |
+| Bible Lookup | ស្វែងរកព្រះគម្ពីរ | header button (Ctrl+B) |
+| Setting | ការកំណត់ | header gear |
+| Documents | ឯកសារ | list + presenter tab |
+| Lyrics | អក្សរភ្លេង | list + presenter tab |
+| Bibles | ព្រះគម្ពីរ | presenter/right tab |
+| Foreground | ផ្ទៃខាងមុខ | presenter tab |
+| Presenting Flows | តារាងកម្មវិធី | left list (dev) |
+| Bible Notes | កំណត់ត្រាព្រះគម្ពីរ | right tab |
+| Colors / Images / Videos / Cameras / Web(s) / Audios | ពណ៌ / រូបភាព / វីដេអូ / កាមេរ៉ា / វេបសាយ / សំលេង | background tabs |
+| Clear all/bg/slide/bible/fg (F6–F10) | លុបទាំងអស់ / លុបផ្ទៃខាងក្រោយ / លុបស្លាយ / លុបព្រះគម្ពីរ / លុបផ្ទៃខាងមុខ | mini-screen footer |
+| Close (Ctrl+Q) | បិទ | modal close |
+| Save (Ctrl+S) | រក្សាទុក | editors |
+
+---
+
+## 2. Window model — main-window routes vs. popup windows ⚠️ (biggest trap)
+
+**Main-window pages** (switched in-place via `goToPath()` → `location.href`, per
+`src/router/routeHelpers.tsx`):
+- `presenter.html` (default) · `reader.html` · `appDocumentEditor.html`
+- Verified: clicking the `Bible Reader` header tab navigates the **same** window to
+  `reader.html`. `navigate_page` between these is fine.
+
+**Popup windows** (opened via `openSettingPage()`→`openPopupWindow()`→
+`window.open(url?uuid=…)`, per `src/setting/settingHelpers.ts` + `src/helper/domHelpers.ts`):
+- `setting.html` · `about.html` · `finder.html` · `lyricEditor.html` · `bibleNote.html` ·
+  `webEditor.html`
+- These are **separate windows**. The main window is **never** meant to host them.
+
+### ❌ Do NOT navigate the main window to a popup-only page
+Forcing the main window to `setting.html` (e.g. `navigate_page → setting.html`):
+- It **loads**, but then you **cannot navigate away** — every destination
+  (`presenter.html`, `reader.html`, even `about:blank`, via `navigate_page` /
+  `location.href` / `location.replace` / `window.open(_self)`) returns
+  **`net::ERR_ABORTED`**. (Server + Vite are healthy; `fetch('/presenter.html')` → 200. It is
+  not a `beforeunload` and not a `will-navigate` block — `guardBrowsing` only sets a
+  window-open handler.)
+- It **persists** `mainHtmlPath:"setting.html"` into
+  `%APPDATA%/open-worship-app/setting.json` (see §3), so the main window **reopens Settings on
+  every restart** until you fix the file.
+
+### ✅ Correct way to test Settings/About/etc.
+1. Click the gear (Settings) / relevant button in the app — it opens a **new popup target**.
+2. `mcp__owa-devtools__list_pages` → find the `setting.html` target → `select_page` it.
+3. Test it, then `close_page` the popup (or leave it; it's a separate window).
+Keep the main window on `presenter.html`.
+
+---
+
+## 3. Persisted window state & recovery
+
+`electron/ElectronSettingManager.ts` saves the main window's page to **`mainHtmlPath`** in
+`%APPDATA%/open-worship-app/setting.json` on every navigation. File shape:
+```json
+{"mainWinBounds":{...},"appScreenDisplayId":null,"mainHtmlPath":"presenter.html","themeSource":"system"}
+```
+- **Default is `reader.html`**, not the Presenter (`ElectronSettingManager` seeds
+  `mainHtmlPath: htmlFiles.reader`; verified 2026-09-09 on a fresh userData — the packaged
+  app opened on `owa://local/reader.html`). The value survives full restarts, which is
+  why a long-used dev profile opens on the Presenter.
+- **Recovery if the main window is stuck on a popup page:** (1) stop the app, (2) set
+  `mainHtmlPath` back to `"presenter.html"` in `setting.json` (keep the other keys), (3)
+  relaunch. The window will open on the Presenter. Locale (`localStorage['language-locale']`)
+  is stored separately and is preserved.
+- The `mainHtmlPath` validation IS implemented (`toAllowedMainHtmlPath` in
+  `electron/ElectronMainController.ts`): only presenter/reader/appDocumentEditor are
+  accepted at boot, anything else falls back to `htmlFiles.reader`. Note it does NOT
+  protect against a legitimate main page that hangs at boot (run `20260830-1407`:
+  `mainHtmlPath:"reader.html"` + a reader-boot hang re-armed itself on every launch —
+  hand-editing `setting.json` was still the way out).
+- **Renderer crash/hang recovery exists since 2026-08-30** (`applyRendererRecovery`,
+  `electron/electronHelpers.ts`, wired into the main window and every screen window):
+  a dead renderer (`render-process-gone`) auto-reloads its content, capped at 3
+  reloads per 30 s so a boot-crashing page cannot reload-loop; a hung renderer
+  (`unresponsive`) raises a native **Reload / Wait** dialog whose Reload force-kills
+  the renderer and lets the gone-handler reload it. QA implication: a killed/hung
+  window healing itself (or that dialog appearing) is the FEATURE working — but more
+  than 3 heals in quick succession means a crash-loop upstream; report THAT.
+
+---
+
+## 4. Readiness signals (per page)
+- **Page-agnostic:** `#root` exists, has children, and no `img.loading` inside.
+  A persistent `.loading` image = bug.
+- `presenter.html` / `appDocumentEditor.html`: also have `#app-header` + `#app-body`.
+- `reader.html`: **no `#app-header`** — wait for bible content instead.
+- `setting.html`: `document.title` matches `/Settings/`; `General` + `Apply Settings` buttons.
+
+---
+
+## 5. Interaction gotchas (verified)
+
+- **Click the button, not the wrapper.** Nav tabs / list rows expose the label as
+  `StaticText`/`<li>`; a synthetic `.click()` on the `<li>` does **not** fire React's handler.
+  Click the actual `button.nav-link` (or the item's `<button>`), or MCP-click the button's
+  `uid`.
+- **Background panel starts collapsed.** It's an `app-hidden-widget` (~6px, shows only a
+  `Background` / `Note` label). Its tabs **do not exist in the DOM until expanded** — an early
+  `.nav-tabs` scan finds only the header + presenter tab groups. **Click the `Background`
+  label to expand**, then the tabs (`Colors…Audios`) render as real `button.nav-link`s.
+- **Color swatches are `role="button"` controls** (`RenderColorComp` / `RenderNoColorComp`:
+  `tabIndex=0`, the colour name as `aria-label`, `aria-pressed` on the one in force, Enter /
+  Space press them). `take_snapshot` lists them as `button "fuchsia"` … `button "white"` plus
+  `button "No Color"` — press them by `uid` (verified 2026-09-12; earlier revisions said plain
+  `div`s carrying only a `title`, and before that `role=group` — both stale). **Focus stays on
+  the swatch that was pressed**, by mouse or by Tab + Enter: `BackgroundColorsComp` keys each
+  screen's picker by the SCREEN rather than by the colour, and puts focus back on the same
+  swatch when a re-render dropped it within 2 s of the press. A keyboard user losing their
+  place after a press is a regression now, not the standing Info it once was. Every press
+  re-renders the row, so a swatch `uid` from before the press is dead after it — snapshot
+  again (`click` answers "no longer exists").
+- ⚠️ **The Audios tab is a SECOND pane, not a different list in the same one** (verified
+  2026-08-11). Clicking `Audios` leaves `Videos` active as well and splits the panel: there
+  are then **two** `BackgroundMediaComp` elements side by side (videos left, audios right).
+  So `document.querySelector('[data-react-comp-name="BackgroundMediaComp"]')` returns the
+  **videos** pane whichever tab you just clicked, and an "audio" download driven through it
+  runs as a **video** download — the popup says `Video URL:` and the toast
+  `Downloading video from …`. That looks exactly like an MD-02 regression and is not one.
+  Pick the pane by its path text:
+  `[...document.querySelectorAll('[data-react-comp-name="BackgroundMediaComp"]')]
+  .find((el) => el.innerText.includes('\\audios'))`, then assert the popup subtitle reads
+  `Audio URL:` **before** submitting.
+- **`list_pages` stays broken after the selected page closes; `select_page` recovers it.**
+  Closing the screen target (its ❌ button) or a popup leaves `owa-devtools` erroring
+  `The selected page has been closed. Call list_pages to see open pages.` — from
+  `list_pages` itself, so the advice is circular. Call `select_page` with a known id (the
+  presenter is normally the lowest one) and it selects and re-lists fine. Confirm the app
+  is actually alive with
+  `node .claude/skills/owa-robot-test/scripts/wait-for-debugger.mjs --timeout=5000`
+  (it discovers the published port itself — there is no fixed 9223 any more) before
+  assuming a crash.
+- **Contrast-aware dialog.** Choosing a background color that may clash with text pops a
+  confirm: *"…text color may not be visible… change text color as well?"* (`Cancel`/`Ok`).
+  Handle it. (This is **good UX**, not a bug.)
+- **Sliders.** Presenter has two `input[type=range]`: thumbnail-size (`max="200"`) and
+  mini-screen zoom (`max="30"`). To drive one programmatically: native value setter +
+  `dispatchEvent(new Event('input',{bubbles:true}))` (React listens on `input`).
+- **Bible Lookup input is an incremental picker** (book → chapter → verse) **and it now
+  resolves a typed full reference too** — ⚠️ corrected **2026-09-11**; this file claimed the
+  opposite from 2026-08-05. Typing `John 3:16` char-by-char renders that verse: the chapter
+  strip shows `16` selected and the Resources panel switches to `JHN.3`. **Both surfaces
+  behave the same** — the header modal and the Bible Reader page — which is exactly what the
+  shared `InputHandlerComp` / `BIBLE_LOOKUP_INPUT_ID` predicts; only the direction of that
+  shared behaviour changed. Verified live on both with `Psalm 23:1` as a control: its text is
+  absent from the saved Bibles list, so "The LORD is my shepherd" appearing after typing
+  cannot have come from a list row (baseline probe confirmed the word was nowhere on the page
+  first). Step-by-step picking still works — it is simply no longer the only way, and a test
+  that asserts "the `3:16` is dropped" will now fail a correct app.
+  Also: a single `fill()` = one change event (test artifact); use char-by-char `type_text` to
+  mimic a real user.
+- **Presenting a SLIDE is a single click, and re-clicking it does NOT clear it**
+  (corrected 2026-08-12; earlier revisions of this file said the click was a *toggle* and
+  that clicking the same slide again cleared the layer — that is stale). One click on a
+  slide thumbnail presents it; clicking the **same** card again simply **re-applies** it —
+  `SL` stays solid and the screen badge stays on the card. The repo's own test states the
+  rule outright: *"Re-selecting the same slide re-applies it (no toggle-off behavior)"*
+  (`src/_screen/managers/nonBibleManagers.coverage.test.tsx:946`). So **use `F8` (or the
+  `SL` clear button) to un-present a slide** — never a second click. Still use `click`
+  (no `dblClick`), and verify via `.app-on-screen` / the card's `data-screen-icon-id`
+  badge before proceeding. Background **media** items were not re-tested for toggling —
+  do not assume either behaviour there without checking.
+- ⚠️ **A bare synthetic `.click()` does NOT present a slide card** (verified 2026-08-10).
+  `VarySlideRenderComp` is a **drag surface**, and `element.click()` — which dispatches a
+  lone `click` with no pointer sequence — leaves it completely inert: no present, no
+  toggle, no console error, and the on-screen badge stays exactly as it was. It looks like
+  a dead card. Dispatch the **full sequence** instead —
+  `pointerdown → mousedown → pointerup → mouseup → click`, all with real `clientX/clientY`
+  — which presents it first time. (Ordinary `<button>`s and context-menu items are fine
+  with a bare `.click()`; this is specific to the draggable cards.) Related, but not the
+  same thing: a *real* canceled `pointerdown` suppressing `mousedown`/`click`/`dblclick`
+  on drag surfaces. **Never conclude "clicking a slide does nothing" from a bare
+  `.click()`** — re-drive it with the full sequence before filing anything.
+- ⚠️ **`document.hasFocus()` lies under CDP/DevTools attachment** (verified 2026-08-30:
+  it returned `true` on an app window while OS focus was on the terminal). Consequences:
+  (a) never assert "window is focused/unfocused" from `document.hasFocus()` during a
+  driven run; (b) the cross-window scroll-sync send guard
+  (`sendSyncScrollPercentage`) leans on it, so with DevTools open BOTH windows may
+  pass the guard — the echo loop that allowed is now structurally suppressed
+  (`syncScrollPercentage` stamps `_remoteAppliedScroll` on the element it scrolls and
+  `registerScrollingSyncEvent` swallows that one position-matched event). A scroll in
+  one window reflecting in the other exactly ONCE per gesture is correct; a
+  self-sustaining scroll oscillation between windows is a regression on that stamp.
+- ⚠️ **Bible screen text color is a persisted STYLE, not inheritance** — measure
+  `#bible-screen-view td span` / `tr`, never a container (verified 2026-08-30, cost a
+  false High). The `screen-bible-style-text` setting (color/text-shadow/font-size) is
+  injected as `#bible-screen-view tr {…}` by `ScreenBibleComp` in every window
+  (default color WHITE when unset), so preview and screen agree by construction. A
+  container element inherits the page theme instead (`rgb(222,226,230)` in the
+  presenter's dark theme vs black on the screen window) — comparing containers across
+  windows fabricates a mismatch. Black-with-white-outline at 100px is a legitimate
+  operator configuration, readable over the white background it was set against.
+- **Toasts: trigger them from a real refusal, and hold the first one open.**
+  `window.testSimpleToasts()` (dev-only, `src/toast/toastHelpers.ts`) is out of reach: it
+  needs `evaluate_script`, which the MCP firewall refuses. A locked screen is the reliable
+  source instead, covering `[GL-10, GL-15, GL-23]`: **Lock** → `press_key F6` with
+  `includeSnapshot` → `hover` the `alert` → `press_key F6` with `includeSnapshot` → two
+  `alert`s, each *Screen Manager is locked* / *Unlock the screen to change what it shows*
+  with its own `button "Close"` (verified 2026-09-12). Two traps. One F6 is refused by all
+  four layer managers, and the refusal is said **once a second per screen**
+  (`ScreenManagerBase.checkIsLockedWithMessage`), so a single press no longer shows a stack
+  and a second press inside that second stays silent. And a toast lives 4 s, which one tool
+  round trip can outlast, so hover the first before pressing again (the `hover` tool clears
+  only that toast's timer; moving off restarts it at 2 s). Toasts live in `.app-toast-stack`
+  (max 5, newest at the bottom).
+- ⚠️ **Closing a context menu with a synthetic `document.body` click KILLS every keyboard
+  shortcut** (verified 2026-07-26 — cost most of a run and looked exactly like an `F7`
+  regression). The menu renders a **full-viewport overlay** that owns
+  `onClick={handleClose}` (`AppContextMenuComp.tsx`); a click dispatched on `document.body`
+  is *outside* that overlay (body is the root container's parent), so `onClose` never runs
+  and the menu's keyboard **layer** is never popped. `KeyboardEventListener` then routes all
+  keys to the dead menu layer and **every base-layer shortcut silently stops working**
+  (`F5`–`F10`, `Ctrl+B`, …) while `document.onkeydown` still looks correctly installed and
+  the keydown still reaches `document`. **Always dismiss via the overlay itself**
+  (`document.querySelector('.app-context-menu').parentElement` → dispatch the click there)
+  or `Escape`. Verified good: after a proper open/close cycle `Ctrl+B` and `F7` both work.
+  If shortcuts have already gone dead, **reload the page** to reset the layer stack.
+- ⚠️ **Never drive a resizer with synthetic mouse events — and never collapse a widget by
+  dragging.** `FlexResizeActorComp` attaches its `mousemove`/`mouseup` listeners to
+  `globalThis`, and `isShouldIgnore` reads `event.target.classList` unguarded
+  (`FlexResizeActorComp.tsx:126`). A `mousemove` you dispatch on `globalThis` has **`window`**
+  as its target, `window.classList` is `undefined`, and every move then throws
+  `Uncaught TypeError: Cannot read properties of undefined (reading 'contains')` — which the
+  app's global handler turns into a **"Reload is needed — Internal process error"** dialog and
+  a `error-datetime-setting` lock-starvation cascade. It looks exactly like a product crash;
+  it is not (a real mouse event always has an element target). Verified 2026-08-07; the drag
+  also does not actually resize anything, because `getMousePagePos` needs `pageX/pageY`.
+  **The supported way to collapse or restore a widget is the resizer's own context menu:**
+  🖱️R the `.flex-resize-actor` → **`Reset Size` / `Close First Widget` / `Close Second
+  Widget`**. That path is clean (zero console errors) and is how you put a panel back the way
+  you found it — the Background panel starts collapsed, and expanding it to test the tabs is a
+  persisted change you must undo.
+- **Presenting a background/slide with multiple screens and none `Select`ed does NOT apply
+  immediately** — `ScreenEventHandler.chooseScreenIds` opens a **screen-chooser context
+  menu** (`Screen id: 0/1/2`). A click that "does nothing" is usually this menu waiting.
+  With one screen, or with screens explicitly selected, it applies directly.
+- **Screens sharing a colour-note are a sync group.** Applying a background to one screen
+  propagates to every screen with the same colour-note dot and leaves `No Color` screens
+  alone (verified 2026-07-26: `lime` screens 0+1 moved together, screen 2 did not). Don't
+  file that as "applied to the wrong screen".
+- **Slide/lyric previews live in `<iframe srcdoc>`** (lyric ones inside a
+  `shadowing-parent-width-tag` shadow root, `sandbox="allow-scripts"` so their DOM is
+  unreadable from the parent — inspect the `srcdoc` attribute string instead). A lyric's
+  slide 1 is often just the `<h1>` title, which at ~0.2 preview scale looks like a blank
+  dark card — not a rendering bug.
+- **In-app modal popups (Alert / Confirm / Input) are single-slot and chained.**
+  `HandleAlertComp` holds one `popupWidgetManager` slot per type and shows them
+  one-at-a-time; a popup's close runs `openX(null)` **asynchronously**. If a popup's
+  close is ordered *after* the callback that opens the **next** popup, the async close
+  lands last and silently tears the next popup down — worst with two of the **same type**
+  back-to-back (`Alert`→`Alert`). The components deliberately close-**then**-run-callback
+  to make the new popup win the slot ([src/popup-widget/AlertPopupComp.tsx](../../../../src/popup-widget/AlertPopupComp.tsx)
+  and its Confirm/Input siblings). **Regression check** (run whenever the focus touches
+  popups/dialogs/settings): the dev build exposes `window.tryPopup()` (guarded by
+  `appProvider.systemUtils.isDev`) which opens a fixed 1→2→3→4→5 chain
+  (Confirm/Alert/Alert/Confirm/Alert). In the running app, `evaluate_script`
+  `() => typeof window.tryPopup` → `"function"`, then call `window.tryPopup()` and step
+  each popup by clicking its **Yes/Ok** primary button (`.app-popup-widget button.btn-info`),
+  reading the header (`.app-popup-widget .app-popup-header-title`) between clicks. All five
+  titles must appear **in order** and the stack must be empty after the 5th — a popup that
+  never appears (torn down by the previous popup's async close, especially `Alert`→`Alert`)
+  is a **High** finding. (Its jsdom twin `HandleAlertComp.test.tsx` was deleted in the
+  2026-08-24 test prune — the live `window.tryPopup()` probe is now the only coverage.)
+
+---
+
+## 6. `.app-on-screen` / live-output semantics — and driving the screen window
+- Any element currently shown on the presentation output carries **`.app-on-screen`**.
+- The active background tab gets a **`*` prefix** (e.g. `*Videos`, `*Colors`).
+- Use both to verify "send to screen" toggles:
+  `[...document.querySelectorAll('.app-on-screen')].map(e=>e.textContent.trim())`.
+
+### Screen window CDP visibility (verified, corrected 2026-07-08)
+- While a screen is **SHOWING** (toggle `ShowHideScreen` / `F5`), it **is** a normal CDP
+  target: `https://localhost:3000/screen.html?screenId=N` in `list_pages` — fully
+  drivable (`take_snapshot` / `click` / `take_screenshot`; the ❌ `#close` button has
+  been clicked via MCP and it hid the screen).
+- The target **vanishes the moment the screen hides** — an earlier session concluded it
+  was "never on CDP"; that was wrong, it's just absent while hidden.
+- A **hidden** screen's console forwards via `all:app:log` → electron main stdout (the
+  `npm run dev` terminal). Read that channel for screen-only bugs while hidden.
+- The mini preview reuses the same screen React components but **without
+  `isPageScreen`/StrictMode** — screen-window-only bugs (e.g. full-width PDF, mount
+  loops) do NOT reproduce there. **That is why driving the real target once per run is
+  mandatory** (SKILL §6a): screenshot the screen target itself and compare with the
+  mini preview.
+- Presenting a slide is a **single click, not a toggle** (§5) — present, verify, then
+  clear with `F6`–`F10` (a second click on the same card only re-applies it); end with the
+  screen hidden unless it started showing.
+
+### 6.1 What the MCP firewall will not do for you (verified 2026-09-15)
+
+Three refusals are POLICY, not breakage — read them as "a human presses this", record the
+row as BLOCKED with the reason, and never hunt for a way around:
+
+| You try | What comes back | Do this instead |
+|---|---|---|
+| `owa_click "Move to Trash"` (or any delete / discard / erase / *clear all* label) | *"switched off, because it cannot be undone by pressing it again"* | Point with `owa_find_ui … highlight`; for a file THIS RUN created, delete on disk via the Recycle Bin (SKILL §6e step 5). `CM-06` is human-only |
+| `owa_type` into an app confirm / alert / **input popup** (e.g. the Download From URL box) | *"part of a question the app is asking the user"* | chrome-devtools `fill` + `click` on the uids from `take_snapshot` — the popup is drivable, only the `owa_*` shortcut is withheld |
+| `evaluate_script`, `take_snapshot`-free page probing, `press_key` from the chatbot | refused / withheld | snapshot, `wait_for`, or an `owa_*` tool (SKILL step 0) |
+
+A refusal arrives as an `isError` RESULT written for a model, not a crash; it costs one
+round and proves the interlock still works, which is itself worth a line in the report.
+
+---
+
+## 7. Known-benign console — DO NOT report these
+| Message | Why it's fine |
+|---|---|
+| `[warn] Electron Security Warning (Disabled webSecurity)` | **dev only** — "will not show up once packaged" |
+| `[warn] Electron Security Warning (allowRunningInsecureContent)` | **dev only** |
+| `[info] Download the React DevTools…` | dev only |
+| `[debug] [vite] connecting… / connected` | dev HMR |
+| `[log] printHtmlText` and an empty `[log]` | benign; the empty log repeats on interaction (cleanup candidate, not a bug) |
+| `TypeError: Cannot get bible list` at `getOnlineBibleInfoList` (Settings → Bible tab) | **intended** — the online bible `info.json` fetch failed or is unavailable (e.g. offline/dev); the error is caught and logged by `handleError`, the function returns `null`, and the UI simply shows no online bible list |
+| `[warn] If you are profiling the playground app, please ensure you turn off the debug view…` (reader page) | third-party dev-mode noise from the bundled **`bible-note`** dependency (`node_modules/bible-note/dist/bible-note.mjs`) — nothing in `src/` emits it. Observed 2026-09-11 |
+
+Real console issues to flag: uncaught errors, unhandled promise rejections, React
+key/warning spam, failed dynamic imports.
+
+## 8. Known-benign network — DO NOT report
+- On presenter load the **same live background video is fetched repeatedly** (3× observed
+  2026-07-06 with `award background(1).mp4`; **11×** observed 2026-07-08 with `6_cv.mp4`, all
+  `200`) — redundant I/O, not an error, but worth tracking as it may be growing.
+- `file://` media loads are normal.
+Real network issues to flag: `4xx`/`5xx` on app assets, blocked/CORS, broken images/media.
+
+---
+
+## 9. Signal vs. noise — what actually counts as a bug
+**Not bugs (expected):**
+- Dev-only Electron/React warnings (§7); redundant media fetch (§8).
+- A configured-but-missing font shown as **"Hanuman (Missing)"** — the label is *informative*;
+  it's an environment note, not a code defect.
+- Locale/content changes the **user** made (confirm first).
+- Popup-page navigation trap **you** caused by forcing the main window there (§2).
+
+**Real bugs to hunt:**
+- Uncaught errors / failed requests to app assets; blank or never-clearing `.loading`.
+- A tab/button that doesn't respond or doesn't toggle its state; a modal that won't open/close
+  (`Ctrl+B` open, `Ctrl+Q` / red `btn-danger` close).
+- Clipped/overflowing/overlapping/low-contrast text; broken/blank images; layout shift.
+- **Accessibility:** icon-only buttons with no accessible name — scan `take_snapshot` for
+  unnamed interactive nodes. ⚠️ The presenter is **clean as of 2026-09-11** (108 buttons, all
+  named: `Help`, `Full view`, `AI Chat`, `App Assistant`, `Setting`, the five clear buttons…),
+  so both older observations — "Help's name is a raw URL" and "the fullscreen toggle has no
+  name" — are retired. An unnamed node there is now a **regression**, not the status quo.
+
+---
+
+## 10. Don't disrupt the live window (courtesy)
+- If you change the live **background** (color/image/video) or the selected document, **restore
+  it** afterward (double-click the original item; verified working).
+- **Showing the physical screen is part of the mandatory screen block** (SKILL §6a):
+  toggle it ON briefly, drive the `screen.html` target, then **hide it and restore
+  every control you touched** (lock, transitions, stage number, display, color note).
+  What stays forbidden: **leaving** a display taken over, OS-fullscreen games on a
+  window in use, or showing any screen at all when the user says a **live service** is
+  running — in that case assert via mini-screen and mark the SC rows BLOCKED→EX-02.
+- **Never leave the main window on a popup-only page** (§2–§3).
+
+---
+
+## 11. Verified-good baseline (what "healthy" looked like on 2026-07-06, v2026.06.21)
+Use as a diff target for regressions:
+- All four pages (`presenter`/`reader`/`appDocumentEditor`/`setting`) mount ready with **no
+  uncaught app errors** (only §7 dev noise).
+- Bible Lookup: opens via `Ctrl+B` **and** the button; renders a chapter via the picker; closes
+  via the red `btn-danger` **and** `Ctrl+Q`.
+- Documents: selecting a doc loads slides + updates the footer path; thumbnail slider rescales.
+- Lyrics: selected lyric renders (with chords) in `<iframe>` previews.
+- Background: panel expands; all six tabs switch; a color selection updates the mini-screen.
+- Mini-screen: reflects active content; zoom slider rescales the preview.
+- Bible Reader: renders a verse via the step-by-step picker **and** from a typed full
+  reference (§5 — re-verified 2026-09-11 on both lookup surfaces).
+- Settings: title `Settings`; `General`/`Bible` tabs; `Apply Settings`; Path/Language/Theme/Font
+  sections. (Note: the old `Set Default Data` button is gone — has
+  `Reset All Child Directories` / `Clear All Settings` instead. `Reset Widgets Size`
+  left this window on 2026-08-09 for the native **View** menu, where it applies live
+  instead of only flagging the Apply button.)
+
+---
+
+## 12. Cross-window (multi-renderer) propagation — the regression class a CDP-only run misses ⚠️
+
+**The trap that let an edit→present regression ship:** OWA is **multi-window**, and each
+window is a **separate Electron renderer** — its own JS heap, its own in-renderer event
+bus, and its own **per-renderer data cache**. Windows do **not** share memory; they sync
+only through **files on disk + a file watcher**. So "edit in one window shows up in
+another" is an *emergent, cross-process* behavior — exactly the kind a run that drives one
+window at a time never checks. (This is how the case where **resizing a box in the
+`Document Editor` window did not update the `Presenter`'s slide preview** went unspotted.)
+
+### 12.1 The window/renderer model
+- **Presenter** (`presenter.html`), **Reader** (`reader.html`), **Doc Editor**
+  (`appDocumentEditor.html`), **Screen** (`screen.html?screenId=N`), and the popup
+  **Lyric / Bible-note / Web** editors are each a distinct renderer.
+- The Doc Editor can be open **two different ways**, and only one creates the two-window
+  config where this bug lives:
+  - **Header `Slide Editor` tab** → `goToPath()` → navigates the *same* (main) window
+    in-place (NAV-01-style). No second window → **this bug can't appear** (there's one
+    renderer). *This is the trap: earlier runs opened the editor this way and saw nothing.*
+  - **`Slide Editor` tab's `bi-box-arrow-up-right` external icon (NAV-21)** — or a doc's
+    row/quick-edit **Edit ↗** — → `openAppDocumentEditorExternal` → `openPopupWindow`
+    (uuid `app_document_editor`) → a **separate** `Document Editor - <name>` window
+    (`src/app-document-list/AppDocument.ts:529`). **This** is the config to test.
+
+### 12.2 The propagation chain (know each hop so you know where it can break)
+Editor saves a doc → the change must cross to the Presenter/Screen:
+1. Editor renderer `FileSource.writeFileData()` — deletes **only the editor's** cache and
+   fires `fireUpdateEvent()` in **only the editor's** renderer; writes the file
+   (`src/helper/FileSource.ts:171`). *(This is why the editor itself updates but nothing
+   else automatically does.)*
+2. The file on disk changes → **each other renderer's** watch fires. ⚠️ **Rewritten
+   2026-08-11 (refactor28):** it is no longer one `fs.watch` per mounted `DirSource`
+   (`useDirSourceWatching` is gone). Each renderer now runs **ONE recursive watch on the whole
+   data parent dir**, started **lazily** by `watchDataDir()` the first time anything registers a
+   `FileSource` listener (`src/helper/dirWatchingHelpers.ts`, `FileSource.registerEventListener*`).
+   Consequence for testing: propagation no longer depends on which list is mounted — a document
+   previewed with its list hidden still refreshes. `watchDataDir()` is memoized, so the settled
+   case is a field read; the watch is released by `unwatchDataDir()`, whose ONE caller is the
+   data-directory setting (it aborts by the identity the watch STARTED on — after the selection
+   moves, nothing could name the old tree again).
+3. **`handleFileEvent` itself does no I/O.** It records the changed path and its parent
+   directory and arms a **500 ms trailing debounce** — a media download writes its file in
+   hundreds of chunks and every chunk is an event, so the filesystem work runs once per burst,
+   not once per chunk. ⚠️ **Testing consequence: allow ~1 s before reading the UI.** The paths
+   accumulate in sets, so two directories touched inside one window are both handled.
+4. The flush → `alertFileChanging()` → `FileSource.getInstance(<changed path>)`
+   `.fireUpdateEvent()` **directly** (the old DirSource `file-update` hop is gone). If the
+   changed path carries a **sidecar suffix** — `.histories`, `-htmls`, `-images` — the file it
+   belongs to is told as well, which is how an editor's history write becomes an `update` on the
+   `.ows`/`.owl` itself. The suffix is tested first on purpose: an ordinary file change must not
+   pay an `fsCheckFileExist` for an "original" that cannot exist.
+5. The OTHER half of the flush is the directory diff — readdir vs `dirSource.filePathsMap` →
+   `fireRefreshEvent()` — which is what makes an added/removed file appear/disappear in a list,
+   and the only thing that clears that map. A pure **content** edit never needs it. The
+   `DirSource` is resolved from **the changed file's own parent directory**
+   (`getInstanceByDirPath(pathDirname(filePath))`), NOT from the watch root — the root is the
+   data parent dir and owns no list. Two things follow: a directory no list is mounted on
+   resolves to `null` and is skipped, which is also what keeps an editing-history write free
+   (the parent of `<file>.histories/3` is the history folder, which owns no `DirSource`); and a
+   change the OS reports without naming it falls back to `DirSource.getAllInstances()`.
+   ⚠️ Both were broken when refactor28 landed (XW-10): the diff called
+   `DirSource.getInstance(dirPath)`, whose argument is a **setting name**, not a path — it built
+   a junk DirSource (`dirPath: ''`) and fired at nobody — and a deleted path returned early
+   before ever reaching the diff. Fixed in code, **not yet re-verified live.**
+6. `useFileSourceEvents(['update'], …)` consumers reload: Presenter **center preview**
+   `VarySlidesComp` (`src/app-document-presenter/items/VarySlidesComp.tsx:84`) and the
+   **list-row** thumbnails (`VaryAppDocumentFileComp`) — each re-reads `getSlides()`
+   (debounced **500 ms**) **through a 2-second `fileDataCacheManager` cache**
+   (`src/helper/FileSource.ts:42,137`).
+   - ⚠️ **The live screen / presented slide does NOT auto-reload — this is intentional
+     (verified 2026-07-19).** Presenting takes a `cloneJson` **snapshot** into
+     `ScreenVaryAppDocumentManager._varySlideData`
+     (`src/_screen/managers/ScreenVaryAppDocumentManager.ts`, captured at present-time), and
+     **nothing in `src/_screen/` subscribes to `useFileSourceEvents`** (`ScreenVaryAppDocumentComp`
+     listens only to screen `['refresh']`). So a **saved** edit to a currently-presented
+     slide updates the Presenter's center preview, but the **live projector output stays
+     frozen on purpose** — the operator decides when to push the change by **re-presenting**
+     the slide (clear + present again, or click it). This keeps the congregation's screen
+     stable during mid-service edits. A stale live screen after a saved edit is therefore
+     **expected, not a bug** (see §12.4 / XW-03).
+
+**Failure modes this hides (what a good XW test catches):** `fs.watch` not firing for
+content-only edits (the watch is `recursive: true` everywhere now, so `<name>.histories/`
+sub-writes are seen on every OS); the sidecar→original mapping dropping a suffix; a **consumer's
+own derived cache** never being invalidated (§12.5 — the lyric Stage Previewer's 3-minute slide
+cache, the bug XW-08 exists for); the **2 s per-renderer cache** serving stale bytes to the
+reload; an **auto-reloading** consumer (center preview / list rows) that stopped subscribing;
+a regression in the reload wiring (e.g. the `VaryAppDocumentFileComp` / `LyricFileComp` /
+`PresentingFlowFileComp` `useFileSourceEvents` refactor). **Expected, NOT bugs:** a **saved**
+edit not auto-updating the **live screen** of a **presented** slide — the presented copy is an
+intentional snapshot; the operator applies it by **re-presenting** (§12.2 step 5). Only the
+center preview / list rows must auto-reload.
+
+#### ⚠️ 12.2b UNSAVED edits DO propagate — the sync unit is the history HEAD, not the saved file
+
+**Corrected 2026-08-10 (run `20260810-1454`); earlier revisions of this file, `SKILL.md`
+§6c and `test-plan.md` §S18 all claimed the opposite — that "an unsaved edit not showing in
+the Presenter is correct (XW-04)". That was wrong, and it is the kind of wrong that makes a
+QA agent file a false FAIL (or wave through a real regression).**
+
+Unsaved editor state is **disk-backed the moment you make it**: `EditingHistoryManager`
+writes `<file>.histories/<n>-head`. The watcher→bridge→reload chain therefore fires on the
+*unsaved* edit too, and the Presenter reads through the **history HEAD**, not the `.ows`. The
+same architecture is already documented for the run sheet ("a presenting flow reads its
+editing-history HEAD, not the `.owpf`").
+
+Measured live on a scratch document, editor in its own window:
+
+| where | after editing X 356 → 100 and **saving** | after editing X 100 → 600 and **NOT saving** |
+| --- | --- | --- |
+| `<file>.histories/<n>-head` | 100 | **600** |
+| the saved `.ows` on disk | 100 | 100 |
+| Presenter centre preview (other renderer) | 100 | **600** |
+| live `screen.html` (already presenting) | 356 — stale **by design** | 600 — stale by design |
+| live `screen.html` **after re-presenting** | 100 | **600** |
+
+So **presenting projects the unsaved working state**, and the `*` suffix the list draws on a
+dirty document (`a2*`) is the operator's only warning. That is coherent — the preview and the
+projector agree, which is what an operator needs — but it means:
+
+- **XW-04 asserts the opposite of the truth.** The correct assertion is: an unsaved edit
+  **does** reach the Presenter preview within ~3 s, and a re-present pushes it to the screen.
+  A Presenter that *fails* to show an unsaved edit is the finding.
+- "Confirm the change was actually **saved** before filing a FAIL" is **not** valid triage
+  here. Saving changes what is in the `.ows`, not what the Presenter shows.
+- To prove where a value came from, read **both** `<file>.histories/<n>-head` and the saved
+  file — they disagree exactly while a document is dirty, and the head is what renders.
+
+### 12.3 Why a CDP-only run can't see it — and how to test it anyway
+Three reasons earlier runs missed it, each with the fix:
+1. **CDP can't do the edit.** Canvas drag-resize and Monaco typing need genuine OS
+   **foreground** focus (CLAUDE.md); synthetic events don't mutate the model. → Use a
+   **CDP-drivable** content edit instead (12.4).
+2. **The two-window config is never set up.** → Open the editor as a **separate window**
+   (12.1) so both `appDocumentEditor.html` and `presenter.html`/`screen.html` targets exist.
+3. **No scenario pairs "edit here" with "assert there."** → Run the XW rows / test-plan S18.
+
+### 12.4 The recipe (self-restoring)
+1. **Prefer a scratch doc.** Create a throwaway document (or use one you'll fully restore),
+   select it in the Presenter so `VarySlidesComp` shows it; optionally **present** slide 1
+   (this also covers the mandatory screen block — but note the live screen is a snapshot and
+   is **not** expected to auto-update on save; see step 4 / XW-03).
+2. Open that doc's **Doc Editor as a separate window** (NAV-21 external icon). `list_pages`
+   → you now have both targets. *(Opening/closing a popup can trigger an `owa-devtools`
+   "browser reconnected" — re-`list_pages` and re-`select_page` after each window
+   open/close; read screen visibility from `.show-hide.showing`, not target enumeration.)*
+3. **Make a CDP-drivable edit in the editor target** (no OS focus needed), pick one:
+   - **Properties-panel numeric inputs** — select a canvas item, then `fill` the Box
+     **Position/Size/Rotate** inputs (ED-19) or slide **Width/Height** (ED-17). These are
+     real `<input>`s and are the closest analog to the user's drag-resize.
+   - **Programmatic controller mutation** — walk React fibers to the live `CanvasController`
+     (CLAUDE.md file-drop note) and call a mutate method.
+   - **Direct `fileSource.writeFileData(json)`** — writes the doc to disk, exercising the
+     whole watcher→bridge→cache chain end-to-end with no UI at all.
+   Then **Save** (green save button / `Ctrl+S` — a button click works over CDP).
+4. **Assert propagation in the OTHER target(s)** within ~3 s (500 ms debounce + 2 s cache +
+   watch latency): Presenter `VarySlidesComp` box geometry/text changed (XW-01); list-row
+   thumbnail changed (XW-02). If **either** stays stale after a **saved** edit →
+   **regression → XW FAIL + Finding** (name the broken hop from 12.2).
+   - **XW-03 (live `screen.html` output of a *presented* slide):** it is **expected to stay
+     stale** after a saved edit — the presented slide is an intentional snapshot (§12.2
+     step 5). Do **not** file that as a bug. Instead verify the **apply** path: **re-present**
+     the slide (clear + present again, or click it) and confirm the `screen.html` output
+     *then* reflects the edit. Only a broken apply — screen still stale **after re-present**,
+     or the saved bytes wrong on disk — is a FAIL.
+5. **Restore:** in the editor, **Undo** (`Ctrl+Z`, never *Discard*) + re-save, or write back
+   the original bytes; delete the scratch doc. Restore any presented/shown state (KB §10).
+
+### 12.5 The event arriving ≠ the slides changing — assert the DERIVED view (XW-08) ⚠️
+
+The chain in §12.2 ends at "the consumer re-renders". That is **not** the assertion. A consumer
+that derives slides from the file keeps its **own** cache, and a re-render that re-reads that
+cache shows the pre-edit content while every hop before it is healthy. The lyric **Stage
+Previewer** is the standing example, fixed 2026-08-11:
+
+- `LyricAppDocumentStageAbstract` memoizes its slides in a module-level `CacheManager` with a
+  **3-minute** TTL. The panes re-rendered on every `update` and re-derived the *same cached*
+  slides — so an edit showed up in the rendered song above them and not in the slides below,
+  for minutes at a time. `LyricSlidesPreviewerComp` now clears **every stage entry's** cache on
+  `update` (`useFileSourceEvents(['update'], …, lyricManager.filePath)`).
+- `LyricAppDocument.getOpenLyricPreviewer()` returned the cached `openLyric` instance built at
+  first render; it now re-feeds it `Lyric.getContent()` on each call.
+
+**So: always test with ≥2 stages shown, and read EVERY pane.** A cache one consumer clears and
+another does not is invisible with a single pane on screen — and per CLAUDE.md's debounce note,
+a hook mounted once per stage over the SAME `filePath` is exactly where a shared timer or a
+shared cache collapses N panes into one refresh.
+
+**How to drive it with no OS focus** (Monaco typing needs real foreground focus; this does not):
+
+```bash
+# marker in, then flip it — the whole watch→alert→cache→render chain, from the shell
+node -e "const fs=require('fs');const p='<data>/documents/zz-robot-<runid>.owl';
+const j=JSON.parse(fs.readFileSync(p,'utf8'));
+j.content=j.content.replace(/ROBOT MARKER \w+/g,'ROBOT MARKER BETA');
+fs.writeFileSync(p,JSON.stringify(j,null,2),'utf8')"
+```
+
+and to imitate an **unsaved** editor edit, write the same JSON to
+`zz-robot-<runid>.owl.histories/1-head` instead (§12.2b — the head is what renders; a scratch
+file with no `.histories` falls back to the file itself). Read the result back out of the panes'
+**shadow roots**, which is where the rendered lyric HTML lives:
+
+```js
+[...document.querySelectorAll('.stage-previewer-pane')].map((pane) => {
+    const out = [];
+    pane.querySelectorAll('*').forEach((el) => {
+        const m = el.shadowRoot?.textContent.match(/ROBOT MARKER (\w+)/);
+        if (m) out.push(m[1]);
+    });
+    return out;
+});
+```
+
+Measured 2026-08-11: both write shapes reached both panes **in under a second**. Re-measured
+2026-08-13 after the `globalCacheManager1M` → `globalCacheManager10Seconds` change (commit
+`fe741a52`): still ~0.5 s to BOTH panes, for the `.owl` write and the `.histories/0-head`
+write alike. Teardown is `rm -rf` of the scratch `.owl` **and** its `.histories` dir, then
+re-selecting whatever document was selected before.
+
+⚠️ **XW-10 is FIXED — corrected 2026-08-13.** Earlier revisions of this line said the deleted
+file's row does not leave the list on its own, nor on the list menu's **Reload**. That is
+stale: verified live in run `20260813-2138` that a scratch `.owl` copied in appeared as a row
+within 1.5 s and that deleting it removed the row within 3 s, neither needing a Reload. Do not
+plan a teardown around a row that "will not go away".
+
+---
+
+## 13. Lyric slides — measure the SCREEN, not the previewer ⚠️
+
+Lyric documents (`src/lyric-list/`) are not ordinary slides: each slide's body is one
+`type: 'html'` canvas item whose markup is generated by the **`open-lyric`** dependency.
+That makes them the easiest place in the app for the operator's preview and the projector
+to disagree — which is precisely what the mandatory screen block (SKILL §6a) exists for.
+
+**Verified 2026-08-03:** with a lyric presented, the Presenter's own previewer rendered the
+chorus at `font-size: 61px` while **both** `screen.html` outputs rendered the identical
+slide at `16px` in near-black — about 6% of a 1494×934 output. Root cause:
+`LyricAppDocument.openLyric` is a public field assigned by exactly one React component
+(`LyricSlidesPreviewerComp`), and `basicOpenLyricOptions` silently omitted `fontSize`
+whenever it was null — which is always true in the screen renderer. Fixed by reading the
+persisted setting instead.
+
+How to check it in a run (cheap, one `evaluate_script` per side):
+
+```js
+// on the screen.html target
+const s = document.getElementById('slide')
+    .querySelector('.ol-preview-line, .ol-preview-lyric-segment__text');
+({ fontSize: getComputedStyle(s).fontSize, color: getComputedStyle(s).color })
+// on the presenter: same probe inside each ShadowingFillParentWidthComp shadowRoot
+```
+
+The two must agree. A previewer/screen mismatch is a **High** finding, and the
+mini-screen preview does **not** reliably expose it.
+
+Notes that save time on this subsystem:
+
+- **A cold start is the interesting case.** The presented slide is restored from settings
+  before the previewer component mounts, so init-order bugs show up on the first present
+  after launch and then "heal" once you re-present. Do the screen measurement **before**
+  reloading or re-presenting anything, or you will measure the healed state and miss it.
+- **Stages are separate document instances** (`getLyricAppDocumentStageByStage`), each with
+  its own cache. Screens on different stages (`St: 0` / `St: 1`) can legitimately render
+  different layouts — stage 1 shows chord/section labels. That is not a bug.
+  Since 2026-08-07 each stage ALSO has its own persisted **style**
+  (`lyric-stage-style-<stage>`, PM-116/PM-117), so two stages differing in padding,
+  background opacity, font size or theme is equally expected. The setting is deliberately
+  **unprefixed** — presenter, reader and screen must resolve one key — and its custom CSS
+  is APPENDED to the stage's own layout css, so stage 0 keeps hiding its chords no matter
+  what the operator typed. Chords reappearing on stage 0 IS a bug.
+- **Khmer glyph overhang at segment boundaries** (the tail of one segment drawing into the
+  next) is font shaping in the open-lyric output, not a layout bug — check
+  `getBoundingClientRect()` on adjacent `.ol-preview-lyric-segment__text` nodes; they are
+  strictly adjacent, never overlapping.
+- **Slide 1 of a lyric is the whole-song info card** and slide 3 is deliberately blank
+  (`OPEN_LYRIC_NONE_KEY`). An empty-looking card there is intentional.
+- Lyric slide markup carries a **full computed-style dump per node** (~464 KB for one
+  chorus). It comes from `open-lyric`, not this repo — worth flagging as a performance
+  Info finding, not fixable in `src/`.
+
+---
+
+## 14. Presenting Flows — the model behind every PL row ⚠️
+
+The Presenting Flows panel (`src/presenting-flow/`) is the app's **run sheet**: one file per service,
+holding everything that service will present, in order. It is small in code and dense in
+rules, and almost every one of those rules is a testable claim. Read **all of this**
+before driving PL-10 / PL-29 / PL-32..PL-76 / PL-81..PL-102 — it explains *why* each row's
+pass condition is what it is, and which "odd" behaviours are deliberate. It is also the
+required reading for **presenting flow deep mode** (SKILL.md §6f, recipe in test-plan §S20).
+
+A run sheet holds three kinds of thing now, and confusing them is the fastest way to
+mis-file a finding:
+
+| kind | what it is | §|
+| --- | --- | --- |
+| **content** | something to SHOW — a slide, a document, a background, a verse, a widget, audio | §14.2 |
+| **action** | something to DO — 13 that clear a screen, 4 that drive the run itself | §14.9 |
+| **CC element** | a FOLLOWER of the line above it — rides its host's present | §14.10 |
+
+### 14.1 It is NOT dev-only any more (corrected 2026-08-04)
+
+Commit `203d35cc` removed the `isDev` gate in `AppPresenterLeftComp` and handed the panel
+the slot the **Lyric List** used to occupy (lyrics moved into the Documents list). Older
+notes — including earlier revisions of this file, `ui-map.md`, `components-path.md` and
+the matrix itself — say "dev builds only". They are stale. **No PL row may be marked
+BLOCKED with the reason "dev-only".** (PL-49.)
+
+### 14.2 Two kinds of entry, and why they differ
+
+| stored as | kinds | why |
+| --- | --- | --- |
+| **reference** (`filePath` + `id`, `stage` for lyrics) | slide, lyric slide, PDF/PPTX/DOCX slide, app document | a presenting flow is built days before the service; a song edited in between must project its NEW words. A snapshot would silently project stale text. |
+| **preset** (drag payload stored verbatim in `data`) | background colour/image/video/camera/web, bible verse, foreground widget, audio | small, self-describing, and for a foreground the preset (the marquee text, the countdown duration, the styling) *is* the point. |
+
+Consequences to test against, not to "fix":
+
+- Editing a referenced document changes what the presenting flow projects. Editing the source of
+  a preset does **not**.
+- A countdown entry stores `durationSecond`, never a resolved date; quick text stores
+  markdown, never rendered html. A stored preset replayed a week later must not show an
+  expired countdown.
+- `title` on an entry is a **label captured when it was added** — purely cosmetic.
+  Renaming the underlying file does not change the row's text. That is deliberate:
+  resolving real names would mean reading every referenced file just to draw the list.
+- Audio is accepted but is deliberately **not** in `backgroundDragTypeList`: it plays
+  locally and must never reach the screen pipeline.
+
+### 14.3 Performance is the whole design — the things that must not regress
+
+This panel is where a careless change becomes a visible stall on the target hardware:
+
+- **Rows are text-only.** No thumbnail per row — that would decode every referenced
+  image/video just to draw a list. Rich previews live in the floating widget, on demand.
+- **Document slides load on expand and are released on collapse** (the component
+  unmounts). A long presenting flow must never hold every document's slides at once.
+- **On-screen marking uses ONE shared subscription** for the whole tree
+  (`useIsOnScreenChecking` + `onScreenSubscribers`), not `useScreenUpdateEvents` per row —
+  that hook fans out into seven subscriptions each with its own `useState`, so a document
+  expanded to ~90 rows produced ~650 state updates per screen event and React answered
+  with `Maximum update depth exceeded`. A single **shared** 500 ms debounce is correct
+  here (contrast CLAUDE.md's per-instance rule) because one pass refreshes every
+  subscriber. PL-70.
+- **The row you just clicked bypasses the debounce** (`refreshOnScreenAfterPresenting` →
+  `isImmediate`, yielded one macrotask so it lands after the present, and cancelling the
+  pass the same event already scheduled). Half a second of "did that work?" reads as a
+  slow app.
+- **Idle costs four setting reads.** `checkIsAnythingOnScreen` short-circuits everything;
+  with nothing presenting, listing presenting flows opens no presenting flow files at all. If you ever
+  see the idle list reading `.owpf` files, that gate is broken.
+- **Icons come from the file extension**, never from instantiating the document
+  (`toDocumentIcon`), and the on-screen check for a document matches on `filePath` only —
+  never `getSlides()`.
+- **Clicks stop propagating** so they never reach the enclosing `FileItemHandlerComp`
+  `<li>`, whose click fires the one UNSCOPED FileSource `select` in the app and re-renders
+  every file row in the window. PL-63.
+
+### 14.4 Drag rules (the source of most "it did nothing" reports)
+
+- A drag out of a presenting flow row sets `presentingFlowDraggingStore`. While it is set, the presenting flow
+  CARD's add handler bails — that is what makes a drop back into the same list a
+  **reorder** rather than a duplicate add. The side effect: **dragging a row from presenting flow
+  A onto presenting flow B adds nothing at all** (PL-55). Known limitation; do not re-file.
+- Rows go to a screen through `dragStore.onDropped`, NOT the synchronous `dataTransfer`
+  payload: a stored slide must be re-read from its document first and `dragstart` cannot
+  await. A slide CHILD row (under an expanded document) is already resolved, so it rides
+  the ordinary synchronous path.
+- The accepted-type gate is `acceptedDragTypeList`; anything else toasts
+  *"This item type cannot be added to a presenting flow"*.
+
+### 14.5 Settings hygiene
+
+Settings are files named after their key, so a raw file path in a setting name would
+create directory separators and log an `ENOENT` on every read. Everything the presenting flow
+persists goes through `toPresentingFlowSettingName` (`/ \ : * ? " < > |` and dots → `_`):
+`presenting-flow-opened-…`, `presenting-flow-item-expanded-…`, `presenting-flow-preview-collapsed-…`. The
+preview's collapse setting stores **only the collapsed keys** and is **deleted** when
+everything is expanded — one file per presenting flow, and the common case writes nothing.
+PL-54 / PL-58.
+
+### 14.6 The floating preview is a run-sheet player
+
+- **SEVERAL widgets may be open at once, one per FILE** (2026-08-08; before that a shared
+  slot meant opening another presenting flow's preview REPLACED the first and threw its
+  run position away). Each is its own run — its own cursor, its own folding, its own
+  auto-next clock — and its own rect under
+  `floating-widget-rect-presenting-flow-preview-<sanitized path>`, staggered 24px on first
+  open. Every icon of a previewed presenting flow is highlighted, not just one. The zoom
+  slider stays a single shared setting, so zooming one resizes them all.
+- **Space / ↓ / → / PageDown** step the run FORWARD only — no wrap, because wrapping
+  round to element 1 mid-service would put the wrong thing on a live screen. The keys are
+  gated on focus being inside the widget, since the presenter's slide list answers the very
+  same keys — and **the widget focuses itself when it opens** (2026-08-06), because the
+  gesture that opened it left focus on the tree's button and the operator's FIRST press
+  did nothing with nothing on screen to say why. PL-98.
+- **PARKED (disabled) is the ONLY reason a line is stepped over** (changed 2026-08-06;
+  earlier revisions of this file said audio, damaged and FOLDED entries were skipped —
+  that is stale and was a bug: folding is how an operator READS a long sheet, so a folded
+  song was silently jumped over). The landing now **unfolds** what it reaches, and an
+  audio track or an error row takes the cursor and fires nothing — which is the honest
+  reading of where the run is. PL-99.
+- A **document** element is walked slide by slide (disabled slides skipped) and the run
+  only leaves it once the slide on screen is its last. Crossing INTO one always starts at
+  its FIRST slide. Because unfolding is async — the slides are only read off disk once the
+  preview mounts — entering them is **deferred one macrotask** and answered when the
+  stepper registers; the ask is dropped the moment the cursor moves, or an unfold by hand
+  later would present a slide out of nowhere. PL-46 / PL-48 / PL-99.
+- **The cursor is the panel's OWN**, not derived from the screens. Reading it off the
+  screen managers was a bug: the match is on the document's file path, so a twice-listed
+  document (or one also live from the presenter's own list) made a press in one element
+  jump to what another had shown.
+- Selection is remembered as **key + position**: the key survives a reorder, the position
+  tells two identical entries apart. The key includes the arming value, so re-arming a
+  clock or a shortcut re-keys the line.
+- Slide cards inside the widget get a **restricted** right-click menu — the RUN-SHEET
+  family only (**Reveal Original / Set Specific Screen / Disable / Add CC Elements**,
+  `genPresentingFlowVarySlideContextMenuItems`), caught on the way DOWN via
+  `onContextMenuCapture` + `stopPropagation`. The previewer's colour-note/background/edit
+  family acts on the document, not the run sheet, so none of it appears; note there is no
+  **Show on Screens** either (a left-click presents the card). Verified live 2026-08-06 —
+  earlier revisions of this line said "Show on Screens only", which predates the
+  pin/CC/disable work of 2026-08-04..06. PL-59.
+- Bible entries render read-only: a verse in a run sheet is a stored preset, not a row of
+  a bible file, so no retarget, no copy family, no colour note. PL-60.
+
+### 14.7 Export / import (`.owapf.tar.gz`)
+
+A tar.gz (`tarCreate`/`tarExtract`) — **not** a zip; the app has no zip dependency. Layout:
+`manifest.json` + `presentingFlow.json` + `files/`. The bundle carries the **whole document**
+behind every slide reference (so the reference resolves after import), the media behind
+every background, and each document's `.bg.json` attached-background sidecar with its
+paths absolutised.
+
+Import contract worth testing explicitly:
+
+1. **Every destination folder is resolved up front** — a list whose folder has not been
+   chosen yet fails the import BEFORE a single file is written (PL-66). Discovering it
+   halfway would leave media imported and no presenting flow to show for it.
+2. Archive paths are validated (`..` / backslash refused) — a traversal entry landing
+   outside the extract dir is a security-relevant FAIL.
+3. What happens on a name clash is decided **per destination folder**, by
+   `collisionPolicyBySettingName` (`src/helper/appArchiveHelpers.ts`). **Media** is
+   `reuse-if-same`: an identical file (by MD5) is reused, so re-importing the same bundle
+   does not grow images/videos/audios/webs at all, and a same-name file with different
+   bytes lands beside it as `1 (1).jpg`. **Documents, presenting flows and bible notes are
+   `always-new`** — the operator's own authored work, where a namesake is not the same
+   work and silently dropping an import is the one outcome that loses it — so a re-import
+   DOES produce `a1 (Copy) (1).ows` even when the bytes match. An existing `.bg.json` is
+   never clobbered; the presenting flow file itself is de-duplicated as `<name> (1).owpf` (PL-67).
+4. Bible entries are re-created in the **Default** bible list (identical verse reused) and
+   the entry re-pointed at it, which is what makes Reveal Original work afterwards
+   (PL-68).
+5. A dropped `.owapf.tar.gz` is unpacked from **where it already sits** (`appFilePath`
+   stamped by the electron preload), never copied into the app folders first — bundles are
+   big. Only if a drop carries no path is it staged in temp (PL-45).
+
+Driving a real drop through CDP works here: dispatch a plain bubbling `Event('drop')` with
+a fabricated `dataTransfer` and stamp `appFilePath` on the `File` — see CLAUDE.md's
+file-drop note. That exercises the whole import pipeline against a real file on disk.
+
+**The de-duplicated export name — FIXED 2026-08-06.** A second export used to be named
+`<name>.owapf.tar (1).gz` (`FileSource.genNextFilePath` splits on the LAST dot), which
+failed `checkIsPresentingFlowArchiveFileFullName` and made a dropped bundle do **nothing at all**
+— no import, no toast. Exports now go through `genNextArchiveFilePath`, which knows the
+whole extension and writes `<name> (1).owapf.tar.gz`; `checkIsArchiveFileFullName` and
+`toArchiveBaseName` share one regex that still accepts the old shape, so bundles already in
+people's Downloads import (and are NAMED) correctly. The same fix covers `.owadoc.tar.gz`,
+`.owbible.tar.gz` and `.owadata.tar`. If you meet a `<name>.owapf.tar (n).gz` on disk it is
+an old file, not a new bug.
+
+### 14.8 Failure surfaces that are easy to miss
+
+- A damaged entry becomes ONE error row (`Invalid item`) plus a toast — the rest of the
+  presenting flow must still render, and the bad entry must survive a later write of the file
+  (PL-51).
+- `tran()` throws in dev on a missing Khmer key and blanks the page, so the locale pass
+  (§6d / LT-01) MUST cover the presenting flow strings: `Drop items here`,
+  `No items in this presentingFlow`, `No slides`, `Not Supported Item Type`, `Preview PresentingFlow`,
+  `Open Preview`, `Remove from PresentingFlow`, `Choose Color`, `Move up`, `Move down`,
+  `Collapse All`, `Expand All`, `Slide Thumbnail Size Scale`, `Import`, `Export`,
+  `Fail to read file data` — plus everything the action families added since:
+  `Add Action`, `Clear Screen`, `Other Clear FG Items`, every action label, `Set Specific Screen`,
+  `Add CC Elements`, `Disable`/`Enable`, `Duplicate`, `Move to Top`/`Move to Bottom`,
+  `Apply on Screens`, `Start Auto Next`, `Change Seconds`/`Change Timing`,
+  `Change Shortcut`, `Keyboard Event`, `Shortcut`, `Press a shortcut`,
+  and each refusal toast (`This element takes only one CC element`,
+  `This element does not accept CC element`, `The set time is already due`,
+  `This shortcut is already used in this presentingFlow`,
+  `Attach the elements to show as CC elements`,
+  `Open the presentingFlow preview to use this action`). A menu that renders BLANK in Khmer is
+  this throw, not a styling bug — read the console for the key name.
+- **The action rows are the ones to re-check after any new label**: their text is built as
+  `tran(label)` + the arming value appended AFTER translation, so a new action ships a new
+  key every time.
+- There is **no save button** anywhere in this panel: every mutation writes the `.owpf`
+  through immediately. "Nothing happened" therefore means the write failed, not that a
+  save is pending.
+
+### 14.9 Actions — a run sheet holds things to DO (PL-71..PL-74, PL-95..PL-97)
+
+Added 2026-08-04. An action is stored as `{type:'action', data:<id>}` (+ its arming
+value) and resolved live against the registry in `presentingFlowActionHelpers.ts`, so the row's
+label follows the locale and nothing is baked into the file. `PRESENTING_FLOW_ACTION_TYPE` is
+deliberately **not** a `DragTypeEnum`: nothing but the **Add Action** menu can produce one,
+and `acceptedDragTypeList` must keep refusing it.
+
+Two families, split by a `target` discriminant — the difference decides the whole menu:
+
+- **`target: 'screen'` (15)** — `apply(screenManager)`. Five mirror the mini screen's
+  clear bar; eight are per-foreground-widget clears derived from `foregroundClearMap`
+  (keyed by the widget type, so a new widget without a clear is a compile error). They
+  behave like content for every purpose except being shown: clickable, draggable onto a
+  mini screen, pinnable. The Foreground panel's **Background Images Slide Show** has no
+  clear on purpose — it drives the background manager, so `Clear Background` covers it.
+  The last two are **`Screen: Show` / `Screen: Hide`** (below), which are about the
+  WINDOW rather than about what is on it.
+- **`target: 'run'` (5)** — `start(presentingFlowItem)`; drives the RUN, reaches no screen of its
+  own. `Next: Interval`, `Next: Timeout`, `Next: Clear Interval` (§14.11), `Jump to`
+  (§14.11), `Keyboard Event` (§14.12). Their menus must never offer **Show on Screens** / **Reveal Original**, and
+  they must never appear in another row's **Add CC Elements** list — except the two that
+  deliberately do (§14.10).
+
+**The menu is FOUR levels** since 2026-08-08: everything that erases folds behind one
+**Clear Screen** row with a chevron, and inside it the eight per-widget FG clears fold again
+behind **Other Clear FG Items** (thirteen of the twenty entries clear something, so inline
+they were the menu). `presentingFlowActionMenuList` is the menu's SHAPE — a group holds MENU
+ENTRIES, so a family may hold a family — and `presentingFlowActionList` the flat registry an id
+resolves against; only `PresentingFlowFileComp` reads the former, and its `genMenuEntry` walks
+it recursively, so a family added later folds itself away. The stored ids did not change. The
+top level reads **clear something → put the screen up or down → move the run on**, **eight**
+rows in that order (corrected 2026-08-13 — this said seven, which predates `Next: Clear
+Interval`/PL-101 joining the run family): `Clear Screen`, `Screen: Show`, `Screen: Hide`,
+`Next: Interval`, `Next: Clear Interval`, `Next: Timeout`, `Jump to`, `Keyboard Event`.
+**Clear Screen** opens the five whole-layer clears in the mini screen bar's own order plus the
+**Other Clear FG Items** row, which in turn holds the eight per-widget FG clears — all
+verified rendering non-blank in Khmer on 2026-08-13.
+
+**Three things are asked BEFORE a line is written**, and Cancel must add nothing in every
+case: how a clock is armed, what shortcut a `Keyboard Event` answers to, and — new
+2026-08-06 — which screens a `Screen: Show`/`Screen: Hide` runs on (below).
+
+Two traps when driving this by CDP:
+
+- **Colours are load-bearing, not decoration.** The two `secondary` clears use
+  `--bs-gray-500` because the context menu's own background IS `--bs-secondary` and they
+  were invisible; the run family wears four different colours on purpose (timeout
+  warning, interval teal, jump purple, keyboard pink) so they are told apart at a glance
+  mid-service — `Next: Clear Interval` shares the interval's teal BECAUSE it is that same
+  thing undone. A "wrong colour" here is a real finding.
+- **Closing nested menus programmatically pollutes the keyboard layer stack.** After a lot
+  of synthetic menu driving, the preview's keys stop firing — the tell is `ArrowDown`
+  reporting `defaultPrevented: true` while the run does not move. **Reload the window and
+  retry before filing it**; it is a driving artefact, not a product bug.
+
+**`Screen: Show` / `Screen: Hide` — the screen ITSELF (PL-100).** Everything else in the
+menu changes what is on a screen; these two put the screen up and take it down, which is
+the one thing an unattended sheet could not do before (light the screen for the
+pre-service loop, darken it at the end). They wear the mini screen toggle's own
+`file-slides-fill` / `file-slides` glyph in green / red, badges `ON` / `OFF`.
+
+- **They NAME their screens, and nothing else does.** `requiresScreenIds` on the registry
+  entry, so a checklist (**Screen: Show - Set Specific Screen**, one row per open screen
+  in that screen's identity colour) is asked before the line is written and the answer is
+  stored in the ordinary `screenIds` pin — the row draws the usual pin badge and
+  **Set Specific Screen** re-aims it. Firing one runs on those screens ONLY: no fall
+  through to the selected screens, no "which screen?" menu, since both mean the operator
+  is standing there. An empty answer, and an empty pin at fire time, both refuse with
+  **Please choose at least one screen** titled with the action's own label.
+- **Idempotent on purpose.** `apply` reads `isShowing` first and writes only on a change,
+  so an interval walking past a `Screen: Show` every cycle does not re-run the real
+  window work or re-fire the `visible` event.
+- **Hosts no CC, may BE one.** `ccItemCount: 0` (its menu has no **Add CC Elements**; a
+  drop says **This element does not accept CC element**) — a follower riding a hide would
+  be content pushed onto a screen in the same gesture that darkens it. The other
+  direction is open, and as a CC it still goes to the screens IT names.
+
+### 14.10 CC elements — followers that ride a host's present (PL-89..PL-93)
+
+A CC row is a **uuid reference to a sibling line** of the same sheet, resolved on read.
+Attaching one is a COPY of the reference, not a link to a second file: the host's present
+puts the host AND every CC on the screens in ONE gesture.
+
+- The screen question is asked **once, by the host**. A CC must never reach
+  `chooseScreenIds` itself — it rides a latch keyed by the native event. A second
+  "which screen?" menu appearing during one gesture is a FAIL.
+- Whether a row may BE a CC is per-action (`canBeCcItem`), and whether a row's CCs are
+  **followers** or **targets** is a different flag (`ccItemsAreTargets`). `Jump to` uses
+  its single CC to NAME a line (so its list is wider — documents and an interval are
+  listed too); everything else's CCs are followers.
+- The two refusals read differently on purpose: a clock, which accepts none, says
+  **This element does not accept CC element**; a second one on a `Jump to` says
+  **This element takes only one CC element**.
+- A CC row's menu is short — never **Show on Screens**, never **Disable** — and clicking
+  it reveals its original in the tree.
+
+### 14.10b Media Control — the slide's own video, driven by the sheet (PL-102)
+
+`Slide: Media Control` is the only action that is **not** in the `Add Action` menu. It is
+authored from the slide it controls (**Add Media Control**, right under **Add CC Elements**
+on a slide row, a document line, or a slide inside a document) and lands as a CC element of
+that host, because everything it says is about one particular slide.
+
+What gets "fixed" by mistake here:
+
+- **Its settings are on the ATTACHMENT, not on the element.** The listed `Slide: Media
+  Control` row is bare and does nothing when clicked; the CC row under the host carries the
+  mode and the numbers and the cyan gear. The same controller attached twice therefore
+  means two different things — that is the point, not a bug.
+- **A pin NARROWS, it does not redirect.** Pinned to a screen the host also reached it runs
+  there alone; pinned to one the host never reached it runs nowhere. It drives media the
+  host put on a screen, so a screen without that slide has nothing to drive.
+- **Volume is presenter-side.** The projected screen holds slide media muted by design, so
+  the level is what the operator hears at the desk. **Speed is synced** — the projection
+  runs at it too, and a projection left at 1x against a 2x master would be re-seeked
+  forward on every tick.
+- An unticked **Volume** / **Speed** means "leave it alone", not "reset it".
+- Changing the slide drops anything still armed, so a "stop at 1:10" never lands on
+  whatever went up next.
+
+### 14.11 The two clocks and the GOTO — the sheet walking itself (PL-95, PL-96, PL-101)
+
+`Next: Interval (n)` / `Next: Timeout (n)` move the run on by themselves; `Jump to` aims
+it at a line another line names (backwards up the sheet is the point — that plus an
+interval is the looping set of slides), and `Next: Clear Interval` is the loop's off
+switch as a line (PL-101).
+
+The rules that get "fixed" by mistake:
+
+- **Only the run MOVING touches a clock** — the preview's cursor changing to another
+  element or another slide. A click on the background, on the widget chrome, or any
+  keypress that does not move the run leaves both alone. (Answering raw input was the
+  first design; an unintended click killing a countdown is the bug it caused.)
+  Moving cancels a timeout and restarts an interval from full.
+- A **timeout** may be armed with a **time of day** instead of a count of seconds; a time
+  already gone by is refused (**The set time is already due**), never rolled to tomorrow.
+  The remainder is re-read from the wall clock each tick, so a sleeping laptop still fires
+  on time.
+- A **timeout may be a CC element and an interval may not** — a slide can carry "go on by
+  yourself in N seconds"; nothing may carry a loop no input can stop. A
+  **`Next: Clear Interval` may be one too**: a follower that STOPS something can never run
+  away with the run.
+- **`Next: Clear Interval` ends an INTERVAL and only an interval** — a running timeout is
+  deliberately left counting (it is a one-shot the run moving already cancels, and it is
+  nearly always a CC holding the line that is up). It arms with nothing, asks nothing,
+  says nothing when there was no interval to end (doing it twice is doing it once), and
+  ends a PAUSED interval as readily as a running one.
+- With the preview closed, or open on ANOTHER presenting flow, firing any run action toasts
+  **Open the presenting flow preview to use this action** and does nothing else. That is why
+  these rows can only be tested with the widget open.
+
+### 14.12 `Keyboard Event` — the hotkey line (PL-97, PL-98)
+
+The one thing the operator aims themselves, mid-service, without looking: arm a line with
+`Shift+A` and pressing it in the floating preview sends the run there and puts everything
+attached to it on the screens.
+
+- **Set by PRESSING, not typing** — the field is read-only. **Ctrl and Shift only, at
+  least one**: the mapper uses `allControlKey`, so Alt (`Option` on a Mac) and Meta would
+  silently stop matching when the sheet is carried to another machine. A bare key is
+  refused because `ArrowDown`/`Space` already step the run.
+- The stored form is the canonical `Ctrl+Shift+A`, **not** the platform-formatted
+  `⌃⇧ A` — and that string IS the row's label, so there is no prettier second form to
+  drift.
+- **Unique per presenting flow**, enforced at the write funnel: a second line answering the same
+  key is refused out loud, and a **Duplicate** keeps the CCs but comes back UNARMED rather
+  than claiming the key.
+- It is **the only run action that resolves screens**, because its CCs are its whole
+  payload — with nothing attached it toasts **Attach the elements to show as CC
+  elements** rather than reading as a dead key. That is also why **Set Specific Screen**
+  works on it.
+- Each shortcut registers through the app's keyboard LAYER (so a modal can take it back),
+  one registrar component per shortcut.
+
+### 14.13 Which screen a row lands on — pinning, choosing, parking (PL-81..PL-88)
+
+- **Set Specific Screen** pins a line (and a document's slides individually). The pin
+  persists in the file and BEATS the currently selected screens — that is its point.
+- Two things deliberately outrank a pin: a **force-choose** (the menu's own "show on
+  screens" question) and a **drag onto a mini screen**. Both are the operator saying
+  "this one, now".
+- A pinned screen that no longer exists must degrade quietly, not throw.
+- **Disable** parks a line: it keeps its place in the sheet, is skipped by the run, and
+  fires nothing. A parked DOCUMENT parks its slides with it. Parked is the only thing the
+  run steps over (§14.6).
+
+### 14.14 The archive family (PL-39/40/45/65..68/76..80, NAV-17/18)
+
+Three layers, one code path, all tar/tar.gz (no zip dependency anywhere):
+
+| file | holds |
+| --- | --- |
+| `.owapf.tar.gz` | a presenting flow + the whole document behind every slide reference + media + `.bg.json` sidecars |
+| `.owadoc.tar.gz` / `.owbible.tar.gz` | ONE document (or bible list) + everything attached to it |
+| `.owabn.tar.gz` | one bible NOTE item + the media embedded in it |
+| `.owanote.tar.gz` | one whole bible NOTE FILE — every item in it, the media those items embed (`note-asset`), and the background attached to the file. The embedded files land in the app's temp-files folder on import, not in a backgrounds folder |
+| `.owadata.tar` | the whole data folder — File → Export/Import Data; uncompressed and with no staging copy, on purpose |
+| `.owabdata.tar.gz` | the XML bibles of Settings → Bible (ST-34..ST-40) — MANY per bundle, and the only kind whose import can REFUSE an item |
+
+Every one of them also has a password-protected shape with the compression tail swapped
+for `.enc` (`.owapf.enc`, `.owabdata.enc`…): the kind stays in the name because that is
+what routes a drop, but what decides is the `OWAENC` container magic, never the name.
+
+The import contract is the thing to test: **every destination folder is resolved up front**,
+so an import with a folder unset fails BEFORE writing anything (§14.7). Adding a new
+archive kind usually means adding a CONFIG, not copying the layer.
+
+`.owabdata` is the exception worth knowing, and NOT a config: its items are flat files in
+an **app-managed** folder (so there is no folder to resolve and no `kindDirSettingNameMap`
+entry), there are many per bundle, and identity is the bible KEY inside the XML rather than
+the file name. That last part is what makes its import the only one that can say no —
+where every other kind resolves a name collision by adding `a (1).mp4` beside yours, two
+bibles sharing a key would be ambiguous everywhere else in the app, so a colliding or
+unreadable item becomes a red un-tickable row and is skipped. Keys compare
+**case-insensitively**, and the key is re-read from the extracted FILE because the manifest
+is untrusted.
+
+### 14.15 Driving this panel through CDP
+
+- **Read the `.owpf` on disk to settle "did it save?"** — dev writes to
+  `Desktop\open-worship-data-dev`, NOT the packaged data folder. A tree that looks wrong
+  while the file is right is a stale HMR render: reload before filing.
+- **Never `import()` an app module inside `evaluate_script`.** It re-runs
+  `document.onkeydown = …` at module scope and kills every shortcut in the window for the
+  rest of the session — which then looks exactly like a broken hotkey feature.
+- Synthetic `press_key` DOES drive the run keys and the hotkeys (ordinary `keydown`
+  listeners); only Monaco needs genuine OS foreground focus.
+- A real `.owapf.tar.gz` drop is drivable: dispatch a plain bubbling `Event('drop')` with a
+  fabricated `dataTransfer` and stamp `appFilePath` on the `File` (CLAUDE.md's file-drop
+  note). That runs the whole import pipeline against a file on disk.
+- The floating preview's keys are focus-gated — if a press does nothing, check
+  `document.activeElement` is inside the widget before concluding anything.
+
+---
+
+## 15. Bible XML import — from a link to a usable translation ⚠️ (ST-41..ST-50, W-34)
+
+Everything in this section was driven live on 2026-08-10 against the canonical link
+`https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSBible.xml`,
+importing it a second time under a scratch key and then deleting it.
+
+**Use a NON-ENGLISH bible.** An English XML hides every bug in this area, because the
+defaults an import falls back to are the English ones. The canonical link is Khmer on
+purpose.
+
+### 15.1 The import is two questions, not one
+
+`BibleXMLImportComp` → `readFromUrl` → `xmlTextToJson` → `saveJsonDataToXMLfile`.
+
+- **Download.** `initHttpRequest` is protocol-aware AND **follows up to 5 redirects**, so a
+  `github.com/…/raw/…` link resolves to `raw.githubusercontent.com` on its own and a plain
+  `http://host:8000/…` works too. The body is streamed to
+  `<appLocalStorage.defaultStorage>/temp-xml/<basename>.xml`, read, then **deleted** — an
+  import that leaves anything in `temp-xml` failed partway.
+- **`Key is missing`.** Most published XMLs carry no `key`/`abbr`, so `guessingBibleKey`
+  loops a `showAppInput` until it has one. The **Guessing keys** buttons are
+  `getGuessingBibleKeys`: every attribute value **on the root element**, split on
+  `[.,\s]`, deduped, minus every key already installed (`getAllXMLFileKeys` + the
+  downloaded-bible list). That last filter is why re-importing the canonical file on a
+  machine that already has `ពគប` shows 15 buttons and **not** `ពគប` — on a fresh machine
+  the `link="https://www.bible.com/bible/1270/GEN.23.ពគប"` attribute hands the operator
+  that exact badge as a one-click button. That is where the user's `ពគប` came from.
+- **`Confirm Key for Bible`.** `No` loops back to the key input rather than aborting; the
+  way out of the loop entirely is `Cancel` then `No`.
+- The key is **also the file name** (`<key>.xml`). Renaming `key` later in the Info editor
+  does NOT rename the file — `updateBibleXMLInfo` saves through `oldBibleInfo.key`, so the
+  badge and the file name silently diverge. Settle the key at import time.
+
+### 15.2 Where the file lands (do not assume the `-dev` folder)
+
+`bibles-data` is app-managed and hangs off `appLocalStorage.defaultStorage`, **not** off any
+Path-Settings folder. On 2026-08-10 the running dev app wrote to
+`Desktop\open-worship-data\bibles-data` while its Bible-Reader folder was
+`Desktop\open-worship-data-dev\bibles-read` — so §14.15's "dev writes to `…-dev`" holds for
+the path-settings folders but **not** for `bibles-data`. Resolve it before declaring a write
+missing; a `Get-ChildItem -Recurse -Filter "<key>*"` over the profile settles it in seconds.
+
+### 15.3 A raw import is not finished — it lands on English
+
+Attribute aliases resolve (`translation`/`name` → `title`, `status` → `legalNote`,
+`abbr` → `key`), but every field the source omits falls back to a default:
+
+| what | default after import | what a Khmer bible needs |
+| --- | --- | --- |
+| `locale` | `en-US` | `km-KH` |
+| `number-map` | `0`…`9` | `០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩` |
+| `book-map` | `Genesis`, `Exodus`, `Psalm`… | `លោកុប្បត្តិ`, `និក្ខមនំ`, `ទំនុកដំកើង`… |
+
+The bible works — it is just filed under **English** in the reader's key menu (that menu is
+grouped by locale) and renders `(<key>) Acts 28:15` instead of `(<key>) កិច្ចការ ២៨:១៥`.
+**That difference is the pass/fail signal for ST-49**, and it is visible without opening a
+single file.
+
+### 15.4 The three Info-editor actions, and why the ORDER is load-bearing
+
+Pencil → **Info** → right-click inside Monaco. `addMonacoBibleInfoActions` adds:
+
+1. **🌎 Choose Locale** — 229-entry `AppContextMenu` of `<locale> (<Language name>)`.
+2. **#️⃣ Edit Numbers Map** — "Define numbers map for `<lang>`", with a **Translate** link and
+   a **Use ១ ២ ៣** button that fills the locale's own digits.
+3. **📚 Edit Books Map** — a second Monaco holding the 66 names, line-numbered with the model
+   book names (`Genesis (GEN) 01`), plus **Reset** / **Translate** / **Parse Markup String
+   (HTML\|XML)** / **📖 Guessing Names**. Guessing Names lists the locale's shipped sets
+   labelled by the bible keys that use them (km ships three: `អគត` · `ពគប, គកស១៦, GKHB` ·
+   `គខប`), **sorted so the set matching the current bible key is first and bold**.
+
+Actions 2 and 3 read `info.locale` **out of the editor buffer**, not out of the saved file —
+so running Choose Locale first is what makes "Use ១ ២ ៣" and the Khmer book sets appear at
+all. Run them in the other order and you get the English suggestions with no error message.
+
+Each action rewrites the buffer via `setPartialBibleInfo` and leaves the footer on **Unsaved
+changes**; nothing reaches disk until **Save**, which then fires `forceReloadAppWindows()`.
+
+### 15.5 Driving all of this through CDP
+
+- **A synthetic `contextmenu` event does NOT open Monaco's menu.** Verified against
+  `.monaco-editor`, `.overflow-guard`, `.monaco-scrollable-element`, `.lines-content`,
+  `.view-lines` and `.view-line`, with `pointerdown`/`mousedown` first — no menu in any case.
+- **Use the command palette instead**: `document.querySelector('.monaco-editor
+  .native-edit-context').focus()` then `press_key F1`. The three actions are listed above the
+  built-ins and the palette opens fine without OS foreground focus (it is a keybinding, not a
+  model mutation — CLAUDE.md's Monaco-focus rule bites typing, not commands).
+- **Match the palette row by LABEL, never by index.** It re-sorts the last-used command to
+  the top under "recently used", so a fixed arrow count runs the wrong action on the second
+  pass — that mistake silently re-opened the locale menu here.
+- **Filtering the palette programmatically does not work**: the native-setter `value` +
+  `input` trick empties the row list instead of filtering it. Read the rows, count
+  `ArrowDown`s to the one whose text matches, confirm `.focused` is on it, then `Enter`.
+- Everything else on this page is ordinary React: the URL box, the key input, the guessing-key
+  buttons, `Ok`/`Yes`, **Use ១ ២ ៣**, **Guessing Names** and its menu items all take a plain
+  `.click()` / native-setter `input` event.
+
+### 15.6 Cleanup — the cache is cleared with the trash now (fixed 2026-08-22)
+
+🗑 → **Yes** trashes `<key>.xml` **and clears the sibling `<key>.xml.cache` folder**
+(`clearBibleXMLCache`, commit `3a97acc4`; pinned by `bibleXMLHelpers.test.tsx`). On
+builds before 2026-08-22 the folder was left behind — if a stale `ZZTEST.xml.cache`
+from an earlier run is still on disk, remove it once and stop expecting new ones.
+Note the cache folder is named after the **KEY, not the file** — a bible saved as
+`my-kjv.xml` caches under `KJV.xml.cache`.
+
+Also note `saveJsonDataToXMLfile` **returns `true` without checking the write** — it awaits
+`saveXMLText` and discards its boolean — so "the import said it worked" is not evidence the
+file exists. Confirm on disk, or confirm the row in the list.
+
+---
+
+## 16. Resources — the user's own files beside the verse (RD-81..90, CM-93, W-37)
+
+The 4th entry of the Bible Find previewer's 4-way select
+([bible-find/BibleFindPreviewerComp.tsx](../../../../src/bible-find/BibleFindPreviewerComp.tsx)
+— Find / Cross Reference / Location-Name (KJV) / **Resources**; setting
+`bible-search-tab`). Facts that shape a run:
+
+- **File pattern is chapter-level:** `<bookKey>.<chapter>.<anything>` (`PSA.1.pdf`,
+  `GEN.49.outline.docx`). `<bookKey>.0.*` (chapter < 1) = whole-book file, listed under
+  EVERY chapter, tagged `Introduction`. `PSA.01.pdf` deliberately matches nothing —
+  canonical spelling only. Free-text search hits append below the verse matches,
+  capped at 200 (surfaced as "Too many matching files", never silent).
+- **No watcher, by design.** A file added while the app is open appears after the
+  10-second scan-cache TTL, or on box **Refresh** / panel **Reload**. Not a bug.
+- **A collapsed folder box never touches the disk**; only the active select entry is
+  mounted at all. The scan is breadth-first and budgeted: the folder plus TWO levels
+  of folders under it (`MAX_SCAN_DEPTH 2` since 2026-09-15 — it was 8, and a home
+  folder spent all 1500 dirs and found nothing), 1500 dirs, 20000 entries. A file
+  three folders down is not listed, by design. A drive root degrades with a visible
+  "Too many folders to search", never a hang.
+- **A row is a single click** → opens in the OS default app. No drag, no
+  double-click-present, no screen integration. Row menu: Open / Copy Path /
+  Reveal. Folder-header menu: Refresh / Add Folder / Reveal / Remove Folder (red,
+  confirm with Yes/No).
+- **Empty states are correct behaviour:** no folders → a single **Add Folder**
+  button; no verse selected → "Please select any bible verse."; a saved path that
+  is now a file → "Folder not found" (`ENOTDIR`).
+- The only entry point is the advanced panel's picker. The verse context menu's
+  **Open in Resources** item (`CM-93`) was REMOVED 2026-09-11 at the user's request.
+
+## 17. Connection Graph — people/places relations (RD-92..106, W-38)
+
+Opened from a Location-Name record's **Open Graph Preview** button
+([location-name-lookup/LocationNameDetailPanelsComp.tsx](../../../../src/location-name-lookup/LocationNameDetailPanelsComp.tsx));
+host `GraphViewPanelsHostComp` is mounted on the reader AND the main layout
+([graph-view/](../../../../src/graph-view/)). Facts that shape a run:
+
+- **Opening a record always starts FRESH** (RD-105) — no state leaks between graphs
+  of different records.
+- ⇕ drag boxes, wheel-zoom; **Ctrl+Z / Ctrl+Y walk every move** (drag, zoom,
+  expand — RD-102). The ✨ dock button re-lays-out both shapes (RD-103).
+- 🖱️R a box → menu differs for root / non-root / collapsed boxes (RD-101), and
+  carries **Set as centre** / **Use as root** (RD-106).
+- The panel is written in the record's lookup language (RD-104), and a box's verse
+  list is titled by YOUR bible (RD-100) — two independent language settings.
+- Export goes through `graphExportHelpers` (a correct `fsWriteFile` exemplar — no
+  blob `<a download>`).
+- The core under `graph-view/core/` is pure non-React; geometry constants are
+  load-bearing (see memory `graph-view-connection-graph`). Route rows from the
+  matrix (`RD-92..106`); the observed recipe is `W-38`.
+
+---
+
+## 18. The PACKAGED build — what prod mode changes (SKILL §2b) ⚠️
+
+Prod mode drives the app electron-builder wrote under `release/`, not `node_modules/
+electron` on Vite. Every `isDev` branch in the code base flips, and several of this
+file's rules were written on the dev side of that branch. What follows is the model;
+items marked *(source)* are read from the code and not yet re-observed live in a
+packaged run — confirm them the first time and drop the mark.
+
+### 18.1 Where things are
+
+- **Executable**: `release/win-unpacked/Open Worship app.exe` (x64) or
+  `release/win-arm64-unpacked/…` (arm64); macOS `release/mac[-arm64]/Open Worship
+  app.app`; Linux `release/linux-unpacked/open-worship-app`. `scripts/prod-app.mjs
+  locate` picks the one for this CPU and says whether any source file is newer than it.
+  The installer (`Open Worship app-<ver>-<os>-<arch>.exe` / `.zip`, `latest.yml`) sits
+  beside it — a `pack:*` writes both; the unpacked dir is what a run drives.
+- **Pages** are served by the app's own protocol: **`owa://local/<page>.html`**
+  (`electron/fsServe.ts`, `getRootUrl()` in `electron/protocolHelpers.ts`). The
+  main-window navigation guard (`isSupportedMainNavigation`,
+  `ElectronMainController.ts`) compares scheme + host, so `navigate_page` must use that
+  exact origin; a `file://` or `https://localhost:3000` URL is rejected. Observed live
+  2026-09-09: the release-dir app published `owa://local/reader.html` as its main-window
+  target — the page `mainHtmlPath` last held, not necessarily the Presenter.
+- **userData** is `%APPDATA%\open-worship-app` (macOS `~/Library/Application
+  Support/open-worship-app`, Linux `~/.config/open-worship-app`) — the `-dev` suffix is
+  dev only (`applyLaunchOverrides`, `electron/index.ts`). That dir holds `setting.json`
+  (`mainHtmlPath` recovery, §3), `bibles-data/`, `lookup-data/` and the single-instance
+  lock. `OWA_USER_DATA_PATH` / `--owa-user-data-path=` move all of it. **The app's code
+  is `resources/app.asar`** with `electron-build/`, `dist/*.gz.bundle` and
+  `tools/owa-devtools-mcp/` unpacked beside it (`asarUnpack` in package.json) — the MCP
+  host the chatbot talks to runs from that unpacked copy, so a `tools/` edit reaches
+  prod only through a rebuild.
+- **User content** (documents, lyrics, videos, audios, extra-bin) follows
+  `clientSetting["selected-parent-dir"]` in that `setting.json` and falls back to
+  userData itself — read the real path off the UI (`PathSelectorComp`) before sweeping
+  anything for MD-04. On the maintainer's box the packaged app points at
+  `Desktop\open-worship-data-dev` too, so "prod" and "dev" can share one content dir.
+
+### 18.2 Two instances, one machine
+
+- Discovery publishes `isDev` and `userDataPath` per instance
+  (`<temp>/open-worship-app-cdp/<pid>.json`, verified 2026-09-09 with a dev app and a
+  release-dir app side by side: `isDev: true` on `…\open-worship-app-dev`, `isDev:
+  false` on `…\open-worship-app`). `prod-app.mjs status` prints them with the exe behind
+  each pid; `wait-for-debugger.mjs --prod` waits for the packaged kind only.
+- The **release-dir exe and the installed app share userData** → one lock. The second
+  to start quits in `main()` before `ready` (`requestSingleInstanceLock` → `app.quit()`),
+  and the first only gets a `second-instance` focus. No error anywhere; the launch just
+  "does nothing".
+- The `owa-devtools` stdio server your tools come from resolves the app **newest
+  first on every call** (`resolveAppBrowserUrl`, `requireLivePort`). Only the in-app
+  HTTP host is pinned to its own instance (`pinCdpPort`, 2026-09-09). So a dev app
+  started AFTER the packaged one silently takes over every tool call — `owa_app_state`
+  is the tell (`instances[0].isDev`, and the window URL scheme). `OWA_CDP_PORT` pins an
+  outside client, read at its start.
+- **`npm run build` (inside every `pack:*`) deletes `electron-build/`**, the dev app's
+  main entry — memory `build-kills-running-dev-app` — and an `electron:watch` chain
+  restarts the dev app the moment the folder comes back. Stop the dev stack before the
+  pack, not just the app.
+- `ELECTRON_RUN_AS_NODE=1` (VS Code's shell) makes the packaged exe run as plain Node
+  and exit, exactly as it does `npm run dev`. `prod-app.mjs launch` strips it and
+  `NODE_ENV`.
+
+### 18.3 Defaults that flip (each one changes an assertion)
+
+| `isDev` branch | Dev | Packaged | QA consequence |
+|---|---|---|---|
+| AI features unset (`checkIsAiEnabledByDefault`, `electron/aiHelpers.ts`) | ON | **OFF** — no CDP, no MCP, no chatbot menu item | Nothing can be driven until `ai-enabled` is `"true"` in `setting.json` (`prod-app.mjs enable-ai`, app closed). Restore afterwards. |
+| `tran()` on a missing key (`src/lang/langHelpers.ts`) | throws, subtree blanks | returns the English text *(source)* | LT-01/02 assert **visually** (raw English on a Khmer screen = Low); the Critical throw class is invisible in prod and the report must say so. |
+| `data-react-comp-name` / `-fp` stamps (`vite-plugin-comp-name.ts`, `apply: 'serve'`) | present | absent | `owa_find_ui` reports no component; findings name the control's label / `data-widget-name`. |
+| `window.testSimpleToasts()` (`src/toast/toastHelpers.ts`) | defined | absent *(source)* | GL-10 toast stacking needs two real refusal toasts, or `PARTIAL`. |
+| Extra Binaries install (`extraBinInstallHelpers.ts`) | copies the local `bin-<ver>.tar.gz` | **downloads the published pack** *(source)* | MD-05 needs network and is the only real exercise of that path; a missing local pack is irrelevant. |
+| `ignore-certificate-errors` switch | on | off | A TLS failure on a URL import / SongSelect that only shows packaged is a finding. |
+| Main-process console (`all:app:log`, hidden-screen logs) | in the `npm run dev` terminal | nowhere visible | SC-05 is `BLOCKED: no main-process stdout in prod`. |
+| Electron security warnings, React DevTools, HMR noise (§7) | present | absent | The packaged console should be nearly silent; read every `[warn]`/`[error]`. |
+| Experiments page, dev menu items, `icon-dev.png` | present | absent / release icon | Rows citing `src/experiments/` are `EXCLUDED`; a dev icon on the packaged window is a packaging bug. |
+
+### 18.4 Recovery paths in prod
+
+- A main window stuck on a popup-only page (§2–§3): the file to edit is
+  `%APPDATA%\open-worship-app\setting.json` — the un-suffixed one — with the app
+  closed. Same key (`mainHtmlPath`), same fallback (`toAllowedMainHtmlPath`).
+- A packaged app that will not attach: `prod-app.mjs ai-status` first, `status` second
+  (lock holder), then check the exe `locate` printed is the one that ran.
+- **A fresh userData (`--user-data=<scratch>`) opens on the Bible Reader**, not the
+  Presenter (§3) — wait on `--match=owa://local/` and `owa_goto_page` to the presenter.
+- `prod-app.mjs stop` reports `forced after 8 s` every time so far (2026-09-09, twice):
+  a WM_CLOSE to the main window does not quit this app within that window. The force
+  kill is normal, and the script removes the dead instance's discovery file itself.
+- Renderer crash/hang recovery (§3) is the same code and also active packaged.
+
+### 18.5 Observed in the first full packaged run (2026-09-11, v2026.08.15 win-arm64)
+
+Everything here was seen live on `release/win-arm64-unpacked` driven on a scratch
+profile inside `release/`; it replaces the *(source)* marks it touches.
+
+- **A scratch profile inside `release/` is the default** (SKILL §2b P0-4) and it works:
+  `selected-parent-dir` unset → content follows `app.getPath('userData')`, so documents,
+  `bibles-data`, media, `extra-bin` and the lock all land under `release/`. The user's own
+  `setting.json` is never touched, so there is no `ai-enabled` value to restore.
+- **The Parent Directory box commits on every keystroke.** A per-character fill of an
+  absolute path made the app adopt `C:\` (the first existing prefix) and create
+  `C:\bibles-data` + `C:\local-storage` in the drive root before the *Set according paths*
+  confirm was answered. Seed the key in `setting.json` with the app closed instead.
+- **`tran()` really does not throw packaged** — confirmed, not inferred: the whole app in
+  `km-KH` rendered with no blank subtree and no `Translation for text …` line in any
+  console. LT-02 in prod is a VISUAL assertion plus a raw-English sweep. (Found that way:
+  `Slide Note: 1` stays English while `Document Note` translates.)
+- **Comp stamps are gone**, as predicted: every `owa_find_ui`/`owa_click` answer carries
+  `component: null` / `sourceFile: null`. Locate by label, `data-widget-name` or panel.
+- **`window.testSimpleToasts()` is absent** and the mini screen's lock/record/expand/⋮
+  icons carry **no accessible name at all** (`owa_list_ui` on the Mini Screen panel lists
+  only *Toggle showing screen [F5]*, the screen-id badge and the display button), so the
+  locked-screen refusal toast cannot be driven by label either. GL-10 in prod is PARTIAL
+  unless a refusal toast can be raised some other way.
+- **The media block writes OUTSIDE the data dir even on a scratch profile**:
+  `BackgroundVideosComp`/`BackgroundAudiosComp` stage the download in the OS temp dir
+  (`getTempPath()`) and move the finished file into the media dir. The failure path
+  cleaned up after itself (no `temp-*.part` in `%TEMP%` after three failed attempts).
+- **The PUBLISHED extra-bin pack can be too old to work, and only a prod run sees it.**
+  2026-09-11: the packaged app installed pack **0.0.2** from the real CDN (`yt-dlp
+  2026.07.04`, built 2026-08-11) and every media download failed with `ERROR: unable to
+  download video data: HTTP Error 403: Forbidden`. Dev is blind to this — it mock-installs
+  the LOCAL `bin-<ver>.tar.gz`, which was **0.0.3** (`yt-dlp 2026.08.19`) and works. So
+  `MD-01/02` were FAIL, not BLOCKED: a fresh install of the release cannot download media.
+- **Attribute a media failure in three runs before filing it**, because "403" alone names
+  neither the app nor YouTube:
+  1. the app's own attempt (twice — a 403 can be throttling),
+  2. the SAME `yt-dlp.exe` the app used, run directly with **the app's exact arguments**
+     (`<url> -o <out> --no-playlist --ffmpeg-location …\ffmpeg\bin --no-js-runtimes
+     --js-runtimes quickjs:…\qjs.exe`), and
+  3. a DIFFERENT yt-dlp build (the other pack on the machine) with those same arguments.
+  Same failure in 1+2 and success in 3 ⇒ stale binary, a **High** finding against the
+  published pack. Failure in all three ⇒ genuinely YouTube-side ⇒ BLOCKED.
+  ⚠️ Do not "simplify" step 2 with `-f worst`: a newer yt-dlp takes a different extraction
+  path (visionos/m3u8) where that format does not exist and dies on *Requested format is
+  not available*, which looks like a failure and proves nothing. Keep the app's args.
+- **Do not judge staleness by a test file.** `prod-app.mjs locate` now skips `*.test.*`
+  when looking for sources newer than the exe (it was reporting STALE for
+  `aiChatSessionHelpers.test.ts`, which never ships).
+- **The release ships its own test files**: 22 `*.test.mjs` (328 KB) under
+  `app.asar.unpacked/tools/owa-devtools-mcp/`.
+- **First-run furnishing is a test, not a chore** — the Reader's *No Parent Directory
+  Selected* → Settings redirect, *Set according paths* → 11 child dirs, *Create KJV Bible
+  XML* (~5 MB, no network), and the Extra Binaries install from the REAL CDN
+  (`INSTALLED 0.0.2`, archive kept, `Re-extract` works offline) all passed here.
+- **`navigate_page` is unusable packaged — use `owa_goto_page`.** The firewall's
+  `checkIsAppUrl` (`firewall.mjs:244`) allows `file:`, `about:blank` and `http(s)` on
+  localhost/127.0.0.1 only; a packaged build serves `owa://local`, so every attempt is
+  refused with *"Opening an address outside this app is switched off"*. `owa_goto_page`
+  takes `presenter.html` / `reader.html` / `appDocumentEditor.html` and is not affected.
+- **A dev-only defect must be re-checked against the package before it is filed against a
+  release.** A parallel dev run's blank `appDocumentEditor.html` (with a `.owl` selected)
+  did NOT reproduce packaged: the editor rendered fully, the app raised its own
+  *"Open Worship slide required … Return to Presenter?"* guard, the console stayed empty
+  even across a stop/relaunch that booted straight back into the editor
+  (`mainHtmlPath` persists the page, and the `.owl` selection persists with it), and
+  *Return to Presenter* restored `presenter.html`. Dev runs the working tree; the package
+  runs the tree it was built from — name which tree a finding belongs to, **but do not
+  assume the tree is the difference**: here it was not (the only change across those
+  commits in the whole document/editor path was two lines adding a header button). A
+  route hypothesis (`reader.html` → editor, presenter never mounted) was then tested on
+  the package in both selection states — nothing selected, and a `.owl` written straight
+  into `selected-vary-app-document` — and both rendered correctly with the guard and an
+  empty console; the dev session could not reproduce it again either, and downgraded it to
+  intermittent. **Sequence that works when a dev finding will not reproduce packaged:**
+  diff the relevant paths before blaming the build, then vary the approach (route,
+  selection state, cold boot vs. in-session navigation), then — if it still will not
+  reproduce — file the CODE-level risk rather than the behaviour (here: `_getInstance`
+  throws on an extension mismatch and no error boundary wraps `SlideEditorComp`), because
+  an unreproducible blank window is not a release finding but a missing boundary is real.

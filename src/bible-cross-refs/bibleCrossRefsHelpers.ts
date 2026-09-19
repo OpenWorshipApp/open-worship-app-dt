@@ -2,20 +2,24 @@ import { useState } from 'react';
 
 import { decrypt, bible_ref } from '../_owa-crypto';
 import { handleError } from '../helper/errorHelpers';
-import { toBibleFileName } from '../helper/bible-helpers/bibleLogicHelpers1';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/appHooks';
 import { appApiFetch } from '../helper/networkHelpers';
-import CacheManager from '../others/CacheManager';
+import { globalCacheManager10Seconds } from '../others/CacheManager';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { unlocking } from '../server/unlockingHelpers';
-import { getLangCode } from '../lang/langHelpers';
-import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 import {
-    CrossReferenceType,
-    validateCrossReference,
-} from '../helper/ai/bibleCrossRefHelpers';
+    DEFAULT_LANG_CODE,
+    DEFAULT_LOCALE,
+    getLangCode,
+    getLocalBibleCrossRef,
+    supportedLocales,
+} from '../lang/langHelpers';
+import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
+import { validateCrossReference } from '../helper/ai/bibleCrossRefHelpers';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
+import { appLog, appError as logError } from '../helper/loggerHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export type RawBibleCrossRefListType = string[][];
 export type BibleCrossRefType = {
@@ -59,14 +63,14 @@ function transform(bibleRef: RawBibleCrossRefListType): BibleCrossRefType[][] {
 }
 
 // TODO: subject to remove
-const bibleCrossRefCache = new CacheManager<BibleCrossRefType[][]>(60); // 1 minute
 export async function getBibleCrossRef(
     bibleTitle: string,
     forceRefresh = false,
 ) {
-    return unlocking(`bible-refs/${bibleTitle}`, async () => {
+    const key = `bible-refs/${bibleTitle}`;
+    return unlocking(key, async () => {
         if (!forceRefresh) {
-            const cachedData = await bibleCrossRefCache.get(bibleTitle);
+            const cachedData = await globalCacheManager10Seconds.get(key);
             if (cachedData !== null) {
                 return cachedData;
             }
@@ -80,42 +84,32 @@ export async function getBibleCrossRef(
             const json = JSON.parse(text);
             if (Array.isArray(json)) {
                 const data = transform(json);
-                await bibleCrossRefCache.set(bibleTitle, data);
+                await globalCacheManager10Seconds.set(key, data);
                 return data;
             }
         } catch (error) {
-            console.error('Error parsing JSON: for key', bibleTitle);
+            logError('Error parsing JSON: for key', bibleTitle);
             handleError(error);
         }
         return null;
     });
 }
 
-const bibleCrossRefAICache = new CacheManager<CrossReferenceType[]>(60); // 1 minute
-export async function getBibleCrossRefAI(
-    {
-        aiType,
-        langCode,
-        bookKey,
-        chapter,
-        verse,
-    }: {
-        aiType: string;
-        langCode: string;
-        bookKey: string;
-        chapter: number;
-        verse: number;
-    },
-    forceRefresh = false,
-) {
+export async function getBibleCrossRefAI({
+    aiType,
+    langCode,
+    bookKey,
+    chapter,
+    verse,
+}: {
+    aiType: string;
+    langCode: string;
+    bookKey: string;
+    chapter: number;
+    verse: number;
+}) {
     const key = `${aiType}/${langCode}/${bookKey}/${chapter}/${verse}.json`;
     return unlocking(key, async () => {
-        if (!forceRefresh) {
-            const cachedData = await bibleCrossRefAICache.get(key);
-            if (cachedData !== null) {
-                return cachedData;
-            }
-        }
         const jsonText = await downloadBibleCrossRefAI(key);
         if (jsonText === null) {
             return null;
@@ -125,43 +119,13 @@ export async function getBibleCrossRefAI(
             if (validateCrossReference(data).valid === false) {
                 return null;
             }
-            await bibleCrossRefAICache.set(key, data);
             return data as CrossReferenceType[];
         } catch (error) {
-            console.error('Error parsing JSON: for key', key);
+            logError('Error parsing JSON: for key', key);
             handleError(error);
         }
         return null;
     });
-}
-
-// TODO: subject to remove
-export function useGettingBibleCrossRef(
-    bookKey: string,
-    chapter: number,
-    verseNum: number,
-) {
-    const key = `${toBibleFileName(bookKey, chapter)}.${verseNum}`;
-    const [bibleCrossRef, setBibleCrossRef] = useState<
-        BibleCrossRefType[][] | null | undefined
-    >(undefined);
-    useAppEffectAsync(
-        async (methodContext) => {
-            const data = await getBibleCrossRef(key);
-            methodContext.setBibleCrossRef(data);
-        },
-        [bookKey, chapter],
-        { setBibleCrossRef },
-    );
-    return {
-        bibleCrossRef,
-        refresh: () => {
-            setBibleCrossRef(undefined);
-            getBibleCrossRef(key, true).then((data) => {
-                setBibleCrossRef(data);
-            });
-        },
-    };
 }
 
 async function fetchBibleCrossRefAI(
@@ -170,10 +134,28 @@ async function fetchBibleCrossRefAI(
     bookKey: string,
     chapter: number,
     verseNum: number,
-    forceRefresh = false,
 ) {
-    const locale = await getBibleLocale(bibleKey);
-    const langCode = getLangCode(locale) ?? 'en';
+    let locale = await getBibleLocale(bibleKey);
+    if (supportedLocales.includes(locale) === false) {
+        locale = DEFAULT_LOCALE;
+    }
+
+    const localData = await getLocalBibleCrossRef(locale, {
+        bookKey,
+        chapter,
+        verse: verseNum,
+    });
+    if (localData !== null) {
+        return localData;
+    }
+
+    appLog('No local cross ref found for, fetching online', {
+        locale,
+        bookKey,
+        chapter,
+        verseNum,
+    });
+    const langCode = getLangCode(locale) ?? DEFAULT_LANG_CODE;
     const params = {
         aiType,
         langCode,
@@ -181,15 +163,12 @@ async function fetchBibleCrossRefAI(
         chapter,
         verse: verseNum,
     };
-    let data = await getBibleCrossRefAI(params, forceRefresh);
-    if (data === null && langCode !== 'en') {
-        data = await getBibleCrossRefAI(
-            {
-                ...params,
-                langCode: 'en',
-            },
-            forceRefresh,
-        );
+    let data = await getBibleCrossRefAI(params);
+    if (data === null && langCode !== DEFAULT_LANG_CODE) {
+        data = await getBibleCrossRefAI({
+            ...params,
+            langCode: DEFAULT_LANG_CODE,
+        });
     }
     return data;
 }
@@ -214,7 +193,7 @@ export function useGettingBibleCrossRefAI(
             );
             methodContext.setBibleCrossRef(data);
         },
-        [bibleKey, bookKey, chapter, verseNum],
+        [aiType, bibleKey, bookKey, chapter, verseNum],
         { setBibleCrossRef },
     );
     return {
@@ -227,7 +206,6 @@ export function useGettingBibleCrossRefAI(
                 bookKey,
                 chapter,
                 verseNum,
-                true,
             ).then((data) => {
                 setBibleCrossRef(data);
             });
@@ -291,6 +269,23 @@ export function fromBibleCrossRefText(text: string): BibleCrossRefType {
     };
 }
 
+// The preview of a verse shown under a cross reference. Cut to a word, and
+// marked as cut only when it actually was: `substring(150) + '...'` appended an
+// ellipsis to every verse whether or not anything had been removed, so a short
+// one ended "living soul...." -- four dots promising a rest of the verse that
+// did not exist. Cutting here rather than in CSS is deliberate; the panel can
+// hold a hundred of these and the tail is memory nobody reads.
+const PREVIEW_MAX_LENGTH = 150;
+function toPreviewText(text: string) {
+    if (text.length <= PREVIEW_MAX_LENGTH) {
+        return text;
+    }
+    const cut = text.substring(0, PREVIEW_MAX_LENGTH);
+    const lastSpaceIndex = cut.lastIndexOf(' ');
+    const head = lastSpaceIndex > 0 ? cut.substring(0, lastSpaceIndex) : cut;
+    return head.replace(/[\s,;:]+$/, '') + '\u2026';
+}
+
 export async function breakItem(bibleKey: string, bibleVerseKey: string) {
     const extracted = bibleRenderHelper.fromKJVBibleVersesKey(bibleVerseKey);
     const bibleModelInfo = getBibleModelInfo();
@@ -312,7 +307,7 @@ export async function breakItem(bibleKey: string, bibleVerseKey: string) {
     await bibleItem.toTitle();
     const bibleText = await bibleItem.toText();
     return {
-        htmlText: bibleText.substring(0, 150) + '...',
+        htmlText: toPreviewText(bibleText),
         bibleItem,
         bibleText,
     };

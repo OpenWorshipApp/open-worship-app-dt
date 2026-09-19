@@ -4,11 +4,10 @@ import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
 import {
     attemptClosing,
+    genParentWinCenterPosition,
     genWebPreferences,
     getAppThemeBackgroundColor,
-    getCenterScreenPosition,
     guardBrowsing,
-    isSecured,
 } from './electronHelpers';
 import { join } from 'node:path';
 
@@ -17,9 +16,11 @@ export default class ElectronLWShareController {
     win: BrowserWindow | null = null;
     mainWin: BrowserWindow | null = null;
     createWindow(mainWin: BrowserWindow) {
-        const { x, y, width, height } = getCenterScreenPosition(mainWin, {
-            width: 550,
-            height: 600,
+        const width = 550;
+        const height = 600;
+        const { x, y } = genParentWinCenterPosition(mainWin, {
+            width,
+            height,
         });
         const webPreferences = genWebPreferences(
             join(__dirname, 'client', 'lwShare.preload.js'),
@@ -30,12 +31,7 @@ export default class ElectronLWShareController {
             y,
             width,
             height,
-            webPreferences: {
-                webSecurity: isSecured,
-                nodeIntegration: true,
-                contextIsolation: false,
-                preload: join(__dirname, 'client', 'lwShare.preload.js'),
-            },
+            webPreferences,
             parent: mainWin,
             autoHideMenuBar: true,
         });

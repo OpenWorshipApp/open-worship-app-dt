@@ -8,13 +8,48 @@ $header-height: 34px;
 $card-header-height: 40px;
 
 $base-z-index: 10;
-$z-index-bible-lookup: $base-z-index + 10;
+// Floating helper widgets (marquee, quick text, bible custom style, notes) sit
+// just above the app content but BELOW modals/popups, the finder, toasts and
+// context menus so those always render on top of a floating widget.
+// Several widgets can be open at once, so the value below is only the FLOOR of a
+// reserved band: the widget the user last touched is raised within
+// `$z-index-floating-widget-band` levels of it (see `FloatingWidgetComp.scss` /
+// `FLOATING_WIDGET_MAX_Z_OFFSET`). The whole band still ends below every layer
+// listed after it here — EXCEPT for a widget hosted inside a modal, which moves
+// to `$z-index-floating-widget-in-modal` (see there).
+$z-index-floating-widget: $base-z-index + 5;
+$z-index-floating-widget-band: 9;
+$z-index-bible-lookup: $base-z-index + 15;
 $z-index-popup-full-screen: $base-z-index + 20;
 $z-index-resize-actor-top: $base-z-index + 30;
-$z-index-finder: $base-z-index + 40;
 $z-index-widget-full-view: $base-z-index + 45;
-$z-index-context-menu: $base-z-index + 50;
+// A floating widget OPENED FROM INSIDE a modal (the names/locations lookup and
+// the bible custom style widget both live in the Bible Lookup popup's header)
+// gets its own band ABOVE the modal. The band above is deliberately the whole
+// modal stack, not just `$z-index-bible-lookup`: the modal's own content can
+// raise itself to `app-popup-full`, a resize actor or a full view, and a widget
+// the user opened from that modal has to stay reachable over all of them.
+$z-index-floating-widget-above-modal: $base-z-index + 46;
+// Alert/confirm/input popups interrupt whatever is on screen and must be
+// answered, so they outrank even an in-modal floating widget (the band above
+// tops out at
+// $z-index-floating-widget-above-modal + $z-index-floating-widget-band).
+$z-index-blocking-modal: $base-z-index + 56;
 $z-index-toast: $base-z-index + 60;
-$z-index-progress-bar: $base-z-index + 60;
+$z-index-presenting-control: $base-z-index + 70;
+// The keyboard screencast renders INSIDE `#presenting-control`, so this only has
+// to beat its siblings there — the drawing canvas, the spotlight mask and the
+// floating panel. It is a caption on top of everything being presented,
+// including the operator's own annotation.
+$z-index-keyboard-screencast: $base-z-index + 75;
+$z-index-progress-bar: $base-z-index + 80;
+$z-index-context-menu: 99999;
 
-$hight-light-color: #ad0090;
+// NOTE: `$app-highlight-color` (#ad0090) was deliberately removed. It was a
+// single magenta doing four unrelated jobs -- selected row, armed overlay,
+// progress text, edit affordance -- while the very same hue family also meant
+// "live on a screen" and "Bible Reader mode". Colour carried no rank, so
+// nothing could out-shout the one state that matters during a service.
+// Use `var(--app-accent)` for anything that merely needs to stand out, and
+// `var(--app-on-air)` ONLY for content live on a congregation screen.
+// Both are defined per theme in `theme-override-{dark,light}.scss`.

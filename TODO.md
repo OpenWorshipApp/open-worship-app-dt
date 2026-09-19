@@ -4,7 +4,7 @@
 * ~~editor background~~
 * ~~editor back-front~~
 * ~~editor font family~~
-* ~~playlist~~
+* ~~presenting flow~~
 * ~setting-bible~~
 * ~~setting-about~~
 * ~~setting~~

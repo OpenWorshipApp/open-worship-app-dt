@@ -1,8 +1,7 @@
 @use '../others/variables.scss' as *;
 
 #app-confirm-popup {
-  width: 600px;
-  max-width: calc(100vw - 10px);
-  min-height: 200px;
-  overflow: auto;
+  width: 520px;
+  max-width: calc(100vw - 20px);
+  max-height: calc(100vh - 20px);
 }

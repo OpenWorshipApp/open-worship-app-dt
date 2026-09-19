@@ -1,25 +1,45 @@
-import EventHandler from '../../event/EventHandler';
-import Canvas from './Canvas';
-import CanvasItem, { CanvasItemPropsType } from './CanvasItem';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
+import EventHandler, { type ListenerType } from '../../event/EventHandler';
+import type Canvas from './Canvas';
+import type { CanvasItemPropsType } from './CanvasItem';
+import type CanvasItem from './CanvasItem';
+import SettingManager from '../../helper/SettingManager';
 import FileSource from '../../helper/FileSource';
 import CanvasItemText from './CanvasItemText';
 import CanvasItemImage from './CanvasItemImage';
+import type { CanvasItemBiblePropsType } from './CanvasItemBibleItem';
 import CanvasItemBibleItem from './CanvasItemBibleItem';
-import BibleItem from '../../bible-list/BibleItem';
+import { genFittedHtmlBoxLayout } from './canvasBoxLayoutHelpers';
+import type BibleItem from '../../bible-list/BibleItem';
+import type { AppColorType } from '../../others/color/colorHelpers';
 import {
-    CanvasItemMediaPropsType,
-    CanvasControllerEventType,
+    checkIsMediaCanvasItemType,
+    getRemoteMediaMimetypeName,
+    type CanvasItemMediaDimPropsType,
+    type CanvasControllerEventType,
 } from './canvasHelpers';
 import CanvasItemVideo from './CanvasItemVideo';
+import CanvasItemCamera from './CanvasItemCamera';
+import CanvasItemAudio from './CanvasItemAudio';
+import CanvasItemYouTube from './CanvasItemYouTube';
+import CanvasItemWebsite from './CanvasItemWebsite';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import { createContext, use } from 'react';
 import { showCanvasItemContextMenu } from './canvasContextMenuHelpers';
-import AppDocument from '../../app-document-list/AppDocument';
-import Slide from '../../app-document-list/Slide';
+import type AppDocument from '../../app-document-list/AppDocument';
+import { allArrows } from '../../event/KeyboardEventListener';
 
-const EDITOR_SCALE_SETTING_NAME = 'canvas-editor-scale';
+const editorScaleSettingManager = new SettingManager<number>({
+    settingName: 'canvas-editor-scale',
+    defaultValue: 1,
+    isErrorToDefault: true,
+    validate: (value) => {
+        return Number.isFinite(Number.parseFloat(value));
+    },
+    serialize: (value) => `${value}`,
+    deserialize: (value) => Number.parseFloat(value),
+});
 export const defaultRangeSize = {
     size: 10,
     min: 1,
@@ -28,21 +48,23 @@ export const defaultRangeSize = {
 };
 
 export type CanvasItemEventDataType = { canvasItems: CanvasItem<any>[] };
+type EditCanvasItemsOptionsType = {
+    showNotFoundToast?: boolean;
+};
 
 class CanvasController extends EventHandler<CanvasControllerEventType> {
+    readonly MOVING_OFFSET = 20;
     static readonly eventNamePrefix: string = 'canvas-c';
     private _scale: number = 1;
     readonly appDocument: AppDocument;
     readonly canvas: Canvas;
+    public toCenterView: () => void = () => {};
+    public focusEditor: () => void = () => {};
+    public onArrowing: (event: KeyboardEvent) => void = () => {};
 
     constructor(appDocument: AppDocument, canvas: Canvas) {
         super();
-        const defaultData = Number.parseFloat(
-            getSetting(EDITOR_SCALE_SETTING_NAME) ?? '',
-        );
-        if (!Number.isNaN(defaultData)) {
-            this._scale = defaultData;
-        }
+        this._scale = editorScaleSettingManager.getSetting();
         this.appDocument = appDocument;
         this.canvas = canvas;
     }
@@ -53,7 +75,9 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
     set scale(newScale: number) {
         this._scale = newScale;
-        setSetting(EDITOR_SCALE_SETTING_NAME, this._scale.toString());
+        if (Number.isFinite(newScale)) {
+            editorScaleSettingManager.setSetting(newScale);
+        }
         this.addPropEvent('scale', { canvasItems: this.canvas.canvasItems });
     }
 
@@ -64,18 +88,55 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         super.addPropEvent(eventName, data);
     }
 
-    applyEditItem(canvasItem: CanvasItem<any>) {
-        const canvasItems = this.canvas.canvasItems;
-        const index = canvasItems.findIndex((item) => {
-            return item.checkIsSame(canvasItem);
-        });
-        if (index === -1) {
-            showSimpleToast('Edit Canvas Item', 'Canvas item not found');
-            return;
+    editCanvasItemsByIds(
+        ids: number[],
+        mutator: (canvasItem: CanvasItem<any>) => void,
+        options: EditCanvasItemsOptionsType = {},
+    ) {
+        const { showNotFoundToast = true } = options;
+        if (ids.length === 0) {
+            return [];
         }
-        canvasItems[index] = canvasItem;
-        this.setCanvasItems(canvasItems);
-        canvasItem.fireEditEvent();
+
+        const latestCanvasItems = this.canvas.canvasItems;
+        const idSet = new Set(ids);
+        const matchedCanvasItems = latestCanvasItems.filter((canvasItem) => {
+            return idSet.has(canvasItem.id);
+        });
+
+        if (matchedCanvasItems.length === 0) {
+            if (showNotFoundToast) {
+                showSimpleToast(
+                    tran('Edit Canvas Item'),
+                    tran('Canvas item not found'),
+                );
+            }
+            return [];
+        }
+
+        for (const matchedCanvasItem of matchedCanvasItems) {
+            mutator(matchedCanvasItem);
+        }
+
+        this.setCanvasItems(latestCanvasItems);
+        for (const matchedCanvasItem of matchedCanvasItems) {
+            matchedCanvasItem.fireEditEvent();
+        }
+
+        return matchedCanvasItems;
+    }
+
+    editCanvasItemById(
+        id: number,
+        mutator: (canvasItem: CanvasItem<any>) => void,
+        options: EditCanvasItemsOptionsType = {},
+    ) {
+        const [matchedCanvasItem] = this.editCanvasItemsByIds(
+            [id],
+            mutator,
+            options,
+        );
+        return matchedCanvasItem;
     }
 
     fireUpdateEvent() {
@@ -84,48 +145,57 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         });
     }
 
-    async cloneItem(canvasItem: CanvasItem<any>) {
-        const newCanvasItem = canvasItem.clone();
-        newCanvasItem.props.top += 20;
-        newCanvasItem.props.left += 20;
-        newCanvasItem.props.id = this.canvas.maxItemId + 1;
-        return newCanvasItem;
-    }
-
-    async duplicate(canvasItem: CanvasItem<any>) {
-        const newCanvasItems = this.canvas.canvasItems;
-        const newCanvasItem = await this.cloneItem(canvasItem);
-        if (newCanvasItem === null) {
-            return;
-        }
-        const index = this.canvas.canvasItems.indexOf(canvasItem);
-        newCanvasItems.splice(index + 1, 0, newCanvasItem);
-        this.setCanvasItems(newCanvasItems);
-    }
-
-    deleteItem(canvasItem: CanvasItem<any>) {
-        const canvasItems = this.canvas.canvasItems;
-        const index = canvasItems.findIndex((item) => {
-            return item.checkIsSame(canvasItem);
+    fireReloadEvent() {
+        this.addPropEvent('reload', {
+            canvasItems: this.canvas.canvasItems,
         });
-        if (index === -1) {
-            showSimpleToast('Delete Canvas Item', 'Canvas item not found');
-            return;
-        }
-        canvasItems.splice(index, 1);
-        this.setCanvasItems(canvasItems);
     }
 
-    addNewItem(canvasItem: CanvasItem<any>) {
+    duplicateItems(canvasItems: CanvasItem<any>[]) {
         const newCanvasItems = this.canvas.canvasItems;
-        canvasItem.props.id = this.canvas.maxItemId + 1;
-        newCanvasItems.push(canvasItem);
+        for (const canvasItem of canvasItems) {
+            canvasItem.props.id = this.canvas.maxItemId + 1;
+            canvasItem.props.top += this.MOVING_OFFSET;
+            canvasItem.props.left += this.MOVING_OFFSET;
+            newCanvasItems.push(canvasItem);
+        }
         this.setCanvasItems(newCanvasItems);
     }
 
-    async addNewTextItem() {
+    deleteItems(targetCanvasItems: CanvasItem<any>[]) {
+        const deletableCanvasItems = targetCanvasItems.filter((targetItem) => {
+            return !targetItem.isLocked;
+        });
+        if (deletableCanvasItems.length < targetCanvasItems.length) {
+            showSimpleToast(
+                tran('Delete Canvas Items'),
+                tran('Locked items cannot be deleted'),
+            );
+        }
+        if (deletableCanvasItems.length === 0) {
+            return;
+        }
+        const canvasItems = this.canvas.canvasItems;
+        const newCanvasItems = canvasItems.filter((item) => {
+            return !deletableCanvasItems.some((targetItem) => {
+                return item.checkIsSame(targetItem);
+            });
+        });
+        this.setCanvasItems(newCanvasItems);
+    }
+
+    addNewItems(canvasItems: CanvasItem<any>[]) {
+        const newCanvasItems = this.canvas.canvasItems;
+        for (const canvasItem of canvasItems) {
+            canvasItem.props.id = this.canvas.maxItemId + 1;
+            newCanvasItems.push(canvasItem);
+        }
+        this.setCanvasItems(newCanvasItems);
+    }
+
+    addNewTextItem() {
         const newItem = CanvasItemText.genDefaultItem();
-        this.addNewItem(newItem);
+        this.addNewItems([newItem]);
     }
 
     getMousePosition(event: any) {
@@ -135,44 +205,196 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         return { x, y };
     }
 
-    async genNewMediaItemFromFilePath(filePath: string, event: any) {
+    /**
+     * Where a newly inserted box should be CENTERED.
+     *
+     * The canvas context menu inserts at the cursor. The app's Insert menu (and
+     * anything else driven without a pointer) has no cursor, so the box lands in
+     * the middle of the slide instead — the same fallback `addNewBibleItem`
+     * already uses for a keyboard paste.
+     */
+    getInsertPosition(event?: any) {
+        if (event === undefined || event === null) {
+            return { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+        }
+        return this.getMousePosition(event);
+    }
+
+    async genNewMediaItemFromFilePath(filePath: string, event?: any) {
         try {
             const fileSource = FileSource.getInstance(filePath);
             const mediaType =
                 fileSource.metadata?.appMimetype.mimetypeName ?? '';
-            if (!['image', 'video'].includes(mediaType)) {
+            if (
+                !checkIsMediaCanvasItemType(mediaType) &&
+                mediaType !== 'audio'
+            ) {
                 showSimpleToast(
-                    'Insert Medias',
-                    'Only image and video files are supported',
+                    tran('Insert Medias'),
+                    tran('Only image, video and audio files are supported'),
                 );
                 return;
             }
-            const { x, y } = this.getMousePosition(event);
+            const { x, y } = this.getInsertPosition(event);
             const newItem = await (mediaType === 'image'
                 ? CanvasItemImage.genFromInsertion(x, y, filePath)
-                : CanvasItemVideo.genFromInsertion(x, y, filePath));
+                : mediaType === 'audio'
+                  ? CanvasItemAudio.genFromInsertion(x, y, filePath)
+                  : CanvasItemVideo.genFromInsertion(x, y, filePath));
             return newItem;
         } catch (error) {
             handleError(error);
         }
-        showSimpleToast('Insert Image or Video', 'Fail to insert medias');
+        showSimpleToast(
+            tran('Insert Image, Video or Audio'),
+            tran('Fail to insert medias'),
+        );
     }
 
-    async genNewImageItemFromFile(file: File | Blob, event: any) {
+    // Insert a media item that points at a remote link instead of a local
+    // file. The link is stored as the item's source, so the document stays
+    // small and the media is only fetched when it is actually rendered.
+    async genNewMediaItemFromLink(url: string, event?: any) {
         try {
-            const { x, y } = this.getMousePosition(event);
+            const mediaType = getRemoteMediaMimetypeName(url);
+            if (mediaType === null) {
+                showSimpleToast(
+                    tran('Insert Media Link'),
+                    tran('Only image, video and audio links are supported'),
+                );
+                return;
+            }
+            const { x, y } = this.getInsertPosition(event);
+            const newItem = await (mediaType === 'image'
+                ? CanvasItemImage.genCanvasItemFromLink(x, y, url)
+                : mediaType === 'audio'
+                  ? CanvasItemAudio.genCanvasItemFromLink(x, y, url)
+                  : CanvasItemVideo.genCanvasItemFromLink(x, y, url));
+            return newItem;
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast(
+            tran('Insert Media Link'),
+            tran('Fail to insert media link'),
+        );
+    }
+
+    genNewYouTubeItem(url: string, event?: any) {
+        try {
+            const { x, y } = this.getInsertPosition(event);
+            return CanvasItemYouTube.genFromUrl(x, y, url);
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast(tran('Insert YouTube'), tran('Fail to insert YouTube'));
+    }
+
+    genNewWebsiteItem(url: string, event?: any) {
+        try {
+            const { x, y } = this.getInsertPosition(event);
+            return CanvasItemWebsite.genFromUrl(x, y, url);
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast(tran('Insert Website'), tran('Fail to insert website'));
+    }
+
+    genNewColorBoxItem(color: AppColorType, event?: any) {
+        try {
+            const { x, y } = this.getInsertPosition(event);
+            return CanvasItemText.genColorBoxItem(x, y, color);
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast(tran('New'), tran('Fail to insert medias'));
+    }
+
+    genNewCameraItem(camera: { deviceId: string; label: string }, event?: any) {
+        try {
+            const { x, y } = this.getInsertPosition(event);
+            return CanvasItemCamera.genFromDevice(
+                x,
+                y,
+                camera.deviceId,
+                camera.label,
+            );
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast(tran('Insert Camera'), tran('Fail to insert camera'));
+    }
+
+    async genNewImageItemFromFile(file: File | Blob, event?: any) {
+        try {
+            const { x, y } = this.getInsertPosition(event);
             const newItem = CanvasItemImage.genFromFile(x, y, file);
             return newItem;
         } catch (error) {
             handleError(error);
         }
-        showSimpleToast('Pasting Image', 'Fail to insert image');
+        showSimpleToast(tran('Pasting Image'), tran('Fail to insert image'));
     }
 
-    async addNewBibleItem(bibleItem: BibleItem) {
+    static async genMediaItemFromFile(x: number, y: number, file: File | Blob) {
+        if (file.type.startsWith('video/')) {
+            return CanvasItemVideo.genFromFile(x, y, file);
+        }
+        if (file.type.startsWith('audio/')) {
+            return CanvasItemAudio.genFromFile(x, y, file);
+        }
+        return CanvasItemImage.genFromFile(x, y, file);
+    }
+
+    async genNewMediaItemFromFile(file: File | Blob, event: any) {
+        try {
+            const { x, y } = this.getInsertPosition(event);
+            const newItem = await CanvasController.genMediaItemFromFile(
+                x,
+                y,
+                file,
+            );
+            return newItem;
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast(
+            tran('Insert Image, Video or Audio'),
+            tran('Fail to insert medias'),
+        );
+    }
+
+    // `event` comes from the canvas context menu; without it the box is
+    // centered, as for a keyboard paste that has no cursor position.
+    async addNewBibleItem(bibleItem: BibleItem, event?: any) {
         const id = this.canvas.maxItemId + 1;
         const newItem = await CanvasItemBibleItem.fromBibleItem(id, bibleItem);
-        this.addNewItem(newItem);
+        if (newItem.type === 'bible') {
+            const layout = genFittedHtmlBoxLayout(
+                newItem.props as CanvasItemBiblePropsType,
+                this.canvas.width,
+                this.canvas.height,
+                event === undefined ? null : this.getMousePosition(event),
+            );
+            if (layout !== null) {
+                newItem.applyProps(layout);
+            }
+        }
+        this.addNewItems([newItem]);
+    }
+
+    async replaceBibleItem(canvasItemId: number, bibleItem: BibleItem) {
+        const canvasItem = this.canvas.canvasItems.find((item) => {
+            return item.id === canvasItemId && item.type === 'bible';
+        });
+        if (canvasItem === undefined) {
+            return;
+        }
+        await (canvasItem as CanvasItemBibleItem).setNewBibleItem(bibleItem);
+        const newCanvasItems = this.canvas.canvasItems.map((item) =>
+            item.checkIsSame(canvasItem) ? canvasItem : item,
+        );
+        this.setCanvasItems(newCanvasItems);
     }
 
     applyOrderingData(canvasItem: CanvasItem<any>, isBack: boolean) {
@@ -209,15 +431,58 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     ) {
         const scale = Math.min(targetWidth / width, targetHeight / height);
         const props = canvasItem.props as CanvasItemPropsType;
+        const oldWidth = props.width;
+        const oldHeight = props.height;
         props.width = Math.round(width * scale);
         props.height = Math.round(height * scale);
+        const offsetX = Math.round((oldWidth - props.width) / 2);
+        const offsetY = Math.round((oldHeight - props.height) / 2);
+        props.left += offsetX;
+        props.top += offsetY;
         const targetDimension = {
             parentWidth: targetWidth,
             parentHeight: targetHeight,
         };
-        canvasItem.applyBoxData(targetDimension, {
-            horizontalAlignment: 'center',
-            verticalAlignment: 'center',
+        canvasItem.applyBoxData(targetDimension);
+    }
+
+    moveCanvasItem(
+        canvasItem: CanvasItem<any>,
+        offsetX: number,
+        offsetY: number,
+        {
+            arrowing,
+            isCtrlKey,
+            isShiftKey,
+        }: {
+            arrowing: (typeof allArrows)[number];
+            isCtrlKey: boolean;
+            isShiftKey: boolean;
+        },
+    ) {
+        let actualOffsetX = 0;
+        let actualOffsetY = 0;
+        if (arrowing === 'ArrowUp') {
+            actualOffsetY = -offsetY;
+        } else if (arrowing === 'ArrowDown') {
+            actualOffsetY = offsetY;
+        } else if (arrowing === 'ArrowLeft') {
+            actualOffsetX = -offsetX;
+        } else if (arrowing === 'ArrowRight') {
+            actualOffsetX = offsetX;
+        }
+        const props = canvasItem.props as CanvasItemPropsType;
+        let factor = 1;
+        if (isCtrlKey) {
+            factor = 0.1;
+        } else if (isShiftKey) {
+            factor = 10;
+        }
+        const left = props.left + actualOffsetX * factor;
+        const top = props.top + actualOffsetY * factor;
+        canvasItem.applyProps({
+            left,
+            top,
         });
     }
 
@@ -235,15 +500,14 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             width,
             height,
         );
-        this.applyEditItem(canvasItem);
     }
 
     applyCanvasItemFully(canvasItem: CanvasItem<any>) {
         const props = canvasItem.props as CanvasItemPropsType;
         let width = props.width;
         let height = props.height;
-        if (['image', 'video'].includes(canvasItem.type)) {
-            const mediaProps = props as any as CanvasItemMediaPropsType;
+        if (checkIsMediaCanvasItemType(canvasItem.type)) {
+            const mediaProps = props as any as CanvasItemMediaDimPropsType;
             width = mediaProps.mediaWidth;
             height = mediaProps.mediaHeight;
         }
@@ -256,14 +520,19 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             width,
             height,
         );
+        // move to center
+        canvasItem.applyProps({
+            left: (this.canvas.width - props.width) / 2,
+            top: (this.canvas.height - props.height) / 2,
+        });
     }
 
     applyCanvasItemOriginal(canvasItem: CanvasItem<any>) {
         const props = canvasItem.props as CanvasItemPropsType;
         let width = props.width;
         let height = props.height;
-        if (['image', 'video'].includes(canvasItem.type)) {
-            const mediaProps = props as any as CanvasItemMediaPropsType;
+        if (checkIsMediaCanvasItemType(canvasItem.type)) {
+            const mediaProps = props as any as CanvasItemMediaDimPropsType;
             width = mediaProps.mediaWidth;
             height = mediaProps.mediaHeight;
         }
@@ -271,13 +540,13 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     }
 
     applyCanvasItemMediaStrip(canvasItem: CanvasItem<any>) {
-        if (!['image', 'video'].includes(canvasItem.type)) {
+        if (!checkIsMediaCanvasItemType(canvasItem.type)) {
             return;
         }
         const props = canvasItem.props as CanvasItemPropsType;
         const targeWidth = props.width;
         const targetHeightHeight = props.height;
-        const mediaProps = props as any as CanvasItemMediaPropsType;
+        const mediaProps = props as any as CanvasItemMediaDimPropsType;
         const width = mediaProps.mediaWidth;
         const height = mediaProps.mediaHeight;
         this.scaleCanvasItemToSize(
@@ -298,6 +567,8 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     genHandleContextMenuOpening(
         canvasItem: CanvasItem<any>,
         handleCanvasItemEditing: () => void,
+        isSelected: boolean,
+        openBibleLookup: (() => void) | null = null,
     ) {
         return (event: any) => {
             event.stopPropagation();
@@ -306,13 +577,15 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
                 this,
                 canvasItem,
                 handleCanvasItemEditing,
+                isSelected,
+                openBibleLookup,
             );
         };
     }
 
     itemRegisterEventListener(
         eventNames: CanvasControllerEventType[],
-        listener: (data: CanvasItemEventDataType) => void,
+        listener: ListenerType<CanvasItemEventDataType>,
     ) {
         return super.registerEventListener<CanvasItemEventDataType>(
             eventNames,
@@ -320,9 +593,12 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         );
     }
 
-    static initInstance(slide: Slide) {
-        const appDocument = AppDocument.getInstance(slide.filePath);
-        return new this(appDocument, new Canvas(slide));
+    matchEvent(event: KeyboardEvent) {
+        if (allArrows.includes(event.key as any)) {
+            this.onArrowing(event);
+            return true;
+        }
+        return false;
     }
 }
 

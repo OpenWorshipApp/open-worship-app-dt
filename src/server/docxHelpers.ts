@@ -1,0 +1,127 @@
+import FileSource from '../helper/FileSource';
+import { type AnyObjectType } from '../helper/typeHelpers';
+import { tran } from '../lang/langHelpers';
+import {
+    hideProgressBar,
+    showProgressBar,
+} from '../progress-bar/progressBarHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
+import { electronSendAsync } from './appHelpers';
+import appProvider from './appProvider';
+import { fsDeleteDir, fsReadFile, pathJoin } from './fileHelpers';
+import { unlocking } from './unlockingHelpers';
+
+function toDocxHtmlsPreviewDirPath(filePath: string) {
+    const fileSource = FileSource.getInstance(filePath);
+    return appProvider.pathUtils.resolve(
+        fileSource.baseDirPath,
+        `${fileSource.fullName}-docx-htmls`,
+    );
+}
+
+export async function removeDocxHtmlsPreview(filePath: string) {
+    const outDir = toDocxHtmlsPreviewDirPath(filePath);
+    return await fsDeleteDir(outDir);
+}
+
+export async function docxToHtmls(filePath: string, outDir: string) {
+    const progressBarKey = `Exporting DOCX Pages "${FileSource.getInstance(filePath).name}"`;
+    showSimpleToast(
+        tran('Exporting DOCX Pages'),
+        tran('Please wait while the DOCX pages are being exported...'),
+    );
+    showProgressBar(progressBarKey);
+    const isSuccess = await electronSendAsync<boolean>(
+        'main:app:docx-to-htmls',
+        { filePath, outDir },
+    );
+    hideProgressBar(progressBarKey);
+    return isSuccess;
+}
+
+export async function getDocxToHtmlsVersion() {
+    const version = await electronSendAsync<string>(
+        'main:app:get-docx-to-htmls-version',
+    );
+    return version;
+}
+
+export type DocxPageDataType100 = {
+    htmlFileName: string;
+    htmlFilePath: string;
+    html: string;
+    width: number;
+    height: number;
+};
+
+export type DocxDataType100 = {
+    info: {
+        toolName: string;
+        toolVersion: '1.0.0';
+        exportedAt: string;
+        docxFileName: string;
+        checksum: {
+            sha256: string;
+            md5: string;
+        };
+        fontFamily: string[];
+        embeddedFontFamily: string[];
+        missingFontFamily: string[];
+        pages: DocxPageDataType100[];
+    };
+    baseDirPath: string;
+};
+
+export async function getDocxMissingFontFamilyList(
+    filePath: string,
+): Promise<string[]> {
+    // Read only the small info.json (already short-lived cached) — no HTML reads
+    // and no preview regeneration; returns [] when the preview isn't generated
+    // yet.
+    const outDir = toDocxHtmlsPreviewDirPath(filePath);
+    const infoFilePath = pathJoin(outDir, 'info.json');
+    const infoFileSource = FileSource.getInstance(infoFilePath);
+    const infoData = await infoFileSource.readFileJsonData();
+    return (infoData?.missingFontFamily as string[] | undefined) ?? [];
+}
+
+export function getDocxData(filePath: string): Promise<DocxDataType100 | null> {
+    const key = `get-docx-data-${filePath}`;
+    return unlocking<DocxDataType100 | null>(key, async () => {
+        const fileMd5 = await appProvider.systemUtils.generateFileMD5(filePath);
+        const outDir = toDocxHtmlsPreviewDirPath(filePath);
+        const infoFilePath = pathJoin(outDir, 'info.json');
+        const infoFileSource = FileSource.getInstance(infoFilePath);
+        let infoData: AnyObjectType | null = null;
+        let i = 0;
+        while (i < 3) {
+            infoData = await infoFileSource.readFileJsonData();
+            if (infoData !== null) {
+                if (infoData.checksum?.md5 === fileMd5) {
+                    break;
+                }
+                await removeDocxHtmlsPreview(filePath);
+                infoData = null;
+            }
+            await docxToHtmls(filePath, outDir);
+            i += 1;
+        }
+        if (infoData === null) {
+            return null;
+        }
+        const pages = (infoData.pages as any[]).map(async (page) => {
+            const htmlFilePath = pathJoin(outDir, page.htmlFileName);
+            const html = await fsReadFile(htmlFilePath);
+            return {
+                ...page,
+                htmlFilePath,
+                html,
+            };
+        });
+        infoData.pages = await Promise.all(pages);
+        return {
+            info: infoData as DocxDataType100['info'],
+            baseDirPath: outDir,
+        };
+    });
+}

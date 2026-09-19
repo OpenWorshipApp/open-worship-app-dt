@@ -1,0 +1,68 @@
+.page-base-appearance-setting {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 10px;
+  border-top: 1px solid var(--bs-border-color, #cccccc2f);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--bs-info-rgb), 0.06),
+    rgba(var(--bs-info-rgb), 0)
+  );
+
+  // A labelled group ("On Screen Width", colour picker) reads as one unit.
+  .setting-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .setting-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 0.6;
+
+    i {
+      font-size: 0.85rem;
+    }
+  }
+
+  // Tighten the segmented toggle so it fits the short bar cleanly.
+  .btn-group {
+    .btn {
+      padding: 1px 12px;
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+  }
+
+  // Colour picker: record dot + optional clear, wrapped as a quiet chip.
+  .docx-bg-color {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 4px;
+    border-radius: 6px;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: rgba(var(--bs-light-rgb, 248, 249, 250), 0.08);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      line-height: 1;
+
+      i {
+        font-size: 1rem;
+      }
+    }
+  }
+}

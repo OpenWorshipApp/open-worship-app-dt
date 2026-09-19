@@ -1,24 +1,39 @@
 import './SlideEditorToolsComp.scss';
 
-import { lazy } from 'react';
+import { lazy, useMemo } from 'react';
 
 import { useStateSettingString } from '../../../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../../../others/TabRenderComp';
 import SlideEditorPropertiesComp from './SlideEditorPropertiesComp';
-import { useSelectedCanvasItemsAndSetterContext } from '../CanvasItem';
+import {
+    useEditingCanvasItemAndSetterContext,
+    useSelectedCanvasItemsAndSetterContext,
+} from '../CanvasItem';
+import { toIconedLabel } from '../../../others/labelIconHelpers';
 
 const LazyToolCanvasItemsComp = lazy(() => {
     return import('./ToolCanvasItemsComp');
 });
 
 const tabTypeList = [
-    ['p', 'Properties'],
-    ['c', 'Canvas Items'],
+    ['p', toIconedLabel('Properties')],
+    ['c', toIconedLabel('Canvas Items')],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
 export default function SlideEditorToolsComp() {
     const { canvasItems: selectedCanvasItems } =
         useSelectedCanvasItemsAndSetterContext();
+    const { canvasItem: editingCanvasItem } =
+        useEditingCanvasItemAndSetterContext();
+    // While a box is being text-edited it is not in `selectedCanvasItems`, but
+    // the properties panel should still show its properties. Fall back to the
+    // editing item when there is no explicit selection.
+    const propertyCanvasItems = useMemo(() => {
+        if (selectedCanvasItems.length > 0) {
+            return selectedCanvasItems;
+        }
+        return editingCanvasItem !== null ? [editingCanvasItem] : [];
+    }, [selectedCanvasItems, editingCanvasItem]);
     const [tabKey, setTabKey] = useStateSettingString<TabKeyType>(
         'editor-tools-tab',
         'p',
@@ -37,8 +52,8 @@ export default function SlideEditorToolsComp() {
                             title: name,
                         };
                     })}
-                    activeTab={tabKey}
-                    setActiveTab={setTabKey}
+                    activeTabs={[tabKey]}
+                    setActiveTab={(key) => setTabKey(key)}
                 />
             </div>
             <div
@@ -49,7 +64,7 @@ export default function SlideEditorToolsComp() {
             >
                 {tabKey === 'p' ? (
                     <SlideEditorPropertiesComp
-                        canvasItems={selectedCanvasItems}
+                        canvasItems={propertyCanvasItems}
                     />
                 ) : null}
                 {genTabBody<TabKeyType>(tabKey, ['c', LazyToolCanvasItemsComp])}

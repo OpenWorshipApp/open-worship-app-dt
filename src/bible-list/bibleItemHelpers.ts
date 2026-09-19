@@ -1,9 +1,9 @@
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { tran } from '../lang/langHelpers';
-import BibleItem from './BibleItem';
-import { BibleTargetType } from './bibleRenderHelpers';
-import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
-import { AnyObjectType } from '../helper/typeHelpers';
+import type BibleItem from './BibleItem';
+import type { BibleTargetType } from './bibleRenderHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import type { AnyObjectType } from '../helper/typeHelpers';
 
 export type BibleItemType = {
     id: number;
@@ -66,21 +66,30 @@ export function genBibleItemCopyingContextMenu(
     ];
 }
 
+/**
+ * The SAME passage in a DIFFERENT translation is not a duplicate -- reading two
+ * translations side by side is what this list is for, so the `bibleKey` is part
+ * of an item's identity here. Without it, a KJV/LSG pair of John 3 warned about
+ * itself.
+ */
 export function genDuplicatedMessage(
     list: BibleItem[],
-    { target }: BibleItem,
+    { target, bibleKey }: BibleItem,
     i: number,
 ) {
     let warningMessage;
-    const duplicated = list.find(({ target: target1 }, i1) => {
-        return (
-            target.bookKey === target1.bookKey &&
-            target.chapter === target1.chapter &&
-            target.verseStart === target1.verseStart &&
-            target.verseEnd === target1.verseEnd &&
-            i !== i1
-        );
-    });
+    const duplicated = list.find(
+        ({ target: target1, bibleKey: bibleKey1 }, i1) => {
+            return (
+                bibleKey === bibleKey1 &&
+                target.bookKey === target1.bookKey &&
+                target.chapter === target1.chapter &&
+                target.verseStart === target1.verseStart &&
+                target.verseEnd === target1.verseEnd &&
+                i !== i1
+            );
+        },
+    );
     if (duplicated) {
         const itemNum = list.indexOf(duplicated) + 1;
         warningMessage = `Duplicated with item number ${itemNum}`;

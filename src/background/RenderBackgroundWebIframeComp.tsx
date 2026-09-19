@@ -1,30 +1,72 @@
 import { useMemo } from 'react';
-import FileSource from '../helper/FileSource';
+
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
+
+type BackgroundWebIframeSourceType = {
+    src: string;
+    fullName: string;
+};
 
 export function BackgroundWebPlaceHolderComp({
     height,
-}: Readonly<{ height: number }>) {
+    imageData,
+    isPlaying,
+    isUrl = false,
+}: Readonly<{
+    height: number;
+    imageData?: string | null;
+    isPlaying: boolean;
+    isUrl?: boolean;
+}>) {
     return (
         <div className="w-100 h-100 d-flex justify-content-center align-items-center">
-            <i
-                className="bi bi-filetype-html"
-                style={{
-                    fontSize: `${Math.floor(height / 2)}px`,
-                }}
-            />
+            {imageData ? (
+                <>
+                    <img
+                        src={imageData}
+                        alt="web preview"
+                        style={{
+                            width: '100%',
+                            height: `${height}px`,
+                            objectFit: 'cover',
+                        }}
+                    />
+                    {isUrl && !isPlaying ? (
+                        <small
+                            className="badge rounded-pill text-bg-info"
+                            style={{
+                                position: 'absolute',
+                                left: '4px',
+                                top: '4px',
+                                zIndex: 1,
+                            }}
+                        >
+                            URL
+                        </small>
+                    ) : null}
+                </>
+            ) : (
+                <i
+                    className={
+                        'bi ' + (isUrl ? 'bi-globe' : 'bi-filetype-html')
+                    }
+                    style={{
+                        fontSize: `${Math.floor(height / 2)}px`,
+                    }}
+                />
+            )}
         </div>
     );
 }
 
 export default function RenderBackgroundWebIframeComp({
-    fileSource,
+    iframeSource,
     width,
     height,
     targetWidth,
     targetHeight,
 }: Readonly<{
-    fileSource: FileSource;
+    iframeSource: BackgroundWebIframeSourceType;
     width: number;
     height: number;
     targetWidth?: number;
@@ -32,20 +74,23 @@ export default function RenderBackgroundWebIframeComp({
 }>) {
     const { scale, actualWidth, actualHeight } = useMemo(() => {
         const display = getDefaultScreenDisplay();
-        targetWidth = targetWidth ?? display.bounds.width;
-        targetHeight = targetHeight ?? display.bounds.height;
-        const scale = Math.max(width / targetWidth, height / targetHeight);
+        const effectiveWidth = targetWidth ?? display.bounds.width;
+        const effectiveHeight = targetHeight ?? display.bounds.height;
+        const scale = Math.max(
+            width / effectiveWidth,
+            height / effectiveHeight,
+        );
         return {
             scale,
-            actualWidth: targetWidth,
-            actualHeight: targetHeight,
+            actualWidth: effectiveWidth,
+            actualHeight: effectiveHeight,
         };
     }, [targetWidth, width, height, targetHeight]);
     return (
         <iframe
             sandbox="allow-scripts"
-            src={fileSource.src}
-            title={fileSource.fullName}
+            src={iframeSource.src}
+            title={iframeSource.fullName}
             style={{
                 pointerEvents: 'none',
                 colorScheme: 'normal',
@@ -56,6 +101,9 @@ export default function RenderBackgroundWebIframeComp({
                 overflow: 'hidden',
                 transform: `scale(${scale})`,
                 transformOrigin: 'top left',
+                position: 'absolute',
+                top: 0,
+                left: 0,
             }}
         />
     );

@@ -1,9 +1,11 @@
-import { RefObject } from 'react';
+import type { RefObject } from 'react';
+
 import { useGetBibleCrossRefOpenAI } from '../helper/ai/openAIBibleCrossRefHelpers';
 import LoadingComp from '../others/LoadingComp';
-import { RefreshingRefType } from '../helper/ai/aiHelpers';
+import type { RefreshingRefType } from '../helper/ai/aiHelpers';
 import { useGenRefreshRef } from '../helper/ai/bibleCrossRefHelpers';
 import RenderAIBibleCrossReferenceListComp from './RenderAIBibleCrossReferenceListComp';
+import { tran } from '../lang/langHelpers';
 
 export default function BibleCrossRefOpenAIItemRendererBodyComp({
     ref,
@@ -30,7 +32,7 @@ export default function BibleCrossRefOpenAIItemRendererBodyComp({
     if (bibleCrossRef === null) {
         return (
             <div>
-                `Data not available for "{bookKey} {chapter}:{verse}"
+                {tran('Data not available for')} "{bookKey} {chapter}:{verse}"
             </div>
         );
     }

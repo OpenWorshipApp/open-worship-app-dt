@@ -1,86 +1,119 @@
-import { Fragment } from 'react';
+import './RenderBookOptionsComp.scss';
+
+import {
+    Fragment,
+    useCallback,
+    type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 
 import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
+import type { KeyboardType } from '../event/KeyboardEventListener';
+import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import type { SelectBookType } from './selectionHelpers';
 import {
-    KeyboardType,
-    useKeyboardRegistering,
-} from '../event/KeyboardEventListener';
-import {
-    SelectBookType,
+    BOOK_OPTION_WIDTH,
     processSelection,
     userEnteringSelected,
 } from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync } from '../helper/appHooks';
 import {
     checkIsApocrypha,
     checkIsOldTestament,
 } from '../helper/bible-helpers/bibleInfoHelpers';
+import { tran } from '../lang/langHelpers';
+import {
+    type BookSubtypeType,
+    kjvBibleModelInfo,
+} from '../helper/bible-helpers/bibleModelHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 const OPTION_CLASS = 'bible-lookup-book-option';
 const OPTION_SELECTED_CLASS = 'active';
 
+const bookToSubtype = Object.fromEntries(
+    (kjvBibleModelInfo.bookKeysSubtype || []).reduce(
+        (acc, subtype: BookSubtypeType) => {
+            subtype.bookKeys.forEach((bookKey) => {
+                acc.push([bookKey, subtype.type]);
+            });
+            return acc;
+        },
+        [] as [string, string][],
+    ),
+);
+
 function genBookOption({
-    bibleKey,
     onSelect,
     index,
     bookKey,
     book,
     modelBook,
     isAvailable,
+    fontFamily,
 }: {
-    bibleKey: string;
     onSelect: SelectBookType;
     index: number;
     bookKey: string;
     book: string;
     modelBook: string;
     isAvailable: boolean;
+    fontFamily?: string;
 }) {
     const activeClass = index === 0 && isAvailable ? OPTION_SELECTED_CLASS : '';
     const isOldTestament = checkIsOldTestament(bookKey);
     const isApocrypha = checkIsApocrypha(bookKey);
-    let borderColor = '#3a3a8eb2';
+    let borderColor = '#a415d85a';
     if (isOldTestament) {
-        borderColor = '#53854420';
+        borderColor = '#5385441a';
     }
     if (isApocrypha) {
-        borderColor = '#733a8eb2';
+        borderColor = '#3a578e2a';
     }
     return (
         <div
-            title={isAvailable ? undefined : 'Not available'}
+            className="book-option"
+            title={isAvailable ? undefined : tran('Not available')}
             style={{
-                margin: '2px',
                 cursor: isAvailable ? undefined : 'not-allowed',
             }}
         >
             <button
+                data-book-index={index + 1}
                 className={
-                    'text-nowrap btn-sm btn btn-outline-success' +
+                    'd-flex text-nowrap btn-sm btn btn-outline-success' +
                     ` ${OPTION_CLASS} ${activeClass}`
                 }
+                data-book-subtype={bookToSubtype[bookKey]}
                 disabled={!isAvailable}
                 style={{
-                    width: '240px',
-                    overflowX: 'auto',
-                    borderColor,
+                    borderColor: '#00000000',
+                    borderBottomColor: borderColor,
+                    width: BOOK_OPTION_WIDTH,
+                    textAlign: 'left',
+                    fontSize: '1.01rem',
                 }}
                 type="button"
                 onClick={() => {
                     onSelect(bookKey, book);
                 }}
             >
-                <span data-bible-key={bibleKey}>{book}</span>
-                {book === modelBook ? null : (
-                    <small className="px-1">({modelBook})</small>
-                )}
+                <div className="book-option-index">{index + 1}</div>
+                <div
+                    className="flex-fill"
+                    style={{ fontFamily, paddingLeft: '0.5em' }}
+                >
+                    {book}
+                    {book === modelBook ? null : (
+                        <small className="px-1">({modelBook})</small>
+                    )}
+                </div>
             </button>
         </div>
     );
 }
 
-function BookOptionsComp({
+export default function RenderBookOptionsComp({
     onSelect,
     guessingBook,
 }: Readonly<{
@@ -88,71 +121,62 @@ function BookOptionsComp({
     guessingBook: string;
 }>) {
     const bibleKey = useBibleKeyContext();
+    const fontFamily = useBibleFontFamily(bibleKey);
     const [matchedBooks] = useAppStateAsync(() => {
-        return genBookMatches(bibleKey, guessingBook);
+        return genBookMatches(bibleKey, { guessingBook });
     }, [bibleKey, guessingBook]);
-    const useKeyEvent = (key: KeyboardType) => {
-        useKeyboardRegistering(
-            [{ key }],
-            (event: KeyboardEvent) => {
-                processSelection(
-                    OPTION_CLASS,
-                    OPTION_SELECTED_CLASS,
-                    event.key as KeyboardType,
-                    event,
-                );
-            },
-            [],
-        );
-    };
-    useKeyEvent('ArrowLeft');
-    useKeyEvent('ArrowRight');
-    useKeyEvent('ArrowUp');
-    useKeyEvent('ArrowDown');
+    const handleOnArrow = useCallback(
+        (event: KeyboardEvent | ReactKeyboardEvent<any>) => {
+            processSelection(
+                OPTION_CLASS,
+                OPTION_SELECTED_CLASS,
+                event.key as KeyboardType,
+                event,
+            );
+        },
+        [],
+    );
+    useKeyboardRegistering([{ key: 'ArrowLeft' }], handleOnArrow, []);
+    useKeyboardRegistering([{ key: 'ArrowRight' }], handleOnArrow, []);
+    useKeyboardRegistering([{ key: 'ArrowUp' }], handleOnArrow, []);
+    useKeyboardRegistering([{ key: 'ArrowDown' }], handleOnArrow, []);
     userEnteringSelected(OPTION_CLASS, OPTION_SELECTED_CLASS);
+    const ghostElementCount = Math.ceil(
+        document.body.clientWidth / BOOK_OPTION_WIDTH,
+    );
 
     if (!matchedBooks) {
-        return <div>No book options available</div>;
+        return <div>{tran('No book options available')}</div>;
     }
     return (
         <>
-            {matchedBooks.map(
-                ({ bibleKey, bookKey, book, modelBook, isAvailable }, i) => {
-                    return (
-                        <Fragment key={bookKey}>
-                            {genBookOption({
-                                bibleKey,
-                                bookKey,
-                                book,
-                                modelBook,
-                                onSelect,
-                                index: i,
-                                isAvailable,
-                            })}
-                        </Fragment>
-                    );
-                },
-            )}
+            {matchedBooks.map((matchBook, i) => {
+                const { bookKey, book, modelBook, isAvailable } = matchBook;
+                return (
+                    <Fragment key={bookKey}>
+                        {genBookOption({
+                            bookKey,
+                            book,
+                            modelBook,
+                            onSelect,
+                            index: i,
+                            isAvailable,
+                            fontFamily,
+                        })}
+                    </Fragment>
+                );
+            })}
+            {Array.from({
+                length: ghostElementCount,
+            }).map((_, i) => {
+                return (
+                    <div
+                        className="book-option-ghost"
+                        key={i}
+                        style={{ width: BOOK_OPTION_WIDTH }}
+                    />
+                );
+            })}
         </>
-    );
-}
-
-export default function RenderBookOptionsComp({
-    onSelect,
-    bookKey,
-    guessingBook,
-}: Readonly<{
-    onSelect: SelectBookType;
-    bookKey: string | null;
-    guessingBook: string | null;
-}>) {
-    if (bookKey !== null) {
-        return null;
-    }
-    return (
-        <BookOptionsComp
-            onSelect={onSelect}
-            guessingBook={guessingBook ?? ''}
-        />
     );
 }

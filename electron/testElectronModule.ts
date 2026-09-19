@@ -1,0 +1,273 @@
+import { vi } from 'vitest';
+
+import { createMockBrowserWindow, createMockWebContents } from './testUtils';
+
+type BrowserWindowFactory = () => any;
+
+const browserWindows: any[] = [];
+const defaultBrowserWindowFactory: BrowserWindowFactory = () => {
+    return createMockBrowserWindow();
+};
+let browserWindowFactory: BrowserWindowFactory = defaultBrowserWindowFactory;
+
+function getLastBrowserWindow() {
+    let lastBrowserWindow = null;
+    for (const browserWindow of browserWindows) {
+        lastBrowserWindow = browserWindow;
+    }
+    return lastBrowserWindow;
+}
+
+const BrowserWindowMock: any = vi.fn(function BrowserWindowMock(options?: any) {
+    const win = browserWindowFactory();
+    win.__options = options;
+    browserWindows.push(win);
+    return win;
+});
+BrowserWindowMock.getAllWindows = vi.fn(() => browserWindows);
+BrowserWindowMock.getFocusedWindow = vi.fn(getLastBrowserWindow);
+BrowserWindowMock.fromWebContents = vi.fn((webContents: any) => {
+    return (
+        browserWindows.find((browserWindow) => {
+            return browserWindow.webContents === webContents;
+        }) ?? null
+    );
+});
+
+const webContentsViews: any[] = [];
+const WebContentsViewMock: any = vi.fn(function WebContentsViewMock(
+    options?: any,
+) {
+    const view = {
+        __options: options,
+        webContents: createMockWebContents(),
+        setBounds: vi.fn(),
+        setBackgroundColor: vi.fn(),
+    };
+    webContentsViews.push(view);
+    return view;
+});
+
+const menuBuildFromTemplate = vi.fn();
+const menuSetApplicationMenu = vi.fn();
+const MenuMock: any = vi.fn(function MenuMock() {
+    return {
+        append: vi.fn(),
+        popup: vi.fn(),
+    };
+});
+MenuMock.buildFromTemplate = menuBuildFromTemplate;
+MenuMock.setApplicationMenu = menuSetApplicationMenu;
+
+export const electronMockState = {
+    browserWindows,
+    BrowserWindowMock,
+    app: {
+        getVersion: vi.fn(() => '1.2.3'),
+        isReady: vi.fn(() => true),
+        getAppPath: vi.fn(() => '/mock-app'),
+        getPath: vi.fn(() => '/mock-user-data'),
+        setPath: vi.fn(),
+        isPackaged: false,
+        name: 'Open Worship app',
+        on: vi.fn(),
+        whenReady: vi.fn(),
+        requestSingleInstanceLock: vi.fn(() => true),
+        quit: vi.fn(),
+        relaunch: vi.fn(),
+        setAppUserModelId: vi.fn(),
+        setUserTasks: vi.fn(),
+        commandLine: {
+            appendSwitch: vi.fn(),
+        },
+    },
+    safeStorage: {
+        isEncryptionAvailable: vi.fn(() => true),
+        encryptString: vi.fn((plainText: string) => {
+            return Buffer.from(`enc:${plainText}`, 'utf8');
+        }),
+        decryptString: vi.fn((buffer: Buffer) => {
+            const text = buffer.toString('utf8');
+            if (!text.startsWith('enc:')) {
+                throw new Error('Failed to decrypt');
+            }
+            return text.slice(4);
+        }),
+        getSelectedStorageBackend: vi.fn(() => 'gnome_libsecret'),
+    },
+    nativeTheme: {
+        shouldUseDarkColors: false,
+        themeSource: 'system' as 'light' | 'dark' | 'system',
+    },
+    shell: {
+        openExternal: vi.fn(() => Promise.resolve()),
+        showItemInFolder: vi.fn(),
+        trashItem: vi.fn(),
+    },
+    clipboard: {
+        writeText: vi.fn(),
+    },
+    net: {
+        fetch: vi.fn((url: string) => Promise.resolve(url)),
+    },
+    protocol: {
+        handle: vi.fn(),
+        registerSchemesAsPrivileged: vi.fn(),
+    },
+    session: {
+        defaultSession: {
+            webRequest: {
+                onBeforeSendHeaders: vi.fn(),
+                onHeadersReceived: vi.fn(),
+                onCompleted: vi.fn(),
+                onErrorOccurred: vi.fn(),
+            },
+            setDisplayMediaRequestHandler: vi.fn(),
+        },
+        // Every partitioned session shares one object, which is enough for the
+        // callers here: they register handlers on it and never read it back.
+        fromPartition: vi.fn(() => {
+            return {
+                webRequest: { onBeforeRequest: vi.fn() },
+                setPermissionRequestHandler: vi.fn(),
+                setPermissionCheckHandler: vi.fn(),
+                on: vi.fn(),
+            };
+        }),
+    },
+    dialog: {
+        showOpenDialog: vi.fn(),
+        showMessageBox: vi.fn(async () => ({ response: 1 })),
+    },
+    ipcMain: {
+        handle: vi.fn(),
+        on: vi.fn(),
+    },
+    systemPreferences: {
+        askForMediaAccess: vi.fn(),
+    },
+    webContentsViews,
+    WebContentsViewMock,
+    screen: {
+        getCursorScreenPoint: vi.fn(() => ({ x: 0, y: 0 })),
+        getAllDisplays: vi.fn(() => []),
+        getPrimaryDisplay: vi.fn(() => ({
+            id: 1,
+            bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+            size: { width: 1920, height: 1080 },
+        })),
+        getDisplayMatching: vi.fn(() => ({
+            id: 1,
+            bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+            workArea: { x: 0, y: 0, width: 1920, height: 1080 },
+            size: { width: 1920, height: 1080 },
+        })),
+    },
+    Menu: MenuMock,
+    // constructed with `new MenuItem(...)`, so it must be a real function
+    MenuItem: vi.fn(function MenuItemMock(options: any) {
+        return options;
+    }),
+    reset() {
+        browserWindows.splice(0, browserWindows.length);
+        webContentsViews.splice(0, webContentsViews.length);
+        WebContentsViewMock.mockClear();
+        browserWindowFactory = defaultBrowserWindowFactory;
+        BrowserWindowMock.mockClear();
+        BrowserWindowMock.getAllWindows.mockClear();
+        BrowserWindowMock.getFocusedWindow.mockClear();
+        BrowserWindowMock.fromWebContents.mockClear();
+        this.app.getVersion.mockClear();
+        this.app.isReady.mockClear().mockReturnValue(true);
+        this.app.getAppPath.mockClear();
+        this.app.getPath.mockClear();
+        this.app.setPath.mockClear();
+        this.app.on.mockClear();
+        this.app.whenReady.mockClear();
+        this.app.requestSingleInstanceLock.mockClear();
+        this.app.quit.mockClear();
+        this.app.relaunch.mockClear();
+        this.app.setAppUserModelId.mockClear();
+        this.app.setUserTasks.mockClear();
+        this.app.commandLine.appendSwitch.mockClear();
+        this.shell.openExternal.mockClear();
+        this.shell.showItemInFolder.mockClear();
+        this.shell.trashItem.mockClear();
+        this.clipboard.writeText.mockClear();
+        this.net.fetch.mockClear();
+        this.protocol.handle.mockClear();
+        this.protocol.registerSchemesAsPrivileged.mockClear();
+        this.session.defaultSession.webRequest.onBeforeSendHeaders.mockClear();
+        this.session.defaultSession.webRequest.onHeadersReceived.mockClear();
+        this.session.defaultSession.webRequest.onCompleted.mockClear();
+        this.session.defaultSession.webRequest.onErrorOccurred.mockClear();
+        this.session.defaultSession.setDisplayMediaRequestHandler.mockClear();
+        this.dialog.showOpenDialog.mockClear();
+        this.dialog.showMessageBox
+            .mockClear()
+            .mockImplementation(async () => ({ response: 1 }));
+        this.ipcMain.handle.mockClear();
+        this.ipcMain.on.mockClear();
+        this.systemPreferences.askForMediaAccess.mockClear();
+        // `mockClear` keeps any `mockReturnValue` a test set, so each default
+        // implementation is restored explicitly.
+        this.safeStorage.isEncryptionAvailable
+            .mockClear()
+            .mockReturnValue(true);
+        this.safeStorage.getSelectedStorageBackend
+            .mockClear()
+            .mockReturnValue('gnome_libsecret');
+        this.safeStorage.encryptString
+            .mockClear()
+            .mockImplementation((plainText: string) => {
+                return Buffer.from(`enc:${plainText}`, 'utf8');
+            });
+        this.safeStorage.decryptString
+            .mockClear()
+            .mockImplementation((buffer: Buffer) => {
+                const text = buffer.toString('utf8');
+                if (!text.startsWith('enc:')) {
+                    throw new Error('Failed to decrypt');
+                }
+                return text.slice(4);
+            });
+        this.screen.getAllDisplays.mockClear();
+        this.screen.getPrimaryDisplay.mockClear();
+        this.screen.getDisplayMatching.mockClear();
+        MenuMock.mockClear();
+        menuBuildFromTemplate.mockClear();
+        menuSetApplicationMenu.mockClear();
+        this.MenuItem.mockClear();
+        this.nativeTheme.shouldUseDarkColors = false;
+        this.nativeTheme.themeSource = 'system';
+        this.app.isPackaged = false;
+    },
+    setBrowserWindowFactory(factory: BrowserWindowFactory) {
+        browserWindowFactory = factory;
+    },
+};
+
+export function createElectronModuleMock() {
+    const electronModule = {
+        app: electronMockState.app,
+        safeStorage: electronMockState.safeStorage,
+        nativeTheme: electronMockState.nativeTheme,
+        shell: electronMockState.shell,
+        clipboard: electronMockState.clipboard,
+        BrowserWindow: electronMockState.BrowserWindowMock,
+        WebContentsView: electronMockState.WebContentsViewMock,
+        protocol: electronMockState.protocol,
+        session: electronMockState.session,
+        net: electronMockState.net,
+        dialog: electronMockState.dialog,
+        ipcMain: electronMockState.ipcMain,
+        systemPreferences: electronMockState.systemPreferences,
+        screen: electronMockState.screen,
+        Menu: electronMockState.Menu,
+        MenuItem: electronMockState.MenuItem,
+    };
+    return {
+        ...electronModule,
+        default: electronModule,
+    };
+}

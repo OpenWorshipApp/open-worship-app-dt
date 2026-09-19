@@ -1,21 +1,20 @@
 import BibleItem from '../bible-list/BibleItem';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
-import { tran } from '../lang/langHelpers';
-import { BibleItemRenderingType } from './bibleScreenComps';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { DEFAULT_LANG_CODE, tran } from '../lang/langHelpers';
+import type { BibleItemRenderingType } from './bibleScreenComps';
 import bibleScreenHelper from './bibleScreenHelpers';
-import ScreenBibleManager from './managers/ScreenBibleManager';
+import type ScreenBibleManager from './managers/ScreenBibleManager';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { addPlayToBottom, addToTheTop } from './screenHelpers';
 import { getDisplayByScreenId } from './managers/screenHelpers';
-import { BibleItemType } from '../bible-list/bibleItemHelpers';
+import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { cloneJson } from '../helper/helpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
-import { genContextMenuBibleKeys } from '../bible-lookup/BibleSelectionComp';
-import { BibleItemDataType } from './screenTypeHelpers';
-import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { genContextMenuBibleKeys } from '../bible-lookup/BibleKeySelectionComp';
+import type { BibleItemDataType } from './screenTypeHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export type ScreenBibleManagerEventType = 'update' | 'text-style';
 
@@ -39,7 +38,7 @@ async function applyBibleItems(
     const bibleItemJson = bibleItemData.bibleItemData?.bibleItem;
     if (bibleItemJson === undefined) {
         showAppAlert(
-            'Fail to get bible item data',
+            tran('Fail to get bible item data'),
             'We were sorry, but we are unable to get bible item data at ' +
                 'the moment please try again later',
         );
@@ -82,14 +81,14 @@ async function onBibleSelect(
         ...(bibleRenderingList.length > 1
             ? [
                   {
-                      childBefore: (
-                          <i className="bi bi-x-lg" style={{ color: 'red' }} />
-                      ),
+                      childBefore: genContextMenuItemIcon('x-lg', {
+                          color: 'red',
+                      }),
                       title: tran('Remove'),
                       menuElement: (
                           <span
                               style={{ color: 'red' }}
-                              data-bible-key={
+                              data-bible-key-ff={
                                   bibleRenderingList[index].bibleKey
                               }
                           >
@@ -111,14 +110,7 @@ async function onBibleSelect(
               ]
             : []),
         {
-            childBefore: (
-                <i
-                    className="bi bi-lightbulb"
-                    style={{
-                        color: 'var(--bs-info-text-emphasis)',
-                    }}
-                />
-            ),
+            childBefore: genContextMenuItemIcon('lightbulb'),
             menuElement: <span>{tran('Shift Click to Add')}</span>,
             disabled: true,
         },
@@ -195,8 +187,9 @@ export async function renderScreenBibleManager(
         child.remove();
     }
     div.appendChild(divContainer);
-    screenBibleManager.renderScroll(true);
     screenBibleManager.renderSelectedIndex();
+    div.scrollTop =
+        screenBibleManager.scroll * (div.scrollHeight - div.clientHeight);
     addToTheTop(div);
     addPlayToBottom(div);
 }
@@ -207,7 +200,8 @@ export async function bibleItemToScreenViewData(
     const bibleRenderingList =
         await bibleScreenHelper.genBibleItemRenderList(bibleItems);
     const bibleKey = bibleItems[0].bibleKey || null;
-    const locale = bibleKey === null ? 'en' : await getBibleLocale(bibleKey);
+    const locale =
+        bibleKey === null ? DEFAULT_LANG_CODE : await getBibleLocale(bibleKey);
     return {
         type: 'bible-item',
         locale,

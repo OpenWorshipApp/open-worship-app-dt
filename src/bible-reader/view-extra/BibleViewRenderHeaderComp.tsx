@@ -1,44 +1,50 @@
-import {
-    fontSizeToHeightStyle,
-    useBibleViewFontSizeContext,
-} from '../../helper/bibleViewHelpers';
+import { useCallback } from 'react';
+
+import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import RenderActionButtonsComp from '../../bible-lookup/RenderActionButtonsComp';
 import { HoverMotionHandler } from '../../helper/domHelpers';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { RenderTitleMaterialComp } from './RenderTitleMaterialComp';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function BibleViewRenderHeaderComp({
     bibleItem,
 }: Readonly<{ bibleItem: ReadIdOnlyBibleItem }>) {
     const viewController = useBibleItemsViewControllerContext();
-    const fontSize = useBibleViewFontSizeContext();
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const handleBibleKeyChange = useCallback(
+        (isContextMenu: boolean, _oldBibleKey: string, newBibleKey: string) => {
+            viewControllerRef.current.applyTargetOrBibleKey(
+                bibleItemRef.current,
+                isContextMenu
+                    ? {
+                          extraBibleKeys: [
+                              ...bibleItemRef.current.extraBibleKeys,
+                              newBibleKey,
+                          ],
+                      }
+                    : {
+                          bibleKey: newBibleKey,
+                      },
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleDelete = useCallback(() => {
+        viewControllerRef.current.deleteBibleItem(bibleItemRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="card-header d-flex app-top-hover-motion-1 p-0"
-            style={{ ...fontSizeToHeightStyle(fontSize) }}
+            style={{ height: 'unset' }}
         >
             <RenderTitleMaterialComp
                 bibleItem={bibleItem}
-                onBibleKeyChange={(
-                    isContextMenu: boolean,
-                    _oldBibleKey: string,
-                    newBibleKey: string,
-                ) => {
-                    viewController.applyTargetOrBibleKey(
-                        bibleItem,
-                        isContextMenu
-                            ? {
-                                  extraBibleKeys: [
-                                      ...bibleItem.extraBibleKeys,
-                                      newBibleKey,
-                                  ],
-                              }
-                            : {
-                                  bibleKey: newBibleKey,
-                              },
-                    );
-                }}
+                onBibleKeyChange={handleBibleKeyChange}
             />
             <div
                 className={`${HoverMotionHandler.lowVisibleClassname}-0 app-opacity-hover`}
@@ -56,11 +62,12 @@ export default function BibleViewRenderHeaderComp({
                     style={{
                         color: 'var(--bs-danger-text-emphasis)',
                     }}
-                    onClick={() => {
-                        viewController.deleteBibleItem(bibleItem);
-                    }}
+                    onClick={handleDelete}
                 />
             </div>
+            {/* The view's own menu. No handler: the bible view around this
+                header owns it. */}
+            <ContextMenuDotsButtonComp />
         </div>
     );
 }

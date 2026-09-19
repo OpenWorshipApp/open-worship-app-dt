@@ -1,14 +1,20 @@
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
+import { useCallback } from 'react';
+
 import { tran } from '../lang/langHelpers';
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import {
     openContextMenu,
     openInBibleLookup,
 } from '../bible-find/bibleFindHelpers';
-import { handleDragStart } from '../helper/dragHelpers';
-import { BibleCrossRefType, breakItem } from './bibleCrossRefsHelpers';
+import { handleDragStart as handleDragStartHelper } from '../helper/dragHelpers';
+import type { BibleCrossRefType } from './bibleCrossRefsHelpers';
+import { breakItem } from './bibleCrossRefsHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export default function BibleCrossRefRenderFoundItemsComp({
     bibleVersesKey,
@@ -19,11 +25,34 @@ export default function BibleCrossRefRenderFoundItemsComp({
 }>) {
     const viewController = useLookupBibleItemControllerContext();
     const bibleKey = useBibleKeyContext();
+    const fontFamily = useBibleFontFamily(bibleKey);
     const [data] = useAppStateAsync(() => {
         return breakItem(bibleKey, bibleVersesKey);
     }, [bibleKey, bibleVersesKey]);
+    const dataRef = useAppCurrentRef(data);
+    const handleDragStart = useCallback((event: any) => {
+        handleDragStartHelper(event, dataRef.current!.bibleItem);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        openContextMenu(event, {
+            viewController: viewControllerRef.current,
+            bibleItem: dataRef.current!.bibleItem,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleClicking = useCallback((event: any) => {
+        openInBibleLookup(
+            event,
+            viewControllerRef.current,
+            dataRef.current!.bibleItem,
+            true,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (data === undefined) {
-        return <div>Loading...</div>;
+        return <div>{tran('Loading')}...</div>;
     }
     if (data === null) {
         return (
@@ -31,7 +60,7 @@ export default function BibleCrossRefRenderFoundItemsComp({
                 className="w-100 app-border-white-round my-2 p-2 app-caught-hover-pointer"
                 style={{ color: 'red' }}
             >
-                Fail to get data for "{bibleVersesKey}"
+                {tran('Fail to get data for')} "{bibleVersesKey}"
             </div>
         );
     }
@@ -41,41 +70,44 @@ export default function BibleCrossRefRenderFoundItemsComp({
             className="w-100 app-border-white-round my-2 p-2 app-caught-hover-pointer"
             title={tran('shift + click to append')}
             draggable
-            onDragStart={(event) => {
-                handleDragStart(event, bibleItem);
-            }}
-            onContextMenu={(event) => {
-                openContextMenu(event, {
-                    viewController,
-                    bibleItem,
-                });
-            }}
-            onClick={(event) => {
-                openInBibleLookup(event, viewController, bibleItem, true);
-            }}
+            onDragStart={handleDragStart}
+            onContextMenu={handleContextMenuOpening}
+            onClick={handleClicking}
         >
-            <BibleDirectViewTitleComp bibleItem={bibleItem} />
-            {/* TODO: update title */}
-            <span className="badge badge-success" title="isS">
+            <div className="d-flex align-items-start">
+                <div className="flex-fill app-overflow-hidden">
+                    <BibleDirectViewTitleComp bibleItem={bibleItem} />
+                </div>
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
+            </div>
+            {/* Markers copied from the cross-reference data (`fn`, `*`, a leading
+                `S`, `Title`, `(LXX and DSS)`). They carried their field
+                names (`isS`, `isFN`, ...) as tooltips, in English in every
+                language. TODO: a tran() tooltip each, once what `S` and
+                `*` mean in that data is known -- a wrong one is worse than
+                none. */}
+            <span className="badge badge-success">
                 {itemInfo.isS ? 'S ' : ''}
             </span>
-            <span className="badge badge-success" title="isFN">
+            <span className="badge badge-success">
                 {itemInfo.isFN ? 'FN ' : ''}
             </span>
-            <span className="badge badge-success" title="isStar">
+            <span className="badge badge-success">
                 {itemInfo.isStar ? '★ ' : ''}
             </span>
-            <span className="badge badge-success" title="isTitle">
+            <span className="badge badge-success">
                 {itemInfo.isTitle ? 'T ' : ''}
             </span>
-            <span className="badge badge-success" title="isLXXDSS">
+            <span className="badge badge-success">
                 {itemInfo.isLXXDSS ? 'LXXDSS ' : ''}
             </span>
             <span
                 title={bibleText}
-                data-bible-key={bibleItem.bibleKey}
+                style={{ fontFamily }}
                 dangerouslySetInnerHTML={{
-                    __html: htmlText,
+                    __html: sanitizeHtml(htmlText),
                 }}
             />
         </div>

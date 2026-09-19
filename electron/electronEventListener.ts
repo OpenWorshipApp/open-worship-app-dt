@@ -1,26 +1,74 @@
+import path from 'node:path';
 import electron, {
-    FileFilter,
+    BrowserWindow,
+    clipboard,
+    type FileFilter,
+    type IpcMain,
     nativeTheme,
     shell,
     systemPreferences,
+    type WebContents,
 } from 'electron';
-import fontList from 'font-list';
 
-import ElectronAppController from './ElectronAppController';
+import type ElectronAppController from './ElectronAppController';
+import { getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
+import {
+    AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
+    answerAiChatMicrophoneAsk,
+    clearAiChatGuestData,
+} from './aiChatGuestHelpers';
+import {
+    checkIsEncryptedFile,
+    decryptFile,
+    encryptFile,
+} from './archiveCryptoHelpers';
 import {
     attemptClosing,
+    captureWebScreenShot,
+    captureWindowImage,
+    findScreenWindow,
+    getUpdatePageUrl,
     goDownload,
     isMac,
+    messageChannels,
+    previewPrintCurrentWindow,
+    printHTMLContent,
+    setGuideRunning,
+    askGuideHelp,
+    answerGuideHelp,
+    sendChatAttachment,
+    takeChatAttachment,
+    tarAppend,
+    tarCreate,
     tarExtract,
 } from './electronHelpers';
+import type { CustomMenusDataType, OptionalPromise } from './electronHelpers';
+import {
+    closeFindOverlay,
+    getFindOverlayHostWebContents,
+    getFindOverlayWebContents,
+    startFindOverlayDragging,
+    stopFindOverlayDragging,
+} from './finderOverlayHelpers';
 import ElectronScreenController from './ElectronScreenController';
 import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
+import {
+    docxToHtmls,
+    getDocxToHtmlsVersion,
+    pptxToHtmls,
+    getPptxToHtmlsVersion,
+    getPptxSlidesCount,
+    type DocxToHtmlsParamsType,
+    type PptxToHtmlsParamsType,
+} from './msHelpers';
+import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
+import { captureOAuthRedirectUrl } from './oauthHelpers';
+import { relaunchApp } from './taskbarHelpers';
+import { readWebPage } from './webPageHelpers';
+import { type FontListMapType, getSystemFontListMap } from './fontListHelpers';
 
 const { dialog, ipcMain, app } = electron;
-const cache: { [key: string]: any } = {
-    fontsMap: null,
-};
 
 export type AnyObjectType = {
     [key: string]: any;
@@ -34,12 +82,32 @@ export type ScreenMessageType = {
 type ShowScreenDataType = {
     screenId: number;
     displayId: number;
-    replyEventName: string;
 };
 
-export const channels = {
-    screenMessageChannel: 'app:screen:message',
-};
+// Enumerating system fonts spawns a child process (PowerShell on Windows) that
+// takes seconds while the OS cold-loads its font APIs. The answer -- a few KB --
+// is kept for the whole app run so that happens once however many windows and
+// dropdowns ask, and asks that arrive while it runs share the one in flight
+// (the start-up prewarm and the first dropdown used to spawn two). A failure
+// or an empty list is not kept, so the next ask tries again.
+let fontListMapPromise: Promise<FontListMapType | null> | null = null;
+function getFontListMap() {
+    fontListMapPromise ??= getSystemFontListMap().then(
+        (fontListMap) => {
+            if (Object.keys(fontListMap).length > 0) {
+                return fontListMap;
+            }
+            fontListMapPromise = null;
+            return null;
+        },
+        (error) => {
+            console.log(error);
+            fontListMapPromise = null;
+            return null;
+        },
+    );
+    return fontListMapPromise;
+}
 
 export function initEventListenerApp(appController: ElectronAppController) {
     ipcMain.handle('get-is-packaged', () => {
@@ -53,31 +121,129 @@ export function initEventListenerApp(appController: ElectronAppController) {
         event.returnValue = app.getPath('userData');
     });
 
-    ipcMain.on('main:app:get-desktop-path', (event) => {
-        event.returnValue = app.getPath('desktop');
+    ipcMain.on('main:app:get-app-path', (event) => {
+        event.returnValue = app.getAppPath();
     });
+
+    ipcMain.on(
+        'main:app:get-special-path',
+        (
+            event,
+            name:
+                | 'desktop'
+                | 'downloads'
+                | 'home'
+                | 'appData'
+                | 'assets'
+                | 'userData'
+                | 'sessionData'
+                | 'temp'
+                | 'exe'
+                | 'module'
+                | 'documents'
+                | 'music'
+                | 'pictures'
+                | 'videos'
+                | 'recent'
+                | 'logs'
+                | 'crashDumps',
+        ) => {
+            event.returnValue = app.getPath(name);
+        },
+    );
 
     ipcMain.on('main:app:get-temp-path', (event) => {
         event.returnValue = app.getPath('temp');
     });
 
-    ipcMain.on('main:app:select-dirs', async (event) => {
+    // What the in-app chatbot connects to. Both doors are on ports this
+    // process picked at launch, so nothing in the renderer can hardcode them.
+    ipcMain.on('main:app:get-ai-endpoints', (event) => {
+        event.returnValue = {
+            mcpUrl: getMcpUrl(),
+            cdpPort: getRemoteDebuggingPort(),
+        };
+    });
+
+    // The AI Chat window's "Sign out of every site". It is the only way in
+    // the app to end a sign-in held on the guest partition, and the window
+    // has already asked twice by the time it gets here.
+    onAsync(ipcMain, 'main:app:clear-ai-chat-data', async () => {
+        await clearAiChatGuestData();
+        return true;
+    });
+
+    // A site in the AI Chat window asking for the microphone, answered by the
+    // person on that window's own line. The sender is checked against the
+    // window that was asked, so no other page in the app can say yes.
+    ipcMain.on(AI_CHAT_MICROPHONE_ANSWER_CHANNEL, (event, data: unknown) => {
+        answerAiChatMicrophoneAsk(event.sender.id, data);
+    });
+
+    onAsync(ipcMain, 'main:app:select-dirs', async () => {
         const result = await dialog.showOpenDialog(appController.mainWin, {
             properties: ['openDirectory'],
         });
-        event.returnValue = result.filePaths;
+        return result.filePaths;
     });
 
-    ipcMain.on(
+    onAsync(
+        ipcMain,
         'main:app:select-files',
-        async (event, filters?: FileFilter[]) => {
+        async ({ filters }: { filters?: FileFilter[] }) => {
             const result = await dialog.showOpenDialog(appController.mainWin, {
                 properties: ['openFile', 'multiSelections'],
                 filters,
             });
-            event.returnValue = result.filePaths;
+            return result.filePaths;
         },
     );
+
+    // A photograph of what the operator is actually looking at. Three callers,
+    // one path: the Presenting Control's snapshot button, the chatbot's own
+    // "attach a screenshot", and `owa_screenshot` for an agent driving the app
+    // from outside. Everything here is a data URL, and the renderer that asked
+    // is the one that decides what to do with it.
+    onAsync(
+        ipcMain,
+        'main:app:capture-window',
+        async ({ screenId }: { screenId?: number }) => {
+            return await captureWindowImage(
+                screenId === undefined
+                    ? appController.mainWin
+                    : findScreenWindow(screenId),
+            );
+        },
+    );
+}
+
+function onAsync<T1, T2>(
+    ipc: IpcMain,
+    eventName: string,
+    callee: (data: T1) => OptionalPromise<T2>,
+): void {
+    ipc.on(eventName, async (event, data: T1) => {
+        const replyEventName = (data as any)?.replyEventName;
+        if (!replyEventName) {
+            console.error(`${eventName}: replyEventName is required`);
+            return;
+        }
+        // Always reply — a missing reply leaves the renderer's awaiting
+        // promise pending forever (stuck progress bars, silent failures).
+        // The renderer rejects when the reply is an Error instance.
+        let result: T2 | Error;
+        try {
+            result = await callee(data);
+        } catch (error) {
+            console.error(`${eventName}:`, error);
+            result = error instanceof Error ? error : new Error(String(error));
+        }
+        try {
+            event.sender.send(replyEventName, result);
+        } catch (error) {
+            console.error(`${eventName}: failed to reply`, error);
+        }
+    });
 }
 
 export function initEventScreen(appController: ElectronAppController) {
@@ -93,26 +259,35 @@ export function initEventScreen(appController: ElectronAppController) {
     });
 
     // TODO: use shareProps.mainWin.on or shareProps.screenWin.on
-    ipcMain.on('main:app:show-screen', (event, data: ShowScreenDataType) => {
-        const screenController = ElectronScreenController.createInstance(
-            data.screenId,
-        );
-        const display = appController.settingManager.getDisplayById(
-            data.displayId,
-        );
-        if (display !== undefined) {
-            screenController.listenLoading().then(() => {
-                appController.mainController.sendData(data.replyEventName);
-            });
-            screenController.setDisplay(display);
-            appController.mainWin.focus();
-        }
-        screenController.win.on('close', () => {
-            screenController.destroyInstance();
-            appController.mainController.sendNotifyInvisibility(data.screenId);
-        });
-        event.returnValue = Promise.resolve('hello');
-    });
+    onAsync(
+        ipcMain,
+        'main:app:show-screen',
+        async (data: ShowScreenDataType) => {
+            const isNewInstance =
+                ElectronScreenController.getInstance(data.screenId) === null;
+            const screenController = ElectronScreenController.createInstance(
+                data.screenId,
+            );
+            const display = appController.settingManager.getDisplayById(
+                data.displayId,
+            );
+            if (display !== undefined) {
+                await screenController.listenLoading();
+                screenController.setDisplay(display);
+                appController.mainWin.focus();
+            }
+            // Attach only once — createInstance returns a cached controller,
+            // and stacking a listener per show call duplicates the notify.
+            if (isNewInstance) {
+                screenController.win.on('close', () => {
+                    screenController.destroyInstance();
+                    appController.mainController.sendNotifyInvisibility(
+                        data.screenId,
+                    );
+                });
+            }
+        },
+    );
 
     ipcMain.on('app:hide-screen', (_, screenId: number) => {
         const screenController = ElectronScreenController.getInstance(screenId);
@@ -149,7 +324,7 @@ export function initEventScreen(appController: ElectronAppController) {
     );
 
     ipcMain.on(
-        channels.screenMessageChannel,
+        messageChannels.screenMessage,
         async (
             event,
             {
@@ -160,7 +335,7 @@ export function initEventScreen(appController: ElectronAppController) {
             }: ScreenMessageType & { isScreen: boolean },
         ) => {
             if (isScreen) {
-                appController.mainController.sendMessage({
+                appController.mainController.sendScreenMessage({
                     screenId,
                     type,
                     data,
@@ -176,27 +351,39 @@ export function initEventScreen(appController: ElectronAppController) {
         },
     );
 
-    ipcMain.on('screen:app:change-bible', (_, isNext) => {
-        appController.mainController.changeBible(isNext);
-    });
-    ipcMain.on('screen:app:ctrl-scrolling', (_, isUp) => {
-        appController.mainController.ctrlScrolling(isUp);
+    ipcMain.on(
+        'screen:app:change-bible',
+        (_, data: { screenId: number; isNext: boolean }) => {
+            appController.mainController.changeBible(data);
+        },
+    );
+}
+
+// The find bar drives the page of the window it is pinned to -- never a fan-out
+// over every open window, which used to highlight matches in windows the
+// operator was not even looking at.
+const foundInPageTrackedContents = new WeakSet<WebContents>();
+
+function trackFoundInPage(hostWebContents: WebContents) {
+    if (foundInPageTrackedContents.has(hostWebContents)) {
+        return;
+    }
+    foundInPageTrackedContents.add(hostWebContents);
+    hostWebContents.on('found-in-page', (_event, result) => {
+        const overlayWebContents =
+            getFindOverlayWebContents(hostWebContents) ?? null;
+        if (overlayWebContents === null || overlayWebContents.isDestroyed()) {
+            return;
+        }
+        overlayWebContents.send('main:app:found-in-page', {
+            activeMatchOrdinal: result.activeMatchOrdinal,
+            matches: result.matches,
+            finalUpdate: result.finalUpdate,
+        });
     });
 }
 
-export function initEventFinder(appController: ElectronAppController) {
-    ipcMain.on('finder:app:close-finder', () => {
-        attemptClosing(appController.finderController);
-    });
-
-    ipcMain.on('main:app:open-setting', () => {
-        appController.settingController.open(
-            appController.mainWin,
-            appController.settingManager,
-        );
-    });
-
-    const mainWinWebContents = appController.mainWin.webContents;
+export function initFinderEvent() {
     ipcMain.on(
         'finder:app:search-in-page',
         (
@@ -208,146 +395,217 @@ export function initEventFinder(appController: ElectronAppController) {
                 matchCase?: boolean;
             } = {},
         ) => {
-            event.returnValue = mainWinWebContents.findInPage(
-                searchText,
-                options,
-            );
+            const hostWebContents = getFindOverlayHostWebContents(event.sender);
+            if (hostWebContents === null) {
+                return;
+            }
+            trackFoundInPage(hostWebContents);
+            hostWebContents.findInPage(searchText, options);
         },
     );
     ipcMain.on(
         'finder:app:stop-search-in-page',
         (
-            _,
+            event,
             action: 'clearSelection' | 'keepSelection' | 'activateSelection',
         ) => {
-            mainWinWebContents.stopFindInPage(action);
+            getFindOverlayHostWebContents(event.sender)?.stopFindInPage(action);
         },
     );
+    ipcMain.on('finder:app:close', (event) => {
+        closeFindOverlay(event.sender);
+    });
+    ipcMain.on('finder:app:drag-start', (event, grabOffsetX: number) => {
+        startFindOverlayDragging(event.sender, grabOffsetX);
+    });
+    ipcMain.on('finder:app:drag-stop', (event) => {
+        stopFindOverlayDragging(event.sender);
+    });
 }
 
 export function initEventOther(appController: ElectronAppController) {
-    ipcMain.on(
+    // OAuth sign-in (e.g. CCLI SongSelect): the consent page must live in a
+    // real window the main process controls, so the renderer only receives
+    // the captured redirect URL back.
+    onAsync(
+        ipcMain,
+        'main:app:oauth-authorize',
+        (data: { authorizeUrl: string; redirectUriPrefix: string }) => {
+            return captureOAuthRedirectUrl(data);
+        },
+    );
+
+    onAsync(
+        ipcMain,
         'main:app:tar-extract',
-        async (
-            _,
-            {
-                replyEventName,
-                filePath,
-                outputDir,
-            }: {
-                replyEventName: string;
-                filePath: string;
-                outputDir: string;
-            },
-        ) => {
-            await tarExtract(filePath, outputDir);
-            appController.mainController.sendData(replyEventName);
+        (data: { filePath: string; outputDir: string; entries?: string[] }) => {
+            return tarExtract(data.filePath, data.outputDir, data.entries);
         },
     );
 
-    ipcMain.on('main:app:get-font-list', async (event) => {
-        if (cache.fontsMap !== null) {
-            event.returnValue = cache.fontsMap;
-        }
-        try {
-            const fonts = await fontList.getFonts({ disableQuoting: true });
-            const fontsMap = Object.fromEntries(
-                fonts.map((fontName) => {
-                    return [fontName, []];
-                }),
+    onAsync(
+        ipcMain,
+        'main:app:tar-create',
+        (data: {
+            inputDir: string;
+            outputFilePath: string;
+            files: string[];
+            isGzip?: boolean;
+            excludeNamePatterns?: string[];
+        }) => {
+            return tarCreate(
+                data.inputDir,
+                data.outputFilePath,
+                data.files,
+                data.isGzip,
+                data.excludeNamePatterns,
             );
-            event.returnValue = fontsMap;
-            cache.fontsMap = fontsMap;
-        } catch (error) {
-            console.log(error);
-            event.returnValue = null;
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:tar-append',
+        (data: {
+            archiveFilePath: string;
+            inputDir: string;
+            files: string[];
+        }) => {
+            return tarAppend(data.archiveFilePath, data.inputDir, data.files);
+        },
+    );
+
+    // Password protection for an exported archive. It runs here rather than in
+    // the renderer so the bytes never cross the bridge: an archive can be
+    // gigabytes, and both directions stream straight from disk to disk.
+    onAsync(
+        ipcMain,
+        'main:app:file-encrypt',
+        (data: {
+            filePath: string;
+            outputFilePath: string;
+            password: string;
+        }) => {
+            return encryptFile(
+                data.filePath,
+                data.outputFilePath,
+                data.password,
+            );
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:file-decrypt',
+        (data: {
+            filePath: string;
+            outputFilePath: string;
+            password: string;
+        }) => {
+            return decryptFile(
+                data.filePath,
+                data.outputFilePath,
+                data.password,
+            );
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:check-is-encrypted-file',
+        (data: { filePath: string }) => {
+            return checkIsEncryptedFile(data.filePath);
+        },
+    );
+
+    onAsync(ipcMain, 'main:app:get-font-list', async () => {
+        return await getFontListMap();
+    });
+    // Prewarm the font list so the first font dropdown doesn't pay the cold cost.
+    void getFontListMap();
+
+    // The clipboard module lives in this process only, so a renderer's copy
+    // has to come through here.
+    ipcMain.on('main:app:copy-to-clipboard', (_, text: unknown) => {
+        if (typeof text !== 'string' || text.length === 0) {
+            return;
         }
+        clipboard.writeText(text);
     });
 
-    ipcMain.on('main:app:reveal-path', (_, path: string) => {
-        shell.showItemInFolder(path);
+    ipcMain.on('main:app:reveal-path', (_, filePath: string) => {
+        if (typeof filePath !== 'string' || filePath.length === 0) {
+            return;
+        }
+        const resolvedFilePath = path.resolve(filePath);
+        shell.showItemInFolder(resolvedFilePath);
     });
 
-    ipcMain.on(
-        'main:app:trash-path',
-        async (
-            _,
-            data: {
-                path: string;
-                replyEventName: string;
-            },
-        ) => {
-            await shell.trashItem(data.path);
-            appController.mainController.sendData(data.replyEventName);
-        },
-    );
-
-    ipcMain.on('main:app:preview-pdf', (_, pdfFilePath: string) => {
-        appController.mainController.previewPdf(pdfFilePath);
-    });
-    ipcMain.on(
-        'main:app:convert-to-pdf',
-        async (
-            _event,
-            {
-                replyEventName,
-                officeFilePath,
-                pdfFilePath,
-            }: {
-                replyEventName: string;
-                officeFilePath: string;
-                pdfFilePath: string;
-            },
-        ) => {
-            const error = await officeFileToPdf(officeFilePath, pdfFilePath);
-            if (error === null) {
-                appController.mainController.sendData(replyEventName);
-            } else {
-                appController.mainController.sendData(replyEventName, error);
+    onAsync(ipcMain, 'main:app:trash-path', async (data: { path: string }) => {
+        if (typeof data.path !== 'string' || data.path.length === 0) {
+            return false;
+        }
+        const resolvedFilePath = path.resolve(data.path);
+        for (let i = 0; i < 5; i++) {
+            try {
+                await shell.trashItem(resolvedFilePath);
+                return true;
+            } catch (error) {
+                console.error('Error trashing item:', error);
             }
+            console.log('Retrying trashing item:', resolvedFilePath);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+        return false;
+    });
+
+    onAsync(
+        ipcMain,
+        'main:app:convert-to-pdf',
+        (data: { officeFilePath: string; pdfFilePath: string }) => {
+            return officeFileToPdf(data.officeFilePath, data.pdfFilePath);
         },
     );
 
-    ipcMain.on(
+    onAsync(
+        ipcMain,
         'main:app:pdf-to-images',
-        async (
-            _event,
-            {
-                replyEventName,
-                filePath,
-                outDir,
-                isForce,
-            }: {
-                replyEventName: string;
-                filePath: string;
-                outDir: string;
-                isForce: boolean;
-            },
-        ) => {
-            const data = await pdfToImages(filePath, outDir, isForce);
-            appController.mainController.sendData(replyEventName, data);
+        (data: { filePath: string; outDir: string; isForce: boolean }) => {
+            const mainDisplay = appController.settingManager.primaryDisplay;
+            return pdfToImages(
+                data.filePath,
+                data.outDir,
+                mainDisplay.size.width,
+                data.isForce,
+            );
         },
     );
 
-    ipcMain.on(
+    onAsync(
+        ipcMain,
         'main:app:pdf-pages-count',
-        async (
-            _event,
-            {
-                replyEventName,
-                filePath,
-            }: {
-                replyEventName: string;
-                filePath: string;
-            },
-        ) => {
-            const data = await getPagesCount(filePath);
-            appController.mainController.sendData(replyEventName, data);
+        (data: { filePath: string }) => {
+            return getPagesCount(data.filePath);
         },
     );
 
     ipcMain.on('main:app:go-download', () => {
         goDownload();
+    });
+
+    // The in-app update check's hand-off: a Store install goes to its own
+    // page in Microsoft Store, anything else to the website download page.
+    ipcMain.on('main:app:go-update', () => {
+        shell.openExternal(getUpdatePageUrl()).catch((error) => {
+            console.error('Failed to open the update page:', error);
+        });
+    });
+
+    // Asked for by the Settings panel that owns a setting a reload cannot
+    // apply. Fire-and-forget on purpose: nothing can be answered to a renderer
+    // that is about to be torn down with the process.
+    ipcMain.on('main:app:relaunch', () => {
+        relaunchApp();
     });
 
     ipcMain.on(
@@ -359,28 +617,302 @@ export function initEventOther(appController: ElectronAppController) {
             ) {
                 return;
             }
-            nativeTheme.themeSource = theme;
+            appController.settingManager.themeSource = theme;
             appController.resetThemeBackgroundColor();
         },
     );
     ipcMain.on('main:app:get-theme', (event) => {
-        event.returnValue = nativeTheme.themeSource;
+        event.returnValue = appController.settingManager.themeSource;
     });
 
-    ipcMain.on('main:app:ask-camera-access', () => {
-        if (isMac) {
-            systemPreferences
-                .askForMediaAccess('camera')
-                .then((access) => {
-                    console.log('Camera access:', access);
-                })
-                .catch((error) => {
-                    console.error('Camera access error:', error);
-                });
+    onAsync(ipcMain, 'main:app:ask-camera-access', async () => {
+        if (!isMac) {
+            return true;
         }
+        try {
+            const access = await systemPreferences.askForMediaAccess('camera');
+            console.log('Camera access:', access);
+            return access;
+        } catch (error) {
+            console.error('Camera access error:', error);
+        }
+        return false;
     });
 
     ipcMain.on('all:app:force-reload', () => {
         appController.reloadAll();
+    });
+
+    // The media download found the pack missing (or just installed it) in one
+    // renderer; the Settings window it is about to raise has to re-read.
+    ipcMain.on('all:app:extra-bin-changed', () => {
+        appController.sendMessageToAll('main:app:extra-bin-changed');
+    });
+
+    ipcMain.on('all:app:print', (event, htmlText?: string) => {
+        if (typeof htmlText === 'string') {
+            void printHTMLContent(htmlText).catch((error) => {
+                console.error('Print content failed:', error);
+            });
+            return;
+        }
+
+        const win = BrowserWindow.fromWebContents(event.sender);
+        void previewPrintCurrentWindow(win).catch((error) => {
+            console.error('Print preview failed:', error);
+        });
+    });
+
+    ipcMain.on('all:app:log', (_event, messages: any[]) => {
+        console.log(...messages);
+    });
+
+    ipcMain.on('all:app:get-zoom-factor', (event) => {
+        event.returnValue = appController.mainWin.webContents.getZoomFactor();
+    });
+
+    onAsync(
+        ipcMain,
+        'main:app:ms-pp-slides-count',
+        (data: { filePath: string }) => {
+            const slidesCount = getPptxSlidesCount(data.filePath);
+            return slidesCount;
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:capture-web-screen-shot',
+        (data: {
+            url: string;
+            width: number;
+            height: number;
+            delay?: number;
+        }) => {
+            return captureWebScreenShot(data.url, data);
+        },
+    );
+
+    // What `owa_read_website` reaches through. The address is judged in
+    // `readWebPage` itself rather than here: that function is what opens the
+    // socket, and a check placed at the door instead would be one an added
+    // caller could forget.
+    onAsync(
+        ipcMain,
+        'main:app:read-web-page',
+        (data: {
+            url: string;
+            wantsScreenshot?: boolean;
+            maxChars?: number;
+            width?: number;
+            height?: number;
+        }) => {
+            return readWebPage(data.url, data);
+        },
+    );
+
+    ipcMain.on('all:app:check-is-window-on-top', (event) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        if (win === null) {
+            return false;
+        }
+        const isOnTop = win.isAlwaysOnTop();
+        event.returnValue = isOnTop;
+    });
+    ipcMain.on(
+        'all:app:set-is-window-on-top',
+        (event, data: { isOnTop: boolean }) => {
+            const win = BrowserWindow.fromWebContents(event.sender);
+            if (win === null) {
+                return false;
+            }
+            win.setAlwaysOnTop(data.isOnTop);
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:pptx-to-htmls',
+        (data: PptxToHtmlsParamsType) => {
+            const isSuccess = pptxToHtmls(data);
+            return isSuccess;
+        },
+    );
+    onAsync(ipcMain, 'main:app:get-pptx-to-htmls-version', () => {
+        const version = getPptxToHtmlsVersion();
+        return version;
+    });
+    onAsync(
+        ipcMain,
+        'main:app:docx-to-htmls',
+        (data: DocxToHtmlsParamsType) => {
+            const isSuccess = docxToHtmls(data);
+            return isSuccess;
+        },
+    );
+    onAsync(ipcMain, 'main:app:get-docx-to-htmls-version', () => {
+        const version = getDocxToHtmlsVersion();
+        return version;
+    });
+
+    ipcMain.on(
+        'main:app:set-menu-items',
+        (
+            event,
+            {
+                key,
+                menusData,
+                options,
+            }: {
+                key: string;
+                menusData: CustomMenusDataType | null;
+                options?: { isRoutedToFocusedWindow?: boolean };
+            },
+        ) => {
+            // Route clicks back to the renderer that contributed the items, not
+            // to whichever window happens to be focused: only the owner has a
+            // handler for its own `clickData` (e.g. the presenter opens the lang
+            // tools links), so focus-based routing silently drops the click
+            // whenever a popup or a screen window is in front.
+            const ownerWin = BrowserWindow.fromWebContents(event.sender);
+            // ...unless the items belong to a feature EVERY window carries.
+            // Only one entry is kept per key, so the last window to load owns
+            // the routing and every other window's press lands nowhere -- the
+            // owner is not focused, and its own guard drops it. For those, the
+            // window in front is the one that meant to press it.
+            const isRoutedToFocusedWindow =
+                options?.isRoutedToFocusedWindow === true;
+            setCustomMenusData(
+                key,
+                menusData === null
+                    ? null
+                    : {
+                          menusData,
+                          clickMenu: (menuData: any) => {
+                              sendMenuClicked(
+                                  menuData,
+                                  isRoutedToFocusedWindow
+                                      ? (BrowserWindow.getFocusedWindow() ??
+                                            ownerWin)
+                                      : ownerWin,
+                              );
+                          },
+                      },
+            );
+            initMenu(appController);
+        },
+    );
+
+    ipcMain.on(
+        'main:app:client-setting',
+        (
+            event,
+            data: {
+                key: string;
+                type: 'get' | 'set' | 'delete' | 'get-all-keys' | 'clear';
+                value?: any;
+            },
+        ) => {
+            const { key, type, value } = data;
+            let returnValue: any = null;
+            if (type === 'get') {
+                const setting =
+                    appController.settingManager.getClientSetting(key);
+                returnValue = setting;
+            } else if (type === 'set') {
+                appController.settingManager.setClientSetting(key, value);
+                returnValue = true;
+            } else if (type === 'delete') {
+                appController.settingManager.deleteClientSetting(key);
+                returnValue = true;
+            } else if (type === 'get-all-keys') {
+                const allSettings =
+                    appController.settingManager.getAllClientSettingKeys();
+                returnValue = JSON.stringify(allSettings);
+            } else if (type === 'clear') {
+                appController.settingManager.clearClientSettings();
+                returnValue = true;
+            }
+            event.returnValue = returnValue;
+        },
+    );
+
+    // Sibling of `main:app:client-setting` for credentials. Same shape, but the
+    // values are encrypted at rest by `safeStorage`. There is deliberately no
+    // `get-all-keys`: enumerating secret key names buys nothing.
+    ipcMain.on(
+        'main:app:secure-setting',
+        (
+            event,
+            data: {
+                key: string;
+                type: 'get' | 'set' | 'delete' | 'clear' | 'is-available';
+                value?: any;
+            },
+        ) => {
+            const { key, type, value } = data;
+            const { settingManager } = appController;
+            let returnValue: any = null;
+            if (type === 'get') {
+                returnValue = settingManager.getSecureSetting(key);
+            } else if (type === 'set') {
+                settingManager.setSecureSetting(key, value);
+                returnValue = true;
+            } else if (type === 'delete') {
+                settingManager.deleteSecureSetting(key);
+                returnValue = true;
+            } else if (type === 'clear') {
+                settingManager.clearSecureSettings();
+                returnValue = true;
+            } else if (type === 'is-available') {
+                returnValue = settingManager.checkIsSecureStorageAvailable();
+            }
+            event.returnValue = returnValue;
+        },
+    );
+
+    ipcMain.on('all:app:check-is-main-window', (event) => {
+        event.returnValue = event.sender === appController.mainWin.webContents;
+    });
+
+    // The chatbot's walkthrough card, relayed out of the window it is drawn in
+    // (`domHelpers`). The sender IS that window, which is the one the card
+    // rings controls in -- and so the one the help window must not cover.
+    ipcMain.on(
+        'all:app:guide-running',
+        (event, data: { isRunning: boolean }) => {
+            const win = BrowserWindow.fromWebContents(event.sender);
+            if (win === null) {
+                return;
+            }
+            setGuideRunning(win, data.isRunning === true);
+        },
+    );
+
+    // The same card, stuck on a step it cannot press. It asks the chat window
+    // that started the walkthrough; the answer comes back the other way and is
+    // drawn on the card, so the user never leaves the window they are working
+    // in. Both halves are routed here because the two renderers cannot reach
+    // each other, and the ANSWER carries no window of its own -- it goes back
+    // to whichever window asked, which `askGuideHelp` is holding.
+    ipcMain.on('all:app:guide-help', (event, data: any) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        if (win === null) {
+            return;
+        }
+        askGuideHelp(win, data ?? {});
+    });
+    ipcMain.on('all:app:guide-help-answer', (_event, data: any) => {
+        answerGuideHelp(data ?? {});
+    });
+
+    // The Presenting Control's snapshot, on its way to the help window. Sent
+    // if that window is already up, and held for it either way -- the same
+    // press opens it, and a window still loading has nobody listening yet.
+    ipcMain.on('all:app:chat-attach', (_event, data: any) => {
+        sendChatAttachment(data ?? {});
+    });
+    ipcMain.on('main:app:take-chat-attachment', (event) => {
+        event.returnValue = takeChatAttachment();
     });
 }

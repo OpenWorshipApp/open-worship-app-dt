@@ -1,38 +1,62 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import CountdownController from './managers/CountdownController';
 import { getHTMLChild } from '../helper/helpers';
-import ScreenManagerBase from './managers/ScreenManagerBase';
-import { handleError } from '../helper/errorHelpers';
-import {
-    ForegroundCameraDataType,
+import type ScreenManagerBase from './managers/ScreenManagerBase';
+import type {
     ForegroundCountdownDataType,
-    ForegroundMarqueDataType,
+    ForegroundMarqueeDataType,
     ForegroundQuickTextDataType,
     ForegroundStopwatchDataType,
     ForegroundTimeDataType,
     ForegroundWebDataType,
+    MarqueePositionType,
     StyleAnimType,
+} from './screenTypeHelpers';
+import {
+    DEFAULT_MARQUEE_SPEED_PERCENTAGE,
+    MAX_MARQUEE_SPEED_PERCENTAGE,
+    MIN_MARQUEE_SPEED_PERCENTAGE,
 } from './screenTypeHelpers';
 import TimingController from './managers/TimingController';
 import StopwatchController from './managers/StopwatchController';
 import FileSource from '../helper/FileSource';
 import RenderBackgroundWebIframeComp from '../background/RenderBackgroundWebIframeComp';
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
+
+const MARQUEE_SLIDE_MILLISECOND = 500;
 
 export function genHtmlForegroundMarquee(
-    { text, extraStyle = {} }: ForegroundMarqueDataType,
+    {
+        text,
+        speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
+        extraStyle = {},
+    }: ForegroundMarqueeDataType,
     screenManagerBase: ScreenManagerBase,
+    position: MarqueePositionType,
 ) {
-    const duration = text.length / 6;
+    const clampedSpeedPercentage = Math.max(
+        MIN_MARQUEE_SPEED_PERCENTAGE,
+        Math.min(MAX_MARQUEE_SPEED_PERCENTAGE, speedPercentage),
+    );
+    const duration =
+        (text.length / 6) *
+        (DEFAULT_MARQUEE_SPEED_PERCENTAGE / clampedSpeedPercentage);
     const scale = screenManagerBase.height / 768;
     const fontSize = Math.round(75 * scale);
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
+    // Keyframes are scoped per instance so a top and a bottom marquee showing
+    // at the same time cannot overwrite each other's slide-in direction.
+    const movingKeyframe = `anim-${uniqueClassname}-moving`;
+    const inKeyframe = `anim-${uniqueClassname}-in`;
+    const outKeyframe = `anim-${uniqueClassname}-out`;
+    const hiddenTranslateY = position === 'top' ? '-100%' : '100%';
     const htmlString = renderToStaticMarkup(
         <div
             style={{
                 position: 'absolute',
                 width: '100%',
                 left: '0px',
-                bottom: '0px',
+                ...(position === 'top' ? { top: '0px' } : { bottom: '0px' }),
             }}
         >
             <style>{`
@@ -45,12 +69,12 @@ export function genHtmlForegroundMarquee(
                     font-size: ${fontSize}px;
                     box-shadow: inset 0 0 10px lightblue;
                     will-change: transform;
-                    transform: translateY(100%);
-                    animation: from-bottom 500ms ease-in forwards;
+                    transform: translateY(${hiddenTranslateY});
+                    animation: ${inKeyframe} ${MARQUEE_SLIDE_MILLISECOND}ms ease-in forwards;
                     white-space: nowrap;
                 }
                 .${uniqueClassname}.out {
-                    animation: to-bottom 500ms ease-out forwards;
+                    animation: ${outKeyframe} ${MARQUEE_SLIDE_MILLISECOND}ms ease-out forwards;
                 }
                 .${uniqueClassname} span {
                     display: inline-block;
@@ -66,22 +90,22 @@ export function genHtmlForegroundMarquee(
                     animation-direction: normal;
                     animation-fill-mode: none;
                     animation-play-state: running;
-                    animation-name: moving;
+                    animation-name: ${movingKeyframe};
                 }
                 .${uniqueClassname}.out span {
                     animation-play-state: paused;
                 }
-                @keyframes moving {
+                @keyframes ${movingKeyframe} {
                     0% { transform: translateX(0); }
                     100% { transform: translateX(-100%); }
                 }
-                @keyframes from-bottom {
-                    0% { transform: translateY(100%); }
+                @keyframes ${inKeyframe} {
+                    0% { transform: translateY(${hiddenTranslateY}); }
                     100% { transform: translateY(0); }
                 }
-                @keyframes to-bottom {
+                @keyframes ${outKeyframe} {
                     0% { transform: translateY(0); }
-                    100% { transform: translateY(100%); }
+                    100% { transform: translateY(${hiddenTranslateY}); }
                 }
             `}</style>
             <p className={uniqueClassname} style={extraStyle}>
@@ -112,7 +136,10 @@ export function genHtmlForegroundMarquee(
                 )) {
                     (element as any).classList.add('out');
                 }
-                setTimeout(resolve, duration * 1000 + 500);
+                // Only the slide-out has to finish before the node is dropped;
+                // tying this to `duration` would keep a hidden marquee around
+                // for minutes at the slowest scroll speeds.
+                setTimeout(resolve, MARQUEE_SLIDE_MILLISECOND);
             });
         },
     };
@@ -133,15 +160,19 @@ export function genHtmlForegroundQuickText(
         <div style={extraStyle}>
             <style>{`
             #${uniqueId} * {
-                margin: 0.05em !important;
+                margin: 0.25em !important;
             }
             `}</style>
-            <div id={uniqueId} dangerouslySetInnerHTML={{ __html: htmlText }} />
+            <div
+                id={uniqueId}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlText) }}
+            />
         </div>,
     );
     const div = document.createElement('div');
     div.innerHTML = htmlString;
     const element = getHTMLChild<HTMLDivElement>(div, 'div');
+
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
             await new Promise<void>((resolve) => {
@@ -166,6 +197,7 @@ export function genHtmlForegroundCountdown(
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
         <div
+            className="foreground-countdown-container"
             style={{
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
@@ -186,9 +218,17 @@ export function genHtmlForegroundCountdown(
                 .${uniqueClassname} #second {
                     text-align: left;
                 }
+                .${uniqueClassname}[data-time-diff="0"] {
+                    animation: anim-${uniqueClassname}-alerting 2s ease-in infinite;
+                }
+                @keyframes anim-${uniqueClassname}-alerting {
+                    0% { color: red; }
+                    75% { color: white; }
+                    100% { color: red; }
+                }
             `}</style>
             <div className={uniqueClassname}>
-                <span style={{ marginRight: '50px' }}>⏳</span>
+                <span style={{ marginRight: '25px' }}>⏳</span>
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
             </div>
@@ -217,6 +257,7 @@ export function genHtmlForegroundStopwatch(
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
         <div
+            className="foreground-stopwatch-container"
             style={{
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
@@ -239,7 +280,7 @@ export function genHtmlForegroundStopwatch(
                 }
             `}</style>
             <div className={uniqueClassname}>
-                <span style={{ marginRight: '50px' }}>⏱️</span>
+                <span style={{ marginRight: '25px' }}>⏱️</span>
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
             </div>
@@ -266,9 +307,11 @@ export function genHtmlForegroundTime(
     animData: StyleAnimType,
 ) {
     const { timezoneMinuteOffset, title } = timeData;
+    const is24HourFormat = timeData.is24HourFormat ?? false;
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
         <div
+            className="foreground-time-container"
             style={{
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
@@ -301,16 +344,25 @@ export function genHtmlForegroundTime(
                 <small>{title}</small>
             </div>
             <div className={uniqueClassname}>
-                <span style={{ marginRight: '50px' }}>🕗</span>
+                <span style={{ marginRight: '25px' }}>🕗</span>
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
+                {is24HourFormat ? null : (
+                    <div id="ampm" style={{ marginLeft: '8px' }}>
+                        AM
+                    </div>
+                )}
             </div>
         </div>,
     );
     const div = document.createElement('div');
     div.innerHTML = htmlString;
     const element = getHTMLChild<HTMLDivElement>(div, 'div');
-    const timingHandler = TimingController.init(element, timezoneMinuteOffset);
+    const timingHandler = TimingController.init(
+        element,
+        timezoneMinuteOffset,
+        is24HourFormat,
+    );
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
             timingHandler.start();
@@ -321,55 +373,6 @@ export function genHtmlForegroundTime(
             await animData.animOut(element);
         },
     };
-}
-
-export async function getCameraAndShowMedia(
-    {
-        id,
-        extraStyle,
-        parentContainer,
-        width,
-    }: ForegroundCameraDataType & {
-        parentContainer: HTMLElement;
-        width?: number;
-    },
-    animData?: StyleAnimType,
-) {
-    try {
-        const { mediaDevices } = navigator;
-        const mediaStream = await mediaDevices.getUserMedia({
-            audio: false,
-            video: { deviceId: { exact: id } },
-        });
-        const video = document.createElement('video');
-        video.srcObject = mediaStream;
-        video.onloadedmetadata = () => {
-            video.play();
-        };
-        if (width !== undefined) {
-            video.style.width = `${width}px`;
-        }
-        Object.assign(video.style, extraStyle ?? {});
-        parentContainer.innerHTML = '';
-        const stopAllStreams = () => {
-            const tracks = mediaStream.getVideoTracks();
-            for (const track of tracks) {
-                track.stop();
-            }
-        };
-        if (animData === undefined) {
-            parentContainer.appendChild(video);
-            return stopAllStreams;
-        }
-        animData.animIn(video, parentContainer);
-        return async () => {
-            await animData.animOut(video);
-            stopAllStreams();
-        };
-    } catch (error) {
-        handleError(error);
-    }
-    return () => {};
 }
 
 export function genHtmlForegroundWeb(
@@ -383,23 +386,33 @@ export function genHtmlForegroundWeb(
     const fileSource = FileSource.getInstance(filePath);
     const htmlString = renderToStaticMarkup(
         <RenderBackgroundWebIframeComp
-            fileSource={fileSource}
+            iframeSource={fileSource}
             width={width}
             height={height}
             targetWidth={displayDim.width}
             targetHeight={displayDim.height}
         />,
     );
-    const div = document.createElement('div');
-    Object.assign(div.style, extraStyle);
-    div.innerHTML = htmlString;
-    const element = getHTMLChild<HTMLIFrameElement>(div, 'iframe');
+    // extraStyle carries the widget positioning (alignment + X/Y offset via
+    // left/top/transform), sizing and box styling. It must live on the element
+    // that is actually mounted. The iframe already uses its own `transform` to
+    // scale the page, so it can't also carry the positioning transform — wrap
+    // it in a sized, clipped container that gets extraStyle instead. Mounting
+    // the bare iframe (as before) dropped extraStyle entirely, pinning every
+    // web overlay to the top-left corner.
+    const container = document.createElement('div');
+    container.innerHTML = htmlString;
+    Object.assign(container.style, extraStyle, {
+        width: `${width}px`,
+        height: `${Math.round(displayDim.height * widthScale)}px`,
+        overflow: 'hidden',
+    });
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
-            await animData.animIn(element, parentContainer);
+            await animData.animIn(container, parentContainer);
         },
         handleRemoving: async () => {
-            await animData.animOut(element);
+            await animData.animOut(container);
         },
     };
 }

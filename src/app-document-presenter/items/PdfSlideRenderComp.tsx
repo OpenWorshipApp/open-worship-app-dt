@@ -1,13 +1,16 @@
-import { MouseEvent } from 'react';
+import { useCallback, useMemo, type MouseEvent } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import { getHTMLChild } from '../../helper/helpers';
-import PdfSlide from '../../app-document-list/PdfSlide';
-import SlideItemRenderComp from './SlideItemRenderComp';
-import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
-import SlideScaleContainerComp from './SlideScaleContainerComp';
-import { useScale } from './slideItemRenderHelpers';
+import type PdfSlide from '../../app-document-list/PdfSlide';
+import VarySlideRenderComp from './VarySlideRenderComp';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { tran } from '../../lang/langHelpers';
+import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
+import type PdfAppDocument from '../../app-document-list/PdfAppDocument';
+import { sanitizeHtml } from '../../helper/sanitizeHelpers';
+import { type VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function PdfSlideRenderContentComp({
     pdfImageSrc,
@@ -16,23 +19,19 @@ function PdfSlideRenderContentComp({
     pdfImageSrc: string;
     isFullWidth?: boolean;
 }>) {
-    return (
-        <img
-            alt="pdf-image"
-            style={
-                isFullWidth
-                    ? {
-                          width: '100%',
-                      }
-                    : {
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain',
-                      }
-            }
-            src={pdfImageSrc}
-        />
-    );
+    const actualStyle = useMemo(() => {
+        if (isFullWidth) {
+            return {
+                width: '100%',
+            };
+        }
+        return {
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain' as const,
+        };
+    }, [isFullWidth]);
+    return <img alt="pdf-image" style={actualStyle} src={pdfImageSrc} />;
 }
 
 export function genPdfSlide(pdfImageSrc: string, isFullWidth = false) {
@@ -43,58 +42,55 @@ export function genPdfSlide(pdfImageSrc: string, isFullWidth = false) {
         />,
     );
     const div = document.createElement('div');
-    div.innerHTML = htmlString;
+    div.innerHTML = sanitizeHtml(htmlString);
     return getHTMLChild<HTMLDivElement>(div, 'img');
 }
 
 export default function PdfSlideRenderComp({
-    slide,
+    pdfSlide,
     width,
     index,
     onClick,
-    onContextMenu,
 }: Readonly<{
-    slide: PdfSlide;
+    pdfSlide: PdfSlide;
     width: number;
     index: number;
-    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
-    onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
+    onClick?: (
+        event: MouseEvent<HTMLDivElement>,
+        index: number,
+        varySlide: VarySlideType,
+    ) => void;
 }>) {
-    const { scale, parentWidth, setParentDiv } = useScale(slide, width);
-    useScreenVaryAppDocumentManagerEvents(['update']);
-    const pdfPreviewSrc = slide.pdfPreviewSrc;
+    const pdfAppDocument = useVaryAppDocumentContext() as PdfAppDocument;
+    const pdfPreviewSrc = pdfSlide.pdfPreviewSrc;
+    const pdfAppDocumentRef = useAppCurrentRef(pdfAppDocument);
+    const pdfSlideRef = useAppCurrentRef(pdfSlide);
+    const handleContextMenuOpening = useCallback(
+        (event: MouseEvent, extraMenuItems: ContextMenuItemType[]) => {
+            pdfAppDocumentRef.current.showSlideContextMenu(
+                event,
+                pdfSlideRef.current,
+                extraMenuItems,
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     return (
-        <SlideItemRenderComp
-            slide={slide}
+        <VarySlideRenderComp
+            varySlide={pdfSlide}
             width={width}
             index={index}
-            onContextMenu={onContextMenu}
-            onClick={onClick}
+            onContextMenu={handleContextMenuOpening}
+            onClick={(event) => {
+                onClick?.(event, index, pdfSlide);
+            }}
         >
-            <SlideScaleContainerComp
-                slide={slide}
-                width={width}
-                extraStyle={{
-                    position: 'absolute',
-                }}
-            />
-            <div
-                className="overflow-hidden"
-                ref={setParentDiv}
-                style={{
-                    position: 'absolute',
-                    width: `${parentWidth}px`,
-                    height: `${Math.round(slide.height * scale)}px`,
-                }}
-            >
-                {pdfPreviewSrc === null ? (
-                    <div className="alert alert-danger">
-                        Unable to preview right now
-                    </div>
-                ) : (
-                    <PdfSlideRenderContentComp pdfImageSrc={pdfPreviewSrc} />
-                )}
-            </div>
-        </SlideItemRenderComp>
+            {pdfPreviewSrc === null ? (
+                <h3>{tran('Unable to preview right now')}</h3>
+            ) : (
+                <PdfSlideRenderContentComp pdfImageSrc={pdfPreviewSrc} />
+            )}
+        </VarySlideRenderComp>
     );
 }

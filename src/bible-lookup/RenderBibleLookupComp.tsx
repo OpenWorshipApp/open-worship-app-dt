@@ -5,18 +5,20 @@ import { SelectedBibleKeyContext } from '../bible-list/bibleHelpers';
 import { BibleNotAvailableComp } from './RenderLookupSuggestionComp';
 import BibleLookupBodyPreviewerComp from './BibleLookupBodyPreviewerComp';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { MultiContextRender } from '../helper/MultiContextRender';
+import { MultiContextRenderComp } from '../helper/MultiContextRenderComp';
 import RenderBibleLookupHeaderComp from './RenderBibleLookupHeaderComp';
 import RenderExtraButtonsRightComp from './RenderExtraButtonsRightComp';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
-import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppStateAsync } from '../helper/appHooks';
 import {
     EditingResultContext,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
-import { EditingResultType } from '../helper/bible-helpers/bibleLogicHelpers2';
+import type { EditingResultType } from '../helper/bible-helpers/bibleLogicHelpers2';
 import LoadingComp from '../others/LoadingComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
+import appProvider from '../server/appProvider';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazyBibleSearchBodyPreviewerComp = lazy(() => {
     return import('../bible-find/BibleFindPreviewerComp');
@@ -45,17 +47,19 @@ export function useSelectedBibleKey() {
     }
     return { isValid: bibleInfo !== null, bibleKey };
 }
+const advanceLookupSettingKey =
+    LOOKUP_ONLINE_SETTING_NAME +
+    '-' +
+    appProvider.currentHomePage.split('/')[0];
 
 export default function RenderBibleLookupComp() {
     const viewController = useLookupBibleItemControllerContext();
-    const [isBibleSearching, setIsBibleSearching] = useStateSettingBoolean(
-        LOOKUP_ONLINE_SETTING_NAME,
-        false,
-    );
+    const [isAdvanceLookupOpened, setIsAdvanceLookupOpened] =
+        useStateSettingBoolean(advanceLookupSettingKey, false);
     useAppEffect(() => {
-        viewController.setIsBibleSearching = setIsBibleSearching;
+        viewController.setIsAdvanceLookupOpened = setIsAdvanceLookupOpened;
         return () => {
-            viewController.setIsBibleSearching = (_: boolean) => {};
+            viewController.setIsAdvanceLookupOpened = (_: boolean) => {};
         };
     }, []);
     const [inputText, setInputText] = useState<string>(
@@ -82,15 +86,15 @@ export default function RenderBibleLookupComp() {
             viewController.setInputText = (_: string) => {};
             viewController.reloadEditingResult = (_: string) => {};
         };
-    }, []);
+    }, [viewController]);
     if (!isValidBibleKey) {
         return (
             <div className="card w-100 h-100">
                 <div className="card-header">
                     <div className="float-end">
                         <RenderExtraButtonsRightComp
-                            setIsLookupOnline={setIsBibleSearching}
-                            isLookupOnline={isBibleSearching}
+                            setIsAdvanceLookupOpened={setIsAdvanceLookupOpened}
+                            isAdvanceLookupOpened={isAdvanceLookupOpened}
                         />
                     </div>
                 </div>
@@ -104,11 +108,7 @@ export default function RenderBibleLookupComp() {
             </div>
         );
     }
-    const lookupBody = (
-        <EditingResultContext value={editingResult ?? null}>
-            <BibleLookupBodyPreviewerComp />
-        </EditingResultContext>
-    );
+    const lookupBody = <BibleLookupBodyPreviewerComp />;
     const resizeData = [
         {
             children: {
@@ -117,16 +117,16 @@ export default function RenderBibleLookupComp() {
                 },
             },
             key: 'h2',
-            widgetName: 'Lookup',
+            ...toWidgetLabel('Lookup'),
         },
         {
             children: LazyBibleSearchBodyPreviewerComp,
             key: 'h1',
-            widgetName: 'Bible Online Lookup',
+            ...toWidgetLabel('Bible Online Lookup'),
         },
     ];
     return (
-        <MultiContextRender
+        <MultiContextRenderComp
             contexts={[
                 {
                     context: SelectedBibleKeyContext,
@@ -138,6 +138,10 @@ export default function RenderBibleLookupComp() {
                         inputText,
                     },
                 },
+                {
+                    context: EditingResultContext,
+                    value: editingResult ?? null,
+                },
             ]}
         >
             <div
@@ -148,8 +152,8 @@ export default function RenderBibleLookupComp() {
                 }
             >
                 <RenderBibleLookupHeaderComp
-                    isLookupOnline={isBibleSearching}
-                    setIsLookupOnline={setIsBibleSearching}
+                    isAdvanceLookupOpened={isAdvanceLookupOpened}
+                    setIsAdvanceLookupOpened={setIsAdvanceLookupOpened}
                 />
                 <div
                     className={'card-body d-flex w-100 app-overflow-hidden'}
@@ -157,7 +161,7 @@ export default function RenderBibleLookupComp() {
                         height: 'calc(100% - 38px)',
                     }}
                 >
-                    {isBibleSearching ? (
+                    {isAdvanceLookupOpened ? (
                         <ResizeActorComp
                             flexSizeName="bible-lookup-container-body"
                             isHorizontal
@@ -170,6 +174,6 @@ export default function RenderBibleLookupComp() {
                     )}
                 </div>
             </div>
-        </MultiContextRender>
+        </MultiContextRenderComp>
     );
 }

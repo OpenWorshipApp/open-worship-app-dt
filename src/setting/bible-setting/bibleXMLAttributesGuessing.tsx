@@ -1,16 +1,14 @@
-import { useState } from 'react';
+import { type ChangeEvent, useCallback, useState } from 'react';
 
+import type { LocaleType } from '../../lang/langHelpers';
 import {
-    getLangAsync,
+    DEFAULT_LANG_CODE,
     getLangCode,
-    LanguageDataType,
-    LocaleType,
+    getLangDataAsync,
+    toLocaleNum,
     tran,
 } from '../../lang/langHelpers';
-import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
-import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
-import { Uri } from 'monaco-editor';
-import { getBibleModelInfo } from '../../helper/bible-helpers/bibleModelHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../../helper/appHooks';
 
 function BibleKeyXMLInputComp({
     defaultVale,
@@ -25,15 +23,26 @@ function BibleKeyXMLInputComp({
 }>) {
     const [value, setValue] = useState(defaultVale);
     const [invalidMessage, setInvalidMessage] = useState<string>('');
-    const setValue1 = (value: string) => {
-        setValue(value);
-        onChange(value);
-        if (takenBibleKeys.includes(value.toLowerCase())) {
-            setInvalidMessage('Key is already taken');
-        } else {
-            setInvalidMessage('');
-        }
-    };
+    const onChangeRef = useAppCurrentRef(onChange);
+    const takenBibleKeysRef = useAppCurrentRef(takenBibleKeys);
+    const setValue1 = useCallback(
+        (value: string) => {
+            setValue(value);
+            onChangeRef.current(value);
+            if (takenBibleKeysRef.current.includes(value.toLowerCase())) {
+                setInvalidMessage('Key is already taken');
+            } else {
+                setInvalidMessage('');
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const setValue1Ref = useAppCurrentRef(setValue1);
+    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setValue1Ref.current(e.target.value);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="w-100 h-100">
             <div>{tran('Define a Bible key')}</div>
@@ -46,14 +55,12 @@ function BibleKeyXMLInputComp({
                     }
                     type="text"
                     value={value}
-                    onChange={(e) => {
-                        setValue1(e.target.value);
-                    }}
+                    onChange={handleChange}
                 />
             </div>
             {guessingKeys !== undefined && guessingKeys.length > 0 ? (
                 <div className="w-100">
-                    <div>Guessing keys:</div>
+                    <div>{tran('Guessing keys:')}</div>
                     <div>
                         {guessingKeys.map((guessingKey) => {
                             if (
@@ -99,6 +106,15 @@ export function genBibleKeyXMLInput(
     );
 }
 
+async function toLocaleNumbers(locale: LocaleType, numbers: number[]) {
+    const langData = await getLangDataAsync(locale);
+    if (langData === null) {
+        return null;
+    }
+    const arr = await Promise.all(numbers.map((i) => toLocaleNum(locale, i)));
+    return arr.join(' ');
+}
+
 function BibleNumbersMapXMLInputComp({
     defaultVale,
     onChange,
@@ -108,21 +124,35 @@ function BibleNumbersMapXMLInputComp({
     onChange: (key: string) => void;
     locale: LocaleType;
 }>) {
+    const [num123] = useAppStateAsync(
+        () => toLocaleNumbers(locale, [1, 2, 3]),
+        [locale],
+    );
     const [value, setValue] = useState(defaultVale);
     const [invalidMessage, setInvalidMessage] = useState<string>('');
-    const setValue1 = (value: string) => {
-        setValue(value);
-        onChange(value);
-        if (value.split(' ').length === 10) {
-            setInvalidMessage('');
-        } else {
-            setInvalidMessage('Must have 10 numbers');
-        }
-    };
-    const langCode = getLangCode(locale) ?? 'en';
+    const onChangeRef = useAppCurrentRef(onChange);
+    const setValue1 = useCallback(
+        (value: string) => {
+            setValue(value);
+            onChangeRef.current(value);
+            if (value.split(' ').length === 10) {
+                setInvalidMessage('');
+            } else {
+                setInvalidMessage('Must have 10 numbers');
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const setValue1Ref = useAppCurrentRef(setValue1);
+    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setValue1Ref.current(e.target.value);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const langCode = getLangCode(locale) ?? DEFAULT_LANG_CODE;
     return (
         <div className="w-100 h-100">
-            <div>Define numbers map</div>
+            <div>Define numbers map for {langCode}</div>
             <div className="input-group" title={invalidMessage}>
                 <div className="input-group-text">Key:</div>
                 <input
@@ -130,16 +160,15 @@ function BibleNumbersMapXMLInputComp({
                         'form-control form-control-sm' +
                         (invalidMessage ? ' is-invalid' : '')
                     }
+                    placeholder="0 1 2 3 4 5 6 7 8 9"
                     type="text"
                     value={value}
-                    onChange={(e) => {
-                        setValue1(e.target.value);
-                    }}
+                    onChange={handleChange}
                 />
             </div>
             <div className="w-100">
                 <a
-                    className="btn btn-secondary ms-2"
+                    className="btn btn-sm btn-secondary ms-2"
                     href={
                         `https://translate.google.com/?sl=en&tl=${langCode}&` +
                         'text=0%201%202%203%204%205%206%207%208%209&op=translate'
@@ -148,6 +177,23 @@ function BibleNumbersMapXMLInputComp({
                 >
                     Translate ({langCode})
                 </a>
+                {num123 ? (
+                    <button
+                        className="btn btn-sm btn-secondary ms-2"
+                        onClick={async () => {
+                            const localeNumbers = await toLocaleNumbers(
+                                locale,
+                                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                            );
+                            if (localeNumbers === null) {
+                                return;
+                            }
+                            setValue1(localeNumbers);
+                        }}
+                    >
+                        {`Use ${num123}`}
+                    </button>
+                ) : null}
             </div>
         </div>
     );
@@ -163,143 +209,6 @@ export function genBibleNumbersMapXMLInput(
             defaultVale={numbers.join(' ')}
             onChange={(newValue) => {
                 onChange(newValue.split(' '));
-            }}
-            locale={locale}
-        />
-    );
-}
-
-const genMonacoBibleLineNumber = (num: number) => {
-    const bibleModelInfo = getBibleModelInfo();
-    const map = bibleModelInfo.bookKeysOrder;
-    const index = num - 1;
-    const numString = `0${num}`.slice(-2);
-    if (map[index] === undefined) {
-        return numString;
-    }
-    const bookKey = map[num - 1];
-    const modelKeyBook = getModelKeyBookMap();
-    return `${modelKeyBook[bookKey]} (${bookKey}) ${numString}`;
-};
-
-function BibleBooksMapXMLInputComp({
-    defaultVale,
-    onChange,
-    locale,
-}: Readonly<{
-    defaultVale: string;
-    onChange: (newValue: string) => void;
-    locale: LocaleType;
-}>) {
-    const { editorStore, onContainerInit } = useInitMonacoEditor({
-        settingName: 'bible-xml-wrap-text',
-        options: {
-            value: defaultVale,
-            language: 'plaintext',
-            lineNumbersMinChars: 25,
-            lineNumbers: genMonacoBibleLineNumber,
-        },
-        onContentChange: (_, content) => {
-            onChange(content);
-        },
-        uri: Uri.parse('bible-books-map-editor'),
-        language: 'plaintext',
-    });
-    const handleMarkupStringParsing = (
-        markupString: string,
-        lang: LanguageDataType | null,
-    ) => {
-        const parser = new DOMParser();
-        markupString = markupString.replaceAll('</', '@newline</');
-        const doc = parser.parseFromString(markupString, 'text/html');
-        let innerText = doc.body.innerText;
-        innerText = innerText.replaceAll('@newline', '\n');
-        innerText = innerText.replaceAll(/ +/g, ' ');
-        innerText = innerText.replaceAll(/\n\s/g, '\n');
-        innerText = innerText.replaceAll(/\n+/g, '\n');
-        innerText = innerText.trim();
-        if (lang !== null) {
-            innerText = lang.sanitizeText(innerText);
-        }
-        onChange(innerText);
-        editorStore.replaceValue(innerText);
-    };
-    const langCode = getLangCode(locale) ?? 'en';
-    return (
-        <div className="w-100 h-100">
-            <h3 className="p-2">Define books map</h3>
-            <div
-                className="input-group"
-                ref={onContainerInit}
-                style={{
-                    height: '400px',
-                }}
-            />
-            <div className="w-100 p-1">
-                <button
-                    className="btn btn-sm btn-warning ms-2"
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        editorStore.replaceValue(
-                            Object.values(getModelKeyBookMap()).join('\n'),
-                        );
-                    }}
-                >
-                    {tran('Reset')}
-                </button>
-                <a
-                    className="btn btn-sm btn-secondary ms-2"
-                    href={
-                        `https://translate.google.com/?sl=en&tl=${langCode}&` +
-                        'text=GENESIS%0AEXODUS%0ALEVITICUS%0ANUMBERS%0ADEUTERONO' +
-                        'MY%0AJOSHUA%0AJUDGES%0ARUTH%0A1%20SAMUEL%0A2%20SAMUEL%0A' +
-                        '1%20KINGS%0A2%20KINGS%0A1%20CHRONICLES%0A2%20CHRONICLES%' +
-                        '0AEZRA%0ANEHEMIAH%0AESTHER%0AJOB%0APSALM%0APROVERBS%0AEC' +
-                        'CLESIASTES%0ASONG%20OF%20SOLOMON%0AISAIAH%0AJEREMIAH%0A' +
-                        'LAMENTATIONS%0AEZEKIEL%0ADANIEL%0AHOSEA%0AJOEL%0AAMOS%0' +
-                        'AOBADIAH%0AJONAH%0AMICAH%0ANAHUM%0AHABAKKUK%0AZEPHANIAH' +
-                        '%0AHAGGAI%0AZECHARIAH%0AMALACHI%0AMATTHEW%0AMARK%0ALUKE' +
-                        '%0AJOHN%0AACTS%0AROMANS%0A1%20CORINTHIANS%0A2%20CORINTH' +
-                        'IANS%0AGALATIANS%0AEPHESIANS%0APHILIPPIANS%0ACOLOSSIANS' +
-                        '%0A1%20THESSALONIANS%0A2%20THESSALONIANS%0A1%20TIMOTHY%' +
-                        '0A2%20TIMOTHY%0ATITUS%0APHILEMON%0AHEBREWS%0AJAMES%0A1%' +
-                        '20PETER%0A2%20PETER%0A1%20JOHN%0A2%20JOHN%0A3%20JOHN%0A' +
-                        'JUDE%0AREVELATION&op=translate'
-                    }
-                    target="_blank"
-                >
-                    Translate ({langCode})
-                </a>
-                <button
-                    className="btn btn-sm btn-secondary ms-2"
-                    onClick={async (event) => {
-                        event.stopPropagation();
-                        const value = editorStore.editorInstance.getValue();
-                        const isHTML = value.includes('<');
-                        if (!isHTML) {
-                            return;
-                        }
-                        const lang = await getLangAsync(locale);
-                        handleMarkupStringParsing(value, lang);
-                    }}
-                >
-                    {tran('Parse Markup String (HTML|XML)')}
-                </button>
-            </div>
-        </div>
-    );
-}
-
-export function genBibleBooksMapXMLInput(
-    books: string[],
-    locale: LocaleType,
-    onChange: (books: string[]) => void,
-) {
-    return (
-        <BibleBooksMapXMLInputComp
-            defaultVale={books.join('\n')}
-            onChange={(newValue) => {
-                onChange(newValue.split('\n'));
             }}
             locale={locale}
         />

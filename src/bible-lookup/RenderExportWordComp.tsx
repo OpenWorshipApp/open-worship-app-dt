@@ -1,0 +1,32 @@
+import { tran } from '../lang/langHelpers';
+
+import type BibleItemsViewController from '../bible-reader/BibleItemsViewController';
+import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
+import { exportToWordDocument } from '../bible-list/bibleHelpers';
+
+async function handleWordExporting(
+    bibleItemsViewController: BibleItemsViewController,
+) {
+    const bibleItems =
+        await bibleItemsViewController.getBibleItemsForExportingMSWord();
+    exportToWordDocument(bibleItems);
+}
+
+export default function RenderExportWordComp() {
+    const bibleItemsViewController = useBibleItemsViewControllerContext();
+    return (
+        <button
+            className="btn btn-sm btn-secondary"
+            title={tran('Export to MS Word')}
+            aria-label={tran('Export to MS Word')}
+            onClick={handleWordExporting.bind(null, bibleItemsViewController)}
+        >
+            <i
+                className="bi bi-file-earmark-word"
+                style={{
+                    color: 'blue',
+                }}
+            />
+        </button>
+    );
+}

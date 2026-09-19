@@ -1,8 +1,10 @@
-import { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
-import { OptionalPromise } from '../helper/typeHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
 import appProvider from '../server/appProvider';
 import { tran } from '../lang/langHelpers';
+import { genLabelIcon } from '../others/labelIconHelpers';
+import { getSetting, setSetting } from '../helper/settingHelpers';
 
 export type TabOptionType = {
     title: ReactNode;
@@ -19,51 +21,23 @@ export enum WindowModEnum {
 export function toTitleExternal(title: string, style?: CSSProperties) {
     return (
         <span style={style}>
+            {genLabelIcon(title)}
             {tran(title) + ' '}
-            <i className="bi bi-box-arrow-up-right" />
         </span>
     );
 }
-
-export const presenterTab: TabOptionType = {
-    title: toTitleExternal('Presenter', {
-        color: 'var(--app-color-presenter)',
-    }),
-    routePath: appProvider.presenterHomePage,
-};
-export const readerTab: TabOptionType = {
-    title: (
-        <span
-            style={{
-                color: 'var(--app-color-reader)',
-            }}
-        >
-            <i className="bi bi-book px-1" />
-            {toTitleExternal('Bible Reader')}
-        </span>
-    ),
-    routePath: appProvider.readerHomePage,
-};
-export const experimentTab: TabOptionType = {
-    title: toTitleExternal('(dev)Experiment'),
-    routePath: appProvider.experimentHomePage,
-};
 
 const PATH_NAME_SETTING_NAME = 'last-page-location';
 export function goToPath(pathname?: string) {
     if (!pathname) {
         pathname =
-            globalThis.localStorage.getItem(PATH_NAME_SETTING_NAME) ||
-            appProvider.presenterHomePage;
+            getSetting(PATH_NAME_SETTING_NAME) || appProvider.presenterHomePage;
     }
     if (pathname.startsWith(appProvider.currentHomePage)) {
         pathname = appProvider.presenterHomePage;
     }
     const url = new URL(globalThis.location.href);
     url.pathname = pathname;
-    globalThis.localStorage.setItem(
-        PATH_NAME_SETTING_NAME,
-        appProvider.currentHomePage,
-    );
+    setSetting(PATH_NAME_SETTING_NAME, appProvider.currentHomePage);
     globalThis.location.href = url.href;
 }

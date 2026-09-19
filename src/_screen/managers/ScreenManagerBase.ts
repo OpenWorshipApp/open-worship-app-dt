@@ -1,5 +1,5 @@
 import EventHandler from '../../event/EventHandler';
-import { DroppedDataType } from '../../helper/DragInf';
+import type { DroppedDataType } from '../../helper/DragInf';
 import { getWindowDim } from '../../helper/helpers';
 import { setSetting } from '../../helper/settingHelpers';
 import ScreenForegroundManager from './ScreenForegroundManager';
@@ -11,9 +11,9 @@ import {
     setDisplay,
     showScreen,
 } from '../screenHelpers';
-import ScreenManagerInf from '../preview/ScreenManagerInf';
+import type ScreenManagerInf from '../preview/ScreenManagerInf';
 import ScreenVaryAppDocumentManager from './ScreenVaryAppDocumentManager';
-import ColorNoteInf from '../../helper/ColorNoteInf';
+import type ColorNoteInf from '../../helper/ColorNoteInf';
 import {
     getDisplayByScreenId,
     getDisplayIdByScreenId,
@@ -21,14 +21,18 @@ import {
 } from './screenHelpers';
 import appProvider from '../../server/appProvider';
 import { showSimpleToast } from '../../toast/toastHelpers';
-import { ScreenMessageType } from '../screenTypeHelpers';
+import type { ScreenMessageType } from '../screenTypeHelpers';
+import { tran } from '../../lang/langHelpers';
+import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
 
 export type ScreenManagerEventType =
     | 'instance'
     | 'update'
     | 'visible'
     | 'display-id'
-    | 'refresh';
+    | 'refresh'
+    | 'scale'
+    | 'color-note-update';
 
 export default class ScreenManagerBase
     extends EventHandler<ScreenManagerEventType>
@@ -41,20 +45,26 @@ export default class ScreenManagerBase
     height = 1;
     _isSelected: boolean = false;
     _isLocked: boolean = false;
-    _stageNumber: number = 0;
+    _stage: number = 0;
     colorNote: string | null = null;
     private _isShowing: boolean;
     noSyncGroupMap: Map<string, boolean>;
+    getElementsByDomSelector: (_domSelector: string) => HTMLElement[] =
+        () => [];
+    divRef: WeakRef<HTMLDivElement> | null = null;
 
-    constructor(screenId: number) {
+    constructor(screenId: number, isInert = false) {
         super();
         this.screenId = screenId;
         this.isDeleted = false;
         this.noSyncGroupMap = new Map();
+        if (isInert) {
+            // ghost stand-in for a deleted screen: no IPC, no display lookup
+            this._isShowing = false;
+            return;
+        }
         const ids = getAllShowingScreenIds();
-        this._isShowing = ids.some((id) => {
-            return id === screenId;
-        });
+        this._isShowing = ids.includes(screenId);
         this.updateDim();
     }
     get key() {
@@ -64,7 +74,7 @@ export default class ScreenManagerBase
     static idFromKey(key: string): number {
         const id = Number.parseInt(key, 10);
         if (Number.isNaN(id)) {
-            throw new Error(`Invalid screen key: ${key}`);
+            throw new TypeError(`Invalid screen key: ${key}`);
         }
         return id;
     }
@@ -93,35 +103,101 @@ export default class ScreenManagerBase
         this._isLocked = isLocked;
     }
 
-    get stageNumber() {
-        return this._stageNumber;
+    async setIsLockedWithSyncGroup(isLocked: boolean) {
+        this.isLocked = isLocked;
     }
 
-    set stageNumber(stageNumber: number) {
-        if (stageNumber < 0) {
+    get stage() {
+        return this._stage;
+    }
+
+    set stage(stage: number) {
+        if (stage < 0) {
             throw new Error('Stage number cannot be negative');
         }
-        this._stageNumber = stageNumber;
+        this._stage = stage;
     }
 
     get isShowing() {
         return this._isShowing;
     }
 
-    checkIsLockedWithMessage() {
-        if (this.isLocked) {
-            showSimpleToast(
-                'Screen Manager is locked',
-                'Please unlock the screen manager to change the app document',
-            );
-            return true;
+    syncScrollPercentage(data: {
+        domSelector: string;
+        scroll: { x: number; y: number };
+    }) {
+        const { domSelector, scroll } = data;
+        const htmlElements = this.getElementsByDomSelector(domSelector);
+        for (const element of htmlElements) {
+            const scrollLeft =
+                scroll.x * (element.scrollWidth - element.clientWidth);
+            const scrollTop =
+                scroll.y * (element.scrollHeight - element.clientHeight);
+            // Stamped so the scroll event this scrollTo fires is recognized
+            // as remote-applied and NOT re-broadcast
+            // (`registerScrollingSyncEvent`). The focused/mouse-over guard on
+            // the send side is not enough: `document.hasFocus()` reports true
+            // under an attached DevTools/CDP session, at which point a
+            // re-broadcast echoes between windows forever and floods the IPC
+            // channel until the renderer starves.
+            (element as any)._remoteAppliedScroll = {
+                left: scrollLeft,
+                top: scrollTop,
+            };
+            element.scrollTo({
+                left: scrollLeft,
+                top: scrollTop,
+            });
         }
-        return false;
+    }
+
+    checkIsMediaPlaying(isWithMessage = true) {
+        const element = this.divRef?.deref();
+        if (element === undefined) {
+            return false;
+        }
+        // Refresh is a passive/system action (fired on resize, display change,
+        // etc.), so guard silently — no toast to avoid spamming on repeated
+        // fires.
+        return checkMediaPlaying({
+            targetElement: element,
+            withMessage: isWithMessage,
+            includeYouTube: true,
+        });
+    }
+
+    // When the refusal was last SAID. One press reaches the check below from
+    // every layer at once -- Clear All asks the background, slide, bible and
+    // foreground managers in turn -- and each used to raise its own copy of
+    // the same toast: four identical warnings stacked for one key. Every call
+    // is still refused; the message is said once per burst.
+    private lockedMessageShownAt = 0;
+    private static readonly lockedMessageGapMs = 1000;
+
+    checkIsLockedWithMessage() {
+        if (!this.isLocked) {
+            return false;
+        }
+        const now = Date.now();
+        if (
+            now - this.lockedMessageShownAt >=
+            ScreenManagerBase.lockedMessageGapMs
+        ) {
+            this.lockedMessageShownAt = now;
+            // Not "change the app document": a locked screen refuses a
+            // background, a verse or a countdown just the same.
+            showSimpleToast(
+                tran('Screen Manager is locked'),
+                tran('Unlock the screen to change what it shows'),
+            );
+        }
+        return true;
     }
 
     updateDim() {
-        const display = this.display;
-        const dim = appProvider.isPageScreen ? getWindowDim() : display.bounds;
+        const dim = appProvider.isPageScreen
+            ? getWindowDim()
+            : this.display.bounds;
         this.width = dim.width;
         this.height = dim.height;
     }
@@ -136,7 +212,7 @@ export default class ScreenManagerBase
         ScreenVaryAppDocumentManager.enableSyncGroup(this.screenId);
         ScreenBibleManager.enableSyncGroup(this.screenId);
         ScreenForegroundManager.enableSyncGroup(this.screenId);
-        this.sendSyncScreen();
+        this.sendSyncScreen(true);
     }
 
     checkIsSyncGroupEnabled(Class: { eventNamePrefix: string }) {
@@ -191,6 +267,11 @@ export default class ScreenManagerBase
         ScreenManagerBase.fireUpdateEvent();
     }
 
+    fireColorNoteUpdateEvent() {
+        this.addPropEvent('color-note-update');
+        ScreenManagerBase.fireColorNoteUpdateEvent();
+    }
+
     fireInstanceEvent() {
         this.addPropEvent('instance');
         ScreenManagerBase.fireInstanceEvent();
@@ -203,11 +284,20 @@ export default class ScreenManagerBase
 
     fireRefreshEvent() {
         this.addPropEvent('refresh');
-        ScreenManagerBase.fireVisibleEvent();
+        ScreenManagerBase.fireRefreshEvent();
+    }
+
+    fireScaleEvent() {
+        this.addPropEvent('scale');
+        ScreenManagerBase.fireScaleEvent();
     }
 
     static fireUpdateEvent() {
         this.addPropEvent('update');
+    }
+
+    static fireColorNoteUpdateEvent() {
+        this.addPropEvent('color-note-update');
     }
 
     static fireInstanceEvent() {
@@ -222,7 +312,11 @@ export default class ScreenManagerBase
         this.addPropEvent('refresh');
     }
 
-    sendSyncScreen() {
+    static fireScaleEvent() {
+        this.addPropEvent('scale');
+    }
+
+    sendSyncScreen(_shouldFromOtherGroupMember = false) {
         throw new Error('sendSyncScreen is not implemented.');
     }
 
@@ -234,11 +328,11 @@ export default class ScreenManagerBase
         throw new Error('delete is not implemented.');
     }
 
-    receiveScreenDropped(_droppedData: DroppedDataType) {
+    receiveScreenDropped(_droppedData: DroppedDataType): Promise<void> {
         throw new Error('receiveScreenDropped is not implemented.');
     }
 
-    sendScreenMessage(_message: ScreenMessageType, _isForce?: boolean) {
+    sendScreenMessage(_message: ScreenMessageType, _isForce: boolean) {
         throw new Error('sendScreenMessage is not implemented.');
     }
 
@@ -248,5 +342,37 @@ export default class ScreenManagerBase
 
     getScreenManagerBaseForce(_screenId: number): ScreenManagerBase {
         throw new Error('getScreenManagerForce is not implemented.');
+    }
+}
+
+// Inert stand-in assigned to sub-managers when their screen is deleted.
+// Deliberately NOT a full ScreenManager: constructing one would re-register a
+// whole family of sub-managers into the module caches under the deleted
+// screenId (a permanent leak) and make deleted screens look alive again.
+export class ScreenManagerBaseGhost extends ScreenManagerBase {
+    constructor(screenId: number) {
+        super(screenId, true);
+        this.isDeleted = true;
+    }
+
+    override sendSyncScreen() {}
+
+    override clear() {}
+
+    override async delete() {}
+
+    override async receiveScreenDropped(_droppedData: DroppedDataType) {}
+
+    override sendScreenMessage(
+        _message: ScreenMessageType,
+        _isForce: boolean,
+    ) {}
+
+    override createScreenManagerBaseGhost(screenId: number): ScreenManagerBase {
+        return new ScreenManagerBaseGhost(screenId);
+    }
+
+    override getScreenManagerBaseForce(screenId: number): ScreenManagerBase {
+        return new ScreenManagerBaseGhost(screenId);
     }
 }

@@ -1,16 +1,13 @@
 import { getModelChapterCount, toBibleFileName } from './bibleLogicHelpers1';
 import { bibleKeyToXMLFilePath } from '../../setting/bible-setting/bibleXMLJsonDataHelpers';
-import {
-    bibleDataReader,
-    BibleInfoType,
-    BibleChapterType,
-} from './BibleDataReader';
+import type { BibleInfoType, BibleChapterType } from './BibleDataReader';
+import { bibleDataReader } from './BibleDataReader';
 import { fsCheckFileExist } from '../../server/fileHelpers';
 import CacheManager from '../../others/CacheManager';
 import { freezeObject } from '../helpers';
 import { checkIsRtl } from '../../lang/langHelpers';
-import { getVersesCount } from './bibleLogicHelpers2';
-import { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
+import { fromLocaleNumBible, getVersesCount } from './bibleLogicHelpers2';
+import type { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
 import { getBibleModelInfo } from './bibleModelHelpers';
 
 export async function checkIsBookAvailable(bibleKey: string, bookKey: string) {
@@ -40,7 +37,7 @@ export async function getBookVKList(bibleKey: string) {
     if (bibleVKList === null) {
         return null;
     }
-    return Object.fromEntries([
+    const vkMap = Object.fromEntries([
         ...Object.entries(bibleVKList).map(([k, v]) => {
             return [v, k];
         }),
@@ -48,6 +45,24 @@ export async function getBookVKList(bibleKey: string) {
             return [v.toLocaleLowerCase(), k];
         }),
     ]);
+    // ៣ John => 3 John, so string like "2 ធីម៉ូថេ" will be found as "2 Timothy"
+    for (const [k, v] of Object.entries(vkMap)) {
+        const arr = k.split(' ');
+        if (arr.length < 2) {
+            continue;
+        }
+        const localeNumber = arr[0];
+        if (localeNumber === undefined) {
+            continue;
+        }
+        const number = await fromLocaleNumBible(bibleKey, localeNumber);
+        if (number === null) {
+            continue;
+        }
+        const newKey = k.replace(localeNumber, number.toString());
+        vkMap[newKey] = v;
+    }
+    return vkMap;
 }
 export async function bookToKey(bibleKey: string, book: string) {
     const bookVKList = await getBookVKList(bibleKey);
@@ -93,7 +108,11 @@ export async function getVerses(
 }
 
 export async function checkIsBibleXML(bibleKey: string) {
-    const xmlFilePath = await bibleKeyToXMLFilePath(bibleKey);
+    // This is a probe: "no XML file for this key" is a normal answer (the bible
+    // is a downloaded-format one, or the key is not a bible at all — e.g. a
+    // stray directory in the bibles folder), so suppress the error log that
+    // `bibleKeyToXMLFilePath` emits for genuine lookup failures.
+    const xmlFilePath = await bibleKeyToXMLFilePath(bibleKey, false, false);
     if (xmlFilePath === null || !(await fsCheckFileExist(xmlFilePath))) {
         return false;
     }
@@ -113,7 +132,7 @@ export function checkIsApocrypha(bookKey: string) {
     return apocryphalBooks.includes(bookKey);
 }
 
-const bibleInfoCache = new CacheManager<BibleInfoType>(60); // cache for 1 minutes
+const bibleInfoCache = new CacheManager<BibleInfoType>(10);
 // TODO: cache newLines and newLinesTitleMap instead of attaching to bibleInfo
 export async function getBibleInfo(
     bibleKey: string,
@@ -126,7 +145,10 @@ export async function getBibleInfo(
     if (cached !== null) {
         return cached;
     }
-    const bibleInfo = await bibleDataReader.readBibleData(bibleKey, '_info');
+    const bibleInfo = (await bibleDataReader.readBibleData(
+        bibleKey,
+        '_info',
+    )) as BibleInfoType | null;
     if (bibleInfo === null) {
         return null;
     } else {
@@ -145,25 +167,15 @@ export async function getBibleInfoIsRtl(bibleKey: string) {
     return isRtl;
 }
 
-export function toChapterFullKeyFormat(
-    bookKey: string,
-    chapter: string | number,
-) {
-    return `${bookKey} ${chapter}`;
-}
+// Re-exported from a leaf module so a caller that only needs to spell a
+// reference does not have to import this one and its bible-database graph.
+export {
+    toChapterFullKeyFormat,
+    toVerseFullKeyFormat,
+} from './bibleKeyFormatHelpers';
 
-export function toVerseFullKeyFormat(
-    bookKey: string,
-    chapter: string | number,
-    verseStart: string | number,
-    verseEnd?: string | number,
-) {
-    verseEnd ??= verseStart;
-    verseEnd = verseEnd === verseStart ? '' : '-' + verseEnd;
-    return `${toChapterFullKeyFormat(bookKey, chapter)}:${verseStart}${verseEnd}`;
-}
-
-const regex = /^([A-Z]{3}) (\d+):(\d+)(-(\d+))?$/;
+// JHN 18:33- or JHN 18:33-35, 2SA 1:1, 2SA 1:1-2, 2SA 1:1-
+const regex = /^([A-Z123][A-Z]{2}) (\d+):(\d+)(-(\d+))?$/;
 export async function fromVerseKey(
     bibleKey: string,
     // JHN 18:33-

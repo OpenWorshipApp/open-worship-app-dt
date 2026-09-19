@@ -1,32 +1,40 @@
-import { MouseEvent } from 'react';
+import { useCallback, type MouseEvent, type DragEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import Bible from './Bible';
-import BibleItem from './BibleItem';
+import type BibleItem from './BibleItem';
 import ItemReadErrorComp from '../others/ItemReadErrorComp';
 import { useFileSourceRefreshEvents } from '../helper/dirSourceHelpers';
 import {
     genRemovingAttachedBackgroundMenu,
-    handleDragStart,
+    handleDragStart as handleDragStartHelper,
     handleAttachBackgroundDrop,
     extractDropData,
 } from '../helper/dragHelpers';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
-import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
+import { BibleKeySelectionMiniComp } from '../bible-lookup/BibleKeySelectionComp';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import appProvider from '../server/appProvider';
 import { DragTypeEnum } from '../helper/DragInf';
 import { changeDragEventStyle, stopDraggingState } from '../helper/helpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
-import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
-import BibleItemsViewController, {
-    useBibleItemsViewControllerContext,
-} from '../bible-reader/BibleItemsViewController';
+import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import type BibleItemsViewController from '../bible-reader/BibleItemsViewController';
+import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
-import AttachBackgroundIconComponent from '../others/AttachBackgroundIconComponent';
-import { openBibleItemContextMenu, useIsOnScreen } from './bibleHelpers';
+import AttachBackgroundIconComp from '../others/AttachBackgroundIconComp';
+import {
+    improveBibleItemTitleOnHover,
+    openBibleItemContextMenu,
+    useIsOnScreen,
+} from './bibleHelpers';
+import FileSource from '../helper/FileSource';
+import { useAppCurrentRef } from '../helper/appHooks';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 async function getBible(bibleItem: BibleItem) {
     return bibleItem.filePath
@@ -80,6 +88,8 @@ export default function BibleItemRenderComp({
     warningMessage?: string;
     filePath: string;
 }>) {
+    const { bibleKey } = bibleItem;
+    const fontFamily = useBibleFontFamily(bibleKey);
     const viewController = useBibleItemsViewControllerContext();
     const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     useFileSourceRefreshEvents(['select'], filePath);
@@ -93,49 +103,64 @@ export default function BibleItemRenderComp({
     };
     const isOnScreen = useIsOnScreen([bibleItem]);
 
-    const handleContextMenuOpening = async (event: MouseEvent<any>) => {
-        const menuItems: ContextMenuItemType[] = [
-            {
-                menuElement: tran('Open'),
-                onSelect: (event) => {
-                    handleOpening(event, viewController, bibleItem);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const showBibleLookupPopupRef = useAppCurrentRef(showBibleLookupPopup);
+    const filePathRef = useAppCurrentRef(filePath);
+    const indexRef = useAppCurrentRef(index);
+    const handleContextMenuOpening = useCallback(
+        async (event: MouseEvent<any>) => {
+            const menuItems: ContextMenuItemType[] = [
+                {
+                    childBefore: genContextMenuItemIcon('box-arrow-up-right'),
+                    menuElement: tran('Open'),
+                    onSelect: (event) => {
+                        handleOpening(
+                            event,
+                            viewControllerRef.current,
+                            bibleItemRef.current,
+                        );
+                    },
                 },
-            },
-        ];
-        const attachedBackgroundData =
-            await attachBackgroundManager.getAttachedBackground(
-                filePath,
-                bibleItem.id,
+            ];
+            const attachedBackgroundData =
+                await attachBackgroundManager.getAttachedBackground(
+                    filePathRef.current,
+                    bibleItemRef.current.id,
+                );
+            if (attachedBackgroundData !== null) {
+                menuItems.push(
+                    ...genRemovingAttachedBackgroundMenu(
+                        filePathRef.current,
+                        bibleItemRef.current.id,
+                    ),
+                );
+            }
+            openBibleItemContextMenu(
+                event,
+                bibleItemRef.current,
+                indexRef.current,
+                showBibleLookupPopupRef.current,
+                menuItems,
             );
-        if (attachedBackgroundData !== null) {
-            menuItems.push(
-                ...genRemovingAttachedBackgroundMenu(filePath, bibleItem.id),
-            );
-        }
-        openBibleItemContextMenu(
-            event,
-            bibleItem,
-            index,
-            showBibleLookupPopup,
-            menuItems,
-        );
-    };
-
-    if (bibleItem.isError) {
-        return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
-    }
-    const handleDataDropping = async (event: any) => {
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleDataDropping = useCallback(async (event: any) => {
         changeDragEventStyle(event, 'opacity', '1');
         const droppedData = extractDropData(event);
         if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
-            const bible = await Bible.fromFilePath(filePath);
+            const bible = await Bible.fromFilePath(filePathRef.current);
             if (bible === null) {
                 return;
             }
             const droppedBibleItem = droppedData.item as BibleItem;
             if (droppedBibleItem.filePath !== undefined) {
-                if (droppedBibleItem.filePath === bibleItem.filePath) {
-                    const toIndex = bible.getItemIndex(bibleItem);
+                if (
+                    droppedBibleItem.filePath === bibleItemRef.current.filePath
+                ) {
+                    const toIndex = bible.getItemIndex(bibleItemRef.current);
                     bible.moveItemToIndex(droppedBibleItem, toIndex);
                     stopDraggingState(event);
                     bible.save();
@@ -143,39 +168,71 @@ export default function BibleItemRenderComp({
             }
         } else {
             handleAttachBackgroundDrop(event, {
-                filePath,
-                id: bibleItem.id,
+                filePath: filePathRef.current,
+                id: bibleItemRef.current.id,
             });
         }
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleDragStartEvent = useCallback(
+        (event: DragEvent<HTMLLIElement>) => {
+            handleDragStartHelper(event, bibleItemRef.current);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleDragOver = useCallback((event: DragEvent<HTMLLIElement>) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '0.5');
+    }, []);
+    const handleDragLeave = useCallback((event: DragEvent<HTMLLIElement>) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '1');
+    }, []);
+    const handleDoubleClick = useCallback(
+        (event: MouseEvent<HTMLLIElement>) => {
+            handleOpening(
+                event,
+                viewControllerRef.current,
+                bibleItemRef.current,
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+
+    if (bibleItem.isError) {
+        return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
+    }
+    const fileSource = FileSource.getInstance(filePath);
     return (
         <li
-            className="list-group-item item app-caught-hover-pointer px-3"
-            title="Double click to view"
+            className={
+                'list-group-item item app-caught-hover-pointer' +
+                ' app-has-action-rail-2' +
+                (isOnScreen ? ' app-cue-on-air' : '')
+            }
+            ref={improveBibleItemTitleOnHover.bind(
+                null,
+                bibleItem.bibleKey,
+                bibleItem.toVerseFullKey(),
+            )}
+            data-bible-item-id={`${fileSource.name}-${bibleItem.id}`}
             data-index={index + 1}
             draggable
-            onDragStart={(event) => {
-                handleDragStart(event, bibleItem);
-            }}
-            onDragOver={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '0.5');
-            }}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '1');
-            }}
+            onDragStart={handleDragStartEvent}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
             onDrop={handleDataDropping}
-            onDoubleClick={(event) => {
-                handleOpening(event, viewController, bibleItem);
-            }}
+            onDoubleClick={handleDoubleClick}
             onContextMenu={handleContextMenuOpening}
         >
             <div className={`d-flex ps-1 ${isOnScreen ? 'app-on-screen' : ''}`}>
                 <ItemColorNoteComp item={bibleItem} />
                 <div className="d-flex flex-fill">
                     <div className="px-1">
-                        <BibleSelectionMiniComp
+                        <BibleKeySelectionMiniComp
                             bibleKey={bibleItem.bibleKey}
                             onBibleKeyChange={(
                                 _isContextMenu,
@@ -189,7 +246,9 @@ export default function BibleItemRenderComp({
                     </div>
                     <span
                         className="app-ellipsis"
-                        data-bible-key={bibleItem.bibleKey}
+                        style={{
+                            fontFamily,
+                        }}
                     >
                         <BibleViewTitleEditorComp
                             bibleItem={bibleItem}
@@ -210,12 +269,18 @@ export default function BibleItemRenderComp({
                         </span>
                     )}
                 </div>
-                <div className="float-end">
-                    <AttachBackgroundIconComponent
-                        filePath={filePath}
-                        id={bibleItem.id}
-                    />
-                </div>
+            </div>
+            {/* Pinned to the row's border edge, outside the content's own
+                padding: that is what puts this rail at the same x as every
+                other list's, which is the whole point of having one. */}
+            <div className="app-action-rail app-action-rail--pinned">
+                <AttachBackgroundIconComp
+                    filePath={filePath}
+                    id={bibleItem.id}
+                />
+                <ContextMenuDotsButtonComp
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
         </li>
     );

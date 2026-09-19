@@ -1,0 +1,399 @@
+// What the two popup windows of this family share: the help chatbot
+// (`ChatbotAppComp.scss`) and the AI Chat window (`AiChatAppComp.scss`).
+//
+// Both are narrow OS windows opened beside the app, drawn in the same
+// hairline-quiet register, and both carry the same strip of session tabs
+// along their top. The colour tokens, the glass variants of them and the tab
+// strip's rules live here ONCE, so a window that opens beside the other one
+// cannot drift into looking like a different program. Each window's own
+// sheet declares everything below the strip.
+//
+// Two rules both windows keep (see the header of `ChatbotAppComp.scss`):
+// bootstrap plus their own sheet and nothing else -- no app tokens -- and no
+// webfonts.
+
+// The palette. Included INSIDE the window's root rule (`.chatbot-app`,
+// `.aichat-app`) so the light-theme block below can nest on `&`.
+@mixin chat-window-tokens {
+  // Warm label face for anything that names something: titles, cue labels,
+  // eyebrows, buttons. Condensed signage lettering -- the language written
+  // on the equipment this app drives.
+  --chat-font-label:
+    'Bahnschrift', 'DIN Alternate', 'Avenir Next Condensed', 'Segoe UI',
+    system-ui, sans-serif;
+  // Answers are read under pressure: the system face, at a size that does
+  // not ask anything of the reader.
+  --chat-font-body:
+    system-ui, -apple-system, 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
+  --chat-font-data: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --chat-ink: #0f141c;
+  --chat-panel: #161e2a;
+  --chat-panel-suggestion: #161e2a;
+  --chat-panel-soft: #121a24;
+  --chat-line: #232d3c;
+  // The same two grounds, guaranteed opaque. Identical to the pair above
+  // until the window is glassy, at which point those go translucent and these
+  // do not -- for the handful of surfaces that cannot be see-through: an
+  // OS-drawn list, and a menu floating over the thing it acts on.
+  --chat-solid: #161e2a;
+  --chat-solid-soft: #121a24;
+  --chat-text: #e4e9f0;
+  --chat-muted: #8b97a8;
+  // The house lamp, not the screen: this window is the operator's side of
+  // the room. Spent on the rail and its markers, nowhere else. Named for
+  // what it was, kept for what it is -- the one accent slot in this sheet.
+  // The light theme darkens it instead of copying it: the same value is used
+  // as TEXT (the bullets, the numbered marks, the lock on a pinned tab) and
+  // #ff2bbf on a white panel is not readable.
+  --chat-brass: #ff2bbf;
+  --chat-brass-dim: #7a1359;
+  // Borrowed from the app itself, and kept for the one action that matters.
+  --chat-signal: #35c4e8;
+  --chat-signal-ink: #04222c;
+  --chat-warn: #e0b054;
+  --chat-warn-bg: #251d10;
+  // Attachments: what the user hands the assistant, and the buttons that go
+  // and fetch it. A cooler relative of the signal colour, kept apart from it
+  // on purpose -- signal means "this drives the app", and a paperclip does
+  // not.
+  --chat-clip-ink: #7ee7f5;
+  --chat-clip-edge: rgb(126 231 245 / 38%);
+
+  &[data-bs-theme='light'] {
+    --chat-ink: #f5f7fa;
+    --chat-panel: #ffffff;
+    --chat-panel-soft: #eef2f7;
+    --chat-line: #dbe2ec;
+    --chat-solid: #ffffff;
+    --chat-solid-soft: #eef2f7;
+    --chat-text: #16202e;
+    --chat-muted: #5c6b7f;
+    --chat-brass: #a8107c;
+    --chat-brass-dim: #f0bade;
+    --chat-signal: #0e7c99;
+    --chat-signal-ink: #ffffff;
+    --chat-warn: #6b4c12;
+    --chat-warn-bg: #fdf3dd;
+    --chat-clip-ink: #0b6274;
+    --chat-clip-edge: rgb(11 98 116 / 38%);
+  }
+}
+
+// Set only where the OS put a real backdrop behind the window -- Windows 11's
+// acrylic, macOS's vibrancy; `appGlassy` on the popup, gated on
+// `systemUtils.isGlassCapable`. Nothing here is a `backdrop-filter`: a popup
+// is its own OS window, so a CSS blur would have nothing of the app to blur,
+// and the compositor's version costs this app no frames at all -- which is the
+// only kind of glass a machine at the back of a church hall can afford.
+//
+// One tinted ground, and everything above it a FILM on that ground rather than
+// a body of its own. Two translucent slabs stacked would add up to an opaque
+// one, and the window would go right back to being a slab with soft edges.
+@mixin chat-window-glass-tokens {
+  --chat-ink: rgb(10 15 22 / 58%);
+  --chat-panel: rgb(255 255 255 / 7%);
+  --chat-panel-suggestion: rgba(60, 60, 60, 95%);
+  --chat-panel-soft: rgb(255 255 255 / 4%);
+  --chat-line: rgb(255 255 255 / 13%);
+
+  // The lit edge that says "pane of glass" rather than "hole in the window".
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 9%);
+
+  // The ground is already carrying the tint; the strip painting it a second
+  // time is what would double it.
+  .chat-tabs {
+    background-color: transparent;
+  }
+}
+
+@mixin chat-window-glass-light-tokens {
+  --chat-ink: rgb(247 249 252 / 62%);
+  --chat-panel: rgb(255 255 255 / 55%);
+  --chat-panel-suggestion: rgb(255 255 255 / 95%);
+  --chat-panel-soft: rgb(14 24 40 / 5%);
+  --chat-line: rgb(14 24 40 / 13%);
+
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 55%);
+}
+
+// --- tabs -------------------------------------------------------------------
+
+// Several conversations at once, and all of them still here tomorrow. Above
+// the head row, the way a browser puts its tabs above the toolbar -- because
+// everything in that head row (which half of the app, who answers, on which
+// model) belongs to the tab in front, not to the window.
+//
+// Sized down hard on purpose: this strip is the way back to an answer, not the
+// furniture of the window.
+// The question itself. Warm, not red: nothing here is broken -- the user is
+// about to throw away something they can't get back, which is a different
+// thing from an error.
+.chat-clear-confirm {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background-color: var(--chat-warn-bg);
+  border-bottom: 1px solid var(--chat-line);
+}
+
+.chat-clear-ask {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--chat-warn);
+  font-size: 12px;
+}
+
+.chat-clear-no,
+.chat-clear-yes {
+  flex: 0 0 auto;
+  appearance: none;
+  border-radius: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 4px 9px;
+}
+
+.chat-clear-no {
+  border: 1px solid var(--chat-line);
+  background-color: var(--chat-panel);
+  color: var(--chat-text);
+
+  &:hover {
+    border-color: var(--chat-muted);
+  }
+}
+
+.chat-clear-yes {
+  border: 1px solid var(--chat-warn);
+  background-color: transparent;
+  color: var(--chat-warn);
+
+  &:hover {
+    background-color: var(--chat-warn);
+    color: var(--chat-warn-bg);
+  }
+}
+
+.chat-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 2px;
+  padding: 5px 0 0 8px;
+  background-color: var(--chat-ink);
+  border-bottom: 1px solid var(--chat-line);
+  // The strip scrolls sideways instead of squeezing every tab thinner: once
+  // there are more chats than fit, each one keeps a readable name and the
+  // strip is dragged/wheeled past them, the way a browser does it.
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    height: 0;
+  }
+}
+
+.chat-tab {
+  display: flex;
+  align-items: center;
+  // Never shrinks -- a tab is as wide as its name, between these two bounds,
+  // and the strip scrolls when they no longer fit.
+  flex: 0 0 auto;
+  min-width: 96px;
+  max-width: 165px;
+  border: 1px solid transparent;
+  border-radius: 4px 4px 0 0;
+  background-color: transparent;
+
+  &:hover:not(.is-on) {
+    background-color: var(--chat-panel-soft);
+  }
+
+  // The one in front is joined to the head row below it: same ground, and its
+  // bottom edge sits ON the strip's rule rather than above it.
+  &.is-on {
+    background-color: var(--chat-panel-soft);
+    border-color: var(--chat-line);
+    border-bottom-color: transparent;
+    margin-bottom: -1px;
+    box-shadow: inset 0 2px 0 var(--chat-brass);
+  }
+}
+
+.chat-tab-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--chat-muted);
+  font-family: var(--chat-font-label);
+  font-size: 11px;
+  text-align: start;
+  padding: 5px 2px 5px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .chat-tab.is-on & {
+    color: var(--chat-text);
+  }
+}
+
+// Typing over a tab's name. Sized to the tab it replaces, so the strip does
+// not jump while it is being renamed.
+.chat-tab-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  appearance: none;
+  font-family: var(--chat-font-label);
+  font-size: 11px;
+  color: var(--chat-text);
+  background-color: var(--chat-ink);
+  border: 1px solid var(--chat-signal);
+  border-radius: 3px;
+  padding: 3px 6px;
+  margin: 2px;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+// Dimmed until the tab is hovered or in front, then as readable as the close
+// beside it: three of these down a full strip, all lit, would be the loudest
+// thing in a window whose whole design is hairline-quiet.
+.chat-tab-menu {
+  flex: 0 0 auto;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--chat-muted);
+  opacity: 0.5;
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 1px 4px 5px;
+  border-radius: 3px;
+
+  .chat-tab:hover &,
+  .chat-tab.is-on &,
+  .chat-tab.is-menu-on & {
+    opacity: 1;
+  }
+
+  &:hover,
+  .chat-tab.is-menu-on & {
+    color: var(--chat-text);
+    background-color: var(--chat-line);
+  }
+}
+
+// Catches the next press anywhere and shuts the menu. Transparent: this is
+// not a modal veil, it is the "click outside" that every menu needs and that
+// a document listener keeps getting wrong.
+.chat-menu-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.chat-menu {
+  position: fixed;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  // Solid even in a glassy window: this one floats OVER the tab it acts on,
+  // and a menu you can read the tab names through is a menu you misread.
+  background-color: var(--chat-solid);
+  border: 1px solid var(--chat-line);
+  border-radius: 5px;
+  box-shadow: 0 8px 22px rgb(0 0 0 / 45%);
+}
+
+.chat-menu-item {
+  appearance: none;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--chat-text);
+  font-size: 11.5px;
+  text-align: start;
+  white-space: nowrap;
+  padding: 6px 8px;
+
+  &:hover {
+    background-color: var(--chat-panel-soft);
+  }
+
+  // The one item here that cannot be undone, coloured as the warning it is
+  // -- and it still only ASKS.
+  &.is-warn {
+    color: var(--chat-warn);
+
+    &:hover {
+      background-color: var(--chat-warn-bg);
+    }
+  }
+}
+
+.chat-menu-line {
+  height: 1px;
+  margin: 4px 2px;
+  background-color: var(--chat-line);
+}
+
+// Where the close button would be, saying why it is not. Not a control: a
+// lock that comes off with one stray press on the exact spot the close used
+// to be is not a lock.
+.chat-tab-lock {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  color: var(--chat-brass);
+  font-size: 10px;
+  padding: 4px 6px;
+}
+
+.chat-tab-close,
+.chat-tab-add {
+  flex: 0 0 auto;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--chat-muted);
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 3px;
+
+  &:hover:not(:disabled) {
+    color: var(--chat-text);
+    background-color: var(--chat-line);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+.chat-tab-add {
+  align-self: center;
+  font-size: 15px;
+  padding: 1px 8px 3px;
+  // Pinned to the right edge of the strip while the tabs scroll underneath,
+  // so starting another chat is never a scroll away.
+  position: sticky;
+  right: 0;
+  margin-left: 2px;
+  background-color: var(--chat-ink);
+  box-shadow: -6px 0 6px -4px var(--chat-ink);
+}

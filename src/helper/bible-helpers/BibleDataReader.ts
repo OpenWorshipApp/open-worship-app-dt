@@ -1,6 +1,11 @@
 import appProvider from '../../server/appProvider';
-import { fsCreateDir, pathJoin } from '../../server/fileHelpers';
-import { LocaleType } from '../../lang/langHelpers';
+import {
+    fsCheckFileExist,
+    fsCreateDir,
+    fsWriteFile,
+    pathJoin,
+} from '../../server/fileHelpers';
+import { tran, type LocaleType } from '../../lang/langHelpers';
 import { decrypt } from '../../_owa-crypto';
 import { handleError } from '../errorHelpers';
 import {
@@ -13,7 +18,14 @@ import CacheManager from '../../others/CacheManager';
 import { appLocalStorage } from '../../setting/directory-setting/appLocalStorage';
 import { unlocking } from '../../server/unlockingHelpers';
 import { checkIsBibleXML } from './bibleInfoHelpers';
-import { readBibleXMLData } from '../../setting/bible-setting/bibleXMLHelpers';
+import {
+    clearBibleXMLCache,
+    readBibleXMLData,
+} from '../../setting/bible-setting/bibleXMLHelpers';
+import { BIBLE_KJV_KEY } from './bibleModelHelpers';
+import { genEmbeddedKJVBibleXMLText } from './kjvBibleXMLTextHelpers';
+import { showSimpleToast } from '../../toast/toastHelpers';
+import { appManagedDataDirNames } from '../constants';
 
 const { base64Decode } = appProvider.appUtils;
 
@@ -55,7 +67,7 @@ export type BibleChapterType = {
     };
 };
 
-const bibleDataCacher = new CacheManager<BibleInfoType | BibleChapterType>(60); // 1 minute
+const bibleDataCacher = new CacheManager<BibleInfoType | BibleChapterType>(10);
 export default class BibleDataReader {
     private _writableBiblePath: string | null = null;
     private _dbController: BibleDatabaseController | null = null;
@@ -94,8 +106,7 @@ export default class BibleDataReader {
             }
             const rawData = base64Decode(b64Data);
             const parsedData = JSON.parse(rawData) as
-                | BibleInfoType
-                | BibleChapterType;
+                BibleInfoType | BibleChapterType;
             return parsedData;
         } catch (error: any) {
             if (error.code !== 'ENOENT') {
@@ -114,7 +125,7 @@ export default class BibleDataReader {
             if (cachedData !== null) {
                 return cachedData;
             }
-            let bibleData: any = null;
+            let bibleData: any;
             const isBibleXML = await checkIsBibleXML(bibleKey);
             if (isBibleXML) {
                 bibleData = await readBibleXMLData(bibleKey, key);
@@ -139,12 +150,20 @@ export default class BibleDataReader {
 
     async getWritableBiblePath() {
         if (this._writableBiblePath === null) {
-            const userWritablePath = appLocalStorage.defaultStorage;
-            const dirPath = pathJoin(userWritablePath, 'bibles-data');
+            const userWritablePath = appLocalStorage.defaultStorageDirPath;
+            // The same folder the whole-data archive offers to export, built
+            // from the same constant so the two can never drift apart.
+            const dirPath = pathJoin(
+                userWritablePath,
+                appManagedDataDirNames.BIBLE_DATA,
+            );
             try {
                 await fsCreateDir(dirPath);
             } catch (error: any) {
-                if (!error.message.includes('file already exists')) {
+                if (
+                    error.code !== 'EEXIST' &&
+                    !error.message?.includes('file already exists')
+                ) {
                     handleError(error);
                 }
             }
@@ -153,13 +172,35 @@ export default class BibleDataReader {
         return this._writableBiblePath;
     }
 
+    initKJVBible() {
+        return unlocking('init-kjv-xml-file', async () => {
+            const dirPath = await bibleDataReader.getWritableBiblePath();
+            const kjvFilePath = pathJoin(dirPath, `${BIBLE_KJV_KEY}.xml`);
+            if (await fsCheckFileExist(kjvFilePath)) {
+                return;
+            }
+            const xmlText = await genEmbeddedKJVBibleXMLText();
+            if (xmlText === null) {
+                showSimpleToast(
+                    tran('Failed to convert KJV Bible data to XML text.'),
+                    'error',
+                );
+                return;
+            }
+            await fsWriteFile(kjvFilePath, xmlText);
+            // A KJV that was deleted earlier left its `KJV.xml.cache` folder
+            // behind, and it would answer for this brand-new file.
+            await clearBibleXMLCache(BIBLE_KJV_KEY);
+        });
+    }
+
     async clearBibleDatabaseData(bibleKey: string) {
         const dbController = await this.getDatabaseController();
         const keys = await dbController.getKeys(bibleKey);
         if (keys === null) {
             return;
         }
-        Promise.all(
+        await Promise.all(
             keys.map(async (key) => {
                 await dbController.deleteItem(key);
             }),

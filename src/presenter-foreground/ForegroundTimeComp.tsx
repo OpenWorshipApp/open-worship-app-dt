@@ -1,13 +1,15 @@
-import { CSSProperties, useState } from 'react';
+import { type ChangeEvent, useCallback, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tz } from 'moment-timezone';
 
 import { tran } from '../lang/langHelpers';
 import {
-    getSetting,
-    setSetting,
+    useStateSettingBoolean,
     useStateSettingNumber,
     useStateSettingString,
 } from '../helper/settingHelpers';
+import { genStringListSettingManager } from '../helper/SettingManager';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
     getScreenForegroundManagerInstances,
@@ -17,13 +19,14 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
-import { ForegroundTimeDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundTimeDataType } from '../_screen/screenTypeHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import { useAppEffect } from '../helper/debuggerHelpers';
-import { handleError } from '../helper/errorHelpers';
-import { dragStore } from '../helper/dragHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 function getSystemTimezoneMinuteOffset() {
     const date = new Date();
@@ -47,6 +50,7 @@ function getMinuteOffsetFromCity(event: any) {
             cityNames.map(([city, name]) => {
                 const title = `${city} (${name})`;
                 return {
+                    childBefore: genContextMenuItemIcon('clock'),
                     menuElement: title,
                     onSelect: () => {
                         const minuteOffset = tz(name).utcOffset() / 60;
@@ -64,9 +68,11 @@ function getMinuteOffsetFromCity(event: any) {
 function TimeInSetComp({
     id,
     genStyle,
+    showingScreenIdDataList,
 }: Readonly<{
     id: string;
     genStyle: () => CSSProperties;
+    showingScreenIdDataList: [number, ForegroundTimeDataType][];
 }>) {
     const [cityName, setCityName] = useStateSettingString<string>(
         `foreground-city-name-setting-${id}`,
@@ -75,128 +81,221 @@ function TimeInSetComp({
     const [timezoneMinuteOffset, setTimezoneMinuteOffset] =
         useStateSettingNumber(
             `foreground-timezone-minute-offset-setting-${id}`,
-            getSystemTimezoneMinuteOffset(),
+            getSystemTimezoneMinuteOffset,
         );
-    const handleShowing = (event: any, isForceChoosing = false) => {
-        ScreenForegroundManager.addTimeData(
-            event,
-            {
+    const [is24HourFormat, setIs24HourFormat] = useStateSettingBoolean(
+        `foreground-time-is-24-hour-format-setting-${id}`,
+        false,
+    );
+    const genTimeData = useCallback(
+        (newIs24HourFormat = is24HourFormat): ForegroundTimeDataType => {
+            return {
                 id,
                 timezoneMinuteOffset,
                 title: cityName || null,
+                is24HourFormat: newIs24HourFormat,
                 extraStyle: genStyle(),
-            },
-            isForceChoosing,
-        );
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleShowing(event, true);
-    };
-    const handleByDropped = (event: any) => {
-        const screenForegroundManager =
-            getScreenForegroundManagerByDropped(event);
-        if (screenForegroundManager === null) {
+            };
+        },
+        [id, timezoneMinuteOffset, cityName, is24HourFormat, genStyle],
+    );
+    const isAmPmFormat = !is24HourFormat;
+    const handleShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            ScreenForegroundManager.addTimeData(
+                event,
+                genTimeData(),
+                isForceChoosing,
+            );
+        },
+        [genTimeData],
+    );
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleByDropped = useCallback(
+        (event: any) => {
+            const screenForegroundManager =
+                getScreenForegroundManagerByDropped(event);
+            if (screenForegroundManager === null) {
+                return;
+            }
+            screenForegroundManager.addTimeData(genTimeData());
+        },
+        [genTimeData],
+    );
+    const setTimezoneMinuteOffsetRef = useAppCurrentRef(
+        setTimezoneMinuteOffset,
+    );
+    const handleUseCurrentTimezone = useCallback(() => {
+        setTimezoneMinuteOffsetRef.current(getSystemTimezoneMinuteOffset());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setCityNameRef = useAppCurrentRef(setCityName);
+    const handleChooseCity = useCallback(async (event: any) => {
+        const result = await getMinuteOffsetFromCity(event);
+        if (result === null) {
             return;
         }
-        screenForegroundManager.addTimeData({
-            id,
-            timezoneMinuteOffset,
-            title: cityName || null,
-            extraStyle: genStyle(),
-        });
-    };
+        setCityNameRef.current(result[0]);
+        setTimezoneMinuteOffsetRef.current(result[1]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleCityNameChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setCityNameRef.current(event.target.value);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleTimezoneOffsetChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setTimezoneMinuteOffsetRef.current(
+                Number.parseInt(event.target.value),
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const setIs24HourFormatRef = useAppCurrentRef(setIs24HourFormat);
+    const showingScreenIdDataListRef = useAppCurrentRef(
+        showingScreenIdDataList,
+    );
+    const genTimeDataRef = useAppCurrentRef(genTimeData);
+    // per-instance: one settings block per time widget — a shared module
+    // timer would drop the earlier widget's refresh
+    const refreshAttemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    const handleTimeFormatChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            const newIs24HourFormat = !event.target.checked;
+            setIs24HourFormatRef.current(newIs24HourFormat);
+            refreshAttemptTimeout(() => {
+                refreshAllTimes(showingScreenIdDataListRef.current, () => {
+                    return genTimeDataRef.current(newIs24HourFormat);
+                });
+            });
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleByDroppedRef = useAppCurrentRef(handleByDropped);
+    const handleTimeDragStart = useCallback((event: any) => {
+        dragStore.onDropped = handleByDroppedRef.current;
+        handleDragStart(
+            event,
+            genForegroundDragInf('time', () => {
+                return genTimeDataRef.current();
+            }),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
-        <div className="d-flex flex-column">
+        <div className="d-flex flex-column gap-2">
             <div className="btn-group">
                 <button
                     className="btn btn-outline-secondary"
-                    onClick={() => {
-                        setTimezoneMinuteOffset(
-                            getSystemTimezoneMinuteOffset(),
-                        );
-                    }}
+                    title={tran('Use this device’s timezone')}
+                    onClick={handleUseCurrentTimezone}
                 >
-                    Use Current Timezone
+                    <i className="bi bi-geo-alt" />{' '}
+                    {tran('Use Current Timezone')}
                 </button>
                 <button
                     className="btn btn-outline-secondary"
-                    onClick={async (event) => {
-                        const result = await getMinuteOffsetFromCity(event);
-                        if (result === null) {
-                            return;
-                        }
-                        setCityName(result[0]);
-                        setTimezoneMinuteOffset(result[1]);
-                    }}
+                    title={tran('Pick a city to set its timezone')}
+                    onClick={handleChooseCity}
                 >
-                    Choose City
+                    <i className="bi bi-globe-americas" /> {tran('Choose City')}
                 </button>
             </div>
-            <hr />
-            <div className="d-flex">
-                <div className="input-group" style={{ width: '250px' }}>
-                    <div className="input-group-text">City:</div>
+            <div className="d-flex flex-wrap align-items-center gap-2">
+                <div
+                    className="input-group"
+                    style={{ width: '250px' }}
+                    title={tran('Label shown above the time')}
+                >
+                    <span className="input-group-text">
+                        <i className="bi bi-buildings" />
+                    </span>
                     <input
-                        className="form-control form-control-sm"
+                        className="form-control"
                         type="text"
+                        placeholder={tran('City')}
                         value={cityName}
-                        onChange={(event) => {
-                            setCityName(event.target.value);
-                        }}
+                        onChange={handleCityNameChange}
                     />
                 </div>
-                <div className="input-group" style={{ width: '270px' }}>
-                    <div className="input-group-text">
-                        Timezone Minute Offset:
-                    </div>
+                <div
+                    className="input-group"
+                    style={{ width: '230px' }}
+                    title={tran('Timezone Minute Offset')}
+                >
+                    <span className="input-group-text">
+                        <i className="bi bi-clock" />
+                    </span>
+                    <span className="input-group-text">
+                        {tran('UTC Offset')}
+                    </span>
                     <input
-                        className="form-control form-control-sm"
+                        className="form-control"
                         type="number"
                         value={timezoneMinuteOffset}
-                        onChange={(event) => {
-                            setTimezoneMinuteOffset(
-                                Number.parseInt(event.target.value),
-                            );
-                        }}
+                        onChange={handleTimezoneOffsetChange}
                     />
+                    <span className="input-group-text">min</span>
                 </div>
-                <div>
-                    <button
-                        className="btn btn-secondary"
-                        onClick={handleShowing}
-                        onContextMenu={handleContextMenuOpening}
-                        draggable
-                        onDragStart={() => {
-                            dragStore.onDropped = handleByDropped;
-                        }}
-                    >
-                        `Show Time
-                    </button>
+                <div className="input-group-text">
+                    <div className="form-check form-switch mb-0">
+                        <input
+                            className="form-check-input app-caught-hover-pointer"
+                            type="checkbox"
+                            role="switch"
+                            id={`time-format-${id}`}
+                            checked={isAmPmFormat}
+                            onChange={handleTimeFormatChange}
+                        />
+                        <label
+                            className="form-check-label"
+                            htmlFor={`time-format-${id}`}
+                        >
+                            {tran('AM/PM')}
+                        </label>
+                    </div>
                 </div>
+                <button
+                    className="btn btn-primary"
+                    title={tran('Show Time')}
+                    onClick={handleShowing}
+                    onContextMenu={handleContextMenuOpening}
+                    draggable
+                    onDragStart={handleTimeDragStart}
+                >
+                    <i className="bi bi-display" /> {tran('Show Time')}
+                </button>
+                <ContextMenuDotsButtonComp
+                    label={tran('Show on Screens')}
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
         </div>
     );
 }
 
-const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllTimes(
     showingScreenIdDataList: [number, ForegroundTimeDataType][],
-    extraStyle: CSSProperties,
+    getTimeData: (timeData: ForegroundTimeDataType) => ForegroundTimeDataType,
 ) {
-    attemptTimeout(() => {
-        for (const [screenId, timeData] of showingScreenIdDataList) {
-            getScreenForegroundManagerInstances(
-                screenId,
-                (screenForegroundManager) => {
-                    screenForegroundManager.removeTimeData(timeData);
-                    screenForegroundManager.addTimeData({
-                        ...timeData,
-                        extraStyle,
-                    });
-                },
-            );
-        }
-    });
+    for (const [screenId, timeData] of showingScreenIdDataList) {
+        getScreenForegroundManagerInstances(
+            screenId,
+            (screenForegroundManager) => {
+                screenForegroundManager.removeTimeData(timeData);
+                screenForegroundManager.addTimeData(getTimeData(timeData));
+            },
+        );
+    }
 }
 
 function handleHiding(screenId: number, timeData: ForegroundTimeDataType) {
@@ -231,10 +330,19 @@ function ForegroundTimeItemComp({
     const showingScreenIdDataList = getAllShowingScreenIdDataList().filter(
         ([, data]) => data.id === id,
     );
+    // per-instance: one item per time widget id
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
         prefix: 'time-' + id,
         onChange: (extraStyle) => {
-            refreshAllTimes(showingScreenIdDataList, extraStyle);
+            attemptTimeout(() => {
+                refreshAllTimes(showingScreenIdDataList, (timeData) => {
+                    return {
+                        ...timeData,
+                        extraStyle,
+                    };
+                });
+            });
         },
         isFontSize: true,
     });
@@ -258,7 +366,11 @@ function ForegroundTimeItemComp({
             {propsSetting}
             <hr />
             <div>
-                <TimeInSetComp genStyle={genStyle} id={id} />
+                <TimeInSetComp
+                    genStyle={genStyle}
+                    id={id}
+                    showingScreenIdDataList={showingScreenIdDataList}
+                />
             </div>
             <div>
                 <ScreensRendererComp
@@ -288,22 +400,20 @@ function RenderShownMiniComp() {
     );
 }
 
-const ID_LIST_SETTING_NAME = 'foreground-time-id-list';
+const idListSettingManager = genStringListSettingManager(
+    'foreground-time-id-list',
+);
 function useIdList() {
     const [idList, setIdList] = useState<string[]>([]);
     const setIdList1 = (newIdList: string[]) => {
         setIdList(newIdList);
-        setSetting(ID_LIST_SETTING_NAME, JSON.stringify(newIdList));
+        idListSettingManager.setSetting(newIdList);
     };
     useAppEffect(() => {
-        const settingString = getSetting(ID_LIST_SETTING_NAME) ?? '';
-        try {
-            if (settingString.trim() !== '') {
-                setIdList(JSON.parse(settingString));
-                return;
-            }
-        } catch (error) {
-            handleError(error);
+        const storedIdList = idListSettingManager.getSetting();
+        if (storedIdList.length > 0) {
+            setIdList(storedIdList);
+            return;
         }
         setIdList1([crypto.randomUUID()]);
     }, []);
@@ -312,11 +422,14 @@ function useIdList() {
 
 export default function ForegroundTimeComp() {
     const [idList, setIdList] = useIdList();
+    useScreenForegroundManagerEvents(['update']);
+    const isOnScreen = getAllShowingScreenIdDataList().length > 0;
     return (
         <ForegroundLayoutComp
             target="time"
             fullChildHeaders={<h4>{tran('Time')}</h4>}
             childHeadersOnHidden={<RenderShownMiniComp />}
+            isOnScreen={isOnScreen}
         >
             <div className="d-flex flex-wrap gap-1">
                 {idList.map((id) => {

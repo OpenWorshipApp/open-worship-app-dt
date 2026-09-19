@@ -7,11 +7,21 @@
         <!-- TODO: change logo192.png -->
         <link rel="apple-touch-icon" href="/logo192.png" />
         <link rel="manifest" href="/manifest.json" />
-        <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'">prod -->
+        <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; worker-src 'self' blob:">prod -->
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="Open Worship App" />
-        <title>Experiment</title>
+        <title>Open Worship app - Experiment (🧪)</title>
         <style>
+            /* The playground shell is a viewport-height flex layout with its
+               own scrolling panes; without this the 100% chain degrades to auto
+               and the whole document scrolls instead. */
+            html,
+            body,
+            #root {
+                height: 100%;
+                margin: 0;
+                overflow: hidden;
+            }
             .back {
                 position: fixed;
                 top: 0;
@@ -44,8 +54,6 @@
                 alt="loading"
             />
         </div>
-        <script type="module" src="/src/appInit.ts"></script>
-        <script type="module" src="/src/archived/experiment.tsx"></script>
-        <button class="back" onclick="history.back()">Back</button>
+        <script type="module" src="/src/experiments/experiment.tsx"></script>
     </body>
 </html>

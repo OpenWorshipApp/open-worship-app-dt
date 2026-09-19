@@ -1,20 +1,35 @@
-import HandleAlertComp from './popup-widget/HandleAlertComp';
-import BibleReaderComp from './bible-reader/BibleReaderComp';
-import AppContextMenuComp from './context-menu/AppContextMenuComp';
-import TopProgressBarComp from './progress-bar/TopProgressBarComp';
-import ToastComp from './toast/ToastComp';
-import { main } from './others/appInitHelpers';
+import './bootstrapCss';
+import { init } from './boot';
+import { run } from './others/main';
 import { hideAllScreens } from './_screen/screenHelpers';
 import { resizeSettingNames } from './resize-actor/flexSizeHelpers';
+import BibleReaderComp from './bible-reader/BibleReaderComp';
+import AppContextMenuComp from './context-menu/AppContextMenuComp';
+import HandleAlertComp from './popup-widget/HandleAlertComp';
+import TopProgressBarComp from './progress-bar/TopProgressBarComp';
+import ToastComp from './toast/ToastComp';
+import AppWindowToolsComp from './others/AppWindowToolsComp';
+import GraphViewPanelsHostComp from './graph-view/GraphViewPanelsHostComp';
+import LocationNameDetailPanelsHostComp from './location-name-lookup/LocationNameDetailPanelsHostComp';
+import { checkIsMainWindow } from './server/appHelpers';
 
-main(
+await init();
+run(
     <>
         <BibleReaderComp flexSizeName={resizeSettingNames.bibleReader} />
         <TopProgressBarComp />
         <ToastComp />
         <AppContextMenuComp />
         <HandleAlertComp />
+        <AppWindowToolsComp />
+        <LocationNameDetailPanelsHostComp />
+        <GraphViewPanelsHostComp />
     </>,
 );
 
-hideAllScreens();
+setTimeout(() => {
+    const isMainWindow = checkIsMainWindow();
+    if (isMainWindow) {
+        hideAllScreens();
+    }
+}, 1000);

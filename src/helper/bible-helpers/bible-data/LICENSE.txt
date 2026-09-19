@@ -1,0 +1,26 @@
+King James Version (KJV) — Legal Note
+======================================
+
+Translation:  King James Version (KJV), also known as the Authorized Version
+Locale:        en-US (United States)
+Status:        Public Domain (United States)
+
+Public Domain Notice
+--------------------
+The text of the King James Version of the Holy Bible, first published in 1611,
+is in the PUBLIC DOMAIN in the United States. It is not subject to copyright in
+the U.S. and may be freely used, copied, quoted, and distributed without
+permission or royalty.
+
+United Kingdom Caveat
+---------------------
+Outside the United States, the situation differs. In the United Kingdom the KJV
+is subject to perpetual Crown copyright, administered by the Cambridge University
+Press as the Crown's patentee. Reproduction within the UK may require permission.
+This project distributes the KJV text under its U.S. public domain status.
+
+Scope of This Notice
+--------------------
+This notice applies only to the King James Version Bible text bundled with this
+project. It does not grant any rights to the software, source code, or other
+assets in this repository, which are licensed separately (see package.json).

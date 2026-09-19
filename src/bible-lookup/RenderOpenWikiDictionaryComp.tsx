@@ -1,17 +1,18 @@
 import appProvider from '../server/appProvider';
 import {
+    getLangData,
     getLangCode,
-    getLangDataByLocaleOrByLangCode,
     getLanguageTitle,
     reversedLocalesMap,
+    tran,
+    DEFAULT_LANG_CODE,
 } from '../lang/langHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
-import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
 function genContextMenuItem(langCode: string): ContextMenuItemType {
     const url = `https://${langCode}.wiktionary.org`;
@@ -21,9 +22,10 @@ function genContextMenuItem(langCode: string): ContextMenuItemType {
     } else {
         menuElement += ` [${langCode}]`;
     }
-    const langData = getLangDataByLocaleOrByLangCode(langCode);
+    const langData = getLangData(langCode);
     const fontFamily = langData === null ? undefined : langData.fontFamily;
     return {
+        childBefore: genContextMenuItemIcon('translate'),
         menuElement,
         title: url,
         onSelect: () => {
@@ -38,10 +40,10 @@ function genContextMenuItem(langCode: string): ContextMenuItemType {
 async function handleWikiDictionaryOpening(bibleKey: string, event: any) {
     const targetLocale = await getBibleLocale(bibleKey);
     let targetLangCode = getLangCode(targetLocale);
-    if (targetLangCode === 'en') {
+    if (targetLangCode === DEFAULT_LANG_CODE) {
         targetLangCode = null;
     }
-    const excludeLangCodes = ['en'];
+    const excludeLangCodes = [DEFAULT_LANG_CODE];
     if (targetLangCode !== null && !excludeLangCodes.includes(targetLangCode)) {
         excludeLangCodes.push(targetLangCode);
     }
@@ -50,12 +52,14 @@ async function handleWikiDictionaryOpening(bibleKey: string, event: any) {
     });
     showAppContextMenu(event, [
         {
-            menuElement: 'Open Wiki Dictionary',
+            childBefore: genContextMenuItemIcon('journal-text'),
+            menuElement: tran('Open Wiki Dictionary'),
             disabled: true,
         },
         { menuElement: elementDivider },
         {
-            menuElement: 'English',
+            childBefore: genContextMenuItemIcon('translate'),
+            menuElement: tran('English'),
             onSelect: () => {
                 const url = `https://en.wiktionary.org`;
                 appProvider.browserUtils.openExternalURL(url);
@@ -74,7 +78,8 @@ export default function RenderOpenWikiDictionaryComp() {
     return (
         <button
             className="btn btn-sm btn-secondary"
-            title="Wiki Dictionary"
+            title={tran('Wiki Dictionary')}
+            aria-label={tran('Wiki Dictionary')}
             onClick={handleWikiDictionaryOpening.bind(null, bibleKey)}
         >
             <i className="bi bi-journal-text" />

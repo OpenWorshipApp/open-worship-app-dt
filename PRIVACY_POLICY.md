@@ -13,7 +13,7 @@ Open Worship App ("we," "our," or "the App") is committed to protecting your pri
 Our application operates primarily as a local desktop application and stores data locally on your device:
 
 - **User Preferences**: Language settings, display preferences, and application configuration
-- **Content Files**: Bible translations, lyrics, playlists, background images/videos/sounds, and worship documents that you import or create
+- **Content Files**: Bible translations, lyrics, presenting flows, background images/videos/sounds, and worship documents that you import or create
 - **Directory Paths**: File system paths you select for storing worship content
 - **Application Settings**: Window positions, font sizes, color preferences, and other customization settings
 

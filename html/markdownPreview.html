@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <!-- TODO: change favicon.ico -->
+    <link rel="icon" href="/favicon.ico" />
+    <!-- TODO: change logo192.png -->
+    <link rel="apple-touch-icon" href="/logo192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <!--
+        The app-wide policy, plus the three directives that shut ways of
+        getting script or a navigation into a page that has none of its own
+        use for them. This window renders a markdown file from anywhere on the
+        machine, so what it shows is written by somebody else: everything the
+        markdown renders to, its own HTML included, goes through DOMPurify
+        (`sanitizePreviewHtml`), and this and the renderer lockdown
+        (`electron/client/rendererLockdown.ts`) are the lines behind that one.
+        Prod only, like every other page: the dev server needs its own
+        websocket and inline module graph.
+    -->
+    <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">prod -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Open Worship App" />
+    <title>Open Worship app - Markdown Preview</title>
+</head>
+
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root">
+        <img style="
+                    position: absolute;
+                    width: 70px;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-35px);
+                    " class="loading" src="/loading.gif" alt="loading" />
+    </div>
+    <script type="module" src="/src/markdownPreview.tsx"></script>
+</body>
+
+</html>

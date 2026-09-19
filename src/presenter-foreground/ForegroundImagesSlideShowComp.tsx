@@ -1,6 +1,7 @@
 import '../background/BackgroundImagesComp.scss';
 
-import { CSSProperties, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
@@ -8,20 +9,23 @@ import BackgroundMediaComp from '../background/BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
 import FileSource from '../helper/FileSource';
 import { useStateSettingString } from '../helper/settingHelpers';
-import SlideAutoPlayComp from '../slide-auto-play/SlideAutoPlayComp';
+import SlideAutoPlayComp, {
+    type NextDataType,
+} from '../slide-auto-play/SlideAutoPlayComp';
 import { getScreenManagerByScreenId } from '../_screen/managers/screenManagerHelpers';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
-import { FilePathLoadedContext } from '../others/RenderListComp';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import ScreenManagerBase from '../_screen/managers/ScreenManagerBase';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import {
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import type {
     BackgroundSrcType,
     ImageScaleType,
-    scaleTypeList,
 } from '../_screen/screenTypeHelpers';
+import { scaleTypeList } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import RenderBackgroundScreenIds from '../background/RenderBackgroundScreenIds';
+import RenderBackgroundScreenIdsComp from '../background/RenderBackgroundScreenIdsComp';
+import { FilePathLoadedContext } from '../helper/dirSourceHelpers';
 
 const DIR_SOURCE_SETTING_NAME = 'images-slide-show';
 const extraStyle: CSSProperties = {
@@ -95,7 +99,7 @@ function rendChild(
     const fileSource = FileSource.getInstance(filePath);
     return (
         <div className="card-body app-overflow-hidden">
-            <RenderBackgroundScreenIds
+            <RenderBackgroundScreenIdsComp
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return Number.parseInt(key);
                 })}
@@ -125,6 +129,22 @@ function HeaderElements({
     setScaleType: (event: any, value: ImageScaleType) => void;
     isMini?: boolean;
 }>) {
+    const setScaleTypeRef = useAppCurrentRef(setScaleType);
+    const handleClick = useCallback((event: any) => {
+        showAppContextMenu(
+            event,
+            scaleTypeList.map((scaleType) => {
+                return {
+                    childBefore: genContextMenuItemIcon('aspect-ratio'),
+                    menuElement: scaleType,
+                    onSelect: (event1) => {
+                        setScaleTypeRef.current(event1, scaleType);
+                    },
+                };
+            }),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="d-flex">
             {isMini ? null : <div>Scale Type:</div>}
@@ -134,19 +154,7 @@ function HeaderElements({
                     width: '80px',
                     height: '30px',
                 }}
-                onClick={(event: any) => {
-                    showAppContextMenu(
-                        event,
-                        scaleTypeList.map((scaleType) => {
-                            return {
-                                menuElement: scaleType,
-                                onSelect: (event1) => {
-                                    setScaleType(event1, scaleType);
-                                },
-                            };
-                        }),
-                    );
-                }}
+                onClick={handleClick}
             >
                 {scaleType}
             </button>
@@ -154,10 +162,10 @@ function HeaderElements({
     );
 }
 
-function useAnyItemSelected(filePaths: string[] | undefined) {
+function useAnyItemSelected(filePaths: string[] | null) {
     const [isAnyItemSelected, setIsAnyItemSelected] = useState(false);
     const refresh = () => {
-        if (filePaths === undefined || filePaths.length === 0) {
+        if (filePaths === null || filePaths.length === 0) {
             setIsAnyItemSelected(false);
             return;
         }
@@ -180,7 +188,7 @@ function useAnyItemSelected(filePaths: string[] | undefined) {
 }
 
 export default function ForegroundImagesSlideShowComp() {
-    const [filePaths, setFilePaths] = useState<string[] | undefined>();
+    const [filePaths, setFilePaths] = useState<string[] | null>(null);
     const isAnyItemSelected = useAnyItemSelected(filePaths);
     const [scaleType, setScaleType] = useStateSettingString<ImageScaleType>(
         'images-slide-show-scale-type',
@@ -193,13 +201,15 @@ export default function ForegroundImagesSlideShowComp() {
             scaleType,
         });
     };
-    const handleShowing = (event: any, fileSource: FileSource) => {
+    const scaleTypeRef = useAppCurrentRef(scaleType);
+    const handleShowing = useCallback((event: any, fileSource: FileSource) => {
         ScreenBackgroundManager.handleBackgroundSelecting(event, 'image', {
             src: fileSource.src,
-            scaleType,
+            scaleType: scaleTypeRef.current,
             extraStyle,
         });
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const genHeaderElements = (isMini: boolean) => (
         <HeaderElements
             scaleType={scaleType}
@@ -207,12 +217,31 @@ export default function ForegroundImagesSlideShowComp() {
             isMini={isMini}
         />
     );
+    const filePathsRef = useAppCurrentRef(filePaths);
+    const handleNext = useCallback((data: NextDataType) => {
+        if (
+            filePathsRef.current === null ||
+            filePathsRef.current.length === 0
+        ) {
+            return;
+        }
+        handleNextItemSelecting({
+            srcList: filePathsRef.current.map((filePath) => {
+                const fileSource = FileSource.getInstance(filePath);
+                return fileSource.src;
+            }),
+            scaleType: scaleTypeRef.current,
+            isNext: data.isNext,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <ForegroundLayoutComp
             target="images-slide-show"
             fullChildHeaders={<h4>{tran('Background Images Slide Show')}</h4>}
             childHeadersOnHidden={genHeaderElements(true)}
             extraBodyStyle={{ maxHeight: '450px' }}
+            isOnScreen={isAnyItemSelected}
         >
             <div>{genHeaderElements(false)}</div>
             <hr />
@@ -235,26 +264,7 @@ export default function ForegroundImagesSlideShowComp() {
                     />
                 </FilePathLoadedContext>
                 {isAnyItemSelected ? (
-                    <SlideAutoPlayComp
-                        prefix="images"
-                        onNext={(data) => {
-                            if (
-                                filePaths === undefined ||
-                                filePaths.length === 0
-                            ) {
-                                return;
-                            }
-                            handleNextItemSelecting({
-                                srcList: filePaths.map((filePath) => {
-                                    const fileSource =
-                                        FileSource.getInstance(filePath);
-                                    return fileSource.src;
-                                }),
-                                scaleType: scaleType,
-                                isNext: data.isNext,
-                            });
-                        }}
-                    />
+                    <SlideAutoPlayComp prefix="images" onNext={handleNext} />
                 ) : null}
             </div>
         </ForegroundLayoutComp>

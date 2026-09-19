@@ -1,0 +1,98 @@
+{
+    "page": "bible-note",
+    "label": "Bible Note",
+    "window": "bibleNote.html",
+    "focus": "bibleNote",
+    "description": "The window a Bible note is written in. It opens on its own from the Notes list and belongs to one note file.",
+    "updated": "2026-09-02",
+    "sections": [
+        {
+            "id": "writing",
+            "label": "Writing a note",
+            "recipes": [
+                "W-14"
+            ],
+            "questions": [
+                {
+                    "id": "what-is-this",
+                    "text": "What is this Bible Note window for?",
+                    "kind": "what",
+                    "keywords": [
+                        "note window",
+                        "what is this",
+                        "purpose",
+                        "study"
+                    ],
+                    "starter": true,
+                    "starterRank": 1,
+                    "resources": {
+                        "recipe": "W-14"
+                    }
+                },
+                {
+                    "id": "save-note",
+                    "text": "How do I save the note I am writing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "save",
+                        "keep",
+                        "ctrl s",
+                        "store",
+                        "lose"
+                    ],
+                    "starter": true,
+                    "starterRank": 2,
+                    "resources": {
+                        "recipe": "W-14",
+                        "shortcut": "Ctrl+S",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "sharing",
+            "label": "Taking notes elsewhere",
+            "recipes": [
+                "W-41"
+            ],
+            "questions": [
+                {
+                    "id": "share-notes",
+                    "text": "How do I share a page of Bible notes with another machine?",
+                    "kind": "howto",
+                    "keywords": [
+                        "export",
+                        "send",
+                        "another computer",
+                        "bundle",
+                        "backup"
+                    ],
+                    "starter": true,
+                    "starterRank": 3,
+                    "resources": {
+                        "recipe": "W-41",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "notes-password",
+                    "text": "Can I put a password on the notes I send?",
+                    "kind": "what",
+                    "keywords": [
+                        "password",
+                        "lock",
+                        "private",
+                        "protect",
+                        "encrypt"
+                    ],
+                    "starter": true,
+                    "starterRank": 4,
+                    "resources": {
+                        "recipe": "W-41"
+                    }
+                }
+            ]
+        }
+    ]
+}

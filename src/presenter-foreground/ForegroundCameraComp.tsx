@@ -1,10 +1,11 @@
-import { CSSProperties, useRef } from 'react';
+import { useCallback, useMemo, type CSSProperties } from 'react';
+import { useRef } from 'react';
 
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync, useAppCurrentRef } from '../helper/appHooks';
 import LoadingComp from '../others/LoadingComp';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
-import { getCameraAndShowMedia } from '../_screen/screenForegroundHelpers';
 import {
     getScreenForegroundManagerInstances,
     getForegroundShowingScreenIdDataList,
@@ -12,12 +13,17 @@ import {
 } from './foregroundHelpers';
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
-import { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import { dragStore } from '../helper/dragHelpers';
-import { CameraInfoType, useCameraInfoList } from '../helper/cameraHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
+import type { CameraInfoType } from '../helper/cameraHelpers';
+import {
+    getCameraAndShowMedia,
+    useCameraInfoList,
+} from '../helper/cameraHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 function RenderCameraInfoComp({
     cameraInfo,
@@ -29,6 +35,9 @@ function RenderCameraInfoComp({
     genStyle: () => CSSProperties;
 }>) {
     const containerRef = useRef<HTMLDivElement>(null);
+    // deps are the stable inputs — `containerRef.current` in the deps array
+    // re-ran the effect on the second render, visibly stopping and
+    // re-acquiring the camera stream
     useAppEffectAsync(async () => {
         if (containerRef.current === null) {
             return;
@@ -38,35 +47,68 @@ function RenderCameraInfoComp({
             parentContainer: containerRef.current,
             width,
         });
-    }, [containerRef.current]);
-    const handleShowing = (event: any, isForceChoosing = false) => {
-        ScreenForegroundManager.addCameraData(
-            event,
-            {
+    }, [cameraInfo.deviceId, width]);
+    const handleShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            ScreenForegroundManager.addCameraData(
+                event,
+                {
+                    id: cameraInfo.deviceId,
+                    extraStyle: genStyle(),
+                },
+                isForceChoosing,
+            );
+        },
+        [cameraInfo, genStyle],
+    );
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleByDropped = useCallback(
+        (event: any) => {
+            const screenForegroundManager =
+                getScreenForegroundManagerByDropped(event);
+            if (screenForegroundManager === null) {
+                return;
+            }
+            screenForegroundManager.addCameraData({
                 id: cameraInfo.deviceId,
                 extraStyle: genStyle(),
-            },
-            isForceChoosing,
+            });
+        },
+        [cameraInfo, genStyle],
+    );
+    const handleByDroppedRef = useAppCurrentRef(handleByDropped);
+    const cameraInfoRef = useAppCurrentRef(cameraInfo);
+    const genStyleRef = useAppCurrentRef(genStyle);
+    const handleDraggingStart = useCallback((event: any) => {
+        dragStore.onDropped = handleByDroppedRef.current;
+        handleDragStart(
+            event,
+            genForegroundDragInf('camera', () => {
+                return {
+                    id: cameraInfoRef.current.deviceId,
+                    extraStyle: genStyleRef.current(),
+                };
+            }),
         );
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleShowing(event, true);
-    };
-    const handleByDropped = (event: any) => {
-        const screenForegroundManager =
-            getScreenForegroundManagerByDropped(event);
-        if (screenForegroundManager === null) {
-            return;
-        }
-        screenForegroundManager.addCameraData({
-            id: cameraInfo.deviceId,
-            extraStyle: genStyle(),
-        });
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="card m-1" style={{ width: `${width}px` }}>
-            <div className="card-header app-ellipsis" title={cameraInfo.label}>
-                {cameraInfo.label}
+            <div
+                className="card-header app-ellipsis d-flex align-items-center"
+                title={cameraInfo.label}
+            >
+                <span className="flex-fill app-ellipsis">
+                    {cameraInfo.label}
+                </span>
+                <ContextMenuDotsButtonComp
+                    label={tran('Show on Screens')}
+                    onOpening={handleContextMenuOpening}
+                />
             </div>
             <div
                 className={
@@ -78,9 +120,7 @@ function RenderCameraInfoComp({
                 onContextMenu={handleContextMenuOpening}
                 ref={containerRef}
                 draggable
-                onDragStart={() => {
-                    dragStore.onDropped = handleByDropped;
-                }}
+                onDragStart={handleDraggingStart}
             >
                 <LoadingComp />
             </div>
@@ -106,25 +146,22 @@ function getAllShowingScreenIdDataList() {
     return showingScreenIdDataList;
 }
 
-const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllCameras(
     showingScreenIdDataList: [number, ForegroundCameraDataType][],
     extraStyle: CSSProperties,
 ) {
-    attemptTimeout(() => {
-        for (const [screenId, data] of showingScreenIdDataList) {
-            getScreenForegroundManagerInstances(
-                screenId,
-                (screenForegroundManager) => {
-                    screenForegroundManager.removeCameraData(data);
-                    screenForegroundManager.addCameraData({
-                        ...data,
-                        extraStyle,
-                    });
-                },
-            );
-        }
-    });
+    for (const [screenId, data] of showingScreenIdDataList) {
+        getScreenForegroundManagerInstances(
+            screenId,
+            (screenForegroundManager) => {
+                screenForegroundManager.removeCameraData(data);
+                screenForegroundManager.addCameraData({
+                    ...data,
+                    extraStyle,
+                });
+            },
+        );
+    }
 }
 
 function handleCameraHiding(screenId: number, data: ForegroundCameraDataType) {
@@ -142,10 +179,15 @@ function ForegroundCameraItemComp({
     const showingScreenIdDataList = getAllShowingScreenIdDataList().filter(
         ([, data]) => data.id === cameraInfo.deviceId,
     );
+    // per-instance: one item per camera device — a shared module timer would
+    // drop the earlier camera's refresh when two are adjusted within 500ms
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
         prefix: `camera-${cameraInfo.deviceId}`,
         onChange: (extraStyle) => {
-            refreshAllCameras(showingScreenIdDataList, extraStyle);
+            attemptTimeout(() => {
+                refreshAllCameras(showingScreenIdDataList, extraStyle);
+            });
         },
     });
     return (
@@ -191,11 +233,14 @@ function RenderShownMiniComp() {
 
 export default function ForegroundCameraComp() {
     const cameraInfoList = useCameraInfoList();
+    useScreenForegroundManagerEvents(['update']);
+    const isOnScreen = getAllShowingScreenIdDataList().length > 0;
     return (
         <ForegroundLayoutComp
             target="camera"
             fullChildHeaders={<h4>{tran('Camera Show')}</h4>}
             childHeadersOnHidden={<RenderShownMiniComp />}
+            isOnScreen={isOnScreen}
         >
             <div className="d-flex flex-wrap">
                 {cameraInfoList.map((cameraInfo) => {

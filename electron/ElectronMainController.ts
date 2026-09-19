@@ -1,14 +1,111 @@
-import { BrowserWindow, Menu, MenuItem, shell } from 'electron';
+import { app, BrowserWindow, Menu, MenuItem, shell } from 'electron';
+import path from 'node:path';
 
-import { channels, ScreenMessageType } from './electronEventListener';
-import { genRoutProps } from './protocolHelpers';
-import ElectronSettingManager from './ElectronSettingManager';
+import { type ScreenMessageType } from './electronEventListener';
+import { genRoutProps, genRouteUrl } from './protocolHelpers';
+import type ElectronSettingManager from './ElectronSettingManager';
+import { htmlFiles } from './fsServe';
 import {
+    applyRendererRecovery,
     attemptClosing,
     genWebPreferences,
     getAppThemeBackgroundColor,
     guardBrowsing,
+    isDev,
+    messageChannels,
 } from './electronHelpers';
+
+const allowedMainHtmlFiles = new Set([
+    htmlFiles.presenter,
+    htmlFiles.reader,
+    htmlFiles.appDocumentEditor,
+]);
+
+function toAllowedMainHtmlPath(mainHtmlPath: string) {
+    return allowedMainHtmlFiles.has(mainHtmlPath)
+        ? mainHtmlPath
+        : htmlFiles.reader;
+}
+
+// A custom scheme (`owa://`) yields an opaque origin whose `.origin` is the
+// literal string "null", so it can't distinguish `owa://local` from
+// `file://` or `data:`. Comparing scheme + host directly keeps the check
+// meaningful for both the dev (`https://localhost:3000`) and packaged origins.
+function toOriginKey(url: URL) {
+    return `${url.protocol}//${url.host}`;
+}
+
+// The app's own root URL — `https://localhost:3000` in dev, `owa://local` when
+// packaged — resolved through the very generator the window is loaded with.
+const appRootOriginKey = toOriginKey(new URL(genRouteUrl(htmlFiles.reader)));
+
+// The main window must never leave presenter/reader/editor. A navigation is
+// only supported when it targets the EXACT URL the app itself would generate
+// for an allowed main page: an html path that survives `toAllowedMainHtmlPath`
+// unchanged, served from the same root URL `genRouteUrl` produces. Anything
+// else (external links, `setting.html`, `file://`, redirects, extra path
+// segments) is rejected.
+function isSupportedMainNavigation(targetUrl: string) {
+    if (!URL.canParse(targetUrl)) {
+        return false;
+    }
+    const targetUrlObj = new URL(targetUrl);
+    const htmlFileName = targetUrlObj.pathname.split('/').pop() ?? '';
+    if (toAllowedMainHtmlPath(htmlFileName) !== htmlFileName) {
+        return false;
+    }
+    const expectedUrlObj = new URL(genRouteUrl(htmlFileName));
+    return (
+        toOriginKey(targetUrlObj) === toOriginKey(expectedUrlObj) &&
+        targetUrlObj.pathname === expectedUrlObj.pathname
+    );
+}
+
+function guardMainNavigation(win: BrowserWindow) {
+    const handleNavigation = (
+        event: Electron.Event<
+            | Electron.WebContentsWillNavigateEventParams
+            | Electron.WebContentsWillRedirectEventParams
+        >,
+        targetUrl: string,
+    ) => {
+        // Only the MAIN frame. These events also fire for sub-frames, and this
+        // guard is about the window not replacing itself with a foreign page —
+        // an <iframe> is embedded content, not a navigation away.
+        //
+        // Without this, any embedded page that answers with a redirect got its
+        // final URL treated as a main-window navigation: cancelled, and opened
+        // in the system browser instead. The Google Maps embed in the names &
+        // locations panel does exactly that (`maps.google.com/maps?…` ->
+        // `www.google.com/maps/embed?…`), so the map stayed blank and a browser
+        // window popped up saying it "must be used in an iframe".
+        if (event.isMainFrame === false) {
+            return;
+        }
+        if (isSupportedMainNavigation(targetUrl)) {
+            return;
+        }
+        // Block the main window from replacing itself with an unsupported page.
+        event.preventDefault();
+        // Hand only genuine external links (a different root) to the system
+        // browser; an unsupported same-root page (e.g. `setting.html`) is just
+        // blocked, never popped open in a browser.
+        if (!URL.canParse(targetUrl)) {
+            return;
+        }
+        const targetUrlObj = new URL(targetUrl);
+        const isExternalOrigin = toOriginKey(targetUrlObj) !== appRootOriginKey;
+        if (
+            isExternalOrigin &&
+            (targetUrlObj.protocol === 'http:' ||
+                targetUrlObj.protocol === 'https:')
+        ) {
+            shell.openExternal(targetUrl);
+        }
+    };
+    win.webContents.on('will-navigate', handleNavigation);
+    win.webContents.on('will-redirect', handleNavigation);
+}
 
 let instance: ElectronMainController | null = null;
 export default class ElectronMainController {
@@ -18,28 +115,36 @@ export default class ElectronMainController {
         this.win = this.createWindow(settingManager);
     }
 
-    previewPdf(pdfFilePath: string) {
-        const mainWin = this.win;
-        const win = new BrowserWindow({
-            parent: mainWin,
-        });
-        win.webContents.setWindowOpenHandler((options) => {
-            shell.openExternal(options.url);
-            return { action: 'deny' };
-        });
-        win.loadURL(pdfFilePath);
-    }
-
     createWindow(settingManager: ElectronSettingManager) {
-        const routeProps = genRoutProps(settingManager.mainHtmlPath);
+        const mainHtmlPath = toAllowedMainHtmlPath(settingManager.mainHtmlPath);
+        const routeProps = genRoutProps(mainHtmlPath);
         const webPreferences = genWebPreferences(routeProps.preloadFilePath);
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
-            x: 0,
-            y: 0,
             webPreferences,
+            // The packaged app gets its icon from electron-builder; `icon.png`
+            // only exists at the project root in dev, so set it dev-only.
+            ...(isDev
+                ? {
+                      icon: path.join(
+                          app.getAppPath(),
+                          'extra-work',
+                          'icon-dev.png',
+                      ),
+                  }
+                : {}),
         });
         guardBrowsing(win, webPreferences);
+        guardMainNavigation(win);
+        applyRendererRecovery(win, () => {
+            // Re-resolved at crash time: the window may have navigated to
+            // another main page since boot, and that navigation is what
+            // `mainHtmlPath` records.
+            const currentHtmlPath = toAllowedMainHtmlPath(
+                settingManager.mainHtmlPath,
+            );
+            genRoutProps(currentHtmlPath).loadURL(win);
+        });
         win.on('closed', () => {
             process.exit(0);
         });
@@ -69,24 +174,20 @@ export default class ElectronMainController {
         process.exit(0);
     }
 
-    sendData(channel: string, data?: any) {
+    sendMessage(channel: string, data?: any) {
         this.win.webContents.send(channel, data);
     }
 
-    sendMessage(message: ScreenMessageType) {
-        this.win.webContents.send(channels.screenMessageChannel, message);
+    sendScreenMessage(message: ScreenMessageType) {
+        this.sendMessage(messageChannels.screenMessage, message);
     }
 
-    changeBible(isNext: boolean) {
-        this.sendData('app:main:change-bible', isNext);
-    }
-
-    ctrlScrolling(isUp: boolean) {
-        this.sendData('app:main:ctrl-scrolling', isUp);
+    changeBible(data: { screenId: number; isNext: boolean }) {
+        this.sendMessage('app:main:change-bible', data);
     }
 
     sendNotifyInvisibility(screenId: number) {
-        this.sendMessage({
+        this.sendScreenMessage({
             screenId,
             type: 'visible',
             data: {
@@ -96,13 +197,11 @@ export default class ElectronMainController {
     }
 
     static getInstance(settingManager: ElectronSettingManager) {
-        if (instance === null) {
-            instance = new this(settingManager);
-        }
+        instance ??= new this(settingManager);
         return instance;
     }
 
     gotoSettingHomePage() {
-        this.win.webContents.executeJavaScript('openBibleSetting();');
+        this.sendMessage('app:main:go-to-setting-home');
     }
 }

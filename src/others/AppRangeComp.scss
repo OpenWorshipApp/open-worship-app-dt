@@ -1,0 +1,36 @@
+// Shared look for every range/zoom slider (AppRangeComp) across the app:
+// a compact pill with hover-able zoom in/out icons.
+.app-range {
+  align-items: center;
+  gap: 4px;
+  margin: 0 6px;
+  padding: 1px 8px;
+  background: rgba(var(--bs-info-rgb), 0.06);
+  border: 1px solid var(--bs-border-color, #cccccc2f);
+  border-radius: 999px;
+
+  .pointer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    opacity: 0.7;
+    transition:
+      background-color 0.15s ease,
+      opacity 0.15s ease;
+
+    &:hover {
+      opacity: 1;
+      background: rgba(var(--bs-info-rgb), 0.18);
+    }
+  }
+
+  .form-range {
+    cursor: pointer;
+  }
+
+  .form-label {
+    margin: 0;
+    opacity: 0.85;
+  }
+}

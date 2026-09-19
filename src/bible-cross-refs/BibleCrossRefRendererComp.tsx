@@ -1,54 +1,42 @@
+import { useCallback, type RefObject } from 'react';
+import { useRef } from 'react';
 import { Fragment } from 'react/jsx-runtime';
-import BibleItem from '../bible-list/BibleItem';
-import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
+
+import './BibleCrossRefComp.scss';
+
+import type BibleItem from '../bible-list/BibleItem';
+import SelectedBibleVerseHeaderComp from '../bible-reader/SelectedBibleVerseHeaderComp';
 import BibleCrossRefOpenAIItemRendererBodyComp from './BibleCrossRefOpenAIItemRendererBodyComp';
 import BibleCrossRefWrapperComp from './BibleCrossRefWrapperComp';
 import BibleCrossRefAnthropicItemRendererBodyComp from './BibleCrossRefAnthropicItemRendererBodyComp';
-import { RefreshingRefType } from '../helper/ai/aiHelpers';
-import { useAvailable as useOpenAIAvailable } from '../helper/ai/openAIHelpers';
-import { RefObject, useRef } from 'react';
+import type { RefreshingRefType } from '../helper/ai/aiHelpers';
+// From the availability module, NOT `openAIHelpers`: this component only asks
+// whether to draw an AI control, and the other module imports the OpenAI SDK.
+import { useAvailable as useOpenAIAvailable } from '../helper/ai/openAIAvailabilityHelpers';
 import {
     BibleKeyContext,
     defaultRefreshingRef,
 } from '../helper/ai/bibleCrossRefHelpers';
-import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHelpers';
+// Availability module, not `anthropicHelpers` — see the OpenAI note above.
+import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicAvailabilityHelpers';
 import { tran } from '../lang/langHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
-import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
 import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
 import appProvider from '../server/appProvider';
 
-function RenderVerseTextComp({
-    bibleItem,
-}: Readonly<{ bibleItem: BibleItem }>) {
-    const [text] = useAppStateAsync(() => {
-        return bibleItem.toText();
-    }, [bibleItem]);
-    return (
-        <div
-            data-bible-key={bibleItem.bibleKey}
-            style={{
-                maxHeight: '75px',
-                overflow: 'auto',
-            }}
-        >
-            {text}
-        </div>
-    );
-}
-
+// Says a model wrote the text below, and opens the page that explains what that
+// means for accuracy. `bi-cpu` rather than the lightbulb it shared with the
+// translation note: one glyph cannot carry two different claims.
 function genAiVigilant() {
+    const label =
+        tran('Generated using AI technology.') +
+        ' Results may vary and may not be ' +
+        'accurate. Please use with caution.';
     return (
-        <i
-            className="bi bi-lightbulb app-caught-hover-pointer"
-            title={
-                tran('Generated using AI technology.') +
-                ' Results may vary and may not be ' +
-                'accurate. Please use with caution.'
-            }
-            style={{
-                color: 'var(--bs-info-text-emphasis)',
-            }}
+        <button
+            type="button"
+            className="app-xref-note bi bi-cpu"
+            title={label}
+            aria-label={label}
             onClick={(event) => {
                 event.stopPropagation();
                 appProvider.browserUtils.openExternalURL(
@@ -74,11 +62,14 @@ export default function BibleCrossRefRendererComp({
     const { bookKey: book, chapter, verseStart } = bibleItem.target;
     // TODO: support multiple verses
     const verses = [verseStart];
-    const handleRefreshing = (ref: RefObject<RefreshingRefType | null>) => {
-        if (ref.current !== null) {
-            ref.current.refresh();
-        }
-    };
+    const handleRefreshing = useCallback(
+        (ref: RefObject<RefreshingRefType | null>) => {
+            if (ref.current !== null) {
+                ref.current.refresh();
+            }
+        },
+        [],
+    );
     const bibleKey = bibleItem.bibleKey;
     return (
         <BibleKeyContext.Provider value={bibleKey}>
@@ -88,47 +79,22 @@ export default function BibleCrossRefRendererComp({
                 cloneBibleItem.target.verseEnd = verse;
                 return (
                     <Fragment key={verse}>
-                        <div
-                            className="m-1 p-1"
-                            data-bible-key={cloneBibleItem.bibleKey}
-                        >
-                            <div
-                                className="alert alert-info p-0 px-1 m-0"
-                                style={{ verticalAlign: 'center' }}
-                            >
-                                <BibleSelectionMiniComp
-                                    bibleKey={bibleItem.bibleKey}
-                                    onBibleKeyChange={(
-                                        _isContextMenu,
-                                        _oldValue,
-                                        newValue,
-                                    ) => {
-                                        const newBibleItem = bibleItem.clone();
-                                        newBibleItem.bibleKey = newValue;
-                                        setBibleItem(newBibleItem);
-                                    }}
-                                />
-                                <BibleViewTitleEditorComp
-                                    bibleItem={cloneBibleItem}
-                                    isOneVerse
-                                    onTargetChange={(newBibleTarget) => {
-                                        cloneBibleItem.target = newBibleTarget;
-                                        setBibleItem(cloneBibleItem);
-                                    }}
-                                    waitUntilGotVerseStart
-                                />
-                            </div>
-                            <RenderVerseTextComp bibleItem={cloneBibleItem} />
-                        </div>
-                        <hr />
-                        <div className="d-flex flex-wrap">
+                        <SelectedBibleVerseHeaderComp
+                            bibleItem={cloneBibleItem}
+                            onBibleKeyChange={(newBibleKey) => {
+                                const newBibleItem = bibleItem.clone();
+                                newBibleItem.bibleKey = newBibleKey;
+                                setBibleItem(newBibleItem);
+                            }}
+                            onTargetChange={(newBibleTarget) => {
+                                cloneBibleItem.target = newBibleTarget;
+                                setBibleItem(cloneBibleItem);
+                            }}
+                        />
+                        <div className="app-xref-panel">
                             <BibleCrossRefWrapperComp
-                                title={
-                                    <>
-                                        {genAiVigilant()}
-                                        AI Cross References
-                                    </>
-                                }
+                                title={`AI ${tran('Cross References')}`}
+                                note={genAiVigilant()}
                                 settingName="show-standard-bible-ref"
                                 onRefresh={handleRefreshing.bind(
                                     null,
@@ -147,12 +113,8 @@ export default function BibleCrossRefRendererComp({
                             </BibleCrossRefWrapperComp>
                             {isOpenAIAvailable ? (
                                 <BibleCrossRefWrapperComp
-                                    title={
-                                        <>
-                                            <i className="bi bi-robot" /> Custom
-                                            OpenAI
-                                        </>
-                                    }
+                                    title="Custom OpenAI"
+                                    note={genAiVigilant()}
                                     settingName="show-ai-bible-ref"
                                     onRefresh={handleRefreshing.bind(
                                         null,
@@ -170,12 +132,8 @@ export default function BibleCrossRefRendererComp({
                             ) : null}
                             {isAnthropicAvailable ? (
                                 <BibleCrossRefWrapperComp
-                                    title={
-                                        <>
-                                            <i className="bi bi-robot" /> Custom
-                                            Anthropic
-                                        </>
-                                    }
+                                    title="Custom Anthropic"
+                                    note={genAiVigilant()}
                                     settingName="show-ai-bible-ref"
                                     onRefresh={handleRefreshing.bind(
                                         null,

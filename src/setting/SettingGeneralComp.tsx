@@ -15,7 +15,10 @@ export default function SettingGeneralComp() {
             <div className="m-1" style={{ minWidth: '600px' }}>
                 <SettingGeneralPath />
             </div>
-            <div className="app-border-white-round m-1">
+            <div
+                className="app-border-white-round m-1"
+                style={{ minWidth: '320px' }}
+            >
                 <SettingGeneralLanguageComp />
                 <SettingGeneralThemeComp />
                 <SettingGeneralFontFamilyComp />

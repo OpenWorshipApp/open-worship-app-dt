@@ -1,40 +1,87 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useCallback, type CSSProperties } from 'react';
+
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
-import { checkIsAppDocumentItemOnScreen } from '../../app-document-list/appDocumentHelpers';
-import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import type { OnScreenListType } from '../../_screen/managers/varySlideOnScreenHelpers';
+import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderBackgroundWebIframeComp from '../../background/RenderBackgroundWebIframeComp';
 import RenderCameraVideoComp from '../../background/RenderCameraVideoComp';
-import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
-import { DroppedDataType, DragTypeEnum } from '../../helper/DragInf';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
+import type { DroppedDataType } from '../../helper/DragInf';
+import { DragTypeEnum } from '../../helper/DragInf';
 import {
     getColorNoteFilePathSetting,
     setColorNoteFilePathSetting,
 } from '../../helper/FileSourceMetaManager';
-import {
-    HIGHLIGHT_SELECTED_CLASSNAME,
-    genTimeoutAttempt,
-} from '../../helper/helpers';
+import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
+import { playMediaElement } from '../../helper/mediaHelpers';
 import { chooseColorNote } from '../../others/ItemColorNoteComp';
 import appProvider from '../../server/appProvider';
 import BackgroundRenderOnHoverComp from './BackgroundRenderOnHoverComp';
+import type FileSource from '../../helper/FileSource';
+import { useWebCapturing } from '../../helper/capturingHelpers';
+import { tran } from '../../lang/langHelpers';
 
 const CAMERA_BACKGROUND_SRC = '/assets/background-camera.png';
 const WEB_BACKGROUND_SRC = '/assets/background-web.png';
 const BROKEN_IMAGE_SRC = '/assets/broken-image.png';
 const BROKEN_VIDEO_SRC = '/assets/broken-video.mp4';
 
+export const DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME =
+    '--app-docx-preview-background';
+
+function RenderBackgroundWebComp({
+    fileSource,
+}: Readonly<{
+    fileSource: FileSource;
+}>) {
+    const imageData = useWebCapturing(fileSource.src);
+    const genChildrenRender = useCallback(
+        (dim: { width: number; height: number }) => {
+            const { width, height } = dim;
+            return (
+                <RenderBackgroundWebIframeComp
+                    iframeSource={fileSource}
+                    width={width}
+                    height={height}
+                />
+            );
+        },
+        [fileSource],
+    );
+    return (
+        <BackgroundRenderOnHoverComp
+            src={imageData ?? WEB_BACKGROUND_SRC}
+            opacity={1}
+            genChildren={genChildrenRender}
+        />
+    );
+}
+const fillingParentStyle: CSSProperties = {
+    width: '100%',
+    height: '100%',
+};
 export function genAttachBackgroundComponent(
     droppedData: DroppedDataType | null | undefined,
 ) {
-    if (droppedData === null || droppedData === undefined) {
-        return null;
+    if (!droppedData) {
+        return (
+            <div
+                className="attached-virtual-bg-color"
+                style={{
+                    ...fillingParentStyle,
+                    backgroundColor: `var(${DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME}, transparent)`,
+                }}
+            ></div>
+        );
     }
     if (droppedData.type === DragTypeEnum.BACKGROUND_COLOR) {
         return (
             <div
-                className="w-100 h-100"
-                style={{ backgroundColor: droppedData.item }}
+                style={{
+                    ...fillingParentStyle,
+                    backgroundColor: droppedData.item,
+                }}
             />
         );
     }
@@ -54,26 +101,17 @@ export function genAttachBackgroundComponent(
         );
     }
     if (droppedData.type === DragTypeEnum.BACKGROUND_WEB) {
-        return (
-            <BackgroundRenderOnHoverComp
-                src={WEB_BACKGROUND_SRC}
-                genChildren={({ width, height }) => {
-                    return (
-                        <RenderBackgroundWebIframeComp
-                            fileSource={droppedData.item}
-                            width={width}
-                            height={height}
-                        />
-                    );
-                }}
-            />
-        );
+        return <RenderBackgroundWebComp fileSource={droppedData.item} />;
     }
     if (droppedData.type === DragTypeEnum.BACKGROUND_IMAGE) {
         const src = droppedData.item.src;
         return (
             <img
-                className="w-100 h-100"
+                style={{
+                    ...fillingParentStyle,
+                    objectFit: 'cover',
+                    objectPosition: 'center center',
+                }}
                 alt={src}
                 src={src}
                 onError={(event) => {
@@ -87,15 +125,19 @@ export function genAttachBackgroundComponent(
     if (droppedData.type === DragTypeEnum.BACKGROUND_VIDEO) {
         return (
             <video
-                className="w-100 h-100"
                 style={{
+                    ...fillingParentStyle,
                     objectFit: 'cover',
                     objectPosition: 'center center',
                 }}
-                onMouseEnter={(event) => {
-                    event.currentTarget.play();
+                // NOTE: this video renders inside ShadowingFillParentWidthComp's
+                // shadow-rooted React root; React cannot synthesize
+                // mouseenter/mouseleave across that boundary, so keep the
+                // bubbling over/out events (the video has no children).
+                onMouseOver={(event) => {
+                    playMediaElement(event.currentTarget);
                 }}
-                onMouseLeave={(event) => {
+                onMouseOut={(event) => {
                     event.currentTarget.pause();
                 }}
                 loop
@@ -113,88 +155,43 @@ export function genAttachBackgroundComponent(
 }
 
 export function toClassNameHighlight(
-    varyAppDocumentItem: VaryAppDocumentItemType,
-    selectedVaryAppDocumentItem?: VaryAppDocumentItemType | null,
+    varySlide: VarySlideType,
+    selectedVarySlide: VarySlideType | null,
+    holdingVarySlides: VarySlideType[],
+    onScreenList: OnScreenListType,
 ) {
     const activeClassname =
         appProvider.isPageAppDocumentEditor &&
-        selectedVaryAppDocumentItem &&
-        varyAppDocumentItem.checkIsSame(selectedVaryAppDocumentItem)
+        selectedVarySlide &&
+        varySlide.checkIsSame(selectedVarySlide)
             ? 'active'
             : '';
-    const isOnScreen = checkIsAppDocumentItemOnScreen(varyAppDocumentItem);
+    // Handed in rather than read here. This runs for every slide preview on
+    // screen, and reading the on-screen map from a render body is what made a
+    // single present re-render (and re-parse for) every preview in the window;
+    // `useVarySlideOnScreenList` answers it once per slide and only wakes the
+    // slides whose answer actually changed.
+    const isOnScreen = onScreenList.length > 0;
     const presenterClassname =
         appProvider.isPageAppDocumentEditor || !isOnScreen
             ? ''
             : `${HIGHLIGHT_SELECTED_CLASSNAME} animation`;
+    let holdingClassname = '';
+    if (
+        !(
+            selectedVarySlide !== null &&
+            varySlide.checkIsSame(selectedVarySlide)
+        ) &&
+        holdingVarySlides.some((holdingItem) =>
+            varySlide.checkIsSame(holdingItem),
+        )
+    ) {
+        holdingClassname = 'holding';
+    }
     return {
-        selectedList: ScreenVaryAppDocumentManager.getDataList(
-            varyAppDocumentItem.filePath,
-            varyAppDocumentItem.id,
-        ),
         activeCN: activeClassname,
         presenterCN: presenterClassname,
-    };
-}
-
-export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
-    const [targetDiv, setTargetDiv] = useState<HTMLDivElement | null>(null);
-    const [parentWidth, setParentWidth] = useState(0);
-
-    useAppEffect(() => {
-        setParentWidth(targetDiv?.clientWidth ?? 0);
-    }, [targetDiv, thumbnailSize]);
-
-    const scale = useMemo(() => {
-        return parentWidth / item.width;
-    }, [parentWidth, item]);
-
-    const resizeAttemptTimeout = useMemo(() => {
-        return genTimeoutAttempt(500);
-    }, []);
-
-    const listenParentSizing = useCallback(
-        (parentDiv: HTMLElement | null) => {
-            if (parentDiv !== null) {
-                const resizeObserver = new ResizeObserver(() => {
-                    resizeAttemptTimeout(() => {
-                        setParentWidth(targetDiv?.clientWidth ?? 0);
-                    });
-                });
-                resizeObserver.observe(parentDiv);
-                return () => {
-                    resizeObserver.disconnect();
-                };
-            }
-        },
-        [resizeAttemptTimeout, targetDiv],
-    );
-
-    const handleSetTargetDiv = useCallback(
-        (div: HTMLDivElement | null) => {
-            setTargetDiv(div);
-            return listenParentSizing(div?.parentElement ?? null);
-        },
-        [listenParentSizing],
-    );
-
-    const handleSetParentDiv = useCallback(
-        (parentDiv: HTMLDivElement | null) => {
-            if (parentDiv === null) {
-                setTargetDiv(null);
-            } else {
-                setTargetDiv(parentDiv.parentElement as HTMLDivElement);
-            }
-            return listenParentSizing(parentDiv);
-        },
-        [listenParentSizing],
-    );
-
-    return {
-        parentWidth,
-        scale,
-        setTargetDiv: handleSetTargetDiv,
-        setParentDiv: handleSetParentDiv,
+        holdingCN: holdingClassname,
     };
 }
 
@@ -205,13 +202,10 @@ export function genChooseColorNoteOption(
     const colorCode = getColorNoteFilePathSetting(filePath, id);
     return [
         {
-            menuElement: 'Choose Color',
-            childBefore: (
-                <i
-                    className="bi bi-record-circle px-1"
-                    style={{ color: colorCode || undefined }}
-                />
-            ),
+            menuElement: tran('Choose Color'),
+            childBefore: genContextMenuItemIcon('record-circle', {
+                color: colorCode || undefined,
+            }),
             onSelect: (event) => {
                 chooseColorNote(
                     colorCode,
@@ -224,4 +218,27 @@ export function genChooseColorNoteOption(
             },
         },
     ];
+}
+
+const shadowingStyleText = `
+.shadow-blank-bg[data-shadow-theme='dark'] {
+    --color1: #495057;
+    --color2: #343a40;
+}
+.shadow-blank-bg[data-shadow-theme='light'] {
+    --color1: #dee2e6;
+    --color2: #ced4da;
+}
+.shadow-blank-bg {
+    background-size: 30px 30px;
+    background-position: 0 0, 0 15px, 15px -15px, -15px 0px;
+
+    background-image:
+    linear-gradient(45deg, var(--color1) 25%, var(--color2) 25%),
+    linear-gradient(-45deg, var(--color1) 25%, var(--color2) 25%),
+    linear-gradient(45deg, var(--color2) 75%, var(--color1) 75%),
+    linear-gradient(-45deg, var(--color2) 75%, var(--color1) 75%);
+}`;
+export function getSlideItemShadowingStyle() {
+    return <style>{shadowingStyleText}</style>;
 }

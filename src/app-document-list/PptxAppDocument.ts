@@ -1,0 +1,202 @@
+import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
+import type { MimetypeNameType } from '../server/fileHelpers';
+import type ItemSourceInf from '../others/ItemSourceInf';
+import {
+    BLANK_HTML_SLIDE_SRC,
+    showStaticSlideContextMenu,
+} from './appDocumentHelpers';
+import {
+    showAppContextMenu,
+    type ContextMenuItemType,
+} from '../context-menu/appContextMenuHelpers';
+import { handleError } from '../helper/errorHelpers';
+import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
+import { appLog } from '../helper/loggerHelpers';
+import PptxSlide, { type PptxSlidePropsType } from './PptxSlide';
+import {
+    getPptxData,
+    getPptxMissingFontFamilyList,
+    getPptxSlideAudioDataListQuick,
+    getPptxToHtmlsVersion,
+    removePptxHtmlsPreview,
+} from '../server/pptxHelpers';
+import { type VarySlideAudioDataType } from '../background/backgroundHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { tran } from '../lang/langHelpers';
+
+export default class PptxAppDocument
+    extends AppDocumentSourceAbs
+    implements ItemSourceInf<PptxSlide>
+{
+    static readonly mimetypeName: MimetypeNameType = 'pptx';
+    isEditable = false;
+
+    constructor(filePath: string) {
+        super(filePath);
+    }
+
+    setMetadata(_metaData: AnyObjectType): OptionalPromise<void> {
+        throw new Error('Method not implemented.');
+    }
+    setSlides(_items: PptxSlide[]): OptionalPromise<void> {
+        throw new Error('Method not implemented.');
+    }
+    setItemById(_id: number, _item: PptxSlide): OptionalPromise<void> {
+        throw new Error('Method not implemented.');
+    }
+
+    showSlideContextMenu(
+        event: any,
+        item: PptxSlide,
+        extraMenuItems: ContextMenuItemType[] = [],
+    ) {
+        return showStaticSlideContextMenu(event, item, extraMenuItems);
+    }
+
+    async showContextMenu(event: any) {
+        const contextMenuItems: ContextMenuItemType[] = [
+            {
+                childBefore: genContextMenuItemIcon('arrow-clockwise'),
+                menuElement: tran('Reload'),
+                onSelect: () => {
+                    this.fileSource.fireUpdateEvent();
+                },
+            },
+        ];
+        showAppContextMenu(event, contextMenuItems);
+    }
+
+    async getMetadata() {
+        return {};
+    }
+
+    async getMissingFontFamilyList() {
+        return await getPptxMissingFontFamilyList(this.filePath);
+    }
+
+    async getSlides() {
+        try {
+            const pptxData = await getPptxData(this.filePath);
+            const pptxToHtmlsVersion = await getPptxToHtmlsVersion();
+            if (
+                pptxData !== null &&
+                pptxToHtmlsVersion !== pptxData.info.toolVersion
+            ) {
+                await removePptxHtmlsPreview(this.filePath);
+                appLog(
+                    'Pptx version mismatch:',
+                    pptxToHtmlsVersion,
+                    pptxData?.info.toolVersion,
+                );
+                return [];
+            }
+            if (pptxData === null) {
+                return [];
+            }
+            const slide0 = new PptxSlide(this.filePath, {
+                id: 0,
+                htmlFilePath: BLANK_HTML_SLIDE_SRC,
+                subHtmlFilePaths: [],
+                html: '',
+                subHtmls: [],
+                isDisabled: false,
+                note: null,
+                metadata: pptxData.info.dimensions,
+                images: [],
+                videos: [],
+                audios: [],
+                type: 'pptx-slide',
+            });
+            const dataList = pptxData.info.slides.map(
+                (
+                    {
+                        htmlFilePath,
+                        subHtmlFilePaths,
+                        html,
+                        subHtmls,
+                        isDisabled,
+                        note,
+                        images,
+                        videos,
+                        audios,
+                    },
+                    i,
+                ) => {
+                    const json: PptxSlidePropsType = {
+                        id: i + 1,
+                        htmlFilePath,
+                        subHtmlFilePaths,
+                        html,
+                        subHtmls,
+                        isDisabled,
+                        note,
+                        metadata: pptxData.info.dimensions,
+                        images: images ?? [],
+                        videos: videos ?? [],
+                        audios: audios ?? [],
+                        type: 'pptx-slide',
+                    };
+                    return new PptxSlide(this.filePath, json);
+                },
+            );
+            return [slide0, ...dataList];
+        } catch (error) {
+            handleError(error);
+        }
+        return [];
+    }
+
+    /**
+     * NOT through `getSlides()`: the Audios panel calls this for every pptx in
+     * the folder on every folder refresh, and `getSlides()` hashes the whole
+     * file and reads every slide's html first (`EN-12`). `info.json` alone
+     * answers it; `[]` until the preview exists.
+     */
+    async getAudioFilePaths(): Promise<VarySlideAudioDataType[]> {
+        const audioDataList = await getPptxSlideAudioDataListQuick(
+            this.filePath,
+        );
+        return audioDataList.map((audioData) => {
+            return {
+                ...audioData,
+                slideFilePath: this.filePath,
+            };
+        });
+    }
+
+    async getSlideByIndex(index: number) {
+        const items = await this.getSlides();
+        return items[index] ?? null;
+    }
+
+    async getItemById(id: number) {
+        const items = await this.getSlides();
+        return items.find((item) => item.id === id) ?? null;
+    }
+
+    static getInstance(filePath: string) {
+        return this._getInstance(filePath, () => {
+            return new this(filePath);
+        });
+    }
+
+    static checkIsThisType(item: any) {
+        return item instanceof this;
+    }
+
+    checkIsSame(item: any) {
+        if (PptxAppDocument.checkIsThisType(item)) {
+            return this.filePath === item.filePath;
+        }
+        return false;
+    }
+
+    toJson(): AnyObjectType {
+        throw new Error('Method not implemented.');
+    }
+
+    async preDelete() {
+        super.preDelete();
+        await removePptxHtmlsPreview(this.filePath);
+    }
+}
