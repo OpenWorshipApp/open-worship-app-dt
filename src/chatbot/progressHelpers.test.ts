@@ -222,3 +222,64 @@ describe('a foreground extra on its way to the screen', () => {
         );
     });
 });
+
+describe('the data tools on the wait line', () => {
+    test('says a file is going to the trash, and which', () => {
+        expect(
+            describeToolStep('owa_lyric_file', {
+                action: 'delete',
+                name: 'Amazing Grace',
+            }),
+        ).toBe('Moving your song “Amazing Grace” to the trash');
+        expect(
+            describeToolStep('owa_slide_file', {
+                action: 'update-slide',
+                name: 'Sunday',
+                slide: 3,
+            }),
+        ).toBe('Changing slide 3 of “Sunday”');
+        expect(describeToolStep('owa_slide_file', { action: 'slides' })).toBe(
+            'Reading the slides',
+        );
+    });
+
+    test('names the passage being saved', () => {
+        expect(
+            describeToolStep('owa_bible_item', {
+                action: 'add',
+                reference: 'John 3:16',
+            }),
+        ).toBe('Saving to your Bibles list: “John 3:16”');
+        expect(describeToolStep('owa_bible_note', { action: 'delete' })).toBe(
+            'Removing a Bible note',
+        );
+        expect(describeToolStep('owa_undo', { action: 'undo' })).toBe(
+            'Putting back an earlier change',
+        );
+        expect(describeToolStep('owa_undo', {})).toBe(
+            'Looking through the recent changes',
+        );
+    });
+
+    test('never lets a data tool or an action name reach the line', () => {
+        for (const name of [
+            'owa_bible_item',
+            'owa_bible_note',
+            'owa_undo',
+            'owa_slide_file',
+            'owa_lyric_file',
+        ]) {
+            for (const action of [
+                'list',
+                'add',
+                'delete-slide',
+                'nonsense',
+                undefined,
+            ]) {
+                const text = describeToolStep(name, { action });
+                expect(text, `${name} ${action}`).not.toContain('_');
+                expect(text.length).toBeGreaterThan(4);
+            }
+        }
+    });
+});

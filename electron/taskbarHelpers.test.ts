@@ -9,7 +9,7 @@ vi.mock('electron', async () => {
 // let each case pick a platform without `vi.resetModules()` — which would leave
 // the helpers holding a different electron mock than this file asserts on.
 const platformFlags = vi.hoisted(() => {
-    return { isDev: false, isWindows: true };
+    return { isDev: false, isWindows: true, isWindowsStore: false };
 });
 
 const { resetPopupWindowsBounds } = vi.hoisted(() => ({
@@ -22,6 +22,9 @@ vi.mock('./electronHelpers', () => ({
     },
     get isWindows() {
         return platformFlags.isWindows;
+    },
+    get isWindowsStore() {
+        return platformFlags.isWindowsStore;
     },
     resetPopupWindowsBounds,
 }));
@@ -65,6 +68,7 @@ describe('taskbarHelpers', () => {
         electronMockState.app.getAppPath.mockReturnValue('/mock-app');
         platformFlags.isDev = false;
         platformFlags.isWindows = true;
+        platformFlags.isWindowsStore = false;
         resetPopupWindowsBounds.mockClear();
     });
 
@@ -111,6 +115,18 @@ describe('taskbarHelpers', () => {
         expect(electronMockState.app.setAppUserModelId).toHaveBeenCalledWith(
             'app.openworship.desktop',
         );
+    });
+
+    test('leaves a Store install the identity Windows gave its package', () => {
+        // MSIX forbids a custom app id, and setting one anyway is what makes
+        // the reset task below disappear from the jump list.
+        platformFlags.isWindowsStore = true;
+
+        initAppUserModelId();
+        initUserTasks();
+
+        expect(electronMockState.app.setAppUserModelId).not.toHaveBeenCalled();
+        expect(electronMockState.app.setUserTasks).toHaveBeenCalledTimes(1);
     });
 
     test('keeps a separate taskbar identity in dev', () => {

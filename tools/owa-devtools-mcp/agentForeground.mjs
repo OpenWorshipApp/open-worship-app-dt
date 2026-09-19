@@ -103,7 +103,8 @@ export function formatForegroundResult(result) {
             text: String(result.reason ?? 'That could not be done.'),
         };
     }
-    return { isError: false, text: JSON.stringify(result, null, 2) };
+    // Compact: see `toTextResult` in owaTools.mjs.
+    return { isError: false, text: JSON.stringify(result) };
 }
 
 function describeScreens(result) {

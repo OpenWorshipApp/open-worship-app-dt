@@ -202,7 +202,9 @@ export default function InputExtraButtonsComp() {
             />
             <i
                 className="bi bi-arrow-bar-right app-caught-hover-pointer"
-                title={`Tab to complete [${toShortcutKey(tabEventMap)}]`}
+                title={
+                    tran('Tab to complete') + ` [${toShortcutKey(tabEventMap)}]`
+                }
                 style={{
                     color: 'var(--bs-secondary-text-emphasis)',
                     ...genAvailableStyle(!isTabAvailable),

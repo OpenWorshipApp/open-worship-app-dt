@@ -48,22 +48,40 @@ Breaking one of these is a regression even when the feature works.
    guest "just for this" is the change that loses the boundary.
 2. **One partition, locked down once.** The guest lives on `persist:aichat`
    (persistent, so a sign-in survives a restart — that is the point). The
-   session grants only `clipboard-sanitized-write`; camera, microphone,
-   location, notifications, clipboard-read are refused without a prompt.
-3. **http(s) only, and out means OUT.** The guest may navigate to http(s) and
-   nothing else (`will-navigate` / `will-redirect`); a window it opens goes
-   to the system browser through `shell.openExternal` and is denied — never
-   to an app window, because `handlePopupWindowOpen` hands out
-   `nodeIntegration: true`.
-4. **The guest talks to the public internet and nothing else.**
-   `guardGuestSessionRequests` cancels every request from the guest session
-   to a local or private address (`checkIsLocalHostname`,
+   session grants only `clipboard-sanitized-write` on its own; camera,
+   location, notifications, screen capture, clipboard-read are refused
+   without a prompt. **The microphone is ASKED, never granted by the box**
+   (2026-09-14, the user's call): an audio-only request from a site's own
+   https top page goes to the window, which refuses it silently unless the
+   guest is the tab in FRONT and the page is that tab's own site, and
+   otherwise asks on its own line with **Don't allow** focused. A yes is per
+   site, in memory, until the app closes or **Sign out of every site**; a
+   request that also wants the camera is refused whole.
+3. **http(s) only, and out means OUT — for a press.** The guest may navigate
+   to http(s) and nothing else (`will-navigate` / `will-redirect`); a window
+   it opens goes to the system browser through `shell.openExternal` and is
+   denied — never to an app window, because `handlePopupWindowOpen` hands out
+   `nodeIntegration: true` — and ONLY within five seconds of a press the
+   person made in that guest, one page per press (`decideGuestWindowOpen`;
+   the press is the guest's `input-event`, read in the main process where a
+   page cannot fake one). `allowpopups` switches Electron's popup blocking
+   off entirely: before 2026-09-14 a page's timer opened the system browser
+   with nothing pressed. A refused page is said on the window's own line, for
+   the tab in front, and nothing on that line opens it.
+4. **The guest talks to the public internet and nothing else — WebSockets
+   too.** `guardGuestSessionRequests` cancels every request from the guest
+   session to a local or private address (`checkIsLocalHostname`,
    `tools/owa-devtools-mcp/webUrlPolicy.mjs` — one dialect, shared with the
    MCP firewall). This machine's loopback carries the app's own CDP and MCP
    doors; a blind `no-cors` `fetch` at both was served before this existed.
-   Never narrow the filter to a pattern list (`127.0.0.2` walks through one)
-   and never register a second `onBeforeRequest` on this partition — Electron
-   keeps one listener and the second silently replaces the first.
+   The filter is `GUEST_REQUEST_URL_PATTERNS` — `*://*/*`, `ws://*/*`,
+   `wss://*/*` — because `*://` is http and https only: until 2026-09-14 a
+   `ws://` handshake to any loopback service opened from the guest. Never
+   `<all_urls>` (it hands the listener `data:`/`blob:` loads, whose empty
+   host counts as local), never narrow the filter to an address pattern list
+   (`127.0.0.2` walks through one), and never register a second
+   `onBeforeRequest` on this partition — Electron keeps one listener and the
+   second silently replaces the first.
 5. **`webviewTag: true` goes to ONE page by its bounds key**
    (`genPopupWebPreferences`, `electron/electronHelpers.ts`), never by a
    feature an opener could ask for.
@@ -108,11 +126,18 @@ It answers, per guest: `require` / `process` unreachable, `navigator.webdriver`
 false, the partition, the permissions a page is refused, that a `file:`
 navigation is refused, that `window.open` is denied, that ten addresses on
 this machine and its network — both of the app's own doors among them — are
-unreachable, and that the site's own origin STILL is; and, on the host page,
-that `require` is gone and no more than three guests are mounted. 33 checks,
-all held as of 2026-09-12. Write it down before changing anything. A run
-where one of those "held" checks fails is the failure this skill exists to
-catch — including the last one, which fails when a wall has become a brick.
+unreachable, and that the site's own origin STILL is; that a WebSocket to five
+spellings of loopback is refused — judged by what the probe's own loopback
+servers RECEIVED, since a page's `closed 1006` cannot tell a refusal from
+nothing listening — and that a public `wss://` echo STILL opens; and, on the
+host page, that `require` is gone, no more than three guests are mounted, and
+a `window.open` of example.com with nothing pressed is handed nothing and said
+on the window's line. 43 checks with one site open, all held as of 2026-09-14
+— the eight added that afternoon are the WebSockets, their positive control
+and the no-press window. Write it down before changing anything. A run where
+one of those "held" checks fails is the failure this skill exists to catch —
+including the two that fail when a wall has become a brick. A browser window
+opening on example.com during a run is the press gate failing.
 
 > **The guest is not a `list_pages` target.** chrome-devtools-mcp lists pages;
 > a `<webview>` is a `webview` target, and the `owa_*` tools refuse the host
@@ -166,8 +191,9 @@ npm run lint
 ```
 
 `&&`-chained: the first failing stage stops the rest. Read the log body, not
-the exit code. The build restarts the dev app under nodemon; nudge a watched
-file if it does not come back.
+the exit code. Its build check goes to a temp dir (`EN-16`), so the dev app
+under nodemon is left alone; a real `npm run build` still restarts it — nudge a
+watched file if it does not come back.
 
 ### 5. Land the paper trail
 
@@ -210,7 +236,8 @@ Full model, the measurements and what is still open:
   own Save dialog — a person is driving), open a link in the system browser,
   write the clipboard when the user presses Copy.
 - What it must never do: reach `file:`/`owa:`/the app's pages, open an app
-  window, prompt for a device, read the clipboard, run with a preload, or be
+  window, prompt for a device (the microphone is asked by the WINDOW, on its
+  own line, never by the page), read the clipboard, run with a preload, or be
   driven by anything but the person in front of it.
 
 When adding to the policy: a refusal a person sees is written for a PERSON
@@ -218,7 +245,11 @@ When adding to the policy: a refusal a person sees is written for a PERSON
 and a refusal a page meets is silent — a page is not owed an explanation.
 
 **Never widen the box to make a site work.** If a site needs a permission,
-the answer is the ↗ **Open in your browser** button, not a grant.
+the answer is the ↗ **Open in your browser** button, not a grant. The
+microphone is the one exception, decided by the user on 2026-09-14 with a
+picture of claude.ai's dictation button refused, and it is still not a
+grant: it is a question the person answers, per site, for the tab they are
+looking at (`AC-13`). A second exception is the user's call, not a run's.
 
 ### B. Performance — every guest is a process
 

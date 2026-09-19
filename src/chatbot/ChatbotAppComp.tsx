@@ -8,6 +8,8 @@ import { captureAppWindow } from '../helper/appCaptureHelpers';
 import { openPopupWindow } from '../helper/domHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { setSetting } from '../helper/settingHelpers';
+import type { AISecretKeyNameType } from '../helper/ai/aiHelpers';
+import { requestAIKeyFocus } from '../helper/ai/aiKeyFocusHelpers';
 import { findContactEmail, showFileOrDirExplorer } from '../server/appHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useThemeSource } from '../others/themeHelpers';
@@ -36,6 +38,7 @@ import {
     type ChatAssetPreviewType,
 } from './assetPreviewHelpers';
 import RenderSessionTabsComp from './RenderSessionTabsComp';
+import { findSteppedProvider } from './providerPickHelpers';
 import {
     REPORT_COPY_EMAIL_TOOL_NAME,
     REPORT_COPY_IMAGE_TOOL_NAME,
@@ -115,6 +118,7 @@ import {
     getLlmModel,
     getLlmModelList,
     getLlmProvider,
+    getLlmProviderKeyField,
     listAllLlmModels,
     setLlmModel,
     setLlmProvider,
@@ -269,14 +273,27 @@ const BLIND_MODEL_MESSAGE =
     'This assistant cannot look at pictures. Pick one that can, or take the ' +
     'picture off and describe it instead.';
 
-function openAiSetting() {
+/**
+ * Settings → Others, with the cursor in `keyName`'s box -- or on the AI panel
+ * itself when there is no box in particular. The request is written BEFORE the
+ * window is raised: a Settings window that is already open is only brought to
+ * the front (the same page is never opened twice), and it reads the request
+ * off that focus. See `aiKeyFocusHelpers`.
+ */
+function openAiKeySetting(keyName: AISecretKeyNameType | null) {
     setSetting(SETTING_TABS_SETTING_NAME, SETTING_OTHERS_TAB);
+    requestAIKeyFocus(keyName);
     openPopupWindow(
         appProvider.settingHomePage,
         `setting_${Date.now()}`,
         'setting',
         { appTopToMain: true },
     );
+}
+
+// Handed to `onClick` as it is, so it takes no argument an event could fill.
+function openAiSetting() {
+    openAiKeySetting(null);
 }
 
 function useStarterQuestions(focus: BotFocusType) {
@@ -745,16 +762,19 @@ function RenderFocusSwitchComp({
 // not the other. The switch lives in this window rather than in Settings so it
 // can be flipped between two questions, without leaving the answer on screen.
 //
-// A provider with no key is LISTED and disabled, never dropped: the pair is
-// what tells the user the other one exists. Its reason goes in the option's
-// own text rather than in a `title`, because this list is drawn by the OS and
-// Windows shows no tooltip over a row of it.
+// A provider with no key is LISTED, never dropped: the list is what tells the
+// user the others exist. Its reason goes in the option's own text rather than
+// in a `title`, because this list is drawn by the OS and Windows shows no
+// tooltip over a row of it. And it is PICKABLE, not disabled: a greyed row
+// said what was missing and left nothing to press, so picking it opens
+// Settings with the cursor in that provider's key box, and the tab stays on
+// the provider it had.
 const NO_PROVIDER_VALUE = '';
 
 /**
  * What a row of the assistant list reads as. Three cases, and the third is the
- * reason this is a function: a provider with no key is unusable and says so,
- * one with a key is just its name, and the KEYLESS one is usable by everybody
+ * reason this is a function: a provider with no key says what it needs, one
+ * with a key is just its name, and the KEYLESS one is usable by everybody
  * and still needs a word of warning on it -- it is the only row whose cost is
  * paid in something other than money, and the list is the last place a user
  * sees it before choosing.
@@ -809,6 +829,14 @@ function RenderProviderSwitchComp({
     const chosenLabel = LLM_PROVIDER_LIST.find((item) => {
         return item.key === provider;
     })?.label;
+    // An arrow on the CLOSED list changes its value on every press (Windows,
+    // Linux). A row with no key would then open Settings under somebody who
+    // was only moving through the list -- and the list, snapping back, would
+    // keep every row past it out of reach. So such a press steps OVER the row,
+    // the way it stepped over a disabled one; a click or an Enter on it is the
+    // ask. Cleared straight after the press: an arrow that opens the list
+    // instead (macOS) changes nothing, and the click that follows is an ask.
+    const arrowStepRef = useRef<1 | -1 | null>(null);
     return (
         <select
             className="chat-pick"
@@ -822,8 +850,36 @@ function RenderProviderSwitchComp({
             // With no key at all there is no provider to be on, and a select
             // whose value matches no option renders blank.
             value={provider ?? NO_PROVIDER_VALUE}
+            onKeyDown={(event) => {
+                if (
+                    event.altKey ||
+                    (event.key !== 'ArrowDown' && event.key !== 'ArrowUp')
+                ) {
+                    return;
+                }
+                arrowStepRef.current = event.key === 'ArrowDown' ? 1 : -1;
+                setTimeout(() => {
+                    arrowStepRef.current = null;
+                }, 0);
+            }}
             onChange={(event) => {
-                onChange(event.target.value as LlmProviderType);
+                const newProvider = event.target.value as LlmProviderType;
+                const step = arrowStepRef.current;
+                if (step === null || availableProviders.includes(newProvider)) {
+                    onChange(newProvider);
+                    return;
+                }
+                const steppedProvider = findSteppedProvider(
+                    LLM_PROVIDER_LIST.map((item) => {
+                        return item.key;
+                    }),
+                    availableProviders,
+                    newProvider,
+                    step,
+                );
+                if (steppedProvider !== null) {
+                    onChange(steppedProvider);
+                }
             }}
         >
             {provider === null ? (
@@ -842,7 +898,11 @@ function RenderProviderSwitchComp({
                     <option
                         key={item.key}
                         value={item.key}
-                        disabled={!isAvailable}
+                        // Pickable, NOT disabled: picking it is how the user
+                        // asks to add its key (`handleProviderChanging`). The
+                        // attribute is what tells it apart -- to the style
+                        // sheet, and to a script driving this window.
+                        data-needs-key={isAvailable ? undefined : ''}
                         title={title}
                     >
                         {text}
@@ -1998,8 +2058,31 @@ export default function ChatbotAppComp() {
         ) as Record<LlmProviderType, LlmModelType[]>;
     });
     const [isLoadingModels, setIsLoadingModels] = useState(false);
-    const availableProviders = useMemo(() => {
-        return getAvailableLlmProviders();
+    const [availableProviders, setAvailableProviders] = useState(
+        getAvailableLlmProviders,
+    );
+    // Read again, not remembered from when the window opened: the key that
+    // makes a provider answer is typed into ANOTHER window, and this list is
+    // what sends the user there. Returned, so a press acts on the fresh
+    // answer; set only on a change, because this component is the whole
+    // window and a focus is no reason to redraw the conversation.
+    const refreshAvailableProviders = useCallback(() => {
+        const newProviders = getAvailableLlmProviders();
+        setAvailableProviders((oldProviders) => {
+            return oldProviders.join() === newProviders.join()
+                ? oldProviders
+                : newProviders;
+        });
+        return newProviders;
+    }, []);
+    // Coming back from Settings is a focus. A list still reading "needs an API
+    // key" beside a key that has just been saved sends the user back to type
+    // it again.
+    useAppEffect(() => {
+        window.addEventListener('focus', refreshAvailableProviders);
+        return () => {
+            window.removeEventListener('focus', refreshAvailableProviders);
+        };
     }, []);
     const modelList = provider === null ? [] : modelListMap[provider];
     // Both of these change THIS tab, and are also written down as what the
@@ -2007,13 +2090,21 @@ export default function ChatbotAppComp() {
     // whatever they were asking with.
     const handleProviderChanging = useCallback(
         (newProvider: LlmProviderType) => {
+            if (!refreshAvailableProviders().includes(newProvider)) {
+                // A provider with no key yet: picking it is how the user asks
+                // to add one. Nothing about the tab changes -- the list is
+                // controlled, so it shows the provider it had again -- and
+                // Settings opens with the cursor in that provider's key box.
+                openAiKeySetting(getLlmProviderKeyField(newProvider));
+                return;
+            }
             setLlmProvider(newProvider);
             const newModel = getLlmModel(newProvider);
             updateActiveSession((session) => {
                 return { ...session, provider: newProvider, model: newModel };
             });
         },
-        [updateActiveSession],
+        [updateActiveSession, refreshAvailableProviders],
     );
     const handleModelChanging = useCallback(
         (newModel: string) => {
@@ -4301,7 +4392,11 @@ export default function ChatbotAppComp() {
             // the press, so nothing a model says and nothing a saved file
             // carries can be an address.
             if (action.toolName === OPEN_AI_SETTING_TOOL_NAME) {
-                openAiSetting();
+                // A refused key's door names its provider, so the panel opens
+                // with the cursor in that key's box. Resolved here from the
+                // NAME: a saved button naming anything else opens the panel
+                // and nothing more.
+                openAiKeySetting(getLlmProviderKeyField(action.args?.provider));
                 return;
             }
             if (action.toolName === OPEN_PROVIDER_PAGE_TOOL_NAME) {

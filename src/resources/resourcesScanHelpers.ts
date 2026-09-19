@@ -1,3 +1,6 @@
+import douayRheimsBibleJson from '../helper/bible-helpers/douayRheimsBible.json';
+import kjvBibleConfigJson from '../helper/bible-helpers/kjvBibleConfig.json';
+import kjvdBibleJson from '../helper/bible-helpers/kjvdBible.json';
 import CacheManager from '../others/CacheManager';
 import {
     checkIsHiddenName,
@@ -8,11 +11,18 @@ import {
 } from '../server/fileHelpers';
 
 /**
- * How deep below a chosen folder to look. Deep enough for any way a person
- * files sermon material by year/book/series, shallow enough that pointing this
- * at a drive root degrades instead of hanging.
+ * How deep below a chosen folder to look: the folder itself and the two levels
+ * of folders under it (`<folder>/Genesis/Sermons/GEN.1.pdf`), never a third.
+ *
+ * Shallow on purpose (2026-09-15). A folder is added because material is KEPT
+ * in it, near its top; what lies deeper in a broad folder -- a home folder's
+ * app data, projects, caches -- is somebody else's tree, and walking it is
+ * where the directory budget below went. Measured on a real home folder: 64
+ * folders read at this depth and the walk completes; at 4 or more it spends
+ * all 1500 and the box says "Too many folders to search" having found nothing.
+ * The budgets below stay as the backstop for a drive root.
  */
-export const MAX_SCAN_DEPTH = 8;
+export const MAX_SCAN_DEPTH = 2;
 
 /**
  * The real budget. Cost here is dominated by the NUMBER OF `readdir` CALLS --
@@ -33,6 +43,14 @@ export const MAX_SCAN_ENTRIES = 20000;
  * panel is for, and they are a handful by construction.
  */
 export const MAX_SEARCH_MATCHES = 200;
+
+/**
+ * How many "other" files to keep -- the ones named after no chapter at all.
+ * Capped for the reason the search hits are: a folder holding a few thousand
+ * photos would otherwise put every one of them into the DOM. Unlike a search,
+ * nothing typed can narrow this list, so the note under it says so instead.
+ */
+export const MAX_OTHER_MATCHES = 200;
 
 /**
  * How many directories to read before handing the frame back to the browser.
@@ -99,6 +117,16 @@ export type ResourcesScanResultType = {
     isTruncated: boolean;
     /** `searchedFilePaths` hit `MAX_SEARCH_MATCHES` and stopped growing. */
     isSearchTruncated: boolean;
+    /**
+     * Files named after no chapter of any book -- `Jesus-family-line.jpeg` --
+     * collected only when the panel's Others box is ticked. Kept apart and
+     * listed last, for the reason the searched ones are kept apart: they
+     * answer another question. A file the search also found is listed there,
+     * not here, so what was just typed for is never pushed below this list.
+     */
+    otherFilePaths: string[];
+    /** `otherFilePaths` hit `MAX_OTHER_MATCHES` and stopped growing. */
+    isOthersTruncated: boolean;
 };
 
 /**
@@ -203,6 +231,79 @@ export function checkIsSearchedName(
 export function checkIsBookLevelName(fileFullName: string, bookKey: string) {
     const fileChapter = toChapterNumber(fileFullName, bookKey);
     return fileChapter !== null && fileChapter < 1;
+}
+
+/**
+ * Every book key a bible model the app ships can hand the reader -- `GEN`,
+ * `1CH`, and the deuterocanonical `TOB` or `1MA` the KJVD and Douay-Rheims
+ * models add -- lowercased once, so sorting a file into "named after a
+ * chapter" or "other" is one `Set` lookup per entry of the walk. Read off the
+ * model JSON directly rather than through `bibleModelHelpers`, which would
+ * also construct a `SettingManager` at load for a helper that needs none; the
+ * modules are the same ones that file imports, so nothing is loaded twice.
+ */
+const BOOK_KEY_SET = new Set(
+    [kjvBibleConfigJson, kjvdBibleJson, douayRheimsBibleJson].flatMap(
+        (modelInfo) => {
+            return modelInfo.bookKeysOrder.map((bookKey) => {
+                return bookKey.toLowerCase();
+            });
+        },
+    ),
+);
+
+/**
+ * Is this file named after a chapter of SOME book -- any book, not only the
+ * ones open? `GEN.50.pdf` is; `Jesus-family-line.jpeg` is not, and neither is
+ * `IMG.2.jpg`, because `IMG` is no book. A name spelled the way no chapter is
+ * (`GEN.01.pdf`, `GEN.pdf`) is not one either, which is what the Others list
+ * wants: a misnamed file turns up there instead of nowhere at all.
+ */
+export function checkIsBookChapterName(fileFullName: string) {
+    const dotIndex = fileFullName.indexOf('.');
+    if (dotIndex <= 0) {
+        return false;
+    }
+    const bookKey = fileFullName.slice(0, dotIndex);
+    if (!BOOK_KEY_SET.has(bookKey.toLowerCase())) {
+        return false;
+    }
+    return toChapterNumber(fileFullName, bookKey) !== null;
+}
+
+/**
+ * Would a file just put in a folder be listed by the view AS IT STANDS?
+ *
+ * The same three questions `walkForMatches` asks of every entry, in the same
+ * order, against one name and with no disk read at all. It exists because
+ * copying `outline.docx` onto a shelf while the reader is on Genesis 4 puts a
+ * file on disk that the panel, correctly, does not draw -- and a panel that
+ * does not visibly change is indistinguishable from one that failed. The
+ * caller says so in words instead.
+ */
+export function checkIsResourceFileListed(
+    fileFullName: string,
+    targets: ResourceTargetType[],
+    searchText: string,
+    isOthersShowing: boolean,
+) {
+    if (checkIsHiddenName(fileFullName)) {
+        return false;
+    }
+    const isMatched = targets.some(({ bookKey, chapter }) => {
+        return checkIsMatchedName(fileFullName, bookKey, chapter);
+    });
+    if (isMatched) {
+        return true;
+    }
+    const lowerSearchText = normalizeResourceSearchText(searchText);
+    if (
+        lowerSearchText !== '' &&
+        checkIsSearchedName(fileFullName, lowerSearchText)
+    ) {
+        return true;
+    }
+    return isOthersShowing && !checkIsBookChapterName(fileFullName);
 }
 
 export type ResourceMatchPatternType = {
@@ -353,6 +454,9 @@ const RESOURCE_ICON_BY_DOT_EXTENSION: { [key: string]: [string, string?] } = {
     '.docx': ['file-earmark-word', '#2b579a'],
     '.doc': ['file-earmark-word', '#2b579a'],
     '.own': ['journal-text'],
+    // Both open in the app's own preview window.
+    '.md': ['markdown'],
+    '.markdown': ['markdown'],
     // Named as the format it is, never as a link list: a `.json` may hold the
     // link schema (`resourceLinksHelpers.ts`) or may be any other data file, and
     // only reading it settles that -- the row swaps this for a link glyph once
@@ -396,6 +500,7 @@ const scanCacheManager = new CacheManager<ResourcesScanResultType>(10);
 function toScanCacheKey(
     dirPath: string,
     targets: ResourceTargetType[],
+    isOthersShowing: boolean,
     lowerSearchText: string,
 ) {
     // SORTED, unlike `toResourceTargetsKey`: the panes' order decides where
@@ -413,7 +518,10 @@ function toScanCacheKey(
     // The search text goes LAST so `invalidateResourcesScanCache`'s
     // `${dirPath} ` prefix still drops every entry for a folder, whatever was
     // typed when they were made.
-    return `${dirPath} ${targetsKey} ${lowerSearchText}`;
+    // The Others flag rides between them: a different question, so a
+    // different entry, and still after the prefix a folder is dropped by.
+    const othersKey = isOthersShowing ? 'others' : '-';
+    return `${dirPath} ${targetsKey} ${othersKey} ${lowerSearchText}`;
 }
 
 /**
@@ -438,10 +546,15 @@ async function walkForMatches(
     dirPath: string,
     targets: ResourceTargetType[],
     lowerSearchText: string,
+    isOthersShowing: boolean,
     checkShouldStop: () => boolean,
 ): Promise<ResourcesScanResultType | null> {
     const filePaths: string[] = [];
     const searchedFilePaths: string[] = [];
+    // Collected in the same walk: every entry is already in hand here, so
+    // ticking Others costs no directory read at all -- only the rows.
+    const otherFilePaths: string[] = [];
+    let isOthersTruncated = false;
     // Breadth-first, with an explicit queue. The file the user wants is almost
     // always one or two levels down, so if a budget runs out, breadth-first has
     // already found it -- depth-first could spend the whole budget inside one
@@ -503,6 +616,14 @@ async function walkForMatches(
                     } else {
                         searchedFilePaths.push(pathJoin(current.dirPath, name));
                     }
+                } else if (isOthersShowing && !checkIsBookChapterName(name)) {
+                    // Past the cap the walk carries on, as it does for the
+                    // search: the chapter's own files still have to be found.
+                    if (otherFilePaths.length >= MAX_OTHER_MATCHES) {
+                        isOthersTruncated = true;
+                    } else {
+                        otherFilePaths.push(pathJoin(current.dirPath, name));
+                    }
                 }
             } else if (isDirectory && current.depth < MAX_SCAN_DEPTH) {
                 queue.push({
@@ -521,14 +642,23 @@ async function walkForMatches(
     }
     filePaths.sort(compareResourceFiles);
     searchedFilePaths.sort(compareResourceFiles);
-    return { filePaths, searchedFilePaths, isTruncated, isSearchTruncated };
+    otherFilePaths.sort(compareResourceFiles);
+    return {
+        filePaths,
+        searchedFilePaths,
+        isTruncated,
+        isSearchTruncated,
+        otherFilePaths,
+        isOthersTruncated,
+    };
 }
 
 /**
  * Every file under `dirPath` belonging to any of these chapters -- each
  * chapter's own files plus the book-level ones (`PSA.0.*`) -- and, when
  * `searchText` is given, everything else under it whose name contains that
- * text, returned separately.
+ * text, returned separately -- and, when `isOthersShowing`, every file named
+ * after no chapter of any book (`checkIsBookChapterName`), separately again.
  *
  * Returns `null` when `checkShouldStop` asked it to give up, so a walk started
  * for a reading the user has already moved off stops touching the disk instead
@@ -541,20 +671,28 @@ export async function scanResourceFiles(
     dirPath: string,
     targets: ResourceTargetType[],
     searchText: string = '',
+    isOthersShowing: boolean = false,
     checkShouldStop: () => boolean = () => false,
 ): Promise<ResourcesScanResultType | null> {
     const lowerSearchText = normalizeResourceSearchText(searchText);
-    if (targets.length === 0 && lowerSearchText === '') {
-        // Nothing to look for -- no pane resolves to a passage and nothing is
-        // typed -- so no reason to read a single directory.
+    if (targets.length === 0 && lowerSearchText === '' && !isOthersShowing) {
+        // Nothing to look for -- no pane resolves to a passage, nothing is
+        // typed and Others is off -- so no reason to read a single directory.
         return {
             filePaths: [],
             searchedFilePaths: [],
             isTruncated: false,
             isSearchTruncated: false,
+            otherFilePaths: [],
+            isOthersTruncated: false,
         };
     }
-    const cacheKey = toScanCacheKey(dirPath, targets, lowerSearchText);
+    const cacheKey = toScanCacheKey(
+        dirPath,
+        targets,
+        isOthersShowing,
+        lowerSearchText,
+    );
     return await scanCacheManager.unlocking(cacheKey, async () => {
         // Inside the lock: two boxes over one folder, or a remount from a tab
         // switch, then cost one walk instead of two racing ones.
@@ -566,6 +704,7 @@ export async function scanResourceFiles(
             dirPath,
             targets,
             lowerSearchText,
+            isOthersShowing,
             checkShouldStop,
         );
         if (result !== null) {

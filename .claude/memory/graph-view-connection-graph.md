@@ -1,8 +1,11 @@
 ---
 name: graph-view-connection-graph
-description: The connection graph is a PURE non-React core in src/graph-view/core plus a thin React layer; a second dataset is one GraphSourceType, and the ring geometry has clearances that must not be tweaked casually
-metadata:
+description: "The connection graph is a PURE non-React core in src/graph-view/core plus a thin React layer; a second dataset is one GraphSourceType, and the ring geometry has clearances that must not be tweaked casually"
+metadata: 
+  node_type: memory
   type: project
+  originSessionId: ed0cad4d-8194-4a7e-9067-7311378aa74e
+  modified: 2026-09-18T00:12:41.662Z
 ---
 
 **`src/graph-view/` — the floating "Open Graph Preview" panel, added 2026-08-29.**
@@ -189,6 +192,92 @@ column translated labels need — a bare `<i>` sits flush against the text.
   has not caught up yet, so it fitted the pre-expansion graph and zoomed IN.
 - `'Mentioned by'` and `'mentioned by'` collide after `sanitizeTranKey`, and the
   km dictionary throws AT LOAD on a duplicate. See [[tran-missing-key-throws-in-dev]].
+
+### Copying it out as text (2026-09-17)
+
+`graphTextExportHelpers.ts` is a SECOND pure serializer beside
+`buildGraphSvg`, feeding the `📋` button's **Copy as Markdown** and
+**Copy as Mermaid Diagram**. It takes the same `GraphExportNodeType` list
+`readExportModel` builds for the picture, so a copy can never disagree with
+what is on the canvas, and it imports nothing from the app (both imports are
+types).
+
+- **The Markdown CARRIES the diagram**, in a `mermaid` fence under a
+  `## Diagram` heading, ahead of the tables (the user asked for this the moment
+  the first cut shipped without it). Everywhere markdown is rendered — the
+  app's own preview, a wiki, a repository — that block draws the same boxes the
+  canvas has, so the tables read as the detail behind a picture rather than as
+  a substitute for one. The fence GROWS past any run of backticks inside the
+  diagram, and a graph with no records writes no diagram rather than fencing an
+  empty `flowchart`, which fails to parse. **Copy as Mermaid Diagram** is kept
+  for the narrower job: the drawing alone, for a tool that wants only that.
+- **FIVE diagram languages, declared once** in `GRAPH_DIAGRAM_FORMAT_LIST`
+  (the user asked for the variety: which language is right depends on what it
+  is pasted into). Mermaid flowchart across and down, Mermaid mindmap,
+  Graphviz DOT, PlantUML — the menu rows, the toast title and
+  `buildGraphDiagram` all read that list, so a sixth is one row plus one
+  branch. Two things the live run taught: **a context menu here is 210px and
+  CLIPS**, which drew `Copy as Mermaid Flowchart (left to right)` and
+  `… (top down)` as two identical `Copy as Mermaid Flowchar…` rows — every
+  row is named short now, with the full name on `ContextMenuItemType.title`
+  and on the toast; and only Mermaid can be PROVEN here, since the app's
+  markdown preview renders mermaid and nothing on the machine renders DOT or
+  PlantUML.
+- **A mindmap needs a TREE**, so `toChildKeyListByKey` walks one breadth-first
+  and UNDIRECTED from the centre (the arrows say what a relation means, not
+  how it was explored; a tree built along them alone loses a family whenever
+  the centre is someone's child), keeps the first line that reaches each
+  record, and parks anything unreachable on the centre. It carries no relation
+  words on purpose: the format has nowhere to put them, and a tree crosses half
+  the edges backwards — an edge is labelled from the end it POINTS AT, so
+  `son` would end up captioning a father.
+- **Mermaid is a `flowchart LR` by default, and the direction was MEASURED.** `flowchart`
+  is the only kind that carries this graph whole (arrows on directed relations,
+  plain lines on the rest, a label per line, arbitrary cross-links; a `mindmap`
+  cannot link two branches, which is most of a family). `TD` looks right for a
+  family tree and is wrong here: a graph in this panel is a fan, and 29 boxes
+  came out as ONE row 28 wide, squeezed to the page width, nothing legible.
+  `LR` makes the fan a column. A document is read down a page.
+- **The verse list is capped at 12 a record.** Uncapped, David's 29-box graph
+  copied as 19KB with 15KB of it references — Solomon cites 174. The box on
+  screen shows a count and keeps the list behind its Verses button.
+- Structural furniture (`## Records`, `flowchart`, `_(centre)_`) is English;
+  everything out of the dataset goes through the injected `translate`, the
+  LOOKUP language's dictionary. A relation HEADING reads from the end the edge
+  points at, so a stored parent -> child edge is **Children**, not the
+  **Parents** definition that declares the same canonical kind.
+- Mermaid reads labels as markup: `&` is escaped BEFORE `#`, or `&#35;` is
+  escaped in turn and shows as text. A `classDef` colour is read off the live
+  stylesheet, so one holding a comma or a quote is dropped rather than breaking
+  the parse.
+- The copy itself cannot touch `clipboard` from the renderer — see
+  [[renderer-has-no-clipboard-module]], which is what the live verification of
+  this feature turned up.
+- **The three Mermaid shapes also OPEN, in `mermaid.live`** (2026-09-17,
+  `src/helper/mermaidLiveHelpers.ts`, the user's own ask with the rows circled).
+  Copying a diagram is half of what a diagram is for and nothing on an ordinary
+  machine DRAWS one but this app's markdown preview. A row at the foot of the
+  📋 menu opens a SECOND menu with the three shapes by name — not three more
+  rows, because `Open in Mermaid Live (across)` clips at 210px the way the
+  flowchart pair did — and `MERMAID_LIVE_FORMAT_LIST` is derived from
+  `fenceLanguage === 'mermaid'` rather than flagged, so DOT and PlantUML can
+  never reach an editor that draws neither. The link is the editor's own
+  `serializeState` written out and must match it byte for byte: the state as
+  JSON (`code`, the `mermaid` CONFIG as a nested JSON string, `updateDiagram`,
+  `rough` — the only four its `State` requires), UTF-8, zlib `deflate`,
+  URL-safe base64 unpadded, behind `pako:` in the FRAGMENT of
+  `https://mermaid.live/edit`. Three things that are not obvious:
+  **the fragment never reaches a server**, which is the whole reason this is
+  safe for a church's own records and is what the editor means by "the
+  diagrams never leave your browser"; **`base64:` is a documented second tag**
+  (the same state, uncompressed) and is what a platform without
+  `CompressionStream` gets, a half of the format rather than a guess; and
+  **`shell.openExternal` drops a long URL in SILENCE while still resolving** —
+  measured against this project's own Electron, 2 500 and 8 000 characters
+  arrived whole and 30 000 never arrived, so past 8 000 the link goes to the
+  clipboard with a sentence instead (an ordinary 29-box graph writes 1 290).
+  The compressor is driven through its own writer and reader, never a `Blob`
+  or a `Response`, because a test environment holds its own copies of those.
 
 ### Persistence
 

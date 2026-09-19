@@ -29,15 +29,21 @@
 // bridge the rest of the app uses. Narrowing that bridge to the handful of
 // calls this window makes is real work and is tracked as MC-04.
 
-// One entry per window that should not have Node. Two are on it: the chatbot,
-// the one renderer whose CONTENT comes from outside the machine, and the AI
-// Chat window, which hosts somebody else's site in a `<webview>` guest -- the
-// guest is sandboxed on its own (`electron/aiChatGuestHelpers.ts`), and the
-// page around it draws a tab strip and needs nothing of Node either. Adding
-// a page here is a one-line change, and each one needs checking against what
-// that page's code actually does -- a window that writes files through
-// `require` rather than the provider bridge would break.
-const LOCKED_DOWN_PATH_NAMES = ['/chatbot.html', '/aichat.html'];
+// One entry per window that should not have Node. Three are on it: the
+// chatbot, the one renderer whose CONTENT comes from outside the machine; the
+// AI Chat window, which hosts somebody else's site in a `<webview>` guest --
+// the guest is sandboxed on its own (`electron/aiChatGuestHelpers.ts`), and the
+// page around it draws a tab strip and needs nothing of Node either; and the
+// Markdown Preview, which renders a file from anywhere on the machine -- a
+// Resources folder somebody copied in, a download -- and reads it through the
+// provider bridge. Adding a page here is a one-line change, and each one needs
+// checking against what that page's code actually does -- a window that writes
+// files through `require` rather than the provider bridge would break.
+const LOCKED_DOWN_PATH_NAMES = [
+    '/chatbot.html',
+    '/aichat.html',
+    '/markdownPreview.html',
+];
 
 export function checkShouldLockdownRenderer(pathName: string) {
     return LOCKED_DOWN_PATH_NAMES.some((one) => {

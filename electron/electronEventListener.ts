@@ -1,6 +1,7 @@
 import path from 'node:path';
 import electron, {
     BrowserWindow,
+    clipboard,
     type FileFilter,
     type IpcMain,
     nativeTheme,
@@ -11,7 +12,11 @@ import electron, {
 
 import type ElectronAppController from './ElectronAppController';
 import { getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
-import { clearAiChatGuestData } from './aiChatGuestHelpers';
+import {
+    AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
+    answerAiChatMicrophoneAsk,
+    clearAiChatGuestData,
+} from './aiChatGuestHelpers';
 import {
     checkIsEncryptedFile,
     decryptFile,
@@ -22,6 +27,7 @@ import {
     captureWebScreenShot,
     captureWindowImage,
     findScreenWindow,
+    getUpdatePageUrl,
     goDownload,
     isMac,
     messageChannels,
@@ -60,6 +66,7 @@ import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
 import { captureOAuthRedirectUrl } from './oauthHelpers';
 import { relaunchApp } from './taskbarHelpers';
 import { readWebPage } from './webPageHelpers';
+import { type FontListMapType, getSystemFontListMap } from './fontListHelpers';
 
 const { dialog, ipcMain, app } = electron;
 
@@ -77,28 +84,29 @@ type ShowScreenDataType = {
     displayId: number;
 };
 
-// Enumerating system fonts spawns PowerShell (Windows) / a shell helper on the
-// first call, which can take several seconds while the OS cold-loads its font
-// APIs. Cache the result for the whole app run so it happens once regardless of
-// how many windows/dropdowns request it (each renderer only caches per-window).
-let cachedFontListMap: Record<string, string[]> | null = null;
-async function getFontListMap() {
-    if (cachedFontListMap !== null) {
-        return cachedFontListMap;
-    }
-    try {
-        const fontList = await import('font-list');
-        const fonts = await fontList.getFonts({ disableQuoting: true });
-        cachedFontListMap = Object.fromEntries(
-            fonts.map((fontName) => {
-                return [fontName, []];
-            }),
-        );
-        return cachedFontListMap;
-    } catch (error) {
-        console.log(error);
-    }
-    return null;
+// Enumerating system fonts spawns a child process (PowerShell on Windows) that
+// takes seconds while the OS cold-loads its font APIs. The answer -- a few KB --
+// is kept for the whole app run so that happens once however many windows and
+// dropdowns ask, and asks that arrive while it runs share the one in flight
+// (the start-up prewarm and the first dropdown used to spawn two). A failure
+// or an empty list is not kept, so the next ask tries again.
+let fontListMapPromise: Promise<FontListMapType | null> | null = null;
+function getFontListMap() {
+    fontListMapPromise ??= getSystemFontListMap().then(
+        (fontListMap) => {
+            if (Object.keys(fontListMap).length > 0) {
+                return fontListMap;
+            }
+            fontListMapPromise = null;
+            return null;
+        },
+        (error) => {
+            console.log(error);
+            fontListMapPromise = null;
+            return null;
+        },
+    );
+    return fontListMapPromise;
 }
 
 export function initEventListenerApp(appController: ElectronAppController) {
@@ -163,6 +171,13 @@ export function initEventListenerApp(appController: ElectronAppController) {
     onAsync(ipcMain, 'main:app:clear-ai-chat-data', async () => {
         await clearAiChatGuestData();
         return true;
+    });
+
+    // A site in the AI Chat window asking for the microphone, answered by the
+    // person on that window's own line. The sender is checked against the
+    // window that was asked, so no other page in the app can say yes.
+    ipcMain.on(AI_CHAT_MICROPHONE_ANSWER_CHANNEL, (event, data: unknown) => {
+        answerAiChatMicrophoneAsk(event.sender.id, data);
     });
 
     onAsync(ipcMain, 'main:app:select-dirs', async () => {
@@ -509,6 +524,15 @@ export function initEventOther(appController: ElectronAppController) {
     // Prewarm the font list so the first font dropdown doesn't pay the cold cost.
     void getFontListMap();
 
+    // The clipboard module lives in this process only, so a renderer's copy
+    // has to come through here.
+    ipcMain.on('main:app:copy-to-clipboard', (_, text: unknown) => {
+        if (typeof text !== 'string' || text.length === 0) {
+            return;
+        }
+        clipboard.writeText(text);
+    });
+
     ipcMain.on('main:app:reveal-path', (_, filePath: string) => {
         if (typeof filePath !== 'string' || filePath.length === 0) {
             return;
@@ -567,6 +591,14 @@ export function initEventOther(appController: ElectronAppController) {
 
     ipcMain.on('main:app:go-download', () => {
         goDownload();
+    });
+
+    // The in-app update check's hand-off: a Store install goes to its own
+    // page in Microsoft Store, anything else to the website download page.
+    ipcMain.on('main:app:go-update', () => {
+        shell.openExternal(getUpdatePageUrl()).catch((error) => {
+            console.error('Failed to open the update page:', error);
+        });
     });
 
     // Asked for by the Settings panel that owns a setting a reload cannot

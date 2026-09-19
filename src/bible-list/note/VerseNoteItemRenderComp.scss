@@ -122,59 +122,8 @@
     background: transparent;
     line-height: 1.5;
 
-    &__line {
-      display: flex;
-      align-items: baseline;
-      gap: 4px;
-      min-width: 0;
-    }
-
-    // The marked words, wearing the mark. The wash arrives as an inline
-    // `background-color` from the same `--owa-verse-hl-*` custom property the
-    // reader paints `::highlight()` with — one palette, defined once in
-    // `appInit.scss`.
-    //
-    // Deliberately NOT italic: it was a third way of saying "quoted" on top of
-    // the wash and the indent, and synthetic obliquing is what it does to the
-    // Khmer scripts this app is mostly read in.
-    &__text {
-      // Shrinks before the comment beside it does, but never past the point of
-      // being a legible sample of the words.
-      flex: 0 1 auto;
-      min-width: 0;
-      padding: 0 3px;
-      border-radius: 3px;
-      overflow: hidden;
-      color: var(--app-ink);
-      font-size: var(--app-text-sm);
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    // What you wrote about those words. Secondary to them, and the part that
-    // gives way when the panel is narrow.
-    &__comment {
-      flex: 1 1 auto;
-      min-width: 0;
-      overflow: hidden;
-      color: var(--app-muted);
-      font-size: var(--app-text-sm);
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
-
-  // A comment is not washed — it is underlined, exactly as it is in the verse —
-  // so a comment and a highlight on the same words stay tellable apart here for
-  // the same reason they do there.
-  //
-  // Written out rather than nested as `&--comment &__text`: Sass expands EVERY
-  // `&` to the whole compound, so that form compiles to
-  // `…app-verse-annotation--comment .app[data-bs-theme] .app-cue-list…` and
-  // matches nothing.
-  .app-verse-annotation--comment .app-verse-annotation__text {
-    text-decoration: underline wavy var(--owa-verse-comment);
-    text-underline-offset: 0.2em;
+    // The line of words inside is `VerseAnnotationLineComp`, styled in its own
+    // sheet: the Resources panel draws a note file's marks with it too.
   }
 }
 

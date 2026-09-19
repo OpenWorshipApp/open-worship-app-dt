@@ -10,7 +10,25 @@ asks, on a machine and an API bill neither of which has room to spare.
 ```bash
 node .claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs
 node .claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs --json
+node .claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs --stdio
+node .claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs --ratchet
 ```
+
+`--stdio` lists a FRESH server spawned from the code on disk, so an edit is
+measured without restarting the operator's app (the in-app host caches
+`server.mjs` on its first session).
+
+**`--ratchet` is the thing that makes this table binding** (`MC-14`, 2026-09-17).
+It exits 1 when the MODEL's bill crosses `MODEL_TOKEN_CEILING`, recorded in the
+script at **7 450** against a measured 7 253 (lowered from 8 200 on 2026-09-18,
+when `MC-07`'s cut would otherwise have left ~950 tokens of room nobody chose
+to spend) — one small tool of headroom, not a budget to spend down to. The
+ceiling is on the model's bill and not the host's, because the developer's door
+may grow and a tool added "for the developer" that quietly reaches the model is
+exactly what this catches. A deliberate addition
+raises the line IN THE SAME CHANGE and says why; the failure names the three
+biggest model-visible tools, since that is usually where the cut is. It needs a
+running app, so it belongs in a run sheet rather than in `npm run lint`.
 
 **The host's bill and the model's bill are different numbers**, and the one
 that matters for a question is the model's. The audit reports both.
@@ -27,6 +45,9 @@ that matters for a question is the model's. The audit reports both.
 | 2026-09-09, screens / selection / run sheet sentences | 48 (22 owa) / ~11 586 | 19 / ~5 976 | ~59 760 |
 | 2026-09-10, `owa_present_bible` added | 49 (23 owa) / ~11 968 | 20 / ~6 358 | ~63 580 |
 | 2026-09-11, `owa_foreground` added | 50 (24 owa) / ~12 459 | 21 / ~6 849 | ~68 490 |
+| 2026-09-14, baseline before the data tools (other drift since 09-11) | 50 (24 owa) / ~12 511 | 21 / ~6 901 | ~69 010 |
+| 2026-09-14, `owa_bible_item` / `owa_bible_note` / `owa_undo`, slide CRUD, delete | 53 (27 owa) / ~13 600 | 24 / ~7 990 | ~79 900 |
+| 2026-09-18, `MC-07` — the descriptions cut, two contradictions out | 53 (27 owa) / ~12 863 | 24 / **~7 253** | ~72 530 |
 
 Each of those last two rows is what one deliberate addition costs, paid by
 every volunteer whether or not they ever ask about a web page or a song:
@@ -50,6 +71,22 @@ guess: *Start a 5 minute countdown on the screen* cost 18 rounds and $0.18 on
 Sonnet 5 and started nothing; with the tool it is 2 rounds and one call. Six
 widgets share the one schema on purpose — six tools would have been ~2 000
 tokens a round for the same job.
+
+The data tools (2026-09-14) are **+1 089** together, asked for by the user in
+so many words -- CRUD over saved Bible passages, Bible notes, songs and slide
+documents, slides with their text and style, and an undo behind every one of
+them. Measured at +1 244 off a fresh server and trimmed once before the row was
+written: `owa_slide_file` 329 → 622 (+293, the six slide actions and one shared
+array of text-box fields), `owa_lyric_file` 358 → 370 (+12, `delete`),
+`owa_bible_item` 301, `owa_bible_note` 297, `owa_undo` 186. The trade is every
+volunteer paying ~1 100 tokens a round so that "add a slide that says
+Welcome", "save John 3:16 to my list" and "put back what you deleted" are one
+call each instead of a walkthrough nobody can demo -- and on Anthropic the
+cached prefix makes that a tenth after the first round. The first thing to
+withhold, if the bill has to come down, is `owa_bible_note` (the rarest ask of
+the three) through `modelTools.mjs`, which takes nothing from the developer.
+Measured with the audit's new `--stdio`, which lists the code on disk instead
+of the app's cached host -- no restart of the operator's app to see an edit.
 
 `owa_lyric_validate` is the cheaper of the two for a reason worth copying: its
 whole input is one required `text` string, so almost all of its 221 tokens are
@@ -98,10 +135,23 @@ FOR and when to reach for it. Do not explain how it works, do not restate the
 schema in prose, and do not apologise for its limits in three sentences where
 one will do.
 
-The biggest owa descriptions today are `owa_guide_start` (1 211 chars of
-description alone) and `owa_help_search` (579). Both earn some of it — they are
-the two tools a wrong choice is most expensive on — but neither has been cut
-since it was written.
+`MC-07` (2026-09-18) cut the biggest of them: `owa_guide_start` 725 → 430,
+`owa_lyric_validate` 520 → 411, `owa_help_search` 439 → 331, `owa_tran` 302 →
+224 — −737 a round in all. Two things it found are worth more than the tokens:
+
+- **A long description drifts into disagreeing with the prompt.** Both of the
+  two biggest carried a rule the chatbot's prompt reverses ("offer this
+  whenever the answer is more than one step"; "check notation you wrote
+  yourself" beside "never write notation yourself"). Read a description
+  against the prompt before trimming it — the contradiction is the first cut.
+- **A cut can go one sentence too deep, and only the window shows it.** With
+  the walkthrough's "offer this" gone, *walk me through …* got an offer instead
+  of a card; one sentence back (*the default `show` presses NOTHING*) and the
+  card went up. Ask the real window the shape a cut touched.
+
+The biggest now are `owa_slide_file` (~619, mostly its `items` schema — the
+cost of editing a text box's style), `owa_foreground` (~445) and
+`owa_guide_start` (~430).
 
 ### 3. Fewer rounds
 
@@ -119,6 +169,13 @@ tools answer better instead.
 Results are context too, and unlike schemas they are unbounded. `owa_app_state`
 used to carry the user's data directory and forty dev-only component names into
 every question that touched it. Trim at the source, not in the prompt.
+
+**Results are compact JSON** (`MC-33`, 2026-09-18). Every one was indented,
+and a result stays in front of the model for every later round of the
+question: fourteen ordinary read-only calls went **35 411 → 24 499 characters
+(−31%), 1 355 lines → 49**, and the round after `owa_help_search` writes ~12%
+fewer tokens on the wire. Never indent a result again — nothing reads one by
+its layout.
 
 ## App-side cost, which is not tokens
 
@@ -149,6 +206,11 @@ Ask, in this order:
 3. Can two existing tools be merged into the one that answers completely?
 4. Does the model actually reach for it, or is it a tool for a case you
    imagined? A tool nothing calls is worse than no tool.
+5. Does it have to reach the MODEL, or only the developer? `modelTools.mjs`
+   withholds 29 of the 53 and costs the developer nothing.
+
+Then run `--ratchet`. If it fails, either the tool is worth raising
+`MODEL_TOKEN_CEILING` for — say so in the same change — or it is not.
 
 Then follow the authoring checklist in
 [`../../owa-enhance-chatbot/references/mcp-tools.md`](../../owa-enhance-chatbot/references/mcp-tools.md)

@@ -182,3 +182,86 @@ describe('reading a website announces where it went', () => {
         ).toBeNull();
     });
 });
+
+// The data tools write the user's own files, so the banner names WHAT: "moved
+// the song "Amazing Grace" to the trash" is something the operator can check;
+// "changed a file" is not.
+describe('the data tools name what they changed', () => {
+    it('says a file went to the trash, and which', () => {
+        expect(
+            describeToolCall('owa_lyric_file', {
+                action: 'delete',
+                name: 'Amazing Grace',
+            }),
+        ).toBe('moved the song "Amazing Grace" to the trash');
+        expect(describeToolCall('owa_slide_file', { action: 'delete' })).toBe(
+            'moved a slide document to the trash',
+        );
+        // What the earlier actions always said is unchanged.
+        expect(
+            describeToolCall('owa_lyric_file', { action: 'create', name: 'X' }),
+        ).toBe('made the song "X"');
+        expect(
+            describeToolCall('owa_slide_file', { action: 'rename', name: 'X' }),
+        ).toBe('renamed the slide document "X"');
+        expect(describeToolCall('owa_lyric_file', { action: 'update' })).toBe(
+            'changed a song',
+        );
+    });
+
+    it('names the slide a slide action touched', () => {
+        expect(
+            describeToolCall('owa_slide_file', {
+                action: 'update-slide',
+                name: 'Sunday',
+                slide: 3,
+            }),
+        ).toBe('changed slide 3 of "Sunday"');
+        expect(
+            describeToolCall('owa_slide_file', {
+                action: 'delete-slide',
+                name: 'Sunday',
+                slide: 2,
+            }),
+        ).toBe('removed slide 2 from "Sunday"');
+        expect(
+            describeToolCall('owa_slide_file', {
+                action: 'add-slide',
+                name: 'Sunday',
+            }),
+        ).toBe('added a slide to "Sunday"');
+        expect(
+            describeToolCall('owa_slide_file', { action: 'slides', name: 'x' }),
+        ).toBeNull();
+    });
+
+    it('names the passage and its list, the note and its file', () => {
+        expect(
+            describeToolCall('owa_bible_item', {
+                action: 'add',
+                reference: 'John 3:16',
+            }),
+        ).toBe('saved John 3:16 to the Bibles list "Default"');
+        expect(
+            describeToolCall('owa_bible_item', {
+                action: 'delete-list',
+                list: 'Easter',
+            }),
+        ).toBe('moved the Bibles list "Easter" to the trash');
+        expect(
+            describeToolCall('owa_bible_note', {
+                action: 'delete',
+                file: 'Sermons',
+            }),
+        ).toBe('removed a note from "Sermons"');
+        expect(describeToolCall('owa_bible_item', { action: 'list' })).toBeNull();
+        expect(describeToolCall('owa_bible_note', { action: 'read' })).toBeNull();
+    });
+
+    it('announces an undo, and not a look at the list', () => {
+        expect(describeToolCall('owa_undo', { action: 'undo' })).toBe(
+            'put back an earlier change',
+        );
+        expect(describeToolCall('owa_undo', { action: 'list' })).toBeNull();
+    });
+});

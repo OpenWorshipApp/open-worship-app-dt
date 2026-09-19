@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [ST-01, ST-02, ST-03, ST-04, ST-05, ST-06, ST-07, ST-08, ST-09, LT-02, LT-03, LT-04]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-12"
+workflowsVersion: "2026-09-18"
 ---
 # W-16 — Settings: language, theme, fonts, folders
 
@@ -22,7 +22,9 @@ workflowsVersion: "2026-09-12"
      window. Unsaved edits in the Slide Editor are kept.
    - **Theme:** system / light / dark.
    - **Font family:** the font used for on-screen text. A font marked `(Missing)` is
-     configured but not installed on this computer.
+     configured but not installed on this computer. When the chosen font comes in more
+     than one weight, a second list beside it picks one (`400 Regular`, `700 Bold`…);
+     **[en:tran:Default]** keeps the font's own weight.
    - **Directories:** where documents, lyrics, and bibles are stored on disk.
    - **Reset buttons** (`Reset All Child Directories` / `Clear All Settings`):
      **these erase configuration; use with care.** `Reset All Child Directories`
@@ -37,5 +39,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-01` · `ST-02` · `ST-03` · `ST-04` · `ST-05` · `ST-06` · `ST-07` · `ST-08` · `ST-09` · `LT-02` · `LT-03` · `LT-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
 :::

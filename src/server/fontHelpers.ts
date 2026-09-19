@@ -50,6 +50,55 @@ export function useFontList() {
     return fontList;
 }
 
+// The typographic names of the standard weights. They are not run through
+// `tran()`: like a font's own name they are what the font calls itself, and the
+// Khmer dictionary's `Light` already means the light THEME.
+const FONT_WEIGHT_NAME_MAP = new Map<string, string>([
+    ['100', 'Thin'],
+    ['200', 'Extra Light'],
+    ['300', 'Light'],
+    ['350', 'Semi Light'],
+    ['400', 'Regular'],
+    ['500', 'Medium'],
+    ['600', 'Semi Bold'],
+    ['700', 'Bold'],
+    ['800', 'Extra Bold'],
+    ['900', 'Black'],
+    ['950', 'Extra Black'],
+]);
+
+// The weight picker used to store `--` for "no weight"; it stores nothing now.
+export function toCleanFontWeight(fontWeight: string | null | undefined) {
+    const cleanFontWeight = (fontWeight ?? '').trim();
+    return cleanFontWeight === '--' ? '' : cleanFontWeight;
+}
+
+export function toFontWeightLabel(fontWeight: string) {
+    const name = FONT_WEIGHT_NAME_MAP.get(fontWeight);
+    return name === undefined ? fontWeight : `${fontWeight} ${name}`;
+}
+
+export function genFontWeightOptions(
+    fontWeights: string[],
+    fontWeight: string,
+    // The caller translates it: this module is imported by every window, and
+    // `tran` would drag the whole language layer in for one word.
+    missingLabel = '(Missing)',
+) {
+    const options: [string, string][] = fontWeights.map((weight) => {
+        return [weight, toFontWeightLabel(weight)];
+    });
+    if (fontWeight !== '' && !fontWeights.includes(fontWeight)) {
+        // A `<select>` whose value matches no option shows its FIRST, which
+        // would read as though the saved weight were the default.
+        options.unshift([
+            fontWeight,
+            `${toFontWeightLabel(fontWeight)} ${missingLabel}`,
+        ]);
+    }
+    return options;
+}
+
 export function getMissingFontSearchUrl(fontFamily: string) {
     return `https://www.google.com/search?q=font+download: "${fontFamily}"`;
 }

@@ -175,8 +175,56 @@ const FILE_ACTION_MAP: Record<string, string> = {
     rename: 'Renaming a',
 };
 
+// The actions that name a slide or send a file somewhere, which read better
+// as whole sentences than as a verb in front of a noun.
+const FILE_SENTENCE_MAP: Record<
+    string,
+    (noun: string, name: string | null, slide: string) => string
+> = {
+    delete: (noun, name) => {
+        return name === null
+            ? `Moving a ${noun} to the trash`
+            : `Moving your ${noun} “${name}” to the trash`;
+    },
+    slides: (_noun, name) => {
+        return name === null
+            ? 'Reading the slides'
+            : `Reading the slides of “${name}”`;
+    },
+    'add-slide': (_noun, name) => {
+        return name === null ? 'Adding a slide' : `Adding a slide to “${name}”`;
+    },
+    'update-slide': (_noun, name, slide) => {
+        return name === null
+            ? `Changing ${slide}`
+            : `Changing ${slide} of “${name}”`;
+    },
+    'delete-slide': (_noun, name, slide) => {
+        return name === null
+            ? `Removing ${slide}`
+            : `Removing ${slide} from “${name}”`;
+    },
+    'move-slide': (_noun, name, slide) => {
+        return name === null
+            ? `Moving ${slide}`
+            : `Moving ${slide} of “${name}”`;
+    },
+    'duplicate-slide': (_noun, name, slide) => {
+        return name === null
+            ? `Copying ${slide}`
+            : `Copying ${slide} of “${name}”`;
+    },
+};
+
 function describeFileStep(args: any, noun: string, plural: string) {
     const action = String(args?.action ?? '');
+    const sentence = FILE_SENTENCE_MAP[action];
+    if (sentence !== undefined) {
+        const slide = Number.isInteger(args?.slide)
+            ? `slide ${args.slide}`
+            : 'a slide';
+        return sentence(noun, toStepQuote(args?.name), slide);
+    }
     const verb = FILE_ACTION_MAP[action];
     if (verb === undefined) {
         return `Working on your ${plural}`;
@@ -189,6 +237,52 @@ function describeFileStep(args: any, noun: string, plural: string) {
         return `${verb} ${noun}`;
     }
     return `${verb} ${noun}: “${name}”`;
+}
+
+// The saved passages and notes, and putting a change back, on the wait line.
+const DATA_STEP_MAP: Record<string, Record<string, string>> = {
+    owa_bible_item: {
+        list: 'Looking through your saved Bible passages',
+        update: 'Changing a saved Bible passage',
+        delete: 'Removing a saved Bible passage',
+        'create-list': 'Making a Bibles list',
+        'rename-list': 'Renaming a Bibles list',
+        'delete-list': 'Moving a Bibles list to the trash',
+    },
+    owa_bible_note: {
+        list: 'Looking through your Bible notes',
+        read: 'Reading a Bible note',
+        add: 'Writing a Bible note',
+        update: 'Changing a Bible note',
+        delete: 'Removing a Bible note',
+        'create-file': 'Making a notes file',
+        'rename-file': 'Renaming a notes file',
+        'delete-file': 'Moving a notes file to the trash',
+    },
+    owa_undo: {
+        list: 'Looking through the recent changes',
+        undo: 'Putting back an earlier change',
+    },
+};
+
+const DATA_STEP_FALLBACK_MAP: Record<string, string> = {
+    owa_bible_item: 'Working on your saved Bible passages',
+    owa_bible_note: 'Working on your Bible notes',
+    owa_undo: 'Looking through the recent changes',
+};
+
+function describeDataStep(name: string, args: any) {
+    if (name === 'owa_bible_item' && args?.action === 'add') {
+        return toQuotedStep(
+            'Saving to your Bibles list:',
+            args?.reference,
+            'Saving a passage to your Bibles list',
+        );
+    }
+    return (
+        DATA_STEP_MAP[name]?.[String(args?.action ?? '')] ??
+        DATA_STEP_FALLBACK_MAP[name]
+    );
 }
 
 // What each foreground extra is called on the wait line.
@@ -309,6 +403,10 @@ export function describeToolStep(name: string, args: any): string {
             return describeFileStep(args, 'song', 'songs');
         case 'owa_slide_file':
             return describeFileStep(args, 'slide document', 'slide documents');
+        case 'owa_bible_item':
+        case 'owa_bible_note':
+        case 'owa_undo':
+            return describeDataStep(name, args);
         case 'owa_guide_start':
             return 'Setting up a walkthrough';
         case 'owa_guide_step':

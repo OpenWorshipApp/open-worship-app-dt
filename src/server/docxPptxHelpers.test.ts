@@ -389,4 +389,82 @@ describe('docxHelpers and pptxHelpers', () => {
         ).resolves.toBeNull();
         expect(electronSendAsyncMock).toHaveBeenCalledTimes(3);
     });
+
+    test('lists pptx slide audios from info.json alone -- no hash, no html read, no export', async () => {
+        const module = await loadPptxModule();
+        const infoReadMock = vi.fn().mockResolvedValue({
+            checksum: { md5: 'whatever' },
+            slides: [
+                { htmlFileName: 'slide-1.html', audios: [] },
+                {
+                    htmlFileName: 'slide-2.html',
+                    audios: ['media/media1.wav', 'media/media2.mp3'],
+                },
+                { htmlFileName: 'slide-3.html', audios: ['media/media3.wav'] },
+            ],
+        });
+        fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
+            if (filePath === '/slides/demo.pptx') {
+                return {
+                    baseDirPath: '/slides',
+                    fullName: 'demo.pptx',
+                    name: 'demo',
+                };
+            }
+            if (filePath.endsWith('/info.json')) {
+                return {
+                    readFileJsonData: infoReadMock,
+                };
+            }
+            throw new Error(`Unexpected file source: ${filePath}`);
+        });
+
+        await expect(
+            module.getPptxSlideAudioDataListQuick('/slides/demo.pptx'),
+        ).resolves.toEqual([
+            {
+                slideIndex: 2,
+                slideId: 2,
+                filePaths: [
+                    '/slides/demo.pptx-htmls/media/media1.wav',
+                    '/slides/demo.pptx-htmls/media/media2.mp3',
+                ],
+            },
+            {
+                slideIndex: 3,
+                slideId: 3,
+                filePaths: ['/slides/demo.pptx-htmls/media/media3.wav'],
+            },
+        ]);
+        // The Audios panel asks this of EVERY pptx in the folder on every folder
+        // refresh: it must never hash the file, read a slide's html or export.
+        expect(generateFileMD5Mock).not.toHaveBeenCalled();
+        expect(fsReadFileMock).not.toHaveBeenCalled();
+        expect(electronSendAsyncMock).not.toHaveBeenCalled();
+        expect(infoReadMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('lists no pptx slide audios while the preview is not generated yet', async () => {
+        const module = await loadPptxModule();
+        fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
+            if (filePath === '/slides/new.pptx') {
+                return {
+                    baseDirPath: '/slides',
+                    fullName: 'new.pptx',
+                    name: 'new',
+                };
+            }
+            if (filePath.endsWith('/info.json')) {
+                return {
+                    readFileJsonData: vi.fn().mockResolvedValue(null),
+                };
+            }
+            throw new Error(`Unexpected file source: ${filePath}`);
+        });
+
+        await expect(
+            module.getPptxSlideAudioDataListQuick('/slides/new.pptx'),
+        ).resolves.toEqual([]);
+        expect(electronSendAsyncMock).not.toHaveBeenCalled();
+    });
 });

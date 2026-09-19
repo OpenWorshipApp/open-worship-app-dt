@@ -4,6 +4,7 @@ import {
     AGENT_FILE_ACTIONS,
     AGENT_FILE_ACTION_TEXT,
     AGENT_FILE_SAFETY_TEXT,
+    AGENT_SLIDE_ACTIONS,
     formatAgentFileResult,
     genAgentFileExpression,
 } from './agentFile.mjs';
@@ -81,14 +82,33 @@ describe('formatAgentFileResult', () => {
 });
 
 describe('the shared wording', () => {
-    it('offers exactly the five actions the worker implements', () => {
+    it('offers exactly the actions the worker implements', () => {
         expect(AGENT_FILE_ACTIONS).toEqual([
             'list',
             'info',
             'create',
             'update',
             'rename',
+            'delete',
         ]);
+        // A song's slides are made from its words, so only the slide tool
+        // offers these.
+        expect(AGENT_SLIDE_ACTIONS).toEqual([
+            'slides',
+            'add-slide',
+            'update-slide',
+            'delete-slide',
+            'move-slide',
+            'duplicate-slide',
+        ]);
+    });
+
+    // The half of the safety sentence the delete added: it went to the trash,
+    // and it can be put back.
+    it('tells the model a delete can be put back', () => {
+        expect(AGENT_FILE_SAFETY_TEXT).toContain('trash');
+        expect(AGENT_FILE_SAFETY_TEXT).toContain('owa_undo');
+        expect(AGENT_FILE_ACTION_TEXT).toContain('`delete`');
     });
 
     // The one sentence that keeps a volunteer from discovering their song

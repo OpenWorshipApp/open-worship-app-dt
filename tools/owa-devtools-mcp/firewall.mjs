@@ -46,6 +46,12 @@
 // hatch is an environment variable the person starting the process sets --
 // see `readFirewallMode`.
 
+import {
+    checkIsDestructiveLabelText,
+    genDestructiveLabelRule,
+} from './destructiveLabel.mjs';
+import { AGENT_REMOVING_ACTIONS } from './agentData.mjs';
+import { loadTranBundle } from './tran.mjs';
 import { checkWebUrl } from './webUrlPolicy.mjs';
 
 // The tools that cannot be made safe by inspecting their arguments, and what
@@ -70,30 +76,6 @@ const DENIED_TOOL_MAP = {
         'pick the file themselves -- owa_find_ui will point at the button.',
 };
 
-// Word-boundary matches only, and deliberately short. A label blocklist that
-// guesses wide is worse than none: it refuses ordinary work, the model learns
-// the tool is unreliable, and it stops trying. Every entry here names
-// something that cannot be undone by pressing the thing again.
-//
-// Deliberately NOT here: bare "reset" (the View menu's *Reset Widgets Size* is
-// harmless) and bare "clear" (*Clear Bible* is an ordinary presenting move a
-// user asks for out loud). Both would have fired on controls a volunteer
-// legitimately wants pressed.
-const DESTRUCTIVE_LABEL_PATTERNS = [
-    /\bdelete\b/i,
-    /\btrash\b/i,
-    /\bdiscard\b/i,
-    /\berase\b/i,
-    /\bremove\b/i,
-    /\buninstall\b/i,
-    /\boverwrite\b/i,
-    /\bclear all\b/i,
-    /\breset all\b/i,
-    /\bfactory\b/i,
-    /\bsign out\b/i,
-    /\blog out\b/i,
-];
-
 // Budgets, shared across every session in the process on purpose: the things
 // being protected -- the ONE app window in front of a volunteer, and the ONE
 // network this machine is on -- do not belong to a conversation. Two agents
@@ -105,9 +87,16 @@ const DESTRUCTIVE_LABEL_PATTERNS = [
 // is already odd, and each of those is a hidden browser window plus whatever
 // went out in the address. So the network budget is small, slow to refill, and
 // its refusal says to ask the user rather than to try again.
+//
+// The third counts what takes something of the user's away -- a file to the
+// trash, a slide, a note, a saved passage. Every one is recoverable
+// (`owa_undo`), which is why they are offered at all; but a loop emptying a
+// Documents folder into the trash still costs a volunteer their morning, and
+// no honest request removes more than a handful of things.
 const RATE_BUDGET_MAP = {
     acting: { windowMilliseconds: 60 * 1000, limit: 25 },
     network: { windowMilliseconds: 5 * 60 * 1000, limit: 10 },
+    removing: { windowMilliseconds: 5 * 60 * 1000, limit: 10 },
 };
 
 // What the operator can look back at. Bounded because this app runs on very
@@ -118,12 +107,15 @@ const LOG_LIMIT = 100;
 const state = {
     rateAtMap: new Map(),
     logList: [],
+    // `{at, rule}` -- see `getDestructiveLabelRule`.
+    destructiveRule: null,
 };
 
-/** Tests drive the rate limiters and the log; both need a clean slate. */
+/** Tests drive the rate limiters, the log and the rule; all need a clean slate. */
 export function resetFirewallState() {
     state.rateAtMap = new Map();
     state.logList = [];
+    state.destructiveRule = null;
 }
 
 /**
@@ -194,7 +186,33 @@ const ACTING_TOOL_SET = new Set([
     // off. A `check` only reads, but the budget counts the tool, not the
     // argument, for the same reason as the passage above.
     'owa_foreground',
+    // The user's saved Bible passages and notes, and putting back a change.
+    // Written straight to disk -- a Bibles list and a notes file have no
+    // editing history -- which is why each change is backed up first and
+    // why the budget still counts them.
+    'owa_bible_item',
+    'owa_bible_note',
+    'owa_undo',
 ]);
+
+// The tools whose `action` can take something away (see
+// `AGENT_REMOVING_ACTIONS`). Judged on the arguments, like a network call: a
+// `list` must not spend a removal slot.
+const REMOVING_TOOL_SET = new Set([
+    'owa_lyric_file',
+    'owa_slide_file',
+    'owa_bible_item',
+    'owa_bible_note',
+    'owa_undo',
+]);
+
+/** Does THIS call take something of the user's away? */
+export function checkIsRemovingCall(name, args) {
+    return (
+        REMOVING_TOOL_SET.has(name) &&
+        AGENT_REMOVING_ACTIONS.includes(args?.action)
+    );
+}
 
 export function checkIsActingTool(name) {
     return ACTING_TOOL_SET.has(name);
@@ -282,13 +300,35 @@ function toCandidateLabels(find) {
         });
 }
 
+// Read on every `owa_click`, `owa_type` and walkthrough start and on every
+// snapshot row the uid interlock looks at -- and deriving it re-reads and
+// parses the app's whole dictionary (~110 KB, ~1 300 entries). What it derives
+// is ~1.5 KB, so it is kept for a minute and then dropped: a walkthrough's
+// dozen presses pay for it once, and nothing resident outlives the question
+// that needed it.
+const DESTRUCTIVE_RULE_TTL_MILLISECONDS = 60 * 1000;
+
+/**
+ * The destructive-label rule for every language the app can be shown in,
+ * derived from the app's own `tran()` dictionary (`destructiveLabel.mjs`).
+ */
+export function getDestructiveLabelRule(now = Date.now()) {
+    const cached = state.destructiveRule;
+    if (cached === null || now - cached.at > DESTRUCTIVE_RULE_TTL_MILLISECONDS) {
+        state.destructiveRule = {
+            at: now,
+            rule: genDestructiveLabelRule(loadTranBundle()),
+        };
+    }
+    return state.destructiveRule.rule;
+}
+
+/** Whether a label names something that cannot be undone, in any language. */
 export function checkIsDestructiveText(text) {
     if (typeof text !== 'string' || text === '') {
         return false;
     }
-    return DESTRUCTIVE_LABEL_PATTERNS.some((one) => {
-        return one.test(text);
-    });
+    return checkIsDestructiveLabelText(text, getDestructiveLabelRule());
 }
 
 export function findDestructiveLabel(find) {
@@ -352,6 +392,23 @@ const INTERACTIVE_ROLE_SET = new Set([
 // `  uid=1_112 button "Clear All" description="Clear All [F6]"`
 const SNAPSHOT_LINE_PATTERN = /^ *uid=(\S+) +([A-Za-z]+)(.*)$/gm;
 
+// A row's accessible name and its description are each quoted. Read whole, the
+// row catches a label found anywhere inside it; read one quoted name at a time
+// it also catches a label that is only refused WHOLE (a translation that sits
+// inside some ordinary sentence of the dictionary), which the quotes and the
+// description beside it would otherwise never equal.
+function checkIsDestructiveRow(rest) {
+    if (checkIsDestructiveText(rest)) {
+        return true;
+    }
+    for (const match of rest.matchAll(/"((?:[^"\\]|\\.)*)"/g)) {
+        if (checkIsDestructiveText(match[1])) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // A snapshot names its page in every uid (`1_112`), so one page's tree can be
 // replaced without touching another's.
 function toUidPagePrefix(uid) {
@@ -385,7 +442,7 @@ export function genUidLabelMemory({ limit = 200 } = {}) {
                 seenPrefixSet.add(toUidPagePrefix(uid));
                 if (
                     INTERACTIVE_ROLE_SET.has(role.toLowerCase()) &&
-                    checkIsDestructiveText(rest)
+                    checkIsDestructiveRow(rest)
                 ) {
                     foundMap.set(uid, rest.trim());
                 }
@@ -455,17 +512,25 @@ export function findDestructiveUid(name, args, lookupUidLabel) {
     return null;
 }
 
-function checkRate(kind, now) {
+function checkHasRoom(kind, now) {
     const { windowMilliseconds, limit } = RATE_BUDGET_MAP[kind];
     const since = now - windowMilliseconds;
     const atList = (state.rateAtMap.get(kind) ?? []).filter((at) => {
         return at > since;
     });
     state.rateAtMap.set(kind, atList);
-    if (atList.length >= limit) {
+    return atList.length < limit;
+}
+
+function useRoom(kind, now) {
+    state.rateAtMap.get(kind)?.push(now);
+}
+
+function checkRate(kind, now) {
+    if (!checkHasRoom(kind, now)) {
         return false;
     }
-    atList.push(now);
+    useRoom(kind, now);
     return true;
 }
 
@@ -477,13 +542,75 @@ function refuse(rule, reason) {
 
 // One sentence for both halves of the interlock, because they are the same
 // refusal: the model found the right control and must not press it itself.
-function genDestructiveReason(label) {
+export function genDestructiveReason(label) {
     return (
         `Pressing "${label}" for the user is switched off, because it ` +
         'cannot be undone by pressing it again. Point at it instead -- ' +
         'owa_find_ui with highlight -- and tell the user in one sentence ' +
         'what it will do and to press it themselves if they want it.'
     );
+}
+
+// --- The page half -----------------------------------------------------
+//
+// Everything above reads the words a call CARRIES. The press itself happens
+// in the page, on whatever element the matcher resolved -- and that is where
+// the words stop mattering: a title that says Delete on a button whose own
+// text does not, a label in the language the window is showing, a no-break
+// space the matcher folds and a pattern does not, or a walkthrough step the
+// firewall never reads at all. So every press also carries a guard, and the
+// page refuses by what the element IS (`destructiveLabel.mjs`). Same split as
+// `webUrlPolicy.mjs`: this file refuses what it can see cheaply, the far end
+// refuses authoritatively.
+
+const QUESTION_REASON =
+    'That control is part of a question the app is asking the user -- a ' +
+    'confirm, an alert or a box to fill in -- and answering it is theirs to ' +
+    'do, never yours. Tell them in one sentence what the app is asking and ' +
+    'let them press it.';
+
+/**
+ * What a press carries into the page to be judged by, or null when the
+ * operator switched the firewall off -- the one switch, read in one place, so
+ * the page half can never be stricter or looser than the rest of the policy.
+ */
+export function genPressGuard() {
+    return readFirewallMode() === 'off'
+        ? null
+        : { rule: getDestructiveLabelRule() };
+}
+
+/**
+ * The sentence for a refusal the PAGE made. A walkthrough is already ringing
+ * the control, so it is told to say so rather than to point at it again.
+ */
+export function genPressRefusalReason(refusal, { isGuide = false } = {}) {
+    if (refusal?.refused === 'question') {
+        return QUESTION_REASON;
+    }
+    const label = String(refusal?.label ?? 'that control');
+    if (!isGuide) {
+        return genDestructiveReason(label);
+    }
+    return (
+        `Pressing "${label}" for the user is switched off, because it ` +
+        'cannot be undone by pressing it again. The walkthrough card is ' +
+        'already ringing it: tell the user in one sentence what it will do ' +
+        'and to press it themselves if they want it, then move the ' +
+        'walkthrough on with next.'
+    );
+}
+
+/** A refusal the page made is logged beside the ones made here. */
+export function recordPressRefusal(name, refusal) {
+    recordDecision({
+        name,
+        rule:
+            refusal?.refused === 'question'
+                ? 'question-press'
+                : 'destructive-press',
+        isAllowed: false,
+    });
 }
 
 /**
@@ -556,7 +683,11 @@ export function checkToolCall(
     if (uidLabel !== null) {
         return refuse('destructive-uid', genDestructiveReason(uidLabel));
     }
-    if (checkIsActingTool(name) && !checkRate('acting', now)) {
+    // Both budgets are looked at before either is spent, so a call refused
+    // by one does not use up a slot of the other.
+    const isActing = checkIsActingTool(name);
+    const isRemoving = checkIsRemovingCall(name, args);
+    if (isActing && !checkHasRoom('acting', now)) {
         return refuse(
             'rate-limit',
             'Too many actions in the app in the last minute. Something is ' +
@@ -564,6 +695,21 @@ export function checkToolCall(
                 'were trying to do and what you would need from them, and ' +
                 'let them act.',
         );
+    }
+    if (isRemoving && !checkHasRoom('removing', now)) {
+        return refuse(
+            'rate-limit',
+            'Too many things removed in the last few minutes. Each one went ' +
+                'to the trash and can be put back with owa_undo, but no ' +
+                'honest request removes this many this fast. Stop, tell the ' +
+                'user what was removed, and ask what they want.',
+        );
+    }
+    if (isActing) {
+        useRoom('acting', now);
+    }
+    if (isRemoving) {
+        useRoom('removing', now);
     }
     if (checkIsNetworkCall(name, args) && !checkRate('network', now)) {
         return refuse(

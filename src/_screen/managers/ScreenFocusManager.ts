@@ -668,7 +668,7 @@ export default class ScreenFocusManager
                 tran(
                     'Failed to apply to screen. Please make sure the screen is open.',
                 ),
-                'error',
+                tran('Error'),
             );
             return;
         }

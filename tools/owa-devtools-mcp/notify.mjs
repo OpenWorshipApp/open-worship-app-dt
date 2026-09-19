@@ -72,14 +72,58 @@ const ACTING_TOOLS = {
     // 5 minute countdown on the screen" is something the operator can check
     // against the wall. A `check` reads and stays quiet.
     owa_foreground: 'put a countdown or a message on the screen',
+    // The user's saved passages and notes, and putting a change back. Each
+    // names what it touched below: "removed a note from Default" is a
+    // sentence the operator can check, "changed a note" is not.
+    owa_bible_item: 'changed the saved Bible passages',
+    owa_bible_note: 'changed a Bible note',
+    owa_undo: 'put back an earlier change',
 };
 
-// What a write to one of the user's documents is called, or null for a read.
-const AGENT_FILE_VERBS = {
-    create: 'made',
-    update: 'changed',
-    rename: 'renamed',
+// What a write to one of the user's documents reads as, by action, or no
+// entry for a read (`list`, `info`, `slides`). A delete says where it went.
+const AGENT_FILE_PHRASE_MAP = {
+    create: (what, named) => `made the ${what} ${named}`,
+    update: (what, named) => `changed the ${what} ${named}`,
+    rename: (what, named) => `renamed the ${what} ${named}`,
+    delete: (what, named) => `moved the ${what} ${named} to the trash`,
+    'add-slide': (_what, named) => `added a slide to ${named}`,
+    'update-slide': (_what, named, slide) => `changed ${slide} of ${named}`,
+    'delete-slide': (_what, named, slide) => `removed ${slide} from ${named}`,
+    'move-slide': (_what, named, slide) => `moved ${slide} of ${named}`,
+    'duplicate-slide': (_what, named, slide) => `copied ${slide} of ${named}`,
 };
+
+// The saved passages and notes, the same way.
+const AGENT_DATA_PHRASE_MAP = {
+    owa_bible_item: {
+        add: (args, list) =>
+            typeof args?.reference === 'string' && args.reference.trim() !== ''
+                ? `saved ${args.reference.trim()} to the Bibles list ${list}`
+                : `saved a passage to the Bibles list ${list}`,
+        update: (_args, list) => `changed a saved passage in ${list}`,
+        delete: (_args, list) => `removed a saved passage from ${list}`,
+        'create-list': (_args, list) => `made the Bibles list ${list}`,
+        'rename-list': (_args, list) => `renamed the Bibles list ${list}`,
+        'delete-list': (_args, list) =>
+            `moved the Bibles list ${list} to the trash`,
+    },
+    owa_bible_note: {
+        add: (_args, file) => `added a note to ${file}`,
+        update: (_args, file) => `changed a note in ${file}`,
+        delete: (_args, file) => `removed a note from ${file}`,
+        'create-file': (_args, file) => `made the notes file ${file}`,
+        'rename-file': (_args, file) => `renamed the notes file ${file}`,
+        'delete-file': (_args, file) =>
+            `moved the notes file ${file} to the trash`,
+    },
+};
+
+function toQuotedName(name, fallback) {
+    return typeof name === 'string' && name.trim() !== ''
+        ? `"${name.trim()}"`
+        : fallback;
+}
 
 // What each foreground extra is called in a banner.
 const FOREGROUND_BANNER_NOUN_MAP = {
@@ -136,15 +180,32 @@ export function describeToolCall(name, args) {
         return null;
     }
     if (name === 'owa_lyric_file' || name === 'owa_slide_file') {
-        const verb = AGENT_FILE_VERBS[args?.action];
-        if (verb === undefined) {
-            // `list` and `info` only read, and a banner per read would both
-            // cry wolf and photograph itself during a QA run.
+        const phrase = AGENT_FILE_PHRASE_MAP[args?.action];
+        if (phrase === undefined) {
+            // `list`, `info` and `slides` only read, and a banner per read
+            // would both cry wolf and photograph itself during a QA run.
             return null;
         }
         const what = name === 'owa_lyric_file' ? 'song' : 'slide document';
-        const named = typeof args?.name === 'string' && args.name !== '';
-        return named ? `${verb} the ${what} "${args.name}"` : `${verb} a ${what}`;
+        const slide = Number.isInteger(args?.slide)
+            ? `slide ${args.slide}`
+            : 'a slide';
+        return phrase(what, toQuotedName(args?.name, `a ${what}`), slide)
+            .replace(`the ${what} a ${what}`, `a ${what}`);
+    }
+    if (Object.hasOwn(AGENT_DATA_PHRASE_MAP, name)) {
+        const phraseMap = AGENT_DATA_PHRASE_MAP[name];
+        if (!Object.hasOwn(phraseMap, String(args?.action))) {
+            return null;
+        }
+        const where = toQuotedName(
+            name === 'owa_bible_item' ? args?.list : args?.file,
+            '"Default"',
+        );
+        return phraseMap[args.action](args, where);
+    }
+    if (name === 'owa_undo') {
+        return args?.action === 'undo' ? ACTING_TOOLS.owa_undo : null;
     }
     if (name === 'owa_present_bible') {
         if (args?.action === 'check') {

@@ -21,7 +21,174 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-12e** (**W-42 step 14 — on a Mac, the help window steps aside
+**workflowsVersion: 2026-09-18a** (**W-31 step 7 — the divider's arrows say what they do.** From
+`/owa-enhance ui` (`EN-21`): the two small arrows on a hovered divider were titled *Disable left* /
+*Disable right* — in English in every language, and wrong in English too, since they collapse a panel
+and disable nothing. They read **Collapse left panel** / **Collapse right panel** (top / bottom on a
+horizontal divider) now, in the window's language. They are deliberately NOT the menu's own words, so
+the app's tools do not find a hover-only arrow where a walkthrough means the menu item. In the same
+change the Reader's lookup history chips, verse numbers, Tab hint and split button and the Mini
+Screen card's `Screen: N` title stopped being English in a Khmer window. Verified live 2026-09-18 in
+English and in Khmer: all four arrow names on the Presenter's dividers in English and the left one in
+Khmer, the Khmer tooltip on all 20 history chips and on the verse numbers, no console error, the
+language restored after.)
+
+Previous: **workflowsVersion: 2026-09-17g** (**W-38 step 11 — a Mermaid diagram opens in the Mermaid Live Editor.**
+Asked for by the user with the three Mermaid rows circled in a picture: *as a user I want to be able to
+open each copy mermaid diagram string in mermaid live editor directly*. Copying a diagram is only half of
+what a diagram is for, and nothing on an ordinary machine draws one but this app's own markdown preview.
+**Open in Mermaid Live** sits under a divider at the foot of the 📋 menu and opens a second menu with the
+three Mermaid shapes named plainly; DOT and PlantUML are not there because that editor draws neither. The
+whole diagram rides in the link's FRAGMENT, which a browser never sends to a server, so nothing about the
+records leaves the machine. Verified live 2026-09-17 on David's graph: the row drew unclipped, Chrome
+opened the editor, and the link read back showed it holding this app's own diagram, Khmer names intact.)
+
+Previous: **workflowsVersion: 2026-09-17f** (**W-38 step 10 — FIVE diagram languages, not one.** Asked for by
+the user: *add variety of diagrams, so this will let user to have more options to see many format of
+diagrams they want*. The copy menu now offers the Markdown document plus Mermaid flowchart across,
+Mermaid flowchart down, Mermaid mindmap, Graphviz DOT and PlantUML — which one is right depends on
+what it is being pasted into, and that is not a question the app can answer for anyone. The rows are
+named SHORT because a context menu here is 210px and clipped the first pair to two identical
+`Copy as Mermaid Flowchar…` lines; the full name is on the hover and on the toast. Verified live
+2026-09-17 on Jacob's graph: the six rows read distinctly, and all three Mermaid shapes render in the
+app's own markdown preview (the mindmap as a branching tree around Jacob).)
+
+Previous: **workflowsVersion: 2026-09-17e** (**W-38 step 10 — the Markdown copy CARRIES the diagram.** Asked
+for by the user right after the first cut: *the markdown should include mermaid ```mermaid ... ``` for
+the diagram*. The document now opens on a `## Diagram` section holding the drawing in a `mermaid`
+fence, ahead of the tables, so pasting the Markdown anywhere that renders it brings the picture along;
+**Copy as Mermaid Diagram** stays for handing the drawing alone to something that wants only that.
+Verified live 2026-09-17: David's 38-box graph copied as ~12.5KB and rendered — heading, summary,
+drawn diagram, then the tables — in the app's own markdown preview.)
+
+Previous: **workflowsVersion: 2026-09-17d** (**W-38 step 10 — the connection graph copies as Markdown or as a
+Mermaid diagram.** Asked for by the user with the spot circled in a picture: *in name/location-name lookup
+graph preview, I want a copy icon, when click the icon it show contextmenu of `Copy as Markdown` and
+`Copy as Mermaid Diagram`*. A clipboard button now sits left of the signpost icon and opens those two
+items. The Markdown is the records as a table with the centre marked, the connections grouped by kind
+with the gendered relation word, and the verses each record cites; the Mermaid is a `flowchart LR` whose
+boxes carry the canvas's own per-kind colour. Record wording follows the lookup language, the document
+furniture stays English, and both are built from the same visible boxes the saved picture uses. Verified
+live 2026-09-17 on the dev reader: David's graph at 29 boxes copied as ~7.6KB of Markdown and as a
+diagram that renders in the app's own markdown preview. New RD-121.)
+
+Previous: **workflowsVersion: 2026-09-17c** (**W-37 step 8 — put files INTO a Resources folder with Add Files.**
+Asked for by the user with a picture of a group's menu circled: *as a user I want to be able to copy one or
+more files to the resources selected folder… add `Add Files` to select files to copy to the folder.* The
+group menu now has **Add Files** under **Add Folder**: pick one or several files and they are copied into
+that folder, the originals untouched. Nothing is overwritten — a name the folder already holds gets ` (1)`
+— a file already sitting there is left alone rather than copied beside itself, and the group re-reads
+itself and opens if it was folded. A copied file that the list cannot draw (named after no chapter, with
+**Others** unticked) is SAID so in the note rather than landing in silence. Verified live 2026-09-17 on the
+dev reader: the item sits between **Add Folder** and **Reveal in File Explorer**; a `GEN.1.claude-check.txt`
+picked into the `Document` group appeared under `GEN.1.*` by itself, the same file picked again landed as
+`GEN.1.claude-check (1).txt` beside it with the toast **Add Files — 1 file copied**, and both were removed
+again. New RD-120; RD-87 amended.)
+
+Previous: **workflowsVersion: 2026-09-17b** (**W-37 step 6 — a note file shows its highlights and comments, and a
+markdown file its own HTML.** Asked for by the user the same day, twice: with a picture of the Bible Notes
+panel, *it should have all like highlight and comments as well*, and with the README selected, *the
+markdown preview should be rendered*. A `.own` row now lists everything the Bible Notes panel lists — its
+notes, and each marked verse with its highlights in their colour and its comments underlined — and a mark
+opens its verse beside the reading. The preview draws the HTML a README is written in (a centred picture, a
+fold-away section, badges) with anything that could run taken out, and the step says why a file saved with
+its markdown escaped shows the characters as written. Verified live 2026-09-17 on the dev reader:
+`GEN.1.own` listed ccc2, Sunday May 31 2026, test, Unnamed, then *(KJV) Genesis 22:2* (*and offer*
+underlined, *testing comment*), *(KJV) Genesis 22:1* (*pass after* in pink) and *(KJV) Genesis 4:1*; two
+verses folded to a count of 1; pressing *and she conceived* opened Genesis 4:1 as another view with both
+marks painted, and the file's MD5 and timestamp were unchanged; the app's own `README.md` rendered its
+badges, centred screenshot, table of contents (a press scrolled to *Tech Stack*), contributors table and a
+closed *Fedora Dependencies* section; the user's `GEN.1.md`, saved with `\#` and `\*\*` escapes, showed
+those characters as written.)
+
+Previous: **workflowsVersion: 2026-09-17a** (**W-37 step 6 — a markdown file and a bible note file open inside the app.**
+Asked for by the user with two pictures (a `GEN.1.md` and a `GEN.1.own` circled in Resources, and the
+Bible Notes panel): *Resources should support in app preview for markdown file and Bible-note file… open
+bible-note preview should be read-only, open markdown-file should popup like bible-note and render the
+markdown. If possible add Mermaid diagram support.* A `.md` opens a **Markdown Preview** window (tables,
+code, pictures beside the file, Mermaid diagrams; follows the file as it is saved; links to headings, to
+other `.md` files with Back, and to the web); a `.own` row opens onto its notes, and a note opens in the
+Bible Note window read-only. Verified live 2026-09-17 on the dev reader: `GEN.1.md` opened the preview; a
+scratch document drew a flowchart and a sequence diagram, reported a broken one above its code, scrolled
+to a heading, opened a linked `.md` with Back, and updated when the file was saved; `GEN.1.own` listed its
+four notes and not its three verse marks, and **ccc2** opened with *(Read-only)* in its title and a locked
+editor, and pressing the editor's Undo left the file byte-identical on disk.)
+
+Previous: **workflowsVersion: 2026-09-16a** (**W-37 step 8 — copy a Resources folder into the data folder.**
+Asked for by the user with a picture of a Resources group's menu: *as a user I want to be able to move
+selected folder in Resources to under selected-dir so I can manage it easily*, and then *after copied
+then change the selection to the copied one*. A group's menu now has **Copy to Data Directory**
+between **Reveal in File Explorer** and **Remove Folder**. It asks first, naming the folder and the
+`resources` folder inside the data folder it goes to; then copies the whole folder there, sub-folders
+and all, and the group switches to the copy in the same place, folded or open as it was. The original
+stays on disk. A name already taken gets ` (1)`; a folder that is already a copy is not offered the
+item; a folder holding the data folder itself is refused before anything is asked, since it would be copied
+into itself. Verified live 2026-09-16 on the dev reader: the item and its confirm on a scratch folder, and the
+refusal on a Desktop group holding the data folder. Not seen live: the copy after **Yes**, which an agent may
+not press — unit-tested on a real folder tree.)
+
+Previous: **workflowsVersion: 2026-09-15c** (**W-16 — a font's weights are listed beside it.**
+Asked for by the user with a picture of the Slide Editor's font box: the font list came from a
+package that could name a font but not its weights, so the weight list beside it never appeared.
+The app now reads each installed font's real weights itself, and the list appears whenever the
+chosen font ships more than one (`400 Regular`, `700 Bold`, `900 Black` for Arial), with
+**Default** leaving the font's own weight. Settings, the Slide Editor and the Foreground widgets
+share that one picker. Verified live 2026-09-15 on the dev Slide Editor: a text box in Arial
+offered Default, 400 Regular, 700 Bold and 900 Black, 700 Bold thickened the text on the canvas and
+its thumbnail, and Undo put it back. Not seen live in the Settings card itself.)
+
+Previous: **workflowsVersion: 2026-09-15b** (**W-37 step 5 — tick Others to see every file that is not named after a chapter.**
+Asked for by the user with a picture of the panel: *I want to be able to see others non related to
+`<book>.<chapter>.*` files so I don't have to do search for those files*. A picture, a map or a handout
+kept in the same folders as the chapter files could only be reached by typing part of its name. A box
+marked **Others** now sits beside the magnifier; ticked, each folder also lists every file whose name is
+not a book and chapter, under an **Others** heading after everything else, up to 200 a folder, and it
+stays ticked next time. Verified live 2026-09-15 on the dev reader: ticking it listed a general folder's
+files under **Others** while the two chapter-named folders beside it did not change, nothing appeared in
+the console, and unticking it put the lists back.)
+
+Previous: **workflowsVersion: 2026-09-15a** (**W-37 step 4 — Resources looks two folder levels down, not eight.**
+Asked for by the user with a picture of the panel: a group for their whole home folder said **No
+matching files** and **Too many folders to search**, and they asked for the search to stay near the
+top. It had walked eight levels deep, and a home folder is mostly other programs' folders, so the walk
+used up its whole allowance there and found nothing. Now each group reads its folder and the two levels
+of folders under it and stops. Measured on that home folder: 64 folders read and the walk finishes, where
+four levels or more ran out at 1 500. Verified live 2026-09-15 on the dev reader: the home-folder group
+says **No matching files** with no warning, and the other groups still list their `GEN.4.pdf`,
+`GEN.0.pdf` and `GEN.0.json` links. RD-84, RD-89 and RD-114 amended.)
+
+Previous: **workflowsVersion: 2026-09-14c** (**W-44 step 6 — a link opens only when you pressed it, and the boxed site cannot reach this computer by any route.**
+Security work, not a report. Measured from inside a live site: a page in the AI Chat window could
+open your normal browser on its own, with nothing pressed, as often as it liked; and a WebSocket —
+the kind of connection a live chat uses — could reach programs on this computer such as OBS or a
+presentation remote, which ordinary web requests from the site already could not. Now your browser
+is handed a page only right after you press something in the site, one page per press; a page that
+tries anyway is not opened, and a line under the row above the page says so. And WebSockets are held
+to the same wall as everything else, while the sites' own live connections still work. Verified live
+2026-09-14 on the dev window: 43 checks held. CB-68 extended.)
+
+Previous: **workflowsVersion: 2026-09-14b** (**W-44 step 6 — a site may ask for the microphone.**
+Reported by the user with a picture of Claude's dictation button under *Microphone access is
+blocked* in the AI Chat window, whose advice points at a browser address bar the window does
+not have. Pressing a site's microphone button now puts a line under the row above the page
+asking to allow it, with **Don't allow** already selected; a yes is for that one site, lasts
+until the app closes, and only counts while its tab is in front. Verified live 2026-09-14 on
+the dev app with Claude's own **Dictate**: the line appeared, **Don't allow** and Escape kept
+the microphone off, **Allow** let the site hear, and the same site behind another tab was
+refused.)
+
+Previous: **workflowsVersion: 2026-09-14a** (**W-42 step 13 — an assistant with no key can be chosen,
+and choosing it opens its key box.** Asked for by the user with a picture of the help
+window's assistant list open on **Kimi — needs an API key**, greyed out: the row said what
+was missing and could not be pressed. It is in the list in a quieter colour now; choosing it
+keeps the conversation on the assistant it had and opens **Settings** on **Others** with the
+cursor in that assistant's key box, and a **Settings** window that is already open comes to
+the front and turns to **Others** rather than a second one opening. Verified live 2026-09-14
+on the dev app: with **Settings** closed the cursor was in **Kimi API Key** under a second
+after the choice, and with **Settings** open on **General** the same window came forward on
+**Others** with the cursor in the box.)
+
+Previous: **workflowsVersion: 2026-09-12e** (**W-42 step 14 — on a Mac, the help window steps aside
 ALONE.** Reported by the user with a picture from macOS: pressing **Do it for me**
 minimised every window of the app, the presenter included, and closing the card brought
 nothing back. The help window is a child of the app window, and a Mac cannot minimise a
@@ -1295,7 +1462,9 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
      window. Unsaved edits in the Slide Editor are kept.
    - **Theme:** system / light / dark.
    - **Font family:** the font used for on-screen text. A font marked `(Missing)` is
-     configured but not installed on this computer.
+     configured but not installed on this computer. When the chosen font comes in more
+     than one weight, a second list beside it picks one (`400 Regular`, `700 Bold`…);
+     **[en:tran:Default]** keeps the font's own weight.
    - **Directories:** where documents, lyrics, and bibles are stored on disk.
    - **Reset buttons** (`Reset All Child Directories` / `Clear All Settings`):
      **these erase configuration; use with care.** `Reset All Child Directories`
@@ -2435,10 +2604,24 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    you click them, which takes a second and loses nothing: the conversation lives on the
    site, under your account.
 6. A link the site opens in a new window (a citation, a "learn more") opens in your normal
-   browser, never in the app. The site cannot use the camera, microphone or your location
-   from inside this window, cannot open anything on this computer, and cannot reach
-   anything on it or on the building's network — not the app itself, not the router, not a
-   printer. Only the internet, which is all a chat site wants.
+   browser, never in the app — and only when you pressed something in the site just before.
+   A page that tries to open one on its own is stopped, and a line under the row above the
+   page says *This site tried to open … in your browser without a press, so it was not
+   opened*; press the link again if you meant it. 📸 The site cannot use the camera or your
+   location from inside this window, cannot open anything on this computer, and cannot
+   reach anything on it or on the building's network — not the app itself, not the router,
+   not a printer, not a program such as OBS that listens for connections. Only the
+   internet, which is all a chat site wants.
+
+   **Talking instead of typing.** The microphone is the one thing a site may ask for. Press
+   its microphone button (Claude's **Dictate**, for one) and a line appears under the row
+   above the page: *claude.ai wants to use your microphone. Allow it until the app
+   closes?* 📸 **Allow** lets that site hear you; **Don't allow** — already selected, so
+   Enter or Escape picks it — keeps the microphone off, and the site shows its own
+   "blocked" message until you press its button and answer again. A yes is for that one
+   site, lasts until the app closes, and only counts while its tab is the one in front; a
+   tab behind is never let in. **Sign out of every site** (step 7) takes it back. The
+   camera stays off whatever you answer.
 7. **Sharing this computer?** You stay signed in to these sites until you say otherwise,
    and closing the tabs does not sign you out — that is worth knowing in a church back
    room where several people use the same machine. Click **↤** (**Sign out of every
@@ -2521,9 +2704,11 @@ in a popup window:
    app has this menu) — and choose **[en:tran:Close First Widget]**. 📸 The first of
    the two panels (the left one, or the upper one) collapses to its green strip and the
    other takes its space. `Close Second Widget` does the same to the other panel.
-   Hovering the divider shows the same two choices as small arrows. A collapsed
-   panel has no divider — if one of the two is already a strip, click the strip
-   first.
+   Hovering the divider shows the same two choices as small arrows, each named for
+   the side it closes — **[en:tran:Collapse left panel]** / **[en:tran:Collapse right panel]**,
+   or **[en:tran:Collapse top panel]** / **[en:tran:Collapse bottom panel]** on a
+   divider between an upper and a lower panel. A collapsed panel has no divider — if
+   one of the two is already a strip, click the strip first.
 8. Click the green **Document List** strip — the panel comes straight back.
 9. Right-click the **divider between Document List and Presenting Flow List** again and
    choose **[en:tran:Reset Size]** — just those two panels return to the sizes they
@@ -2862,8 +3047,9 @@ all count as book-level too.
    the app is open, or after changing the list from another window. 📸
 4. Each folder becomes its own group, named after the folder, with the folder it lives in
    shown beside the name and the full path if you hover it. Under the name, hanging off a
-   single vertical line, are the matching files — **from that folder and every folder
-   inside it** — filed under the pattern each one answered to (`GEN.24.*`, then
+   single vertical line, are the matching files — **from that folder and the folders
+   inside it, two levels down** (`Library/Genesis/Sermons/GEN.24.pdf` is found, a file one
+   folder deeper than that is not) — filed under the pattern each one answered to (`GEN.24.*`, then
    `GEN.27.*`, then the dashed `GEN.0.*`), sorted by file type within each, each with its
    own icon (PDF, Word, PowerPoint, video, image, bible note). The extension is set quieter
    than the rest of the name so the reference reads first. Hover a file to see where it
@@ -2884,9 +3070,46 @@ all count as book-level too.
    Click the magnifier again to close the box and put the lists back as they were. If a
    folder has hundreds of matches only the first 200 are shown, and the box says **Too many
    matching files** — type a bit more to narrow it down.
+   **To see everything else without typing, tick [en:tran:Others]**, the box just left of the
+   magnifier. Each folder then also lists every file whose name is _not_ a book and a
+   chapter — `family-tree.jpeg`, `church-map.pdf`, `README.txt` — under an
+   **[en:tran:Others]** heading after its verse files and anything you searched for. 📸
+   A file only counts as a book-and-chapter file when it starts with a real book key and a
+   plainly written chapter, so `GEN.5.pdf` stays out of this list while `IMG.2.jpg` and a
+   misnumbered `GEN.01.pdf` show up in it — handy for spotting a file you named wrongly. A
+   file your search found is listed under the search heading instead, never twice. Up to 200
+   are shown per folder; past that the group says **Too many other files**, and pointing
+   Resources at the folder your material is actually in keeps the list short. Untick
+   **[en:tran:Others]** to hide them again — the box stays the way you left it next time.
 6. Click a file to open it in whatever application your computer normally uses for it — a
    PDF in your PDF reader, a PowerPoint in PowerPoint. Right-click one for **Open**,
    **Copy Path to Clipboard**, or **Reveal in Finder** / **Reveal in File Explorer**.
+   Two kinds of file open **inside the app** instead:
+   - **A markdown file** (`.md`, `.markdown`, drawn with the `bi-markdown` icon) opens in its
+     own **Markdown Preview** window, like a Bible Note does: headings, lists, tables, quotes,
+     code, pictures kept beside the file, and **Mermaid diagrams** written in a ` ```mermaid `
+     block are drawn as diagrams (a diagram with a mistake in it shows the error above its
+     code). The window follows the file — save it in your editor and the preview changes.
+     A link to a heading scrolls there; a link to another `.md` opens it in the same window,
+     with **[en:tran:Back]** (`bi-arrow-left`) to return; a web link opens in your browser; a
+     link to any other file shows it in its folder rather than running it. HTML written
+     inside the file is drawn the way GitHub shows a README — a centred picture, a table, a
+     section that folds away — but nothing in it can run: scripts, buttons, forms and styles
+     are taken out. If a file shows `#` and `**` instead of a heading and bold, the file itself
+     was saved with them escaped (`\#`, `\*\*`), which some editors' formatted view does
+     when text is pasted into it; the preview shows what is written. The head row also has
+     **[en:tran:Reload]**, **[en:tran:Open in Default App]** (to edit it) and **Reveal in
+     File Explorer**. Right-click the row for **[en:tran:Preview]** or **Open**. Pressing a
+     file whose preview is already open brings that window forward. 📸
+   - **A bible note file** (`.own`) gains a chevron: click it and everything in it is
+     listed under it, as the **Bible Notes** panel lists it — its notes, and each verse
+     marked in it (`bi-highlighter`) with its highlights in their colour and its comments
+     underlined, what was written beside them. Click a note to open it in the **Bible Note**
+     window **read-only** — the title bar says **([en:tran:Read-only])**, the lock at the
+     bottom shows it is locked, and nothing you do there is saved to the file. Click a
+     highlight or comment to open that verse beside what you are reading; click a verse to
+     fold it away to a count. Nothing in the file can be changed from here. A file that is
+     not a bible note says **[en:tran:Not a bible note file]**. 📸
 7. **A `.json` file can hold a list of links** — videos, articles, anything on the web for
    that chapter — and the panel shows them instead of opening the file. Write it as a list
    of entries, each with a **title** to read and a **url** to open:
@@ -2925,9 +3148,29 @@ all count as book-level too.
      the file rather than follow a link.
 8. Click a group's header to fold it away; it stays folded next time. Right-click a header
    for **Refresh** (re-reads that one folder — **Reload** in step 3 does all of them),
-   **Add Folder**, **Reveal in Finder**/**File Explorer**, and **Remove Folder**,
-   which asks you to confirm and then only removes it from this list — nothing on disk is
-   touched. 📸
+   **Add Folder**, **[en:tran:Add Files]**, **Reveal in Finder**/**File Explorer**,
+   **[en:tran:Copy to Data Directory]** and **Remove Folder**, which asks you to confirm and
+   then only removes it from this list — nothing on disk is touched. 📸
+   **[en:tran:Add Files]** is the other way round: it puts files you already have INTO that
+   folder. Pick one or several in the picker and they are **copied** in — the originals stay
+   exactly where they were — then the group re-reads itself, opening if it was folded, and a
+   note says how many were copied. **Nothing is ever overwritten**: a name the folder already
+   holds gets a number beside it, so a second `GEN.4.pdf` lands as `GEN.4 (1).pdf`. Pick a file
+   that is already in that folder and it is left alone rather than copied beside itself. Copy in
+   a file named after no chapter — `notes.docx` — and it is on the shelf but not in the list;
+   the note says so and tells you to tick **[en:tran:Others]** (step 5) to see it. 📸
+   **[en:tran:Copy to Data Directory]** brings a folder you keep somewhere else in with the rest
+   of the app's data, so it lives and moves with it. It asks first, naming the folder and where
+   the copy goes — a `resources` folder inside your data folder (the one Settings calls the
+   parent directory). Press **Yes** and everything in the folder is copied there, sub-folders
+   and all, while the progress bar runs; then the group switches to the copy, in the same place
+   and folded or open as it was, and a note says where it went. **Your original folder is not
+   touched** — it only leaves this list, so delete it yourself once you are happy with the copy.
+   A second copy of a folder with the same name is called `YouTube (1)` rather than mixed into
+   the first. The item is not offered on a folder that already is a copy, and a folder that
+   holds your data folder — your whole Desktop, when the data lives on the Desktop — is refused
+   straight away with **[en:tran:The data directory is inside this folder]**, because it would
+   be copied into itself. 📸
 
 > **Watch the numbering.** The chapter number has to stand on its own between two dots. For
 > Psalm 1 that means `PSA.1.pdf` is found while `PSA.10.pdf`, `PSA.100.pdf` and `PSA.149.pdf`
@@ -2938,10 +3181,12 @@ all count as book-level too.
 > **If a group shows a warning** instead of files: **Folder not found** means the folder was
 > moved, renamed or deleted since you added it (remove it and add it again);
 > **Cannot read folder** means the app is not allowed to read it. **Too many folders to
-> search** means the folder tree was too large to finish — point Resources at the folder
-> your material is actually in rather than at a whole drive.
+> search** means even those two levels held more folders than it could read — point
+> Resources at the folder your material is actually in rather than at a whole drive.
+> A file you expected that is simply **not listed** is usually more than two folders down:
+> add the folder it sits in (or the one above it) as a group of its own.
 
-_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, CM-93._
+_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, CM-93._
 
 ---
 
@@ -3010,13 +3255,51 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    Downloads folder and revealed for you), **Print** (which prints on white paper
    whatever theme the app is using), and **Save preset** to name an arrangement and come
    back to it later.
-10. Opening a record always starts you at that record, with one box — every time, however
+10. **Take it away as words.** The clipboard button (📋) left of the signpost opens six
+    ways to copy the graph: **[en:tran:Copy as Markdown]** on its own, then five diagram
+    languages — **[en:tran:Copy as Mermaid (across)]**, **[en:tran:Copy as Mermaid (down)]**,
+    **[en:tran:Copy as Mermaid Mindmap]**, **[en:tran:Copy as Graphviz DOT]** and
+    **[en:tran:Copy as PlantUML]**. Hover a row for its full name; the message that
+    follows the copy says which one landed. 📸
+    > **Markdown** is the graph written out for a note or a document — **the diagram
+    > included**. It opens with the drawing itself in a `mermaid` block, so a wiki, a
+    > repository, a notes app or this app's own markdown preview draws the same boxes
+    > and lines; under it come every record with its kind and one-line description in a
+    > table (the one in the middle marked _(centre)_), the connections grouped by kind
+    > — _son_, _wife_, _located at_ — and the verses each record cites. Names, kinds
+    > and relationship words come out in the same language the records are in.
+    > **Which diagram language?** Whichever the thing you are pasting into reads.
+    > **Mermaid** is drawn by most places that show markdown, and comes three ways: the
+    > usual one runs **across** the page, **down** suits a line of generations, and the
+    > **mindmap** turns the graph into a branching tree around the middle record —
+    > easiest to read at a glance, but a tree cannot show a second link between two
+    > people, and it carries no relationship words. **Graphviz DOT** and **PlantUML**
+    > are for tools and wikis that draw those instead. Every one of them describes
+    > exactly the boxes on the canvas, so switching a kind of connection off first is
+    > how you copy only part of a graph.
+11. **See it drawn, without leaving anything behind.** The last row on that same 📋 menu,
+    under a divider, is **[en:tran:Open in Mermaid Live]**. It opens a second little menu
+    — **[en:tran:Mermaid (across)]**, **[en:tran:Mermaid (down)]**,
+    **[en:tran:Mermaid Mindmap]** — and picking one opens the Mermaid Live Editor in your
+    web browser with this graph already in it, drawn. 📸
+    > **Nothing is uploaded.** The diagram travels inside the address, after the `#`, and
+    > a browser never sends that part to anybody's server — it is the same thing the
+    > editor's own Share box does, which is why that site says the diagrams you make
+    > never leave your browser. Your names, places and notes stay on this machine.
+    > Only the three Mermaid rows are offered, because that editor draws Mermaid and not
+    > Graphviz DOT or PlantUML.
+    > It is the quickest way to get a **picture** of a graph out of the app for a slide or
+    > a handout — the editor can zoom it, recolour it and save it as a PNG or an SVG.
+    > A very large graph makes an address too long for the browser to be handed. If that
+    > happens the app says so and puts the link on your clipboard instead: open your
+    > browser and paste it into the address bar.
+12. Opening a record always starts you at that record, with one box — every time, however
     you left the window last time. 📸
     > If an arrangement is worth coming back to, say so: `⋯` → **Save preset**, name it,
     > and it is waiting in that same menu next time.
 
 _Verify: RD-92, RD-93, RD-94, RD-95, RD-96, RD-97, RD-98, RD-99, RD-100, RD-101,
-RD-102, RD-103, RD-104, RD-105, RD-106._
+RD-102, RD-103, RD-104, RD-105, RD-106, RD-121._
 ### W-39 — Let the passage scroll itself while you read
 
 When a chapter is longer than the panel, you do not have to keep reaching for the mouse
@@ -3455,8 +3738,13 @@ it is describing.
    worth getting before you go and fetch one.
 13. The second list is **who answers** — **Claude**, **ChatGPT**, **Kimi** — and you
    can change your mind between two questions. The ones whose key you have set can be
-   chosen; the others are still in the list, greyed out and reading **needs an API key**,
-   so you can see they are there and what they want. Beside it is the third list, the
+   chosen; the others are still in the list, in a quieter colour and reading
+   **needs an API key**, so you can see they are there and what they want. Choose one of
+   those and the conversation stays on the assistant it had, while **[en:tran:Settings]**
+   opens on **Others** with the cursor already in that assistant's key box — for Kimi,
+   **Kimi API Key** — ready for the key to be pasted in. If **[en:tran:Settings]** was
+   already open on another page, that same window comes to the front and turns to
+   **Others**. Beside it is the third list, the
    **model** that will answer — **Opus 5**, **GPT-5**, **Kimi K3** — and it is a list
    you can change.
    Hold the mouse over a name to see what it is good for, how quick it is and what it

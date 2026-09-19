@@ -135,7 +135,7 @@ function getLookupDataVersionCached(langCode: string) {
 
 async function getLookupDataDirPath() {
     const dirPath = pathJoin(
-        appLocalStorage.defaultStorage,
+        appLocalStorage.defaultStorageDirPath,
         appManagedDataDirNames.LOOKUP_DATA,
     );
     try {

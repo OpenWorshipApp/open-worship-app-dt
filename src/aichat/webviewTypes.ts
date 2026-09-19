@@ -13,6 +13,9 @@ export type AiChatGuestElementType = HTMLWebViewElement & {
     reload: () => void;
     goBack: () => void;
     canGoBack: () => boolean;
+    // The id the main process knows this guest by, which is how a
+    // microphone ask is matched to the tab it came from.
+    getWebContentsId: () => number;
 };
 
 // Electron's guest events are plain DOM events carrying extra fields; only

@@ -1,7 +1,12 @@
 import { app } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
-import { isDev, isWindows, resetPopupWindowsBounds } from './electronHelpers';
+import {
+    isDev,
+    isWindows,
+    isWindowsStore,
+    resetPopupWindowsBounds,
+} from './electronHelpers';
 
 import packageInfo from '../package.json';
 
@@ -30,8 +35,14 @@ export function resetWindowsBounds(appController: ElectronAppController) {
 // NSIS stamps on the shortcut, or the taskbar treats the running app and its
 // pinned shortcut as two different things. Dev keeps its own identity, matching
 // how it already keeps its own `userData` dir and single-instance lock.
+//
+// A Store (MSIX) install is the one case with NOTHING to claim: Windows gives
+// the package its own id and forbids replacing it -- "you may only use the
+// AUMID generated for it by the application model environment" -- and setting
+// one anyway is documented to make the jump list entries disappear, which is
+// exactly the reset task below.
 export function initAppUserModelId() {
-    if (!isWindows) {
+    if (!isWindows || isWindowsStore) {
         return;
     }
     const appId = packageInfo.build.appId;

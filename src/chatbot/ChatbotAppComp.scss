@@ -232,6 +232,13 @@ select.chat-pick {
     color: var(--chat-text);
     background-color: var(--chat-solid);
   }
+
+  // A provider with no key yet. Not `disabled` -- picking it is how the user
+  // asks to add one -- so it is only quieter than the rows that can answer
+  // now, and its text says what it needs.
+  option[data-needs-key] {
+    color: var(--chat-muted);
+  }
 }
 
 // The running bill for the tab, under the choices that set it, and only

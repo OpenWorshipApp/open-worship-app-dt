@@ -43,11 +43,14 @@ So: **prune before you sharpen, sharpen before you add.**
 | `owa_list_ui` | `filter`, `page`, `limit` | Enumerates the visible controls of a window. The cure for guessing a label. | |
 | `owa_click` | `find*`, `page` | Clicks a control by its label. Answers `nearMisses` when it cannot match. | ✔ |
 | `owa_type` | `find*`, `value*`, `submit`, `page` | Types into a control by its label, optionally submitting. | ✔ |
-| `owa_guide_start` | `title`, `manualId`, `steps`, `mode`, `labels`, `page` | Draws the numbered walkthrough card in the app window, each step's control ringed. `mode: "demo"` lets the card DO each step. `manualId` builds steps from a recipe; `canDemo: false` comes back when the recipe's bolding cannot be pressed. | ✔ |
+| `owa_guide_start` | `title`, `manualId`, `steps`, `mode`, `page` | Draws the numbered walkthrough card in the app window, each step's control ringed. `mode: "demo"` lets the card DO each step. `manualId` builds steps from a recipe; `canDemo: false` comes back when the recipe's bolding cannot be pressed. Answers with the same shape as `owa_guide_status`, so the aim is checked by the start itself. (`labels` left the schema 2026-09-18 — nothing passed it; `MC-36`.) | ✔ |
 | `owa_guide_step` | `action*`, `stepNumber`, `page` | Advances / goes back / performs the current step. | ✔ |
 | `owa_guide_status` | `page` | Where the guide is, whether the target was found, and `nearMisses` when it was not. | |
-| `owa_lyric_file` | `action*`, `name`, `newName`, `content`, `page` | The user's songs: list / info / create / update / rename. `content` is an Open Lyric document, checked by `validateOpenLyric` in the tool (line numbers) and by the app at the disk boundary. `update` goes to the editing history, so it is undoable and UNSAVED — the model must say so. | ✔ |
-| `owa_slide_file` | `action*`, `name`, `newName`, `content`, `page` | The same five actions over slide documents; `content` is the document JSON, checked by `AppDocument.validate`. | ✔ |
+| `owa_lyric_file` | `action*`, `name`, `newName`, `content`, `page` | The user's songs: list / info / create / update / rename / delete. `content` is an Open Lyric document, checked by `validateOpenLyric` in the tool (line numbers) and by the app at the disk boundary. `update` goes to the editing history, so it is undoable and UNSAVED — the model must say so. `delete` moves the song to the trash; every change is backed up first and `owa_undo` puts it back. | ✔ |
+| `owa_slide_file` | `action*`, `name`, `newName`, `content`, `slide`, `to`, `items`, `page` | The same six actions over slide documents (`content` is the document JSON, checked by `AppDocument.validate`), plus one slide at a time: `slides` reads every slide with its text boxes and their style; `add-slide`; `update-slide`, where an item with `id` changes that box — text, font, size, colour, alignment, position — or removes it, and one without adds a text box; `delete-slide`, `move-slide`, `duplicate-slide`. A slide change is one editing-history entry, unsaved; the pure rules are `src/helper/agentSlideHelpers.ts`. | ✔ |
+| `owa_bible_item` | `action*`, `list`, `id`, `reference`, `version`, `newName`, `page` | The user's saved Bible passages (the Presenter's Bibles list, or the Reader's): list, add a reference as the user says it (read by `owa_present_bible`'s own resolvers), update its reference or version, delete, and whole lists — create-list, rename-list, delete-list to the trash. A list file has no editing history, so every write is backed up first. Nothing reaches a screen. | ✔ |
+| `owa_bible_note` | `action*`, `file`, `id`, `title`, `text`, `newName`, `page` | The user's Bible notes: list, read, add (plain text written as the note editor's own content), update, delete, and whole files. A verse-marks item is removed or renamed whole. Refused while that file is open in its own window. Backed up first. | ✔ |
+| `owa_undo` | `action*` (`list` \| `undo`), `id`, `page` | Put back a change the data tools made: the recent changes newest first, each with an id; undo one, or the newest not yet undone. An undo backs itself up, so it can be undone too. | ✔ |
 | `owa_read_website` | `url*`, `maxChars`, `screenshot`, `links`, `page` | Reads a page on the public web — text, optionally its links and a picture. For the world OUTSIDE the app only; app questions come from `owa_help_search`. https and public addresses only, both halves of the policy in `webUrlPolicy.mjs`. The result is fenced as a document that was read, never as anything talking to the model. | ✔ |
 | `owa_lyric_validate` | `text*`, `mode`, `title`, `artist`, `from`, `to` | `mode: "draft"` turns RAW words into Open Lyric — a paste, a page that was read, an attached file — and is the ONLY way a song should ever be written: a careful hand-written attempt still fails on `CC` (must be `Cx2`) and on free text inside `Instrumental`. The draft is round-tripped through the validator below, so it cannot ship an invalid document; `openLyricDraft.mjs` holds the emitter and `Breakdown` is the tier-2 fence nothing can fail in. Otherwise checks song text against the Open Lyric notation the Lyric Editor uses: every mistake with its line, its section and what to write instead, then the song itself — title, key, tempo, sections, play order. `problems` are what the editor refuses the song for; `warnings` are what it accepts and a musician still wants. A whole SONG PAGE can be handed in as `text`: `lyricPageText.mjs` finds the song among the toolbars, charts and footers, rejoins the lines a chord layout breaks into fragments, reads the key/tempo/time strip, keeps a second language as a translation line, and REPORTS the area it chose -- `from`/`to` override it, `title`/`artist` override what it read. Gated so a plain paste is untouched. The ONE tool here that reaches nothing — no CDP, no window, no network — so it answers with the app shut. Its grammar is guarded against open-lyric drift by two tests, see `openLyric.mjs`. | |
 
@@ -113,9 +116,18 @@ consequences are felt by a volunteer minutes before a service. Write for both:
 - **Say what the user will SEE.** A tool that rings a control in red or takes a
   screen down has to say so, or the model will use it casually.
 - **Do not restate the schema in prose.** The parameters are already sent.
-- **Length is a budget.** `owa_guide_start` costs ~594 tokens, more than any other
-  tool in the server, because it teaches a whole interaction. That is defensible.
-  A 400-token description on a tool that reads one value is not.
+- **Length is a budget.** `owa_guide_start` cost ~725 tokens, more than any other
+  tool in the server, because it teaches a whole interaction -- and a rule the
+  prompt reverses had crept in with the length. Cut to ~430 (`MC-07`,
+  2026-09-18), with the one sentence that turned out load-bearing put back: the
+  default `show` presses NOTHING, so start it when asked. A 400-token
+  description on a tool that reads one value is not defensible.
+- **Read a description against the prompt.** The chatbot's model reads both,
+  and a long description drifts: two of the biggest disagreed with the prompt
+  until `MC-07`. The prompt serves one caller; the description serves both, so
+  a rule only the chatbot needs belongs in the prompt.
+- **Results are compact JSON** (`MC-33`). A result stays in front of the model
+  for every later round; indentation was ~31% of the characters.
 
 ## Pruning and scoping
 

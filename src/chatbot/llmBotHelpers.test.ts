@@ -94,6 +94,7 @@ import {
     getAvailableLlmProviders,
     getLlmModel,
     getLlmModelList,
+    getLlmProviderKeyField,
     getLlmProviderWarning,
     getLlmProviderWarningLinks,
     toCleanToolName,
@@ -1046,6 +1047,24 @@ describe('askLlmBot, carrying more than words', () => {
             },
         );
         expect(takeAdditions).not.toHaveBeenCalled();
+    });
+});
+
+// Which box the help window sends the user to when a provider it lists has no
+// key yet, or its key was refused.
+describe('getLlmProviderKeyField', () => {
+    test('names the box each paid provider takes its key in', () => {
+        expect(getLlmProviderKeyField('anthropic')).toBe('anthropicAPIKey');
+        expect(getLlmProviderKeyField('openai')).toBe('openAIAPIKey');
+        expect(getLlmProviderKeyField('kimi')).toBe('kimiAPIKey');
+    });
+
+    test('is null for the keyless one and for what is not a provider', () => {
+        // Asked of whatever a button carries, a hand-edited session included.
+        expect(getLlmProviderKeyField('free')).toBeNull();
+        expect(getLlmProviderKeyField('toString')).toBeNull();
+        expect(getLlmProviderKeyField(undefined)).toBeNull();
+        expect(getLlmProviderKeyField(42)).toBeNull();
     });
 });
 

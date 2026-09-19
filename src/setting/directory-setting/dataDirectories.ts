@@ -115,7 +115,7 @@ export const dataDirectories: DataDirectoryType[] = [
             const { appLocalStorage } = await import('./appLocalStorage');
             const { pathJoin } = await import('../../server/fileHelpers');
             return pathJoin(
-                appLocalStorage.defaultStorage,
+                appLocalStorage.defaultStorageDirPath,
                 appManagedDataDirNames.BIBLE_DATA,
             );
         },

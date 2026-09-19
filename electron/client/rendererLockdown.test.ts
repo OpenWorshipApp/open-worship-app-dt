@@ -30,7 +30,7 @@ function genNodeScope() {
 }
 
 describe('checkShouldLockdownRenderer', () => {
-    it('names the two windows that hold outside content, nothing else', () => {
+    it('names the windows that hold outside content, nothing else', () => {
         expect(checkShouldLockdownRenderer('/chatbot.html')).toBe(true);
         expect(checkShouldLockdownRenderer('/chatbot.html?uuid=chatbot')).toBe(
             true,
@@ -38,11 +38,17 @@ describe('checkShouldLockdownRenderer', () => {
         expect(checkShouldLockdownRenderer('/aichat.html?uuid=aichat')).toBe(
             true,
         );
+        expect(
+            checkShouldLockdownRenderer(
+                '/markdownPreview.html?preview-file=%2Fa.md&uuid=preview',
+            ),
+        ).toBe(true);
         for (const pathName of [
             '/presenter.html',
             '/reader.html',
             '/setting.html',
             '/screen.html',
+            '/bibleNote.html',
             '',
         ]) {
             expect(checkShouldLockdownRenderer(pathName)).toBe(false);

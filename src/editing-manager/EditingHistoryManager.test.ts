@@ -166,6 +166,8 @@ vi.mock('../helper/FileSource', () => ({
             mocks.files.set(normalizedPath, data);
             return true;
         }),
+        forgetCachedData: vi.fn(),
+        forgetCachedDataUnder: vi.fn(),
     },
 }));
 
@@ -629,6 +631,39 @@ describe('EditingHistoryManager', () => {
 
         expect(await manager.save()).toBe(true);
         expect(mocks.files.get(filePath)).toBe('version 2');
+    });
+
+    // Measured 2026-09-14: the history renames `N` onto `N-head` and reuses its
+    // paths after a clear, while `FileSource`'s read cache kept a path's OLD
+    // bytes for two seconds -- a history cleared and rebuilt inside that window
+    // read back two edits old. Every way the history changes a path without
+    // writing it now forgets that path's cached read.
+    test('forgets the cached read of every path it moves, copies or clears', async () => {
+        const filePath = '/docs/cache.owa';
+        const historyDirPath = `${filePath}.histories`;
+        mocks.dirs.add('/docs');
+        mocks.files.set(filePath, 'version 1');
+        const { FileLineHandler } = await loadEditingHistoryModule();
+        const { FileSource } = await loadMockedModules();
+        const handler = new FileLineHandler(filePath, historyDirPath);
+
+        await handler.ensureHistoriesDir();
+        expect(FileSource.forgetCachedData).toHaveBeenCalledWith(
+            `${historyDirPath}/0-head`,
+        );
+
+        await handler.appendHistory('version 2');
+        for (const movedPath of ['0-head', '0', '1', '1-head']) {
+            expect(FileSource.forgetCachedData).toHaveBeenCalledWith(
+                `${historyDirPath}/${movedPath}`,
+            );
+        }
+
+        await handler.clearHistories();
+        expect(FileSource.forgetCachedDataUnder).toHaveBeenCalledWith(
+            historyDirPath,
+        );
+        expect(mocks.dirs.has(historyDirPath)).toBe(false);
     });
 
     test('moveFilePath skips missing folders and replaces an existing target', async () => {

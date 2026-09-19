@@ -1,4 +1,4 @@
-import { clipboard, shell } from 'electron';
+import { ipcRenderer, shell } from 'electron';
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 
@@ -6,6 +6,7 @@ import {
     commitHash,
     isDev,
     isWindows,
+    isWindowsStore,
     isMac,
     isLinux,
     is64System,
@@ -42,13 +43,20 @@ function openFile(filePath: string) {
 }
 
 const systemUtils = {
+    // Through MAIN, not `clipboard.writeText` here: Electron exposes the
+    // clipboard module to the main process only (it is absent from both the
+    // `Common` and `Renderer` export sets), so reaching it from this side
+    // threw `Cannot read properties of undefined (reading 'writeText')` — an
+    // uncaught error, which this app answers with "Reload is needed". `shell`
+    // below is a `Common` export and stays where it is.
     copyToClipboard(str: string) {
-        clipboard.writeText(str);
+        ipcRenderer.send('main:app:copy-to-clipboard', str);
     },
     openFile,
     commitHash,
     isDev,
     isWindows,
+    isWindowsStore,
     isMac,
     isLinux,
     isUbuntu,

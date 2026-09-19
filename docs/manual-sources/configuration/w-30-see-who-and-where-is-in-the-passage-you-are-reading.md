@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [RD-72, RD-73, RD-74, RD-75, RD-76, RD-57, RD-80, RD-91, RD-113]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-12"
+workflowsVersion: "2026-09-18"
 ---
 # W-30 — See who and where is in the passage you are reading
 
@@ -66,5 +66,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-72` · `RD-73` · `RD-74` · `RD-75` · `RD-76` · `RD-57` · `RD-80` · `RD-91` · `RD-113`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-12).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
 :::

@@ -12,7 +12,7 @@
 // talk to the main process over `require('electron').ipcRenderer` (renderers
 // run with node integration).
 
-import { resolveCdpPort } from './discovery.mjs';
+import { describeDeadPin, resolveCdpPort } from './discovery.mjs';
 
 export const PAGE_KINDS = {
     presenter: 'presenter.html',
@@ -31,6 +31,7 @@ const APP_PAGE_RANK = [
     'appDocumentEditor.html',
     'lyricEditor.html',
     'bibleNote.html',
+    'markdownPreview.html',
     'webEditor.html',
     PAGE_KINDS.setting,
     'about.html',
@@ -96,9 +97,13 @@ export function pickTarget(targets, match) {
 export async function requireLivePort(port) {
     const livePort = await resolveCdpPort({ port });
     if (livePort === null) {
+        // A pin that is dead is a different problem from no app at all, and
+        // the old message said the second for both -- so a script pinned to a
+        // restarted dev app read "start the app" with the app right there.
         throw new Error(
-            'No running Open Worship App was found. Start the app (or ' +
-                '`npm run dev`) and try again.',
+            describeDeadPin() ??
+                'No running Open Worship App was found. Start the app (or ' +
+                    '`npm run dev`) and try again.',
         );
     }
     return livePort;

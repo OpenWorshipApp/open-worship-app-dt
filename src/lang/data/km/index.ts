@@ -46,6 +46,9 @@ const dictionary = {
     'Too many folders to search': 'ថតច្រើនពេកមិនអាចស្វែងរកអស់បានទេ',
     'Too many matching files': 'ឯកសារដែលត្រូវគ្នាច្រើនពេក',
     'Search file name': 'ស្វែងរកឈ្មោះឯកសារ',
+    'Show files not named after a book and chapter':
+        'បង្ហាញឯកសារដែលមិនបានដាក់ឈ្មោះតាមកណ្ឌគម្ពីរ និងជំពូក',
+    'Too many other files': 'ឯកសារផ្សេងទៀតច្រើនពេក',
     // --- Resources: the links inside a `.json` beside the verse.
     'Open Link in Browser': 'បើកតំណនៅក្នុងកម្មវិធីរុករក',
     'Too many links': 'តំណច្រើនពេក',
@@ -56,6 +59,34 @@ const dictionary = {
     'Drop folders here': 'ទម្លាក់ថតនៅទីនេះ',
     'Folder is already added': 'ថតនេះមានក្នុងបញ្ជីរួចហើយ',
     'Drop a folder, not a file': 'សូមទម្លាក់ថត មិនមែនឯកសារទេ',
+    // --- Resources: copying a folder into the data directory.
+    'Copy to Data Directory': 'ចម្លងទៅថតទិន្នន័យ',
+    'Copy this folder, then list the copy here instead?':
+        'ចម្លងថតនេះ រួចបង្ហាញថតដែលបានចម្លងនៅទីនេះជំនួសវិញឬ?',
+    'Folder is already in the data directory':
+        'ថតនេះស្ថិតនៅក្នុងថតទិន្នន័យរួចហើយ',
+    'The data directory is inside this folder':
+        'ថតទិន្នន័យស្ថិតនៅក្នុងថតនេះ ដូច្នេះមិនអាចចម្លងចូលខ្លួនវាបានទេ',
+    'Cannot copy folder': 'មិនអាចចម្លងថតបានទេ',
+    // --- Resources: copying picked files INTO one of the user's folders.
+    'Add Files': 'បន្ថែមឯកសារ',
+    'file copied': 'ឯកសារត្រូវបានចម្លង',
+    'files copied': 'ឯកសារត្រូវបានចម្លង',
+    'file was not copied': 'ឯកសារមិនត្រូវបានចម្លងទេ',
+    'files were not copied': 'ឯកសារមិនត្រូវបានចម្លងទេ',
+    'Cannot copy file': 'មិនអាចចម្លងឯកសារបានទេ',
+    'Tick Others to see them': "ធីក 'ផ្សេងទៀត' ដើម្បីមើលពួកវា",
+    'They are not shown in this list': 'ពួកវាមិនត្រូវបានបង្ហាញក្នុងបញ្ជីនេះទេ',
+    // --- Resources: previewing a markdown file and a bible note file in the
+    // app, and the Markdown Preview window.
+    'Read-only': 'អានតែប៉ុណ្ណោះ',
+    'No notes': 'គ្មានកំណត់ចំណាំ',
+    'Not a bible note file': 'មិនមែនជាឯកសារកំណត់ចំណាំព្រះគម្ពីរទេ',
+    'This file is too large to preview': 'ឯកសារនេះធំពេក មិនអាចមើលជាមុនបានទេ',
+    'Cannot read this file': 'មិនអាចអានឯកសារនេះបានទេ',
+    'File not found': 'រកមិនឃើញឯកសារ',
+    Back: 'ថយក្រោយ',
+    'Open in Default App': 'បើកក្នុងកម្មវិធីលំនាំដើម',
     // --- Bible Find: the results list and its chunk footer.
     'verses found': 'ខគម្ពីរដែលរកឃើញ',
     Results: 'លទ្ធផល',
@@ -601,8 +632,9 @@ const dictionary = {
     Empty: 'ទទេ',
     Enable: 'បើកដំណើរការ',
     'Exit Full': 'ចាកចេញពីពេញ',
+    'Fix slide dimension': 'កែទំហំស្លាយ',
     'Font Family': 'ពុម្ពអក្សរ',
-    'Font Style': 'រចនាប័ទ្មពុម្ពអក្សរ',
+    'Font Weight': 'កម្រាស់ពុម្ពអក្សរ',
     Foreground: 'ផ្ទៃខាងមុខ',
     'Full Width': 'ទទឹងពេញ',
     Full: 'ពេញ',
@@ -1524,6 +1556,47 @@ const dictionary = {
         'ទីតាំងមិនអាចជាចំណុចចាប់ផ្តើម ឬចុងបញ្ចប់បានទេ',
     'Mentioned by': 'បានរៀបរាប់ដោយ',
     'Save as image': 'រក្សាទុកជារូបភាព',
+    // The text copies: the document, then one row per diagram language. The
+    // format names stay Latin — `Markdown` is already in this file that way
+    // (the music help), and every one of them is what the program the text is
+    // pasted into calls itself. Only the direction is translated, since that
+    // is the part a reader is choosing between.
+    'Copy as Markdown': 'ចម្លងជា Markdown',
+    // A menu row is clipped at 210px, so the two flowchart rows are named
+    // short and carry the full name on their hover and on the toast.
+    'Copy as Mermaid (across)': 'ចម្លងជា Mermaid (ផ្ដេក)',
+    'Copy as Mermaid (down)': 'ចម្លងជា Mermaid (បញ្ឈរ)',
+    'Copy as Mermaid Flowchart (left to right)':
+        'ចម្លងជា Mermaid Flowchart (ពីឆ្វេងទៅស្តាំ)',
+    'Copy as Mermaid Flowchart (top down)':
+        'ចម្លងជា Mermaid Flowchart (ពីលើទៅក្រោម)',
+    'Copy as Mermaid Mindmap': 'ចម្លងជា Mermaid ផែនទីគំនិត',
+    'Copy as Graphviz DOT': 'ចម្លងជា Graphviz DOT',
+    'Copy as PlantUML': 'ចម្លងជា PlantUML',
+    // The same five formats named with no verb, for the rows that OPEN a
+    // diagram instead of copying it. The three Mermaid shapes are what the
+    // Mermaid Live Editor menu is made of; the other two carry a name because
+    // the list declares one for every format. `Mindmap` is translated here and
+    // in `Copy as Mermaid Mindmap` above, or one menu would name the same
+    // shape two ways. The last two are product names and stand as they are —
+    // which means neither may ever be written into the knowledge as an
+    // `[en:tran:…]` template: `tran.test.mjs` reads a translation identical to
+    // its key as no translation at all, and cannot tell the two apart.
+    'Mermaid (across)': 'Mermaid (ផ្ដេក)',
+    'Mermaid (down)': 'Mermaid (បញ្ឈរ)',
+    'Mermaid Mindmap': 'Mermaid ផែនទីគំនិត',
+    'Graphviz DOT': 'Graphviz DOT',
+    PlantUML: 'PlantUML',
+    'Open in Mermaid Live': 'បើកក្នុង Mermaid Live',
+    'Open the diagram in the Mermaid Live Editor':
+        'បើកដ្យាក្រាមក្នុងកម្មវិធីកែ Mermaid Live',
+    'Opening in the Mermaid Live Editor':
+        'កំពុងបើកក្នុងកម្មវិធីកែ Mermaid Live',
+    // Said when the diagram is too long to hand the browser as a link; the
+    // link goes to the clipboard instead, so the sentence has to say what to
+    // do with it.
+    'The link is too long for the browser. It has been copied — paste it into the address bar.':
+        'តំណវែងពេកសម្រាប់កម្មវិធីរុករក។ វាត្រូវបានចម្លងរួចហើយ — សូមបិទភ្ជាប់វាទៅក្នុងរបារអាសយដ្ឋាន។',
     'Save preset': 'រក្សាទុកគំរូ',
     'Delete preset': 'លុបគំរូ',
     Presets: 'គំរូ',
@@ -1561,6 +1634,38 @@ const dictionary = {
     pink: 'ផ្កាឈូក',
     orange: 'ទឹកក្រូច',
     purple: 'ស្វាយ',
+
+    // --- Keys on failure paths that had no Khmer at all (EN-20, 2026-09-18).
+    // `src/lang/tranKeyCoverage.test.ts` now fails on a key like these.
+    // Machine-authored Khmer following the dictionary's existing conventions;
+    // a native speaker should review the phrasing.
+    'Failed to apply to screen. Please make sure the screen is open.':
+        'បរាជ័យក្នុងការដាក់ទៅអេក្រង់។ សូមប្រាកដថាអេក្រង់ត្រូវបានបើក។',
+    'Failed to sync slide. Please make sure the screen is open.':
+        'បរាជ័យក្នុងការធ្វើសមកាលកម្មស្លាយ។ សូមប្រាកដថាអេក្រង់ត្រូវបានបើក។',
+    'Error occurred during reading image data from clipboard':
+        'មានបញ្ហាពេលកំពុងអានទិន្នន័យរូបភាពពីក្តារចុច',
+    'Error occurred during getting image file extension':
+        'មានបញ្ហាពេលកំពុងទទួលបានកន្ទុយឯកសាររូបភាព',
+    'We were sorry, but we are unable to get bible list at the moment please try again later':
+        'សូមអភ័យទោស យើងមិនអាចទទួលបានបញ្ជីព្រះគម្ពីរនៅពេលនេះទេ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ',
+    // --- Tooltips that were English in every language (EN-21, 2026-09-18):
+    // the lookup history chips, the verse numbers, the divider arrows, the
+    // Mini Screen card, the Bible Note footer. Machine-authored Khmer following
+    // the dictionary's existing conventions; a native speaker should review.
+    'Double click to put back, shift double click to put back split':
+        'ចុចពីរដងដើម្បីដាក់ត្រឡប់វិញ, Shift + ចុចពីរដងដើម្បីដាក់ត្រឡប់វិញដោយបំបែក',
+    'Tab to complete': 'Tab ដើម្បីបំពេញ',
+    'Double click to select verses': 'ចុចពីរដងដើម្បីជ្រើសរើសខគម្ពីរ',
+    'Click to remove extra Bible': 'ចុចដើម្បីដកព្រះគម្ពីរបន្ថែមចេញ',
+    'Collapse left panel': 'បង្រួមផ្ទាំងខាងឆ្វេង',
+    'Collapse right panel': 'បង្រួមផ្ទាំងខាងស្តាំ',
+    'Collapse top panel': 'បង្រួមផ្ទាំងខាងលើ',
+    'Collapse bottom panel': 'បង្រួមផ្ទាំងខាងក្រោម',
+    Screen: 'អេក្រង់',
+    'Open in Markdown Editor': 'បើកក្នុងកម្មវិធីកែ Markdown',
+    'Open Bible Lookup': 'បើកផ្ទាំងស្វែងរកព្រះគម្ពីរ',
+    'Change Bible Key': 'ប្ដូរកូនសោរព្រះគម្ពីរ',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

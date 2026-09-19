@@ -12,7 +12,12 @@ import { getParamFileFullName, getParamIdNum } from '../../helper/domHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import appProvider from '../../server/appProvider';
 import { appHomeStorage } from '../../server/appHomeStorage';
-import { pathJoin, pathResolve, fsExistSync } from '../../server/fileHelpers';
+import {
+    pathBasename,
+    pathJoin,
+    pathResolve,
+    fsExistSync,
+} from '../../server/fileHelpers';
 import {
     getAppFilePathFromFile,
     type LocalFile,
@@ -23,7 +28,9 @@ import {
     DEFAULT_LANG_CODE,
     getAllLangsAsync,
     initAllLangCss,
+    tran,
 } from '../../lang/langHelpers';
+import { getBibleNotePreviewFilePath } from './bibleNotePreviewHelpers';
 import { acquireLookupData } from '../../location-name-lookup/lookupDataHelpers';
 import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
@@ -182,9 +189,18 @@ function excalidrawClearLibrariesFileList() {
 export async function initBibleNote({
     note,
     noteItem,
+    isReadOnly = false,
 }: Readonly<{
     note: Note;
     noteItem: NoteItem;
+    /**
+     * A preview of a note file from outside the Bible Notes folder
+     * (`bibleNotePreviewHelpers.ts`). The editor is locked AND nothing is
+     * saved: the lock is the editor's to enforce, and a lock the user can
+     * reach is not the only thing standing between a preview and somebody's
+     * file on disk -- `saveData` refuses on its own.
+     */
+    isReadOnly?: boolean;
 }>) {
     void initAllLangCss();
     const langDataList = await getAllLangsAsync();
@@ -234,7 +250,7 @@ export async function initBibleNote({
             return noteItem.content || null;
         },
         saveData: async (data: string) => {
-            if (data === noteItem.content) {
+            if (isReadOnly || data === noteItem.content) {
                 return;
             }
             noteItem.content = data;
@@ -255,6 +271,11 @@ export async function initBibleNote({
         excalidrawSaveLibrariesFile,
     };
     const bibleNote = new BibleNote(bibleNoteProps);
+    if (isReadOnly) {
+        // Set by the host, which the editor shows as LOCKED: its own read-only
+        // toggle cannot be flipped back from inside the window.
+        bibleNote.isReadOnly = true;
+    }
 
     // per-note: a module-level shared timer would drop note A's reload when
     // note B changes within the debounce window
@@ -271,7 +292,13 @@ export async function initBibleNote({
                     return;
                 }
                 attemptTimeout(async () => {
-                    if (bibleNote.getIsFocusing() || document.hasFocus()) {
+                    // The wait protects typing in progress from being
+                    // overwritten; a preview has none, and following the file
+                    // as it changes is the point of keeping one open.
+                    if (
+                        !isReadOnly &&
+                        (bibleNote.getIsFocusing() || document.hasFocus())
+                    ) {
                         await new Promise((resolve) => {
                             setTimeout(resolve, 3_000);
                         });
@@ -284,6 +311,13 @@ export async function initBibleNote({
                     ) {
                         return;
                     }
+                    if (isReadOnly) {
+                        // Nothing else moves it on in a preview -- `saveData`
+                        // is what does that in an editable window -- so a file
+                        // edited back to what it was would otherwise never be
+                        // shown again.
+                        noteItem.content = newNoteItem.content;
+                    }
                     bibleNote.content = newNoteItem.content;
                 });
             },
@@ -295,8 +329,8 @@ export async function initBibleNote({
     return bibleNote;
 }
 
-async function getNoteAndNoteItem() {
-    const fileFullName = getParamFileFullName(globalThis.location.href);
+function getNoteFilePathInNotesDir(url: string) {
+    const fileFullName = getParamFileFullName(url);
     if (fileFullName === null) {
         throw new Error('Note file not specified');
     }
@@ -306,7 +340,15 @@ async function getNoteAndNoteItem() {
     if (dirPath === null) {
         throw new Error('Note directory not set');
     }
-    const filePath = pathJoin(dirPath, fileFullName);
+    return pathJoin(dirPath, fileFullName);
+}
+
+async function getNoteAndNoteItem() {
+    const url = globalThis.location.href;
+    const previewFilePath = getBibleNotePreviewFilePath(url);
+    const isReadOnly = previewFilePath !== null;
+    const filePath = previewFilePath ?? getNoteFilePathInNotesDir(url);
+    const fileFullName = pathBasename(filePath);
     if (fsExistSync(filePath) === false) {
         throw new Error(`Note file not found: ${fileFullName}`);
     }
@@ -320,17 +362,22 @@ async function getNoteAndNoteItem() {
         throw new Error('Note item ID not specified');
     }
     const noteItem = note.getItemById(noteItemId);
-    if (noteItem === null) {
+    // A verse item (a verse's highlights and comments) has no editor content,
+    // and an editor opened on it would be an empty page.
+    if (noteItem === null || noteItem.isVerseItem) {
         throw new Error(`Note item not found: ${noteItemId}`);
     }
-    return { note, noteItem };
+    return { note, noteItem, isReadOnly };
 }
 
 export async function getBibleNoteData() {
     try {
         const data = await getNoteAndNoteItem();
         const { name } = data.note.fileSource;
-        const suffix = `${name}: ${data.noteItem.title}`;
+        let suffix = `${name}: ${data.noteItem.title}`;
+        if (data.isReadOnly) {
+            suffix += ` (${tran('Read-only')})`;
+        }
         document.title = `${appProvider.windowTitle} - ${suffix}`;
         return data;
     } catch (error) {

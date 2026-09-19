@@ -20,6 +20,20 @@ export const AGENT_FILE_ACTIONS = [
     'create',
     'update',
     'rename',
+    'delete',
+];
+
+/**
+ * One slide at a time, for slide documents only: a song's slides are made
+ * from its words, so a song has none of its own to change.
+ */
+export const AGENT_SLIDE_ACTIONS = [
+    'slides',
+    'add-slide',
+    'update-slide',
+    'delete-slide',
+    'move-slide',
+    'duplicate-slide',
 ];
 
 /**
@@ -28,22 +42,24 @@ export const AGENT_FILE_ACTIONS = [
  */
 export const AGENT_FILE_ACTION_TEXT =
     '`list` names what is there, `info` reads one, `create` makes a new one, ' +
-    '`update` changes one, `rename` renames one.';
+    '`update` changes one, `rename` renames one, `delete` moves one to the ' +
+    'trash.';
 
 /**
  * The sentence both tools end on, and the most important one in either.
  *
- * A volunteer must never discover that their song changed because an
- * assistant decided it should. `update` writes the editing history rather than
- * the file, so it is undoable and the document is left visibly dirty -- but
- * only the model can tell them that, and it will not unless it is told to.
+ * A volunteer must never discover that their song changed, or went, because
+ * an assistant decided it should. `update` writes the editing history rather
+ * than the file, `delete` is a move to the trash, and every change keeps a
+ * backup `owa_undo` puts back (`src/helper/agentBackupHelpers.ts`) -- but only
+ * the model can tell them that, and it will not unless it is told to.
  */
 export const AGENT_FILE_SAFETY_TEXT =
-    'Nothing is deleted and nothing is overwritten: `create` refuses a name ' +
-    'already in use, and `update` leaves the change UNSAVED (a * beside the ' +
-    'name, undone with Ctrl+Z) for the user to Save themselves -- always say ' +
-    'so afterwards. Ask before changing anything they did not ask you to ' +
-    'change.';
+    'Nothing is lost: `delete` goes to the trash, `create` refuses a taken ' +
+    'name, `update` -- like every edit -- stays UNSAVED (a * beside the ' +
+    'name, Ctrl+Z undoes it) for the user to Save, and every change keeps a ' +
+    'backup owa_undo puts back -- say so afterwards. Ask before changing ' +
+    'what they did not ask about.';
 
 /**
  * Ask the app to act on one of the user's documents.
@@ -104,5 +120,6 @@ export function formatAgentFileResult(result) {
             text: String(result.reason ?? 'That could not be done.'),
         };
     }
-    return { isError: false, text: JSON.stringify(result, null, 2) };
+    // Compact: see `toTextResult` in owaTools.mjs.
+    return { isError: false, text: JSON.stringify(result) };
 }

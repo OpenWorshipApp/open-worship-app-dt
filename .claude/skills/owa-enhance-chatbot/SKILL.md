@@ -274,12 +274,11 @@ credit — ask the user first) are the ready-made harnesses.
 npm run lint
 ```
 
-It is `&&`-chained: the first failing stage stops the rest, so a `test:all`
-failure means the typecheck, prettier, eslint and build never ran. Read the log
-body, not the exit code. Expect `lint:pre` to rewrite formatting.
-
-Remember the gate ends in a `build`, which kills the running app — so this is the
-last step, after live verification.
+It is `&&`-chained: the first failing stage stops the rest, so a typecheck
+failure means the tests, prettier, eslint and the build check never ran. Read the
+log body, not the exit code. It only checks (`EN-16`): a `lint:pre` failure means
+`npm run format`, and its build goes to a temp dir, so the running app survives
+it. Still the last step, after live verification.
 
 ### 6. Land the paper trail
 

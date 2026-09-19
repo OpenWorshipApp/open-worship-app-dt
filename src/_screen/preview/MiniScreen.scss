@@ -35,9 +35,12 @@
       border-radius: 3px;
     }
 
+    // A FEW pulses, then a steady on-air colour -- never `infinite` (`EN-19`,
+    // memory `infinite-paint-animation-at-rest`). The pulse restarts whenever
+    // the screen is shown again.
     &.showing .app-showing-indicator {
-      animation: app-live-blinking-amin 3s cubic-bezier(0.075, 0.82, 0.165, 1)
-        infinite;
+      color: rgb(213, 72, 154);
+      animation: app-live-blinking-amin 3s cubic-bezier(0.075, 0.82, 0.165, 1) 3;
     }
   }
 

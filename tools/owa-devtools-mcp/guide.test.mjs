@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, beforeEach } from 'vitest';
 
+import { genDestructiveLabelRule } from './destructiveLabel.mjs';
 import {
     detectRecipeWindow,
     dropStepsAlreadyDone,
@@ -9,6 +10,9 @@ import {
     toGuideSteps,
     toKeystroke,
 } from './guide.mjs';
+import { loadTranBundle } from './tran.mjs';
+
+const GUARD = { rule: genDestructiveLabelRule(loadTranBundle()) };
 
 // The runtime is a string evaluated in the app page, so it is exercised the
 // way the app gets it: evaluated, then driven through its own api.
@@ -1264,6 +1268,110 @@ describe('a control that only resembles the step', () => {
         const result = await window.__owaGuide.act();
         expect(result.lastResult.done).toBe(true);
         expect(clicked).toEqual(['toggle']);
+    });
+});
+
+// The walkthrough was the one press the firewall never read: `owa_guide_step`
+// with `do` performed whatever `find` or `press` the step was started with.
+describe('a step that is not the card to press', () => {
+    it('rings a control that cannot be undone and leaves it to the user', async () => {
+        document.body.innerHTML =
+            '<button id="clear" title="Clear All [F6]">Clear All</button>';
+        let clicks = 0;
+        document.getElementById('clear').addEventListener('click', () => {
+            clicks += 1;
+        });
+        let helpAsked = 0;
+        document.addEventListener('owa-guide-help', () => {
+            helpAsked += 1;
+        });
+        const started = startGuide({
+            mode: 'demo',
+            guard: GUARD,
+            steps: [
+                { text: 'Clear everything.', finds: ['Clear All'] },
+                { text: 'Done.', finds: [] },
+            ],
+        });
+        expect(started.pressRefused).toBe('destructive');
+        const status = await window.__owaGuide.act();
+        expect(clicks).toBe(0);
+        expect(status.lastResult).toMatchObject({
+            done: false,
+            refused: 'destructive',
+            isUserTurn: true,
+        });
+        // Nobody to ask: the assistant may not press it either.
+        expect(helpAsked).toBe(0);
+        // Still ringed, and the user pressing it themselves moves on.
+        expect(status.isTargetFound).toBe(true);
+        document.getElementById('clear').click();
+        expect(window.__owaGuide.status().stepNumber).toBe(2);
+    });
+
+    it('will not press the key a destructive control is named by', async () => {
+        document.body.innerHTML =
+            '<button title="Clear All [F6]">A</button>' +
+            '<button title="Clear Bible [F9]">B</button>';
+        const seen = [];
+        document.addEventListener('keydown', (event) => {
+            seen.push(event.key);
+        });
+        startGuide({
+            mode: 'demo',
+            guard: GUARD,
+            steps: [
+                { text: 'Press F6.', finds: [], keys: toKeystroke('F6') },
+                { text: 'Press F9.', finds: [], keys: toKeystroke('F9') },
+                { text: 'Done.', finds: [] },
+            ],
+        });
+        const refused = await window.__owaGuide.act();
+        expect(seen).toEqual([]);
+        expect(refused.lastResult.refused).toBe('destructive');
+        window.__owaGuide.next();
+        const pressed = await window.__owaGuide.act();
+        expect(seen).toEqual(['F9']);
+        expect(pressed.lastResult.did).toBe('pressed');
+    });
+
+    it('never answers a question the app is asking', async () => {
+        document.body.innerHTML =
+            '<div id="app-confirm-popup"><button id="yes">Yes</button></div>';
+        let clicks = 0;
+        document.getElementById('yes').addEventListener('click', () => {
+            clicks += 1;
+        });
+        startGuide({
+            mode: 'demo',
+            guard: GUARD,
+            steps: [
+                { text: 'Say yes.', finds: ['Yes'] },
+                { text: 'Done.', finds: [] },
+            ],
+        });
+        const status = await window.__owaGuide.act();
+        expect(clicks).toBe(0);
+        expect(status.lastResult.refused).toBe('question');
+    });
+
+    // A caller from before the guard existed (or the firewall off) presses
+    // exactly as it did.
+    it('presses as before when started without a guard', async () => {
+        document.body.innerHTML = '<button id="clear">Clear All</button>';
+        let clicks = 0;
+        document.getElementById('clear').addEventListener('click', () => {
+            clicks += 1;
+        });
+        startGuide({
+            mode: 'demo',
+            steps: [
+                { text: 'Clear everything.', finds: ['Clear All'] },
+                { text: 'Done.', finds: [] },
+            ],
+        });
+        await window.__owaGuide.act();
+        expect(clicks).toBe(1);
     });
 });
 

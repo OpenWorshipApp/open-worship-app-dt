@@ -29,6 +29,7 @@ import {
     removeVerseAnnotation,
     updateVerseHighlightColor,
 } from './verseAnnotationHelpers';
+import VerseAnnotationLineComp from './VerseAnnotationLineComp';
 
 function checkIsHighlight(
     annotation: VerseHighlightType | VerseCommentType,
@@ -82,7 +83,6 @@ export default function RenderVerseAnnotationComp({
     // that cannot render.
     const viewController = use(BibleItemsViewControllerContext);
     const viewControllerRef = useAppCurrentRef(viewController);
-    const isHighlight = checkIsHighlight(annotation);
     const annotationRef = useAppCurrentRef(annotation);
     const filePathRef = useAppCurrentRef(filePath);
     const noteItemIdRef = useAppCurrentRef(noteItemId);
@@ -184,38 +184,16 @@ export default function RenderVerseAnnotationComp({
             <li
                 className={
                     'list-group-item app-verse-annotation' +
-                    ' app-caught-hover-pointer app-has-action-rail' +
-                    (isHighlight ? '' : ' app-verse-annotation--comment')
+                    ' app-caught-hover-pointer app-has-action-rail'
                 }
                 title={tran('Click to open the verse')}
                 onClick={handleOpening}
                 onContextMenu={handleContextMenuOpening}
             >
-                <div className="app-verse-annotation__line app-ellipsis">
-                    {/* The words wear the mark itself — the same wash the
-                        reader paints them with, from the same custom property.
-                        A comment gets no wash: the sheet underlines it, exactly
-                        as the verse is underlined. */}
-                    {/* The face is inherited from the verse block above, which
-                        owns it for the whole row — see `VerseNoteItemRenderComp`. */}
-                    <span
-                        className="app-verse-annotation__text"
-                        style={
-                            isHighlight
-                                ? {
-                                      backgroundColor: `var(--owa-verse-hl-${annotation.color})`,
-                                  }
-                                : undefined
-                        }
-                    >
-                        {annotation.text}
-                    </span>
-                    {isHighlight || !annotation.comment ? null : (
-                        <span className="app-verse-annotation__comment">
-                            {annotation.comment}
-                        </span>
-                    )}
-                </div>
+                {/* The words wear the mark itself — the same wash the reader
+                    paints them with. A comment gets no wash: it is underlined,
+                    exactly as the verse is. */}
+                <VerseAnnotationLineComp annotation={annotation} />
                 <div className="app-action-rail app-action-rail--pinned">
                     <ContextMenuDotsButtonComp
                         onOpening={handleContextMenuOpening}

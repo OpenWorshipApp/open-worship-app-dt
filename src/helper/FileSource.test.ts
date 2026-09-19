@@ -287,6 +287,18 @@ vi.mock('../others/CacheManager', () => ({
         async delete(key: string) {
             this.cache.delete(key);
         }
+
+        deleteSync(key: string) {
+            this.cache.delete(key);
+        }
+
+        deleteMatchedSync(checkIsMatched: (key: string) => boolean) {
+            for (const key of [...this.cache.keys()]) {
+                if (checkIsMatched(key)) {
+                    this.cache.delete(key);
+                }
+            }
+        }
     },
 }));
 
@@ -431,6 +443,36 @@ describe('FileSource', () => {
             await FileSource.readFileData('/docs/silent.txt', true),
         ).toBeNull();
         expect(handleErrorMock).not.toHaveBeenCalled();
+    });
+
+    // Measured 2026-09-14 through the editing history: a path whose bytes
+    // change by a rename or a copy -- not `writeFileData` -- read back its OLD
+    // bytes until the cache entry lapsed, and a history rebuilt inside that
+    // window came back two edits old. Forgetting the path is the fix.
+    test('forgets a cached read whose file changed without writeFileData', async () => {
+        const headPath = '/docs/song.owa.histories/1-head';
+        const neighbourPath = '/docs/song.owa.historiesX/1-head';
+        setFile(headPath, 'two edits old');
+        setFile(neighbourPath, 'a neighbour');
+
+        const { default: FileSource } = await loadFileSourceModule();
+        expect(await FileSource.readFileData(headPath)).toBe('two edits old');
+        await FileSource.readFileData(neighbourPath);
+        state.files.set(headPath, 'current');
+        state.files.set(neighbourPath, 'neighbour changed');
+
+        // The behaviour that bit: the cached bytes, not the file's.
+        expect(await FileSource.readFileData(headPath)).toBe('two edits old');
+        FileSource.forgetCachedData(headPath);
+        expect(await FileSource.readFileData(headPath)).toBe('current');
+
+        state.files.set(headPath, 'after the clear');
+        FileSource.forgetCachedDataUnder('/docs/song.owa.histories');
+        expect(await FileSource.readFileData(headPath)).toBe('after the clear');
+        // A folder whose name merely starts the same way is not inside it.
+        expect(await FileSource.readFileData(neighbourPath)).toBe(
+            'a neighbour',
+        );
     });
 
     test('writes text and base64 data and reports save failures', async () => {

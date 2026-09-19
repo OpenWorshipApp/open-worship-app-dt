@@ -168,17 +168,6 @@ export function toVerseBibleItem(verseKey: string) {
 }
 
 /**
- * The bible key a verse key was marked in — `"(KJV) GEN 22:1"` → `"KJV"`.
- *
- * Read off the string rather than through `fromBibleVerseKey` so a row can pick
- * its font without parsing a target it is not going to use.
- */
-export function toVerseBibleKey(verseKey: string) {
-    const index = verseKey.indexOf(') ');
-    return index === -1 ? null : verseKey.slice(1, index);
-}
-
-/**
  * Open a verse as ANOTHER bible view rather than replacing what is on screen.
  *
  * `BibleItemRenderComp`'s own opening is a plain click on a list of passages you

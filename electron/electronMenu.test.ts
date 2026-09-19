@@ -32,6 +32,12 @@ vi.mock('./finderOverlayHelpers', async (importOriginal) => {
     return { ...actual, openFindOverlay };
 });
 
+// Read inside the menu builder, so a getter over mutable state lets one test
+// build the menu as a Store install without `vi.resetModules()`.
+const platformFlags = vi.hoisted(() => {
+    return { isWindowsStore: false };
+});
+
 vi.mock('./electronHelpers', () => ({
     copyDebugInfoToClipboard,
     goDownload,
@@ -42,6 +48,9 @@ vi.mock('./electronHelpers', () => ({
     // `aiHelpers` reads it to decide what an unset master switch means, and
     // the Help menu asks `aiHelpers` whether to carry the chatbot item.
     isDev: false,
+    get isWindowsStore() {
+        return platformFlags.isWindowsStore;
+    },
 }));
 
 vi.mock('./client/appInfo', () => ({
@@ -57,6 +66,7 @@ import { createMockBrowserWindow } from './testUtils';
 describe('electronMenu', () => {
     beforeEach(() => {
         electronMockState.reset();
+        platformFlags.isWindowsStore = false;
         copyDebugInfoToClipboard.mockClear();
         goDownload.mockClear();
         openFindOverlay.mockClear();
@@ -306,6 +316,21 @@ describe('electronMenu', () => {
 
         clickSubmenuItem(helpMenu, 'Check for Updates Online');
         expect(goDownload).toHaveBeenCalledTimes(1);
+    });
+
+    test('a Store install drops "Check for Updates Online"', () => {
+        // The Store is the only thing that can update an MSIX install, and
+        // `Check for Updates` opens it. The website installer beside it would
+        // leave a second, separately-updating copy of the app on the machine.
+        platformFlags.isWindowsStore = true;
+        initMenu(createAppController() as any);
+
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        const help = template.find((item: any) => item.role === 'help');
+        const labels = help.submenu.map((item: any) => item.label);
+        expect(labels).toContain('Check for Updates');
+        expect(labels).not.toContain('Check for Updates Online');
     });
 
     test('the macOS app menu opens About and Preferences', () => {

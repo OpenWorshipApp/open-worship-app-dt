@@ -201,7 +201,7 @@ vi.mock('../../helper/helpers', () => ({
 
 vi.mock('../directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
-        defaultStorage: '/storage',
+        defaultStorageDirPath: '/storage',
     },
 }));
 

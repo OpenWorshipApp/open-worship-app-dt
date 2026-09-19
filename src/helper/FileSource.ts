@@ -156,6 +156,30 @@ export default class FileSource
         return `file-data-${filePath}`;
     }
 
+    /**
+     * Forget what the short read cache holds for a path whose bytes changed
+     * some way OTHER than `writeFileData` -- a rename onto it, a copy onto it,
+     * a delete. The editing history does exactly that on every step (`N`
+     * becomes `N-head` by a rename) and reuses its paths once a history is
+     * cleared, so a path read inside the cache's two seconds read back its OLD
+     * bytes: measured 2026-09-14, a document whose history was cleared and
+     * rebuilt within that window came back two edits old, and the diff patch
+     * the history wrote from that stale read would have broken its Ctrl+Z.
+     */
+    static forgetCachedData(filePath: string) {
+        fileDataCacheManager.deleteSync(this.toDataCacheKey(filePath));
+    }
+
+    /** `forgetCachedData` for every path inside a folder deleted whole. */
+    static forgetCachedDataUnder(dirPath: string) {
+        const prefix = this.toDataCacheKey(dirPath);
+        fileDataCacheManager.deleteMatchedSync((key) => {
+            return (
+                key.startsWith(`${prefix}/`) || key.startsWith(`${prefix}\\`)
+            );
+        });
+    }
+
     static async readFileData(filePath: string, isSilent?: boolean) {
         const key = this.toDataCacheKey(filePath);
         // Same lock as writeFileData — with separate locks a read can slip in

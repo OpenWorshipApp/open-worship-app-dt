@@ -1,11 +1,11 @@
 ---
 name: tran-missing-key-throws-in-dev
-description: A missing km translation key THROWS in dev (blanks the page); dynamic tran(prop) sites are invisible to literal grepping
+description: A missing km translation key THROWS in dev (blanks the page); `tranKeyCoverage.test.ts` catches static keys since 2026-09-18, dynamic tran(prop) sites still need a live Khmer pass
 metadata: 
   node_type: memory
   type: project
   originSessionId: 65d709fb-f37b-4655-a432-072843474442
-  modified: 2026-08-07T13:52:19.672Z
+  modified: 2026-09-18T23:47:56.524Z
 ---
 
 `tran()` in `src/lang/langHelpers.ts` throws `Translation for text "X" not
@@ -14,14 +14,26 @@ back to English. A single missing key blanks whatever subtree renders it (React
 error, no boundary). Production silently falls back to the English string.
 
 **Why:** it makes missing-key bugs invisible in English (the default locale
-returns early before any lookup) and fatal in Khmer — so a lint/typecheck/test
-pass proves nothing about translation coverage.
+returns early before any lookup) and fatal in Khmer. Until 2026-09-18 a
+lint/typecheck/test pass proved nothing about translation coverage.
 
-**How to apply:** when auditing coverage, grepping `tran('literal')` is not
-enough. Two classes are invisible to it:
+**Now the gate catches the STATIC half** (`EN-20`):
+`src/lang/tranKeyCoverage.test.ts` (in `test:all`, so in `npm run lint`) fails
+naming any key the `km` dictionary lacks — a literal, a `+` chain (read as ONE
+key), or a string constant. It found 5 keys on failure paths that had no Khmer
+at all. It reads the dictionary as SOURCE and evaluates the object literal, so
+unquoted identifier keys count and it has none of the false positives below.
+A new label in `src/` fails the gate until its Khmer string is added. Keep new
+keys statically readable — a literal per branch (`genCollapseTitle` in
+`FlexResizeActorComp.tsx`), not a key looked up from a table — or the test
+cannot see them.
 
-- **Concatenation** — `tran('a ' + 'b')` is ONE key at runtime. Merge adjacent
-  literals joined by `+` or you get false misses.
+**How to apply:** the test cannot read what is built at runtime. Two classes
+still need the live Khmer pass:
+
+- **Concatenation with a variable** — `tran('a ' + b)`. (Pure literal chains
+  `tran('a ' + 'b')` are ONE key at runtime; the test merges them, and an ad-hoc
+  grep must too or it reports false misses.)
 - **Dynamic** `tran(prop)` — e.g. `PositionSizeFieldComp` (`BoxPositionSizeComp.tsx`)
   called `tran(name)` fed by `name="X:"`. Found only by running the app in
   Khmer. Sweep these by finding components that call `tran(<destructured prop>)`
@@ -64,7 +76,15 @@ that the live app rendered perfectly.) **Never file a missing-key finding from a
 static sweep alone; confirm the actual console throw with the app running in
 Khmer.**
 
-Separately: ~66 user-facing strings never reach `tran()` at all (hardcoded
+Separately: ~66 user-facing strings never reached `tran()` at all (hardcoded
 `title=`/`aria-label=`/`placeholder=` JSX literals, plus wrappers like
 `SlideEditorToolTitleComp` and `RenderCardComp` that render `title` raw). Those
-stay English in Khmer mode and are a pre-existing gap, not a dictionary problem.
+stay English in Khmer mode and are a pre-existing gap, not a dictionary problem
+— and the test above cannot see them, because they never call `tran()`.
+2026-09-18 (`EN-21`) routed the 13 a volunteer meets most: the Reader's lookup
+history chip, verse numbers, Tab hint, split button, the divider arrows (now
+*Collapse … panel*), the Mini Screen card, the background icons and the Bible
+Note footer. `triage.mjs --area=ui` lists the literal ones left. The four
+English titles of the static `receiveSyncScreen` receivers are deliberate: they
+also run in the screen window, where a `tran()` before its language data loads
+throws in dev (same reason as `ScreenCloseButtonComp`).

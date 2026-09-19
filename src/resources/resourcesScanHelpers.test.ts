@@ -19,12 +19,15 @@ vi.mock('../server/appProvider', () => ({
 }));
 
 import {
+    checkIsBookChapterName,
     checkIsMatchedName,
+    checkIsResourceFileListed,
     checkIsSearchedName,
     compareResourceFiles,
     fromResourceTargetsKey,
     groupResourceFiles,
     invalidateResourcesScanCache,
+    MAX_OTHER_MATCHES,
     MAX_SCAN_DEPTH,
     MAX_SEARCH_MATCHES,
     normalizeResourceSearchText,
@@ -268,6 +271,8 @@ describe('toResourceIcon', () => {
         ['a.pptx', 'file-earmark-ppt'],
         ['a.docx', 'file-earmark-word'],
         ['a.own', 'journal-text'],
+        ['a.md', 'markdown'],
+        ['a.MARKDOWN', 'markdown'],
         ['a.PNG', 'file-earmark-image'],
         ['a.mp4', 'file-earmark-play'],
         ['a.zzz', 'question-diamond'],
@@ -341,6 +346,24 @@ describe('scanResourceFiles', () => {
         expect(result?.filePaths).toHaveLength(MAX_SCAN_DEPTH + 1);
     });
 
+    test('reads the folder and two levels under it, never a third', async () => {
+        installTree({
+            '/root': ['PSA.1.top.pdf', 'a/'],
+            '/root/a': ['PSA.1.one.pdf', 'b/'],
+            '/root/a/b': ['PSA.1.two.pdf', 'c/'],
+            '/root/a/b/c': ['PSA.1.three.pdf'],
+        });
+        const result = await scanResourceFiles('/root', PSA_1);
+        expect(result?.filePaths).toEqual([
+            '/root/a/PSA.1.one.pdf',
+            '/root/PSA.1.top.pdf',
+            '/root/a/b/PSA.1.two.pdf',
+        ]);
+        expect(readdirMock).toHaveBeenCalledTimes(3);
+        // Stopping at the depth is the design, not a budget running out.
+        expect(result?.isTruncated).toBe(false);
+    });
+
     test('a subfolder that cannot be read is skipped, not fatal', async () => {
         installTree({
             '/root': ['locked/', 'PSA.1.pdf'],
@@ -363,7 +386,13 @@ describe('scanResourceFiles', () => {
 
     test('returns null and caches nothing when asked to stop', async () => {
         installTree({ '/root': ['PSA.1.pdf'] });
-        const result = await scanResourceFiles('/root', PSA_1, '', () => true);
+        const result = await scanResourceFiles(
+            '/root',
+            PSA_1,
+            '',
+            false,
+            () => true,
+        );
         expect(result).toBeNull();
         // A partial walk must not be served to the next caller as the answer.
         readdirMock.mockClear();
@@ -503,5 +532,144 @@ describe('scanResourceFiles with a search text', () => {
         installTree({ '/root': ['PSA.1.pdf', 'anything.txt'] });
         const result = await scanResourceFiles('/root', PSA_1, '   ');
         expect(result?.searchedFilePaths).toEqual([]);
+    });
+});
+
+describe('checkIsBookChapterName', () => {
+    test.each([
+        ['GEN.4.pdf', true],
+        ['gen.50.notes.docx', true],
+        ['1CH.0.json', true],
+        ['PSA.-1.pdf', true],
+        // A book only the KJVD and Douay-Rheims models carry still counts.
+        ['TOB.1.pdf', true],
+        ['Jesus-family-line.jpeg', false],
+        // Shaped like one, but `IMG` is no book.
+        ['IMG.2.jpg', false],
+        // A book, spelled the way no chapter is -- so it shows up somewhere.
+        ['GEN.01.pdf', false],
+        ['GEN.pdf', false],
+        ['GEN.4', false],
+        ['README', false],
+        ['.GEN.4.pdf', false],
+    ])('%s -> %s', (fileFullName, expected) => {
+        expect(checkIsBookChapterName(fileFullName)).toBe(expected);
+    });
+});
+
+describe('scanResourceFiles with Others', () => {
+    const GEN_4 = [{ bookKey: 'GEN', chapter: 4 }];
+
+    beforeEach(() => {
+        invalidateResourcesScanCache();
+    });
+
+    test('lists the files named after no chapter, apart from the rest', async () => {
+        installTree({
+            '/root': [
+                'GEN.4.pdf',
+                'GEN.5.pdf',
+                'Jesus-family-line.jpeg',
+                'sub/',
+            ],
+            '/root/sub': ['map.png', 'IMG.2.jpg', 'GEN.01.pdf'],
+        });
+        const result = await scanResourceFiles('/root', GEN_4, '', true);
+        expect(result?.filePaths).toEqual(['/root/GEN.4.pdf']);
+        // `GEN.5.pdf` is another chapter's file, not an "other" one.
+        expect(result?.otherFilePaths).toEqual([
+            '/root/Jesus-family-line.jpeg',
+            '/root/sub/IMG.2.jpg',
+            '/root/sub/GEN.01.pdf',
+            '/root/sub/map.png',
+        ]);
+        expect(result?.isOthersTruncated).toBe(false);
+    });
+
+    test('unticked, collects nothing extra', async () => {
+        installTree({ '/root': ['GEN.4.pdf', 'Jesus-family-line.jpeg'] });
+        const result = await scanResourceFiles('/root', GEN_4);
+        expect(result?.otherFilePaths).toEqual([]);
+    });
+
+    test('a file the search found is listed there, not here', async () => {
+        installTree({ '/root': ['GEN.4.pdf', 'jesus-map.png', 'church.png'] });
+        const result = await scanResourceFiles('/root', GEN_4, 'jesus', true);
+        expect(result?.searchedFilePaths).toEqual(['/root/jesus-map.png']);
+        expect(result?.otherFilePaths).toEqual(['/root/church.png']);
+    });
+
+    test('is a cache entry of its own, dropped with its folder', async () => {
+        installTree({ '/root': ['GEN.4.pdf', 'map.png'] });
+        await scanResourceFiles('/root', GEN_4);
+        const result = await scanResourceFiles('/root', GEN_4, '', true);
+        // Ticking the box must not be answered by the unticked walk.
+        expect(readdirMock).toHaveBeenCalledTimes(2);
+        expect(result?.otherFilePaths).toEqual(['/root/map.png']);
+        invalidateResourcesScanCache('/root');
+        await scanResourceFiles('/root', GEN_4, '', true);
+        expect(readdirMock).toHaveBeenCalledTimes(3);
+    });
+
+    test('still walks with no chapter open', async () => {
+        installTree({ '/root': ['map.png'] });
+        const result = await scanResourceFiles('/root', [], '', true);
+        expect(result?.otherFilePaths).toEqual(['/root/map.png']);
+    });
+
+    test('caps the other files and says it did', async () => {
+        const names = ['GEN.4.pdf'];
+        for (let index = 0; index < MAX_OTHER_MATCHES + 5; index++) {
+            names.push(`photo-${index}.jpg`);
+        }
+        installTree({ '/root': names });
+        const result = await scanResourceFiles('/root', GEN_4, '', true);
+        expect(result?.otherFilePaths).toHaveLength(MAX_OTHER_MATCHES);
+        expect(result?.isOthersTruncated).toBe(true);
+        // The chapter's own files are all still there past the cap.
+        expect(result?.filePaths).toEqual(['/root/GEN.4.pdf']);
+    });
+});
+
+describe('checkIsResourceFileListed', () => {
+    const genesisFour = [{ bookKey: 'GEN', chapter: 4 }];
+
+    test('a file named after an open chapter is drawn', () => {
+        expect(
+            checkIsResourceFileListed('GEN.4.pdf', genesisFour, '', false),
+        ).toBe(true);
+        // Book-level files show under every chapter of that book.
+        expect(
+            checkIsResourceFileListed('GEN.0.pdf', genesisFour, '', false),
+        ).toBe(true);
+    });
+
+    test('a file named after nothing is drawn only with Others ticked', () => {
+        expect(
+            checkIsResourceFileListed('notes.docx', genesisFour, '', false),
+        ).toBe(false);
+        expect(
+            checkIsResourceFileListed('notes.docx', genesisFour, '', true),
+        ).toBe(true);
+        // Named after a chapter that is NOT open: the Others list skips it
+        // too, so it is drawn nowhere.
+        expect(
+            checkIsResourceFileListed('GEN.9.pdf', genesisFour, '', true),
+        ).toBe(false);
+    });
+
+    test('the search box is a way in of its own', () => {
+        expect(
+            checkIsResourceFileListed('notes.docx', genesisFour, 'note', false),
+        ).toBe(true);
+        expect(
+            checkIsResourceFileListed('notes.docx', genesisFour, 'map', false),
+        ).toBe(false);
+    });
+
+    test('a hidden file is drawn by nothing at all', () => {
+        expect(
+            checkIsResourceFileListed('.GEN.4.pdf', genesisFour, '', true),
+        ).toBe(false);
     });
 });

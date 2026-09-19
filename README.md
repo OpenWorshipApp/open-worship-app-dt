@@ -9,6 +9,7 @@
 > A simple PC cross-platform, **free** and **open-source**, presentation plus bible-studying app for churches. Built to run offline on lower-spec PCs to help budget-conscious churches.
 
 Main Goals:
+
 - **Portable** — No installation required, run from any folder
 - **Cross-Platform** — Windows, macOS, and Linux support
 - **Fast** — Optimized for low-spec machines
@@ -66,6 +67,7 @@ Main Goals:
 - 📺 **Video and Audio Download** — Download videos and audios from the internet instantly for offline presentation
 
 Other Features:
+
 - ✂️ **Cut, Copy, Paste** — Standard editing features for text and slides
 - 🔄 **Undo/Redo** — Easily revert or reapply changes
 - 🔍 **Find in Page** — Find text within slides and documents
@@ -75,8 +77,8 @@ Other Features:
 - 🖼️ **Dynamic Wallpaper Display** — Automatically cycle through background images
 - And a lot more
 
-
 Future Features:
+
 - 🎵 **Dynamic Lyric Import** — Import song lyrics from various sources and formats
 - 📖 **Dynamic Bible Import** — Import Bible translations from various sources and formats
 - 🌍 **Multi-Language Support** — Interface and Bible translations in multiple languages
@@ -104,6 +106,7 @@ Special thanks to all frameworks and tools listed in [package.json](./package.js
 - For Windows, [Cygwin](https://cygwin.com/) is needed. `Cygwin` through [Git](https://git-scm.com/) is recommended (by installing `Git` with `Git-bash` we will have all required commands installed)
 
 For Fedora:
+
 ```bash
 sudo dnf install libxcrypt-compat
 ```
@@ -132,12 +135,63 @@ The app will launch in development mode with hot reload enabled.
 ## 📦 Building for Production
 
 ### Windows
+
 ```bash
 npm run pack:win
 ```
+
 > **Note:** Developer mode must be enabled. [Learn more](https://learn.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development)
 
+### Microsoft Store
+
+```bash
+npm run pack:win:store
+```
+
+This creates an `.appx` package in `release/` for Partner Center submission.
+
+**Before the first build**, reserve the app name in Partner Center, then copy its
+identity into `package.json` — the build refuses to start until you do, because a
+package with the wrong identity fails only hours later, at upload. From
+_Product management → Product identity_:
+
+| Partner Center      | `package.json`                   |
+| ------------------- | -------------------------------- |
+| Package/Identity/Name | `build.appx.identityName`      |
+| Package/Identity/Publisher | `build.appx.publisher` (starts with `CN=`) |
+| Publisher display name | `build.appx.publisherDisplayName` |
+| Store ID            | `msStoreProductId`               |
+
+`build.appx.displayName` must be the reserved name exactly. None of these can be
+chosen freely, and the package identity cannot be changed once the app exists in
+Partner Center. Do not sign the package with a development certificate — the Store
+signs it.
+
+**Before the first submission**, have ready:
+
+- A privacy policy URL. It is mandatory for desktop apps, whatever the app collects.
+- The declaration that the app can show live generative AI content (the assistant
+  and the AI Chat window), in the listing and in Partner Center.
+- Notes for certification covering the dependencies the app downloads or needs:
+  the Extra Binaries media pack and LibreOffice for office-file conversion.
+
+**Architectures:** this packs for the machine it runs on, like `pack:win`. Run it on
+an x64 and on an arm64 machine and upload both packages in one submission, or
+Windows on ARM gets an emulated build (Windows 10 on ARM, none at all).
+
+**Tiles and icons** come from `resources/appx/` — without them electron-builder packs
+its own placeholder logo. Adding `.scale-200` copies there would sharpen them on
+high-DPI screens, at the cost of an extra `makepri` step in the build.
+
+**Updates:** a Store install is serviced by the Store, which notifies and installs
+on its own. The app never compares itself against the website's version there (that
+version is published days before the Store has it), and _Help → Check for Updates_
+simply opens the app's page in Microsoft Store. _Check for Updates Online_, which
+leads to the website installer, is hidden for Store installs. Every other Windows
+install keeps the download-page updater unchanged.
+
 ### macOS
+
 ```bash
 # Standard build
 npm run pack:mac
@@ -147,6 +201,7 @@ npm run pack:mac:uni
 ```
 
 ### Linux
+
 ```bash
 npm run pack:linux
 ```
@@ -203,49 +258,55 @@ This project is open-source and actively growing. Whether you're a developer, de
 
 ### Ways to Contribute
 
-| Role | How You Can Help |
-|------|------------------|
-| 💻 **Developers** | Fix bugs, add features, improve performance |
-| 🎨 **Designers** | Enhance UI/UX, create icons and graphics |
-| 🧪 **Testers** | Try the app during real worship services, report issues |
-| 📝 **Writers** | Improve docs, write tutorials, translate content |
-| 💡 **Anyone** | Share ideas, report bugs, spread the word |
+| Role              | How You Can Help                                                  |
+| ----------------- | ----------------------------------------------------------------- |
+| 💻 **Developers** | Fix bugs, add features, improve performance                       |
+| 🎨 **Designers**  | Enhance UI/UX, create icons and graphics                          |
+| 🧪 **Testers**    | Try the app during real worship services, report issues           |
+| 📝 **Writers**    | Improve docs, write tutorials, translate content                  |
+| 💡 **Anyone**     | Share ideas, report bugs, spread the word                         |
 | 📚 **Translator** | Help translate the app and documentation into different languages |
-| 𝌭 **Legal** | Assist with licensing, compliance, and legal documentation |
-| Others | Any other skills you can offer! |
+| 𝌭 **Legal**      | Assist with licensing, compliance, and legal documentation        |
+| Others            | Any other skills you can offer!                                   |
 
 ### Getting Started with Contributing
 
 1. **🍴 Fork** this repository on GitHub
 
 2. **📥 Clone** your fork:
+
    ```bash
    git clone https://github.com/YOUR-USERNAME/open-worship-app-dt.git
    cd open-worship-app-dt
    ```
 
 3. **📦 Install** dependencies:
+
    ```bash
    npm install --allow-git=all
    ```
 
 4. **🌿 Create a branch** for your feature:
+
    ```bash
    git checkout -b feature/your-awesome-feature
    ```
 
 5. **🔨 Make your changes** and test thoroughly:
+
    ```bash
    npm run dev
    ```
 
 6. **✅ Commit** your changes:
+
    ```bash
    git add .
    git commit -m "Add: your descriptive commit message"
    ```
 
 7. **🚀 Push** to your fork:
+
    ```bash
    git push origin feature/your-awesome-feature
    ```
@@ -270,7 +331,7 @@ This project is open-source and actively growing. Whether you're a developer, de
 
 ## 💡 About This Project
 
-> *"Let every thing that hath breath praise the LORD. Praise ye the LORD."*  
+> _"Let every thing that hath breath praise the LORD. Praise ye the LORD."_  
 > — Psalm 150:6 (KJV)
 
 ### 🎯 Vision

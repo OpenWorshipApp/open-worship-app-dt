@@ -137,14 +137,16 @@ If the staged change alters observable behavior:
 Cheap, and they convert guesses into facts. Run on the touched files only.
 
 ```sh
-npx tsc --noEmit                    # typecheck
+npm run lint:all:error              # typecheck, src AND electron
 npx vitest run <changed test file>  # targeted tests
 npm run lint:es                     # eslint, --max-warnings 0
 ```
 
-Do **not** run the full `npm run lint` for a review — it ends with a production `build`,
-and `electron:build` deletes `electron-build/`, killing a running dev app. If live
-verification is also wanted, do it *before* any build.
+A bare `npx tsc --noEmit` checks `src` only — `tsconfig.json` includes nothing else, so an
+`electron/` change needs `lint:all:error` (`EN-14`). The full `npm run lint` only checks
+since `EN-16` and is safe beside a running dev app, but takes ~3 minutes; the three above
+are the review-sized slice. `npm run build` still deletes `electron-build/`, killing a
+running dev app.
 
 Do not pipe a lint run through `tee`/`grep` and trust the exit code — bash has no
 `pipefail` here, so the pipeline reports the last command's status and masks the real

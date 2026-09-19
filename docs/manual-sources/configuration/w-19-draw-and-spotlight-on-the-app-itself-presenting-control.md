@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-12"
+workflowsVersion: "2026-09-18"
 ---
 # W-19 — Draw and spotlight on the app itself (Presenting Control)
 

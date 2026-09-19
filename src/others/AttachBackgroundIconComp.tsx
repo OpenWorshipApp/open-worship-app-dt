@@ -9,6 +9,7 @@ import { getMenuTitleRevealFile } from '../helper/helpers';
 import { showFileOrDirExplorer } from '../server/appHelpers';
 import type FileSource from '../helper/FileSource';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { tran } from '../lang/langHelpers';
 
 function showMediaContextMenu(event: any, filePath: string) {
     event.stopPropagation();
@@ -79,7 +80,7 @@ export default function AttachBackgroundIconComp({
     if (backgroundType === DragTypeEnum.BACKGROUND_COLOR) {
         return (
             <RendItemComp
-                title={`Color: ${item}`}
+                title={`${tran('Color')}: ${item}`}
                 iType="filter-circle-fill"
                 iStyle={{ color: item }}
             />
@@ -88,7 +89,7 @@ export default function AttachBackgroundIconComp({
     if (backgroundType === DragTypeEnum.BACKGROUND_CAMERA) {
         return (
             <RendItemComp
-                title={`Camera: ${item.src}`}
+                title={`${tran('Camera')}: ${item.src}`}
                 iType="camera-video-fill"
                 iStyle={{}}
             />

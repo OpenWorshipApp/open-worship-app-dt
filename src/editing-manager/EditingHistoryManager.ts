@@ -104,6 +104,7 @@ export class FileLineHandler {
                         (await fsCheckFileExist(filePath))
                     ) {
                         await fsDeleteFile(filePath);
+                        FileSource.forgetCachedData(filePath);
                         continue;
                     }
                 } catch (error) {
@@ -170,6 +171,12 @@ export class FileLineHandler {
 
     private async moveFile(fileFullPath: string, newFileFullPath: string) {
         await fsMove(fileFullPath, newFileFullPath);
+        // A rename changes what BOTH paths hold without `writeFileData`, so the
+        // short read cache would otherwise hand back what either path held a
+        // moment ago -- and `N-head` is read straight after this to write the
+        // diff patch (`FileSource.forgetCachedData`).
+        FileSource.forgetCachedData(fileFullPath);
+        FileSource.forgetCachedData(newFileFullPath);
         return newFileFullPath;
     }
 
@@ -280,10 +287,17 @@ export class FileLineHandler {
         }
         currentFilePath = this.toCurrentFileFullPath(0);
         await fsCloneFile(this.filePath, currentFilePath);
+        // A history cleared and rebuilt reuses `0-head` -- a path that may
+        // have been read, holding another document state, moments ago.
+        FileSource.forgetCachedData(currentFilePath);
     }
 
-    clearHistories() {
-        return fsDeleteDir(this.dirPath);
+    async clearHistories() {
+        // Forgotten on both sides of the delete: a read already under way may
+        // cache what it found just after the first forget.
+        FileSource.forgetCachedDataUnder(this.dirPath);
+        await fsDeleteDir(this.dirPath);
+        FileSource.forgetCachedDataUnder(this.dirPath);
     }
 
     async clearNextHistories(index: number) {
@@ -292,8 +306,10 @@ export class FileLineHandler {
             .filter((fileIndex) => {
                 return fileIndex > index;
             })
-            .map((fileIndex) => {
-                return fsDeleteFile(this.toFileFullPath(fileIndex));
+            .map(async (fileIndex) => {
+                const filePath = this.toFileFullPath(fileIndex);
+                await fsDeleteFile(filePath);
+                FileSource.forgetCachedData(filePath);
             });
         await Promise.all(promises);
     }

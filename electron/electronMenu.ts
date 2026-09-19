@@ -12,6 +12,7 @@ import { checkIsAiEnabled } from './aiHelpers';
 import {
     copyDebugInfoToClipboard,
     goDownload,
+    isWindowsStore,
     previewPrintCurrentWindow,
     printCurrentWindow,
     toShortcutKey,
@@ -418,12 +419,21 @@ export function initMenu(appController: ElectronAppController) {
                         );
                     },
                 },
-                {
-                    label: 'Check for Updates Online',
-                    click: () => {
-                        goDownload();
-                    },
-                },
+                // A Store install has ONE honest way to update -- the Store --
+                // and `Check for Updates` above opens it. The website download
+                // page beside it would hand a Store user an installer that
+                // cannot update their copy and leaves two apps on the machine,
+                // which is also what Store policy asks us not to offer.
+                ...(isWindowsStore
+                    ? []
+                    : [
+                          {
+                              label: 'Check for Updates Online',
+                              click: () => {
+                                  goDownload();
+                              },
+                          },
+                      ]),
                 ...(isMac
                     ? []
                     : [

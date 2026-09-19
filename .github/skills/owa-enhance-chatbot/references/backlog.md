@@ -13,6 +13,64 @@ tools → cost → capability → polish.**
 
 ---
 
+## EC-182 · A screen answer hands the volunteer a background's FILE name — `open`
+
+Seen 2026-09-18 while verifying `MC-07` / `MC-33` (`owa-enhance-mcp`), asked
+*Is anything showing on the projector right now?* on Claude Sonnet 5 with the
+screen off: *"it does still hold content ready to go: a background video
+(7_cv.mp4) and a slide from the Peaching document"*. The prompt forbids a file
+name in front of a volunteer, and `owa_list_screens` hands the model exactly
+that — `background: { kind: "video", name: "7_cv.mp4" }` — with nothing to say
+it is a file name rather than a title. The answer was otherwise right (off,
+what it holds, the show button offered). Two cheap routes: have the tool say
+`name` is the file's name ("the video file 7_cv.mp4" is fine; a bare token in
+brackets reads as a code), or add a background clause to the prompt's
+state paragraph. Not graded as a failure; filed so the next corpus run looks.
+
+## EC-181 · A provider with no key was a greyed row with nothing to press — `done` 2026-09-14
+
+Reported by the user with a picture of the head row's assistant list open on
+**Kimi — needs an API key**, greyed out: *if no api key for the api then still
+allow clickable but when click should bring to setting to the input text*. The
+row said what was missing and was the one place in the window with no way to
+fix it: a disabled `<option>` cannot be pressed, and the way to a key was a
+link in the empty state or under a failure note.
+
+**Shipped.** The row is a plain `<option>` marked `data-needs-key` and drawn in
+the muted colour. Picking it does not switch the tab (the list is controlled
+and snaps back; `chatbot-llm-provider` is untouched): `handleProviderChanging`
+re-reads the keys at the press — a key saved in Settings since counts — and
+calls `openAiKeySetting(getLlmProviderKeyField(provider))`. The request crosses
+windows as a 30-second setting (`src/helper/ai/aiKeyFocusHelpers.ts`), not a
+URL parameter: Settings is ONE window found again by its URL
+(`getPopupWindowData`), so a parameter opens a second window while the open one
+is only raised. `SettingOthersAIComp` takes the request on mount and on window
+focus and hands a token to that key's `SettingOthersFieldComp`, which focuses
+and centres the input; `SettingComp` turns an open window to Others on the
+raise's focus, and drops the request when unsaved Bible edits refuse the
+switch. Two things fell out. An ARROW on the closed list, which changes the
+value on every press, steps over a keyless row the way it stepped over a
+disabled one (`findSteppedProvider`, 4 tests) — without it Settings popped up
+under anyone arrowing through the list, and the rows past it were out of the
+keyboard's reach. And **Open AI settings** under a refused key carries its
+provider, so it lands on that key's box too (a missing workspace id, a busy
+service and the keyless pool still open the panel only). The list re-reads the
+keys when the window is focused, so coming back from Settings finds the row
+plain.
+
+**Verified live** 2026-09-14 on the dev app over raw CDP (the owa-devtools tools
+were driving a packaged app started beside it): Settings not open → a new
+window with the cursor in **Kimi API Key** 0.9 s after the pick; Settings open
+on **General** with the help window in front → the same window came forward,
+switched to Others and focused the box in 0.2 s, one Settings window
+throughout; the tab and the stored default stayed on Claude. The e2e harness
+skips `data-needs-key` rows, since picking one no longer switches.
+
+**Not verified live:** the arrow step-over (unit-tested; a real arrow press
+switches providers and rewrites the stored default), the refused-key door (no
+provider failure to hand), and a key typed in Settings turning the row plain
+(that would have written a key into the dev profile).
+
 ## EC-180 · On a Mac, a walkthrough minimised the whole app — `done` 2026-09-12
 
 Reported by the user with a picture from macOS — the help window over the

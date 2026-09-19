@@ -4,13 +4,70 @@ import { act, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { scanResourceFilesMock, invalidateMock, isShowingState } = vi.hoisted(
-    () => ({
-        scanResourceFilesMock: vi.fn(),
-        invalidateMock: vi.fn(),
-        isShowingState: { value: true },
-    }),
-);
+const {
+    scanResourceFilesMock,
+    invalidateMock,
+    isShowingState,
+    showAppContextMenuMock,
+    checkIsInResourcesDataDirMock,
+    selectFilesMock,
+    copyFilesMock,
+    copiedMessageMock,
+    setSettingBooleanMock,
+    showSimpleToastMock,
+} = vi.hoisted(() => ({
+    scanResourceFilesMock: vi.fn(),
+    invalidateMock: vi.fn(),
+    isShowingState: { value: true },
+    showAppContextMenuMock: vi.fn(),
+    checkIsInResourcesDataDirMock: vi.fn(),
+    selectFilesMock: vi.fn(),
+    copyFilesMock: vi.fn(),
+    copiedMessageMock: vi.fn(),
+    setSettingBooleanMock: vi.fn(),
+    showSimpleToastMock: vi.fn(),
+}));
+
+vi.mock('../context-menu/appContextMenuHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<
+            typeof import('../context-menu/appContextMenuHelpers')
+        >();
+    return { ...original, showAppContextMenu: showAppContextMenuMock };
+});
+
+vi.mock('./resourcesCopyHelpers', () => ({
+    checkIsInResourcesDataDir: checkIsInResourcesDataDirMock,
+    copyFilesIntoResourcesFolder: copyFilesMock,
+    // The wording is proved in that module's own tests; what this file has to
+    // prove is WHAT the box hands it -- above all `isNoneListed`, which only
+    // the live view can work out.
+    toResourcesFilesCopiedMessage: copiedMessageMock,
+    ResourcesCopyError: class ResourcesCopyError extends Error {
+        readonly messageKey: string;
+        constructor(messageKey: string) {
+            super(messageKey);
+            this.messageKey = messageKey;
+        }
+    },
+}));
+
+vi.mock('../server/fileHelpers', async (importOriginal) => {
+    // Partial: the box splits paths with the real helpers; only the dialog is
+    // stubbed, since a test must never open one.
+    const original =
+        await importOriginal<typeof import('../server/fileHelpers')>();
+    return { ...original, selectFiles: selectFilesMock };
+});
+
+vi.mock('../toast/toastHelpers', () => ({
+    showSimpleToast: showSimpleToastMock,
+}));
+
+vi.mock('../progress-bar/progressBarHelpers', () => ({
+    showProgressBar: vi.fn(),
+    hideProgressBar: vi.fn(),
+}));
 
 vi.mock('../helper/appHooks', async (importOriginal) => {
     // Partial: `useAppCurrentRef` must survive -- every handler in the
@@ -25,7 +82,10 @@ vi.mock('../helper/settingHelpers', async (importOriginal) => {
         await importOriginal<typeof import('../helper/settingHelpers')>();
     return {
         ...original,
-        useStateSettingBoolean: () => [isShowingState.value, vi.fn()],
+        useStateSettingBoolean: () => [
+            isShowingState.value,
+            setSettingBooleanMock,
+        ],
     };
 });
 
@@ -49,6 +109,8 @@ function genScanResult(overrides: any = {}) {
         searchedFilePaths: [],
         isTruncated: false,
         isSearchTruncated: false,
+        otherFilePaths: [],
+        isOthersTruncated: false,
         ...overrides,
     };
 }
@@ -91,6 +153,13 @@ describe('ResourcesDirBoxComp', () => {
         scanResourceFilesMock.mockResolvedValue(
             genScanResult({ filePaths: ['/a/songs/PSA.1.pdf'] }),
         );
+        selectFilesMock.mockReset();
+        copyFilesMock.mockReset();
+        copiedMessageMock.mockReset();
+        copiedMessageMock.mockReturnValue('copied');
+        setSettingBooleanMock.mockReset();
+        showSimpleToastMock.mockReset();
+        invalidateMock.mockClear();
         container = document.createElement('div');
         document.body.appendChild(container);
     });
@@ -106,7 +175,11 @@ describe('ResourcesDirBoxComp', () => {
         container = null;
     });
 
-    async function renderBox(searchText = '') {
+    async function renderBox(
+        searchText = '',
+        isOthersShowing = false,
+        onCopyFolderToDataDir = vi.fn(),
+    ) {
         await act(async () => {
             if (!container) {
                 throw new Error('Missing test container');
@@ -117,7 +190,9 @@ describe('ResourcesDirBoxComp', () => {
                     dirPath="/a/songs"
                     targets={PSA_1}
                     searchText={searchText}
+                    isOthersShowing={isOthersShowing}
                     onAddFolder={vi.fn()}
+                    onCopyFolderToDataDir={onCopyFolderToDataDir}
                     onRemoveFolder={vi.fn()}
                 />,
             );
@@ -148,6 +223,7 @@ describe('ResourcesDirBoxComp', () => {
             '/a/songs',
             PSA_1,
             '',
+            false,
             expect.any(Function),
         );
         // The full path, so two matches in two subfolders can be told apart.
@@ -182,7 +258,9 @@ describe('ResourcesDirBoxComp', () => {
                     dirPath="/a/songs"
                     targets={targets}
                     searchText=""
+                    isOthersShowing={false}
                     onAddFolder={vi.fn()}
+                    onCopyFolderToDataDir={vi.fn()}
                     onRemoveFolder={vi.fn()}
                 />,
             );
@@ -230,6 +308,7 @@ describe('ResourcesDirBoxComp', () => {
             '/a/songs',
             PSA_1,
             'abc',
+            false,
             expect.any(Function),
         );
         expect(
@@ -270,6 +349,171 @@ describe('ResourcesDirBoxComp', () => {
         expect(container?.textContent).toContain(message);
     });
 
+    test('passes Others down and lists the other files last, labelled', async () => {
+        scanResourceFilesMock.mockResolvedValue(
+            genScanResult({
+                filePaths: ['/a/songs/PSA.1.pdf'],
+                searchedFilePaths: ['/a/songs/abc.docx'],
+                otherFilePaths: ['/a/songs/Jesus-family-line.jpeg'],
+            }),
+        );
+        await renderBox('abc', true);
+        expect(scanResourceFilesMock).toHaveBeenCalledWith(
+            '/a/songs',
+            PSA_1,
+            'abc',
+            true,
+            expect.any(Function),
+        );
+        const text = container?.textContent ?? '';
+        // After the chapter's files AND after what was just typed for.
+        expect(text.indexOf('*abc*')).toBeGreaterThan(text.indexOf('PSA.1.*'));
+        expect(text.indexOf('Others')).toBeGreaterThan(text.indexOf('*abc*'));
+        const row = container?.querySelector(
+            '[title="/a/songs/Jesus-family-line.jpeg"]',
+        );
+        expect(row).not.toBeNull();
+        // Matched for no book, so it is tagged as no book's introduction.
+        expect(row?.textContent).not.toContain('Introduction');
+    });
+
+    test('other files alone are not "no matching files"', async () => {
+        scanResourceFilesMock.mockResolvedValue(
+            genScanResult({ otherFilePaths: ['/a/songs/map.png'] }),
+        );
+        await renderBox('', true);
+        expect(container?.textContent).not.toContain('No matching files');
+    });
+
+    test('says when the other files were capped', async () => {
+        scanResourceFilesMock.mockResolvedValue(
+            genScanResult({
+                otherFilePaths: ['/a/songs/map.png'],
+                isOthersTruncated: true,
+            }),
+        );
+        await renderBox('', true);
+        expect(container?.textContent).toContain('Too many other files');
+    });
+
+    function openFolderMenu() {
+        showAppContextMenuMock.mockClear();
+        const header = container?.querySelector('.app-resources-group-header');
+        act(() => {
+            header?.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            );
+        });
+        const menuItems: any[] = showAppContextMenuMock.mock.calls[0][1];
+        return menuItems;
+    }
+
+    test('offers to copy the folder into the data directory', async () => {
+        checkIsInResourcesDataDirMock.mockReturnValue(false);
+        const onCopyFolderToDataDir = vi.fn();
+        await renderBox('', false, onCopyFolderToDataDir);
+        const menuItems = openFolderMenu();
+        const copyItem = menuItems.find((item) => {
+            return item.menuElement === 'Copy to Data Directory';
+        });
+        expect(copyItem).toBeDefined();
+        // Beside Reveal, above the red Remove.
+        expect(menuItems.indexOf(copyItem)).toBe(menuItems.length - 2);
+        copyItem.onSelect();
+        expect(onCopyFolderToDataDir).toHaveBeenCalledWith('/a/songs');
+    });
+
+    test('does not offer to copy a folder that already is a copy', async () => {
+        checkIsInResourcesDataDirMock.mockReturnValue(true);
+        await renderBox();
+        const labels = openFolderMenu().map((item) => item.menuElement);
+        expect(labels).not.toContain('Copy to Data Directory');
+        expect(labels).toContain('Remove Folder');
+    });
+
+    async function pickAddFiles() {
+        const addFilesItem = openFolderMenu().find((item) => {
+            return item.menuElement === 'Add Files';
+        });
+        expect(addFilesItem).toBeDefined();
+        await act(async () => {
+            await addFilesItem.onSelect();
+        });
+    }
+
+    test('Add Files copies the picked files into THIS folder', async () => {
+        selectFilesMock.mockResolvedValue(['/downloads/PSA.1.pdf']);
+        copyFilesMock.mockResolvedValue({
+            copiedFilePaths: ['/a/songs/PSA.1.pdf'],
+            skippedCount: 0,
+            error: null,
+        });
+        await renderBox();
+        await pickAddFiles();
+        expect(copyFilesMock).toHaveBeenCalledWith('/a/songs', [
+            '/downloads/PSA.1.pdf',
+        ]);
+        // The cached walk is what the box draws from, so it goes first.
+        expect(invalidateMock).toHaveBeenCalledWith('/a/songs');
+        expect(scanResourceFilesMock).toHaveBeenCalledTimes(2);
+        // Opened, so a folder that was collapsed still shows what went in.
+        expect(setSettingBooleanMock).toHaveBeenCalledWith(true);
+        expect(showSimpleToastMock).toHaveBeenCalledWith('Add Files', 'copied');
+    });
+
+    test('a copied file the list cannot draw is reported as such', async () => {
+        selectFilesMock.mockResolvedValue(['/downloads/notes.docx']);
+        copyFilesMock.mockResolvedValue({
+            copiedFilePaths: ['/a/songs/notes.docx'],
+            skippedCount: 0,
+            error: null,
+        });
+        // Others off, the reader on Psalm 1: the file is on the shelf and
+        // nothing on screen would ever show it.
+        await renderBox();
+        await pickAddFiles();
+        expect(copiedMessageMock.mock.calls[0][1]).toEqual({
+            isNoneListed: true,
+            isOthersShowing: false,
+        });
+        // The same file with Others ticked IS drawn, so nothing is said.
+        copiedMessageMock.mockClear();
+        await act(async () => {
+            root?.unmount();
+        });
+        root = null;
+        await renderBox('', true);
+        await pickAddFiles();
+        expect(copiedMessageMock.mock.calls[0][1]).toEqual({
+            isNoneListed: false,
+            isOthersShowing: true,
+        });
+    });
+
+    test('a cancelled dialog copies nothing and says nothing', async () => {
+        selectFilesMock.mockResolvedValue([]);
+        await renderBox();
+        await pickAddFiles();
+        expect(copyFilesMock).not.toHaveBeenCalled();
+        expect(showSimpleToastMock).not.toHaveBeenCalled();
+        expect(scanResourceFilesMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('a refusal is said in words, and nothing is re-scanned', async () => {
+        selectFilesMock.mockResolvedValue(['/downloads/PSA.1.pdf']);
+        const { ResourcesCopyError } = await import('./resourcesCopyHelpers');
+        copyFilesMock.mockRejectedValue(
+            new ResourcesCopyError('Folder not found'),
+        );
+        await renderBox();
+        await pickAddFiles();
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Add Files',
+            'Folder not found',
+        );
+        expect(scanResourceFilesMock).toHaveBeenCalledTimes(1);
+    });
+
     test('unmounting mid-scan asks the walk itself to stop', async () => {
         let checkShouldStop = () => false;
         scanResourceFilesMock.mockImplementation(
@@ -277,6 +521,7 @@ describe('ResourcesDirBoxComp', () => {
                 _dirPath: string,
                 _targets: unknown,
                 _searchText: string,
+                _isOthersShowing: boolean,
                 shouldStop: () => boolean,
             ) => {
                 checkShouldStop = shouldStop;

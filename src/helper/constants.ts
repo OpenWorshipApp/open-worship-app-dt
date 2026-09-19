@@ -24,7 +24,7 @@ export const defaultDataDirNames = {
 
 /**
  * Data folders the APP owns the location of: they sit beside the user-chosen
- * ones under the parent directory (`appLocalStorage.defaultStorage`) and have
+ * ones under the parent directory (`appLocalStorage.defaultStorageDirPath`) and have
  * no `dirSourceSettingNames` entry, because there is nothing to choose. Kept
  * out of `defaultDataDirNames` for exactly that reason — that object is walked
  * key by key to write a directory setting (`selectPathForChildDir`).
@@ -42,6 +42,22 @@ export const appManagedDataDirNames = {
      * again — it must never be dragged into every backup.
      */
     EXTRA_BIN: 'extra-bin',
+    /**
+     * A copy of whatever an agent (the help chatbot, or an outside agent over
+     * the MCP tools) changed, taken BEFORE the change, so `owa_undo` can put
+     * it back -- `src/helper/agentBackupHelpers.ts`. Bounded by count and age.
+     * Not registered in `dataDirectories.ts` either: it is a safety net for
+     * the last few changes, not data a whole-data archive should carry.
+     */
+    AGENT_BACKUP: 'agent-backups',
+    /**
+     * Where **Copy to Data Directory** puts a Resources folder, so a library
+     * kept anywhere on the machine can live beside the rest of the data --
+     * `src/resources/resourcesCopyHelpers.ts`. Not in `dataDirectories.ts`
+     * (yet): these are the user's own PDFs and videos, and whether a whole-data
+     * archive should carry every one of them is a size question of its own.
+     */
+    RESOURCES: 'resources',
 };
 
 /**

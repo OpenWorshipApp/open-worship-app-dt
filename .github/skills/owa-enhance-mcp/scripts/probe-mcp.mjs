@@ -15,11 +15,18 @@
 // expected to be REFUSED, and a run where one of them succeeds is the failure
 // this script exists to catch.
 //
+// The one exception, and it is a harmless one: to prove the interlock reads
+// the CONTROL a press lands on (MC-23), it puts three probe buttons into the
+// Presenter window for a second or two -- one TITLED "Delete" with ordinary
+// words on it, one inside a question popup, one plain -- counts clicks on
+// them, and takes them out again. Every real destructive control is left
+// alone: a regression here presses a probe button, never Clear All.
+//
 // Exit code: 0 when every check held, 1 when one did not or no app is running.
 
 import { spawn } from 'node:child_process';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // scripts -> owa-enhance-mcp -> skills -> .claude|.github -> repo root
@@ -307,6 +314,146 @@ try {
         `it answered: ${toText(rebind).slice(0, 160)}`,
     );
 
+    // --- the interlock reads the control, in any language (MC-23) ------
+    //
+    // The words half, in the firewall. Neither label is on an English
+    // window, so even a regression presses nothing.
+    const khmer = await call('owa_click', { find: 'លុបទាំងអស់' });
+    check(
+        'a Khmer label that cannot be undone is refused',
+        khmer.result?.isError === true &&
+            toText(khmer).includes('cannot be undone'),
+        `it answered: ${toText(khmer).slice(0, 120)}`,
+    );
+    const spaced = await call('owa_click', { find: 'Sign out' });
+    check(
+        'a no-break space does not hide a label that cannot be undone',
+        spaced.result?.isError === true &&
+            toText(spaced).includes('cannot be undone'),
+        `it answered: ${toText(spaced).slice(0, 120)}`,
+    );
+
+    // The control half, in the page, against probe buttons put there for the
+    // purpose. `window.__owaGuide` is dropped first: the walkthrough runtime
+    // is memoised in the page, and one installed before this code would not
+    // carry the guard (memory: `dom-match-memoised-in-page`).
+    const { evaluateInApp } = await import(
+        pathToFileURL(path.join(REPO_ROOT, 'tools', 'owa-devtools-mcp', 'cdp.mjs'))
+            .href
+    );
+    const inPresenter = (expression) => {
+        return evaluateInApp(expression, { match: 'presenter.html' });
+    };
+    const readProbeClicks = async () => {
+        return (await inPresenter('window.__owaProbeClicks ?? -1')).value;
+    };
+    const injected = await inPresenter(`(() => {
+        document.getElementById('owa-probe-host')?.remove();
+        // A walkthrough somebody else has running is left alone, runtime and
+        // all -- the check below is skipped instead of breaking their card.
+        const isGuideRunning = window.__owaGuide !== undefined &&
+            window.__owaGuide.status().isRunning === true;
+        if (!isGuideRunning) {
+            delete window.__owaGuide;
+        }
+        const host = document.createElement('div');
+        host.id = 'owa-probe-host';
+        host.style.cssText = 'position:fixed;left:8px;top:8px;' +
+            'z-index:2147483600;display:flex;gap:4px';
+        host.innerHTML =
+            '<button title="Delete Probe Item 7f3a">Probe 7f3a</button>' +
+            '<div id="app-input-popup"><button>Probe Yes 7f3a</button></div>' +
+            '<button>Probe Fine 7f3a</button>';
+        window.__owaProbeClicks = 0;
+        host.addEventListener('click', () => {
+            window.__owaProbeClicks += 1;
+        }, true);
+        document.body.appendChild(host);
+        return { isGuideRunning };
+    })()`);
+    try {
+        const titled = await call('owa_click', {
+            find: 'Probe 7f3a',
+            page: 'presenter.html',
+        });
+        check(
+            'a press landing on a control TITLED for what cannot be undone is refused',
+            titled.result?.isError === true &&
+                toText(titled).includes('cannot be undone') &&
+                (await readProbeClicks()) === 0,
+            `it answered: ${toText(titled).slice(0, 120)}`,
+        );
+        const answered = await call('owa_click', {
+            find: 'Probe Yes 7f3a',
+            page: 'presenter.html',
+        });
+        check(
+            'a press inside a question the app is asking is refused',
+            answered.result?.isError === true &&
+                toText(answered).includes('question the app is asking') &&
+                (await readProbeClicks()) === 0,
+            `it answered: ${toText(answered).slice(0, 120)}`,
+        );
+        const fine = await call('owa_click', {
+            find: 'Probe Fine 7f3a',
+            page: 'presenter.html',
+        });
+        check(
+            'an ordinary press still lands',
+            fine.result?.isError !== true && (await readProbeClicks()) === 1,
+            `it answered: ${toText(fine).slice(0, 120)}`,
+        );
+        if (injected.value?.isGuideRunning === true) {
+            say('  skip  a walkthrough is running in that window; not replaced');
+        } else {
+            await call('owa_guide_start', {
+                mode: 'demo',
+                page: 'presenter.html',
+                steps: [
+                    { text: 'Probe step', find: 'Probe 7f3a' },
+                    { text: 'Done' },
+                ],
+            });
+            const walked = await call('owa_guide_step', {
+                action: 'do',
+                page: 'presenter.html',
+            });
+            check(
+                'a walkthrough will not press it either',
+                walked.result?.isError === true &&
+                    toText(walked).includes('walkthrough card') &&
+                    (await readProbeClicks()) === 1,
+                `it answered: ${toText(walked).slice(0, 120)}`,
+            );
+            await call('owa_guide_step', {
+                action: 'stop',
+                page: 'presenter.html',
+            });
+        }
+    } finally {
+        await inPresenter(`(() => {
+            document.getElementById('owa-probe-host')?.remove();
+            delete window.__owaProbeClicks;
+            return true;
+        })()`).catch(() => {});
+    }
+
+    // --- the data tools, and their undo -------------------------------
+    for (const added of ['owa_bible_item', 'owa_bible_note', 'owa_undo']) {
+        check(
+            `${added} is offered`,
+            nameList.includes(added),
+            'it is not in tools/list',
+        );
+    }
+    // Read-only: the relay and the backup store answer from the app.
+    const changes = await call('owa_undo', { action: 'list' });
+    check(
+        'the list of changes that can be undone answers from the app',
+        changes.result?.isError !== true && toText(changes).includes('"changes"'),
+        `it answered: ${toText(changes).slice(0, 160)}`,
+    );
+
     const read = await call('owa_app_state', {});
     check(
         'reading the app still works',
@@ -314,7 +461,25 @@ try {
         `it answered: ${toText(read).slice(0, 120)}`,
     );
 } catch (error) {
-    check('the probe ran', false, String(error?.message ?? error));
+    // The presenter half of this probe needs the main window ON the presenter,
+    // and `evaluateInApp` says so precisely. Reported as its own line rather
+    // than as one opaque FAIL: with the window on the Reader this read
+    // "16/17 held", which is what a passing run looks like -- eight checks,
+    // including the whole in-page half of the destructive interlock, had not
+    // run at all.
+    const message = String(error?.message ?? error);
+    if (message.includes('no open page matching "presenter.html"')) {
+        check(
+            'the presenter was open, so the in-page checks could run',
+            false,
+            'The main window is not on the Presenter, so the interlock-in-' +
+                'the-page, walkthrough and data-tool checks were SKIPPED -- ' +
+                'not passed. Switch with `owa_goto_page presenter.html` (or ' +
+                'the Presenter tab) and run this again.',
+        );
+    } else {
+        check('the probe ran', false, message);
+    }
 } finally {
     client.child.kill();
 }

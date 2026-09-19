@@ -39,10 +39,21 @@ type McpHostType = {
 // `import()` survives here; TypeScript would turn a plain dynamic import into
 // `require()` under `module: commonjs`, which cannot load an ESM graph that
 // awaits at its top level.
-export const importEsm = new Function(
-    'specifier',
-    'return import(specifier);',
-) as (specifier: string) => Promise<any>;
+//
+// Built on the FIRST CALL, never at load. This module is reached from every
+// preload now (`electronHelpers` -> `webCaptureHelpers` -> here), and the
+// locked-down pages -- `chatbot.html` above all -- carry a CSP with no
+// 'unsafe-eval': a `new Function` run at load threw inside the preload, the
+// window got no `appProvider`, and the chatbot opened on "Standing by" for
+// good (2026-09-18). Only the main process ever calls this.
+let importEsmFunction: ((specifier: string) => Promise<any>) | null = null;
+export function importEsm(specifier: string): Promise<any> {
+    importEsmFunction ??= new Function(
+        'specifier',
+        'return import(specifier);',
+    ) as (specifier: string) => Promise<any>;
+    return importEsmFunction(specifier);
+}
 
 // The env var wins over the argv value for the same reason `OWA_USER_DATA_PATH`
 // does: a jump list relaunch carries argv but no environment.

@@ -1,23 +1,36 @@
-import { Fragment, useCallback, useState } from 'react';
+import { Fragment, useCallback, useRef, useState } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
+import { handleError } from '../helper/errorHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
+import {
+    hideProgressBar,
+    showProgressBar,
+} from '../progress-bar/progressBarHelpers';
 import { showFileOrDirExplorer } from '../server/appHelpers';
-import { pathBasename, pathDirname } from '../server/fileHelpers';
+import { pathBasename, pathDirname, selectFiles } from '../server/fileHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
 import ResourcesFileRowComp from './ResourcesFileRowComp';
+import {
+    checkIsInResourcesDataDir,
+    copyFilesIntoResourcesFolder,
+    ResourcesCopyError,
+    toResourcesFilesCopiedMessage,
+} from './resourcesCopyHelpers';
 import { toResourcesFolderExpandedSettingName } from './resourcesFolderHelpers';
 import type {
     ResourcesScanResultType,
     ResourceTargetType,
 } from './resourcesScanHelpers';
 import {
+    checkIsResourceFileListed,
     groupResourceFiles,
     invalidateResourcesScanCache,
     scanResourceFiles,
@@ -61,13 +74,18 @@ export default function ResourcesDirBoxComp({
     dirPath,
     targets,
     searchText,
+    isOthersShowing,
     onAddFolder,
+    onCopyFolderToDataDir,
     onRemoveFolder,
 }: Readonly<{
     dirPath: string;
     targets: ResourceTargetType[];
     searchText: string;
+    /** List the files named after no chapter at all, after the rest. */
+    isOthersShowing: boolean;
     onAddFolder: () => void;
+    onCopyFolderToDataDir: (dirPath: string) => void;
     onRemoveFolder: (dirPath: string) => void;
 }>) {
     const [isShowing, setIsShowing] = useStateSettingBoolean(
@@ -81,8 +99,15 @@ export default function ResourcesDirBoxComp({
     const isShowingRef = useAppCurrentRef(isShowing);
     const setIsShowingRef = useAppCurrentRef(setIsShowing);
     const onAddFolderRef = useAppCurrentRef(onAddFolder);
+    const onCopyFolderToDataDirRef = useAppCurrentRef(onCopyFolderToDataDir);
     const onRemoveFolderRef = useAppCurrentRef(onRemoveFolder);
     const dirPathRef = useAppCurrentRef(dirPath);
+    // Read only when the copy has finished, to work out whether anything it
+    // wrote will actually be drawn -- so they must be the view as it is THEN,
+    // not as it was when the menu was opened.
+    const targetsRef = useAppCurrentRef(targets);
+    const searchTextRef = useAppCurrentRef(searchText);
+    const isOthersShowingRef = useAppCurrentRef(isOthersShowing);
     const handleToggleShowing = useCallback(() => {
         setIsShowingRef.current(!isShowingRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -94,6 +119,74 @@ export default function ResourcesDirBoxComp({
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handleRefreshingRef = useAppCurrentRef(handleRefreshing);
+    // Guards a second run while one is going: the menu can be opened again
+    // over a folder whose copy is still writing, and two runs would each pick
+    // the same free name and one would land on the other.
+    const isAddingFilesRef = useRef(false);
+    const handleAddingFiles = useCallback(async () => {
+        if (isAddingFilesRef.current) {
+            return;
+        }
+        const title = tran('Add Files');
+        const pickedFilePaths = await selectFiles([
+            { name: tran('All Files'), extensions: ['*'] },
+        ]);
+        if (pickedFilePaths.length === 0) {
+            return;
+        }
+        const dirPath = dirPathRef.current;
+        const progressKey = `${title}: ${dirPath}`;
+        isAddingFilesRef.current = true;
+        showProgressBar(progressKey);
+        try {
+            const result = await copyFilesIntoResourcesFolder(
+                dirPath,
+                pickedFilePaths,
+            );
+            if (result.error !== null) {
+                handleError(result.error);
+            }
+            if (result.copiedFilePaths.length > 0) {
+                // The box is what has to change, and it is keyed on the cached
+                // walk -- so the cache goes first, then the re-scan.
+                handleRefreshingRef.current();
+                // Opened, because a folder that was collapsed when the files
+                // went in would answer the copy with nothing at all.
+                setIsShowingRef.current(true);
+            }
+            const isNoneListed = result.copiedFilePaths.every((filePath) => {
+                return !checkIsResourceFileListed(
+                    pathBasename(filePath),
+                    targetsRef.current,
+                    searchTextRef.current,
+                    isOthersShowingRef.current,
+                );
+            });
+            showSimpleToast(
+                title,
+                toResourcesFilesCopiedMessage(result, {
+                    isNoneListed,
+                    isOthersShowing: isOthersShowingRef.current,
+                }),
+            );
+        } catch (error) {
+            if (error instanceof ResourcesCopyError) {
+                showSimpleToast(title, tran(error.messageKey));
+                return;
+            }
+            handleError(error);
+            showSimpleToast(
+                title,
+                `${tran('Cannot copy file')}: ${(error as Error).message}`,
+            );
+        } finally {
+            isAddingFilesRef.current = false;
+            hideProgressBar(progressKey);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleAddingFilesRef = useAppCurrentRef(handleAddingFiles);
     const handleContextMenuOpening = useCallback((event: any) => {
         const menuItems: ContextMenuItemType[] = [
             {
@@ -109,12 +202,35 @@ export default function ResourcesDirBoxComp({
                 },
             },
             {
+                childBefore: genContextMenuItemIcon('file-earmark-plus'),
+                menuElement: tran('Add Files'),
+                onSelect: () => {
+                    void handleAddingFilesRef.current();
+                },
+            },
+            {
                 childBefore: genContextMenuItemIcon('folder2-open'),
                 menuElement: getMenuTitleRevealFile(),
                 onSelect: () => {
                     showFileOrDirExplorer(dirPathRef.current);
                 },
             },
+            // Left out for a folder that is already a copy: there is nothing
+            // to copy it to. Asked when the menu opens, never on render, so
+            // the data directory is not resolved for every box on screen.
+            ...(checkIsInResourcesDataDir(dirPathRef.current)
+                ? []
+                : [
+                      {
+                          childBefore: genContextMenuItemIcon('copy'),
+                          menuElement: tran('Copy to Data Directory'),
+                          onSelect: () => {
+                              onCopyFolderToDataDirRef.current(
+                                  dirPathRef.current,
+                              );
+                          },
+                      },
+                  ]),
             {
                 childBefore: genContextMenuItemIcon('folder-x', {
                     color: 'var(--bs-danger)',
@@ -167,6 +283,7 @@ export default function ResourcesDirBoxComp({
                     dirPath={dirPath}
                     targets={targets}
                     searchText={searchText}
+                    isOthersShowing={isOthersShowing}
                     refreshCount={refreshCount}
                 />
             ) : null}
@@ -178,11 +295,13 @@ function ResourcesDirBoxBodyComp({
     dirPath,
     targets,
     searchText,
+    isOthersShowing,
     refreshCount,
 }: Readonly<{
     dirPath: string;
     targets: ResourceTargetType[];
     searchText: string;
+    isOthersShowing: boolean;
     refreshCount: number;
 }>) {
     const [scanResult, setScanResult] =
@@ -196,7 +315,7 @@ function ResourcesDirBoxBodyComp({
         let isCancelled = false;
         const isCancelledRef = { current: false };
         setErrorMessageKey(null);
-        scanResourceFiles(dirPath, targets, searchText, () => {
+        scanResourceFiles(dirPath, targets, searchText, isOthersShowing, () => {
             return isCancelledRef.current;
         })
             .then((result) => {
@@ -220,7 +339,7 @@ function ResourcesDirBoxBodyComp({
         // costs at most one walk per 500ms rather than one per character; and
         // `targets` is one array per reading (memoised on its key), so it is
         // a new identity only when a pane opened, closed or moved chapter.
-    }, [dirPath, targets, searchText, refreshCount]);
+    }, [dirPath, targets, searchText, isOthersShowing, refreshCount]);
     if (errorMessageKey !== null) {
         return (
             <div className="app-resources-body">
@@ -241,15 +360,23 @@ function ResourcesDirBoxBodyComp({
             </div>
         );
     }
-    const { filePaths, searchedFilePaths, isTruncated, isSearchTruncated } =
-        scanResult;
+    const {
+        filePaths,
+        searchedFilePaths,
+        isTruncated,
+        isSearchTruncated,
+        otherFilePaths,
+        isOthersTruncated,
+    } = scanResult;
     // One labelled run per pattern, in the order the toolbar prints them --
     // three panes make three questions, and a flat list could not say which
     // chapter a `GEN.27.pdf` answered.
     const groupList = groupResourceFiles(filePaths, targets);
     return (
         <div className="app-resources-body">
-            {groupList.length === 0 && searchedFilePaths.length === 0 ? (
+            {groupList.length === 0 &&
+            searchedFilePaths.length === 0 &&
+            otherFilePaths.length === 0 ? (
                 <div className="app-resources-note">
                     {tran('No matching files')}
                 </div>
@@ -322,6 +449,40 @@ function ResourcesDirBoxBodyComp({
                 <div className="app-resources-note text-warning app-ellipsis">
                     <i className="bi bi-exclamation-triangle pe-1" />
                     {tran('Too many matching files')}
+                </div>
+            ) : null}
+            {otherFilePaths.length > 0 ? (
+                <>
+                    {/*
+                     * Labelled like the search tail, and last: these answer
+                     * "what else is on this shelf", never "what is named after
+                     * the chapter on screen".
+                     */}
+                    <div
+                        className="app-resources-found-label app-ellipsis"
+                        title={tran(
+                            'Show files not named after a book and chapter',
+                        )}
+                    >
+                        <i className="bi bi-files" />
+                        <span className="app-ellipsis">{tran('Others')}</span>
+                    </div>
+                    {otherFilePaths.map((filePath) => {
+                        // No `canAutoExpandLinks`: up to 200 of these, so a
+                        // `.json` among them is read on its first press.
+                        return (
+                            <ResourcesFileRowComp
+                                key={filePath}
+                                filePath={filePath}
+                            />
+                        );
+                    })}
+                </>
+            ) : null}
+            {isOthersTruncated ? (
+                <div className="app-resources-note text-warning app-ellipsis">
+                    <i className="bi bi-exclamation-triangle pe-1" />
+                    {tran('Too many other files')}
                 </div>
             ) : null}
             {isTruncated ? (

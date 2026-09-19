@@ -698,6 +698,60 @@ document.addEventListener('owa-agent-bible', (event) => {
         });
 });
 
+// `owa_bible_item`, `owa_bible_note` and `owa_undo`: an agent asking to look at
+// or change the user's saved Bible passages and notes, or to put back a change
+// an agent made.
+//
+// ONE relay for the three, keyed by `domain`, with the same lazy import as
+// every relay here -- a worker loads only when its tool is called. The map is
+// the whole routing, and a domain not in it (checked as an OWN key, so
+// `constructor` is not one) is answered rather than guessed at.
+const AGENT_DATA_WORKER_MAP: Record<
+    string,
+    () => Promise<(detail: any) => Promise<unknown>>
+> = {
+    'bible-item': async () => {
+        return (await import('./agentBibleListHelpers'))
+            .handleAgentBibleListRequest;
+    },
+    note: async () => {
+        return (await import('./agentNoteHelpers')).handleAgentNoteRequest;
+    },
+    undo: async () => {
+        return (await import('./agentBackupHelpers')).handleAgentUndoRequest;
+    },
+};
+
+document.addEventListener('owa-agent-data', (event) => {
+    const detail = (event as CustomEvent).detail ?? {};
+    const { token } = detail;
+    const reply = (result: unknown) => {
+        document.dispatchEvent(
+            new CustomEvent('owa-agent-data-answer', {
+                detail: { token, result },
+            }),
+        );
+    };
+    const domain = String(detail.domain);
+    if (!Object.hasOwn(AGENT_DATA_WORKER_MAP, domain)) {
+        reply({
+            isError: true,
+            reason: `Unknown kind of data "${domain}".`,
+        });
+        return;
+    }
+    AGENT_DATA_WORKER_MAP[domain]()
+        .then(async (handleRequest) => {
+            reply(await handleRequest(detail));
+        })
+        .catch((error) => {
+            reply({
+                isError: true,
+                reason: String(error?.message ?? error),
+            });
+        });
+});
+
 // `owa_foreground`: an agent asked to start or stop a foreground extra -- a
 // countdown, a clock, a scrolling message -- on the ticked screens, or to read
 // which are on.

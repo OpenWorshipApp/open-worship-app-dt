@@ -41,7 +41,7 @@ vi.mock('../../server/fileHelpers', () => ({
 
 vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
-        get defaultStorage() {
+        get defaultStorageDirPath() {
             return defaultStorageMock.value;
         },
     },

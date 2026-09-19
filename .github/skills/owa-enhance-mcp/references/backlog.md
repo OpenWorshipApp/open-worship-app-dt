@@ -53,6 +53,34 @@ Verified live through a fresh server: the probe takes a real snapshot, finds
 `uid=1_112 button "Clear All"`, aims a real `click` at it and is refused;
 a uid the snapshot never named is not.
 
+### `MC-23` — the interlock read English words, not the control · done 2026-09-14
+
+Found by reading the policy against the dictionary, not by a report. The
+destructive interlock was twelve English regexes on a call's `find`, and three
+things walked past it: **every Khmer label** (41 destructive keys translated,
+none caught — and `owa_list_ui`, `owa_list_screens` and the manual all hand the
+model the words as displayed); **folded spacing** (`Clear All` with a no-break
+space matched no pattern and pressed Clear All [F6]); and **the walkthrough**,
+whose `owa_guide_step` `do` pressed a step's `find` or `press` with no words
+read at all (`press: "F6"` is Clear All).
+
+Closed in two layers, the `webUrlPolicy.mjs` split. `destructiveLabel.mjs`
+holds one rule — the English patterns plus every translation of a
+destructively-worded dictionary key — which the firewall reads on the words
+(cheap, logged) and the PAGE reads on the element about to be pressed
+(`PRESS_GUARD_SOURCE`, the module's own functions as source text): a title or
+aria-label that cannot be undone, a key whose titled control cannot be, a
+picker being set to such an option, and anything inside the app's confirm /
+alert / input popups, which is the user's to answer. A translation the
+dictionary shares with an allowed control stays pressable (Khmer Clear Bible IS
+Delete Bible); the app's confirm stands behind it.
+
+Proof: dictionary-wide tests (every destructive translation refused, NO
+ordinary one), and `probe-mcp.mjs` 15 → 25 checks live — a button TITLED Delete
+refused with 0 clicks on it, a press inside a question refused, an ordinary
+press still landing, and the walkthrough refusing too. Cost: nothing to the
+model; ~1.5 KB of rule rides each press.
+
 ### `MC-03` — `window.open` is a way back to Node · open
 
 A renderer locked down by `rendererLockdown.ts` can still call `window.open`,
@@ -108,11 +136,44 @@ Two things filed with it, both found while doing it:
 separately and prints a withheld tool as `(name)` — reporting only the total is
 how a tool added "for the developer" ends up billed to every volunteer.
 
-### `MC-07` — the two biggest owa descriptions have never been cut · open
+### `MC-07` — the two biggest owa descriptions have never been cut · done 2026-09-18
 
 `owa_guide_start` is 1 211 chars of description (1 625 of schema);
 `owa_help_search` is 579. Both earn some of it. Neither has been reviewed since
 it was written, and both are paid for on every round of every question.
+
+**Done, `/owa-enhance-mcp tools`, and wider than filed.** The model's bill went
+**7 990 → 7 253 tokens a round (−737, −9.2%)**, the host's 13 600 → 12 863,
+and the ratchet's ceiling came down with it (8 200 → 7 450) so the saving
+cannot be spent back unnoticed. What was cut, and why it could be:
+
+- `owa_guide_start` 725 → 430: prose the schema already carried, and **a rule
+  the chatbot's prompt reverses** ("offer this whenever the answer is more
+  than one step" — the prompt says start it only when ASKED; the window offers
+  the buttons itself). Its `labels` argument went too: the card's button words
+  in the user's language, passed by nothing in 358 recorded asks.
+- `owa_lyric_validate` 520 → 411, dropping another contradiction: "check
+  notation you wrote yourself BEFORE you offer it" stood two sentences before
+  "never write the notation yourself".
+- `owa_tran` 302 → 224 (called 0 times in 358 asks), `owa_help_search` 439 →
+  331 (the internal-note lecture is repeated on the page itself), and small
+  cuts to `owa_present_bible`, `owa_foreground`, `owa_list_questions`'
+  `focus`, the slide tool's second "unsaved" sentence, and one shared
+  `PAGE_TEXT` for the six `page` arguments that described themselves.
+
+**One cut was too deep, and only the live window showed it.** With the
+contradiction gone, *Walk me through changing the background to a colour* got
+steps and an OFFER — the model read "never demo a step that changes what the
+congregation sees" as covering the walkthrough itself. One sentence back —
+*the default `show` presses NOTHING, so start it when they ask to be walked
+through* — and the re-ask started the card with the model's own three steps,
+the ring on **Background** (`isTargetFound: true`). +25 tokens, kept.
+
+Tool-call counts behind the choices, off every recorded ask in
+`test-results/chatbot-quality/` (358): `owa_help_search` 168, `owa_help_page`
+132, `owa_list_screens` 104, `owa_app_state` 66, … `owa_guide_start` 2 (the
+window starts most walkthroughs itself), and 0 for `owa_tran`,
+`owa_guide_step`, `owa_guide_status`, `owa_goto_page` and `owa_type`.
 
 ---
 
@@ -170,6 +231,12 @@ backtick in the message takes the whole file out.
 
 ### `MC-13` — `press_key` is the model's last unguarded input · open
 
+Update 2026-09-14: `press_key` has been withheld from the model since
+2026-09-08 (`modelTools.mjs`), and its one twin the model could still reach —
+a walkthrough step's `press`, done by `owa_guide_step` — is refused when the
+control whose title names that key cannot be undone (`MC-23`). What is left
+open is the developer's door, where `press_key` is still unguarded.
+
 With the uid-aimed acting tools withheld (`MC-06`), the model keeps
 `owa_click`, `owa_type` — both label-guarded — and `press_key`, which is
 guarded by nothing. Enter on a focused *Move to Trash* is a destructive press
@@ -183,25 +250,52 @@ focused element's label the way `genUidLabelMemory` reads a snapshot, and
 refuse Enter/Space when it is destructive; or withhold `press_key` too and see
 whether anything the chatbot does actually needs it.
 
-### `MC-16` — `captureWebScreenShot` loads foreign pages loosely · open
+### `MC-16` — `captureWebScreenShot` loads foreign pages loosely · done 2026-09-17
 
 Found while building `owa_read_website`, which deliberately did NOT reuse it.
 
 `captureWebScreenShot` in `electron/electronHelpers.ts` is what renders a
-website canvas item and a web background. It opens a hidden `BrowserWindow`
+website canvas item and a web background. It opened a hidden `BrowserWindow`
 with `webSecurity: false`, on the app's DEFAULT session, with no
 `setWindowOpenHandler`, no permission handler and no `will-download` handler —
-and it loads whatever address is in the slide.
+and it loaded whatever address was in the slide.
 
-It is a lower trust question than the new tool's, because the address was typed
-by the user rather than chosen by a model, and that is why it was left alone
-rather than bent into a shared function with a "be careful" flag. But "the user
-typed it" covers a presenting flow somebody was handed on a memory stick as
-well as one they wrote. The cheap parts of `webPageHelpers.ts`'s lockdown
-transfer directly and change nothing the feature does: deny `window.open`,
-deny downloads, refuse permissions, and give it a session of its own.
-`webSecurity: false` is the one that needs thought — it may be load-bearing for
-the preview.
+**Measured against the running app before anything was changed**, by serving a
+page on this machine's own LAN address and capturing it the way a website item
+does. The page reached `127.0.0.1` and `localhost` — where this app's CDP and
+MCP doors live, the same pair the AI Chat guest was walled off from on
+2026-09-12 — and `file:///…/package.json` captured 58 622 characters of the
+operator's disk. Neither needs a model or an agent: opening a shared
+presenting flow is the whole delivery.
+
+Closed by `electron/webCaptureHelpers.ts`, on the rule **a capture may talk to
+the site it was asked for and to the public internet; never to this machine,
+and never to anything else on the local network**:
+
+- Its **own memory-only session**, so the page cannot read a cookie or a
+  cached response belonging to anything the user is signed in to.
+- **Permissions, downloads and `window.open` refused**, plus `sandbox: true`
+  and no preload.
+- **`checkIsCaptureUrlAllowed`** — http(s) only, at the first load and at every
+  redirect, which is what closes the `file://` disk read.
+- **The network wall**, `onBeforeRequest` over the same three patterns
+  (`*://*/*`, `ws://*/*`, `wss://*/*`) and the same `webUrlPolicy.mjs` dialect
+  the guest's uses. The **same-host exemption** is what keeps a church's own
+  intranet notice board working: a private page may load its own assets and
+  nothing else private. Loopback gets no exemption at all.
+
+`webSecurity` is deliberately still OFF. It is the one setting here that might
+be load-bearing for a real user's slide, nothing measured says whether it is,
+and the wall closes what it would otherwise open — so flipping it would risk
+somebody's slides for no measured gain. That is the residual.
+
+Re-measured after, same harness: the notice board captures **byte for byte the
+same 7 106 characters** and still loads its own image and fetch, reaches this
+machine not at all, and `file://` is refused in a sentence.
+`https://example.com` and `https://en.wikipedia.org/wiki/Hymn` still capture
+(28 462 and 167 822 characters), so cross-origin assets on a public page are
+untouched. Unit rules in `electron/webCaptureHelpers.test.ts`, against the
+REAL dialect — a hand-written twin is what gets `127.1` and `0x7f.1` wrong.
 
 ### `MC-17` — the outbound budget has no per-site memory · open
 
@@ -225,6 +319,127 @@ the next regression impossible to land quietly. Cheap to write, and it needs a
 running app, which is why it is not a unit test — likely a `--max-tokens=`
 flag on the audit script plus a line in the run sheet.
 
+2026-09-14: half of it. The audit gained `--stdio`, which lists a FRESH server
+spawned from the code on disk — so an edit is measured without restarting the
+operator's app (the in-app host caches `server.mjs`). It was used to trim the
+data tools from +1 244 to +1 089 before the row was written. The ceiling that
+fails a run is still not written.
+
+2026-09-17: **done.** `--ratchet` (with `--ratchet=<n>` to try another
+ceiling) fails the run when the MODEL's bill crosses `MODEL_TOKEN_CEILING`,
+recorded in the script at **8 200** against a measured 7 990. Three decisions
+worth keeping:
+
+- The ceiling is on the **model's** bill, not the host's. The developer's door
+  may grow; a tool added "for the developer" that quietly reaches the model is
+  exactly the regression this catches, and reporting one total is how that
+  lands unnoticed.
+- The headroom is **one small tool**. It is not a budget to spend down to — a
+  deliberate addition raises the line in the same change and says why, which
+  is the whole mechanism.
+- The failure **names the three biggest model-visible tools**, because the
+  person reading it is deciding what to cut and the biggest row is usually the
+  answer.
+
+Proven both ways against the live app: `--ratchet` exits 0 at 7 990/8 200,
+`--ratchet=7000` exits 1 and names `owa_guide_start` (~725), `owa_slide_file`
+(~622), `owa_lyric_validate` (~520). Still not wired into `npm run lint` —
+it needs a running app, so it belongs in a run sheet rather than the gate.
+
+### `MC-26` — verse marks cannot be made by a tool · open
+
+`owa_bible_note` lists and reads a verse's highlights and comments, and removes
+a verse-marks item whole, but cannot ADD a highlight or a comment: a mark is a
+character range in one translation's rendered verse text
+(`verseAnnotationHelpers.ts` `addVerseHighlight(anchor, offsets, color)`), so a
+tool would need the verse text, the words to mark and the anchor the Reader
+builds. Filed rather than done because nobody has asked the assistant for it.
+
+### `MC-27` — the backup store is bounded by count and age, not bytes · open
+
+`agent-backups/` keeps the last 100 changes for 30 days and refuses one entry
+over 25 MB. A slide document with pictures inline can approach that, so 100 of
+them is a lot of disk on a small machine. A total-size cap is a directory
+listing with sizes at prune time; not written because no such document has
+been measured yet.
+
+### `MC-28` — paths of the data tools not yet driven live · open
+
+The 2026-09-14 live run drove 36 checks across songs, slides, Bible items and
+notes (all held after `MC-25`). Not driven live: `owa_bible_item` `update` by
+`version` alone (`BibleItem.fromVerseKey`), `rename-list` and `rename-file`,
+`owa_bible_note` `update` of a title only, `add` into a Default that does not
+exist yet, and the refusal while a note window is open. Unit-level logic is
+covered; the app glue is not.
+
+### `MC-29` — the full gate collides with a concurrent session · done 2026-09-18
+
+`npm run lint` ends in `prettier --write "src/**"` and a `build` that deletes
+`electron-build/`. On 2026-09-14 another session was editing chatbot and
+settings files and had the dev app up: prettier would have rewritten its
+unfinished files and the build would have killed its app. The stages were run
+individually instead (tests, typecheck, eslint over `src` and `electron`,
+prettier on this change's files only) and the build was left to the operator.
+
+**Closed by `EN-16`** (`/owa-enhance dev-flow`, run `20260918-1109`): the gate
+only checks now — `prettier --check` (`npm run format` writes) and a build
+into a temp dir (`extra-work/check-build.mjs`) — so it runs beside a live app
+and a peer's unfinished files. The piecemeal route had a hole of its own: the
+build it left out was the only electron typecheck (`EN-14`).
+
+### `MC-30` — `OWA_CDP_PORT` is a preference for the `owa_*` tools, not a pin · done 2026-09-17
+
+Seen 2026-09-14 while verifying `MC-24`, with three sessions sharing one dev
+app. `listCandidatePorts` puts `OWA_CDP_PORT` first and then EVERY published
+instance, and `requireLivePort` takes the first that answers. So when the
+pinned port is dead, every `owa_*` call goes to the newest instance instead,
+while chrome-devtools' own tools (`resolveAppBrowserUrl`, no liveness check)
+keep failing on the dead port. A dev app restarted by nodemon comes back on a
+NEW port, so a script pinned to dev a minute earlier is then driving whatever
+was published last — the packaged app, with the user's real data, if it is up.
+That day's render proof ran "pinned" to 53801 three minutes after a peer's
+restart had, by its report, moved dev to 61610, and it still succeeded; only
+the path it printed (`open-worship-data-dev`) showed it had been dev. Nothing
+wrong was driven: no packaged app was running.
+
+Two ways to close it, not taken because both change the developer's door:
+make the env port exclusive (fail with "port X is not answering; the app
+published Y"), or pin by KIND off the discovery file's `isDev`
+(`OWA_CDP_TARGET=dev`), which survives a restart and is what a verification
+script actually means. Until then, a script that writes checks
+`owa_app_state` `isDev` first.
+
+**Closed 2026-09-17 on the first of the two.** A port named on purpose — by
+`pinCdpPort` or by `OWA_CDP_PORT` — is now the WHOLE candidate list, which is
+what `resolveAppBrowserUrl` had always done, so the two halves of one server
+can no longer drive two different apps. `describeDeadPin` in `discovery.mjs`
+writes the refusal `requireLivePort` throws: *"Port 9999 was named by
+OWA_CDP_PORT and is not answering. The app published 62807 (dev). Point
+OWA_CDP_PORT at one of those, or unset it to take the newest."* The old
+message said "start the app" with the app right there on another port, which
+is the half of this that made it hard to notice.
+
+Proven both ways against the live app: the shipped HEAD version answers
+`9999, 62807, 9223` for a dead pin — it would have driven 62807 — and the new
+one answers `[9999]` and refuses by name, while an unpinned call still
+resolves 62807.
+
+The second way, `OWA_CDP_TARGET=dev`, is still worth having and is now the
+whole of what is left here: it survives a nodemon restart, which a port does
+not, and it is what a verification script actually means. Filed as `MC-31`.
+
+### `MC-31` — pin by KIND, not by port (`OWA_CDP_TARGET=dev`) · open
+
+Split out of `MC-30` when its first half closed. A pinned PORT is exact and
+dies with the instance: `npm run electron:dev` restarts the app on a new port
+whenever `electron-build/` or `tools/owa-devtools-mcp` is touched, so a script
+that pinned dev correctly a minute ago now refuses (which is the fix) but
+still cannot get itself back to dev without re-reading the discovery file.
+`OWA_CDP_TARGET=dev|prod` would filter `readLiveInstances()` on the published
+`isDev` and survive the restart. Cheap — the field is already in the file and
+`listCandidatePorts` is now the single place that decides — and unwritten only
+because nothing has needed it since the refusal started naming the live port.
+
 ### `MC-20` — the app's own `PART_DEFINITIONS` has no drift guard · open
 
 `src/plugins/song-select/songSelectLyricHelpers.ts` carries its own hand-copied
@@ -237,9 +452,136 @@ already exists — it just has to be pointed at the second copy. (Better still:
 one exported table, but `tools/` is plain ESM and `src/` is TypeScript, and
 neither may import the other.)
 
+### `MC-35` — `owa_guide_status` could ride `owa_guide_step` for the model · open
+
+Found by `MC-07`'s call counts: 0 model calls in 358 asks, and the one moment
+the prompt sends the model to it — "check your aim once, after you start it" —
+is already answered, because `owa_guide_start` RETURNS `status()`
+(`isTargetFound`, `nearMisses`, `canDemo`). Adding `status` to
+`owa_guide_step`'s action enum and withholding `owa_guide_status` in
+`modelTools.mjs` would be ~−120 tokens a round with nothing taken from the
+developer. Not done: the prompt names the tool twice (chatbot skill's to
+edit), and the one real use — reading where the user got to on the card
+before answering "it didn't work" — has never been measured either way.
+
+### `MC-36` — the walkthrough card's own buttons are English in every window · open
+
+`owa_guide_start` took a `labels` argument for the card's Next / Back / Done /
+Step words "in the language of the user". Nothing ever passed it — the
+chatbot answers in English by rule — so it left the schema with `MC-07`, and
+the card still reads Next / Back / Done / Do it / Skip in a Khmer window. The
+right fix is the server's, not the model's: fill them from `tranText` at
+start, the way help pages are. It needs dictionary keys first — `km` has
+`Next` and `Back`, not `Done`, `Step`, `Do it` or `Skip` — and a missing key
+THROWS in dev, so it is a change to `src/lang` as much as to this package.
+
 ---
 
 ## Done
+
+### `MC-32` — a string evaluated at load killed every strict-CSP window's preload · done 2026-09-18
+
+Found by this skill's own live check, not by a report: the chatbot window
+opened on its **Standing by** placeholder and stayed there. Its console:
+`EvalError ... 'unsafe-eval' is not an allowed source of script` at
+`electron-build/electron/aiHelpers.js:55`, then `Unable to load preload
+script`, then `Cannot read properties of undefined (reading 'isPageReader')`
+— no preload, no `appProvider`, nothing mounted. A reload happened to
+survive, which is what made it look intermittent.
+
+The cause was a chain, not a line. The staged `MC-16` work made
+`electronHelpers.ts` import `webCaptureHelpers`, which imports `aiHelpers`,
+whose top level built `importEsm` with `new Function` — and every preload
+requires `electronHelpers`. `chatbot.html` carries a CSP with no
+'unsafe-eval' in dev; **in a packaged build every page does** (the
+`<!-- prod ... prod -->` blocks), so that release would have opened no
+window at all.
+
+Fixed at the module that evaluated: `importEsm` builds its `Function` on the
+first call — only the main process ever makes one. Reproduced before (close,
+reopen: Standing by, no provider), proven after (a fresh open renders, 0
+console errors in the chatbot and the presenter, the lockdown still revokes
+`require` and empties `process.env`). `aiHelpers.test.ts` loads the module
+under a `Function` that refuses to evaluate, with a positive control so the
+empty list cannot pass by the trap missing. Memory
+`preload-must-not-eval-at-load`.
+
+### `MC-33` — every tool result was indented JSON · done 2026-09-18
+
+The results lever, which the budget file lists fourth and nobody had pulled:
+`toTextResult` and the four worker formatters wrote `JSON.stringify(value,
+null, 2)`, and a result is not read once — it stays in front of the model for
+every later round of the question. Compact now. Measured on fourteen
+read-only calls against the running app: **35 411 → 24 499 characters
+(−31%), 1 355 lines → 49**; on the Presenter `owa_list_screens` −40%,
+`owa_app_state` −37%, a 200-row `owa_list_ui` −26%. On the wire, the round
+after `owa_help_search` wrote 960 and 932 tokens where the same questions
+wrote 1 080 and 1 056 on 2026-09-11. Nothing read a result by its layout:
+the window parses them, and every pattern that peeks (`applyToolWatch`, the
+firewall's redaction) takes `:\s*`.
+
+Two trims rode with it: `owa_list_questions` rows lost the ranker's own
+inputs (`keywords`, `starter`, `starterRank`, the page and focus the caller
+named) — −71% on a query; and `owa_app_state`'s `instances` lost `url` (the
+port again) and `mcpUrl` (a door no caller of that tool opens).
+
+### `MC-34` — "Clear All [F6] Clear All" · done 2026-09-18
+
+`owa_find_ui` and `owa_list_ui` named the Mini Screen's Clear All button
+"Clear All [F6] Clear All" and the editor's Save "Save [Ctrl+S] Save", while
+`owa_list_screens` said "Clear All [F6]" — a title WITH its shortcut beside an
+aria-label without, which the exact-repeat rule in `labelPartsOf` (`EC-115`)
+cannot see. `shownLabelOf` drops the shorter twin from the words handed OUT
+(`describe`, a list row, a near miss); `labelPartsOf` keeps both, because the
+exact-name tie-breaker reads the bare one. The press's did-it-change check
+reads the label before and after through the same `describe`, or a label
+merely re-joined would read as a change. `domMatch.test.mjs` +1 (73).
+
+### `MC-24` — CRUD over the user's data, every change undoable · done 2026-09-14
+
+Asked for directly, in three messages: *add all possible tools: bible-item
+crud, bible-note crud, document (app-document, lyric) crud*; *add tools for
+app-document slides: crud, update slide with style with text*; and *make sure
+all actions have backup action, e.g. delete it should move to trash and can
+undo*.
+
+Shipped: `delete` on `owa_lyric_file` / `owa_slide_file`; six slide actions on
+`owa_slide_file` (`slides`, `add-slide`, `update-slide` with text, font, size,
+colour, alignment and position per box, `delete-slide`, `move-slide`,
+`duplicate-slide`); `owa_bible_item` (list / add by reference / update /
+delete, and whole lists); `owa_bible_note` (list / read / add / update /
+delete, and whole files); and `owa_undo`.
+
+**No backup, no change** (`src/helper/agentBackupHelpers.ts`): every write
+snapshots what it is about to change and refuses when the snapshot cannot be
+saved; a delete is the app's own Move to Trash; an undo takes its own backup
+first. This matters most where the app has no undo of its own at all — a
+Bibles list and a notes file write straight to disk. The firewall rations
+removals separately (10 per 5 min) and `owa_bible_note` refuses a write while
+that file is open in its own window, which would save its stale copy over it.
+
+Cost: **+1 089 tokens a round** to the model (21 → 24 tools, ~6 901 → ~7 990),
+measured with `audit --stdio` and cross-checked on the live host. Verified live
+on the dev app through fresh servers: 36 checks across the four domains plus a
+picture of the created document in the Documents list; scratch files trashed.
+One check failed first and found `MC-25`.
+
+### `MC-25` — the editing history read its own files from a stale cache · done 2026-09-14
+
+Found by `MC-24`'s live run: undoing the delete of a slide document with
+unsaved edits brought back a state two edits old. The backup was right; the
+READ was wrong. `FileSource.readFileData` caches by path for 2 s, and the
+editing history renames `N` onto `N-head` and reuses its paths after a clear —
+so a history rebuilt inside the window read back the old head, and
+`changeCurrent` wrote its diff patch from that stale text, which would have
+broken the document's Ctrl+Z. Plain editing can reach it: undo, then edit,
+within two seconds.
+
+Fixed at the root: `FileSource.forgetCachedData` / `forgetCachedDataUnder`,
+called after every history move, clone, delete and clear; and
+`AppEditableDocumentSourceAbs.preDelete` now awaits its discard. Regression
+tests in `EditingHistoryManager.test.ts` and `FileSource.test.ts`; the live
+re-run held 14/14 on slides and 5/5 on songs.
 
 ### `MC-21` — the assistant could not write a song or a slide document · done 2026-09-02
 

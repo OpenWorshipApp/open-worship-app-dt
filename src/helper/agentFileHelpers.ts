@@ -22,7 +22,10 @@
  * should not have to read about a file type it is not touching. The lifecycle
  * is identical, so it is written once here and the differences live in
  * `AGENT_FILE_KIND_MAP` — the same shape `LLM_PROVIDER_MAP` uses for the same
- * reason: a third file type should be a descriptor, not a third copy.
+ * reason: a third file type should be a descriptor, not a third copy. The
+ * slide actions belong to slide documents only, and their rules -- which box
+ * an `id` names, where a new slide goes -- are the pure module
+ * `agentSlideHelpers.ts`, so they are tested without an app behind them.
  *
  * ## What it will not do
  *
@@ -30,23 +33,26 @@
  * actually touches the disk and a check placed further out is one a later
  * caller can forget:
  *
- *  - **It never deletes anything, and never overwrites on `create`.**
- *    `fsCreateFile` throws on an existing path unless told to override, and it
- *    is never told to.
- *  - **`update` writes the EDITING HISTORY, never the saved file.** That is
- *    the whole safety story for the destructive half: the change is undoable
- *    with Ctrl+Z, the document shows its `*` dirty marker, and a human presses
- *    Save. It is "the assistant may point, the human presses" applied to
- *    content rather than to a button. It also leaves anything already ON a
- *    screen alone — a presented slide is a snapshot until re-presented.
+ *  - **Nothing is lost, and `create` never overwrites.** A delete is a move to
+ *    the trash, and every change -- create, update, rename, delete, a slide --
+ *    is backed up BEFORE it is made (`agentBackupHelpers.ts`): no backup, no
+ *    change, and `owa_undo` puts any of them back. `fsCreateFile` throws on an
+ *    existing path unless told to override, and it is never told to.
+ *  - **`update` and the slide actions write the EDITING HISTORY, never the
+ *    saved file.** The change is undoable with Ctrl+Z, the document shows its
+ *    `*` dirty marker, and a human presses Save. It is "the assistant may
+ *    point, the human presses" applied to content rather than to a button. It
+ *    also leaves anything already ON a screen alone — a presented slide is a
+ *    snapshot until re-presented.
  *  - **A name is REFUSED, never quietly cleaned.** `createNewFileDetail` still
  *    carries a `// TODO: verify file name before create`, so a separator or a
  *    `..` in a name would land wherever it pointed. Writing to a different
  *    file than the caller named is worse than saying no.
  *  - **Content must satisfy the app's own validator** before any write —
- *    open-lyric's for a song, `AppDocument.validate` for a slide document. A
- *    file the app cannot parse is one that renders as nothing on a projector,
- *    which is the failure a volunteer cannot debug mid-service.
+ *    open-lyric's for a song, `AppDocument.validate` for a slide document, and
+ *    the canvas item classes for every box a slide action writes. A file the
+ *    app cannot parse is one that renders as nothing on a projector, which is
+ *    the failure a volunteer cannot debug mid-service.
  */
 import type FileSource from './FileSource';
 import type { MimetypeNameType } from '../server/fileHelpers';
@@ -61,11 +67,36 @@ import {
     getMimetypeExtensions,
     pathJoin,
 } from '../server/fileHelpers';
+import {
+    type AgentEditableKindType,
+    NoBackupError,
+    genNoBackupReason,
+    genUndoField,
+    renameAgentFile,
+    runWithAgentBackup,
+    snapshotAgentEditing,
+    snapshotAgentFileForDelete,
+    trashAgentFile,
+} from './agentBackupHelpers';
+import {
+    type AgentSlideActionType,
+    type AgentSlideChangeType,
+    applyAgentSlideAction,
+    checkIsAgentSlideAction,
+    readAgentSlideDocument,
+    readAgentSlideRequest,
+} from './agentSlideHelpers';
 
 export type AgentFileActionType =
-    'list' | 'info' | 'create' | 'update' | 'rename';
+    | 'list'
+    | 'info'
+    | 'create'
+    | 'update'
+    | 'rename'
+    | 'delete'
+    | AgentSlideActionType;
 
-export type AgentFileKindNameType = 'lyric' | 'slide';
+export type AgentFileKindNameType = AgentEditableKindType;
 
 export type AgentFileRequestType = {
     kind?: AgentFileKindNameType;
@@ -73,6 +104,9 @@ export type AgentFileRequestType = {
     name?: string;
     newName?: string;
     content?: string;
+    slide?: unknown;
+    to?: unknown;
+    items?: unknown;
 };
 
 export type AgentFileResultType = {
@@ -82,6 +116,29 @@ export type AgentFileResultType = {
 
 function fail(reason: string): AgentFileResultType {
     return { isError: true, reason };
+}
+
+const UNSAVED_NOTE =
+    'The change is in the document but NOT on disk yet: it shows a * beside ' +
+    'its name, Ctrl+Z undoes it, and the user presses Save to keep it. Tell ' +
+    'them that.';
+
+/**
+ * The sentence for a change that did not happen. A backup that could not be
+ * saved says so in its own words -- nothing was touched; anything else is the
+ * change itself failing after its backup was taken, which `owa_undo` can
+ * still reverse.
+ */
+function toChangeFailure(error: unknown, what: string) {
+    if (error instanceof NoBackupError) {
+        return fail(error.message);
+    }
+    handleError(error);
+    return fail(
+        `${what} could not be finished: ` +
+            `${String((error as any)?.message ?? error)} Anything it did get ` +
+            'to do can be put back with owa_undo.',
+    );
 }
 
 // --- what differs between the two file types ----------------------------
@@ -309,6 +366,13 @@ function toFilePath(dirPath: string, name: string, kind: AgentFileKindType) {
     return toPosix(filePath).startsWith(`${dir}/`) ? filePath : null;
 }
 
+function genNoSuchFileReason(kind: AgentFileKindType, name: string) {
+    return (
+        `There is no ${kind.label} called "${name}". Use action "list" to ` +
+        'see what is there.'
+    );
+}
+
 async function handleList(dirPath: string, kind: AgentFileKindType) {
     // The app's own mimetype-aware listing rather than a suffix filter, so
     // "what counts as one of these" is answered in one place.
@@ -327,28 +391,49 @@ async function handleList(dirPath: string, kind: AgentFileKindType) {
     };
 }
 
+/**
+ * Whether the user would see a `*` beside it: the editing-history head
+ * against the saved file, the comparison `useEditingHistoryStatus` makes. The
+ * history's mere existence is not the answer -- Save keeps the history folder,
+ * so a document saved a moment ago still has one. `lastEditDate` is set aside
+ * for the same reason the status hook sets it aside: Save stamps it.
+ */
+async function readHasUnsavedChanges(
+    kindName: AgentFileKindNameType,
+    filePath: string,
+) {
+    const DocumentClass =
+        kindName === 'lyric'
+            ? await getLyricClass()
+            : await getAppDocumentClass();
+    const document = DocumentClass.getInstance(filePath);
+    const toComparable = (json: AnyObjectType | null) => {
+        if (json === null) {
+            return null;
+        }
+        const metadata = { ...(json.metadata ?? {}) };
+        delete metadata.lastEditDate;
+        return JSON.stringify({ ...json, metadata });
+    };
+    const current = await document.getJsonData();
+    const original = await document.getJsonData(true);
+    return toComparable(current) !== toComparable(original);
+}
+
 async function handleInfo(
     dirPath: string,
     name: string,
     kind: AgentFileKindType,
+    kindName: AgentFileKindNameType,
 ) {
     const filePath = toFilePath(dirPath, name, kind);
     if (filePath === null || !(await fsCheckFileExist(filePath))) {
-        return fail(
-            `There is no ${kind.label} called "${name}". Use action "list" ` +
-                'to see what is there.',
-        );
+        return fail(genNoSuchFileReason(kind, name));
     }
-    const { default: EditingHistoryManager } =
-        await import('../editing-manager/EditingHistoryManager');
-    // A document with histories has edits that are not on disk yet — the `*`
-    // the operator sees beside its name.
-    const hasUnsavedChanges =
-        await EditingHistoryManager.getInstance(filePath).checkHasHistories();
     return {
         name,
         filePath,
-        hasUnsavedChanges,
+        hasUnsavedChanges: await readHasUnsavedChanges(kindName, filePath),
         ...(await kind.describe(filePath)),
     };
 }
@@ -377,6 +462,7 @@ async function handleCreate(
     name: string,
     content: string,
     kind: AgentFileKindType,
+    kindName: AgentFileKindNameType,
 ) {
     const filePath = toFilePath(dirPath, name, kind);
     if (filePath === null) {
@@ -399,16 +485,30 @@ async function handleCreate(
                 'which is action "update".',
         );
     }
-    const fileSource = await kind.create(dirPath, name, content);
-    if (fileSource === null) {
-        return fail(`The ${kind.label} could not be created.`);
+    try {
+        // The backup of a file that is not there yet is "there was none":
+        // undoing a create moves the new file to the trash.
+        const { meta, value: fileSource } = await runWithAgentBackup(
+            `Made the ${kind.label} “${name}”`,
+            [{ type: 'file', filePath, text: null, kind: kindName }],
+            async () => {
+                const created = await kind.create(dirPath, name, content);
+                if (created === null) {
+                    throw new Error(`The ${kind.label} could not be created.`);
+                }
+                return created;
+            },
+        );
+        fileSource.fireUpdateEvent();
+        return {
+            created: fileSource.name,
+            filePath: fileSource.filePath,
+            ...genUndoField(meta),
+            note: 'It is on disk and in the Documents list already.',
+        };
+    } catch (error) {
+        return toChangeFailure(error, `Making the ${kind.label} “${name}”`);
     }
-    fileSource.fireUpdateEvent();
-    return {
-        created: fileSource.name,
-        filePath: fileSource.filePath,
-        note: `It is on disk and in the Documents list already.`,
-    };
 }
 
 async function handleUpdate(
@@ -416,6 +516,7 @@ async function handleUpdate(
     name: string,
     content: string,
     kind: AgentFileKindType,
+    kindName: AgentFileKindNameType,
 ) {
     const filePath = toFilePath(dirPath, name, kind);
     if (filePath === null || !(await fsCheckFileExist(filePath))) {
@@ -424,20 +525,32 @@ async function handleUpdate(
                 'to make one, or "list" to see what is there.',
         );
     }
-    if ((await kind.update(filePath, content)) === null) {
+    const editing = await snapshotAgentEditing(kindName, filePath);
+    if (editing === null) {
         return fail(`"${name}" could not be read, so it was not changed.`);
     }
-    const FileSourceClass = await getFileSourceClass();
-    FileSourceClass.getInstance(filePath).fireUpdateEvent();
-    return {
-        updated: name,
-        filePath,
-        isSaved: false,
-        note:
-            'The change is in the document but NOT on disk yet: it shows a * ' +
-            'beside its name, Ctrl+Z undoes it, and the user presses Save to ' +
-            'keep it. Tell them that.',
-    };
+    try {
+        const { meta } = await runWithAgentBackup(
+            `Changed the ${kind.label} “${name}”`,
+            [editing],
+            async () => {
+                if ((await kind.update(filePath, content)) === null) {
+                    throw new Error(`"${name}" could not be read.`);
+                }
+            },
+        );
+        const FileSourceClass = await getFileSourceClass();
+        FileSourceClass.getInstance(filePath).fireUpdateEvent();
+        return {
+            updated: name,
+            filePath,
+            isSaved: false,
+            ...genUndoField(meta),
+            note: UNSAVED_NOTE,
+        };
+    } catch (error) {
+        return toChangeFailure(error, `Changing the ${kind.label} “${name}”`);
+    }
 }
 
 async function handleRename(
@@ -445,42 +558,217 @@ async function handleRename(
     name: string,
     newName: string,
     kind: AgentFileKindType,
+    kindName: AgentFileKindNameType,
 ) {
-    if (toFilePath(dirPath, newName, kind) === null) {
+    const oldPath = toFilePath(dirPath, name, kind);
+    const newPath = toFilePath(dirPath, newName, kind);
+    if (newPath === null) {
         return fail(
             'That new name would not stay inside the Documents folder.',
         );
     }
-    const FileSourceClass = await getFileSourceClass();
-    const fileSource = FileSourceClass.getInstance(
-        dirPath,
-        `${name}.${getExtension(kind)}`,
-    );
-    const oldFilePath = fileSource.filePath;
-    const renamed = await fileSource.renameTo(newName);
-    if (renamed === null) {
+    if (oldPath === null || !(await fsCheckFileExist(oldPath))) {
+        return fail(genNoSuchFileReason(kind, name));
+    }
+    if (await fsCheckFileExist(newPath)) {
         return fail(
-            `"${name}" could not be renamed. Either it is not there, or ` +
-                `something called "${newName}" already is.`,
+            `Something called "${newName}" is already there, so "${name}" ` +
+                'was not renamed.',
         );
     }
-    // The editing history has to follow the document, or unsaved edits are
-    // left behind under the old name and the `*` silently disappears.
-    // `EditingHistoryManager.moveFilePath` exists for this and had no
-    // production caller at all before these tools -- `renameTo` itself had
-    // none either, so nothing had ever exercised the pair together.
-    const { default: EditingHistoryManager } =
-        await import('../editing-manager/EditingHistoryManager');
-    await EditingHistoryManager.moveFilePath(oldFilePath, renamed.filePath);
-    renamed.fireUpdateEvent();
-    return {
-        renamedFrom: name,
-        renamedTo: renamed.name,
-        filePath: renamed.filePath,
-        note:
-            'A presenting flow that referenced the old name no longer finds ' +
-            'it — say so if they use run sheets.',
-    };
+    try {
+        // `renameAgentFile` takes the editing history with the file (or
+        // unsaved edits are left behind under the old name and the `*`
+        // silently disappears) and its sidecars (or its attached background
+        // is).
+        const { meta, value: renamedPath } = await runWithAgentBackup(
+            `Renamed the ${kind.label} “${name}” to “${newName}”`,
+            [{ type: 'rename', from: oldPath, to: newPath, kind: kindName }],
+            () => {
+                return renameAgentFile(oldPath, newName, kindName);
+            },
+        );
+        return {
+            renamedFrom: name,
+            renamedTo: newName,
+            filePath: renamedPath,
+            ...genUndoField(meta),
+            note:
+                'A presenting flow that referenced the old name no longer ' +
+                'finds it — say so if they use run sheets.',
+        };
+    } catch (error) {
+        return toChangeFailure(error, `Renaming the ${kind.label} “${name}”`);
+    }
+}
+
+async function handleDelete(
+    dirPath: string,
+    name: string,
+    kind: AgentFileKindType,
+    kindName: AgentFileKindNameType,
+) {
+    const filePath = toFilePath(dirPath, name, kind);
+    if (filePath === null || !(await fsCheckFileExist(filePath))) {
+        return fail(genNoSuchFileReason(kind, name));
+    }
+    let restores;
+    try {
+        // The file as saved, its unsaved state on top, and its sidecars: the
+        // OS trash keeps only the first, and cannot be emptied back into a
+        // folder by a program anyway.
+        restores = await snapshotAgentFileForDelete(filePath, kindName);
+    } catch (error) {
+        return fail(genNoBackupReason(error));
+    }
+    try {
+        const { meta } = await runWithAgentBackup(
+            `Moved the ${kind.label} “${name}” to the trash`,
+            restores,
+            () => {
+                return trashAgentFile(filePath, kindName);
+            },
+        );
+        return {
+            deleted: name,
+            isInTrash: true,
+            ...genUndoField(meta),
+            note:
+                'It is in the trash, and owa_undo puts it back, unsaved ' +
+                'changes and all. A presenting flow that used it cannot find ' +
+                'it until then -- say so if they use run sheets. If one of ' +
+                'its slides is on a screen, it stays there until something ' +
+                'else is shown.',
+        };
+    } catch (error) {
+        return toChangeFailure(
+            error,
+            `Moving the ${kind.label} “${name}” to the trash`,
+        );
+    }
+}
+
+/**
+ * Whether the document a slide action produced is one the app would open --
+ * checked with the app's own validators before the backup is even taken. The
+ * document validator reads the slides' shape; the canvas item classes read
+ * each box the change WROTE, which is where the document validator has holes
+ * (an alignment word, a colour).
+ */
+async function findInvalidSlideReason(change: AgentSlideChangeType) {
+    const AppDocument = await getAppDocumentClass();
+    try {
+        AppDocument.validate(change.json);
+    } catch (error: any) {
+        return (
+            'This app would not open the document after that change, so it ' +
+            `was not made: ${String(error?.message ?? error).slice(0, 300)}`
+        );
+    }
+    if (change.checkItems.length === 0) {
+        return null;
+    }
+    const { default: Canvas } = await import('../slide-editor/canvas/Canvas');
+    const { CanvasItemError } =
+        await import('../slide-editor/canvas/CanvasItem');
+    for (const { item } of change.checkItems) {
+        const canvasItem = Canvas.canvasItemFromJson(item);
+        if (canvasItem === null || canvasItem instanceof CanvasItemError) {
+            return (
+                `Box ${item.id} would not open in the slide editor after ` +
+                'that change, so nothing was changed. Read the slide with ' +
+                'action "slides" and send only the fields to change.'
+            );
+        }
+    }
+    return null;
+}
+
+async function handleSlideAction(
+    dirPath: string,
+    name: string,
+    action: AgentSlideActionType,
+    request: AgentFileRequestType,
+    kind: AgentFileKindType,
+    kindName: AgentFileKindNameType,
+) {
+    if (kindName !== 'slide') {
+        return fail(
+            "A song's slides are made from its words, so it has no slides of " +
+                'its own to change. Change its words with action "update".',
+        );
+    }
+    // Everything about the request that needs no document, so a malformed
+    // one is refused before anything is read off the disk.
+    const checked = readAgentSlideRequest(action, request);
+    if (checked.isError === true) {
+        return fail(checked.reason);
+    }
+    const filePath = toFilePath(dirPath, name, kind);
+    if (filePath === null || !(await fsCheckFileExist(filePath))) {
+        return fail(genNoSuchFileReason(kind, name));
+    }
+    const AppDocument = await getAppDocumentClass();
+    const appDocument = AppDocument.getInstance(filePath);
+    // The HEAD, unsaved edits and all: that is the document the user sees,
+    // and the one a change must be made to.
+    const json = await appDocument.getJsonData();
+    if (json === null) {
+        return fail(`"${name}" could not be read, so it was not changed.`);
+    }
+    if (action === 'slides') {
+        const read = readAgentSlideDocument(json, name, checked);
+        return read.isError === true ? fail(read.reason) : read.slideDocument;
+    }
+    const { default: CanvasItemText } =
+        await import('../slide-editor/canvas/CanvasItemText');
+    const { default: Slide } = await import('../app-document-list/Slide');
+    const change = applyAgentSlideAction(action, json, checked, {
+        name,
+        genTextDefaults: () => {
+            return CanvasItemText.genDefaultItem().toJson();
+        },
+        getDefaultDim: () => {
+            return Slide.getDefaultDim();
+        },
+    });
+    if (change.isError === true) {
+        return fail(change.reason);
+    }
+    if (!change.didChange) {
+        return { ...change.result, didChange: false, note: change.note };
+    }
+    const invalidReason = await findInvalidSlideReason(change);
+    if (invalidReason !== null) {
+        return fail(invalidReason);
+    }
+    const editing = await snapshotAgentEditing('slide', filePath);
+    if (editing === null) {
+        return fail(`"${name}" could not be read, so it was not changed.`);
+    }
+    try {
+        // ONE history entry for the whole change, so one Ctrl+Z undoes it.
+        const { meta } = await runWithAgentBackup(
+            change.summary,
+            [editing],
+            async () => {
+                await appDocument.setJsonData(change.json as any);
+                // With no data: an editor open on this document ignores its
+                // own window's history echoes, and must re-read instead of
+                // committing its stale copy over this change.
+                const FileSourceClass = await getFileSourceClass();
+                FileSourceClass.getInstance(filePath).fireUpdateEvent();
+            },
+        );
+        return {
+            ...change.result,
+            isSaved: false,
+            ...genUndoField(meta),
+            note: [change.note, UNSAVED_NOTE].filter(Boolean).join(' '),
+        };
+    } catch (error) {
+        return toChangeFailure(error, change.summary);
+    }
 }
 
 /**
@@ -501,7 +789,7 @@ export async function handleAgentFileRequest(
         } = request ?? {};
         const kind =
             kindName === undefined ? undefined : AGENT_FILE_KIND_MAP[kindName];
-        if (kind === undefined) {
+        if (kindName === undefined || kind === undefined) {
             return fail('Unknown kind. Use "lyric" or "slide".');
         }
         const dirPath = getDirPath();
@@ -521,7 +809,20 @@ export async function handleAgentFileRequest(
         }
         const safeName = (name as string).trim();
         if (action === 'info') {
-            return await handleInfo(dirPath, safeName, kind);
+            return await handleInfo(dirPath, safeName, kind, kindName);
+        }
+        if (action === 'delete') {
+            return await handleDelete(dirPath, safeName, kind, kindName);
+        }
+        if (checkIsAgentSlideAction(action)) {
+            return await handleSlideAction(
+                dirPath,
+                safeName,
+                action,
+                request,
+                kind,
+                kindName,
+            );
         }
         if (action === 'rename') {
             const newNameReason = checkAgentFileName(newName);
@@ -533,6 +834,7 @@ export async function handleAgentFileRequest(
                 safeName,
                 (newName as string).trim(),
                 kind,
+                kindName,
             );
         }
         if (action === 'create' || action === 'update') {
@@ -546,11 +848,21 @@ export async function handleAgentFileRequest(
                 return fail(contentReason);
             }
             return action === 'create'
-                ? await handleCreate(dirPath, safeName, content, kind)
-                : await handleUpdate(dirPath, safeName, content, kind);
+                ? await handleCreate(dirPath, safeName, content, kind, kindName)
+                : await handleUpdate(
+                      dirPath,
+                      safeName,
+                      content,
+                      kind,
+                      kindName,
+                  );
         }
         return fail(
-            'Unknown action. Use list, info, create, update or rename.',
+            'Unknown action. Use list, info, create, update, rename or delete' +
+                (kindName === 'slide'
+                    ? ', or one slide at a time: slides, add-slide, ' +
+                      'update-slide, delete-slide, move-slide, duplicate-slide.'
+                    : '.'),
         );
     } catch (error: any) {
         handleError(error);

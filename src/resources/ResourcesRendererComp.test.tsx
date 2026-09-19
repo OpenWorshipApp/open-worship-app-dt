@@ -142,6 +142,8 @@ describe('ResourcesRendererComp folder dropping', () => {
             searchedFilePaths: [],
             isTruncated: false,
             isSearchTruncated: false,
+            otherFilePaths: [],
+            isOthersTruncated: false,
         });
         container = document.createElement('div');
         document.body.appendChild(container);
@@ -277,5 +279,90 @@ describe('ResourcesRendererComp folder dropping', () => {
         // Leaving the window entirely arrives with no related target at all.
         await dispatch(genDragEvent('dragleave'));
         expect(getPanel().className).not.toContain('is-dropping');
+    });
+});
+
+describe('ResourcesRendererComp Others', () => {
+    let container: HTMLDivElement | null = null;
+    let root: Root | null = null;
+
+    beforeEach(() => {
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        getFolderListMock.mockReturnValue(['/a/songs']);
+        scanResourceFilesMock.mockResolvedValue({
+            filePaths: [],
+            searchedFilePaths: [],
+            isTruncated: false,
+            isSearchTruncated: false,
+            otherFilePaths: ['/a/songs/Jesus-family-line.jpeg'],
+            isOthersTruncated: false,
+        });
+        container = document.createElement('div');
+        document.body.appendChild(container);
+    });
+
+    afterEach(async () => {
+        if (root) {
+            await act(async () => {
+                root?.unmount();
+            });
+            root = null;
+        }
+        container?.remove();
+        container = null;
+    });
+
+    async function settle() {
+        await act(async () => {
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        });
+    }
+
+    test('ticking Others asks every folder for the other files too', async () => {
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<ResourcesRendererComp targets={PSA_1} />);
+        });
+        await settle();
+        // Off by default: the panel is for the chapter being read.
+        expect(scanResourceFilesMock).toHaveBeenLastCalledWith(
+            '/a/songs',
+            PSA_1,
+            '',
+            false,
+            expect.any(Function),
+        );
+        const checkbox = container?.querySelector<HTMLInputElement>(
+            '.app-resources-others input[type="checkbox"]',
+        );
+        if (!checkbox) {
+            throw new Error('Missing Others checkbox');
+        }
+        // Named by its own word, so a screen reader and a search both find it.
+        expect(checkbox.closest('label')?.textContent).toBe('Others');
+        expect(checkbox.checked).toBe(false);
+
+        await act(async () => {
+            checkbox.click();
+        });
+        await settle();
+        expect(checkbox.checked).toBe(true);
+        expect(scanResourceFilesMock).toHaveBeenLastCalledWith(
+            '/a/songs',
+            PSA_1,
+            '',
+            true,
+            expect.any(Function),
+        );
+        expect(
+            container?.querySelector(
+                '[title="/a/songs/Jesus-family-line.jpeg"]',
+            ),
+        ).not.toBeNull();
     });
 });

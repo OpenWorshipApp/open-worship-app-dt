@@ -125,7 +125,7 @@ vi.mock('../../others/CacheManager', () => ({
 
 vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
-        defaultStorage: '/storage',
+        defaultStorageDirPath: '/storage',
     },
 }));
 

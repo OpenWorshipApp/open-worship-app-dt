@@ -13,6 +13,7 @@ import {
     HIGHLIGHT_SELECTED_CLASSNAME,
     RECEIVING_DROP_CLASSNAME,
 } from '../../helper/helpers';
+import { tran } from '../../lang/langHelpers';
 
 export default function ScreenPreviewerItemComp({
     width,
@@ -141,7 +142,7 @@ export default function ScreenPreviewerItemComp({
             }
             data-screen-key={screenManager.screenId}
             data-screen-manager-key={screenManager.key}
-            title={`Screen: ${screenManager.screenId}`}
+            title={`${tran('Screen')}: ${screenManager.screenId}`}
             style={{
                 overflow: 'hidden',
                 width: `${width}px`,

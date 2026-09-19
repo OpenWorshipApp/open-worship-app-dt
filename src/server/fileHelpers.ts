@@ -22,6 +22,12 @@ import {
 import { cloneJson, freezeObject } from '../helper/helpers';
 import { electronSendAsync } from './appHelpers';
 import { tran } from '../lang/langHelpers';
+import {
+    type DataDirAliasType,
+    fromPortableText,
+    genDataDirAlias,
+    toPortableText,
+} from './dataDirAliasHelpers';
 
 for (const ml of [
     mimeBibleList,
@@ -332,18 +338,62 @@ function _fsReaddir(dirPath: string) {
     return fsFilePromise<string[]>(appProvider.fileUtils.readdir, dirPath);
 }
 
+// A data folder carried between computers keeps no absolute path of its own in
+// any file: text written inside it stores the folder as `$DATA_DIR_PATH`, and
+// every text read expands it (see `dataDirAliasHelpers`). Web files are loaded
+// by an <iframe> straight from disk, where nothing would expand it, so they
+// keep real paths.
+const webFileExtensions = mimeWebList.flatMap(({ extensions }) => {
+    return extensions;
+});
+// One entry, rebuilt only when the data folder changes.
+let dataDirAlias: DataDirAliasType | null = null;
+function getDataDirAlias(filePath: string) {
+    // `?.`: the test doubles of `appProvider` carry no `sessionData`.
+    const dirPath = appProvider.sessionData?.defaultStorageDirPath;
+    if (
+        !dirPath ||
+        webFileExtensions.includes(getFileDotExtension(filePath).toLowerCase())
+    ) {
+        return null;
+    }
+    if (dataDirAlias?.dirPath !== dirPath) {
+        dataDirAlias = genDataDirAlias(
+            dirPath,
+            pathSeparator,
+            appProvider.browserUtils.pathToFileURL,
+        );
+    }
+    return dataDirAlias;
+}
+function toRealFileText(filePath: string, text: string) {
+    const alias = getDataDirAlias(filePath);
+    return alias === null ? text : fromPortableText(text, alias);
+}
+function toPortableFileText(filePath: string, text: string) {
+    const alias = getDataDirAlias(filePath);
+    // Only what is written INSIDE the data folder: an export, a temp file or
+    // a download stays readable by whatever opens it. Reads resolve the alias
+    // anywhere, so a file copied off the drive still works.
+    if (alias === null || !filePath.startsWith(alias.prefix)) {
+        return text;
+    }
+    return toPortableText(text, alias);
+}
+
 // const rwState: { [key: string]: { r: number; w: number } } = {};
 // for debugging read/write operation count, not used for logic
 // (globalThis as any).rwState = rwState;
-function _fsReadFile(filePath: string, options?: any) {
+async function _fsReadFile(filePath: string, options?: any) {
     // rwState[filePath] = rwState[filePath] ?? { r: 0, w: 0 };
     // rwState[filePath].r++;
     // console.log('read-file', filePath);
-    return fsFilePromise<string>(
+    const text = await fsFilePromise<string>(
         appProvider.fileUtils.readFile,
         filePath,
         options,
     );
+    return toRealFileText(filePath, text);
 }
 function _fsWriteFile(filePath: string, data: string | Buffer, options?: any) {
     // rwState[filePath] = rwState[filePath] ?? { r: 0, w: 0 };
@@ -351,7 +401,7 @@ function _fsWriteFile(filePath: string, data: string | Buffer, options?: any) {
     return fsFilePromise<void>(
         appProvider.fileUtils.writeFile,
         filePath,
-        data,
+        typeof data === 'string' ? toPortableFileText(filePath, data) : data,
         options,
     );
 }
@@ -661,10 +711,15 @@ export async function fsWriteFile(
 }
 
 export function fsWriteFileSync(filePath: string, txt: string, encoding?: any) {
-    return appProvider.fileUtils.writeFileSync(filePath, txt, {
-        encoding: encoding ?? 'utf8',
-        flag: 'w',
-    });
+    // Settings go through here, and they hold most of the data folder's paths.
+    return appProvider.fileUtils.writeFileSync(
+        filePath,
+        toPortableFileText(filePath, txt),
+        {
+            encoding: encoding ?? 'utf8',
+            flag: 'w',
+        },
+    );
 }
 
 export async function fsCreateFile(
@@ -732,7 +787,10 @@ export async function fsReadFile(filePath: string) {
 }
 
 export function fsReadSync(filePath: string) {
-    return appProvider.fileUtils.readFileSync(filePath, 'utf8');
+    return toRealFileText(
+        filePath,
+        appProvider.fileUtils.readFileSync(filePath, 'utf8'),
+    );
 }
 
 // The bytes of a file as base64 -- a saved picture on its way back to the

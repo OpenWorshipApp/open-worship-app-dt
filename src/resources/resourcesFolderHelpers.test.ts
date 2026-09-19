@@ -38,9 +38,11 @@ vi.mock('../helper/settingHelpers', async (importOriginal) => {
 
 import {
     addResourcesFolders,
+    carryResourcesFolderSettings,
     getResourcesFolderList,
     promptAddResourcesFolders,
     removeResourcesFolderSettings,
+    replaceResourcesFolder,
     sanitizeResourcesFolderList,
     setResourcesFolderList,
     toResourcesFolderExpandedSettingName,
@@ -159,6 +161,69 @@ describe('addResourcesFolders', () => {
             addedDirPaths: ['/c/media'],
             duplicatedDirPaths: ['/a/songs'],
         });
+    });
+});
+
+describe('replaceResourcesFolder', () => {
+    beforeEach(() => {
+        state.isLinux = false;
+    });
+
+    test("puts the copy in the original folder's place", () => {
+        expect(
+            replaceResourcesFolder(
+                ['/a/songs', '/b/youtube', '/c/media'],
+                '/b/youtube',
+                '/data/resources/youtube',
+            ),
+        ).toEqual(['/a/songs', '/data/resources/youtube', '/c/media']);
+    });
+
+    test("finds the original by the file system's own spelling rules", () => {
+        expect(
+            replaceResourcesFolder(['/B/YouTube/'], '/b/youtube', '/d/yt'),
+        ).toEqual(['/d/yt']);
+    });
+
+    test('keeps the copy once when it was already listed', () => {
+        expect(
+            replaceResourcesFolder(
+                ['/d/yt', '/b/youtube'],
+                '/b/youtube',
+                '/d/yt',
+            ),
+        ).toEqual(['/d/yt']);
+    });
+
+    test('changes nothing when the original is no longer listed', () => {
+        expect(
+            replaceResourcesFolder(['/a/songs'], '/b/youtube', '/d/yt'),
+        ).toEqual(['/a/songs']);
+    });
+});
+
+describe('carryResourcesFolderSettings', () => {
+    beforeEach(() => {
+        getItemMock.mockReset();
+        setItemMock.mockReset();
+    });
+
+    test("hands a collapsed folder's state to its copy", () => {
+        getItemMock.mockReturnValue('false');
+        carryResourcesFolderSettings('/b/youtube', '/d/yt');
+        expect(getItemMock).toHaveBeenCalledWith(
+            toResourcesFolderExpandedSettingName('/b/youtube'),
+        );
+        expect(setItemMock).toHaveBeenCalledWith(
+            toResourcesFolderExpandedSettingName('/d/yt'),
+            'false',
+        );
+    });
+
+    test('writes nothing for a folder that never stored a state', () => {
+        getItemMock.mockReturnValue(null);
+        carryResourcesFolderSettings('/b/youtube', '/d/yt');
+        expect(setItemMock).not.toHaveBeenCalled();
     });
 });
 

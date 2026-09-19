@@ -125,7 +125,7 @@ Every candidate must survive this:
   cost. No scenario → not a finding; drop it or demote it to a Nit.
 - **Confirm the line is actually unstaged.** For `MM` files this is the single easiest
   mistake to make.
-- **Prefer running the check over asserting it** — `npx tsc --noEmit`,
+- **Prefer running the check over asserting it** — `npm run lint:all:error` (src + electron),
   `npx vitest run <file>`, `npm run lint:es` on the touched files. Note which findings
   were machine-verified.
 - **Allow for in-flight-ness.** Unstaged code is not claiming to be finished. An
@@ -177,7 +177,7 @@ Leave Low/Nit unless trivial, and note what you touched.
 
 - Never remove a `TODO`, a commented-out block, or an unused new file without asking —
   those may be deliberate placeholders in in-flight work.
-- Re-run the relevant tests / `npx tsc --noEmit` afterwards.
+- Re-run the relevant tests / `npm run lint:all:error` (src + electron) afterwards.
 - The fixes land in the working tree and stay **unstaged**. The user decides what to
   `git add`. Never stage, commit, or stash.
 

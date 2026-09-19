@@ -435,6 +435,20 @@ Keep the main window on `presenter.html`.
   clear with `F6`–`F10` (a second click on the same card only re-applies it); end with the
   screen hidden unless it started showing.
 
+### 6.1 What the MCP firewall will not do for you (verified 2026-09-15)
+
+Three refusals are POLICY, not breakage — read them as "a human presses this", record the
+row as BLOCKED with the reason, and never hunt for a way around:
+
+| You try | What comes back | Do this instead |
+|---|---|---|
+| `owa_click "Move to Trash"` (or any delete / discard / erase / *clear all* label) | *"switched off, because it cannot be undone by pressing it again"* | Point with `owa_find_ui … highlight`; for a file THIS RUN created, delete on disk via the Recycle Bin (SKILL §6e step 5). `CM-06` is human-only |
+| `owa_type` into an app confirm / alert / **input popup** (e.g. the Download From URL box) | *"part of a question the app is asking the user"* | chrome-devtools `fill` + `click` on the uids from `take_snapshot` — the popup is drivable, only the `owa_*` shortcut is withheld |
+| `evaluate_script`, `take_snapshot`-free page probing, `press_key` from the chatbot | refused / withheld | snapshot, `wait_for`, or an `owa_*` tool (SKILL step 0) |
+
+A refusal arrives as an `isError` RESULT written for a model, not a crash; it costs one
+round and proves the interlock still works, which is itself worth a line in the report.
+
 ---
 
 ## 7. Known-benign console — DO NOT report these
@@ -1376,9 +1390,11 @@ The 4th entry of the Bible Find previewer's 4-way select
 - **No watcher, by design.** A file added while the app is open appears after the
   10-second scan-cache TTL, or on box **Refresh** / panel **Reload**. Not a bug.
 - **A collapsed folder box never touches the disk**; only the active select entry is
-  mounted at all. The scan is breadth-first and budgeted (depth 8, 1500 dirs, 20000
-  entries) — a drive root degrades with a visible "Too many folders to search",
-  never a hang.
+  mounted at all. The scan is breadth-first and budgeted: the folder plus TWO levels
+  of folders under it (`MAX_SCAN_DEPTH 2` since 2026-09-15 — it was 8, and a home
+  folder spent all 1500 dirs and found nothing), 1500 dirs, 20000 entries. A file
+  three folders down is not listed, by design. A drive root degrades with a visible
+  "Too many folders to search", never a hang.
 - **A row is a single click** → opens in the OS default app. No drag, no
   double-click-present, no screen integration. Row menu: Open / Copy Path /
   Reveal. Folder-header menu: Refresh / Add Folder / Reveal / Remove Folder (red,

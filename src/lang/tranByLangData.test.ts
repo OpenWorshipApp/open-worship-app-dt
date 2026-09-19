@@ -19,7 +19,7 @@ vi.mock('../server/appProvider', () => ({
 // Pulled in transitively by `settingHelpers`; nothing here reads a setting.
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
-        defaultStorage: '/data',
+        defaultStorageDirPath: '/data',
         localStorageDir: '/data/local-storage',
         getItem: () => null,
         setItem: vi.fn(),

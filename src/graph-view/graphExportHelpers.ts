@@ -293,6 +293,16 @@ function rasterizeSvg(svgText: string): Promise<SrcData | null> {
 }
 
 /**
+ * The document copy's label, named ONCE.
+ *
+ * The menu row and the toast that confirms it say the same thing, and a copy
+ * whose confirmation named another format would leave the user checking their
+ * clipboard. The DIAGRAM labels live with the formats themselves, in
+ * `GRAPH_DIAGRAM_FORMAT_LIST`.
+ */
+export const COPY_MARKDOWN_LABEL = 'Copy as Markdown';
+
+/**
  * Prints the same SVG through the app's existing print pipeline: a hidden
  * BrowserWindow, `printToPDF`, then the Print Preview window.
  *

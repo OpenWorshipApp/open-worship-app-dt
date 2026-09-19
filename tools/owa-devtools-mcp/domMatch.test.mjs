@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { genDestructiveLabelRule } from './destructiveLabel.mjs';
 import {
     DOM_MATCH_RUNTIME,
     genClickExpression,
@@ -8,6 +9,11 @@ import {
     genListUiExpression,
     genTypeExpression,
 } from './domMatch.mjs';
+import { loadTranBundle } from './tran.mjs';
+
+// What a press carries with the firewall on: the rule off the app's own
+// dictionary, so the Khmer cases below are the real translations.
+const GUARD = { rule: genDestructiveLabelRule(loadTranBundle()) };
 
 // The runtime is a string evaluated in the app page, so it is exercised the
 // way the app gets it: evaluated, then driven through its own api. The
@@ -223,6 +229,32 @@ describe('the shared DOM matcher', () => {
         ]);
     });
 
+    // The Mini Screen's Clear All and the editor's Save: a title WITH the
+    // shortcut, an aria-label without. Listed as "Clear All [F6] Clear All"
+    // by find and list while owa_list_screens said "Clear All [F6]" (2026-09-18).
+    it('says a name once when only a shortcut tells the two apart', async () => {
+        document.body.innerHTML =
+            '<button id="clear" title="Clear All [F6]" aria-label="Clear All">' +
+            '<i></i></button>';
+        const dm = install();
+        const element = document.getElementById('clear');
+        expect(dm.shownLabelOf(element)).toBe('Clear All [F6]');
+        expect(dm.describe(element).label).toBe('Clear All [F6]');
+        expect(dm.listControls('', 10).map((row) => row.label)).toEqual([
+            'Clear All [F6]',
+        ]);
+        // Matching still reads the bare name: it is the exact-name
+        // tie-breaker between two controls that both say "Clear All".
+        expect(dm.labelPartsOf(element)).toEqual(['Clear All [F6]', 'Clear All']);
+        expect(dm.checkIsNamedExactly(element, 'clear all')).toBe(true);
+        expect(dm.nearMisses(['clear everything'])).toEqual(['Clear All [F6]']);
+        // A press compares the label before and after the SAME way, so one
+        // that changed nothing is still reported as unproven.
+        const result = await run(genClickExpression(['Clear All'], 100));
+        expect(result.didChange).toBe(false);
+        expect(result.unverified).toBeTruthy();
+    });
+
     it('refuses a label that only mentions the word inside another', () => {
         document.body.innerHTML =
             '<button title="...\\khmer-study-bible-pdf">GEN.0.pdf</button>';
@@ -414,6 +446,84 @@ describe('the packaged expressions', () => {
             genClickExpression(['Toggle showing screen'], 100),
         );
         expect(exact.clicked.label).toContain('Toggle showing screen');
+    });
+
+    // The page half of the interlock: judged by what the control IS. The
+    // firewall reads the words a press was aimed with, and "X" is not a
+    // destructive word -- the title on the button it lands on is.
+    it('will not press a control named for what cannot be undone', async () => {
+        document.body.innerHTML =
+            '<button id="del" title="Delete this preset">X</button>';
+        let clicks = 0;
+        document.getElementById('del').addEventListener('click', () => {
+            clicks += 1;
+        });
+        const refused = await run(
+            genClickExpression(['X'], 100, 0, { guard: GUARD }),
+        );
+        expect(clicks).toBe(0);
+        expect(refused).toMatchObject({
+            clicked: null,
+            refused: 'destructive',
+            label: 'Delete this preset',
+        });
+        // With the firewall switched off there is no guard, and it presses.
+        await run(genClickExpression(['X'], 100, 0));
+        expect(clicks).toBe(1);
+    });
+
+    it('will not press a Khmer control named for what cannot be undone', async () => {
+        document.body.innerHTML =
+            '<div class="app-context-menu-item" title="ផ្លាស់ទីទៅធុងសំរាម">' +
+            '<div>ផ្លាស់ទីទៅធុងសំរាម</div></div>';
+        const refused = await run(
+            genClickExpression(['ផ្លាស់ទីទៅធុងសំរាម'], 100, 0, { guard: GUARD }),
+        );
+        expect(refused.refused).toBe('destructive');
+    });
+
+    // "Delete, then Yes": the Yes belongs to the user.
+    it('never answers a question the app is asking', async () => {
+        document.body.innerHTML =
+            '<div id="modal-container" class="modal-container--blocking">' +
+            '<div id="app-confirm-popup"><button id="yes">Yes</button></div>' +
+            '</div>';
+        let clicks = 0;
+        document.getElementById('yes').addEventListener('click', () => {
+            clicks += 1;
+        });
+        const refused = await run(
+            genClickExpression(['Yes'], 100, 0, { guard: GUARD }),
+        );
+        expect(clicks).toBe(0);
+        expect(refused.refused).toBe('question');
+    });
+
+    // Choosing IS the press on a picker. Offering "Delete" is not refused;
+    // being set to it is.
+    it('reads a picker by the choice being made', async () => {
+        document.body.innerHTML =
+            '<select aria-label="When done"><option>Keep</option>' +
+            '<option>Show</option><option>Delete</option></select>';
+        const refused = await run(
+            genTypeExpression(['When done'], 'Delete', { guard: GUARD }),
+        );
+        expect(refused).toMatchObject({ typed: null, refused: 'destructive' });
+        expect(document.querySelector('select').value).toBe('Keep');
+        const chosen = await run(
+            genTypeExpression(['When done'], 'Show', { guard: GUARD }),
+        );
+        expect(chosen.typed).toBe('Show');
+    });
+
+    it('never fills in a box the app is asking the user to fill', async () => {
+        document.body.innerHTML =
+            '<div id="app-input-popup"><input aria-label="New name"></div>';
+        const refused = await run(
+            genTypeExpression(['New name'], 'x', { guard: GUARD }),
+        );
+        expect(refused.refused).toBe('question');
+        expect(document.querySelector('input').value).toBe('');
     });
 
     it('says a plain button press is unproven rather than nothing', async () => {

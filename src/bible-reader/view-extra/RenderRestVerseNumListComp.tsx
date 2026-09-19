@@ -6,6 +6,7 @@ import { toLocaleNumBible } from '../../helper/bible-helpers/bibleLogicHelpers2'
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { cleanupVerseNumberClicked } from './viewExtraHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
+import { tran } from '../../lang/langHelpers';
 
 export default function RenderRestVerseNumListComp({
     to,
@@ -50,7 +51,10 @@ export default function RenderRestVerseNumListComp({
                     <div
                         key={verse}
                         className="verse-number app-caught-hover-pointer"
-                        title={`Double click to select verses ${toTitle(verse)}`}
+                        title={
+                            tran('Double click to select verses') +
+                            ` ${toTitle(verse)}`
+                        }
                         onDoubleClick={(event) => {
                             cleanupVerseNumberClicked(event);
                             onSelect(verse);

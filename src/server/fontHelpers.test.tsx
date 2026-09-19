@@ -163,6 +163,42 @@ describe('fontHelpers', () => {
         expect(electronSendAsyncMock).toHaveBeenCalledTimes(1);
     });
 
+    test('names the standard weights and leaves any other as its number', async () => {
+        const module = await loadModule();
+
+        expect(module.toFontWeightLabel('300')).toBe('300 Light');
+        expect(module.toFontWeightLabel('350')).toBe('350 Semi Light');
+        expect(module.toFontWeightLabel('700')).toBe('700 Bold');
+        expect(module.toFontWeightLabel('450')).toBe('450');
+        expect(module.toFontWeightLabel('constructor')).toBe('constructor');
+    });
+
+    test('reads the old "--" weight as no weight', async () => {
+        const module = await loadModule();
+
+        expect(module.toCleanFontWeight('--')).toBe('');
+        expect(module.toCleanFontWeight(' 700 ')).toBe('700');
+        expect(module.toCleanFontWeight(null)).toBe('');
+        expect(module.toCleanFontWeight(undefined)).toBe('');
+    });
+
+    test('keeps a saved weight the family does not ship as a missing option', async () => {
+        const module = await loadModule();
+
+        expect(module.genFontWeightOptions(['400', '700'], '700')).toEqual([
+            ['400', '400 Regular'],
+            ['700', '700 Bold'],
+        ]);
+        expect(module.genFontWeightOptions(['400', '700'], '')).toEqual([
+            ['400', '400 Regular'],
+            ['700', '700 Bold'],
+        ]);
+        expect(module.genFontWeightOptions(['400'], '900')).toEqual([
+            ['900', '900 Black (Missing)'],
+            ['400', '400 Regular'],
+        ]);
+    });
+
     test('builds the font download search url for a font family', async () => {
         const module = await loadModule();
 

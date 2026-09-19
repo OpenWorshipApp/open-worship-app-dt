@@ -100,7 +100,7 @@ export const electronMockState = {
         themeSource: 'system' as 'light' | 'dark' | 'system',
     },
     shell: {
-        openExternal: vi.fn(),
+        openExternal: vi.fn(() => Promise.resolve()),
         showItemInFolder: vi.fn(),
         trashItem: vi.fn(),
     },
@@ -124,6 +124,16 @@ export const electronMockState = {
             },
             setDisplayMediaRequestHandler: vi.fn(),
         },
+        // Every partitioned session shares one object, which is enough for the
+        // callers here: they register handlers on it and never read it back.
+        fromPartition: vi.fn(() => {
+            return {
+                webRequest: { onBeforeRequest: vi.fn() },
+                setPermissionRequestHandler: vi.fn(),
+                setPermissionCheckHandler: vi.fn(),
+                on: vi.fn(),
+            };
+        }),
     },
     dialog: {
         showOpenDialog: vi.fn(),

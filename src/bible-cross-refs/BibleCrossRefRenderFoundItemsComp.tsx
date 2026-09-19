@@ -82,20 +82,25 @@ export default function BibleCrossRefRenderFoundItemsComp({
                     onOpening={handleContextMenuOpening}
                 />
             </div>
-            {/* TODO: update title */}
-            <span className="badge badge-success" title="isS">
+            {/* Markers copied from the cross-reference data (`fn`, `*`, a leading
+                `S`, `Title`, `(LXX and DSS)`). They carried their field
+                names (`isS`, `isFN`, ...) as tooltips, in English in every
+                language. TODO: a tran() tooltip each, once what `S` and
+                `*` mean in that data is known -- a wrong one is worse than
+                none. */}
+            <span className="badge badge-success">
                 {itemInfo.isS ? 'S ' : ''}
             </span>
-            <span className="badge badge-success" title="isFN">
+            <span className="badge badge-success">
                 {itemInfo.isFN ? 'FN ' : ''}
             </span>
-            <span className="badge badge-success" title="isStar">
+            <span className="badge badge-success">
                 {itemInfo.isStar ? '★ ' : ''}
             </span>
-            <span className="badge badge-success" title="isTitle">
+            <span className="badge badge-success">
                 {itemInfo.isTitle ? 'T ' : ''}
             </span>
-            <span className="badge badge-success" title="isLXXDSS">
+            <span className="badge badge-success">
                 {itemInfo.isLXXDSS ? 'LXXDSS ' : ''}
             </span>
             <span

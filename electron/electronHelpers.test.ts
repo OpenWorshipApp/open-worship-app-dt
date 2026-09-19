@@ -43,6 +43,7 @@ import {
     genTimeoutAttempt,
     genWebPreferences,
     getAppThemeBackgroundColor,
+    getUpdatePageUrl,
     goDownload,
     guardBrowsing,
     POPUP_FRAME_NAME_PREFIX,
@@ -152,6 +153,28 @@ describe('electronHelpers', () => {
         goDownload();
 
         expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
+            'https://www.openworship.app/download?mv=1.2.3',
+        );
+    });
+
+    test('uses the Microsoft Store product page for a Store install', () => {
+        expect(getUpdatePageUrl(true, '9NBLGGH4NNS1')).toBe(
+            'ms-windows-store://pdp/?ProductId=9NBLGGH4NNS1',
+        );
+    });
+
+    test('a Store install with no product id opens the Store updates page', () => {
+        // Never the self-hosted download page: its NSIS installer cannot
+        // update an MSIX package.
+        expect(getUpdatePageUrl(true, '')).toBe(
+            'ms-windows-store://downloadsandupdates',
+        );
+    });
+
+    test('any other install keeps the website download page', () => {
+        // Even with a product id to hand: the Store cannot update a copy it
+        // did not install.
+        expect(getUpdatePageUrl(false, '9NBLGGH4NNS1')).toBe(
             'https://www.openworship.app/download?mv=1.2.3',
         );
     });

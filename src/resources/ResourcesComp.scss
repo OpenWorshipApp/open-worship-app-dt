@@ -72,6 +72,26 @@
     overflow: hidden;
   }
 
+  // The Others box. At the patterns' size and in muted ink, not at the form
+  // default -- a full-size checkbox and label were the loudest thing in a row
+  // whose point is the patterns beside them. Brightens under the mouse, like
+  // the folder names do, so it still reads as something to press.
+  .app-resources-others {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    color: var(--app-muted);
+    .form-check-input {
+      margin: 0;
+      font-size: 0.8rem;
+    }
+    &:hover {
+      color: var(--app-ink);
+    }
+  }
+
   // The thesis of the whole panel, so it is set to be READ -- it used to be the
   // most informative string on screen and the faintest thing on it.
   .app-resources-pattern {
@@ -371,6 +391,39 @@
         background-color: var(--app-accent);
       }
     }
+  }
+
+  // A note opens in this app, not in a browser: drawn in the ink a file row
+  // is, keeping the link row's rail and indent.
+  .app-resources-link.app-resources-note-item {
+    color: var(--app-ink);
+  }
+
+  // A verse marked in a note file. The reference is a code with numbers in
+  // it, pinned so `22:2` and `22:11` line up, as in the Bible Notes panel.
+  .app-resources-verse-title {
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Folded only, and the same quiet chip the Bible Notes panel counts with.
+  .app-resources-verse-count {
+    flex: 0 0 auto;
+    min-width: 2ch;
+    margin-left: 0.35rem;
+    padding: 0 4px;
+    border-radius: 3px;
+    background-color: rgba(127, 127, 127, 0.22);
+    color: var(--app-muted);
+    font-size: var(--app-text-xs);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  // A highlight or comment: the line of words (`VerseAnnotationLineComp`)
+  // takes the row, so a long comment is cut at the panel's edge.
+  .app-resources-verse-mark .app-verse-annotation__line {
+    flex: 1 1 auto;
   }
 
   .app-resources-link-icon {

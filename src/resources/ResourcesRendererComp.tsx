@@ -1,28 +1,43 @@
 import './ResourcesComp.scss';
 
-import type { DragEvent } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import type { ChangeEvent, DragEvent } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { handleError } from '../helper/errorHelpers';
+import { escapeHtmlText } from '../helper/sanitizeHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { tran } from '../lang/langHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import {
+    hideProgressBar,
+    showProgressBar,
+} from '../progress-bar/progressBarHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import ResourcesDirBoxComp from './ResourcesDirBoxComp';
+import {
+    copyResourcesFolderToDataDir,
+    getResourcesDataDirPath,
+    getResourcesFolderCopyRefusalKey,
+    ResourcesCopyError,
+} from './resourcesCopyHelpers';
 import {
     checkIsDraggingFiles,
     planResourcesFolderDrop,
     readDroppedPaths,
 } from './resourcesDropHelpers';
 import {
+    carryResourcesFolderSettings,
     getResourcesFolderList,
+    RESOURCES_OTHERS_SHOWING_SETTING_NAME,
     RESOURCES_SEARCH_SHOWING_SETTING_NAME,
     promptAddResourcesFolders,
     removeResourcesFolderSettings,
+    replaceResourcesFolder,
     setResourcesFolderList,
 } from './resourcesFolderHelpers';
 import type { ResourceTargetType } from './resourcesScanHelpers';
@@ -53,6 +68,13 @@ export default function ResourcesRendererComp({
     // and whoever does not never has to see it.
     const [isSearchShowing, setIsSearchShowing] = useStateSettingBoolean(
         RESOURCES_SEARCH_SHOWING_SETTING_NAME,
+        false,
+    );
+    // Persisted for the same reason: someone who keeps general material --
+    // a family tree, a map -- beside their chapter files wants it every time.
+    // Off by default, because the panel exists for the chapter being read.
+    const [isOthersShowing, setIsOthersShowing] = useStateSettingBoolean(
+        RESOURCES_OTHERS_SHOWING_SETTING_NAME,
         false,
     );
     // Two of them on purpose. `searchText` is what the field shows, updated on
@@ -90,7 +112,7 @@ export default function ResourcesRendererComp({
     const handleRemovingFolder = useCallback(async (dirPath: string) => {
         const isOk = await showAppConfirm(
             tran('Remove Folder'),
-            `Remove "${dirPath}"?`,
+            `Remove "${escapeHtmlText(dirPath)}"?`,
             { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
         );
         if (!isOk) {
@@ -108,6 +130,71 @@ export default function ResourcesRendererComp({
         await removeResourcesFolderSettings(dirPath);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // Folders being copied right now. A second press on the same folder while
+    // its copy runs would start a second full copy of the same tree.
+    const copyingDirPathsRef = useRef(new Set<string>());
+    const handleCopyingFolderToDataDir = useCallback(
+        async (dirPath: string) => {
+            if (copyingDirPathsRef.current.has(dirPath)) {
+                return;
+            }
+            const title = tran('Copy to Data Directory');
+            const refusalKey = getResourcesFolderCopyRefusalKey(dirPath);
+            if (refusalKey !== null) {
+                showSimpleToast(title, tran(refusalKey));
+                return;
+            }
+            // Where it will land, said BEFORE anything is written: a copy
+            // can be gigabytes, and the destination is a folder the user may
+            // never have opened.
+            const isOk = await showAppConfirm(
+                title,
+                tran('Copy this folder, then list the copy here instead?') +
+                    `<br><br>"${escapeHtmlText(dirPath)}"` +
+                    `<br>→ "${escapeHtmlText(getResourcesDataDirPath())}"`,
+                { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
+            );
+            if (!isOk) {
+                return;
+            }
+            const progressKey = `${title}: ${dirPath}`;
+            copyingDirPathsRef.current.add(dirPath);
+            showProgressBar(progressKey);
+            try {
+                const { destinationDirPath } =
+                    await copyResourcesFolderToDataDir(dirPath);
+                // The copy takes the original's place, open or collapsed as it
+                // was; the original stays on disk, only off the list.
+                carryResourcesFolderSettings(dirPath, destinationDirPath);
+                const newDirPathList = replaceResourcesFolder(
+                    getResourcesFolderList(),
+                    dirPath,
+                    destinationDirPath,
+                );
+                setResourcesFolderList(newDirPathList);
+                setDirPathList(newDirPathList);
+                invalidateResourcesScanCache(dirPath);
+                await removeResourcesFolderSettings(dirPath);
+                showSimpleToast(title, destinationDirPath);
+            } catch (error) {
+                if (error instanceof ResourcesCopyError) {
+                    showSimpleToast(title, tran(error.messageKey));
+                    return;
+                }
+                handleError(error);
+                showSimpleToast(
+                    title,
+                    tran('Cannot copy folder') +
+                        ': ' +
+                        (error as Error).message,
+                );
+            } finally {
+                copyingDirPathsRef.current.delete(dirPath);
+                hideProgressBar(progressKey);
+            }
+        },
+        [],
+    );
     const handleReloading = useCallback(() => {
         // Everything this panel derives, dropped at once: the cached matches
         // for every folder (nothing watches these -- they live outside the
@@ -214,6 +301,14 @@ export default function ResourcesRendererComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [attemptTimeout],
     );
+    const setIsOthersShowingRef = useAppCurrentRef(setIsOthersShowing);
+    const handleOthersToggling = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setIsOthersShowingRef.current(event.target.checked);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     const handleAddingFolderRef = useAppCurrentRef(handleAddingFolder);
     const handleReloadingRef = useAppCurrentRef(handleReloading);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -310,6 +405,29 @@ export default function ResourcesRendererComp({
                         })}
                     </span>
                 )}
+                {/*
+                 * A checkbox rather than another icon button: it is a standing
+                 * choice about what the list holds, and the word says what it
+                 * holds where an icon would have to be learned. Outside the
+                 * patterns' swap, so it stays put while a folder is dragged in.
+                 */}
+                <label
+                    className={
+                        'app-resources-others form-label mb-0 text-nowrap' +
+                        ' app-caught-hover-pointer'
+                    }
+                    title={tran(
+                        'Show files not named after a book and chapter',
+                    )}
+                >
+                    <input
+                        className="form-check-input mt-0 app-caught-hover-pointer"
+                        type="checkbox"
+                        checked={isOthersShowing}
+                        onChange={handleOthersToggling}
+                    />
+                    <span>{tran('Others')}</span>
+                </label>
                 <button
                     className="app-ghost-button"
                     type="button"
@@ -369,7 +487,11 @@ export default function ResourcesRendererComp({
                                 searchText={
                                     isSearchShowing ? appliedSearchText : ''
                                 }
+                                isOthersShowing={isOthersShowing}
                                 onAddFolder={handleAddButtonClicking}
+                                onCopyFolderToDataDir={
+                                    handleCopyingFolderToDataDir
+                                }
                                 onRemoveFolder={handleRemovingFolder}
                             />
                         );

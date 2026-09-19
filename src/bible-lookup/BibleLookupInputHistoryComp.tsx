@@ -205,10 +205,10 @@ function RendHistoryItemComp({
                 'btn btn-sm d-flex align-items-center app-border-white-round' +
                 ' mx-1 p-0'
             }
-            title={
+            title={tran(
                 'Double click to put back, shift double click to ' +
-                'put back split'
-            }
+                    'put back split',
+            )}
             style={{ height: '27px', fontFamily }}
             draggable
             onDragStart={async (event: any) => {

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 4b47a03e-c20d-4e2c-9dcd-fe2857a8917c
-  modified: 2026-09-02T00:27:27.718Z
+  modified: 2026-09-14T17:31:54.318Z
 ---
 
 `owa_lyric_file` and `owa_slide_file` (2026-09-02) give an agent `list` /
@@ -30,8 +30,13 @@ for the rest of the tool surface.
   a presented slide is a snapshot until re-presented. Do not "fix" this into a
   save. See [[presenting-flow-reads-editing-history-head]] for why the head
   file is what everything renders anyway.
-- **There is no delete action**, and `create` never overwrites — `fsCreateFile`
-  throws on an existing path unless told to override, and it never is.
+- **A delete is a move to the trash, and every change is backed up first**
+  (2026-09-14, asked for by the user: *make sure all actions have backup
+  action, e.g. delete it should move to trash and can undo*). The same day
+  slide documents gained six slide actions (text and style of each box).
+  `create` still never overwrites — `fsCreateFile` throws on an existing path
+  unless told to override, and it never is. The store, the undo and its
+  ordering rules are [[agent-data-tools-backup-undo]].
 - **Two things are checked in TWO layers**, the same split
   [[mcp-read-website-tool]] uses:
   - The NAME, in `owaTools.mjs` FIRST and again at the disk boundary, off one

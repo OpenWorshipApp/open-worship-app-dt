@@ -70,6 +70,7 @@ export type SystemUtilsType = {
     commitHash?: string;
     isDev: boolean;
     isWindows: boolean;
+    isWindowsStore: boolean;
     is64System: boolean;
     isMac: boolean;
     isArm64: boolean;
@@ -96,6 +97,8 @@ export type AppInfoType = {
     version: string;
     versionNumber: number;
 };
+// An installed family and the CSS font weights it ships, `['400', '700']`
+// (`electron/fontListHelpers.ts`).
 export type FontListType = {
     [key: string]: string[];
 };
@@ -137,6 +140,8 @@ export type PagePropsType = {
     isMainPage: boolean;
     lwShareHomePage: string;
     bibleNoteHomePage: string;
+    isPageMarkdownPreview: boolean;
+    markdownPreviewHomePage: string;
     webEditorHomePage: string;
     experimentHomePage: string;
     getIsMouseOverApp: () => boolean;
@@ -228,6 +233,13 @@ export type AppProviderType = Readonly<
         POPUP_FRAME_NAME_PREFIX: string;
         init: () => Promise<void>;
         envUtils: EnvUtilsType;
+        // The one field that changes while the window runs (`Readonly` is
+        // shallow). Filled at start-up, never by the preload, which is frozen.
+        sessionData: {
+            // The data folder that `fileHelpers` aliases as `$DATA_DIR_PATH`
+            // in file contents; `null` turns the aliasing off.
+            defaultStorageDirPath: string | null;
+        };
     }
 >;
 
@@ -244,6 +256,7 @@ const providerSource = (globalThis as any).provider;
 const appProvider = {
     ...providerSource,
     windowTitle: document.title,
+    sessionData: { defaultStorageDirPath: null },
     isMainPage: providerSource.isPageReader || providerSource.isPagePresenter,
     getIsMouseOverApp: () => {
         return isMouseOverApp;

@@ -451,7 +451,13 @@ refused `evaluate_script`: **Lock** screen 0 → `press_key F6` with `includeSna
 elsewhere. The hover is what makes it deterministic: a toast lives 4 s, and the refusal is
 said once a second per screen (a single F6 is refused by four layers and used to stack four
 identical toasts), so the second press must come ≥1 s later and a tool round trip can
-outlast the first toast (verified 2026-09-12). Toasts are how the app reports refusals everywhere
+outlast the first toast (verified 2026-09-12). ⚠️ **The hover has to land inside those 4 s,
+and a slow session cannot** (2026-09-15: three tries, each answering *element no longer
+exists* / *did not become interactive* because reading the press's own snapshot took longer
+than the toast lived). Keep the hover in the very next call after the press, with nothing
+else in that turn; if it still misses, the honest row is `GL-10 PARTIAL: one toast verified,
+stacking not reached at this session's latency` — never FAIL, and never a PASS you did not
+see. Toasts are how the app reports refusals everywhere
 (locked screen, audio-off-while-playing, drop-with-no-folder), so a broken toast stack
 silently swallows those messages. Selectors + assertions: ui-map §Toasts.
 
@@ -720,14 +726,23 @@ sweep/teardown pair 0 + 5 is what keeps the block idempotent):
 0. **Sweep first (MD-04, part 1).** List the videos and audios dirs before downloading
    anything and delete leftovers from earlier runs — they carry the **canonical video's
    page title** (`[MV] គ្រប់ទាំងផ្កា Flowers by … - Official Music Video - YouTube`, ` (N)`
-   from the second copy on) — plus any orphaned `temp-*.part`. Match that title, **not
+   from the second copy on) — plus any orphaned partial. Match that title, **not
    `*YouTube*`**: the user's own library holds real downloads whose names also end in
    `- YouTube` (`ស្រែកថ្វាយព្រះអង្គ Shout to the Lord - YouTube.MKV`, `4K Christian Church
    Worship … - YouTube.mp4`). Say in the report how many you found: leftovers mean the
    previous run skipped its teardown.
+   ⚠️ **The partial is written to `%TEMP%`, not to the media dir** (verified 2026-09-15:
+   `-o %TEMP%\temp-<ms>.%(ext)s`, so a failed run leaves `%TEMP%\temp-<ms>.*`, and only the
+   finished file is moved into `videos`/`audios`). Sweep both places; older revisions of
+   this file said `temp-*.part` in the media dirs alone.
 1. **Video (MD-01)** — Background → **Videos** tab → right-click the empty area of the
    list → **Download From URL** → put the link in → **Ok**. yt-dlp fetches separate video
    and audio streams and **merges them with ffmpeg**.
+   ⚠️ **Driving this with the tools:** there is no right-click tool — press the list
+   header's ⋮ (`owa_click "Background > More Options"`, `ListMenuButtonComp`) and the same
+   menu opens. Then the URL box is an app **input popup**, which `owa_type` refuses on
+   purpose (*"part of a question the app is asking the user"*); use chrome-devtools
+   `fill` + `click` on the uids from `take_snapshot` instead (verified 2026-09-15).
 2. **Audio (MD-02)** — Background → **♫Audios♫** split → same menu (the popup label must
    read **Audio URL:**) → **Ok**. This one runs `-x --audio-format mp3`, i.e. an actual
    **libmp3lame encode** — a merge-only ffmpeg would pass MD-01 and fail here.
@@ -737,13 +752,20 @@ sweep/teardown pair 0 + 5 is what keeps the block idempotent):
    command line (`Get-CimInstance Win32_Process -Filter "Name='yt-dlp.exe'"`): it must
    carry `--no-js-runtimes --js-runtimes quickjs:<…>\extra-bin\qjs\qjs.exe`.
 5. **Delete both again (MD-04, part 2)** — once step 3's evidence (screenshot + on-disk
-   listing) is captured. Prefer the app's own path: 🖱️R the new row → **Move to Trash** →
-   **Yes**, for the video and then for the `.mp3`. That also covers `CM-06` on a background
-   media row against a scratch file this run created, and it refreshes the list through the
-   real `delete` event. Two gotchas:
+   listing) is captured. Three gotchas:
+   - ⚠️ **An agent cannot press Move to Trash, and that is the firewall working**
+     (verified 2026-09-15): `owa_click "Move to Trash"` is refused — *"switched off,
+     because it cannot be undone by pressing it again"* — and the uid interlock covers
+     chrome-devtools' `click` too (CLAUDE.md *Agent access*). So **the on-disk Recycle Bin
+     below is the agent's teardown path**, and `CM-06` is `BLOCKED: destructive-label
+     interlock, human-only` rather than a row to fake. A HUMAN tester still uses the app's
+     own path — 🖱️R the row → **Move to Trash** → **Yes** — which also covers `CM-06` and
+     refreshes the list through the real `delete` event.
    - **Move to Trash is hidden while the item is on a screen** (`isInScreen`,
      `BackgroundMediaItemComp`) — clear/hide the screen first; a missing entry there is not
      a bug.
+   - Deleting on disk behind the app's back is fine here: the list drops both rows on its
+     own through `fs.watch` (verified 2026-09-15, no reload needed).
    - **On-disk fallback** for anything that never reached the list (failed/partial
      download, app already closed). The names start with `[MV]`, and `[` is a
      character-class metacharacter for PowerShell's `-Path`, so filter objects and pipe

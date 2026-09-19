@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from 'vitest';
 
 import {
     NO_APP_URL,
+    describeDeadPin,
     listCandidatePorts,
     pinCdpPort,
     resolveAppBrowserUrl,
@@ -33,7 +34,35 @@ describe('pinCdpPort', () => {
         pinCdpPort(() => 60377);
         const ports = listCandidatePorts();
         expect(ports[0]).toBe(60377);
-        expect(ports).toContain(9223);
+    });
+
+    // `MC-30`: the list used to go on to every published instance and the
+    // legacy fallbacks, and `resolveCdpPort` takes the first that ANSWERS --
+    // so a pin that had died drove whatever was published last, which is the
+    // packaged app with the user's real data when one is up. A named port is
+    // now that port or nothing, the way `resolveAppBrowserUrl` always was.
+    test('a port named on purpose is the WHOLE list', () => {
+        pinCdpPort(() => 60377);
+        expect(listCandidatePorts()).toEqual([60377]);
+        pinCdpPort(null);
+        process.env.OWA_CDP_PORT = '9223';
+        expect(listCandidatePorts()).toEqual([9223]);
+    });
+
+    test('with nothing named it still walks discovery and the fallbacks', () => {
+        pinCdpPort(null);
+        expect(listCandidatePorts().length).toBeGreaterThan(0);
+    });
+
+    // The message a person reads when their pin is dead. The old one said "no
+    // app is running" with the app right there on another port.
+    test('a dead pin is described, and nothing else is', () => {
+        pinCdpPort(null);
+        expect(describeDeadPin()).toBe(null);
+        process.env.OWA_CDP_PORT = '9223';
+        const described = describeDeadPin();
+        expect(described).toContain('9223');
+        expect(described).toContain('OWA_CDP_PORT');
     });
 
     test('a pinned port beats a pinned env port too', () => {

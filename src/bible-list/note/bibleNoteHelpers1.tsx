@@ -14,9 +14,11 @@ import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers
 export function useBibleNoteControl({
     bibleNote,
     setIsShowingBibleLookup,
+    isReadOnly = false,
 }: {
     bibleNote: BibleNote;
     setIsShowingBibleLookup: (isShowing: boolean) => void;
+    isReadOnly?: boolean;
 }) {
     const themeSource = useThemeSource();
     useAppEffect(() => {
@@ -29,9 +31,12 @@ export function useBibleNoteControl({
             if (!editorLink) {
                 continue;
             }
+            const editorTitle =
+                `${tran('Open in Markdown Editor')}` +
+                ` (${langData.langCode})`;
             bibleNote.prependFooterActionButton({
                 id: 'khmer-markdown-editor ' + langData.langCode,
-                description: `Open in ${langData.langCode} Markdown Editor`,
+                description: editorTitle,
                 shortcutKey: 'Ctrl+Shift+Alt+K',
                 children: (
                     <button
@@ -41,8 +46,8 @@ export function useBibleNoteControl({
                                 editorLink,
                             );
                         }}
-                        title={`Open in ${langData.langCode} Markdown Editor`}
-                        aria-label={`Open in ${langData.langCode} Markdown Editor`}
+                        title={editorTitle}
+                        aria-label={editorTitle}
                         aria-pressed={false}
                     >
                         <i className={'bi bi-spellcheck'} />
@@ -50,9 +55,13 @@ export function useBibleNoteControl({
                 ),
             });
         }
+        if (isReadOnly) {
+            // Its whole job is inserting a passage into the note.
+            return;
+        }
         bibleNote.prependFooterActionButton({
             id: 'bible-lookup',
-            description: 'Open Bible Lookup',
+            description: tran('Open Bible Lookup'),
             shortcutKey: 'Ctrl+Shift+B',
             children: (
                 <button
@@ -60,21 +69,21 @@ export function useBibleNoteControl({
                     onClick={() => {
                         setIsShowingBibleLookup(true);
                     }}
-                    title={'Open Bible Lookup'}
-                    aria-label={'Open Bible Lookup'}
+                    title={tran('Open Bible Lookup')}
+                    aria-label={tran('Open Bible Lookup')}
                     aria-pressed={false}
                 >
                     <i className={'bi bi-book'} />
                 </button>
             ),
         });
-    }, [bibleNote]);
+    }, [bibleNote, isReadOnly]);
 
     const [isOnTop, setIsOnTop] = useIsOnTop();
     useAppEffect(() => {
         bibleNote.prependFooterActionButton({
             id: 'toggle-on-top',
-            description: 'Toggle always on top',
+            description: tran('Toggle Always On Top'),
             shortcutKey: 'Ctrl+Shift+Alt+T',
             children: (
                 <button
@@ -105,7 +114,7 @@ export function useBibleNoteControl({
     useAppEffect(() => {
         bibleNote.prependFooterActionButton({
             id: 'bible-key',
-            description: 'Change Bible Key',
+            description: tran('Change Bible Key'),
             shortcutKey: 'Ctrl+Shift+B',
             children: (
                 <button
@@ -119,8 +128,8 @@ export function useBibleNoteControl({
                             [bibleKey],
                         );
                     }}
-                    title={'Change Bible Key'}
-                    aria-label={'Change Bible Key'}
+                    title={tran('Change Bible Key')}
+                    aria-label={tran('Change Bible Key')}
                     aria-pressed={false}
                     style={{
                         color: 'var(--bs-info)',

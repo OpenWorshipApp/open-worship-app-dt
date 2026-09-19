@@ -268,7 +268,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                     tran(
                         'Failed to apply to screen. Please make sure the screen is open.',
                     ),
-                    'error',
+                    tran('Error'),
                 );
                 continue;
             }
@@ -784,6 +784,9 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         const { screenId } = message;
         const screenForegroundManager = this.getInstance(screenId);
         if (screenForegroundManager === null) {
+            // English on purpose: this receiver also runs in the screen
+            // window, and a `tran()` there before its language data has loaded
+            // throws in dev (see `ScreenCloseButtonComp`).
             showSimpleToast(
                 'Failed to apply to screen. Please make sure the screen is open.',
                 'error',
