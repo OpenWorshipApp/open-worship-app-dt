@@ -75,7 +75,6 @@ Other Features:
 - 📜 **Scrolling Messages** — Display scrolling Marquee Bottom text for announcements and notices
 - 🖱️ **Drag and Drop** — Easily arrange slides, import media files, and organize content by dragging and dropping
 - 🖼️ **Dynamic Wallpaper Display** — Automatically cycle through background images
-- 🎵 **CCLI Integration** — Search and import licensed worship songs from CCLI SongSelect
 - And a lot more
 
 Future Features:
