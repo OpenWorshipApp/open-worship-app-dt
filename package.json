@@ -13,6 +13,7 @@
         "i:d:a": "npm cache clean --force && npm i --allow-git=all && npm run electron:install",
         "electron:install": "node node_modules/electron/install.js",
         "dev": "concurrently -k \"npm run vite:dev\" \"npm run electron:build && npm run electron\"",
+        "ubuntu:fix": "sudo chown root:root node_modules/electron/dist/chrome-sandbox && sudo chmod 4755 node_modules/electron/dist/chrome-sandbox",
         "electron:build": "node extra-work/rmdir.mjs electron-build && tsc -p electron.tsconfig.json && node extra-work/copy-build.mjs && node extra-work/build-knowledge.mjs && node extra-work/build-info.mjs",
         "electron:build:watch": "tsc -p electron.tsconfig.json -w",
         "electron": "cross-env NODE_ENV=development electron .",
