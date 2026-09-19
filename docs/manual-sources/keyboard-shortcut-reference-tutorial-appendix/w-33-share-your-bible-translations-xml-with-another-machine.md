@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-34, ST-35, ST-36, ST-37, ST-38, ST-39, ST-40, LT-01]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-18"
+workflowsVersion: "2026-09-19"
 ---
 # W-33 — Share your Bible translations (XML) with another machine
 
@@ -65,5 +65,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-34` · `ST-35` · `ST-36` · `ST-37` · `ST-38` · `ST-39` · `ST-40` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-19).
 :::

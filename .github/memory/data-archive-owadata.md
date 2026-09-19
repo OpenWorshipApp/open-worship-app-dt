@@ -59,11 +59,13 @@ Other non-obvious bits:
   output or its `.part`, and import reports an empty archive in plain words. The other four
   archive kinds stage their plain tar in a temp dir and never collided.
 - The folder catalogue is `src/setting/directory-setting/dataDirectories.ts`, shared with
-  the Path Settings page — add a folder there and both pick it up. **Two of its entries
-  are not plain `select-dir-*` folders (2026-08-07):**
+  the Path Settings page — add a folder there and both pick it up. **Some of its entries
+  are not plain `select-dir-*` folders (2026-08-07, 2026-09-19):**
   - `getDirPath` — an APP-MANAGED folder, one the user cannot point anywhere, so there is
-    no setting to read. Only `bibles-data` so far (`app-dir-bible-data`, resolved from
-    `appLocalStorage.defaultStorage`, dynamic-imported so the catalogue stays light).
+    no setting to read: `bibles-data` (`app-dir-bible-data`) and, since 2026-09-19,
+    `resources` (`app-dir-resources`, archived WHOLE), both resolved from
+    `appLocalStorage.defaultStorageDirPath` by `getAppManagedDirPath`, dynamic-imported so
+    the catalogue stays light.
     Having it is also what keeps the folder OFF the Path Settings page
     (`selectableDataDirectories`) — there is nothing to choose. Import resolves it the
     same way, so the "no folder is selected yet" guard never fires for it.
@@ -73,6 +75,12 @@ Other non-obvious bits:
     archived FILE BY FILE (`toTarEntries` → `bibles-data/KJV.xml`) while the manifest
     still names the FOLDER — import extracts by entry prefix, so they land back inside.
     Missing `fileNames` archives NOTHING of it, never the whole folder.
+  - `afterImport(dirPath, extractedDirPath)` — run inside `importDataArchive`'s loop, AFTER
+    the copy and BEFORE the unpacked copy is deleted, so it reads what the ARCHIVE held.
+    Only `resources` uses it: it puts each top-level sub-folder it restored on the
+    Resources panel's list (`addResourcesFoldersToList`), because that list is a setting
+    in `local-storage/`, which never travels — without it a new machine got the files and
+    a panel showing none of them. Deduped, so a repeat import writes no setting.
 - `webs` (`BACKGROUND_WEB`) was missing from the catalogue entirely until 2026-08-07, so
   it was absent from BOTH the export panel and the Path Settings page — even though
   `selectPathForChildDir` had always been creating and setting it (it walks

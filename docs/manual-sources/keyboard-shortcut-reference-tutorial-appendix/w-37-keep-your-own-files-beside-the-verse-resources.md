@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, CM-93]
 screenshots: 14
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-18"
+workflowsVersion: "2026-09-19"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -170,7 +170,8 @@ all count as book-level too.
    a file named after no chapter — `notes.docx` — and it is on the shelf but not in the list;
    the note says so and tells you to tick **[en:tran:Others]** (step 5) to see it. 📸
    **[en:tran:Copy to Data Directory]** brings a folder you keep somewhere else in with the rest
-   of the app's data, so it lives and moves with it. It asks first, naming the folder and where
+   of the app's data, so it lives and moves with it — **[en:tran:Export Data]** (W-25) carries
+   it in a backup, which a folder only listed here does not. It asks first, naming the folder and where
    the copy goes — a `resources` folder inside your data folder (the one Settings calls the
    parent directory). Press **Yes** and everything in the folder is copied there, sub-folders
    and all, while the progress bar runs; then the group switches to the copy, in the same place
@@ -201,5 +202,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-19).
 :::

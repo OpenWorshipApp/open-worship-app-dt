@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [NAV-17, NAV-18, NAV-19]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-18"
+workflowsVersion: "2026-09-19"
 ---
 # W-25 — Back up everything, or move to a new computer
 
@@ -14,16 +14,25 @@ or to set up a second machine — use the app's **File** menu.
 
 1. Open the **File** menu at the top of the window and choose **[en:tran:Export Data]**. 📸
 2. A panel lists every data folder you have set up — Documents, Presenting Flows, Background
-   Images, Videos, Audios and Webs, Bible Present, Bible Reader, Notes, and **Bibles XML**
-   — with the folder each one points at. **They all start ticked.** Untick anything you do
-   not want (the videos folder is usually the big one), or use **Select All** /
-   **Deselect All**. 📸
+   Images, Videos, Audios and Webs, Bible Present, Bible Reader, Notes, **Bibles XML** and
+   **Resources** — with the folder each one points at. **They all start ticked.** Untick
+   anything you do not want (the videos folder is usually the big one), or use
+   **Select All** / **Deselect All**. 📸
 
-   > **Bibles XML** is the one folder you never chose yourself — the app keeps it. It
-   > carries the Bible XML files you added by hand (Settings → Bible → Bibles XML), and
-   > **only those**: the Bible versions you downloaded in the app are left out, because
-   > you simply download them again on the other machine. If you have never added an XML
-   > Bible, the row is not offered at all.
+   > **Bibles XML** and **Resources** are the two folders you never chose yourself — the
+   > app keeps them.
+   >
+   > **Bibles XML** carries the Bible XML files you added by hand (Settings → Bible →
+   > Bibles XML), and **only those**: the Bible versions you downloaded in the app are
+   > left out, because you simply download them again on the other machine. If you have
+   > never added an XML Bible, the row is not offered at all.
+   >
+   > **Resources** is the `resources` folder inside your data folder — where
+   > **[en:tran:Copy to Data Directory]** in the Resources panel (W-37) puts a folder of
+   > chapter PDFs, notes or links. All of it goes in, so it can be big; untick it like the videos if you do
+   > not need it. A folder you left somewhere else on the computer and only listed in the
+   > panel is **not** in the backup — copy it into the data folder first. If you have
+   > never copied one there, the row is not offered.
    > 2a. Below the folder list, the same panel asks for a **[en:tran:Password]** and a
    > **[en:tran:Confirm Password]**. Leave both empty for an ordinary backup.
    > Type the same password in both to lock it — a backup carried on a USB stick holds your
@@ -45,7 +54,9 @@ or to set up a second machine — use the app's **File** menu.
    > as quickly as it always was.
 
 5. Press **Ok**. When it finishes you are told how many files were brought in and how
-   many were already up to date.
+   many were already up to date. Every folder the **Resources** row brought back is also
+   added to the Resources panel's list, so it shows up there without being added by hand
+   (press **[en:tran:Reload]** in the panel's ⋮ menu if the panel was already open).
 
 > Notes: this is a **copy, not a replacement**. A file already on the machine with the
 > same contents is left alone, so importing the same backup twice changes nothing and is
@@ -68,5 +79,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-17` · `NAV-18` · `NAV-19`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-19).
 :::

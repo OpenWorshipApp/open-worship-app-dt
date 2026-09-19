@@ -53,9 +53,9 @@ export const appManagedDataDirNames = {
     /**
      * Where **Copy to Data Directory** puts a Resources folder, so a library
      * kept anywhere on the machine can live beside the rest of the data --
-     * `src/resources/resourcesCopyHelpers.ts`. Not in `dataDirectories.ts`
-     * (yet): these are the user's own PDFs and videos, and whether a whole-data
-     * archive should carry every one of them is a size question of its own.
+     * `src/resources/resourcesCopyHelpers.ts`. In `dataDirectories.ts` since
+     * 2026-09-19, WHOLE: these are the user's own files, nothing in it can be
+     * downloaded again, and the export panel lets its row be unticked.
      */
     RESOURCES: 'resources',
 };

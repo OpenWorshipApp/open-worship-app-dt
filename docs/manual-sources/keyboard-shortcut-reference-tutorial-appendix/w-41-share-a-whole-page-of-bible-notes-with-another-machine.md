@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [PR-30, PR-31, CM-69, CM-98, CM-99]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-18"
+workflowsVersion: "2026-09-19"
 ---
 # W-41 — Share a whole page of Bible Notes with another machine
 
@@ -40,5 +40,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-30` · `PR-31` · `CM-69` · `CM-98` · `CM-99`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-19).
 :::

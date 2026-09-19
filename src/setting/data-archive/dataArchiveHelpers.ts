@@ -161,9 +161,9 @@ export function toCommonAncestor(dirPaths: string[]) {
 }
 
 /**
- * Where a folder actually is. An app-managed one (the bible databases) has no
- * directory setting to read — the app fixed its place — so it answers for
- * itself; everything else is wherever the user pointed it.
+ * Where a folder actually is. An app-managed one (the bible data, the
+ * resources) has no directory setting to read — the app fixed its place — so
+ * it answers for itself; everything else is wherever the user pointed it.
  */
 export async function getDataDirectoryPath(dataDirectory: DataDirectoryType) {
     if (dataDirectory.getDirPath !== undefined) {
@@ -540,7 +540,7 @@ export async function importDataArchive(
                 return folder.entry;
             }),
         );
-        for (const { folder, dirPath } of destinations) {
+        for (const { folder, dataDirectory, dirPath } of destinations) {
             const sourceDir = toExtractedArchivePath(extractDir, folder.entry);
             if (!(await fsCheckDirExist(sourceDir))) {
                 continue;
@@ -551,6 +551,9 @@ export async function importDataArchive(
                 getImportCollisionPolicy(folder.settingName),
                 counts,
             );
+            // Inside the loop, before the unpacked copy is deleted: the hook
+            // reads what the archive held, not what the folder holds now.
+            await dataDirectory.afterImport?.(dirPath as string, sourceDir);
         }
     } finally {
         await safeDeleteDir(extractDir);

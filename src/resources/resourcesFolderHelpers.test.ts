@@ -38,6 +38,7 @@ vi.mock('../helper/settingHelpers', async (importOriginal) => {
 
 import {
     addResourcesFolders,
+    addResourcesFoldersToList,
     carryResourcesFolderSettings,
     getResourcesFolderList,
     promptAddResourcesFolders,
@@ -161,6 +162,32 @@ describe('addResourcesFolders', () => {
             addedDirPaths: ['/c/media'],
             duplicatedDirPaths: ['/a/songs'],
         });
+    });
+});
+
+describe('addResourcesFoldersToList', () => {
+    beforeEach(() => {
+        state.isLinux = false;
+        getItemMock.mockReset();
+        setItemMock.mockReset();
+    });
+
+    test('saves the list with the new folders on the end', () => {
+        getItemMock.mockReturnValue('["/a/songs"]');
+        expect(
+            addResourcesFoldersToList(['/d/resources/pdf', '/a/Songs']),
+        ).toEqual(['/d/resources/pdf']);
+        expect(setItemMock).toHaveBeenCalledWith(
+            'resources-folder-list',
+            '["/a/songs","/d/resources/pdf"]',
+        );
+    });
+
+    test('writes nothing when every folder is already listed', () => {
+        // A second import of the same backup must not rewrite the setting.
+        getItemMock.mockReturnValue('["/d/resources/pdf"]');
+        expect(addResourcesFoldersToList(['/d/resources/pdf/'])).toEqual([]);
+        expect(setItemMock).not.toHaveBeenCalled();
     });
 });
 

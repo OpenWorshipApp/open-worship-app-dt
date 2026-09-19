@@ -146,6 +146,24 @@ export function addResourcesFolders(
 }
 
 /**
+ * Put folders on the SAVED list, for a caller that is not the panel -- File →
+ * Import Data, which brings the data directory's `resources` folder back but
+ * not this list (a setting is not data), so the files it restored would land
+ * on a machine whose panel shows none of them. Returns the folders that were
+ * new; a panel already open picks them up on its Reload.
+ */
+export function addResourcesFoldersToList(dirPaths: string[]) {
+    const { newDirPathList, addedDirPaths } = addResourcesFolders(
+        getResourcesFolderList(),
+        dirPaths,
+    );
+    if (newDirPathList !== null) {
+        setResourcesFolderList(newDirPathList);
+    }
+    return addedDirPaths;
+}
+
+/**
  * The list with one folder swapped for another IN ITS PLACE.
  *
  * For a folder that was copied somewhere else: the copy takes over the box the

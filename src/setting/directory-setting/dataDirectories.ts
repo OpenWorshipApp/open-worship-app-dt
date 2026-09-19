@@ -30,6 +30,12 @@ export type DataDirectoryType = {
      * Everything else in it, sub-folders included, stays out of the archive.
      */
     fileNamePattern?: RegExp;
+    /**
+     * Run once Import Data has copied this folder back: `dirPath` is where it
+     * went, `extractedDirPath` the unpacked copy it came from — for a folder
+     * whose files mean nothing to the app until a setting points at them.
+     */
+    afterImport?: (dirPath: string, extractedDirPath: string) => Promise<void>;
 };
 
 /**
@@ -38,6 +44,13 @@ export type DataDirectoryType = {
  * nothing can mistake it for a path the user picked.
  */
 export const APP_MANAGED_BIBLE_DATA_KEY = 'app-dir-bible-data';
+export const APP_MANAGED_RESOURCES_KEY = 'app-dir-resources';
+
+async function getAppManagedDirPath(dirName: string) {
+    const { appLocalStorage } = await import('./appLocalStorage');
+    const { pathJoin } = await import('../../server/fileHelpers');
+    return pathJoin(appLocalStorage.defaultStorageDirPath, dirName);
+}
 
 export const dataDirectories: DataDirectoryType[] = [
     {
@@ -111,12 +124,46 @@ export const dataDirectories: DataDirectoryType[] = [
         defaultDirName: appManagedDataDirNames.BIBLE_DATA,
         iconClassName: 'bi-filetype-xml',
         fileNamePattern: /\.xml$/i,
-        getDirPath: async () => {
-            const { appLocalStorage } = await import('./appLocalStorage');
-            const { pathJoin } = await import('../../server/fileHelpers');
-            return pathJoin(
-                appLocalStorage.defaultStorageDirPath,
-                appManagedDataDirNames.BIBLE_DATA,
+        getDirPath: () => {
+            return getAppManagedDirPath(appManagedDataDirNames.BIBLE_DATA);
+        },
+    },
+    {
+        // `<parent dir>/resources`, where the Resources panel's **Copy to Data
+        // Directory** puts a folder (`src/resources/resourcesCopyHelpers.ts`).
+        // App-managed for the same reason as the bible data: its place is
+        // fixed under the parent directory, so there is no setting to read.
+        //
+        // The WHOLE folder goes in, sub-folders and all: these are the user's
+        // own PDFs, notes and link lists, and nothing in it can be fetched
+        // again. It can be large; its row can be unticked like the videos one.
+        title: 'Resources',
+        settingName: APP_MANAGED_RESOURCES_KEY,
+        defaultDirName: appManagedDataDirNames.RESOURCES,
+        iconClassName: 'bi-folder2-open',
+        getDirPath: () => {
+            return getAppManagedDirPath(appManagedDataDirNames.RESOURCES);
+        },
+        // The panel lists only the folders on its own list, and that list is
+        // a setting rather than data, so it never travels: each folder the
+        // archive held is put back on it, or the restore would show nothing.
+        afterImport: async (dirPath, extractedDirPath) => {
+            const { checkIsHiddenName, fsListDirents, pathJoin } =
+                await import('../../server/fileHelpers');
+            const { addResourcesFoldersToList } =
+                await import('../../resources/resourcesFolderHelpers');
+            const dirents = await fsListDirents(extractedDirPath);
+            addResourcesFoldersToList(
+                dirents
+                    .filter((dirent) => {
+                        return (
+                            dirent.isDirectory &&
+                            !checkIsHiddenName(dirent.name)
+                        );
+                    })
+                    .map((dirent) => {
+                        return pathJoin(dirPath, dirent.name);
+                    }),
             );
         },
     },

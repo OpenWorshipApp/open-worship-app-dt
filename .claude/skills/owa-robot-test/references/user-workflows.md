@@ -21,7 +21,20 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-18a** (**W-31 step 7 — the divider's arrows say what they do.** From
+**workflowsVersion: 2026-09-19** (**W-25 steps 2 and 5 — the backup carries the Resources
+folder.** Asked for by the user: *add `$DATA_DIR_PATH/resources` part of export/import data as
+well*. **Export Data** lists a **Resources** row, the app-managed `<data folder>/resources`
+where the Resources panel's **Copy to Data Directory** puts a folder, and archives ALL of it,
+sub-folders included. **Import Data** puts it back and adds each folder it restored to the
+Resources panel's list — the list is a setting, not data, so on a new machine the files would
+otherwise land and show nowhere. A folder only LISTED in the panel from elsewhere on the disk is
+not carried. Verified live 2026-09-19 on the dev data folder: the row shown ticked with its path;
+a Resources-only export held all 1 321 files and a manifest naming `app-dir-resources`;
+importing it back reported `Imported 0 file(s); 1321 already up to date` with no `(1)` copies
+and the list untouched; an archive holding a new sub-folder imported 1 file, added that folder
+to the list, and the panel drew it as its own group after Reload.)
+
+Previous: **workflowsVersion: 2026-09-18a** (**W-31 step 7 — the divider's arrows say what they do.** From
 `/owa-enhance ui` (`EN-21`): the two small arrows on a hovered divider were titled *Disable left* /
 *Disable right* — in English in every language, and wrong in English too, since they collapse a panel
 and disable nothing. They read **Collapse left panel** / **Collapse right panel** (top / bottom on a
@@ -2238,16 +2251,25 @@ or to set up a second machine — use the app's **File** menu.
 
 1. Open the **File** menu at the top of the window and choose **[en:tran:Export Data]**. 📸
 2. A panel lists every data folder you have set up — Documents, Presenting Flows, Background
-   Images, Videos, Audios and Webs, Bible Present, Bible Reader, Notes, and **Bibles XML**
-   — with the folder each one points at. **They all start ticked.** Untick anything you do
-   not want (the videos folder is usually the big one), or use **Select All** /
-   **Deselect All**. 📸
+   Images, Videos, Audios and Webs, Bible Present, Bible Reader, Notes, **Bibles XML** and
+   **Resources** — with the folder each one points at. **They all start ticked.** Untick
+   anything you do not want (the videos folder is usually the big one), or use
+   **Select All** / **Deselect All**. 📸
 
-   > **Bibles XML** is the one folder you never chose yourself — the app keeps it. It
-   > carries the Bible XML files you added by hand (Settings → Bible → Bibles XML), and
-   > **only those**: the Bible versions you downloaded in the app are left out, because
-   > you simply download them again on the other machine. If you have never added an XML
-   > Bible, the row is not offered at all.
+   > **Bibles XML** and **Resources** are the two folders you never chose yourself — the
+   > app keeps them.
+   >
+   > **Bibles XML** carries the Bible XML files you added by hand (Settings → Bible →
+   > Bibles XML), and **only those**: the Bible versions you downloaded in the app are
+   > left out, because you simply download them again on the other machine. If you have
+   > never added an XML Bible, the row is not offered at all.
+   >
+   > **Resources** is the `resources` folder inside your data folder — where
+   > **[en:tran:Copy to Data Directory]** in the Resources panel (W-37) puts a folder of
+   > chapter PDFs, notes or links. All of it goes in, so it can be big; untick it like the videos if you do
+   > not need it. A folder you left somewhere else on the computer and only listed in the
+   > panel is **not** in the backup — copy it into the data folder first. If you have
+   > never copied one there, the row is not offered.
    > 2a. Below the folder list, the same panel asks for a **[en:tran:Password]** and a
    > **[en:tran:Confirm Password]**. Leave both empty for an ordinary backup.
    > Type the same password in both to lock it — a backup carried on a USB stick holds your
@@ -2269,7 +2291,9 @@ or to set up a second machine — use the app's **File** menu.
    > as quickly as it always was.
 
 5. Press **Ok**. When it finishes you are told how many files were brought in and how
-   many were already up to date.
+   many were already up to date. Every folder the **Resources** row brought back is also
+   added to the Resources panel's list, so it shows up there without being added by hand
+   (press **[en:tran:Reload]** in the panel's ⋮ menu if the panel was already open).
 
 > Notes: this is a **copy, not a replacement**. A file already on the machine with the
 > same contents is left alone, so importing the same backup twice changes nothing and is
@@ -3160,7 +3184,8 @@ all count as book-level too.
    a file named after no chapter — `notes.docx` — and it is on the shelf but not in the list;
    the note says so and tells you to tick **[en:tran:Others]** (step 5) to see it. 📸
    **[en:tran:Copy to Data Directory]** brings a folder you keep somewhere else in with the rest
-   of the app's data, so it lives and moves with it. It asks first, naming the folder and where
+   of the app's data, so it lives and moves with it — **[en:tran:Export Data]** (W-25) carries
+   it in a backup, which a folder only listed here does not. It asks first, naming the folder and where
    the copy goes — a `resources` folder inside your data folder (the one Settings calls the
    parent directory). Press **Yes** and everything in the folder is copied there, sub-folders
    and all, while the progress bar runs; then the group switches to the copy, in the same place

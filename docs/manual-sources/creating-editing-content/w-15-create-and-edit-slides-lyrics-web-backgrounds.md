@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-45, ED-46, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-18"
+workflowsVersion: "2026-09-19"
 ---
 # W-15 — Create and edit slides / lyrics / web backgrounds
 
@@ -52,5 +52,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-45` · `ED-46` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-43` · `PM-33` · `PM-124`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-18).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-19).
 :::
