@@ -7,6 +7,7 @@ import { setSetting, useStateSettingString } from '../helper/settingHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import { tran } from '../lang/langHelpers';
 
 const BIBLE_FIND_RECENT_SEARCH_SETTING_NAME = 'bible-find-recent-search';
 let setFindText: (text: string) => void = () => {};
@@ -105,16 +106,28 @@ export default function BibleFindHeaderComp({
     }, []);
     return (
         <>
+            {/* Both controls carry a name: unnamed, the box read "edit, blank"
+                and the button "button" to a screen reader, and the app's own
+                `owa_find_ui`/`owa_type` could not reach either of them — the
+                two controls that drive this whole view. */}
             <input
                 className="form-control form-control-sm"
                 ref={inputRef}
                 type="text"
                 value={text}
+                aria-label={tran('Search verses')}
+                placeholder={`${tran('Search verses')}...`}
                 onKeyUp={keyUpHandling}
                 style={{ fontFamily }}
                 onChange={handleInputChange}
             />
-            <button className="btn btn-sm" onClick={handleRefreshing}>
+            <button
+                className="btn btn-sm"
+                type="button"
+                title={tran('Refresh')}
+                aria-label={tran('Refresh')}
+                onClick={handleRefreshing}
+            >
                 <i className="bi bi-arrow-clockwise app-caught-hover-pointer" />
             </button>
         </>

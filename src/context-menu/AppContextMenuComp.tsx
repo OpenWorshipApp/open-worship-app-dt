@@ -42,21 +42,40 @@ function ContextMenuItemComp({
         }, 0);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handleKeyDown = useCallback(
+        (event: any) => {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+            // Space would scroll the page behind the menu.
+            event.preventDefault();
+            handleClick(event);
+        },
+        [handleClick],
+    );
     if (item.menuElement === elementDivider) {
         return item.menuElement;
     }
     return (
+        // `menuitem` and a tab stop: every menu in this app was a plain `div`
+        // with an `onClick`, so the accessibility tree showed a bare group of
+        // text nodes where a menu is, and no menu could be worked without a
+        // mouse. The container carries the matching `menu` role.
         <div
             className={
                 `${APP_CONTEXT_MENU_ITEM_CLASS} d-flex w-100 app-overflow-hidden` +
                 `${isDisabled ? ' disabled' : ''}`
             }
             style={item.style ?? {}}
+            role="menuitem"
+            tabIndex={isDisabled ? -1 : 0}
+            aria-disabled={isDisabled || undefined}
             title={
                 item.title ??
                 (typeof item.menuElement === 'string' ? item.menuElement : '')
             }
             onClick={handleClick}
+            onKeyDown={handleKeyDown}
         >
             {item.childBefore || null}
             <div className="app-ellipsis flex-fill">{item.menuElement}</div>
@@ -96,6 +115,7 @@ export default function AppContextMenuComp() {
                     }
                 }}
                 className="app-context-menu app-focusable"
+                role="menu"
             >
                 {data.items.map((item, i) => {
                     return (

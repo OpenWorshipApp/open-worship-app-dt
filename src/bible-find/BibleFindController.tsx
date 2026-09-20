@@ -33,7 +33,7 @@ import type {
     BibleFindResultType,
     SelectedBookKeyType,
 } from './bibleFindHelpers';
-import { calcPerPage, findOnline } from './bibleFindHelpers';
+import { calcPerPage, findOnline, toFindWildCardText } from './bibleFindHelpers';
 import type { AppContextMenuControlType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
@@ -183,8 +183,20 @@ class DatabaseFindingHandler {
             return null;
         }
         let { fromLineNumber, toLineNumber } = findData;
+        if (fromLineNumber === undefined || toLineNumber === undefined) {
+            fromLineNumber = 0;
+            toLineNumber = DEFAULT_ROW_LIMIT - 1;
+        }
         const locale = await getBibleLocale(bibleKey);
         const sText = (await sanitizeFindingText(locale, text)) ?? text;
+        const wildCardText = toFindWildCardText(locale, sText);
+        if (wildCardText === null) {
+            // The query holds nothing this bible's script can match, so there
+            // is no query to run: `null` puts the view on the same "No data
+            // available" state an empty box does, instead of scanning all
+            // 31,000 verses to answer that every one of them matched.
+            return null;
+        }
         let sqlBookKey = '';
         if (bookKeys?.length) {
             const bookConditions = bookKeys
@@ -192,19 +204,8 @@ class DatabaseFindingHandler {
                 .join(' OR ');
             sqlBookKey = ` AND (${bookConditions})`;
         }
-        const wildCardText = sText
-            .split(' ')
-            .filter((part) => quickTrimText(locale, part))
-            .filter((part) => part.length > 0)
-            .map((part) => `%${part}%`)
-            .join('')
-            .replaceAll("'", '');
         const sqlFrom = `FROM verses WHERE sText LIKE '%${wildCardText}%'${sqlBookKey}`;
         let sql = `SELECT text ${sqlFrom}`;
-        if (fromLineNumber === undefined || toLineNumber === undefined) {
-            fromLineNumber = 0;
-            toLineNumber = DEFAULT_ROW_LIMIT - 1;
-        }
         const count = calcPerPage(toLineNumber, fromLineNumber);
         if (count < 1) {
             throw new Error(`Invalid line number ${JSON.stringify(findData)}`);

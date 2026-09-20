@@ -1311,6 +1311,7 @@ const dictionary = {
     Locations: 'ទីកន្លែង',
     'Search names': 'ស្វែងរកឈ្មោះ',
     'Search locations': 'ស្វែងរកទីកន្លែង',
+    'Search verses': 'ស្វែងរកខគម្ពីរ',
     'Clear search': 'សម្អាតការស្វែងរក',
     'Filter by name type': 'ត្រងតាមប្រភេទឈ្មោះ',
     'Type filter applies to names only':
@@ -1357,6 +1358,7 @@ const dictionary = {
     Children: 'កូន',
     Siblings: 'បងប្អូន',
     Cousins: 'បងប្អូនជីដូនមួយ',
+    Verse: 'ខគម្ពីរ',
     Verses: 'ខគម្ពីរ',
     Links: 'តំណភ្ជាប់',
     'Modern identification': 'ការកំណត់អត្តសញ្ញាណសម័យទំនើប',

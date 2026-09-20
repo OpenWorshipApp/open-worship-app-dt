@@ -145,7 +145,11 @@ export default function RenderBookOptionsComp({
         document.body.clientWidth / BOOK_OPTION_WIDTH,
     );
 
-    if (!matchedBooks) {
+    // `?.length`, not just a null check: a filter that matched NO book left an
+    // array of zero here, so the body rendered nothing but its ghost spacers
+    // and the panel came up blank with no word of why — typing `gen 3` before
+    // the book is committed is enough to reach it.
+    if (!matchedBooks?.length) {
         return <div>{tran('No book options available')}</div>;
     }
     return (

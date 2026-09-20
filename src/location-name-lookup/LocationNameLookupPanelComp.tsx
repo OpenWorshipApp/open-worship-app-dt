@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import type { MentionNameType } from 'bible-note';
 
 import { useAppEffect } from '../helper/appHooks';
+import { useBibleViewTextScale } from '../helper/bibleViewHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import LoadingComp from '../others/LoadingComp';
 import RenderPaginationComp from '../others/RenderPaginationComp';
@@ -53,6 +54,12 @@ function RenderResultListComp({
     search: (query: string, page: number) => LookupPageType;
 }>) {
     const [page, setPage] = useState(1);
+    // The records render at the BIBLE TEXT's size: this list is what names the
+    // record a detail panel then shows, and that panel has always been zoomed,
+    // so at a large bible font the two halves of one feature were unreadable
+    // beside each other. `zoom` re-lays-out rather than repainting, so a long
+    // name wraps inside the narrower logical width instead of running off.
+    const textScale = useBibleViewTextScale();
     // Reading a page is a synchronous scan over thousands of records and, for an
     // empty query, a copy of the whole sorted array — so it must happen only
     // when the query, the filter or the page actually changes, never on an
@@ -85,6 +92,7 @@ function RenderResultListComp({
                     'flex-fill d-flex align-items-center' +
                     ' justify-content-center text-secondary'
                 }
+                style={{ zoom: textScale }}
             >
                 {tran('No matches')}
             </div>
@@ -97,6 +105,7 @@ function RenderResultListComp({
                     'list-group list-group-flush flex-fill' +
                     ' location-name-lookup__list overflow-y-auto'
                 }
+                style={{ zoom: textScale }}
             >
                 {result.records.map((record) => {
                     return (
@@ -239,6 +248,14 @@ function RenderLookupBodyComp({
             // per row falling back to whatever the system happens to have. A
             // package that names no font (English) leaves this undefined and
             // nothing changes.
+            //
+            // The bible-text zoom is NOT here, it is on the result list — see
+            // `RenderResultListComp`. This element carries the search box, two
+            // tabs and a select in a 340px widget: at the 2.6x a 44px bible
+            // asks for, that row runs off the widget and the Locations tab and
+            // the pager cannot be reached at all (measured 2026-09-20). The
+            // records are what has to be readable; the chrome has to stay
+            // operable.
             style={{ fontFamily }}
         >
             <div className="input-group input-group-sm p-2 pb-1">

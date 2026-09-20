@@ -80,7 +80,26 @@ describe('loggerHelpers', () => {
         ]);
     });
 
+    test('drops debug chatter outside dev but keeps errors and warnings', () => {
+        // `verbose` was hardcoded, so opening the Find view wrote 67
+        // `console.log` lines in a packaged build too.
+        (providerMock as any).systemUtils = { isDev: false };
+
+        appLog('noise');
+        appTrace('noise');
+        appWarning('careful');
+        appError('boom');
+
+        expect(console.log).not.toHaveBeenCalled();
+        expect(console.trace).not.toHaveBeenCalled();
+        expect(console.warn).toHaveBeenCalledWith('careful');
+        expect(console.error).toHaveBeenCalledWith('boom');
+
+        delete (providerMock as any).systemUtils;
+    });
+
     afterEach(() => {
+        delete (providerMock as any).systemUtils;
         console.log = originalConsole.log;
         console.error = originalConsole.error;
         console.warn = originalConsole.warn;
