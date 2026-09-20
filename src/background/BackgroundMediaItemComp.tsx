@@ -27,7 +27,15 @@ function genFileNameElement(fileName: string) {
                     fontSize: '14px',
                 }}
             >
-                {fileName}
+                {/* `app-ellipsis-left` is `direction: rtl` so a long name
+                    keeps its END. That also makes the line RTL for the bidi
+                    algorithm, which REORDERS a name whose runs are not all
+                    one direction: `1_cv` was drawn as `cv_1` because the
+                    neutral `_` between the digits and the letters took the
+                    line's direction. `bdi` isolates the name and takes its
+                    direction from its own first strong character, so the
+                    order is right while the ellipsis stays on the left. */}
+                <bdi>{fileName}</bdi>
             </p>
         </div>
     );
@@ -141,7 +149,7 @@ export default function BackgroundMediaItemComp({
         >
             {isNameOnTop && (
                 <div className="app-ellipsis-left pe-4">
-                    {fileSource.fullName}
+                    <bdi>{fileSource.fullName}</bdi>
                 </div>
             )}
             {rendChild(

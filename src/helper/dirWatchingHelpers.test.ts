@@ -10,9 +10,11 @@ const {
     watchMock,
     handleErrorMock,
     getSelectedParentDirectoryMock,
+    dirSourceGetDirPathBySettingNameMock,
 } = vi.hoisted(() => ({
     dirSourceGetAllInstancesMock: vi.fn(),
     dirSourceGetInstanceByDirPathMock: vi.fn(),
+    dirSourceGetDirPathBySettingNameMock: vi.fn(),
     fileSourceGetInstanceMock: vi.fn(),
     fsCheckDirExistMock: vi.fn(),
     fsCheckFileExistMock: vi.fn(),
@@ -29,6 +31,7 @@ vi.mock('./DirSource', () => ({
     default: {
         getAllInstances: dirSourceGetAllInstancesMock,
         getInstanceByDirPath: dirSourceGetInstanceByDirPathMock,
+        getDirPathBySettingName: dirSourceGetDirPathBySettingNameMock,
     },
 }));
 
@@ -44,6 +47,8 @@ vi.mock('../server/fileHelpers', () => ({
     pathJoin: (...paths: string[]) => paths.filter(Boolean).join('/'),
     pathDirname: (filePath: string) =>
         filePath.split('/').slice(0, -1).join('/'),
+    pathResolve: (dirPath: string) => dirPath,
+    pathSeparator: '/',
 }));
 
 vi.mock('../server/comparisonHelpers', () => ({
@@ -66,6 +71,15 @@ vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
         getSelectedParentDirectory: getSelectedParentDirectoryMock,
     },
+}));
+
+// Two child folders is enough to show both cases: one left under the parent
+// directory (covered by its recursive watch) and one pointed outside it.
+vi.mock('../setting/directory-setting/dataDirectories', () => ({
+    selectableDataDirectories: [
+        { settingName: 'select-dir-app-document' },
+        { settingName: 'select-dir-background-video' },
+    ],
 }));
 
 // `watchingState` and the pending sets are module state, so every test gets a
@@ -120,6 +134,7 @@ describe('dirWatchingHelpers', () => {
         });
         dirSourceGetInstanceByDirPathMock.mockReturnValue(null);
         dirSourceGetAllInstancesMock.mockReturnValue([]);
+        dirSourceGetDirPathBySettingNameMock.mockReturnValue(null);
     });
 
     afterEach(() => {
@@ -141,6 +156,110 @@ describe('dirWatchingHelpers', () => {
         // A second caller must not install a second watch on the same dir.
         await helpers.watchDataDir();
         expect(watchMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('a child folder OUTSIDE the parent directory gets a watch of its own', async () => {
+        // The configuration this exists for: Documents pointed at a sibling
+        // tree while everything else stays under the parent directory. Before
+        // the fix nothing in `/elsewhere/documents` ever raised an event, so a
+        // document edited in another window never reached the Presenter.
+        dirSourceGetDirPathBySettingNameMock.mockImplementation(
+            (settingName: string) => {
+                return settingName === 'select-dir-app-document'
+                    ? '/elsewhere/documents'
+                    : '/data/videos';
+            },
+        );
+        const { helpers } = await startWatching();
+
+        const watchedDirPaths = watchMock.mock.calls.map((call) => call[0]);
+        // `/data/videos` is inside `/data`, which is already watched
+        // recursively, so it must NOT cost a second watch.
+        expect(watchedDirPaths).toEqual(['/data', '/elsewhere/documents']);
+
+        // Still memoized: a second registration installs nothing more.
+        await helpers.watchDataDir();
+        expect(watchMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('every child folder under the parent directory still costs ONE watch', async () => {
+        dirSourceGetDirPathBySettingNameMock.mockImplementation(
+            (settingName: string) => {
+                return settingName === 'select-dir-app-document'
+                    ? '/data/documents'
+                    : '/data/videos';
+            },
+        );
+        await startWatching();
+
+        expect(watchMock).toHaveBeenCalledTimes(1);
+        expect(watchMock).toHaveBeenCalledWith(
+            '/data',
+            expect.objectContaining({ recursive: true }),
+            expect.any(Function),
+        );
+    });
+
+    test('a folder chosen ABOVE the parent directory absorbs it', async () => {
+        dirSourceGetDirPathBySettingNameMock.mockImplementation(
+            (settingName: string) => {
+                return settingName === 'select-dir-app-document' ? '/' : null;
+            },
+        );
+        await startWatching();
+
+        const watchedDirPaths = watchMock.mock.calls.map((call) => call[0]);
+        expect(watchedDirPaths).toEqual(['/']);
+    });
+
+    test('unwatching releases every root in one abort', async () => {
+        dirSourceGetDirPathBySettingNameMock.mockImplementation(
+            (settingName: string) => {
+                return settingName === 'select-dir-app-document'
+                    ? '/elsewhere/documents'
+                    : null;
+            },
+        );
+        const { helpers } = await startWatching();
+        const signals: AbortSignal[] = watchMock.mock.calls.map((call) => {
+            return call[1].signal;
+        });
+        expect(signals).toHaveLength(2);
+
+        helpers.unwatchDataDir();
+
+        for (const signal of signals) {
+            expect(signal.aborted).toBe(true);
+        }
+    });
+
+    test('resync re-aims the watches when a child folder moves out', async () => {
+        const { helpers } = await startWatching();
+        expect(watchMock).toHaveBeenCalledTimes(1);
+
+        // Nothing moved yet: a resync must not churn the watches.
+        await helpers.resyncDataDirWatches();
+        expect(watchMock).toHaveBeenCalledTimes(1);
+
+        dirSourceGetDirPathBySettingNameMock.mockImplementation(
+            (settingName: string) => {
+                return settingName === 'select-dir-app-document'
+                    ? '/elsewhere/documents'
+                    : null;
+            },
+        );
+        await helpers.resyncDataDirWatches();
+
+        const watchedDirPaths = watchMock.mock.calls
+            .slice(1)
+            .map((call) => call[0]);
+        expect(watchedDirPaths).toEqual(['/data', '/elsewhere/documents']);
+    });
+
+    test('resync does nothing before anything is watched', async () => {
+        const helpers = await importHelpers();
+        await helpers.resyncDataDirWatches();
+        expect(watchMock).not.toHaveBeenCalled();
     });
 
     test('a burst of registrations resolves the directory once', async () => {

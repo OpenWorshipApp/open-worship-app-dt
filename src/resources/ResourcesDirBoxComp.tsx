@@ -272,7 +272,7 @@ export default function ResourcesDirBoxComp({
                  * of it rather than the end when it will not fit.
                  */}
                 <span className="app-resources-group-path app-ellipsis-left">
-                    {toParentPathLabel(dirPath)}
+                    <bdi>{toParentPathLabel(dirPath)}</bdi>
                 </span>
                 <ContextMenuDotsButtonComp
                     onOpening={handleContextMenuOpening}

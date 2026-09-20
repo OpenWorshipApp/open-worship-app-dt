@@ -446,6 +446,11 @@ const dictionary = {
     Videos: 'វីដេអូ',
     Cameras: 'កាមេរ៉ា',
     Webs: 'វេបសាយ',
+    // Singular: what ONE attached background is, for the icon that says a
+    // slide carries one (`AttachBackgroundIconComp`).
+    Image: 'រូបភាព',
+    Video: 'វីដេអូ',
+    Web: 'វេបសាយ',
     Text: 'អក្សរ',
     Box: 'ប្រអប់',
     Appearance: 'រូបរាង',

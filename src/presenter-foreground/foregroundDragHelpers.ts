@@ -25,6 +25,14 @@ export type ForegroundDragDataType = {
     data: any;
 };
 
+/**
+ * The ENGLISH key for each widget, translated where the label is BUILT rather
+ * than stored: a presenting flow row resolves its title on every render
+ * (`PresentingFlowItem`), so a row added in one language still reads in the
+ * one the app is shown in. Every value here has to exist in the dictionaries —
+ * the lookup below is dynamic, so `tranKeyCoverage.test.ts` cannot see it and
+ * a missing one would only show as a throw in a Khmer window.
+ */
 const targetLabelMap: Record<ForegroundDragTargetType, string> = {
     countdown: 'Countdown',
     stopwatch: 'Stopwatch',
@@ -80,11 +88,25 @@ export function toForegroundDragIconName(target: ForegroundDragTargetType) {
     return targetIconMap[target] ?? 'front';
 }
 
-export function toForegroundDragLabel({
-    target,
-    data,
-}: ForegroundDragDataType) {
-    const label = targetLabelMap[target] ?? target;
+/**
+ * `translate` is passed IN rather than `tran` being imported here: this module
+ * is on the screen path, and `langHelpers` pulls `appHooks` (and React) behind
+ * it. Left out, the label comes back in English — which is what the presenting
+ * flow file stores, so the record on disk stays language-neutral; the row
+ * hands `tran` in so what the operator READS follows the app's language.
+ */
+export function toForegroundDragLabel(
+    { target, data }: ForegroundDragDataType,
+    translate: (labelKey: string) => string = (labelKey) => {
+        return labelKey;
+    },
+) {
+    // A `target` the map does not know can only come from a hand-edited or
+    // future presenting flow file; it is not a dictionary key, so it is shown
+    // as it is rather than translated, which would throw in a Khmer window
+    // over a file the user cannot see into.
+    const labelKey = targetLabelMap[target];
+    const label = labelKey === undefined ? target : translate(labelKey);
     if (target === 'marquee-top' || target === 'marquee-bottom') {
         return `${label}: ${(data.text ?? '').substring(0, 60)}`;
     }

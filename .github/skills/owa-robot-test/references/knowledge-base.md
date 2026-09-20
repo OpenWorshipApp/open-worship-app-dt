@@ -1,6 +1,6 @@
 # OWA Robot Test — Observation Knowledge Base
 
-docVersion: 2026-09-12
+docVersion: 2026-09-19
 
 Field notes for agents/skills doing black-box QA of the **running** Open Worship App.
 Everything here was **verified against the live app**, not inferred. Read this before a run
@@ -560,14 +560,33 @@ Editor saves a doc → the change must cross to the Presenter/Screen:
    else automatically does.)*
 2. The file on disk changes → **each other renderer's** watch fires. ⚠️ **Rewritten
    2026-08-11 (refactor28):** it is no longer one `fs.watch` per mounted `DirSource`
-   (`useDirSourceWatching` is gone). Each renderer now runs **ONE recursive watch on the whole
-   data parent dir**, started **lazily** by `watchDataDir()` the first time anything registers a
+   (`useDirSourceWatching` is gone). Each renderer now runs a recursive watch per **watch
+   root**, started **lazily** by `watchDataDir()` the first time anything registers a
    `FileSource` listener (`src/helper/dirWatchingHelpers.ts`, `FileSource.registerEventListener*`).
    Consequence for testing: propagation no longer depends on which list is mounted — a document
    previewed with its list hidden still refreshes. `watchDataDir()` is memoized, so the settled
-   case is a field read; the watch is released by `unwatchDataDir()`, whose ONE caller is the
-   data-directory setting (it aborts by the identity the watch STARTED on — after the selection
-   moves, nothing could name the old tree again).
+   case is a field read; the watch is released by `unwatchDataDir()`, whose callers are the
+   data-directory setting and `resyncDataDirWatches()` (it aborts by the identity the watch
+   STARTED on — after the selection moves, nothing could name the old tree again).
+
+   ⚠️ **The roots are the parent directory AND every child folder pointed outside it**
+   (corrected 2026-09-19; until then it really was the parent directory alone, and that was a
+   bug). Each child folder — Documents, Videos, Bible Notes … — is separately configurable, so
+   any one of them can sit in a sibling tree; a watch rooted at the parent alone then never
+   heard about it, and the staleness was silent and total (list never gained or lost a row, a
+   document edited in another window never reached the Presenter preview, and even
+   **re-presenting kept projecting the copy the renderer already had** — only reopening the
+   window recovered). `resolveWatchingDirPaths` collects the parent plus every configured
+   child and `toMinimalDirPaths` drops the ones already covered recursively, so the ordinary
+   setup — everything under the parent — is still exactly ONE watch. A child folder moved in
+   or out at runtime is picked up by `resyncDataDirWatches()`, called from `DirSource`'s
+   `dirPath` setter.
+
+   **Testing consequence:** an XW run on a profile whose folders all sit under the parent
+   directory cannot see this class of bug at all. To exercise it, point one child folder
+   somewhere else (or test on a profile that already does) and assert BOTH halves — a file
+   added/removed in that folder reaching the list, and a content change reaching the
+   Presenter preview.
 3. **`handleFileEvent` itself does no I/O.** It records the changed path and its parent
    directory and arms a **500 ms trailing debounce** — a media download writes its file in
    hundreds of chunks and every chunk is an event, so the filesystem work runs once per burst,

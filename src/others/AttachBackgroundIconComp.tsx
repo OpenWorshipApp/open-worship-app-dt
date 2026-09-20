@@ -27,11 +27,20 @@ function showMediaContextMenu(event: any, filePath: string) {
 
 function RendItemComp({
     title,
+    label,
     iStyle,
     iType,
     onContextMenu,
 }: Readonly<{
     title: string;
+    /**
+     * What a screen reader says. Separate from `title` because the tooltip is
+     * allowed to be the whole `file://` path -- useful when two slides carry
+     * backgrounds of the same name -- while the accessible name must not be:
+     * read aloud it is a minute of punctuation, and it carries the operator's
+     * account name into anything that repeats it.
+     */
+    label?: string;
     iStyle?: CSSProperties;
     iType: string;
     onContextMenu?: (event: any) => void;
@@ -49,7 +58,7 @@ function RendItemComp({
         <button
             className="btn btn-secondary btn-sm p-0 mx-1"
             title={title}
-            aria-label={title}
+            aria-label={label ?? title}
             // A plain click opens the same menu the right-click does. This
             // button has never done anything else, and a right-click is not
             // something a touch screen — or a browser that keeps its own menu on
@@ -96,34 +105,40 @@ export default function AttachBackgroundIconComp({
         );
     }
     if (backgroundType === DragTypeEnum.BACKGROUND_WEB) {
+        const fileSource = item as FileSource;
         return (
             <RendItemComp
-                title={(item as FileSource).src}
+                title={fileSource.src}
+                label={`${tran('Web')}: ${fileSource.fullName}`}
                 iType="globe"
                 onContextMenu={(event) => {
-                    showMediaContextMenu(event, (item as FileSource).filePath);
+                    showMediaContextMenu(event, fileSource.filePath);
                 }}
             />
         );
     }
     if (backgroundType === DragTypeEnum.BACKGROUND_IMAGE) {
+        const fileSource = item as FileSource;
         return (
             <RendItemComp
-                title={(item as FileSource).src}
+                title={fileSource.src}
+                label={`${tran('Image')}: ${fileSource.fullName}`}
                 iType="image"
                 onContextMenu={(event) =>
-                    showMediaContextMenu(event, (item as FileSource).filePath)
+                    showMediaContextMenu(event, fileSource.filePath)
                 }
             />
         );
     }
     if (backgroundType === DragTypeEnum.BACKGROUND_VIDEO) {
+        const fileSource = item as FileSource;
         return (
             <RendItemComp
-                title={(item as FileSource).src}
+                title={fileSource.src}
+                label={`${tran('Video')}: ${fileSource.fullName}`}
                 iType="file-earmark-play-fill"
                 onContextMenu={(event) =>
-                    showMediaContextMenu(event, (item as FileSource).filePath)
+                    showMediaContextMenu(event, fileSource.filePath)
                 }
             />
         );

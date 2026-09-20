@@ -40,7 +40,7 @@ export default function MiniScreenAudioHandlersComp({
         <div className="w-100">
             <hr className="w-100" />
             <div className="w-100 app-ellipsis-left overflow-hidden">
-                {fileFullName}
+                <bdi>{fileFullName}</bdi>
             </div>
             <div className="d-flex align-items-center w-100 my-2">
                 <audio

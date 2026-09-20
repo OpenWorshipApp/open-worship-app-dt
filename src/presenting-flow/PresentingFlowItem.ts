@@ -854,6 +854,19 @@ export default class PresentingFlowItem {
         if (this.isError) {
             return tran('Invalid item');
         }
+        // A foreground widget has no name of its own either: its label is BUILT
+        // from the widget kind and its own settings, and both are stored right
+        // here, so nothing has to be read off disk to say it again. Derived on
+        // read for the same reason an action is -- a row added while the app
+        // was in English used to stay English for ever, because the label was
+        // captured on add. The stored title is kept as the fallback, for a
+        // payload this build cannot read.
+        if (this.isForeground) {
+            const foregroundData = this.data;
+            if (foregroundData?.target) {
+                return toForegroundDragLabel(foregroundData, tran);
+            }
+        }
         return this.originalJson.title ?? this.type;
     }
 

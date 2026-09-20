@@ -161,6 +161,43 @@ describe('Khmer translation coverage', () => {
         expect(kmSource).toContain('return key.trim().toLowerCase();');
     });
 
+    // `toForegroundDragLabel` translates through a LOOKUP
+    // (`tran(targetLabelMap[target])`), so the sweep above cannot see those
+    // keys at all. They are the labels on every foreground row of a presenting
+    // flow, and a missing one throws in a Khmer window while every other check
+    // stays green -- exactly the hole this file exists to close.
+    test('every foreground widget label has a Khmer string', () => {
+        const { keySet } = readKhmerKeys();
+        const source = readFileSync(
+            path.join(
+                SRC_DIR,
+                'presenter-foreground',
+                'foregroundDragHelpers.ts',
+            ),
+            'utf-8',
+        );
+        const start = source.indexOf('const targetLabelMap');
+        const end = source.indexOf('};', start);
+        if (start === -1 || end === -1) {
+            throw new Error('`targetLabelMap` is no longer shaped as expected');
+        }
+        const labels = [
+            ...source
+                .slice(start, end)
+                .matchAll(/:\s*('(?:[^'\\\n]|\\.)*')\s*,/g),
+        ].map((match) => {
+            return evaluateLiteral(match[1]) as string;
+        });
+        // A regex that stopped matching would pass an empty list.
+        expect(labels).toContain('Countdown');
+        expect(labels.length).toBeGreaterThanOrEqual(8);
+        expect(
+            labels.filter((label) => {
+                return !keySet.has(sanitizeTranKey(label));
+            }),
+        ).toEqual([]);
+    });
+
     test('reads a key the way tran() receives it', () => {
         const text = [
             "tran('Plain');",
