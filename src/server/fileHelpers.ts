@@ -1495,6 +1495,13 @@ export function fsReadFileBase64Sync(filePath: string) {
     return appProvider.fileUtils.readFileSync(filePath, 'base64');
 }
 
+// The raw bytes of a file that is not text -- a picture going into an exported
+// package. Deliberately not through `_fsReadFile`, whose portable-path
+// rewriting is for text.
+export function fsReadFileBytes(filePath: string) {
+    return fsFilePromise<Uint8Array>(appProvider.fileUtils.readFile, filePath);
+}
+
 export async function fsCopyFilePathToPath(
     file: File | Blob | string,
     destinationPath: string,

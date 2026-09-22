@@ -10,9 +10,9 @@ import type { Editor, OpenLyric, OpenLyricMarkdownManager } from 'open-lyric';
 import { resolveGzBundleFilePath } from './gzBundleFilePath';
 
 export const DEFAULT_LANG_CODE = 'en';
-export const supportedLangCodes = [DEFAULT_LANG_CODE, 'km'];
+export const supportedLangCodes = [DEFAULT_LANG_CODE, 'km', 'fr'];
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
-export const supportedLocales = [DEFAULT_LOCALE, 'km-KH'];
+export const supportedLocales = [DEFAULT_LOCALE, 'km-KH', 'fr-FR'];
 
 export const allLocalesMap = {
     arc: 'arc',

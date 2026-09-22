@@ -3,9 +3,9 @@ id: W-37
 title: "Keep your own files beside the verse (Resources)"
 section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, CM-93]
-screenshots: 14
+screenshots: 15
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-19"
+workflowsVersion: "2026-09-21"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -92,9 +92,14 @@ all count as book-level too.
    Resources at the folder your material is actually in keeps the list short. Untick
    **[en:tran:Others]** to hide them again — the box stays the way you left it next time.
 6. Click a file to open it in whatever application your computer normally uses for it — a
-   PDF in your PDF reader, a PowerPoint in PowerPoint. Right-click one for **Open**,
+   PowerPoint in PowerPoint, a picture in your picture viewer. Right-click one for **Open**,
    **Copy Path to Clipboard**, or **Reveal in Finder** / **Reveal in File Explorer**.
-   Two kinds of file open **inside the app** instead:
+   Three kinds of file open **inside the app** instead:
+   - **A PDF** (`.pdf`) opens in the app's own PDF viewer window — the same one
+     **[en:tran:Preview PDF]** opens from a PDF in the Documents list — with its pages down
+     the side, zoom and print. Right-click the row for **[en:tran:Preview PDF]**, or **Open**
+     to use your own PDF reader instead. Pressing a PDF whose preview is already open brings
+     that window forward. 📸
    - **A markdown file** (`.md`, `.markdown`, drawn with the `bi-markdown` icon) opens in its
      own **Markdown Preview** window, like a Bible Note does: headings, lists, tables, quotes,
      code, pictures kept beside the file, and **Mermaid diagrams** written in a ` ```mermaid `
@@ -202,5 +207,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-21).
 :::

@@ -55,11 +55,12 @@ Every React function component must have a name ending in `Comp`
 (e.g. `FormComp`, `ForegroundCountDownComp`).
 
 Every label a user reads goes through `tran()` (in render, never at module
-scope) with its Khmer string in `src/lang/data/km/index.ts`. A missing one
-THROWS in dev. `src/lang/tranKeyCoverage.test.ts` fails the gate on any STATIC
-key without Khmer — write keys as literals so it can read them (EN-20). A
-dynamic `tran(prop)` still needs the live Khmer pass (memory
-`tran-missing-key-throws-in-dev`).
+scope) with its Khmer string in `src/lang/data/km/index.ts` AND its French
+string in `src/lang/data/fr/index.ts`. A missing one THROWS in dev.
+`src/lang/tranKeyCoverage.test.ts` fails the gate on any STATIC key without
+Khmer, and on any difference between the French and Khmer key sets — write
+keys as literals so it can read them (EN-20). A dynamic `tran(prop)` still
+needs the live Khmer pass (memory `tran-missing-key-throws-in-dev`).
 
 ## Running the app for verification (`npm run dev`)
 

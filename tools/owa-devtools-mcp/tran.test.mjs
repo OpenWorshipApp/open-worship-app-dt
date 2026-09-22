@@ -39,7 +39,7 @@ describe('resolveTranTemplates', () => {
         // dictionary does not carry. The app's own `tran` throws on the last
         // of these in dev; a document must not, or one mistyped label costs
         // the reader the whole answer.
-        expect(resolveTranTemplates('[en:tran:Clear Bible]', 'fr')).toBe(
+        expect(resolveTranTemplates('[en:tran:Clear Bible]', 'de')).toBe(
             'Clear Bible',
         );
         expect(resolveTranTemplates('[en:tran:Clear Bible]', null)).toBe(
@@ -166,8 +166,14 @@ describe('the knowledge corpus', () => {
                     );
                     continue;
                 }
+                // Asked of the DICTIONARY, not of the translation: French
+                // writes **Documents**, **Images** and **Bible** exactly as
+                // English does, and a label that reads the same is still a
+                // label the app translates.
+                const dictionaryKey = token.key.trim().toLowerCase();
                 for (const language of translatable) {
-                    if (tranText(token.key, language.code) === token.key) {
+                    const dictionary = bundle.dictionaries[language.code];
+                    if (dictionary[dictionaryKey] === undefined) {
                         broken.push(
                             `${path.basename(filePath)}: "${token.key}" has ` +
                                 `no ${language.code} translation`,

@@ -537,8 +537,13 @@ async function runWhere({ report }: BuiltinRunContextType) {
     }
 }
 
+const APP_LANGUAGE_NAME_MAP: Record<string, string> = {
+    en: 'English',
+    km: 'Khmer',
+    fr: 'French',
+};
 function languageName(code: string) {
-    return code === 'km' ? 'Khmer' : code === 'en' ? 'English' : code;
+    return APP_LANGUAGE_NAME_MAP[code] ?? code;
 }
 
 async function runHelp({ argument, focus, report }: BuiltinRunContextType) {

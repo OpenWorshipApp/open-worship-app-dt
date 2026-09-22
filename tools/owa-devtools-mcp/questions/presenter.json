@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-09-11",
+    "updated": "2026-09-21",
     "sections": [
         {
             "id": "orientation",
@@ -355,7 +355,8 @@
                 "W-03",
                 "W-04",
                 "W-26",
-                "W-27"
+                "W-27",
+                "W-45"
             ],
             "questions": [
                 {
@@ -686,6 +687,29 @@
                     ],
                     "resources": {
                         "recipe": "W-43"
+                    }
+                },
+                {
+                    "id": "export-pptx",
+                    "text": "How do I save a slide document as a PowerPoint file?",
+                    "kind": "howto",
+                    "keywords": [
+                        "powerpoint",
+                        "pptx",
+                        "ppt",
+                        "export to pptx",
+                        "save as powerpoint",
+                        "open in powerpoint",
+                        "google slides",
+                        "keynote"
+                    ],
+                    "resources": {
+                        "recipe": "W-45",
+                        "related": [
+                            "W-23"
+                        ],
+                        "find": "Documents",
+                        "guide": true
                     }
                 }
             ]

@@ -21,7 +21,26 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-19a** (**W-16 step 2 — Repair Links.** From `/owa-enhance
+**workflowsVersion: 2026-09-21a** (**new W-45 — Save a slide document as a PowerPoint
+file (Export to PPTX).** Asked for by the user with a picture of a slide document's
+menu in the Documents list: *add `Export to PPTX` for the AppDocument slides*, then
+*make sure the exported pptx slide look closely identical to the app slide*. The menu
+of an Open Worship slide document gains **Export to PPTX** under **Export**. The slide
+is drawn the way a screen draws it and read back, so the file keeps the words as
+editable text broken where the screen breaks them, in the font the screen really used,
+with the boxes, pictures, background, speaker notes and hidden slides. Verified live
+2026-09-21 on five documents, each slide opened in PowerPoint 16 and compared with a
+1:1 render of the screen: text within 0–3px, shapes and pictures exact. New PL-106.)
+
+Previous: **workflowsVersion: 2026-09-21** (**W-37 step 6 — a PDF previews in the app.** Asked for by
+the user, with a picture of the Documents list's menu: *add Preview PDF to pdf item's contextmenu
+in Resources*, then *make the click (only for pdf) to preview the pdf*. A `.pdf` row in
+Resources now opens the same PDF viewer window the Documents list's **Preview PDF** does, on a
+click and from its menu; **Open** still hands it to the computer's own PDF reader. Verified live
+2026-09-21 on `GEN.1.pdf` in the Reader: the menu lists **Preview PDF** first, and both it and
+a plain click open `GEN.1.pdf?uuid=GEN.1.pdf` with its 4 pages drawn.)
+
+Previous: **workflowsVersion: 2026-09-19a** (**W-16 step 2 — Repair Links.** From `/owa-enhance
 reliability` (`EN-33`), the user's ask: *my data portable and supported on both Windows and
 POSIX*. A data folder carried between computers still held links naming where it used to be —
 files saved before `$DATA_DIR_PATH` existed, or while the folder lived elsewhere — and those
@@ -2233,6 +2252,46 @@ _Verify: PL-77..PL-80, CM-36, CM-37._
 
 ---
 
+### W-45 — Save a slide document as a PowerPoint file (Export to PPTX)
+
+For when a slide document has to be shown or edited where this app is not — a guest
+speaker's laptop, a church that uses PowerPoint, Google Slides or Keynote. Unlike
+**Export** (W-23), which carries the document to another Open Worship app, this makes a
+PowerPoint file anyone can open.
+
+1. In the **Documents** list, right-click an Open Worship slide document (or press the
+   **⋮** at the end of its row) and choose **[en:tran:Export to PPTX]**. It sits just
+   under **[en:tran:Export]**. 📸
+2. A message **[en:tran:Export to PPTX]** appears saying **[en:tran:Exported to]** and
+   where: a `<name>.pptx` in your **Downloads** folder, which opens with the file in it.
+   Exporting the same document again makes `<name> (1).pptx` beside it. 📸
+3. Open it in PowerPoint. Each slide looks the way the screen shows it:
+   - the words stay words you can change, broken into lines exactly where the app breaks
+     them, in the same font — and where that font has no letter for part of the text (the
+     English inside a Khmer title), in the font the app used for it instead;
+   - text boxes keep their colour, see-through fill and rounded corners, and a box that
+     blurs what is behind it carries that blur as a picture underneath it;
+   - pictures keep their place and size; a video becomes its first frame and a website
+     box its picture of the page;
+   - behind each slide is the background the screen would be showing: the slide's own,
+     else the document's, else the one the slide before it left up — so the slides that
+     follow a video background keep it, as they do when you present them in order. 📸
+4. Anything you wrote in a slide's **Slide Note** is in that slide's **Notes** in
+   PowerPoint, and a slide you disabled comes out as a **hidden** slide, skipped when the
+   show runs.
+
+> Notes: it is offered on Open Worship slide documents only — a PDF, PowerPoint or Word
+> file in the list already is its own file, and a lyric has no slides of its own. The
+> file is a copy: changing it changes nothing in the app. A YouTube box becomes the
+> video's picture when the computer is online; a camera box, a camera background and a
+> live web page as a background cannot be exported, the same as printing leaves them out.
+> PowerPoint on another computer uses the fonts THAT computer has, so for the same look
+> there install the same fonts (the lines break in the same places either way).
+
+_Verify: PL-106._
+
+---
+
 ### W-24 — Share a bible list with another machine
 
 A bible list (the verses you lined up for a service) travels the same way.
@@ -3126,9 +3185,14 @@ all count as book-level too.
    Resources at the folder your material is actually in keeps the list short. Untick
    **[en:tran:Others]** to hide them again — the box stays the way you left it next time.
 6. Click a file to open it in whatever application your computer normally uses for it — a
-   PDF in your PDF reader, a PowerPoint in PowerPoint. Right-click one for **Open**,
+   PowerPoint in PowerPoint, a picture in your picture viewer. Right-click one for **Open**,
    **Copy Path to Clipboard**, or **Reveal in Finder** / **Reveal in File Explorer**.
-   Two kinds of file open **inside the app** instead:
+   Three kinds of file open **inside the app** instead:
+   - **A PDF** (`.pdf`) opens in the app's own PDF viewer window — the same one
+     **[en:tran:Preview PDF]** opens from a PDF in the Documents list — with its pages down
+     the side, zoom and print. Right-click the row for **[en:tran:Preview PDF]**, or **Open**
+     to use your own PDF reader instead. Pressing a PDF whose preview is already open brings
+     that window forward. 📸
    - **A markdown file** (`.md`, `.markdown`, drawn with the `bi-markdown` icon) opens in its
      own **Markdown Preview** window, like a Bible Note does: headings, lists, tables, quotes,
      code, pictures kept beside the file, and **Mermaid diagrams** written in a ` ```mermaid `

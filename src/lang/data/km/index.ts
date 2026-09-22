@@ -432,6 +432,8 @@ const dictionary = {
         'យើងខ្ញុំសូមអភ័យទោស កំហុសក្នុងដំណើរការ ខ្ញុំសូមអញ្ជើញអ្នកធ្វើការផ្ទុកឡើងវិញនៃកម្មវិធី',
     Exporting: 'កំពុងបំលែង',
     'Export to MS Word': 'បំលែងទៅឯកសារ MS Word',
+    'Export to PPTX': 'បំលែងទៅឯកសារ PPTX',
+    'Unable to export the document to PPTX': 'មិនអាចបំលែងឯកសារទៅជា PPTX បានទេ',
     'Exporting Fonts': 'បំលែងពុម្ពអក្សរ',
     'Would you like to export the fonts?': 'តើអ្នកចង់បំលែងពុម្ពអក្សរដែរឬទេ?',
     'Fail to Get File List': 'បរាជ័យក្នុងការទទួលបានបញ្ជីឯកសារ',
@@ -1585,10 +1587,7 @@ const dictionary = {
     // Mermaid Live Editor menu is made of; the other two carry a name because
     // the list declares one for every format. `Mindmap` is translated here and
     // in `Copy as Mermaid Mindmap` above, or one menu would name the same
-    // shape two ways. The last two are product names and stand as they are —
-    // which means neither may ever be written into the knowledge as an
-    // `[en:tran:…]` template: `tran.test.mjs` reads a translation identical to
-    // its key as no translation at all, and cannot tell the two apart.
+    // shape two ways. The last two are product names and stand as they are.
     'Mermaid (across)': 'Mermaid (ផ្ដេក)',
     'Mermaid (down)': 'Mermaid (បញ្ឈរ)',
     'Mermaid Mindmap': 'Mermaid ផែនទីគំនិត',

@@ -58,6 +58,7 @@ export default function ResourcesFileRowComp({
     const fileFullName = pathBasename(filePath);
     const [iconName, color] = toResourceIcon(fileFullName);
     const [nameStem, dotExtension] = toResourceNameParts(fileFullName);
+    const isPdf = dotExtension.toLowerCase() === '.pdf';
     const isBookLevel =
         bookKey !== undefined && checkIsBookLevelName(fileFullName, bookKey);
     // A CANDIDATE only. `.json` is a general-purpose format, so the name can
@@ -87,6 +88,7 @@ export default function ResourcesFileRowComp({
     const filePathRef = useAppCurrentRef(filePath);
     const previewKindRef = useAppCurrentRef(previewKind);
     const isNotesShowingRef = useAppCurrentRef(isNotesShowing);
+    const isPdfRef = useAppCurrentRef(isPdf);
     useAppEffect(() => {
         if (!isLinksCandidate || !canAutoExpandLinks) {
             // Nothing is read here for a row that is not a candidate, and
@@ -120,6 +122,12 @@ export default function ResourcesFileRowComp({
         openMarkdownPreview(filePathRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handlePdfPreviewing = useCallback(async () => {
+        // Loaded at the press, like the markdown preview above.
+        const { openPdfPreview } = await import('../helper/pdfPreviewHelpers');
+        openPdfPreview(filePathRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleClicking = useCallback(async () => {
         if (previewKindRef.current === 'note') {
             setIsNotesShowing(!isNotesShowingRef.current);
@@ -127,6 +135,12 @@ export default function ResourcesFileRowComp({
         }
         if (previewKindRef.current === 'markdown') {
             await handlePreviewing();
+            return;
+        }
+        // The app's own viewer rather than whatever the machine opens a PDF
+        // with; the menu keeps Open for that.
+        if (isPdfRef.current) {
+            await handlePdfPreviewing();
             return;
         }
         if (!isLinksCandidateRef.current) {
@@ -171,13 +185,24 @@ export default function ResourcesFileRowComp({
                 },
             });
         }
+        // The same in-app viewer the Documents list opens -- and the row's own
+        // press. Listed anyway, beside Open, so the two routes read as a choice.
+        if (isPdfRef.current) {
+            menuItems.push({
+                childBefore: genContextMenuItemIcon('file-earmark-pdf'),
+                menuElement: tran('Preview PDF'),
+                onSelect: () => {
+                    void handlePdfPreviewing();
+                },
+            });
+        }
         // Not for a note file: no application but this one reads a `.own`,
         // and the operating system would only ask which program to use.
         if (previewKindRef.current !== 'note') {
             menuItems.push({
                 childBefore: genContextMenuItemIcon('box-arrow-up-right'),
-                // The OS route stays in the menu for a link list and a
-                // markdown file too: their rows do something else when
+                // The OS route stays in the menu for a link list, a
+                // markdown file and a PDF too: their rows do something else when
                 // pressed, and editing the file is still a thing to want.
                 menuElement: tran('Open'),
                 onSelect: () => {

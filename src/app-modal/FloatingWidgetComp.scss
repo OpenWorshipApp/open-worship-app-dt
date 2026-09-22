@@ -121,6 +121,15 @@ $resize-corner-size: 16px;
   border-radius: 4px;
 }
 
+// The widget's own window controls (and a host's extra ones beside them) stay
+// small so they do not crowd the title; a host's buttons INSIDE the title keep
+// the full size above.
+.floating-widget__actions .floating-widget__button {
+  width: 1.375rem;
+  height: 1.375rem;
+  font-size: 0.75rem;
+}
+
 .floating-widget__button:hover,
 .floating-widget__button:focus-visible {
   background-color: rgba(var(--bs-secondary-rgb, 108, 117, 125), 0.16);

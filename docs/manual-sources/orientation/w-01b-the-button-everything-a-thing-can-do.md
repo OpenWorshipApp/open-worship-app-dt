@@ -5,7 +5,7 @@ section: "Orientation"
 verify: [GL-24, GL-06]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-19"
+workflowsVersion: "2026-09-21"
 ---
 # W-01b — The `⋮` button: everything a thing can do
 
@@ -37,5 +37,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `GL-24` · `GL-06`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-21).
 :::

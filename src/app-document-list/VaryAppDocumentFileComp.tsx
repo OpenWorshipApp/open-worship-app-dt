@@ -19,7 +19,7 @@ import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAb
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
 import type { VaryAppDocumentDynamicType } from './appDocumentTypeHelpers';
 import { tran } from '../lang/langHelpers';
-import { openPopupWindow } from '../helper/domHelpers';
+import { openPdfPreview } from '../helper/pdfPreviewHelpers';
 import PptxAppDocument from './PptxAppDocument';
 import { removePptxHtmlsPreview } from '../server/pptxHelpers';
 import DocxAppDocument from './DocxAppDocument';
@@ -45,13 +45,7 @@ function genKindContextMenuItems(
                 childBefore: genContextMenuItemIcon('file-earmark-pdf'),
                 menuElement: tran('Preview PDF'),
                 onSelect: () => {
-                    const { fileSource } = varyAppDocument;
-                    const fileFullName = fileSource.fullName;
-                    openPopupWindow(
-                        fileSource.src,
-                        `pdf_preview-${fileFullName}_${Date.now()}`,
-                        fileFullName,
-                    );
+                    openPdfPreview(varyAppDocument.filePath);
                 },
             },
             {
@@ -156,7 +150,26 @@ function genContextMenuItems(
             exportAppDocument(filePath);
         },
     });
+    // Only an Open Worship slide document: a PDF/PPTX/DOCX already is its own
+    // file, and a lyric has no slides of its own to lay out.
+    if (AppDocument.checkIsThisType(varyAppDocument)) {
+        menuItems.push({
+            childBefore: genContextMenuItemIcon('filetype-pptx'),
+            menuElement: tran('Export to PPTX'),
+            onSelect: () => {
+                exportAppDocumentPptx(varyAppDocument);
+            },
+        });
+    }
     return menuItems;
+}
+
+// Loaded on the press: the exporter brings the screen stylesheet and the whole
+// PPTX writer, which nobody who never exports should pay for.
+async function exportAppDocumentPptx(appDocument: AppDocument) {
+    const { exportAppDocumentToPptx } =
+        await import('../ms-office/pptxExportHelpers');
+    await exportAppDocumentToPptx(appDocument);
 }
 
 function FilePreviewAppDocumentNormalComp({

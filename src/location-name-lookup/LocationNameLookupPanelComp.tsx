@@ -54,10 +54,11 @@ function RenderResultListComp({
     search: (query: string, page: number) => LookupPageType;
 }>) {
     const [page, setPage] = useState(1);
-    // The records render at the BIBLE TEXT's size: this list is what names the
-    // record a detail panel then shows, and that panel has always been zoomed,
-    // so at a large bible font the two halves of one feature were unreadable
-    // beside each other. `zoom` re-lays-out rather than repainting, so a long
+    // The records track the BIBLE TEXT's size (a step under it — see
+    // `useBibleViewTextScale`): this list is what names the record a detail
+    // panel then shows, and that panel has always been zoomed, so at a large
+    // bible font the two halves of one feature were unreadable beside each
+    // other. `zoom` re-lays-out rather than repainting, so a long
     // name wraps inside the narrower logical width instead of running off.
     const textScale = useBibleViewTextScale();
     // Reading a page is a synchronous scan over thousands of records and, for an

@@ -1,5 +1,5 @@
 {
-  "version": 74,
+  "version": 76,
   "locationsMap": [
     {
       "id": "00000000-0000-4000-8000-000000000002",
@@ -2524,7 +2524,12 @@
       "verses": [
         "ACT 28:15"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "topostext",
+          "url": "https://topostext.org/place/415130UFAp"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Forum_Appii",
       "uncertainty": false,
       "matterRange": 72
@@ -6526,7 +6531,16 @@
         "LUK 8:26",
         "LUK 8:37"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Exorcism_of_the_Gerasene_demoniac"
+        },
+        {
+          "type": "wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Gadara"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 50
@@ -6652,7 +6666,12 @@
         "JOS 19:12",
         "1CH 6:72"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/daberath.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Daburiyya",
       "uncertainty": false,
       "matterRange": 84
@@ -6761,7 +6780,12 @@
       "verses": [
         "JOS 15:49"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dannah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 92
@@ -6792,7 +6816,12 @@
         "JDG 1:11",
         "1CH 6:58"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/debir.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Debir",
       "uncertainty": true,
       "matterRange": 48
@@ -6910,7 +6939,12 @@
         "JER 48:18",
         "JER 48:22"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dibon.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Dhiban,_Jordan",
       "uncertainty": false,
       "matterRange": 52
@@ -6933,7 +6967,12 @@
       "verses": [
         "JOS 15:38"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dilean.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 92
@@ -6958,7 +6997,12 @@
       "verses": [
         "JOS 21:35"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblicaltraining",
+          "url": "https://www.biblicaltraining.org/library/dimnah"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -6982,7 +7026,12 @@
       "verses": [
         "JOS 15:22"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dimonah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 92
@@ -7004,7 +7053,12 @@
         "GEN 36:32",
         "1CH 1:43"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dinhabah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -7027,7 +7081,12 @@
       "verses": [
         "DEU 1:1"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dizahab.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -7050,7 +7109,12 @@
         "NUM 33:12",
         "NUM 33:13"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dophkah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -7078,7 +7142,12 @@
         "JDG 1:27",
         "1CH 7:29"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dor.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Tel_Dor",
       "uncertainty": false,
       "matterRange": 66
@@ -7104,7 +7173,12 @@
         "GEN 37:17",
         "2KI 6:13"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dothan.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Tel_Dothan",
       "uncertainty": false,
       "matterRange": 52
@@ -7127,7 +7201,12 @@
       "verses": [
         "NEH 2:13"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dragon_spring.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -7153,7 +7232,12 @@
       "verses": [
         "JOS 15:52"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dumah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": false,
       "matterRange": 90
@@ -7203,7 +7287,12 @@
       "verses": [
         "DAN 3:1"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/dura.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 78
@@ -7305,7 +7394,12 @@
         "OBA 1:8",
         "MAL 1:4"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/edom.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Edom",
       "uncertainty": false,
       "matterRange": 12
@@ -7877,7 +7971,12 @@
         "ZEC 14:18",
         "ZEC 14:19"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/egypt.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Egypt",
       "uncertainty": false,
       "matterRange": 2
@@ -7924,7 +8023,12 @@
         "ZEC 9:7",
         "ZEP 2:4"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ekron.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Ekron",
       "uncertainty": false,
       "matterRange": 34
@@ -7959,7 +8063,12 @@
         "EZK 32:24",
         "DAN 8:2"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/elam.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Elam",
       "uncertainty": false,
       "matterRange": 34
@@ -7985,7 +8094,12 @@
         "NUM 33:9",
         "NUM 33:10"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/elim.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Elim_(place)",
       "uncertainty": true,
       "matterRange": 78
@@ -8006,7 +8120,12 @@
       "verses": [
         "LUK 24:13"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/emmaus.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Emmaus",
       "uncertainty": true,
       "matterRange": 52
@@ -8037,7 +8156,12 @@
         "SNG 1:14",
         "EZK 47:10"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/engedi.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Ein_Gedi_(archaeological_site)",
       "uncertainty": false,
       "matterRange": 50
@@ -8063,7 +8187,12 @@
         "NUM 32:9",
         "DEU 1:24"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/eshcol.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 62
@@ -8087,7 +8216,12 @@
         "EST 8:9",
         "JOB 28:19"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ethiopia.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Cush_(Bible)",
       "uncertainty": false,
       "matterRange": 32
@@ -8112,7 +8246,12 @@
       "verses": [
         "NEH 3:29"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/east_gate.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 82
@@ -8138,7 +8277,12 @@
         "1SA 5:1",
         "1SA 7:12"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ebenezer.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 55
@@ -8160,7 +8304,12 @@
       "verses": [
         "JOS 15:21"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/eder_2.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -8193,7 +8342,12 @@
         "JOS 13:12",
         "JOS 13:31"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/edrei.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": false,
       "matterRange": 58
@@ -8216,7 +8370,12 @@
         "ISA 15:8",
         "EZK 47:10"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/eglaim.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 86
@@ -8247,7 +8406,12 @@
         "JOS 12:12",
         "JOS 15:39"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/eglon.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 60
@@ -8272,7 +8436,12 @@
       "verses": [
         "GEN 35:7"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/el-bethel.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": false,
       "matterRange": 78
@@ -8296,7 +8465,12 @@
       "verses": [
         "GEN 14:6"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/el-paran.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -8328,7 +8502,12 @@
         "2CH 8:17",
         "2CH 26:2"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/elath.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Eilat",
       "uncertainty": false,
       "matterRange": 62
@@ -8358,7 +8537,12 @@
         "ISA 16:9",
         "JER 48:34"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/elealeh.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": false,
       "matterRange": 66
@@ -8381,7 +8565,12 @@
       "verses": [
         "EZK 27:7"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/elishah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -8405,7 +8594,12 @@
         "GEN 14:1",
         "GEN 14:9"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ellasar.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Larsa",
       "uncertainty": true,
       "matterRange": 82
@@ -8428,7 +8622,12 @@
       "verses": [
         "JOS 19:43"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/elon.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 92
@@ -8451,7 +8650,12 @@
       "verses": [
         "1KI 4:9"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/elonbeth-hanan.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -8475,7 +8679,12 @@
         "JOS 19:44",
         "JOS 21:23"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/eltekeh.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -8497,7 +8706,12 @@
       "verses": [
         "JOS 15:59"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/eltekon.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 92
@@ -8520,7 +8734,12 @@
         "JOS 15:30",
         "JOS 19:4"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/eltolad.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -8548,7 +8767,12 @@
         "1SA 28:7",
         "PSA 83:10"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/en-dor.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Endor_(village)",
       "uncertainty": false,
       "matterRange": 58
@@ -8573,7 +8797,12 @@
         "JOS 19:21",
         "JOS 21:29"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/en-gannim_2.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": false,
       "matterRange": 88
@@ -8595,7 +8824,12 @@
       "verses": [
         "JOS 19:21"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/en-haddah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 92
@@ -8617,7 +8851,12 @@
       "verses": [
         "JDG 15:19"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/en-hakkore.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 78
@@ -8639,7 +8878,12 @@
       "verses": [
         "JOS 19:37"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/en-hazor.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 92
@@ -8660,7 +8904,12 @@
       "verses": [
         "GEN 14:7"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/en-mishpat.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 82
@@ -8683,7 +8932,12 @@
       "verses": [
         "NEH 11:29"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/en-rimmon.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -8713,7 +8967,12 @@
         "2SA 17:17",
         "1KI 1:9"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/en-rogel.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/En-rogel",
       "uncertainty": false,
       "matterRange": 74
@@ -8738,7 +8997,12 @@
         "JOS 15:7",
         "JOS 18:17"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/en-shemesh.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -8761,7 +9025,12 @@
       "verses": [
         "JOS 17:7"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/en-tappuah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -8782,7 +9051,12 @@
       "verses": [
         "JOS 15:34"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/enam.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 92
@@ -8804,7 +9078,12 @@
       "verses": [
         "ISA 60:6"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ephah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -8828,7 +9107,12 @@
       "verses": [
         "1SA 17:1"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ephes-dammim.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 82
@@ -8869,7 +9153,12 @@
         "REV 1:11",
         "REV 2:1"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ephesus.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Ephesus",
       "uncertainty": false,
       "matterRange": 14
@@ -8894,7 +9183,12 @@
       "verses": [
         "JHN 11:54"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ephraim.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 74
@@ -8924,7 +9218,12 @@
         "PSA 132:6",
         "MIC 5:2"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ephrath.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Bethlehem",
       "uncertainty": true,
       "matterRange": 5
@@ -8950,7 +9249,12 @@
       "verses": [
         "GEN 10:10"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/erech.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Uruk",
       "uncertainty": false,
       "matterRange": 80
@@ -8972,7 +9276,12 @@
       "verses": [
         "GEN 26:20"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/esek.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -9005,7 +9314,12 @@
         "JDG 18:8",
         "JDG 18:11"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/eshtaol.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Eshtaol",
       "uncertainty": false,
       "matterRange": 54
@@ -9033,7 +9347,12 @@
         "1SA 30:28",
         "1CH 6:57"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/eshtemoa.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Eshtemoa",
       "uncertainty": false,
       "matterRange": 72
@@ -9056,7 +9375,12 @@
       "verses": [
         "2CH 11:6"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/etam_2.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 82
@@ -9083,7 +9407,12 @@
         "NUM 33:7",
         "NUM 33:8"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/etham.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 86
@@ -9108,7 +9437,12 @@
         "JOS 15:42",
         "JOS 19:7"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ether.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -9152,7 +9486,12 @@
         "REV 9:14",
         "REV 16:12"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/euphrates.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Euphrates",
       "uncertainty": false,
       "matterRange": 15
@@ -9176,7 +9515,12 @@
         "JOS 19:3",
         "1CH 4:29"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ezem.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -9205,7 +9549,12 @@
         "2CH 8:17",
         "2CH 20:36"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ezion-geber.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Ezion-Geber",
       "uncertainty": true,
       "matterRange": 60
@@ -9230,7 +9579,12 @@
       "verses": [
         "ACT 27:8"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/fair_havens.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Kaloi_Limenes",
       "uncertainty": false,
       "matterRange": 55
@@ -9256,7 +9610,12 @@
         "MAT 27:8",
         "ACT 1:19"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/field_of_blood.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Akeldama",
       "uncertainty": false,
       "matterRange": 62
@@ -9287,7 +9646,12 @@
         "NEH 12:39",
         "ZEP 1:10"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/fish_gate.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 70
@@ -9312,7 +9676,12 @@
       "verses": [
         "ACT 28:15"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/forum_of_appius.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Forum_Appii",
       "uncertainty": false,
       "matterRange": 72
@@ -9338,7 +9707,12 @@
       "verses": [
         "NEH 12:37"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/fountain_gate.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 72
@@ -9426,7 +9800,12 @@
         "ACT 10:37",
         "ACT 13:31"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/galilee.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Galilee",
       "uncertainty": false,
       "matterRange": 5
@@ -9504,7 +9883,12 @@
         "AMO 6:2",
         "MIC 1:10"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gath.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gath_(city)",
       "uncertainty": false,
       "matterRange": 30
@@ -9547,7 +9931,12 @@
         "ZEC 9:5",
         "ACT 8:26"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gaza.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gaza_City",
       "uncertainty": false,
       "matterRange": 32
@@ -9581,7 +9970,12 @@
         "2CH 14:13",
         "2CH 14:14"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gerar.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gerar",
       "uncertainty": true,
       "matterRange": 48
@@ -9608,7 +10002,12 @@
         "MAT 26:36",
         "MRK 14:32"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gethsemane.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gethsemane",
       "uncertainty": true,
       "matterRange": 24
@@ -9670,7 +10069,12 @@
         "JER 41:12",
         "JER 41:16"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gibeon.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gibeon_(ancient_city)",
       "uncertainty": false,
       "matterRange": 30
@@ -9776,7 +10180,12 @@
         "SNG 4:1",
         "SNG 6:5"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gilead.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gilead",
       "uncertainty": false,
       "matterRange": 14
@@ -9802,7 +10211,12 @@
         "MRK 15:22",
         "JHN 19:17"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/golgotha.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Calvary",
       "uncertainty": true,
       "matterRange": 11
@@ -9851,7 +10265,12 @@
         "2PE 2:6",
         "JUD 1:7"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gomorrah.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Sodom_and_Gomorrah",
       "uncertainty": true,
       "matterRange": 16
@@ -9883,7 +10302,12 @@
         "EXO 8:22",
         "EXO 9:26"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/goshen.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Land_of_Goshen",
       "uncertainty": true,
       "matterRange": 42
@@ -9906,7 +10330,12 @@
       "verses": [
         "JOS 15:51"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/goshen_3.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -9942,7 +10371,12 @@
         "EZK 47:20",
         "EZK 48:28"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/great_sea.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Mediterranean_Sea",
       "uncertainty": false,
       "matterRange": 50
@@ -9972,7 +10406,12 @@
         "ZEC 9:13",
         "ACT 20:2"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/greece.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Greece",
       "uncertainty": false,
       "matterRange": 34
@@ -10000,7 +10439,12 @@
         "2SA 23:30",
         "1CH 11:32"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gaash.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 82
@@ -10024,7 +10468,12 @@
       "verses": [
         "JHN 19:13"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gabbatha.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gabbatha",
       "uncertainty": true,
       "matterRange": 60
@@ -10054,7 +10503,12 @@
         "2TI 4:10",
         "1PE 1:1"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/galatia.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Galatia",
       "uncertainty": false,
       "matterRange": 40
@@ -10192,7 +10646,12 @@
         "NEH 8:16",
         "NEH 12:39"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ephraim_gate.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 74
@@ -10281,7 +10740,12 @@
       "verses": [
         "2KI 14:25"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gath_hepher.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gath-hepher",
       "uncertainty": false,
       "matterRange": 66
@@ -10309,7 +10773,12 @@
         "JOS 21:24",
         "1CH 6:69"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gath_rimmon.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gath-rimmon",
       "uncertainty": true,
       "matterRange": 84
@@ -10350,7 +10819,12 @@
         "ISA 10:29",
         "ZEC 14:10"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/geba.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Geba",
       "uncertainty": false,
       "matterRange": 50
@@ -10375,7 +10849,12 @@
       "verses": [
         "EZK 27:9"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gebal.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Byblos",
       "uncertainty": false,
       "matterRange": 74
@@ -10420,7 +10899,12 @@
       "verses": [
         "JOS 12:13"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/geder.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -10445,7 +10929,12 @@
       "verses": [
         "JOS 15:36"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gederah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 86
@@ -10493,7 +10982,12 @@
         "JOS 15:41",
         "2CH 28:18"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gederoth.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 86
@@ -10517,7 +11011,12 @@
         "1CH 12:7",
         "1CH 4:39"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gedor.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 86
@@ -10543,7 +11042,12 @@
       "verses": [
         "JOS 18:17"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/geliloth.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -10571,7 +11075,12 @@
         "MRK 6:53",
         "LUK 5:1"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gennesaret.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gennesaret",
       "uncertainty": false,
       "matterRange": 52
@@ -10605,7 +11114,12 @@
         "1CH 2:23",
         "1CH 3:2"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/geshur.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Geshur",
       "uncertainty": true,
       "matterRange": 55
@@ -10644,7 +11158,12 @@
         "1CH 14:16",
         "1CH 20:4"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gezer.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gezer",
       "uncertainty": false,
       "matterRange": 48
@@ -10665,7 +11184,12 @@
       "verses": [
         "2SA 2:24"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/giah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -10691,7 +11215,12 @@
         "1KI 16:15",
         "1KI 16:17"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gibbethon.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 62
@@ -10758,7 +11287,12 @@
         "HOS 9:9",
         "HOS 10:9"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gibeah.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gibeah",
       "uncertainty": false,
       "matterRange": 32
@@ -10780,7 +11314,12 @@
       "verses": [
         "JDG 20:45"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gidom.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -10811,7 +11350,12 @@
         "2CH 32:30",
         "2CH 33:14"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gihon_2.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gihon_Spring",
       "uncertainty": false,
       "matterRange": 62
@@ -10843,7 +11387,12 @@
         "1CH 10:1",
         "1CH 10:8"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gilboa.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Mount_Gilboa",
       "uncertainty": false,
       "matterRange": 48
@@ -10901,7 +11450,12 @@
         "AMO 5:5",
         "MIC 6:5"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gilgal.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gilgal",
       "uncertainty": true,
       "matterRange": 28
@@ -10927,7 +11481,12 @@
         "JOS 15:51",
         "2SA 15:12"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/giloh.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 78
@@ -10952,7 +11511,12 @@
       "verses": [
         "2CH 28:18"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gimzo.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": false,
       "matterRange": 86
@@ -10975,7 +11539,12 @@
         "2SA 4:3",
         "NEH 11:33"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gittaim.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 86
@@ -10999,7 +11568,12 @@
         "2SA 21:18",
         "2SA 21:19"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gob.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -11028,7 +11602,12 @@
         "JOS 21:27",
         "1CH 6:71"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/golan.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 70
@@ -11058,7 +11637,12 @@
         "1CH 5:26",
         "ISA 37:12"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gozan.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Gozan",
       "uncertainty": true,
       "matterRange": 62
@@ -11083,7 +11667,12 @@
       "verses": [
         "JOS 11:8"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/sidon.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Sidon",
       "uncertainty": false,
       "matterRange": 28
@@ -11134,7 +11723,12 @@
       "verses": [
         "2CH 26:7"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gurbaal.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -11160,7 +11754,12 @@
       "verses": [
         "2KI 9:27"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/gur.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 86
@@ -13440,7 +14039,12 @@
       "verses": [
         "JOS 19:13"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/eth-kazin.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 92
@@ -20734,7 +21338,12 @@
         "NEH 7:37",
         "NEH 11:35"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ono.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": false,
       "matterRange": 68
@@ -20794,7 +21403,12 @@
         "NUM 33:43",
         "NUM 33:44"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/oboth.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -20906,7 +21520,12 @@
       "verses": [
         "JOS 18:24"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ophni.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -21561,7 +22180,12 @@
       "verses": [
         "2SA 6:8"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "wikipedia",
+          "url": "https://en.wikipedia.org/wiki/List_of_minor_biblical_places#Perez_Uzzah"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 80
@@ -21584,7 +22208,12 @@
       "verses": [
         "1CH 13:11"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "wikipedia",
+          "url": "https://en.wikipedia.org/wiki/List_of_minor_biblical_places#Perez_Uzzah"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 80
@@ -21957,7 +22586,12 @@
       "verses": [
         "ISA 66:19"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "wikipedia",
+          "url": "https://en.wikipedia.org/wiki/List_of_minor_biblical_places#Pul"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -22128,7 +22762,12 @@
       "verses": [
         "JDG 15:17"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ramath-lehi.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 80
@@ -22158,7 +22797,12 @@
         "NUM 33:14",
         "NUM 33:15"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rephidim.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Rephidim",
       "uncertainty": true,
       "matterRange": 60
@@ -22220,7 +22864,12 @@
         "EZK 25:5",
         "AMO 1:14"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rabbah.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Amman",
       "uncertainty": false,
       "matterRange": 34
@@ -22245,7 +22894,12 @@
       "verses": [
         "JOS 19:20"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rabbith.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -22270,7 +22924,12 @@
       "verses": [
         "1SA 30:29"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/racal.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 86
@@ -22297,7 +22956,12 @@
       "verses": [
         "JOS 19:35"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rakkath.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -22323,7 +22987,12 @@
       "verses": [
         "JOS 19:46"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rakkon.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -22366,7 +23035,12 @@
         "HOS 5:8",
         "MAT 2:18"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ramah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": false,
       "matterRange": 30
@@ -22394,7 +23068,12 @@
       "verses": [
         "JOS 13:26"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ramath-mizpeh.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -22434,7 +23113,12 @@
         "1SA 25:1",
         "1SA 28:3"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ramathaim-zophim.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 32
@@ -22465,7 +23149,12 @@
         "NUM 33:3",
         "NUM 33:5"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rameses.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 44
@@ -22516,7 +23205,12 @@
         "2CH 18:28",
         "2CH 22:5"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ramoth-gilead.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Ramoth-Gilead",
       "uncertainty": true,
       "matterRange": 28
@@ -22569,7 +23263,12 @@
         "ACT 7:36",
         "HEB 11:29"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/red_sea.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Red_Sea",
       "uncertainty": false,
       "matterRange": 13
@@ -22597,7 +23296,12 @@
         "NUM 13:21",
         "2SA 10:8"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rehob.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 82
@@ -22624,7 +23328,12 @@
       "verses": [
         "GEN 26:22"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rehoboth.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 80
@@ -22647,7 +23356,12 @@
         "GEN 36:37",
         "1CH 1:48"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rehoboth_2.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -22673,7 +23387,12 @@
       "verses": [
         "JOS 18:27"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rekem.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -22700,7 +23419,12 @@
         "JOS 19:21",
         "1CH 6:73"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/remeth.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -22726,7 +23450,12 @@
       "verses": [
         "GEN 10:12"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/resen.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -22754,7 +23483,12 @@
         "2KI 19:12",
         "ISA 37:12"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rezeph.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Resafa",
       "uncertainty": false,
       "matterRange": 84
@@ -22780,7 +23514,12 @@
       "verses": [
         "ACT 28:13"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rhegium.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Reggio_Calabria",
       "uncertainty": false,
       "matterRange": 84
@@ -22805,7 +23544,12 @@
       "verses": [
         "ACT 21:1"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rhodes.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Rhodes",
       "uncertainty": false,
       "matterRange": 84
@@ -22840,7 +23584,12 @@
         "JER 52:26",
         "JER 52:27"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/riblah.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Riblah",
       "uncertainty": false,
       "matterRange": 44
@@ -22867,7 +23616,12 @@
         "JDG 20:47",
         "JDG 21:13"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rimmon.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": false,
       "matterRange": 78
@@ -22892,7 +23646,12 @@
       "verses": [
         "JOS 19:7"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rimmon_2.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 82
@@ -22916,7 +23675,12 @@
         "NUM 33:19",
         "NUM 33:20"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rimmon-perez.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 86
@@ -22939,7 +23703,12 @@
         "NUM 33:21",
         "NUM 33:22"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rissah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 86
@@ -22962,7 +23731,12 @@
         "NUM 33:18",
         "NUM 33:19"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rithmah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 86
@@ -22988,7 +23762,12 @@
       "verses": [
         "1SA 23:28"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rock_of_escape.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 80
@@ -23015,7 +23794,12 @@
         "2SA 17:27",
         "2SA 19:31"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rogelim.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 80
@@ -23048,7 +23832,12 @@
         "ROM 1:15",
         "2TI 1:17"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rome.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Rome",
       "uncertainty": false,
       "matterRange": 12
@@ -23074,7 +23863,12 @@
       "verses": [
         "2KI 23:36"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/rumah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 88
@@ -27063,7 +27857,12 @@
       "verses": [
         "ACT 20:15"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Mycale"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Trogyllium",
       "uncertainty": true,
       "matterRange": 100
@@ -27137,7 +27936,12 @@
         "DAN 8:2",
         "DAN 8:16"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ulai.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": false,
       "matterRange": 62
@@ -27158,7 +27962,12 @@
       "verses": [
         "JOS 19:30"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/ummah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -27180,7 +27989,12 @@
         "JER 10:9",
         "DAN 10:5"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/uphaz.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -27204,7 +28018,12 @@
         "JER 25:20",
         "LAM 4:21"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/uz.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Land_of_Uz",
       "uncertainty": true,
       "matterRange": 54
@@ -27226,7 +28045,12 @@
         "2KI 21:18",
         "2KI 21:26"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/uzza.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 76
@@ -27247,7 +28071,12 @@
       "verses": [
         "1CH 7:24"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/uzzen-sheerah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -27885,7 +28714,12 @@
         "ISA 7:3",
         "ISA 36:2"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/washer%27s_field.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 68
@@ -27917,7 +28751,12 @@
         "NEH 8:16",
         "NEH 12:37"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/water_gate.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 66
@@ -27938,7 +28777,12 @@
       "verses": [
         "ISA 35:8"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/way_of_holiness.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -27962,7 +28806,12 @@
       "verses": [
         "1SA 24:2"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/wildgoats%27_rocks.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 82
@@ -28011,7 +28860,12 @@
       "verses": [
         "JOS 19:38"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/yiron.htm"
+        }
+      ],
       "wikipedia": "https://en.wikipedia.org/wiki/Yaroun",
       "uncertainty": false,
       "matterRange": 90
@@ -28085,7 +28939,12 @@
         "JOS 18:28",
         "2SA 21:14"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/zelah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 80
@@ -28107,7 +28966,12 @@
       "verses": [
         "1SA 10:2"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/zelzah.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
@@ -28130,7 +28994,12 @@
       "verses": [
         "JOS 18:22"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/zemaraim.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 90
@@ -28440,7 +29309,12 @@
       "verses": [
         "2CH 4:17"
       ],
-      "links": [],
+      "links": [
+        {
+          "type": "biblehub",
+          "url": "https://biblehub.com/atlas/zarethan.htm"
+        }
+      ],
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 70

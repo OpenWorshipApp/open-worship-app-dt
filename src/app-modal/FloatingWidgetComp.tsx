@@ -402,6 +402,23 @@ export default function FloatingWidgetComp({
         [],
     );
 
+    // Fill the viewport, or put the widget back at the size and place it had.
+    // Shared by the header's double-press and the full-view button.
+    const handleToggleMaximized = useCallback(() => {
+        const next = toggleMaximizedWidgetRect(
+            widgetRectRef.current,
+            restoreRectRef.current,
+            optionsRef.current,
+            isHeaderOnlyRef.current,
+        );
+        // Kept in step synchronously, the way a drag does: a press landing
+        // before React re-renders must not resize from the stale rect.
+        widgetRectRef.current = next.rect;
+        setWidgetRect(next.rect);
+        setRestoreRect(next.restoreRect);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Double-pressing the header is the quick "fill the viewport" gesture, and
     // doing it again puts the widget back at the size and place it had.
     const handleHeaderPointerDown = useCallback(
@@ -439,17 +456,7 @@ export default function FloatingWidgetComp({
             // Cleared so a third press starts counting again instead of undoing
             // what the second one just did.
             lastHeaderPressRef.current = null;
-            const next = toggleMaximizedWidgetRect(
-                widgetRectRef.current,
-                restoreRectRef.current,
-                optionsRef.current,
-                isHeaderOnlyRef.current,
-            );
-            // Kept in step synchronously, the way a drag does: a press landing
-            // before React re-renders must not resize from the stale rect.
-            widgetRectRef.current = next.rect;
-            setWidgetRect(next.rect);
-            setRestoreRect(next.restoreRect);
+            handleToggleMaximized();
             // Held back from the widget's own handler so this press starts no
             // move gesture — the widget just jumped somewhere else, and a drag
             // from the old grab point would fight it.
@@ -464,6 +471,9 @@ export default function FloatingWidgetComp({
     const collapseLabel = isCollapsed
         ? tran('Expand floating widget')
         : tran('Collapse floating widget');
+    const fullViewLabel = isMaximized
+        ? tran('Exit full view')
+        : tran('Full view');
     const actionButtons = (
         <div
             className="floating-widget__actions"
@@ -488,6 +498,19 @@ export default function FloatingWidgetComp({
                     />
                 </button>
             )}
+            <button
+                type="button"
+                className="floating-widget__button"
+                onClick={handleToggleMaximized}
+                aria-label={fullViewLabel}
+                title={fullViewLabel}
+            >
+                <i
+                    className={`bi bi-${
+                        isMaximized ? 'fullscreen-exit' : 'arrows-fullscreen'
+                    }`}
+                />
+            </button>
             <button
                 type="button"
                 className="floating-widget__button"

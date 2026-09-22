@@ -47,8 +47,9 @@ function escapeHtmlText(text: string) {
 }
 
 // A <video> element never paints a frame into a printed PDF, so grab the
-// first frame as an image instead.
-function captureVideoFrameDataUrl(src: string) {
+// first frame as an image instead. "Export to PPTX" takes its still the same
+// way, since a screen holds a slide video on that frame too.
+export function captureVideoFrameDataUrl(src: string) {
     return new Promise<string | null>((resolve) => {
         const video = document.createElement('video');
         video.muted = true;
@@ -154,8 +155,9 @@ async function genBackgroundHtml(
 // across slides is captured once).
 //
 // Unlike a web BACKGROUND, which is genuinely live content and cannot print, a
-// website ITEM is a still image by design and prints fine.
-async function fillWebsiteScreenShots(
+// website ITEM is a still image by design and prints fine — and exports to a
+// PPTX picture the same way.
+export async function fillWebsiteScreenShots(
     slideDiv: HTMLDivElement,
     webScreenShotCache: Map<string, Promise<string | null>>,
 ) {
