@@ -194,6 +194,7 @@ function NotePreview({ note }: Readonly<{ note: Note }>) {
                 }`}
                 style={{
                     overflow: 'auto',
+                    paddingBottom: '5px',
                 }}
             >
                 {note.isOpened && (

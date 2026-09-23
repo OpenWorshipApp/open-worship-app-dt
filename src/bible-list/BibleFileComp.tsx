@@ -159,6 +159,7 @@ function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
                 }`}
                 style={{
                     overflow: 'auto',
+                    paddingBottom: '5px',
                 }}
             >
                 {bible.isOpened && (
