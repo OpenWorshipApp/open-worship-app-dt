@@ -732,6 +732,67 @@ button.chat-engine {
   }
 }
 
+.chat-demo-block {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--chat-line);
+}
+
+.chat-demo-note {
+  margin: -2px 0 9px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--chat-muted);
+}
+
+.chat-demo-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.chat-demo {
+  appearance: none;
+  min-height: 66px;
+  padding: 9px 10px;
+  text-align: start;
+  color: var(--chat-text);
+  background-color: var(--chat-panel);
+  border: 1px solid var(--chat-line);
+  border-radius: 5px;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    border-color: var(--chat-cyan);
+    background-color: var(--chat-panel-soft);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+  }
+}
+
+.chat-demo-label,
+.chat-demo-detail {
+  display: block;
+}
+
+.chat-demo-label {
+  font-family: var(--chat-font-label);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--chat-cyan);
+}
+
+.chat-demo-detail {
+  margin-top: 4px;
+  font-family: var(--chat-font-body);
+  font-size: 11.5px;
+  line-height: 1.3;
+  color: var(--chat-muted);
+}
+
 .chat-hint {
   margin: 14px 0 0;
   font-size: 11.5px;

@@ -344,7 +344,13 @@ export const DOM_MATCH_RUNTIME = `
         }
         const inputType = (element.getAttribute('type') ?? 'text')
             .toLowerCase();
-        return ['text', 'search', 'url', 'tel', 'password', 'email', 'number']
+        return [
+            'text', 'search', 'url', 'tel', 'password', 'email', 'number',
+            // Setting the value and dispatching input + change is also the
+            // correct programmatic form of moving a slider. It lets a guide
+            // enlarge Reader text precisely instead of clicking its label.
+            'range',
+        ]
             .includes(inputType);
     };
 
@@ -1226,8 +1232,8 @@ export const DOM_MATCH_RUNTIME = `
 
 /** `listControls`, packaged as an expression for `evaluateInApp`. */
 export function genListUiExpression({ filter = '', limit = 100 } = {}) {
-    const cappedLimit = Math.min(Math.max(Math.trunc(limit) || 100, 1), 200);
-    return `(() => {
+  const cappedLimit = Math.min(Math.max(Math.trunc(limit) || 100, 1), 200);
+  return `(() => {
         const dm = ${DOM_MATCH_RUNTIME};
         const controls = dm.listControls(
             ${JSON.stringify(String(filter))}, ${cappedLimit},
@@ -1251,12 +1257,12 @@ export function genListUiExpression({ filter = '', limit = 100 } = {}) {
  * proof and a far better one than silence.
  */
 export function genClickExpression(
-    finds,
-    timeoutMs = 1500,
-    settleMs = 250,
-    { guard = null } = {},
+  finds,
+  timeoutMs = 1500,
+  settleMs = 250,
+  { guard = null } = {},
 ) {
-    return `(async () => {
+  return `(async () => {
         const dm = ${DOM_MATCH_RUNTIME};
         const guard = ${JSON.stringify(guard)};
         const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
@@ -1403,11 +1409,11 @@ export function genClickExpression(
  * contenteditable. `submit` follows it with an Enter keydown/keyup pair.
  */
 export function genTypeExpression(
-    finds,
-    value,
-    { submit = false, timeoutMs = 1500, guard = null } = {},
+  finds,
+  value,
+  { submit = false, timeoutMs = 1500, guard = null } = {},
 ) {
-    return `(async () => {
+  return `(async () => {
         const dm = ${DOM_MATCH_RUNTIME};
         const guard = ${JSON.stringify(guard)};
         const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
@@ -1555,7 +1561,7 @@ export function genTypeExpression(
  * expect to light up.
  */
 export function genHighlightSelectorExpression(selector, isHighlighting) {
-    return `(() => {
+  return `(() => {
         const dm = ${DOM_MATCH_RUNTIME};
         let element = null;
         try {
@@ -1582,7 +1588,7 @@ export function genHighlightSelectorExpression(selector, isHighlighting) {
 }
 
 export function genFindUiExpression(text, isHighlighting) {
-    return `(() => {
+  return `(() => {
         const dm = ${DOM_MATCH_RUNTIME};
         // Parsed the same way the click matcher parses it, so "Background
         // panel" and "Background > Videos" mean here what they mean there --

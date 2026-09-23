@@ -11,7 +11,7 @@ import electron, {
 } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
-import { getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
+import { getMcpToken, getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
 import {
     AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
     answerAiChatMicrophoneAsk,
@@ -158,9 +158,11 @@ export function initEventListenerApp(appController: ElectronAppController) {
 
     // What the in-app chatbot connects to. Both doors are on ports this
     // process picked at launch, so nothing in the renderer can hardcode them.
+    // The MCP capability stays off the URL and crosses only this IPC seam.
     ipcMain.on('main:app:get-ai-endpoints', (event) => {
         event.returnValue = {
             mcpUrl: getMcpUrl(),
+            mcpToken: getMcpToken(),
             cdpPort: getRemoteDebuggingPort(),
         };
     });

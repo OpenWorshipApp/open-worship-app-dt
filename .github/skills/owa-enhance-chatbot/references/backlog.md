@@ -1,7 +1,7 @@
 # Enhancement backlog — `EC-xx`
 
 Tracked improvements for the chatbot and its MCP tools. **Ids are stable.** When
-you finish one, move it to *Done* with the date and what actually shipped; when
+you finish one, move it to _Done_ with the date and what actually shipped; when
 you find something new, add it here even if you do not do it — the next run
 should start from the truth, not from a re-discovery.
 
@@ -13,12 +13,147 @@ tools → cost → capability → polish.**
 
 ---
 
+## EC-188 · Four Reader demos left most important Reader work undiscoverable — `done` 2026-09-23
+
+Requested with the four-demo shelf visible: add 20 more important demonstrations,
+for `reader.html` only. The original shelf covered text size, one reference and
+one search route; it did not expose passage history, people and places, parallel
+reading, layout, scrolling, advanced study views or the saved-content panels.
+
+**Shipped.** The same zero-model shelf now has exactly 24 Reader-only lessons.
+The 20 additions cover Previous/Next, clearing a reference, the names/places
+lookup and its language, a second Bible, full view, copy, two split directions,
+save, auto-scroll/top, both line-layout toggles, Cross Reference,
+Location-Name, Resources, the Find book filter and the Bibles/Notes panel.
+Every start was checked against the live Reader and lands on a real control;
+three initially-loose labels (auto-scroll, scroll-to-top and Should New Lines)
+were replaced with the exact accessible words before shipping. No provider is
+called. Changing `demoId` from a 24-value enum to a catalog-validated string
+reduced the model-visible tool bill by 16 tokens per round instead of growing it.
+
+## EC-187 · Common Reader lessons required a question and a model — `done` 2026-09-22
+
+Requested for older, non-technical Reader users: let somebody learn by following
+a demonstration instead of knowing what to ask. Before, the empty Reader chat
+offered questions only; even a repeatable demo was special-cased in answer code
+or rebuilt by a model.
+
+**Shipped.** The empty Reader assistant now has four large **Try a guided demo**
+choices: make words larger, make them smaller, open John 3:16 through book →
+chapter → verse buttons, and find Bible text. They call checked-in
+`owa_guide_start { demoId }` recipes directly, with no key, network, model round
+or provider cost. Live, font size went 17 → 25 → 17; a Khmer Bible opened John
+3:16 through its localized visible buttons; and the search lesson recovered from
+the panel remembering Resources by choosing Find before focusing Search verses.
+The first search run exposed that remembered-tab dead end; the second completed.
+
+
+## EC-186 · Model metadata became dead buttons and leaked into senior-facing answers — `done` 2026-09-22
+
+Measured in the live Reader: GPT-5 nano emitted pressable `none`,
+`Bible Version buttons`, `Split view button (if shown)` and `NIV button on
+screen` chips. Pressing them ended at “I could not find … on screen.” A second
+answer printed its private `OPTIONS:` line because the model wrote OPTIONS,
+NEEDS and SHOWS in an order the two-line parser did not revisit.
+
+**Shipped.** Placeholder, described and conditional control names are never
+drawn. A model-authored control chip is kept only when that exact label was
+returned by a successful `owa_find_ui` or `owa_list_ui` call during the same
+ask; selectors and files keep their existing rules. Stored conversations are
+sanitized on load, so the fix removes old dead chips and old private frames
+too. The three closing frames are now stripped iteratively in any order without
+widening the prose lookback. Live re-asks gave the senior the real **Add Extra
+Bible** route, no invented Split view, no dead chip and no visible frame.
+
+## EC-185 · “Do it for me” replayed the wrong Reader task and exposed dead presses — `done` 2026-09-22
+
+Measured live on the Reader after asking _The words are too small_: **Do it for
+me** opened W-11 at step 1/7, circled **Bible Reference** and offered to press
+it. The user's font-size task was step 2; even there, a recipe demo would click
+the visible **Font Size** words rather than move the slider. On a Khmer Bible,
+the typed English-reference route was also the wrong default: clearing the box
+showed the Bible's own localized book buttons, and book → chapter worked when
+the exact button label (`៣(3)`, not its parent tooltip `Chapter 3`) was pressed.
+
+**Shipped.** Walkthrough actions carry the original question as `topic`, and a
+broad manual opens on its one matching task instead of replaying the page. A
+keyed **Do it for me** first shows that relevant step as a pointer without an
+ineffective Do it button, then asks the model to rebuild the demo from the live
+localized controls. The guide can set a range value, can explicitly `hover` an
+event-driven surface, and already holds CSS-hover-hidden targets visible. The
+Reader prompt and W-06/W-11 prefer localized book → chapter → verse for a
+non-English Bible, with typed references only as a shortcut. Focused tests pin
+topic selection, demo preparation, hover (card and user), and range changes.
+The live button found a second path: the model restarted the guide with the
+whole manual and interpreted “press each step” by acting immediately; it reached
+**Add Extra Bible** before the run was stopped. Recipes are now show-only,
+model-built demos must pass explicit live steps, and the preparation ask says
+not to press anything yet. Offline help omits the non-working demo button.
+
+The final live follow-through found two more dead ends in that path. First, a
+one-step demo labelled its only action **Done** and closed without acting; the
+last actionable step now stays **Do it**, with a card-click regression test.
+Second, GPT-5 nano answered the non-English reference ask by asking the senior
+to read and type back the exact Khmer label. That route is now deterministic
+and works offline: an English `Book C:V` is parsed locally and becomes explicit
+**Clear input → Book → Chapter C → Verse V** guide steps. Localized book and
+chapter buttons carry stable English titles for exact safe matching while their
+visible words remain localized. Small-text **Do it** is deterministic too: one
+named range step changes the current value by `+8`, so it cannot accidentally
+make already-large text smaller. Live, the visible card changed 17px → 25px and
+completed; the test setting was restored to 17px.
+
+Fresh live verification then drove the localized sequence against the Khmer
+Bible: **Clear input** → `43យ៉ូហាន(John)` → `៣(3)` via the exact **Chapter 3**
+title → localized **Verse 16**. A fast driver exposed one final timing race in
+the guide's pre-action wait; it is fixed and the Do button is disabled during
+the short result pause so an older user's second press cannot repeat the step.
+
+## EC-184 · Reader answers assumed too much computer knowledge — `done` 2026-09-22
+
+Requested by the user for `reader.html`: treat the Reader as a place used by
+non-technical older people and make the chatbot smart enough to help them. The
+shared prompt already said “not a technical person”, but it did not change the
+shape of a Reader answer: it could lead with a shortcut, hand over a long recipe,
+name a control without saying where it is, or say “double-click” / “drag” as if
+those were self-explanatory.
+
+**Shipped.** The Reader prompt alone now leads with mouse or touch, starts with at
+most three one-action steps, uses familiar words, says where a control is, and
+explains double-click, right-click and drag the first time. It explicitly requires
+respectful language, never childish language. The Presenter prompt is unchanged.
+The four opening Reader questions now use the likely problem statements rather
+than feature names: where to type `John 3:16`, words that are too small, a lost
+passage and two Bibles side by side. Prompt isolation and the four corpus starters
+are pinned by tests. Live verification then asked the same plain Reader question
+through all three keyed providers: Claude / Haiku 4.5, ChatGPT / GPT-5 nano and
+Kimi / Kimi K2.6 each answered through the selected provider with no error or
+stand-in banner.
+
+## EC-183 · Plain Reader questions opened the wrong help page — `done` 2026-09-22
+
+Measured live through `owa_help_search`, with `focus: reader`, before changing the
+corpus: _The words are too small. Help me._ → W-42 (the chatbot page), _Where do I
+type John 3:16?_ → W-16 (Settings), _I want two Bibles next to each other._ → W-33
+(Bible export), and only _I lost the Bible verse I was reading._ → W-11. Top-1 was
+**1/4** for the most ordinary Reader phrases. W-11 promised these features to the
+question corpus but did not name **Font Size** or **Add Extra Bible**, so the
+ranker had little true text to find; the generic word “help” made the chatbot page
+look unusually relevant.
+
+**Shipped.** W-11 now names and locates **Bible Reference**, **Font Size**, **Add
+Extra Bible** and recent references in mouse-first language. Query aliases connect
+_small / tiny_ to font size, _lost_ to recent history and _Bibles_ to versions;
+generic _help_, _too_, _each_ and _other_ no longer decide a result. A fixed-corpus
+test pins all four phrases to W-11. After the rebuilt knowledge index, the live
+search result is **4/4 top-1** with no model call and no added model-visible tool.
+
 ## EC-182 · A screen answer hands the volunteer a background's FILE name — `open`
 
 Seen 2026-09-18 while verifying `MC-07` / `MC-33` (`owa-enhance-mcp`), asked
-*Is anything showing on the projector right now?* on Claude Sonnet 5 with the
-screen off: *"it does still hold content ready to go: a background video
-(7_cv.mp4) and a slide from the Peaching document"*. The prompt forbids a file
+_Is anything showing on the projector right now?_ on Claude Sonnet 5 with the
+screen off: _"it does still hold content ready to go: a background video
+(7_cv.mp4) and a slide from the Peaching document"_. The prompt forbids a file
 name in front of a volunteer, and `owa_list_screens` hands the model exactly
 that — `background: { kind: "video", name: "7_cv.mp4" }` — with nothing to say
 it is a file name rather than a title. The answer was otherwise right (off,
@@ -30,8 +165,8 @@ state paragraph. Not graded as a failure; filed so the next corpus run looks.
 ## EC-181 · A provider with no key was a greyed row with nothing to press — `done` 2026-09-14
 
 Reported by the user with a picture of the head row's assistant list open on
-**Kimi — needs an API key**, greyed out: *if no api key for the api then still
-allow clickable but when click should bring to setting to the input text*. The
+**Kimi — needs an API key**, greyed out: _if no api key for the api then still
+allow clickable but when click should bring to setting to the input text_. The
 row said what was missing and was the one place in the window with no way to
 fix it: a disabled `<option>` cannot be pressed, and the way to a key was a
 link in the empty state or under a failure note.
@@ -74,9 +209,9 @@ provider failure to hand), and a key typed in Settings turning the row plain
 ## EC-180 · On a Mac, a walkthrough minimised the whole app — `done` 2026-09-12
 
 Reported by the user with a picture from macOS — the help window over the
-presenter, **Do it for me** circled — and *when make assistant control then it
+presenter, **Do it for me** circled — and _when make assistant control then it
 minimize the chatbot window, but on Mac it will minimize all windows including
-main*.
+main_.
 
 Cause, read off Electron's own source and two open issues
 (electron/electron#26031, #39578): the help window is opened with
@@ -117,9 +252,9 @@ back above the presenter, and moves with the presenter when that is dragged.
 
 ## EC-178 · Free answered nobody: its default service had gone paid — `done` 2026-09-12
 
-Reported by the user with a picture of the Free provider answering *"I could
-not answer that: The assistant service answered 500"*, and the ask *fix the
-free, if it still [un]usable then remove the free service*. Measured before
+Reported by the user with a picture of the Free provider answering _"I could
+not answer that: The assistant service answered 500"_, and the ask _fix the
+free, if it still [un]usable then remove the free service_. Measured before
 anything changed:
 
 - **LLM7's anonymous catalogue now prices every model.** `gpt-oss` — the
@@ -127,7 +262,7 @@ anything changed:
   called the tool once and then answered 429 on every call; `DeepSeek-V4-Flash`
   wants a key; `mistral-Nemo` refuses tools; `codestral-latest` answered
   without calling one. Asked in the live window on the tab's saved `gpt-oss`:
-  *"Free could not answer — Model 'gpt-oss' is currently unavailable.."* over
+  _"Free could not answer — Model 'gpt-oss' is currently unavailable.."_ over
   the offline guide. That was every keyless install.
 - **Kilo Code's `:free` models, through the real loop** — the 21 tools the
   model sees (~28 KB of schema a round), read-only tools executed against the
@@ -149,11 +284,11 @@ of the list does not stop a saved tab posting it. `toUsableLlmModel` puts a
 keyless name the list no longer carries back on the first choice — at
 `getLlmModel`, at window load (`genInitialSessionState`) and in `askLlmBot`
 for every caller — and leaves a keyed provider's off-list name alone (that
-one was picked under *More models…*).
+one was picked under _More models…_).
 
 Re-asked in the same window after a reload: the head row read **Free /
-Nemotron Lightning**, the notice named Kilo Code alone, and *How do I present
-a Bible verse?* answered in 16 s — six numbered steps off the manual, two Kilo
+Nemotron Lightning**, the notice named Kilo Code alone, and _How do I present
+a Bible verse?_ answered in 16 s — six numbered steps off the manual, two Kilo
 rounds, **free · 29k tokens**, walkthrough buttons under it.
 
 Left open: the list will rot again — both services this provider has used
@@ -166,28 +301,28 @@ shared allowance, and a fall-through doubles every failed wait.
 
 ## EC-179 · The app's own tool host failing printed a status code — `done` 2026-09-12
 
-The 500 in the same picture was NOT the free service. *"The assistant service
-answered 500"* is `mcpClient.ts` reporting the app's OWN MCP host. The
+The 500 in the same picture was NOT the free service. _"The assistant service
+answered 500"_ is `mcpClient.ts` reporting the app's OWN MCP host. The
 window's console held two 500s from `127.0.0.1:39223/mcp` — the model loop's
 `tools/list`, then the offline guide's search, which goes through the same
 host — so both answers failed and the outer catch printed the status. On the
-path where the guide does answer, the note over it read *"Free could not
-answer — …"*: the provider blamed for the app's own server, on the day Free
+path where the guide does answer, the note over it read _"Free could not
+answer — …"_: the provider blamed for the app's own server, on the day Free
 really was broken for a reason of its own, so the two could not be told
 apart. The host answered normally minutes later (a fresh session with the
 chatbot's Origin, and the window's own), and the cause was not recoverable:
 `host.mjs` logs a failed request to main-process stdout only.
 
 **Shipped.** `ToolHostError` (`mcpClient.ts`) carries a sentence written for a
-volunteer — *The app's own help service did not respond. Try again in a
+volunteer — _The app's own help service did not respond. Try again in a
 moment; if it keeps happening, restart the app with View → Relaunch in the
-main window.* — and its status in `hostStatus`, deliberately NOT `status`,
+main window._ — and its status in `hostStatus`, deliberately NOT `status`,
 which `readLlmIssue` would read as a provider 5xx and hand to another key.
 `describeAskFailure` in the window says that sentence instead of "<provider>
 could not answer", and takes the provider's own trailing full stop off first
-(the live note had read *"unavailable.. Here is"*). Proven by stubbing only
-the chatbot window's `fetch` to the host with a 500 and asking *Where is the
-mini screen?*: the answer was the sentence, in 2.7 s; the stub was removed.
+(the live note had read _"unavailable.. Here is"_). Proven by stubbing only
+the chatbot window's `fetch` to the host with a 500 and asking _Where is the
+mini screen?_: the answer was the sentence, in 2.7 s; the stub was removed.
 `mcpClient.test.ts` holds the words, the missing `status`, and that a host
 that is not running at all stays its own error.
 
@@ -208,9 +343,9 @@ write four steps — `owa_help_search`, `owa_help_page W-09`, two `owa_find_ui`,
 tokens into the cache), pressed **Foreground** again — which CLOSED the panel
 it had opened, `owa_click` answering `didChange: false` because a tab keeps
 its state in a class (`EC-167`) — hunted the widget's boxes it had just
-hidden, and ended on the fragment *"Now Foreground is active. Let me look for
-the countdown controls."* with the corpus fallback *It says the password is
-wrong on a file I was sent — what now?* under it. $0.18, 65 s, nothing on the
+hidden, and ended on the fragment _"Now Foreground is active. Let me look for
+the countdown controls."_ with the corpus fallback _It says the password is
+wrong on a file I was sent — what now?_ under it. $0.18, 65 s, nothing on the
 screen: the worst answer of the day, for a pre-service ask in nearly every
 church and a corpus question since 2026-09-01.
 
@@ -224,7 +359,7 @@ one-button answer (`readCountdownAsk`); a prompt bullet; the banner, the
 firewall's acting set, the wait line, `applyToolWatch`; six corpus rows carry
 the tool and one imperative row was added. Re-asked: **2 rounds, 7.3 s, one
 call**, the countdown held on the (off) screen and its show button offered;
-*Put the time on the screen* 3 rounds, 9.4 s; `/countdown 5` 3.3 s and no
+_Put the time on the screen_ 3 rounds, 9.4 s; `/countdown 5` 3.3 s and no
 model. +491 tokens a round (21 model tools, ~6 849).
 
 ---
@@ -232,8 +367,8 @@ model. +491 tokens a round (21 model tools, ~6 849).
 ## EC-167 · A pressed panel tab read as "nothing changed" — `done` 2026-09-11
 
 Behind `EC-166`'s second half. `owa_click "Foreground"` on the open Foreground
-tab closed the panel and answered `didChange: false` with the *nothing is
-proven* sentence: `stateOf` read `aria-pressed` / `aria-checked` /
+tab closed the panel and answered `didChange: false` with the _nothing is
+proven_ sentence: `stateOf` read `aria-pressed` / `aria-checked` /
 `aria-expanded` and `.checked`, and this app's panel tabs (`RendTabComp`,
 Bootstrap `nav-link`s) keep their state in the `active` class. It reads
 `aria-selected` and a `.nav-link` / `[role="tab"]`'s `active` class now, so a
@@ -247,17 +382,17 @@ bullet says the Foreground tab closes on a second press).
 ## EC-168 · `/clear-foreground` said "nothing to clear" with a countdown held on the off screen — `done` 2026-09-11
 
 Measured the same afternoon: with a countdown and a marquee on the hidden
-screen 0, `/clear-foreground` read the screens and answered *The screen is
-off, so there is nothing to clear — the projector shows nothing from the app*,
+screen 0, `/clear-foreground` read the screens and answered _The screen is
+off, so there is nothing to clear — the projector shows nothing from the app_,
 pressing nothing. An off screen HOLDS its layers and shows them the moment it
 is turned on; the command judged by `isAnyShowing` alone, written before
 `owa_list_screens` carried content. `readScreens` in `builtinActionHelpers.ts`
 now carries `clearable` — the Clear labels whose `hasSomething` is true on any
-screen — a held layer is pressed whether or not the screen shows (*The screen
-is off, so this only emptied what it was holding*), and because a Clear button
-is a plain press the click cannot verify, the layer is read back and *Cleared*
+screen — a held layer is pressed whether or not the screen shows (_The screen
+is off, so this only emptied what it was holding_), and because a Clear button
+is a plain press the click cannot verify, the layer is read back and _Cleared_
 is said only when it holds nothing now. Re-asked live: pressed, and the check
-afterwards read *No foreground extra is on any screen*.
+afterwards read _No foreground extra is on any screen_.
 
 ---
 
@@ -265,18 +400,18 @@ afterwards read *No foreground extra is on any screen*.
 
 Measured 2026-09-11 with Amazing Grace selected and the screen off. The ask
 selected the song (`owa_lyric_file list`, `owa_click "Blessed Assurance"`,
-4 rounds, $0.03) and asked *Would you like me to present that first slide?*
-with *Show the first verse instead* beside it; *Yes, put it up* pressed
+4 rounds, $0.03) and asked _Would you like me to present that first slide?_
+with _Show the first verse instead_ beside it; _Yes, put it up_ pressed
 `Slide 1: First` (a song's first slide holds no words — `text: null`) and
-then **`Toggle showing screen [F5]`**, and answered *The screen is now on,
-showing the first slide of Blessed Assurance to the congregation* — a motion
+then **`Toggle showing screen [F5]`**, and answered _The screen is now on,
+showing the first slide of Blessed Assurance to the congregation_ — a motion
 background and no words, on the user's only display. Two things. The verse
 path OFFERS the show button and this path pressed it: the prompt's
 selectedDocument bullet says "when they ASKED for it, do it" and nothing about
 the screen's power, so the same imperative gets two policies. And "put the
 song up" means the first slide WITH WORDS to anyone in a church; the field
-could carry `firstWithWords` (or the describer could say *slide 1 is the
-title*), and the prompt could say so. Not done this run: the verse door was
+could carry `firstWithWords` (or the describer could say _slide 1 is the
+title_), and the prompt could say so. Not done this run: the verse door was
 the bigger ask, and this one needs a decision about the show button that
 should be made once for every acting path.
 
@@ -284,12 +419,12 @@ should be made once for every acting path.
 
 ## EC-170 · The background demo's step 2 presses Colors, and no card can double-click a video — `open`, low
 
-*Set the background to a video* answers with W-08's steps (3 rounds, right).
+_Set the background to a video_ answers with W-08's steps (3 rounds, right).
 Its **Do it for me** starts the recipe demo: step 1 clicks the Background bar
-(the card reports the tab row's joined label), step 2 — *Pick a tab: Colors /
-Images / Videos / Cameras / Webs …* — clicks **Colors**, the first name in the
-sentence, and the recipe's *double-click an item to make it the live
-background* has no `dblclick` action in `guide.mjs` and no `owa_click`
+(the card reports the tab row's joined label), step 2 — _Pick a tab: Colors /
+Images / Videos / Cameras / Webs …_ — clicks **Colors**, the first name in the
+sentence, and the recipe's _double-click an item to make it the live
+background_ has no `dblclick` action in `guide.mjs` and no `owa_click`
 equivalent. A background by ask would need either a double-click action on
 the card (and a step that names WHICH tab) or a door like `owa_foreground`'s
 (`ScreenBackgroundManager` on the ticked screens by file name). Common enough
@@ -349,7 +484,7 @@ index they never needed.
 **Measured live, same window, shipped code: 156 nulls → 12, 144 fixed, 0
 broken, 0 mis-targeted.** Both panes ring distinctly (`y: 41` for the KJV
 pane, `y: 440` for the Khmer one). Three tests hold it, including the one
-that matters most — a control *inside* one of two same-named panes.
+that matters most — a control _inside_ one of two same-named panes.
 
 The 12 that remain are the `MAX_SELECTOR_DEPTH` budget, which is a different
 question and not this one.
@@ -375,8 +510,8 @@ nothing does the window say so — and it now names what it looked for.
 
 ## EC-174 · Nothing in the window cautioned against trusting an AI answer — `done` 2026-09-12
 
-Asked for by the user in the same exchange: *add a cautious warning message
-somewhere about AI bad impact and be careful while using it*.
+Asked for by the user in the same exchange: _add a cautious warning message
+somewhere about AI bad impact and be careful while using it_.
 
 The window had one warning and it was about something else: the keyless
 provider's notice says where the user's words GO. Nothing anywhere said the
@@ -388,8 +523,8 @@ A standing caution now sits under the starter chips in the empty state. It
 names what going wrong looks like HERE rather than warning about AI in the
 abstract — misreading the app, describing a button that is not there, quoting
 a verse inaccurately, and offering an action that reaches a projector — and
-it closes on over-reliance: *it is here to help you use the app, not to
-replace knowing it*. Generic boilerplate is read once and never believed; a
+it closes on over-reliance: _it is here to help you use the app, not to
+replace knowing it_. Generic boilerplate is read once and never believed; a
 specific one is what makes somebody check.
 
 Placed in the empty state on purpose, and **not** made sticky or foldable:
@@ -405,8 +540,8 @@ lines it sits with without out-shouting the sticky provider notice above.
 ## EC-175 · Opening an AI window asked nothing first — `done` 2026-09-12
 
 Asked for by the user with a picture of the toolbar, both AI icons circled:
-*when I click the icon I want to see the confirm message of the warning about
-AI cautious first, then confirm to open*. Scope confirmed with them: **both**
+_when I click the icon I want to see the confirm message of the warning about
+AI cautious first, then confirm to open_. Scope confirmed with them: **both**
 buttons, **every** press.
 
 `EC-174` had put a standing caution inside the assistant window, and that is a
@@ -418,8 +553,8 @@ had no caution anywhere at all.
 every user-initiated route into either window: the two toolbar buttons, the
 two **Tools** entries (Ctrl+Shift+A included) and the two native **Help** menu
 items, which land on the IPC receivers in `domHelpers`. A caution a menu item
-walks around is a caution nobody is given. The Presenting Control's *hand this
-snapshot to the help window* is deliberately NOT gated: that press already
+walks around is a caution nobody is given. The Presenting Control's _hand this
+snapshot to the help window_ is deliberately NOT gated: that press already
 carries its own intent, and a Cancel there would strand the snapshot the main
 process is holding for the window it was about to open.
 
@@ -453,10 +588,10 @@ including the fail-open), `commonButtons` +4, `AppAssistantComp` +2.
 
 ## EC-177 · An asset could be made but not looked at or kept — `done` 2026-09-12
 
-Asked for by the user, straight after `EC-176`: *as a user I want to always be
+Asked for by the user, straight after `EC-176`: _as a user I want to always be
 able to download assets in chat session. Make sure all assets: files/images
 clickable to see preview and on preview has download icon to download the
-asset.*
+asset._
 
 A conversation accumulates assets — the user's own screenshot, a dropped file,
 the report the window just wrote, the song the assistant just created — and
@@ -494,21 +629,21 @@ and never by `kind`.
 Verified live 2026-09-12 on the dev Reader: the saved report's `.md` opened as
 readable text over the conversation; its `.png`, whose bytes were never in the
 window, opened as a full picture read off the disk; **Download** on a file
-already in Downloads answered *"…" is already in your Downloads folder — I
-opened it for you* and left the folder with two files, not three. The preview
+already in Downloads answered _"…" is already in your Downloads folder — I
+opened it for you_ and left the folder with two files, not three. The preview
 surfaces were repainted onto the window's opaque ground in the same pass — on
 the glassy window the first cut let the conversation show through the text.
 
 ## EC-176 · A saved report said nowhere to send it — `done` 2026-09-12
 
 Asked for by the user with a picture of the Report button under a box reading
-*font-family is too small*: *find email address from `getHelpPageUrl` … then
+_font-family is too small_: _find email address from `getHelpPageUrl` … then
 provide copy-able content and copy-able email address, so user can copy email
-address and copy content to send the issue* — and, while it was being built,
-*app auto email sometime out-of-date, use the found email from help page as
-primary and from the app as secondary*.
+address and copy content to send the issue_ — and, while it was being built,
+_app auto email sometime out-of-date, use the found email from help page as
+primary and from the app as secondary_.
 
-The Send press ended on *saved into Downloads, pass it on however you like*: a
+The Send press ended on _saved into Downloads, pass it on however you like_: a
 file, and no idea who wanted it. The address was in `package.json`'s `author`
 field the whole time, and the live help page named a DIFFERENT one
 (`info@openworship.app` against the package's `owf2025@gmail.com`) — which is
@@ -524,14 +659,14 @@ Report is confirmed so it runs beside the investigation, and is remembered ten
 minutes for the presses that follow. The Send answer names the address, says
 which source it came from, names a `[Open Worship app] <title> (<reference>)`
 subject, and offers **Copy report**, **Copy subject** and **Copy picture**
-(added the same afternoon at the user's asks *generate email subject as well*
-and *for images, give copy-able image to clipboard as well* — the screenshot
+(added the same afternoon at the user's asks _generate email subject as well_
+and _for images, give copy-able image to clipboard as well_ — the screenshot
 as PNG through `copyImageToClipboard`, now shared with the preview's own
 Copy, and read back from Downloads after a reopen), **Copy email address**
 and **Email it** (a `mailto:` with address and subject; the report goes on
 the clipboard first because mail clients cut a body at ~2 000 characters).
-The third ask of the afternoon — *for all images preview in chatbot should
-have icon to copy image to clipboard* — put the same clipboard path on every
+The third ask of the afternoon — _for all images preview in chatbot should
+have icon to copy image to clipboard_ — put the same clipboard path on every
 picture chip in the window (`RenderCopyPictureIconComp`, ask row and answers
 alike, the press stopped so it does not also open the preview or ring a
 control) and an icon on the preview's own Copy. All five report buttons are
@@ -543,43 +678,44 @@ this** and now also carries the machine line, the selection and run sheet, each
 screen's content, the displays, 20 console lines and who investigated.
 
 Verified live 2026-09-12 on the dev Reader with Claude Sonnet 5: two reports
-(≈ $0.10 each), *Copied …* for all four Copy buttons (report, subject, picture,
+(≈ $0.10 each), _Copied …_ for all four Copy buttons (report, subject, picture,
 address), the picture chip's icon flipping to a tick in the ask row and under
 an answer without opening the preview, and — after a reload emptied the
 in-memory report — **Copy email address** answering `info@openworship.app`
-*(from the app's help page)*. **Email it** was not pressed live (it opens the
+_(from the app's help page)_. **Email it** was not pressed live (it opens the
 operator's mail client); its link is unit-tested. W-42 step 9, CB-32 and
 `questions/troubleshooting.json` (`report-email-it`) updated with it.
 
 ## EC-161 · A song the model created itself was still offered for creation — `done` 2026-09-10
 
-Measured 2026-09-10: asked *Create a lyric file from https://hymnary.org/…*,
+Measured 2026-09-10: asked _Create a lyric file from https://hymnary.org/…_,
 Claude Sonnet 5 called `owa_lyric_validate {url}` and then `owa_lyric_file
-{create}` itself, answered *"Done! The song … has been created and is already
-sitting in your Documents list"* — and the window still drew **Create
+{create}` itself, answered _"Done! The song … has been created and is already
+sitting in your Documents list"_ — and the window still drew **Create
 "Amazing grace! (how sweet the sound)"** under it, minted off the draft in
 `applyToolWatch`; a press makes a second file beside the first. (The ask was
-made in a tab carrying *How do I add a song?* history; asked again in a clean
+made in a tab carrying _How do I add a song?_ history; asked again in a clean
 tab with pasted words it created the file the same way.) `ToolWatchType`
 carries `createdLyric` now, read off a successful create's RESULT (`created`
-+ `filePath`; a refusal is prose and sets nothing), and the answer carries
-**Show it in the list** and the file — what the Create button's own answer
-offers — and no Create, no walkthrough. Re-asked: the chips, no button.
+
+- `filePath`; a refusal is prose and sets nothing), and the answer carries
+  **Show it in the list** and the file — what the Create button's own answer
+  offers — and no Create, no walkthrough. Re-asked: the chips, no button.
 
 ---
 
 ## EC-162 · A site's bot check was drafted as a song called "Untitled" — `done` 2026-09-10
 
-The third read of hymnary.org in a row came back as its *Hold tight…
-checking your browser…* interstitial. Short lines of words are exactly what
+The third read of hymnary.org in a row came back as its _Hold tight…
+checking your browser…_ interstitial. Short lines of words are exactly what
 a song looks like to the drafter, so it drafted the check as a VALID song
 titled "Untitled", and the window minted **Create "Untitled"** and the preview
 box under an answer whose text (rightly) said it would not create a file
 from that. `checkIsBrowserCheckPage` in `openLyricDraft.mjs` — a page (the
 wrapper is the proof), short (≤ 1 500 characters), matching the words a
 challenge prints — is refused with `BROWSER_CHECK_TEXT` before anything is
-drafted; the offline bot and `/lyric` say *hymnary.org answered with a
-"checking your browser" page instead of the song* (`checkIsBrowserCheckRefusal`,
+drafted; the offline bot and `/lyric` say _hymnary.org answered with a
+"checking your browser" page instead of the song_ (`checkIsBrowserCheckRefusal`,
 a prefix pinned to the sentence by a test rather than an import of the
 drafter into the renderer).
 
@@ -625,8 +761,8 @@ the offline bot must expect one paid round first.
 
 ## EC-160 · The head row and the ask form covered a quarter of the window while an answer was read — `reverted` 2026-09-11
 
-**Removed whole the next morning at the user's ask** (*please remove all
-auto-hide feature from the chatbot*): the head band, its strip, the 📌, the
+**Removed whole the next morning at the user's ask** (_please remove all
+auto-hide feature from the chatbot_): the head band, its strip, the 📌, the
 `chatbot-auto-hide` setting, `autoHideHelpers.ts` and its test, the tip, the
 corpus question and the W-42 paragraph. The lesson worth keeping is the
 sequence — asked for with a picture, the box wanted back the same afternoon,
@@ -635,8 +771,8 @@ the way, and in a window used minutes before a service NOTHING should move
 on its own. Do not bring it back without being asked in so many words. What
 was shipped and measured is left below as the record.
 
-Asked for by the user, with a picture of the window circled: *make those area
-auto-hide*, then *auto-hide while scrolling*. Measured on the window as it
+Asked for by the user, with a picture of the window circled: _make those area
+auto-hide_, then _auto-hide while scrolling_. Measured on the window as it
 opens: 630px tall, the tab strip 33px, the head (three pickers, CREDIT USED,
 LIMIT PER HOUR) 67px, the ask form (tip line, attach row, box, Ask / Report)
 72px — 139px of furniture that is touched once a session or is empty while
@@ -657,7 +793,7 @@ gotchas`). Tests: `autoHideHelpers.test.ts` (12). New CB-65, W-42 step 8, a
 question in `common.json`, a tip.
 
 **Then the user changed their mind about the bottom half the same day:**
-*I don't want auto-hide for the bottom one.* The ask form is an ordinary
+_I don't want auto-hide for the bottom one._ The ask form is an ordinary
 form again — the box the next question goes in has to be where it was, not
 brought back first — and only the head is a band; the zone code stays
 written for any band. Documented as such in W-42, CB-65 and the tip.
@@ -669,16 +805,16 @@ including the arrow keys' — right by the rule, not measured with a person.
 
 ## EC-158 · An unusual answer from a provider came with no door to it, and an empty Anthropic account was never stood in for — `done` 2026-09-10
 
-**Asked for by the user**, in their own words: *if there any unusual
+**Asked for by the user**, in their own words: _if there any unusual
 response from api then give buttons for user to go to the api dashboard.
-e.g. Claude ai dashboard if got message of no credit available*. Measured
+e.g. Claude ai dashboard if got message of no credit available_. Measured
 first through the real window (`score-2026-09-10-provider-door.json`), on
-the ChatGPT key that has been out of credit since `EC-83`: *Is anything
-showing on the projector right now?* asked on ChatGPT was answered by the
-Claude stand-in (`EC-144`) under *"ChatGPT could not answer — the AI
-account is out of credit or being rate-limited"* — with the provider's body
+the ChatGPT key that has been out of credit since `EC-83`: _Is anything
+showing on the projector right now?_ asked on ChatGPT was answered by the
+Claude stand-in (`EC-144`) under _"ChatGPT could not answer — the AI
+account is out of credit or being rate-limited"_ — with the provider's body
 saying `insufficient_quota` in plain sight — and the row under it held
-*How do I turn it on?* / *Never mind* / *Copy*: nothing that took the user
+_How do I turn it on?_ / _Never mind_ / _Copy_: nothing that took the user
 to the account that was empty. Two defects behind one symptom:
 
 - **The window read only the HTTP status**, and a status is not enough. An
@@ -690,7 +826,7 @@ to the account that was empty. Two defects behind one symptom:
   So the sentence hedged, and no button could be chosen from it.
 - **An empty Anthropic account is a 402 (`billing_error`), or a 400
   `invalid_request_error` whose only clue is "Your credit balance is too
-  low"** — and `checkIsProviderFault` was 401/403/429/5xx, *never a 400*.
+  low"** — and `checkIsProviderFault` was 401/403/429/5xx, _never a 400_.
   A dead Claude key with a live ChatGPT key one option along fell straight
   to the manual; `EC-144` had measured the other direction only. Read off
   the providers' own error pages that day (Anthropic, OpenAI, Kimi), not
@@ -707,25 +843,25 @@ arrives under, so a 400 saying "credit balance" is an empty account and
 stood in for; a plain 400 stays the request's own; the provider's own short
 sentence is lifted out of a raw body rather than replaced by "error 400").
 `genProviderIssueActions` turns the kind into buttons named for the
-provider that FAILED — *Open ChatGPT billing*; *Open AI settings* + *Open
-Claude API keys*; *Open Kimi usage limits*; both doors for a bare 429; the
+provider that FAILED — _Open ChatGPT billing_; _Open AI settings_ + _Open
+Claude API keys_; _Open Kimi usage limits_; both doors for a bare 429; the
 status page for a busy service; the settings panel for the keyless provider
 — as two pseudo tools caught in `handleActing` (registered nowhere, like the
 report's Send), where **a button carries a provider and a page NAME and the
 address is resolved at the press** out of `PAID_PROVIDER_PAGE_MAP`, the one
-table of console pages, which Settings' *Get key* buttons now read too
+table of console pages, which Settings' _Get key_ buttons now read too
 (they had drifted: `console.anthropic.com` redirects to
 `platform.claude.com`, OpenAI's keys page moved under the organisation
 settings). The press opens the page in the browser and says so in the
 transcript. They ride the stand-in note, the offline-fallback note, a
-rescue's one line and the report's *I could not look into it*.
+rescue's one line and the report's _I could not look into it_.
 
-**Verified live 2026-09-10** on the same dead ChatGPT key: *"ChatGPT could
-not answer — the AI account is out of credit. Claude answered instead…"*
+**Verified live 2026-09-10** on the same dead ChatGPT key: _"ChatGPT could
+not answer — the AI account is out of credit. Claude answered instead…"_
 with **Open ChatGPT billing** first in the row (3 rounds, 4 s, the head
-row moved to Claude as before); the press wrote *Opening
+row moved to Claude as before); the press wrote _Opening
 https://platform.openai.com/settings/organization/billing in your
-browser.* and the page opened. Screenshot
+browser._ and the page opened. Screenshot
 `test-results/chatbot-quality/score-2026-09-10-provider-door-window.png`.
 Tests: providerIssueHelpers +19 (new, every documented shape of all three
 providers), llmBotHelpers +5 (a 402 and a credit-balance 400 stood in for,
@@ -733,8 +869,8 @@ the sentences), two rewritten (a fake that carried the dead-account body
 under a 400 now carries a real bad request).
 
 **Left open as `EC-159`:** Kimi documents no billing or limits page, so
-both of its doors are the console home; and the model-picker's *More
-models…* failure (`listAllLlmModels`) still shows the sentence with no
+both of its doors are the console home; and the model-picker's _More
+models…_ failure (`listAllLlmModels`) still shows the sentence with no
 button — it is drawn in the picker, not in a message.
 
 ---
@@ -755,9 +891,9 @@ too.
 
 ## EC-155 · Nothing stopped a runaway from spending the whole key — `done` 2026-09-10
 
-**Asked for by the user**, mid-run, in their own words: *as a user I don't
+**Asked for by the user**, mid-run, in their own words: _as a user I don't
 want to mistakenly stuck in an infinite loop of programmatically error that
-eat all my credit or flooding bill. add a token-over-use prevention for me*.
+eat all my credit or flooding bill. add a token-over-use prevention for me_.
 Measured first, as every run must: the standing twelve on the window's own
 default (Claude Sonnet 5) were 12/12, median 3 rounds, about $0.29 in all —
 and NOTHING in the window bounded what a fault could spend. The two things
@@ -791,15 +927,15 @@ being down and the stand-in cannot hand the runaway a second key; the
 window answers the question from the offline guide under the pause note,
 because saying no must cost nothing. Past four fifths of the cap the head
 figure turns amber and the answer that crossed carries a one-time
-*Heads-up* (`takeNearLimitNotice`); `/credit` carries the hour line.
+_Heads-up_ (`takeNearLimitNotice`); `/credit` carries the hour line.
 
 **Verified live 2026-09-10** through the real window: the ledger seeded with
 $0.21 of prior spend and read back after a reload (*$0.21 over 5 model
 calls*); the cap set to $0.25 through the picker (figure amber); ONE real
 question paid its first round (a $0.04 cache write), was paused before its
 second and answered from the guide under the pause note with **Allow more**,
-the head row reading *paused · ≈ $0.25 this hour*; the press wrote *Carrying
-on: the hour starts again from now, with $0.25 available…* and Claude
+the head row reading _paused · ≈ $0.25 this hour*; the press wrote *Carrying
+on: the hour starts again from now, with $0.25 available…_ and Claude
 answered the re-asked question (3 rounds); `/limit`, `/limit 0.05` (a value
 the picker did not list — now always listed); the heads-up landed on the
 answer that crossed 80%; 150 seeded free rounds with the money cap off
@@ -823,7 +959,7 @@ money cap, so a Kimi K2 hour is bounded by the pace cap alone.
 Found while checking the new step was findable: `owa_help_search "spending
 limit"` returned NO manual page at all and an internal note first (the
 workflows file's own version banner, which happens to sit at the top of
-that file), and asked *How do I set a spending limit for the assistant?* the
+that file), and asked _How do I set a spending limit for the assistant?_ the
 live assistant searched nothing and answered **"That's not something Open
 Worship App has a setting for"** — one round, $0.04, on the day the setting
 shipped. `build-knowledge.mjs` indexed every page's `searchText` as its
@@ -851,7 +987,7 @@ now on.
 `recordSpendRound` stores `null` for a round whose model has no row in
 `MODEL_PRICE_MAP` (Kimi's K2 family, anything read off an account's own
 catalogue), and `toSpendState` counts it as $0 — honestly, since a made-up
-price is worse than none, and the head figure says *N calls* rather than a
+price is worse than none, and the head figure says _N calls_ rather than a
 dollar figure when every round is unpriced. But it means the money cap
 never trips for such a model and only the 150-calls-an-hour pace cap bounds
 the hour. A token cap (say a million tokens an hour) would bound it in the
@@ -862,8 +998,8 @@ the figure is not a guess.
 
 ## EC-152 · Nothing said what a chat had cost — `done` 2026-09-10
 
-**Asked for by the user**, mid-run: *as a user I want to see how many credit
-used per chat session*. Every model round comes back with the provider's own
+**Asked for by the user**, mid-run: _as a user I want to see how many credit
+used per chat session_. Every model round comes back with the provider's own
 `usage` block, and the window threw it away; the standing corpus's cost had
 only ever been read off the wire by the research driver (`EC-57` measured the
 caching that way), so a volunteer spending the church's API credit had
@@ -891,23 +1027,23 @@ used** row under the three pickers, only once there is a bill, both with
 the sums and the caveat on the hover; the tip line teaches it. The dollars
 are an estimate from list prices checked against the providers the same day
 (`MODEL_PRICE_MAP`; `toPriceLabel` prints the same table on the model
-picker's hover so the two cannot drift); a free service reads *free*, an
-unpriced model *price not known* with the tokens still counted, a mixed tab
+picker's hover so the two cannot drift); a free service reads _free_, an
+unpriced model _price not known_ with the tokens still counted, a mixed tab
 both. **`/credit`** (`/cost`, `/usage`, `/spent`, `/tokens`) answers from the
 tab's own total with no model, because no tool reads the window and a free
-model asked *how much has this chat cost?* quoted the manual's sample figure
-back as the answer (Nemotron: *"the total so far is about $0.02"* off the
+model asked _how much has this chat cost?_ quoted the manual's sample figure
+back as the answer (Nemotron: _"the total so far is about $0.02"_ off the
 recipe's own example line) — the recipe carries no quotable number now and
 says the assistant cannot read the figure. W-42 step 8, CB-62, a corpus row
 (`chat-cost`, W-42 + `find: Credit used`).
 
-**Verified live** on the presenter: two asks in one tab (*≈ $0.04 · 31.3k
-tokens* then *≈ $0.004 · 15.5k tokens*, the row *≈ $0.05 · 46.8k tokens*,
+**Verified live** on the presenter: two asks in one tab (_≈ $0.04 · 31.3k
+tokens* then *≈ $0.004 · 15.5k tokens_, the row _≈ $0.05 · 46.8k tokens*,
 every figure matching the provider's usage read off the wire by the
 driver); a third ask stopped after round one left *Stopped…* with no figure
 and moved the row's tokens up by that round; a reload kept every figure; the
 free tier read *free · 25.2k tokens*; `/credit` in the spent tab answered
-*This chat so far: ≈ $0.05 · 62.4k tokens* with the sums in 1.5 s and no
+*This chat so far: ≈ $0.05 · 62.4k tokens_ with the sums in 1.5 s and no
 round paid; Claude asked the same in words answered from that line and
 named `/credit` (2 rounds). Cost of the change to the model: none — nothing
 new is sent to it. Tests: `usageHelpers.test.ts` (24), the tab store's
@@ -919,8 +1055,8 @@ command (3).
 ## EC-153 · A model's OPTIONS frame glued to the full stop printed at the user — `done` 2026-09-10
 
 Found by the same run on the free tier (Nemotron, `nvidia/nemotron-3.5-
-lightning:free`): *"No, the projector is not showing anything right
-now.OPTIONS: Yes, start presenting How do I start? No thanks"* — the marker
+lightning:free`): _"No, the projector is not showing anything right
+now.OPTIONS: Yes, start presenting How do I start? No thanks"_ — the marker
 and all three buttons drawn as prose. `OPTIONS_MARKER` required the marker to
 start a word after whitespace or a bullet, and a full stop was not on the
 list. It and its two cousins (`SHOWS:`, `NEEDS:`) take `.`, `!` and `?`
@@ -935,9 +1071,9 @@ and the corpus follow-ups stand in.
 
 ## EC-154 · A walkthrough of the help window is offered under a question about the help window — `open`, low
 
-*How much has this chat cost so far?* on Claude opened W-42 and answered
+_How much has this chat cost so far?_ on Claude opened W-42 and answered
 right, and the answer carried **Show me step by step / Do it for me** for
-W-42 — a walkthrough of *Ask the app for help*, whose first step opens the
+W-42 — a walkthrough of _Ask the app for help_, whose first step opens the
 window the user is already typing in. `applyToolWatch` offers the guide for
 any manual page the model settled on; a page whose recipe is about THIS
 window (the focus's own `howToOpen` is the window the question came from)
@@ -951,7 +1087,7 @@ itself; measure on the six `help`-section corpus rows first.
 
 **Measured first**, not reported. The standing corpus held at 12/12 on the
 window's own default (Claude Sonnet 5), so the run followed the one shape
-the previous row had left open (`EC-131`): *Put John 3:16 on the screen*.
+the previous row had left open (`EC-131`): _Put John 3:16 on the screen_.
 The answer was right and honest — W-06's steps, offered, 3 rounds — and
 **Do it for me** started the recipe's demo, which pressed **Bible Lookup**
 and stopped on step 2: `find: ""`, `press: "Tab"`, and the reference the
@@ -959,8 +1095,8 @@ user had typed nowhere in it (`owa_guide_status`, verbatim). The Bible
 Lookup is a picker written for a person — first letters of the book, the
 book, the chapter, the verse, a double-click on the preview — with labels
 along the way (the book's own name, bare numbers) that no card and no
-`owa_click` can be aimed at from a sentence. The song equivalent, *Put the
-song Amazing Grace on the screen*, already worked end to end through
+`owa_click` can be aimed at from a sentence. The song equivalent, _Put the
+song Amazing Grace on the screen_, already worked end to end through
 `selectedDocument` (select 4 rounds → confirm → present 4 rounds, verified
 on the Mini Screen); the verse — the app's commonest live ask and the top
 starter chip — had no door at all.
@@ -984,27 +1120,27 @@ the model to OFFER the show button. `action: "check"` resolves and quotes
 without touching a screen. A locked screen, no ticked screen, an unknown
 version (with the installed ones named), a reference no version reads, and
 the main window off the Presenter are all refused in a sentence written for
-a person. Acting: banner *put John 3:16 on the screen*, firewall budget,
-progress line *Putting a Bible passage on the screen: "John 3:16"*. The
+a person. Acting: banner _put John 3:16 on the screen_, firewall budget,
+progress line _Putting a Bible passage on the screen: "John 3:16"_. The
 prompt's one new bullet says a verse by reference is ONE call, never the
 lookup popup or a guide, done when asked and offered when only asked how;
 and `applyToolWatch` marks the ask `isActedOn` on a presented result so no
 walkthrough of the lookup is offered under an answer that already did it.
-**`/verse John 3:16`** does the same with no model (0 rounds, 1.5 s, *Turn
-the screen on* / *Take it off again* offered), and the offline bot answers
-*Put John 3:16 on the screen* by checking the reference, quoting its first
+**`/verse John 3:16`** does the same with no model (0 rounds, 1.5 s, _Turn
+the screen on_ / _Take it off again_ offered), and the offline bot answers
+_Put John 3:16 on the screen_ by checking the reference, quoting its first
 words and offering ONE button that presents it (`VERSE_ASK_PATTERN` —
 only a concrete reference with a chapter; a how-do-I and "slide 3" go
 where they went). The corpus carries the question as a template (W-06 +
 the tool), W-06 gained step 7 and W-42 the command.
 
-**Re-asked on the window's own default:** *Put John 3:16 on the screen* →
-`owa_present_bible` → `owa_list_screens` → *"John 3:16 (Amplified) is
+**Re-asked on the window's own default:** _Put John 3:16 on the screen_ →
+`owa_present_bible` → `owa_list_screens` → _"John 3:16 (Amplified) is
 loaded and ready, but the screen itself is currently off … Would you like
-me to turn the screen on?"* with the toggle's own words as a chip — **3
+me to turn the screen on?"_ with the toggle's own words as a chip — **3
 rounds, 9.1 s**, no walkthrough buttons; **Yes, show the screen** → 3
-rounds, 6 s, `owa_click "Toggle showing screen [F5]"` → *"The screen is
-now on and showing John 3:16 (Amplified)"* — proven on the
+rounds, 6 s, `owa_click "Toggle showing screen [F5]"` → _"The screen is
+now on and showing John 3:16 (Amplified)"_ — proven on the
 `screen.html?screenId=0` target (screenshot in the score file's folder).
 Offline (network cut): the check, the quote and the button in 3.1 s; the
 button 4.5 s. Cost: ~5 976 → ~6 358 tokens a round to the model (one
@@ -1019,13 +1155,13 @@ What `EC-147` did NOT fix. `runBotAction` starts the recipe's demo first
 and asks the model only when `canDemo` is false — and `canDemo` is true
 when ANY step has something to press (`guide.mjs`), so a recipe whose
 first step is a real button and whose second needs the user's content
-(W-06's *type the first letters of the book*) still gets the instant card
+(W-06's _type the first letters of the book_) still gets the instant card
 and stalls on step 2 with no model round. The verse is now routed around
 it by the prompt (the model never searches for it, so no W-06 buttons
 appear), but the mechanism is unchanged for every other recipe that types
 (W-15's address, W-16's name). A demo needs a per-step verdict — the
 runtime knows every step's `find`/`keys`/`action` at start — so the
-card can say *steps 2 and 3 need words I do not have* and hand THOSE to the
+card can say _steps 2 and 3 need words I do not have_ and hand THOSE to the
 model with the user's ask attached (`EC-38`'s rescue already carries the
 step; it needs the ask). Measure with `demo-failure-rate.mjs` on the
 recipes with a typing step before building.
@@ -1089,8 +1225,8 @@ standing corpus through it (`score-2026-09-09-stand-in-key.json`,
   retries on a 429 whose body said `insufficient_quota` / `credit_balance_exhausted`
   — an account out of credit, which no retry can fix);
 - 3.1–4.6 s of waiting;
-- then *"ChatGPT could not answer — the AI account is out of credit or being
-  rate-limited. Here is what the app's own guide says."* and the offline bot,
+- then _"ChatGPT could not answer — the AI account is out of credit or being
+  rate-limited. Here is what the app's own guide says."_ and the offline bot,
   which got **8 of 12** (q02 offered a verse row as the control, q06 opened
   "in the Documents list" from the Reader, q11 the link-download page, q12
   the drawing panel's Undo).
@@ -1099,7 +1235,7 @@ The ChatGPT key had been out of credit since at least 2026-09-02 (`EC-83`).
 A live **Claude** key sat one option along in the head row the whole week,
 and every earlier run had picked it by hand. A volunteer does not: they open
 the window, ask, wait five seconds, and read a page of the manual under an
-apology — rung 4's *degrades honestly* delivered as *degrades every time*.
+apology — rung 4's _degrades honestly_ delivered as _degrades every time_.
 
 **Shipped.** `askLlmBot` takes a **stand-in**: on a failure that is the
 provider's own (`checkIsProviderFault` — 401/403, 429, 5xx; never a 400,
@@ -1110,13 +1246,13 @@ failedProvider, reason}` on the answer. **Free is on neither side of it**:
 never the stand-in for a paid key (a public service getting a paid
 question's words and attachments because a card declined), never stood in
 for (a paid key spending money on the free tier's behalf). The window writes
-the note — *ChatGPT could not answer — …. Claude answered instead and this
-chat now uses it; pick ChatGPT in the row above to switch back.* — and moves
+the note — _ChatGPT could not answer — …. Claude answered instead and this
+chat now uses it; pick ChatGPT in the row above to switch back._ — and moves
 the TAB to the stand-in, so the head row says who is being asked and the
 next question does not pay the dead post again; the stored new-tab default is
 left as the user set it, so a key topped up tomorrow is back without anybody
-knowing a setting changed. The wait line says *ChatGPT could not answer —
-asking Claude instead*. And the OpenAI-shaped loop posts with
+knowing a setting changed. The wait line says _ChatGPT could not answer —
+asking Claude instead_. And the OpenAI-shaped loop posts with
 `maxRetries: 0` (`EC-86`, half): a dead key is asked once. The Anthropic loop
 keeps the SDK default — a 429 on a live Claude key is nearly always a rate
 limit that honours `retry-after`.
@@ -1137,12 +1273,12 @@ lived. Reopen if a measurement shows new tabs being opened per question.
 
 ## EC-145 · The near-miss ranking counted "to" and "the", and offered a line of Genesis as the control — `done` 2026-09-09
 
-Offline where-is, measured under `EC-144`: *Where is the button to change the
-background?* → `owa_find_ui` found nothing (correct — no control is called
-that) and the offline bot offered its first near miss: *"there is **pass
-after Click to open the verse** on screen — is that the one?"*, with a
+Offline where-is, measured under `EC-144`: _Where is the button to change the
+background?_ → `owa_find_ui` found nothing (correct — no control is called
+that) and the offline bot offered its first near miss: _"there is **pass
+after Click to open the verse** on screen — is that the one?"_, with a
 **Highlight** button for it. `nearMisses` in `domMatch.mjs` scored a label
-one point per shared token, and *to* and *the* were tokens: every verse row
+one point per shared token, and _to_ and _the_ were tokens: every verse row
 (text + its `Click to open the verse` title) scored 2, the **Background**
 panel — on screen, tier 0 for the word itself — scored 1, and ties broke on
 length. **Shipped:** a `FILLER_WORD_SET` the near-miss ranking drops from
@@ -1158,12 +1294,12 @@ failing before the change.
 `EC-139` taught the MODEL that the Reader page has none of the Presenter's
 panels and that the way back is the 🖥️ **Go Back to Presenter** button. The
 offline bot — what the window has on the afternoon `EC-144` was measured on
-— had no such fact: *How do I edit a slide?* from the Bible Reader opened
-*"in the Documents list"*. **Shipped:** `genBackToPresenterRoute(focus)` is
+— had no such fact: _How do I edit a slide?_ from the Bible Reader opened
+_"in the Documents list"_. **Shipped:** `genBackToPresenterRoute(focus)` is
 now the ONE source of the route for the prompt and the offline bot
-(`helpBotHelpers.ts`), and `genBackToPresenterLead` puts *This is done in the
+(`helpBotHelpers.ts`), and `genBackToPresenterLead` puts _This is done in the
 Presenter — the Bible Reader page has none of these panels. First click the
-🖥️ Go Back to Presenter button at the top right, then:* in front of a manual
+🖥️ Go Back to Presenter button at the top right, then:_ in front of a manual
 answer that names a Presenter panel (`PRESENTER_PANEL_PATTERN`, tested with
 the manual's emphasis marks stripped first — the first live re-ask still
 missed because the excerpt reads `**Documents** list`). Verified live with
@@ -1174,13 +1310,13 @@ is the route the code takes when the building's internet dies. Four tests.
 
 ## EC-139 · The wrong-window shape wrote its steps off the excerpt, for a panel the window does not have — `done` 2026-09-09
 
-The ratchet regression carried from the previous row. *How do I edit a
-slide?* asked from the Bible Reader, Claude Sonnet 5: **2 rounds, one
-`owa_help_search`, no page opened**, and step 1 *"In the **Documents** list,
-select (or double-click) the slide document"* — the Reader page is
+The ratchet regression carried from the previous row. _How do I edit a
+slide?_ asked from the Bible Reader, Claude Sonnet 5: **2 rounds, one
+`owa_help_search`, no page opened**, and step 1 _"In the **Documents** list,
+select (or double-click) the slide document"_ — the Reader page is
 `BibleReaderComp` and nothing else; it has no Documents list. Measured over
 the day's four corpus runs the shape opened the page 1 time in 4, and the two
-"passing" answers had sent the user to *"the Presenter tab at the top"*,
+"passing" answers had sent the user to _"the Presenter tab at the top"_,
 which the Reader has not got either (its route back is the 🖥️ **Go Back to
 Presenter** button at the top right). The prompt rule ("`owa_help_page` on
 the hit BEFORE you write any step") and the top hit's own note were both
@@ -1197,23 +1333,23 @@ untouched. **In the prompt**, for the two main-window pages that are not the
 Presenter: the page has NONE of the Presenter's panels (named), and step 1
 for steps that use one is the real control — the 🖥️ button in the Reader,
 the Presenter tab in the Editor. Re-asked in fresh tabs: **2 of 2 open the
-page and start with *Click the 🖥️ Go Back to Presenter button at the top
-right***, 3 rounds, 9 s; the nudge did not need to fire on either (the
+page and start with _Click the 🖥️ Go Back to Presenter button at the top
+right_**, 3 rounds, 9 s; the nudge did not need to fire on either (the
 prompt fact was enough) and stays as the net. Tests: llmBotHelpers +5.
 
 ---
 
 ## EC-140 · The manual had no page for removing a file, and the assistant guessed "Delete" — `done` 2026-09-09
 
-q12 of the standing corpus, *and how do I undo that?* after *How do I add a
-song?*: **6 rounds, 16.7 s** — three `owa_help_search`es, an
-`owa_list_questions`, two pages (W-15, W-01b) — ending on *"Choose
-**Delete** from the menu"*. The row's menu ends in **Move to Trash**
-(observed live, red trash icon, last item), a confirm asks *Moving File to
-Trash* → **Yes**, and the file goes to the OS Recycle Bin (`shell.trashItem`).
+q12 of the standing corpus, _and how do I undo that?_ after _How do I add a
+song?_: **6 rounds, 16.7 s** — three `owa_help_search`es, an
+`owa_list_questions`, two pages (W-15, W-01b) — ending on _"Choose
+**Delete** from the menu"_. The row's menu ends in **Move to Trash**
+(observed live, red trash icon, last item), a confirm asks _Moving File to
+Trash_ → **Yes**, and the file goes to the OS Recycle Bin (`shell.trashItem`).
 No `W-xx` described any of it; CM-06 was the only mention, in the matrix.
 Shipped: **W-43 — Remove a song, document or file (Move to Trash)** in
-*Creating & editing content*, with the confirm, the Recycle Bin, the
+_Creating & editing content_, with the confirm, the Recycle Bin, the
 on-screen background exception and the slide-inside-a-document case; two
 corpus questions (`trash-document`, `restore-trashed-document`) in
 `presenter.json`; manual and knowledge rebuilt. Re-asked: **3 rounds, 7.6 s,
@@ -1224,26 +1360,26 @@ document"` → W-43 first at 192 (W-23 at 70).
 
 ## EC-141 · The assistant offered to press Space in a run it cannot advance — `done` 2026-09-09
 
-The first re-ask of *What's next in my running order?* with `runSheet`
-landed answered right and closed with *"Want me to press Space to move to
-it?"* — the shape of `EC-117`: a pill offering a thing no tool will do
+The first re-ask of _What's next in my running order?_ with `runSheet`
+landed answered right and closed with _"Want me to press Space to move to
+it?"_ — the shape of `EC-117`: a pill offering a thing no tool will do
 (`press_key` is withheld, and a key has nothing the interlock can read). A
 pressed "yes" would have cost a round and an apology. Shipped in the same
 run: the tool description and the prompt's run-sheet sentence both say no
 tool advances a run and the operator presses **Space** or **→** in the run
-player. Re-asked: *"To move to it, press Space (or the → key) in the run
-player."*, no offer. Measured on one provider only (Sonnet 5).
+player. Re-asked: _"To move to it, press Space (or the → key) in the run
+player."_, no offer. Measured on one provider only (Sonnet 5).
 
 ---
 
 ## EC-136 · The panels recipe could only name the View menu, and the card could press none of it — `done` 2026-09-09
 
-Reported with a screenshot: the guide card for *Hide, show, and reset the
-app's panels (View menu)* on **Step 1/5**, its hint reading *"Open the View
-menu at the very top of the app window first"*, and beside it the user's OWN
+Reported with a screenshot: the guide card for _Hide, show, and reset the
+app's panels (View menu)_ on **Step 1/5**, its hint reading _"Open the View
+menu at the very top of the app window first"_, and beside it the user's OWN
 right-click on the divider between two panels, open on **Reset Size / Close
-First Widget / Close Second Widget** — circled, with *"the agent also use
-contextmenu of the resize"*. Three things were wrong at once, measured
+First Widget / Close Second Widget** — circled, with _"the agent also use
+contextmenu of the resize"_. Three things were wrong at once, measured
 through the app's own host before anything was changed:
 
 - **The recipe named one route, the one no card can press.** All of W-31 was
@@ -1257,13 +1393,13 @@ through the app's own host before anything was changed:
   `.flex-resize-actor` carried no `title`, `aria-label` or
   `data-widget-name`, so the matcher could not see it and a step about it had
   nothing to ring. And the guide's right-click path aimed at a LIST region
-  (`findListRegion`), which is right for *"right-click an empty part of the
-  list"* and wrong for a divider; `openContextMenu` aimed 20 px in from the
+  (`findListRegion`), which is right for _"right-click an empty part of the
+  list"_ and wrong for a divider; `openContextMenu` aimed 20 px in from the
   bottom-right edge, which on a 6 px divider is a point in the pane beside it.
-- **The View-menu step itself was being dropped.** The card opened on *"Click
-  a ticked one"* with nothing said about what to tick, because
-  `dropStepsAlreadyDone` read the whole step and step 1 says *"e.g. on the
-  presenter: App Presenter Left …"* two sentences after *"Open View"* — the
+- **The View-menu step itself was being dropped.** The card opened on _"Click
+  a ticked one"_ with nothing said about what to tick, because
+  `dropStepsAlreadyDone` read the whole step and step 1 says _"e.g. on the
+  presenter: App Presenter Left …"_ two sentences after _"Open View"_ — the
   window's name in an example list made the step a "go to this window" step.
 
 **Shipped.**
@@ -1279,32 +1415,32 @@ through the app's own host before anything was changed:
   first — **"Document List" and "Presenting Flow List" are panes NAMED with a
   kind noun**, so "Presenting Flow List" was being trimmed to "presenting flow",
   a tier-1 loose fit on its own strip that `owa_click` REFUSED to press
-  (measured live: *"the closest control on screen is not called that"* for the
+  (measured live: _"the closest control on screen is not called that"_ for the
   strip named exactly that). A bug older than this report, hit by the recipe's
   step 8.
 - `guide.mjs`: a right-click step whose named control is a `[role="separator"]`
   right-clicks it where it is (same one-press-one-action shape as the list:
   the press opens the menu, `withMore` names the item, the next press chooses
-  it), the hint says *right-click it* rather than *click it*, a step that names
-  a *divider* gets NO list fallback when the divider is missing (a collapsed
+  it), the hint says _right-click it_ rather than _click it_, a step that names
+  a _divider_ gets NO list fallback when the divider is missing (a collapsed
   panel has no divider; the fallback right-clicked the Presenting Flow list's
   own menu for a step about the divider above it), and `dropStepsAlreadyDone`
   reads only a step's FIRST sentence for where it is going.
 - W-31 gained steps 7–9 (right-click → Close First Widget; click the strip;
   right-click → Reset Size, double-click, hover arrows), `docs:gen`, knowledge
-  rebuilt; `questions/common.json` gained *What does right-clicking the line
-  between two panels do?* plus divider keywords and a `find` on both existing
+  rebuilt; `questions/common.json` gained _What does right-clicking the line
+  between two panels do?_ plus divider keywords and a `find` on both existing
   panel questions.
 
 **Measured after, through the app's own host on the Presenter:** the card
-starts on step 1 (*Open View …*, 9 steps); `goto 7` → `find: "divider between
+starts on step 1 (_Open View …_, 9 steps); `goto 7` → `find: "divider between
 Document List and Presenting Flow List"`, `isTargetFound: true`; **Do it** →
 `right-clicked`, `more: "Close First Widget"` (screenshot: the app's own menu
 open, ring on the item); **Do it** → `clicked "Close First Widget"`, Document
 List collapsed to its strip (screenshot: card on step 8 ringing the strip);
 step 8 **Do it** → strip clicked, pane back; step 9 → `right-clicked`, `more:
 "Reset Size"` → `clicked "Reset Size"` → guide finished. With the Document
-List collapsed, step 7 answers *nothing on screen to act on* and opens no
+List collapsed, step 7 answers _nothing on screen to act on_ and opens no
 menu. 8 new tests (guide 3, domMatch 2 + the strip, drop rule 1). Tool count
 and tokens/round unchanged (48 / 19 to the model, ~11 332 / ~5 722).
 
@@ -1321,7 +1457,7 @@ press while an advance is pending, or cancel the pending one.
 Steps 1, 2, 3 and 5 of W-31 are the OS View menu, which no card can press,
 and each refusal spends a rescue round. `EC-136` gave the recipe a DOM route
 beside them, but the demo still opens on a step it cannot do. Either mark
-menu-bar steps `kind: "look"`-like (*do this yourself, then Next*, no rescue
+menu-bar steps `kind: "look"`-like (_do this yourself, then Next_, no rescue
 ask), or teach the card that the divider steps ARE the demo of the same thing.
 
 ## EC-128 · "Which song is selected?" was answered with the song on the projector, and "show the next slide" ran to the cap — `done` 2026-09-09
@@ -1331,11 +1467,11 @@ user is in the MIDDLE of, on Claude Sonnet 5, with "Amazing Grace"
 highlighted in the Documents list and the projector still holding a Khmer
 hymn (screen off, slide held):
 
-| Ask | Before | After |
-| --- | --- | --- |
-| *Which song is selected right now?* (Amazing Grace selected, the hymn on the off screen) | *"The song loaded on your Mini Screen right now is នៅកាល់វ៉ារី (ខ ៥៥) … currently sitting on the verse slide"* — 2 rounds, `owa_app_state` + `owa_list_screens`, and WRONG: the only document any tool had ever named was the one on the screen | *"The song currently selected is Amazing Grace (7 slides). Nothing from it is on screen right now."* — 2 rounds, 4.6 s, `owa_app_state` alone |
-| *What am I about to put on the screen?* (the hymn selected, its verse showing) | the verse on the wall, and nothing about what comes after it | *"verse 1 of "…" is on the screen. The next slide, if you move forward, would be slide 5 (which appears empty/blank text)"* — right: slide 5 is a picture. 2 rounds |
-| *Show the next slide* (same state) | **10 rounds, 54 s, 13 tool calls**: `owa_help_search`, `owa_list_screens`, `owa_app_state`, `owa_list_ui` ×6 (*Verse*, *Slide*, *Verse:*, *(2)*, *កាល់*, then `limit: 200` — **34 574 tokens written to the cache** and read on every later round), `owa_help_page`, `owa_click "5 Index: 5"` (a slide's index badge, the only part of a card any tool listed, pressed because it happened to bubble to the card — the congregation's screen changed), `owa_list_screens` — and then *"I could not find an answer for that."* Asked again clean: 9 rounds, 80 s, `owa_lyric_file info` on the whole song, nothing pressed, the same non-answer | *"The next slide is slide 5 ("671826"). Do you want me to put it on the screen now?"* — 2 rounds, 6 s, ONE call. **Yes, show it** → `owa_app_state`, `owa_click "Slide 5: 671826"`, `owa_list_screens` → *"Slide 5 ("671826") is now showing on the screen."* 4 rounds, 7.6 s, verified on the wall |
+| Ask                                                                                      | Before                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | After                                                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _Which song is selected right now?_ (Amazing Grace selected, the hymn on the off screen) | _"The song loaded on your Mini Screen right now is នៅកាល់វ៉ារី (ខ ៥៥) … currently sitting on the verse slide"_ — 2 rounds, `owa_app_state` + `owa_list_screens`, and WRONG: the only document any tool had ever named was the one on the screen                                                                                                                                                                                                                                                                                                                                                                                                | _"The song currently selected is Amazing Grace (7 slides). Nothing from it is on screen right now."_ — 2 rounds, 4.6 s, `owa_app_state` alone                                                                                                                                                       |
+| _What am I about to put on the screen?_ (the hymn selected, its verse showing)           | the verse on the wall, and nothing about what comes after it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | _"verse 1 of "…" is on the screen. The next slide, if you move forward, would be slide 5 (which appears empty/blank text)"_ — right: slide 5 is a picture. 2 rounds                                                                                                                                 |
+| _Show the next slide_ (same state)                                                       | **10 rounds, 54 s, 13 tool calls**: `owa_help_search`, `owa_list_screens`, `owa_app_state`, `owa_list_ui` ×6 (_Verse_, _Slide_, _Verse:_, _(2)_, _កាល់_, then `limit: 200` — **34 574 tokens written to the cache** and read on every later round), `owa_help_page`, `owa_click "5 Index: 5"` (a slide's index badge, the only part of a card any tool listed, pressed because it happened to bubble to the card — the congregation's screen changed), `owa_list_screens` — and then _"I could not find an answer for that."_ Asked again clean: 9 rounds, 80 s, `owa_lyric_file info` on the whole song, nothing pressed, the same non-answer | _"The next slide is slide 5 ("671826"). Do you want me to put it on the screen now?"_ — 2 rounds, 6 s, ONE call. **Yes, show it** → `owa_app_state`, `owa_click "Slide 5: 671826"`, `owa_list_screens` → _"Slide 5 ("671826") is now showing on the screen."_ 4 rounds, 7.6 s, verified on the wall |
 
 Two things were missing, and both are fields, not prompt rules. Nothing said
 what was SELECTED: `owa_list_screens` says what the projector holds and
@@ -1360,8 +1496,8 @@ with empty canvases and no attachment slide). A 200-page PDF lists 24 and
 counts the rest. Off the Presenter the field is a `note`, never a silent
 absence. The prompt's "what they are in the MIDDLE of" rule names the field
 and the one press; the offline bot answers the same questions from it
-(`answerSelection`, checked before the how-do-I gate — *which song is
-selected* starts like a how-do-I and is not one; a run-sheet question is
+(`answerSelection`, checked before the how-do-I gate — _which song is
+selected_ starts like a how-do-I and is not one; a run-sheet question is
 excluded) and offers `/next`; and three commands run with no model:
 `/selected`, `/next`, `/previous` (1.5–3 s, what CHANGED read back, honest
 when the screen is off). `owa_app_state` also stopped carrying the forty
@@ -1377,30 +1513,30 @@ a five-slide song and rides only the rounds after the call.
 Seen on the same asks, by capturing every round's content blocks off the
 wire for the first time: **every Claude Sonnet 5 round carries a `thinking`
 block** — the model runs adaptive thinking whether or not the request asks
-for it — and the last round of *show the next slide* ended `max_tokens` with
+for it — and the last round of _show the next slide_ ended `max_tokens` with
 2 000 output tokens of thinking and NO text. The loop's `MAX_TOKENS` was
 2 000, set when Claude did not think by default; OpenAI's and Kimi's budgets
 had been raised to 6 000 for exactly this failure ("the answer itself can
 come back empty") and Anthropic's had not. The window turned the empty text
-into *"I could not find an answer for that"* — a claim about the app, made
+into _"I could not find an answer for that"_ — a claim about the app, made
 to a user whose projector the same question had just changed. With the
 effort left at its default (high), a round over a 35 000-token tool result
 took 20 s.
 
 What shipped: `ANTHROPIC_MAX_TOKENS` 6 000, and a final round with no text
-says *"I ran out of room working that out before I could answer"* when it
+says _"I ran out of room working that out before I could answer"_ when it
 stopped on `max_tokens`. **The effort setting was tried and NOT shipped**:
-at `output_config.effort: "low"` the rounds were 2–4 s faster and *show the
-next slide* cost 47–71 output tokens a round, but *How do I edit a slide?*
+at `output_config.effort: "low"` the rounds were 2–4 s faster and _show the
+next slide_ cost 47–71 output tokens a round, but _How do I edit a slide?_
 from the Reader was answered off the search excerpt without opening the
-page — *"click the slide document — this opens it in the Slide Editor"*,
+page — _"click the slide document — this opens it in the Slide Editor"_,
 which is not how the app works — and `medium` did the same twice. The
 default effort skipped the page too once the prompt had grown, so the fix
 went where the model decides: the top manual hit of `owa_help_search` now
 carries `note: "An excerpt, not the steps: open this page with
 owa_help_page before writing any step."` — 2 of 2 asks opened the page
 after that, where the prompt rule alone (sharpened the same day) was
-ignored 4 of 4 -- and then 0 of 1 on the final re-run, so it is a hit rate, not a fix. The fix that held was at the SOURCE: W-02 step 2 read *"Slide Editor only opens when a slide document is selected"*, which every skipped answer condensed into *"select the document -- this opens the Slide Editor"*; reworded to put the order first (select in the left list, then click the tab), regenerated and rebuilt, the same ask opened the page and gave the right steps 2 of 2. The comment above the budget records why effort stays at
+ignored 4 of 4 -- and then 0 of 1 on the final re-run, so it is a hit rate, not a fix. The fix that held was at the SOURCE: W-02 step 2 read _"Slide Editor only opens when a slide document is selected"_, which every skipped answer condensed into _"select the document -- this opens the Slide Editor"_; reworded to put the order first (select in the left list, then click the tab), regenerated and rebuilt, the same ask opened the page and gave the right steps 2 of 2. The comment above the budget records why effort stays at
 the provider's default: change it only with the corpus re-graded. The
 driver now records `content` per round (`ask-corpus.mjs`), which is how the
 thinking blocks were seen at all.
@@ -1436,7 +1572,7 @@ control. Tests: domMatch +2 (and one rewritten).
 
 ## EC-131 · A do-it with CONTENT loses the content between the ask and the demo — `half done` 2026-09-10 (the verse: `EC-147`; the mechanism: `EC-148`)
 
-*Put John 3:16 on the screen*: the answer is right (W-06's steps, offered,
+_Put John 3:16 on the screen_: the answer is right (W-06's steps, offered,
 not done — 3 rounds) and **Do it for me** under it starts W-06 as a demo.
 Step 1 presses **Bible Lookup**; step 2 has `find: ""`, `isTargetFound:
 false`, and would type the recipe's own example (`Joh`), not the user's
@@ -1459,11 +1595,11 @@ needs the user's words — is `EC-148`.
 
 ## EC-132 · The running order is invisible to every tool — `done` 2026-09-09
 
-*What's next in my running order?*: 6 rounds, 22.7 s (`owa_app_state`,
+_What's next in my running order?_: 6 rounds, 22.7 s (`owa_app_state`,
 `owa_help_search`, `owa_help_page`, `owa_list_ui` ×2 / `owa_find_ui`), a
 plausible answer about the collapsed Presenting Flow List panel and an
-unverified claim that *"whatever is live right now shows a small green
-mark"*. The run sheet's cursor lives in the floating preview's own store
+unverified claim that _"whatever is live right now shows a small green
+mark"_. The run sheet's cursor lives in the floating preview's own store
 (`presenting-flow-preview-run-player` in memory) and no tool reads it, so
 the assistant cannot say what is next in a service — the one question rung
 5 most wants answered. `selectedDocument` covers the slide list; the run
@@ -1481,9 +1617,9 @@ player is open. Lazily imported over the existing `owa-agent-presenter`
 relay; read whatever the selection is. `describeRunSheet` serves `/run` and
 the offline bot (`RUN_SHEET_PATTERN` now routes TO it instead of away).
 Re-asked live with the run landed on a document's last slide: **2 rounds,
-6.1 s, one call** — *"Your run sheet pl1 (1) is currently on line 14, a1
+6.1 s, one call** — _"Your run sheet pl1 (1) is currently on line 14, a1
 (Copy). The next press will run line 15: Clear Slide. To move to it, press
-Space"*; `/run` 1.5 s. Left open: a PRESS that steps the run (`EC-142`).
+Space"_; `/run` 1.5 s. Left open: a PRESS that steps the run (`EC-142`).
 Tests: agentRunSheetHelpers +9, agentPresenter.mjs +4, helpBot +2.
 
 ---
@@ -1514,15 +1650,14 @@ model actually has — a pill promising to press a key when no key tool is
 offered is dropped — the way `checkIsDraftEcho` drops the draft echoes.
 Measure how often it fires before building it.
 
-
-**2026-09-10, another:** under *How do I set a spending limit for the
-assistant?* Sonnet 5 offered **Set it to $2** and **Turn the limit off** —
+**2026-09-10, another:** under _How do I set a spending limit for the
+assistant?_ Sonnet 5 offered **Set it to $2** and **Turn the limit off** —
 presses no tool makes, and deliberately so: the limit is the PERSON's, and a
 model that could raise its own budget would defeat the guard (`EC-155`).
 Pressed, the pill sends those words and the model explains the picker
 instead; not wrong, but a button that does not do what it says.
 
-**2026-09-09, another:** under *and how do I undo that?* (Move to Trash)
+**2026-09-09, another:** under _and how do I undo that?_ (Move to Trash)
 Claude Sonnet 5 offered **Yes, remove it now** — a press `owa_click` refuses
 by its destructive interlock, so the "yes" can only end in an apology.
 
@@ -1530,9 +1665,9 @@ by its destructive interlock, so the "yes" can only end in an apology.
 
 ## EC-133 · The model calls screen 0 "screen 1" — `open`, low
 
-With the projector showing, *Is anything showing?* answered *"screen 1 is
-on and showing a song slide"* and the panic answer *"screen 1 is turned
-on"* — the app's badge reads `Screen: 0`, and a volunteer looking for
+With the projector showing, _Is anything showing?_ answered _"screen 1 is
+on and showing a song slide"_ and the panic answer _"screen 1 is turned
+on"_ — the app's badge reads `Screen: 0`, and a volunteer looking for
 "screen 1" will not find it. `owa_list_screens` carries `screenId: 0`; the
 model counts from 1 for people. Carry the badge's own words (`label:
 "Screen: 0"`) beside the id, the way `controls` carries the button labels,
@@ -1554,8 +1689,8 @@ time. A second read a little later, or an `isSelected` read off the row's
 
 ## EC-135 · `owa_click` refused a label that IS the control's title once the shortcut is in it — `done` 2026-09-10
 
-`owa_click "Close [Ctrl+Q]"` on the Bible Lookup popup was refused as *"the
-closest control on screen is not called that"*; `owa_click "Close"` pressed
+`owa_click "Close [Ctrl+Q]"` on the Bible Lookup popup was refused as _"the
+closest control on screen is not called that"_; `owa_click "Close"` pressed
 it. The control's parts are `Close [Ctrl+Q]` (title) and `Close`
 (aria-label), and `Toggle showing screen [F5]` — the same shape — presses
 fine off `controls.showHide`. Not chased: `domMatch.mjs` was another
@@ -1575,7 +1710,6 @@ but decoration matches nothing. Re-driven through the app's own host:
 
 ---
 
-
 ## EC-124 · "Showing: true" was read as "blank": the screens tool said nothing about what was ON the screen — `done` 2026-09-09
 
 The rung 5 finding, measured by following the standing corpus's panic
@@ -1584,12 +1718,12 @@ Verse 2). `owa_list_screens` answered `isAnyShowing`, the ids and the
 displays, and nothing about content, so every state answer was written by
 inference:
 
-| Ask | Before | After |
-| --- | --- | --- |
-| *Is anything showing on the projector right now?* (screen on, verse on it) | *"Yes — the presentation screen is currently on and showing on your display."* 2 rounds. Nothing a volunteer could check against the wall. | *"Yes — the projector is on and showing a song slide. It's on "Verse 2" of "យើងនឹងចូលក្នុងទីក្រុងបរិសុទ្ធ ( ខ ២៥៧ )", with the text starting "ចូរមានសង្ឃឹម …". There's no Bible verse or background image on it right now."* 2 rounds |
-| *the words no come out big screen* (same state) | **9 rounds, 36 s, 142k cached input**, `owa_list_ui` ×4, `owa_help_page`, and then: *"It looks like nothing has actually been sent to it yet: turning the screen on just gives you a blank canvas"* — a confident wrong answer to somebody reading that verse off the wall | *"The screen itself is on and it already holds the words — the current slide is "Verse 2" of your song … nothing has been cleared or locked. The likely reason: the app can currently only see one display — the same one your computer itself is using … check the cable, then the display button in the Mini Screen panel at the bottom right."* 3 rounds — the right diagnosis for this machine, which has one display |
-| *Nothing is showing on the projector* (screen off, verse held) | *"no screen is currently showing at all … press the show/eye button"* — right, but blind to the slide already loaded | *"Your screen is simply switched off — it's not showing anything, but it does still have a slide loaded (Verse 2 of "…") ready to go. Would you like me to turn the screen on? That will make the projector show that slide."* plus a SHOWS chip that rings the toggle |
-| → **Yes, turn it on** | **8 rounds, 16.6 s**: `owa_find_ui "show screen"` → nothing (`EC-115`) → `owa_click "0 Screen: 0"` (a near miss: the screen-id badge) → `owa_list_screens` → `owa_list_ui filter Screen` → `owa_click "Toggle showing screen [F5] Toggle showing screen [F5]"` (the label DOUBLED) → `owa_list_screens` → *"The screen is now showing"* | **3 rounds, 9.1 s**: `owa_list_screens` → `owa_click "Toggle showing screen [F5]"` → *"The screen is on now. The projector should be showing Verse 2 of "…" — please check the wall to confirm."* Confirmed on: `isAnyShowing: true` |
+| Ask                                                                        | Before                                                                                                                                                                                                                                                                                                                                  | After                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _Is anything showing on the projector right now?_ (screen on, verse on it) | _"Yes — the presentation screen is currently on and showing on your display."_ 2 rounds. Nothing a volunteer could check against the wall.                                                                                                                                                                                              | _"Yes — the projector is on and showing a song slide. It's on "Verse 2" of "យើងនឹងចូលក្នុងទីក្រុងបរិសុទ្ធ ( ខ ២៥៧ )", with the text starting "ចូរមានសង្ឃឹម …". There's no Bible verse or background image on it right now."_ 2 rounds                                                                                                                                                                                     |
+| _the words no come out big screen_ (same state)                            | **9 rounds, 36 s, 142k cached input**, `owa_list_ui` ×4, `owa_help_page`, and then: _"It looks like nothing has actually been sent to it yet: turning the screen on just gives you a blank canvas"_ — a confident wrong answer to somebody reading that verse off the wall                                                              | _"The screen itself is on and it already holds the words — the current slide is "Verse 2" of your song … nothing has been cleared or locked. The likely reason: the app can currently only see one display — the same one your computer itself is using … check the cable, then the display button in the Mini Screen panel at the bottom right."_ 3 rounds — the right diagnosis for this machine, which has one display |
+| _Nothing is showing on the projector_ (screen off, verse held)             | _"no screen is currently showing at all … press the show/eye button"_ — right, but blind to the slide already loaded                                                                                                                                                                                                                    | _"Your screen is simply switched off — it's not showing anything, but it does still have a slide loaded (Verse 2 of "…") ready to go. Would you like me to turn the screen on? That will make the projector show that slide."_ plus a SHOWS chip that rings the toggle                                                                                                                                                    |
+| → **Yes, turn it on**                                                      | **8 rounds, 16.6 s**: `owa_find_ui "show screen"` → nothing (`EC-115`) → `owa_click "0 Screen: 0"` (a near miss: the screen-id badge) → `owa_list_screens` → `owa_list_ui filter Screen` → `owa_click "Toggle showing screen [F5] Toggle showing screen [F5]"` (the label DOUBLED) → `owa_list_screens` → _"The screen is now showing"_ | **3 rounds, 9.1 s**: `owa_list_screens` → `owa_click "Toggle showing screen [F5]"` → _"The screen is on now. The projector should be showing Verse 2 of "…" — please check the wall to confirm."_ Confirmed on: `isAnyShowing: true`                                                                                                                                                                                      |
 
 What shipped: `owa_list_screens` now answers `screens[]` — per screen,
 showing or not: `isShowing`, `isLocked`, `isSelected`, `stage`, `display`,
@@ -1610,9 +1744,9 @@ on the screen, that a showing screen holding a slide is never "blank", to
 place the card where `previewCard` says, and — on a yes — to press
 `controls.showHide` by its exact words with no search round first. The
 offline bot's state answer and the `/screen` command say the same content
-(`describeScreenContent`, plain ESM the renderer bundles): *"Screen 0 is off
+(`describeScreenContent`, plain ESM the renderer bundles): _"Screen 0 is off
 but already holds the song "…" (Verse 2) -- "…", so turning it on shows
-that."*, 1.6 s, no model. Cost: +124 tokens a round to the model (5 598 →
+that."_, 1.6 s, no model. Cost: +124 tokens a round to the model (5 598 →
 5 722), all in the description; the answer itself is ~1 050 characters for
 one screen with a song on it, and it rides only the rounds after the call.
 
@@ -1623,10 +1757,10 @@ one screen with a song on it, and it rides only the rounds after the call.
 `labelOf` joined the text, the title, the aria-label and the placeholder, and
 a control built the accessible way — the show/hide toggle, every button in
 `MiniScreenClearControlComp` — carries the same words in title AND
-aria-label, so it listed as *"Toggle showing screen [F5] Toggle showing
-screen [F5]"* and the model passed the doubled thing on as an `owa_click`
+aria-label, so it listed as _"Toggle showing screen [F5] Toggle showing
+screen [F5]"_ and the model passed the doubled thing on as an `owa_click`
 label (it happened to match, on the joined string). Same class as the
-*"Setting Setting"* chip name fixed on 2026-09-02, one layer down.
+_"Setting Setting"_ chip name fixed on 2026-09-02, one layer down.
 `labelPartsOf` now keeps each distinct name once. Test added.
 
 ---
@@ -1638,7 +1772,7 @@ label (it happened to match, on the joined string). Same class as the
 `ScreenPreviewerItemComp` card, which carries `title="Screen: 0"` and so
 matches the `[title]` selector, with its whole subtree's text as the label
 (under the 120-character cut by four characters). It is what the model read
-when it pressed *"0 Screen: 0"* (`EC-124`'s wrong press — that one is the
+when it pressed _"0 Screen: 0"_ (`EC-124`'s wrong press — that one is the
 `ShowingScreenIconComp` badge, a real control, but the container row sat
 beside it). A `[title]`-only element whose own text is longer than its
 title is a container, not a control: list it by its title alone or not at
@@ -1660,14 +1794,14 @@ screen down; if it is not, it is an app bug to file. Not measured further.
 ## EC-123 · With no key, a song link still gets a manual search — `done` 2026-09-10
 
 `checkIsLyricPaste` lets the offline bot draft a PASTE itself (`EC-96`), but
-*Create a lyric file from https://…* with no key, no credit or a 429 fell
+_Create a lyric file from https://…_ with no key, no credit or a 429 fell
 through to `answerFromManual` and searched the guide for the address.
 
 **Measured 2026-09-10** through the real window with the assistant paused by
 the spend guard (the one no-model path a live key allows): the app's own
-starter chip, *Create a lyric file from https://hymnary.org/text/…*, was
-searched for in the manual as typed and answered with W-15's *Making a new
-file: in the Documents list, click the ⋮…* — how to make an EMPTY file — under
+starter chip, _Create a lyric file from https://hymnary.org/text/…_, was
+searched for in the manual as typed and answered with W-15's _Making a new
+file: in the Documents list, click the ⋮…_ — how to make an EMPTY file — under
 **Show me step by step / Do it for me**. On Claude Sonnet 5 the same ask took
 3 rounds and 17.6 s, and the model drafted the song AND created the file in
 one breath (`EC-161`).
@@ -1676,7 +1810,7 @@ one breath (`EC-161`).
 `/hymn`, `/new-song`; `/song` was already `/selected`'s alias, so the app's own
 noun for a song file won) — the drafter reads the page itself
 (`owa_lyric_validate` with `url`; the firewall rations it and the app window
-says *Assistant read a page on hymnary.org*) and the answer is the same
+says _Assistant read a page on hymnary.org_) and the answer is the same
 report, preview box and **Create "…" / Copy song text** buttons the model's
 answer carries, with NOTHING written until Create is pressed; `/lyric` over
 pasted words drafts those. And the offline bot reads the ask itself:
@@ -1685,7 +1819,7 @@ message — a bare address is as likely a YouTube link) → `answerLyricLink`,
 before the paste check, never a manual search for an address; a page with no
 song on it, a bot check (`EC-162`) and a refused read each get a sentence of
 their own and never the tool's words. The spend-pause and provider-failure
-notes both say *I wrote the song out myself instead* over a drafted song
+notes both say _I wrote the song out myself instead_ over a drafted song
 (`describeOfflineStandIn`). **Re-asked live:** `/lyric https://hymnary.org/…`
 → 0 rounds, 3.5 s, six verses, the buttons and the preview; the chip's words
 with the assistant paused → the same song under the pause note.
@@ -1695,15 +1829,15 @@ with the assistant paused → the same song under the pause note.
 ## EC-118 · A song page's chords never reached the file, because the model retyped the page — `done` 2026-09-09
 
 **Reported by the user with a screenshot** of a Khmer hymnal's chord page,
-the `|G` markers circled: *check why no key note imported* for *Create a
-lyric file from* the page's address. The saved
+the `|G` markers circled: _check why no key note imported_ for _Create a
+lyric file from_ the page's address. The saved
 transcript and the `.owl` on disk say what happened: Claude Sonnet 5 read
 the page with `owa_read_website`, then passed `owa_lyric_validate` its OWN
 copy of the words — every fragment rejoined correctly, the title's hymn
 number trimmed, the artist's name transliterated into Latin script — with not one of
 the page's 36 chords in it, and no `Attachments` line, which is the proof it
 never handed the wrapper over. The prompt and the tool description had both
-said *hand the page over whole* since `EC-76`; `EC-98` had already recorded
+said _hand the page over whole_ since `EC-76`; `EC-98` had already recorded
 that neither provider does. On a hymnal text page that costs nothing; on a
 chord page it costs every chord, and no drafter can put back what the model
 deleted. The same page handed to the drafter WHOLE came out with every chord
@@ -1716,8 +1850,8 @@ from the whole text with the model never getting a turn in between. The
 firewall judges a draft carrying a `url` as a network call on its ARGUMENTS
 (`checkIsNetworkCall`: address policy, the ten-reads-in-five-minutes budget,
 nothing charged to a draft from a paste); `notify.mjs` announces it as
-*read a page on <site>* exactly like a read; `progressHelpers` says
-*Reading <site> and writing the song out*; the prompt's song bullet and both
+_read a page on <site>_ exactly like a read; `progressHelpers` says
+_Reading <site> and writing the song out_; the prompt's song bullet and both
 tool descriptions say to give the address and no text, and
 `owa_read_website`'s says a song page is not its job. The result must START
 with the drafter's own first line — the window keys on it to lift the song
@@ -1736,8 +1870,8 @@ Not done: whether ChatGPT, Kimi and Free reach for `url` (`EC-122`).
 
 ## EC-119 · A chord site's toolbar was drafted as Verse 1 — `done` 2026-09-09
 
-Found the moment the page above was handed over whole: *Add to / edit / Edit
-/ print / Print / navigation / ScrollTranspose / settings / Settings* as a
+Found the moment the page above was handed over whole: _Add to / edit / Edit
+/ print / Print / navigation / ScrollTranspose / settings / Settings_ as a
 nine-line **Verse 1**, the real verses renumbered 2 and 3. Every button is a
 line of WORDS by every test in `lyricPageText.mjs`, and this page draws no
 strumming diagram between its toolbar and its first chord, so there was no
@@ -1750,7 +1884,7 @@ its chord sheet is the boundary, and everything above it in the region goes
 chordless rows above the first chorded row are furniture, swept and NAMED in
 the report (`takeLeadingFurniture`, the mirror of `takeTrailingCredits`,
 stopping at a chord, a label or a line long enough to sing, bounded at 12).
-The report's *first line* now skips a verse number, which said nothing about
+The report's _first line_ now skips a verse number, which said nothing about
 which part of the page was taken. Tests +3; the real page: two verses of six
 lines, `firstLine` the first sung words.
 
@@ -1766,21 +1900,21 @@ opening that file would read that the site owns the hymn. Now a notice that
 names the host the page came from (`toSiteLabel`: `madeupchords` out of
 `www.madeupchords.com`, off the header line this package wrote and never the
 body) is skipped on BOTH paths — the footer read and the tail sweep — and the
-field says *Unknown*, which is honest. Tests +2.
+field says _Unknown_, which is honest. Tests +2.
 
 ---
 
 ## EC-121 · A Khmer credit line is neither read as the author nor kept as the year — `open`, low
 
-A Khmer *music and lyrics:* label with the songwriter's name after it, and
+A Khmer _music and lyrics:_ label with the songwriter's name after it, and
 the year in Khmer digits under it, is exactly the credit the Copyright field
-wants, and the model's own copy had it, as an English *Music and lyrics:*
+wants, and the model's own copy had it, as an English _Music and lyrics:_
 line with the name and the year. The reader identifies the line
 as a credit (`checkIsCreditLine`'s short-label-and-colon shape) and drops it,
 but `readCreditArtist` knows English openers only, `readCreditCopyright`
 wants a © sign, and the year line is wordless junk that separates without
 flushing — so the credit rode into one row with the chart heading under it
-(`<name>Guitar chords`) and the song says *Unknown* where the page said whose
+(`<name>Guitar chords`) and the song says _Unknown_ where the page said whose
 it is. Worth a Khmer/any-script label map for the credit openers, a
 year-under-a-credit rule, and a flush on a credit line so it never joins the
 row after it.
@@ -1804,13 +1938,13 @@ ever a fallback for a model that ignored the description.
 ## EC-111 · The model pressed F5 unasked and reported the screen on — `done` 2026-09-08
 
 The standing corpus, re-asked on Claude Sonnet 5 with no user report behind
-it. *Nothing is showing on the projector*: `owa_list_screens`,
+it. _Nothing is showing on the projector_: `owa_list_screens`,
 `owa_app_state`, `owa_find_ui "show screen"` with `highlight: true` (which
-rang the Bible Lookup's *Save bible item and show on screen* button — the
+rang the Bible Lookup's _Save bible item and show on screen_ button — the
 wrong control), `owa_find_ui "display"`, then **`press_key F5` on page 0,
 `list_pages`, `press_key F5` on page 1**, `owa_list_screens` — 8 rounds,
-18.8 s, and the answer: *"The screen is now showing on the projector —
-pressing F5 turned it on."* `showingScreenIds: [0]` afterwards. The screen
+18.8 s, and the answer: _"The screen is now showing on the projector —
+pressing F5 turned it on."_ `showingScreenIds: [0]` afterwards. The screen
 came on with nobody having asked, which is the one thing the whole design
 says never happens, and the prompt had forbidden it since the first run —
 for "hiding a screen, clearing content", not in so many words for SHOWING
@@ -1823,11 +1957,11 @@ regression by the ratchet.
 `modelTools.mjs` (the two acting tools that carry no label — a message box
 is the user's to answer, as the guide card already holds); the prompt's
 offered-never-done rule now names showing a screen and a shortcut key by
-name; the symptom rule ends *"a symptom is not a request, so press nothing
-until they say yes"*. Re-asked three times: 2 rounds, 5–6 s, *"Would you like
-me to turn the screen on for you?"* with **Yes, turn it on** under it — and
+name; the symptom rule ends _"a symptom is not a request, so press nothing
+until they say yes"_. Re-asked three times: 2 rounds, 5–6 s, _"Would you like
+me to turn the screen on for you?"_ with **Yes, turn it on** under it — and
 that chip, pressed, went `owa_find_ui "Show"` → `owa_click "Toggle showing
-screen [F5]"` → `owa_list_screens` → *"The screen is on now"* (4 rounds, 7.9
+screen [F5]"` → `owa_list_screens` → _"The screen is on now"_ (4 rounds, 7.9
 s), so the consent path lost nothing. `EC-17` (a guide step pressing a key)
 is the card's half and stays open.
 
@@ -1835,7 +1969,7 @@ is the card's half and stays open.
 
 ## EC-112 · A panic question ran to the round cap through three snapshots — `done` 2026-09-08
 
-Same run, next question: *the words no come out big screen* (asked with the
+Same run, next question: _the words no come out big screen_ (asked with the
 screen on and empty, the state `EC-111` had just left). `owa_list_screens`,
 `owa_app_state`, **`take_snapshot` ×3** (two windows and the chatbot's own,
 ~8 400 tokens each), `list_pages`, `owa_help_search "warning icon on bible
@@ -1861,15 +1995,15 @@ offer.
 
 ## EC-113 · A tool's field name quoted back as evidence — `done` 2026-09-08
 
-Found on the re-ask of `EC-111`: *"...isn't turned on at all in the app
-right now (isAnyShowing is false)"*, and on the next question *"no screen is
-showing at all right now (isAnyShowing is false), which is why..."* — 2 of 2
-the moment the symptom rule asked the model to *say which fault it found*.
+Found on the re-ask of `EC-111`: _"...isn't turned on at all in the app
+right now (isAnyShowing is false)"_, and on the next question _"no screen is
+showing at all right now (isAnyShowing is false), which is why..."_ — 2 of 2
+the moment the symptom rule asked the model to _say which fault it found_.
 A field name is the setting-key class of leak the prompt forbids, and it
 arrived in brackets as proof. **Shipped** at both ends, the way `EC-92` was:
-the NEVER bullet names *a field out of a tool's answer like "isAnyShowing"*,
+the NEVER bullet names _a field out of a tool's answer like "isAnyShowing"_,
 and `scrubAnswerToolFields` (`recipeIdHelpers.ts`) drops a bracketed aside
-whose content is a camel-cased name followed by *is / was / : / =* — the
+whose content is a camel-cased name followed by _is / was / : / =_ — the
 shape a real aside ("(iPad)", "(or F5)", "(e.g. Joh)") never has — at the
 same seam the recipe ids leave by. Third ask clean.
 
@@ -1878,7 +2012,7 @@ same seam the recipe ids leave by. Third ask clean.
 ## EC-114 · `owa_click` pressed a loose match — `done` 2026-09-08
 
 The aim under `EC-111`: `owa_find_ui "show screen"` answered ONE match, the
-Bible Lookup's *Save bible item and show on screen* button at tier 3 (every
+Bible Lookup's _Save bible item and show on screen_ button at tier 3 (every
 word somewhere, out of order), and `owa_click` pressed whatever `findBest`
 returned — so the same two words, handed to `owa_click`, would have PRESENTED
 a verse to the congregation. The guide card had held the `isPressSafe` bar
@@ -1886,17 +2020,17 @@ since `EC-104`; the tool the model presses with had not. **Shipped:**
 `genClickExpression` asks for `preferPressSafe` and refuses a match that is
 not called what was asked, with the control it found as `nearest` and the
 `nearMisses` — proven through the app's own host: `"show screen"` → refused,
-`nearest` the save button, `nearMisses` carrying *Toggle showing screen
-[F5]*; `"Images"` / `"Colors"` / *Toggle showing screen* (shortcut and all)
-still press. The window's own callers (`/screen-show`'s *Toggle showing
-screen*, the five Clear labels, every `openFind`) all pass the bar.
+`nearest` the save button, `nearMisses` carrying _Toggle showing screen
+[F5]_; `"Images"` / `"Colors"` / _Toggle showing screen_ (shortcut and all)
+still press. The window's own callers (`/screen-show`'s _Toggle showing
+screen_, the five Clear labels, every `openFind`) all pass the bar.
 
 ---
 
 ## EC-115 · `owa_find_ui` cannot find "Toggle showing screen" from "show screen" — `open`, medium
 
 Behind `EC-111`'s wrong ring: a two-word query where one word matches by
-word-start (*show* → *showing*) and the other whole (*screen*) matches
+word-start (_show_ → _showing_) and the other whole (_screen_) matches
 nothing, because tier 2 wants the WHOLE needle as a word-start and tier 3
 wants every token as a whole word. `"show"` alone finds the toggle at tier 2;
 `"show screen"` finds only a button that happens to carry both words. And
@@ -1909,7 +2043,7 @@ token it begins; and report `isPressSafe` (or the tier) on every
 a loose one. `EC-114` closed the PRESS; this is the POINT.
 
 **2026-09-09**: reproduced on the "yes" under the panic answer — `owa_find_ui
-"show screen"` answered 0 matches with *0 Screen: 0* among the near misses,
+"show screen"` answered 0 matches with _0 Screen: 0_ among the near misses,
 and the model pressed that. `EC-124` takes the flow off this tool (the
 screens answer names the toggle by its exact words), so the panic path no
 longer depends on it; the matcher defect itself is still open.
@@ -1918,32 +2052,32 @@ longer depends on it; the matcher defect itself is still open.
 
 ## EC-116 · The screen preview card is placed "at the top of the Presenter" — `done` 2026-09-09
 
-The `EC-111` re-ask, third answer: *"turn the screen on in the screen preview
-area at the top of the Presenter"* — it is at the bottom right (the Mini
-Screen panel). Same class as the id-scrub run's *"usually top area"* for the
+The `EC-111` re-ask, third answer: _"turn the screen on in the screen preview
+area at the top of the Presenter"_ — it is at the bottom right (the Mini
+Screen panel). Same class as the id-scrub run's _"usually top area"_ for the
 mini screen, which that run fixed for the where-is question. The model is
 guessing layout it has never been told; the prompt's symptom paragraph names
 the card and its controls but not where the card is. One clause there, or a
 line in W-10, closes it — measure on the panic shapes.
 
 **Closed 2026-09-09 by `EC-124`**: `owa_list_screens` answers `previewCard.where`
-off the panel's own bounding box (*"at the bottom right of the window"* on this
-layout, *"collapsed"* when its bar is folded), and the prompt says to place the
-card where that says and never to guess. Re-asked *the words no come out big
-screen*: *"the display button in the Mini Screen panel at the bottom right"*.
+off the panel's own bounding box (_"at the bottom right of the window"_ on this
+layout, _"collapsed"_ when its bar is folded), and the prompt says to place the
+card where that says and never to guess. Re-asked _the words no come out big
+screen_: _"the display button in the Mini Screen panel at the bottom right"_.
 
 ---
 
 ## EC-117 · A model-written option that shows the screen — `open`, low
 
-The OPTIONS rule says *never one that would change what the congregation
-sees; showing, clearing or hiding stays something they ask for themselves*,
+The OPTIONS rule says _never one that would change what the congregation
+sees; showing, clearing or hiding stays something they ask for themselves_,
 and the state answers write one anyway: **Show the screen now** (q03,
 before and after, and on Kimi), **Yes, show the screen** (q07), **Yes, turn
 it on** (q08) — 5 of 5 state answers this run. Pressing one IS the user
 asking, the answer offered it in words, and every earlier row graded such a
-chip as a pass — so either the rule is wrong and should say *offer it as an
-option, never do it unasked*, or it is right and the window should drop the
+chip as a pass — so either the rule is wrong and should say _offer it as an
+option, never do it unasked_, or it is right and the window should drop the
 option in code (`quickReplyHelpers`, the shape `checkIsDraftEcho` already
 has). Decide, then make the prompt and the code agree.
 
@@ -1952,11 +2086,11 @@ has). Decide, then make the prompt and the code agree.
 ## EC-103 · The card rang and pressed a control that was behind a popup — `done` 2026-09-08
 
 **Reported with a screenshot.** The Bible Lookup popup open over the
-Presenter, *How do I add a background?* → **Do it for me**, and the card's
+Presenter, _How do I add a background?_ → **Do it for me**, and the card's
 ring drawn THROUGH the popup on a line of Genesis: the Images tab was under
 it. A control is "on screen" by every measure the matcher had — laid out,
 painted, enabled — and Do it clicked it and moved on to step 3 with nothing
-visible having changed. *"does not work while modal present."* The runtime
+visible having changed. _"does not work while modal present."_ The runtime
 now asks the window what it paints at the control's own centre
 (`coverOf`, `elementsFromPoint`) and names the layer (`layerOf`): the app's
 popup (the modal container, closed by its own red ✕), a right-click menu
@@ -1975,9 +2109,9 @@ closes, 2 refusals of an open question).
 Measured by `demo-failure-rate.mjs`, pressing Do it through all 224 steps
 the card offered it on. Of the 92 presses reported as done, a spot check of
 what was actually clicked found a step about the drawing panel's **Clear**
-pressing the projector's **Clear All [F6]**, **Follow** pressing *Break lines
-following model formatting*, **Add** pressing *Add Bible Item*, **Back**
-pressing *Background:*, **No** pressing *No Color*, and **ASSISTANT** opening
+pressing the projector's **Clear All [F6]**, **Follow** pressing _Break lines
+following model formatting_, **Add** pressing _Add Bible Item_, **Back**
+pressing _Background:_, **No** pressing _No Color_, and **ASSISTANT** opening
 the help window — every one a tier-1 or looser match (a whole word inside a
 longer label, or a word-start) taken as the thing itself. The tiers are right
 for pointing and wrong for a click. `domMatch` now carries `isPressSafe`
@@ -1992,15 +2126,15 @@ as not found with `nearest` beside it.
 ## EC-105 · A step that is something to notice was a failed press — `done` 2026-09-08
 
 Of the 124 presses the card refused in the same run, 51 named nothing to
-press at all, and 40 of those were steps that DESCRIBE — *The bar under the
-search box says how many verses matched*, *When it finishes, the file
-appears in the folder* — each costing an apology, or a model round on the
+press at all, and 40 of those were steps that DESCRIBE — _The bar under the
+search box says how many verses matched_, _When it finishes, the file
+appears in the folder_ — each costing an apology, or a model round on the
 rescue, for a step whose whole content was "look". `toGuideSteps` marks
 such a step `kind: "look"` (opens by describing, bolds no label-like phrase,
 names no key), the card draws **Next** instead of **Do it** for it with a
 line saying what it is, and a tool-driven `do` just moves on. 19 recipe
-steps statically; the rest of the 51 are real actions with no label (*Click
-the yellow dot*, *Drag a slide*), which stay with the rescue.
+steps statically; the rest of the 51 are real actions with no label (_Click
+the yellow dot_, _Drag a slide_), which stay with the rescue.
 
 ---
 
@@ -2008,7 +2142,7 @@ the yellow dot*, *Drag a slide*), which stay with the rescue.
 
 W-01, W-09, W-10 and W-17 are tours written as bold-led bullets with no
 numbered step, and every walkthrough button under their answers — the panic
-question's among them, which lands on W-10 — answered *Nothing to guide*.
+question's among them, which lands on W-10 — answered _Nothing to guide_.
 `toGuideSteps` now reads a top-level bullet that opens with a bold as a step
 when a page numbers nothing, sub-bullets folded in. W-10 becomes a seven-step
 tour of the screen card (Toggle showing screen / F5, the clears, Lock,
@@ -2019,14 +2153,13 @@ Display, Transitions, Background audio, Stage number).
 ## EC-107 · A bold over 40 characters, or of one character, misread the step — `done` 2026-09-08
 
 `BOLD_PATTERN` capped a bold at 40 characters and floored it at 2: W-08's
-*Colors / Images / Videos / Cameras / Webs* is 41, so it was not read and its
+_Colors / Images / Videos / Cameras / Webs_ is 41, so it was not read and its
 closing asterisks paired with the next bold's — "Colors" was eaten and the
 tab step led with **Ok**, a button on a dialog that was not open. One-character
 bolds (**✕**, **ⓘ**) did the same damage the other way: unread, their
 asterisks paired with the next bold's and the words between became the label.
 Now 1–120 characters, cut at the line; the `checkIsControlLabel` length rule
-turns the ✕ away one step later. Measured over the manual: 88 bolds were over
-40. `nameOf` also names the control the ring LANDED on rather than the step's
+turns the ✕ away one step later. Measured over the manual: 88 bolds were over 40. `nameOf` also names the control the ring LANDED on rather than the step's
 first candidate, and prefers a short candidate over a bolded sentence when
 nothing landed.
 
@@ -2049,8 +2182,8 @@ structural change. Until then the rescue's `DO:` line is the honest answer.
 ## EC-109 · The rest of the refusals, by shape — `open`, low
 
 What `demo-failure-rate.mjs` still refuses after `EC-103`–`EC-107`: actions
-with no label (*Click the yellow dot*, *Drag a slide onto the canvas*, *Type
-your search words*, *Double-click a verse*), controls that exist only after
+with no label (_Click the yellow dot_, _Drag a slide onto the canvas_, _Type
+your search words_, _Double-click a verse_), controls that exist only after
 the previous step's effect (the ⓘ card's fields), file and password dialogs
 (Export / Import / Downloads / Password / Ok), and recipe bolds that are not
 the app's words. Each is a recipe fix or a model rescue, not a card rule;
@@ -2060,7 +2193,7 @@ the harness lists them by recipe and step so the next run can pick.
 
 ## EC-110 · W-02 ends its own walkthrough on step 1 — `open`, low
 
-*Switch between the main pages*: its first Do it navigates the main window,
+_Switch between the main pages_: its first Do it navigates the main window,
 which unloads the card with everything else. The harness skips it by
 default. A walkthrough that survives navigation needs the guide state held
 by the server and re-injected on load.
@@ -2069,61 +2202,61 @@ by the server and re-injected on load.
 
 ## EC-95 · The model's own pills under a drafted song repeated the buttons, brighter — `done` 2026-09-08
 
-The four *Try asking* chips, asked on the user's own assistant (Kimi K2.6).
+The four _Try asking_ chips, asked on the user's own assistant (Kimi K2.6).
 Both chips that end in a draft — the paste and the page — came back with
 **Create "Amazing Grace"** / **Copy song text** AND, under them, the model's
-`OPTIONS:` pills *Create the file* / *Copy the text* (*Copy to clipboard* on
+`OPTIONS:` pills _Create the file_ / _Copy the text_ (_Copy to clipboard_ on
 the page). The pills are drawn as filled buttons and the real ones as
-outlines, so the pill is what a volunteer presses. Pressed, *Create the file*
+outlines, so the pill is what a volunteer presses. Pressed, _Create the file_
 goes to the model as a question: it retyped the notation by hand (refused
 twice — no `- ` on the Config lines, then `Structure: Verse 1, Verse 2,
 Chorus`), hit the name already in use, and answered with **Overwrite the old
 one** as a button — 4 rounds, 32 s, nothing created. The real button: 0
-rounds, 1.5 s, saved as *Amazing Grace (2)*. Same class as `EC-89` bullet
+rounds, 1.5 s, saved as _Amazing Grace (2)_. Same class as `EC-89` bullet
 one, same fix: `checkIsDraftEcho` in `quickReplyHelpers` drops a model option
 that says create/save/copy in other words, only ever beside those two
 buttons; and under a draft the corpus follow-ups are not offered at all (the
-"question" was a hymn, and its nearest corpus question was *How do I change
-where my documents are stored?*). Re-asked on Kimi: the two buttons and one
-real reply (*I need to change something*).
+"question" was a hymn, and its nearest corpus question was _How do I change
+where my documents are stored?_). Re-asked on Kimi: the two buttons and one
+real reply (_I need to change something_).
 
 ---
 
 ## EC-96 · A rate-limited paste fell to a bot that searched the manual for the hymn — `done` 2026-09-08
 
-The chip says *paste the words here*; the paste arrived ~25 s after the chip's
+The chip says _paste the words here_; the paste arrived ~25 s after the chip's
 own two rounds and Moonshot answered **429 three times in 3.6 s**
 (`msh-gid: free`, `retry-after: 1` — the window is a minute, not a second).
 The offline bot then ran `owa_help_search` with sixteen lines of Amazing
-Grace as the query and said *I could not find that in the app guide*, with
-*Can I show you a picture of my screen?* underneath. The drafter needs no
+Grace as the query and said _I could not find that in the app guide_, with
+_Can I show you a picture of my screen?_ underneath. The drafter needs no
 model, so `askHelpBot` now recognises a lyric-shaped paste
 (`checkIsLyricPaste`: four or more short lines, no question, no notation)
 and drafts it through `owa_lyric_validate` itself — same two buttons, same
-pseudo tools, same hardened create path — and the window's note says *I
-wrote the song out myself instead* rather than *Here is what the app's own
-guide says*. Only on the fallback: with a model the model still decides.
-Proven live under a real 429: draft in 3.6 s, **Create** → *Amazing Grace
-(3)* in 1.5 s.
+pseudo tools, same hardened create path — and the window's note says _I
+wrote the song out myself instead_ rather than _Here is what the app's own
+guide says_. Only on the fallback: with a model the model still decides.
+Proven live under a real 429: draft in 3.6 s, **Create** → _Amazing Grace
+(3)_ in 1.5 s.
 
 ---
 
 ## EC-97 · A hymnal text page handed over whole drafted sixteen verses of menus — `done` 2026-09-08
 
-The prompt and the tool both say *hand a song page in WHOLE*. Done exactly
+The prompt and the tool both say _hand a song page in WHOLE_. Done exactly
 that with a hymnal site's text page, the length rule took a region from the
-first mention of the first line to the *Text Information* table — ninety
-lines, because *Printable scores: PDF, MusicXML* is four words — and drafted
+first mention of the first line to the _Text Information_ table — ninety
+lines, because _Printable scores: PDF, MusicXML_ is four words — and drafted
 **"Untitled" with 16 verses**, the six real ones being numbers 8 to 13 among
-*Song available on My.Hymnary*. Both models had produced a good song on this
+_Song available on My.Hymnary_. Both models had produced a good song on this
 page only by IGNORING the instruction and copying the stanzas out themselves;
 a model that obeyed would have handed a volunteer the menu. Fixed in the
 reader: `pickNumberedStanzas` takes a run of stanzas numbered 1…n (plus a
 labelled refrain among or after them) as the song on a no-chord page, and
 `readPageFields` reads the `Title:` / `Author:` / `Copyright:` table such a
-page prints far below the words (the page said *Copyright: Public Domain* in
-plain sight and the draft said *Unknown*). Measured on the same page: title,
-author, *Public Domain*, the address in `Attachments`, six verses of four
+page prints far below the words (the page said _Copyright: Public Domain_ in
+plain sight and the draft said _Unknown_). Measured on the same page: title,
+author, _Public Domain_, the address in `Attachments`, six verses of four
 lines. Proven live on Kimi, which handed the page over whole on the after-run.
 
 ---
@@ -2131,8 +2264,8 @@ lines. Proven live on Kimi, which handed the page over whole on the after-run.
 ## EC-98 · What a model ACTUALLY hands the drafter is its own copy, and the drafter read it worst — `done` 2026-09-08
 
 Neither provider hands a page over whole, whatever the prompt says. Claude
-copies the stanzas out with the page's title line, *Author:* and *Tune: NEW
-BRITAIN* on top and passes `from`/`to` around them; the markers were only
+copies the stanzas out with the page's title line, _Author:_ and _Tune: NEW
+BRITAIN_ on top and passes `from`/`to` around them; the markers were only
 ever read on the PAGE path, so the three header lines became **Verse 1** and
 Claude spent a round drafting again (5 rounds, 41 s). Three changes, all in
 the drafter: `from`/`to` are believed on plain words too; a short unlabelled
@@ -2140,25 +2273,25 @@ block above a run of numbered stanzas is the heading, not a verse
 (`dropHeadingAboveNumberedStanzas`, four-line minimum for a verse on every
 hymnal), and its first line — cut at the ` | Site` a page title carries —
 names the song when nothing else did; and a `copyright` slot on draft mode,
-because the page's *Copyright: Public Domain* line rode along in the model's
+because the page's _Copyright: Public Domain_ line rode along in the model's
 copy one time in two. Also: with no `mode`, notation is checked and anything
 else is drafted — Kimi called the tool twice on one page for want of the
-word. Re-asked on Claude: 4 rounds, one draft, right first time, *Public
-Domain* in the Config.
+word. Re-asked on Claude: 4 rounds, one draft, right first time, _Public
+Domain_ in the Config.
 
 ---
 
 ## EC-99 · A taken name was refused with "use update", and the model offered to overwrite — `done` 2026-09-08
 
-`owa_lyric_file create` under a name already in use answered *Use action
-"update" to change it, or pick another name* — and a model asked to create a
+`owa_lyric_file create` under a name already in use answered _Use action
+"update" to change it, or pick another name_ — and a model asked to create a
 song off a page did exactly what it was told, offering **Update the existing
 one** as a button under a song the user had never asked to change. The
 window's own **Create** button never asks: it takes the next free name. The
-refusal now leads with that name (*"Amazing Grace (4)" is free — create it
-under that name, unless the user asked to change the existing one*), found
+refusal now leads with that name (_"Amazing Grace (4)" is free — create it
+under that name, unless the user asked to change the existing one_), found
 by `findFreeName` in the worker with the same `(n)` scheme. Claude still puts
-the choice to the user (*Save as a new name* / *Update the existing one*),
+the choice to the user (_Save as a new name_ / _Update the existing one_),
 which is defensible with the real Create button right above it — left as is.
 
 ---
@@ -2203,8 +2336,8 @@ be cut, or the cut should refuse the button.
 
 ## EC-102 · "Here are the lyrics" is a pill that sends those three words — `open`, low
 
-The paste chip's answer on Kimi ended with *Here are the lyrics* / *It's a
-link* / *Never mind* as pills. Pressing the first sends the sentence, not
+The paste chip's answer on Kimi ended with _Here are the lyrics_ / _It's a
+link_ / _Never mind_ as pills. Pressing the first sends the sentence, not
 the lyrics. A model-written option that describes what the USER will type
 next should fill the box rather than be asked — the corpus already has the
 `template` idea for exactly this.
@@ -2213,7 +2346,7 @@ next should fill the box rather than be asked — the corpus already has the
 
 ## EC-92 · A recipe id reached a volunteer in prose, twice on the same question — `done` 2026-09-08
 
-Claude Sonnet 5, *"Where is the button to change the background?"*, the
+Claude Sonnet 5, _"Where is the button to change the background?"_, the
 standing corpus's where-is shape, in the Presenter — verbatim:
 
 > **W-08 has exactly what you need.** In the Presenter, look at the bottom of
@@ -2224,17 +2357,17 @@ from the search hit, and the hit is the one place an id cannot leave — its
 `id` field is the handle `owa_help_page` and `owa_guide_start` take. The
 prompt forbids "an id like W-06 -- not even in passing", the page tool has
 scrubbed ids out of page bodies since `EC-21`, and this still happened; asked
-again after the fix the model wrote *"W-08 is the exact match for the
-Presenter"* — so it is systematic on this shape, not a one-off, and the
+again after the fix the model wrote _"W-08 is the exact match for the
+Presenter"_ — so it is systematic on this shape, not a one-off, and the
 previous run's answer to the same question (no id) was luck. Leaks on the
 ratchet: **0 → 1**, which outranks everything new (`EC-22` was the open
 item: "prose answers are still on the honour system for ids").
 
 Two more channels found on the way: the search **excerpt** was never scrubbed
-(*"Open the Background panel (W-08 step 1)"*, *"see W-28"* — page bodies were,
+(_"Open the Background panel (W-08 step 1)"_, _"see W-28"_ — page bodies were,
 excerpts were not, and a two-round answer is written from the excerpt), and
 the guide card's own `stripInternalIds` did not know the lettered id
-`W-01b` exists, so it left *"see b"* behind.
+`W-01b` exists, so it left _"see b"_ behind.
 
 **Shipped 2026-09-08.** Three layers, none of them a sentence in the prompt:
 
@@ -2246,11 +2379,11 @@ the guide card's own `stripInternalIds` did not know the lettered id
   seam the `OPTIONS:` / `NEEDS:` / `SHOWS:` frames are taken off, LAST, and
   replaces an id with the page's own title — `learnPageTitles` folds every
   search hit and opened page into the tool watch (`pageTitles`, per ask,
-  never kept) — or with *the guide page* when no tool named it. Real-world
+  never kept) — or with _the guide page_ when no tool named it. Real-world
   tokens of the same shape (`UTF-8`, `USB-3`) are left alone.
 - Proven live on the same question, against a model that wrote the id again:
-  *"The guide page “Set the background (color / image / video / web)” is the
-  exact match for the Presenter."* 9 + 3 new tests. `EC-22` closes with it.
+  _"The guide page “Set the background (color / image / video / web)” is the
+  exact match for the Presenter."_ 9 + 3 new tests. `EC-22` closes with it.
 
 What it does NOT do: stop the model writing the id. That is the cheaper
 sentence the prompt already carries, measured to fail 2 of 2 here; the scrub
@@ -2260,9 +2393,9 @@ is the rule.
 
 ## EC-93 · Retrieval ranks the page that MENTIONS backgrounds over the one that SETS them — `open`, medium (evidence for `EC-50`)
 
-`owa_help_search "change background" focus:presenter`: **W-15** (*Create and
-edit slides / lyrics / web backgrounds*) scores 66, **W-08** (*Set the
-background*) 46 — W-15 says the word more often. The model picked W-08
+`owa_help_search "change background" focus:presenter`: **W-15** (_Create and
+edit slides / lyrics / web backgrounds_) scores 66, **W-08** (_Set the
+background_) 46 — W-15 says the word more often. The model picked W-08
 anyway from the excerpt, and the offline bot would not have: it takes the top
 hit. Same class as `EC-50` / `EC-90`; filed as one more labelled case for
 the held-out set, not fixed here.
@@ -2271,7 +2404,7 @@ the held-out set, not fixed here.
 
 ## EC-94 · The reader's wrong-window question spends two rounds asking where the user is — `open`, low
 
-Bible Reader focus, *"How do I edit a slide?"*, with the main window on the
+Bible Reader focus, _"How do I edit a slide?"_, with the main window on the
 Presenter: 5 rounds, 24 s, `owa_app_state page:"reader.html"` (no such window)
 then `owa_app_state` with no page — the same fact twice. The answer was
 right (W-15). The first result could say which page the main window IS on
@@ -2291,8 +2424,7 @@ merely shared a word with what they pressed.
 
 The obvious fix, "rank the corpus first", was measured too and is worse: the
 two rankers agree on 71 of 258 (28%); when they agree the recipe is right
-60/71 (85%), when they disagree the search is right 84 of 180 and the corpus
-35. The corpus is not a better ranker. It is a set of LABELS, and a label is
+60/71 (85%), when they disagree the search is right 84 of 180 and the corpus 35. The corpus is not a better ranker. It is a set of LABELS, and a label is
 read, not weighed.
 
 **Shipped.** Three pieces, each proven live 2026-09-03:
@@ -2302,7 +2434,7 @@ read, not weighed.
   recipe first with `isKnownQuestion: true` (+100 over the top score). A
   paraphrase never fires it — the 45 held-out paraphrases score 22/45 before
   and after — so it cannot regress a typed question. Live: `/help Nothing is
-  showing on the projector — what do I check?` → W-10 first, where it was
+showing on the projector — what do I check?` → W-10 first, where it was
   the drawing page.
 - `findKnownQuestion` + `genKnownQuestionHint` in `questionHelpers.ts`,
   applied in `handleAsking`: the model rewrites every query in its own words
@@ -2317,19 +2449,18 @@ read, not weighed.
 Corpus top-1 is 258/258 after this by construction and is NOT the number to
 quote; the honest numbers are the held-out 22/45 (unchanged) and the rounds.
 
-
 ## EC-83 · The window could not DO anything without a model — `done` 2026-09-02
 
-**Asked for from the app**, four messages in a row: *"looking for a way to do
+**Asked for from the app**, four messages in a row: _"looking for a way to do
 pre-training the local assistant, for some task the chatbot should not ask the
-llm api"*, *"add build action like `/presenter-screen-show`
-`/presenter-screen-hide`"*, *"buildin actions"*, *"so user don't have to ask
-llm"*.
+llm api"_, _"add build action like `/presenter-screen-show`
+`/presenter-screen-hide`"_, _"buildin actions"_, _"so user don't have to ask
+llm"_.
 
 **Measured first**, on the standing twelve-question corpus through the real
 window (`test-results/chatbot-quality/score-2026-09-02-built-in-commands.json`):
 
-- Claude Sonnet 5 answered *"Turn off the screen for me"* in 2 rounds and 9
+- Claude Sonnet 5 answered _"Turn off the screen for me"_ in 2 rounds and 9
   seconds — correctly, that nothing was showing. Nine seconds and a paid call
   to learn the state of a button.
 - The same afternoon ChatGPT answered 429 on every call (out of credit), the
@@ -2339,7 +2470,7 @@ window (`test-results/chatbot-quality/score-2026-09-02-built-in-commands.json`):
   how-do-I, nothing at all a person could press on the two panic shapes, and
   the wrong page on four.
 
-So the rung-4 promise — *degrades honestly when the key dies* — was the
+So the rung-4 promise — _degrades honestly when the key dies_ — was the
 window's normal condition that day, and the thing it degraded to could
 describe the screen and not touch it.
 
@@ -2372,22 +2503,22 @@ by name, look up by reference, step a running order). Filed under `EC-84`.
 
 The measurement is in `EC-83`. The twelve offline answers, graded:
 
-| # | Question | Offline answer | Verdict |
-| --- | --- | --- | --- |
-| 1 | How do I put a Bible verse on the screen? | "No presentation screen is showing" | wrong — a task read as a screen question. **Fixed**: `TASK_QUESTION_PATTERN` |
-| 2 | Where is the button to change the background? | (where-is path; the button is a collapsed bar) | weak |
-| 3 | Is anything showing? | state | pass |
-| 4 | Turn off the screen for me | state, nothing to press | pass, barely. **Fixed**: a *Turn the screen on* command button |
-| 5 | Build a running order | W-22 | pass |
-| 6 | (reader) How do I edit a slide? | W-02, W-15 offered second | partial |
-| 7 | Nothing is showing on the projector | state, nothing to press | **Fixed**: the button |
-| 8 | the words no come out big screen | state | same |
-| 9 | Can it stream to Facebook? | W-01 + walkthrough buttons | wrong — see `EC-85` |
-| 10 | passage scroll itself | W-39 | pass |
-| 11 | How do I add a song? | W-21 (the *link* page, on the word "song" in its title) | wrong |
-| 12 | and how do I undo that? | W-01 | wrong — no follow-up handling offline |
+| #   | Question                                      | Offline answer                                          | Verdict                                                                      |
+| --- | --------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| 1   | How do I put a Bible verse on the screen?     | "No presentation screen is showing"                     | wrong — a task read as a screen question. **Fixed**: `TASK_QUESTION_PATTERN` |
+| 2   | Where is the button to change the background? | (where-is path; the button is a collapsed bar)          | weak                                                                         |
+| 3   | Is anything showing?                          | state                                                   | pass                                                                         |
+| 4   | Turn off the screen for me                    | state, nothing to press                                 | pass, barely. **Fixed**: a _Turn the screen on_ command button               |
+| 5   | Build a running order                         | W-22                                                    | pass                                                                         |
+| 6   | (reader) How do I edit a slide?               | W-02, W-15 offered second                               | partial                                                                      |
+| 7   | Nothing is showing on the projector           | state, nothing to press                                 | **Fixed**: the button                                                        |
+| 8   | the words no come out big screen              | state                                                   | same                                                                         |
+| 9   | Can it stream to Facebook?                    | W-01 + walkthrough buttons                              | wrong — see `EC-85`                                                          |
+| 10  | passage scroll itself                         | W-39                                                    | pass                                                                         |
+| 11  | How do I add a song?                          | W-21 (the _link_ page, on the word "song" in its title) | wrong                                                                        |
+| 12  | and how do I undo that?                       | W-01                                                    | wrong — no follow-up handling offline                                        |
 
-**2026-09-10, seen again** under the spend-guard pause: the guide's own answer to *How do I add a song?* was still W-21's link-download page. Unchanged, still open.
+**2026-09-10, seen again** under the spend-guard pause: the guide's own answer to _How do I add a song?_ was still W-21's link-download page. Unchanged, still open.
 
 Two of the wrong ones were one cause: `answerFromManual` appended the focus
 NAME to the query, and "presenter" is in the title of the Presenter overview
@@ -2397,9 +2528,9 @@ word, W-10 69 and first. **Fixed** the same day.
 **Re-measured 2026-09-09** through the real window on a dead key
 (`EC-144`): **8 of 12**, then **10 of 12** after `EC-145` (q02) and `EC-146`
 (q06). The two left are the ranker (q11 → W-21, the link-download page, for
-*How do I add a song?* — the corpus row is *How do I make a new song?*, and
-the exact-label path needs the exact words) and the follow-up (q12, *and how
-do I undo that?* → the drawing panel's Undo; the offline bot has no
+_How do I add a song?_ — the corpus row is _How do I make a new song?_, and
+the exact-label path needs the exact words) and the follow-up (q12, _and how
+do I undo that?_ → the drawing panel's Undo; the offline bot has no
 follow-up handling beyond a bare yes/no).
 
 **What is left is the ranker.** `How do I add a song?` → W-21 is
@@ -2407,7 +2538,7 @@ follow-up handling beyond a bare yes/no).
 The obvious next step — answer offline from the 262-question CORPUS first,
 since every row is pinned to a recipe — was measured too and is not a free
 win: `owa_list_questions "How do I put a Bible verse on the screen?"` ranks
-*How do I put a song's lyrics on the screen?* FIRST (`verse` is one of its
+_How do I put a song's lyrics on the screen?_ FIRST (`verse` is one of its
 keywords) and the Bible question below it. Two rankers, both imperfect,
 disagreeing on the same question. Size: a combined score (corpus row → its
 recipe, agreeing with the search's top hit → confident; disagreeing → offer
@@ -2418,10 +2549,10 @@ offline bot from 4/12 to something a service can lean on. See `EC-90`.
 
 ## EC-85 · An honest "the app cannot do that" still carries walkthrough buttons for an unrelated page — `done` 2026-09-03
 
-Claude, *"Can it stream to Facebook?"*: the text was right — no streaming, use
+Claude, _"Can it stream to Facebook?"_: the text was right — no streaming, use
 OBS — and under it sat **Show me step by step** and **Do it for me**, because
 `applyToolWatch` latched the search's top hit, which was **W-01 (Understand
-the Presenter window)** at score 2. Pressing *Do it for me* would have
+the Presenter window)** at score 2. Pressing _Do it for me_ would have
 demoed the Presenter tour under a question about Facebook. The offline bot
 did the same with the same page.
 
@@ -2466,7 +2597,7 @@ on this machine).
 
 ## EC-87 · What lives in a right-click menu is invisible to every tool — `open`, medium
 
-Claude, *"and how do I undo that?"* after *"How do I add a song?"*: 5 rounds,
+Claude, _"and how do I undo that?"_ after _"How do I add a song?"_: 5 rounds,
 6 tool calls — `owa_help_search` twice, `owa_list_ui filter:"Delete"`,
 `owa_find_ui "Delete" anyPage`, another search, then the page. The Delete
 item is in the document row's ⋮ / right-click menu, which no tool lists and
@@ -2480,12 +2611,12 @@ this row do" would have made it one round.
 
 ## EC-88 · Kimi started a walkthrough unasked on the plainest how-do-I — `done` 2026-09-08
 
-Kimi k2.6, *"How do I put a Bible verse on the screen?"*: 4 rounds, 43 s,
-and it called `owa_guide_start` itself — *"A guide card is now in the corner
-of your Presenter window"* — for a question that asked for words. Harmless
+Kimi k2.6, _"How do I put a Bible verse on the screen?"_: 4 rounds, 43 s,
+and it called `owa_guide_start` itself — _"A guide card is now in the corner
+of your Presenter window"_ — for a question that asked for words. Harmless
 here (a card, not a screen), but the prompt says offer, and a weaker model
 read "offer this whenever the answer is more than one step" as "do this". One
-sentence in the tool description, measured on Kimi. **Done 2026-09-08**: seen again on *How do I add a background?* (4 tool rounds, a card drawn over the Presenter, then a 429). The cause was the prompt’s own sentence, *offer to walk them through it and call `owa_guide_start`*, which Kimi read as written. It now says the buttons appear by themselves and the tool is called only when they ASK. Re-asked: 2 rounds, no card.
+sentence in the tool description, measured on Kimi. **Done 2026-09-08**: seen again on _How do I add a background?_ (4 tool rounds, a card drawn over the Presenter, then a 429). The cause was the prompt’s own sentence, _offer to walk them through it and call `owa_guide_start`_, which Kimi read as written. It now says the buttons appear by themselves and the tool is called only when they ASK. Re-asked: 2 rounds, no card.
 
 ---
 
@@ -2497,31 +2628,31 @@ the end of the reply and `step by step` to its start); the pattern now takes
 the button's own words behind a yes. Two cases added to the test.
 
 - Every Claude answer that offered **Show me step by step** also carried a
-  model-written *"Yes, walk me through it"* quick reply beside it — the same
+  model-written _"Yes, walk me through it"_ quick reply beside it — the same
   press twice, in two shapes, which is the wall-of-buttons `EC-12` was about.
   `genMessageReplies` drops exact duplicates only. **Done 2026-09-08**:
-  measured 7 of 7 walkthrough answers carrying one (*Yes, walk me through
-  it*, *Yes, show me how*, *Yes, show me*, *Show me the demo instead*);
+  measured 7 of 7 walkthrough answers carrying one (_Yes, walk me through
+  it_, _Yes, show me how_, _Yes, show me_, _Show me the demo instead_);
   `checkIsWalkthroughEcho` in `quickReplyHelpers` drops a model option that
-  accepts the walkthrough, only ever beside those two buttons — *Show me the
-  button* under a state answer keeps its place. Proven live: the Bible-verse
+  accepts the walkthrough, only ever beside those two buttons — _Show me the
+  button_ under a state answer keeps its place. Proven live: the Bible-verse
   answer's buttons went from 4 to 3.
 - `/find Clear Bible` (and the offline where-is) answers with the label the
   matcher joined: **BB Clear Bible [F9] Clear Bible** — the title and the aria
   label, twice. `labelPartsOf` already exists for chips; the answer text
   should use it.
 - `owa_find_ui "the Background panel"` returns 0 while the panel is collapsed
-  to its title bar, though the description promises the *"the X panel"* form;
+  to its title bar, though the description promises the _"the X panel"_ form;
   the bare word finds the bar at once.
 
 ---
 
 ## EC-90 · Two rankers, both imperfect, and no way to know which to trust — `idea`, medium
 
-Measured this run on ONE question, *How do I put a Bible verse on the
-screen?*: `owa_help_search` ranks W-06 (right); `owa_list_questions` ranks
-the lyrics question first (wrong, on the keyword `verse`). On *How do I add a
-song?* it is the reverse: search says W-21 (wrong), the corpus says W-15 by
+Measured this run on ONE question, _How do I put a Bible verse on the
+screen?_: `owa_help_search` ranks W-06 (right); `owa_list_questions` ranks
+the lyrics question first (wrong, on the keyword `verse`). On _How do I add a
+song?_ it is the reverse: search says W-21 (wrong), the corpus says W-15 by
 its second row (right). Neither is the oracle. The 236 labelled questions are
 the test set (`EC-50`); grading the CORPUS ranker against its own labels is
 circular, so the held-out 45 paraphrases are the only fair judge of a merged
@@ -2530,11 +2661,10 @@ the window says when they do not, the offline bot cannot pass rung 2.
 
 ---
 
-
 ## EC-80 · The window would not say what it was doing — `done` 2026-09-04
 
 **Reported from the app with a screenshot**, mid-answer: the question was
-*"Create a lyric file from https://www.example.com/chords/523776"*, and
+_"Create a lyric file from https://www.example.com/chords/523776"_, and
 under it the single line
 
 > Looking it up… press Stop to give up on it.
@@ -2544,9 +2674,9 @@ fetch, whole-page screenshot included), `owa_lyric_validate mode: "draft"`, a
 name check and a create — most of a minute — behind a sentence that does not
 change once in it.
 
-The fault is not that the wait is long. It is that the line answers *"is it
-alive?"* while the person reading it is asking *"is it getting anywhere, and is
-it doing what I meant?"* Nothing on screen could distinguish a window still
+The fault is not that the wait is long. It is that the line answers _"is it
+alive?"_ while the person reading it is asking _"is it getting anywhere, and is
+it doing what I meant?"_ Nothing on screen could distinguish a window still
 working from one that had hung, so the only strategy it teaches is to press Stop
 and try again — and pressing Stop is exactly the wrong move on a question that
 was 50 seconds into a 55-second job.
@@ -2566,7 +2696,7 @@ things that were decided rather than fallen into:
 - **It says what it is working ON**, which is the half the user actually asked
   for: `Searching the guide for "background"`, `Reading example.com` (the
   site, not the address and its query string), `Creating a new song: "Amazing
-  Grace"`. Arguments are flattened and cut at 38 characters — a pasted song is a
+Grace"`. Arguments are flattened and cut at 38 characters — a pasted song is a
   legitimate argument and would otherwise take the line down the window.
 - **Finished steps stay above the running one**, dimmed, with only one dot ever
   breathing. A single replacing line was cheaper and answers the wrong question.
@@ -2591,8 +2721,8 @@ order, exactly one running at a time, cleared on the answer. New `CB-47`.
 ## EC-81 · Four chips were the whole of what this window looked capable of — `done` 2026-09-04
 
 **Asked for from the app with a screenshot** circling the line under the
-starters: *"should `More...`, when I click it show all list so can know what I
-can do"*.
+starters: _"should `More...`, when I click it show all list so can know what I
+can do"_.
 
 `EC-17` built the corpus — 260 questions, every one pinned to a recipe or a
 tool — and then showed four of them. The other 180 for that window were
@@ -2621,13 +2751,13 @@ here`, grouped, **Fewer** folding it away. `CB-17` amended.
 
 ## EC-82 · The tip line could be re-rolled but not walked — `done` 2026-09-04
 
-**Asked for from the app with a screenshot**: *"should `<-` and `->` for pre
-next tip"*.
+**Asked for from the app with a screenshot**: _"should `<-` and `->` for pre
+next tip"_.
 
-`EC-78`'s tip line answers *"show me another"* with a random pick, which is
+`EC-78`'s tip line answers _"show me another"_ with a random pick, which is
 right for that question and cannot answer either of the two the user actually
-had: *show me all of them* (a random walk gives no way to know when you have
-seen the lot) and *bring back the one I was half way through reading* (a random
+had: _show me all of them_ (a random walk gives no way to know when you have
+seen the lot) and _bring back the one I was half way through reading_ (a random
 walk has no back).
 
 **Shipped.** `stepChatTip(currentId, delta)` walks `CHAT_TIP_LIST` in order and
@@ -2653,12 +2783,12 @@ took it back. `CB-46` amended.
 
 ## EC-76 · "Done — the screen is now showing", with nothing on the wall — `done` 2026-09-03
 
-**Reported from the app with a screenshot.** The assistant was asked *"How do I
-show a screen?"* and answered correctly — the show/hide button in the screen
-preview header, or `F5`. It then offered to do it, was told *"Yes, turn it on"*,
+**Reported from the app with a screenshot.** The assistant was asked _"How do I
+show a screen?"_ and answered correctly — the show/hide button in the screen
+preview header, or `F5`. It then offered to do it, was told _"Yes, turn it on"_,
 and replied **"Done — the screen is now showing."** `owa_list_screens` said
-`showingScreenIds: []`. The user's own words: *"it did wrong, it open setting
-instead. the report is incorrect. the agent should double check"*.
+`showingScreenIds: []`. The user's own words: _"it did wrong, it open setting
+instead. the report is incorrect. the agent should double check"_.
 
 Two faults stacked, and the second is the one that made it dangerous.
 
@@ -2681,7 +2811,7 @@ looking for the reason it is off.
 Shipped:
 
 - The decorations are `tran('Reveal Hidden Controls')`. **Not** `Show Hidden
-  Controls`, which was tried first and still won the bare word `Show` at tier 1
+Controls`, which was tried first and still won the bare word `Show` at tier 1
   on a whole-word match — the word had to leave the label, not move within it.
   Measured after: `find: "Show"` now ranks `ShowHideScreenComp` first.
 - `owa_click` reads the control back ~250 ms after the press (this app
@@ -2706,8 +2836,8 @@ Shipped:
 Cost: `owa_click` 278 → 411 tokens/round, `owa_list_screens` 58 → 109; **+184
 tokens/round**, repaid by the first `owa_list_screens` call of any question.
 
-**Related, still open: `EC-37`** — that one is about CONSENT (a "yes" to *would
-you like help* being read as a "yes" to *do it now*). This one is about
+**Related, still open: `EC-37`** — that one is about CONSENT (a "yes" to _would
+you like help_ being read as a "yes" to _do it now_). This one is about
 TRUTHFULNESS, and they met in the same transcript: consent was taken loosely and
 the outcome was then reported without being checked. Fixing the second does not
 fix the first.
@@ -2731,7 +2861,7 @@ columns had cut it into.
 **What was built:** `tools/owa-devtools-mcp/lyricPageText.mjs` (+ its test), a
 reader that turns a page into the lines of a song. `checkIsPageText` gates the
 whole thing so an ordinary paste is untouched. Details in `CLAUDE.md`
-§*Agent access*; the four rules that matter are region-by-walls-of-wordless-
+§_Agent access_; the four rules that matter are region-by-walls-of-wordless-
 lines scored on CHORDS first, fragments rejoined with nothing between them, a
 fragment after a fragment starting a new line, and a label never joining to
 anything. A page with no chords — a hymn-text site — gets a second reader keyed
@@ -2753,6 +2883,7 @@ already has a place for and nothing in this repo had ever emitted.
 `from`, `to`) and no new tool.
 
 Also in this change, because they were in the way:
+
 - `owa_read_website`'s screenshot is WHOLE-PAGE now (capped at 2400px). It was
   a 768px viewport, which on a song page is the site's toolbar and nothing
   else — useless for the one question a picture is worth asking.
@@ -2772,7 +2903,7 @@ reviews, and both are named in the report, so this is polish rather than a
 defect. The tail sweep stops at anything carrying a chord, and on those pages
 the line inherits one.
 
-**Half closed by `EC-79`.** The sweep also used to stop at a *translation*, and
+**Half closed by `EC-79`.** The sweep also used to stop at a _translation_, and
 `Guitar chords` was being paired with the songwriter's credit above it — so the
 two of them rode into the last verse together. Nothing printed under a credit
 line is a translation of it now. The toolbar residue at the top of a region is
@@ -2807,12 +2938,12 @@ knowing any of that was its cue, and the one thing it genuinely cannot do.
 **The measurement that decided the design**, probed live against the real
 validator before a line was written:
 
-| attempt | problems |
-| --- | ---: |
-| plain lyrics, as pasted | 1 (no `ol:Config` at all) |
-| a plausible model attempt | **9** |
-| a **careful** model attempt | **2** |
-| a deterministic emitter | **0** |
+| attempt                     |                  problems |
+| --------------------------- | ------------------------: |
+| plain lyrics, as pasted     | 1 (no `ol:Config` at all) |
+| a plausible model attempt   |                     **9** |
+| a **careful** model attempt |                     **2** |
+| a deterministic emitter     |                     **0** |
 
 The careful row is the finding. It still dies, and on traps invisible from the
 outside: `CC` in `Structure` where `Cx2` is required, and the sentence "guitar
@@ -2848,7 +2979,7 @@ song lyrics belong to whoever wrote them.
   of the other half.
 - **Leaving `instrumental` out of the label map does not keep it away from that
   fence.** It stops the line being read as a label at all, so `[Instrumental]`
-  becomes a lyric somebody sings. It has to be recognised and *routed* to
+  becomes a lyric somebody sings. It has to be recognised and _routed_ to
   `Breakdown`.
 - **`questions.test.mjs` could not see a tool registered from a loop.** Its
   regex read `registerTool('name'` only, so `owa_lyric_file` and
@@ -2902,7 +3033,7 @@ Three faults, one seam:
    `botFocus.mjs`'s own header warns about, in the same words, about a
    different duplicate.
 2. **Even the two it knew, it only TOLD.** The user had just pressed a button
-   that says *Do it for me*.
+   that says _Do it for me_.
 3. **`ChatbotAppComp` printed `error.message` at them.** Not only for this
    failure — for every failed button press this window will ever have.
 
@@ -2927,15 +3058,15 @@ Two things fixed on the way, both on the same seam:
   `isMainWindow` — so every crossing to the **Document Editor** was refused by
   the tool the prompt had just named. The enum is now derived
   (`BOT_MAIN_WINDOW_PAGES`), and accepts all three.
-- The model side was told *"Ask them to open it themselves"* for all five
+- The model side was told _"Ask them to open it themselves"_ for all five
   windows of their own. It now presses `openFind` for the one that has it,
   exactly as the button path does.
 
 **Verified live** on the reported conversation itself, in the running app: the
 same **Do it for me** press, on the same tab, with Settings shut — the Settings
 window opens by itself and the answer under the old failure bubble reads
-*"**Opening Settings for you.** Look at the app window. A card is showing step
-1 of 4..."*. Covered by 5 tests (press-to-open, navigate-not-click, the
+_"**Opening Settings for you.** Look at the app window. A card is showing step
+1 of 4..."_. Covered by 5 tests (press-to-open, navigate-not-click, the
 no-single-control fallback, the one-attempt cap, and the sanitised message).
 
 **Found on the way:** `helpBotHelpers.test.ts` and `llmBotHelpers.test.ts` both
@@ -2951,7 +3082,7 @@ trap as `EC-61`. Both now mock it, in the pattern of `reportHelpers.test.ts`.
 the user, the card comes up in it, and step 1 of 4 reads:
 
 > **Click the gear (Settings) in the header — Settings opens in its own
-> window.** *Do this step in the window behind me.*
+> window.** _Do this step in the window behind me._
 
 They are looking at Settings. The step was just performed FOR them. The card
 reports `find: null`, `isTargetFound: false` — it cannot point at anything,
@@ -2971,8 +3102,8 @@ if (!isReader && !isPresenter) { return kept; }
 same `botFocus.mjs` that declares eight. Six of the eight windows got no
 dropping at all, and it fires just as much when the user opened Settings
 themselves and pressed **Show me step by step**. The model half was already
-told the rule the recipe half was breaking: *"Never tell them to open the
-window they are already in."*
+told the rule the recipe half was breaking: _"Never tell them to open the
+window they are already in."_
 
 **Shipped 2026-09-02.** `genHereNames` reads the descriptor instead: the
 `label` a recipe writes in a sentence, the `openFind` written ON the control,
@@ -2982,7 +3113,7 @@ rather than a regex built from the label: these are whole control names, and
 user-facing text has no business being spliced into a pattern.
 
 **Verified** against the real recipe, not a fixture: `W-16` in Settings goes
-from 4 steps starting *"Click the gear (Settings) in the header"* to **3
+from 4 steps starting _"Click the gear (Settings) in the header"_ to **3
 starting at the General tab**, while the same recipe asked from the presenter
 keeps all four. Covered by 3 new tests (a window of its own, the Document
 Editor by either of its two names, and a pathname nothing declares); the 39
@@ -3029,13 +3160,13 @@ next person will hit it.
 ## EC-72 · A Settings walkthrough ran in the Presenter and rang a Bible version — `done` 2026-09-02
 
 **Reported from the app with a screenshot**, and it is two complaints in one:
-*"this wrong highlight, and also wrong page. it should help user open setting
-page and assist user in setting page."*
+_"this wrong highlight, and also wrong page. it should help user open setting
+page and assist user in setting page."_
 
 The card read **Settings: language, theme, fonts, folders — Step 2/4**, drawn
 in the **Presenter**, with a red ring around the **KJV** button of a Bible row
-and the line *"The ringed control is in the Bibles panel, at the top right of
-this window."*
+and the line _"The ringed control is in the Bibles panel, at the top right of
+this window."_
 
 The chain, measured:
 
@@ -3049,7 +3180,7 @@ The chain, measured:
 3. `General`, `Language`, `Apply Settings`, `Theme`, `Font family`,
    `Directories` and `Reset buttons` match nothing in the Presenter. The
    candidate list has no floor, so it fell through to the fourth: **`English`**,
-   out of *"Language: click **English**"*.
+   out of _"Language: click **English**"_.
 4. The Bible version button's accessible label is **"KJV English KJV"** -- the
    key, its language, the key again. `English` is a whole word of it, so it
    matched at tier 1, exactly, and `owa_find_ui` confirms **3 identical rows
@@ -3129,8 +3260,8 @@ question is how many steps are over a readable length, not this one.
 ## EC-61 · A picture with an empty box was refused by the provider — `done` 2026-09-02
 
 **Reported from the window, with the transcript.** The assistant had just been
-asked *"Can I show you a picture of my screen?"* and had answered *"Yes, please
-send me a screenshot and I'll take a look."* The user pressed 📷, sent it with
+asked _"Can I show you a picture of my screen?"_ and had answered _"Yes, please
+send me a screenshot and I'll take a look."_ The user pressed 📷, sent it with
 nothing typed, and got:
 
 ```
@@ -3151,8 +3282,8 @@ press that triggered them.
    unreachable service, so a malformed request told a volunteer their provider
    was down.
 3. **The fallback answered nothing.** `askHelpBot('')` returns the generic
-   greeting, so the recovery under the error was *"Ask me how to do something in
-   the app."*
+   greeting, so the recovery under the error was _"Ask me how to do something in
+   the app."_
 
 **Shipped 2026-09-02.** One decision point, `toAskedOfModel` in
 `attachmentHelpers.ts`: their own words when they typed any, an attachment's
@@ -3191,18 +3322,18 @@ owa_help_page  {id:'internal:skills/owa-robot-test/references/user-workflows.md'
 ```
 
 `readHelpPage` in `help.mjs` slices at `MAX_PAGE_BYTES` = 256 KB, which is a
-*file-read* guard, not a *conversation* guard. The whole body goes back as one
+_file-read_ guard, not a _conversation_ guard. The whole body goes back as one
 tool result and then sits in `messages` for every remaining round of the loop —
 so one unlucky call can cost more than the entire rest of the question, on the
 volunteer's own API key, and can push a small model past its context window
 outright. The id above is not exotic: it is what `owa_help_search` hands the model
 as a top internal hit.
 
-**Fix shape.** Cap what the *model* receives independently of what the file is:
+**Fix shape.** Cap what the _model_ receives independently of what the file is:
 return the matched section plus a bounded window (a few KB), and let the model ask
 for more by section id. Manual pages are small (largest ~40 KB); it is the
 `internal` corpus that is huge, and internal pages are exactly the ones the model
-is only supposed to *understand*, never quote.
+is only supposed to _understand_, never quote.
 
 **Shipped 2026-08-31.** `MAX_MODEL_BYTES` in `help.mjs`, split by kind, applied
 in `readHelpPage`: a manual page is capped at 40 KB (above the largest one that
@@ -3232,11 +3363,11 @@ Original note:
 `llmBotHelpers.ts` sends everything `listTools()` returns, every round, up to
 `MAX_TOOL_ROUNDS` (10):
 
-| | tools | tokens/round |
-| --- | ---: | ---: |
-| `owa_*` | 13 | ~2 800 |
-| chrome-devtools-mcp | 29 | ~5 750 |
-| **total** | **42** | **~8 550** → ~85 500 per question, worst case |
+|                     |  tools |                                  tokens/round |
+| ------------------- | -----: | --------------------------------------------: |
+| `owa_*`             |     13 |                                        ~2 800 |
+| chrome-devtools-mcp |     29 |                                        ~5 750 |
+| **total**           | **42** | **~8 550** → ~85 500 per question, worst case |
 
 A help bot for church volunteers does not need `lighthouse_audit`,
 `take_heapsnapshot`, `performance_start_trace`/`_stop_trace`/`_analyze_insight`,
@@ -3250,7 +3381,7 @@ upstream must not reach a volunteer's window because nobody updated an exclusion
 
 **Verify by** `audit-mcp-tools.mjs` before/after plus the same question answered
 correctly with the smaller set. Constraints and reasoning:
-[mcp-tools.md](./mcp-tools.md) §*Pruning and scoping*.
+[mcp-tools.md](./mcp-tools.md) §_Pruning and scoping_.
 
 ---
 
@@ -3301,7 +3432,7 @@ is still returned. That is intended, and the test now pins it.
 `extra-work/verify-chatbot-tools.mjs` and `extra-work/verify-chatbot-e2e.mjs`
 both open with `const MCP_URL = 'http://127.0.0.1:39223/mcp'`, even though the
 published instance file carries `mcpUrl`, and `verify-chatbot-e2e.mjs` already
-discovers the *CDP* port that way. A second instance, or 39223 already taken,
+discovers the _CDP_ port that way. A second instance, or 39223 already taken,
 makes both fail as if the app were down.
 
 **Fix shape.** Read `mcpUrl` from `<temp>/open-worship-app-cdp/<pid>.json` — the
@@ -3334,7 +3465,7 @@ tests; this one does not.
 
 ~594 tokens of schema + description, more than any other tool, because it teaches
 a whole interaction (steps, `manualId`, demo mode, `canDemo: false`, `labels`).
-That is largely defensible. Worth revisiting only *after* EC-02, when it will be a
+That is largely defensible. Worth revisiting only _after_ EC-02, when it will be a
 much bigger share of a much smaller total — and only if the trimmed version still
 produces guides that land on the right control.
 
@@ -3383,11 +3514,11 @@ did not offer a walkthrough. That is `EC-12`.
 
 ## EC-12 · Prose answers still contain non-steps, and skip the walkthrough offer — `open`, medium
 
-The prompt forbids "look at the app window" as a *guide card* step ("something
+The prompt forbids "look at the app window" as a _guide card_ step ("something
 you say in the chat, never a step"). The same rule is not applied to the numbered
 steps in a prose answer, and the fixed panic answer duly opens with:
 
-> 1. Look at the main app window.  2. Find the "Screen Preview" area.
+> 1. Look at the main app window. 2. Find the "Screen Preview" area.
 
 Neither is a control to press; both are throat-clearing before the one real step.
 The same answer also did not offer a walkthrough, while the non-native phrasing of
@@ -3412,7 +3543,7 @@ The model handled it correctly live (it said the app has no built-in support and
 suggested OBS, leaking nothing), so this is a hazard rather than an active defect
 — which is why it is medium and not high. But the corpus split exists precisely
 so a user's question is never answered from builder notes, and "the manual has
-nothing" is better answered as *nothing* than as a note the model is forbidden to
+nothing" is better answered as _nothing_ than as a note the model is forbidden to
 quote. Worth pairing with a prompt line that says an empty manual result is a
 legitimate "the app does not do that".
 
@@ -3422,7 +3553,7 @@ legitimate "the app does not do that".
 
 Established this run: "the words no come out big screen" has no lexical path to
 the page that answers it, even with the filler words stripped, because no manual
-page can state whether *this* screen is showing right now. The alias table lifted
+page can state whether _this_ screen is showing right now. The alias table lifted
 the panic phrasing onto the right page and could not lift this one, and no amount
 of ranking work will.
 
@@ -3434,17 +3565,17 @@ Only worth doing if the round is actually being spent — instrument first.
 ## EC-18 · The ring landed on the wrong control — `done` 2026-08-31
 
 **Reported from the app with a screenshot.** The walkthrough step "Open the
-Background panel" ringed **`Background:`** — the background-*transition* button
+Background panel" ringed **`Background:`** — the background-_transition_ button
 in the screen preview footer — and pressing **Do it** opened the transition menu
 instead of the panel. Measured live, five things on screen matched the word
 "Background" and every one of them tied at tier 1:
 
-| candidate | control? | label length |
-| --- | --- | ---: |
-| the collapsed **Background** panel bar | **no** (a `div`) | 28 |
-| `Background:` transition button | yes | 33 |
-| **Clear Background [F7]** button | yes | 41 |
-| the screen-preview card, the transition group | no | 57 / 31 |
+| candidate                                     | control?         | label length |
+| --------------------------------------------- | ---------------- | -----------: |
+| the collapsed **Background** panel bar        | **no** (a `div`) |           28 |
+| `Background:` transition button               | yes              |           33 |
+| **Clear Background [F7]** button              | yes              |           41 |
+| the screen-preview card, the transition group | no               |      57 / 31 |
 
 Two independent causes, both now fixed:
 
@@ -3486,7 +3617,7 @@ Lookup.
 
 ## EC-20 · A row of tabs written as one bold had nothing to ring — `done` 2026-08-31
 
-With EC-19 fixed, W-08 step 2 rang *nothing*: the recipe names the whole tab row
+With EC-19 fixed, W-08 step 2 rang _nothing_: the recipe names the whole tab row
 in a single bold, "**Colors / Images / Videos / Cameras / Web**", and no control
 carries that string. Honest, but useless. `toFindCandidates` now offers each
 part of a slash-joined bold as its own candidate — the joined phrase FIRST, so a
@@ -3500,10 +3631,10 @@ manual actually writes.
 
 ## EC-21 · The card showed a volunteer a manual id — `done` 2026-08-31
 
-Visible in the same reported screenshot: the card read *"Open the Background
-panel **(W-08 step 1)** and choose the Videos tab."* The system prompt already
-forbids this in as many words — *"NEVER show them ... an id like \"W-06\" — not
-even in passing"* — and the model did it anyway. A rule the model can ignore is
+Visible in the same reported screenshot: the card read _"Open the Background
+panel **(W-08 step 1)** and choose the Videos tab."_ The system prompt already
+forbids this in as many words — _"NEVER show them ... an id like \"W-06\" — not
+even in passing"_ — and the model did it anyway. A rule the model can ignore is
 not a rule.
 
 `stripInternalIds` now cleans every step text and the title, at one choke point
@@ -3528,7 +3659,7 @@ in prose at all — instrument before building, the way `EC-14` asks.
 ## EC-23 · `genSessionId` collides, and flakes the whole gate — `open`, medium
 
 Found by running the gate for `EC-18`: `npm run lint` failed at its FIRST stage
-on `src/chatbot/chatSessionHelpers.test.ts` — *expected 499 to be 500* — with
+on `src/chatbot/chatSessionHelpers.test.ts` — _expected 499 to be 500_ — with
 nothing in this change anywhere near it. Reproduced 1 run in 3.
 
 `genSessionId` is `Date.now().toString(36)` + **4** random base-36 characters,
@@ -3545,8 +3676,8 @@ the user to take, because it is product code outside the reported defect.
 ## EC-24 · A step whose control is inside a menu could only apologise — `done` 2026-08-31
 
 **Reported from the app with a screenshot**, one step further into the same
-walkthrough as `EC-18`. W-21 step 2 — *"Right-click an empty part of the list
-(or use the + button in the folder-path bar) and choose **Download From URL**"*
+walkthrough as `EC-18`. W-21 step 2 — _"Right-click an empty part of the list
+(or use the + button in the folder-path bar) and choose **Download From URL**"_
 — answered:
 
 > I could not do that one for you (nothing on screen to act on) - do it
@@ -3564,7 +3695,7 @@ Shipped, and it is the shape that matters more than the case:
 
 - `action: "rightClick"` — `dm.openContextMenu` fires a real `contextmenu` at a
   point INSIDE the region (bottom right: a list fills from the top left, so
-  that is its empty part, and right-clicking an item gets the *item's* menu,
+  that is its empty part, and right-clicking an item gets the _item's_ menu,
   which is a different menu). Verified against the app before any of it was
   written.
 - `dm.findListRegion(point)` answers "which list?" the way the user would: the
@@ -3573,8 +3704,8 @@ Shipped, and it is the shape that matters more than the case:
   and only then the biggest on screen. `state.lastPoint` carries it.
 - **A step may take two presses.** After any demo action, a label the step
   itself names that was NOT on screen and now IS comes back as `more`, and the
-  card holds the step: *Done - and it brought up "Download From URL". Press Do
-  it again to finish this step.* It is never clicked for them — "click
+  card holds the step: _Done - and it brought up "Download From URL". Press Do
+  it again to finish this step._ It is never clicked for them — "click
   **Delete**, then **Yes**" would otherwise confirm its own dialog.
 - `state.pendingFind` aims that second press at what the first revealed.
   Without it the press re-reads the step's candidates from the top and lands on
@@ -3604,8 +3735,8 @@ mini-screen's ⋮ instead.
 
 ## EC-25 · The Khmer twin left a husk in the card — `done` 2026-08-31
 
-Visible in the same screenshot: the step ended *"…and choose Download From URL
-**(URL)**."* `toEnglishOnly` dropped a bracket only when it held Khmer and
+Visible in the same screenshot: the step ended _"…and choose Download From URL
+**(URL)**."_ `toEnglishOnly` dropped a bracket only when it held Khmer and
 nothing else, so `(ទាញយកពី URL)` lost its Khmer and kept its Latin word. Any
 bracket holding Khmer is a translation aside and now goes whole. Brackets that
 are all English ("(or right-click the empty list)") are untouched. 0 husks left
@@ -3614,11 +3745,11 @@ across the 251 manual steps.
 ## EC-26 · The ring landed on the wrong control AGAIN, with the panel open — `done` 2026-08-31
 
 **Reported from the app with a screenshot — the same symptom `EC-18` closed.**
-The W-21 walkthrough step *"Open the **Background** panel and choose the
-**Videos** tab"* ringed **`Background:`**, the background-*transition* button in
+The W-21 walkthrough step _"Open the **Background** panel and choose the
+**Videos** tab"_ ringed **`Background:`**, the background-_transition_ button in
 the screen preview footer.
 
-`EC-18` was verified *"live on the real W-08 recipe from a collapsed layout"*.
+`EC-18` was verified _"live on the real W-08 recipe from a collapsed layout"_.
 That is the whole story: with the panel COLLAPSED its title bar is on screen and
 says "Background", so the tie-breaks `EC-18` added had something right to pick.
 With the panel **OPEN** the pane draws its name nowhere at all — measured live,
@@ -3640,7 +3771,7 @@ Three changes, in order of how much they carry:
 2. **The matcher reads the parent path** (`domMatch.mjs`). `parseNeedle` splits
    `Background > Videos` into a scope and a target and treats the scope as a
    requirement; a trailing kind noun (`panel`, `tab`, `box`) is dropped rather
-   than spent on a failed match, and a *region* noun additionally says the words
+   than spent on a failed match, and a _region_ noun additionally says the words
    in front of it name a place, not a press. `containerPathOf` walks at most 24
    ancestors for at most 4 names, and only for elements that already matched.
    `pathTier` lets the panel supply words the label lacks (`Background Videos`)
@@ -3654,8 +3785,8 @@ Three changes, in order of how much they carry:
    panel bar, which is the half of the step not done yet.
 
 Verified live in both states: open → the **Videos** tab inside the Background
-panel, hint *"The ringed control is in the Background panel, at the middle left
-of this window"*; `owa_find_ui "Background"` now answers with the panel first
+panel, hint _"The ringed control is in the Background panel, at the middle left
+of this window"_; `owa_find_ui "Background"` now answers with the panel first
 where it used to answer with the transition button. 9 tests added.
 
 Cost: +97 tokens/round (~8686 → ~8783) for the `Panel > Control` syntax in three
@@ -3665,7 +3796,7 @@ tool descriptions. Tool count unchanged at 42.
 
 **Reported from the app with a screenshot.** The card opens bottom right and the
 ring lands wherever the control is, so a step pointing at anything in that corner
-was a card reading *"the ringed control"* with the ring underneath it. The
+was a card reading _"the ringed control"_ with the ring underneath it. The
 frosted glass was not enough: a control read through an 18px blur is not a
 control you can find.
 
@@ -3739,7 +3870,7 @@ chatbot window.
 
 Verified live, both by the tool and through the real window: **Show me step by
 step** pressed in the chat → window minimised, presenter foreground, card
-reading *Look up and present a Bible verse — step 1 of 6* ringing **Bible
+reading _Look up and present a Bible verse — step 1 of 6_ ringing **Bible
 Lookup**; the card's **✕** → window back on top. Plus 4 unit tests on
 `setGuideRunning`. CB-09 extended, W-42 step 12 extended, README and
 `.claude/CLAUDE.md` updated.
@@ -3885,8 +4016,8 @@ its own English text — and on a hand-written twin coming back.
 retrieval rather than by reading the answer. The user asked the presenter's own
 starter chip **"Is any screen showing right now?"**, got a correct answer about
 the mini screen and `F5`, pressed **Do it for me**, and was walked through
-**W-20 — Show the keys you press (Keyboard Screencast)**, step 2 of 8: *"In the
-panel's title bar, click the keyboard button (`K`)…"*.
+**W-20 — Show the keys you press (Keyboard Screencast)**, step 2 of 8: _"In the
+panel's title bar, click the keyboard button (`K`)…"_.
 
 The search behind it:
 
@@ -3908,8 +4039,8 @@ song -> songselect x12   some -> something x11     copy -> copyright x7
 screen -> screencast x6  drop -> dropdown x5       stop -> stopwatch x4
 ```
 
-So "How do I **copy** an answer?" ranked *See who published a Bible translation
-(and its **copyright**)* first, and W-20 was hijacking three separate questions
+So "How do I **copy** an answer?" ranked _See who published a Bible translation
+(and its **copyright**)_ first, and W-20 was hijacking three separate questions
 about screens.
 
 **Shipped.** The tail is capped at three characters — every inflection this
@@ -3921,8 +4052,8 @@ matches, and a wrong page is the more expensive of the two mistakes.
 **Also shipped, from the same measurement.** Coverage is now weighted by how
 much each word SETTLES rather than by how many words matched. Counting words
 read "How do I move to the next slide?" as a three-word question, and the page
-that answers it — W-03, whose step 3 is *"step through slides … Arrow keys /
-PageUp / PageDown"* — carries only "slide": one of three, squared, is a 0.11
+that answers it — W-03, whose step 3 is _"step through slides … Arrow keys /
+PageUp / PageDown"_ — carries only "slide": one of three, squared, is a 0.11
 multiplier, so it scored 7 while a presenting-flow page saying "move", "next"
 and "slide" in passing scored 27. The inverse frequencies the score already
 computes build the ratio for free, and the square comes off — the weighting is
@@ -3933,16 +4064,16 @@ knowledge bundle — the one with EC-49's restored page in it — so the ranking
 change is not credited with the page restoration (on the older bundle the
 baseline is 135):
 
-| Set | top-1 | top-3 | not in top-5 |
-| --- | --- | --- | --- |
-| The 236 corpus questions, each labelled with its own recipe | 136 (58%) → **140 (59%)** | 179 (76%) → **186 (79%)** | 38 (16%) → **37 (16%)** |
-| 45 held-out volunteer paraphrases (written from recipe titles only) | 21 (47%) → **23 (51%)** | 31 (69%) → **32 (71%)** | 11 → 11 |
+| Set                                                                 | top-1                     | top-3                     | not in top-5            |
+| ------------------------------------------------------------------- | ------------------------- | ------------------------- | ----------------------- |
+| The 236 corpus questions, each labelled with its own recipe         | 136 (58%) → **140 (59%)** | 179 (76%) → **186 (79%)** | 38 (16%) → **37 (16%)** |
+| 45 held-out volunteer paraphrases (written from recipe titles only) | 21 (47%) → **23 (51%)**   | 31 (69%) → **32 (71%)**   | 11 → 11                 |
 
 Per-query: **26 top-1 answers changed, 9 now right that were wrong, 3 now wrong
 that were right** (two of those three are defensible — "What do the reset
 buttons in Settings do?" moved from W-16 to W-31, which is where the reset
 buttons are). The aggregate is deliberately not the headline: this fix is about
-a class of *catastrophic* misses, where the winning page is from another subject
+a class of _catastrophic_ misses, where the winning page is from another subject
 entirely, and three of the nine fixed are the reported one —
 `show screen`, `how do i turn off the screen` and `How do I clear everything off
 the screen at once?` all left W-20 for W-10.
@@ -3963,7 +4094,7 @@ so `owa_guide_start`'s `manualId`, carried the model's first guess.
 
 That is why an answer written from W-10 and `owa_list_screens` offered an
 eight-step walkthrough of the keyboard screencast: `runBotAction` starts the
-guide with those args *before* the model is asked anything.
+guide with those args _before_ the model is asked anything.
 
 **Shipped.** Two signals, kept apart because they are not worth the same:
 
@@ -3981,7 +4112,7 @@ without a live MCP host — seven tests in `llmBotHelpers.test.ts`.
 
 ---
 
-**Verified live 2026-09-01 on GPT-5, in the real window, on the reported question itself.** The presenter's starter chip "Is any screen showing right now?" now answers *"No. No presentation screens are showing right now."* with the replies **Help me show it / Which screen should I use? / No thanks** and **no walkthrough buttons at all** -- the model answered from live state and opened no manual page, so there is no recipe to walk. Pressing **Help me show it** reproduces the reported answer word for word (*"Click **Toggle showing screen [F5]** in the Mini Screen header. Or press **F5**"*) and still carries no walkthrough of anything else. The useful case is untouched: "How do I put a Bible verse on the screen?" answers in five steps and DOES offer **Show me step by step** / **Do it for me**, and pressing it starts `title: "Look up and present a Bible verse"`, step 1 of 6, `find: "Bible Lookup"`, `isTargetFound: true` -- the right recipe, ringing the right control. Note the app's own MCP host caches its ESM graph for the life of the process, so the retrieval half of this was verified through a freshly spawned `bin.mjs` over stdio (`owa_help_search "show screen"` -> `W-10, W-31, W-18`, W-20 gone from the top three) and reaches the running app only on its next restart.
+**Verified live 2026-09-01 on GPT-5, in the real window, on the reported question itself.** The presenter's starter chip "Is any screen showing right now?" now answers _"No. No presentation screens are showing right now."_ with the replies **Help me show it / Which screen should I use? / No thanks** and **no walkthrough buttons at all** -- the model answered from live state and opened no manual page, so there is no recipe to walk. Pressing **Help me show it** reproduces the reported answer word for word (_"Click **Toggle showing screen [F5]** in the Mini Screen header. Or press **F5**"_) and still carries no walkthrough of anything else. The useful case is untouched: "How do I put a Bible verse on the screen?" answers in five steps and DOES offer **Show me step by step** / **Do it for me**, and pressing it starts `title: "Look up and present a Bible verse"`, step 1 of 6, `find: "Bible Lookup"`, `isTargetFound: true` -- the right recipe, ringing the right control. Note the app's own MCP host caches its ESM graph for the life of the process, so the retrieval half of this was verified through a freshly spawned `bin.mjs` over stdio (`owa_help_search "show screen"` -> `W-10, W-31, W-18`, W-20 gone from the top three) and reaches the running app only on its next restart.
 
 ---
 
@@ -4007,7 +4138,7 @@ manual regenerates to 43 workflows (was 42), W-01 gets its own `verify` rows
 back, and the knowledge bundle carries 44 manual documents.
 
 The guard is the real deliverable: `questions.test.mjs` already asserted it
-"points every recipe at a real manual id" while only checking the *shape*
+"points every recipe at a real manual id" while only checking the _shape_
 `/^W-\d{2}[a-z]?$/` — which `W-01b` passed for months. A second test now reads
 the ids off `docs/manual-sources/**` and fails on a recipe with no page. Shape
 is not existence.
@@ -4016,11 +4147,11 @@ is not existence.
 
 ## EC-51 · A question could only ever be a sentence of English — `done` 2026-09-02
 
-**Asked for from the app**, with a screenshot of the ask box circled: *"I want to
+**Asked for from the app**, with a screenshot of the ask box circled: _"I want to
 be able to attach files (especially image), paste image from clipboard, inspect
-dom element to attach, attach screenshot ..."* — then widened twice mid-request:
-*"for something unclear the ai should ask for more input from user"* and *"during
-waiting for api response user should able to add more input"*.
+dom element to attach, attach screenshot ..."_ — then widened twice mid-request:
+_"for something unclear the ai should ask for more input from user"_ and _"during
+waiting for api response user should able to add more input"_.
 
 The box was an `<input type="text">` with no paste, drop or attach handler
 anywhere, so everything the assistant knew it had to go and fetch for itself. For
@@ -4058,14 +4189,14 @@ Four decisions worth not re-deriving:
 - **A blind model is refused before the call, not after.** Sending an image to a
   text-only model is a 400, which `describeLlmError` reads as an unreachable
   service and would tell a volunteer their internet is down. `checkCanSeeImages`
-  is an allowlist per provider (not a flag per model — one chosen through *More
-  models…* has no entry to carry a flag) and the window offers one that can see,
+  is an allowlist per provider (not a flag per model — one chosen through _More
+  models…_ has no entry to carry a flag) and the window offers one that can see,
   in a press.
 
-**Asked for while it was being built, and shipped with it**: *"as a user I want
+**Asked for while it was being built, and shipped with it**: _"as a user I want
 to see where the element is. click the attached selector should highligh the
-elelement"* and *"click on attached file/image should see preview for image or
-reveal in file location"*. Every chip is pressable, and what it shows depends on
+elelement"_ and _"click on attached file/image should see preview for image or
+reveal in file location"_. Every chip is pressable, and what it shows depends on
 what it is -- a pointed-at control is RUNG where it lives by its stored selector
 (`owa_highlight_selector`, a third client-only tool: by the words would be a
 guess, and half the labels in this app sit on more than one control), a picture
@@ -4266,12 +4397,12 @@ not ranking: the user says "next slide", the manual says "step through slides";
 "turn it off" vs "clear"; "put a picture on a slide" vs "drag from the Background
 panel". Three things were tried and measured this run, and none of them closes it:
 
-| Change | top-1 on the 45 held-out paraphrases |
-| --- | --- |
-| baseline | 47% |
-| IDF-weighted coverage + the prefix cap (shipped) | 51% |
-| routing through the 236-question corpus with `matchQuestions` instead | 51% |
-| reciprocal-rank fusion of both | 56%, and top-3 *worse* |
+| Change                                                                | top-1 on the 45 held-out paraphrases |
+| --------------------------------------------------------------------- | ------------------------------------ |
+| baseline                                                              | 47%                                  |
+| IDF-weighted coverage + the prefix cap (shipped)                      | 51%                                  |
+| routing through the 236-question corpus with `matchQuestions` instead | 51%                                  |
+| reciprocal-rank fusion of both                                        | 56%, and top-3 _worse_               |
 
 Fusion is the only one that moved it much, and it costs a second ranking pass on
 every search to buy 5 points while making top-3 worse — not worth shipping on
@@ -4346,14 +4477,14 @@ compressing four clauses that were justification or already said elsewhere.
 Three things live verification forced, none of which unit tests could have found:
 
 - **The marker does not arrive on its own line.** First live run, GPT-5 ended an
-  answer *"Want me to keep stepping you through on screen? OPTIONS: Yes, walk me
-  through it | …"* — one sentence, marker and all — and a line-anchored parser
+  answer _"Want me to keep stepping you through on screen? OPTIONS: Yes, walk me
+  through it | …"_ — one sentence, marker and all — and a line-anchored parser
   printed the whole frame at the user. The line is CUT at the marker now, and the
   prompt says "on a line of its OWN". The strip is unconditional: a malformed
   frame still disappears.
-- **Two follow-ups from one topic are one option.** The corpus offered *"How do
-  I add a web page to the Background panel?"* and *"How do I show a web page as
-  the background?"* side by side. Spread on `resources.recipe` as well as
+- **Two follow-ups from one topic are one option.** The corpus offered _"How do
+  I add a web page to the Background panel?"_ and _"How do I show a web page as
+  the background?"_ side by side. Spread on `resources.recipe` as well as
   `section`.
 - **The two rows add up.** An offline manual answer carries four buttons of its
   own; two more under them made six under one paragraph. `MAX_BUTTON_COUNT` 5 is
@@ -4411,7 +4542,7 @@ that it still matches the app. A renamed control, a reworded `W-xx`, a removed
 feature — each silently leaves a suggestion the assistant will offer and then
 fail to answer.
 
-Written down in `.claude/CLAUDE.md` §*Agent access*, in the memory
+Written down in `.claude/CLAUDE.md` §_Agent access_, in the memory
 `question-corpus-maintenance`, and in the package README; `questions.test.mjs`
 catches the structural half (no recipe and no tool, duplicate id, malformed
 recipe id, a demoted starter). What it cannot catch is a `find`/`menu`/`shortcut`
@@ -4431,7 +4562,7 @@ a bible view (Copy, Split horizontal, Split vertical, Save bible item, Save
 and show, Export to MS Word). The app paints them only while the mouse is
 over the bible view.
 
-The matcher asked one question about being on screen — *does it have a box?*
+The matcher asked one question about being on screen — _does it have a box?_
 — and these have one the whole time: they are hidden with `visibility` (plus
 an `opacity` fade) on an ancestor, never with `display`. So:
 
@@ -4484,15 +4615,15 @@ the only one serving fresh tool code (`mcp-tool-edit-two-processes`).
 with the ring on Copy; six seconds later `visibilityOf` is `hidden` again
 with zero stamps, zero injected styles and zero ring markers left behind. A
 one-step guide for "Save bible item" rings a painted icon under the hint
-*"This one only shows while the mouse is over it, so I am holding it up for
-you."* `owa_click {find: "Copy"}` presses it with it on screen.
+_"This one only shows while the mouse is over it, so I am holding it up for
+you."_ `owa_click {find: "Copy"}` presses it with it on screen.
 
 Cost: **+74 tokens/round** (~8783 → ~8857) for the two sentences telling the
 model what `showsOnHover` means. Tool count unchanged at 42. 10 tests added.
 
 **Found while verifying, and worth keeping:** a caller must not test "is it
 hidden?" before asking for a reveal. The guide card redraws its step, and on
-the second draw the control was visible *because the card was holding it* —
+the second draw the control was visible _because the card was holding it_ —
 so the card dropped the one sentence explaining why. `revealHidden` now
 answers "is this being held", true for a hold it just made and true for one
 already up. Pinned by a test.
@@ -4558,7 +4689,7 @@ like help to show a screen?" → "yes" made the model SHOW the screen — verifi
 live, `showingScreenIds` went `[]` → `[0]`. The prompt's rule is that anything
 changing what the audience sees is "offered, never done unasked", and this was
 offered and accepted, so it is inside the letter of the rule. It is not clearly
-inside its intent: the user agreed to **help to show**, not to *show it now*,
+inside its intent: the user agreed to **help to show**, not to _show it now_,
 and on a Sunday morning the difference is a congregation seeing something
 before the service starts.
 
@@ -4578,12 +4709,12 @@ the model's side: confirm the ACTION, not the offer of help.
 Measured this run over all 39 manual recipes with steps (251 numbered steps).
 After EC-15 pressed the keystroke steps, what is left breaks down as:
 
-| Why the step can't be acted on | Steps |
-| --- | --- |
-| Bold phrase has no capital (`**step-by-step picker**`, `**version**`) | 34 |
-| Step bolds nothing at all | 24 |
-| Bold phrase is an action verb (`**Double-click**`) | 8 |
-| Bold phrase is one character (`**✕**`) | 2 |
+| Why the step can't be acted on                                        | Steps |
+| --------------------------------------------------------------------- | ----- |
+| Bold phrase has no capital (`**step-by-step picker**`, `**version**`) | 34    |
+| Step bolds nothing at all                                             | 24    |
+| Bold phrase is an action verb (`**Double-click**`)                    | 8     |
+| Bold phrase is one character (`**✕**`)                                | 2     |
 
 The 34 is a single rule: `checkIsControlLabel` requires a capital, because bold
 prose ("**not**", "**version**") would otherwise match real controls and ring
@@ -4596,7 +4727,6 @@ query per candidate at start time, so measure it before shipping it.
 The 8 action verbs are a different shape — `**Double-click**` says what to DO,
 not what to do it to, and the guide has no way to express a double-click at all.
 Worth a `action: "doubleClick"` only if a recipe actually needs it.
-
 
 **Narrowed 2026-09-08**: the four bullet-written recipes now start (`EC-106`), a bold up to 120 characters is read (`EC-107`), and a step that only describes what to notice is a look-step with a Next button rather than a failed press (`EC-105`). What is left is `EC-109`.
 
@@ -4612,11 +4742,10 @@ it. A cheap enforcement: have the card itself refuse a known screen-clearing
 keystroke while a screen is actually showing (`owa_list_screens` already knows),
 and say why. Do not add a blanket confirm — it would land on every step.
 
-
 ## EC-38 · A stuck walkthrough step could only apologise — `done` 2026-09-01
 
-**Reported from the app with a screenshot.** W-06 step 3 — *"The verse renders
-in the preview panel. **Double-click** it to present."* — answered:
+**Reported from the app with a screenshot.** W-06 step 3 — _"The verse renders
+in the preview panel. **Double-click** it to present."_ — answered:
 
 > I could not do that one for you (nothing on screen to act on) - do it
 > yourself, then press Skip.
@@ -4672,8 +4801,8 @@ Four things verification itself forced, all shipped with it:
 
 Verified live end to end on the reported step: 6 runs of 6 usable, zero leaks, median 13s — reached in four measured corrections, not one (see the run detail json). One of them
 noticed the Bible Lookup popup had been closed since the guide started and
-answered *"Click Bible Lookup at the top to open it again, then find your
-verse."* — it read the window, not the recipe. With the chat window closed it
+answered _"Click Bible Lookup at the top to open it again, then find your
+verse."_ — it read the window, not the recipe. With the chat window closed it
 answers `unavailable` at once and the plain instruction comes back; a 30s
 ceiling covers an outside agent with nothing listening. Once per step per run.
 Cost: **no new tool, 0 extra tokens/round** — the card talks over the app's own
@@ -4693,8 +4822,8 @@ Two more, found only by measuring and shipped with it:
   every rescue threw and `handleAsking` did what it does for a human question —
   asked the offline bot. That bot searches the manual, so handed a
   machine-written rescue prompt it matched the words "nothing on screen" and
-  answered *"No presentation screen is showing right now. This machine has 1
-  display(s) available to present on."* — identically, 10 times out of 10, in
+  answered _"No presentation screen is showing right now. This machine has 1
+  display(s) available to present on."_ — identically, 10 times out of 10, in
   2 seconds, drawn on the card as the answer. It now reports `unavailable`
   instead, and the card's own plain instruction stands. An assistant that
   degrades must degrade toward silence, not toward confidence.
@@ -4709,10 +4838,10 @@ could not be scored: the key is out of credit.
 
 ---
 
-## EC-41 · "press" arrived as "pre  " twice, and nothing explains it — `idea`, low
+## EC-41 · "press" arrived as "pre " twice, and nothing explains it — `idea`, low
 
-Two answers in one 12-run batch came back with the word *press* broken —
-"pre  Enter", "Nothing to pre  on this step" — and it did not recur in the 18
+Two answers in one 12-run batch came back with the word _press_ broken —
+"pre Enter", "Nothing to pre on this step" — and it did not recur in the 18
 runs after. It is provably not any transform in the pipeline:
 `toGuideRescueAnswer` leaves "press" alone (tested), and the card collapses runs
 of whitespace, so a double space reaching the card at all is anomalous by
@@ -4736,20 +4865,19 @@ page that should have answered it?). That last part is what would actually
 measure whether the knowledge corpus is causing failures, rather than assuming
 either way.
 
-
 **Done 2026-09-08**: `scripts/demo-failure-rate.mjs` presses Do it through every step of every recipe in the window it is filed under, paced under the firewall's 25-a-minute budget, closes the popup, menu or panel one recipe leaves in front of the next, skips a destructive label, and grades each press by what the card reported (done / done-more / closed / could-not with the reason and near misses / skipped). First measurement, card only: 224 presses, 92 done, 124 refused (55%) — and a spot check of the 92 found the wrong control pressed in at least ten of them (`EC-104`).
 ---
 
 ## EC-39 · The chat window italicises `snake_case` — `done` 2026-09-08
 
 Found while reading the first live transcript: `owa_find_ui` rendered as
-*owa_find_ui* with the underscores eaten, because `renderRichText` treats `_`
+_owa_find_ui_ with the underscores eaten, because `renderRichText` treats `_`
 as emphasis the way markdown does. It only showed because the run was printing
 a prompt it should not have been (fixed in `EC-38`), so nothing user-facing
 depends on it today — but a setting name, a file name or a tool name in an
 answer would be mangled the same way, silently. Underscore emphasis is not
 worth having in a window whose subject matter is full of identifiers; asterisks
-alone would do. **Done 2026-09-08**: it reached the user after all — the starter chip’s own address, `amazing_grace_how_sweet_the_sound`, was drawn as *amazing* grace *how* sweet *the* sound in the YOU message. Underscore emphasis now needs a word edge on both sides (`renderRichText`), so a name with underscores inside it is left alone and `_this_` still slants.
+alone would do. **Done 2026-09-08**: it reached the user after all — the starter chip’s own address, `amazing_grace_how_sweet_the_sound`, was drawn as _amazing_ grace _how_ sweet _the_ sound in the YOU message. Underscore emphasis now needs a word edge on both sides (`renderRichText`), so a name with underscores inside it is left alone and `_this_` still slants.
 
 ---
 
@@ -4757,7 +4885,7 @@ alone would do. **Done 2026-09-08**: it reached the user after all — the start
 
 `EC-38` fires from `act()`, which is the **Do it** press. A user in the ordinary
 **Show me step by step** mode gets no press at all: when the step's control is
-not on screen the card says *"Do this step in the window behind me"* and simply
+not on screen the card says _"Do this step in the window behind me"_ and simply
 waits, with nobody asked and nothing to wait for. That is the same dead end
 without the button, and it is the mode a volunteer who declined the demo is in.
 
@@ -4872,8 +5000,8 @@ assistant is offered from and cannot describe.
 
 - **2026-08-31 — EC-15 · "Do it" presses keyboard shortcuts.** Reported from
   the app with a screenshot: W-06 step 4, "Close the dialog with the red ✕
-  button or **Ctrl+Q**", answered *"I could not do that one for you (nothing on
-  screen to act on) - do it yourself, then press Skip."* Measured before
+  button or **Ctrl+Q**", answered _"I could not do that one for you (nothing on
+  screen to act on) - do it yourself, then press Skip."_ Measured before
   building: **82 of the manual's 251 steps (33%)** could never be demoed, and
   the largest rescuable slice of those named a keystroke. Now 69 (27%);
   W-06 itself goes from 2 of 6 steps actionable to 5 of 6. Notes for the next
@@ -4905,15 +5033,15 @@ assistant is offered from and cannot describe.
   - `owa_guide_status` grew `canActOnStep` and `press` because a keystroke step
     reported `isTargetFound: false` with no label — indistinguishable from a
     broken guide, which invites the model to "fix" one that was working.
-  Verified live end to end (the real W-06 recipe, demo mode, step 4, dialog
-  open → `{done: true, did: "pressed", keys: "Ctrl+Q"}` → dialog closed).
-  CB-11 rewritten, README tool table extended, 7 tests added.
+    Verified live end to end (the real W-06 recipe, demo mode, step 4, dialog
+    open → `{done: true, did: "pressed", keys: "Ctrl+Q"}` → dialog closed).
+    CB-11 rewritten, README tool table extended, 7 tests added.
 
 - **2026-08-31 — EC-10 · the chat tab menu, the lock, and the two sweeps.**
   Asked for as "an option to clear all chats" and shaped, over the same session,
   into a `⋮` on the left of every tab (right-click does the same) opening
-  *Rename this chat* / *Lock this chat* / *Close this chat* / *Close other
-  chats…* / *Clear all chats…*. Notes worth keeping for the next change here:
+  _Rename this chat_ / _Lock this chat_ / _Close this chat_ / _Close other
+  chats…_ / _Clear all chats…_. Notes worth keeping for the next change here:
   - The menu CANNOT live inside `.chat-tabs` — that box scrolls, so a menu in it
     is clipped at its edges. It is `position: fixed`, width pinned to a constant
     (there is nothing to measure before the first frame), clamped to the window,
@@ -4929,15 +5057,15 @@ assistant is offered from and cannot describe.
   - `isLocked` is the protection both sweeps step around, and
     `handleClosingSession` refuses it too: the `×` being absent is a UI fact,
     not a guarantee.
-  Verified live (menu on a plain and a locked tab, both confirmations, a solo
-  and a clear that each left the locked tab standing, `isLocked` read back off
-  disk). CB-15 added, W-42 steps 3 and 4 added, `.claude/CLAUDE.md` updated.
+    Verified live (menu on a plain and a locked tab, both confirmations, a solo
+    and a clear that each left the locked tab standing, `isLocked` read back off
+    disk). CB-15 added, W-42 steps 3 and 4 added, `.claude/CLAUDE.md` updated.
 
 - **EC-25 (OPEN, found 2026-09-01, both providers) — "Which API key is used for
   what?" is answered by INVENTION, confidently, on Claude-shaped and
-  OpenAI-shaped models alike.** Verbatim, Kimi K3: *"there is one optional API
+  OpenAI-shaped models alike.** Verbatim, Kimi K3: _"there is one optional API
   key ... **YouTube Data API key** — makes the YouTube panel in the Background
-  bar work ... Add it in **Settings → API**."* GPT-5 on the same question
+  bar work ... Add it in **Settings → API**."_ GPT-5 on the same question
   invents the same YouTube key plus a SongSelect one. **There is no
   Settings → API panel and no YouTube Data API key anywhere in this app.** The
   real answer is now painted on the screen the question is about — the
@@ -4995,17 +5123,17 @@ assistant is offered from and cannot describe.
     Chatbot / Bible Cross Reference, Kimi → Chatbot. The two hints this
     replaced were both WRONG — they omitted the chatbot, which both keys had
     been driving for a while.
-  Verified live on a real key: `kimi-k3` and `kimi-k2.6` each answered in
-  numbered steps with no internals leaked, **More models...** pulled
-  `kimi-k2.7-code` off the account, a bad model id fell back to the manual
-  reading *"Kimi could not answer"*, and Settings rendered in Khmer without
-  blanking. CB-06/08/12 rewritten, new CB-22, W-42 steps 10-11, `tran()` keys
-  added, question corpus given `kimi`/`moonshot` keywords.
-  **Not done:** Kimi is chatbot-only — Bible Cross Ref keeps its two custom
-  sources and Bible Audio stays OpenAI-only (the chips say so). The list price
-  for `kimi-k2.6` and `kimi-k2.7-code-highspeed` is left BLANK rather than
-  guessed: Moonshot publishes one only for K3, and third-party aggregators
-  disagree with each other. Fill them in if the console ever states them.
+    Verified live on a real key: `kimi-k3` and `kimi-k2.6` each answered in
+    numbered steps with no internals leaked, **More models...** pulled
+    `kimi-k2.7-code` off the account, a bad model id fell back to the manual
+    reading _"Kimi could not answer"_, and Settings rendered in Khmer without
+    blanking. CB-06/08/12 rewritten, new CB-22, W-42 steps 10-11, `tran()` keys
+    added, question corpus given `kimi`/`moonshot` keywords.
+    **Not done:** Kimi is chatbot-only — Bible Cross Ref keeps its two custom
+    sources and Bible Audio stays OpenAI-only (the chips say so). The list price
+    for `kimi-k2.6` and `kimi-k2.7-code-highspeed` is left BLANK rather than
+    guessed: Moonshot publishes one only for K3, and third-party aggregators
+    disagree with each other. Fill them in if the console ever states them.
 
 - **2026-08-31 — this skill.** `owa-enhance-chatbot` created: SKILL.md, the
   architecture / MCP-tools / verification references, this backlog, and
@@ -5039,8 +5167,8 @@ paid key, and the window says so rather than pretending.
 
 The warning **names the services and links to them** (`warningLinks`, built off
 `FREE_SERVICE_MAP` so the chatbot's disclosure and Settings' cannot drift
-apart), asked for by the user: *"add link of those free api website, so user can
-aware of providers"*. These are the only providers in the window the user has no
+apart), asked for by the user: _"add link of those free api website, so user can
+aware of providers"_. These are the only providers in the window the user has no
 account with and agreed nothing to, which makes them the ones whose terms they
 most need to be able to go and read. In Settings the links deliberately do NOT
 reuse `RenderOpenPageButtonComp` — it `tran()`s its label and title, and `tran()`
@@ -5067,7 +5195,7 @@ every provider: no real tool name contains `<`.
 
 `MAX_TOOL_ROUNDS` is 10, and the tool schemas are ~9 800 tokens per round. On a
 paid key that is money; on the free tier's ~500 000 tokens per 24h it is a
-sixth of the day. Measured: *"How do I add a song?"* ran all ten rounds, spent
+sixth of the day. Measured: _"How do I add a song?"_ ran all ten rounds, spent
 **78 941 prompt tokens over 104 seconds and produced no answer at all**.
 
 **Shipped.** `maxToolRounds` on the provider descriptor, **6** for the free one.
@@ -5100,7 +5228,7 @@ the `OPTIONS:` line.
 
 **Shipped.** `checkIsReadableReply` drops an option with **no Latin letter in it
 at all**. Deliberately not "contains non-Latin characters": button names in this
-app are translated, so *"Show me លុបព្រះគម្ពីរ"* is correct and must survive.
+app are translated, so _"Show me លុបព្រះគម្ពីរ"_ is correct and must survive.
 This window's standing lesson again — enforce, do not ask.
 
 ---

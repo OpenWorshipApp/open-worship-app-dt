@@ -1732,6 +1732,229 @@ const dictionary = {
     'Files changed:': 'Fichiers modifiés :',
     'The app reloads to show them.':
         "L'application se recharge pour les afficher.",
+    // --- Page-aware Tips of the Day and their deterministic walkthroughs.
+    'Tips of the Day': 'Astuces du jour',
+    'Tip of the Day': 'Astuce du jour',
+    'Presenter tip': 'Astuce Présentateur',
+    'Reader tip': 'Astuce Lecteur',
+    'Show it': 'Me montrer',
+    'Next tip': 'Astuce suivante',
+    'All tips': 'Toutes les astuces',
+    'All Presenter tips': 'Toutes les astuces du Présentateur',
+    'All Reader tips': 'Toutes les astuces du Lecteur',
+    'Back to tip': "Retour à l'astuce",
+    'Choose a tip to practise at your own pace.':
+        'Choisissez une astuce à pratiquer à votre rythme.',
+    "Don't show again": 'Ne plus afficher',
+    'Show Tips of the Day automatically':
+        'Afficher automatiquement les astuces du jour',
+    'Applies to the Presenter and Bible Reader on the next app launch.':
+        "S'applique au Présentateur et au Lecteur biblique au prochain démarrage de l'application.",
+    'Starting walkthrough…': 'Démarrage du guide…',
+    'Could not start this walkthrough.': 'Impossible de démarrer ce guide.',
+    'Look up a Bible passage': 'Rechercher un passage biblique',
+    'Open Bible Lookup without leaving the Presenter.':
+        'Ouvrez la recherche biblique sans quitter le Présentateur.',
+    'Show or hide the Document List':
+        'Afficher ou masquer la liste des documents',
+    'Toggle the panel that holds your slide documents.':
+        'Affichez ou masquez le panneau contenant vos diaporamas.',
+    'Show or hide the Presenting Flow List':
+        'Afficher ou masquer la liste des déroulés',
+    'Toggle the panel used to build and follow a service order.':
+        "Affichez ou masquez le panneau servant à préparer et suivre l'ordre du culte.",
+    'Show or hide Bibles and Bible Notes':
+        'Afficher ou masquer les Bibles et les notes bibliques',
+    'Toggle the panel for saved passages and notes.':
+        'Affichez ou masquez le panneau des passages et notes enregistrés.',
+    'Show or hide the Mini Screen': 'Afficher ou masquer le mini-écran',
+    'Toggle the panel that previews and controls audience screens.':
+        "Affichez ou masquez le panneau d'aperçu et de contrôle des écrans du public.",
+    'Give the Presenter more room': "Agrandir l'espace du Présentateur",
+    'Switch the Presenter between normal and full view.':
+        'Basculez le Présentateur entre la vue normale et la vue complète.',
+    'Make the words larger': 'Agrandir les mots',
+    'Open the hidden footer and raise Font Size.':
+        'Ouvrez le pied de page masqué et augmentez la taille de police.',
+    'Find words in the Bible': 'Rechercher des mots dans la Bible',
+    'Open Bible Find, then put the caret in its search box.':
+        'Ouvrez la recherche biblique, puis placez le curseur dans son champ de recherche.',
+    'Look up a Bible person or place':
+        'Rechercher une personne ou un lieu biblique',
+    'Open the names and locations lookup beside the passage.':
+        'Ouvrez la recherche de noms et de lieux à côté du passage.',
+    'Put two Bible versions side by side':
+        'Placer deux versions de la Bible côte à côte',
+    'Open the version picker for a second Bible column.':
+        'Ouvrez le sélecteur de version pour une deuxième colonne biblique.',
+    'Toggle distraction-free reading': 'Basculer la lecture sans distraction',
+    'Enter or leave the full reading view.':
+        'Entrez dans la vue de lecture complète ou quittez-la.',
+    'Toggle the side panel that keeps saved passages and notes.':
+        'Affichez ou masquez le panneau latéral des passages et notes enregistrés.',
+    'Search tips': 'Rechercher des astuces',
+    'No tips found': 'Aucune astuce trouvée',
+    'Getting started': 'Bien débuter',
+    'Reading and layout': 'Lecture et disposition',
+    'Notes and marks': 'Notes et annotations',
+    'Reader shortcuts': 'Outils du Lecteur',
+    'View menu': 'Menu Affichage',
+    'Study tools': "Outils d'étude",
+    'Make the words smaller': 'Réduire les mots',
+    'Open the hidden footer and lower Font Size.':
+        'Ouvrez le pied de page masqué et réduisez la taille de police.',
+    'Open John 3:16 with buttons': 'Ouvrir Jean 3:16 avec les boutons',
+    'Choose the book, chapter and verse without typing a reference.':
+        'Choisissez le livre, le chapitre et le verset sans saisir de référence.',
+    'Go back to the previous passage': 'Revenir au passage précédent',
+    'Use the passage history without typing the reference again.':
+        "Utilisez l'historique sans saisir à nouveau la référence.",
+    'Go forward to the next passage': 'Avancer au passage suivant',
+    'Move forward again after using passage history.':
+        "Avancez de nouveau après avoir utilisé l'historique.",
+    'Clear the reference box': 'Effacer le champ de référence',
+    "Show this Bible's book buttons and start a fresh lookup.":
+        'Affichez les boutons des livres et commencez une nouvelle recherche.',
+    'Change names and places language':
+        'Changer la langue des noms et des lieux',
+    'Open the language picker used by the people and places tools.':
+        'Ouvrez le sélecteur de langue des outils de personnes et de lieux.',
+    'Choose how to copy a passage': 'Choisir comment copier un passage',
+    'Open the Copy menu for the passage you are reading.':
+        'Ouvrez le menu Copier du passage que vous lisez.',
+    'Split the passage side by side': 'Partager le passage côte à côte',
+    'Make a second reading pane to the right.':
+        'Créez un second volet de lecture à droite.',
+    'Split the passage top and bottom': 'Partager le passage en haut et en bas',
+    'Make a second reading pane underneath.':
+        'Créez un second volet de lecture en dessous.',
+    'Save this passage in Bibles': 'Enregistrer ce passage dans Bibles',
+    'Keep the passage in your Bibles list for later.':
+        'Conservez le passage dans votre liste Bibles pour plus tard.',
+    'Present a passage from the Reader':
+        'Présenter un passage depuis le Lecteur',
+    'Double-click a verse to send it to selected screens; use F9 to clear it.':
+        "Double-cliquez un verset pour l'envoyer aux écrans choisis; utilisez F9 pour l'effacer.",
+    'Start automatic scrolling': 'Démarrer le défilement automatique',
+    'Let a long passage move down by itself.':
+        'Laissez un long passage défiler tout seul.',
+    'Jump back to the top': 'Revenir directement en haut',
+    'Return to the beginning of a long passage.':
+        "Revenez au début d'un long passage.",
+    'Toggle natural Bible line breaks':
+        'Basculer les sauts de ligne naturels de la Bible',
+    "Choose whether the passage follows the Bible's own line breaks.":
+        'Choisissez si le passage suit les sauts de ligne de la Bible.',
+    'Toggle model-based line breaks':
+        'Basculer les sauts de ligne selon le modèle',
+    'Choose whether supported Bibles use their formatting model.':
+        'Choisissez si les Bibles compatibles utilisent leur modèle de mise en forme.',
+    'Open cross references': 'Ouvrir les références croisées',
+    'See other verses connected to the passage you are reading.':
+        "Voyez d'autres versets liés au passage que vous lisez.",
+    'See people and places in this passage':
+        'Voir les personnes et les lieux de ce passage',
+    'Open the names and locations found in what you are reading.':
+        'Ouvrez les noms et lieux trouvés dans votre lecture.',
+    'Open passage resources': 'Ouvrir les ressources du passage',
+    'Show study resources for the passage beside the Bible.':
+        "Affichez les ressources d'étude du passage à côté de la Bible.",
+    'Search only selected Bible books':
+        'Rechercher seulement dans certains livres bibliques',
+    'Open the book filter used by Bible Find.':
+        'Ouvrez le filtre de livres utilisé par la recherche biblique.',
+    'Type a complete Bible reference': 'Saisir une référence biblique complète',
+    'Enter a reference such as John 3:16 and open it directly.':
+        'Saisissez une référence comme Jean 3:16 et ouvrez-la directement.',
+    'Use the reference box shortcuts':
+        'Utiliser les raccourcis du champ de référence',
+    'Tab completes a choice, Escape removes one part, and Ctrl+Escape clears all.':
+        'Tab complète un choix, Échap supprime une partie et Ctrl+Échap efface tout.',
+    'Reuse and arrange passage history':
+        "Réutiliser et organiser l'historique des passages",
+    'Open, split, drag, save, or remove references from the history row.':
+        "Ouvrez, partagez, faites glisser, enregistrez ou retirez les références de l'historique.",
+    'Change version and read Bible information':
+        'Changer de version et lire les informations bibliques',
+    'Choose a translation, then open its publisher, language, and copyright details.':
+        "Choisissez une traduction, puis consultez son éditeur, sa langue et ses droits d'auteur.",
+    'Choose one verse or a verse range':
+        'Choisir un verset ou une plage de versets',
+    'Use verse numbers to select a start, an end, or all verses in the chapter.':
+        'Utilisez les numéros pour choisir un début, une fin ou tout le chapitre.',
+    'Use dictionary and Word export':
+        "Utiliser le dictionnaire et l'export Word",
+    'Look up selected words in Wiki Dictionary or export a passage to Microsoft Word.':
+        'Recherchez les mots sélectionnés dans Wiki Dictionary ou exportez le passage vers Microsoft Word.',
+    'Use Bible audio and AI reading controls':
+        'Utiliser les commandes audio et de lecture IA',
+    'Enable automatic AI audio, play verse audio, repeat it, or refresh the source.':
+        "Activez l'audio IA automatique, lisez un verset, répétez-le ou actualisez la source.",
+    'Edit and arrange reading panes':
+        'Modifier et organiser les volets de lecture',
+    'Rename, recolor, drag, split, replace, or close the passages in your workspace.':
+        'Renommez, recolorez, faites glisser, partagez, remplacez ou fermez les passages.',
+    'Master Bible Find results':
+        'Maîtriser les résultats de recherche biblique',
+    'Change version, use suggestions and book filters, page through hits, then open or save one.':
+        'Changez de version, utilisez les suggestions et filtres, parcourez les résultats, puis ouvrez-en ou enregistrez-en un.',
+    'Explore people and place details':
+        'Explorer les détails des personnes et des lieux',
+    'Filter records, follow references, open verses or maps, copy details, and change data language.':
+        'Filtrez les fiches, suivez les références, ouvrez versets ou cartes, copiez les détails et changez la langue des données.',
+    'Explore the connection graph': 'Explorer le graphe de relations',
+    'Open a graph from a record, expand relations, filter, drag, pan, zoom, and find connections.':
+        'Ouvrez un graphe depuis une fiche, développez et filtrez les relations, déplacez, zoomez et trouvez des liens.',
+    'Organize and share a connection graph':
+        'Organiser et partager un graphe de relations',
+    'Re-layout, undo, set a centre or root, then copy, save, print, or open the drawn view.':
+        'Réorganisez, annulez, définissez un centre ou une racine, puis copiez, enregistrez, imprimez ou ouvrez le dessin.',
+    'Organize passage resources by filename':
+        'Organiser les ressources par nom de fichier',
+    'Name files by book and chapter so they appear beside the right passage.':
+        "Nommez les fichiers par livre et chapitre afin qu'ils apparaissent près du bon passage.",
+    'Build and use your Resources library':
+        'Créer et utiliser votre bibliothèque de ressources',
+    'Add or drop folders, search and reload them, open files, add files, or copy them into app data.':
+        "Ajoutez ou déposez des dossiers, recherchez et actualisez-les, ouvrez ou ajoutez des fichiers, ou copiez-les dans les données de l'application.",
+    'Highlight and comment on Bible text':
+        'Surligner et commenter le texte biblique',
+    'Select words in one verse to highlight, recolor, remove marks, or attach a comment.':
+        'Sélectionnez des mots dans un verset pour les surligner, recolorer, effacer ou commenter.',
+    'Work with marked verses in Bible Notes':
+        'Utiliser les versets annotés dans Notes bibliques',
+    'Open, recolor, edit, move, drag, add to Bibles, or delete a marked verse.':
+        'Ouvrez, recolorez, modifiez, déplacez, faites glisser, ajoutez à Bibles ou supprimez un verset annoté.',
+    'Use the Reader header tools': "Utiliser les outils d'en-tête du Lecteur",
+    'Return to Presenter or open Settings, App Assistant, AI Chat, and Help.':
+        "Revenez au Présentateur ou ouvrez Paramètres, Assistant, Chat IA et l'aide.",
+    'Reload or force-reload the Reader':
+        'Recharger ou forcer le rechargement du Lecteur',
+    'Use Reload for a normal refresh; use Force Reload only to bypass cached app files.':
+        'Utilisez Recharger normalement; utilisez Forcer le rechargement seulement pour ignorer le cache.',
+    'Restart the whole app with Relaunch':
+        "Redémarrer toute l'application avec Relancer",
+    'Use View > Relaunch when every app window needs a clean restart; the app asks first.':
+        "Utilisez Affichage > Relancer pour redémarrer toutes les fenêtres; l'application demande confirmation.",
+    'Open Developer Tools for diagnostics':
+        'Ouvrir les outils de développement pour le diagnostic',
+    'Use View > Toggle Developer Tools only when troubleshooting or collecting technical details.':
+        'Utilisez Affichage > Outils de développement uniquement pour le dépannage ou les détails techniques.',
+    'Zoom the whole Reader interface': "Agrandir toute l'interface du Lecteur",
+    'Use Actual Size, Zoom In, or Zoom Out for the whole window; Font Size changes Bible text only.':
+        'Utilisez Taille réelle, Zoom avant ou Zoom arrière pour toute la fenêtre; Taille de police ne change que le texte biblique.',
+    'Make the whole app window full screen':
+        "Mettre toute la fenêtre de l'application en plein écran",
+    'Use View > Toggle Full Screen or F11; the passage Full button is the reading-only alternative.':
+        'Utilisez Affichage > Plein écran ou F11; le bouton Plein du passage agrandit seulement la lecture.',
+    'Show or hide Reader panels from View':
+        'Afficher ou masquer les panneaux depuis Affichage',
+    'Use View > Widgets to check or uncheck Bible and Notes, Bibles, Bible Notes, Bible Lookup, and study panes.':
+        "Utilisez Affichage > Widgets pour afficher ou masquer Bible et notes, Bibles, Notes bibliques, Recherche biblique et les volets d'étude.",
+    'Restore every Reader panel layout':
+        'Restaurer la disposition de tous les panneaux',
+    'Use View > Reset Widgets Size to restore defaults and reopen collapsed panels after confirmation.':
+        'Utilisez Affichage > Réinitialiser la taille des widgets pour restaurer les valeurs par défaut et rouvrir les panneaux après confirmation.',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

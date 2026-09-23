@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [RD-10, RD-49, RD-50, RD-51, RD-52]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-21"
+workflowsVersion: "2026-09-23"
 ---
 # W-13 — Cross references
 
@@ -47,5 +47,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-10` · `RD-49` · `RD-50` · `RD-51` · `RD-52`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-21).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
 :::

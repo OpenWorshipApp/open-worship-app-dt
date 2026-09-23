@@ -21,6 +21,31 @@
     backdrop-filter: blur(2px);
     animation: app-toast-sliding-in 150ms ease-out;
   }
+
+  > .app-daily-tip {
+    width: min(390px, calc(100vw - 20px));
+
+    .app-daily-tip-detail {
+      margin-bottom: 12px;
+    }
+
+    .app-daily-tip-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .app-daily-tip-list {
+      max-height: min(55vh, 430px);
+      overflow-x: hidden;
+      overflow-y: auto;
+
+      .list-group-item {
+        white-space: normal;
+        text-align: left;
+      }
+    }
+  }
 }
 
 @keyframes app-toast-sliding-in {

@@ -27,7 +27,12 @@ import { toBotFocus } from '../../tools/owa-devtools-mcp/botFocus.mjs';
 
 import type { BotActionType } from './helpBotHelpers';
 import type { LlmProviderType } from './llmBotHelpers';
-import type { AttachRequestType, ShowRefType } from './quickReplyHelpers';
+import {
+    checkIsUsableShowControlName,
+    parseAnswerFrames,
+    type AttachRequestType,
+    type ShowRefType,
+} from './quickReplyHelpers';
 // A value import, like `botFocus.mjs` above, and safe for the same reason:
 // the usage module imports nothing but a type of its own, so it costs the
 // mount path arithmetic and a price table.
@@ -318,6 +323,15 @@ function toValidUsageField(raw: unknown) {
     return usage === null ? {} : { usage };
 }
 
+// Old conversations are data, not trusted UI. Earlier model answers could
+// persist their private OPTIONS / NEEDS / SHOWS frames before the parser grew
+// strict enough to remove every malformed variant. Clean bot text again while
+// loading so fixing the assistant also fixes the dead chips and raw machinery
+// already visible in a senior user's saved conversation.
+function toCleanStoredBotText(text: string) {
+    return parseAnswerFrames(text).text;
+}
+
 function toValidMessage(raw: any): ChatMessageType | null {
     if (
         typeof raw?.text !== 'string' ||
@@ -328,7 +342,7 @@ function toValidMessage(raw: any): ChatMessageType | null {
     return {
         id: typeof raw.id === 'number' ? raw.id : 0,
         author: raw.author,
-        text: raw.text,
+        text: raw.author === 'bot' ? toCleanStoredBotText(raw.text) : raw.text,
         ...(typeof raw.note === 'string' ? { note: raw.note } : {}),
         ...(Array.isArray(raw.actions) ? { actions: raw.actions } : {}),
         ...toValidReplies(raw.replies),
@@ -343,7 +357,10 @@ function toValidMessage(raw: any): ChatMessageType | null {
                               typeof one?.name === 'string' &&
                               (one.kind === 'control' ||
                                   one.kind === 'selector' ||
-                                  one.kind === 'file')
+                                  one.kind === 'file') &&
+                              (one.kind !== 'control' ||
+                                  (checkIsUsableShowControlName(one.value) &&
+                                      checkIsUsableShowControlName(one.name)))
                           );
                       })
                       .slice(0, MAX_ATTACHMENT_COUNT)

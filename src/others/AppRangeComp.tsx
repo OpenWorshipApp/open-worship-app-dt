@@ -243,6 +243,7 @@ export default function AppRangeComp({
             <input
                 id={id}
                 className="form-range px-1"
+                aria-label={title}
                 title={localValue.toString()}
                 type="range"
                 min={defaultSize.min}

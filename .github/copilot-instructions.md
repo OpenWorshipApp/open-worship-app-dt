@@ -156,7 +156,12 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   loads at startup; chrome-devtools-mcp and puppeteer are imported on the first
   MCP session. The SAME server is what `./.mcp.json` spawns over stdio for an
   outside agent (as `owa-devtools`), so the chatbot and the agent share one tool
-  set — chrome-devtools' plus the `owa_*` ones. **The in-app host is PINNED to
+  set — chrome-devtools' plus the `owa_*` ones. **The HTTP door requires a
+  per-launch bearer capability** (2026-09-23, `MC-01`): 256 random bits from
+  `startOwaMcpHost`, published beside `mcpUrl` in the mode-0600 instance file,
+  passed to the chatbot over IPC, and checked before an MCP session is opened.
+  It never enters the URL, logs, results or model context; a missing or wrong
+  token gets 401. The stdio door is unchanged. **The in-app host is PINNED to
   its own instance** (2026-09-09, `pinCdpPort` in `discovery.mjs`, fed by
   `getCdpPort: () => remoteDebuggingPort` from `startMcpHost`): discovery is
   newest-first, which is right for the stdio bin and wrong for a server living
@@ -280,6 +285,23 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   W-17) walk their bold-led bullets and paragraphs. Do it across the manual:
   wrong presses ≥10 → 0, recipes that start 33 → 37, honest refusals go UP
   because a wrong press is now a refusal that names what it found.
+- **The Presenter and Reader have checked-in demos that need no model**
+  (2026-09-22, expanded 2026-09-23, `readerDemos.mjs` and
+  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 24
+  Reader-only lessons through the same guarded card: the original font
+  larger/smaller, localized John 3:16 and Bible Find demos, plus passage
+  history, reference clearing, people/places, two versions, full view,
+  copy/split/save, scrolling, line layout, advanced study views, book filtering
+  and the Bibles/Notes panel. The catalog is
+  shared with the chatbot's empty state, so the words a senior presses and the
+  steps the MCP runs cannot drift. A demo changes one visible thing per **Do
+  it** press; the search lesson names the Bible Online Lookup picker, selects
+  **Find** even when it remembered Resources, and leaves the search box for the
+  person's own word. Six safe Presenter lessons back its Tips of the Day and
+  only reveal or toggle app controls. `demoId` is a string validated against
+  those catalogs at call time, not a 30-value schema enum sent to the model on every round. This
+  adds no tool, spends no provider credit and keeps schema cost flat as lessons
+  are added.
 - **The screens tool says what is ON the projector, not only whether it is on**
   (2026-09-09, `tools/owa-devtools-mcp/agentScreens.mjs` +
   `src/helper/agentScreenHelpers.ts`). `owa_list_screens` used to answer
@@ -490,7 +512,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   immediately before it connects, which is the authoritative one. Both are
   needed — `localtest.me` is a real public domain whose A record is
   `127.0.0.1`, and loopback is where this app serves its own CDP and MCP doors
-  with no credential on either. Node's `new URL()` canonicalises `0177.0.0.1`,
+  (the MCP door is authenticated, but a model must not reach either). Node's
+  `new URL()` canonicalises `0177.0.0.1`,
   `2130706433`, `0x7f.1` and `127.1` to `127.0.0.1` before the policy reads
   them, so the checks read the canonical hostname and must never be "improved"
   to match the raw string. The page loads in a window locked down separately
@@ -652,7 +675,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   first call now, which only the main process makes (memory
   `preload-must-not-eval-at-load`).
 - **Discovery**: `publishAiEndpoints()` writes
-  `<temp>/open-worship-app-cdp/<pid>.json` with `{port, url, mcpUrl, isDev,
+  `<temp>/open-worship-app-cdp/<pid>.json` with `{port, url, mcpUrl, mcpToken, isDev,
   userDataPath, startedAt}` — one file per live instance, swept when a pid is
   gone, removed on `will-quit`. Chromium reports its chosen port through
   `<userData>/DevToolsActivePort`, which is polled after `ready`.
@@ -1237,6 +1260,14 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   intent, and a Cancel would strand the snapshot the main process is holding.
   Its four strings need Khmer keys like any other label outside
   `src/chatbot/`; a missing one THROWS in dev.
+  For automated chatbot verification, this caution remains person-only by
+  default. A narrow exception applies only when `owa_app_state` confirms a
+  development instance and the user explicitly authorizes acceptance in the
+  current conversation: automation may press this caution's exact **Open**
+  button through the development CDP endpoint. A generic “continue” is not
+  consent. The exception never applies to packaged/production instances,
+  **Allow more**, projector or destructive confirmations, or any other blocking
+  dialog, and it is not a reason to weaken the MCP firewall.
 - **The wait says what it is DOING** (`src/chatbot/progressHelpers.ts`). One
   unchanging `Looking it up…` line for the ~55 seconds a question takes when it
   reads a web page, drafts a song and creates it cannot tell a window that is
@@ -1747,6 +1778,22 @@ language the app is in. That is what `domMatch.mjs` reads for the parent path
   or typing: the page's own `:hover` rules re-aimed at a `data-owa-hover`
   attribute, one reveal at a time, always released. Driving the app by
   hand, remember a control can be real, clickable and invisible at once.
+  A guide can also use `action: "hover"` when an event-driven surface creates
+  another control; it dispatches pointer/mouse hover events without moving the
+  person's real pointer. A CSS-hidden target normally needs no hover step —
+  name it directly. Guide `type` can set a range slider value as well as a text
+  box; a signed value such as `+8` changes a range relative to its current
+  value. The last actionable demo step is still **Do it** until it has run — it
+  must never become **Done** and close without acting. When a broad manual is
+  started with `topic`, only the task-matching step
+  is shown; the chatbot's keyed **Do it for me** path uses that as a safe pointer
+  while it rebuilds the demo from the live localized controls. A `manualId` is
+  show-only: executable demos must pass explicit live steps, and preparing one
+  never presses ahead — the person presses **Do it** once per visible action.
+  Known repeatable Reader jobs do not need a model to rediscover those steps:
+  small text uses the named Font Size range, and a localized Bible reference
+  uses Clear input → the book's stable model-name title → Chapter N → Verse N
+  while the buttons keep their localized visible words.
 - **Verifying file-drop features.** Synthetic `DragEvent` drops can't exercise
   `readDroppedFiles` (`src/others/droppingFileHelpers.ts`) — `webkitGetAsEntry()`
   returns null for programmatic `DataTransfer`s. The drag-over mimetype gate IS
@@ -1978,7 +2025,7 @@ put it to the user rather than shaving another 200 tokens off a description.
   ~85k worst case for one question** — 29 of those tools are chrome-devtools' and
   include `evaluate_script`. Baseline it with
   `node .claude/skills/owa-enhance-chatbot/scripts/audit-mcp-tools.mjs` (reads
-  `mcpUrl` from the published instance file, `--json`, and warns when an acting
+  `mcpUrl` and `mcpToken` from the published instance file, `--json`, and warns when an acting
   tool is missing from `notify.mjs`'s `ACTING_TOOLS`).
 - **Every run researches before it builds** (`references/research.md`): ask the
   live assistant a standing corpus of real volunteer questions, grade each answer
@@ -2011,8 +2058,8 @@ surface grew 19% in a day because adding a tool is easy and nobody is billed at
 the time), **good for a developer** driving QA over stdio, and **good for the
 chatbot** answering a volunteer over HTTP. Preference order for any change is
 **remove → deny → merge → sharpen → add**. Tracked work carries `MC-xx` ids in
-`references/backlog.md`; `MC-01` (the HTTP door has no credential) is the open
-hole worth knowing about — `MC-02` (the uid-aimed acting tools) and `MC-16`
+`references/backlog.md`; `MC-01` (the HTTP door's per-launch bearer token),
+`MC-02` (the uid-aimed acting tools) and `MC-16`
 (the window a slide's website loads in) are CLOSED, the latter down to a
 documented `webSecurity: false` residual. `MC-14` put a RATCHET on the token
 bill: `audit-mcp-tools.mjs --ratchet` fails when the model's surface crosses

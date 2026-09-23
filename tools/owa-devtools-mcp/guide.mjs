@@ -18,16 +18,111 @@
 // shadow root, so a guide can be started, ignored and forgotten with no trace
 // left on the service running underneath it.
 
-import {
-    BOT_FOCUS_LIST,
-    detectBotFocus,
-    getBotFocus,
-} from './botFocus.mjs';
+import { BOT_FOCUS_LIST, detectBotFocus, getBotFocus } from './botFocus.mjs';
 import { PRESS_GUARD_SOURCE } from './destructiveLabel.mjs';
 import { DOM_MATCH_RUNTIME } from './domMatch.mjs';
 import { toEnglishOnly } from './help.mjs';
 
 const MAX_STEPS = 20;
+
+// A manual page is often a shelf of independent jobs, not one long task.
+// W-11, for example, covers reference lookup, font size, history, versions,
+// full view and presenting. Starting all seven for "make the words bigger"
+// put the volunteer at Bible Reference -- a correct step from the page and
+// the wrong answer to the question. `topic` lets the caller carry the user's
+// own words into the recipe. Be deliberately conservative: when two useful
+// words do not meet one step, keep the complete recipe rather than guessing.
+const TOPIC_FILLER_WORD_SET = new Set([
+  'a',
+  'an',
+  'and',
+  'app',
+  'bible',
+  'button',
+  'can',
+  'click',
+  'do',
+  'for',
+  'help',
+  'how',
+  'i',
+  'in',
+  'is',
+  'it',
+  'me',
+  'my',
+  'of',
+  'on',
+  'please',
+  'reader',
+  'the',
+  'this',
+  'to',
+  'use',
+  'what',
+  'where',
+  'with',
+]);
+
+function toTopicToken(value) {
+  const token = value.toLowerCase();
+  const aliases = {
+    bigger: 'large',
+    larger: 'large',
+    lost: 'lose',
+    losing: 'lose',
+    next: 'beside',
+    side: 'beside',
+    text: 'word',
+    typing: 'type',
+    versions: 'version',
+    words: 'word',
+  };
+  if (aliases[token] !== undefined) {
+    return aliases[token];
+  }
+  if (token.length > 4 && token.endsWith('s')) {
+    return token.slice(0, -1);
+  }
+  return token;
+}
+
+function topicTokens(text) {
+  return (
+    String(text ?? '')
+      .normalize('NFKC')
+      .toLowerCase()
+      .match(/[\p{L}\p{N}]+/gu)
+      ?.map(toTopicToken)
+      .filter((token) => !TOPIC_FILLER_WORD_SET.has(token)) ?? []
+  );
+}
+
+export function selectGuideStepsForTopic(steps, topic = '') {
+  if (!Array.isArray(steps) || steps.length < 2) {
+    return steps;
+  }
+  const wanted = [...new Set(topicTokens(topic))];
+  if (wanted.length === 0) {
+    return steps;
+  }
+  const ranked = steps
+    .map((step, index) => {
+      const held = new Set(topicTokens(step?.text));
+      const matched = wanted.filter((token) => held.has(token));
+      return {
+        index,
+        // Words carry two points; bare chapter/verse numbers carry one.
+        score: matched.reduce((total, token) => {
+          return total + (/^\d+$/.test(token) ? 1 : 2);
+        }, 0),
+      };
+    })
+    .sort((one, other) => {
+      return other.score - one.score || one.index - other.index;
+    });
+  return ranked[0].score >= 2 ? [steps[ranked[0].index]] : steps;
+}
 
 // The system prompt tells the model never to show a volunteer an id like
 // "W-06", not even in passing -- and a card in front of one still read
@@ -43,8 +138,7 @@ const MAX_STEPS = 20;
 // keeps a step's.
 const ID_PATTERN = /\b[A-Z]{1,3}-\d{1,3}[a-z]?\b/g;
 const ID_ASIDE_PATTERN =
-    /\s*[([][^)\]]*\b[A-Z]{1,3}-\d{1,3}[a-z]?\b[^)\]]*[)\]]/g;
-
+  /\s*[([][^)\]]*\b[A-Z]{1,3}-\d{1,3}[a-z]?\b[^)\]]*[)\]]/g;
 
 // Installed once per page; re-sent on every call because a reload wipes it.
 // Kept in a shadow root so the app's stylesheets cannot reach in and the
@@ -62,6 +156,7 @@ const GUIDE_RUNTIME = `
         isDemo: false,
         canDemo: true,
         wasDemoAsked: false,
+        isActing: false,
         lastAction: null,
         lastResult: null,
         // Where the last action landed. A step that points at a region
@@ -394,6 +489,11 @@ const GUIDE_RUNTIME = `
     // Which step the view was last scrolled for, so a re-draw never scrolls.
     let scrollIntoViewFor = null;
     const handleWatchedClick = () => { api.next('user-did-it'); };
+    const handleWatchedHover = () => {
+        if (!isSelfPressing) {
+            api.next('user-did-it');
+        }
+    };
     // The keystroke half of the same idea: a step that says "press Ctrl+Q"
     // has no control to ring and so nothing to watch for a click, but the
     // user pressing it themselves is exactly as much of an answer. Only
@@ -428,6 +528,9 @@ const GUIDE_RUNTIME = `
     const unwatch = () => {
         if (watchedElement !== null) {
             watchedElement.removeEventListener('click', handleWatchedClick, true);
+            watchedElement.removeEventListener(
+                'mouseover', handleWatchedHover, true,
+            );
             watchedElement = null;
         }
         if (watchedKeys !== null) {
@@ -635,7 +738,14 @@ const GUIDE_RUNTIME = `
         if (wanted.length === 0) {
             return null;
         }
-        return dm.findBest(wanted, { preferPressSafe: true });
+        return dm.findBest(wanted, {
+            preferPressSafe: true,
+            // A value is only ever written into a value-bearing control. A
+            // nearby label can be the best visual match and still cannot
+            // accept the value (Font Size's visible words sit beside its
+            // range input), so do not let the guide press the label instead.
+            onlyBoxes: step.action === 'type',
+        });
     };
     const findElement = (step) => {
         const match = findMatch(step);
@@ -747,6 +857,27 @@ const GUIDE_RUNTIME = `
             name: 'something else on the window', closer: null };
     };
 
+    // Some footers are not hover-hidden. They stay closed behind the small
+    // three-dot control made by handleAutoHide(), and only a click adds
+    // auto-hide-show. Treat that control as a prerequisite rather than
+    // drawing a ring around an invisible child. CSS :hover is still forced by
+    // dm.revealHidden() without borrowing the person's pointer; a click-open
+    // panel visibly opens through its own real control, one press before the
+    // requested action.
+    const autoHideRevealOf = (element) => {
+        const panel = element.closest('.app-auto-hide');
+        if (panel === null || panel.classList.contains('auto-hide-show')) {
+            return null;
+        }
+        const parent = panel.parentElement;
+        if (parent === null) {
+            return null;
+        }
+        return [...parent.children].find((one) => {
+            return one.classList.contains('auto-hide-button');
+        }) ?? null;
+    };
+
     // A needle can say where to look as well as what to look for
     // ("Background > Videos"). The card is read by a volunteer, so it says
     // the thing, and the panel it is in comes from the element the ring
@@ -777,9 +908,14 @@ const GUIDE_RUNTIME = `
         const isLast = state.index === state.steps.length - 1;
         // A look-step has nothing to do for anyone: its button says Next
         // even in demo mode, so nobody presses Do it on a thing to notice.
-        parts.next.textContent = state.isDemo && !isLast && step.kind !== 'look'
+        // A demo's last step still has to be DONE before the guide is done.
+        // Calling this button "Done" used to close every one-step demo
+        // without performing its only action -- exactly the shape of the
+        // senior-facing "make the words larger" fix.
+        parts.next.textContent = state.isDemo && step.kind !== 'look'
             ? state.labels.act
             : (isLast ? state.labels.done : state.labels.next);
+        parts.next.disabled = state.isActing;
         unwatch();
         const match = findMatch(step);
         const target = match === null ? null : match.element;
@@ -840,6 +976,30 @@ const GUIDE_RUNTIME = `
             parts.hint.textContent = 'Look for "' + named + '" in the window ' +
                 'behind me. The closest thing I can see is "' + seen +
                 '", which may not be it.';
+            return;
+        }
+        const autoHideReveal = autoHideRevealOf(target);
+        if (autoHideReveal !== null) {
+            const revealRect = autoHideReveal.getBoundingClientRect();
+            ring.style.display = 'block';
+            ring.dataset.waiting = state.isDemo ? 'no' : 'yes';
+            ring.style.left = (revealRect.x - 3) + 'px';
+            ring.style.top = (revealRect.y - 3) + 'px';
+            ring.style.width = revealRect.width + 'px';
+            ring.style.height = revealRect.height + 'px';
+            avoidRing(revealRect);
+            parts.hint.textContent = state.isDemo
+                ? 'Press ' + state.labels.act + ' and I will open the hidden ' +
+                    'controls first. Then press it again and I will ' +
+                    (step.action === 'type' ? 'change "' + named + '".' :
+                        'use "' + named + '".')
+                : 'First press the ringed three dots to open the hidden ' +
+                    'controls. I will keep this step here for you.';
+            // Reposition the ring while the footer is closed. Do not attach
+            // the normal click watcher: opening the footer is a prerequisite,
+            // not completion of the step. The tracker redraws against the
+            // requested control as soon as the panel opens.
+            watchedElement = autoHideReveal;
             return;
         }
         const isHeldVisible = dm.revealHidden(target, HOVER_HOLD_MS);
@@ -927,6 +1087,7 @@ const GUIDE_RUNTIME = `
         // press that does nothing on a divider.
         const isRightClick = step.action === 'rightClick' &&
             target.getAttribute('role') === 'separator';
+        const isHover = step.action === 'hover';
         parts.hint.textContent = (refusal !== null
             ? (refusal.refused === 'question'
                 ? 'This is the app asking you a question, so I will not ' +
@@ -935,10 +1096,11 @@ const GUIDE_RUNTIME = `
                     'you — press it yourself if you want it. ')
             : (state.isDemo
                 ? 'Press ' + state.labels.act + ' and I will ' +
-                    (step.action === 'type' ? 'type it' :
-                        (isRightClick ? 'right-click it' : 'click it')) +
+                    (step.action === 'type' ? 'change it' :
+                        (isRightClick ? 'right-click it' :
+                            (isHover ? 'move the pointer over it' : 'click it'))) +
                     ' for you. '
-                : '')) + (isHeldVisible
+                : (isHover ? 'Move the pointer over the ringed area. ' : ''))) + (isHeldVisible
             ? 'This one only shows while the mouse is over it, so I ' +
                 'am holding it up for you. '
             : '') + 'The ringed control is ' +
@@ -951,7 +1113,11 @@ const GUIDE_RUNTIME = `
             ' of this window.' + (layer === null ? '' :
                 ' Something is in front of it right now — close that first.');
         watchedElement = target;
-        target.addEventListener('click', handleWatchedClick, true);
+        target.addEventListener(
+            isHover ? 'mouseover' : 'click',
+            isHover ? handleWatchedHover : handleWatchedClick,
+            true,
+        );
     };
 
     // Moving the ring back onto a control we ALREADY hold, which is all a
@@ -1047,9 +1213,13 @@ const GUIDE_RUNTIME = `
         }
         if (state.lastAction === 'demo-did-it' && state.lastResult !== null &&
             state.lastResult.more !== undefined) {
-            parts.hint.textContent = 'Done - and it brought up "' +
-                state.lastResult.more + '". Press ' + state.labels.act +
-                ' again to finish this step.';
+            parts.hint.textContent = state.lastResult.did === 'revealed'
+                ? 'I opened the hidden controls. "' + state.lastResult.more +
+                    '" is visible now. Press ' + state.labels.act +
+                    ' again and I will finish this step.'
+                : 'Done - and it brought up "' + state.lastResult.more +
+                    '". Press ' + state.labels.act +
+                    ' again to finish this step.';
             return;
         }
         if (state.lastAction === 'demo-did-it' && state.lastResult !== null &&
@@ -1117,7 +1287,7 @@ const GUIDE_RUNTIME = `
             // went wrong, so the card moves on as it would on Next.
             return { done: true, did: 'looked' };
         }
-        const missingBefore = missingOf(step);
+        let missingBefore = missingOf(step);
         // Done AND still not finished: report what the press revealed rather
         // than letting the card march on to the next step with a menu open.
         const withMore = async (result) => {
@@ -1175,6 +1345,11 @@ const GUIDE_RUNTIME = `
                     ? { element: null, nearMisses: [] }
                     : await dm.waitForBest(wanted, 1500, {
                           preferPressSafe: true,
+                          // Waiting must keep the same type-only filter as
+                          // the first lookup. Otherwise a slow range falls
+                          // back to its nearby label and fails as "not a text
+                          // box" when the demo tries to change it.
+                          onlyBoxes: step.action === 'type',
                       });
             if (waited.element === null) {
                 // The control is not there -- but the step may still have
@@ -1195,6 +1370,13 @@ const GUIDE_RUNTIME = `
             }
             match = waited;
             target = waited.element;
+            // It appeared while THIS action was waiting to begin, not
+            // because the action revealed it. Do not feed the same needle to
+            // withMore below or a slow-rendering book/chapter grid keeps the
+            // current step after its button was successfully clicked.
+            missingBefore = missingBefore.filter((one) => {
+                return String(one) !== String(waited.needle);
+            });
         }
         // Close enough to point at is not close enough to PRESS. The
         // matcher's looser tiers exist so a ring can land near a misspelt
@@ -1219,6 +1401,19 @@ const GUIDE_RUNTIME = `
         const refusal = refusalOf(step, target);
         if (refusal !== null) {
             return toRefusedResult(refusal, nameOf(step, match));
+        }
+        const autoHideReveal = autoHideRevealOf(target);
+        if (autoHideReveal !== null) {
+            unwatch();
+            rememberPoint(autoHideReveal);
+            autoHideReveal.click();
+            return {
+                done: true,
+                did: 'revealed',
+                // Keep the same step. One press opens the controls; the next
+                // performs the action the person originally asked for.
+                more: nameOf(step, match),
+            };
         }
         // In the way: a popup is closed by this press and the step by the
         // next, one press one action, the same shape as the right-click
@@ -1253,23 +1448,117 @@ const GUIDE_RUNTIME = `
                 // Off the element's own prototype, not the global classes:
                 // an evaluated string can run in a realm whose
                 // HTMLInputElement is not the one this element was made
-                // from. (The step names a text box, so the tag check has
-                // already happened at match time -- a button's value
-                // accessor is not a text box.)
+                // from. (The step names a value-bearing control, so the tag
+                // check has already happened at match time -- a button's
+                // value accessor is not a text box or picker.)
                 const setter = Object.getOwnPropertyDescriptor(
                     Object.getPrototypeOf(target),
                     'value',
                 )?.set;
                 if (setter === undefined ||
-                    !['INPUT', 'TEXTAREA'].includes(target.tagName)) {
+                    !['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
                     return { done: false, reason: 'not a text box' };
                 }
-                setter.call(target, step.value);
+                // A senior asking for larger text needs "larger than it is
+                // now", not a fixed size that might accidentally make an
+                // already-large slider smaller. Demo steps may therefore use
+                // a relative range value such as "+8". Ordinary text boxes
+                // still receive those characters literally.
+                let nextValue = step.value;
+                let resultValue = null;
+                let did = 'typed';
+                if (target.tagName === 'SELECT') {
+                    const wanted = nextValue.trim().toLowerCase();
+                    const chosen = [...target.options].find((option) => {
+                        const text = (option.textContent ?? '').trim();
+                        return text.toLowerCase() === wanted ||
+                            String(option.value) === nextValue;
+                    });
+                    if (chosen === undefined) {
+                        return {
+                            done: false,
+                            reason: 'that choice is not in this picker',
+                            choices: [...target.options].map((option) => {
+                                return (option.textContent ?? '').trim();
+                            }),
+                        };
+                    }
+                    if (chosen.disabled) {
+                        return {
+                            done: false,
+                            reason: 'that choice is disabled',
+                        };
+                    }
+                    nextValue = chosen.value;
+                    resultValue = (chosen.textContent ?? '').trim();
+                    did = 'selected';
+                }
+                if (
+                    target.tagName === 'INPUT' &&
+                    String(target.type).toLowerCase() === 'range' &&
+                    /^[+-]\\d+(?:\\.\\d+)?$/.test(step.value)
+                ) {
+                    const current = Number(target.value);
+                    const delta = Number(step.value);
+                    const min = Number(target.min);
+                    const max = Number(target.max);
+                    const rangeStep = Number(target.step);
+                    if (Number.isFinite(current) && Number.isFinite(delta)) {
+                        let changed = current + delta;
+                        if (Number.isFinite(min)) changed = Math.max(min, changed);
+                        if (Number.isFinite(max)) changed = Math.min(max, changed);
+                        if (Number.isFinite(rangeStep) && rangeStep > 0 &&
+                            Number.isFinite(min)) {
+                            changed = min + Math.round(
+                                (changed - min) / rangeStep,
+                            ) * rangeStep;
+                        }
+                        nextValue = String(changed);
+                    }
+                }
+                if (resultValue === null) {
+                    resultValue = nextValue;
+                }
+                setter.call(target, nextValue);
                 target.dispatchEvent(new Event('input', { bubbles: true }));
                 target.dispatchEvent(new Event('change', { bubbles: true }));
                 rememberPoint(target);
                 return await withMore({
-                    done: true, did: 'typed', value: step.value,
+                    done: true, did: did, value: resultValue,
+                });
+            }
+            if (step.action === 'hover') {
+                unwatch();
+                rememberPoint(target);
+                // CSS-only hover controls are held by the shared matcher.
+                // Event-driven controls (React onMouseEnter and similar)
+                // receive the mouse sequence without moving the person's real
+                // pointer. Both paths are needed across the app.
+                dm.revealHidden(target, HOVER_HOLD_MS * 2);
+                const init = {
+                    bubbles: true,
+                    cancelable: true,
+                    composed: true,
+                };
+                isSelfPressing = true;
+                try {
+                    if (typeof PointerEvent === 'function') {
+                        target.dispatchEvent(new PointerEvent('pointerover', init));
+                    }
+                    target.dispatchEvent(new MouseEvent('mouseover', init));
+                    target.dispatchEvent(new MouseEvent('mouseenter', {
+                        ...init,
+                        bubbles: false,
+                    }));
+                    target.dispatchEvent(new MouseEvent('mousemove', init));
+                } finally {
+                    isSelfPressing = false;
+                }
+                return await withMore({
+                    done: true,
+                    did: 'hovered',
+                    label: (target.textContent ||
+                        target.getAttribute('title') || '').trim().slice(0, 40),
                 });
             }
             unwatch();
@@ -1327,6 +1616,7 @@ const GUIDE_RUNTIME = `
             askedHelpAt = [];
             clearTimeout(helpTimer);
             state.isRunning = state.steps.length > 0;
+            state.isActing = false;
             state.lastAction = 'started';
             state.lastResult = null;
             render();
@@ -1334,12 +1624,14 @@ const GUIDE_RUNTIME = `
             return api.status();
         },
         go(index) {
+            state.isActing = false;
             state.index = Math.max(0, Math.min(state.steps.length - 1, index));
             state.pendingFind = null;
             render();
             return api.status();
         },
         next(reason) {
+            state.isActing = false;
             if (state.index >= state.steps.length - 1) {
                 return api.stop(reason ?? 'finished');
             }
@@ -1350,6 +1642,7 @@ const GUIDE_RUNTIME = `
             return api.status();
         },
         back() {
+            state.isActing = false;
             state.index = Math.max(0, state.index - 1);
             state.pendingFind = null;
             state.lastAction = 'back';
@@ -1358,6 +1651,7 @@ const GUIDE_RUNTIME = `
         },
         stop(reason) {
             state.isRunning = false;
+            state.isActing = false;
             state.lastAction = reason ?? 'stopped';
             unwatch();
             // Not left to lapse: a guide that is stopped should
@@ -1368,6 +1662,16 @@ const GUIDE_RUNTIME = `
             return api.status();
         },
         async act() {
+            // The result stays on the card briefly so the person can see
+            // what changed. During that moment a second press must not repeat
+            // the same action (clear twice, enlarge twice, choose a vanished
+            // book twice), especially when a backgrounded window throttles
+            // the 700 ms advance timer.
+            if (state.isActing) {
+                return api.status();
+            }
+            state.isActing = true;
+            parts.next.disabled = true;
             const result = await perform();
             state.lastResult = result;
             state.lastAction = result.done ? 'demo-did-it' : 'demo-could-not';
@@ -1389,6 +1693,7 @@ const GUIDE_RUNTIME = `
                     }
                 }, 700);
             } else {
+                state.isActing = false;
                 render();
             }
             return api.status();
@@ -1478,7 +1783,7 @@ const GUIDE_RUNTIME = `
     parts.next.addEventListener('click', () => {
         const isLast = state.index === state.steps.length - 1;
         const step = state.steps[state.index];
-        if (state.isDemo && !isLast && step !== undefined && step.kind !== 'look') {
+        if (state.isDemo && step !== undefined && step.kind !== 'look') {
             api.act();
             return;
         }
@@ -1498,13 +1803,13 @@ const GUIDE_RUNTIME = `
 })()`;
 
 export function genGuideExpression(call) {
-    return `(() => { const api = ${GUIDE_RUNTIME}; return api.${call}; })()`;
+  return `(() => { const api = ${GUIDE_RUNTIME}; return api.${call}; })()`;
 }
 
 // A bold phrase that is a keystroke, not a control: nothing on screen is
 // labelled "Ctrl+B", so ringing it can only fail.
 const SHORTCUT_PATTERN =
-    /^(ctrl|alt|shift|cmd|meta|win|esc|escape|tab|enter|f\d{1,2})\b|\+/i;
+  /^(ctrl|alt|shift|cmd|meta|win|esc|escape|tab|enter|f\d{1,2})\b|\+/i;
 
 // ...but a keystroke is still a thing that can be DONE, and that is the whole
 // difference between a card that acts and a card that apologises. A third of
@@ -1518,40 +1823,40 @@ const SHORTCUT_PATTERN =
 // thing -- verified live against Ctrl+B (opens the Bible Lookup popup) and
 // Ctrl+Q (closes it).
 const NAMED_KEY_MAP = {
-    esc: 'Escape',
-    escape: 'Escape',
-    enter: 'Enter',
-    return: 'Enter',
-    tab: 'Tab',
-    space: ' ',
-    spacebar: ' ',
-    del: 'Delete',
-    delete: 'Delete',
-    backspace: 'Backspace',
-    home: 'Home',
-    end: 'End',
-    pageup: 'PageUp',
-    pagedown: 'PageDown',
-    up: 'ArrowUp',
-    down: 'ArrowDown',
-    left: 'ArrowLeft',
-    right: 'ArrowRight',
-    arrowup: 'ArrowUp',
-    arrowdown: 'ArrowDown',
-    arrowleft: 'ArrowLeft',
-    arrowright: 'ArrowRight',
+  esc: 'Escape',
+  escape: 'Escape',
+  enter: 'Enter',
+  return: 'Enter',
+  tab: 'Tab',
+  space: ' ',
+  spacebar: ' ',
+  del: 'Delete',
+  delete: 'Delete',
+  backspace: 'Backspace',
+  home: 'Home',
+  end: 'End',
+  pageup: 'PageUp',
+  pagedown: 'PageDown',
+  up: 'ArrowUp',
+  down: 'ArrowDown',
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
+  arrowup: 'ArrowUp',
+  arrowdown: 'ArrowDown',
+  arrowleft: 'ArrowLeft',
+  arrowright: 'ArrowRight',
 };
 
 const MODIFIER_MAP = {
-    ctrl: 'ctrlKey',
-    control: 'ctrlKey',
-    alt: 'altKey',
-    option: 'altKey',
-    shift: 'shiftKey',
-    cmd: 'metaKey',
-    command: 'metaKey',
-    meta: 'metaKey',
-    win: 'metaKey',
+  ctrl: 'ctrlKey',
+  control: 'ctrlKey',
+  alt: 'altKey',
+  option: 'altKey',
+  shift: 'shiftKey',
+  cmd: 'metaKey',
+  command: 'metaKey',
+  meta: 'metaKey',
+  win: 'metaKey',
 };
 
 // The `code` a physical en-US keyboard would report. The app deliberately
@@ -1559,17 +1864,17 @@ const MODIFIER_MAP = {
 // (`toEnUsKey`), so a `key` sent with no `code` matches nothing on a German
 // or Khmer layout -- the exact users this app is for.
 function toKeyCode(key) {
-    if (/^[a-z]$/i.test(key)) {
-        return 'Key' + key.toUpperCase();
-    }
-    if (/^[0-9]$/.test(key)) {
-        return 'Digit' + key;
-    }
-    if (key === ' ') {
-        return 'Space';
-    }
-    // 'F9', 'Escape', 'Tab', 'ArrowUp' are already their own codes.
-    return key;
+  if (/^[a-z]$/i.test(key)) {
+    return 'Key' + key.toUpperCase();
+  }
+  if (/^[0-9]$/.test(key)) {
+    return 'Digit' + key;
+  }
+  if (key === ' ') {
+    return 'Space';
+  }
+  // 'F9', 'Escape', 'Tab', 'ArrowUp' are already their own codes.
+  return key;
 }
 
 /**
@@ -1589,57 +1894,57 @@ function toKeyCode(key) {
  * for both -- and the card is showing the user those same words to read.
  */
 export function toKeystroke(phrase) {
-    if (typeof phrase !== 'string') {
-        return null;
+  if (typeof phrase !== 'string') {
+    return null;
+  }
+  const parts = phrase
+    .split('+')
+    .map((part) => {
+      return part.trim();
+    })
+    .filter((part) => {
+      return part.length > 0;
+    });
+  if (parts.length === 0) {
+    return null;
+  }
+  const keystroke = {
+    key: null,
+    code: null,
+    ctrlKey: false,
+    altKey: false,
+    shiftKey: false,
+    metaKey: false,
+    label: null,
+  };
+  for (const modifier of parts.slice(0, -1)) {
+    const flag = MODIFIER_MAP[modifier.toLowerCase()];
+    // An unknown word before a "+" means this was never a shortcut.
+    if (flag === undefined) {
+      return null;
     }
-    const parts = phrase
-        .split('+')
-        .map((part) => {
-            return part.trim();
-        })
-        .filter((part) => {
-            return part.length > 0;
-        });
-    if (parts.length === 0) {
-        return null;
-    }
-    const keystroke = {
-        key: null,
-        code: null,
-        ctrlKey: false,
-        altKey: false,
-        shiftKey: false,
-        metaKey: false,
-        label: null,
-    };
-    for (const modifier of parts.slice(0, -1)) {
-        const flag = MODIFIER_MAP[modifier.toLowerCase()];
-        // An unknown word before a "+" means this was never a shortcut.
-        if (flag === undefined) {
-            return null;
-        }
-        keystroke[flag] = true;
-    }
-    const wanted = parts[parts.length - 1];
-    const named = NAMED_KEY_MAP[wanted.toLowerCase()];
-    if (/^f([1-9]|1\d|2[0-4])$/i.test(wanted)) {
-        keystroke.key = wanted.toUpperCase();
-    } else if (named !== undefined) {
-        keystroke.key = named;
-    } else if (wanted.length === 1 && parts.length > 1) {
-        // Shift+B really does arrive as an uppercase `key`, and the app
-        // compares the letter's case to decide what was typed.
-        keystroke.key = keystroke.shiftKey
-            ? wanted.toUpperCase()
-            : wanted.toLowerCase();
-    } else {
-        return null;
-    }
-    keystroke.code = toKeyCode(keystroke.key);
-    // What the card says out loud, kept as the user's own words rather than
-    // rebuilt from the flags, so "Ctrl+Q" is not read back as "Control+q".
-    keystroke.label = parts.join('+');
-    return keystroke;
+    keystroke[flag] = true;
+  }
+  const wanted = parts[parts.length - 1];
+  const named = NAMED_KEY_MAP[wanted.toLowerCase()];
+  if (/^f([1-9]|1\d|2[0-4])$/i.test(wanted)) {
+    keystroke.key = wanted.toUpperCase();
+  } else if (named !== undefined) {
+    keystroke.key = named;
+  } else if (wanted.length === 1 && parts.length > 1) {
+    // Shift+B really does arrive as an uppercase `key`, and the app
+    // compares the letter's case to decide what was typed.
+    keystroke.key = keystroke.shiftKey
+      ? wanted.toUpperCase()
+      : wanted.toLowerCase();
+  } else {
+    return null;
+  }
+  keystroke.code = toKeyCode(keystroke.key);
+  // What the card says out loud, kept as the user's own words rather than
+  // rebuilt from the flags, so "Ctrl+Q" is not read back as "Control+q".
+  keystroke.label = parts.join('+');
+  return keystroke;
 }
 
 // ...nor is the verb in front of it, nor a word the manual merely stressed.
@@ -1647,7 +1952,7 @@ export function toKeystroke(phrase) {
 // prose is not ("**not**", "**version**") -- and "not" would have found the
 // Notes button and drawn a red ring around the wrong thing entirely.
 const ACTION_PATTERN =
-    /^(double-?click|right-?click|click|press|type|drag|drop|hover|scroll|open|choose|select)\b/i;
+  /^(double-?click|right-?click|click|press|type|drag|drop|hover|scroll|open|choose|select)\b/i;
 
 // A recipe names a whole row of tabs in one bold -- "**Colors / Images /
 // Videos / Cameras / Web**" -- and introduces each with the colon it is
@@ -1686,26 +1991,26 @@ const RIGHT_CLICK_PATTERN = /^\s*(?:\*\*)?right[- ]?click\b/i;
 // become the label. `checkIsControlLabel` is what turns the ✕ away, one
 // step later and on purpose.
 const BOLD_PATTERN =
-    /\*\*([^*\n]{1,120})\*\*(?:\s*\([^)*]{0,60}\))?(?:\s*(panel|pane|section|area|sidebar))?/g;
+  /\*\*([^*\n]{1,120})\*\*(?:\s*\([^)*]{0,60}\))?(?:\s*(panel|pane|section|area|sidebar))?/g;
 
 function toFindCandidates(phrase) {
-    const candidates = [phrase, ...phrase.split(/\s+\/\s+/)];
-    return candidates
-        .map((one) => {
-            return one.replace(/[:.,;]+$/, '').trim();
-        })
-        .filter((one, at, all) => {
-            return one.length > 0 && all.indexOf(one) === at;
-        });
+  const candidates = [phrase, ...phrase.split(/\s+\/\s+/)];
+  return candidates
+    .map((one) => {
+      return one.replace(/[:.,;]+$/, '').trim();
+    })
+    .filter((one, at, all) => {
+      return one.length > 0 && all.indexOf(one) === at;
+    });
 }
 
 function checkIsControlLabel(candidate) {
-    return (
-        candidate.length > 1 &&
-        /[A-Z]/.test(candidate) &&
-        !SHORTCUT_PATTERN.test(candidate) &&
-        !ACTION_PATTERN.test(candidate)
-    );
+  return (
+    candidate.length > 1 &&
+    /[A-Z]/.test(candidate) &&
+    !SHORTCUT_PATTERN.test(candidate) &&
+    !ACTION_PATTERN.test(candidate)
+  );
 }
 
 // A candidate that could be the words ON a control, as against a bolded
@@ -1716,14 +2021,16 @@ function checkIsControlLabel(candidate) {
 // "the Bible you are reading" and "Colours are the special one" do not.
 const LABEL_LIKE_MAX_WORDS = 5;
 function checkIsLabelLike(candidate) {
-    const text = String(candidate ?? '').replace(/^[^>]*>\s*/, '').trim();
-    return (
-        text.length > 0 &&
-        text.length <= 40 &&
-        text.split(/\s+/).length <= LABEL_LIKE_MAX_WORDS &&
-        !/[—;:,.!?]/.test(text) &&
-        !/^(?:the|a|an|your|you|it|its|this|that|these|those)\b/i.test(text)
-    );
+  const text = String(candidate ?? '')
+    .replace(/^[^>]*>\s*/, '')
+    .trim();
+  return (
+    text.length > 0 &&
+    text.length <= 40 &&
+    text.split(/\s+/).length <= LABEL_LIKE_MAX_WORDS &&
+    !/[—;:,.!?]/.test(text) &&
+    !/^(?:the|a|an|your|you|it|its|this|that|these|those)\b/i.test(text)
+  );
 }
 
 // A step that opens by describing what the user will SEE -- "The live
@@ -1736,15 +2043,17 @@ function checkIsLabelLike(candidate) {
 // worth ringing and no key to press: a step that says "click" anywhere in
 // it, or bolds a label, is an action even when it opens with "The".
 const OBSERVE_PATTERN =
-    /^(?:the|a|an|each|every|these|this|that|those|it|its|your|you|nothing|only|recent|when|if|once|both|some|all|there|opening|closing|picking|results|rows|links|panels|anything|everything|whatever)\b/i;
+  /^(?:the|a|an|each|every|these|this|that|those|it|its|your|you|nothing|only|recent|when|if|once|both|some|all|there|opening|closing|picking|results|rows|links|panels|anything|everything|whatever)\b/i;
 function checkIsLookStep(text, finds, keys, action) {
-    if (keys != null || action === 'rightClick') {
-        return false;
-    }
-    if (finds.some(checkIsLabelLike)) {
-        return false;
-    }
-    return OBSERVE_PATTERN.test(text) && !/\b(?:click|press|type|drag)\b/i.test(text);
+  if (keys != null || action === 'rightClick') {
+    return false;
+  }
+  if (finds.some(checkIsLabelLike)) {
+    return false;
+  }
+  return (
+    OBSERVE_PATTERN.test(text) && !/\b(?:click|press|type|drag)\b/i.test(text)
+  );
 }
 
 // A recipe starts from wherever the app happens to be, so its first steps are
@@ -1757,15 +2066,17 @@ function checkIsLookStep(text, finds, keys, action) {
 // first instruction is to look at the thing you are already looking at has
 // spent the one step the user was most willing to follow. The card says it.
 export function stripInternalIds(text) {
-    return String(text ?? '')
-        .replace(ID_ASIDE_PATTERN, '')
-        .replace(ID_PATTERN, '')
-        // Whatever the cut left behind: a doubled space, a space in front of
-        // the full stop, or the comma that used to introduce the id.
-        .replace(/\s+([.,;:!?])/g, '$1')
-        .replace(/\s{2,}/g, ' ')
-        .replace(/[,;:]\s*$/, '')
-        .trim();
+  return (
+    String(text ?? '')
+      .replace(ID_ASIDE_PATTERN, '')
+      .replace(ID_PATTERN, '')
+      // Whatever the cut left behind: a doubled space, a space in front of
+      // the full stop, or the comma that used to introduce the id.
+      .replace(/\s+([.,;:!?])/g, '$1')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/[,;:]\s*$/, '')
+      .trim()
+  );
 }
 
 const PREAMBLE_PATTERN = /^(look|watch|see)\b[^.]{0,40}\bapp window\b/i;
@@ -1792,32 +2103,32 @@ const PREAMBLE_PATTERN = /^(look|watch|see)\b[^.]{0,40}\bapp window\b/i;
 // substring rather than by a built regex: these are whole control names, and
 // user-facing text has no business being spliced into a pattern.
 function toWindowNames(descriptor) {
-    const words = descriptor.label.split(' ');
-    return [
-        descriptor.label,
-        descriptor.openFind,
-        `${words[words.length - 1]} tab`,
-    ]
-        .filter((one) => {
-            return typeof one === 'string' && one.length > 0;
-        })
-        .map((one) => {
-            return one.toLowerCase();
-        });
+  const words = descriptor.label.split(' ');
+  return [
+    descriptor.label,
+    descriptor.openFind,
+    `${words[words.length - 1]} tab`,
+  ]
+    .filter((one) => {
+      return typeof one === 'string' && one.length > 0;
+    })
+    .map((one) => {
+      return one.toLowerCase();
+    });
 }
 
 // The sentence a step OPENS with: up to the first full stop that ends a
 // sentence (one followed by a space or the end), so "e.g." and "3.16" do
 // not cut it short.
 function toFirstSentence(text) {
-    const whole = String(text ?? '').replace(/\b(e\.g|i\.e)\./gi, '$1');
-    const match = /^(.*?[.!?])(?:\s|$)/.exec(whole);
-    return match === null ? whole : match[1];
+  const whole = String(text ?? '').replace(/\b(e\.g|i\.e)\./gi, '$1');
+  const match = /^(.*?[.!?])(?:\s|$)/.exec(whole);
+  return match === null ? whole : match[1];
 }
 
 function genHereNames(pathname) {
-    const descriptor = getBotFocus(detectBotFocus(pathname) ?? '');
-    return descriptor === null ? null : toWindowNames(descriptor);
+  const descriptor = getBotFocus(detectBotFocus(pathname) ?? '');
+  return descriptor === null ? null : toWindowNames(descriptor);
 }
 
 // A recipe's first step is how you GET to the window the rest of it happens
@@ -1838,52 +2149,51 @@ function genHereNames(pathname) {
 // the 44 manual documents: 5 recipes name exactly one window and all 5 are
 // right, 5 name more than one, 29 name none.
 export function detectRecipeWindow(steps) {
-    const first = steps?.[0]?.text ?? '';
-    const goingPattern =
-        /^(click|open|go to|switch to|choose|select|press)\b/i;
-    if (!goingPattern.test(first)) {
-        return null;
-    }
-    const lowered = first.toLowerCase();
-    const named = BOT_FOCUS_LIST.filter((descriptor) => {
-        return toWindowNames(descriptor).some((name) => {
-            return lowered.includes(name);
-        });
+  const first = steps?.[0]?.text ?? '';
+  const goingPattern = /^(click|open|go to|switch to|choose|select|press)\b/i;
+  if (!goingPattern.test(first)) {
+    return null;
+  }
+  const lowered = first.toLowerCase();
+  const named = BOT_FOCUS_LIST.filter((descriptor) => {
+    return toWindowNames(descriptor).some((name) => {
+      return lowered.includes(name);
     });
-    return named.length === 1 ? named[0].window : null;
+  });
+  return named.length === 1 ? named[0].window : null;
 }
 
 export function dropStepsAlreadyDone(steps, pathname = '') {
-    const kept = [...steps];
-    while (kept.length > 1 && PREAMBLE_PATTERN.test(kept[0].text)) {
-        kept.shift();
-    }
-    const hereNames = genHereNames(pathname);
-    if (hereNames === null) {
-        return kept;
-    }
-    // Only the step's FIRST sentence says where it is going. W-31 opens
-    // "Open View on the top menu bar → Widgets. You get one tick-box per
-    // panel ... e.g. on the presenter: App Presenter Left ..." -- a step
-    // about the View menu, with the window's name in the example list two
-    // sentences on -- and the whole step was dropped in the Presenter, so
-    // the card opened on "Click a ticked one" with nothing said about
-    // what to tick. A step that takes you somewhere says so up front.
-    const checkIsHere = (text) => {
-        const lowered = toFirstSentence(text).toLowerCase();
-        return hereNames.some((name) => {
-            return lowered.includes(name);
-        });
-    };
-    const goingPattern = /^(click|open|go to|switch to|choose|select)\b/i;
-    while (
-        kept.length > 1 &&
-        goingPattern.test(kept[0].text) &&
-        checkIsHere(kept[0].text)
-    ) {
-        kept.shift();
-    }
+  const kept = [...steps];
+  while (kept.length > 1 && PREAMBLE_PATTERN.test(kept[0].text)) {
+    kept.shift();
+  }
+  const hereNames = genHereNames(pathname);
+  if (hereNames === null) {
     return kept;
+  }
+  // Only the step's FIRST sentence says where it is going. W-31 opens
+  // "Open View on the top menu bar → Widgets. You get one tick-box per
+  // panel ... e.g. on the presenter: App Presenter Left ..." -- a step
+  // about the View menu, with the window's name in the example list two
+  // sentences on -- and the whole step was dropped in the Presenter, so
+  // the card opened on "Click a ticked one" with nothing said about
+  // what to tick. A step that takes you somewhere says so up front.
+  const checkIsHere = (text) => {
+    const lowered = toFirstSentence(text).toLowerCase();
+    return hereNames.some((name) => {
+      return lowered.includes(name);
+    });
+  };
+  const goingPattern = /^(click|open|go to|switch to|choose|select)\b/i;
+  while (
+    kept.length > 1 &&
+    goingPattern.test(kept[0].text) &&
+    checkIsHere(kept[0].text)
+  ) {
+    kept.shift();
+  }
+  return kept;
 }
 
 /**
@@ -1902,43 +2212,43 @@ export function dropStepsAlreadyDone(steps, pathname = '') {
 // IS a step of a tour: "**Lock** (header, the padlock): when locked…" names
 // the control and says what it does, which is what a card shows.
 function readStepLines(lines, startPattern, isParagraphPage = false) {
-    const steps = [];
-    let current = null;
-    for (const line of lines) {
-        const started = startPattern.exec(line);
-        if (started !== null) {
-            if (current !== null) {
-                steps.push(current);
-            }
-            current = { raw: started[1] };
-            continue;
-        }
-        // A note the recipe hangs under a step ("> Note: ...") is background
-        // for whoever maintains the manual; on a card it buries the one
-        // instruction the user is meant to carry out.
-        if (current !== null && /^\s*>/.test(line)) {
-            continue;
-        }
-        // A wrapped continuation line of the step above it -- and, on a
-        // bullet page, the sub-bullets under it.
-        if (current !== null && /^\s{2,}\S/.test(line)) {
-            current.raw += ' ' + line.trim().replace(/^[-*]\s+/, '');
-            continue;
-        }
-        if (current !== null && line.trim() === '') {
-            steps.push(current);
-            current = null;
-            continue;
-        }
-        // A paragraph wraps at column 0; a numbered step never does.
-        if (current !== null && isParagraphPage && line.trim() !== '') {
-            current.raw += ' ' + line.trim();
-        }
-    }
-    if (current !== null) {
+  const steps = [];
+  let current = null;
+  for (const line of lines) {
+    const started = startPattern.exec(line);
+    if (started !== null) {
+      if (current !== null) {
         steps.push(current);
+      }
+      current = { raw: started[1] };
+      continue;
     }
-    return steps;
+    // A note the recipe hangs under a step ("> Note: ...") is background
+    // for whoever maintains the manual; on a card it buries the one
+    // instruction the user is meant to carry out.
+    if (current !== null && /^\s*>/.test(line)) {
+      continue;
+    }
+    // A wrapped continuation line of the step above it -- and, on a
+    // bullet page, the sub-bullets under it.
+    if (current !== null && /^\s{2,}\S/.test(line)) {
+      current.raw += ' ' + line.trim().replace(/^[-*]\s+/, '');
+      continue;
+    }
+    if (current !== null && line.trim() === '') {
+      steps.push(current);
+      current = null;
+      continue;
+    }
+    // A paragraph wraps at column 0; a numbered step never does.
+    if (current !== null && isParagraphPage && line.trim() !== '') {
+      current.raw += ' ' + line.trim();
+    }
+  }
+  if (current !== null) {
+    steps.push(current);
+  }
+  return steps;
 }
 
 const NUMBERED_STEP_PATTERN = /^\s*\d+\.\s+(.*)$/;
@@ -1946,84 +2256,87 @@ const NUMBERED_STEP_PATTERN = /^\s*\d+\.\s+(.*)$/;
 // front matter (**Goal:**, **Where:**), which is about the recipe, not a
 // step of it.
 const BOLD_LED_STEP_PATTERN =
-    /^(?:[-*]\s+)?(\*\*(?!(?:Goal|Where|Verify|Note|Tip|Why|Screenshots?)\b)[^*\n]{1,120}\*\*.*)$/;
+  /^(?:[-*]\s+)?(\*\*(?!(?:Goal|Where|Verify|Note|Tip|Why|Screenshots?)\b)[^*\n]{1,120}\*\*.*)$/;
 
 export function toGuideSteps(markdown, limit = MAX_STEPS) {
-    const lines = markdown.split(/\r?\n/);
-    let steps = readStepLines(lines, NUMBERED_STEP_PATTERN);
-    if (steps.length === 0) {
-        steps = readStepLines(lines, BOLD_LED_STEP_PATTERN, true);
-    }
-    return steps.slice(0, limit).map((step) => {
-        const marked = [...step.raw.matchAll(BOLD_PATTERN)].map((match) => {
-            return {
-                text: toEnglishOnly(match[1].replace(/[*`]/g, '')).trim(),
-                region: match[2] ?? null,
-            };
-        });
-        const bolds = marked.map((one) => {
-            return one.text;
-        });
-        const plain = bolds
-            .flatMap(toFindCandidates)
-            .filter(checkIsControlLabel);
-        // A step that names a PANEL and a control inside it is naming ONE
-        // thing, not two: "open the **Background** panel and choose the
-        // **Videos** tab" means the Videos tab of that panel. Asked for on
-        // its own, "Background" is also the word on a transition button down
-        // beside the screen preview -- and that is what the ring landed on.
-        // The ORDER is the adaptive part. The scoped candidate is tried
-        // first and can only match once the panel is open; with the panel
-        // collapsed it finds nothing and the panel itself is next, which is
-        // the half of the step the user has not done yet.
-        const scope = marked.find((one) => {
-            return one.region !== null && checkIsControlLabel(one.text);
-        });
-        const finds = [
-            ...(scope === undefined
-                ? []
-                : plain
-                      .filter((one) => {
-                          return one !== scope.text;
-                      })
-                      .map((one) => {
-                          return scope.text + ' > ' + one;
-                      })),
-            ...(scope === undefined ? [] : [scope.text + ' ' + scope.region]),
-            ...plain,
-        ].filter((one, at, all) => {
-            return all.indexOf(one) === at;
-        });
-        // The first shortcut the step names, kept ALONGSIDE the labels rather
-        // than instead of them: a recipe writes "press Ctrl+B (or click Bible
-        // Lookup)", and clicking the control the user can see is the better
-        // demonstration -- so the element wins when there is one, and this is
-        // what the step falls back on when the shortcut is all there is, or
-        // when the named control turns out not to be on screen.
-        const keys =
-            bolds.map(toKeystroke).find((one) => {
-                return one !== null;
-            }) ?? null;
-        const action = RIGHT_CLICK_PATTERN.test(step.raw) ? 'rightClick' : undefined;
-        const text = toEnglishOnly(
-            step.raw
-                // The screenshot markers and links mean nothing on a card.
-                .replace(/📸/g, '')
-                .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-                .replace(/\*\*([^*]+)\*\*/g, '$1')
-                .replace(/`([^`]+)`/g, '$1')
-                .replace(/_([^_]+)_/g, '$1'),
-        )
-            .replace(/\s+/g, ' ')
-            .trim();
+  const lines = markdown.split(/\r?\n/);
+  let steps = readStepLines(lines, NUMBERED_STEP_PATTERN);
+  if (steps.length === 0) {
+    steps = readStepLines(lines, BOLD_LED_STEP_PATTERN, true);
+  }
+  return steps
+    .slice(0, limit)
+    .map((step) => {
+      const marked = [...step.raw.matchAll(BOLD_PATTERN)].map((match) => {
         return {
-            keys,
-            action,
-            text,
-            finds,
-            ...(checkIsLookStep(text, finds, keys, action) ? { kind: 'look' } : {}),
+          text: toEnglishOnly(match[1].replace(/[*`]/g, '')).trim(),
+          region: match[2] ?? null,
         };
-    }).filter((step) => {
-        return step.text.length > 0;
+      });
+      const bolds = marked.map((one) => {
+        return one.text;
+      });
+      const plain = bolds.flatMap(toFindCandidates).filter(checkIsControlLabel);
+      // A step that names a PANEL and a control inside it is naming ONE
+      // thing, not two: "open the **Background** panel and choose the
+      // **Videos** tab" means the Videos tab of that panel. Asked for on
+      // its own, "Background" is also the word on a transition button down
+      // beside the screen preview -- and that is what the ring landed on.
+      // The ORDER is the adaptive part. The scoped candidate is tried
+      // first and can only match once the panel is open; with the panel
+      // collapsed it finds nothing and the panel itself is next, which is
+      // the half of the step the user has not done yet.
+      const scope = marked.find((one) => {
+        return one.region !== null && checkIsControlLabel(one.text);
+      });
+      const finds = [
+        ...(scope === undefined
+          ? []
+          : plain
+              .filter((one) => {
+                return one !== scope.text;
+              })
+              .map((one) => {
+                return scope.text + ' > ' + one;
+              })),
+        ...(scope === undefined ? [] : [scope.text + ' ' + scope.region]),
+        ...plain,
+      ].filter((one, at, all) => {
+        return all.indexOf(one) === at;
+      });
+      // The first shortcut the step names, kept ALONGSIDE the labels rather
+      // than instead of them: a recipe writes "press Ctrl+B (or click Bible
+      // Lookup)", and clicking the control the user can see is the better
+      // demonstration -- so the element wins when there is one, and this is
+      // what the step falls back on when the shortcut is all there is, or
+      // when the named control turns out not to be on screen.
+      const keys =
+        bolds.map(toKeystroke).find((one) => {
+          return one !== null;
+        }) ?? null;
+      const action = RIGHT_CLICK_PATTERN.test(step.raw)
+        ? 'rightClick'
+        : undefined;
+      const text = toEnglishOnly(
+        step.raw
+          // The screenshot markers and links mean nothing on a card.
+          .replace(/📸/g, '')
+          .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+          .replace(/\*\*([^*]+)\*\*/g, '$1')
+          .replace(/`([^`]+)`/g, '$1')
+          .replace(/_([^_]+)_/g, '$1'),
+      )
+        .replace(/\s+/g, ' ')
+        .trim();
+      return {
+        keys,
+        action,
+        text,
+        finds,
+        ...(checkIsLookStep(text, finds, keys, action) ? { kind: 'look' } : {}),
+      };
+    })
+    .filter((step) => {
+      return step.text.length > 0;
     });
 }

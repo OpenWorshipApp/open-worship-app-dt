@@ -10,8 +10,10 @@
 // run. Restores the main window to reader.html and stops any guide at the
 // end. Exits 1 on any failed check.
 
-const MCP_URL = 'http://127.0.0.1:39223/mcp';
 const ANSWER_TIMEOUT_MS = 120000;
+
+let mcpUrl = null;
+let mcpToken = null;
 
 let failures = 0;
 function check(label, ok, detail = '') {
@@ -43,6 +45,13 @@ async function getCdpPort() {
                 signal: AbortSignal.timeout(3000),
             });
             if (res.ok) {
+                mcpUrl = process.env.OWA_MCP_URL ?? info.mcpUrl;
+                mcpToken = process.env.OWA_MCP_TOKEN ?? info.mcpToken;
+                if (!mcpUrl || !mcpToken) {
+                    throw new Error(
+                        'The live app did not publish an authenticated MCP endpoint.',
+                    );
+                }
                 return info.port;
             }
         } catch {
@@ -146,14 +155,18 @@ async function findPage(port, match, timeoutMs = 15000) {
 let mcpSessionId = null;
 let mcpRequestId = 0;
 async function mcpPost(body) {
+    if (mcpUrl === null || mcpToken === null) {
+        await getCdpPort();
+    }
     const headers = {
         'content-type': 'application/json',
         accept: 'application/json, text/event-stream',
+        authorization: `Bearer ${mcpToken}`,
     };
     if (mcpSessionId !== null) {
         headers['mcp-session-id'] = mcpSessionId;
     }
-    const response = await fetch(MCP_URL, {
+    const response = await fetch(mcpUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),

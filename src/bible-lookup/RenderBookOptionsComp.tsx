@@ -80,6 +80,7 @@ function genBookOption({
         >
             <button
                 data-book-index={index + 1}
+                title={modelBook}
                 className={
                     'd-flex text-nowrap btn-sm btn btn-outline-success' +
                     ` ${OPTION_CLASS} ${activeClass}`

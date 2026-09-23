@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [PL-105]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-21"
+workflowsVersion: "2026-09-23"
 ---
 # W-36 — Import a public domain song (no account needed)
 
@@ -39,5 +39,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-105`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-21).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
 :::

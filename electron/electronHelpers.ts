@@ -56,6 +56,10 @@ export type CustomMenusDataType = {
     // popups hide their menu bar, and a single owner is what keeps the click
     // routed back to the window whose widgets the items describe.
     view?: CustomMenuItemType[];
+    // Renderer-contributed Help entries. Page-scoped help belongs here so its
+    // label can be translated in the renderer and its click returns to the
+    // page that knows how to handle it.
+    help?: CustomMenuItemType[];
 };
 
 function parseEnvContent(content: string) {

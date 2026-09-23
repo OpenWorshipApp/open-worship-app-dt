@@ -211,6 +211,27 @@ const SHOWS_MARKER = /(^|[\s>*_(.!?-])SHOWS:[ \t]*/i;
 const MAX_SHOW_LENGTH = 300;
 const MAX_SHOW_COUNT = 3;
 
+// A SHOWS chip is a promise that pressing it will land on one real control.
+// Weak models sometimes fill an absent value with `none`, or copy their own
+// uncertainty into the name (`Split view button (if shown)`, `NIV button on
+// screen`). Those are prose, not labels. Dropping them here keeps model
+// metadata from becoming a bright, pressable dead end for a senior user.
+const EMPTY_SHOW_CONTROL_PATTERN =
+    /^(?:none|null|nil|n\/?a|unknown|no(?:ne)? available|not applicable)$/i;
+const CONDITIONAL_SHOW_CONTROL_PATTERN =
+    /(?:\bif\s+(?:shown|visible|available|present)\b|\bwhen\s+(?:shown|visible|available)\b|\bon\s+(?:the\s+)?screen\b)/i;
+const DESCRIBED_SHOW_CONTROL_PATTERN = /\bbuttons?$/i;
+
+export function checkIsUsableShowControlName(value: string) {
+    const clean = toCleanReply(value);
+    return (
+        clean.length > 0 &&
+        !EMPTY_SHOW_CONTROL_PATTERN.test(clean) &&
+        !CONDITIONAL_SHOW_CONTROL_PATTERN.test(clean) &&
+        !DESCRIBED_SHOW_CONTROL_PATTERN.test(clean)
+    );
+}
+
 function toFileName(value: string) {
     const parts = value.split(/[\\/]/);
     return parts[parts.length - 1] || value;
@@ -243,7 +264,11 @@ export function parseAnswerShows(text: string): {
             matched === null ? 'control' : matched[1].toLowerCase()
         ) as ShowRefKindType;
         const value = (matched === null ? raw : matched[2]).trim();
-        if (value.length === 0 || seen.has(value.toLowerCase())) {
+        if (
+            value.length === 0 ||
+            (kind === 'control' && !checkIsUsableShowControlName(value)) ||
+            seen.has(value.toLowerCase())
+        ) {
             continue;
         }
         seen.add(value.toLowerCase());
@@ -310,6 +335,58 @@ export function parseAttachRequests(text: string): {
         }
     }
     return { text: cut.text, requests };
+}
+
+/**
+ * Remove all model-only frames regardless of which order a small model wrote
+ * them in. Each individual parser deliberately looks back only two lines so
+ * prose examples are not mistaken for machinery; removing the nearer frames
+ * and trying again lets a third legitimate closing frame become near enough
+ * without weakening that safety boundary.
+ */
+export function parseAnswerFrames(text: string): {
+    text: string;
+    options: string[];
+    requests: AttachRequestType[];
+    shows: ShowRefType[];
+} {
+    let clean = String(text ?? '');
+    const options: string[] = [];
+    const requests: AttachRequestType[] = [];
+    const shows: ShowRefType[] = [];
+    for (let pass = 0; pass < 3; pass += 1) {
+        const before = clean;
+        const parsedOptions = parseAnswerOptions(clean);
+        clean = parsedOptions.text;
+        for (const option of parsedOptions.options) {
+            if (!options.includes(option) && options.length < MAX_REPLY_COUNT) {
+                options.push(option);
+            }
+        }
+        const parsedRequests = parseAttachRequests(clean);
+        clean = parsedRequests.text;
+        for (const request of parsedRequests.requests) {
+            if (!requests.includes(request)) {
+                requests.push(request);
+            }
+        }
+        const parsedShows = parseAnswerShows(clean);
+        clean = parsedShows.text;
+        for (const show of parsedShows.shows) {
+            if (
+                !shows.some((one) => {
+                    return one.kind === show.kind && one.value === show.value;
+                }) &&
+                shows.length < MAX_SHOW_COUNT
+            ) {
+                shows.push(show);
+            }
+        }
+        if (clean === before) {
+            break;
+        }
+    }
+    return { text: clean, options, requests, shows };
 }
 
 // A question a press can answer is short, and it is the LAST thing said. These

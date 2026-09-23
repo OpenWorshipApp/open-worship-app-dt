@@ -15,6 +15,10 @@ import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 import appProvider from '../server/appProvider';
 import {
+    READER_DEMO_LIST,
+    type ReaderDemoType,
+} from '../../tools/owa-devtools-mcp/readerDemos.mjs';
+import {
     MAX_ATTACHMENT_COUNT,
     checkIsImageName,
     checkIsReadableTextFile,
@@ -390,6 +394,59 @@ function RenderAllQuestionsComp({
                 );
             })}
         </div>
+    );
+}
+
+/**
+ * Common Reader lessons that never call a language model. The button
+ * starts the same MCP guide an answer would use, with its steps already
+ * written and checked into the app.
+ */
+function RenderReaderDemosComp({
+    isBusy,
+    onStart,
+}: Readonly<{
+    isBusy: boolean;
+    onStart: (demo: ReaderDemoType) => void;
+}>) {
+    return (
+        <section
+            className="chat-demo-block"
+            aria-labelledby="reader-demo-title"
+        >
+            <p className="chat-eyebrow" id="reader-demo-title">
+                Try a guided demo
+            </p>
+            <p className="chat-demo-note">
+                No AI model or account needed. Press one, then use <b>Do it</b>{' '}
+                in the Reader for one safe step at a time.
+            </p>
+            <div className="chat-demo-list">
+                {READER_DEMO_LIST.filter(
+                    (demo) => demo.isFeatured !== false,
+                ).map((demo) => {
+                    return (
+                        <button
+                            key={demo.id}
+                            type="button"
+                            className="chat-demo"
+                            aria-label={`${demo.label}. ${demo.detail}`}
+                            disabled={isBusy}
+                            onClick={() => {
+                                onStart(demo);
+                            }}
+                        >
+                            <span className="chat-demo-label">
+                                {demo.label}
+                            </span>
+                            <span className="chat-demo-detail">
+                                {demo.detail}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+        </section>
     );
 }
 
@@ -4609,6 +4666,22 @@ export default function ChatbotAppComp() {
                                 );
                             })}
                         </div>
+                        {focus === 'reader' ? (
+                            <RenderReaderDemosComp
+                                isBusy={isBusy}
+                                onStart={(demo) => {
+                                    addMessage(activeSessionId, {
+                                        author: 'you',
+                                        text: `Guided demo: ${demo.label}`,
+                                    });
+                                    void handleActing({
+                                        label: demo.label,
+                                        toolName: 'owa_guide_start',
+                                        args: { demoId: demo.id },
+                                    });
+                                }}
+                            />
+                        ) : null}
                         {/*
                          * The four above say what to type first. This says
                          * what the window is FOR -- and a help window whose

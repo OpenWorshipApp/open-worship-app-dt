@@ -135,6 +135,8 @@ class PptxMediaStore {
 async function writePackage(
     appDocument: AppDocument,
     zipWriter: OfficeZipWriter,
+    title: string,
+    progressPrefix = '',
 ) {
     const slides = await appDocument.getSlides();
     const [firstSlide] = slides;
@@ -150,7 +152,7 @@ async function writePackage(
             return index !== null;
         });
     const info: PptxDeckInfoType = {
-        title: appDocument.fileSource.name,
+        title,
         slideCount: slides.length,
         notesSlideIndexes,
         hiddenSlideCount: slides.filter((slide) => {
@@ -208,7 +210,7 @@ async function writePackage(
             const slideIndex = index + 1;
             showProgressBarMessage(
                 tran(EXPORT_TITLE),
-                `${slideIndex}/${slides.length}`,
+                `${progressPrefix}${slideIndex}/${slides.length}`,
             );
             const model = await measurer.measureSlide(slide);
             const units = genPptxUnits(deck, slide.width, slide.height);
@@ -243,45 +245,92 @@ async function writePackage(
     await zipWriter.finish();
 }
 
-export async function exportAppDocumentToPptx(appDocument: AppDocument) {
-    showProgressBar(EXPORT_TITLE);
+export type PptxExportEntryType = {
+    appDocument: AppDocument;
+    name: string;
+};
+
+async function exportEntryToPptx(
+    entry: PptxExportEntryType,
+    progressPrefix: string,
+) {
     let filePath: string | null = null;
     let sink: ReturnType<typeof createFileSink> | null = null;
     try {
         filePath = await genNextArchiveFilePath(
             getDownloadPath(),
-            toArchiveFileName(
-                appDocument.fileSource.name,
-                PPTX_DOT_EXTENSION,
-                'Document',
-            ),
+            toArchiveFileName(entry.name, PPTX_DOT_EXTENSION, 'Document'),
             PPTX_DOT_EXTENSION,
         );
         sink = createFileSink(filePath);
         const { write } = sink;
-        await writePackage(appDocument, new OfficeZipWriter(write));
-        await sink.close();
-        // `showSimpleToast` does not translate; the path goes on AFTER the
-        // translation, never into the key.
-        showSimpleToast(
-            tran(EXPORT_TITLE),
-            `${tran('Exported to')} ${filePath}`,
+        await writePackage(
+            entry.appDocument,
+            new OfficeZipWriter(write),
+            entry.name,
+            progressPrefix,
         );
-        showFileOrDirExplorer(filePath);
+        await sink.close();
         return filePath;
     } catch (error) {
-        handleError(error);
         sink?.abort();
         if (filePath !== null) {
             // never leave half a package behind looking like a real one
             await fsDeleteFile(filePath).catch(handleError);
         }
+        throw error;
+    }
+}
+
+/**
+ * Exports one or more rendered documents as separate PPTX files.
+ *
+ * A lyric preview uses one derived document per visible stage. Keeping the
+ * batch here means those stages are written serially (one slide DOM and one
+ * picture in memory at a time), share one progress bar, and reveal Downloads
+ * only once when the batch is complete.
+ */
+export async function exportAppDocumentsToPptx(
+    entries: readonly PptxExportEntryType[],
+) {
+    if (entries.length === 0) {
+        return [];
+    }
+    showProgressBar(EXPORT_TITLE);
+    const filePaths: string[] = [];
+    try {
+        for (const entry of entries) {
+            const progressPrefix = entries.length > 1 ? `${entry.name} · ` : '';
+            filePaths.push(await exportEntryToPptx(entry, progressPrefix));
+        }
+        const revealPath =
+            filePaths.length === 1 ? filePaths[0] : getDownloadPath();
+        // `showSimpleToast` does not translate; the path goes on AFTER the
+        // translation, never into the key.
+        showSimpleToast(
+            tran(EXPORT_TITLE),
+            `${tran('Exported to')} ${revealPath}`,
+        );
+        showFileOrDirExplorer(revealPath);
+        return filePaths;
+    } catch (error) {
+        handleError(error);
         showSimpleToast(
             tran(EXPORT_TITLE),
             tran('Unable to export the document to PPTX'),
         );
-        return null;
+        return filePaths;
     } finally {
         hideProgressBar(EXPORT_TITLE);
     }
+}
+
+export async function exportAppDocumentToPptx(appDocument: AppDocument) {
+    const [filePath] = await exportAppDocumentsToPptx([
+        {
+            appDocument,
+            name: appDocument.fileSource.name,
+        },
+    ]);
+    return filePath ?? null;
 }

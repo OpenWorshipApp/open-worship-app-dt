@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, XW-08]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-21"
+workflowsVersion: "2026-09-23"
 ---
 # W-05 — Present song lyrics
 
@@ -54,5 +54,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `XW-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-21).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
 :::

@@ -19,6 +19,7 @@ import {
 import { tran } from '../lang/langHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genLyricReloadContextMenuItem } from './lyricContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { getLabelIconName, toIconedLabel } from '../others/labelIconHelpers';
 import { getStageAccentColor } from '../_screen/screenHelpers';
 import LyricStageStyleFloatingComp from './LyricStageStyleFloatingComp';
@@ -29,6 +30,7 @@ import {
     useLyricStageStyleFloatingStage,
 } from './lyricStageStyleFloatingHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
+import { exportLyricStagesToPptx } from './lyricPptxExportHelpers';
 
 function getLyricAppDocuments(
     stageSetting: string,
@@ -241,6 +243,9 @@ export default function LyricSlidesPreviewerComp() {
         return unusedStages.length === 0 ? null : unusedStages[0];
     }, [stages]);
     const nextStageRef = useAppCurrentRef(nextStage);
+    const lyricAppDocumentEntriesRef = useAppCurrentRef(
+        lyricAppDocumentEntries,
+    );
 
     const handleStageAdding = useCallback(() => {
         if (nextStageRef.current === null) {
@@ -272,6 +277,15 @@ export default function LyricSlidesPreviewerComp() {
             genLyricReloadContextMenuItem(() => {
                 lyricManagerRef.current.fileSource.fireUpdateEvent();
             }),
+            {
+                childBefore: genContextMenuItemIcon('filetype-pptx'),
+                menuElement: tran('Export to PPTX'),
+                onSelect: () => {
+                    void exportLyricStagesToPptx(
+                        lyricAppDocumentEntriesRef.current,
+                    );
+                },
+            },
         ]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

@@ -1708,6 +1708,205 @@ const dictionary = {
     'Files changed:': 'ឯកសារដែលបានកែប្រែ៖',
     'The app reloads to show them.':
         'កម្មវិធីនឹងផ្ទុកឡើងវិញ ដើម្បីបង្ហាញពួកវា។',
+    // --- Page-aware Tips of the Day and their deterministic walkthroughs.
+    'Tips of the Day': 'គន្លឹះប្រចាំថ្ងៃ',
+    'Tip of the Day': 'គន្លឹះប្រចាំថ្ងៃ',
+    'Presenter tip': 'គន្លឹះសម្រាប់អ្នកបង្ហាញ',
+    'Reader tip': 'គន្លឹះសម្រាប់អ្នកអាន',
+    'Show it': 'បង្ហាញរបៀប',
+    'Next tip': 'គន្លឹះបន្ទាប់',
+    'All tips': 'គន្លឹះទាំងអស់',
+    'All Presenter tips': 'គន្លឹះទាំងអស់សម្រាប់អ្នកបង្ហាញ',
+    'All Reader tips': 'គន្លឹះទាំងអស់សម្រាប់អ្នកអាន',
+    'Back to tip': 'ត្រឡប់ទៅគន្លឹះ',
+    'Choose a tip to practise at your own pace.':
+        'ជ្រើសរើសគន្លឹះមួយ ដើម្បីហាត់រៀនតាមល្បឿនរបស់អ្នក។',
+    "Don't show again": 'កុំបង្ហាញម្តងទៀត',
+    'Show Tips of the Day automatically':
+        'បង្ហាញគន្លឹះប្រចាំថ្ងៃដោយស្វ័យប្រវត្តិ',
+    'Applies to the Presenter and Bible Reader on the next app launch.':
+        'អនុវត្តចំពោះទំព័រអ្នកបង្ហាញ និងទំព័រអ្នកអានព្រះគម្ពីរ នៅពេលបើកកម្មវិធីលើកក្រោយ។',
+    'Starting walkthrough…': 'កំពុងចាប់ផ្តើមការណែនាំ…',
+    'Could not start this walkthrough.': 'មិនអាចចាប់ផ្តើមការណែនាំនេះបានទេ។',
+    'Look up a Bible passage': 'ស្វែងរកបទគម្ពីរ',
+    'Open Bible Lookup without leaving the Presenter.':
+        'បើកការស្វែងរកព្រះគម្ពីរដោយមិនចាកចេញពីទំព័រអ្នកបង្ហាញ។',
+    'Show or hide the Document List': 'បង្ហាញ ឬលាក់បញ្ជីឯកសារ',
+    'Toggle the panel that holds your slide documents.':
+        'បើក ឬបិទផ្ទាំងដែលផ្ទុកឯកសារស្លាយរបស់អ្នក។',
+    'Show or hide the Presenting Flow List': 'បង្ហាញ ឬលាក់បញ្ជីតារាងកម្មវិធី',
+    'Toggle the panel used to build and follow a service order.':
+        'បើក ឬបិទផ្ទាំងសម្រាប់រៀបចំ និងតាមដានលំដាប់កម្មវិធី។',
+    'Show or hide Bibles and Bible Notes':
+        'បង្ហាញ ឬលាក់ព្រះគម្ពីរ និងកំណត់ត្រាព្រះគម្ពីរ',
+    'Toggle the panel for saved passages and notes.':
+        'បើក ឬបិទផ្ទាំងសម្រាប់បទគម្ពីរ និងកំណត់ត្រាដែលបានរក្សាទុក។',
+    'Show or hide the Mini Screen': 'បង្ហាញ ឬលាក់អេក្រង់តូច',
+    'Toggle the panel that previews and controls audience screens.':
+        'បើក ឬបិទផ្ទាំងមើលជាមុន និងគ្រប់គ្រងអេក្រង់អ្នកទស្សនា។',
+    'Give the Presenter more room': 'ពង្រីកកន្លែងសម្រាប់ទំព័រអ្នកបង្ហាញ',
+    'Switch the Presenter between normal and full view.':
+        'ប្តូរទំព័រអ្នកបង្ហាញរវាងទិដ្ឋភាពធម្មតា និងពេញ។',
+    'Make the words larger': 'ធ្វើឱ្យអក្សរធំជាងមុន',
+    'Open the hidden footer and raise Font Size.':
+        'បើកបាតទំព័រដែលលាក់ ហើយបង្កើនទំហំអក្សរ។',
+    'Find words in the Bible': 'ស្វែងរកពាក្យក្នុងព្រះគម្ពីរ',
+    'Open Bible Find, then put the caret in its search box.':
+        'បើកការស្វែងរកព្រះគម្ពីរ រួចដាក់ទស្សន៍ទ្រនិចក្នុងប្រអប់ស្វែងរក។',
+    'Look up a Bible person or place': 'ស្វែងរកបុគ្គល ឬទីកន្លែងក្នុងព្រះគម្ពីរ',
+    'Open the names and locations lookup beside the passage.':
+        'បើកការស្វែងរកឈ្មោះ និងទីកន្លែងនៅក្បែរបទគម្ពីរ។',
+    'Put two Bible versions side by side': 'ដាក់ព្រះគម្ពីរពីរកំណែនៅក្បែរគ្នា',
+    'Open the version picker for a second Bible column.':
+        'បើកឧបករណ៍ជ្រើសកំណែសម្រាប់ជួរឈរព្រះគម្ពីរទីពីរ។',
+    'Toggle distraction-free reading': 'ប្តូរទៅការអានដោយគ្មានការរំខាន',
+    'Enter or leave the full reading view.': 'ចូល ឬចាកចេញពីទិដ្ឋភាពអានពេញ។',
+    'Toggle the side panel that keeps saved passages and notes.':
+        'បើក ឬបិទផ្ទាំងចំហៀងសម្រាប់បទគម្ពីរ និងកំណត់ត្រាដែលបានរក្សាទុក។',
+    'Search tips': 'ស្វែងរកគន្លឹះ',
+    'No tips found': 'រកមិនឃើញគន្លឹះ',
+    'Getting started': 'ចាប់ផ្តើម',
+    'Reading and layout': 'ការអាន និងប្លង់',
+    'Notes and marks': 'កំណត់ត្រា និងសញ្ញាសម្គាល់',
+    'Reader shortcuts': 'ឧបករណ៍អ្នកអាន',
+    'View menu': 'ម៉ឺនុយ មើល',
+    'Study tools': 'ឧបករណ៍សិក្សា',
+    'Make the words smaller': 'ធ្វើឱ្យអក្សរតូចជាងមុន',
+    'Open the hidden footer and lower Font Size.':
+        'បើកបាតទំព័រដែលលាក់ ហើយបន្ថយទំហំអក្សរ។',
+    'Open John 3:16 with buttons': 'បើក យ៉ូហាន ៣:១៦ ដោយប៊ូតុង',
+    'Choose the book, chapter and verse without typing a reference.':
+        'ជ្រើសសៀវភៅ ជំពូក និងខ ដោយមិនចាំបាច់វាយសេចក្ដីយោង។',
+    'Go back to the previous passage': 'ត្រឡប់ទៅអត្ថបទមុន',
+    'Use the passage history without typing the reference again.':
+        'ប្រើប្រវត្តិអត្ថបទ ដោយមិនបាច់វាយសេចក្ដីយោងម្ដងទៀត។',
+    'Go forward to the next passage': 'ទៅមុខកាន់អត្ថបទបន្ទាប់',
+    'Move forward again after using passage history.':
+        'ទៅមុខម្ដងទៀត បន្ទាប់ពីប្រើប្រវត្តិអត្ថបទ។',
+    'Clear the reference box': 'សម្អាតប្រអប់សេចក្ដីយោង',
+    "Show this Bible's book buttons and start a fresh lookup.":
+        'បង្ហាញប៊ូតុងសៀវភៅរបស់ព្រះគម្ពីរ ហើយចាប់ផ្ដើមស្វែងរកថ្មី។',
+    'Change names and places language': 'ប្ដូរភាសាឈ្មោះ និងទីកន្លែង',
+    'Open the language picker used by the people and places tools.':
+        'បើកឧបករណ៍ជ្រើសភាសា សម្រាប់ឈ្មោះមនុស្ស និងទីកន្លែង។',
+    'Choose how to copy a passage': 'ជ្រើសរបៀបចម្លងអត្ថបទ',
+    'Open the Copy menu for the passage you are reading.':
+        'បើកម៉ឺនុយ ចម្លង សម្រាប់អត្ថបទដែលអ្នកកំពុងអាន។',
+    'Split the passage side by side': 'បំបែកអត្ថបទដាក់ក្បែរគ្នា',
+    'Make a second reading pane to the right.':
+        'បង្កើតផ្ទាំងអានទីពីរនៅខាងស្ដាំ។',
+    'Split the passage top and bottom': 'បំបែកអត្ថបទខាងលើ និងខាងក្រោម',
+    'Make a second reading pane underneath.': 'បង្កើតផ្ទាំងអានទីពីរនៅខាងក្រោម។',
+    'Save this passage in Bibles': 'រក្សាទុកអត្ថបទនេះក្នុង ព្រះគម្ពីរ',
+    'Keep the passage in your Bibles list for later.':
+        'ទុកអត្ថបទក្នុងបញ្ជីព្រះគម្ពីរ ដើម្បីអាននៅពេលក្រោយ។',
+    'Present a passage from the Reader': 'បង្ហាញអត្ថបទពីអ្នកអាន',
+    'Double-click a verse to send it to selected screens; use F9 to clear it.':
+        'ចុចពីរដងលើខ ដើម្បីផ្ញើទៅអេក្រង់ដែលបានជ្រើស; ប្រើ F9 ដើម្បីលុបវា។',
+    'Start automatic scrolling': 'ចាប់ផ្ដើមរំកិលដោយស្វ័យប្រវត្តិ',
+    'Let a long passage move down by itself.':
+        'ឱ្យអត្ថបទវែងរំកិលចុះដោយខ្លួនឯង។',
+    'Jump back to the top': 'ត្រឡប់ទៅខាងលើភ្លាមៗ',
+    'Return to the beginning of a long passage.': 'ត្រឡប់ទៅដើមនៃអត្ថបទវែង។',
+    'Toggle natural Bible line breaks': 'ប្ដូរការចុះបន្ទាត់តាមព្រះគម្ពីរ',
+    "Choose whether the passage follows the Bible's own line breaks.":
+        'ជ្រើសថាតើអត្ថបទត្រូវធ្វើតាមការចុះបន្ទាត់របស់ព្រះគម្ពីរឬអត់។',
+    'Toggle model-based line breaks': 'ប្ដូរការចុះបន្ទាត់តាមគំរូ',
+    'Choose whether supported Bibles use their formatting model.':
+        'ជ្រើសថាតើព្រះគម្ពីរដែលគាំទ្រ ត្រូវប្រើគំរូទ្រង់ទ្រាយរបស់វាឬអត់។',
+    'Open cross references': 'បើកសេចក្ដីយោងឆ្លង',
+    'See other verses connected to the passage you are reading.':
+        'មើលខផ្សេងៗដែលទាក់ទងនឹងអត្ថបទដែលអ្នកកំពុងអាន។',
+    'See people and places in this passage':
+        'មើលមនុស្ស និងទីកន្លែងក្នុងអត្ថបទនេះ',
+    'Open the names and locations found in what you are reading.':
+        'បើកឈ្មោះ និងទីកន្លែងដែលមានក្នុងអត្ថបទដែលអ្នកកំពុងអាន។',
+    'Open passage resources': 'បើកធនធានរបស់អត្ថបទ',
+    'Show study resources for the passage beside the Bible.':
+        'បង្ហាញធនធានសិក្សារបស់អត្ថបទនៅក្បែរព្រះគម្ពីរ។',
+    'Search only selected Bible books': 'ស្វែងរកតែក្នុងសៀវភៅដែលបានជ្រើស',
+    'Open the book filter used by Bible Find.':
+        'បើកតម្រងសៀវភៅ ដែលប្រើដោយការស្វែងរកព្រះគម្ពីរ។',
+    'Type a complete Bible reference': 'វាយសេចក្ដីយោងព្រះគម្ពីរពេញលេញ',
+    'Enter a reference such as John 3:16 and open it directly.':
+        'បញ្ចូលសេចក្ដីយោងដូចជា យ៉ូហាន ៣:១៦ ហើយបើកវាដោយផ្ទាល់។',
+    'Use the reference box shortcuts': 'ប្រើផ្លូវកាត់ក្នុងប្រអប់សេចក្ដីយោង',
+    'Tab completes a choice, Escape removes one part, and Ctrl+Escape clears all.':
+        'Tab បំពេញជម្រើស Escape លុបមួយផ្នែក ហើយ Ctrl+Escape សម្អាតទាំងអស់។',
+    'Reuse and arrange passage history': 'ប្រើឡើងវិញ និងរៀបចំប្រវត្តិអត្ថបទ',
+    'Open, split, drag, save, or remove references from the history row.':
+        'បើក បំបែក អូស រក្សាទុក ឬលុបសេចក្ដីយោងពីជួរប្រវត្តិ។',
+    'Change version and read Bible information':
+        'ប្ដូរកំណែ និងអានព័ត៌មានព្រះគម្ពីរ',
+    'Choose a translation, then open its publisher, language, and copyright details.':
+        'ជ្រើសកំណែប្រែ រួចបើកព័ត៌មានអ្នកបោះពុម្ព ភាសា និងសិទ្ធិអ្នកនិពន្ធ។',
+    'Choose one verse or a verse range': 'ជ្រើសខមួយ ឬចន្លោះខ',
+    'Use verse numbers to select a start, an end, or all verses in the chapter.':
+        'ប្រើលេខខ ដើម្បីជ្រើសចំណុចចាប់ផ្ដើម ចំណុចបញ្ចប់ ឬខទាំងអស់ក្នុងជំពូក។',
+    'Use dictionary and Word export': 'ប្រើវចនានុក្រម និងនាំចេញទៅ Word',
+    'Look up selected words in Wiki Dictionary or export a passage to Microsoft Word.':
+        'ស្វែងរកពាក្យដែលបានជ្រើសក្នុង Wiki Dictionary ឬនាំចេញអត្ថបទទៅ Microsoft Word។',
+    'Use Bible audio and AI reading controls':
+        'ប្រើសំឡេងព្រះគម្ពីរ និងការគ្រប់គ្រងអានដោយ AI',
+    'Enable automatic AI audio, play verse audio, repeat it, or refresh the source.':
+        'បើកសំឡេង AI ស្វ័យប្រវត្តិ ចាក់សំឡេងខ ចាក់ម្ដងទៀត ឬផ្ទុកប្រភពឡើងវិញ។',
+    'Edit and arrange reading panes': 'កែសម្រួល និងរៀបចំផ្ទាំងអាន',
+    'Rename, recolor, drag, split, replace, or close the passages in your workspace.':
+        'ប្ដូរឈ្មោះ ប្ដូរពណ៌ អូស បំបែក ជំនួស ឬបិទអត្ថបទក្នុងកន្លែងធ្វើការ។',
+    'Master Bible Find results': 'ប្រើលទ្ធផលស្វែងរកព្រះគម្ពីរឱ្យស្ទាត់',
+    'Change version, use suggestions and book filters, page through hits, then open or save one.':
+        'ប្ដូរកំណែ ប្រើសំណើ និងតម្រងសៀវភៅ មើលទំព័រលទ្ធផល រួចបើក ឬរក្សាទុកមួយ។',
+    'Explore people and place details': 'ស្វែងយល់ព័ត៌មានមនុស្ស និងទីកន្លែង',
+    'Filter records, follow references, open verses or maps, copy details, and change data language.':
+        'តម្រងកំណត់ត្រា តាមសេចក្ដីយោង បើកខ ឬផែនទី ចម្លងព័ត៌មាន និងប្ដូរភាសាទិន្នន័យ។',
+    'Explore the connection graph': 'ស្វែងយល់ក្រាបទំនាក់ទំនង',
+    'Open a graph from a record, expand relations, filter, drag, pan, zoom, and find connections.':
+        'បើកក្រាបពីកំណត់ត្រា ពង្រីកទំនាក់ទំនង តម្រង អូស រំកិល ពង្រីក និងស្វែងរកការតភ្ជាប់។',
+    'Organize and share a connection graph': 'រៀបចំ និងចែករំលែកក្រាបទំនាក់ទំនង',
+    'Re-layout, undo, set a centre or root, then copy, save, print, or open the drawn view.':
+        'រៀបប្លង់ឡើងវិញ មិនធ្វើវិញ កំណត់កណ្ដាល ឬឫស រួចចម្លង រក្សាទុក បោះពុម្ព ឬបើករូបក្រាប។',
+    'Organize passage resources by filename': 'រៀបចំធនធានតាមឈ្មោះឯកសារ',
+    'Name files by book and chapter so they appear beside the right passage.':
+        'ដាក់ឈ្មោះឯកសារតាមសៀវភៅ និងជំពូក ដើម្បីឱ្យវាបង្ហាញក្បែរអត្ថបទត្រឹមត្រូវ។',
+    'Build and use your Resources library': 'បង្កើត និងប្រើបណ្ណាល័យធនធាន',
+    'Add or drop folders, search and reload them, open files, add files, or copy them into app data.':
+        'បន្ថែម ឬទម្លាក់ថត ស្វែងរក និងផ្ទុកឡើងវិញ បើក ឬបន្ថែមឯកសារ ឬចម្លងទៅទិន្នន័យកម្មវិធី។',
+    'Highlight and comment on Bible text':
+        'រំលេច និងដាក់មតិយោបល់លើអត្ថបទព្រះគម្ពីរ',
+    'Select words in one verse to highlight, recolor, remove marks, or attach a comment.':
+        'ជ្រើសពាក្យក្នុងខមួយ ដើម្បីរំលេច ប្ដូរពណ៌ លុបសញ្ញា ឬភ្ជាប់មតិយោបល់។',
+    'Work with marked verses in Bible Notes':
+        'ធ្វើការជាមួយខដែលបានសម្គាល់ក្នុងកំណត់ត្រាព្រះគម្ពីរ',
+    'Open, recolor, edit, move, drag, add to Bibles, or delete a marked verse.':
+        'បើក ប្ដូរពណ៌ កែ ផ្លាស់ទី អូស បន្ថែមទៅព្រះគម្ពីរ ឬលុបខដែលបានសម្គាល់។',
+    'Use the Reader header tools': 'ប្រើឧបករណ៍ក្បាលទំព័រអ្នកអាន',
+    'Return to Presenter or open Settings, App Assistant, AI Chat, and Help.':
+        'ត្រឡប់ទៅអ្នកបង្ហាញ ឬបើកការកំណត់ ជំនួយការកម្មវិធី ការជជែក AI និងជំនួយ។',
+    'Reload or force-reload the Reader': 'ផ្ទុកអ្នកអានឡើងវិញ ឬបង្ខំផ្ទុកឡើងវិញ',
+    'Use Reload for a normal refresh; use Force Reload only to bypass cached app files.':
+        'ប្រើ ផ្ទុកឡើងវិញ សម្រាប់ធម្មតា; ប្រើ បង្ខំផ្ទុកឡើងវិញ តែពេលចង់រំលងឯកសារឃ្លាំងប៉ុណ្ណោះ។',
+    'Restart the whole app with Relaunch':
+        'ចាប់ផ្ដើមកម្មវិធីទាំងមូលឡើងវិញដោយ Relaunch',
+    'Use View > Relaunch when every app window needs a clean restart; the app asks first.':
+        'ប្រើ មើល > Relaunch ពេលបង្អួចទាំងអស់ត្រូវចាប់ផ្ដើមថ្មី; កម្មវិធីនឹងសួរបញ្ជាក់ជាមុន។',
+    'Open Developer Tools for diagnostics':
+        'បើកឧបករណ៍អ្នកអភិវឌ្ឍន៍សម្រាប់វិនិច្ឆ័យ',
+    'Use View > Toggle Developer Tools only when troubleshooting or collecting technical details.':
+        'ប្រើ មើល > ប្ដូរឧបករណ៍អ្នកអភិវឌ្ឍន៍ តែពេលដោះស្រាយបញ្ហា ឬប្រមូលព័ត៌មានបច្ចេកទេស។',
+    'Zoom the whole Reader interface': 'ពង្រីកចំណុចប្រទាក់អ្នកអានទាំងមូល',
+    'Use Actual Size, Zoom In, or Zoom Out for the whole window; Font Size changes Bible text only.':
+        'ប្រើ ទំហំពិត ពង្រីក ឬបង្រួម សម្រាប់បង្អួចទាំងមូល; ទំហំអក្សរ ប្ដូរតែអត្ថបទព្រះគម្ពីរ។',
+    'Make the whole app window full screen':
+        'ធ្វើឱ្យបង្អួចកម្មវិធីទាំងមូលពេញអេក្រង់',
+    'Use View > Toggle Full Screen or F11; the passage Full button is the reading-only alternative.':
+        'ប្រើ មើល > ប្ដូរពេញអេក្រង់ ឬ F11; ប៊ូតុង ពេញ ក្នុងអត្ថបទ ពង្រីកតែផ្ទៃអាន។',
+    'Show or hide Reader panels from View':
+        'បង្ហាញ ឬលាក់ផ្ទាំងអ្នកអានពីម៉ឺនុយ មើល',
+    'Use View > Widgets to check or uncheck Bible and Notes, Bibles, Bible Notes, Bible Lookup, and study panes.':
+        'ប្រើ មើល > ធាតុក្រាហ្វិក ដើម្បីបង្ហាញ ឬលាក់ ព្រះគម្ពីរ និងកំណត់ត្រា ព្រះគម្ពីរ កំណត់ត្រាព្រះគម្ពីរ ការស្វែងរក និងផ្ទាំងសិក្សា។',
+    'Restore every Reader panel layout': 'ស្ដារប្លង់ផ្ទាំងអ្នកអានទាំងអស់',
+    'Use View > Reset Widgets Size to restore defaults and reopen collapsed panels after confirmation.':
+        'ប្រើ មើល > កំណត់ទំហំធាតុក្រាហ្វិកឡើងវិញ ដើម្បីស្ដារលំនាំដើម និងបើកផ្ទាំងដែលបានបង្រួម បន្ទាប់ពីបញ្ជាក់។',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

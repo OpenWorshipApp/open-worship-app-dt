@@ -152,6 +152,7 @@ export function initMenu(appController: ElectronAppController) {
     const fileMenuItems = getCustomMenuItems('file');
     const insertMenuItems = getCustomMenuItems('insert');
     const viewMenuItems = getCustomMenuItems('view');
+    const helpMenuItems = getCustomMenuItems('help');
 
     const template: any[] = [
         // { role: 'appMenu' }
@@ -382,6 +383,8 @@ export function initMenu(appController: ElectronAppController) {
         {
             role: 'help',
             submenu: [
+                ...helpMenuItems,
+                ...(helpMenuItems.length === 0 ? [] : [{ type: 'separator' }]),
                 // Hidden outright when AI is switched off in Settings ->
                 // Others: the window it opens would have nothing to talk to.
                 ...(checkIsAiEnabled()

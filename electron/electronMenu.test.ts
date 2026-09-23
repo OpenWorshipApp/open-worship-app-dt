@@ -535,6 +535,46 @@ describe('electronMenu', () => {
         }
     });
 
+    test('renderer help items appear first and route their click data', () => {
+        const helpClick = vi.fn();
+        setCustomMenusData('daily-tips', {
+            menusData: {
+                help: [
+                    {
+                        label: 'Tips of the Day',
+                        clickData: { isOpenDailyTip: true },
+                    },
+                    {
+                        label: 'All tips',
+                        clickData: { isBrowseDailyTips: true },
+                    },
+                ],
+            } as any,
+            clickMenu: helpClick,
+        });
+
+        try {
+            initMenu(createAppController() as any);
+            const template =
+                electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+            const helpMenu = template.find((item: any) => {
+                return item.role === 'help';
+            });
+            expect(helpMenu.submenu[0].label).toBe('Tips of the Day');
+            expect(helpMenu.submenu[1].label).toBe('All tips');
+            expect(helpMenu.submenu[2]).toEqual({ type: 'separator' });
+
+            helpMenu.submenu[0].click();
+            helpMenu.submenu[1].click();
+            expect(helpClick).toHaveBeenCalledWith({ isOpenDailyTip: true });
+            expect(helpClick).toHaveBeenCalledWith({
+                isBrowseDailyTips: true,
+            });
+        } finally {
+            setCustomMenusData('daily-tips', null);
+        }
+    });
+
     test('custom tool items from several renderers are ordered by owner key', () => {
         const firstClick = vi.fn();
         const secondClick = vi.fn();

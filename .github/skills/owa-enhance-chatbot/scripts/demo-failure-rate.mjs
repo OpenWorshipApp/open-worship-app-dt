@@ -68,7 +68,7 @@ function readInstance() {
                 return null;
             }
         })
-        .filter((one) => one !== null && one.mcpUrl)
+        .filter((one) => one !== null && one.mcpUrl && one.mcpToken)
         .sort((one, other) => {
             return String(other.startedAt).localeCompare(String(one.startedAt));
         });
@@ -84,6 +84,10 @@ function readInstance() {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const instance = readInstance();
 const MCP_URL = process.env.OWA_MCP_URL ?? instance.mcpUrl;
+const MCP_TOKEN = process.env.OWA_MCP_TOKEN ?? instance.mcpToken;
+if (!MCP_TOKEN) {
+    throw new Error('The selected MCP endpoint has no published token.');
+}
 let sessionId = null;
 let requestId = 0;
 
@@ -91,6 +95,7 @@ async function post(body) {
     const headers = {
         'content-type': 'application/json',
         accept: 'application/json, text/event-stream',
+        authorization: `Bearer ${MCP_TOKEN}`,
     };
     if (sessionId !== null) {
         headers['mcp-session-id'] = sessionId;
@@ -108,9 +113,13 @@ async function post(body) {
         return null;
     }
     const text = await response.text();
-    const line = text.startsWith('event:') || text.includes('\ndata:')
-        ? text.split('\n').find((one) => one.startsWith('data:'))?.slice(5)
-        : text;
+    const line =
+        text.startsWith('event:') || text.includes('\ndata:')
+            ? text
+                  .split('\n')
+                  .find((one) => one.startsWith('data:'))
+                  ?.slice(5)
+            : text;
     try {
         return JSON.parse(line ?? '{}').result ?? null;
     } catch {
@@ -186,7 +195,11 @@ async function evaluateIn(pageMatch, expression) {
                 JSON.stringify({
                     id: 1,
                     method: 'Runtime.evaluate',
-                    params: { expression, returnByValue: true, awaitPromise: true },
+                    params: {
+                        expression,
+                        returnByValue: true,
+                        awaitPromise: true,
+                    },
                 }),
             );
         });
@@ -205,7 +218,6 @@ async function evaluateIn(pageMatch, expression) {
         });
     });
 }
-
 
 // Which window each recipe is filed under, off the question corpus -- the
 // same file the chatbot's own "Do it for me" reads when it picks a page.
@@ -249,7 +261,9 @@ function pickPage(focuses) {
 async function closeLeftovers(pageKey) {
     // A popup left open by the previous recipe (the Bible Lookup, a confirm
     // the harness would never answer) is closed the way the app closes it.
-    await evaluateIn(pageKey + '.html', `(() => {
+    await evaluateIn(
+        pageKey + '.html',
+        `(() => {
         const done = [];
         const closer = document.querySelector(
             '#modal-container button.btn-danger i.bi-x-lg',
@@ -261,7 +275,8 @@ async function closeLeftovers(pageKey) {
             '.floating-widget .floating-widget__button i.bi-x-lg',
         )) { icon.closest('button').click(); done.push('widget'); }
         return done.join(',');
-    })()`);
+    })()`,
+    );
 }
 
 async function runRecipe(manualId, pageKey) {
@@ -459,10 +474,13 @@ for (const manualId of ids) {
                         ' ' +
                         step.grade.padEnd(20) +
                         (step.find ?? '').slice(0, 30).padEnd(31) +
-                        (step.reason ?? step.more ?? step.behind ?? '')
-                            .slice(0, 70) +
+                        (step.reason ?? step.more ?? step.behind ?? '').slice(
+                            0,
+                            70,
+                        ) +
                         (step.nearMisses?.length
-                            ? '  near: ' + step.nearMisses.join(' | ').slice(0, 60)
+                            ? '  near: ' +
+                              step.nearMisses.join(' | ').slice(0, 60)
                             : '') +
                         (step.help && step.help !== 'none'
                             ? '  help:' + step.help
@@ -473,9 +491,15 @@ for (const manualId of ids) {
     }
 }
 
-const summary = { recipes: records.length, byOutcome: {}, byGrade: {}, byReason: {} };
+const summary = {
+    recipes: records.length,
+    byOutcome: {},
+    byGrade: {},
+    byReason: {},
+};
 for (const record of records) {
-    summary.byOutcome[record.outcome] = (summary.byOutcome[record.outcome] ?? 0) + 1;
+    summary.byOutcome[record.outcome] =
+        (summary.byOutcome[record.outcome] ?? 0) + 1;
     for (const step of record.steps) {
         summary.byGrade[step.grade] = (summary.byGrade[step.grade] ?? 0) + 1;
         if (step.reason) {
@@ -489,7 +513,8 @@ const pressed = Object.entries(summary.byGrade)
     .reduce((sum, [, value]) => sum + value, 0);
 summary.pressed = pressed;
 summary.couldNot = summary.byGrade['could-not'] ?? 0;
-summary.failureRate = pressed === 0 ? null : Number((summary.couldNot / pressed).toFixed(3));
+summary.failureRate =
+    pressed === 0 ? null : Number((summary.couldNot / pressed).toFixed(3));
 if (isJson) {
     console.log(JSON.stringify({ summary, records }, null, 2));
 } else {

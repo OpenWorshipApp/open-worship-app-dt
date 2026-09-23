@@ -63,7 +63,15 @@ beforeAll(() => {
                 surface: 'reader',
                 file: 'manual/w-11.md',
             },
-            '# Read the Bible\nThe reference box and the version button fill the screen with a verse.\n',
+            [
+                '# Read the Bible',
+                'Type John 3:16 in the Bible Reference box.',
+                'The passage fills the Reader screen.',
+                'If the words are too small, use Font Size to make them bigger and readable.',
+                'Recent history takes you back to a passage you lost.',
+                'Add Extra Bible puts two Bible versions next to each other.',
+                '',
+            ].join('\n'),
         ),
         writeEntry(
             {
@@ -147,6 +155,16 @@ describe('searchHelp ranking', () => {
 
     it('answers nothing rather than guessing when no word matches', () => {
         expect(searchHelp('zzzz', 3, 'auto', 'presenter')).toEqual([]);
+    });
+
+    it.each([
+        'The words are too small. Help me.',
+        'I lost the Bible verse I was reading.',
+        'Where do I type John 3:16?',
+        'I want two Bibles next to each other.',
+    ])('understands a plain Reader question: %s', (question) => {
+        const hits = searchHelp(question, 3, 'manual', 'reader');
+        expect(hits[0].id).toBe('W-11');
     });
 });
 

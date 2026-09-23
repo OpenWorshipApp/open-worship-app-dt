@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, CB-61]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-21"
+workflowsVersion: "2026-09-23"
 ---
 # W-06 — Look up and present a Bible verse
 
@@ -13,19 +13,20 @@ workflowsVersion: "2026-09-21"
 
 1. Press **Ctrl+B** (or click **[en:tran:Bible Lookup]** in the header). The
    lookup opens as a popup dialog. 📸
-2. The input is a **step-by-step picker**: type the first letters of the book (e.g.
-   `Joh`) and click the book, then pick the chapter, then the verse. Press **Tab** to
-   auto-complete the current part; **Escape** clears the input.
-   > Tip: you can also type the reference in full — `John 3:16` — and that verse appears;
-   > picking book → chapter → verse in steps is optional. The **Bible Reader** page (W-10)
-   > works the same way.
+2. The input is a **step-by-step picker**. Click the empty box to see the book grid,
+   then click the book, the chapter and the verse. These buttons use the names and
+   numbers of the Bible version you chose, so this is the preferred route for a
+   non-English Bible.
+   > Tip: typing the first letters or a full reference such as `John 3:16` is a shortcut
+   > when that Bible recognizes what you type. **Tab** completes the current part;
+   > **Escape** clears it. The **Bible Reader** page works the same way.
 3. The verse renders in the preview panel. **Double-click** it to present. 📸
 4. Close the dialog with the red ✕ button or **Ctrl+Q**.
 5. Press **F9** ([en:tran:Clear Bible]) to take the verse off screen.
 6. The presented verse also appears in the **Bibles** tab (middle column) and the
    **Bibles** list (right column) for re-presenting later.
 7. In a hurry, ask the app instead: open the assistant (**🤖**, W-42) and type
-   *Put John 3:16 on the screen* — or the command **/verse John 3:16**, which
+   _Put John 3:16 on the screen_ — or the command **/verse John 3:16**, which
    needs no assistant. The passage goes up in the version the lookup is on, and
    the answer says what is on the screen now; it is not saved to the **Bibles**
    list. 📸
@@ -35,5 +36,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `CB-61`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-21).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
 :::

@@ -33,6 +33,7 @@ let mcpHost: McpHostType | null = null;
 type McpHostType = {
     port: number;
     url: string;
+    token: string;
     close: () => Promise<void>;
 };
 
@@ -316,6 +317,7 @@ export async function publishAiEndpoints(timeoutMilliseconds = 10 * 1000) {
                     port,
                     url: `http://127.0.0.1:${port}`,
                     mcpUrl: mcpHost?.url ?? null,
+                    mcpToken: mcpHost?.token ?? null,
                     isDev,
                     version: app.getVersion(),
                     userDataPath: app.getPath('userData'),
@@ -365,4 +367,8 @@ export function getRemoteDebuggingPort() {
 
 export function getMcpUrl() {
     return mcpHost?.url ?? null;
+}
+
+export function getMcpToken() {
+    return mcpHost?.token ?? null;
 }

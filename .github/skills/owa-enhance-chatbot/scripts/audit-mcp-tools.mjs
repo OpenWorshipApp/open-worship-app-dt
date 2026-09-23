@@ -57,11 +57,18 @@ const ratchetCeiling = ratchetArg
     ? (Number(ratchetArg.split('=')[1]) || MODEL_TOKEN_CEILING)
     : null;
 
-// The published instance file carries `mcpUrl`; the default port is a default,
-// never a promise. OWA_MCP_URL wins, for a bridged or a second instance.
-function resolveMcpUrl() {
+// The published instance file carries the URL and its per-launch capability;
+// neither is a default. Overrides must name both so a token cannot be sent to
+// a different local service by mistake.
+function resolveMcpEndpoint() {
     if (process.env.OWA_MCP_URL) {
-        return process.env.OWA_MCP_URL;
+        if (!process.env.OWA_MCP_TOKEN) {
+            throw new Error('OWA_MCP_URL also requires OWA_MCP_TOKEN.');
+        }
+        return {
+            mcpUrl: process.env.OWA_MCP_URL,
+            mcpToken: process.env.OWA_MCP_TOKEN,
+        };
     }
     let names = [];
     try {
@@ -81,7 +88,7 @@ function resolveMcpUrl() {
             const info = JSON.parse(
                 readFileSync(path.join(DISCOVERY_DIR, name), 'utf8'),
             );
-            if (info?.mcpUrl) {
+            if (info?.mcpUrl && info?.mcpToken) {
                 instances.push(info);
             }
         } catch {
@@ -89,22 +96,23 @@ function resolveMcpUrl() {
         }
     }
     if (instances.length === 0) {
-        throw new Error('No published instance carries an mcpUrl.');
+        throw new Error('No published instance carries an MCP endpoint.');
     }
     // Newest first: a stale file for a dead pid sorts to the back.
     instances.sort((one, other) => {
         return String(other.startedAt).localeCompare(String(one.startedAt));
     });
-    return instances[0].mcpUrl;
+    return instances[0];
 }
 
 let sessionId = null;
 let requestId = 0;
 
-async function post(mcpUrl, body) {
+async function post(mcpUrl, mcpToken, body) {
     const headers = {
         'content-type': 'application/json',
         accept: 'application/json, text/event-stream',
+        authorization: `Bearer ${mcpToken}`,
     };
     if (sessionId !== null) {
         headers['mcp-session-id'] = sessionId;
@@ -192,9 +200,9 @@ async function listToolsOverStdio() {
     }
 }
 
-async function listTools(mcpUrl) {
+async function listTools(mcpUrl, mcpToken) {
     requestId += 1;
-    await post(mcpUrl, {
+    await post(mcpUrl, mcpToken, {
         jsonrpc: '2.0',
         id: requestId,
         method: 'initialize',
@@ -204,9 +212,12 @@ async function listTools(mcpUrl) {
             clientInfo: { name: 'owa-enhance-chatbot-audit', version: '1.0.0' },
         },
     });
-    await post(mcpUrl, { jsonrpc: '2.0', method: 'notifications/initialized' });
+    await post(mcpUrl, mcpToken, {
+        jsonrpc: '2.0',
+        method: 'notifications/initialized',
+    });
     requestId += 1;
-    const result = await post(mcpUrl, {
+    const result = await post(mcpUrl, mcpToken, {
         jsonrpc: '2.0',
         id: requestId,
         method: 'tools/list',
@@ -270,10 +281,12 @@ function padStart(text, width) {
 
 async function main() {
     const isStdio = argv.includes('--stdio');
-    const mcpUrl = isStdio
-        ? 'a fresh stdio server (the code on disk)'
-        : resolveMcpUrl();
-    const tools = isStdio ? await listToolsOverStdio() : await listTools(mcpUrl);
+    const endpoint = isStdio ? null : resolveMcpEndpoint();
+    const mcpUrl =
+        endpoint?.mcpUrl ?? 'a fresh stdio server (the code on disk)';
+    const tools = isStdio
+        ? await listToolsOverStdio()
+        : await listTools(endpoint.mcpUrl, endpoint.mcpToken);
     const describeToolCall = (await loadPackageModule('notify.mjs'))
         ?.describeToolCall;
     const checkIsModelHiddenTool = (await loadPackageModule('modelTools.mjs'))

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PM-118, PM-119, PM-120, PM-126, PL-01, CM-06]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-21"
+workflowsVersion: "2026-09-23"
 ---
 # W-26 — Compare two documents side by side (floating slide previews)
 
@@ -59,5 +59,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-118` · `PM-119` · `PM-120` · `PM-126` · `PL-01` · `CM-06`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-21).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
 :::

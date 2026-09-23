@@ -46,6 +46,7 @@ import {
     describeRunSheet,
     describeSelectedDocument,
 } from '../../tools/owa-devtools-mcp/agentPresenter.mjs';
+import bibleModel from '../helper/bible-helpers/kjvBibleConfig.json';
 
 /**
  * The app is many windows, and the same question has a different answer in
@@ -119,6 +120,12 @@ export function genGuideActions(
     // what it should demo -- which is the button doing nothing, again.
     topic = '',
 ): BotActionType[] {
+    const isReaderTextTooSmall =
+        hit.id === 'W-11' &&
+        focus === 'reader' &&
+        /(?:(?:small|tiny).*(?:words?|text|font)|(?:words?|text|font).*(?:small|tiny|larger|bigger))/i.test(
+            topic,
+        );
     return [
         {
             // A recipe can only mark a control by bolding it, and the words
@@ -139,7 +146,12 @@ export function genGuideActions(
                   'to click for each step.'
                 : undefined,
             toolName: 'owa_guide_start',
-            args: { manualId: hit.id, page: `${focus}.html`, mode: 'show' },
+            args: {
+                manualId: hit.id,
+                page: `${focus}.html`,
+                mode: 'show',
+                ...(topic.length > 0 ? { topic } : {}),
+            },
         },
         {
             // Same walkthrough, one press per step, each press doing the step
@@ -158,16 +170,136 @@ export function genGuideActions(
             // Written as a person would say it: it is shown in the chat as
             // the user's own message, so no tool name and no underscores
             // for the markdown renderer to eat.
-            ask: canAsk
-                ? 'Do it for me in the app window' +
-                  (topic.length > 0 ? `: ${topic}` : '') +
-                  ' — put the demo card up now and press each step for ' +
-                  'me, without looking anything else up first.'
-                : undefined,
+            ask: isReaderTextTooSmall
+                ? undefined
+                : canAsk
+                  ? 'Do it for me in the app window' +
+                    (topic.length > 0 ? `: ${topic}` : '') +
+                    ' — use the controls that are on screen, put the demo ' +
+                    'card up now, and do NOT press a step yet. The person will ' +
+                    'press Do it for one visible step at a time.'
+                  : undefined,
             toolName: 'owa_guide_start',
-            args: { manualId: hit.id, page: `${focus}.html`, mode: 'demo' },
+            args: isReaderTextTooSmall
+                ? {
+                      demoId: 'reader-font-larger',
+                  }
+                : {
+                      manualId: hit.id,
+                      page: `${focus}.html`,
+                      mode: 'demo',
+                      ...(topic.length > 0 ? { topic } : {}),
+                  },
+        },
+    ].filter((_action, index) => {
+        // A recipe can point, but its prose cannot safely operate live
+        // controls. Without a model to rebuild exact steps, showing a Do it
+        // button promises more than the app can deliver.
+        return canAsk || index === 0;
+    });
+}
+
+type ReaderButtonReferenceType = {
+    book: string;
+    chapter: number;
+    verse: number;
+};
+
+function readReaderButtonReference(
+    question: string,
+    focus: BotFocusType,
+): ReaderButtonReferenceType | null {
+    if (
+        focus !== 'reader' ||
+        !/(?:book|chapter)\s+buttons?|khmer|non[- ]english|another language/i.test(
+            question,
+        )
+    ) {
+        return null;
+    }
+    const books = Object.values(bibleModel.keyBookMap).sort(
+        (left, right) => right.length - left.length,
+    );
+    for (const book of books) {
+        const escaped = book
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            .replace(/\s+/g, '\\s+');
+        const match = new RegExp(
+            `(?:^|\\b)${escaped}\\s+(\\d{1,3}):(\\d{1,3})\\b`,
+            'i',
+        ).exec(question);
+        if (match !== null) {
+            return {
+                book,
+                chapter: Number(match[1]),
+                verse: Number(match[2]),
+            };
+        }
+    }
+    return null;
+}
+
+/**
+ * A guaranteed mouse-first route for a reference typed in English while the
+ * selected Bible uses localized book names and numerals. The visible buttons
+ * keep their local text; stable English titles let the guide target the exact
+ * same book/chapter without asking a senior to copy characters they cannot
+ * read.
+ */
+export function genReaderButtonReferenceAnswer(
+    question: string,
+    focus: BotFocusType,
+): BotAnswerType | null {
+    const reference = readReaderButtonReference(question, focus);
+    if (reference === null) {
+        return null;
+    }
+    const { book, chapter, verse } = reference;
+    const steps = [
+        {
+            text: 'Clear the current Bible reference to show the book buttons.',
+            find: 'Clear input',
+            action: 'click',
+        },
+        {
+            text: `Choose ${book} from the book buttons.`,
+            find: book,
+            action: 'click',
+        },
+        {
+            text: `Choose chapter ${chapter}.`,
+            find: `Chapter ${chapter}`,
+            action: 'click',
+        },
+        {
+            text: `Choose verse ${verse}.`,
+            find: `Verse ${verse}`,
+            action: 'click',
         },
     ];
+    const title = `Open ${book} ${chapter}:${verse}`;
+    return {
+        text:
+            `You do not need to type the English book name.\n\n` +
+            `1. Press **Clear input** to show the Bible's own book buttons.\n` +
+            `2. Press the book button for **${book}** in your Bible's own ` +
+            `language, then press **Chapter ${chapter}**.\n` +
+            `3. Press **Verse ${verse}** to open the passage.\n\n` +
+            'If the names use unfamiliar letters, press **Do it for me** ' +
+            'below. It will handle one visible button at a time.',
+        actions: [
+            {
+                label: 'Show me step by step',
+                toolName: 'owa_guide_start',
+                args: { title, page: 'reader.html', mode: 'show', steps },
+            },
+            {
+                label: 'Do it for me',
+                toolName: 'owa_guide_start',
+                args: { title, page: 'reader.html', mode: 'demo', steps },
+            },
+        ],
+    };
 }
 
 // An answer to what the bot just asked, not a question of its own. The bot has
@@ -890,6 +1022,13 @@ export async function askHelpBot(
     if (trimmedQuestion.length === 0) {
         return { text: 'Ask me how to do something in the app.' };
     }
+    const readerButtonAnswer = genReaderButtonReferenceAnswer(
+        trimmedQuestion,
+        focus,
+    );
+    if (readerButtonAnswer !== null) {
+        return readerButtonAnswer;
+    }
     // A song page named by its address -- "Create a lyric file from
     // https://…", the app's own starter chip -- is read and drafted by the
     // tool with no model. Before the manual for the same reason as the paste
@@ -1151,10 +1290,21 @@ export async function runBotAction(
         return { text: 'Done.', isNeedingModel: action.ask !== undefined };
     }
     if (action.toolName === 'owa_guide_start') {
+        const isDemoAsked =
+            action.args?.mode === 'demo' || action.args?.demoId !== undefined;
+        // A manual recipe can point immediately, but it cannot reliably DO
+        // the task: it carries prose and bold words, not the live localized
+        // labels or values a control needs. While the model builds those
+        // exact steps, show the relevant manual step without an ineffective
+        // Do it button. The model's guide replaces it when it is ready.
+        const isPreparingDemo = isDemoAsked && action.ask !== undefined;
         let status;
         try {
             status = parseToolJson(
-                await callTool(action.toolName, action.args ?? {}),
+                await callTool(action.toolName, {
+                    ...(action.args ?? {}),
+                    ...(isPreparingDemo ? { mode: 'show' } : {}),
+                }),
             );
         } catch (error: any) {
             // The focus says Settings but no Settings window is up: the guide
@@ -1175,7 +1325,15 @@ export async function runBotAction(
                 isNeedingModel: action.ask !== undefined,
             };
         }
-        const isDemoAsked = action.args?.mode === 'demo';
+        if (isPreparingDemo) {
+            return {
+                text:
+                    '**Look at the app window.** I am pointing to the right ' +
+                    'place now. Give me a moment to prepare the safe **Do ' +
+                    'it** step for the controls on your screen.',
+                isNeedingModel: true,
+            };
+        }
         // What "good enough" means differs: a demo has to be able to PRESS
         // something, a walkthrough has to be able to POINT at something.
         const isGoodEnough = isDemoAsked

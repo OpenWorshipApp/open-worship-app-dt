@@ -564,6 +564,8 @@ export type CustomMenusDataType = {
     // Renderer-contributed **View** entries: the per-widget open/close
     // checkboxes and `Reset Widgets Size`. See `resize-actor/widgetAppMenuHelpers`.
     view?: CustomMenuItemType[];
+    // Renderer-contributed Help entries, such as the current page's tips.
+    help?: CustomMenuItemType[];
 };
 
 export function checkIsValidLangCode(text: string) {

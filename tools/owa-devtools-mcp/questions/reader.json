@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-09-17",
+    "updated": "2026-09-23",
     "sections": [
         {
             "id": "reading",
@@ -27,7 +27,6 @@
                         "go to",
                         "read"
                     ],
-                    "starter": true,
                     "resources": {
                         "recipe": "W-11",
                         "related": [
@@ -35,12 +34,11 @@
                         ],
                         "find": "Bible Lookup",
                         "guide": true
-                    },
-                    "starterRank": 1
+                    }
                 },
                 {
                     "id": "type-reference",
-                    "text": "How do I type a full reference like John 3:16?",
+                    "text": "Where do I type John 3:16?",
                     "kind": "howto",
                     "keywords": [
                         "reference",
@@ -53,11 +51,13 @@
                         "recipe": "W-11",
                         "shortcut": "Tab to complete, Escape to clear",
                         "guide": true
-                    }
+                    },
+                    "starter": true,
+                    "starterRank": 1
                 },
                 {
                     "id": "reader-versions",
-                    "text": "How do I compare Bible versions?",
+                    "text": "How do I put two Bible versions side by side?",
                     "kind": "howto",
                     "keywords": [
                         "translation",
@@ -76,7 +76,7 @@
                         ],
                         "guide": true
                     },
-                    "starterRank": 2
+                    "starterRank": 4
                 },
                 {
                     "id": "add-version",
@@ -98,7 +98,7 @@
                 },
                 {
                     "id": "reader-history",
-                    "text": "How do I get back to what I was reading before?",
+                    "text": "I lost the passage I was reading. How do I get it back?",
                     "kind": "howto",
                     "keywords": [
                         "history",
@@ -110,7 +110,9 @@
                     "resources": {
                         "recipe": "W-11",
                         "guide": true
-                    }
+                    },
+                    "starter": true,
+                    "starterRank": 3
                 },
                 {
                     "id": "reader-clear-input",
@@ -131,7 +133,7 @@
                 },
                 {
                     "id": "reader-text-size",
-                    "text": "How do I make the reading text bigger?",
+                    "text": "The words are too small. Can you help me?",
                     "kind": "howto",
                     "keywords": [
                         "font size",
@@ -146,7 +148,9 @@
                             "W-16"
                         ],
                         "guide": true
-                    }
+                    },
+                    "starter": true,
+                    "starterRank": 2
                 },
                 {
                     "id": "auto-scroll",
@@ -202,6 +206,31 @@
             ]
         },
         {
+            "id": "guided-demos",
+            "label": "Guided demos without AI",
+            "recipes": [
+                "W-42"
+            ],
+            "questions": [
+                {
+                    "id": "reader-built-in-demos",
+                    "text": "Can I practise the Bible Reader without asking AI?",
+                    "kind": "howto",
+                    "keywords": [
+                        "demo",
+                        "practice",
+                        "learn reader",
+                        "without ai",
+                        "offline",
+                        "no account"
+                    ],
+                    "resources": {
+                        "recipe": "W-42"
+                    }
+                }
+            ]
+        },
+        {
             "id": "find",
             "label": "Searching the whole Bible",
             "recipes": [
@@ -239,13 +268,11 @@
                         "where",
                         "cannot find"
                     ],
-                    "starter": true,
                     "resources": {
                         "recipe": "W-12",
                         "find": "Find",
                         "guide": true
-                    },
-                    "starterRank": 4
+                    }
                 },
                 {
                     "id": "search-limit-books",
@@ -416,14 +443,12 @@
                         "annotation",
                         "underline"
                     ],
-                    "starter": true,
                     "resources": {
                         "recipe": "W-40",
                         "related": [
                             "W-14"
                         ]
-                    },
-                    "starterRank": 3
+                    }
                 },
                 {
                     "id": "highlight-verse",

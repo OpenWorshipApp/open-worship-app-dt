@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [PR-30, PR-31, CM-69, CM-98, CM-99]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-21"
+workflowsVersion: "2026-09-23"
 ---
 # W-41 — Share a whole page of Bible Notes with another machine
 
@@ -23,6 +23,7 @@ to it — travels as one bundle.
    > Everything a note points at rides inside: a picture you pasted, a clip you inserted,
    > the sound file you attached. That makes this bundle much larger than a bible list's,
    > so give a note full of video a moment to finish.
+
 4. On the other machine, click the `⋮` at the top of the **Bible Notes** panel → **[en:tran:Import]** and pick the file — or **drag the `.owanote.tar.gz` (or `.owanote.enc`) onto
    the Bible Notes panel**. A protected one asks for its password first.
    **[en:tran:Import From URL]** works here too if the bundle is on the web. 📸
@@ -31,6 +32,7 @@ to it — travels as one bundle.
 
    > If a note file of that name is already there, yours is never overwritten: the
    > imported one arrives beside it as `name (1)`. Rename whichever you prefer.
+
 6. To move a **single note** instead of the whole page, use the `⋮` on that note →
    **Export**, and **Import** on the note file you want it to land in — any note file,
    not only **Default**.
@@ -40,5 +42,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-30` · `PR-31` · `CM-69` · `CM-98` · `CM-99`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-21).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
 :::

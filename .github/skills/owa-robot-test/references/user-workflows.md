@@ -21,10 +21,54 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-21a** (**new W-45 — Save a slide document as a PowerPoint
+**workflowsVersion: 2026-09-23c** (**W-46 — automatic Tips of the Day can be restored from Settings.**
+After **Don't show again**, open **Settings → General → Other General Options** and turn
+on **Show Tips of the Day automatically**. The shared Presenter/Reader setting takes
+effect on the next app launch. GL-25 expanded.)
+
+Previous: **workflowsVersion: 2026-09-23b** (**W-45 expanded — every visible lyric stage can
+now be exported as its own PowerPoint file.** Select a lyric, open the Stage Previewer
+header menu, and choose **Export to PPTX**; the app writes one deck per visible stage,
+preserving that stage's layout and style. Verified live 2026-09-23 with Stage 0 and
+Stage 1: both nine-slide packages opened without repair and retained their distinct
+lyric/chord layouts. PL-106 expanded.)
+
+Previous: **workflowsVersion: 2026-09-23a** (**W-46 — the Reader learning library now
+covers 49 topics across the complete page and native View menu.** Search and
+topic labels keep the expanded catalog navigable; the original 24 safe demos
+remain featured in the Assistant, while the additional lessons cover reference
+shortcuts and history, passage/version actions, study results, names, graphs,
+resources, verse marks, Reader header tools and every View command. Reload,
+Relaunch and Developer Tools remain available in All tips but are excluded from
+the random daily suggestion. GL-25 expanded.)
+
+Previous: **workflowsVersion: 2026-09-23** (**W-42 step 6 — the Reader's zero-model
+practice shelf now covers 24 important jobs.** Twenty more checked-in demos add
+passage history, reference clearing, names and places, side-by-side reading,
+full view, copy/split/save, scrolling, line layout, advanced study views,
+filtered search and the Bibles/Notes side panel. Each remains inside
+`reader.html`, starts without a provider call, and performs at most one visible
+action per **Do it** press. CB-77 expanded.)
+
+Previous: **workflowsVersion: 2026-09-22a** (**W-11 — hidden Reader controls are opened by
+clicking the visible **⋯** at the bottom-left before the user is sent to a slider or
+button that is not yet on screen. Verified live with the Font Size control and the
+chatbot's two-press Do path. New CB-76.)
+
+Previous: **workflowsVersion: 2026-09-22** (**W-11 and W-42 — Reader help now starts with the
+plain questions and mouse controls an older, non-technical reader is likely to use.**
+The Reader's four opening questions ask where to type a reference, how to enlarge the
+words, how to return to a lost passage and how to put two Bibles beside each other.
+W-11 names the exact controls and their positions, so those everyday phrases reach a
+short useful answer instead of the chatbot's own page or Settings. Verified live
+2026-09-22 on the dev Reader: `John 3:16` opened from the **Bible Reference** box,
+**Font Size** was at the bottom left, and **Add Extra Bible** opened the installed
+versions. New CB-73.)
+
+Previous: **workflowsVersion: 2026-09-21a** (**new W-45 — Save a slide document as a PowerPoint
 file (Export to PPTX).** Asked for by the user with a picture of a slide document's
-menu in the Documents list: *add `Export to PPTX` for the AppDocument slides*, then
-*make sure the exported pptx slide look closely identical to the app slide*. The menu
+menu in the Documents list: _add `Export to PPTX` for the AppDocument slides_, then
+_make sure the exported pptx slide look closely identical to the app slide_. The menu
 of an Open Worship slide document gains **Export to PPTX** under **Export**. The slide
 is drawn the way a screen draws it and read back, so the file keeps the words as
 editable text broken where the screen breaks them, in the font the screen really used,
@@ -33,21 +77,21 @@ with the boxes, pictures, background, speaker notes and hidden slides. Verified 
 1:1 render of the screen: text within 0–3px, shapes and pictures exact. New PL-106.)
 
 Previous: **workflowsVersion: 2026-09-21** (**W-37 step 6 — a PDF previews in the app.** Asked for by
-the user, with a picture of the Documents list's menu: *add Preview PDF to pdf item's contextmenu
-in Resources*, then *make the click (only for pdf) to preview the pdf*. A `.pdf` row in
+the user, with a picture of the Documents list's menu: _add Preview PDF to pdf item's contextmenu
+in Resources_, then _make the click (only for pdf) to preview the pdf_. A `.pdf` row in
 Resources now opens the same PDF viewer window the Documents list's **Preview PDF** does, on a
 click and from its menu; **Open** still hands it to the computer's own PDF reader. Verified live
 2026-09-21 on `GEN.1.pdf` in the Reader: the menu lists **Preview PDF** first, and both it and
 a plain click open `GEN.1.pdf?uuid=GEN.1.pdf` with its 4 pages drawn.)
 
 Previous: **workflowsVersion: 2026-09-19a** (**W-16 step 2 — Repair Links.** From `/owa-enhance
-reliability` (`EN-33`), the user's ask: *my data portable and supported on both Windows and
-POSIX*. A data folder carried between computers still held links naming where it used to be —
+reliability` (`EN-33`), the user's ask: _my data portable and supported on both Windows and
+POSIX_. A data folder carried between computers still held links naming where it used to be —
 files saved before `$DATA_DIR_PATH` existed, or while the folder lived elsewhere — and those
 pictures and videos showed as missing. **Repair Links**, in the Child Directories header of
 Path Settings, points every such link at the folder where it is now, and only a link whose
 own path is gone and whose file exists here. Verified live 2026-09-19 on the dev data folder:
-*Links repaired: 381. Files changed: 127.* for the lyric backgrounds and their editing history
+_Links repaired: 381. Files changed: 127._ for the lyric backgrounds and their editing history
 written on a Mac, then 6 more in 4 files (folder links); no old path left, every file still
 parses, the Documents folder kept in another folder untouched, and every window reloaded with
 no errors. The rest of that change — a missing data folder named at start-up with Retry, one
@@ -56,8 +100,8 @@ permanent-delete question on a USB stick, file names checked for every OS — is
 `coverage-matrix.md` as rows still to be seen live, not as steps here.)
 
 Previous: **workflowsVersion: 2026-09-19** (**W-25 steps 2 and 5 — the backup carries the Resources
-folder.** Asked for by the user: *add `$DATA_DIR_PATH/resources` part of export/import data as
-well*. **Export Data** lists a **Resources** row, the app-managed `<data folder>/resources`
+folder.** Asked for by the user: _add `$DATA_DIR_PATH/resources` part of export/import data as
+well_. **Export Data** lists a **Resources** row, the app-managed `<data folder>/resources`
 where the Resources panel's **Copy to Data Directory** puts a folder, and archives ALL of it,
 sub-folders included. **Import Data** puts it back and adds each folder it restored to the
 Resources panel's list — the list is a setting, not data, so on a new machine the files would
@@ -69,8 +113,8 @@ and the list untouched; an archive holding a new sub-folder imported 1 file, add
 to the list, and the panel drew it as its own group after Reload.)
 
 Previous: **workflowsVersion: 2026-09-18a** (**W-31 step 7 — the divider's arrows say what they do.** From
-`/owa-enhance ui` (`EN-21`): the two small arrows on a hovered divider were titled *Disable left* /
-*Disable right* — in English in every language, and wrong in English too, since they collapse a panel
+`/owa-enhance ui` (`EN-21`): the two small arrows on a hovered divider were titled _Disable left_ /
+_Disable right_ — in English in every language, and wrong in English too, since they collapse a panel
 and disable nothing. They read **Collapse left panel** / **Collapse right panel** (top / bottom on a
 horizontal divider) now, in the window's language. They are deliberately NOT the menu's own words, so
 the app's tools do not find a hover-only arrow where a walkthrough means the menu item. In the same
@@ -81,8 +125,8 @@ Khmer, the Khmer tooltip on all 20 history chips and on the verse numbers, no co
 language restored after.)
 
 Previous: **workflowsVersion: 2026-09-17g** (**W-38 step 11 — a Mermaid diagram opens in the Mermaid Live Editor.**
-Asked for by the user with the three Mermaid rows circled in a picture: *as a user I want to be able to
-open each copy mermaid diagram string in mermaid live editor directly*. Copying a diagram is only half of
+Asked for by the user with the three Mermaid rows circled in a picture: _as a user I want to be able to
+open each copy mermaid diagram string in mermaid live editor directly_. Copying a diagram is only half of
 what a diagram is for, and nothing on an ordinary machine draws one but this app's own markdown preview.
 **Open in Mermaid Live** sits under a divider at the foot of the 📋 menu and opens a second menu with the
 three Mermaid shapes named plainly; DOT and PlantUML are not there because that editor draws neither. The
@@ -91,8 +135,8 @@ records leaves the machine. Verified live 2026-09-17 on David's graph: the row d
 opened the editor, and the link read back showed it holding this app's own diagram, Khmer names intact.)
 
 Previous: **workflowsVersion: 2026-09-17f** (**W-38 step 10 — FIVE diagram languages, not one.** Asked for by
-the user: *add variety of diagrams, so this will let user to have more options to see many format of
-diagrams they want*. The copy menu now offers the Markdown document plus Mermaid flowchart across,
+the user: _add variety of diagrams, so this will let user to have more options to see many format of
+diagrams they want_. The copy menu now offers the Markdown document plus Mermaid flowchart across,
 Mermaid flowchart down, Mermaid mindmap, Graphviz DOT and PlantUML — which one is right depends on
 what it is being pasted into, and that is not a question the app can answer for anyone. The rows are
 named SHORT because a context menu here is 210px and clipped the first pair to two identical
@@ -101,17 +145,17 @@ named SHORT because a context menu here is 210px and clipped the first pair to t
 app's own markdown preview (the mindmap as a branching tree around Jacob).)
 
 Previous: **workflowsVersion: 2026-09-17e** (**W-38 step 10 — the Markdown copy CARRIES the diagram.** Asked
-for by the user right after the first cut: *the markdown should include mermaid ```mermaid ... ``` for
-the diagram*. The document now opens on a `## Diagram` section holding the drawing in a `mermaid`
+for by the user right after the first cut: _the markdown should include mermaid `mermaid ... ` for
+the diagram_. The document now opens on a `## Diagram` section holding the drawing in a `mermaid`
 fence, ahead of the tables, so pasting the Markdown anywhere that renders it brings the picture along;
 **Copy as Mermaid Diagram** stays for handing the drawing alone to something that wants only that.
 Verified live 2026-09-17: David's 38-box graph copied as ~12.5KB and rendered — heading, summary,
 drawn diagram, then the tables — in the app's own markdown preview.)
 
 Previous: **workflowsVersion: 2026-09-17d** (**W-38 step 10 — the connection graph copies as Markdown or as a
-Mermaid diagram.** Asked for by the user with the spot circled in a picture: *in name/location-name lookup
+Mermaid diagram.** Asked for by the user with the spot circled in a picture: _in name/location-name lookup
 graph preview, I want a copy icon, when click the icon it show contextmenu of `Copy as Markdown` and
-`Copy as Mermaid Diagram`*. A clipboard button now sits left of the signpost icon and opens those two
+`Copy as Mermaid Diagram`_. A clipboard button now sits left of the signpost icon and opens those two
 items. The Markdown is the records as a table with the centre marked, the connections grouped by kind
 with the gendered relation word, and the verses each record cites; the Mermaid is a `flowchart LR` whose
 boxes carry the canvas's own per-kind colour. Record wording follows the lookup language, the document
@@ -120,8 +164,8 @@ live 2026-09-17 on the dev reader: David's graph at 29 boxes copied as ~7.6KB of
 diagram that renders in the app's own markdown preview. New RD-121.)
 
 Previous: **workflowsVersion: 2026-09-17c** (**W-37 step 8 — put files INTO a Resources folder with Add Files.**
-Asked for by the user with a picture of a group's menu circled: *as a user I want to be able to copy one or
-more files to the resources selected folder… add `Add Files` to select files to copy to the folder.* The
+Asked for by the user with a picture of a group's menu circled: _as a user I want to be able to copy one or
+more files to the resources selected folder… add `Add Files` to select files to copy to the folder._ The
 group menu now has **Add Files** under **Add Folder**: pick one or several files and they are copied into
 that folder, the originals untouched. Nothing is overwritten — a name the folder already holds gets ` (1)`
 — a file already sitting there is left alone rather than copied beside itself, and the group re-reads
@@ -134,37 +178,37 @@ again. New RD-120; RD-87 amended.)
 
 Previous: **workflowsVersion: 2026-09-17b** (**W-37 step 6 — a note file shows its highlights and comments, and a
 markdown file its own HTML.** Asked for by the user the same day, twice: with a picture of the Bible Notes
-panel, *it should have all like highlight and comments as well*, and with the README selected, *the
-markdown preview should be rendered*. A `.own` row now lists everything the Bible Notes panel lists — its
+panel, _it should have all like highlight and comments as well_, and with the README selected, _the
+markdown preview should be rendered_. A `.own` row now lists everything the Bible Notes panel lists — its
 notes, and each marked verse with its highlights in their colour and its comments underlined — and a mark
 opens its verse beside the reading. The preview draws the HTML a README is written in (a centred picture, a
 fold-away section, badges) with anything that could run taken out, and the step says why a file saved with
 its markdown escaped shows the characters as written. Verified live 2026-09-17 on the dev reader:
-`GEN.1.own` listed ccc2, Sunday May 31 2026, test, Unnamed, then *(KJV) Genesis 22:2* (*and offer*
-underlined, *testing comment*), *(KJV) Genesis 22:1* (*pass after* in pink) and *(KJV) Genesis 4:1*; two
-verses folded to a count of 1; pressing *and she conceived* opened Genesis 4:1 as another view with both
+`GEN.1.own` listed ccc2, Sunday May 31 2026, test, Unnamed, then _(KJV) Genesis 22:2_ (_and offer_
+underlined, _testing comment_), _(KJV) Genesis 22:1_ (_pass after_ in pink) and _(KJV) Genesis 4:1_; two
+verses folded to a count of 1; pressing _and she conceived_ opened Genesis 4:1 as another view with both
 marks painted, and the file's MD5 and timestamp were unchanged; the app's own `README.md` rendered its
-badges, centred screenshot, table of contents (a press scrolled to *Tech Stack*), contributors table and a
-closed *Fedora Dependencies* section; the user's `GEN.1.md`, saved with `\#` and `\*\*` escapes, showed
+badges, centred screenshot, table of contents (a press scrolled to _Tech Stack_), contributors table and a
+closed _Fedora Dependencies_ section; the user's `GEN.1.md`, saved with `\#` and `\*\*` escapes, showed
 those characters as written.)
 
 Previous: **workflowsVersion: 2026-09-17a** (**W-37 step 6 — a markdown file and a bible note file open inside the app.**
 Asked for by the user with two pictures (a `GEN.1.md` and a `GEN.1.own` circled in Resources, and the
-Bible Notes panel): *Resources should support in app preview for markdown file and Bible-note file… open
+Bible Notes panel): _Resources should support in app preview for markdown file and Bible-note file… open
 bible-note preview should be read-only, open markdown-file should popup like bible-note and render the
-markdown. If possible add Mermaid diagram support.* A `.md` opens a **Markdown Preview** window (tables,
+markdown. If possible add Mermaid diagram support._ A `.md` opens a **Markdown Preview** window (tables,
 code, pictures beside the file, Mermaid diagrams; follows the file as it is saved; links to headings, to
 other `.md` files with Back, and to the web); a `.own` row opens onto its notes, and a note opens in the
 Bible Note window read-only. Verified live 2026-09-17 on the dev reader: `GEN.1.md` opened the preview; a
 scratch document drew a flowchart and a sequence diagram, reported a broken one above its code, scrolled
 to a heading, opened a linked `.md` with Back, and updated when the file was saved; `GEN.1.own` listed its
-four notes and not its three verse marks, and **ccc2** opened with *(Read-only)* in its title and a locked
+four notes and not its three verse marks, and **ccc2** opened with _(Read-only)_ in its title and a locked
 editor, and pressing the editor's Undo left the file byte-identical on disk.)
 
 Previous: **workflowsVersion: 2026-09-16a** (**W-37 step 8 — copy a Resources folder into the data folder.**
-Asked for by the user with a picture of a Resources group's menu: *as a user I want to be able to move
-selected folder in Resources to under selected-dir so I can manage it easily*, and then *after copied
-then change the selection to the copied one*. A group's menu now has **Copy to Data Directory**
+Asked for by the user with a picture of a Resources group's menu: _as a user I want to be able to move
+selected folder in Resources to under selected-dir so I can manage it easily_, and then _after copied
+then change the selection to the copied one_. A group's menu now has **Copy to Data Directory**
 between **Reveal in File Explorer** and **Remove Folder**. It asks first, naming the folder and the
 `resources` folder inside the data folder it goes to; then copies the whole folder there, sub-folders
 and all, and the group switches to the copy in the same place, folded or open as it was. The original
@@ -185,8 +229,8 @@ offered Default, 400 Regular, 700 Bold and 900 Black, 700 Bold thickened the tex
 its thumbnail, and Undo put it back. Not seen live in the Settings card itself.)
 
 Previous: **workflowsVersion: 2026-09-15b** (**W-37 step 5 — tick Others to see every file that is not named after a chapter.**
-Asked for by the user with a picture of the panel: *I want to be able to see others non related to
-`<book>.<chapter>.*` files so I don't have to do search for those files*. A picture, a map or a handout
+Asked for by the user with a picture of the panel: _I want to be able to see others non related to
+`<book>.<chapter>.*` files so I don't have to do search for those files_. A picture, a map or a handout
 kept in the same folders as the chapter files could only be reached by typing part of its name. A box
 marked **Others** now sits beside the magnifier; ticked, each folder also lists every file whose name is
 not a book and chapter, under an **Others** heading after everything else, up to 200 a folder, and it
@@ -215,8 +259,8 @@ to the same wall as everything else, while the sites' own live connections still
 2026-09-14 on the dev window: 43 checks held. CB-68 extended.)
 
 Previous: **workflowsVersion: 2026-09-14b** (**W-44 step 6 — a site may ask for the microphone.**
-Reported by the user with a picture of Claude's dictation button under *Microphone access is
-blocked* in the AI Chat window, whose advice points at a browser address bar the window does
+Reported by the user with a picture of Claude's dictation button under _Microphone access is
+blocked_ in the AI Chat window, whose advice points at a browser address bar the window does
 not have. Pressing a site's microphone button now puts a line under the row above the page
 asking to allow it, with **Don't allow** already selected; a yes is for that one site, lasts
 until the app closes, and only counts while its tab is in front. Verified live 2026-09-14 on
@@ -247,15 +291,15 @@ stopped, the presenter on screen throughout.)
 
 Previous: **workflowsVersion: 2026-09-12d** (**W-30 step 1 — the view is picked by its NAME, and
 there are four of them.** Found by a robot-test pass, not reported: the step said the
-drop-down lists *three views* and told the reader to *pick the third one*, and the live
+drop-down lists _three views_ and told the reader to _pick the third one_, and the live
 list has had four since Resources joined it — so the third one is now the wrong view.
 An ordinal is what drifted, so the step no longer uses one: it names all four and says
 to pick **Location-Name (KJV)** by its name, which cannot go stale when a fifth view is
 added. Verified live 2026-09-12 on the dev reader. RD-drift.)
 
 Previous: **workflowsVersion: 2026-09-12c** (**W-37 step 3 — a folder can be dragged into Resources.**
-Asked for by the user with a picture of the panel: *as a user I want to do drag/drop folder
-to do folder adding*. Adding a shelf meant the button and the picker dialog, which is the
+Asked for by the user with a picture of the panel: _as a user I want to do drag/drop folder
+to do folder adding_. Adding a shelf meant the button and the picker dialog, which is the
 long way round when the folder is already open in front of you in Explorer. Dropping one
 anywhere on the view now adds it — the view outlines itself and its top line says **Drop
 folders here** while a folder is held over it — and several at once is one drop. A dropped
@@ -269,25 +313,25 @@ a file** and shelved nothing. New RD-114.)
 
 Previous: **workflowsVersion: 2026-09-12b** (**W-37 step 7 — a `.json` beside the verse is a list of links you can click.** Asked for by the user with a picture of the Resources panel: a `GEN.0.json` in their own YouTube folder drawn with the "unknown file" diamond, and a whole library of `<BOOK>.0.json` files behind it holding a title and a YouTube address per video. Opening one in a text editor is not what anybody wants from it, so the panel now reads it: each entry's **title** is a row you press, and pressing it opens that address in the computer's own web browser. The shape is the one their files already had -- a list of `{ "title": ..., "url": ... }` -- with a bare address on its own allowed as a shorthand. **A `.json` that is not that is still just a file**: the panel tries the content, and anything it cannot read as links keeps the ordinary icon and opens in whatever application the machine uses for it, with no error and nothing to dismiss. Only `http` and `https` addresses are offered, because opening an address hands it to the desktop, which would launch whatever program has claimed some other scheme. Verified live 2026-09-12 on the dev reader: their own `GEN.0.json` listed three Khmer video titles, a probe file with a bad entry listed its two good rows and said **1 entry was not understood**, a probe holding ordinary data stayed an ordinary file row, and a press on a title opened the video in Chrome. New RD-115.)
 
-Previous: **workflowsVersion: 2026-09-12a** (**W-44 steps 3 and 7 — Sign out of every site, and the boxed site can no longer reach this computer at all.** Security work, not a report. The window keeps you signed in on purpose — that is why it exists rather than a browser tab — and on a shared church computer that means the volunteer who opened ChatGPT before the service is still signed in for whoever sits down after it; closing every tab never touched it. There is now a **Sign out of every site** in the row above the page (**↤**) and in words on the card, it asks before it acts with *Keep me signed in* already selected, and it takes the pages the tabs were on and the names the sites gave them — the previous person's conversation titles — while leaving any name you typed yourself. And the box got its fifth wall: measured from inside a live site, a page in this window could not READ anything on this computer, but it could still SEND a request to it, including to the app's own two doors — so the boxed site is now refused every address on this machine and its network (the router, a printer, a NAS, and loopback written any of the five ways that defeat a naive check) while the site's own pages are untouched. Verified live 2026-09-12 on the dev window: 33 checks held, the site still loaded and signed in. CB-68 extended.)
+Previous: **workflowsVersion: 2026-09-12a** (**W-44 steps 3 and 7 — Sign out of every site, and the boxed site can no longer reach this computer at all.** Security work, not a report. The window keeps you signed in on purpose — that is why it exists rather than a browser tab — and on a shared church computer that means the volunteer who opened ChatGPT before the service is still signed in for whoever sits down after it; closing every tab never touched it. There is now a **Sign out of every site** in the row above the page (**↤**) and in words on the card, it asks before it acts with _Keep me signed in_ already selected, and it takes the pages the tabs were on and the names the sites gave them — the previous person's conversation titles — while leaving any name you typed yourself. And the box got its fifth wall: measured from inside a live site, a page in this window could not READ anything on this computer, but it could still SEND a request to it, including to the app's own two doors — so the boxed site is now refused every address on this machine and its network (the router, a printer, a NAS, and loopback written any of the five ways that defeat a naive check) while the site's own pages are untouched. Verified live 2026-09-12 on the dev window: 33 checks held, the site still loaded and signed in. CB-68 extended.)
 
 Previous: **workflowsVersion: 2026-09-11f** (**W-30 — the names in a Khmer verse are underlined too.** Reported with a picture of the reader showing Genesis 4 in two columns: the King James one underlined **Adam**, **Eve**, **Cain** and **Abel**, the Khmer one beside it underlined nothing, and the panel that lists who is in the passage had been answering for both all along. It is the dictionary that is English, not the feature — so a bible in a language the app ships records for now underlines that language's own spellings and a click opens the same record. A Khmer verse marks a name the dictionary records for that verse or somewhere in its chapter and nothing else, so it marks a little less than the King James column and never guesses; another English version still underlines nothing, because the dictionary was made from King James wording. Verified live 2026-09-11 on the dev reader: `អ័ដាម`, `អេវ៉ា`, `កាអ៊ីន` and `អេបិល` underlined in ពគប Genesis 4, and the Khmer `អេបិល` opened the record **អេបិល (Abel)**. W-29 step 3 and W-30's closing note say so; RD-80 covers it.)
 
 Previous: **workflowsVersion: 2026-09-11e** (**W-06 and W-11 — you can type the whole reference now.** Both recipes told the reader to pick book → chapter → verse in steps because a full `John 3:16` "only filters the book list and the `3:16` is dropped when you pick the book". A robot run typed the reference char-by-char into both lookup surfaces — the header dialog and the Bible Reader page — and both went straight to the verse: `John 3:16` rendered with 16 selected in the chapter strip and Resources switched to `JHN.3`, and `Psalm 23:1`, a control whose words appear nowhere in the saved Bibles list, rendered "The LORD is my shepherd" on both against a clean baseline. The two notes now read as a tip that the step-by-step picking is optional, and the same correction went into the matrix RD-03, knowledge-base §5/§11, test-plan S11 and components-path. Verified live 2026-09-11 on the dev window.)
 
-Previous: **workflowsVersion: 2026-09-11d** (**new W-44 — Chat with an AI website inside the app (AI Chat).** Asked for by the user with a picture of Firefox's AI sidebar: *like firefox, I want an ai chat panel … just open webpage from ai company directly*, with *another icon right next to the chatbot icon*, *deepseek kimi grok chatgpt claude gemini mistral …* and *tabs for each session like what having in chatbot*. A **✨** button right of the **🤖** on the presenter, the slide editor and the reader (and **Help → AI Chat**, **Tools → AI Chat** everywhere) opens a window beside the app, the same size and place as the help window, on a card listing ten AI chat sites; a press loads that site itself — the user's own account, the site's own sign-in, kept across restarts — in a sandboxed box that can reach nothing on the machine. The tab strip is the help window's own; a tab is named after the page and comes back on its conversation; three tabs keep their site loaded at once and the rest reload on return, because every loaded site is a renderer process of its own. Not gated on **Enable AI features**: no key, no assistant. Verified live 2026-09-11 on the dev window: ChatGPT, Claude, Gemini and DeepSeek opened in four tabs, the fourth unloading the first. New CB-68; W-42 step 1 now places the **🤖** between the gear and the **✨**.)
+Previous: **workflowsVersion: 2026-09-11d** (**new W-44 — Chat with an AI website inside the app (AI Chat).** Asked for by the user with a picture of Firefox's AI sidebar: _like firefox, I want an ai chat panel … just open webpage from ai company directly_, with _another icon right next to the chatbot icon_, _deepseek kimi grok chatgpt claude gemini mistral …_ and _tabs for each session like what having in chatbot_. A **✨** button right of the **🤖** on the presenter, the slide editor and the reader (and **Help → AI Chat**, **Tools → AI Chat** everywhere) opens a window beside the app, the same size and place as the help window, on a card listing ten AI chat sites; a press loads that site itself — the user's own account, the site's own sign-in, kept across restarts — in a sandboxed box that can reach nothing on the machine. The tab strip is the help window's own; a tab is named after the page and comes back on its conversation; three tabs keep their site loaded at once and the rest reload on return, because every loaded site is a renderer process of its own. Not gated on **Enable AI features**: no key, no assistant. Verified live 2026-09-11 on the dev window: ChatGPT, Claude, Gemini and DeepSeek opened in four tabs, the fourth unloading the first. New CB-68; W-42 step 1 now places the **🤖** between the gear and the **✨**.)
 
-Previous: **workflowsVersion: 2026-09-11c** (**W-09 and W-42 step 6 — a countdown, clock or scrolling message goes on the screen by its words, asked or by /countdown and /marquee.** Research, not a report: the standing questions held, so the next ask shape was followed through — *Start a 5 minute countdown on the screen* — and the assistant's "yes" ran to its round cap hunting the Foreground tab's boxes (a toggle it had just closed) and started nothing. The Foreground panel is a form for a person, so the app now starts an extra by its words on the ticked screens and reads them back: one call with an assistant, **/countdown 5** and **/marquee <words>** with none, one offered button with no key. The five **/clear-** commands clear a layer the off screen HOLDS instead of saying there is nothing to clear. Verified live 2026-09-11 on the presenter with Claude Sonnet 5, the countdown read off the screen. New CB-67.)
+Previous: **workflowsVersion: 2026-09-11c** (**W-09 and W-42 step 6 — a countdown, clock or scrolling message goes on the screen by its words, asked or by /countdown and /marquee.** Research, not a report: the standing questions held, so the next ask shape was followed through — _Start a 5 minute countdown on the screen_ — and the assistant's "yes" ran to its round cap hunting the Foreground tab's boxes (a toggle it had just closed) and started nothing. The Foreground panel is a form for a person, so the app now starts an extra by its words on the ticked screens and reads them back: one call with an assistant, **/countdown 5** and **/marquee <words>** with none, one offered button with no key. The five **/clear-** commands clear a layer the off screen HOLDS instead of saying there is nothing to clear. Verified live 2026-09-11 on the presenter with Claude Sonnet 5, the countdown read off the screen. New CB-67.)
 
-Previous: **workflowsVersion: 2026-09-11b** (**W-42 step 8 — the auto-hide is gone.** The user, the morning after asking for it: *please remove all auto-hide feature from the chatbot*. The pickers, the credit lines and the ask box stay exactly where they always were; nothing in the help window tucks away on a scroll any more, there is no 📌, and the step's paragraph about it is removed. Verified live 2026-09-11 on the dev window: the head is a plain row again with no strip and no pin.)
+Previous: **workflowsVersion: 2026-09-11b** (**W-42 step 8 — the auto-hide is gone.** The user, the morning after asking for it: _please remove all auto-hide feature from the chatbot_. The pickers, the credit lines and the ask box stay exactly where they always were; nothing in the help window tucks away on a scroll any more, there is no 📌, and the step's paragraph about it is removed. Verified live 2026-09-11 on the dev window: the head is a plain row again with no strip and no pin.)
 Previous: **workflowsVersion: 2026-09-11a** (**W-37 step 1 — the verse context menu no longer offers Open in Resources.** Removed at the user's request; the Resources view is reached from the advanced lookup picker only. Test and matrix row CM-93 retired in the same change.)
 
 Previous: **workflowsVersion: 2026-09-10i** (**W-42 step 6 — `/lyric https://…` writes a song
 from a page with no assistant, and a song link is drafted offline.** Measured
-2026-09-10: with the assistant paused, *Create a lyric file from https://…* — the
+2026-09-10: with the assistant paused, _Create a lyric file from https://…_ — the
 app's own starter chip — was searched for in the guide and answered with how to make
 an EMPTY file; on a live key the same ask drafted the song and created the file in
-one breath, 3 rounds and 18 s, and still offered **Create** under *Done!*. Now
+one breath, 3 rounds and 18 s, and still offered **Create** under _Done!_. Now
 `/lyric <address>` reads the page and offers the song in ~3.5 s with no model round,
 the built-in guide does the same for the chip's words with no key, and an answer
 whose file the assistant already created carries **Show it in the list** and the
@@ -302,9 +346,9 @@ files are filed under the pattern they answered to, a book-level file once. The 
 being typed into follows its reference box. Verified live 2026-09-10 in the Bible
 Reader on Genesis 24 beside Genesis 27.)
 
-Previous: **2026-09-10g** (**W-42 step 8 — only the rows at the top tuck away; the ask box stays put.** The user, the same day: *I don't want auto-hide for the bottom one*. The pickers and the credit lines still tuck away to a thin strip while you scroll and come back at the top, under the mouse, or for good with the 📌; the ask box with its tip line no longer moves, so the next question can always be typed. Verified live 2026-09-10 on the dev window.)
-Previous: **workflowsVersion: 2026-09-10f** (**W-42 step 8 — the rows at the top and the ask box tuck away while you scroll.** Asked for by the user, with a picture of the help window circled: *make those area auto-hide*, then *auto-hide while scrolling*. The three pickers, the CREDIT USED line and the ask box with its tip took 139px of a 630px window — a quarter of the answer out of sight for controls touched once a session. Now scrolling the conversation tucks both away to a thin strip with a grip on it; the mouse at either strip, a picker given the keyboard, anything left in the box, or scrolling back to the top (the pickers) or the bottom (the box) brings them back, and the 📌 at the end of the pickers keeps them in view for good. Verified live 2026-09-10 on the dev window by every rule, the pictures taken with the window in front. New CB-65.)
-Previous: **workflowsVersion: 2026-09-10e** (**W-42 step 13 — a provider that cannot answer says what is wrong and carries the door to it.** Asked for by the user: *if there any unusual response from api then give buttons for user to go to the api dashboard*. Measured first on the ChatGPT key that has been out of credit for a week: the note hedged *out of credit or being rate-limited* with the provider's own body saying `insufficient_quota`, and nothing under it to press. The failure is now read from what the provider said (its documented code or type and its words, not only the status — an empty Anthropic account is a 402 or a 400 saying "credit balance", which the stand-in had never once caught), the note says the one thing it knows, and the first button in the row opens the provider's own billing, keys, limits or status page in the browser — **Open ChatGPT billing**, **Open Claude API keys**, **Open Kimi usage limits** — or the app's AI settings for the Free assistant; the hover shows the address, the press says *Opening … in your browser.* Verified live 2026-09-10 on the presenter through the dead ChatGPT key with Claude standing in. New CB-64.)
+Previous: **2026-09-10g** (**W-42 step 8 — only the rows at the top tuck away; the ask box stays put.** The user, the same day: _I don't want auto-hide for the bottom one_. The pickers and the credit lines still tuck away to a thin strip while you scroll and come back at the top, under the mouse, or for good with the 📌; the ask box with its tip line no longer moves, so the next question can always be typed. Verified live 2026-09-10 on the dev window.)
+Previous: **workflowsVersion: 2026-09-10f** (**W-42 step 8 — the rows at the top and the ask box tuck away while you scroll.** Asked for by the user, with a picture of the help window circled: _make those area auto-hide_, then _auto-hide while scrolling_. The three pickers, the CREDIT USED line and the ask box with its tip took 139px of a 630px window — a quarter of the answer out of sight for controls touched once a session. Now scrolling the conversation tucks both away to a thin strip with a grip on it; the mouse at either strip, a picker given the keyboard, anything left in the box, or scrolling back to the top (the pickers) or the bottom (the box) brings them back, and the 📌 at the end of the pickers keeps them in view for good. Verified live 2026-09-10 on the dev window by every rule, the pictures taken with the window in front. New CB-65.)
+Previous: **workflowsVersion: 2026-09-10e** (**W-42 step 13 — a provider that cannot answer says what is wrong and carries the door to it.** Asked for by the user: _if there any unusual response from api then give buttons for user to go to the api dashboard_. Measured first on the ChatGPT key that has been out of credit for a week: the note hedged _out of credit or being rate-limited_ with the provider's own body saying `insufficient_quota`, and nothing under it to press. The failure is now read from what the provider said (its documented code or type and its words, not only the status — an empty Anthropic account is a 402 or a 400 saying "credit balance", which the stand-in had never once caught), the note says the one thing it knows, and the first button in the row opens the provider's own billing, keys, limits or status page in the browser — **Open ChatGPT billing**, **Open Claude API keys**, **Open Kimi usage limits** — or the app's AI settings for the Free assistant; the hover shows the address, the press says _Opening … in your browser._ Verified live 2026-09-10 on the presenter through the dead ChatGPT key with Claude standing in. New CB-64.)
 
 Previous: **workflowsVersion: 2026-09-10d** (**W-30 steps 2 and 4 — every open passage is
 listed, the pane being edited included.** Reported with a screenshot: two panes open,
@@ -319,41 +363,41 @@ reading — `(KJV) Genesis 29:1-35`, the full book name. Verified live 2026-09-1
 Bible Reader: both blocks, in pane order, the first following a retyped reference
 within about a second and a half.)
 
-Previous: **2026-09-10c** (**W-42 step 8 — a spending limit, and the assistant pauses at it.** Asked for by the user: *I don't want to mistakenly get stuck in an infinite loop of programmatic error that eats all my credit or floods the bill.* Until now the only things between a fault that keeps asking and the bill were the round cap on one question and a person pressing Stop, and a fault is not a person. Now a **LIMIT PER HOUR** picker sits beside CREDIT USED (a dollar an hour to begin with), the figure next to it says what the last hour has cost across every tab and turns amber past four fifths of the cap, and at the cap the assistant PAUSES: the question is answered from this guide instead, with a note saying why and an **Allow more** button that starts the hour again — a button, so a fault cannot press it, and remembered across a restart so a fault cannot reload past it. A fixed pace cap of 150 model calls an hour holds whatever the money cap is set to, which is what protects a free service. **/limit** reads or sets it with no assistant. Verified live 2026-09-10 on the presenter: the cap set to $0.25 with $0.21 already spent, one real question paid one round, was paused on its second and answered from the guide; Allow more re-asked it and Claude answered; 150 seeded calls with the money cap off refused the next question before any round was bought. New CB-63.)
+Previous: **2026-09-10c** (**W-42 step 8 — a spending limit, and the assistant pauses at it.** Asked for by the user: _I don't want to mistakenly get stuck in an infinite loop of programmatic error that eats all my credit or floods the bill._ Until now the only things between a fault that keeps asking and the bill were the round cap on one question and a person pressing Stop, and a fault is not a person. Now a **LIMIT PER HOUR** picker sits beside CREDIT USED (a dollar an hour to begin with), the figure next to it says what the last hour has cost across every tab and turns amber past four fifths of the cap, and at the cap the assistant PAUSES: the question is answered from this guide instead, with a note saying why and an **Allow more** button that starts the hour again — a button, so a fault cannot press it, and remembered across a restart so a fault cannot reload past it. A fixed pace cap of 150 model calls an hour holds whatever the money cap is set to, which is what protects a free service. **/limit** reads or sets it with no assistant. Verified live 2026-09-10 on the presenter: the cap set to $0.25 with $0.21 already spent, one real question paid one round, was paused on its second and answered from the guide; Allow more re-asked it and Claude answered; 150 seeded calls with the money cap off refused the next question before any round was bought. New CB-63.)
 
-Previous: **workflowsVersion: 2026-09-10b** (**W-42 step 8 — every answer says what it cost, and CREDIT USED totals the chat.** Asked for by the user: *as a user I want to see how many credit used per chat session*. Every model round reports the tokens it used and the window threw the number away, so a volunteer was spending the church's API credit with nothing on screen saying how much. Now the small grey figures at the end of an answer's Copy line say what that answer cost (*≈ $0.02 · 49k tokens*), a **CREDIT USED** line under the three pickers keeps the running total for the tab — counting a stopped or failed question's rounds too — and the hover on either has the sums; the dollars are an estimate from the list price, a free service reads *free*, an unpriced model *price not known*. Measured on the standing twelve questions the same morning: about $0.28 for all twelve on Claude Sonnet 5, every round after the first a cache read. Verified live 2026-09-10 on the presenter, the figures checked against the provider's own usage on the wire. New CB-62.)
+Previous: **workflowsVersion: 2026-09-10b** (**W-42 step 8 — every answer says what it cost, and CREDIT USED totals the chat.** Asked for by the user: _as a user I want to see how many credit used per chat session_. Every model round reports the tokens it used and the window threw the number away, so a volunteer was spending the church's API credit with nothing on screen saying how much. Now the small grey figures at the end of an answer's Copy line say what that answer cost (*≈ $0.02 · 49k tokens*), a **CREDIT USED** line under the three pickers keeps the running total for the tab — counting a stopped or failed question's rounds too — and the hover on either has the sums; the dollars are an estimate from the list price, a free service reads *free*, an unpriced model *price not known*. Measured on the standing twelve questions the same morning: about $0.28 for all twelve on Claude Sonnet 5, every round after the first a cache read. Verified live 2026-09-10 on the presenter, the figures checked against the provider's own usage on the wire. New CB-62.)
 
-Previous: **workflowsVersion: 2026-09-10a** (**W-06 step 7 and W-42 — a Bible passage goes up by its reference, asked in words or by /verse.** Research, not a report: the standing questions held, so the one shape left open was followed through — *Put John 3:16 on the screen* — and the assistant could only describe the lookup's picker; the **Do it for me** under that answer opened the lookup and stopped where a person types the first letters of the book, the verse lost. The lookup is a picker for a person and no walkthrough can drive it, so the app now presents a passage by its reference through its own parser — the words the volunteer says, in the version the lookup is on — and reads the screen back: the assistant does it in one call and offers the screen's own show button, **/verse John 3:16** does it with no assistant, and with the network cut the guide checks the reference, quotes it and offers one button. Verified live 2026-09-10 on the presenter with Claude Sonnet 5, the passage read off the projector window. New CB-61.)
+Previous: **workflowsVersion: 2026-09-10a** (**W-06 step 7 and W-42 — a Bible passage goes up by its reference, asked in words or by /verse.** Research, not a report: the standing questions held, so the one shape left open was followed through — _Put John 3:16 on the screen_ — and the assistant could only describe the lookup's picker; the **Do it for me** under that answer opened the lookup and stopped where a person types the first letters of the book, the verse lost. The lookup is a picker for a person and no walkthrough can drive it, so the app now presents a passage by its reference through its own parser — the words the volunteer says, in the version the lookup is on — and reads the screen back: the assistant does it in one call and offers the screen's own show button, **/verse John 3:16** does it with no assistant, and with the network cut the guide checks the reference, quotes it and offers one button. Verified live 2026-09-10 on the presenter with Claude Sonnet 5, the passage read off the projector window. New CB-61.)
 
-Previous: **workflowsVersion: 2026-09-09e** (**W-42 step 13 — a key that cannot answer hands the question to another of yours.** Research, not a report: the help window's own default assistant was a ChatGPT key a week out of credit, and every one of the standing twelve questions waited three to five seconds on three identical posts to it and then answered from this guide — with a working Claude key one option along in the row above. Now the next assistant whose key is set answers instead, once and at once, the note says which and why, and the tab moves to it; the dead key is asked once, not three times. The guide's own answers improved where they were measured wrong the same afternoon: *where is the button to change the background* offered a line of Genesis as the nearest control (it shared the words *to* and *the*) and now offers **Background**; *how do I edit a slide* asked from the Bible Reader now opens with the way back to the Presenter before naming the Documents list. Verified live 2026-09-09 on the presenter and the reader, with the dead key and with the network cut. New CB-60.)
+Previous: **workflowsVersion: 2026-09-09e** (**W-42 step 13 — a key that cannot answer hands the question to another of yours.** Research, not a report: the help window's own default assistant was a ChatGPT key a week out of credit, and every one of the standing twelve questions waited three to five seconds on three identical posts to it and then answered from this guide — with a working Claude key one option along in the row above. Now the next assistant whose key is set answers instead, once and at once, the note says which and why, and the tab moves to it; the dead key is asked once, not three times. The guide's own answers improved where they were measured wrong the same afternoon: _where is the button to change the background_ offered a line of Genesis as the nearest control (it shared the words _to_ and _the_) and now offers **Background**; _how do I edit a slide_ asked from the Bible Reader now opens with the way back to the Presenter before naming the Documents list. Verified live 2026-09-09 on the presenter and the reader, with the dead key and with the network cut. New CB-60.)
 
-Previous: **workflowsVersion: 2026-09-09d** (**new W-43 — Remove a song, document or file (Move to Trash); W-42 step 6 — the assistant knows the RUN SHEET, and /run.** Research, not a report: the standing questions were asked again and the follow-up *and how do I undo that?* under *How do I add a song?* took the assistant six lookups and 17 seconds to end on **Delete** — a menu item this app does not have. The manual had no page for removing a file at all; this one names the real item, the confirm, and the Recycle Bin the file goes to, and the assistant's question list carries a question for it. Also: asked *How do I edit a slide?* from the Bible Reader, the assistant had been starting its steps "in the Documents list", which the Reader has not got — it is now told which panels that page lacks and that the way back is the 🖥️ **Go Back to Presenter** button, and steps written from a search excerpt without opening the page are handed back to it once. And *What's next in my running order?* — six lookups and an unverified guess about a green mark — is answered from the run sheet itself: which presenting flow is open in its run player, the line the run is on and the slide inside it, and what the next press puts up, in 2 rounds; **/run** says the same with no assistant. Verified live 2026-09-09 on the presenter and the reader with Claude Sonnet 5. New CB-58, CB-59.)
+Previous: **workflowsVersion: 2026-09-09d** (**new W-43 — Remove a song, document or file (Move to Trash); W-42 step 6 — the assistant knows the RUN SHEET, and /run.** Research, not a report: the standing questions were asked again and the follow-up _and how do I undo that?_ under _How do I add a song?_ took the assistant six lookups and 17 seconds to end on **Delete** — a menu item this app does not have. The manual had no page for removing a file at all; this one names the real item, the confirm, and the Recycle Bin the file goes to, and the assistant's question list carries a question for it. Also: asked _How do I edit a slide?_ from the Bible Reader, the assistant had been starting its steps "in the Documents list", which the Reader has not got — it is now told which panels that page lacks and that the way back is the 🖥️ **Go Back to Presenter** button, and steps written from a search excerpt without opening the page are handed back to it once. And _What's next in my running order?_ — six lookups and an unverified guess about a green mark — is answered from the run sheet itself: which presenting flow is open in its run player, the line the run is on and the slide inside it, and what the next press puts up, in 2 rounds; **/run** says the same with no assistant. Verified live 2026-09-09 on the presenter and the reader with Claude Sonnet 5. New CB-58, CB-59.)
 
-Previous: **workflowsVersion: 2026-09-09c** (**W-42 step 6 — the assistant knows what the user is in the MIDDLE of, and three more commands.** Research, not a report: the standing questions passed, so the other half of the situational rung was asked with the selection deliberately different from what the projector held — and the assistant named the song on the screen when asked which song was SELECTED, and ran to its round cap on *show the next slide* (the slide cards had no name any tool could see; it pressed a slide's number badge and then said it could not find an answer). The app now tells it which song or document is selected, its slides with their first words, which one is up and which comes next, and every slide card answers to its own name (*Slide 5: …*), so the same asks are two rounds and one press, verified on the wall. **/selected**, **/next** and **/previous** do the same with no assistant. Verified live 2026-09-09 on the presenter with Claude Sonnet 5. New CB-56.)
+Previous: **workflowsVersion: 2026-09-09c** (**W-42 step 6 — the assistant knows what the user is in the MIDDLE of, and three more commands.** Research, not a report: the standing questions passed, so the other half of the situational rung was asked with the selection deliberately different from what the projector held — and the assistant named the song on the screen when asked which song was SELECTED, and ran to its round cap on _show the next slide_ (the slide cards had no name any tool could see; it pressed a slide's number badge and then said it could not find an answer). The app now tells it which song or document is selected, its slides with their first words, which one is up and which comes next, and every slide card answers to its own name (_Slide 5: …_), so the same asks are two rounds and one press, verified on the wall. **/selected**, **/next** and **/previous** do the same with no assistant. Verified live 2026-09-09 on the presenter with Claude Sonnet 5. New CB-56.)
 
-Previous: **workflowsVersion: 2026-09-09b** (**W-31 steps 7–9 — the divider between two panels has the same menu, and the walkthrough can press it.** Reported with a screenshot: the walkthrough for this page on step 1 of 5 saying to open the View menu, beside a right-click the user had made themselves on a panel divider, open on *Reset Size / Close First Widget / Close Second Widget* — *"the agent also use contextmenu of the resize"*. The page knew only the View menu, which lives in the menu bar where no walkthrough can press it (and which a popup window does not have), the divider had no name the assistant could find, and the View-menu step itself was being skipped in the Presenter because its example list says *presenter*. Now every divider is named after the two panels it sits between, the recipe says what a right-click, a double-click and a hover on it do, and the walkthrough opens the divider’s own menu, rings the item and chooses it on the next press. Verified live 2026-09-09 on the presenter. New CB-57. Also W-02 step 2 reworded to put the ORDER first — select the document, then click the tab — because the assistant was condensing it into "click the slide document, this opens the Slide Editor".)
+Previous: **workflowsVersion: 2026-09-09b** (**W-31 steps 7–9 — the divider between two panels has the same menu, and the walkthrough can press it.** Reported with a screenshot: the walkthrough for this page on step 1 of 5 saying to open the View menu, beside a right-click the user had made themselves on a panel divider, open on _Reset Size / Close First Widget / Close Second Widget_ — _"the agent also use contextmenu of the resize"_. The page knew only the View menu, which lives in the menu bar where no walkthrough can press it (and which a popup window does not have), the divider had no name the assistant could find, and the View-menu step itself was being skipped in the Presenter because its example list says _presenter_. Now every divider is named after the two panels it sits between, the recipe says what a right-click, a double-click and a hover on it do, and the walkthrough opens the divider’s own menu, rings the item and chooses it on the next press. Verified live 2026-09-09 on the presenter. New CB-57. Also W-02 step 2 reworded to put the ORDER first — select the document, then click the tab — because the assistant was condensing it into "click the slide document, this opens the Slide Editor".)
 
-Previous: **workflowsVersion: 2026-09-09a** (**W-42 step 6 — the assistant knows what is ON the projector.** Research, not a report: the standing questions passed, so the panic ones were followed through with the projector actually showing a verse — and the assistant said *“turning the screen on just gives you a blank canvas”* to a screen showing Verse 2, said *“yes, the screen is on”* with not a word about what, and took eight presses of its own to turn a screen on when asked. The app now tells it what each screen holds — the song and the verse with its first words, the passage, the background, the widgets, the lock — and the words on that screen’s own buttons, so the same questions name the verse on the wall, the *yes* is one press, and **/screen** and the offline answer say the same with no assistant at all. Verified live 2026-09-09 on the presenter with Claude Sonnet 5. New CB-55.)
+Previous: **workflowsVersion: 2026-09-09a** (**W-42 step 6 — the assistant knows what is ON the projector.** Research, not a report: the standing questions passed, so the panic ones were followed through with the projector actually showing a verse — and the assistant said _“turning the screen on just gives you a blank canvas”_ to a screen showing Verse 2, said _“yes, the screen is on”_ with not a word about what, and took eight presses of its own to turn a screen on when asked. The app now tells it what each screen holds — the song and the verse with its first words, the passage, the background, the widgets, the lock — and the words on that screen’s own buttons, so the same questions name the verse on the wall, the _yes_ is one press, and **/screen** and the offline answer say the same with no assistant at all. Verified live 2026-09-09 on the presenter with Claude Sonnet 5. New CB-55.)
 
-Previous: **workflowsVersion: 2026-09-08c** (**W-42 step 15 — Do it presses the button the step names, closes what is in the way first, and reads Next on a step that is only something to notice; W-12 step 1 names the toggle as the app does.** Reported with a screenshot: the Bible Lookup popup open over the Presenter and the walkthrough’s ring drawn through it onto a line of Genesis — *“does not work while modal present”* — then *“many question fail during Do it”*. Do it was pressed through every step of every recipe (224 presses): 124 refused, and a check of the 92 counted as done found the wrong control pressed in at least ten of them — the projector’s Clear All for the drawing panel’s Clear, the help window opened for a bolded word. Now a control behind a popup, menu or floating panel is closed out of the way on the first press and never a question the app is asking; only a control called what the step says is pressed, a look-alike is named and handed to the assistant; a step that only describes what to see reads Next; and the four tour pages (W-01, W-09, W-10, W-17) that could not start a walkthrough at all now do. Verified live 2026-09-08 on the presenter and reader. New CB-52.)
-Previous: **workflowsVersion: 2026-09-08b** (**W-42 steps 18 and 19 — the buttons under a drafted song are the only thing to press, a paste is written out even with no assistant, and a hymnal’s text page reads right.** Asked for from the app with the *Try asking* chips circled: *“test all questions in the highlight then enhance until everything work smoothly”*. Graded on the assistant the window was set to — Kimi on a free account — the two how-do-I chips passed; under a drafted song the assistant’s own *Create the file* / *Copy the text* pills were drawn brighter than the real buttons and pressing one failed after half a minute, and the paste the third chip invites was refused a minute later and searched for in this guide. Now only the real buttons and genuine replies sit under a song; a refused or keyless paste is written out by the app itself in a second or two; and a hymnal’s text page comes out as its numbered stanzas with the title, author and *Public Domain* off the page’s own table (it was sixteen verses of menus). Verified live 2026-09-08 on the presenter with Kimi K2.6 and Claude Sonnet 5. New CB-51.)
-Previous: **workflowsVersion: 2026-09-08a** (**W-42 step 6 — a page is named by its title, never by a code.** Research, not a report: the standing questions asked on Claude, and the where-is one opened with *“W-08 has exactly what you need”* — a code the assistant is told never to show, written from a search result, and written again when asked after the fix. The code now leaves the search excerpts and, if the assistant writes one anyway, the window replaces it with the page's title before you see it. The offline button has read **Read the whole thing** for some time; this step said **Read all of W-xx**, and now says what is on the screen. And the *“Yes, walk me through it”* reply that sat beside **Show me step by step** on every multi-step answer — the same press twice — is dropped. Verified live 2026-09-08 on the presenter with Claude Sonnet 5. New CB-50.)
+Previous: **workflowsVersion: 2026-09-08c** (**W-42 step 15 — Do it presses the button the step names, closes what is in the way first, and reads Next on a step that is only something to notice; W-12 step 1 names the toggle as the app does.** Reported with a screenshot: the Bible Lookup popup open over the Presenter and the walkthrough’s ring drawn through it onto a line of Genesis — _“does not work while modal present”_ — then _“many question fail during Do it”_. Do it was pressed through every step of every recipe (224 presses): 124 refused, and a check of the 92 counted as done found the wrong control pressed in at least ten of them — the projector’s Clear All for the drawing panel’s Clear, the help window opened for a bolded word. Now a control behind a popup, menu or floating panel is closed out of the way on the first press and never a question the app is asking; only a control called what the step says is pressed, a look-alike is named and handed to the assistant; a step that only describes what to see reads Next; and the four tour pages (W-01, W-09, W-10, W-17) that could not start a walkthrough at all now do. Verified live 2026-09-08 on the presenter and reader. New CB-52.)
+Previous: **workflowsVersion: 2026-09-08b** (**W-42 steps 18 and 19 — the buttons under a drafted song are the only thing to press, a paste is written out even with no assistant, and a hymnal’s text page reads right.** Asked for from the app with the _Try asking_ chips circled: _“test all questions in the highlight then enhance until everything work smoothly”_. Graded on the assistant the window was set to — Kimi on a free account — the two how-do-I chips passed; under a drafted song the assistant’s own _Create the file_ / _Copy the text_ pills were drawn brighter than the real buttons and pressing one failed after half a minute, and the paste the third chip invites was refused a minute later and searched for in this guide. Now only the real buttons and genuine replies sit under a song; a refused or keyless paste is written out by the app itself in a second or two; and a hymnal’s text page comes out as its numbered stanzas with the title, author and _Public Domain_ off the page’s own table (it was sixteen verses of menus). Verified live 2026-09-08 on the presenter with Kimi K2.6 and Claude Sonnet 5. New CB-51.)
+Previous: **workflowsVersion: 2026-09-08a** (**W-42 step 6 — a page is named by its title, never by a code.** Research, not a report: the standing questions asked on Claude, and the where-is one opened with _“W-08 has exactly what you need”_ — a code the assistant is told never to show, written from a search result, and written again when asked after the fix. The code now leaves the search excerpts and, if the assistant writes one anyway, the window replaces it with the page's title before you see it. The offline button has read **Read the whole thing** for some time; this step said **Read all of W-xx**, and now says what is on the screen. And the _“Yes, walk me through it”_ reply that sat beside **Show me step by step** on every multi-step answer — the same press twice — is dropped. Verified live 2026-09-08 on the presenter with Claude Sonnet 5. New CB-50.)
 
-Previous: **workflowsVersion: 2026-09-05b** (**W-42 step 6 — a picked question is a label, not a search.** Measured on all 258 supported questions that name a page of this guide: searched for as typed, the search put that page first for 147 (57%) — so a question picked off the app's own list got the wrong page two times in five, with a paid assistant or without. A question that IS one of the corpus rows (a chip, a suggestion, the More… list) now goes straight to the page it is filed under, on the search itself and as a hint to the assistant, which then opens the page without searching (2 rounds where the free-worded version took 5). The 45 held-out paraphrases are untouched (22 of 45 before and after). And a search hit that merely shares a word — *Can it stream to Facebook?* scored the Presenter overview 2 — no longer counts as an answer: no walkthrough buttons under an honest "it cannot", no page at all from the offline bot. Verified live 2026-09-03 on the presenter with Claude Sonnet 5 and with a dead key. New CB-49.)
+Previous: **workflowsVersion: 2026-09-05b** (**W-42 step 6 — a picked question is a label, not a search.** Measured on all 258 supported questions that name a page of this guide: searched for as typed, the search put that page first for 147 (57%) — so a question picked off the app's own list got the wrong page two times in five, with a paid assistant or without. A question that IS one of the corpus rows (a chip, a suggestion, the More… list) now goes straight to the page it is filed under, on the search itself and as a hint to the assistant, which then opens the page without searching (2 rounds where the free-worded version took 5). The 45 held-out paraphrases are untouched (22 of 45 before and after). And a search hit that merely shares a word — _Can it stream to Facebook?_ scored the Presenter overview 2 — no longer counts as an answer: no walkthrough buttons under an honest "it cannot", no page at all from the offline bot. Verified live 2026-09-03 on the presenter with Claude Sonnet 5 and with a dead key. New CB-49.)
 
-Previous: **workflowsVersion: 2026-09-05a** (**W-42 step 6 — commands that need no assistant.** Asked for from the app: *"looking for a way to do pre-training the local assistant, for some task the chatbot should not ask the llm api"*, then *"add build action like `/presenter-screen-show` `/presenter-screen-hide`"*, *"buildin actions"*, *"so user don't have to ask llm"*. Measured the same afternoon before anything was built: three of the four assistants on the machine answered 429 within the hour (ChatGPT out of credit, Kimi rate-limited from the second question, the free pool after 62 seconds), so the standing question corpus fell through to the offline guide bot, which answered *"Turn off the screen for me"* with the screen's state and no way to change it, and got 4 of 12 right. The ask box now takes `/` commands — `/screen`, `/screen-show`, `/screen-hide`, the five clears, `/find`, `/goto`, `/here`, `/help`, `/commands` — run through the app's own tools with no model, no key and no internet, each answering with what CHANGED, read back after the press. Typing `/` lists them. Two cheap offline-bot fixes rode along: a how-do-I that mentions the screen is no longer answered with the screen's state, and the window's name is no longer a search word (it made the Presenter overview page outrank the real answer). Verified live 2026-09-02 on the presenter: every command 0 model rounds, about 1.6 s, the screen really on and off. New CB-48.)
+Previous: **workflowsVersion: 2026-09-05a** (**W-42 step 6 — commands that need no assistant.** Asked for from the app: _"looking for a way to do pre-training the local assistant, for some task the chatbot should not ask the llm api"_, then _"add build action like `/presenter-screen-show` `/presenter-screen-hide`"_, _"buildin actions"_, _"so user don't have to ask llm"_. Measured the same afternoon before anything was built: three of the four assistants on the machine answered 429 within the hour (ChatGPT out of credit, Kimi rate-limited from the second question, the free pool after 62 seconds), so the standing question corpus fell through to the offline guide bot, which answered _"Turn off the screen for me"_ with the screen's state and no way to change it, and got 4 of 12 right. The ask box now takes `/` commands — `/screen`, `/screen-show`, `/screen-hide`, the five clears, `/find`, `/goto`, `/here`, `/help`, `/commands` — run through the app's own tools with no model, no key and no internet, each answering with what CHANGED, read back after the press. Typing `/` lists them. Two cheap offline-bot fixes rode along: a how-do-I that mentions the screen is no longer answered with the screen's state, and the window's name is no longer a search word (it made the Presenter overview page outrank the real answer). Verified live 2026-09-02 on the presenter: every command 0 model rounds, about 1.6 s, the screen really on and off. New CB-48.)
 
-Previous: **workflowsVersion: 2026-09-04b** (**W-42 step 6 — the window says what it is doing while it works, the tip line walks, and the four suggestions are no longer all there is.** Asked for from the app with three screenshots: *"chatbot, should log progress and progress information (doing on what)"*, *"should `<-` and `->` for pre next tip"*, and *"should `More...`, when I click it show all list so can know what I can do"*. A question that reads a web page and drafts a song is most of a minute behind one unchanging line — *Looking it up…* — which cannot tell a window that is working from one that has hung; the wait is now a short LOG of what it is actually doing, in the words a volunteer would use: *Connecting to the app*, *Searching the guide for "background"*, *Reading example.com*, *Creating a new song: "Amazing Grace"*. Finished steps stay above the running one, so it reads as progress rather than as a spinner, and no tool name, path or id can reach it. The 💡 line gained **‹** and **›**, which walk the tips in order and wrap, where pressing the sentence still gives a random one — the arrows are the only way to see them all and the only way back to one that changed while it was half-read. And the four **Try asking** chips gained **More…**, which opens every question the window is prepared for, grouped under the panel each belongs to — 184 of them in the Presenter. Verified live 2026-09-04 on the presenter with Claude Sonnet 5. New CB-47; CB-46 and CB-17 amended.)
+Previous: **workflowsVersion: 2026-09-04b** (**W-42 step 6 — the window says what it is doing while it works, the tip line walks, and the four suggestions are no longer all there is.** Asked for from the app with three screenshots: _"chatbot, should log progress and progress information (doing on what)"_, _"should `<-` and `->` for pre next tip"_, and _"should `More...`, when I click it show all list so can know what I can do"_. A question that reads a web page and drafts a song is most of a minute behind one unchanging line — _Looking it up…_ — which cannot tell a window that is working from one that has hung; the wait is now a short LOG of what it is actually doing, in the words a volunteer would use: _Connecting to the app_, _Searching the guide for "background"_, _Reading example.com_, _Creating a new song: "Amazing Grace"_. Finished steps stay above the running one, so it reads as progress rather than as a spinner, and no tool name, path or id can reach it. The 💡 line gained **‹** and **›**, which walk the tips in order and wrap, where pressing the sentence still gives a random one — the arrows are the only way to see them all and the only way back to one that changed while it was half-read. And the four **Try asking** chips gained **More…**, which opens every question the window is prepared for, grouped under the panel each belongs to — 184 of them in the Presenter. Verified live 2026-09-04 on the presenter with Claude Sonnet 5. New CB-47; CB-46 and CB-17 amended.)
 
-Previous: **workflowsVersion: 2026-09-04a** (**W-42 step 6 — the ask box remembers what it has been asked, and a tip sits above it.** Asked for from the app with a screenshot of the chat window: *"chatbot, it should remember asking history, when editing the alt+arrow-up/down should get the text from history"*, then *"show this kind of tip somewhere to let user know any features"* and *"showing tip randomly, maybe above the input text"*. **Alt+↑** / **Alt+↓** walk back through every question typed into this window — one list for the whole window, kept across tabs and across days, seeded from the conversations already saved — and a press past the newest hands back the half-written question the walk started from. The plain arrows are untouched: they belong to the cursor and to the suggestion list. Above the box, one line with a 💡 names a feature nothing on screen announces — the camera, the walkthrough cards, **Report**, **Alt+↑** itself — a different one each time the window opens, another on a click. Verified live 2026-09-04 on the presenter with Claude: two questions walked back, the empty box handed back, a real ask recorded and recalled, and the tip changing on each press. New CB-46.)
+Previous: **workflowsVersion: 2026-09-04a** (**W-42 step 6 — the ask box remembers what it has been asked, and a tip sits above it.** Asked for from the app with a screenshot of the chat window: _"chatbot, it should remember asking history, when editing the alt+arrow-up/down should get the text from history"_, then _"show this kind of tip somewhere to let user know any features"_ and _"showing tip randomly, maybe above the input text"_. **Alt+↑** / **Alt+↓** walk back through every question typed into this window — one list for the whole window, kept across tabs and across days, seeded from the conversations already saved — and a press past the newest hands back the half-written question the walk started from. The plain arrows are untouched: they belong to the cursor and to the suggestion list. Above the box, one line with a 💡 names a feature nothing on screen announces — the camera, the walkthrough cards, **Report**, **Alt+↑** itself — a different one each time the window opens, another on a click. Verified live 2026-09-04 on the presenter with Claude: two questions walked back, the empty box handed back, a real ask recorded and recalled, and the tip changing on each press. New CB-46.)
 
-Previous: **workflowsVersion: 2026-09-03a** (**W-10 — the show/hide screen control is named, because "Show" is not its name.** Reported from the app with a screenshot: the assistant was asked *"How do I show a screen?"*, offered to do it, was told *"Yes, turn it on"*, and answered *"Done — the screen is now showing."* while nothing was on the wall. Four toolbar-reveal decorations in the presenter carried the title **Show**, an exact match that outranked the screen's own control, so the press landed on one of them. Those are now **[en:tran:Reveal Hidden Controls]**, the screen control answers to **[en:tran:Toggle showing screen]** in whatever language the app is showing (it was hardcoded English), and a press now reports what it CHANGED rather than only what it hit. Verified live 2026-09-03. New CB-44.)
+Previous: **workflowsVersion: 2026-09-03a** (**W-10 — the show/hide screen control is named, because "Show" is not its name.** Reported from the app with a screenshot: the assistant was asked _"How do I show a screen?"_, offered to do it, was told _"Yes, turn it on"_, and answered _"Done — the screen is now showing."_ while nothing was on the wall. Four toolbar-reveal decorations in the presenter carried the title **Show**, an exact match that outranked the screen's own control, so the press landed on one of them. Those are now **[en:tran:Reveal Hidden Controls]**, the screen control answers to **[en:tran:Toggle showing screen]** in whatever language the app is showing (it was hardcoded English), and a press now reports what it CHANGED rather than only what it hit. Verified live 2026-09-03. New CB-44.)
 
-Previous: **workflowsVersion: 2026-09-01h** (**W-19 step 1 and W-42 steps 1 and 5 — the annotation overlay and the assistant now belong to EVERY window, and the help window can be asked about any of them.** Asked for from the app: *"add chatbot assistant and presenting-control to all pages except about.html, chatbot.html, finder.html, screen.html"*, then *"have to extend the list to support all question files"* — the **ASKING ABOUT** list offered only Presenter and Bible Reader while the help was reachable from eight windows. Both features are now mounted on all nine pages by one component, reached by **Tools → Start Controlling** / **Ctrl+Shift+P** and **Tools → App Assistant** / **Ctrl+Shift+A**; the projector, the About box and the Find bar deliberately keep neither. The menu click now goes to the window in FRONT rather than to whichever one registered the entry last — opening Settings used to take *Start Controlling* away from the Presenter. **ASKING ABOUT** names all eight windows, and the question corpus grew three files (Bible Note, Web Editor, Lyric Editor) with the Slide Editor's own split out of the Presenter's. Verified live 2026-09-01: the overlay and the shortcut on a Settings window and on the Experiment page — neither of which had ever had them — with the accent frame correctly themed on a page that loads none of the app's own stylesheets.)
+Previous: **workflowsVersion: 2026-09-01h** (**W-19 step 1 and W-42 steps 1 and 5 — the annotation overlay and the assistant now belong to EVERY window, and the help window can be asked about any of them.** Asked for from the app: _"add chatbot assistant and presenting-control to all pages except about.html, chatbot.html, finder.html, screen.html"_, then _"have to extend the list to support all question files"_ — the **ASKING ABOUT** list offered only Presenter and Bible Reader while the help was reachable from eight windows. Both features are now mounted on all nine pages by one component, reached by **Tools → Start Controlling** / **Ctrl+Shift+P** and **Tools → App Assistant** / **Ctrl+Shift+A**; the projector, the About box and the Find bar deliberately keep neither. The menu click now goes to the window in FRONT rather than to whichever one registered the entry last — opening Settings used to take _Start Controlling_ away from the Presenter. **ASKING ABOUT** names all eight windows, and the question corpus grew three files (Bible Note, Web Editor, Lyric Editor) with the Slide Editor's own split out of the Presenter's. Verified live 2026-09-01: the overlay and the shortcut on a Settings window and on the Experiment page — neither of which had ever had them — with the accent frame correctly themed on a page that loads none of the app's own stylesheets.)
 
-Previous: **workflowsVersion: 2026-09-01g** (**W-42 steps 6 and 9 — the ask box holds several lines, and the window can report a bug for you.** Asked for from the app with a screenshot of the ask row: *"change input text to textarea to support multiple lines"*, then *"under `Ask` add `Report`"* — investigate first, collect the evidence, prepare it for an issue tracker — then *"ctrl+enter to ask, for normal enter just make new line"* and *"to prevent click REPORT by accident, should confirm before running report"*. The box now grows with what is typed in it, **Enter** starts a line and **Ctrl+Enter** asks. **Report**, under **Ask**, quotes back what it is about to report before it does anything; confirmed, it photographs the app, notes the build, the window, the screens and the error log, investigates the live app and writes the report in the volunteer's place. Nothing is sent by it — there is no issue tracker connected yet, so it saves the report and the picture into Downloads and says so rather than claiming it was filed. Verified live 2026-09-01 on the presenter with ChatGPT: two reports end to end, both files on disk. New CB-32.)
+Previous: **workflowsVersion: 2026-09-01g** (**W-42 steps 6 and 9 — the ask box holds several lines, and the window can report a bug for you.** Asked for from the app with a screenshot of the ask row: _"change input text to textarea to support multiple lines"_, then _"under `Ask` add `Report`"_ — investigate first, collect the evidence, prepare it for an issue tracker — then _"ctrl+enter to ask, for normal enter just make new line"_ and _"to prevent click REPORT by accident, should confirm before running report"_. The box now grows with what is typed in it, **Enter** starts a line and **Ctrl+Enter** asks. **Report**, under **Ask**, quotes back what it is about to report before it does anything; confirmed, it photographs the app, notes the build, the window, the screens and the error log, investigates the live app and writes the report in the volunteer's place. Nothing is sent by it — there is no issue tracker connected yet, so it saves the report and the picture into Downloads and says so rather than claiming it was filed. Verified live 2026-09-01 on the presenter with ChatGPT: two reports end to end, both files on disk. New CB-32.)
 
-Previous: **workflowsVersion: 2026-09-01f** (**W-42 steps 6 and 7, and W-19 step 7 — the help window takes more than typed words, and stays listening while it answers.** Asked for from the app: attach files and images, paste an image from the clipboard, inspect a DOM element to attach, attach a screenshot — then widened mid-request to *"during waiting for api response user should able to add more input"* and *"for something unclear the ai should ask for more input from user"*. The box is no longer disabled while an answer is on its way: **Add** folds what you type into the answer being written, and a **Stop** gives every added word back. Five ways to attach (paperclip, paste, drop, **📷** a picture of the app, **🎯** point at a control), capped at four per question, shown as chips with an **×**. Pointing does not press: the choosing click is swallowed, so asking what **Clear Bible** does never clears the bible. Pictures live only as long as the window — the chip greys out afterwards and says so — and a model that cannot see one says so before spending anything and offers one that can. The assistant can now ask to be SHOWN, with the button beside the request. W-19 gains a **camera** in the Presenting Control that photographs the app WITH the drawing on it and offers ask / copy / save-into-images. Pressing a chip shows what it stands for — a control is ringed again by its stored selector, a picture opens big, a file opens its folder. New CB-26..CB-31.)
+Previous: **workflowsVersion: 2026-09-01f** (**W-42 steps 6 and 7, and W-19 step 7 — the help window takes more than typed words, and stays listening while it answers.** Asked for from the app: attach files and images, paste an image from the clipboard, inspect a DOM element to attach, attach a screenshot — then widened mid-request to _"during waiting for api response user should able to add more input"_ and _"for something unclear the ai should ask for more input from user"_. The box is no longer disabled while an answer is on its way: **Add** folds what you type into the answer being written, and a **Stop** gives every added word back. Five ways to attach (paperclip, paste, drop, **📷** a picture of the app, **🎯** point at a control), capped at four per question, shown as chips with an **×**. Pointing does not press: the choosing click is swallowed, so asking what **Clear Bible** does never clears the bible. Pictures live only as long as the window — the chip greys out afterwards and says so — and a model that cannot see one says so before spending anything and offers one that can. The assistant can now ask to be SHOWN, with the button beside the request. W-19 gains a **camera** in the Presenting Control that photographs the app WITH the drawing on it and offers ask / copy / save-into-images. Pressing a chip shows what it stands for — a control is ringed again by its stored selector, a picture opens big, a file opens its folder. New CB-26..CB-31.)
 
 Previous: **workflowsVersion: 2026-09-01e** (**W-42 step 6 — an answer on its way can be stopped.** Reported from the app with a screenshot: a question was asked, "Looking it up…" appeared, and there was no way back — the box was disabled, the Ask button was disabled, and the only way out of a question asked by mistake was to wait it out or close the window. A question can take a minute (ten model rounds), and it is being paid for the whole time. The **Ask** button now becomes **Stop** while an answer is on its way, **Esc** does the same, and pressing either drops the request on the wire rather than merely ignoring what comes back. Verified live 2026-09-01 on the presenter with ChatGPT: both the button and the key ended the answer at once, the network log shows the model call `net::ERR_ABORTED` mid-round, no late answer landed, and an answer left alone still arrives as before.)
 
@@ -1188,19 +1232,20 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, XW-08._
 
 1. Press **Ctrl+B** (or click **[en:tran:Bible Lookup]** in the header). The
    lookup opens as a popup dialog. 📸
-2. The input is a **step-by-step picker**: type the first letters of the book (e.g.
-   `Joh`) and click the book, then pick the chapter, then the verse. Press **Tab** to
-   auto-complete the current part; **Escape** clears the input.
-   > Tip: you can also type the reference in full — `John 3:16` — and that verse appears;
-   > picking book → chapter → verse in steps is optional. The **Bible Reader** page (W-10)
-   > works the same way.
+2. The input is a **step-by-step picker**. Click the empty box to see the book grid,
+   then click the book, the chapter and the verse. These buttons use the names and
+   numbers of the Bible version you chose, so this is the preferred route for a
+   non-English Bible.
+   > Tip: typing the first letters or a full reference such as `John 3:16` is a shortcut
+   > when that Bible recognizes what you type. **Tab** completes the current part;
+   > **Escape** clears it. The **Bible Reader** page works the same way.
 3. The verse renders in the preview panel. **Double-click** it to present. 📸
 4. Close the dialog with the red ✕ button or **Ctrl+Q**.
 5. Press **F9** ([en:tran:Clear Bible]) to take the verse off screen.
 6. The presented verse also appears in the **Bibles** tab (middle column) and the
    **Bibles** list (right column) for re-presenting later.
 7. In a hurry, ask the app instead: open the assistant (**🤖**, W-42) and type
-   *Put John 3:16 on the screen* — or the command **/verse John 3:16**, which
+   _Put John 3:16 on the screen_ — or the command **/verse John 3:16**, which
    needs no assistant. The passage goes up in the version the lookup is on, and
    the answer says what is on the screen now; it is not saved to the **Bibles**
    list. 📸
@@ -1273,8 +1318,8 @@ has its own controls and a Show/Start button:
 Press **F10** (Clear Foreground) to clear all foreground widgets, or **F6** to clear
 everything at once.
 
-**Or ask for it.** In the help window (🤖), *Start a 5 minute countdown on the
-screen* or *Put the time on the screen* starts the extra straight away and reads
+**Or ask for it.** In the help window (🤖), _Start a 5 minute countdown on the
+screen_ or _Put the time on the screen_ starts the extra straight away and reads
 the screen back — it is held even while the screen is off, and the screen's own
 show button is offered, never pressed unasked. **/countdown 5**, **/countdown
 10:30** and **/marquee Please silence your phones** do the same with no assistant,
@@ -1317,23 +1362,37 @@ _Verify: PR-04..07, SP-01..09, KB-03..07, KB-13._
 
 ## Bible study
 
-### W-11 — Read the Bible (full references, versions)
+### W-11 — Read the Bible (references, text size, history, versions)
 
 **Goal:** look up and read a verse in the Bible Reader — deeper reading than the
 quick lookup, and where you look a verse up when you are not presenting.
 **Where:** header tab **[en:tran:Bible Reader]**.
 
-1. Click the **Bible Reader** tab. 📸
-2. Type a reference using the same step-by-step picker as the lookup dialog: book →
-   chapter → verse. The picker keys work here too (**Tab** complete, **Escape** clear,
-   **Ctrl+Escape** clear one part).
-   > Tip: typing the reference in full — `John 3:16` — jumps straight to that verse on this
-   > page as well, so the step-by-step picking is optional.
-3. Switch the Bible **version** from the header dropdown — the text re-renders. 📸
-4. Recent lookups appear as **history** entries; click one to jump back.
-5. Double-click a verse to present it.
+1. In **Bible Reader**, click the **Bible Reference** box at the top. If it already
+   contains a reference, click **Clear input**. Click the book, then the chapter, then
+   the verse from the buttons that appear; the passage opens. This is the preferred
+   route for a non-English Bible because the buttons use that Bible's own names and
+   numbers. 📸
+   > Typing a full reference such as `John 3:16` is an optional shortcut when the
+   > selected Bible recognizes it. **Tab** completes a piece, **Escape** clears the
+   > last piece and **Ctrl+Escape** clears the box.
+2. If the words are too small, click the small **⋯** at the bottom-left of the
+   passage to open the hidden controls. Then press and hold the
+   **[en:tran:Font Size]** slider, move it to the right, and let go when the words are
+   large enough.
+3. To read two Bible versions next to each other, click **[en:tran:Add Extra Bible]**
+   beside the version name, then click the version you want. 📸
+4. If you lose a passage, you do not need to remember and type it again. Click one of
+   the recent reference rows near the top to go back to it.
+5. To change the main Bible version, click its short name in the header and choose a
+   version from the list. 📸
+6. To read without the side panels, click the small **⋯** at the bottom-left if the
+   footer is hidden, then click **[en:tran:Full]** at the bottom-right. Click
+   **[en:tran:Exit Full]** to bring the panels back.
+7. To put a verse on the audience screen, double-click that verse. A double-click
+   means pressing the left mouse button twice quickly in the same place.
 
-_Verify: RD-01..07, RD-11._
+_Verify: RD-01..07, RD-11, RD-19, RD-38._
 
 ### W-12 — Search the whole Bible (Bible Find)
 
@@ -1477,8 +1536,8 @@ on a Mac), where it can be brought back if you change your mind.
 2. Right-click the row, or point at it and click the **⋮** that appears at its right-hand
    end (W-01b). The row's menu opens.
 3. Choose **[en:tran:Move to Trash]** — the last item, with a red trash icon. 📸
-4. A small window asks **[en:tran:Moving File to Trash]** — *Are you sure you want to move
-   "…" to trash?* Click **Yes**. (**No** leaves everything as it was.)
+4. A small window asks **[en:tran:Moving File to Trash]** — _Are you sure you want to move
+   "…" to trash?_ Click **Yes**. (**No** leaves everything as it was.)
 5. The row disappears from the list. The file, and any pictures or media that belonged only
    to it, are in the Recycle Bin / Trash — open that from your desktop to restore them.
 
@@ -2262,10 +2321,16 @@ PowerPoint file anyone can open.
 1. In the **Documents** list, right-click an Open Worship slide document (or press the
    **⋮** at the end of its row) and choose **[en:tran:Export to PPTX]**. It sits just
    under **[en:tran:Export]**. 📸
-2. A message **[en:tran:Export to PPTX]** appears saying **[en:tran:Exported to]** and
+2. For a lyric, select its row so the **[en:tran:Stage Previewer]** opens. Add or remove
+   stages until the layouts you want are visible, then press the **⋮** in the Stage
+   Previewer header and choose **[en:tran:Export to PPTX]**. The app writes one deck per
+   visible stage: `<song> - Stage 0.pptx`, `<song> - Stage 1.pptx`, and so on. Each deck
+   uses that stage's own lyric layout and style. 📸
+3. A message **[en:tran:Export to PPTX]** appears saying **[en:tran:Exported to]** and
    where: a `<name>.pptx` in your **Downloads** folder, which opens with the file in it.
-   Exporting the same document again makes `<name> (1).pptx` beside it. 📸
-3. Open it in PowerPoint. Each slide looks the way the screen shows it:
+   A lyric batch opens the Downloads folder once; exporting again adds numbered copies
+   beside the earlier decks. 📸
+4. Open it in PowerPoint. Each slide looks the way the screen shows it:
    - the words stay words you can change, broken into lines exactly where the app breaks
      them, in the same font — and where that font has no letter for part of the text (the
      English inside a Khmer title), in the font the app used for it instead;
@@ -2276,12 +2341,13 @@ PowerPoint file anyone can open.
    - behind each slide is the background the screen would be showing: the slide's own,
      else the document's, else the one the slide before it left up — so the slides that
      follow a video background keep it, as they do when you present them in order. 📸
-4. Anything you wrote in a slide's **Slide Note** is in that slide's **Notes** in
+5. Anything you wrote in a slide's **Slide Note** is in that slide's **Notes** in
    PowerPoint, and a slide you disabled comes out as a **hidden** slide, skipped when the
    show runs.
 
-> Notes: it is offered on Open Worship slide documents only — a PDF, PowerPoint or Word
-> file in the list already is its own file, and a lyric has no slides of its own. The
+> Notes: a slide document exports from its row menu; a lyric exports from the Stage
+> Previewer header because each visible stage is a separate rendered layout. A PDF,
+> PowerPoint or Word file in the list already is its own file. The
 > file is a copy: changing it changes nothing in the app. A YouTube box becomes the
 > video's picture when the computer is online; a camera box, a camera background and a
 > live web page as a background cannot be exported, the same as printing leaves them out.
@@ -2709,8 +2775,8 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
 6. A link the site opens in a new window (a citation, a "learn more") opens in your normal
    browser, never in the app — and only when you pressed something in the site just before.
    A page that tries to open one on its own is stopped, and a line under the row above the
-   page says *This site tried to open … in your browser without a press, so it was not
-   opened*; press the link again if you meant it. 📸 The site cannot use the camera or your
+   page says _This site tried to open … in your browser without a press, so it was not
+   opened_; press the link again if you meant it. 📸 The site cannot use the camera or your
    location from inside this window, cannot open anything on this computer, and cannot
    reach anything on it or on the building's network — not the app itself, not the router,
    not a printer, not a program such as OBS that listens for connections. Only the
@@ -2718,13 +2784,14 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
 
    **Talking instead of typing.** The microphone is the one thing a site may ask for. Press
    its microphone button (Claude's **Dictate**, for one) and a line appears under the row
-   above the page: *claude.ai wants to use your microphone. Allow it until the app
-   closes?* 📸 **Allow** lets that site hear you; **Don't allow** — already selected, so
+   above the page: _claude.ai wants to use your microphone. Allow it until the app
+   closes?_ 📸 **Allow** lets that site hear you; **Don't allow** — already selected, so
    Enter or Escape picks it — keeps the microphone off, and the site shows its own
    "blocked" message until you press its button and answer again. A yes is for that one
    site, lasts until the app closes, and only counts while its tab is the one in front; a
    tab behind is never let in. **Sign out of every site** (step 7) takes it back. The
    camera stays off whatever you answer.
+
 7. **Sharing this computer?** You stay signed in to these sites until you say otherwise,
    and closing the tabs does not sign you out — that is worth knowing in a church back
    room where several people use the same machine. Click **↤** (**Sign out of every
@@ -2734,11 +2801,61 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    were on and the names the sites gave them are forgotten, a name you typed on a tab
    yourself is kept, and every site asks you to sign in again. It cannot be undone.
 
-**Not loading?** The window says *… could not be loaded* with a **Try again** button when
+**Not loading?** The window says _… could not be loaded_ with a **Try again** button when
 the site cannot be reached — check the building's internet first. A site that refuses to
 sign you in inside the window can be opened in your browser with **↗** and used there.
 
 _Verify: CB-68._
+
+---
+
+### W-46 — Learn the page with Tips of the Day
+
+**Goal:** learn the Presenter or Bible Reader at your own pace and see the exact
+control without having to search the manual.
+
+1. The first Presenter or Bible Reader page opened in an app launch shows one
+   **Tip of the Day** in the top-right corner. It stays there until you choose an
+   action. The tip belongs to that page only, and the first tip is chosen at random
+   without repeating the last automatic tip shown for that page.
+2. Click **Next tip** to move through that page's tips in order. The list wraps to
+   the first tip after the last. Click **All tips** to open the numbered learning
+   list for the current page. Search by a control or task, or scan the topic badges;
+   the counter shows how many lessons match. Each lesson says what it teaches;
+   choose one to return to its card and practise it at your own pace. The Reader
+   has **49 topics**. They cover reference entry and history, reading panes and
+   formatting, Find and cross references, people/places and connection graphs,
+   Resources, verse marks and notes, presenting a verse, the Reader header, and
+   every command under **View**. The **×** closes the card for now; reloading or moving between
+   Presenter and Reader does not show a second automatic card in the same app
+   launch.
+3. Click **Show it** to start a numbered card in the current page, with the control
+   ringed in red. This uses a checked-in walkthrough and no model or provider
+   credit. Presenter walkthroughs only open or toggle app controls; they never
+   change what the congregation sees. Reader lessons that depend on selected
+   text, files, a graph, or the native menu become self-guided numbered cards.
+   They explain the exact action but do not reload, relaunch, export, reset the
+   layout, or open Developer Tools for you. If **AI features** is off, the app
+   offers to open Settings → Others because the local walkthrough server is
+   switched off with it.
+4. Click **Don't show again** to stop automatic tips on both pages in future app
+   launches. This does not remove the lessons: use **Help → Tips of the Day** to
+   open one suggestion, or **Help → All tips** to browse the whole learning list
+   for the page in front. Opening either from Help does not turn automatic tips
+   back on. To restore the automatic card, open **Settings → General → Other
+   General Options**, turn on **[en:tran:Show Tips of the Day automatically]**, and
+   start the app again. The switch restores tips for both Presenter and Bible Reader.
+
+The Reader catalog deliberately keeps **Reload**, **Force Reload**, **Relaunch**
+and **Toggle Developer Tools** under the **View menu** topic for completeness,
+but does not put those troubleshooting commands into the random daily rotation.
+**Actual Size / Zoom In / Zoom Out** are taught as whole-window zoom, separately
+from the passage's **Font Size**. **Toggle Full Screen** is taught as whole-window
+full screen, separately from the passage's **Full** button. **Widgets** explains
+the checked pane list; **Reset Widgets Size** explains its confirmation and that
+it both restores default sizes and reopens collapsed panes.
+
+_Verify: GL-25._
 
 ---
 
@@ -3224,11 +3341,14 @@ all count as book-level too.
 
    ```json
    [
-       {
-           "title": "Overview: 1-2 Chronicles",
-           "url": "https://www.example.com/watch?v=overview-chronicles"
-       },
-       { "title": "Notes on the genealogies", "url": "https://www.example.com/notes" }
+     {
+       "title": "Overview: 1-2 Chronicles",
+       "url": "https://www.example.com/watch?v=overview-chronicles"
+     },
+     {
+       "title": "Notes on the genealogies",
+       "url": "https://www.example.com/notes"
+     }
    ]
    ```
 
@@ -3254,6 +3374,7 @@ all count as book-level too.
      press to show its links.
    - Right-click the `.json` row itself (or its **⋮**) for **Open** if you want to edit
      the file rather than follow a link.
+
 8. Click a group's header to fold it away; it stays folded next time. Right-click a header
    for **Refresh** (re-reads that one folder — **Reload** in step 3 does all of them),
    **Add Folder**, **[en:tran:Add Files]**, **Reveal in Finder**/**File Explorer**,
@@ -3409,6 +3530,7 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
 
 _Verify: RD-92, RD-93, RD-94, RD-95, RD-96, RD-97, RD-98, RD-99, RD-100, RD-101,
 RD-102, RD-103, RD-104, RD-105, RD-106, RD-121._
+
 ### W-39 — Let the passage scroll itself while you read
 
 When a chapter is longer than the panel, you do not have to keep reaching for the mouse
@@ -3490,14 +3612,15 @@ are still there the next time you open the app.
    > it up; dropped on another file in **Bible Notes** it moves there instead, marks and
    > all. One drag, and where you let go decides which it means.
 10. Delete the last mark on a verse and the verse's row disappears from **Bible Notes**
-   too — an empty row would only be something else to tidy up later.
-   > Marks belong to the translation you made them in, because they remember which words
-   > they cover and every translation words a verse differently. A mark made on KJV is not
-   > painted over a Khmer column of the same verse. That is also why a verse row, its
-   > marks, your comments and the comment window are all lettered in the font that bible
-   > is read in rather than the app's own.
-   > They also stay in the app: what you highlight here is never shown on the screen your
-   > congregation sees.
+    too — an empty row would only be something else to tidy up later.
+
+> Marks belong to the translation you made them in, because they remember which words
+> they cover and every translation words a verse differently. A mark made on KJV is not
+> painted over a Khmer column of the same verse. That is also why a verse row, its
+> marks, your comments and the comment window are all lettered in the font that bible
+> is read in rather than the app's own.
+> They also stay in the app: what you highlight here is never shown on the screen your
+> congregation sees.
 
 _Verify: RD-108, RD-109, RD-110, RD-111, RD-112._
 
@@ -3519,6 +3642,7 @@ to it — travels as one bundle.
    > Everything a note points at rides inside: a picture you pasted, a clip you inserted,
    > the sound file you attached. That makes this bundle much larger than a bible list's,
    > so give a note full of video a moment to finish.
+
 4. On the other machine, click the `⋮` at the top of the **Bible Notes** panel → **[en:tran:Import]** and pick the file — or **drag the `.owanote.tar.gz` (or `.owanote.enc`) onto
    the Bible Notes panel**. A protected one asks for its password first.
    **[en:tran:Import From URL]** works here too if the bundle is on the web. 📸
@@ -3527,6 +3651,7 @@ to it — travels as one bundle.
 
    > If a note file of that name is already there, yours is never overwritten: the
    > imported one arrives beside it as `name (1)`. Rename whichever you prefer.
+
 6. To move a **single note** instead of the whole page, use the `⋮` on that note →
    **Export**, and **Import** on the note file you want it to land in — any note file,
    not only **Default**.
@@ -3585,22 +3710,44 @@ it is describing.
    left out. Another tab can be asking about a different window at the same time. **ASSISTANT** is which service answers and **MODEL** is which of
    its models; with no API key at all the third one reads **app guide · offline** under
    **ANSWERS FROM**, and clicking it opens the settings panel that takes a key. 📸
+   When **ASKING ABOUT** is **Bible Reader**, answers lead with the easiest mouse or
+   touch route, use no more than three steps at first, say where the control is, and
+   explain actions such as double-clicking or dragging. A lost item starts with a
+   history or recovery route, not a request to remember it, and a failed step gets a
+   different safe route or one short question that identifies the next exact step.
+   Any steps shown begin at 1, and the choices below the answer stay specific to that
+   answer, including a recovery choice when the first route may fail. The wording is
+   respectful and plain; it does not assume the reader knows computer terms or
+   keyboard shortcuts.
 6. Type a question and press **Ctrl+Enter**, click **Ask**, or click one of the
    suggestions. Answers arrive with follow-up buttons: **Read the whole thing** opens
    the full recipe, the other button is the next-best match. Pages of this guide are
-   always named by their **title** — *the guide page “Set the background”* — never
+   always named by their **title** — _the guide page “Set the background”_ — never
    by a code or a number, whatever the assistant was reading. 📸
    **The four suggestions are not all it can answer — press More… to see the
    rest.** Under the **Try asking** chips on an empty chat is a small
    **More… — everything it can answer** button. It opens the whole list for the
    window you are asking about, sorted under the panel each question belongs to
-   — *Bible*, *Backgrounds*, *The screen the audience sees*, *Nothing on the
-   projector*, and so on. There are 184 of them for the Presenter, and every one
+   — _Bible_, _Backgrounds_, _The screen the audience sees_, _Nothing on the
+   projector_, and so on. There are 184 of them for the Presenter, and every one
    has a page of this guide or a look at the live app behind it, so nothing on
    that list can be pressed and come back with a shrug. It is worth a scroll
    once: most people use this window for the one thing they first saw it do.
    Press any of them to ask it, or type a few words in the box and the same list
    narrows itself as you type. **Fewer** folds it away again. 📸
+   **The Bible Reader also has 24 guided demos that need no AI model, key or
+   account.** Set **ASKING ABOUT** to **Bible Reader** and, in an empty chat,
+   use **Try a guided demo**. The original four practise text size, opening
+   John 3:16 with buttons and finding Bible words. Twenty more cover passage
+   history, clearing the reference, people and places, two Bible versions,
+   distraction-free reading, copy/split/save, automatic scrolling, line
+   layout, cross references, names in the current passage, Resources, book
+   filters and the Bibles/Notes side panel. A card appears in the Reader. Press
+   **Do it** for one visible action at a time, or **Skip** to do that step
+   yourself. The reference demo uses the Bible's own book, chapter and verse
+   buttons, so it also works when those buttons are not in English. Study-view
+   demos choose the named view even when the panel remembered a different one.
+   📸
    **The box takes as many lines as you need.** Plain **Enter** starts a new line
    rather than sending, so a question can be written out properly — what you did,
    what happened, what you expected — and the box grows as you type, up to about
@@ -3620,27 +3767,27 @@ it is describing.
    Each tab keeps its own thread: a question asked here is never answered out of the
    chat next door.
    **And you rarely have to type the next thing.** Every answer ends with two or
-   three short buttons in the assistant's own words — *“How do I style the verse
-   text?”*, *“Which button shows it?”*, *“No thanks”* — and pressing one says it for
+   three short buttons in the assistant's own words — _“How do I style the verse
+   text?”_, _“Which button shows it?”_, _“No thanks”_ — and pressing one says it for
    you, as if you had typed it. A reply that only repeats **Show me step by step**
    in other words is not offered beside it. They are the round-cornered buttons on the bottom row; the
    square ones above them, in capitals, are the ones that DO something in the app.
    Only the newest answer carries them, so a **Yes** is always a yes to the question
    you were just asked. 📸
    **It tells you what it is doing while you wait.** Under your question, a
-   short list builds up as it works — *Connecting to the app*, *Thinking about
-   it*, *Searching the guide for "background"*, *Checking the projector
-   screens*, *Reading example.com*, *Creating a new song: "Amazing
-   Grace"*. The one it is on now is the bright line at the bottom with the
+   short list builds up as it works — _Connecting to the app_, _Thinking about
+   it_, _Searching the guide for "background"_, _Checking the projector
+   screens_, _Reading example.com_, _Creating a new song: "Amazing
+   Grace"_. The one it is on now is the bright line at the bottom with the
    pulsing dot; the ones above it are done and go grey. A question that has to
    read a web page and write a song out of it takes the best part of a minute,
    and this is how you can tell it is getting somewhere rather than stuck — and
-   whether it is doing what you meant. If it says *Reading* a site you did not
-   ask about, or *Pressing* something you did not want pressed, that is the
+   whether it is doing what you meant. If it says _Reading_ a site you did not
+   ask about, or _Pressing_ something you did not want pressed, that is the
    moment to press **Stop**. 📸
    **Changed your mind? Press Stop.** While an answer is on its way the **Ask**
    button becomes **Stop**, and the last line under the steps says so —
-   *press Stop to give up on it.* Pressing it (or **Esc**) calls
+   _press Stop to give up on it._ Pressing it (or **Esc**) calls
    the question off there and then: the chat says **Stopped**, nothing arrives
    afterwards, and your question is still sitting above it with **Ask again**
    under it. Use it for a question asked by mistake, one taking longer than you
@@ -3649,8 +3796,8 @@ it is describing.
    **And you can keep talking while it works.** The box is not locked while an
    answer is coming: type the thing you forgot to say and press **Add** (or
    Enter) and it goes into the answer that is already being written, rather than
-   starting a second question — the line joins the conversation marked *Added
-   while it was working*. If it arrives too late to be worked in, it is answered
+   starting a second question — the line joins the conversation marked _Added
+   while it was working_. If it arrives too late to be worked in, it is answered
    on its own and the reply says so. Press **Stop** instead and every word you
    added comes straight back into the box: nothing you typed is thrown away. 📸
    **A question you picked from the list is answered from its own page.** The
@@ -3665,10 +3812,10 @@ it is describing.
    and the list of them appears above the box — walk it with the arrows or click
    one. **/screen** says whether anything is on the projector AND what is on it
    — the song and the verse, the passage, the background — even while the screen
-   is off, so *the screen is off but already holds Verse 2, turning it on shows
-   that* is the answer rather than a bare *nothing is showing*; **/screen-show**
+   is off, so _the screen is off but already holds Verse 2, turning it on shows
+   that_ is the answer rather than a bare _nothing is showing_; **/screen-show**
    turns the screen on and **/screen-hide** turns every screen off, and both read
-   the screens back afterwards, so *the screen is on now* is never a guess;
+   the screens back afterwards, so _the screen is on now_ is never a guess;
    **/clear-all**, **/clear-background**, **/clear-slide**, **/clear-bible** and
    **/clear-foreground** press the five clear buttons (**F6**–**F10**);
    **/selected** says which song is selected, which of its slides is up and
@@ -3681,19 +3828,19 @@ it is describing.
    nothing: advancing a run is your own **Space** in the run player);
    **/verse John 3:16** puts that passage on the screen — read by the app's own
    reference parser, in the Bible version the Bible Lookup is on (or another
-   installed one that reads it), and read back afterwards: *John 3:16 (KJV) is
-   on the screen now — "For God so loved…"*, with *Turn the screen on* offered
-   when the screen is off and *Take it off again* beside it (**F9**). Asking in
-   words does the same: *Put John 3:16 on the screen* puts it up straight away
+   installed one that reads it), and read back afterwards: _John 3:16 (KJV) is
+   on the screen now — "For God so loved…"_, with _Turn the screen on_ offered
+   when the screen is off and _Take it off again_ beside it (**F9**). Asking in
+   words does the same: _Put John 3:16 on the screen_ puts it up straight away
    with an assistant, and offers one button that does it without one;
    **/countdown 5** starts a five-minute countdown on the screen (**/countdown
    10:30** counts down to a time, **/countdown stop** takes it off; **/timer** is
    the same command) and **/marquee Please silence your phones** scrolls the
    words along the bottom (**/marquee-top** along the top; **stop** takes either
-   off) — each read back afterwards, *a 5 minute countdown, ending at 11:45 AM is
-   on the screen now*, with *Turn the screen on* offered while the screen is off
-   and *Take it off again* beside it. Asking in words does the same: *Start a 5
-   minute countdown on the screen* or *Put the time on the screen* starts it
+   off) — each read back afterwards, _a 5 minute countdown, ending at 11:45 AM is
+   on the screen now_, with _Turn the screen on_ offered while the screen is off
+   and _Take it off again_ beside it. Asking in words does the same: _Start a 5
+   minute countdown on the screen_ or _Put the time on the screen_ starts it
    straight away with an assistant and offers the screen's own show button, and
    without one the guide offers one button that starts it; the five **/clear-**
    commands clear a layer the screen HOLDS even while it is off;
@@ -3709,13 +3856,13 @@ it is describing.
    **/hymn**, **/new-song**); either answers in a few seconds with what the
    song is and the two buttons — **Create "…"** and **Copy song text** — and
    the song text as it will be saved drawn above them, and NOTHING is saved
-   until you press Create (a *page on hymnary.org was read* notice appears in
+   until you press Create (a _page on hymnary.org was read_ notice appears in
    the app window while the page is read). Asking in words does the same
-   without an assistant — *Create a lyric file from https://…* is answered by
+   without an assistant — _Create a lyric file from https://…_ is answered by
    the built-in guide with the same buttons when no assistant can answer;
    **/commands**
    lists them all. The square buttons under a command's answer are
-   commands too — *Turn the screen on* under *nothing is showing* — and pressing
+   commands too — _Turn the screen on_ under _nothing is showing_ — and pressing
    one writes the command into the chat as though you had typed it, so the word is
    there for next time. A command with a spelling mistake lists the real ones
    rather than guessing. 📸
@@ -3764,8 +3911,8 @@ it is describing.
    window says so before spending anything and offers you one that can, in a
    single press.
    **And it can ask to be shown.** When the assistant cannot answer without
-   seeing your screen it says so and puts the button right there — *Send a picture
-   of my screen*, *Point at the control*, *Attach a file* — so you never have to
+   seeing your screen it says so and puts the button right there — _Send a picture
+   of my screen_, _Point at the control_, _Attach a file_ — so you never have to
    work out how to send it one. 📸
 8. Under every answer is **Copy**, which puts that answer on the clipboard and says
    **✓ Copied**. Under every question of yours is **Ask again** — or just click the
@@ -3832,203 +3979,204 @@ it is describing.
    the answer says which. The saved file opens with the same "How to send this"
    section, so it still says where to go a week later. 📸
 10. Ask **"where is …"** and name a button — the chatbot outlines it in **red** in the app
-   window for a few seconds, and tells you where it is. Nothing is clicked for you. 📸
+    window for a few seconds, and tells you where it is. Nothing is clicked for you. 📸
 11. Ask about screens ("is any screen showing?") and the answer comes from the live app,
-   not the manual — with a **Hide every screen** button offered, never pressed for you.
+    not the manual — with a **Hide every screen** button offered, never pressed for you.
 12. With an **AI key** set in **[en:tran:Settings]** → **Others** → **AI Providers**, the
-   same window becomes a real conversation: the model answers, using the same app
-   knowledge and the same tools. Without a key — or when the internet is down — it
-   still answers from the manual, and says so; with no key at all it also tells you that
-   Claude, ChatGPT and Kimi need one, and gives you an **Open AI settings** button that
-   goes straight to the panel that takes it. That panel has one card per provider, and
-   each card says in plain words what its key is used for — **OpenAI** answers here and
-   powers Bible Cross Reference and Bible Audio, **Anthropic** answers here and powers
-   Bible Cross Reference, **Kimi** answers here only — so you can tell which key is
-   worth getting before you go and fetch one.
+    same window becomes a real conversation: the model answers, using the same app
+    knowledge and the same tools. Without a key — or when the internet is down — it
+    still answers from the manual, and says so; with no key at all it also tells you that
+    Claude, ChatGPT and Kimi need one, and gives you an **Open AI settings** button that
+    goes straight to the panel that takes it. That panel has one card per provider, and
+    each card says in plain words what its key is used for — **OpenAI** answers here and
+    powers Bible Cross Reference and Bible Audio, **Anthropic** answers here and powers
+    Bible Cross Reference, **Kimi** answers here only — so you can tell which key is
+    worth getting before you go and fetch one.
 13. The second list is **who answers** — **Claude**, **ChatGPT**, **Kimi** — and you
-   can change your mind between two questions. The ones whose key you have set can be
-   chosen; the others are still in the list, in a quieter colour and reading
-   **needs an API key**, so you can see they are there and what they want. Choose one of
-   those and the conversation stays on the assistant it had, while **[en:tran:Settings]**
-   opens on **Others** with the cursor already in that assistant's key box — for Kimi,
-   **Kimi API Key** — ready for the key to be pasted in. If **[en:tran:Settings]** was
-   already open on another page, that same window comes to the front and turns to
-   **Others**. Beside it is the third list, the
-   **model** that will answer — **Opus 5**, **GPT-5**, **Kimi K3** — and it is a list
-   you can change.
-   Hold the mouse over a name to see what it is good for, how quick it is and what it
-   costs, e.g. `gpt-5 · best answers · slower · $1.25/$10 per 1M tokens`; the smaller
-   models answer a "how do I" just as well for a fraction of it. A model whose price the
-   maker does not publish simply shows no price line rather than a guessed one. Choose **More models…**
-   at the bottom of the list and the window asks your own account what else it can run
-   and adds those too. Each tab keeps its own provider and model, and a new tab starts
-   on the last pair you picked. 📸
-   **A key that cannot answer does not leave you with the guide while another of
-   yours can.** When the assistant you chose is out of credit, refused, or its
-   service is down, the question goes to the next assistant whose key you have set —
-   once, at once — and the answer opens with a note saying so: *ChatGPT could not
-   answer — the AI account is out of credit or being rate-limited. Claude answered
-   instead and this chat now uses it; pick ChatGPT in the row above to switch back.*
-   The tab's own list moves to the one that answered, so the next question in it does
-   not wait on the dead key again; a new tab still starts on the one you picked, and
-   the moment that key works it answers as before. The **Free** assistant is never
-   stood in for and never stands in — it is a choice you make yourself. With no
-   other key, or when the internet itself is down, the answer comes from this guide,
-   as before, under a note that says which. 📸
-   **The note says what is wrong, and carries the door to it.** The reason is read
-   from what the provider actually said, not only from how loudly it said it: *the
-   AI account is out of credit* when the account is empty, *being rate-limited
-   (asked too often)* when it is a rate limit, *out of credit or being rate-limited*
-   only when the provider said nothing more, *the API key was refused* for a wrong
-   or revoked key, *the AI service is overloaded* or *having trouble* when it is the
-   service's own fault. And the first button in the row under the note takes you to
-   the page that fixes it, in your browser — **Open ChatGPT billing** for an empty
-   account, **Open AI settings** and **Open Claude API keys** for a refused key,
-   **Open Kimi usage limits** for a rate limit, **Claude status page** when the
-   service is down — named for the assistant that FAILED, so with two keys you top
-   up the right one. Hold the mouse over the button to see the address it opens;
-   pressing it opens the page and the window says *Opening … in your browser.* The
-   **Free** assistant has no account to go to, so its button is **Open AI settings**,
-   where a key of your own goes. 📸
+    can change your mind between two questions. The ones whose key you have set can be
+    chosen; the others are still in the list, in a quieter colour and reading
+    **needs an API key**, so you can see they are there and what they want. Choose one of
+    those and the conversation stays on the assistant it had, while **[en:tran:Settings]**
+    opens on **Others** with the cursor already in that assistant's key box — for Kimi,
+    **Kimi API Key** — ready for the key to be pasted in. If **[en:tran:Settings]** was
+    already open on another page, that same window comes to the front and turns to
+    **Others**. Beside it is the third list, the
+    **model** that will answer — **Opus 5**, **GPT-5**, **Kimi K3** — and it is a list
+    you can change.
+    Hold the mouse over a name to see what it is good for, how quick it is and what it
+    costs, e.g. `gpt-5 · best answers · slower · $1.25/$10 per 1M tokens`; the smaller
+    models answer a "how do I" just as well for a fraction of it. A model whose price the
+    maker does not publish simply shows no price line rather than a guessed one. Choose **More models…**
+    at the bottom of the list and the window asks your own account what else it can run
+    and adds those too. Each tab keeps its own provider and model, and a new tab starts
+    on the last pair you picked. 📸
+    **A key that cannot answer does not leave you with the guide while another of
+    yours can.** When the assistant you chose is out of credit, refused, or its
+    service is down, the question goes to the next assistant whose key you have set —
+    once, at once — and the answer opens with a note saying so: _ChatGPT could not
+    answer — the AI account is out of credit or being rate-limited. Claude answered
+    instead and this chat now uses it; pick ChatGPT in the row above to switch back._
+    The tab's own list moves to the one that answered, so the next question in it does
+    not wait on the dead key again; a new tab still starts on the one you picked, and
+    the moment that key works it answers as before. The **Free** assistant is never
+    stood in for and never stands in — it is a choice you make yourself. With no
+    other key, or when the internet itself is down, the answer comes from this guide,
+    as before, under a note that says which. 📸
+    **The note says what is wrong, and carries the door to it.** The reason is read
+    from what the provider actually said, not only from how loudly it said it: _the
+    AI account is out of credit_ when the account is empty, _being rate-limited
+    (asked too often)_ when it is a rate limit, _out of credit or being rate-limited_
+    only when the provider said nothing more, _the API key was refused_ for a wrong
+    or revoked key, _the AI service is overloaded_ or _having trouble_ when it is the
+    service's own fault. And the first button in the row under the note takes you to
+    the page that fixes it, in your browser — **Open ChatGPT billing** for an empty
+    account, **Open AI settings** and **Open Claude API keys** for a refused key,
+    **Open Kimi usage limits** for a rate limit, **Claude status page** when the
+    service is down — named for the assistant that FAILED, so with two keys you top
+    up the right one. Hold the mouse over the button to see the address it opens;
+    pressing it opens the page and the window says _Opening … in your browser._ The
+    **Free** assistant has no account to go to, so its button is **Open AI settings**,
+    where a key of your own goes. 📸
 14. Every answer offers **Show me step by step**. Press it and a numbered card
-   appears in the corner of the app window itself, with the button for the current
-   step **circled in red**: press **Next** on the card when you have done it, or
-   just do it — clicking the circled button moves the card on by itself. **Back**
-   returns a step, **✕** stops. Steps you have already done are not shown: asked
-   from the Bible Reader, a recipe that starts "click the Bible Reader tab" starts
-   at the step after it instead. 📸
-   The help window **gets out of your way while the card is up**: it tucks itself
-   down to the taskbar (the Dock on a Mac) the moment the walkthrough starts, so
-   nothing it was sitting on top of is hidden from you, and it comes back on its own
-   when you close the card. Only the help window goes: the app itself stays on
-   screen. If you had already put it out of the way yourself, or it was not covering
-   the app in the first place, it is left exactly where you had it. To fetch it back
-   in the middle of a walkthrough, click it in the taskbar or the Dock, or press the **🤖**
-   button again — that reopens the chat you were in, not a new one.
+    appears in the corner of the app window itself, with the button for the current
+    step **circled in red**: press **Next** on the card when you have done it, or
+    just do it — clicking the circled button moves the card on by itself. **Back**
+    returns a step, **✕** stops. Steps you have already done are not shown: asked
+    from the Bible Reader, a recipe that starts "click the Bible Reader tab" starts
+    at the step after it instead. 📸
+    The help window **gets out of your way while the card is up**: it tucks itself
+    down to the taskbar (the Dock on a Mac) the moment the walkthrough starts, so
+    nothing it was sitting on top of is hidden from you, and it comes back on its own
+    when you close the card. Only the help window goes: the app itself stays on
+    screen. If you had already put it out of the way yourself, or it was not covering
+    the app in the first place, it is left exactly where you had it. To fetch it back
+    in the middle of a walkthrough, click it in the taskbar or the Dock, or press the **🤖**
+    button again — that reopens the chat you were in, not a new one.
 15. **Do it for me** runs the same walkthrough with the app driven for you: the
-   card's button becomes **Do it**, and each press clicks the circled control (or
-   types the text) and moves to the next step. One press per step — nothing runs
-   ahead of you — and **Skip** does a step yourself. Anything that changes what
-   the congregation sees is offered, never done for you unasked. 📸
-   **It presses the button the step names, and nothing that merely resembles
-   it.** A step about the drawing panel's *Clear* does not press the projector's
-   *Clear All*; when the only thing on screen is a look-alike, the card says
-   what it can see — *the closest control on screen is "Clear All", which is not
-   "Clear"* — and asks the assistant instead. 📸
-   **Something in the way is closed first.** With the Bible Lookup popup, a
-   right-click menu or a floating panel over the control the step needs, the
-   card rings the way out (the popup's red ✕) and says so; in **Do it for me**
-   the first press closes it and the next does the step. A question the app is
-   asking — *Ok* / *Cancel* — is never answered for you: answer it and the card
-   carries on. 📸
-   **A step that is something to notice reads Next, not Do it.** *The bar under
-   the search box says how many verses matched* has nothing to press; the card
-   says so and the button moves you on. 📸
+    card's button becomes **Do it**, and each press clicks the circled control (or
+    types the text) and moves to the next step. One press per step — nothing runs
+    ahead of you — and **Skip** does a step yourself. Anything that changes what
+    the congregation sees is offered, never done for you unasked. 📸
+    **It presses the button the step names, and nothing that merely resembles
+    it.** A step about the drawing panel's _Clear_ does not press the projector's
+    _Clear All_; when the only thing on screen is a look-alike, the card says
+    what it can see — _the closest control on screen is "Clear All", which is not
+    "Clear"_ — and asks the assistant instead. 📸
+    **Something in the way is closed first.** With the Bible Lookup popup, a
+    right-click menu or a floating panel over the control the step needs, the
+    card rings the way out (the popup's red ✕) and says so; in **Do it for me**
+    the first press closes it and the next does the step. A question the app is
+    asking — _Ok_ / _Cancel_ — is never answered for you: answer it and the card
+    carries on. 📸
+    **A step that is something to notice reads Next, not Do it.** _The bar under
+    the search box says how many verses matched_ has nothing to press; the card
+    says so and the button moves you on. 📸
 16. **When a step cannot be done for you, the card goes and asks.** Some steps are
-   not a button — a double-click on a verse, something to watch happen, a control
-   that is not on screen yet. The card used to say it could not do that one and
-   leave you to it. It now asks the assistant, which looks at your window as it is
-   right now and writes one line back onto the card telling you exactly what to do
-   and where. It takes a few seconds, and the card says it is asking while it
-   waits. With the help window closed there is nobody to ask, and you get the plain
-   instruction instead. 📸
+    not a button — a double-click on a verse, something to watch happen, a control
+    that is not on screen yet. The card used to say it could not do that one and
+    leave you to it. It now asks the assistant, which looks at your window as it is
+    right now and writes one line back onto the card telling you exactly what to do
+    and where. It takes a few seconds, and the card says it is asking while it
+    waits. With the help window closed there is nobody to ask, and you get the plain
+    instruction instead. 📸
 17. The window answers about the half of the app you are in — asked from the Bible
-   Reader, you are told the reader's way, never the presenter's (they differ: the
-   presenter looks a verse up in a **Ctrl+B** popup, the reader has no such popup).
-   It follows you: switch the app to the other page and the next answer follows,
-   unless you have chosen a half yourself in the first list. Answers are in English.
+    Reader, you are told the reader's way, never the presenter's (they differ: the
+    presenter looks a verse up in a **Ctrl+B** popup, the reader has no such popup).
+    It follows you: switch the app to the other page and the next answer follows,
+    unless you have chosen a half yourself in the first list. Answers are in English.
 
-   > Nothing here leaves the machine unless you set a key. The manual is bundled inside
-   > the app.
+> Nothing here leaves the machine unless you set a key. The manual is bundled inside
+> the app.
+
 18. **It can turn words you already have into a song.** Paste the verses of a song
-   into the box — from an email, from a hymn sheet, from a page you found — and ask
-   for a song; or attach a `.txt` of the words with the paperclip; or give it the
-   address of a page the words are on. One of the **Try asking** chips offers this
-   outright: *Can you make a song from words I paste in?* 📸
-   The answer comes back in plain words — what the song came out as, its parts and
-   the order they play in, and **what it had to guess**, which is usually the key,
-   the tempo, the time signature and the author, because ordinary lyrics say none of
-   those. Underneath it are two buttons: **Create "<the song's title>"** and
-   **Copy song text**. 📸
-   The song's own notation never appears in the chat, and you never have to type it.
-   **Create** writes a real song into your documents list, ready to put on a screen,
-   and answers with two things to press: **Show it in the list**, which draws a red
-   ring round the new song's row in the app window behind, so you can see exactly
-   where it landed; and the song's name, which opens the folder it was written to.
-   📸 It never replaces a song you already have: press it twice and the second is
-   saved beside the first with `(1)` after the name. **Copy song text** puts the same thing on the clipboard, to paste
-   straight into the Lyric Editor.
-   Labels help it: write `Chorus`, `Verse 2`, `Bridge` or just `1.` and `2.` above
-   the blocks and it uses them. Without labels each block becomes a verse, and a
-   block repeated word for word is written once and sung each time it appears. Chord
-   lines above the words are left out — Open Lyric puts chords inside the words —
-   and a section it cannot make sense of is kept whole, with your own label above it,
-   rather than dropped. If you paste something that is not a song, it says so instead
-   of inventing one.
-   **Those two buttons are the only thing to press.** The assistant sometimes
-   writes its own suggestions under an answer, but under a song it never repeats
-   the buttons in other words — *Create the file* or *Copy the text* are not
-   offered, because the real buttons are right there and do the job without
-   asking anybody. 📸
-   **Pasted words become a song even when the assistant cannot answer.** With no
-   key set, out of credit, or refused for asking too often in a minute (a free
-   Kimi account allows about three questions a minute), a paste of song words is
-   written out by the app itself in a second or two, under a note that reads
-   *I wrote the song out myself instead* — with the same **Create** and **Copy
-   song text** buttons, and nothing searched in this guide for the words. 📸
+    into the box — from an email, from a hymn sheet, from a page you found — and ask
+    for a song; or attach a `.txt` of the words with the paperclip; or give it the
+    address of a page the words are on. One of the **Try asking** chips offers this
+    outright: _Can you make a song from words I paste in?_ 📸
+    The answer comes back in plain words — what the song came out as, its parts and
+    the order they play in, and **what it had to guess**, which is usually the key,
+    the tempo, the time signature and the author, because ordinary lyrics say none of
+    those. Underneath it are two buttons: **Create "<the song's title>"** and
+    **Copy song text**. 📸
+    The song's own notation never appears in the chat, and you never have to type it.
+    **Create** writes a real song into your documents list, ready to put on a screen,
+    and answers with two things to press: **Show it in the list**, which draws a red
+    ring round the new song's row in the app window behind, so you can see exactly
+    where it landed; and the song's name, which opens the folder it was written to.
+    📸 It never replaces a song you already have: press it twice and the second is
+    saved beside the first with `(1)` after the name. **Copy song text** puts the same thing on the clipboard, to paste
+    straight into the Lyric Editor.
+    Labels help it: write `Chorus`, `Verse 2`, `Bridge` or just `1.` and `2.` above
+    the blocks and it uses them. Without labels each block becomes a verse, and a
+    block repeated word for word is written once and sung each time it appears. Chord
+    lines above the words are left out — Open Lyric puts chords inside the words —
+    and a section it cannot make sense of is kept whole, with your own label above it,
+    rather than dropped. If you paste something that is not a song, it says so instead
+    of inventing one.
+    **Those two buttons are the only thing to press.** The assistant sometimes
+    writes its own suggestions under an answer, but under a song it never repeats
+    the buttons in other words — _Create the file_ or _Copy the text_ are not
+    offered, because the real buttons are right there and do the job without
+    asking anybody. 📸
+    **Pasted words become a song even when the assistant cannot answer.** With no
+    key set, out of credit, or refused for asking too often in a minute (a free
+    Kimi account allows about three questions a minute), a paste of song words is
+    written out by the app itself in a second or two, under a note that reads
+    _I wrote the song out myself instead_ — with the same **Create** and **Copy
+    song text** buttons, and nothing searched in this guide for the words. 📸
 19. **Give it the address of a song page and it reads the page for you.** The fourth
-   **Try asking** chip is not a question but the start of one:
-   *Create a lyric file from https://example.com/lyric/amazing_grace*. Pressing it
-   does not ask anything — it drops the sentence into the box with the cursor in it,
-   so you can swap that example address for the one you actually have and press
-   **Ctrl+Enter**. 📸 A banner appears in the app window naming the site while it
-   reads.
-   A song page is never just the song: there is a toolbar above it, a strumming
-   diagram, a fretboard chart at the bottom, a row of related songs and the site's
-   own footer — and the words themselves are laid out in columns, with the chords
-   over them, which comes out as one broken fragment per line. It sorts all of that
-   out on its own. It finds the part of the page the song is on, puts the fragments
-   of each line back together, and reads the **key, tempo and time** off the page
-   when the page prints them.
-   **The chords come with the song.** Each one is written into the line at the
-   syllable the page puts it over, the way Open Lyric writes chords, so what you get
-   is something a musician can play from rather than the words on their own. Where
-   the page prints a chord it cannot place — a whole row of them above a line, or
-   the fretboard chart at the bottom — it leaves that one off rather than guess,
-   because a chord over the wrong syllable is worse than a chord left out. Verse and
-   chorus labels are used as written, a `(2x)` beside one is read as *sing it twice*,
-   and a line like *Repeat Chorus* is read as the play order rather than as another
-   copy of the words.
-   **A hymnal's text page works too.** Such a page has no chords at all: the
-   stanzas are printed numbered, `1`, `2`, `3`, in the middle of the site's menus,
-   and the song's own facts sit in a table far below them. The numbered stanzas
-   are taken as the song and nothing else, and the **title**, **author** and
-   **copyright** — *Public Domain*, for a hymn — are read off that table, with
-   the page's address kept with the song as its source. 📸
-   **A song printed in two languages stays in two languages.** Where a page prints
-   the meaning underneath the line that is sung, the two are kept paired, so the
-   slide can show both.
-   **The copyright line on the page is kept with the song**, in its `Copyright`
-   field, so whoever opens the file later can see whose song it is. Most pages
-   print that at the very bottom, a long way from the words, and it is read from
-   there. **The address of the page is kept too**, in the song's `Attachments`,
-   so anyone who opens the file can go and look at where the words came from.
-   **You can read the song before you make it.** The text of the file appears in
-   a box above the two buttons, exactly as it will be saved, so nothing is
-   created out of sight. (If you closed the help window since the song was
-   drafted, the box is not there — ask again and it comes back.) Whether your
-   church may sing it is your own licence and your own decision — the app copies
-   nothing anywhere and sends nothing to anyone, and no file is written until you
-   press **Create**.
-   Because it is a guess about someone else's page, the answer always says **which
-   part of the page it used**, quoting the first and last line it took and how many
-   lines of menus and links it left out. Read that line. If it took in too much or
-   stopped too early, say so in your own words — *the song starts at "…" and ends at
-   "…"* — and ask again. Everything else is the same as pasting the words yourself:
-   the two buttons underneath, and nothing written to disk until you press
-   **Create**.
+    **Try asking** chip is not a question but the start of one:
+    _Create a lyric file from https://example.com/lyric/amazing_grace_. Pressing it
+    does not ask anything — it drops the sentence into the box with the cursor in it,
+    so you can swap that example address for the one you actually have and press
+    **Ctrl+Enter**. 📸 A banner appears in the app window naming the site while it
+    reads.
+    A song page is never just the song: there is a toolbar above it, a strumming
+    diagram, a fretboard chart at the bottom, a row of related songs and the site's
+    own footer — and the words themselves are laid out in columns, with the chords
+    over them, which comes out as one broken fragment per line. It sorts all of that
+    out on its own. It finds the part of the page the song is on, puts the fragments
+    of each line back together, and reads the **key, tempo and time** off the page
+    when the page prints them.
+    **The chords come with the song.** Each one is written into the line at the
+    syllable the page puts it over, the way Open Lyric writes chords, so what you get
+    is something a musician can play from rather than the words on their own. Where
+    the page prints a chord it cannot place — a whole row of them above a line, or
+    the fretboard chart at the bottom — it leaves that one off rather than guess,
+    because a chord over the wrong syllable is worse than a chord left out. Verse and
+    chorus labels are used as written, a `(2x)` beside one is read as _sing it twice_,
+    and a line like _Repeat Chorus_ is read as the play order rather than as another
+    copy of the words.
+    **A hymnal's text page works too.** Such a page has no chords at all: the
+    stanzas are printed numbered, `1`, `2`, `3`, in the middle of the site's menus,
+    and the song's own facts sit in a table far below them. The numbered stanzas
+    are taken as the song and nothing else, and the **title**, **author** and
+    **copyright** — _Public Domain_, for a hymn — are read off that table, with
+    the page's address kept with the song as its source. 📸
+    **A song printed in two languages stays in two languages.** Where a page prints
+    the meaning underneath the line that is sung, the two are kept paired, so the
+    slide can show both.
+    **The copyright line on the page is kept with the song**, in its `Copyright`
+    field, so whoever opens the file later can see whose song it is. Most pages
+    print that at the very bottom, a long way from the words, and it is read from
+    there. **The address of the page is kept too**, in the song's `Attachments`,
+    so anyone who opens the file can go and look at where the words came from.
+    **You can read the song before you make it.** The text of the file appears in
+    a box above the two buttons, exactly as it will be saved, so nothing is
+    created out of sight. (If you closed the help window since the song was
+    drafted, the box is not there — ask again and it comes back.) Whether your
+    church may sing it is your own licence and your own decision — the app copies
+    nothing anywhere and sends nothing to anyone, and no file is written until you
+    press **Create**.
+    Because it is a guess about someone else's page, the answer always says **which
+    part of the page it used**, quoting the first and last line it took and how many
+    lines of menus and links it left out. Read that line. If it took in too much or
+    stopped too early, say so in your own words — _the song starts at "…" and ends at
+    "…"_ — and ask again. Everything else is the same as pasting the words yourself:
+    the two buttons underneath, and nothing written to disk until you press
+    **Create**.
 20. To turn the whole feature off, untick **Enable AI features** in the same settings
-   section and restart the app: the chatbot, its tools and the debugging endpoint they
-   use are then never started.
+    section and restart the app: the chatbot, its tools and the debugging endpoint they
+    use are then never started.
 
 _Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71._

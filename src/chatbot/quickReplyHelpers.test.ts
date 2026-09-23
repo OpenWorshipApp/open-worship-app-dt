@@ -16,6 +16,7 @@ import {
     checkIsWalkthroughEcho,
     genMessageReplies,
     genQuickReplies,
+    parseAnswerFrames,
     parseAnswerOptions,
     parseAnswerShows,
     parseAttachRequests,
@@ -457,6 +458,35 @@ describe('parseAnswerShows', () => {
             'Two',
             'Three',
         ]);
+    });
+
+    test('drops placeholders and conditional prose instead of drawing dead chips', () => {
+        const parsed = parseAnswerShows(
+            'x\nSHOWS: none | Bible Version buttons | Split view button (if shown) | ' +
+                'NIV button on screen | Font Size',
+        );
+        expect(parsed.text).toBe('x');
+        expect(parsed.shows).toEqual([
+            { kind: 'control', value: 'Font Size', name: 'Font Size' },
+        ]);
+    });
+
+    test('removes all three closing frames even when options comes first', () => {
+        expect(
+            parseAnswerFrames(
+                [
+                    'Click Add Extra Bible.',
+                    'OPTIONS: Continue | No thanks',
+                    'NEEDS: screenshot',
+                    'SHOWS: none',
+                ].join('\n'),
+            ),
+        ).toEqual({
+            text: 'Click Add Extra Bible.',
+            options: ['Continue', 'No thanks'],
+            requests: ['screenshot'],
+            shows: [],
+        });
     });
 });
 

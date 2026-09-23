@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-108, RD-109, RD-110, RD-111, RD-112]
 screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-21"
+workflowsVersion: "2026-09-23"
 ---
 # W-40 — Mark up a passage while you study it
 
@@ -56,19 +56,20 @@ are still there the next time you open the app.
    > it up; dropped on another file in **Bible Notes** it moves there instead, marks and
    > all. One drag, and where you let go decides which it means.
 10. Delete the last mark on a verse and the verse's row disappears from **Bible Notes**
-   too — an empty row would only be something else to tidy up later.
-   > Marks belong to the translation you made them in, because they remember which words
-   > they cover and every translation words a verse differently. A mark made on KJV is not
-   > painted over a Khmer column of the same verse. That is also why a verse row, its
-   > marks, your comments and the comment window are all lettered in the font that bible
-   > is read in rather than the app's own.
-   > They also stay in the app: what you highlight here is never shown on the screen your
-   > congregation sees.
+    too — an empty row would only be something else to tidy up later.
+
+> Marks belong to the translation you made them in, because they remember which words
+> they cover and every translation words a verse differently. A mark made on KJV is not
+> painted over a Khmer column of the same verse. That is also why a verse row, its
+> marks, your comments and the comment window are all lettered in the font that bible
+> is read in rather than the app's own.
+> They also stay in the app: what you highlight here is never shown on the screen your
+> congregation sees.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `RD-108` · `RD-109` · `RD-110` · `RD-111` · `RD-112`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-21).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
 :::

@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [CM-06, EX-05, PL-03, PL-20, PM-35]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-21"
+workflowsVersion: "2026-09-23"
 ---
 # W-43 — Remove a song, document or file (Move to Trash)
 
@@ -21,8 +21,8 @@ on a Mac), where it can be brought back if you change your mind.
 2. Right-click the row, or point at it and click the **⋮** that appears at its right-hand
    end (W-01b). The row's menu opens.
 3. Choose **[en:tran:Move to Trash]** — the last item, with a red trash icon. 📸
-4. A small window asks **[en:tran:Moving File to Trash]** — *Are you sure you want to move
-   "…" to trash?* Click **Yes**. (**No** leaves everything as it was.)
+4. A small window asks **[en:tran:Moving File to Trash]** — _Are you sure you want to move
+   "…" to trash?_ Click **Yes**. (**No** leaves everything as it was.)
 5. The row disappears from the list. The file, and any pictures or media that belonged only
    to it, are in the Recycle Bin / Trash — open that from your desktop to restore them.
 
@@ -37,5 +37,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CM-06` · `EX-05` · `PL-03` · `PL-20` · `PM-35`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-21).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
 :::

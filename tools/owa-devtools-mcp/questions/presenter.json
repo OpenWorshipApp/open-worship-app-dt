@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-09-21",
+    "updated": "2026-09-23",
     "sections": [
         {
             "id": "orientation",
@@ -721,7 +721,8 @@
             "recipes": [
                 "W-05",
                 "W-35",
-                "W-36"
+                "W-36",
+                "W-45"
             ],
             "questions": [
                 {
@@ -747,6 +748,27 @@
                         "guide": true
                     },
                     "starterRank": 8
+                },
+                {
+                    "id": "export-lyric-stages-pptx",
+                    "text": "How do I export a song's lyric stages to PowerPoint?",
+                    "kind": "howto",
+                    "keywords": [
+                        "lyric pptx",
+                        "song powerpoint",
+                        "export stage",
+                        "stage previewer",
+                        "chord slides",
+                        "powerpoint"
+                    ],
+                    "resources": {
+                        "recipe": "W-45",
+                        "related": [
+                            "W-05"
+                        ],
+                        "find": "Stage Previewer",
+                        "guide": true
+                    }
                 },
                 {
                     "id": "find-song",

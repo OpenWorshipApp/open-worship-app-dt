@@ -1,6 +1,6 @@
 # Threat model — what an agent driving this app can reach
 
-_Last measured 2026-09-14, against the running dev app._
+_Last measured 2026-09-23, against the running dev app._
 
 ## The thing that makes this different from a browser automation server
 
@@ -35,9 +35,13 @@ normal Tuesday. A prompt-injected model with `evaluate_script` is a remote
 shell on a church's computer, and the volunteer sees a help window that looks
 like it is thinking.
 
-**Anything at all on the machine.** `host.mjs` binds `127.0.0.1` and checks
-`Origin`, which stops a web page. It stops nothing that can open a socket —
-there is no credential on that door (`MC-01`).
+**A holder of this launch's capability.** `host.mjs` binds `127.0.0.1`, checks
+`Origin`, and requires a fresh 256-bit bearer token on `/mcp`. The app writes
+that token only into its mode-0600 discovery file and hands it to the chatbot
+over IPC; a socket client that merely finds the port gets `401` before a
+session exists (`MC-01`). A process running as the same OS account can read the
+discovery file, so this is a local account boundary, not a sandbox from the
+operator's own processes.
 
 ## The policy — `tools/owa-devtools-mcp/firewall.mjs`
 
@@ -195,8 +199,8 @@ Added 2026-09-02, and the first tool here that opens a socket to somewhere a
 language model chose. It inverts the direction of every other risk in this
 file, so it gets its own threat statement.
 
-**What it would have cost to get wrong.** The app's own doors are on loopback
-and neither carries a credential (`MC-01`): the CDP endpoint — whose HTTP
+**What it would have cost to get wrong.** The app's own doors are on loopback.
+The MCP door now carries its per-launch credential (`MC-01`); the CDP endpoint — whose HTTP
 surface includes `/json/list` and `/json/new?url=` — and the MCP host. A fetch
 tool that could name `127.0.0.1` would be a way for an injected model to drive
 the app from inside its own answer, and that is a shorter path than any of the
@@ -316,7 +320,6 @@ never be one:
 
 | Id | Gap |
 | --- | --- |
-| `MC-01` | The HTTP door has **no credential**. Origin-checking stops a web page; any local process drives the app. A token in the published endpoint file would close the browser and cross-user cases. |
 | `MC-13` | `press_key` on the developer's door is unguarded: Enter on a focused *Move to Trash* names no label at any point. The model has not been offered `press_key` since 2026-09-08, and the walkthrough's own key press is judged by the control that names the key since 2026-09-14. |
 | `MC-03` | `window.open` from a locked-down renderer still gets `nodeIntegration: true` through `handlePopupWindowOpen`, which is a way back to Node for code already running in that window. |
 | `MC-04` | `appProvider.fileUtils` is the full `fs` surface in the chatbot window. It genuinely writes files (a saved report, a saved picture), so narrowing it to the calls that window makes is real work. |

@@ -113,6 +113,7 @@ function genChapterOption({
         >
             <button
                 className={className}
+                title={isDiff ? `Chapter ${chapter}` : undefined}
                 onClick={() => {
                     onSelect(chapter);
                 }}

@@ -14,6 +14,7 @@ export type McpToolType = {
 
 type AiEndpointsType = {
     mcpUrl: string | null;
+    mcpToken: string | null;
     cdpPort: number | null;
 };
 
@@ -26,7 +27,7 @@ export function getAiEndpoints(): AiEndpointsType {
             'main:app:get-ai-endpoints',
         );
     } catch (_error) {
-        return { mcpUrl: null, cdpPort: null };
+        return { mcpUrl: null, mcpToken: null, cdpPort: null };
     }
 }
 
@@ -73,8 +74,8 @@ async function post(
     isRetry = false,
     signal?: AbortSignal | null,
 ): Promise<any> {
-    const { mcpUrl } = getAiEndpoints();
-    if (mcpUrl === null) {
+    const { mcpUrl, mcpToken } = getAiEndpoints();
+    if (mcpUrl === null || mcpToken === null) {
         throw new Error(
             'The assistant service is not running in this app instance.',
         );
@@ -82,6 +83,7 @@ async function post(
     const headers: Record<string, string> = {
         'content-type': 'application/json',
         accept: 'application/json, text/event-stream',
+        authorization: `Bearer ${mcpToken}`,
     };
     if (sessionId !== null) {
         headers['mcp-session-id'] = sessionId;

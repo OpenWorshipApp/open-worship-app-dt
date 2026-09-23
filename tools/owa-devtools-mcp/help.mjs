@@ -220,6 +220,13 @@ const TERM_ALIASES = {
     // What they call the content on it.
     words: ['lyric', 'text', 'slide', 'verse'],
     song: ['lyric'],
+    // Reader questions often describe the problem, not the setting. These
+    // everyday words lead to the Reader controls that solve it.
+    small: ['font size', 'bigger text', 'too small', 'read'],
+    tiny: ['font size', 'bigger text', 'too small', 'read'],
+    lost: ['history', 'recent', 'previous', 'back', 'reference'],
+    john: ['reference'],
+    bibles: ['bible', 'version', 'translation'],
     // How they describe it being wrong. These land on the controls that fix it
     // -- show/hide, the clears -- rather than on whatever page shares the
     // adjective.
@@ -429,7 +436,8 @@ const STOP_WORDS = new Set([
     'are', 'was', 'were', 'has', 'have', 'had', 'its', 'it', 'my', 'me', 'we',
     'do', 'in', 'on', 'to', 'of', 'is', 'be', 'or', 'an', 'at', 'by', 'as',
     'if', 'so', 'up', 'out', 'get', 'got', 'any', 'all', 'one', 'not', 'but',
-    'app', 'please', 'want', 'need', 'make', 'made', 'use', 'using', 'there',
+    'app', 'please', 'help', 'want', 'need', 'make', 'made', 'use', 'using',
+    'there', 'too', 'each', 'other',
 ]);
 
 function toTerms(query) {

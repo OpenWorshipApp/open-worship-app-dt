@@ -60,8 +60,8 @@
     "collapsed": false,
     "items": [
       {
-        "text": "W-11 — Read the Bible (full references, versions)",
-        "link": "/bible-study/w-11-read-the-bible-full-references-versions"
+        "text": "W-11 — Read the Bible (references, text size, history, versions)",
+        "link": "/bible-study/w-11-read-the-bible-references-text-size-history-versions"
       },
       {
         "text": "W-12 — Search the whole Bible (Bible Find)",
@@ -162,6 +162,10 @@
       {
         "text": "W-44 — Chat with an AI website inside the app (AI Chat)",
         "link": "/configuration/w-44-chat-with-an-ai-website-inside-the-app-ai-chat"
+      },
+      {
+        "text": "W-46 — Learn the page with Tips of the Day",
+        "link": "/configuration/w-46-learn-the-page-with-tips-of-the-day"
       }
     ]
   },

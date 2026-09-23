@@ -207,6 +207,7 @@ describe('others AppRangeComp', () => {
         const input = container.querySelector(
             'input[type="range"]',
         ) as HTMLInputElement;
+        expect(input.getAttribute('aria-label')).toBe('Zoom');
         const nativeSetter = Object.getOwnPropertyDescriptor(
             window.HTMLInputElement.prototype,
             'value',

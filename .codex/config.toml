@@ -1,0 +1,26 @@
+# Project MCP connection migrated from .mcp.json and .claude/settings.local.json.
+[mcp_servers.owa-devtools]
+command = "node"
+args = ["tools/owa-devtools-mcp/bin.mjs"]
+enabled = true
+
+[mcp_servers.owa-devtools.tools.owa_app_state]
+approval_mode = "approve"
+
+[mcp_servers.owa-devtools.tools.owa_list_screens]
+approval_mode = "approve"
+
+[mcp_servers.owa-devtools.tools.owa_goto_page]
+approval_mode = "approve"
+
+[mcp_servers.owa-devtools.tools.take_snapshot]
+approval_mode = "approve"
+
+[mcp_servers.owa-devtools.tools.take_screenshot]
+approval_mode = "approve"
+
+[mcp_servers.owa-devtools.tools.press_key]
+approval_mode = "approve"
+
+[mcp_servers.owa-devtools.tools.owa_list_ui]
+approval_mode = "approve"

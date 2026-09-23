@@ -4,13 +4,20 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 // node environment, so the one thing this client asks of it -- where the tool
 // host is -- is stubbed.
 const { fake } = vi.hoisted(() => ({
-    fake: { mcpUrl: 'http://127.0.0.1:39223/mcp' as string | null },
+    fake: {
+        mcpUrl: 'http://127.0.0.1:39223/mcp' as string | null,
+        mcpToken: 'test-token' as string | null,
+    },
 }));
 vi.mock('../server/appProvider', () => ({
     default: {
         messageUtils: {
             sendDataSync: () => {
-                return { mcpUrl: fake.mcpUrl, cdpPort: null };
+                return {
+                    mcpUrl: fake.mcpUrl,
+                    mcpToken: fake.mcpToken,
+                    cdpPort: null,
+                };
             },
         },
     },
@@ -21,6 +28,7 @@ import { ToolHostError, checkIsToolHostError, listTools } from './mcpClient';
 afterEach(() => {
     vi.unstubAllGlobals();
     fake.mcpUrl = 'http://127.0.0.1:39223/mcp';
+    fake.mcpToken = 'test-token';
 });
 
 describe('the app tool host failing', () => {
@@ -40,6 +48,14 @@ describe('the app tool host failing', () => {
         expect(error.hostStatus).toBe(500);
         expect(error.message).not.toContain('500');
         expect(error.message).toContain('Relaunch');
+        expect(fetch).toHaveBeenCalledWith(
+            fake.mcpUrl,
+            expect.objectContaining({
+                headers: expect.objectContaining({
+                    authorization: 'Bearer test-token',
+                }),
+            }),
+        );
     });
 
     test('carries no `status`, so no provider fault is read into it', () => {
@@ -56,5 +72,14 @@ describe('the app tool host failing', () => {
         });
         expect(error).toBeInstanceOf(Error);
         expect(checkIsToolHostError(error)).toBe(false);
+    });
+
+    test('a missing capability is treated as a host that is not running', async () => {
+        fake.mcpToken = null;
+        vi.stubGlobal('fetch', vi.fn());
+        const error = await listTools().catch((caught) => caught);
+        expect(error).toBeInstanceOf(Error);
+        expect(checkIsToolHostError(error)).toBe(false);
+        expect(fetch).not.toHaveBeenCalled();
     });
 });

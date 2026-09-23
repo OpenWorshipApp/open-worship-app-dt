@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, CM-93]
 screenshots: 15
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-21"
+workflowsVersion: "2026-09-23"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -131,11 +131,14 @@ all count as book-level too.
 
    ```json
    [
-       {
-           "title": "Overview: 1-2 Chronicles",
-           "url": "https://www.example.com/watch?v=overview-chronicles"
-       },
-       { "title": "Notes on the genealogies", "url": "https://www.example.com/notes" }
+     {
+       "title": "Overview: 1-2 Chronicles",
+       "url": "https://www.example.com/watch?v=overview-chronicles"
+     },
+     {
+       "title": "Notes on the genealogies",
+       "url": "https://www.example.com/notes"
+     }
    ]
    ```
 
@@ -161,6 +164,7 @@ all count as book-level too.
      press to show its links.
    - Right-click the `.json` row itself (or its **⋮**) for **Open** if you want to edit
      the file rather than follow a link.
+
 8. Click a group's header to fold it away; it stays folded next time. Right-click a header
    for **Refresh** (re-reads that one folder — **Reload** in step 3 does all of them),
    **Add Folder**, **[en:tran:Add Files]**, **Reveal in Finder**/**File Explorer**,
@@ -207,5 +211,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-21).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
 :::
