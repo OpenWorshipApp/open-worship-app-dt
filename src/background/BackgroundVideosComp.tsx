@@ -1,7 +1,7 @@
 import './BackgroundVideosComp.scss';
 
-import { useCallback, type ReactElement, type RefObject } from 'react';
-import { useRef, useState } from 'react';
+import { useCallback, type CSSProperties, type ReactElement } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
@@ -16,7 +16,11 @@ import {
     toDownloadFailureMessage,
 } from './downloadHelper';
 import { handleError } from '../helper/errorHelpers';
-import { playMediaElement } from '../helper/mediaHelpers';
+import {
+    playMediaElement,
+    releaseMediaElementWhenDetached,
+} from '../helper/mediaHelpers';
+import { useVideoPoster } from './videoPosterHelpers';
 import { tran } from '../lang/langHelpers';
 import {
     showProgressBar,
@@ -35,56 +39,86 @@ import {
 } from './videoBackgroundHelpers';
 import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
 import { checkIsExtraBinMissingError } from '../helper/extra-bin/extraBinErrors';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
-// Mounting every <video> in the folder at once spawns dozens of demuxers,
-// which kills low-spec machines. Render a same-size placeholder and only
-// mount the <video> once the tile first becomes visible.
-function LazyMountVideoComp({
-    videoRef,
+// Long enough that dragging the mouse across a grid of tiles starts no
+// players, short enough that the video answers the mouse.
+const HOVER_PLAY_DELAY = 120;
+
+const MEDIA_STYLE: CSSProperties = {
+    objectFit: 'cover',
+    objectPosition: 'center center',
+    pointerEvents: 'none',
+};
+
+// At rest a tile draws a PICTURE of the video's first frame, not the video:
+// a `<video>` is a whole media player -- decoder, demuxer, frame pool, ~8 MB
+// of it -- and a folder holds hundreds. The player is created for the one
+// tile under the mouse, which is the only one that plays, and handed straight
+// back when the mouse leaves or the tile scrolls away.
+//
+// Handing it back has to be explicit: taking the element out of the document
+// does NOT free it (the renderer still counted 13k DOM nodes for videos
+// scrolled past until a forced collection here), and Chromium refuses to
+// create any more once a frame holds 1000.
+function VideoTilePreviewComp({
     src,
+    isHovering,
+    onDurationRead,
 }: Readonly<{
-    videoRef: RefObject<HTMLVideoElement | null>;
     src: string;
+    isHovering: boolean;
+    onDurationRead: (duration: number) => void;
 }>) {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [isVideoMounted, setIsVideoMounted] = useState(false);
-    useAppEffect(() => {
-        const container = containerRef.current;
-        if (isVideoMounted || container === null) {
+    const posterDataUrl = useVideoPoster(src);
+    const handleVideoRef = useCallback((element: HTMLVideoElement | null) => {
+        if (element === null) {
             return;
         }
-        const observer = new IntersectionObserver((entries) => {
-            if (
-                entries.some((entry) => {
-                    return entry.isIntersecting;
-                })
-            ) {
-                setIsVideoMounted(true);
-            }
-        });
-        observer.observe(container);
+        playMediaElement(element);
+        // React 19 runs a ref callback's return value as its cleanup, which is
+        // the one place that knows the element is on its way out.
         return () => {
-            observer.disconnect();
+            releaseMediaElementWhenDetached(element);
         };
-    }, [isVideoMounted]);
+    }, []);
+    const onDurationReadRef = useAppCurrentRef(onDurationRead);
+    const handleMetadataLoaded = useCallback((event: any) => {
+        const { duration } = event.currentTarget as HTMLVideoElement;
+        if (!Number.isNaN(duration)) {
+            onDurationReadRef.current(duration);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    if (isHovering) {
+        return (
+            <video
+                className="w-100 h-100"
+                ref={handleVideoRef}
+                loop
+                muted
+                autoPlay
+                preload="auto"
+                poster={posterDataUrl ?? undefined}
+                src={src}
+                style={MEDIA_STYLE}
+                onLoadedMetadata={handleMetadataLoaded}
+            />
+        );
+    }
+    if (posterDataUrl === null) {
+        // Its own frame is still being read; the tile keeps its blank card
+        // rather than flashing something that is not this video.
+        return null;
+    }
     return (
-        <div ref={containerRef} className="w-100 h-100">
-            {isVideoMounted ? (
-                <video
-                    className="w-100 h-100"
-                    ref={videoRef}
-                    loop
-                    muted
-                    preload="metadata"
-                    src={src}
-                    style={{
-                        objectFit: 'cover',
-                        objectPosition: 'center center',
-                        pointerEvents: 'none',
-                    }}
-                />
-            ) : null}
-        </div>
+        <img
+            className="w-100 h-100"
+            src={posterDataUrl}
+            alt=""
+            draggable={false}
+            style={MEDIA_STYLE}
+        />
     );
 }
 
@@ -110,26 +144,38 @@ function RendBodyComp({
             delete methodMapIsFadingAtTheEnd[fileSource.src];
         };
     }, [fileSource]);
-    const vRef = useRef<HTMLVideoElement>(null);
+    const rootRef = useRef<HTMLDivElement>(null);
     const fileSourceRef = useAppCurrentRef(fileSource);
-    const handleMouseEnter = useCallback((event: any) => {
-        if (vRef.current === null) {
+    const [isHovering, setIsHovering] = useState(false);
+    // Moving the mouse ACROSS a grid must not build and tear down a player per
+    // tile it passes over. Per tile: a leave cancels only its own pending
+    // enter.
+    const attemptHover = useMemo(() => {
+        return genTimeoutAttempt(HOVER_PLAY_DELAY);
+    }, []);
+    const handleMouseEnter = useCallback(() => {
+        attemptHover(() => {
+            setIsHovering(true);
+        });
+    }, [attemptHover]);
+    const handleMouseLeave = useCallback(() => {
+        attemptHover(() => {
+            setIsHovering(false);
+        }, true);
+    }, [attemptHover]);
+    const handleDurationRead = useCallback((duration: number) => {
+        const element = rootRef.current;
+        if (element === null || element.title) {
             return;
         }
-        playMediaElement(vRef.current);
-        const currentTarget = event.currentTarget as HTMLDivElement;
-        if (!Number.isNaN(vRef.current.duration) && !currentTarget.title) {
-            currentTarget.title =
-                `${fileSourceRef.current.fullName}\n` +
-                `(${timeToTimeString(vRef.current.duration)})`;
-        }
+        element.title =
+            `${fileSourceRef.current.fullName}\n` +
+            `(${timeToTimeString(duration)})`;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-    const handleMouseLeave = useCallback(() => {
-        vRef.current?.pause();
     }, []);
     return (
         <div
+            ref={rootRef}
             className="card-body app-overflow-hidden app-blank-bg"
             style={{
                 height: `${height}px`,
@@ -144,7 +190,11 @@ function RendBodyComp({
                     return Number.parseInt(key);
                 })}
             />
-            <LazyMountVideoComp videoRef={vRef} src={fileSource.src} />
+            <VideoTilePreviewComp
+                src={fileSource.src}
+                isHovering={isHovering}
+                onDurationRead={handleDurationRead}
+            />
             <div
                 className="position-absolute mx-1 text-white"
                 style={{
@@ -271,7 +321,6 @@ export default function BackgroundVideosComp() {
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_VIDEO}
             genContextMenuItems={genVideoDownloadContextMenuItems}
             genExtraItemContextMenuItems={genExtraItemContextMenuItems}
-            itemFillingClassname="video-thumbnail"
         />
     );
 }

@@ -8,10 +8,7 @@ import appProvider from '../../server/appProvider';
 import { getScreenManagerByScreenId } from '../../_screen/managers/screenManagerHelpers';
 import { slidePreviewerMethods } from './AppDocumentPreviewerFooterComp';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
-import {
-    bringDomToTopView,
-    HIGHLIGHT_SELECTED_CLASSNAME,
-} from '../../helper/helpers';
+import { bringDomToTopView } from '../../helper/helpers';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 import { notifyElementHighlight } from '../../helper/domHelpers';
 import Slide from '../../app-document-list/Slide';
@@ -145,15 +142,34 @@ function findNextSlide(
     return nextVarySlide;
 }
 
+/**
+ * Step every screen showing a slide of this document onto the next one.
+ *
+ * Asked of the SCREEN MANAGERS rather than of the DOM. It used to read the
+ * highlighted cards -- `[data-vary-app-document-item-id].app-highlight-selected`
+ * and the `[data-screen-id]` badges inside them -- which is the same answer
+ * one step removed, since that highlight IS `getDataList()` rendered. With a
+ * windowed list the card of the slide on screen need not be mounted at all
+ * (the operator has scrolled away from it), and reading the DOM then said
+ * "nothing is showing" and left the projector where it was.
+ *
+ * Only the cards' OWN ids are asked, never a pptx sub-slide's: a sub-slide is
+ * a step inside its parent card and has no card of its own, exactly as before.
+ * It is still a valid TARGET, which is what `allVarySlides` is for.
+ */
 export function handleNextItemSelecting({
-    container,
     varySlides,
     isNext,
 }: {
-    container: HTMLDivElement;
     varySlides: VarySlideType[];
     isNext: boolean;
 }) {
+    // The editor page draws no on-screen highlight and never moved a screen
+    // from here; it can be open beside the presenter, and advancing from both
+    // would step every screen twice.
+    if (appProvider.isPageAppDocumentEditor) {
+        return;
+    }
     const allVarySlides = varySlides.reduce((bucket, varySlide) => {
         bucket.push(varySlide);
         if (PptxSlide.checkIsThisType(varySlide)) {
@@ -161,33 +177,35 @@ export function handleNextItemSelecting({
         }
         return bucket;
     }, [] as VarySlideType[]);
-    const divSelectedList = container.querySelectorAll(
-        `[${DATA_QUERY_KEY}].${HIGHLIGHT_SELECTED_CLASSNAME}`,
-    );
-    const foundList = Array.from(divSelectedList).reduce(
+    const foundList = varySlides.reduce(
         (
             bucket: {
                 varySlide: VarySlideType;
                 screenId: number;
             }[],
-            divSelected,
+            varySlide,
         ) => {
-            const itemId = Number.parseInt(
-                divSelected?.getAttribute(DATA_QUERY_KEY) ?? '',
+            const onScreenList = ScreenVaryAppDocumentManager.getDataList(
+                varySlide.filePath,
+                varySlide.id,
             );
-            const selectedElements = Array.from(
-                divSelected.querySelectorAll<HTMLElement>('[data-screen-id]'),
+            if (onScreenList.length === 0) {
+                return bucket;
+            }
+            const targetItem = findNextSlide(
+                isNext,
+                allVarySlides,
+                varySlide.id,
             );
-            const screenIds = selectedElements.map((element) => {
-                return Number.parseInt(element.dataset.screenId ?? '');
-            });
-            const targetItem = findNextSlide(isNext, allVarySlides, itemId);
             if (targetItem === null) {
                 return bucket;
             }
             return bucket.concat(
-                screenIds.map((screenId) => {
-                    return { varySlide: targetItem, screenId };
+                onScreenList.map(([key]) => {
+                    return {
+                        varySlide: targetItem,
+                        screenId: Number.parseInt(key),
+                    };
                 }),
             );
         },
@@ -247,7 +265,6 @@ export function handleSlideMoving(
         isLeft = true;
     }
     handleNextItemSelecting({
-        container: element,
         varySlides,
         isNext: !isLeft,
     });

@@ -8,7 +8,6 @@ import {
 } from '../../event/KeyboardEventListener';
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import {
-    getContainerDiv,
     handleSlideMoving,
     handleNextItemSelecting,
 } from './varyAppDocumentHelpers';
@@ -21,6 +20,8 @@ import {
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import LoadingComp from '../../others/LoadingComp';
 import {
+    checkIsVarySlideOnScreen,
+    toKeyByFilePath,
     useAnyItemSelected,
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
@@ -31,7 +32,13 @@ import {
     MIN_THUMBNAIL_SCALE,
 } from '../../app-document-list/appDocumentTypeHelpers';
 import { useCallback, useMemo } from 'react';
-import FillingFlexCenterComp from '../../others/FillingFlexCenterComp';
+import VirtualGridComp from '../../virtual-list/VirtualGridComp';
+import {
+    genSlideHeightGetter,
+    THUMBNAIL_EXTRA_HEIGHT,
+    THUMBNAIL_EXTRA_WIDTH,
+    toVarySlideKey,
+} from './varySlideGridHelpers';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 import { tran } from '../../lang/langHelpers';
 import PdfAppDocument from '../../app-document-list/PdfAppDocument';
@@ -256,29 +263,48 @@ export default function VarySlidesComp() {
     const isAnyItemSelected = useAnyItemSelected(varySlides);
     const varySlidesRef = useAppCurrentRef(varySlides);
     const handleNext = useCallback((data: { isNext: boolean }) => {
-        const element =
-            scopeRef.current?.containerRef.current ?? getContainerDiv();
-        if (element === null || !varySlidesRef.current) {
+        if (!varySlidesRef.current) {
             return;
         }
         handleNextItemSelecting({
-            container: element,
             varySlides: varySlidesRef.current,
             isNext: data.isNext,
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Rebuilt whenever the zoom moves, since it is what every row offset in
+    // the grid is built from.
+    const getSlideHeight = useMemo(() => {
+        return genSlideHeightGetter(varySlideThumbnailSize);
+    }, [varySlideThumbnailSize]);
+
     useAppEffect(() => {
         if (!varySlides?.length) {
             return;
         }
-        notifyElementHighlight(() => {
-            const root = scopeRef.current?.containerRef.current ?? document;
-            return root.querySelector(
-                `.${APP_DOCUMENT_ITEM_CLASS}.${HIGHLIGHT_SELECTED_CLASSNAME}.animation`,
-            );
-        });
+        // The card of the slide on a screen may be scrolled out of the window,
+        // and a windowed row that is scrolled away has no DOM at all -- so the
+        // key of what to look for travels with the query.
+        const onScreenVarySlide = varySlides.find(checkIsVarySlideOnScreen);
+        notifyElementHighlight(
+            () => {
+                const root = scopeRef.current?.containerRef.current ?? document;
+                return root.querySelector(
+                    `.${APP_DOCUMENT_ITEM_CLASS}` +
+                        `.${HIGHLIGHT_SELECTED_CLASSNAME}.animation`,
+                );
+            },
+            {
+                revealKey:
+                    onScreenVarySlide === undefined
+                        ? undefined
+                        : toKeyByFilePath(
+                              onScreenVarySlide.filePath,
+                              onScreenVarySlide.id,
+                          ),
+            },
+        );
     }, [varySlides]);
 
     if (varySlides === undefined) {
@@ -336,27 +362,38 @@ export default function VarySlidesComp() {
         };
     }
     return (
-        <div className="d-flex flex-wrap justify-content-center pb-5">
+        <div className="w-100 pb-5">
             <MissingFontFamilyBannerComp
                 missingFontFamilyList={missingFontFamilyList ?? []}
                 {...fontRefreshProps}
             />
-            {varySlides.map((varySlide, i) => {
-                return (
-                    <VarySlideRenderWrapperComp
-                        key={varySlide.id}
-                        thumbSize={varySlideThumbnailSize}
-                        varySlide={varySlide}
-                        index={i}
-                    />
-                );
-            })}
-            {varySlides.length > 2 ? (
-                <FillingFlexCenterComp
-                    width={varySlideThumbnailSize}
-                    className={APP_DOCUMENT_ITEM_CLASS}
-                />
-            ) : null}
+            {/* Only the rows on screen are mounted. Every slide card carries a
+                shadow root with a React root of its own, so a document of a
+                thousand slides used to build a thousand of them before the
+                first one could be looked at. */}
+            <VirtualGridComp
+                items={varySlides}
+                getItemKey={toVarySlideKey}
+                renderItem={(varySlide, index) => {
+                    return (
+                        <VarySlideRenderWrapperComp
+                            key={varySlide.id}
+                            thumbSize={varySlideThumbnailSize}
+                            varySlide={varySlide}
+                            index={index}
+                        />
+                    );
+                }}
+                itemWidth={varySlideThumbnailSize + THUMBNAIL_EXTRA_WIDTH}
+                getItemHeight={getSlideHeight}
+                estimateRowHeight={
+                    (varySlides.length === 0
+                        ? 0
+                        : getSlideHeight(varySlides[0])) +
+                    THUMBNAIL_EXTRA_HEIGHT
+                }
+                rowClassName="d-flex"
+            />
             {isAnyItemSelected ? (
                 <SlideAutoPlayComp
                     prefix="vary-app-document"

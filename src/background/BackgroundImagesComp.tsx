@@ -187,7 +187,6 @@ export default function BackgroundImagesComp() {
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_IMAGE}
             genContextMenuItems={genContextMenuItems}
-            itemFillingClassname="image-thumbnail"
         />
     );
 }

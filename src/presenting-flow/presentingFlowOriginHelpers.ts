@@ -10,6 +10,8 @@ import { openBackgroundAudioTab } from '../background/backgroundAudioTabHelpers'
 import { backgroundDragTypeList } from './PresentingFlowItem';
 import type PresentingFlowItem from './PresentingFlowItem';
 import { PRESENTING_FLOW_ITEM_UUID_ATTR } from './presentingFlowCcHelpers';
+import { handleError } from '../helper/errorHelpers';
+import { revealVirtualElement } from '../virtual-list/virtualRevealHelpers';
 
 function toElementGetter(selector: string) {
     return () => {
@@ -30,6 +32,18 @@ function toFileItemElementGetter(src: string) {
     return toElementGetter(
         `[data-file-item-file-src="${escapeSelectorValue(src)}"]`,
     );
+}
+
+/**
+ * The key the file lists window their items by (a file path). A row scrolled
+ * out of a windowed list is not in the document at all, so the selector above
+ * can only find it once the list has been asked to bring it back.
+ */
+function toRevealFilePath(presentingFlowItem: PresentingFlowItem) {
+    const { data } = presentingFlowItem;
+    return typeof data === 'string'
+        ? data
+        : (presentingFlowItem.itemFilePath ?? undefined);
 }
 
 /**
@@ -122,7 +136,10 @@ export function notifyPresentingFlowItemOrigin(
         // seconds, so it waits for the panel to render on its own.
         openBackgroundAudioTab();
     }
-    notifyElementHighlight(elementGetter, { moveToView: bringDomToTopView });
+    notifyElementHighlight(elementGetter, {
+        moveToView: bringDomToTopView,
+        revealKey: toRevealFilePath(presentingFlowItem),
+    });
     return true;
 }
 
@@ -158,13 +175,31 @@ export function notifyPresentingFlowCcOrigin(ccItem: PresentingFlowItem) {
         PRESENTING_FLOW_TREE_ROOT_SELECTOR,
         PRESENTING_FLOW_PREVIEW_ROOT_SELECTOR,
     ]) {
-        const element =
-            document.querySelector(rootSelector)?.querySelector(selector) ??
-            null;
+        const root = document.querySelector(rootSelector);
+        // A closed surface is an answer, and still the reason nothing here
+        // waits three seconds for one.
+        if (root === null) {
+            continue;
+        }
+        const getElement = () => {
+            return root.querySelector(selector);
+        };
+        const element = getElement();
         if (element !== null) {
             notifyElementHighlight(() => {
                 return element;
             });
+            continue;
         }
+        // Open, but the line is windowed out of it: the preview mounts only
+        // the lines on screen, and a CC points at one that may be anywhere in
+        // the sheet. The list windows by the very uuid the CC carries.
+        revealVirtualElement(uuid, getElement).then((revealedElement) => {
+            if (revealedElement !== null) {
+                notifyElementHighlight(() => {
+                    return revealedElement;
+                });
+            }
+        }, handleError);
     }
 }

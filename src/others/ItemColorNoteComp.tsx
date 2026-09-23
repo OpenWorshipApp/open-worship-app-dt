@@ -59,9 +59,18 @@ export default function ItemColorNoteComp({
     item: ColorNoteInf;
     onChange?: (colorNote: string | null) => void;
 }>) {
-    const [colorNote, setColorNote] = useState<string | null>(null);
+    // The list already resolved this file's colour note and kept it on the
+    // item (`useFilePaths`), so seed from that: re-reading it asynchronously
+    // per item costs an `fsCheckFileExist` EVERY time the item mounts, and
+    // with a windowed list an item mounts again on every scroll back.
+    const [colorNote, setColorNote] = useState<string | null>(
+        item.colorNote ?? null,
+    );
     useAppEffectAsync(
         async (contextMethods) => {
+            if (item.colorNote !== undefined) {
+                return;
+            }
             const colorNote = await item.getColorNote();
             contextMethods.setColorNote(colorNote ?? '');
         },

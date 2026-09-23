@@ -75,7 +75,8 @@ export default class FileSource
     static readonly eventNamePrefix: string = 'file-source';
     baseDirPath: string;
     fullName: string;
-    colorNote: string | null = null;
+    // `undefined` until the list has read it; `null` is "read, none set".
+    colorNote: string | null | undefined = undefined;
 
     constructor(baseDirFullPath: string, fileFullName: string) {
         super();

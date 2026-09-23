@@ -12,10 +12,8 @@
 import screenCss from '../_screen/screen.scss?inline';
 import type Slide from '../app-document-list/Slide';
 import { genSlideHtml } from '../app-document-presenter/items/SlideRendererComp';
-import {
-    captureVideoFrameDataUrl,
-    fillWebsiteScreenShots,
-} from '../app-document-list/appDocumentPrintHelpers';
+import { fillWebsiteScreenShots } from '../app-document-list/appDocumentPrintHelpers';
+import { captureVideoFrameDataUrl } from '../helper/mediaHelpers';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import type { DroppedDataType } from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';

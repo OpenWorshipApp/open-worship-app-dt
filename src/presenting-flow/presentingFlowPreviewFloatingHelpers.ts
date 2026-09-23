@@ -329,6 +329,25 @@ export const PRESENTING_FLOW_PREVIEW_ITEM_INDEX_KEY =
     'data-presenting-flow-preview-index';
 
 /**
+ * What the windowed run sheet knows a line by.
+ *
+ * A line scrolled out of the preview has no DOM at all, so everything that
+ * finds one by querying it -- the next-key landing on it, a `Jump to`, a CC
+ * row revealing the line it copies -- has to name it to the list first.
+ *
+ * Its UUID where it has one, because that is the handle the rest of the run
+ * sheet already uses and the only thing a CC carries; a damaged line with no
+ * id falls back to its position, which is all anything has for it anyway.
+ */
+export function toPresentingFlowPreviewRevealKey(
+    filePath: string,
+    presentingFlowItem: PresentingFlowItem,
+    index: number,
+) {
+    return presentingFlowItem.uuid ?? `${filePath}#${index}`;
+}
+
+/**
  * WHICH element each open preview is currently "on", so a next-key knows where to
  * step from. One slot PER OPEN WIDGET, held in memory only: this is where a run
  * has got to right now, not something to restore days later, and two sheets open

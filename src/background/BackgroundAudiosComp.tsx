@@ -126,6 +126,10 @@ export default function BackgroundAudiosComp() {
             isNameOnTop={true}
             genContextMenuItems={genAudioDownloadContextMenuItems}
             shouldHideFooter
+            // An activated row grows an `<audio controls>`, so these rows are
+            // not all one height -- and unmounting one while it plays would
+            // stop the sound.
+            isVirtualizationEnabled={false}
         />
     );
 

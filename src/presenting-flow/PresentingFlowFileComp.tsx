@@ -42,8 +42,15 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import {
     openPresentingFlowPreviewFilePath,
     togglePresentingFlowPreviewFilePath,
+    toPresentingFlowPreviewRevealKey,
     useIsPresentingFlowPreviewOpened,
 } from './presentingFlowPreviewFloatingHelpers';
+import type PresentingFlowItem from './PresentingFlowItem';
+import VirtualListComp from '../virtual-list/VirtualListComp';
+
+// What a plain line takes in the tree. Only ever used for a line that has not
+// been drawn yet -- every one that has is measured.
+const TREE_ROW_HEIGHT = 22;
 
 function PresentingFlowItemsComp({
     presentingFlow,
@@ -51,6 +58,19 @@ function PresentingFlowItemsComp({
     presentingFlow: PresentingFlow;
 }>) {
     const presentingFlowItems = usePresentingFlowItems(presentingFlow.filePath);
+    const { filePath } = presentingFlow;
+    // The same key the floating preview windows by, so a CC row revealing the
+    // line it copies reaches it on whichever surface is open.
+    const getItemKey = useCallback(
+        (presentingFlowItem: PresentingFlowItem, index: number) => {
+            return toPresentingFlowPreviewRevealKey(
+                filePath,
+                presentingFlowItem,
+                index,
+            );
+        },
+        [filePath],
+    );
     if (presentingFlowItems === undefined) {
         return (
             <div
@@ -72,33 +92,38 @@ function PresentingFlowItemsComp({
         );
     }
     return (
-        <>
-            {presentingFlowItems.map((presentingFlowItem, i) => {
+        // Only the lines on screen are mounted. A tree row is cheap on its own
+        // and a thousand of them are not — each holds an on-screen
+        // subscription, and an expanded document holds a row per slide under
+        // it — so a run sheet of a thousand lines cost ~9 300 DOM nodes before
+        // any of it could be read. Rows are not one height (a line, a line
+        // with CCs riding it, a document opened out), so each is measured as
+        // it is drawn.
+        //
+        // Keyed by the entry's OWN uuid, never by its position: a reorder must
+        // move the row, not hand one row's state to whatever slid into its
+        // slot. With an index-based key React kept the instance in the slot
+        // while the entry under it changed, and every mount-time read in the
+        // row — `useStateSettingBoolean` for the expansion flag above all —
+        // went on answering for the PREVIOUS entry, so `Move to Top` silently
+        // opened and closed the wrong documents. The position is the fallback
+        // for the one entry that can have no uuid: a damaged one whose file
+        // never carried a valid id.
+        <VirtualListComp
+            items={presentingFlowItems}
+            getItemKey={getItemKey}
+            estimateRowHeight={TREE_ROW_HEIGHT}
+            renderItem={(presentingFlowItem, i) => {
                 return (
                     <PresentingFlowItemComp
-                        // Keyed by the entry's OWN uuid, never by its position:
-                        // a reorder must move the row, not hand one row's state
-                        // to whatever slid into its slot. With an index-based
-                        // key React kept the instance in the slot while the
-                        // entry under it changed, and every mount-time read in
-                        // the row — `useStateSettingBoolean` for the expansion
-                        // flag above all — went on answering for the PREVIOUS
-                        // entry, so `Move to Top` silently opened and closed the
-                        // wrong documents. The `type`+index shape stays as the
-                        // fallback for the one entry that can have no uuid: a
-                        // damaged one whose file never carried a valid id.
-                        key={
-                            presentingFlowItem.uuid ??
-                            `${presentingFlowItem.type}-${i}`
-                        }
                         presentingFlow={presentingFlow}
                         presentingFlowItem={presentingFlowItem}
                         index={i}
                         itemCount={presentingFlowItems.length}
                     />
                 );
-            })}
-        </>
+            }}
+        />
     );
 }
 

@@ -1,4 +1,5 @@
 import { askAiCaution } from './ai/aiCautionHelpers';
+import { revealVirtualItem } from '../virtual-list/virtualRevealHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -850,15 +851,36 @@ export async function notifyElementHighlight(
         moveToView,
         shouldSkipHighlighting = false,
         type,
+        revealKey,
     }: {
         moveToView?: (element: Element) => void;
         shouldSkipHighlighting?: boolean;
         type?: 'success' | 'warning' | 'danger';
+        /**
+         * The item's key in a windowed list (a file path, a slide id). A row
+         * that is scrolled away has no DOM at all, so the poll below would
+         * never find it: ask the list to bring it into range first -- and
+         * again on each poll until one holds it, since the list may only mount
+         * once its panel opens.
+         */
+        revealKey?: string;
     } = {},
 ) {
+    // Asked on EVERY turn, not once it has been answered: a list whose rows
+    // are not all one height aims at where it currently believes the row to
+    // be, and the screenful the first scroll draws is measured for real a
+    // moment later, moving everything after it. Asking again is what closes
+    // that gap -- and asking for a row already in view does nothing at all.
+    const reveal = () => {
+        if (revealKey !== undefined) {
+            revealVirtualItem(revealKey);
+        }
+    };
+    reveal();
     let element = elementGetter();
     let i = 0;
     while (element === null) {
+        reveal();
         element = elementGetter();
         await new Promise((resolve) => {
             setTimeout(resolve, 100);

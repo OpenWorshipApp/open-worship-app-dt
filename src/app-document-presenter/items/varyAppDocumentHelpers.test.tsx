@@ -4,6 +4,7 @@ import { beforeEach, afterEach, describe, expect, test, vi } from 'vitest';
 
 const {
     handleSlideSelectingMock,
+    getDataListMock,
     appProviderMock,
     getScreenManagerByScreenIdMock,
     slideItemSelectedMock,
@@ -13,6 +14,7 @@ const {
     pptxCheckIsThisTypeMock,
 } = vi.hoisted(() => ({
     handleSlideSelectingMock: vi.fn(),
+    getDataListMock: vi.fn(),
     appProviderMock: {
         isPageAppDocumentEditor: false,
         presenterHomePage: true,
@@ -28,6 +30,7 @@ const {
 vi.mock('../../_screen/managers/ScreenVaryAppDocumentManager', () => ({
     default: {
         handleSlideSelecting: handleSlideSelectingMock,
+        getDataList: getDataListMock,
     },
 }));
 
@@ -103,6 +106,7 @@ describe('varyAppDocumentHelpers', () => {
         pptxCheckIsThisTypeMock.mockImplementation(
             (value: any) => value?.isPptx === true,
         );
+        getDataListMock.mockReturnValue([]);
     });
 
     afterEach(() => {
@@ -242,7 +246,6 @@ describe('varyAppDocumentHelpers', () => {
 
     test('moves highlighted slides across screens and responds to arrow navigation', async () => {
         const {
-            DATA_QUERY_KEY,
             handleSlideMoving: handleArrowing,
             handleNextItemSelecting,
             SLIDE_ITEMS_CONTAINER_CLASS_NAME,
@@ -273,17 +276,15 @@ describe('varyAppDocumentHelpers', () => {
         const container = document.createElement('div');
         container.className = SLIDE_ITEMS_CONTAINER_CLASS_NAME;
         container.tabIndex = 0;
-        const selected = document.createElement('div');
-        selected.setAttribute(DATA_QUERY_KEY, '1');
-        selected.className = 'app-highlight-selected';
-        const screenMarker = document.createElement('span');
-        screenMarker.dataset.screenId = '10';
-        selected.appendChild(screenMarker);
-        container.appendChild(selected);
         document.body.appendChild(container);
+        // Which slide is on which screen is asked of the manager, not of the
+        // cards: with a windowed list the card of the slide on screen need not
+        // be mounted at all.
+        getDataListMock.mockImplementation((_filePath: string, id: number) => {
+            return id === 1 ? [['10', { id: 1 }]] : [];
+        });
 
         handleNextItemSelecting({
-            container,
             varySlides: [slide1, slide2, slide3, pptxParent],
             isNext: true,
         });
@@ -303,7 +304,6 @@ describe('varyAppDocumentHelpers', () => {
         });
 
         handleNextItemSelecting({
-            container,
             varySlides: [slide1, slide2, slide3, pptxParent],
             isNext: false,
         });

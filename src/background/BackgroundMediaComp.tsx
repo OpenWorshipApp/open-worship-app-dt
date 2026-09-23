@@ -18,10 +18,23 @@ import { useZoomingRegistering } from '../others/AppRangeComp';
 import BackgroundMediaItemComp from './BackgroundMediaItemComp';
 import type { RenderChildType } from './backgroundHelpers';
 import { backgroundTypeMapper } from './backgroundHelpers';
-import FillingFlexCenterComp from '../others/FillingFlexCenterComp';
 import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
 import type { BackgroundViewModeType } from './BackgroundViewModeComp';
 import { useBackgroundViewModeSetting } from './BackgroundViewModeComp';
+import VirtualGridComp from '../virtual-list/VirtualGridComp';
+
+// `.image-thumbnail`/`.video-thumbnail` carry `margin: 2px`, so a tile takes
+// its own width plus 4. The two height figures are only a FIRST GUESS -- the
+// grid measures a real row and corrects itself, which is what keeps the name
+// footer's line box right in Khmer and French.
+const THUMBNAIL_MARGIN = 4;
+const THUMBNAIL_EXTRA_HEIGHT = 44;
+const LIST_VIEW_ROW_HEIGHT = 30;
+
+// Module level so the memoised tile sees the same function every render.
+function genNoExtraItemContextMenuItems(_filePath: string) {
+    return [];
+}
 
 export function useThumbnailWidthSetting() {
     const [thumbnailWidth, setThumbnailWidth] = useStateSettingNumber(
@@ -50,7 +63,12 @@ type PropsType = {
     ) => OptionalPromise<ContextMenuItemType[]>;
     sortFilePaths?: (filePaths: string[]) => string[];
     genExtraItemContextMenuItems?: (filePath: string) => ContextMenuItemType[];
-    itemFillingClassname?: string;
+    /**
+     * Off for a list whose tiles are not all one height or must stay mounted:
+     * the Audios tab grows a row into an `<audio controls>` when it is
+     * activated, and unmounting it while it plays would stop the sound.
+     */
+    isVirtualizationEnabled?: boolean;
 };
 
 const handleBodyRendering = (
@@ -69,47 +87,49 @@ const handleBodyRendering = (
         sortFilePaths = (filePaths) => {
             return filePaths.sort((a, b) => a.localeCompare(b));
         },
-        genExtraItemContextMenuItems = (_filePath: string) => [],
+        genExtraItemContextMenuItems = genNoExtraItemContextMenuItems,
     } = props;
     const isListView = viewMode === 'list';
     const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
     const newFilePaths = sortFilePaths(filePaths);
+    const renderItem = (filePath: string) => {
+        return (
+            <BackgroundMediaItemComp
+                key={filePath}
+                rendChild={rendChild}
+                genExtraItemContextMenuItems={genExtraItemContextMenuItems}
+                dragType={dragType}
+                onClick={onClick}
+                noDraggable={noDraggable}
+                isNameOnTop={isNameOnTop}
+                thumbnailWidth={thumbnailWidth}
+                thumbnailHeight={thumbnailHeight}
+                filePath={filePath}
+                viewMode={viewMode}
+            />
+        );
+    };
     return (
         <div className="w-100">
             {extraHeaderChild ? <>{extraHeaderChild}</> : null}
-            <div
-                className={
+            {/* Only the rows on screen are mounted: a folder of a thousand
+                backgrounds costs what a screenful costs, and -- the part that
+                is not just tidiness -- a video tile that is never mounted
+                never spawns a media player. */}
+            <VirtualGridComp
+                isEnabled={props.isVirtualizationEnabled ?? true}
+                items={newFilePaths}
+                renderItem={renderItem}
+                itemWidth={thumbnailWidth + THUMBNAIL_MARGIN}
+                columnCount={isListView ? 1 : undefined}
+                estimateRowHeight={
                     isListView
-                        ? 'd-flex flex-column'
-                        : 'd-flex justify-content-center flex-wrap'
+                        ? LIST_VIEW_ROW_HEIGHT
+                        : thumbnailHeight + THUMBNAIL_EXTRA_HEIGHT
                 }
-            >
-                {newFilePaths.map((filePath) => {
-                    return (
-                        <BackgroundMediaItemComp
-                            key={filePath}
-                            rendChild={rendChild}
-                            genExtraItemContextMenuItems={
-                                genExtraItemContextMenuItems
-                            }
-                            dragType={dragType}
-                            onClick={onClick}
-                            noDraggable={noDraggable}
-                            isNameOnTop={isNameOnTop}
-                            thumbnailWidth={thumbnailWidth}
-                            thumbnailHeight={thumbnailHeight}
-                            filePath={filePath}
-                            viewMode={viewMode}
-                        />
-                    );
-                })}
-                {isListView ? null : (
-                    <FillingFlexCenterComp
-                        width={thumbnailWidth}
-                        className={props.itemFillingClassname}
-                    />
-                )}
-            </div>
+                overscan={3}
+                rowClassName="d-flex"
+            />
         </div>
     );
 };

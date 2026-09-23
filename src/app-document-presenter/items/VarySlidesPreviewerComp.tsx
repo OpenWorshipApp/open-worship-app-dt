@@ -1,5 +1,5 @@
 import type { DragEvent } from 'react';
-import { useCallback, useMemo, useRef } from 'react';
+import { use, useCallback, useMemo, useRef } from 'react';
 
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import VarySlidesComp from './VarySlidesComp';
@@ -9,6 +9,8 @@ import { defaultRangeSize } from './AppDocumentPreviewerFooterComp';
 import SlidesMenuComp from './SlidesMenuComp';
 import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
 import {
+    SelectedEditingSlideContext,
+    toKeyByFilePath,
     useSlideItemsControlEventContext,
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
@@ -58,7 +60,14 @@ export default function VarySlidesPreviewerComp() {
     const scope = useMemo(() => {
         return genSlidesPreviewerScope(containerRef);
     }, []);
+    // The slide being edited is what this previewer opens on, and in a windowed
+    // list a card far down the document is not drawn until the list is asked
+    // for it — so the key of what to look for travels with the query.
+    const selectedSlideEditingRef = useAppCurrentRef(
+        use(SelectedEditingSlideContext)?.selectedSlideEditing ?? null,
+    );
     useAppEffect(() => {
+        const selectedSlideEditing = selectedSlideEditingRef.current;
         notifyElementHighlight(
             () => {
                 // Scoped: `notifyElementHighlight` polls every 100ms up to 30
@@ -73,6 +82,13 @@ export default function VarySlidesPreviewerComp() {
             {
                 moveToView: bringDomToCenterView,
                 type: 'warning',
+                revealKey:
+                    selectedSlideEditing === null
+                        ? undefined
+                        : toKeyByFilePath(
+                              selectedSlideEditing.filePath,
+                              selectedSlideEditing.id,
+                          ),
             },
         );
     }, []);

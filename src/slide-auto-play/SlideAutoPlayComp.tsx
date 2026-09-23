@@ -33,15 +33,28 @@ function PlayingIconComp({
         if (timerSeconds <= 0) {
             return;
         }
-        const timerId = setInterval(() => {
-            onNext({
-                isNext: true,
-                isRandom: false,
-                nextSeconds: timerSeconds,
-            });
-        }, timerSeconds * 1000);
+        // Each tick is scheduled after the last one has RUN, rather than on a
+        // fixed interval: putting a background up decodes an image and redraws
+        // the screen, and on the machines this app is built for that can take
+        // longer than the interval -- `setInterval` would then fire again the
+        // moment the previous tick returned, and a five second slide show
+        // would start stuttering through images instead of resting on them.
+        let timerId: ReturnType<typeof setTimeout> | null = null;
+        const scheduleNext = () => {
+            timerId = setTimeout(() => {
+                onNext({
+                    isNext: true,
+                    isRandom: false,
+                    nextSeconds: timerSeconds,
+                });
+                scheduleNext();
+            }, timerSeconds * 1000);
+        };
+        scheduleNext();
         return () => {
-            clearInterval(timerId);
+            if (timerId !== null) {
+                clearTimeout(timerId);
+            }
         };
     }, [onNext, timerSeconds]);
     return (

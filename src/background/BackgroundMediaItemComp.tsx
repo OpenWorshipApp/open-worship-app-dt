@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { memo, useCallback } from 'react';
 
 import {
     genCommonMenu,
@@ -41,7 +41,7 @@ function genFileNameElement(fileName: string) {
     );
 }
 
-export default function BackgroundMediaItemComp({
+function BackgroundMediaItemComp({
     rendChild,
     genExtraItemContextMenuItems,
     dragType,
@@ -176,3 +176,7 @@ export default function BackgroundMediaItemComp({
         </div>
     );
 }
+
+// Memoised: the windowed grid re-renders every mounted tile each time the
+// scroll crosses a row, and a tile's props do not change when it does.
+export default memo(BackgroundMediaItemComp);

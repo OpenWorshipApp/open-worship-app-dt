@@ -26,6 +26,7 @@ import { scaleTypeList } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import RenderBackgroundScreenIdsComp from '../background/RenderBackgroundScreenIdsComp';
 import { FilePathLoadedContext } from '../helper/dirSourceHelpers';
+import { revealVirtualItem } from '../virtual-list/virtualRevealHelpers';
 
 const DIR_SOURCE_SETTING_NAME = 'images-slide-show';
 const extraStyle: CSSProperties = {
@@ -72,7 +73,7 @@ export function handleNextItemSelecting({
         })
         .filter((item) => item !== null);
     if (foundList.length === 0) {
-        return;
+        return [];
     }
     for (let i = 0; i < foundList.length; i++) {
         const { src, screenId } = foundList[i];
@@ -89,6 +90,9 @@ export function handleNextItemSelecting({
             });
         }, i * 100);
     }
+    return foundList.map(({ src }) => {
+        return src;
+    });
 }
 
 function rendChild(
@@ -105,6 +109,11 @@ function rendChild(
                 })}
             />
             <img
+                // The grid's overscan rows are mounted but off screen; these
+                // keep their images from being fetched and decoded until
+                // they scroll in.
+                loading="lazy"
+                decoding="async"
                 src={fileSource.src}
                 className="card-img-top"
                 alt={fileSource.name}
@@ -225,14 +234,25 @@ export default function ForegroundImagesSlideShowComp() {
         ) {
             return;
         }
-        handleNextItemSelecting({
-            srcList: filePathsRef.current.map((filePath) => {
-                const fileSource = FileSource.getInstance(filePath);
-                return fileSource.src;
-            }),
+        const filePaths = filePathsRef.current;
+        const srcList = filePaths.map((filePath) => {
+            return FileSource.getInstance(filePath).src;
+        });
+        const appliedSrcList = handleNextItemSelecting({
+            srcList,
             scaleType: scaleTypeRef.current,
             isNext: data.isNext,
         });
+        // Keep the list on the image the show just put up. The list is
+        // windowed, so past a screenful the tile that is now showing is
+        // usually not even mounted -- without this, a show running through a
+        // folder of a thousand leaves the operator with no idea where it is.
+        const [appliedSrc] = appliedSrcList;
+        const appliedIndex =
+            appliedSrc === undefined ? -1 : srcList.indexOf(appliedSrc);
+        if (appliedIndex !== -1) {
+            revealVirtualItem(filePaths[appliedIndex]);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (

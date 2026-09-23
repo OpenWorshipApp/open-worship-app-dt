@@ -10,7 +10,18 @@ import type {
 } from '../app-document-list/appDocumentTypeHelpers';
 import { genAttachBackgroundComponent } from '../app-document-presenter/items/slideItemRenderHelpers';
 import VarySlideRenderWrapperComp from '../app-document-presenter/items/VarySlideRenderWrapperComp';
+import {
+    genSlideHeightGetter,
+    THUMBNAIL_EXTRA_HEIGHT,
+    THUMBNAIL_EXTRA_WIDTH,
+    toVarySlideKey,
+} from '../app-document-presenter/items/varySlideGridHelpers';
 import { DATA_QUERY_KEY } from '../app-document-presenter/items/varyAppDocumentHelpers';
+import VirtualGridComp from '../virtual-list/VirtualGridComp';
+import {
+    revealVirtualItem,
+    waitForVirtualElement,
+} from '../virtual-list/virtualRevealHelpers';
 import type BibleItem from '../bible-list/BibleItem';
 import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -646,6 +657,26 @@ function PresentingFlowSlideItemPreviewComp({
  * component is the only thing holding them, and only while the element is
  * unfolded, so nothing keeps a document in memory once its preview is gone.
  */
+/**
+ * A real click on the card, so everything a click does happens: the wrapper's
+ * capture handler moves the cursor here, a parked card cancels it, and the
+ * card's own handler presents it with the entry's pinned screens. A keyboard
+ * event carries no coordinates, so they come from the card itself — which is
+ * what the "which screen?" menu is positioned from, and why the card is
+ * brought into view BEFORE the click rather than after it.
+ */
+function pressSlideCard(element: Element) {
+    bringPresentingFlowRunElementToView(element);
+    const { left, top } = element.getBoundingClientRect();
+    element.dispatchEvent(
+        new MouseEvent('click', {
+            bubbles: true,
+            clientX: left + 8,
+            clientY: top + 8,
+        }),
+    );
+}
+
 function useChildStepping(
     presentingFlowFilePath: string,
     itemKey: string,
@@ -692,31 +723,38 @@ function useChildStepping(
                 return false;
             }
             const varySlide = varySlides[nextIndex];
-            const element = containerRef.current?.querySelector(
-                `[${DATA_QUERY_KEY}="${varySlide.id}"]`,
-            );
-            // Its card is what does the presenting, so with no card there is
-            // nothing this press can do — answered as "nothing left" rather
-            // than silently moving a cursor onto something invisible.
-            if (element == null) {
+            const getElement = () => {
+                return (
+                    containerRef.current?.querySelector(
+                        `[${DATA_QUERY_KEY}="${varySlide.id}"]`,
+                    ) ?? null
+                );
+            };
+            const element = getElement();
+            if (element !== null) {
+                pressSlideCard(element);
+                return true;
+            }
+            // Not DRAWN is not the same as not there. The grid is windowed, so
+            // the card of a slide further down a long document exists only
+            // once the list has been asked for it — and then a React commit
+            // later, which is what the wait is for. The press still belongs to
+            // THIS element: its slide exists, so the run must not fall through
+            // to the next line of the sheet.
+            if (!revealVirtualItem(toVarySlideKey(varySlide))) {
+                // Nothing holds it at all (the body is not mounted): there is
+                // nothing this press can do, answered as "nothing left" rather
+                // than by silently moving a cursor onto something invisible.
                 return false;
             }
-            // Before the click, not after: with no screen chosen yet the click
-            // opens the "which screen?" menu against this rect, and a rect that
-            // is still off-screen would put the menu somewhere unhelpful.
-            bringPresentingFlowRunElementToView(element);
-            const { left, top } = element.getBoundingClientRect();
-            // A real click, so everything a click does happens: the wrapper's
-            // capture handler moves the cursor here, a parked card cancels it,
-            // and the card's own handler presents it with the entry's pinned
-            // screens. A keyboard event carries no coordinates, so they come
-            // from the card itself — what the menu is positioned from.
-            element.dispatchEvent(
-                new MouseEvent('click', {
-                    bubbles: true,
-                    clientX: left + 8,
-                    clientY: top + 8,
-                }),
+            const revealKey = toVarySlideKey(varySlide);
+            waitForVirtualElement(getElement, revealKey).then(
+                (revealedElement) => {
+                    if (revealedElement !== null) {
+                        pressSlideCard(revealedElement);
+                    }
+                },
+                handleError,
             );
             return true;
         },
@@ -803,70 +841,98 @@ function PresentingFlowDocumentItemPreviewComp({
     // in the tree's slide list.
     const hasAnySlideCc = presentingFlowItem.hasSlideCcItems;
     const hasAnyCc = hasAnySlideCc || presentingFlowItem.hasCcItems;
+    // A card scales with the widget's own zoom, and a document may hold pages
+    // of more than one shape, so the slide is what says how tall its card is.
+    // Memoised because it is what every row offset is built from.
+    const getSlideHeight = useMemo(() => {
+        return genSlideHeightGetter(thumbnailWidth);
+    }, [thumbnailWidth]);
     if (data === undefined) {
         return <LoadingComp />;
     }
     if (data === null) {
         return <div>{tran('Fail to read file data')}</div>;
     }
+    const { varySlides } = data;
     return (
-        <div className="d-flex flex-wrap w-100" ref={containerRef}>
-            {data.varySlides.map((varySlide, i) => {
-                return (
-                    <VarySlidePreviewComp
-                        key={`${varySlide.filePath}-${varySlide.id}`}
-                        varyAppDocument={data.varyAppDocument}
-                        varySlide={varySlide}
-                        index={i}
-                        thumbnailWidth={thumbnailWidth}
-                        presentingFlowFilePath={presentingFlowItem.filePath}
-                        itemKey={itemKey}
-                        itemIndex={index}
-                        presetScreenIds={presentingFlowItem.getSlideScreenIds(
-                            varySlide.id,
-                        )}
-                        ownScreenIds={presentingFlowItem.getOwnSlideScreenIds(
-                            varySlide.id,
-                        )}
-                        setSlideScreenIds={setSlideScreenIds}
-                        isDisabled={presentingFlowItem.checkIsVarySlideDisabled(
-                            varySlide,
-                        )}
-                        isOwnDisabled={presentingFlowItem.checkIsOwnSlideDisabled(
-                            varySlide.id,
-                        )}
-                        // Its own park or the element's — both are this run
-                        // sheet's, and only they come off from the card's menu.
-                        isPresentingFlowDisabled={presentingFlowItem.checkIsSlideDisabled(
-                            varySlide.id,
-                        )}
-                        setIsDisabled={(isDisabled) => {
-                            setSlideDisabled(varySlide.id, isDisabled);
-                        }}
-                        ccHost={{
-                            presentingFlow: PresentingFlow.getInstance(
-                                presentingFlowItem.filePath,
-                            ),
-                            index,
-                            slideId: varySlide.id,
-                        }}
-                        ccItems={
-                            hasAnySlideCc
-                                ? presentingFlowItem.getSlideCcItems(
-                                      varySlide.id,
-                                  )
-                                : undefined
-                        }
-                        propagatingCcItems={
-                            hasAnyCc
-                                ? presentingFlowItem.getEffectiveSlideCcItems(
-                                      varySlide.id,
-                                  )
-                                : undefined
-                        }
-                    />
-                );
-            })}
+        <div className="w-100" ref={containerRef}>
+            {/* Only the rows on screen are mounted: every slide card carries a
+                shadow root with a React root of its own, and a run sheet can
+                list a sermon deck of hundreds of them. A grid whose cards hold
+                CC rows under them is left whole — those rows make the cards
+                different heights, which is the one thing the row geometry here
+                cannot know before drawing them. */}
+            <VirtualGridComp
+                isEnabled={!hasAnySlideCc}
+                items={varySlides}
+                getItemKey={toVarySlideKey}
+                renderItem={(varySlide, i) => {
+                    return (
+                        <VarySlidePreviewComp
+                            key={toVarySlideKey(varySlide)}
+                            varyAppDocument={data.varyAppDocument}
+                            varySlide={varySlide}
+                            index={i}
+                            thumbnailWidth={thumbnailWidth}
+                            presentingFlowFilePath={presentingFlowItem.filePath}
+                            itemKey={itemKey}
+                            itemIndex={index}
+                            presetScreenIds={presentingFlowItem.getSlideScreenIds(
+                                varySlide.id,
+                            )}
+                            ownScreenIds={presentingFlowItem.getOwnSlideScreenIds(
+                                varySlide.id,
+                            )}
+                            setSlideScreenIds={setSlideScreenIds}
+                            isDisabled={presentingFlowItem.checkIsVarySlideDisabled(
+                                varySlide,
+                            )}
+                            isOwnDisabled={presentingFlowItem.checkIsOwnSlideDisabled(
+                                varySlide.id,
+                            )}
+                            // Its own park or the element's — both are this run
+                            // sheet's, and only they come off from the card's
+                            // menu.
+                            isPresentingFlowDisabled={presentingFlowItem.checkIsSlideDisabled(
+                                varySlide.id,
+                            )}
+                            setIsDisabled={(isDisabled) => {
+                                setSlideDisabled(varySlide.id, isDisabled);
+                            }}
+                            ccHost={{
+                                presentingFlow: PresentingFlow.getInstance(
+                                    presentingFlowItem.filePath,
+                                ),
+                                index,
+                                slideId: varySlide.id,
+                            }}
+                            ccItems={
+                                hasAnySlideCc
+                                    ? presentingFlowItem.getSlideCcItems(
+                                          varySlide.id,
+                                      )
+                                    : undefined
+                            }
+                            propagatingCcItems={
+                                hasAnyCc
+                                    ? presentingFlowItem.getEffectiveSlideCcItems(
+                                          varySlide.id,
+                                      )
+                                    : undefined
+                            }
+                        />
+                    );
+                }}
+                itemWidth={thumbnailWidth + THUMBNAIL_EXTRA_WIDTH}
+                getItemHeight={getSlideHeight}
+                estimateRowHeight={
+                    (varySlides.length === 0
+                        ? 0
+                        : getSlideHeight(varySlides[0])) +
+                    THUMBNAIL_EXTRA_HEIGHT
+                }
+                rowClassName="d-flex"
+            />
         </div>
     );
 }

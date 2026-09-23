@@ -18,7 +18,7 @@ export function genColorBar(colorNote: string) {
     );
 }
 
-export function genColorMap<T extends { colorNote: string | null }>(
+export function genColorMap<T extends { colorNote?: string | null }>(
     items: T[],
 ) {
     const newFilePathColorMap: { [key: string]: T[] } = {
