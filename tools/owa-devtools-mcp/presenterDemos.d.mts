@@ -1,8 +1,11 @@
 export type PresenterDemoStepType = {
   text: string;
-  find: string;
+  find?: string;
   finds?: string[];
-  action: 'click';
+  action?: 'click' | 'type' | 'hover' | 'rightClick';
+  value?: string;
+  press?: string;
+  kind?: 'act' | 'look';
 };
 
 export type PresenterDemoType = {
@@ -10,6 +13,7 @@ export type PresenterDemoType = {
   label: string;
   detail: string;
   title: string;
+  isFeatured?: boolean;
   steps: PresenterDemoStepType[];
 };
 

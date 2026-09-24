@@ -17,6 +17,7 @@ import {
     checkCanAddChatSession,
     checkCanClearChatSessions,
     checkCanSoloChatSession,
+    applyChatLaunchFocus,
     genChatSessionTitle,
     genNewChatSession,
     genSessionId,
@@ -265,6 +266,45 @@ describe('saveChatSessions', () => {
 
         expect(state.sessions).toEqual([session]);
         expect(state.activeId).toBe('round-trip');
+    });
+});
+
+describe('applyChatLaunchFocus', () => {
+    test('the active tab follows the page that launched the chatbot', () => {
+        const active = genSession({ id: 'active', focus: 'reader' });
+        const other = genSession({ id: 'other', focus: 'reader' });
+
+        const state = applyChatLaunchFocus(
+            { sessions: [active, other], activeId: active.id },
+            'presenter',
+        );
+
+        expect(state.sessions[0].focus).toBe('presenter');
+        expect(state.sessions[1]).toBe(other);
+    });
+
+    test('a new launch supersedes an earlier manual choice', () => {
+        const active = genSession({
+            id: 'active',
+            focus: 'reader',
+            isFocusChosen: true,
+        });
+        const state = applyChatLaunchFocus(
+            { sessions: [active], activeId: active.id },
+            'presenter',
+        );
+
+        expect(state.sessions[0]).toMatchObject({
+            focus: 'presenter',
+            isFocusChosen: false,
+        });
+    });
+
+    test('a missing opener leaves the restored tab alone', () => {
+        const active = genSession({ id: 'active', focus: 'reader' });
+        const state = { sessions: [active], activeId: active.id };
+
+        expect(applyChatLaunchFocus(state, null)).toBe(state);
     });
 });
 

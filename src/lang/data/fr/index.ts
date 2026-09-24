@@ -1773,6 +1773,174 @@ const dictionary = {
     'Give the Presenter more room': "Agrandir l'espace du Présentateur",
     'Switch the Presenter between normal and full view.':
         'Basculez le Présentateur entre la vue normale et la vue complète.',
+    'Open Slide Editor in its own window':
+        "Ouvrir l'Éditeur de diapositives dans sa propre fenêtre",
+    'Keep the Presenter visible while editing the selected document.':
+        'Gardez le Présentateur visible pendant la modification du document sélectionné.',
+    'Open Bible Reader in its own window':
+        'Ouvrir le Lecteur biblique dans sa propre fenêtre',
+    'Read or study without replacing the Presenter page.':
+        'Lisez ou étudiez sans remplacer la page du Présentateur.',
+    'Open app Settings': "Ouvrir les paramètres de l'application",
+    'Change language, theme, folders, screens, and other app options.':
+        "Modifiez la langue, le thème, les dossiers, les écrans et d'autres options de l'application.",
+    'Open the Help menu': "Ouvrir le menu d'aide",
+    'Find app help, tips, updates, and information about the app.':
+        "Trouvez l'aide, les astuces, les mises à jour et les informations sur l'application.",
+    'Open foreground controls': "Ouvrir les contrôles d'avant-plan",
+    'Reach countdowns, clocks, marquees, and quick text.':
+        'Accédez aux comptes à rebours, horloges, bandeaux et textes rapides.',
+    'Open background colors': "Ouvrir les couleurs d'arrière-plan",
+    'Choose a solid color for the selected audience screens.':
+        'Choisissez une couleur unie pour les écrans du public sélectionnés.',
+    'Open background images': "Ouvrir les images d'arrière-plan",
+    'Browse still pictures available for screen backgrounds.':
+        "Parcourez les images fixes disponibles comme arrière-plans d'écran.",
+    'Open background videos': "Ouvrir les vidéos d'arrière-plan",
+    'Browse and control moving backgrounds.':
+        'Parcourez et contrôlez les arrière-plans animés.',
+    'Open camera backgrounds': "Ouvrir les caméras d'arrière-plan",
+    'Choose a connected camera as a live background source.':
+        "Choisissez une caméra connectée comme source d'arrière-plan en direct.",
+    'Open website backgrounds': "Ouvrir les sites web d'arrière-plan",
+    'Browse saved web pages used as screen backgrounds.':
+        "Parcourez les pages web enregistrées utilisées comme arrière-plans d'écran.",
+    'Open the audio library': 'Ouvrir la bibliothèque audio',
+    'Browse music and other audio used during a service.':
+        'Parcourez la musique et les autres fichiers audio utilisés pendant un culte.',
+    'Change the open document folder': 'Changer le dossier de documents ouvert',
+    'Show the folder path box above the Document List.':
+        'Affichez le champ du chemin de dossier au-dessus de la liste des documents.',
+    'Find a document by name': 'Rechercher un document par son nom',
+    'Filter a long Document List without moving or deleting anything.':
+        'Filtrez une longue liste de documents sans rien déplacer ni supprimer.',
+    'Sort the Document List': 'Trier la liste des documents',
+    'Change how documents are ordered without changing their files.':
+        "Modifiez l'ordre d'affichage des documents sans modifier leurs fichiers.",
+    'Filter documents by type': 'Filtrer les documents par type',
+    'Show only slides, lyrics, PDFs, or another document kind.':
+        'Affichez seulement les diapositives, paroles, PDF ou un autre type de document.',
+    'Pin the selected document': 'Épingler le document sélectionné',
+    'Keep presenting from one document while selecting another.':
+        'Continuez à présenter depuis un document tout en sélectionnant un autre.',
+    'Make slide thumbnails larger': 'Agrandir les miniatures des diapositives',
+    'Increase the preview size without changing audience output.':
+        "Agrandissez l'aperçu sans modifier ce que voit le public.",
+    'Fit the selected document to width':
+        'Ajuster le document sélectionné à la largeur',
+    'Toggle full-width document previews without changing the screen.':
+        "Basculez les aperçus en pleine largeur sans modifier l'écran du public.",
+    'Present a slide from a document':
+        'Présenter une diapositive depuis un document',
+    'Select a document, then send one of its slide cards to the audience.':
+        "Sélectionnez un document, puis envoyez l'une de ses diapositives au public.",
+    'Auto-play slides on a timer':
+        'Lire automatiquement les diapositives avec une minuterie',
+    'Set a slide duration and let the selected document advance itself.':
+        'Définissez la durée des diapositives et laissez le document sélectionné avancer seul.',
+    'Present song lyrics': 'Présenter les paroles d’un chant',
+    'Choose a lyric document and present its generated stage slides.':
+        'Choisissez un document de paroles et présentez les diapositives de scène générées.',
+    'Look up and present a Bible verse':
+        'Rechercher et présenter un verset biblique',
+    'Choose a passage, preview it, then send it to selected screens.':
+        'Choisissez un passage, prévisualisez-le, puis envoyez-le aux écrans sélectionnés.',
+    'Style Bible text on screen': "Mettre en forme le texte biblique à l'écran",
+    'Change the Bible layer font, size, colors, spacing, and layout.':
+        "Modifiez la police, la taille, les couleurs, l'espacement et la disposition de la couche biblique.",
+    'Use a solid background color': "Utiliser une couleur unie d'arrière-plan",
+    'Choose a color and apply it only after checking the selected screens.':
+        'Choisissez une couleur et appliquez-la seulement après avoir vérifié les écrans sélectionnés.',
+    'Use an image background': "Utiliser une image d'arrière-plan",
+    'Choose a still picture and preview it before the audience sees it.':
+        'Choisissez une image fixe et prévisualisez-la avant que le public ne la voie.',
+    'Use a video background': "Utiliser une vidéo d'arrière-plan",
+    'Choose a video, preview playback, and control it safely.':
+        'Choisissez une vidéo, prévisualisez sa lecture et contrôlez-la en toute sécurité.',
+    'Use a camera background': "Utiliser une caméra d'arrière-plan",
+    'Choose a connected camera and check its live preview first.':
+        "Choisissez une caméra connectée et vérifiez d'abord son aperçu en direct.",
+    'Use a website background': "Utiliser un site web d'arrière-plan",
+    'Create or choose a saved web item and preview its captured page.':
+        'Créez ou choisissez un élément web enregistré et prévisualisez sa page capturée.',
+    'Play audio during a service': 'Lire un fichier audio pendant un culte',
+    'Choose a saved audio file and use its playback controls.':
+        'Choisissez un fichier audio enregistré et utilisez ses commandes de lecture.',
+    'Show a countdown, clock, or message':
+        'Afficher un compte à rebours, une horloge ou un message',
+    'Use Foreground for timers, marquees, and quick text overlays.':
+        "Utilisez l'avant-plan pour les minuteries, bandeaux et textes rapides.",
+    'Control what the audience sees': 'Contrôler ce que voit le public',
+    'Use Mini Screen to show, hide, lock, or clear individual layers.':
+        'Utilisez le mini-écran pour afficher, masquer, verrouiller ou effacer chaque couche.',
+    'Use more than one audience screen':
+        'Utiliser plusieurs écrans pour le public',
+    'Add screen cards, choose displays, and decide which screens receive content.':
+        'Ajoutez des cartes d’écran, choisissez les affichages et décidez quels écrans reçoivent le contenu.',
+    'Draw or spotlight on the app':
+        "Dessiner ou mettre en lumière dans l'application",
+    'Use Presenting Control for arrows, drawing, erasing, and focus.':
+        'Utilisez le contrôle de présentation pour les flèches, le dessin, la gomme et la mise au point.',
+    'Show the keys you press': 'Afficher les touches utilisées',
+    'Display keyboard shortcuts while teaching or demonstrating the app.':
+        "Affichez les raccourcis clavier pendant l'enseignement ou la démonstration de l'application.",
+    'Download a background video or song':
+        "Télécharger une vidéo d'arrière-plan ou un chant",
+    'Use a supported public link to add video or audio to the library.':
+        'Utilisez un lien public compatible pour ajouter une vidéo ou un son à la bibliothèque.',
+    'Build a service presenting flow':
+        'Créer un déroulé de présentation du culte',
+    'Arrange documents, passages, actions, and cues into a running order.':
+        'Organisez les documents, passages, actions et repères dans un ordre de déroulement.',
+    'Share a presenting flow': 'Partager un déroulé de présentation',
+    'Export a service order with the documents it references.':
+        'Exportez un ordre de culte avec les documents auxquels il fait référence.',
+    'Import a song from SongSelect': 'Importer un chant depuis SongSelect',
+    'Sign in, search the service, and bring a licensed song into Documents.':
+        'Connectez-vous, recherchez dans le service et importez un chant autorisé dans Documents.',
+    'Import a public-domain hymn': 'Importer un cantique du domaine public',
+    'Browse the built-in hymn collection without an account.':
+        'Parcourez la collection intégrée de cantiques sans compte.',
+    'Use the More Options buttons': 'Utiliser les boutons Plus d’options',
+    'Open the three-dot menu on a document, slide, background, or flow item.':
+        "Ouvrez le menu à trois points d'un document, d'une diapositive, d'un arrière-plan ou d'un élément du déroulé.",
+    'Ask the App Assistant for help':
+        "Demander de l'aide à l'Assistant de l'application",
+    'Ask about the Presenter and request a safe step-by-step walkthrough.':
+        'Posez une question sur le Présentateur et demandez un guide sûr, étape par étape.',
+    'Open an AI chat website': "Ouvrir un site de discussion avec l'IA",
+    'Use ChatGPT, Claude, Gemini, or another supported site in a separate window.':
+        'Utilisez ChatGPT, Claude, Gemini ou un autre site compatible dans une fenêtre séparée.',
+    'Find text anywhere in the app':
+        "Rechercher du texte partout dans l'application",
+    'Use the Find bar to locate a document, setting, or visible control.':
+        'Utilisez la barre Rechercher pour trouver un document, un paramètre ou une commande visible.',
+    'Reload or force-reload the Presenter':
+        'Recharger ou forcer le rechargement du Présentateur',
+    'Use Reload normally; use Force Reload only to bypass cached app files.':
+        "Utilisez Recharger normalement ; utilisez Forcer le rechargement seulement pour ignorer les fichiers d'application en cache.",
+    'Use View > Toggle Developer Tools only for technical troubleshooting.':
+        'Utilisez Affichage > Basculer les outils de développement seulement pour un dépannage technique.',
+    'Zoom the whole Presenter interface':
+        "Zoomer toute l'interface du Présentateur",
+    'Use Actual Size, Zoom In, or Zoom Out for every panel and control.':
+        'Utilisez Taille réelle, Zoom avant ou Zoom arrière pour tous les panneaux et commandes.',
+    'Make the whole Presenter full screen':
+        'Afficher tout le Présentateur en plein écran',
+    'Use View > Toggle Full Screen or F11 for the entire app window.':
+        "Utilisez Affichage > Basculer le plein écran ou F11 pour toute la fenêtre de l'application.",
+    'Show or hide Presenter panels from View':
+        'Afficher ou masquer les panneaux du Présentateur depuis Affichage',
+    'Use View > Widgets to choose which Presenter panels are open.':
+        'Utilisez Affichage > Panneaux pour choisir les panneaux du Présentateur ouverts.',
+    'Restore every Presenter panel layout':
+        'Restaurer la disposition de tous les panneaux du Présentateur',
+    'Use View > Reset Widgets Size to restore defaults after confirmation.':
+        'Utilisez Affichage > Réinitialiser la taille des panneaux pour rétablir les valeurs par défaut après confirmation.',
+    'Documents and slides': 'Documents et diapositives',
+    'Audience screens': 'Écrans du public',
+    'Background and media': 'Arrière-plan et médias',
+    'Service planning': 'Planification du culte',
     'Make the words larger': 'Agrandir les mots',
     'Open the hidden footer and raise Font Size.':
         'Ouvrez le pied de page masqué et augmentez la taille de police.',

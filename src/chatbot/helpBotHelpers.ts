@@ -1002,9 +1002,11 @@ export async function answerFromManual(
  * windows, but `setting.html` and `webEditor.html` are one substring away from
  * each other's keys.
  */
-export function detectOpenerFocus(): BotFocusType | null {
+export function detectOpenerFocus(pathname?: string): BotFocusType | null {
     try {
-        return detectBotFocus(window.opener?.location?.pathname ?? '');
+        return detectBotFocus(
+            pathname ?? window.opener?.location?.pathname ?? '',
+        );
     } catch (_error) {
         // A cross-origin or closed opener tells us nothing; the switch stands.
         return null;

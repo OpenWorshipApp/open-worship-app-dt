@@ -264,6 +264,34 @@ describe('electronHelpers coverage', () => {
         expect(selfWin.focus).toHaveBeenCalledTimes(1);
     });
 
+    test('reopening the chatbot sends it the current app page', () => {
+        vi.useFakeTimers();
+        const url = 'https://localhost:3000/chatbot.html?uuid=chatbot';
+        const selfWin = createWindowAt(url, { x: 0, y: 0 });
+        const parentWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                getURL: vi.fn(() => 'https://localhost:3000/presenter.html'),
+            }),
+        });
+        electronMockState.browserWindows.push(selfWin, parentWin);
+
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        expect(
+            windowOpenHandler({
+                url,
+                frameName: `${POPUP_FRAME_NAME_PREFIX}_chatbot`,
+                features: 'popup,appTopToMain',
+            } as any),
+        ).toEqual({ action: 'deny' });
+        expect(selfWin.webContents.send).toHaveBeenCalledWith(
+            'main:app:chatbot-launch-focus',
+            '/presenter.html',
+        );
+    });
+
     test('a non-resizable popup without a menu bar', () => {
         vi.useFakeTimers();
         const parentWin = createMockBrowserWindow();

@@ -1747,6 +1747,161 @@ const dictionary = {
     'Give the Presenter more room': 'ពង្រីកកន្លែងសម្រាប់ទំព័រអ្នកបង្ហាញ',
     'Switch the Presenter between normal and full view.':
         'ប្តូរទំព័រអ្នកបង្ហាញរវាងទិដ្ឋភាពធម្មតា និងពេញ។',
+    'Open Slide Editor in its own window':
+        'បើកកម្មវិធីកែស្លាយក្នុងបង្អួចផ្ទាល់ខ្លួន',
+    'Keep the Presenter visible while editing the selected document.':
+        'រក្សាទំព័រអ្នកបង្ហាញឱ្យនៅមើលឃើញ ខណៈកំពុងកែឯកសារដែលបានជ្រើស។',
+    'Open Bible Reader in its own window':
+        'បើកអ្នកអានព្រះគម្ពីរក្នុងបង្អួចផ្ទាល់ខ្លួន',
+    'Read or study without replacing the Presenter page.':
+        'អាន ឬសិក្សាដោយមិនជំនួសទំព័រអ្នកបង្ហាញ។',
+    'Open app Settings': 'បើកការកំណត់កម្មវិធី',
+    'Change language, theme, folders, screens, and other app options.':
+        'ប្តូរភាសា រូបរាង ថត អេក្រង់ និងជម្រើសកម្មវិធីផ្សេងៗ។',
+    'Open the Help menu': 'បើកម៉ឺនុយជំនួយ',
+    'Find app help, tips, updates, and information about the app.':
+        'ស្វែងរកជំនួយ គន្លឹះ បច្ចុប្បន្នភាព និងព័ត៌មានអំពីកម្មវិធី។',
+    'Open foreground controls': 'បើកការគ្រប់គ្រងផ្ទៃខាងមុខ',
+    'Reach countdowns, clocks, marquees, and quick text.':
+        'ប្រើការរាប់ថយក្រោយ នាឡិកា អក្សររត់ និងអត្ថបទរហ័ស។',
+    'Open background colors': 'បើកពណ៌ផ្ទៃខាងក្រោយ',
+    'Choose a solid color for the selected audience screens.':
+        'ជ្រើសពណ៌តែមួយសម្រាប់អេក្រង់អ្នកទស្សនាដែលបានជ្រើស។',
+    'Open background images': 'បើករូបភាពផ្ទៃខាងក្រោយ',
+    'Browse still pictures available for screen backgrounds.':
+        'រកមើលរូបភាពដែលមានសម្រាប់ផ្ទៃខាងក្រោយអេក្រង់។',
+    'Open background videos': 'បើកវីដេអូផ្ទៃខាងក្រោយ',
+    'Browse and control moving backgrounds.':
+        'រកមើល និងគ្រប់គ្រងផ្ទៃខាងក្រោយមានចលនា។',
+    'Open camera backgrounds': 'បើកកាមេរ៉ាជាផ្ទៃខាងក្រោយ',
+    'Choose a connected camera as a live background source.':
+        'ជ្រើសកាមេរ៉ាដែលបានភ្ជាប់ជាប្រភពផ្ទៃខាងក្រោយផ្ទាល់។',
+    'Open website backgrounds': 'បើកគេហទំព័រជាផ្ទៃខាងក្រោយ',
+    'Browse saved web pages used as screen backgrounds.':
+        'រកមើលទំព័រវេបដែលបានរក្សាទុកសម្រាប់ប្រើជាផ្ទៃខាងក្រោយ។',
+    'Open the audio library': 'បើកបណ្ណាល័យសំឡេង',
+    'Browse music and other audio used during a service.':
+        'រកមើលតន្ត្រី និងសំឡេងផ្សេងទៀតសម្រាប់ប្រើក្នុងកម្មវិធីថ្វាយបង្គំ។',
+    'Change the open document folder': 'ប្តូរថតឯកសារដែលបានបើក',
+    'Show the folder path box above the Document List.':
+        'បង្ហាញប្រអប់ផ្លូវថតនៅខាងលើបញ្ជីឯកសារ។',
+    'Find a document by name': 'ស្វែងរកឯកសារតាមឈ្មោះ',
+    'Filter a long Document List without moving or deleting anything.':
+        'ត្រងបញ្ជីឯកសារវែង ដោយមិនផ្លាស់ទី ឬលុបអ្វីឡើយ។',
+    'Sort the Document List': 'តម្រៀបបញ្ជីឯកសារ',
+    'Change how documents are ordered without changing their files.':
+        'ប្តូរលំដាប់បង្ហាញឯកសារ ដោយមិនកែប្រែឯកសារដើម។',
+    'Filter documents by type': 'ត្រងឯកសារតាមប្រភេទ',
+    'Show only slides, lyrics, PDFs, or another document kind.':
+        'បង្ហាញតែស្លាយ អត្ថបទចម្រៀង PDF ឬប្រភេទឯកសារផ្សេងទៀត។',
+    'Pin the selected document': 'ខ្ទាស់ឯកសារដែលបានជ្រើស',
+    'Keep presenting from one document while selecting another.':
+        'បន្តបង្ហាញពីឯកសារមួយ ខណៈកំពុងជ្រើសឯកសារផ្សេង។',
+    'Make slide thumbnails larger': 'ធ្វើរូបតូចស្លាយឱ្យធំជាងមុន',
+    'Increase the preview size without changing audience output.':
+        'បង្កើនទំហំមើលជាមុន ដោយមិនប្តូរអ្វីលើអេក្រង់អ្នកទស្សនា។',
+    'Fit the selected document to width': 'ដាក់ឯកសារដែលបានជ្រើសឱ្យពេញទទឹង',
+    'Toggle full-width document previews without changing the screen.':
+        'ប្តូរទិដ្ឋភាពឯកសារពេញទទឹង ដោយមិនប្តូរអេក្រង់អ្នកទស្សនា។',
+    'Present a slide from a document': 'បង្ហាញស្លាយពីឯកសារ',
+    'Select a document, then send one of its slide cards to the audience.':
+        'ជ្រើសឯកសារ បន្ទាប់មកផ្ញើកាតស្លាយមួយរបស់វាទៅអ្នកទស្សនា។',
+    'Auto-play slides on a timer': 'ចាក់ស្លាយដោយស្វ័យប្រវត្តិតាមម៉ោង',
+    'Set a slide duration and let the selected document advance itself.':
+        'កំណត់រយៈពេលស្លាយ ហើយឱ្យឯកសារដែលបានជ្រើសបន្តដោយខ្លួនឯង។',
+    'Present song lyrics': 'បង្ហាញអត្ថបទចម្រៀង',
+    'Choose a lyric document and present its generated stage slides.':
+        'ជ្រើសឯកសារចម្រៀង ហើយបង្ហាញស្លាយឆាកដែលបានបង្កើត។',
+    'Look up and present a Bible verse': 'ស្វែងរក និងបង្ហាញខព្រះគម្ពីរ',
+    'Choose a passage, preview it, then send it to selected screens.':
+        'ជ្រើសបទគម្ពីរ មើលជាមុន ហើយផ្ញើវាទៅអេក្រង់ដែលបានជ្រើស។',
+    'Style Bible text on screen': 'កំណត់រចនាប័ទ្មអត្ថបទព្រះគម្ពីរលើអេក្រង់',
+    'Change the Bible layer font, size, colors, spacing, and layout.':
+        'ប្តូរពុម្ពអក្សរ ទំហំ ពណ៌ គម្លាត និងប្លង់នៃស្រទាប់ព្រះគម្ពីរ។',
+    'Use a solid background color': 'ប្រើពណ៌តែមួយជាផ្ទៃខាងក្រោយ',
+    'Choose a color and apply it only after checking the selected screens.':
+        'ជ្រើសពណ៌ ហើយអនុវត្តវាបន្ទាប់ពីពិនិត្យអេក្រង់ដែលបានជ្រើស។',
+    'Use an image background': 'ប្រើរូបភាពជាផ្ទៃខាងក្រោយ',
+    'Choose a still picture and preview it before the audience sees it.':
+        'ជ្រើសរូបភាព ហើយមើលជាមុន មុនពេលអ្នកទស្សនាឃើញវា។',
+    'Use a video background': 'ប្រើវីដេអូជាផ្ទៃខាងក្រោយ',
+    'Choose a video, preview playback, and control it safely.':
+        'ជ្រើសវីដេអូ មើលការចាក់ជាមុន ហើយគ្រប់គ្រងវាដោយសុវត្ថិភាព។',
+    'Use a camera background': 'ប្រើកាមេរ៉ាជាផ្ទៃខាងក្រោយ',
+    'Choose a connected camera and check its live preview first.':
+        'ជ្រើសកាមេរ៉ាដែលបានភ្ជាប់ ហើយពិនិត្យការមើលផ្ទាល់ជាមុន។',
+    'Use a website background': 'ប្រើគេហទំព័រជាផ្ទៃខាងក្រោយ',
+    'Create or choose a saved web item and preview its captured page.':
+        'បង្កើត ឬជ្រើសធាតុវេបដែលបានរក្សាទុក ហើយមើលទំព័ររបស់វាជាមុន។',
+    'Play audio during a service': 'ចាក់សំឡេងក្នុងកម្មវិធីថ្វាយបង្គំ',
+    'Choose a saved audio file and use its playback controls.':
+        'ជ្រើសឯកសារសំឡេងដែលបានរក្សាទុក ហើយប្រើការគ្រប់គ្រងចាក់របស់វា។',
+    'Show a countdown, clock, or message': 'បង្ហាញការរាប់ថយក្រោយ នាឡិកា ឬសារ',
+    'Use Foreground for timers, marquees, and quick text overlays.':
+        'ប្រើផ្ទៃខាងមុខសម្រាប់ម៉ោង អក្សររត់ និងអត្ថបទរហ័សលើអេក្រង់។',
+    'Control what the audience sees': 'គ្រប់គ្រងអ្វីដែលអ្នកទស្សនាឃើញ',
+    'Use Mini Screen to show, hide, lock, or clear individual layers.':
+        'ប្រើអេក្រង់តូចដើម្បីបង្ហាញ លាក់ ចាក់សោ ឬសម្អាតស្រទាប់នីមួយៗ។',
+    'Use more than one audience screen': 'ប្រើអេក្រង់អ្នកទស្សនាច្រើនជាងមួយ',
+    'Add screen cards, choose displays, and decide which screens receive content.':
+        'បន្ថែមកាតអេក្រង់ ជ្រើសឧបករណ៍បង្ហាញ និងកំណត់អេក្រង់ដែលទទួលមាតិកា។',
+    'Draw or spotlight on the app': 'គូរ ឬបំភ្លឺចំណុចលើកម្មវិធី',
+    'Use Presenting Control for arrows, drawing, erasing, and focus.':
+        'ប្រើការគ្រប់គ្រងការបង្ហាញសម្រាប់ព្រួញ ការគូរ ការលុប និងការផ្តោត។',
+    'Show the keys you press': 'បង្ហាញគ្រាប់ចុចដែលអ្នកចុច',
+    'Display keyboard shortcuts while teaching or demonstrating the app.':
+        'បង្ហាញផ្លូវកាត់ក្តារចុច ខណៈកំពុងបង្រៀន ឬបង្ហាញកម្មវិធី។',
+    'Download a background video or song': 'ទាញយកវីដេអូផ្ទៃខាងក្រោយ ឬបទចម្រៀង',
+    'Use a supported public link to add video or audio to the library.':
+        'ប្រើតំណសាធារណៈដែលគាំទ្រ ដើម្បីបន្ថែមវីដេអូ ឬសំឡេងទៅបណ្ណាល័យ។',
+    'Build a service presenting flow': 'បង្កើតលំដាប់កម្មវិធីថ្វាយបង្គំ',
+    'Arrange documents, passages, actions, and cues into a running order.':
+        'រៀបចំឯកសារ បទគម្ពីរ សកម្មភាព និងសញ្ញាចូលជាលំដាប់ដំណើរការ។',
+    'Share a presenting flow': 'ចែករំលែកលំដាប់បង្ហាញ',
+    'Export a service order with the documents it references.':
+        'នាំចេញលំដាប់កម្មវិធីជាមួយឯកសារដែលវាយោង។',
+    'Import a song from SongSelect': 'នាំចូលបទចម្រៀងពី SongSelect',
+    'Sign in, search the service, and bring a licensed song into Documents.':
+        'ចូលគណនី ស្វែងរកសេវាកម្ម ហើយនាំបទចម្រៀងមានអាជ្ញាប័ណ្ណចូលឯកសារ។',
+    'Import a public-domain hymn': 'នាំចូលបទទំនុកតម្កើងសាធារណៈ',
+    'Browse the built-in hymn collection without an account.':
+        'រកមើលសំណុំបទទំនុកតម្កើងដែលមានស្រាប់ ដោយមិនត្រូវការគណនី។',
+    'Use the More Options buttons': 'ប្រើប៊ូតុងជម្រើសបន្ថែម',
+    'Open the three-dot menu on a document, slide, background, or flow item.':
+        'បើកម៉ឺនុយចំណុចបីលើឯកសារ ស្លាយ ផ្ទៃខាងក្រោយ ឬធាតុលំដាប់។',
+    'Ask the App Assistant for help': 'សុំជំនួយពីអ្នកជំនួយការកម្មវិធី',
+    'Ask about the Presenter and request a safe step-by-step walkthrough.':
+        'សួរអំពីទំព័រអ្នកបង្ហាញ និងស្នើការណែនាំម្តងមួយជំហានដោយសុវត្ថិភាព។',
+    'Open an AI chat website': 'បើកគេហទំព័រជជែក AI',
+    'Use ChatGPT, Claude, Gemini, or another supported site in a separate window.':
+        'ប្រើ ChatGPT, Claude, Gemini ឬគេហទំព័រដែលគាំទ្រផ្សេងទៀតក្នុងបង្អួចដាច់ដោយឡែក។',
+    'Find text anywhere in the app': 'ស្វែងរកអត្ថបទគ្រប់ទីកន្លែងក្នុងកម្មវិធី',
+    'Use the Find bar to locate a document, setting, or visible control.':
+        'ប្រើរបារស្វែងរកដើម្បីរកឯកសារ ការកំណត់ ឬប៊ូតុងដែលមើលឃើញ។',
+    'Reload or force-reload the Presenter': 'ផ្ទុកទំព័រអ្នកបង្ហាញឡើងវិញ',
+    'Use Reload normally; use Force Reload only to bypass cached app files.':
+        'ប្រើផ្ទុកឡើងវិញជាធម្មតា; ប្រើផ្ទុកបង្ខំតែពេលចង់រំលងឯកសារឃ្លាំងបណ្តោះអាសន្ន។',
+    'Use View > Toggle Developer Tools only for technical troubleshooting.':
+        'ប្រើ មើល > ប្តូរឧបករណ៍អ្នកអភិវឌ្ឍន៍ សម្រាប់តែការដោះស្រាយបញ្ហាបច្ចេកទេស។',
+    'Zoom the whole Presenter interface':
+        'ពង្រីកចំណុចប្រទាក់ទំព័រអ្នកបង្ហាញទាំងមូល',
+    'Use Actual Size, Zoom In, or Zoom Out for every panel and control.':
+        'ប្រើទំហំពិត ពង្រីក ឬបង្រួម សម្រាប់ផ្ទាំង និងការគ្រប់គ្រងទាំងអស់។',
+    'Make the whole Presenter full screen':
+        'ធ្វើទំព័រអ្នកបង្ហាញទាំងមូលពេញអេក្រង់',
+    'Use View > Toggle Full Screen or F11 for the entire app window.':
+        'ប្រើ មើល > ប្តូរពេញអេក្រង់ ឬ F11 សម្រាប់បង្អួចកម្មវិធីទាំងមូល។',
+    'Show or hide Presenter panels from View':
+        'បង្ហាញ ឬលាក់ផ្ទាំងអ្នកបង្ហាញពីម៉ឺនុយ មើល',
+    'Use View > Widgets to choose which Presenter panels are open.':
+        'ប្រើ មើល > Widgets ដើម្បីជ្រើសផ្ទាំងអ្នកបង្ហាញដែលត្រូវបើក។',
+    'Restore every Presenter panel layout': 'ស្តារប្លង់ផ្ទាំងអ្នកបង្ហាញទាំងអស់',
+    'Use View > Reset Widgets Size to restore defaults after confirmation.':
+        'ប្រើ មើល > កំណត់ទំហំ Widgets ឡើងវិញ ដើម្បីស្តារលំនាំដើមបន្ទាប់ពីបញ្ជាក់។',
+    'Documents and slides': 'ឯកសារ និងស្លាយ',
+    'Audience screens': 'អេក្រង់អ្នកទស្សនា',
+    'Background and media': 'ផ្ទៃខាងក្រោយ និងមេឌៀ',
+    'Service planning': 'ការរៀបចំកម្មវិធីថ្វាយបង្គំ',
     'Make the words larger': 'ធ្វើឱ្យអក្សរធំជាងមុន',
     'Open the hidden footer and raise Font Size.':
         'បើកបាតទំព័រដែលលាក់ ហើយបង្កើនទំហំអក្សរ។',

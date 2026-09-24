@@ -178,6 +178,43 @@ export function genNewChatSession(
     };
 }
 
+/**
+ * Put the tab in front on the window that launched the assistant. A choice the
+ * user makes afterwards stays with that tab until the next launch; restored
+ * tabs are the important case here, because opening from the Presenter must
+ * not leave the visible picker saying Bible Reader just because that was the
+ * last page this conversation used. Other tabs still own their own focus.
+ */
+export function applyChatLaunchFocus(
+    state: ChatSessionStateType,
+    openerFocus: BotFocusType | null,
+): ChatSessionStateType {
+    if (openerFocus === null) {
+        return state;
+    }
+    const activeSession = state.sessions.find((session) => {
+        return session.id === state.activeId;
+    });
+    if (
+        activeSession === undefined ||
+        (activeSession.focus === openerFocus && !activeSession.isFocusChosen)
+    ) {
+        return state;
+    }
+    return {
+        ...state,
+        sessions: state.sessions.map((session) => {
+            return session.id === state.activeId
+                ? {
+                      ...session,
+                      focus: openerFocus,
+                      isFocusChosen: false,
+                  }
+                : session;
+        }),
+    };
+}
+
 /** Trims a typed tab name to something the strip can hold. */
 export function toChatSessionTitle(text: string) {
     return text.trim().replace(/\s+/g, ' ').slice(0, MAX_TYPED_TITLE_LENGTH);

@@ -8,6 +8,27 @@ Status: `open` · `doing` · `done` · `wontfix` (with a reason).
 
 ---
 
+### `MC-42` — resilient Presenter tip demos · done 2026-09-23
+
+Presenter tips could outpace the long-running MCP host during development and
+fail with an unknown built-in demo; an older host could also recognize a newly
+actionable lesson only as show-only. Tips now retry both stale outcomes with a
+compact inline guide. The Presenter catalog exposes safe first actions for 51 of
+56 lessons, and mixed lessons resolve explanation-only follow-ups as `look`
+steps so **Do it** becomes **Next** after the action. The five disruptive or
+native-menu-only lessons remain show-only. Tool count and model schema stay flat.
+
+### `MC-41` — complete Presenter demo catalog · done 2026-09-23
+
+Presenter Tips of the Day exposed only six checked-in demos, leaving documents,
+audience screens, media, service planning, help and the native View menu outside
+the zero-model guide path. Shipped 56 Presenter lessons through the existing
+`owa_guide_start { demoId }` contract: 24 safe deterministic controls and 32
+self-guided lessons for state-dependent, native-menu or live-output work. No new
+tool or schema enum was added; unsafe effects remain explanation-only, so a demo
+cannot change congregation output, reload or relaunch the app, reset the layout,
+or open Developer Tools.
+
 ### `MC-40` — precompiled Reader demos · done 2026-09-22
 
 The guide could run explicit steps, but every caller had to invent them and the

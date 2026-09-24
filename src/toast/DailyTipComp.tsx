@@ -18,6 +18,7 @@ import {
     getDailyTips,
     pickDailyTipIndex,
     rememberDailyTip,
+    startDailyTipGuide,
 } from './dailyTipHelpers';
 
 const MENU_KEY = 'daily-tips';
@@ -151,7 +152,7 @@ export default function DailyTipComp() {
         setTipIndex(null);
     }, []);
     const handleShow = useCallback(async () => {
-        if (tip === null || isStarting) {
+        if (page === null || tip === null || isStarting) {
             return;
         }
         if (!getIsAIEnabled()) {
@@ -162,14 +163,14 @@ export default function DailyTipComp() {
         setIsStarting(true);
         try {
             const { callTool } = await import('../chatbot/mcpClient');
-            await callTool('owa_guide_start', { demoId: tip.demoId });
+            await startDailyTipGuide(page, tip, callTool);
             setTipIndex(null);
         } catch (_error) {
             setErrorMessage(tran('Could not start this walkthrough.'));
         } finally {
             setIsStarting(false);
         }
-    }, [isStarting, tip]);
+    }, [isStarting, page, tip]);
 
     if (page === null || tip === null) {
         return null;

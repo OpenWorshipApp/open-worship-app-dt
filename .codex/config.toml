@@ -24,3 +24,9 @@ approval_mode = "approve"
 
 [mcp_servers.owa-devtools.tools.owa_list_ui]
 approval_mode = "approve"
+
+[mcp_servers.owa-devtools.tools.owa_screenshot]
+approval_mode = "approve"
+
+[mcp_servers.owa-devtools.tools.navigate_page]
+approval_mode = "approve"

@@ -49,8 +49,11 @@ it is describing.
    move to sit above their lists instead of beside them.) The first,
    **ASKING ABOUT**, says which window of the app you are asking about —
    **Presenter**, **Bible Reader**, **Document Editor**, **Bible Note**, **Settings**,
-   **Web Editor**, **Lyric Editor** or **Local Web Share**. It starts on whichever one
-   you opened the help from, and the suggested questions change with it: opened from
+   **Web Editor**, **Lyric Editor** or **Local Web Share**. Every time you open the
+   help — including bringing an already-open help window back to the front — the
+   active tab starts on the window you opened it from. A choice you make afterwards
+   stays with that tab until the next launch, and the other chat tabs keep their own
+   choices. The suggested questions change with it: opened from
    the Lyric Editor it offers marking verses and choruses, opened from Settings it
    offers the language and the Bible downloads. Answers follow it too — a recipe
    belonging to another window names buttons that are not on your screen, so it is

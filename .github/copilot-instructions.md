@@ -287,7 +287,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   because a wrong press is now a refusal that names what it found.
 - **The Presenter and Reader have checked-in demos that need no model**
   (2026-09-22, expanded 2026-09-23, `readerDemos.mjs` and
-  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 24
+  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 49
   Reader-only lessons through the same guarded card: the original font
   larger/smaller, localized John 3:16 and Bible Find demos, plus passage
   history, reference clearing, people/places, two versions, full view,
@@ -297,9 +297,16 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   steps the MCP runs cannot drift. A demo changes one visible thing per **Do
   it** press; the search lesson names the Bible Online Lookup picker, selects
   **Find** even when it remembered Resources, and leaves the search box for the
-  person's own word. Six safe Presenter lessons back its Tips of the Day and
-  only reveal or toggle app controls. `demoId` is a string validated against
-  those catalogs at call time, not a 30-value schema enum sent to the model on every round. This
+  person's own word. The Presenter catalog has 56 lessons across documents,
+  audience screens, backgrounds and media, service planning, app help and the
+  View menu. Fifty-one lessons now begin with a safe deterministic **Do it**
+  action, then turn any explanation-only follow-up into **Next**; only Reload,
+  Relaunch, Developer Tools, Widgets, and Reset Widgets remain fully self-guided.
+  No lesson can present, reload, relaunch, reset layout, or open Developer Tools
+  for the person. Tips also send their current inline lesson when a hot-reloaded
+  renderer finds an older long-running MCP catalog. `demoId` is a string
+  validated against those catalogs at call time, not a 105-value schema enum
+  sent to the model on every round. This
   adds no tool, spends no provider credit and keeps schema cost flat as lessons
   are added.
 - **The screens tool says what is ON the projector, not only whether it is on**

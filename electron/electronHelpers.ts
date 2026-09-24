@@ -157,6 +157,7 @@ export const messageChannels = {
     guideHelp: 'main:app:guide-help',
     guideHelpAnswer: 'main:app:guide-help-answer',
     chatAttach: 'main:app:chat-attach',
+    chatbotLaunchFocus: 'main:app:chatbot-launch-focus',
 };
 
 /**
@@ -1194,6 +1195,15 @@ function handlePopupWindowOpen(
     const { groupWindows, selfWindows, subDisplay, featuresRecord, boundsKey } =
         getPopupWindowData(win, options);
     if (groupWindows.length > 0) {
+        if (options.url.includes(htmlFiles.chatbot)) {
+            const openerPathname = new URL(win.webContents.getURL()).pathname;
+            for (const existingWin of selfWindows) {
+                existingWin.webContents.send(
+                    messageChannels.chatbotLaunchFocus,
+                    openerPathname,
+                );
+            }
+        }
         setTimeout(() => {
             for (const win of groupWindows) {
                 if (win.isMinimized()) {

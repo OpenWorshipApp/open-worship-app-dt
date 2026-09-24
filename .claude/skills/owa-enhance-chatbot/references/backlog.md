@@ -13,6 +13,55 @@ tools → cost → capability → polish.**
 
 ---
 
+## EC-191 · Presenter Show it could fail or leave a dead Do it — `done` 2026-09-23
+
+The reported **Build a service presenting flow** tip displayed “Could not start
+this walkthrough.” A hot-reloaded renderer could know a lesson before Electron's
+long-running MCP host did; after the host learned the lesson, its older show-only
+copy still offered no **Do it** action. Mixed action/explanation lessons could
+also advance to an explanation with a non-working **Do it** button.
+
+**Shipped.** Tips retry an unknown or stale show-only built-in with the current
+inline lesson, so no app restart is required. Fifty-one of 56 Presenter lessons
+now begin with a safe actionable step. Explanation-only follow-ups are explicit
+**Next** steps. Reload, Relaunch, Developer Tools, Widgets, and Reset Widgets
+remain deliberately self-guided because automating them would be disruptive or
+cannot be addressed through the page. Fresh-process live verification reproduced
+the reported lesson as `isDemo: true`, completed its first action, and advanced
+to step 2 as `kind: look` with no dead action.
+
+## EC-190 · Launching from the Presenter left ASKING ABOUT on Bible Reader — `done` 2026-09-23
+
+**Reported by the user with the live Presenter and chatbot in one screenshot.**
+The main window was `presenter.html`, while the restored active chat still showed
+**Bible Reader**. The opener was already readable, but only a brand-new empty
+session used it at mount; a restored tab did not visibly follow it until a question
+was submitted, and raising an already-open chatbot did not remount React at all.
+
+**Shipped.** Each explicit chatbot launch applies the launching window to the active
+tab immediately. A fresh/restored window reads its opener during initialization; an
+already-open popup receives the launcher's current pathname from Electron before it
+is raised. The launch resets that tab to automatic page following, a manual choice
+made afterwards remains tab-scoped until the next launch, and every other tab is
+unchanged. Live on the reported state, the same active tab changed **Bible Reader →
+Presenter** while the main page remained `presenter.html`. No model call or tool
+schema changed. Focused coverage: 40 session tests and 20 popup tests pass.
+
+## EC-189 · Six Presenter tips left most of the Presenter undiscoverable — `done` 2026-09-23
+
+Requested with **All Presenter tips** visibly capped at 6/6. That catalog named
+only Bible Lookup and five layout panels; it did not teach documents and slides,
+audience screens, backgrounds and media, service planning, app help, or the
+native View menu.
+
+**Shipped.** Presenter All tips now has exactly 56 searchable, topic-labelled
+lessons. The first 24 are deterministic walkthroughs for safe visible controls;
+the other 32 explain state-dependent, native-menu, and live-output work without
+presenting, reloading, relaunching, exporting, resetting layout, opening
+Developer Tools, or changing congregation output. The shared catalog backs both
+Tips of the Day and `owa_guide_start`, while `demoId` remains a runtime-validated
+string, so the 50 additions add no tool and no schema enum to every model round.
+
 ## EC-188 · Four Reader demos left most important Reader work undiscoverable — `done` 2026-09-23
 
 Requested with the four-demo shelf visible: add 20 more important demonstrations,

@@ -1,13 +1,12 @@
 ---
 id: W-46
-title: 'Learn the page with Tips of the Day'
-section: 'Configuration'
+title: "Learn the page with Tips of the Day"
+section: "Configuration"
 verify: [GL-25]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: '2026-09-23'
+workflowsVersion: "2026-09-23"
 ---
-
 # W-46 — Learn the page with Tips of the Day
 
 **Goal:** learn the Presenter or Bible Reader at your own pace and see the exact
@@ -21,8 +20,12 @@ control without having to search the manual.
    the first tip after the last. Click **All tips** to open the numbered learning
    list for the current page. Search by a control or task, or scan the topic badges;
    the counter shows how many lessons match. Each lesson says what it teaches;
-   choose one to return to its card and practise it at your own pace. The Reader
-   has **49 topics**. They cover reference entry and history, reading panes and
+   choose one to return to its card and practise it at your own pace. The
+   Presenter has **56 topics**: 51 start with a safe **Do it** for a visible
+   control or shortcut, while Reload, Relaunch, Developer Tools, Widgets, and
+   Reset Widgets stay self-guided. They cover documents and slides, audience
+   screens, backgrounds and media, service planning, app help, and every command
+   under **View**. The Reader has **49 topics**. They cover reference entry and history, reading panes and
    formatting, Find and cross references, people/places and connection graphs,
    Resources, verse marks and notes, presenting a verse, the Reader header, and
    every command under **View**. The **×** closes the card for now; reloading or moving between
@@ -30,11 +33,17 @@ control without having to search the manual.
    launch.
 3. Click **Show it** to start a numbered card in the current page, with the control
    ringed in red. This uses a checked-in walkthrough and no model or provider
-   credit. Presenter walkthroughs only open or toggle app controls; they never
-   change what the congregation sees. Reader lessons that depend on selected
-   text, files, a graph, or the native menu become self-guided numbered cards.
-   They explain the exact action but do not reload, relaunch, export, reset the
-   layout, or open Developer Tools for you. If **AI features** is off, the app
+   credit. The Presenter's deterministic walkthroughs only open, toggle, or
+   adjust safe app controls. Press **Do it** once per actionable step; when the
+   safe setup is complete, an explanation-only follow-up uses **Next**, never a
+   disabled or failing **Do it**. If the renderer refreshed before the local
+   walkthrough service, Show it sends the current lesson inline and still opens
+   the card. Steps that would present, control an audience screen, export, or use
+   a disruptive native-menu action remain self-guided numbered cards.
+   Reader lessons that depend on selected text, files, a graph, or the native
+   menu are self-guided too. They explain the exact action but do not reload,
+   relaunch, export, reset the layout, open Developer Tools, or change what the
+   congregation sees. If **AI features** is off, the app
    offers to open Settings → Others because the local walkthrough server is
    switched off with it.
 4. Click **Don't show again** to stop automatic tips on both pages in future app
@@ -45,9 +54,10 @@ control without having to search the manual.
    General Options**, turn on **[en:tran:Show Tips of the Day automatically]**, and
    start the app again. The switch restores tips for both Presenter and Bible Reader.
 
-The Reader catalog deliberately keeps **Reload**, **Force Reload**, **Relaunch**
-and **Toggle Developer Tools** under the **View menu** topic for completeness,
-but does not put those troubleshooting commands into the random daily rotation.
+The Presenter and Reader catalogs deliberately keep **Reload**, **Force Reload**,
+**Relaunch** and **Toggle Developer Tools** under the **View menu** topic for
+completeness, but do not put those troubleshooting commands into the random
+daily rotation.
 **Actual Size / Zoom In / Zoom Out** are taught as whole-window zoom, separately
 from the passage's **Font Size**. **Toggle Full Screen** is taught as whole-window
 full screen, separately from the passage's **Full** button. **Widgets** explains

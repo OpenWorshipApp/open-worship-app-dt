@@ -1,6 +1,13 @@
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { tran } from '../lang/langHelpers';
-import { READER_DEMO_LIST } from '../../tools/owa-devtools-mcp/readerDemos.mjs';
+import {
+    getPresenterDemo,
+    PRESENTER_DEMO_LIST,
+} from '../../tools/owa-devtools-mcp/presenterDemos.mjs';
+import {
+    getReaderDemo,
+    READER_DEMO_LIST,
+} from '../../tools/owa-devtools-mcp/readerDemos.mjs';
 export {
     DAILY_TIPS_DISABLED_SETTING_NAME,
     disableDailyTips,
@@ -19,51 +26,131 @@ export type DailyTipType = {
     isDaily?: boolean;
 };
 
+export type DailyTipGuideStepType = {
+    text: string;
+    find?: string | null;
+    action?: 'click' | 'type' | 'hover' | 'rightClick';
+    value?: string;
+    press?: string;
+};
+
+export type DailyTipGuideType = {
+    title: string;
+    steps: DailyTipGuideStepType[];
+    mode: 'show' | 'demo';
+};
+
+export type DailyTipCallToolType = (
+    name: 'owa_guide_start',
+    args: Record<string, unknown>,
+) => Promise<unknown>;
+
+function getCanDemoFromToolResult(result: unknown): boolean | null {
+    let parsed = result;
+    if (typeof parsed === 'string') {
+        try {
+            parsed = JSON.parse(parsed);
+        } catch (_error) {
+            return null;
+        }
+    }
+    if (
+        typeof parsed === 'object' &&
+        parsed !== null &&
+        'canDemo' in parsed &&
+        typeof parsed.canDemo === 'boolean'
+    ) {
+        return parsed.canDemo;
+    }
+    return null;
+}
+
 export const DAILY_TIP_SESSION_KEY = 'daily-tip-auto-shown';
 
 function getPresenterTips(): DailyTipType[] {
-    return [
-        {
-            id: 'presenter-bible-lookup',
-            demoId: 'presenter-bible-lookup',
-            title: tran('Look up a Bible passage'),
-            detail: tran('Open Bible Lookup without leaving the Presenter.'),
-        },
-        {
-            id: 'presenter-document-list',
-            demoId: 'presenter-document-list',
-            title: tran('Show or hide the Document List'),
-            detail: tran('Toggle the panel that holds your slide documents.'),
-        },
-        {
-            id: 'presenter-flow-list',
-            demoId: 'presenter-flow-list',
-            title: tran('Show or hide the Presenting Flow List'),
-            detail: tran(
-                'Toggle the panel used to build and follow a service order.',
-            ),
-        },
-        {
-            id: 'presenter-bible-notes',
-            demoId: 'presenter-bible-notes',
-            title: tran('Show or hide Bibles and Bible Notes'),
-            detail: tran('Toggle the panel for saved passages and notes.'),
-        },
-        {
-            id: 'presenter-mini-screen',
-            demoId: 'presenter-mini-screen',
-            title: tran('Show or hide the Mini Screen'),
-            detail: tran(
-                'Toggle the panel that previews and controls audience screens.',
-            ),
-        },
-        {
-            id: 'presenter-full-view',
-            demoId: 'presenter-full-view',
-            title: tran('Give the Presenter more room'),
-            detail: tran('Switch the Presenter between normal and full view.'),
-        },
-    ];
+    const documentsIds = new Set([
+        'presenter-document-list',
+        'presenter-slide-editor-window',
+        'presenter-path-editor',
+        'presenter-filter-documents',
+        'presenter-sort-documents',
+        'presenter-filter-document-types',
+        'presenter-pin-document',
+        'presenter-thumbnail-size',
+        'presenter-preview-width',
+        'presenter-present-slide',
+        'presenter-auto-play',
+        'presenter-present-lyrics',
+        'presenter-more-options',
+        'presenter-songselect',
+        'presenter-public-domain',
+    ]);
+    const screenIds = new Set([
+        'presenter-mini-screen',
+        'presenter-present-bible',
+        'presenter-style-bible',
+        'presenter-screen-controls',
+        'presenter-multi-screen',
+        'presenter-draw-spotlight',
+        'presenter-keyboard-screencast',
+    ]);
+    const backgroundIds = new Set([
+        'presenter-foreground-panel',
+        'presenter-colors-tab',
+        'presenter-images-tab',
+        'presenter-videos-tab',
+        'presenter-cameras-tab',
+        'presenter-webs-tab',
+        'presenter-audios-tab',
+        'presenter-background-color',
+        'presenter-background-image',
+        'presenter-background-video',
+        'presenter-background-camera',
+        'presenter-background-web',
+        'presenter-play-audio',
+        'presenter-foreground-extras',
+        'presenter-download-media',
+    ]);
+    const serviceIds = new Set([
+        'presenter-flow-list',
+        'presenter-build-flow',
+        'presenter-share-flow',
+    ]);
+    const viewMenuIds = new Set([
+        'presenter-view-reload',
+        'presenter-view-relaunch',
+        'presenter-view-devtools',
+        'presenter-view-zoom',
+        'presenter-view-fullscreen',
+        'presenter-view-widgets',
+        'presenter-view-reset-widgets',
+    ]);
+    const notForDailyIds = new Set([
+        'presenter-view-reload',
+        'presenter-view-relaunch',
+        'presenter-view-devtools',
+    ]);
+    return PRESENTER_DEMO_LIST.map((demo) => {
+        const category = documentsIds.has(demo.id)
+            ? tran('Documents and slides')
+            : screenIds.has(demo.id)
+              ? tran('Audience screens')
+              : backgroundIds.has(demo.id)
+                ? tran('Background and media')
+                : serviceIds.has(demo.id)
+                  ? tran('Service planning')
+                  : viewMenuIds.has(demo.id)
+                    ? tran('View menu')
+                    : tran('Getting started');
+        return {
+            id: demo.id,
+            demoId: demo.id,
+            title: tran(demo.label),
+            detail: tran(demo.detail),
+            category,
+            isDaily: !notForDailyIds.has(demo.id),
+        };
+    });
 }
 
 function getReaderTips(): DailyTipType[] {
@@ -148,6 +235,80 @@ export function getDailyTipPage(homePage: string): DailyTipPageType | null {
 
 export function getDailyTips(page: DailyTipPageType): DailyTipType[] {
     return page === 'presenter' ? getPresenterTips() : getReaderTips();
+}
+
+export function getDailyTipGuide(
+    page: DailyTipPageType,
+    tip: DailyTipType,
+): DailyTipGuideType | null {
+    const demo =
+        page === 'presenter'
+            ? getPresenterDemo(tip.demoId, tran)
+            : getReaderDemo(tip.demoId, tran);
+    if (demo === null) {
+        return null;
+    }
+    const steps = demo.steps.map((step) => {
+        const find = step.finds?.at(-1) ?? step.find;
+        return {
+            text: step.text,
+            ...(find === undefined ? {} : { find }),
+            ...(step.action === undefined ? {} : { action: step.action }),
+            ...(step.value === undefined ? {} : { value: step.value }),
+            ...(step.press === undefined ? {} : { press: step.press }),
+        };
+    });
+    const actionableSteps = steps.filter((step) => {
+        return (
+            typeof step.find === 'string' ||
+            typeof step.press === 'string' ||
+            step.action === 'rightClick'
+        );
+    });
+    return {
+        title: tip.title,
+        steps: actionableSteps.length === 0 ? steps : actionableSteps,
+        mode: actionableSteps.length === 0 ? 'show' : 'demo',
+    };
+}
+
+export async function startDailyTipGuide(
+    page: DailyTipPageType,
+    tip: DailyTipType,
+    callTool: DailyTipCallToolType,
+) {
+    const guide = getDailyTipGuide(page, tip);
+    try {
+        const result = await callTool('owa_guide_start', {
+            demoId: tip.demoId,
+        });
+        // During development the renderer can hot-reload a newly actionable
+        // lesson while Electron's MCP host still knows its older, show-only
+        // form. Upgrade that successful-but-stale start in place too.
+        if (
+            guide?.mode !== 'demo' ||
+            getCanDemoFromToolResult(result) !== false
+        ) {
+            return;
+        }
+    } catch (error) {
+        if (
+            !(error instanceof Error) ||
+            !error.message.includes('Unknown built-in demo')
+        ) {
+            throw error;
+        }
+    }
+    // The renderer hot-reloads before Electron's long-lived MCP host. Send
+    // the selected lesson itself when that host still has the older catalog,
+    // so Show it never asks the user to restart just to practise a tip.
+    if (guide === null) {
+        throw new Error(`No walkthrough is available for "${tip.title}".`);
+    }
+    await callTool('owa_guide_start', {
+        ...guide,
+        page: `${page}.html`,
+    });
 }
 
 function getLastTipSettingName(page: DailyTipPageType) {

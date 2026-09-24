@@ -4,6 +4,7 @@ export type ReaderDemoStepType = {
   finds?: string[];
   action?: 'click' | 'type';
   value?: string;
+  press?: string;
   skipIfVisible?: string;
 };
 
