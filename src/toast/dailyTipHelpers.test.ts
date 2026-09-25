@@ -54,11 +54,35 @@ describe('daily tip helpers', () => {
         expect(getDailyTips('presenter').map(({ demoId }) => demoId)).toEqual(
             PRESENTER_DEMO_IDS,
         );
-        expect(getDailyTips('presenter')).toHaveLength(56);
+        expect(getDailyTips('presenter')).toHaveLength(61);
         expect(getDailyTips('reader').map(({ demoId }) => demoId)).toEqual(
             READER_DEMO_IDS,
         );
-        expect(getDailyTips('reader')).toHaveLength(49);
+        expect(getDailyTips('reader')).toHaveLength(54);
+    });
+
+    it('covers every native menu from File through Help on both pages', () => {
+        const suffixes = [
+            'menu-file',
+            'menu-edit',
+            'menu-tools',
+            'menu-window',
+            'menu-help',
+        ];
+        for (const page of ['presenter', 'reader'] as const) {
+            const tips = getDailyTips(page);
+            for (const suffix of suffixes) {
+                const tip = tips.find(({ id }) => id === `${page}-${suffix}`);
+                expect(tip?.detail.length, `${page}-${suffix}`).toBeGreaterThan(
+                    40,
+                );
+                expect(tip?.category, `${page}-${suffix}`).toMatch(/ menu$/);
+                expect(
+                    getDailyTipGuide(page, tip!)?.mode,
+                    `${page}-${suffix}`,
+                ).toBe('show');
+            }
+        }
     });
 
     it('keeps disruptive View commands in All tips, not the daily rotation', () => {

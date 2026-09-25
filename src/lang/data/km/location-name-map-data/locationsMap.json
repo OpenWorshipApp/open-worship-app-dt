@@ -1,5 +1,5 @@
 {
-  "version": 90,
+  "version": 94,
   "locationsMap": [
     {
       "id": "00000000-0000-4000-8000-000000000002",
@@ -1170,28 +1170,6 @@
       "wikipedia": "https://en.wikipedia.org/wiki/Alexandria",
       "uncertainty": false,
       "matterRange": 65
-    },
-    {
-      "id": "25e3ce53-95ff-4df4-911a-d91e33c82863",
-      "name": "ដើមម៉ៃសាក់ទឹកភ្នែក",
-      "kjvName": "Allonbachuth",
-      "oldName": "ដើមម៉ៃសាក់ទឹកភ្នែក",
-      "title": "ជាទម្រង់ KJV នៃ ដើមម៉ៃសាក់ទឹកភ្នែក ដែលជាដើមម៉ៃសាក់នៅខាងក្រោម [បេត-អែល](location-id://00000000-0000-4000-8000-000000000032) ជាកន្លែងដែលគេបានបញ្ចុះសព [ដេបូរ៉ា](name-id://8d540846-0f87-41c7-8c13-6fb3fb6cb89f)",
-      "description": "ដើមម៉ៃសាក់ទឹកភ្នែក គឺជាអក្ខរាវិរុទ្ធ King James Version នៃ ដើមម៉ៃសាក់ទឹកភ្នែក ដែលជា «ដើមម៉ៃសាក់នៃទឹកភ្នែក» នៅខាងក្រោម [បេត-អែល](location-id://00000000-0000-4000-8000-000000000032) ជាកន្លែងដែលគេបានបញ្ចុះសព [ដេបូរ៉ា](name-id://8d540846-0f87-41c7-8c13-6fb3fb6cb89f) ដែលជាមេដោះរបស់ [រេបិកា](name-id://d9f63818-b074-4f13-86e7-63f1fcc88b53) គេមិនដឹងទីតាំងពិតប្រាកដទេ។",
-      "type": "place",
-      "relatedLocations": [
-        "00000000-0000-4000-8000-000000000008",
-        "00000000-0000-4000-8000-000000000032"
-      ],
-      "modernIdentification": null,
-      "coordinates": null,
-      "verses": [
-        "GEN 35:8"
-      ],
-      "links": [],
-      "wikipedia": "https://en.wikipedia.org/wiki/Allon_Bachuth",
-      "uncertainty": true,
-      "matterRange": 88
     },
     {
       "id": "18e003a2-933e-43f5-9755-a2301fcc54a3",
@@ -2796,14 +2774,14 @@
       "name": "បេត-ហារ៉ាន",
       "kjvName": "Bethharan",
       "oldName": null,
-      "title": "ជាទម្រង់សរសេរជាពាក្យតែមួយនៃ បេត-ហារ៉ាន ដែលជាក្រុងរបស់ជនជាតិកាឌ់ក្នុងជ្រលង [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
-      "description": "បេត-ហារ៉ាន គឺជាអក្ខរាវិរុទ្ធជាពាក្យតែមួយនៃ បេត-ហារ៉ាន ឬ បេត-ហារ៉ាម ដែលជាក្រុងរបស់ជនជាតិកាឌ់នៅខាងកើត [យេរីខូរ](location-id://00000000-0000-4000-8000-000000000116) ក្នុងជ្រលង [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) ដែលក្រោយមកពាក់ព័ន្ធនឹងក្រុង Livias។",
+      "title": "[Numbers](book-key://NUM) name for a fenced Gadite town east of the [Jordan](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
+      "description": "Bethharan was a fenced Gadite town east of [Jericho](location-id://00000000-0000-4000-8000-000000000116) in the [Jordan](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) Valley, later associated with Livias.",
       "type": "city",
       "relatedLocations": [
         "55ed6201-774a-4bd6-9801-8c3f8018942e",
-        "e10c14d7-9df4-4c20-aea2-c3107e64a1bc",
         "a8e27fd5-3589-4590-8140-e867b7f142ed",
-        "00000000-0000-4000-8000-000000000116"
+        "00000000-0000-4000-8000-000000000116",
+        "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
       ],
       "modernIdentification": "Tell er-Rameh និងតំបន់ក្រុង Livias បុរាណ ក្នុងប្រទេសយ័រដាន់",
       "coordinates": {
@@ -3025,32 +3003,6 @@
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
-    },
-    {
-      "id": "36ef8d50-17d9-4ee3-bb6f-85ecf0b5f994",
-      "name": "បាល-ហាសោរ",
-      "kjvName": "Baalhazor",
-      "oldName": null,
-      "title": "ជាទម្រង់ខុសគ្នាតាមចន្លោះអក្សរនៃ [បាល-ហាសោរ](location-id://00000000-0000-4000-8000-000000000024) ដែលជាដីចម្ការរបស់ [អាប់សាឡំម](name-id://0e94a17b-69b1-4148-b7de-72eab8eea4cc) ក្នុង [អេប្រាអិម](location-id://0e95bdcb-42ff-4f2a-80d7-00c32ac05b2c)",
-      "description": "បាល-ហាសោរ គឺជាអក្ខរាវិរុទ្ធដែលមានចន្លោះនៃ [បាល-ហាសោរ](location-id://00000000-0000-4000-8000-000000000024) ដែលជាដីចម្ការ ឬភ្នំក្បែរ [អេប្រាអិម](location-id://0e95bdcb-42ff-4f2a-80d7-00c32ac05b2c) ជាកន្លែងដែល [អាប់សាឡំម](name-id://0e94a17b-69b1-4148-b7de-72eab8eea4cc) បានធ្វើពិធីជប់លៀងកាត់រោមចៀម ហើយបានរៀបចំការសម្លាប់ [អាំណូន](name-id://7ddb908e-7d1c-4f3f-8acf-982a7042de76)។",
-      "type": "mountain",
-      "relatedLocations": [
-        "00000000-0000-4000-8000-000000000024",
-        "0e95bdcb-42ff-4f2a-80d7-00c32ac05b2c",
-        "00000000-0000-4000-8000-000000000032"
-      ],
-      "modernIdentification": "Tell Asur នៅឦសានបេត-អែល ក្នុងតំបន់ភ្នំកណ្តាលនៃត្រើយខាងលិច",
-      "coordinates": {
-        "latitude": 31.978559,
-        "longitude": 35.279583
-      },
-      "verses": [
-        "2SA 13:23"
-      ],
-      "links": [],
-      "wikipedia": null,
-      "uncertainty": true,
-      "matterRange": 70
     },
     {
       "id": "90b75f03-ca8f-4cba-b961-909e4016f81b",
@@ -3917,32 +3869,6 @@
       "matterRange": 92
     },
     {
-      "id": "baf670bc-6ce3-47e6-8c5e-67fded0d7e75",
-      "name": "បេត-អាណាត",
-      "kjvName": "Bethanath",
-      "oldName": null,
-      "title": "ជាទម្រង់ខុសគ្នាតាមចន្លោះអក្សរនៃ [បេត-អាណាត](location-id://00000000-0000-4000-8000-000000000030) ដែលជាក្រុងបន្ទាយរបស់ណែបថាលី",
-      "description": "បេត-អាណាត គឺជាអក្ខរាវិរុទ្ធដែលមានចន្លោះនៃ [បេត-អាណាត](location-id://00000000-0000-4000-8000-000000000030) ដែលជាក្រុងរបស់ជនជាតិណែបថាលី ដែលអ្នកស្រុកជនជាតិកាណានរបស់វាបានស្នាក់នៅក្នុងចំណោមជនជាតិអ៊ីស្រាអែល។",
-      "type": "city",
-      "relatedLocations": [
-        "00000000-0000-4000-8000-000000000030",
-        "2ee651d9-d1e6-4096-b6db-6d49461a0dc9"
-      ],
-      "modernIdentification": "ជាធម្មតាគេកំណត់ថាជា Ainata សព្វថ្ងៃ ឬទីតាំងជិតខាង ក្នុងប្រទេសលីបង់ភាគខាងត្បូង",
-      "coordinates": {
-        "latitude": 33.146017,
-        "longitude": 35.427277
-      },
-      "verses": [
-        "JOS 19:38",
-        "JDG 1:33"
-      ],
-      "links": [],
-      "wikipedia": null,
-      "uncertainty": true,
-      "matterRange": 84
-    },
-    {
       "id": "3ff1c8e1-8f0f-47d7-acd2-e5c1bf7ec27e",
       "name": "បេត-អាណូត",
       "kjvName": "Bethanoth",
@@ -4279,8 +4205,8 @@
       "modernIdentification": "Ramat Rachel ឬសន្សំភ្នំជិតខាង នៅខាងត្បូងក្រុងយេរូសាឡិម",
       "coordinates": null,
       "verses": [
-        "JER 6:1",
-        "NEH 3:14"
+        "NEH 3:14",
+        "JER 6:1"
       ],
       "links": [],
       "wikipedia": null,
@@ -4293,10 +4219,10 @@
       "kjvName": "Betharam",
       "oldName": null,
       "title": "ជាទម្រង់ក្នុងកណ្ឌ Joshua នៃក្រុងរបស់ជនជាតិកាឌ់នៅខាងកើត [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
-      "description": "បេត-ហារ៉ាម គឺជាទម្រង់នៃក្រុងរបស់ជនជាតិកាឌ់នៅខាងកើត [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) ក្នុងកណ្ឌ [Joshua](book-key://JOS) ដែលត្រូវនឹង [បេត-ហារ៉ាន](location-id://e10c14d7-9df4-4c20-aea2-c3107e64a1bc) ក្នុងកណ្ឌ [Numbers](book-key://NUM) ហើយក្រោយមកពាក់ព័ន្ធនឹងក្រុង Livias។",
+      "description": "បេត-ហារ៉ាម គឺជាទម្រង់នៃក្រុងរបស់ជនជាតិកាឌ់នៅខាងកើត [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) ក្នុងកណ្ឌ [Joshua](book-key://JOS) ដែលត្រូវនឹង [បេត-ហារ៉ាន](location-id://00000000-0000-4000-8000-000000000033) ក្នុងកណ្ឌ [Numbers](book-key://NUM) ហើយក្រោយមកពាក់ព័ន្ធនឹងក្រុង Livias។",
       "type": "city",
       "relatedLocations": [
-        "e10c14d7-9df4-4c20-aea2-c3107e64a1bc",
+        "00000000-0000-4000-8000-000000000033",
         "a8e27fd5-3589-4590-8140-e867b7f142ed",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
       ],
@@ -4307,32 +4233,6 @@
       },
       "verses": [
         "JOS 13:27"
-      ],
-      "links": [],
-      "wikipedia": null,
-      "uncertainty": true,
-      "matterRange": 86
-    },
-    {
-      "id": "e10c14d7-9df4-4c20-aea2-c3107e64a1bc",
-      "name": "បេត-ហារ៉ាន",
-      "kjvName": "Bethharan",
-      "oldName": null,
-      "title": "ជាទម្រង់ក្នុងកណ្ឌ [Numbers](book-key://NUM) នៃក្រុងរបស់ជនជាតិកាឌ់នៅខាងកើត [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
-      "description": "បេត-ហារ៉ាន គឺជាទម្រង់ក្នុងកណ្ឌ [Numbers](book-key://NUM) សម្រាប់ក្រុងរបស់ជនជាតិកាឌ់នៅខាងកើត [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) ដែលក្រោយមកពាក់ព័ន្ធនឹងក្រុង Livias ហើយត្រូវនឹង [បេត-ហារ៉ាម](location-id://55ed6201-774a-4bd6-9801-8c3f8018942e) ក្នុងកណ្ឌ [Joshua](book-key://JOS)។",
-      "type": "city",
-      "relatedLocations": [
-        "55ed6201-774a-4bd6-9801-8c3f8018942e",
-        "a8e27fd5-3589-4590-8140-e867b7f142ed",
-        "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
-      ],
-      "modernIdentification": "Tell er-Rameh និងតំបន់ក្រុង Livias បុរាណ ក្នុងប្រទេសយ័រដាន់",
-      "coordinates": {
-        "latitude": 31.816383,
-        "longitude": 35.584295
-      },
-      "verses": [
-        "NUM 32:36"
       ],
       "links": [],
       "wikipedia": null,
@@ -4535,7 +4435,7 @@
       "relatedLocations": [
         "a8e27fd5-3589-4590-8140-e867b7f142ed",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987",
-        "e10c14d7-9df4-4c20-aea2-c3107e64a1bc"
+        "00000000-0000-4000-8000-000000000033"
       ],
       "modernIdentification": "Tell Nimrin ក្នុងប្រទេសយ័រដាន់ នៅខាងកើតជ្រលងទន្លេយ័រដាន់ខាងក្រោម",
       "coordinates": {
@@ -4619,30 +4519,6 @@
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 62
-    },
-    {
-      "id": "1107b4f4-405b-4892-8436-8b3a7465b9d4",
-      "name": "បេត-រេហុប",
-      "kjvName": "Bethrehob",
-      "oldName": null,
-      "title": "ជាទម្រង់ខុសគ្នាតាមចន្លោះអក្សរនៃ [បេត-រេហុប](location-id://00000000-0000-4000-8000-000000000035) ដែលជាក្រុង ឬស្រុកភាគខាងជើង",
-      "description": "បេត-រេហុប គឺជាអក្ខរាវិរុទ្ធដែលមានចន្លោះនៃ [បេត-រេហុប](location-id://00000000-0000-4000-8000-000000000035) ដែលជាស្រុក ឬទីលំនៅភាគខាងជើងក្បែរ [ដាន់](location-id://dadc79b1-e84f-40e0-ab31-2fa96b6ed4bd) និង ឡេបូ-ហាម៉ាត។",
-      "type": "city",
-      "relatedLocations": [
-        "00000000-0000-4000-8000-000000000035",
-        "dadc79b1-e84f-40e0-ab31-2fa96b6ed4bd",
-        "00000000-0000-4000-8000-000000000015"
-      ],
-      "modernIdentification": null,
-      "coordinates": null,
-      "verses": [
-        "JDG 18:28",
-        "2SA 10:6"
-      ],
-      "links": [],
-      "wikipedia": null,
-      "uncertainty": true,
-      "matterRange": 78
     },
     {
       "id": "7b0f49d3-4da0-488e-ac64-672963954344",
@@ -5203,27 +5079,6 @@
       "wikipedia": "https://en.wikipedia.org/wiki/Tribe_of_Benjamin",
       "uncertainty": false,
       "matterRange": 42
-    },
-    {
-      "id": "f6a8b0c2-5e7d-4f9a-b13c-6d8e0f2a4b5c",
-      "name": "បេត-ស៊ើរ",
-      "kjvName": "Bethzur",
-      "oldName": null,
-      "title": "ជាក្រុងបន្ទាយក្នុងតំបន់ភ្នំរបស់ជនជាតិយូដា នៅខាងត្បូង [យេរូសាឡិម](location-id://00000000-0000-4000-8000-000000000117)",
-      "description": "បេត-ស៊ើរ គឺជាក្រុងរបស់ជនជាតិយូដា ដែល [រេហូបោម](name-id://68d5eac0-52b9-4b0b-b484-8c7b5c3b8971) បានសង់បន្ទាយឲ្យ ហើយក្រោយមកមានការគ្រប់គ្រងមួយផ្នែកនៅសម័យរបស់ [នេហេមា](name-id://46c4c07f-dde8-4466-a278-6e40a8d3e7f1) [នេហេមា](name-id://7d660af0-8058-4ea7-9317-a9c3fd16a824) កូនប្រុសរបស់ [អាសប៊ូក](name-id://6a14089b-72e5-474e-bbfe-9830aa40a682) ជាអភិបាលនៃពាក់កណ្តាលស្រុករបស់វា។",
-      "type": "city",
-      "relatedLocations": [],
-      "modernIdentification": "Khirbet et-Tubeiqa នៅខាងត្បូងបេថ្លេហិម",
-      "coordinates": null,
-      "verses": [
-        "JOS 15:58",
-        "2CH 11:7",
-        "NEH 3:16"
-      ],
-      "links": [],
-      "wikipedia": "https://en.wikipedia.org/wiki/Beth-zur",
-      "uncertainty": false,
-      "matterRange": 78
     },
     {
       "id": "00000000-0000-4000-8000-000000000041",
@@ -7919,32 +7774,6 @@
         "DAN 11:8",
         "DAN 11:42",
         "DAN 11:43",
-        "JOL 3:19",
-        "AMO 2:10",
-        "AMO 3:1",
-        "AMO 3:9",
-        "AMO 4:10",
-        "AMO 8:8",
-        "AMO 9:5",
-        "AMO 9:7",
-        "ACT 2:10",
-        "ACT 7:9",
-        "ACT 7:10",
-        "ACT 7:11",
-        "ACT 7:12",
-        "ACT 7:15",
-        "ACT 7:17",
-        "ACT 7:34",
-        "ACT 7:36",
-        "ACT 7:39",
-        "ACT 7:40",
-        "ACT 13:17",
-        "REV 11:8",
-        "HAG 2:5",
-        "HEB 3:16",
-        "HEB 8:9",
-        "HEB 11:26",
-        "HEB 11:27",
         "HOS 2:15",
         "HOS 7:11",
         "HOS 7:16",
@@ -7958,18 +7787,44 @@
         "HOS 12:9",
         "HOS 12:13",
         "HOS 13:4",
-        "JUD 1:5",
+        "JOL 3:19",
+        "AMO 2:10",
+        "AMO 3:1",
+        "AMO 3:9",
+        "AMO 4:10",
+        "AMO 8:8",
+        "AMO 9:5",
+        "AMO 9:7",
+        "MIC 6:4",
+        "MIC 7:15",
+        "NAM 3:9",
+        "HAG 2:5",
+        "ZEC 10:10",
+        "ZEC 10:11",
+        "ZEC 14:18",
+        "ZEC 14:19",
         "MAT 2:13",
         "MAT 2:14",
         "MAT 2:15",
         "MAT 2:19",
-        "MIC 6:4",
-        "MIC 7:15",
-        "NAM 3:9",
-        "ZEC 10:10",
-        "ZEC 10:11",
-        "ZEC 14:18",
-        "ZEC 14:19"
+        "ACT 2:10",
+        "ACT 7:9",
+        "ACT 7:10",
+        "ACT 7:11",
+        "ACT 7:12",
+        "ACT 7:15",
+        "ACT 7:17",
+        "ACT 7:34",
+        "ACT 7:36",
+        "ACT 7:39",
+        "ACT 7:40",
+        "ACT 13:17",
+        "HEB 3:16",
+        "HEB 8:9",
+        "HEB 11:26",
+        "HEB 11:27",
+        "JUD 1:5",
+        "REV 11:8"
       ],
       "links": [
         {
@@ -8019,9 +7874,9 @@
         "2KI 1:16",
         "JER 25:20",
         "AMO 1:8",
+        "ZEP 2:4",
         "ZEC 9:5",
-        "ZEC 9:7",
-        "ZEP 2:4"
+        "ZEC 9:7"
       ],
       "links": [
         {
@@ -8132,11 +7987,11 @@
     },
     {
       "id": "00000000-0000-4000-8000-000000000070",
-      "name": "អេន-កេឌី",
+      "name": "Engedi",
       "kjvName": "Engedi",
-      "oldName": "អេន-កេឌី",
+      "oldName": null,
       "title": "ជាអូអាស៊ីសសមុទ្រស្លាប់ និងជាទីមាំមួនក្នុងវាលរហោស្ថានរបស់ [ដាវីឌ](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c)",
-      "description": "អេន-កេឌី ដែល KJV សរសេរថា Engedi គឺជាអូអាស៊ីស និងទីលំនៅនៅលើឆ្នេរខាងលិចនៃសមុទ្រស្លាប់ ដែលគេកំណត់ថាជា [ហាសាលូន-តាម៉ារ](location-id://01cbbee4-41b6-442f-a7c1-a64c15f9542f) ហើយពាក់ព័ន្ធនឹង [ដាវីឌ](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) ដែលលាក់ខ្លួនពី [សូល](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb) នឹង [យ៉ូសាផាត](name-id://3a573bf3-3bda-458d-b7ac-5b2e4f3205f6) និងនឹងរូបភាពក្នុងកណ្ឌ [Song of Solomon](book-key://SNG) និង [Ezekiel](book-key://EZK)។",
+      "description": "Engedi was an oasis and settlement on the western shore of the Dead Sea, identified with [Hazazon-tamar](location-id://01cbbee4-41b6-442f-a7c1-a64c15f9542f) and associated with [David](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) hiding from [Saul](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb), [Jehoshaphat](name-id://3a573bf3-3bda-458d-b7ac-5b2e4f3205f6), and the imagery of [Song of Solomon](book-key://SNG) and [Ezekiel](book-key://EZK).",
       "type": "settlement",
       "relatedLocations": [
         "2882f5a5-375a-40b9-9142-55341e8b6a91",
@@ -8177,7 +8032,7 @@
       "relatedLocations": [
         "00000000-0000-4000-8000-000000000103",
         "00000000-0000-4000-8000-000000000045",
-        "42017171-050f-4b41-bdae-3081853e3e98"
+        "00000000-0000-4000-8000-000000000122"
       ],
       "modernIdentification": "ទំនងជាជ្រលងមួយក្នុងតំបន់ហេប្រុន នៃតំបន់ភ្នំខាងត្បូង",
       "coordinates": null,
@@ -8289,9 +8144,9 @@
     },
     {
       "id": "2c92930d-800c-4a71-bd54-c32fb2fc1f8d",
-      "name": "អេឌើរ of យូដា",
-      "kjvName": "Eder of Judah",
-      "oldName": "អេឌើរ",
+      "name": "Eder",
+      "kjvName": "Eder",
+      "oldName": null,
       "title": "ជាក្រុងភាគខាងត្បូងក្នុង [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដែលខុសពីប៉មអេឌើរ",
       "description": "អេឌើរ of យូដា មានរាយនាមក្នុងចំណោមក្រុងភាគខាងត្បូងឆ្ងាយបំផុតនៃ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ក្បែរ [អេដំម](location-id://00000000-0000-4000-8000-000000000064) ក្នុង [Joshua 15:21](verse-key://JOS 15:21) វាខុសពីប៉មអេឌើរក្នុងកណ្ឌ [Genesis](book-key://GEN) ហើយគេមិនដឹងទីតាំងរបស់វាទេ។",
       "type": "settlement",
@@ -8779,9 +8634,9 @@
     },
     {
       "id": "12fb5582-4de7-4442-a032-771299bc8530",
-      "name": "អេន-កានីម of អ៊ីសាខារ",
-      "kjvName": "En Gannim of Issachar",
-      "oldName": "អេន-កានីម",
+      "name": "Engannim",
+      "kjvName": "Engannim",
+      "oldName": null,
       "title": "ជាក្រុងរបស់អ៊ីសាខារ និងជាក្រុងខាងលេវី ដែលជាទូទៅគេកំណត់ថាជា Jenin",
       "description": "អេន-កានីម of អ៊ីសាខារ ត្រូវបានចែកឲ្យអ៊ីសាខារ ហើយក្រោយមកឲ្យពួកលេវីនៃអំបូរគើសុន ជាទូទៅគេកំណត់ថាជាក្រុង Jenin ដែលឈ្មោះរបស់វារក្សាទុកន័យនៃសួនច្បារ ឬប្រភពទឹក។",
       "type": "settlement",
@@ -8897,7 +8752,7 @@
       "description": "អេន-មីសផាត ត្រូវបានកំណត់ក្នុង [Genesis 14:7](verse-key://GEN 14:7) ថាជា [កាដេស](location-id://501d3b61-a4e6-4e1e-82b1-f8799fb77131) ដែលជាទីកន្លែងដែល [កេដូឡោមើរ](name-id://ed428395-dc41-4ed2-9229-bd7abfaa930f) បានទៅដល់ មុនពេលវាយឈ្នះជនជាតិអាម៉ាឡេក និងជនជាតិអាម៉ូរី ទីតាំងកាដេស-បើនាដ៏ទូលំទូលាយជាងនេះមានការជជែកដេញដោល។",
       "type": "place",
       "relatedLocations": [
-        "42017171-050f-4b41-bdae-3081853e3e98"
+        "00000000-0000-4000-8000-000000000122"
       ],
       "modernIdentification": "តំបន់កាដេស-បារនា ដែលគេច្រើនភ្ជាប់នឹង Ain el-Qudeirat ឬប្រភពទឹកជិតខាង",
       "coordinates": null,
@@ -9359,9 +9214,9 @@
     },
     {
       "id": "83be2021-4474-453d-910e-b8f1abe07900",
-      "name": "អេថាម of យូដា",
-      "kjvName": "Etam of Judah",
-      "oldName": "អេថាម",
+      "name": "Etam",
+      "kjvName": "Etam",
+      "oldName": null,
       "title": "ជាក្រុងបន្ទាយរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ក្បែរ [បេថ្លេហិម](location-id://00000000-0000-4000-8000-000000000034) និង [ត្កូអា](location-id://4a075a4d-bb20-4a0e-a4e4-bbe3c9acdb97)",
       "description": "អេថាម of យូដា មានរាយនាមក្នុងចំណោមទីក្រុងដែល [រេហូបោម](name-id://68d5eac0-52b9-4b0b-b484-8c7b5c3b8971) បានសង់បន្ទាយ ចន្លោះ [បេថ្លេហិម](location-id://00000000-0000-4000-8000-000000000034) និង [ត្កូអា](location-id://4a075a4d-bb20-4a0e-a4e4-bbe3c9acdb97) ហើយគេច្រើនភ្ជាប់វានឹងតំបន់ប្រភពទឹកក្បែរ Artas ទោះបីទីតាំងក្រុងបុរាណពិតប្រាកដមិនច្បាស់លាស់ក៏ដោយ។",
       "type": "settlement",
@@ -10165,6 +10020,8 @@
         "1CH 27:21",
         "PSA 60:7",
         "PSA 108:8",
+        "SNG 4:1",
+        "SNG 6:5",
         "JER 8:22",
         "JER 22:6",
         "JER 46:11",
@@ -10176,9 +10033,7 @@
         "AMO 1:13",
         "OBA 1:19",
         "MIC 7:14",
-        "ZEC 10:10",
-        "SNG 4:1",
-        "SNG 6:5"
+        "ZEC 10:10"
       ],
       "links": [
         {
@@ -10314,8 +10169,8 @@
     },
     {
       "id": "96ad7fa2-bac8-4549-8b02-1e53fca3eaa9",
-      "name": "កូសែន (city in យូដា)",
-      "kjvName": "Goshen (city in Judah)",
+      "name": "Goshen",
+      "kjvName": "Goshen",
       "oldName": null,
       "title": "ជាក្រុងក្នុងតំបន់ភ្នំនៃ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដែលមានរាយនាមជាមួយ [គីឡោ](location-id://cfac9a67-5a8a-42bf-be72-93c82d77bbe6) និង [អារ៉ាប](location-id://b5e2c349-1cd7-4bc8-8ba9-9b6ace77feda)",
       "description": "ទីក្រុងកូសែនក្នុង [Joshua 15:51](verse-key://JOS 15:51) គឺជាក្រុងមួយក្នុងបញ្ជីតំបន់ភ្នំរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដែលខុសពីតំបន់នៅអេស៊ីព្ទ និងខុសពីស្រុកកូសែនដ៏ធំទូលាយនៅភាគខាងត្បូងនៃយូដា ទីតាំងរបស់វាមិនត្រូវបានដឹងឡើយ។",
@@ -10803,10 +10658,10 @@
         "longitude": 35.260125
       },
       "verses": [
-        "2SA 5:25",
         "JOS 18:24",
         "JOS 21:17",
         "1SA 13:3",
+        "2SA 5:25",
         "1KI 15:22",
         "2KI 23:8",
         "1CH 6:60",
@@ -11008,8 +10863,8 @@
       "coordinates": null,
       "verses": [
         "JOS 15:58",
-        "1CH 12:7",
-        "1CH 4:39"
+        "1CH 4:39",
+        "1CH 12:7"
       ],
       "links": [
         {
@@ -11380,10 +11235,10 @@
       },
       "verses": [
         "1SA 28:4",
-        "2SA 1:21",
-        "2SA 21:12",
         "1SA 31:1",
         "1SA 31:8",
+        "2SA 1:21",
+        "2SA 21:12",
         "1CH 10:1",
         "1CH 10:8"
       ],
@@ -11786,8 +11641,8 @@
       "coordinates": null,
       "verses": [
         "NUM 32:34",
-        "JOS 13:24",
         "DEU 33:20",
+        "JOS 13:24",
         "JER 49:1"
       ],
       "links": [],
@@ -12571,9 +12426,9 @@
     },
     {
       "id": "318c2e41-e798-47b2-96b5-c1374fdd935b",
-      "name": "ហាវីឡា of អ៊ីសម៉ាអែល and អាម៉ាលេក",
-      "kjvName": "Havilah of Ishmael and Amalek",
-      "oldName": "ហាវីឡា 2",
+      "name": "Havilah",
+      "kjvName": "Havilah",
+      "oldName": null,
       "title": "ជាតំបន់វាលខ្សាច់នៅលើផ្លូវឆ្ពោះទៅ [ស៊ើរ](location-id://00000000-0000-4000-8000-000000000207) និង [អាសស៊ើរ](location-id://00000000-0000-4000-8000-000000000023)",
       "description": "ហាវីឡានេះ គឺជាតំបន់ដែលពាក់ព័ន្ធនឹងកូនចៅរបស់ [អ៊ីសម៉ាអែល](name-id://056fd84a-3a55-4428-aef2-584809d7d7b1) និងនឹងយុទ្ធនាការរបស់ [សូល](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb) ទាស់នឹង [អាម៉ាលេក](name-id://04a074df-ec7b-4d3b-9f86-b3cb1d6cdd51) ចាប់ពីហាវីឡាឆ្ពោះទៅ [ស៊ើរ](location-id://00000000-0000-4000-8000-000000000207) វាខុសពីហាវីឡាក្នុងតំបន់អេដែននៃកណ្ឌ [Genesis 2](chapter-key://GEN 2) ហើយនៅតែមិនច្បាស់លាស់ខាងភូមិសាស្ត្រ។",
       "type": "region",
@@ -12625,7 +12480,7 @@
       "description": "ហាសា-អាដា គឺជាទីកន្លែងមួយនៅលើខ្សែព្រំដែនភាគខាងត្បូង ក្នុងកណ្ឌ [Numbers 34](chapter-key://NUM 34) ដែលមានរាយនាមបន្ទាប់ពីព្រំដែនបត់ពីកាដេសឆ្ពោះទៅអាសម៉ូន ទីតាំងពិតប្រាកដរបស់វាមិនត្រូវបានដឹងឡើយ។",
       "type": "settlement",
       "relatedLocations": [
-        "42017171-050f-4b41-bdae-3081853e3e98",
+        "00000000-0000-4000-8000-000000000122",
         "9d819e62-aa5c-439f-b088-963ac7f22610"
       ],
       "modernIdentification": null,
@@ -13191,11 +13046,11 @@
       "name": "ហេស្រុន",
       "kjvName": "Hezron",
       "oldName": null,
-      "title": "ជាចំណុចព្រំដែនភាគខាងត្បូងនៃ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ចន្លោះ [កាដេស-បារនា](location-id://42017171-050f-4b41-bdae-3081853e3e98) និងអាដារ",
-      "description": "ហេស្រុន ក្នុងកណ្ឌ [Joshua 15](chapter-key://JOS 15) គឺជាចំណុចមួយនៅលើព្រំដែនភាគខាងត្បូងរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដែលទៅដល់បន្ទាប់ពី [កាដេស-បារនា](location-id://42017171-050f-4b41-bdae-3081853e3e98) ហើយមុនអាដារ និងកើកា វាជាឈ្មោះទីកន្លែងនៅទីនេះ ដែលខុសពីឈ្មោះមនុស្សដែលហៅថាហេស្រុន ហើយទីតាំងពិតប្រាកដរបស់វាមិនត្រូវបានដឹងឡើយ។",
+      "title": "ជាចំណុចព្រំដែនភាគខាងត្បូងនៃ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ចន្លោះ [កាដេស-បារនា](location-id://00000000-0000-4000-8000-000000000122) និងអាដារ",
+      "description": "ហេស្រុន ក្នុងកណ្ឌ [Joshua 15](chapter-key://JOS 15) គឺជាចំណុចមួយនៅលើព្រំដែនភាគខាងត្បូងរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដែលទៅដល់បន្ទាប់ពី [កាដេស-បារនា](location-id://00000000-0000-4000-8000-000000000122) ហើយមុនអាដារ និងកើកា វាជាឈ្មោះទីកន្លែងនៅទីនេះ ដែលខុសពីឈ្មោះមនុស្សដែលហៅថាហេស្រុន ហើយទីតាំងពិតប្រាកដរបស់វាមិនត្រូវបានដឹងឡើយ។",
       "type": "place",
       "relatedLocations": [
-        "42017171-050f-4b41-bdae-3081853e3e98",
+        "00000000-0000-4000-8000-000000000122",
         "00000000-0000-4000-8000-000000000119"
       ],
       "modernIdentification": null,
@@ -15435,11 +15290,11 @@
     },
     {
       "id": "01392f27-1670-4fb7-a38a-36853970f4ae",
-      "name": "យេហូវ៉ា-យីរេ",
+      "name": "Jehovahjireh",
       "kjvName": "Jehovahjireh",
-      "oldName": "យេហូវ៉ា-យីរេ",
+      "oldName": null,
       "title": "ជាឈ្មោះដែល [អ័ប្រាហាំ](name-id://4ce14dfc-b652-45d9-ac05-5f0cf716c412) បានដាក់ឲ្យទីកន្លែងនៃការថ្វាយ [អ៊ីសាក](name-id://a5b2f874-2008-4b28-9698-6357fe71c3bf) ក្នុង [ម៉ូរីយ៉ា](location-id://e9904ce3-3a6f-43fd-9eb3-57cbbb286aa2)",
-      "description": "យេហូវ៉ា-យីរេ ដែល KJV សរសេរថា Jehovahjireh គឺជាឈ្មោះដែល [អ័ប្រាហាំ](name-id://4ce14dfc-b652-45d9-ac05-5f0cf716c412) បានហៅទីកន្លែងក្នុងស្រុក [ម៉ូរីយ៉ា](location-id://e9904ce3-3a6f-43fd-9eb3-57cbbb286aa2) ជាកន្លែងដែលគេបានថ្វាយចៀមឈ្មោលមួយជំនួស [អ៊ីសាក](name-id://a5b2f874-2008-4b28-9698-6357fe71c3bf) ដោយមានពាក្យថា «នៅលើភ្នំរបស់ព្រះអម្ចាស់ នោះនឹងបានឃើញ» ([Genesis 22:14](verse-key://GEN 22:14))។ ឈ្មោះនេះឆ្លុះបញ្ចាំងពាក្យរបស់អ័ប្រាហាំពីមុនថា ព្រះជាម្ចាស់នឹងផ្គត់ផ្គង់កូនចៀមមួយសម្រាប់តង្វាយដុតដោយព្រះអង្គផ្ទាល់ ([Genesis 22:8](verse-key://GEN 22:8))។ ភ្នំជាក់លាក់ក្នុងស្រុកម៉ូរីយ៉ាមិនត្រូវបានកំណត់ក្នុងកណ្ឌ [Genesis](book-key://GEN) ឡើយ ទោះបី [2 Chronicles 3:1](verse-key://2CH 3:1) នៅពេលក្រោយដាក់ភ្នំម៉ូរីយ៉ានៅ [យេរូសាឡិម](location-id://00000000-0000-4000-8000-000000000117) ជាកន្លែងដែល [សាឡូម៉ូន](name-id://509b7c2f-b8bf-4a4d-a393-550a7a4b259f) បានសង់ព្រះដំណាក់របស់ព្រះអម្ចាស់ក៏ដោយ។",
+      "description": "Jehovahjireh is the name [Abraham](name-id://4ce14dfc-b652-45d9-ac05-5f0cf716c412) called the place in the land of [Moriah](location-id://e9904ce3-3a6f-43fd-9eb3-57cbbb286aa2) where a ram was offered in [Isaac](name-id://a5b2f874-2008-4b28-9698-6357fe71c3bf)'s stead, with the saying, In the mount of the LORD it shall be seen ([Genesis 22:14](verse-key://GEN 22:14)). The name echoes Abraham's earlier words that God will provide himself a lamb for a burnt offering ([Genesis 22:8](verse-key://GEN 22:8)). The particular mountain within Moriah is not identified in [Genesis](book-key://GEN), though [2 Chronicles 3:1](verse-key://2CH 3:1) later places mount Moriah at [Jerusalem](location-id://00000000-0000-4000-8000-000000000117), where [Solomon](name-id://509b7c2f-b8bf-4a4d-a393-550a7a4b259f) built the house of the LORD.",
       "type": "memorial place",
       "relatedLocations": [
         "e9904ce3-3a6f-43fd-9eb3-57cbbb286aa2",
@@ -15602,16 +15457,16 @@
         "1KI 21:1",
         "1KI 21:23",
         "2KI 8:29",
+        "2KI 9:10",
         "2KI 9:15",
         "2KI 9:16",
         "2KI 9:17",
-        "2KI 9:10",
         "2KI 9:30",
         "2KI 9:36",
         "2KI 9:37",
-        "2KI 10:11",
         "2KI 10:6",
         "2KI 10:7",
+        "2KI 10:11",
         "2CH 22:6",
         "HOS 1:4",
         "HOS 1:11",
@@ -15632,7 +15487,7 @@
       "type": "settlement",
       "relatedLocations": [
         "a8e27fd5-3589-4590-8140-e867b7f142ed",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
+        "95928260-0297-4497-9546-8a3d601d308c",
         "00000000-0000-4000-8000-000000000179"
       ],
       "modernIdentification": "គេច្រើនភ្ជាប់នឹង al-Jubeiha ជិតក្រុងអាម៉ាន់ ប្រទេសយ័រដាន់",
@@ -16086,15 +15941,15 @@
       "name": "កាដេស-បារនា",
       "kjvName": "Kadeshbarnea",
       "oldName": null,
-      "title": "ជាអក្ខរាវិរុទ្ធភ្ជាប់សហសញ្ញានៃ [កាដេស-បារនា](location-id://42017171-050f-4b41-bdae-3081853e3e98) នៅជិតព្រំដែនភាគខាងត្បូងនៃ [កាណាន](location-id://00000000-0000-4000-8000-000000000045)",
-      "description": "កាដេស-បារនា គឺជាទម្រង់ភ្ជាប់សហសញ្ញាទូទៅសម្រាប់ [កាដេស-បារនា](location-id://42017171-050f-4b41-bdae-3081853e3e98) ដែលជាទីរហោស្ថានមានប្រភពទឹក ជាកន្លែងដែលគេបានចាត់អ្នកស៊ើបការណ៍ចេញទៅ និងជាចំណុចសម្គាល់នៅលើព្រំដែនភាគខាងត្បូងនៃ [កាណាន](location-id://00000000-0000-4000-8000-000000000045) ជាទូទៅគេកំណត់ថាជា Tell el-Qudeirat ឬ Ain el-Qudeirat ទោះបីព័ត៌មានលម្អិតនៃការកំណត់នោះនៅតែមានការជជែកដេញដោលក៏ដោយ។",
+      "title": "southern border oasis and Israelite encampment at Kadeshbarnea",
+      "description": "Kadeshbarnea was the southern-border wilderness encampment associated with the spies, [Israel](location-id://00000000-0000-4000-8000-000000000108)'s long stay near [Canaan](location-id://00000000-0000-4000-8000-000000000045), and boundary formulas for [Judah](location-id://00000000-0000-4000-8000-000000000119) and the land of Canaan; it is commonly located at Tell el-Qudeirat / Ain el-Qudeirat.",
       "type": "encampment",
       "relatedLocations": [
-        "42017171-050f-4b41-bdae-3081853e3e98",
         "501d3b61-a4e6-4e1e-82b1-f8799fb77131",
         "00000000-0000-4000-8000-000000000177",
         "5b88ec17-6c67-409c-87f3-c656c80d89c9",
-        "00000000-0000-4000-8000-000000000064"
+        "00000000-0000-4000-8000-000000000064",
+        "00000000-0000-4000-8000-000000000045"
       ],
       "modernIdentification": "ជាទូទៅគេកំណត់ថាជា Tell el-Qudeirat / Ain el-Qudeirat ក្នុងស៊ីណាយខាងជើង",
       "coordinates": {
@@ -16161,10 +16016,10 @@
       "kjvName": "Kadesh",
       "oldName": null,
       "title": "ជាទីរហោស្ថានមានប្រភពទឹកនៃកាដេស នៅខាងត្បូង [កាណាន](location-id://00000000-0000-4000-8000-000000000045)",
-      "description": "កាដេស គឺជាកន្លែងឈប់សម្រាកដ៏សំខាន់ក្នុងវាលរហោស្ថាន នៅខាងត្បូង [កាណាន](location-id://00000000-0000-4000-8000-000000000045) ដែលហៅផងដែរថា អេន-មីសផាត ហើយភ្ជាប់យ៉ាងជិតស្និទ្ធនឹង [កាដេស-បារនា](location-id://42017171-050f-4b41-bdae-3081853e3e98) វាទាក់ទងនឹងរបាយការណ៍របស់អ្នកស៊ើបការណ៍ ការសោយទិវង្គតរបស់ [ម៉ារាម](name-id://a4c1c942-2737-4847-b6bf-9401d1dff9c3) [មេរីបា](location-id://dcb8b085-0b6a-4007-95ae-3b126617f544) និងការឈានចូលមករបស់ [អ៊ីស្រាអែល](location-id://00000000-0000-4000-8000-000000000108) ទៅរក [អេដំម](location-id://00000000-0000-4000-8000-000000000064)។",
+      "description": "កាដេស គឺជាកន្លែងឈប់សម្រាកដ៏សំខាន់ក្នុងវាលរហោស្ថាន នៅខាងត្បូង [កាណាន](location-id://00000000-0000-4000-8000-000000000045) ដែលហៅផងដែរថា អេន-មីសផាត ហើយភ្ជាប់យ៉ាងជិតស្និទ្ធនឹង [កាដេស-បារនា](location-id://00000000-0000-4000-8000-000000000122) វាទាក់ទងនឹងរបាយការណ៍របស់អ្នកស៊ើបការណ៍ ការសោយទិវង្គតរបស់ [ម៉ារាម](name-id://a4c1c942-2737-4847-b6bf-9401d1dff9c3) [មេរីបា](location-id://dcb8b085-0b6a-4007-95ae-3b126617f544) និងការឈានចូលមករបស់ [អ៊ីស្រាអែល](location-id://00000000-0000-4000-8000-000000000108) ទៅរក [អេដំម](location-id://00000000-0000-4000-8000-000000000064)។",
       "type": "encampment",
       "relatedLocations": [
-        "42017171-050f-4b41-bdae-3081853e3e98",
+        "00000000-0000-4000-8000-000000000122",
         "5b88ec17-6c67-409c-87f3-c656c80d89c9",
         "00000000-0000-4000-8000-000000000177",
         "00000000-0000-4000-8000-000000000064",
@@ -16193,43 +16048,6 @@
         "PSA 29:8",
         "EZK 47:19",
         "EZK 48:28"
-      ],
-      "links": [],
-      "wikipedia": "https://en.wikipedia.org/wiki/Kadesh_(biblical)",
-      "uncertainty": true,
-      "matterRange": 30
-    },
-    {
-      "id": "42017171-050f-4b41-bdae-3081853e3e98",
-      "name": "កាដេស-បារនា",
-      "kjvName": "Kadeshbarnea",
-      "oldName": null,
-      "title": "ជាទីរហោស្ថានមានប្រភពទឹកនៅព្រំដែនភាគខាងត្បូង និងជាជំរំរបស់អ៊ីស្រាអែលនៅកាដេស-បារនា",
-      "description": "កាដេស-បារនា គឺជាជំរំក្នុងវាលរហោស្ថាននៅព្រំដែនភាគខាងត្បូង ដែលពាក់ព័ន្ធនឹងអ្នកស៊ើបការណ៍ ការស្នាក់នៅយូររបស់ [អ៊ីស្រាអែល](location-id://00000000-0000-4000-8000-000000000108) នៅជិត [កាណាន](location-id://00000000-0000-4000-8000-000000000045) និងរូបមន្តព្រំដែនសម្រាប់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) និងទឹកដីកាណាន ជាទូទៅគេដាក់ទីតាំងវានៅ Tell el-Qudeirat / Ain el-Qudeirat។",
-      "type": "encampment",
-      "relatedLocations": [
-        "501d3b61-a4e6-4e1e-82b1-f8799fb77131",
-        "00000000-0000-4000-8000-000000000177",
-        "5b88ec17-6c67-409c-87f3-c656c80d89c9",
-        "00000000-0000-4000-8000-000000000064",
-        "00000000-0000-4000-8000-000000000045"
-      ],
-      "modernIdentification": "ជាទូទៅគេកំណត់ថាជា Tell el-Qudeirat / Ain el-Qudeirat ក្នុងស៊ីណាយខាងជើង",
-      "coordinates": {
-        "latitude": 30.641965,
-        "longitude": 34.414419
-      },
-      "verses": [
-        "NUM 32:8",
-        "NUM 34:4",
-        "DEU 1:2",
-        "DEU 1:19",
-        "DEU 2:14",
-        "DEU 9:23",
-        "JOS 10:41",
-        "JOS 14:6",
-        "JOS 14:7",
-        "JOS 15:3"
       ],
       "links": [],
       "wikipedia": "https://en.wikipedia.org/wiki/Kadesh_(biblical)",
@@ -16269,7 +16087,7 @@
       "type": "settlement",
       "relatedLocations": [
         "00000000-0000-4000-8000-000000000152",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
+        "95928260-0297-4497-9546-8a3d601d308c",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
       ],
       "modernIdentification": null,
@@ -17129,7 +16947,7 @@
       "id": "1fd71ff5-c0b3-4184-ac64-47ee4eddefcf",
       "name": "ស្រុករបស់ហាំ",
       "kjvName": "Land of Ham",
-      "oldName": "ហាំ 2",
+      "oldName": null,
       "title": "ជាឈ្មោះកំណាព្យក្នុងបទគម្ពីរសម្រាប់ [អេស៊ីព្ទ](location-id://00000000-0000-4000-8000-000000000065) ក្នុងកណ្ឌ [Psalms](book-key://PSA)",
       "description": "ស្រុករបស់ហាំ គឺជាឈ្មោះកំណាព្យរបស់កណ្ឌ [Psalms](book-key://PSA) សម្រាប់ [អេស៊ីព្ទ](location-id://00000000-0000-4000-8000-000000000065) ដែលរំលឹកពីការស្នាក់អាស្រ័យរបស់អ៊ីស្រាអែលនៅទីនោះ និងការអស្ចារ្យរបស់ព្រះជាម្ចាស់មុនការចាកចេញ វាខុសពីទីកន្លែងដែលហៅថា [ហាំ](location-id://f37c7ce4-d9c3-4497-b3b1-dd499e2c4909) ក្នុងកណ្ឌ [Genesis 14](chapter-key://GEN 14)។",
       "type": "region",
@@ -19200,7 +19018,7 @@
       "type": "encampment",
       "relatedLocations": [
         "501d3b61-a4e6-4e1e-82b1-f8799fb77131",
-        "42017171-050f-4b41-bdae-3081853e3e98",
+        "00000000-0000-4000-8000-000000000122",
         "5b88ec17-6c67-409c-87f3-c656c80d89c9"
       ],
       "modernIdentification": "ជិតកាដេស ដែលជាទូទៅគេភ្ជាប់នឹងតំបន់ Tell el-Qudeirat / Ain el-Qudeirat",
@@ -19716,9 +19534,9 @@
     },
     {
       "id": "4c916b4d-a2ed-47ac-853b-e512b1fb7068",
-      "name": "មីសប៉ា of បេនយ៉ាមីន",
-      "kjvName": "Mizpah of Benjamin",
-      "oldName": "មីសប៉ា",
+      "name": "Mizpah",
+      "kjvName": "Mizpah",
+      "oldName": null,
       "title": "ជាទីក្រុង និងកន្លែងជួបជុំរបស់ជនជាតិបេនយ៉ាមីន នៅខាងជើង [យេរូសាឡិម](location-id://00000000-0000-4000-8000-000000000117)",
       "description": "មីសប៉ានៃបេនយ៉ាមីន គឺជាទីតាំងជួបជុំ និងរដ្ឋបាលដ៏សំខាន់នៅជិត [យេរូសាឡិម](location-id://00000000-0000-4000-8000-000000000117) ដែលពាក់ព័ន្ធនឹងការប្រជុំរបស់អ៊ីស្រាអែលក្នុងកណ្ឌ [Judges](book-key://JDG) និង Samuel ការសាងសង់របស់ [អេសា](name-id://f5d139c3-aaad-4422-87a8-6b31e0fbc485) និងតំណែងអភិបាលរបស់ [កេដាលា](name-id://4c0cd7c0-acde-4d0d-9fcb-0ce263bb46ea) បន្ទាប់ពីក្រុងយេរូសាឡិមដួលរលំ។",
       "type": "city",
@@ -19761,9 +19579,9 @@
     },
     {
       "id": "88fe0c6e-193b-4471-afa0-7cc4052531db",
-      "name": "មីសប៉ា of កាឡាត",
-      "kjvName": "Mizpah of Gilead",
-      "oldName": "មីសប៉ា",
+      "name": "Mizpah",
+      "kjvName": "Mizpah",
+      "oldName": null,
       "title": "ជាកន្លែងឃ្លាំមើលនៃ [កាឡាត](location-id://00000000-0000-4000-8000-000000000089) ដែលពាក់ព័ន្ធនឹង [យ៉ាកុប](name-id://23ed64d8-8458-49af-9b51-f578ab3262d9) និង [យែបថា](name-id://a0e52599-bd88-4cc9-bf3c-5c0127087f95)",
       "description": "មីសប៉ានៃកាឡាត គឺជាកន្លែងឃ្លាំមើលនៅនាយទន្លេយ័រដាន់ ដែលភ្ជាប់នឹងចំណុចសម្គាល់សម្ពន្ធមេត្រីរបស់ [យ៉ាកុប](name-id://23ed64d8-8458-49af-9b51-f578ab3262d9) និងការប្រមូលទ័ព និងការវិលត្រឡប់របស់ [យែបថា](name-id://a0e52599-bd88-4cc9-bf3c-5c0127087f95) ក្នុងកណ្ឌ [Judges](book-key://JDG) ទីតាំងពិតប្រាកដរបស់វាមិនច្បាស់លាស់ឡើយ។",
       "type": "place",
@@ -19785,9 +19603,9 @@
     },
     {
       "id": "5411e6a7-3d2a-41f2-a537-7f44e214a11f",
-      "name": "មីសប៉ា of ម៉ូអាប់",
-      "kjvName": "Mizpeh of Moab",
-      "oldName": "មីសប៉ា",
+      "name": "Mizpeh",
+      "kjvName": "Mizpeh",
+      "oldName": null,
       "title": "ជាទីជម្រកក្នុងស្រុកម៉ូអាប់ ជាកន្លែងដែល [ដាវីឌ](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) បានដាក់ឪពុកម្តាយរបស់គាត់",
       "description": "មីសប៉ានៃម៉ូអាប់ គឺជាកន្លែងដែល [ដាវីឌ](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) បានទូលសុំស្តេចនៃ [ម៉ូអាប់](location-id://00000000-0000-4000-8000-000000000153) ឲ្យផ្តល់ទីជម្រកដល់ឪពុក និងម្តាយរបស់គាត់ ខណៈ [សូល](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb) កំពុងដេញតាមគាត់ ទីតាំងពិតប្រាកដរបស់វាក្នុងស្រុកម៉ូអាប់មិនត្រូវបានដឹងឡើយ។",
       "type": "place",
@@ -19807,9 +19625,9 @@
     },
     {
       "id": "6281e102-ea7d-43b4-8f82-d2230c73c801",
-      "name": "មីសប៉ា of យូដា",
-      "kjvName": "Mizpeh of Judah",
-      "oldName": "មីសប៉ា",
+      "name": "Mizpeh",
+      "kjvName": "Mizpeh",
+      "oldName": null,
       "title": "ជាក្រុងក្នុងតំបន់ទំនាបនៃចំណែកមរតករបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119)",
       "description": "មីសប៉ានៃយូដា គឺជាក្រុងមួយក្នុងចំណែកមរតកតំបន់ Shephelah នៃ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដែលមានរាយនាមជាមួយ [ឌីលាន](location-id://ac869c17-3d43-428f-aefc-f9c26566982f) និង [យ៉ុកធាល](location-id://78f0de4b-50f9-4194-88b4-e8ddf2e3e59a) ទីតាំងពិតប្រាកដរបស់វាមិនច្បាស់លាស់ឡើយ។",
       "type": "settlement",
@@ -21532,9 +21350,9 @@
     },
     {
       "id": "8eb0b645-ab96-48af-8a4c-89960a0c43a3",
-      "name": "អូប្រា of បេនយ៉ាមីន",
-      "kjvName": "Ophrah of Benjamin",
-      "oldName": "អូប្រា",
+      "name": "Ophrah",
+      "kjvName": "Ophrah",
+      "oldName": null,
       "title": "ជាក្រុងរបស់ជនជាតិបេនយ៉ាមីន នៅជិត [បេត-អែល](location-id://00000000-0000-4000-8000-000000000032) និងស្រុក [ស៊ូអាល](location-id://9e8bbf1c-fd5f-4b20-bd4f-04b8c6d41b92)",
       "description": "អូប្រានៃបេនយ៉ាមីន គឺជាក្រុងមួយក្នុងចំណែកមរតករបស់ [បេនយ៉ាមីន](location-id://80f2867e-4e7c-43b6-aa11-7fd42550d4ef) និងជាគោលដៅរបស់កងលុកលុយជនជាតិភីលីស្ទីនមួយក្រុមចេញពី [មីកម៉ាស](location-id://ee19b0f3-9647-4ed1-9f48-d9bef91d04fd) គេច្រើនភ្ជាប់វានឹងអេប្រុន នៅជិត [បេត-អែល](location-id://00000000-0000-4000-8000-000000000032) ហើយប្រហែលជា et-Taiyibeh។",
       "type": "settlement",
@@ -21559,9 +21377,9 @@
     },
     {
       "id": "19fd95f1-f7b0-45a6-a68f-b397db362565",
-      "name": "អូប្រា of the អ័បៀស៊ើរ",
-      "kjvName": "Ophrah of the Abiezrites",
-      "oldName": "អូប្រា",
+      "name": "Ophrah",
+      "kjvName": "Ophrah",
+      "oldName": null,
       "title": "ជាក្រុងរបស់ជនជាតិម៉ាន៉ាសេ របស់ [គេឌាន](name-id://c639ae62-acde-4142-a3f5-fd40204fc455) និង [យ៉ូអាស](name-id://d309a5e8-c8f5-423b-929a-3e30dd8c64bf) ជនជាតិអ័បៀស៊ើរ",
       "description": "អូប្រានៃជនជាតិអ័បៀស៊ើរ គឺជាលំនៅរបស់ [គេឌាន](name-id://c639ae62-acde-4142-a3f5-fd40204fc455) ក្នុងដែនដីរបស់ [ម៉ាន៉ាសេ](name-id://6d826bc2-ac80-4c27-af89-258a50f37dfe) ជាកន្លែងដែលទេវតាបានលេចមក គេឌានបានសង់អាសនាមួយ បានដាក់អេផូឌ ត្រូវបានបញ្ចុះសព ហើយជាកន្លែងដែល [អ័ប៊ីម៉្មាឡិច](name-id://eba375fa-1ab3-473b-85e6-f85f0771669c) បានសម្លាប់កូនប្រុសរបស់គេឌាន ទីតាំងពិតប្រាកដរបស់វាមិនត្រូវបានកំណត់យ៉ាងច្បាស់លាស់ឡើយ។",
       "type": "settlement",
@@ -21647,7 +21465,7 @@
       "relatedLocations": [
         "00326a98-afe3-48a8-ad4e-b5ff69a319f0",
         "00000000-0000-4000-8000-000000000111",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3"
+        "95928260-0297-4497-9546-8a3d601d308c"
       ],
       "modernIdentification": "ជាធម្មតាគេស្នើនៅ Tell edh-Dhahab el-Sharqi ក្នុងបរិវេណ Tulul adh-Dhahab តាមទន្លេ Zarqa ឬយ៉ាបុក ក្នុងប្រទេសយ័រដាន់",
       "coordinates": {
@@ -22117,7 +21935,7 @@
       "relatedLocations": [
         "00000000-0000-4000-8000-000000000179",
         "00000000-0000-4000-8000-000000000111",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3"
+        "95928260-0297-4497-9546-8a3d601d308c"
       ],
       "modernIdentification": "ជាធម្មតាគេស្នើនៅ Tell edh-Dhahab el-Sharqi ក្នុងបរិវេណ Tulul adh-Dhahab តាមទន្លេ Zarqa ឬយ៉ាបុក ក្នុងប្រទេសយ័រដាន់",
       "coordinates": {
@@ -23183,7 +23001,6 @@
         "DEU 4:43",
         "JOS 20:8",
         "JOS 21:38",
-        "1CH 6:80",
         "1KI 4:13",
         "1KI 22:3",
         "1KI 22:4",
@@ -23196,6 +23013,7 @@
         "2KI 9:1",
         "2KI 9:4",
         "2KI 9:14",
+        "1CH 6:80",
         "2CH 18:2",
         "2CH 18:3",
         "2CH 18:5",
@@ -23628,9 +23446,9 @@
     },
     {
       "id": "5a0e886e-2c06-4f8e-848d-42bb3db37f90",
-      "name": "រីម៉ូន of the Negeb",
-      "kjvName": "Rimmon of the Negeb",
-      "oldName": "រីម៉ូន",
+      "name": "Remmon",
+      "kjvName": "Remmon",
+      "oldName": "Rimmon",
       "title": "ជាក្រុងភាគខាងត្បូងនៃ [យូដា](location-id://00000000-0000-4000-8000-000000000119) និង [ស៊ីម្មាន](name-id://8023a792-fa1b-4465-89b5-09f437ac5081) ដែលហៅផងដែរថា [អេន-រីម៉ូន](location-id://0f95fdfb-1c87-4619-9195-637da5ea9a76)",
       "description": "រីម៉ូននៃតំបន់ណេកិប គឺជាក្រុងមួយនៅជិត [អាយីន](location-id://151ff600-5303-4b5c-a0ae-ab590176b956) ក្នុងតំបន់ព្រំដែនភាគខាងត្បូង ដែលបានប្រគល់ឲ្យ [យូដា](location-id://00000000-0000-4000-8000-000000000119) និង [ស៊ីម្មាន](name-id://8023a792-fa1b-4465-89b5-09f437ac5081) ហើយក្រោយមកគេចងចាំថាជាចំណុចភាគខាងត្បូងនៃស្រុកយូដា។ វាខុសពីថ្មដារីម៉ូន និងខុសពីរីម៉ូនរក្នុង [សាប់យូល៉ូន](name-id://beeaa67f-e08b-4c67-a3b8-a5296e09981c)។",
       "type": "settlement",
@@ -23894,8 +23712,8 @@
       "coordinates": null,
       "verses": [
         "NUM 32:33",
-        "JOS 13:15",
         "DEU 3:12",
+        "JOS 13:15",
         "JDG 5:15"
       ],
       "links": [],
@@ -24155,8 +23973,8 @@
     },
     {
       "id": "6de66ed4-c371-4bcd-9e6a-5118d4b46b86",
-      "name": "សេបា (ស៊ីម្មាន)",
-      "kjvName": "Sheba (Simeon)",
+      "name": "Sheba",
+      "kjvName": "Sheba",
       "oldName": null,
       "title": "ជាទីក្រុងក្នុងចំណែកដីរបស់ [ស៊ីម្មាន](name-id://8023a792-fa1b-4465-89b5-09f437ac5081) ដែលមានរាយនាមជាមួយ [បៀរ-សេបា](location-id://0643b4cb-a5f4-4af3-b469-ed061976d1f4)",
       "description": "សេបា មានលេចឡើងក្នុង [Joshua 19:2](verse-key://JOS 19:2) ក្នុងចំណោមទីក្រុងនានាដែលបានប្រគល់ឲ្យ [ស៊ីម្មាន](name-id://8023a792-fa1b-4465-89b5-09f437ac5081) នៅក្នុងដែនដីភាគខាងត្បូងរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដោយសារវាមានរាយនាមជាប់នឹង [បៀរ-សេបា](location-id://0643b4cb-a5f4-4af3-b469-ed061976d1f4) ហើយគ្មានទីតាំងឯករាជ្យច្បាស់លាស់ គេច្រើនចាត់ទុកវាថាភ្ជាប់នឹងបៀរ-សេបា ទាំងខាងអត្ថបទ និងខាងភូមិសាស្ត្រ។",
@@ -25336,9 +25154,9 @@
       "modernIdentification": null,
       "coordinates": null,
       "verses": [
-        "1CH 4:31",
         "JOS 15:36",
-        "1SA 17:52"
+        "1SA 17:52",
+        "1CH 4:31"
       ],
       "links": [],
       "wikipedia": "https://en.wikipedia.org/wiki/Khirbet_Qeiyafa",
@@ -25394,8 +25212,8 @@
     },
     {
       "id": "ab00d494-52c9-4ac4-9939-f24e8a34394f",
-      "name": "សាមារ (អេប្រាអិម)",
-      "kjvName": "Shamir (Ephraim)",
+      "name": "Shamir",
+      "kjvName": "Shamir",
       "oldName": null,
       "title": "ជាទីក្រុងក្នុងស្រុកអេប្រាអិម ជាកន្លែងដែលចៅក្រម [ថូឡា](name-id://be43e574-ba7e-4641-b5d7-0437e3068858) បានរស់នៅ និងបានបញ្ចុះសព",
       "description": "សាមារ នេះ ស្ថិតនៅ [ភ្នំអេប្រាអិម](location-id://00000000-0000-4000-8000-000000000155) ហើយមានរៀបរាប់ជាលំនៅឋាន និងជាកន្លែងបញ្ចុះសពរបស់ [ថូឡា](name-id://be43e574-ba7e-4641-b5d7-0437e3068858) ដែលជាចៅក្រមម្នាក់លេចឡើងបន្ទាប់ពី [អ័ប៊ីម៉្មាឡិច](name-id://eba375fa-1ab3-473b-85e6-f85f0771669c) មិនច្បាស់ពីទីតាំងបច្ចុប្បន្នរបស់វាឡើយ។",
@@ -25419,7 +25237,7 @@
       "id": "e4a0da39-dd21-4734-890d-67d9359b8119",
       "name": "សារ៉ុន",
       "kjvName": "Sharon",
-      "oldName": "សារ៉ុន 1",
+      "oldName": null,
       "title": "ជាវាលទំនាបឆ្នេរដ៏មានជីជាតិ ចន្លោះ [កើមែល](location-id://bd09f548-2fa1-4b25-8f6b-d00dc545d029) និង [យ៉ុបប៉េ](location-id://dd33c11c-6e8d-484a-8911-bb20e6126e7c)",
       "description": "សារ៉ុន គឺជាវាលទំនាបឆ្នេរសមុទ្រមេឌីទែរ៉ាណេដ៏មានជីជាតិរបស់អ៊ីស្រាអែល ដែលគេស្គាល់ដោយសារវាលស្មៅ ផ្កា រូបភាពនៃការជំនុំជម្រះ និងទីក្រុងនានាជុំវិញ [លីដា](location-id://8d32e0bd-538e-497c-a459-c4425bcc3a7d) ដែលបានបែរមករកព្រះអម្ចាស់ក្នុងកណ្ឌ [Acts](book-key://ACT)។",
       "type": "region",
@@ -25447,8 +25265,8 @@
     },
     {
       "id": "18f2765c-0f87-4fb4-b980-1d1aeb918932",
-      "name": "សារ៉ុន (កាឌ់)",
-      "kjvName": "Sharon (Gad)",
+      "name": "Sharon",
+      "kjvName": "Sharon",
       "oldName": null,
       "title": "ជាស្រុករបស់កុលសម្ព័ន្ធកាឌ់នៅខាងកើត [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
       "description": "សារ៉ុន នេះ គឺជាស្រុកដែលមានរៀបរាប់ជាមួយ [កាឡាត](location-id://00000000-0000-4000-8000-000000000089) និង [បាសាន](location-id://af0d12bf-aa1c-494c-9f89-8288fd65ef3d) ជាកន្លែងដែលកូនចៅកាឌ់រស់នៅ ក្នុង [1 Chronicles 5:16](verse-key://1CH 5:16) ដែលខុសពីវាលទំនាបឆ្នេរសារ៉ុនដ៏ល្បីជាង។",
@@ -26138,9 +25956,9 @@
     },
     {
       "id": "f646691f-a98d-461a-b8b8-100486256dfc",
-      "name": "សូគរ (Shephelah)",
-      "kjvName": "Socoh (Shephelah)",
-      "oldName": "សូគរ",
+      "name": "Socoh",
+      "kjvName": "Socoh",
+      "oldName": "Soco",
       "title": "ជាទីក្រុងរឹងមាំក្នុងតំបន់សេផេឡា នៅជិត [ច្រកភ្នំអេឡា](location-id://29f276d2-7c8e-4f2d-b8fc-1e42a5d2d893)",
       "description": "សូគរ នេះ គឺជាទីក្រុងតំបន់ទំនាបរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) នៅជិត [អាសេកា](location-id://f345fc22-3282-4ad7-9817-3e2b38026e41) និង [ច្រកភ្នំអេឡា](location-id://29f276d2-7c8e-4f2d-b8fc-1e42a5d2d893) ដែលរេហូបោមបានពង្រឹងជាបន្ទាយ ហើយក្រោយមកជនជាតិភីលីស្ទីនបានវាយយកបាន វាខុសពី [សូគរ](location-id://9b32cc6e-9ecb-4a60-966f-c015601c6974) ក្នុងតំបន់ភ្នំ ដែលមានចែងក្នុង [Joshua 15:48](verse-key://JOS 15:48)។",
       "type": "settlement",
@@ -26164,8 +25982,8 @@
     },
     {
       "id": "9b32cc6e-9ecb-4a60-966f-c015601c6974",
-      "name": "សូគរ (hill country)",
-      "kjvName": "Socoh (hill country)",
+      "name": "Socoh",
+      "kjvName": "Socoh",
       "oldName": null,
       "title": "ជាទីក្រុងក្នុងតំបន់ភ្នំរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) នៅជិត [សាមា](location-id://566e5abb-f7e6-4341-a79f-c53d6cf5c7f3) និង [យ៉ាទារ](location-id://bb79e534-b816-4afc-89d6-7dacf78ea24d)",
       "description": "សូគរ នេះ គឺជាទីក្រុងមួយក្នុងតំបន់ភ្នំរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដែលមានរាយនាមជាមួយ [សាមា](location-id://566e5abb-f7e6-4341-a79f-c53d6cf5c7f3) និង [យ៉ាទារ](location-id://bb79e534-b816-4afc-89d6-7dacf78ea24d) ដោយឡែកពីទីក្រុងក្នុងតំបន់សេផេឡាដ៏ល្បីជាង នៅជិត [ច្រកភ្នំអេឡា](location-id://29f276d2-7c8e-4f2d-b8fc-1e42a5d2d893)។",
@@ -26213,9 +26031,9 @@
     },
     {
       "id": "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
-      "name": "សិកូត (អេស៊ីព្ទ)",
-      "kjvName": "Succoth (Egypt)",
-      "oldName": "សិកូត",
+      "name": "Succoth",
+      "kjvName": "Succoth",
+      "oldName": null,
       "title": "ជាជំរំដំបូងរបស់អ៊ីស្រាអែលដែលមានឈ្មោះ បន្ទាប់ពី [រ៉ាមសេស](location-id://ba59e20a-1630-41b8-a91c-4a0a1dbf5b21) ក្នុងការចាកចេញពីអេស៊ីព្ទ",
       "description": "សិកូត នេះ គឺជាកន្លែងឈប់សម្រាកដំបូងដែលមានឈ្មោះ បន្ទាប់ពី [រ៉ាមសេស](location-id://ba59e20a-1630-41b8-a91c-4a0a1dbf5b21) នៅពេលអ៊ីស្រាអែលចាកចេញពី [អេស៊ីព្ទ](location-id://00000000-0000-4000-8000-000000000065) មុន [អេថាម](location-id://864b6fae-f516-45b9-9493-b6a8e0ccd6eb) នៅគែមនៃវាលរហោស្ថាន ទីតាំងពិតប្រាកដរបស់វានៅតំបន់ដីសណ្តទន្លេនីលភាគខាងកើតនៅតែមានការជជែកដេញដោល។",
       "type": "camp",
@@ -26240,8 +26058,8 @@
     },
     {
       "id": "95928260-0297-4497-9546-8a3d601d308c",
-      "name": "ស៊ុកូត (Transjordan)",
-      "kjvName": "Succoth (Transjordan)",
+      "name": "Succoth",
+      "kjvName": "Succoth",
       "oldName": null,
       "title": "ជាទីក្រុងក្នុងជ្រលងទន្លេយ័រដាន់ ជាកន្លែងដែល [យ៉ាកុប](name-id://23ed64d8-8458-49af-9b51-f578ab3262d9) បានសង់ខ្ទម",
       "description": "ស៊ុកូត នេះ គឺជាទីក្រុងនៅត្រើយខាងកើតទន្លេយ័រដាន់ ក្នុងជ្រលងទន្លេយ័រដាន់ ជាកន្លែងដែល [យ៉ាកុប](name-id://23ed64d8-8458-49af-9b51-f578ab3262d9) បានសង់ខ្ទម ក្រោយមកបានប្រគល់ជាចំណែកដីនៅជិត [កាឌ់](name-id://b68edd6a-6aea-4f9f-8c99-684d9a6f7a8b) បានពាក់ព័ន្ធក្នុងការដេញតាមរបស់ [គេឌាន](name-id://c639ae62-acde-4142-a3f5-fd40204fc455) ទៅលើ [ម៉ាឌាន](location-id://00000000-0000-4000-8000-000000000152) ហើយមានរៀបរាប់ជាមួយសារថាន នៅជិតដីឥដ្ឋដែលគេប្រើសម្រាប់គ្រឿងបរិក្ខារព្រះវិហាររបស់ [សាឡូម៉ូន](name-id://509b7c2f-b8bf-4a4d-a393-550a7a4b259f)។",
@@ -26586,8 +26404,8 @@
       "name": "ធីម៉្នាត-សេរ៉ា",
       "kjvName": "Timnathserah",
       "oldName": null,
-      "title": "ជាទម្រង់អក្ខរាវិរុទ្ធផ្សេងនៃឈ្មោះទីក្រុងមរតករបស់ [យ៉ូស្វេ](name-id://28e270de-d886-42b6-918b-665be906a816) គឺធីម៉្នាត-សេរ៉ា",
-      "description": "ធីម៉្នាត-សេរ៉ា គឺជាទម្រង់សម័យទំនើបដែលមានសហសញ្ញា នៃឈ្មោះ Timnathserah ក្នុងកំណែ KJV ដែលជាទីក្រុងក្នុង [ភ្នំអេប្រាអិម](location-id://00000000-0000-4000-8000-000000000155) ដែលអ៊ីស្រាអែលបានឲ្យ [យ៉ូស្វេ](name-id://28e270de-d886-42b6-918b-665be906a816) និងជាកន្លែងដែលគេបានបញ្ចុះសពគាត់។ តាមប្រពៃណីគេភ្ជាប់ទីតាំងនេះនឹង Kifl Haris ទោះបីការកំណត់នោះមិនច្បាស់លាស់ក៏ដោយ។",
+      "title": "[Joshua](name-id://28e270de-d886-42b6-918b-665be906a816)'s inheritance and burial city in [Mount Ephraim](location-id://00000000-0000-4000-8000-000000000155)",
+      "description": "Timnathserah was the city in [Mount Ephraim](location-id://00000000-0000-4000-8000-000000000155) that Israel gave to [Joshua](name-id://28e270de-d886-42b6-918b-665be906a816) and where he was buried. It is traditionally identified with Kifl Haris, though the exact site remains debated.",
       "type": "city",
       "relatedLocations": [
         "fc65dd60-74bc-48d8-bfd7-d6a41c2a4297",
@@ -27481,7 +27299,7 @@
       "kjvName": "Timnah",
       "oldName": null,
       "title": "ជាទីក្រុងក្នុងតំបន់ភ្នំរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដែលខុសពី [ធីមណា](location-id://00000000-0000-4000-8000-000000000223) ក្នុងតំបន់ទំនាប",
-      "description": "ធីមណា ត្រូវបានរក្សាទុកនៅទីនេះសម្រាប់ទីក្រុងក្នុងតំបន់ភ្នំរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដែលមានរាយនាមជាមួយ [ហាលហ៊ុល](location-id://3a42aa99-ef7e-463a-a875-da51a48b6ceb) [បេត-ស៊ើរ](location-id://f6a8b0c2-5e7d-4f9a-b13c-6d8e0f2a4b5c) និង [កេដោរ](location-id://12785454-38f5-42d6-ba3c-aae15b5174ff) ក្នុងកណ្ឌ [Joshua 15](chapter-key://JOS 15)។ សេចក្តីយោងផ្សេងទៀតអំពីធីមណា ឬ [ធីមណា](location-id://00000000-0000-4000-8000-000000000223) ដែលភ្ជាប់នឹង [សាំសុន](name-id://cc81f251-0c5e-452d-9ae8-5b96db780648) ព្រំដែនយូដា-[ដាន់](location-id://dadc79b1-e84f-40e0-ab31-2fa96b6ed4bd) និងតំបន់ទំនាបរបស់ជនជាតិភីលីស្ទីន ត្រូវបានដោះស្រាយក្នុងកំណត់ត្រាធីមណា។",
+      "description": "ធីមណា ត្រូវបានរក្សាទុកនៅទីនេះសម្រាប់ទីក្រុងក្នុងតំបន់ភ្នំរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដែលមានរាយនាមជាមួយ [ហាលហ៊ុល](location-id://3a42aa99-ef7e-463a-a875-da51a48b6ceb) [បេត-ស៊ើរ](location-id://65d009b2-d6fb-4e67-88fd-6b179616d0e8) និង [កេដោរ](location-id://12785454-38f5-42d6-ba3c-aae15b5174ff) ក្នុងកណ្ឌ [Joshua 15](chapter-key://JOS 15)។ សេចក្តីយោងផ្សេងទៀតអំពីធីមណា ឬ [ធីមណា](location-id://00000000-0000-4000-8000-000000000223) ដែលភ្ជាប់នឹង [សាំសុន](name-id://cc81f251-0c5e-452d-9ae8-5b96db780648) ព្រំដែនយូដា-[ដាន់](location-id://dadc79b1-e84f-40e0-ab31-2fa96b6ed4bd) និងតំបន់ទំនាបរបស់ជនជាតិភីលីស្ទីន ត្រូវបានដោះស្រាយក្នុងកំណត់ត្រាធីមណា។",
       "type": "settlement",
       "relatedLocations": [
         "00000000-0000-4000-8000-000000000119",
@@ -27517,33 +27335,6 @@
       },
       "verses": [
         "JDG 2:9"
-      ],
-      "links": [],
-      "wikipedia": "https://en.wikipedia.org/wiki/Timnath-heres",
-      "uncertainty": true,
-      "matterRange": 68
-    },
-    {
-      "id": "6b2b5e8c-76ae-478f-8678-4b7aabd7a8af",
-      "name": "ធីម៉្នាត-សេរ៉ា",
-      "kjvName": "Timnathserah",
-      "oldName": null,
-      "title": "ជាទីក្រុងមរតក និងកន្លែងបញ្ចុះសពរបស់ [យ៉ូស្វេ](name-id://28e270de-d886-42b6-918b-665be906a816) ក្នុង [ភ្នំអេប្រាអិម](location-id://00000000-0000-4000-8000-000000000155)",
-      "description": "ធីម៉្នាត-សេរ៉ា ដែលសរសេរថា Timnathserah ក្នុងកំណែ KJV គឺជាទីក្រុងក្នុង [ភ្នំអេប្រាអិម](location-id://00000000-0000-4000-8000-000000000155) ដែលអ៊ីស្រាអែលបានឲ្យ [យ៉ូស្វេ](name-id://28e270de-d886-42b6-918b-665be906a816) និងជាកន្លែងដែលគេបានបញ្ចុះសពគាត់។ តាមប្រពៃណីគេកំណត់វាថាជា Kifl Haris ទោះបីទីតាំងពិតប្រាកដនៅតែមានការជជែកដេញដោលក៏ដោយ។",
-      "type": "city",
-      "relatedLocations": [
-        "00000000-0000-4000-8000-000000000222",
-        "fc65dd60-74bc-48d8-bfd7-d6a41c2a4297",
-        "0e95bdcb-42ff-4f2a-80d7-00c32ac05b2c"
-      ],
-      "modernIdentification": "តាមប្រពៃណីគឺ Kifl Haris ក្នុងត្រើយខាងលិចកណ្តាល",
-      "coordinates": {
-        "latitude": 32.122353,
-        "longitude": 35.15045
-      },
-      "verses": [
-        "JOS 19:50",
-        "JOS 24:30"
       ],
       "links": [],
       "wikipedia": "https://en.wikipedia.org/wiki/Timnath-heres",
@@ -28197,7 +27988,7 @@
         "00000000-0000-4000-8000-000000000074",
         "00000000-0000-4000-8000-000000000103",
         "00000000-0000-4000-8000-000000000045",
-        "42017171-050f-4b41-bdae-3081853e3e98"
+        "00000000-0000-4000-8000-000000000122"
       ],
       "modernIdentification": null,
       "coordinates": null,
@@ -28592,7 +28383,7 @@
       "description": "ច្រកភ្នំសិកូត គឺជាតំបន់ទំនាបដែលពាក់ព័ន្ធនឹងស្រុកសិកូតក្នុងវាលទន្លេយ័រដាន់ ហើយមានរៀបរាប់ក្នុង [Psalm 108](chapter-key://PSA 108) ថាជាដែនដីដែលព្រះជាម្ចាស់បានវាស់ចែក។",
       "type": "valley",
       "relatedLocations": [
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
+        "95928260-0297-4497-9546-8a3d601d308c",
         "00000000-0000-4000-8000-000000000201",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
       ],
@@ -28844,7 +28635,7 @@
       "kjvName": "Yiron",
       "oldName": "យីរ៉ូន",
       "title": "ជាទីក្រុងរបស់ [ណែបថាលី](name-id://e8c79c45-33b0-4b1e-9265-368c54b9604a) ដែលកំណែ KJV ហៅថា Iron",
-      "description": "យីរ៉ូន គឺជាទម្រង់ភាសាហេព្រើរដែលនៅពីក្រោយឈ្មោះ Iron ក្នុងកំណែ KJV ដែលជាទីក្រុងមួយមានរាយនាមក្នុងមរតករបស់ [ណែបថាលី](name-id://e8c79c45-33b0-4b1e-9265-368c54b9604a) ជាមួយ [ហូរែម](location-id://e7bbda61-7b8d-464a-bc06-86db9d4a31ed) [បេត-អាណាត](location-id://baf670bc-6ce3-47e6-8c5e-67fded0d7e75) និង [បេត-សេមែស](location-id://00000000-0000-4000-8000-000000000037) ក្នុង [Joshua 19:38](verse-key://JOS 19:38) ជាទូទៅគេកំណត់វាថាជា Yaroun នៅភាគខាងត្បូងប្រទេសល្បាណូន។",
+      "description": "យីរ៉ូន គឺជាទម្រង់ភាសាហេព្រើរដែលនៅពីក្រោយឈ្មោះ Iron ក្នុងកំណែ KJV ដែលជាទីក្រុងមួយមានរាយនាមក្នុងមរតករបស់ [ណែបថាលី](name-id://e8c79c45-33b0-4b1e-9265-368c54b9604a) ជាមួយ [ហូរែម](location-id://e7bbda61-7b8d-464a-bc06-86db9d4a31ed) [បេត-អាណាត](location-id://00000000-0000-4000-8000-000000000030) និង [បេត-សេមែស](location-id://00000000-0000-4000-8000-000000000037) ក្នុង [Joshua 19:38](verse-key://JOS 19:38) ជាទូទៅគេកំណត់វាថាជា Yaroun នៅភាគខាងត្បូងប្រទេសល្បាណូន។",
       "type": "city",
       "relatedLocations": [
         "2ee651d9-d1e6-4096-b6db-6d49461a0dc9",
@@ -28872,9 +28663,9 @@
     },
     {
       "id": "00000000-0000-4000-8000-000000000238",
-      "name": "សាណូអា",
-      "kjvName": "Zanoah of the Shephelah",
-      "oldName": "សាណូអា",
+      "name": "Zanoah",
+      "kjvName": "Zanoah",
+      "oldName": null,
       "title": "ជាទីក្រុងតំបន់ទំនាបរបស់ស្រុកយូដា ដែលបានសាងសង់ឡើងវិញក្នុងសម័យ [នេហេមា](name-id://46c4c07f-dde8-4466-a278-6e40a8d3e7f1)",
       "description": "សាណូអា គឺជាទីក្រុងមួយក្នុងស្រុកតំបន់ទំនាបនៃ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ដែលក្រោយមកពាក់ព័ន្ធនឹងអ្នកវិលត្រឡប់មកវិញ ដែលបានជួសជុលកំផែងក្រុង [យេរូសាឡិម](location-id://00000000-0000-4000-8000-000000000117) ត្រង់ [ទ្វារច្រកភ្នំ](location-id://a1142449-1aa9-4dcd-ae43-388e5e0925d1) និងបានតាំងទីលំនៅឡើងវិញនៅទីក្រុងនានាក្នុងស្រុកយូដា ជាទូទៅគេកំណត់វាថាជា Khirbet Zanu នៅជិតភូមិ moshav Zanoah បច្ចុប្បន្ន។",
       "type": "settlement",
@@ -28900,9 +28691,9 @@
     },
     {
       "id": "804c9231-2b6f-4b9b-945e-25f11acd4fb9",
-      "name": "សាណូអា",
-      "kjvName": "Zanoah of the hill country",
-      "oldName": "សាណូអា",
+      "name": "Zanoah",
+      "kjvName": "Zanoah",
+      "oldName": null,
       "title": "ជាទីក្រុងតំបន់ភ្នំរបស់ស្រុកយូដា ដែលមានរាយនាមនៅជិត [យ៉ាទារ](location-id://bb79e534-b816-4afc-89d6-7dacf78ea24d) និងយេសរាល",
       "description": "សាណូអា គឺជាទីក្រុងដាច់ដោយឡែកមួយរបស់ស្រុកយូដា ក្នុងបញ្ជីតំបន់ភ្នំរបស់កណ្ឌ Joshua ដែលខុសពីសាណូអាក្នុងតំបន់ទំនាប គេបានស្នើទីតាំង Khirbet Zanuta នៅភ្នំ [ហេប្រុន](location-id://00000000-0000-4000-8000-000000000103) ភាគខាងត្បូង ប៉ុន្តែការកំណត់នេះនៅតែមិនច្បាស់លាស់។",
       "type": "settlement",
@@ -29245,11 +29036,11 @@
       "kjvName": "Zaphon",
       "oldName": null,
       "title": "ជាទីក្រុងរបស់កុលសម្ព័ន្ធកាឌ់ ក្នុងចំណែកដីនៃជ្រលង [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
-      "description": "សាផូន គឺជាទីក្រុងមួយក្នុងមរតករបស់ [កាឌ់](name-id://0b987f5d-4e64-4b73-a3e2-7f6b47dd7f46) ដែលមានរាយនាមជាមួយ [សិកូត](location-id://f577cd82-77ac-4216-8c7d-86b5dd1bb0b3) និងផ្នែកដែលនៅសល់នៃនគររបស់ [ស៊ីហុន](name-id://7aefa340-c02e-4e80-9ce5-24d4215f6341) ក្នុងជ្រលង [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) មិនច្បាស់ពីទីតាំងពិតប្រាកដរបស់វាឡើយ។",
+      "description": "សាផូន គឺជាទីក្រុងមួយក្នុងមរតករបស់ [កាឌ់](name-id://0b987f5d-4e64-4b73-a3e2-7f6b47dd7f46) ដែលមានរាយនាមជាមួយ [សិកូត](location-id://95928260-0297-4497-9546-8a3d601d308c) និងផ្នែកដែលនៅសល់នៃនគររបស់ [ស៊ីហុន](name-id://7aefa340-c02e-4e80-9ce5-24d4215f6341) ក្នុងជ្រលង [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) មិនច្បាស់ពីទីតាំងពិតប្រាកដរបស់វាឡើយ។",
       "type": "settlement",
       "relatedLocations": [
         "a8e27fd5-3589-4590-8140-e867b7f142ed",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
+        "95928260-0297-4497-9546-8a3d601d308c",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
       ],
       "modernIdentification": null,
@@ -29296,12 +29087,12 @@
       "kjvName": "Zarethan",
       "oldName": "សារថាន",
       "title": "ជាទីកន្លែងក្នុងជ្រលង [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) ដែលសរសេរផងដែរថា Zaretan Zarthan និង Zeredathah",
-      "description": "សារថាន គឺជាទីកន្លែងមួយក្នុងជ្រលង [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) នៅជិត [អាដាំ](location-id://53580466-6123-4acf-8ac5-5357a2e6a567) និង [សិកូត](location-id://f577cd82-77ac-4216-8c7d-86b5dd1bb0b3) ដែលពាក់ព័ន្ធនឹងការឆ្លងទន្លេយ័រដាន់របស់អ៊ីស្រាអែល និងនឹងដីឥដ្ឋដែលគេបានចាក់ភាជន៍លង្ហិនរបស់ [សាឡូម៉ូន](name-id://509b7c2f-b8bf-4a4d-a393-550a7a4b259f) ទម្រង់ពាក់ព័ន្ធតាមកំណែ KJV គឺ Zaretan Zartanah Zarthan និង Zeredathah ទំនងសំដៅលើតំបន់តែមួយនោះ ដែលទីតាំងពិតប្រាកដរបស់វានៅតែមិនច្បាស់លាស់។",
+      "description": "សារថាន គឺជាទីកន្លែងមួយក្នុងជ្រលង [យ័រដាន់](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) នៅជិត [អាដាំ](location-id://53580466-6123-4acf-8ac5-5357a2e6a567) និង [សិកូត](location-id://95928260-0297-4497-9546-8a3d601d308c) ដែលពាក់ព័ន្ធនឹងការឆ្លងទន្លេយ័រដាន់របស់អ៊ីស្រាអែល និងនឹងដីឥដ្ឋដែលគេបានចាក់ភាជន៍លង្ហិនរបស់ [សាឡូម៉ូន](name-id://509b7c2f-b8bf-4a4d-a393-550a7a4b259f) ទម្រង់ពាក់ព័ន្ធតាមកំណែ KJV គឺ Zaretan Zartanah Zarthan និង Zeredathah ទំនងសំដៅលើតំបន់តែមួយនោះ ដែលទីតាំងពិតប្រាកដរបស់វានៅតែមិនច្បាស់លាស់។",
       "type": "place",
       "relatedLocations": [
         "53580466-6123-4acf-8ac5-5357a2e6a567",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
+        "95928260-0297-4497-9546-8a3d601d308c",
         "c6ddfad2-cdfa-4992-9bb8-479e7c6bc9ca"
       ],
       "modernIdentification": null,
@@ -29374,9 +29165,9 @@
     },
     {
       "id": "3289d05d-0691-4de7-a747-9a945560607a",
-      "name": "ច្រកភ្នំសេបោម",
-      "kjvName": "Zeboim Valley",
-      "oldName": "ច្រកភ្នំសេបោម",
+      "name": "Zeboim",
+      "kjvName": "Zeboim",
+      "oldName": null,
       "title": "ជាជ្រលងភ្នំរបស់កុលសម្ព័ន្ធបេនយ៉ាមីន នៅតាមផ្លូវវាយឆ្មក់របស់ជនជាតិភីលីស្ទីន",
       "description": "ច្រកភ្នំសេបោម គឺជាទិសមួយក្នុងចំណោមទិសដែលពួកចោរប្លន់ជនជាតិភីលីស្ទីនបានធ្វើដំណើរចេញពី [មីកម៉ាស](location-id://ee19b0f3-9647-4ed1-9f48-d9bef91d04fd) ក្នុងសម័យរបស់ [សូល](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb) ឆ្ពោះទៅវាលរហោស្ថាននៅផ្នែកខាងកើតរបស់ [បេនយ៉ាមីន](location-id://80f2867e-4e7c-43b6-aa11-7fd42550d4ef) មិនច្បាស់ពីជ្រលងភ្នំពិតប្រាកដឡើយ។",
       "type": "valley",
@@ -29713,9 +29504,9 @@
     },
     {
       "id": "212b3b0d-07c7-4506-99f7-2bd90c1942ce",
-      "name": "ស៊ីភ of the hill country",
-      "kjvName": "Ziph of the hill country",
-      "oldName": "ស៊ីភ",
+      "name": "Ziph",
+      "kjvName": "Ziph",
+      "oldName": null,
       "title": "ជាទីក្រុងតំបន់ភ្នំរបស់ស្រុកយូដា នៅជិតទីជម្រកក្នុងវាលរហោស្ថានរបស់ [ដាវីឌ](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c)",
       "description": "ស៊ីភ ក្នុងតំបន់ភ្នំ គឺជាទីក្រុងរបស់ស្រុកយូដានៅជិត [ម៉ាអូន](location-id://5dc48c50-612b-40c8-87f0-9948dab2dc29) និងកើមែល ដែល [រេហូបោម](name-id://68d5eac0-52b9-4b0b-b484-8c7b5c3b8971) បានពង្រឹងជាបន្ទាយ ហើយដែលពាក់ព័ន្ធនឹងវាលរហោស្ថានដែល [ដាវីឌ](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) បានលាក់ខ្លួនពី [សូល](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb) ជាធម្មតាគេកំណត់វាថាជា Tell Zif នៅអាគ្នេយ៍ [ហេប្រុន](location-id://00000000-0000-4000-8000-000000000103)។",
       "type": "settlement",
@@ -29741,9 +29532,9 @@
     },
     {
       "id": "484839f0-202c-4d25-a69a-ba856717be0f",
-      "name": "ស៊ីភ of the Negeb",
-      "kjvName": "Ziph of the Negeb",
-      "oldName": "ស៊ីភ",
+      "name": "Ziph",
+      "kjvName": "Ziph",
+      "oldName": null,
       "title": "ជាទីក្រុងភាគខាងត្បូងរបស់ស្រុកយូដា ក្នុងស្រុកណេកិប",
       "description": "ស៊ីភ ក្នុងតំបន់ណេកិប គឺជាទីក្រុងដាច់ដោយឡែកមួយក្នុងបញ្ជីភាគខាងត្បូងរបស់ [យូដា](location-id://00000000-0000-4000-8000-000000000119) ជាមួយ [ថេលែម](location-id://a91b54ef-50dc-4e9f-b3bc-c4c329af200d) និង [ប្អាឡូត](location-id://411f8b7a-8f8c-4d57-91c0-6ae3e249a163) ដែលខុសពីស៊ីភក្នុងតំបន់ភ្នំដ៏ល្បីជាង នៅជិតទីជម្រកក្នុងវាលរហោស្ថានរបស់ [ដាវីឌ](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) គេមិនស្គាល់ទីតាំងពិតប្រាកដរបស់វាឡើយ។",
       "type": "settlement",
@@ -30457,7 +30248,6 @@
     ],
     "GEN 35:8": [
       "00000000-0000-4000-8000-000000000008",
-      "25e3ce53-95ff-4df4-911a-d91e33c82863",
       "00000000-0000-4000-8000-000000000032"
     ],
     "GEN 35:9": [
@@ -31772,8 +31562,7 @@
       "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
     ],
     "NUM 32:8": [
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "NUM 32:9": [
       "00000000-0000-4000-8000-000000000074",
@@ -31818,7 +31607,6 @@
     ],
     "NUM 32:36": [
       "00000000-0000-4000-8000-000000000033",
-      "e10c14d7-9df4-4c20-aea2-c3107e64a1bc",
       "c9a05df3-f5c7-46c0-b70d-13287c2526c8"
     ],
     "NUM 32:37": [
@@ -32047,7 +31835,6 @@
       "9d819e62-aa5c-439f-b088-963ac7f22610",
       "0ad7bf6d-0adf-43e0-9262-2431a2d7af7c",
       "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98",
       "5b88ec17-6c67-409c-87f3-c656c80d89c9"
     ],
     "NUM 34:5": [
@@ -32116,7 +31903,6 @@
     "DEU 1:2": [
       "78c4ec57-21ca-4b05-986c-21ceb1e8f109",
       "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98",
       "4c6a65f7-43e9-4112-90d9-7f95bc44bfa4"
     ],
     "DEU 1:4": [
@@ -32137,8 +31923,7 @@
     ],
     "DEU 1:19": [
       "78c4ec57-21ca-4b05-986c-21ceb1e8f109",
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "DEU 1:24": [
       "00000000-0000-4000-8000-000000000074",
@@ -32188,7 +31973,6 @@
     ],
     "DEU 2:14": [
       "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98",
       "4b744ef9-9645-42c6-b96a-b603453ff114"
     ],
     "DEU 2:18": [
@@ -32421,8 +32205,7 @@
       "fd375008-258f-480d-ba13-b9fc0b750550"
     ],
     "DEU 9:23": [
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "DEU 9:26": [
       "00000000-0000-4000-8000-000000000065"
@@ -33043,8 +32826,7 @@
     "JOS 10:41": [
       "00000000-0000-4000-8000-000000000084",
       "00000000-0000-4000-8000-000000000088",
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "JOS 10:43": [
       "5d536a42-83f6-4caf-8fb3-c11de63ca7de"
@@ -33312,12 +33094,10 @@
     ],
     "JOS 14:6": [
       "5d536a42-83f6-4caf-8fb3-c11de63ca7de",
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "JOS 14:7": [
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "JOS 14:13": [
       "00000000-0000-4000-8000-000000000103"
@@ -33340,7 +33120,6 @@
     "JOS 15:3": [
       "2551809c-81df-4029-905c-d7eabc661387",
       "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98",
       "5b88ec17-6c67-409c-87f3-c656c80d89c9"
     ],
     "JOS 15:4": [
@@ -33571,7 +33350,6 @@
     ],
     "JOS 15:58": [
       "65d009b2-d6fb-4e67-88fd-6b179616d0e8",
-      "f6a8b0c2-5e7d-4f9a-b13c-6d8e0f2a4b5c",
       "12785454-38f5-42d6-ba3c-aae15b5174ff",
       "3a42aa99-ef7e-463a-a875-da51a48b6ceb"
     ],
@@ -33910,7 +33688,6 @@
     ],
     "JOS 19:38": [
       "00000000-0000-4000-8000-000000000030",
-      "baf670bc-6ce3-47e6-8c5e-67fded0d7e75",
       "e7bbda61-7b8d-464a-bc06-86db9d4a31ed",
       "890bf339-eec0-44e1-9870-294bb14dd24b",
       "0d4ab817-d745-4f0d-a4e0-16860bad6bc0"
@@ -33947,8 +33724,7 @@
       "c3db0895-8d9d-4336-9cc0-cedc7bfbabda"
     ],
     "JOS 19:50": [
-      "00000000-0000-4000-8000-000000000222",
-      "6b2b5e8c-76ae-478f-8678-4b7aabd7a8af"
+      "00000000-0000-4000-8000-000000000222"
     ],
     "JOS 19:51": [
       "00000000-0000-4000-8000-000000000203"
@@ -34148,8 +33924,7 @@
     "JOS 24:30": [
       "0d1692fb-d846-45e4-9647-99ce91e3b4f6",
       "00000000-0000-4000-8000-000000000106",
-      "00000000-0000-4000-8000-000000000222",
-      "6b2b5e8c-76ae-478f-8678-4b7aabd7a8af"
+      "00000000-0000-4000-8000-000000000222"
     ],
     "JOS 24:32": [
       "00000000-0000-4000-8000-000000000065",
@@ -34230,8 +34005,7 @@
       "00000000-0000-4000-8000-000000000208"
     ],
     "JDG 1:33": [
-      "00000000-0000-4000-8000-000000000030",
-      "baf670bc-6ce3-47e6-8c5e-67fded0d7e75"
+      "00000000-0000-4000-8000-000000000030"
     ],
     "JDG 1:35": [
       "6d63bb71-0ada-4fc1-bfdd-fe6948d7cfd4",
@@ -34778,7 +34552,6 @@
     ],
     "JDG 18:28": [
       "00000000-0000-4000-8000-000000000035",
-      "1107b4f4-405b-4892-8436-8b3a7465b9d4",
       "00000000-0000-4000-8000-000000000208"
     ],
     "JDG 18:29": [
@@ -35717,7 +35490,6 @@
     ],
     "2SA 10:6": [
       "00000000-0000-4000-8000-000000000035",
-      "1107b4f4-405b-4892-8436-8b3a7465b9d4",
       "92a5973a-971c-40de-90f7-a3c5e4813dbc",
       "00000000-0000-4000-8000-000000000246"
     ],
@@ -35759,8 +35531,7 @@
       "00000000-0000-4000-8000-000000000117"
     ],
     "2SA 13:23": [
-      "00000000-0000-4000-8000-000000000024",
-      "36ef8d50-17d9-4ee3-bb6f-85ecf0b5f994"
+      "00000000-0000-4000-8000-000000000024"
     ],
     "2SA 13:37": [
       "008d7d3a-d291-42f3-9e43-23a183215867"
@@ -38100,8 +37871,7 @@
     ],
     "2CH 11:7": [
       "9115a436-027f-4c32-b221-735767cd01c6",
-      "65d009b2-d6fb-4e67-88fd-6b179616d0e8",
-      "f6a8b0c2-5e7d-4f9a-b13c-6d8e0f2a4b5c"
+      "65d009b2-d6fb-4e67-88fd-6b179616d0e8"
     ],
     "2CH 11:8": [
       "00000000-0000-4000-8000-000000000082",
@@ -38863,8 +38633,7 @@
       "4c916b4d-a2ed-47ac-853b-e512b1fb7068"
     ],
     "NEH 3:16": [
-      "65d009b2-d6fb-4e67-88fd-6b179616d0e8",
-      "f6a8b0c2-5e7d-4f9a-b13c-6d8e0f2a4b5c"
+      "65d009b2-d6fb-4e67-88fd-6b179616d0e8"
     ],
     "NEH 3:17": [
       "00000000-0000-4000-8000-000000000125"

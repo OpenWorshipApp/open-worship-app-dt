@@ -1,5 +1,8 @@
+import { genAppMenuDemos } from './appMenuDemos.mjs';
+
 // Small, deterministic Presenter lessons for Tips of the Day. These only
-// reveal app controls; they never change the content shown to the congregation.
+// reveal app controls or explain native menus; they never change the content
+// shown to the congregation.
 
 export const PRESENTER_DEMO_LIST = [
   {
@@ -803,6 +806,7 @@ export const PRESENTER_DEMO_LIST = [
       },
     ],
   },
+  ...genAppMenuDemos('presenter'),
   {
     id: 'presenter-view-reload',
     label: 'Reload or force-reload the Presenter',

@@ -49,7 +49,10 @@ import type { DocxSlidePropsType } from '../../app-document-list/DocxSlide';
 import DocxSlide from '../../app-document-list/DocxSlide';
 import appProvider from '../../server/appProvider';
 import { applyAttachBackground } from './screenBackgroundHelpers';
-import { unlocking } from '../../server/unlockingHelpers';
+import {
+    collectLiveOnScreenMap,
+    persistOnScreenEntry,
+} from './onScreenSettingPersistHelpers';
 import type {
     VarySlideDataType,
     VarySlideType,
@@ -255,16 +258,23 @@ class ScreenVaryAppDocumentManager
         // rather than of the one that also pauses.
         cancelScreenSlideMediaControl(this.screenId);
         this._varySlideData = varySlideData;
-        unlocking(screenManagerSettingNames.VARY_APP_DOCUMENT, () => {
-            const allSlideList = getAppDocumentListOnScreenSetting();
-            if (varySlideData === null) {
-                delete allSlideList[this.key];
-            } else {
-                allSlideList[this.key] = varySlideData;
-            }
-            const string = JSON.stringify(allSlideList);
-            setSetting(screenManagerSettingNames.VARY_APP_DOCUMENT, string);
-            this.fireUpdateEvent();
+        persistOnScreenEntry({
+            lockKey: screenManagerSettingNames.VARY_APP_DOCUMENT,
+            settingName: screenManagerSettingNames.VARY_APP_DOCUMENT,
+            key: this.key,
+            value: varySlideData,
+            readMap: getAppDocumentListOnScreenSetting,
+            collectLive: () => {
+                return collectLiveOnScreenMap(
+                    ScreenVaryAppDocumentManager.getAllInstances(),
+                    (instance) => {
+                        return instance.varySlideData;
+                    },
+                );
+            },
+            onDone: () => {
+                this.fireUpdateEvent();
+            },
         });
         this.render();
         this.sendSyncScreen();

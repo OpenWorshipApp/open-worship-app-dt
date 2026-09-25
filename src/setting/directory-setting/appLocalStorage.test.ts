@@ -6,6 +6,7 @@ const h = vi.hoisted(() => {
         existingPaths: new Set<string>(),
         movedDirPath: null as string | null,
         markerId: 'marker-id' as string | null,
+        fileHelpersLoaded: false,
     };
 });
 
@@ -38,7 +39,7 @@ vi.mock('../../server/appSecureStorage', () => ({
     appSecureStorage: { clear: () => {} },
 }));
 
-vi.mock('../../server/fileHelpers', () => ({
+vi.mock('../../server/storageFileHelpers', () => ({
     fsExistSync: (filePath: string) => {
         return h.existingPaths.has(filePath);
     },
@@ -54,14 +55,21 @@ vi.mock('../../server/fileHelpers', () => ({
     pathJoin: (...parts: string[]) => {
         return parts.join('/');
     },
-    fsCheckDirExist: async () => true,
-    fsDeleteFile: async () => {},
-    fsListFiles: async () => [],
     fsMkDirSync: () => {},
     fsReadSync: () => '',
     fsUnlinkSync: () => {},
     fsWriteFileSync: () => {},
+    fsWriteFileAtomicSync: () => {},
 }));
+
+vi.mock('../../server/fileHelpers', () => {
+    h.fileHelpersLoaded = true;
+    return {
+        fsCheckDirExist: async () => true,
+        fsDeleteFile: async () => {},
+        fsListFiles: async () => [],
+    };
+});
 
 async function loadAppLocalStorage() {
     vi.resetModules();
@@ -73,6 +81,12 @@ beforeEach(() => {
     h.existingPaths.clear();
     h.movedDirPath = null;
     h.markerId = 'marker-id';
+    h.fileHelpersLoaded = false;
+});
+
+test('startup storage does not load the broad file helper graph', async () => {
+    await loadAppLocalStorage();
+    expect(h.fileHelpersLoaded).toBe(false);
 });
 
 describe('where the data folder is, as a window starts', () => {

@@ -67,6 +67,25 @@ function getCanDemoFromToolResult(result: unknown): boolean | null {
 
 export const DAILY_TIP_SESSION_KEY = 'daily-tip-auto-shown';
 
+function getAppMenuCategory(id: string) {
+    if (id.endsWith('menu-file')) {
+        return tran('File menu');
+    }
+    if (id.endsWith('menu-edit')) {
+        return tran('Edit menu');
+    }
+    if (id.endsWith('menu-tools')) {
+        return tran('Tools menu');
+    }
+    if (id.endsWith('menu-window')) {
+        return tran('Window menu');
+    }
+    if (id.endsWith('menu-help')) {
+        return tran('Help menu');
+    }
+    return null;
+}
+
 function getPresenterTips(): DailyTipType[] {
     const documentsIds = new Set([
         'presenter-document-list',
@@ -131,17 +150,20 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-view-devtools',
     ]);
     return PRESENTER_DEMO_LIST.map((demo) => {
-        const category = documentsIds.has(demo.id)
-            ? tran('Documents and slides')
-            : screenIds.has(demo.id)
-              ? tran('Audience screens')
-              : backgroundIds.has(demo.id)
-                ? tran('Background and media')
-                : serviceIds.has(demo.id)
-                  ? tran('Service planning')
-                  : viewMenuIds.has(demo.id)
-                    ? tran('View menu')
-                    : tran('Getting started');
+        const menuCategory = getAppMenuCategory(demo.id);
+        const category =
+            menuCategory ??
+            (documentsIds.has(demo.id)
+                ? tran('Documents and slides')
+                : screenIds.has(demo.id)
+                  ? tran('Audience screens')
+                  : backgroundIds.has(demo.id)
+                    ? tran('Background and media')
+                    : serviceIds.has(demo.id)
+                      ? tran('Service planning')
+                      : viewMenuIds.has(demo.id)
+                        ? tran('View menu')
+                        : tran('Getting started'));
         return {
             id: demo.id,
             demoId: demo.id,
@@ -201,17 +223,20 @@ function getReaderTips(): DailyTipType[] {
         'reader-view-devtools',
     ]);
     return READER_DEMO_LIST.map((demo) => {
-        const category = navigationIds.has(demo.id)
-            ? tran('Getting started')
-            : readingIds.has(demo.id)
-              ? tran('Reading and layout')
-              : notesIds.has(demo.id)
-                ? tran('Notes and marks')
-                : viewMenuIds.has(demo.id)
-                  ? tran('View menu')
-                  : demo.id === 'reader-header-tools'
-                    ? tran('Reader shortcuts')
-                    : tran('Study tools');
+        const menuCategory = getAppMenuCategory(demo.id);
+        const category =
+            menuCategory ??
+            (navigationIds.has(demo.id)
+                ? tran('Getting started')
+                : readingIds.has(demo.id)
+                  ? tran('Reading and layout')
+                  : notesIds.has(demo.id)
+                    ? tran('Notes and marks')
+                    : viewMenuIds.has(demo.id)
+                      ? tran('View menu')
+                      : demo.id === 'reader-header-tools'
+                        ? tran('Reader shortcuts')
+                        : tran('Study tools'));
         return {
             id: demo.id,
             demoId: demo.id,

@@ -1,3 +1,5 @@
+import { genAppMenuDemos } from './appMenuDemos.mjs';
+
 // Small, deterministic Bible Reader lessons. They live beside the guide
 // engine because the chatbot window and every outside MCP client must start
 // the exact same safe steps. Nothing here calls a model or reads a Bible.
@@ -711,6 +713,7 @@ export const READER_DEMO_LIST = [
       },
     ],
   },
+  ...genAppMenuDemos('reader'),
   {
     id: 'reader-view-reload',
     label: 'Reload or force-reload the Reader',

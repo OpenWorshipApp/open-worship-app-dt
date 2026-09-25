@@ -7,8 +7,10 @@ import {
 import { PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME } from './helper/constants';
 import { handleError } from './helper/errorHelpers';
 import { sanitizeCssValue } from './helper/sanitizeHelpers';
-import { getSetting, setSetting } from './helper/settingHelpers';
-import { getAppFontFamily, getAppFontWeight } from './setting/settingHelpers';
+import {
+    getAppFontFamily,
+    getAppFontWeight,
+} from './setting/appFontSettingHelpers';
 import appProvider from './server/appProvider';
 import { appLocalStorage } from './setting/directory-setting/appLocalStorage';
 
@@ -47,10 +49,17 @@ async function initFontFamily() {
  * short in the middle is picked up by the next launch rather than undone.
  */
 async function initPresentingFlowRenameMigration() {
-    if (getSetting(PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME) !== null) {
+    if (
+        appLocalStorage.getItem(
+            PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME,
+        ) !== null
+    ) {
         return;
     }
-    setSetting(PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME, 'true');
+    appLocalStorage.setItem(
+        PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME,
+        'true',
+    );
     try {
         const { default: migratePresentingFlowRename } =
             await import('./helper/presentingFlowRenameMigration');
@@ -71,10 +80,13 @@ const SETTING_KEY_PATH_MIGRATION_SETTING_NAME = 'setting-key-path-migration';
  * pattern as the migration above.
  */
 async function initSettingKeyPathMigration() {
-    if (getSetting(SETTING_KEY_PATH_MIGRATION_SETTING_NAME) !== null) {
+    if (
+        appLocalStorage.getItem(SETTING_KEY_PATH_MIGRATION_SETTING_NAME) !==
+        null
+    ) {
         return;
     }
-    setSetting(SETTING_KEY_PATH_MIGRATION_SETTING_NAME, 'true');
+    appLocalStorage.setItem(SETTING_KEY_PATH_MIGRATION_SETTING_NAME, 'true');
     try {
         const { default: migrateSettingKeyPaths } =
             await import('./helper/settingKeyPathMigration');

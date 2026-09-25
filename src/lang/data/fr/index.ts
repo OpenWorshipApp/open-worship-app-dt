@@ -1752,6 +1752,26 @@ const dictionary = {
         "S'applique au Présentateur et au Lecteur biblique au prochain démarrage de l'application.",
     'Starting walkthrough…': 'Démarrage du guide…',
     'Could not start this walkthrough.': 'Impossible de démarrer ce guide.',
+    'File menu': 'Menu Fichier',
+    'Edit menu': 'Menu Édition',
+    'Tools menu': 'Menu Outils',
+    'Window menu': 'Menu Fenêtre',
+    'Help menu': 'Menu Aide',
+    'Learn the File menu': 'Découvrir le menu Fichier',
+    'Learn Print, Print Without Preview, Export Data, Import Data, Close, and Quit or Exit.':
+        'Découvrez Imprimer, Imprimer sans aperçu, Exporter les données, Importer les données, Fermer et Quitter.',
+    'Learn the Edit menu': 'Découvrir le menu Édition',
+    'Learn Undo, Redo, Cut, Copy, Paste, Paste and Match Style, Find, Delete, Select All, Settings, and Speech.':
+        'Découvrez Annuler, Rétablir, Couper, Copier, Coller, Coller et adapter le style, Rechercher, Supprimer, Tout sélectionner, Paramètres et Parole.',
+    'Learn the Tools menu': 'Découvrir le menu Outils',
+    'Learn Copy Debug Info, Copy Full Debug Info, Local Web Share, Google Fonts, App Assistant, AI Chat, Khmer Tools, and Start Controlling.':
+        "Découvrez la copie des informations de débogage, le partage web local, Google Fonts, l'assistant, AI Chat, les outils khmers et le contrôle de l'écran.",
+    'Learn the Window menu': 'Découvrir le menu Fenêtre',
+    'Learn Minimize, Maximize or Zoom, Close, Bring All to Front, window switching, and Reset Position and Size.':
+        'Découvrez Réduire, Agrandir ou Zoomer, Fermer, Tout ramener au premier plan, changer de fenêtre et Réinitialiser la position et la taille.',
+    'Learn the Help menu': 'Découvrir le menu Aide',
+    'Learn Tips of the Day, All tips, App Help (Chatbot), AI Chat, Learn More, both update checks, and About.':
+        "Découvrez les astuces du jour, toutes les astuces, l'aide par chatbot, AI Chat, En savoir plus, les deux recherches de mise à jour et À propos.",
     'Look up a Bible passage': 'Rechercher un passage biblique',
     'Open Bible Lookup without leaving the Presenter.':
         'Ouvrez la recherche biblique sans quitter le Présentateur.',

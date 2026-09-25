@@ -4,7 +4,7 @@ import type { DroppedDataType } from '../../helper/DragInf';
 import { DragTypeEnum } from '../../helper/DragInf';
 import { getImageDim, getVideoDim } from '../../helper/helpers';
 import { tran } from '../../lang/langHelpers';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
+import { getSetting } from '../../helper/settingHelpers';
 import { genHtmlBackground } from '../ScreenBackgroundComp';
 import { getBackgroundSrcListOnScreenSetting } from '../screenHelpers';
 import { handleError } from '../../helper/errorHelpers';
@@ -19,7 +19,10 @@ import ScreenEventHandler, {
 import type ScreenManagerBase from './ScreenManagerBase';
 import type ScreenEffectManager from './ScreenEffectManager';
 import appProvider from '../../server/appProvider';
-import { unlocking } from '../../server/unlockingHelpers';
+import {
+    collectLiveOnScreenMap,
+    persistOnScreenEntry,
+} from './onScreenSettingPersistHelpers';
 import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
 import type {
     BackgroundDataType,
@@ -95,16 +98,23 @@ class ScreenBackgroundManager
             this.addPropEvent('color-set', backgroundSrc.src);
         }
         this.render();
-        unlocking(screenManagerSettingNames.BACKGROUND, () => {
-            const allBackgroundSrcList = getBackgroundSrcListOnScreenSetting();
-            if (backgroundSrc === null) {
-                delete allBackgroundSrcList[this.key];
-            } else {
-                allBackgroundSrcList[this.key] = backgroundSrc;
-            }
-            const str = JSON.stringify(allBackgroundSrcList);
-            setSetting(screenManagerSettingNames.BACKGROUND, str);
-            this.fireUpdateEvent();
+        persistOnScreenEntry({
+            lockKey: screenManagerSettingNames.BACKGROUND,
+            settingName: screenManagerSettingNames.BACKGROUND,
+            key: this.key,
+            value: backgroundSrc,
+            readMap: getBackgroundSrcListOnScreenSetting,
+            collectLive: () => {
+                return collectLiveOnScreenMap(
+                    ScreenBackgroundManager.getAllInstancesBase<ScreenBackgroundManager>(),
+                    (instance) => {
+                        return instance.backgroundSrc;
+                    },
+                );
+            },
+            onDone: () => {
+                this.fireUpdateEvent();
+            },
         });
         this.sendSyncScreen();
     }

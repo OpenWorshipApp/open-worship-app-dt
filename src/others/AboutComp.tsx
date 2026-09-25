@@ -1,8 +1,6 @@
 import './AboutComp.scss';
 
 import appProvider from '../server/appProvider';
-import { getDocxToHtmlsVersion } from '../server/docxHelpers';
-import { getPptxToHtmlsVersion } from '../server/pptxHelpers';
 import { useAppStateAsync } from '../helper/appHooks';
 import { useThemeSource } from './themeHelpers';
 import { tran } from '../lang/langHelpers';
@@ -38,6 +36,16 @@ async function getBibleNoteVersion() {
     // (lexical, excalidraw, katex) into the About window just for a version
     const { BibleNote } = await import('bible-note');
     return BibleNote.VERSION;
+}
+
+async function getDocxToHtmlsVersion() {
+    const helpers = await import('../server/docxHelpers');
+    return helpers.getDocxToHtmlsVersion();
+}
+
+async function getPptxToHtmlsVersion() {
+    const helpers = await import('../server/pptxHelpers');
+    return helpers.getPptxToHtmlsVersion();
 }
 
 // need width: '700px', height: '410px'

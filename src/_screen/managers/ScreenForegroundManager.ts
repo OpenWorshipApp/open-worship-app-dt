@@ -1,6 +1,5 @@
 import type { CSSProperties, MouseEvent } from 'react';
 
-import { setSetting } from '../../helper/settingHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { tran } from '../../lang/langHelpers';
 import {
@@ -15,7 +14,10 @@ import { getForegroundDataListOnScreenSetting } from '../screenHelpers';
 import { screenManagerSettingNames } from '../../helper/constants';
 import ScreenEventHandler from './ScreenEventHandler';
 import type ScreenManagerBase from './ScreenManagerBase';
-import { unlocking } from '../../server/unlockingHelpers';
+import {
+    collectLiveOnScreenMap,
+    persistOnScreenEntry,
+} from './onScreenSettingPersistHelpers';
 import type {
     ForegroundDataType,
     BasicScreenMessageType,
@@ -226,13 +228,23 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     }
 
     saveForegroundData() {
-        unlocking(screenManagerSettingNames.FOREGROUND, () => {
-            const allForegroundDataList =
-                getForegroundDataListOnScreenSetting();
-            allForegroundDataList[this.key] = this.foregroundData;
-            const string = JSON.stringify(allForegroundDataList);
-            setSetting(screenManagerSettingNames.FOREGROUND, string);
-            this.fireUpdateEvent();
+        persistOnScreenEntry({
+            lockKey: screenManagerSettingNames.FOREGROUND,
+            settingName: screenManagerSettingNames.FOREGROUND,
+            key: this.key,
+            value: this.foregroundData,
+            readMap: getForegroundDataListOnScreenSetting,
+            collectLive: () => {
+                return collectLiveOnScreenMap(
+                    ScreenForegroundManager.getAllInstancesBase<ScreenForegroundManager>(),
+                    (instance) => {
+                        return instance.foregroundData;
+                    },
+                );
+            },
+            onDone: () => {
+                this.fireUpdateEvent();
+            },
         });
         this.sendSyncScreen();
     }

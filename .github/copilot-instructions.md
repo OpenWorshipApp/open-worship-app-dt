@@ -15,6 +15,12 @@ invisible on a dev machine makes the app unusable for the target users.
   change; prefer the lighter approach even if it costs a little more code.
 - Watch for eager imports, preloading whole files/collections (e.g. bibles,
   media) when only a slice is needed, and unbounded in-memory maps.
+- Renderer entry points and `boot.ts` import only leaf helpers. Do not make a
+  startup helper import a mixed feature module such as `fileHelpers`,
+  `appHelpers` or drag helpers for one small primitive: Rolldown can then put
+  document, screen and React server-rendering code in every renderer's static
+  closure. Split the primitive into a dependency-light module and re-export it
+  from the broad helper for existing callers. Memory `renderer-entry-static-closure`.
 - No `infinite` CSS animation of a PAINT property (`color`, `border-color`,
   `text-decoration-color`, `box-shadow`, `background`) on anything that stays
   mounted at rest — run it a few times or animate `opacity`/`transform` only.

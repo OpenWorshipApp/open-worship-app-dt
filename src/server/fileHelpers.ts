@@ -22,13 +22,40 @@ import {
 import { cloneJson, freezeObject } from '../helper/helpers';
 import { electronSendAsync } from './appHelpers';
 import { tran } from '../lang/langHelpers';
+import { DATA_DIR_PATH_ALIAS } from './dataDirAliasHelpers';
 import {
-    DATA_DIR_PATH_ALIAS,
-    type DataDirAliasType,
-    fromPortableText,
-    genDataDirAlias,
-    toPortableText,
-} from './dataDirAliasHelpers';
+    checkIsHiddenName,
+    fsMkDirSync,
+    getDataDirPath,
+    pathJoin,
+    pathSeparator,
+    toPortableFileText,
+    toRealFileText,
+} from './storageFileHelpers';
+
+export {
+    checkIsHiddenName,
+    DATA_DIR_MARKER_FILE_NAME,
+    ensureDataDirMarkerIdSync,
+    findDataDirsOnVolumesSync,
+    findMovedDataDirSync,
+    fsExistSync,
+    fsMkDirSync,
+    fsReadSync,
+    fsUnlinkSync,
+    fsWriteFileSync,
+    getDataDirPath,
+    getUserWritablePath,
+    listVolumeRootsSync,
+    pathJoin,
+    pathSeparator,
+    readDataDirMarkerIdSync,
+    splitPathRoot,
+    splitVolumePath,
+    toPathCompareKey,
+    toPortableFileText,
+    toRealFileText,
+} from './storageFileHelpers';
 
 for (const ml of [
     mimeBibleList,
@@ -123,11 +150,6 @@ export function checkIsAppFile(fileFullName: string) {
     const dotExtension = getFileDotExtension(fileFullName);
     const isAppFile = appExtensions.includes(dotExtension);
     return isAppFile;
-}
-
-export const pathSeparator = appProvider.pathUtils.sep;
-export function pathJoin(...paths: string[]): string {
-    return appProvider.pathUtils.join(...paths);
 }
 
 export function pathResolve(...paths: string[]): string {
@@ -349,15 +371,6 @@ export function rebaseDataDirPath(
     return [toDirPath.replace(/[\\/]+$/, ''), ...parts].join(sep);
 }
 
-/**
- * The data folder text is aliased against (`$DATA_DIR_PATH`), or null before
- * one is known. `?.`: the test doubles of `appProvider` carry no
- * `sessionData`.
- */
-export function getDataDirPath(): string | null {
-    return appProvider.sessionData?.defaultStorageDirPath ?? null;
-}
-
 // --- Repairing links to where the data folder used to be ------------------
 // `$DATA_DIR_PATH` is written lazily, and only for the folder's CURRENT
 // location: a file saved before it existed, or while the folder lived
@@ -548,229 +561,8 @@ export function toFilePathFromFileUrl(
     return filePath.substring(1).replaceAll('/', '\\');
 }
 
-/**
- * A path as its ROOT and the names under it: `C:\a\b` is `C:\` + [a, b],
- * `\\server\share\a` is `\\server\share\` + [a], `/Volumes/USB/a` is `/` +
- * [Volumes, USB, a]. Splitting on the separator alone loses the root -- a
- * macOS or Linux path came back relative (`Volumes/USB/data`), which only
- * resolved when the app happened to be started from `/`.
- */
-export function splitPathRoot(
-    filePath: string,
-    isWindows = pathSeparator === '\\',
-) {
-    let root = '';
-    if (isWindows) {
-        const match =
-            /^[\\/]{2}[^\\/]+[\\/][^\\/]+[\\/]?/.exec(filePath) ??
-            /^[A-Za-z]:[\\/]?/.exec(filePath) ??
-            /^[\\/]/.exec(filePath);
-        root = match?.[0] ?? '';
-    } else if (filePath.startsWith('/')) {
-        root = '/';
-    }
-    const segments = filePath
-        .slice(root.length)
-        .split(isWindows ? /[\\/]/ : '/')
-        .filter((part) => {
-            return part.length > 0;
-        });
-    if (isWindows && root !== '' && !/[\\/]$/.test(root)) {
-        root += '\\';
-    }
-    return { root, segments };
-}
-
-// --- Finding a data folder again ------------------------------------------
-// Each computer remembers the data folder as ONE absolute path, and a flash
-// drive does not keep its address: Windows hands it `E:` today and `F:`
-// tomorrow, a Mac mounts it at `/Volumes/<label>`, Linux under
-// `/media/<user>/<label>`. The folder carries a marker with an id, so the same
-// folder is recognised wherever it turns up. Dot-named, so no list shows it and
-// no whole-data backup copies it (a restored copy is a different folder).
-export const DATA_DIR_MARKER_FILE_NAME = '.owa-data-folder.json';
-
-// The folders removable drives are mounted under, and how many names deep the
-// mount point is: `/Volumes/<label>`, `/media/<user>/<label>`, …
-const POSIX_VOLUME_BASES: [string[], number][] = [
-    [['Volumes'], 1],
-    [['media'], 2],
-    [['run', 'media'], 2],
-    [['mnt'], 1],
-];
-
-/**
- * A path on a removable drive as the drive's mount point and the names under
- * it: `E:\data\x` is `E:\` + [data, x]; `/Volumes/USB/data` is `/Volumes/USB`
- * + [data]. Null for a path that is not on such a drive -- a folder on the
- * system disk does not move -- or for a drive's own root.
- */
-export function splitVolumePath(
-    dirPath: string,
-    isWindows = pathSeparator === '\\',
-) {
-    const { root, segments } = splitPathRoot(dirPath, isWindows);
-    if (isWindows) {
-        if (!/^[A-Za-z]:\\$/.test(root) || segments.length === 0) {
-            return null;
-        }
-        return { volumeRoot: root, segments };
-    }
-    for (const [base, depth] of POSIX_VOLUME_BASES) {
-        const mountLength = base.length + depth;
-        const isUnderBase = base.every((name, index) => {
-            return segments[index] === name;
-        });
-        if (isUnderBase && segments.length > mountLength) {
-            return {
-                volumeRoot: `/${segments.slice(0, mountLength).join('/')}`,
-                segments: segments.slice(mountLength),
-            };
-        }
-    }
-    return null;
-}
-
-function listDirNamesSync(dirPath: string) {
-    try {
-        return appProvider.fileUtils.readdirSync(dirPath) as string[];
-    } catch (_error) {
-        return [];
-    }
-}
-
-/**
- * Every removable-drive mount point this computer has right now. Read only
- * when a data folder has to be FOUND -- its remembered path is gone, or none
- * was ever chosen -- never on an ordinary start.
- */
-export function listVolumeRootsSync() {
-    if (pathSeparator === '\\') {
-        return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-            .split('')
-            .map((letter) => {
-                return `${letter}:\\`;
-            })
-            .filter((root) => {
-                return fsExistSync(root);
-            });
-    }
-    const roots: string[] = [];
-    for (const [base, depth] of POSIX_VOLUME_BASES) {
-        let dirPaths = [`/${base.join('/')}`];
-        for (let level = 0; level < depth; level++) {
-            dirPaths = dirPaths.flatMap((dirPath) => {
-                return listDirNamesSync(dirPath)
-                    .filter((name) => {
-                        return !checkIsHiddenName(name);
-                    })
-                    .map((name) => {
-                        return `${dirPath}/${name}`;
-                    });
-            });
-        }
-        roots.push(...dirPaths);
-    }
-    return roots;
-}
-
-/** The id in a data folder's marker, or null when it has none. */
-export function readDataDirMarkerIdSync(dirPath: string) {
-    try {
-        const markerPath = pathJoin(dirPath, DATA_DIR_MARKER_FILE_NAME);
-        if (!fsExistSync(markerPath)) {
-            return null;
-        }
-        const id = JSON.parse(fsReadSync(markerPath))?.id;
-        return typeof id === 'string' && id.length > 0 ? id : null;
-    } catch (_error) {
-        return null;
-    }
-}
-
-/**
- * The data folder's id, its marker written first when it has none. Null when
- * the folder cannot be written (a locked stick): such a folder is simply not
- * found again, which is no worse than before markers existed.
- */
-export function ensureDataDirMarkerIdSync(dirPath: string) {
-    const existingId = readDataDirMarkerIdSync(dirPath);
-    if (existingId !== null) {
-        return existingId;
-    }
-    try {
-        const id = crypto.randomUUID();
-        fsWriteFileSync(
-            pathJoin(dirPath, DATA_DIR_MARKER_FILE_NAME),
-            JSON.stringify({
-                id,
-                app: 'open-worship-app',
-                createdAt: new Date().toISOString(),
-            }),
-        );
-        return id;
-    } catch (error) {
-        handleError(error);
-        return null;
-    }
-}
-
-/**
- * The same data folder on another drive: the remembered path's names under
- * the drive, tried under every other mount point, accepted only where the
- * marker's id matches -- a folder that merely has the same name is somebody
- * else's data.
- */
-export function findMovedDataDirSync(
-    rememberedDirPath: string,
-    markerId: string | null,
-) {
-    const volumePath = markerId ? splitVolumePath(rememberedDirPath) : null;
-    if (volumePath === null) {
-        return null;
-    }
-    for (const volumeRoot of listVolumeRootsSync()) {
-        if (volumeRoot === volumePath.volumeRoot) {
-            continue;
-        }
-        const candidate = pathJoin(volumeRoot, ...volumePath.segments);
-        if (readDataDirMarkerIdSync(candidate) === markerId) {
-            return candidate;
-        }
-    }
-    return null;
-}
-
-/**
- * Data folders on this computer's drives, for a computer that has never had
- * one chosen: the root of every removable drive and the folders directly in
- * it, plus `extraDirPaths` (the default Desktop folder), that carry a marker.
- */
-export function findDataDirsOnVolumesSync(extraDirPaths: string[] = []) {
-    const candidates = [...extraDirPaths];
-    for (const volumeRoot of listVolumeRootsSync()) {
-        candidates.push(volumeRoot);
-        for (const name of listDirNamesSync(volumeRoot)) {
-            if (!checkIsHiddenName(name)) {
-                candidates.push(pathJoin(volumeRoot, name));
-            }
-        }
-    }
-    return candidates.filter((dirPath) => {
-        return readDataDirMarkerIdSync(dirPath) !== null;
-    });
-}
-
-/**
- * How two folder or file names are compared the way the running OS's disks
- * compare them: Windows and a default macOS disk ignore case, Linux does not.
- */
-export function toPathCompareKey(filePath: string) {
-    return appProvider.systemUtils?.isLinux
-        ? filePath
-        : filePath.toLocaleLowerCase();
-}
-
+// Startup-safe path, marker and synchronous filesystem helpers live in
+// `storageFileHelpers` and are re-exported above.
 /** `C:\…`, `C:/…` or a network share `\\server\share\…`. */
 export function checkIsWindowsAbsolutePath(filePath: string) {
     return /^[A-Za-z]:[\\/]/.test(filePath) || /^\\\\[^\\]/.test(filePath);
@@ -881,10 +673,6 @@ export type MimetypeNameType = (typeof mimetypeNameTypeList)[number];
  * cache, the data archive — has to agree, or a file skipped by one shows up
  * through another.
  */
-export function checkIsHiddenName(fileFullName: string) {
-    return fileFullName.startsWith('.');
-}
-
 // Written by the OS into any folder it shows, including a flash drive's: the
 // thumbnail cache, the folder-view settings and a custom-icon file.
 const SYSTEM_FILE_NAME_SET = new Set(['thumbs.db', 'desktop.ini', 'icon\r']);
@@ -1025,48 +813,6 @@ function _fsRmdir(dirPath: string) {
 
 function _fsReaddir(dirPath: string) {
     return fsFilePromise<string[]>(appProvider.fileUtils.readdir, dirPath);
-}
-
-// A data folder carried between computers keeps no absolute path of its own in
-// any file: text written inside it stores the folder as `$DATA_DIR_PATH`, and
-// every text read expands it (see `dataDirAliasHelpers`). Web files are loaded
-// by an <iframe> straight from disk, where nothing would expand it, so they
-// keep real paths.
-const webFileExtensions = mimeWebList.flatMap(({ extensions }) => {
-    return extensions;
-});
-// One entry, rebuilt only when the data folder changes.
-let dataDirAlias: DataDirAliasType | null = null;
-function getDataDirAlias(filePath: string) {
-    const dirPath = getDataDirPath();
-    if (
-        !dirPath ||
-        webFileExtensions.includes(getFileDotExtension(filePath).toLowerCase())
-    ) {
-        return null;
-    }
-    if (dataDirAlias?.dirPath !== dirPath) {
-        dataDirAlias = genDataDirAlias(
-            dirPath,
-            pathSeparator,
-            appProvider.browserUtils.pathToFileURL,
-        );
-    }
-    return dataDirAlias;
-}
-function toRealFileText(filePath: string, text: string) {
-    const alias = getDataDirAlias(filePath);
-    return alias === null ? text : fromPortableText(text, alias);
-}
-function toPortableFileText(filePath: string, text: string) {
-    const alias = getDataDirAlias(filePath);
-    // Only what is written INSIDE the data folder: an export, a temp file or
-    // a download stays readable by whatever opens it. Reads resolve the alias
-    // anywhere, so a file copied off the drive still works.
-    if (alias === null || !filePath.startsWith(alias.prefix)) {
-        return text;
-    }
-    return toPortableText(text, alias);
 }
 
 // const rwState: { [key: string]: { r: number; w: number } } = {};
@@ -1388,12 +1134,6 @@ export function fsCreateDir(dirPath: string, isRecursive = true) {
     return _fsMkdir(dirPath, isRecursive);
 }
 
-export function fsMkDirSync(dirPath: string, isRecursive = true) {
-    return appProvider.fileUtils.mkdirSync(dirPath, {
-        recursive: isRecursive,
-    });
-}
-
 export async function fsWriteFile(
     filePath: string,
     data: string | Buffer,
@@ -1404,18 +1144,6 @@ export async function fsWriteFile(
         flag: 'w',
     });
     return filePath;
-}
-
-export function fsWriteFileSync(filePath: string, txt: string, encoding?: any) {
-    // Settings go through here, and they hold most of the data folder's paths.
-    return appProvider.fileUtils.writeFileSync(
-        filePath,
-        toPortableFileText(filePath, txt),
-        {
-            encoding: encoding ?? 'utf8',
-            flag: 'w',
-        },
-    );
 }
 
 export async function fsCreateFile(
@@ -1432,10 +1160,6 @@ export async function fsCreateFile(
     }
     await _fsWriteFile(filePath, txt);
     return filePath;
-}
-
-export function fsExistSync(filePath: string) {
-    return appProvider.fileUtils.existsSync(filePath);
 }
 
 export async function fsRenameFile(
@@ -1462,10 +1186,6 @@ export async function fsDeleteFile(filePath: string) {
     }
 }
 
-export function fsUnlinkSync(filePath: string) {
-    return appProvider.fileUtils.unlinkSync(filePath);
-}
-
 export async function fsDeleteDir(dirPath: string) {
     if (await fsCheckFileExist(dirPath)) {
         throw new Error(`${dirPath} is not a directory`);
@@ -1480,13 +1200,6 @@ export async function fsReadFile(filePath: string) {
     // remove `\uFEFF`
     text = text.replace(/^\uFEFF/, '');
     return text;
-}
-
-export function fsReadSync(filePath: string) {
-    return toRealFileText(
-        filePath,
-        appProvider.fileUtils.readFileSync(filePath, 'utf8'),
-    );
 }
 
 // The bytes of a file as base64 -- a saved picture on its way back to the
@@ -1566,10 +1279,6 @@ export async function selectFiles(
     );
     hideProgressBar('Selecting File');
     return filePaths;
-}
-
-export function getUserWritablePath(): string {
-    return appProvider.messageUtils.sendDataSync('main:app:get-data-path');
 }
 
 export function getDesktopPath(): string {

@@ -21,7 +21,14 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-23e** (**W-46 — Presenter Show it is resilient and
+**workflowsVersion: 2026-09-24** (**W-46 — native-menu learning now covers every
+menu from File through Help.** Presenter grows from 56 to 61 lessons and Reader
+from 49 to 54. Five searchable, self-guided overviews name every command under
+**File**, **Edit**, **Tools**, **Window**, and **Help**; the seven detailed
+**View** lessons remain. Conditional and macOS-only commands are included. GL-25
+expanded.)
+
+Previous: **workflowsVersion: 2026-09-23e** (**W-46 — Presenter Show it is resilient and
 actionable.** Fifty-one of 56 lessons begin with a safe **Do it**; mixed lessons
 then switch to **Next**, and stale long-running MCP catalogs receive the current
 lesson inline instead of failing. Five disruptive/native-menu-only lessons stay
@@ -2835,14 +2842,16 @@ control without having to search the manual.
    list for the current page. Search by a control or task, or scan the topic badges;
    the counter shows how many lessons match. Each lesson says what it teaches;
    choose one to return to its card and practise it at your own pace. The
-   Presenter has **56 topics**: 51 start with a safe **Do it** for a visible
-   control or shortcut, while Reload, Relaunch, Developer Tools, Widgets, and
-   Reset Widgets stay self-guided. They cover documents and slides, audience
-   screens, backgrounds and media, service planning, app help, and every command
-   under **View**. The Reader has **49 topics**. They cover reference entry and history, reading panes and
-   formatting, Find and cross references, people/places and connection graphs,
-   Resources, verse marks and notes, presenting a verse, the Reader header, and
-   every command under **View**. The **×** closes the card for now; reloading or moving between
+   Presenter has **61 topics**: 51 start with a safe **Do it** for a visible
+   control or shortcut, while ten native-menu lessons stay self-guided. They
+   cover documents and slides, audience screens, backgrounds and media, service
+   planning, app help, and every native application menu from **File** through
+   **Help**. The Reader has **54 topics**. They cover reference entry and
+   history, reading panes and formatting, Find and cross references,
+   people/places and connection graphs, Resources, verse marks and notes,
+   presenting a verse, the Reader header, every native application menu, and
+   detailed lessons for every command under **View**. The **×** closes the card
+   for now; reloading or moving between
    Presenter and Reader does not show a second automatic card in the same app
    launch.
 3. Click **Show it** to start a numbered card in the current page, with the control
@@ -2867,6 +2876,13 @@ control without having to search the manual.
    back on. To restore the automatic card, open **Settings → General → Other
    General Options**, turn on **[en:tran:Show Tips of the Day automatically]**, and
    start the app again. The switch restores tips for both Presenter and Bible Reader.
+
+The **File**, **Edit**, **Tools**, **Window**, and **Help** overviews name every
+row users can encounter, including conditional and macOS-only rows, so searching
+for a command finds the menu that owns it. They are self-guided because Electron
+draws the operating-system menu outside the page and a walkthrough cannot safely
+ring or press it. The detailed **View** lessons remain separate so each View
+command can explain its effect and risk.
 
 The Presenter and Reader catalogs deliberately keep **Reload**, **Force Reload**,
 **Relaunch** and **Toggle Developer Tools** under the **View menu** topic for

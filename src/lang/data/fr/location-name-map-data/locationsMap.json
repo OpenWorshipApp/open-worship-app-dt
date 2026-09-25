@@ -1,5 +1,5 @@
 {
-  "version": 14,
+  "version": 18,
   "locationsMap": [
     {
       "id": "00000000-0000-4000-8000-000000000002",
@@ -1170,28 +1170,6 @@
       "wikipedia": "https://en.wikipedia.org/wiki/Alexandria",
       "uncertainty": false,
       "matterRange": 65
-    },
-    {
-      "id": "25e3ce53-95ff-4df4-911a-d91e33c82863",
-      "name": "Allonbachuth",
-      "kjvName": "Allonbachuth",
-      "oldName": "Allon Bacuth",
-      "title": "KJV form of Allonbachuth, the oak below [Béthel](location-id://00000000-0000-4000-8000-000000000032) where [Débora](name-id://8d540846-0f87-41c7-8c13-6fb3fb6cb89f) was buried",
-      "description": "Allonbachuth is the King James Version spelling of Allonbachuth, the \"oak of weeping\" below [Béthel](location-id://00000000-0000-4000-8000-000000000032) where [Débora](name-id://8d540846-0f87-41c7-8c13-6fb3fb6cb89f), [Rebecca](name-id://d9f63818-b074-4f13-86e7-63f1fcc88b53)'s nurse, was buried; the exact site is unknown.",
-      "type": "place",
-      "relatedLocations": [
-        "00000000-0000-4000-8000-000000000008",
-        "00000000-0000-4000-8000-000000000032"
-      ],
-      "modernIdentification": null,
-      "coordinates": null,
-      "verses": [
-        "GEN 35:8"
-      ],
-      "links": [],
-      "wikipedia": "https://en.wikipedia.org/wiki/Allon_Bachuth",
-      "uncertainty": true,
-      "matterRange": 88
     },
     {
       "id": "18e003a2-933e-43f5-9755-a2301fcc54a3",
@@ -2796,14 +2774,14 @@
       "name": "Beth-Haran",
       "kjvName": "Bethharan",
       "oldName": null,
-      "title": "graphie en un seul mot de Beth-haran, localité gadite de la vallée du [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
-      "description": "Bethharan est une graphie en un seul mot de Beth-haran ou Beth-haram, la localité gadite située à l'est de [Jéricho](location-id://00000000-0000-4000-8000-000000000116), dans la vallée du [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987), associée plus tard à Livias.",
+      "title": "[Numbers](book-key://NUM) name for a fenced Gadite town east of the [Jordan](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
+      "description": "Bethharan was a fenced Gadite town east of [Jericho](location-id://00000000-0000-4000-8000-000000000116) in the [Jordan](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) Valley, later associated with Livias.",
       "type": "city",
       "relatedLocations": [
         "55ed6201-774a-4bd6-9801-8c3f8018942e",
-        "e10c14d7-9df4-4c20-aea2-c3107e64a1bc",
         "a8e27fd5-3589-4590-8140-e867b7f142ed",
-        "00000000-0000-4000-8000-000000000116"
+        "00000000-0000-4000-8000-000000000116",
+        "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
       ],
       "modernIdentification": "Tell er-Rameh et les environs de l'antique Livias, en Jordanie",
       "coordinates": {
@@ -3025,32 +3003,6 @@
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 84
-    },
-    {
-      "id": "36ef8d50-17d9-4ee3-bb6f-85ecf0b5f994",
-      "name": "Baal-Hatsor",
-      "kjvName": "Baalhazor",
-      "oldName": null,
-      "title": "variante d'espacement de [Baal-Hatsor](location-id://00000000-0000-4000-8000-000000000024), domaine d'[Absalom](name-id://0e94a17b-69b1-4148-b7de-72eab8eea4cc) en [Ephraïm](location-id://0e95bdcb-42ff-4f2a-80d7-00c32ac05b2c)",
-      "description": "Baalhazor est la graphie espacée de [Baal-Hatsor](location-id://00000000-0000-4000-8000-000000000024), le domaine ou la colline près d'[Ephraïm](location-id://0e95bdcb-42ff-4f2a-80d7-00c32ac05b2c) où [Absalom](name-id://0e94a17b-69b1-4148-b7de-72eab8eea4cc) donna la fête de la tonte des brebis et organisa la mort d'[Amnon](name-id://7ddb908e-7d1c-4f3f-8acf-982a7042de76).",
-      "type": "mountain",
-      "relatedLocations": [
-        "00000000-0000-4000-8000-000000000024",
-        "0e95bdcb-42ff-4f2a-80d7-00c32ac05b2c",
-        "00000000-0000-4000-8000-000000000032"
-      ],
-      "modernIdentification": "Tell Asur, au nord-est de Béthel, dans la région montagneuse centrale de la Cisjordanie",
-      "coordinates": {
-        "latitude": 31.978559,
-        "longitude": 35.279583
-      },
-      "verses": [
-        "2SA 13:23"
-      ],
-      "links": [],
-      "wikipedia": null,
-      "uncertainty": true,
-      "matterRange": 70
     },
     {
       "id": "90b75f03-ca8f-4cba-b961-909e4016f81b",
@@ -3917,32 +3869,6 @@
       "matterRange": 92
     },
     {
-      "id": "baf670bc-6ce3-47e6-8c5e-67fded0d7e75",
-      "name": "Beth-Anath",
-      "kjvName": "Bethanath",
-      "oldName": null,
-      "title": "variante d'espacement de [Beth-Anath](location-id://00000000-0000-4000-8000-000000000030), localité fortifiée de Nephthali",
-      "description": "Bethanath est la graphie espacée de [Beth-Anath](location-id://00000000-0000-4000-8000-000000000030), la localité de la tribu de Nephthali dont les habitants cananéens demeurèrent au milieu des Israélites.",
-      "type": "city",
-      "relatedLocations": [
-        "00000000-0000-4000-8000-000000000030",
-        "2ee651d9-d1e6-4096-b6db-6d49461a0dc9"
-      ],
-      "modernIdentification": "Généralement identifiée à l'actuelle Ainata ou à des sites voisins, dans le sud du Liban",
-      "coordinates": {
-        "latitude": 33.146017,
-        "longitude": 35.427277
-      },
-      "verses": [
-        "JOS 19:38",
-        "JDG 1:33"
-      ],
-      "links": [],
-      "wikipedia": null,
-      "uncertainty": true,
-      "matterRange": 84
-    },
-    {
       "id": "3ff1c8e1-8f0f-47d7-acd2-e5c1bf7ec27e",
       "name": "Beth-Anoth",
       "kjvName": "Bethanoth",
@@ -4279,8 +4205,8 @@
       "modernIdentification": "Ramat Rachel ou une crête voisine, au sud de Jérusalem",
       "coordinates": null,
       "verses": [
-        "JER 6:1",
-        "NEH 3:14"
+        "NEH 3:14",
+        "JER 6:1"
       ],
       "links": [],
       "wikipedia": null,
@@ -4293,10 +4219,10 @@
       "kjvName": "Betharam",
       "oldName": null,
       "title": "forme, dans Joshua, de la localité gadite à l'est du [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
-      "description": "Beth-Haram est la forme de la localité gadite à l'est du [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) employée dans [Joshua](book-key://JOS), correspondant à [Beth-Haran](location-id://e10c14d7-9df4-4c20-aea2-c3107e64a1bc) dans [Numbers](book-key://NUM), et associée plus tard à Livias.",
+      "description": "Beth-Haram est la forme de la localité gadite à l'est du [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) employée dans [Joshua](book-key://JOS), correspondant à [Beth-Haran](location-id://00000000-0000-4000-8000-000000000033) dans [Numbers](book-key://NUM), et associée plus tard à Livias.",
       "type": "city",
       "relatedLocations": [
-        "e10c14d7-9df4-4c20-aea2-c3107e64a1bc",
+        "00000000-0000-4000-8000-000000000033",
         "a8e27fd5-3589-4590-8140-e867b7f142ed",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
       ],
@@ -4307,32 +4233,6 @@
       },
       "verses": [
         "JOS 13:27"
-      ],
-      "links": [],
-      "wikipedia": null,
-      "uncertainty": true,
-      "matterRange": 86
-    },
-    {
-      "id": "e10c14d7-9df4-4c20-aea2-c3107e64a1bc",
-      "name": "Beth-Haran",
-      "kjvName": "Bethharan",
-      "oldName": null,
-      "title": "forme, dans [Numbers](book-key://NUM), de la localité gadite à l'est du [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
-      "description": "Beth-Haran est la forme employée dans [Numbers](book-key://NUM) pour la localité gadite à l'est du [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987), associée plus tard à Livias, et correspond à [Beth-Haram](location-id://55ed6201-774a-4bd6-9801-8c3f8018942e) dans [Joshua](book-key://JOS).",
-      "type": "city",
-      "relatedLocations": [
-        "55ed6201-774a-4bd6-9801-8c3f8018942e",
-        "a8e27fd5-3589-4590-8140-e867b7f142ed",
-        "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
-      ],
-      "modernIdentification": "Tell er-Rameh et les environs de l'antique Livias, en Jordanie",
-      "coordinates": {
-        "latitude": 31.816383,
-        "longitude": 35.584295
-      },
-      "verses": [
-        "NUM 32:36"
       ],
       "links": [],
       "wikipedia": null,
@@ -4535,7 +4435,7 @@
       "relatedLocations": [
         "a8e27fd5-3589-4590-8140-e867b7f142ed",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987",
-        "e10c14d7-9df4-4c20-aea2-c3107e64a1bc"
+        "00000000-0000-4000-8000-000000000033"
       ],
       "modernIdentification": "Tell Nimrin, en Jordanie, à l'est de la basse vallée du Jourdain",
       "coordinates": {
@@ -4619,30 +4519,6 @@
       "wikipedia": null,
       "uncertainty": true,
       "matterRange": 62
-    },
-    {
-      "id": "1107b4f4-405b-4892-8436-8b3a7465b9d4",
-      "name": "Beth-Rehob",
-      "kjvName": "Bethrehob",
-      "oldName": null,
-      "title": "variante d'espacement de [Beth-Rehob](location-id://00000000-0000-4000-8000-000000000035), localité ou district du nord",
-      "description": "Bethrehob est la graphie espacée de [Beth-Rehob](location-id://00000000-0000-4000-8000-000000000035), le district ou la localité du nord, près de [Dan](location-id://dadc79b1-e84f-40e0-ab31-2fa96b6ed4bd) et de Lebo-hamath.",
-      "type": "city",
-      "relatedLocations": [
-        "00000000-0000-4000-8000-000000000035",
-        "dadc79b1-e84f-40e0-ab31-2fa96b6ed4bd",
-        "00000000-0000-4000-8000-000000000015"
-      ],
-      "modernIdentification": null,
-      "coordinates": null,
-      "verses": [
-        "JDG 18:28",
-        "2SA 10:6"
-      ],
-      "links": [],
-      "wikipedia": null,
-      "uncertainty": true,
-      "matterRange": 78
     },
     {
       "id": "7b0f49d3-4da0-488e-ac64-672963954344",
@@ -5203,27 +5079,6 @@
       "wikipedia": "https://en.wikipedia.org/wiki/Tribe_of_Benjamin",
       "uncertainty": false,
       "matterRange": 42
-    },
-    {
-      "id": "f6a8b0c2-5e7d-4f9a-b13c-6d8e0f2a4b5c",
-      "name": "Beth-Tsur",
-      "kjvName": "Bethzur",
-      "oldName": null,
-      "title": "localité fortifiée de la région montagneuse de Juda, au sud de [Jérusalem](location-id://00000000-0000-4000-8000-000000000117)",
-      "description": "Beth-Tsur était une localité de Juda fortifiée par [Roboam](name-id://68d5eac0-52b9-4b0b-b484-8c7b5c3b8971), puis administrée en partie à l'époque de [Néhémie](name-id://46c4c07f-dde8-4466-a278-6e40a8d3e7f1); [Néhémie](name-id://7d660af0-8058-4ea7-9317-a9c3fd16a824), fils d'[Azbuk](name-id://6a14089b-72e5-474e-bbfe-9830aa40a682), était chef de la moitié de son district.",
-      "type": "city",
-      "relatedLocations": [],
-      "modernIdentification": "Khirbet et-Tubeiqa, au sud de Bethléhem",
-      "coordinates": null,
-      "verses": [
-        "JOS 15:58",
-        "2CH 11:7",
-        "NEH 3:16"
-      ],
-      "links": [],
-      "wikipedia": "https://en.wikipedia.org/wiki/Beth-zur",
-      "uncertainty": false,
-      "matterRange": 78
     },
     {
       "id": "00000000-0000-4000-8000-000000000041",
@@ -7919,32 +7774,6 @@
         "DAN 11:8",
         "DAN 11:42",
         "DAN 11:43",
-        "JOL 3:19",
-        "AMO 2:10",
-        "AMO 3:1",
-        "AMO 3:9",
-        "AMO 4:10",
-        "AMO 8:8",
-        "AMO 9:5",
-        "AMO 9:7",
-        "ACT 2:10",
-        "ACT 7:9",
-        "ACT 7:10",
-        "ACT 7:11",
-        "ACT 7:12",
-        "ACT 7:15",
-        "ACT 7:17",
-        "ACT 7:34",
-        "ACT 7:36",
-        "ACT 7:39",
-        "ACT 7:40",
-        "ACT 13:17",
-        "REV 11:8",
-        "HAG 2:5",
-        "HEB 3:16",
-        "HEB 8:9",
-        "HEB 11:26",
-        "HEB 11:27",
         "HOS 2:15",
         "HOS 7:11",
         "HOS 7:16",
@@ -7958,18 +7787,44 @@
         "HOS 12:9",
         "HOS 12:13",
         "HOS 13:4",
-        "JUD 1:5",
+        "JOL 3:19",
+        "AMO 2:10",
+        "AMO 3:1",
+        "AMO 3:9",
+        "AMO 4:10",
+        "AMO 8:8",
+        "AMO 9:5",
+        "AMO 9:7",
+        "MIC 6:4",
+        "MIC 7:15",
+        "NAM 3:9",
+        "HAG 2:5",
+        "ZEC 10:10",
+        "ZEC 10:11",
+        "ZEC 14:18",
+        "ZEC 14:19",
         "MAT 2:13",
         "MAT 2:14",
         "MAT 2:15",
         "MAT 2:19",
-        "MIC 6:4",
-        "MIC 7:15",
-        "NAM 3:9",
-        "ZEC 10:10",
-        "ZEC 10:11",
-        "ZEC 14:18",
-        "ZEC 14:19"
+        "ACT 2:10",
+        "ACT 7:9",
+        "ACT 7:10",
+        "ACT 7:11",
+        "ACT 7:12",
+        "ACT 7:15",
+        "ACT 7:17",
+        "ACT 7:34",
+        "ACT 7:36",
+        "ACT 7:39",
+        "ACT 7:40",
+        "ACT 13:17",
+        "HEB 3:16",
+        "HEB 8:9",
+        "HEB 11:26",
+        "HEB 11:27",
+        "JUD 1:5",
+        "REV 11:8"
       ],
       "links": [
         {
@@ -8019,9 +7874,9 @@
         "2KI 1:16",
         "JER 25:20",
         "AMO 1:8",
+        "ZEP 2:4",
         "ZEC 9:5",
-        "ZEC 9:7",
-        "ZEP 2:4"
+        "ZEC 9:7"
       ],
       "links": [
         {
@@ -8132,11 +7987,11 @@
     },
     {
       "id": "00000000-0000-4000-8000-000000000070",
-      "name": "En-Guédi",
+      "name": "Engedi",
       "kjvName": "Engedi",
-      "oldName": "En-Guédi",
+      "oldName": null,
       "title": "oasis de la mer Morte et lieu fort de [David](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) dans le désert",
-      "description": "En-Guédi, Engedi dans la KJV, était une oasis et une localité sur la rive occidentale de la mer Morte, identifiée à [Hatsatson-Thamar](location-id://01cbbee4-41b6-442f-a7c1-a64c15f9542f) et associée à [David](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) se cachant de [Saül](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb), à [Josaphat](name-id://3a573bf3-3bda-458d-b7ac-5b2e4f3205f6) et aux images de [Song of Solomon](book-key://SNG) et d'[Ezekiel](book-key://EZK).",
+      "description": "Engedi was an oasis and settlement on the western shore of the Dead Sea, identified with [Hazazon-tamar](location-id://01cbbee4-41b6-442f-a7c1-a64c15f9542f) and associated with [David](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) hiding from [Saul](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb), [Jehoshaphat](name-id://3a573bf3-3bda-458d-b7ac-5b2e4f3205f6), and the imagery of [Song of Solomon](book-key://SNG) and [Ezekiel](book-key://EZK).",
       "type": "settlement",
       "relatedLocations": [
         "2882f5a5-375a-40b9-9142-55341e8b6a91",
@@ -8177,7 +8032,7 @@
       "relatedLocations": [
         "00000000-0000-4000-8000-000000000103",
         "00000000-0000-4000-8000-000000000045",
-        "42017171-050f-4b41-bdae-3081853e3e98"
+        "00000000-0000-4000-8000-000000000122"
       ],
       "modernIdentification": "Probablement une vallée des environs d'Hébron, dans le sud de la région montagneuse",
       "coordinates": null,
@@ -8289,9 +8144,9 @@
     },
     {
       "id": "2c92930d-800c-4a71-bd54-c32fb2fc1f8d",
-      "name": "Eder of Juda",
-      "kjvName": "Eder of Judah",
-      "oldName": "Eder",
+      "name": "Eder",
+      "kjvName": "Eder",
+      "oldName": null,
       "title": "localité méridionale de [Juda](location-id://00000000-0000-4000-8000-000000000119), distincte de Migdal-Eder",
       "description": "Eder of Juda figure parmi les localités de l'extrême sud de [Juda](location-id://00000000-0000-4000-8000-000000000119), près d'[Edom](location-id://00000000-0000-4000-8000-000000000064), en [Joshua 15:21](verse-key://JOS 15:21); elle est distincte de Migdal-Eder, dans [Genesis](book-key://GEN), et son emplacement est inconnu.",
       "type": "settlement",
@@ -8779,9 +8634,9 @@
     },
     {
       "id": "12fb5582-4de7-4442-a032-771299bc8530",
-      "name": "En-Gannim of Issacar",
-      "kjvName": "En Gannim of Issachar",
-      "oldName": "En-Gannim",
+      "name": "Engannim",
+      "kjvName": "Engannim",
+      "oldName": null,
       "title": "localité d'Issacar et ville lévitique, généralement identifiée à Jénine",
       "description": "En-Gannim of Issacar fut attribuée à Issacar, puis aux Lévites de la famille de Guerschon; on l'identifie généralement à Jénine, dont le nom conserve l'idée de jardins ou de sources.",
       "type": "settlement",
@@ -8897,7 +8752,7 @@
       "description": "En-Mischpath est désignée en [Genesis 14:7](verse-key://GEN 14:7) comme étant [Kadès](location-id://501d3b61-a4e6-4e1e-82b1-f8799fb77131), le lieu qu'atteignit [Kedorlaomer](name-id://ed428395-dc41-4ed2-9229-bd7abfaa930f) avant de battre les Amalécites et les Amoréens; l'emplacement plus large de Kadès-Barnéa est débattu.",
       "type": "place",
       "relatedLocations": [
-        "42017171-050f-4b41-bdae-3081853e3e98"
+        "00000000-0000-4000-8000-000000000122"
       ],
       "modernIdentification": "Région de Kadès-Barnéa, souvent associée à Ain el-Qudeirat ou à des sources voisines",
       "coordinates": null,
@@ -9359,9 +9214,9 @@
     },
     {
       "id": "83be2021-4474-453d-910e-b8f1abe07900",
-      "name": "Etham of Juda",
-      "kjvName": "Etam of Judah",
-      "oldName": "Etham",
+      "name": "Etam",
+      "kjvName": "Etam",
+      "oldName": null,
       "title": "localité fortifiée de [Juda](location-id://00000000-0000-4000-8000-000000000119), près de [Bethléhem](location-id://00000000-0000-4000-8000-000000000034) et de [Tekoa](location-id://4a075a4d-bb20-4a0e-a4e4-bbe3c9acdb97)",
       "description": "Etham of Juda figure parmi les villes fortifiées par [Roboam](name-id://68d5eac0-52b9-4b0b-b484-8c7b5c3b8971) entre [Bethléhem](location-id://00000000-0000-4000-8000-000000000034) et [Tekoa](location-id://4a075a4d-bb20-4a0e-a4e4-bbe3c9acdb97), et on la rapproche souvent de la zone des sources proche d'Artas, bien que le site exact de l'ancienne localité ne soit pas certain.",
       "type": "settlement",
@@ -10165,6 +10020,8 @@
         "1CH 27:21",
         "PSA 60:7",
         "PSA 108:8",
+        "SNG 4:1",
+        "SNG 6:5",
         "JER 8:22",
         "JER 22:6",
         "JER 46:11",
@@ -10176,9 +10033,7 @@
         "AMO 1:13",
         "OBA 1:19",
         "MIC 7:14",
-        "ZEC 10:10",
-        "SNG 4:1",
-        "SNG 6:5"
+        "ZEC 10:10"
       ],
       "links": [
         {
@@ -10314,8 +10169,8 @@
     },
     {
       "id": "96ad7fa2-bac8-4549-8b02-1e53fca3eaa9",
-      "name": "Gosen (city in Juda)",
-      "kjvName": "Goshen (city in Judah)",
+      "name": "Goshen",
+      "kjvName": "Goshen",
       "oldName": null,
       "title": "localité de la région montagneuse de [Juda](location-id://00000000-0000-4000-8000-000000000119), nommée avec [Giloh](location-id://cfac9a67-5a8a-42bf-be72-93c82d77bbe6) et [Arab](location-id://b5e2c349-1cd7-4bc8-8ba9-9b6ace77feda)",
       "description": "La ville de Gosen, en [Joshua 15:51](verse-key://JOS 15:51), était une localité de la liste de la région montagneuse de [Juda](location-id://00000000-0000-4000-8000-000000000119), distincte de la région égyptienne et du pays de Gosen, plus vaste, dans le sud de Juda; son emplacement est inconnu.",
@@ -10803,10 +10658,10 @@
         "longitude": 35.260125
       },
       "verses": [
-        "2SA 5:25",
         "JOS 18:24",
         "JOS 21:17",
         "1SA 13:3",
+        "2SA 5:25",
         "1KI 15:22",
         "2KI 23:8",
         "1CH 6:60",
@@ -11008,8 +10863,8 @@
       "coordinates": null,
       "verses": [
         "JOS 15:58",
-        "1CH 12:7",
-        "1CH 4:39"
+        "1CH 4:39",
+        "1CH 12:7"
       ],
       "links": [
         {
@@ -11380,10 +11235,10 @@
       },
       "verses": [
         "1SA 28:4",
-        "2SA 1:21",
-        "2SA 21:12",
         "1SA 31:1",
         "1SA 31:8",
+        "2SA 1:21",
+        "2SA 21:12",
         "1CH 10:1",
         "1CH 10:8"
       ],
@@ -11786,8 +11641,8 @@
       "coordinates": null,
       "verses": [
         "NUM 32:34",
-        "JOS 13:24",
         "DEU 33:20",
+        "JOS 13:24",
         "JER 49:1"
       ],
       "links": [],
@@ -12571,9 +12426,9 @@
     },
     {
       "id": "318c2e41-e798-47b2-96b5-c1374fdd935b",
-      "name": "Havilah of Ishmael and Amalek",
-      "kjvName": "Havilah of Ishmael and Amalek",
-      "oldName": "Havilah 2",
+      "name": "Havilah",
+      "kjvName": "Havilah",
+      "oldName": null,
       "title": "desert region on the route toward [Schur](location-id://00000000-0000-4000-8000-000000000207) and [Assyrie](location-id://00000000-0000-4000-8000-000000000023)",
       "description": "This Havilah is the region associated with [Ismaël](name-id://056fd84a-3a55-4428-aef2-584809d7d7b1)'s descendants and with [Saül](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb)'s campaign against [Amalek](name-id://04a074df-ec7b-4d3b-9f86-b3cb1d6cdd51) from Havilah toward [Schur](location-id://00000000-0000-4000-8000-000000000207); it is distinct from the Eden-region Havilah of [Genesis 2](chapter-key://GEN 2) and remains geographically uncertain.",
       "type": "region",
@@ -12625,7 +12480,7 @@
       "description": "Hatsar-Addar était un lieu situé sur la ligne de la frontière sud dans [Numbers 34](chapter-key://NUM 34), nommé au point où la frontière se dirigeait de Kadès vers Atsmon; son emplacement exact est inconnu.",
       "type": "settlement",
       "relatedLocations": [
-        "42017171-050f-4b41-bdae-3081853e3e98",
+        "00000000-0000-4000-8000-000000000122",
         "9d819e62-aa5c-439f-b088-963ac7f22610"
       ],
       "modernIdentification": null,
@@ -13191,11 +13046,11 @@
       "name": "Hetsron",
       "kjvName": "Hezron",
       "oldName": null,
-      "title": "point de la frontière sud de [Juda](location-id://00000000-0000-4000-8000-000000000119), entre [Kadès-Barnéa](location-id://42017171-050f-4b41-bdae-3081853e3e98) et Addar",
-      "description": "Hetsron, dans [Joshua 15](chapter-key://JOS 15), était un point de la frontière sud de [Juda](location-id://00000000-0000-4000-8000-000000000119), atteint après [Kadès-Barnéa](location-id://42017171-050f-4b41-bdae-3081853e3e98) et avant Addar et Karkaa; c'est ici un nom de lieu, distinct des personnes appelées Hetsron, et son emplacement exact est inconnu.",
+      "title": "point de la frontière sud de [Juda](location-id://00000000-0000-4000-8000-000000000119), entre [Kadès-Barnéa](location-id://00000000-0000-4000-8000-000000000122) et Addar",
+      "description": "Hetsron, dans [Joshua 15](chapter-key://JOS 15), était un point de la frontière sud de [Juda](location-id://00000000-0000-4000-8000-000000000119), atteint après [Kadès-Barnéa](location-id://00000000-0000-4000-8000-000000000122) et avant Addar et Karkaa; c'est ici un nom de lieu, distinct des personnes appelées Hetsron, et son emplacement exact est inconnu.",
       "type": "place",
       "relatedLocations": [
-        "42017171-050f-4b41-bdae-3081853e3e98",
+        "00000000-0000-4000-8000-000000000122",
         "00000000-0000-4000-8000-000000000119"
       ],
       "modernIdentification": null,
@@ -15435,11 +15290,11 @@
     },
     {
       "id": "01392f27-1670-4fb7-a38a-36853970f4ae",
-      "name": "Jehova-Jiré",
+      "name": "Jehovahjireh",
       "kjvName": "Jehovahjireh",
-      "oldName": "Jehova-Jiré",
+      "oldName": null,
       "title": "nom qu'[Abraham](name-id://4ce14dfc-b652-45d9-ac05-5f0cf716c412) donna au lieu du sacrifice d'[Isaac](name-id://a5b2f874-2008-4b28-9698-6357fe71c3bf), au pays de [Morija](location-id://e9904ce3-3a6f-43fd-9eb3-57cbbb286aa2)",
-      "description": "Jehova-Jiré, orthographié Jehovahjireh dans la KJV, est le nom qu'[Abraham](name-id://4ce14dfc-b652-45d9-ac05-5f0cf716c412) donna au lieu du pays de [Morija](location-id://e9904ce3-3a6f-43fd-9eb3-57cbbb286aa2) où un bélier fut offert à la place d'[Isaac](name-id://a5b2f874-2008-4b28-9698-6357fe71c3bf), avec cette parole: «Sur la montagne de l'Eternel, on le verra» ([Genesis 22:14](verse-key://GEN 22:14)). Le nom fait écho aux paroles antérieures d'Abraham, selon lesquelles Dieu se pourvoira lui-même de l'agneau pour l'holocauste ([Genesis 22:8](verse-key://GEN 22:8)). La montagne précise, dans le pays de Morija, n'est pas identifiée dans [Genesis](book-key://GEN), bien que [2 Chronicles 3:1](verse-key://2CH 3:1) situe plus tard la montagne de Morija à [Jérusalem](location-id://00000000-0000-4000-8000-000000000117), où [Salomon](name-id://509b7c2f-b8bf-4a4d-a393-550a7a4b259f) bâtit la maison de l'Eternel.",
+      "description": "Jehovahjireh is the name [Abraham](name-id://4ce14dfc-b652-45d9-ac05-5f0cf716c412) called the place in the land of [Moriah](location-id://e9904ce3-3a6f-43fd-9eb3-57cbbb286aa2) where a ram was offered in [Isaac](name-id://a5b2f874-2008-4b28-9698-6357fe71c3bf)'s stead, with the saying, In the mount of the LORD it shall be seen ([Genesis 22:14](verse-key://GEN 22:14)). The name echoes Abraham's earlier words that God will provide himself a lamb for a burnt offering ([Genesis 22:8](verse-key://GEN 22:8)). The particular mountain within Moriah is not identified in [Genesis](book-key://GEN), though [2 Chronicles 3:1](verse-key://2CH 3:1) later places mount Moriah at [Jerusalem](location-id://00000000-0000-4000-8000-000000000117), where [Solomon](name-id://509b7c2f-b8bf-4a4d-a393-550a7a4b259f) built the house of the LORD.",
       "type": "memorial place",
       "relatedLocations": [
         "e9904ce3-3a6f-43fd-9eb3-57cbbb286aa2",
@@ -15602,16 +15457,16 @@
         "1KI 21:1",
         "1KI 21:23",
         "2KI 8:29",
+        "2KI 9:10",
         "2KI 9:15",
         "2KI 9:16",
         "2KI 9:17",
-        "2KI 9:10",
         "2KI 9:30",
         "2KI 9:36",
         "2KI 9:37",
-        "2KI 10:11",
         "2KI 10:6",
         "2KI 10:7",
+        "2KI 10:11",
         "2CH 22:6",
         "HOS 1:4",
         "HOS 1:11",
@@ -15632,7 +15487,7 @@
       "type": "settlement",
       "relatedLocations": [
         "a8e27fd5-3589-4590-8140-e867b7f142ed",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
+        "95928260-0297-4497-9546-8a3d601d308c",
         "00000000-0000-4000-8000-000000000179"
       ],
       "modernIdentification": "Souvent associée à al-Jubeiha, près d'Amman, en Jordanie",
@@ -16086,15 +15941,15 @@
       "name": "Kadès-Barnéa",
       "kjvName": "Kadeshbarnea",
       "oldName": null,
-      "title": "graphie à trait d'union de [Kadès-Barnéa](location-id://42017171-050f-4b41-bdae-3081853e3e98), près de la frontière sud de [Canaan](location-id://00000000-0000-4000-8000-000000000045)",
-      "description": "Kadeshbarnea est une forme courante à trait d'union de [Kadès-Barnéa](location-id://42017171-050f-4b41-bdae-3081853e3e98), l'oasis du désert d'où furent envoyés les espions et un repère de la frontière sud de [Canaan](location-id://00000000-0000-4000-8000-000000000045); on l'identifie généralement à Tell el-Qudeirat ou à Ain el-Qudeirat, bien que le détail de l'identification reste débattu.",
+      "title": "southern border oasis and Israelite encampment at Kadeshbarnea",
+      "description": "Kadeshbarnea was the southern-border wilderness encampment associated with the spies, [Israel](location-id://00000000-0000-4000-8000-000000000108)'s long stay near [Canaan](location-id://00000000-0000-4000-8000-000000000045), and boundary formulas for [Judah](location-id://00000000-0000-4000-8000-000000000119) and the land of Canaan; it is commonly located at Tell el-Qudeirat / Ain el-Qudeirat.",
       "type": "encampment",
       "relatedLocations": [
-        "42017171-050f-4b41-bdae-3081853e3e98",
         "501d3b61-a4e6-4e1e-82b1-f8799fb77131",
         "00000000-0000-4000-8000-000000000177",
         "5b88ec17-6c67-409c-87f3-c656c80d89c9",
-        "00000000-0000-4000-8000-000000000064"
+        "00000000-0000-4000-8000-000000000064",
+        "00000000-0000-4000-8000-000000000045"
       ],
       "modernIdentification": "Généralement identifié à Tell el-Qudeirat / Ain el-Qudeirat, dans le nord du Sinaï",
       "coordinates": {
@@ -16161,10 +16016,10 @@
       "kjvName": "Kadesh",
       "oldName": null,
       "title": "oasis désertique de Kadès, au sud de [Canaan](location-id://00000000-0000-4000-8000-000000000045)",
-      "description": "Kadès était la principale halte du désert au sud de [Canaan](location-id://00000000-0000-4000-8000-000000000045), aussi appelée En-Mischpath et étroitement associée à [Kadès-Barnéa](location-id://42017171-050f-4b41-bdae-3081853e3e98); elle est liée au rapport des espions, à la mort de [Marie](name-id://a4c1c942-2737-4847-b6bf-9401d1dff9c3), à [Meriba](location-id://dcb8b085-0b6a-4007-95ae-3b126617f544) et à la démarche d'[Israël](location-id://00000000-0000-4000-8000-000000000108) auprès d'[Edom](location-id://00000000-0000-4000-8000-000000000064).",
+      "description": "Kadès était la principale halte du désert au sud de [Canaan](location-id://00000000-0000-4000-8000-000000000045), aussi appelée En-Mischpath et étroitement associée à [Kadès-Barnéa](location-id://00000000-0000-4000-8000-000000000122); elle est liée au rapport des espions, à la mort de [Marie](name-id://a4c1c942-2737-4847-b6bf-9401d1dff9c3), à [Meriba](location-id://dcb8b085-0b6a-4007-95ae-3b126617f544) et à la démarche d'[Israël](location-id://00000000-0000-4000-8000-000000000108) auprès d'[Edom](location-id://00000000-0000-4000-8000-000000000064).",
       "type": "encampment",
       "relatedLocations": [
-        "42017171-050f-4b41-bdae-3081853e3e98",
+        "00000000-0000-4000-8000-000000000122",
         "5b88ec17-6c67-409c-87f3-c656c80d89c9",
         "00000000-0000-4000-8000-000000000177",
         "00000000-0000-4000-8000-000000000064",
@@ -16193,43 +16048,6 @@
         "PSA 29:8",
         "EZK 47:19",
         "EZK 48:28"
-      ],
-      "links": [],
-      "wikipedia": "https://en.wikipedia.org/wiki/Kadesh_(biblical)",
-      "uncertainty": true,
-      "matterRange": 30
-    },
-    {
-      "id": "42017171-050f-4b41-bdae-3081853e3e98",
-      "name": "Kadès-Barnéa",
-      "kjvName": "Kadeshbarnea",
-      "oldName": null,
-      "title": "oasis de la frontière sud et campement israélite de Kadès-Barnéa",
-      "description": "Kadès-Barnéa était le campement du désert, sur la frontière sud, associé aux espions, au long séjour d'[Israël](location-id://00000000-0000-4000-8000-000000000108) près de [Canaan](location-id://00000000-0000-4000-8000-000000000045) et aux formules de délimitation de [Juda](location-id://00000000-0000-4000-8000-000000000119) et du pays de Canaan; on le situe généralement à Tell el-Qudeirat / Ain el-Qudeirat.",
-      "type": "encampment",
-      "relatedLocations": [
-        "501d3b61-a4e6-4e1e-82b1-f8799fb77131",
-        "00000000-0000-4000-8000-000000000177",
-        "5b88ec17-6c67-409c-87f3-c656c80d89c9",
-        "00000000-0000-4000-8000-000000000064",
-        "00000000-0000-4000-8000-000000000045"
-      ],
-      "modernIdentification": "Généralement identifié à Tell el-Qudeirat / Ain el-Qudeirat, dans le nord du Sinaï",
-      "coordinates": {
-        "latitude": 30.641965,
-        "longitude": 34.414419
-      },
-      "verses": [
-        "NUM 32:8",
-        "NUM 34:4",
-        "DEU 1:2",
-        "DEU 1:19",
-        "DEU 2:14",
-        "DEU 9:23",
-        "JOS 10:41",
-        "JOS 14:6",
-        "JOS 14:7",
-        "JOS 15:3"
       ],
       "links": [],
       "wikipedia": "https://en.wikipedia.org/wiki/Kadesh_(biblical)",
@@ -16269,7 +16087,7 @@
       "type": "settlement",
       "relatedLocations": [
         "00000000-0000-4000-8000-000000000152",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
+        "95928260-0297-4497-9546-8a3d601d308c",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
       ],
       "modernIdentification": null,
@@ -17129,7 +16947,7 @@
       "id": "1fd71ff5-c0b3-4184-ac64-47ee4eddefcf",
       "name": "Land of Ham",
       "kjvName": "Land of Ham",
-      "oldName": "Ham 2",
+      "oldName": null,
       "title": "poetic biblical name for [Egypte](location-id://00000000-0000-4000-8000-000000000065) in the [Psalms](book-key://PSA)",
       "description": "The land of Ham is the [Psalms](book-key://PSA)' poetic name for [Egypte](location-id://00000000-0000-4000-8000-000000000065), recalling Israel's sojourn there and God's wonders before the exodus; it is distinct from the place called [Ham](location-id://f37c7ce4-d9c3-4497-b3b1-dd499e2c4909) in [Genesis 14](chapter-key://GEN 14).",
       "type": "region",
@@ -19200,7 +19018,7 @@
       "type": "encampment",
       "relatedLocations": [
         "501d3b61-a4e6-4e1e-82b1-f8799fb77131",
-        "42017171-050f-4b41-bdae-3081853e3e98",
+        "00000000-0000-4000-8000-000000000122",
         "5b88ec17-6c67-409c-87f3-c656c80d89c9"
       ],
       "modernIdentification": "Near Kadesh, commonly associated with the Tell el-Qudeirat / Ain el-Qudeirat area",
@@ -19716,9 +19534,9 @@
     },
     {
       "id": "4c916b4d-a2ed-47ac-853b-e512b1fb7068",
-      "name": "Mitspa of Benjamin",
-      "kjvName": "Mizpah of Benjamin",
-      "oldName": "Mitspa",
+      "name": "Mizpah",
+      "kjvName": "Mizpah",
+      "oldName": null,
       "title": "ville benjamite et lieu de rassemblement au nord de [Jérusalem](location-id://00000000-0000-4000-8000-000000000117)",
       "description": "Mitspa of Benjamin était un important lieu d'assemblée et centre administratif près de [Jérusalem](location-id://00000000-0000-4000-8000-000000000117), associé aux rassemblements d'Israël dans [Judges](book-key://JDG) et Samuel, aux constructions d'[Asa](name-id://f5d139c3-aaad-4422-87a8-6b31e0fbc485) et au gouvernement de [Guedalia](name-id://4c0cd7c0-acde-4d0d-9fcb-0ce263bb46ea) après la chute de Jérusalem.",
       "type": "city",
@@ -19761,9 +19579,9 @@
     },
     {
       "id": "88fe0c6e-193b-4471-afa0-7cc4052531db",
-      "name": "Mitspa of Galaad",
-      "kjvName": "Mizpah of Gilead",
-      "oldName": "Mitspa",
+      "name": "Mizpah",
+      "kjvName": "Mizpah",
+      "oldName": null,
       "title": "poste de guet de [Galaad](location-id://00000000-0000-4000-8000-000000000089) associé à [Jacob](name-id://23ed64d8-8458-49af-9b51-f578ab3262d9) et à [Jephthé](name-id://a0e52599-bd88-4cc9-bf3c-5c0127087f95)",
       "description": "Mitspa of Galaad était le poste de guet de Transjordanie lié à la borne de l'alliance de [Jacob](name-id://23ed64d8-8458-49af-9b51-f578ab3262d9) ainsi qu'au rassemblement des troupes de [Jephthé](name-id://a0e52599-bd88-4cc9-bf3c-5c0127087f95) et à son retour, dans [Judges](book-key://JDG); son emplacement exact est incertain.",
       "type": "place",
@@ -19785,9 +19603,9 @@
     },
     {
       "id": "5411e6a7-3d2a-41f2-a537-7f44e214a11f",
-      "name": "Mitspé of Moab",
-      "kjvName": "Mizpeh of Moab",
-      "oldName": "Mitspé",
+      "name": "Mizpeh",
+      "kjvName": "Mizpeh",
+      "oldName": null,
       "title": "refuge moabite où [David](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) mit ses parents à l'abri",
       "description": "Mitspé of Moab était le lieu où [David](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) demanda au roi de [Moab](location-id://00000000-0000-4000-8000-000000000153) d'abriter son père et sa mère pendant que [Saül](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb) le poursuivait; son emplacement exact en Moab est inconnu.",
       "type": "place",
@@ -19807,9 +19625,9 @@
     },
     {
       "id": "6281e102-ea7d-43b4-8f82-d2230c73c801",
-      "name": "Mitspé of Juda",
-      "kjvName": "Mizpeh of Judah",
-      "oldName": "Mitspé",
+      "name": "Mizpeh",
+      "kjvName": "Mizpeh",
+      "oldName": null,
       "title": "localité des basses terres dans le territoire attribué à [Juda](location-id://00000000-0000-4000-8000-000000000119)",
       "description": "Mitspé of Juda était une localité de la Shéphélah, dans le territoire attribué à [Juda](location-id://00000000-0000-4000-8000-000000000119), citée avec [Dilean](location-id://ac869c17-3d43-428f-aefc-f9c26566982f) et [Joktheel](location-id://78f0de4b-50f9-4194-88b4-e8ddf2e3e59a); son emplacement exact est incertain.",
       "type": "settlement",
@@ -21532,9 +21350,9 @@
     },
     {
       "id": "8eb0b645-ab96-48af-8a4c-89960a0c43a3",
-      "name": "Ophra of Benjamin",
-      "kjvName": "Ophrah of Benjamin",
-      "oldName": "Ophra",
+      "name": "Ophrah",
+      "kjvName": "Ophrah",
+      "oldName": null,
       "title": "localité benjamite près de [Béthel](location-id://00000000-0000-4000-8000-000000000032) et du pays de [Schual](location-id://9e8bbf1c-fd5f-4b20-bd4f-04b8c6d41b92)",
       "description": "Ophra of Benjamin était une localité du territoire attribué à [Benjamin](location-id://80f2867e-4e7c-43b6-aa11-7fd42550d4ef) et la destination de l'une des bandes de pillards philistins sorties de [Micmasch](location-id://ee19b0f3-9647-4ed1-9f48-d9bef91d04fd); on la rapproche souvent d'Ephron, près de [Béthel](location-id://00000000-0000-4000-8000-000000000032), et peut-être d'et-Taiyibeh.",
       "type": "settlement",
@@ -21559,9 +21377,9 @@
     },
     {
       "id": "19fd95f1-f7b0-45a6-a68f-b397db362565",
-      "name": "Ophra of the Abiezrites",
-      "kjvName": "Ophrah of the Abiezrites",
-      "oldName": "Ophra",
+      "name": "Ophrah",
+      "kjvName": "Ophrah",
+      "oldName": null,
       "title": "localité manassite de [Gédéon](name-id://c639ae62-acde-4142-a3f5-fd40204fc455) et de [Joas](name-id://d309a5e8-c8f5-423b-929a-3e30dd8c64bf), de la famille d'Abiézer",
       "description": "Ophra of the Abiezrites était la localité où vivait [Gédéon](name-id://c639ae62-acde-4142-a3f5-fd40204fc455), sur le territoire de [Manassé](name-id://6d826bc2-ac80-4c27-af89-258a50f37dfe), où l'ange apparut, où Gédéon bâtit un autel, plaça l'éphod et fut enterré, et où [Abimélec](name-id://eba375fa-1ab3-473b-85e6-f85f0771669c) tua les fils de Gédéon; son emplacement exact n'est pas identifié avec certitude.",
       "type": "settlement",
@@ -21647,7 +21465,7 @@
       "relatedLocations": [
         "00326a98-afe3-48a8-ad4e-b5ff69a319f0",
         "00000000-0000-4000-8000-000000000111",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3"
+        "95928260-0297-4497-9546-8a3d601d308c"
       ],
       "modernIdentification": "Généralement proposé à Tell edh-Dhahab el-Sharqi, dans l'ensemble de Tulul adh-Dhahab, sur le Zarqa/Jabbok, en Jordanie",
       "coordinates": {
@@ -22117,7 +21935,7 @@
       "relatedLocations": [
         "00000000-0000-4000-8000-000000000179",
         "00000000-0000-4000-8000-000000000111",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3"
+        "95928260-0297-4497-9546-8a3d601d308c"
       ],
       "modernIdentification": "Généralement proposé à Tell edh-Dhahab el-Sharqi, dans l'ensemble de Tulul adh-Dhahab, sur le Zarqa/Jabbok, en Jordanie",
       "coordinates": {
@@ -23183,7 +23001,6 @@
         "DEU 4:43",
         "JOS 20:8",
         "JOS 21:38",
-        "1CH 6:80",
         "1KI 4:13",
         "1KI 22:3",
         "1KI 22:4",
@@ -23196,6 +23013,7 @@
         "2KI 9:1",
         "2KI 9:4",
         "2KI 9:14",
+        "1CH 6:80",
         "2CH 18:2",
         "2CH 18:3",
         "2CH 18:5",
@@ -23628,8 +23446,8 @@
     },
     {
       "id": "5a0e886e-2c06-4f8e-848d-42bb3db37f90",
-      "name": "Rimmon of the Negeb",
-      "kjvName": "Rimmon of the Negeb",
+      "name": "Remmon",
+      "kjvName": "Remmon",
       "oldName": "Rimmon",
       "title": "localité du sud de [Juda](location-id://00000000-0000-4000-8000-000000000119) et de [Siméon](name-id://8023a792-fa1b-4465-89b5-09f437ac5081), aussi appelée [En-Rimmon](location-id://0f95fdfb-1c87-4619-9195-637da5ea9a76)",
       "description": "Rimmon of the Negeb était une localité proche d'[Aïn](location-id://151ff600-5303-4b5c-a0ae-ab590176b956), dans la zone frontalière du sud, attribuée à [Juda](location-id://00000000-0000-4000-8000-000000000119) et à [Siméon](name-id://8023a792-fa1b-4465-89b5-09f437ac5081), et plus tard évoquée comme un point méridional de Juda. Elle se distingue du rocher de Rimmon et de Rimmono en [Zabulon](name-id://beeaa67f-e08b-4c67-a3b8-a5296e09981c).",
@@ -23894,8 +23712,8 @@
       "coordinates": null,
       "verses": [
         "NUM 32:33",
-        "JOS 13:15",
         "DEU 3:12",
+        "JOS 13:15",
         "JDG 5:15"
       ],
       "links": [],
@@ -24155,8 +23973,8 @@
     },
     {
       "id": "6de66ed4-c371-4bcd-9e6a-5118d4b46b86",
-      "name": "Schéba (Siméon)",
-      "kjvName": "Sheba (Simeon)",
+      "name": "Sheba",
+      "kjvName": "Sheba",
       "oldName": null,
       "title": "localité du lot de [Siméon](name-id://8023a792-fa1b-4465-89b5-09f437ac5081) citée avec [Beer-Schéba](location-id://0643b4cb-a5f4-4af3-b469-ed061976d1f4)",
       "description": "Schéba apparaît en [Joshua 19:2](verse-key://JOS 19:2) parmi les localités attribuées à [Siméon](name-id://8023a792-fa1b-4465-89b5-09f437ac5081) dans le territoire méridional de [Juda](location-id://00000000-0000-4000-8000-000000000119); comme elle est citée à côté de [Beer-Schéba](location-id://0643b4cb-a5f4-4af3-b469-ed061976d1f4) et n'a pas de site indépendant assuré, on la considère souvent comme liée à Beer-Schéba sur le plan textuel ou géographique.",
@@ -25336,9 +25154,9 @@
       "modernIdentification": null,
       "coordinates": null,
       "verses": [
-        "1CH 4:31",
         "JOS 15:36",
-        "1SA 17:52"
+        "1SA 17:52",
+        "1CH 4:31"
       ],
       "links": [],
       "wikipedia": "https://en.wikipedia.org/wiki/Khirbet_Qeiyafa",
@@ -25394,8 +25212,8 @@
     },
     {
       "id": "ab00d494-52c9-4ac4-9939-f24e8a34394f",
-      "name": "Schamir (Ephraïm)",
-      "kjvName": "Shamir (Ephraim)",
+      "name": "Shamir",
+      "kjvName": "Shamir",
       "oldName": null,
       "title": "localité d'Ephraïm où le juge [Thola](name-id://be43e574-ba7e-4641-b5d7-0437e3068858) vécut et fut enterré",
       "description": "Cette Schamir se trouvait dans la [montagne d'Ephraïm](location-id://00000000-0000-4000-8000-000000000155) et est nommée comme la résidence et le lieu de sépulture de [Thola](name-id://be43e574-ba7e-4641-b5d7-0437e3068858), le juge qui se leva après [Abimélec](name-id://eba375fa-1ab3-473b-85e6-f85f0771669c); son emplacement moderne est incertain.",
@@ -25419,7 +25237,7 @@
       "id": "e4a0da39-dd21-4734-890d-67d9359b8119",
       "name": "Sharon",
       "kjvName": "Sharon",
-      "oldName": "Sharon 1",
+      "oldName": null,
       "title": "fertile coastal plain between [Carmel](location-id://bd09f548-2fa1-4b25-8f6b-d00dc545d029) and [Joppé](location-id://dd33c11c-6e8d-484a-8911-bb20e6126e7c)",
       "description": "Sharon is the fertile Mediterranean coastal plain of Israel, known for pastures, flowers, judgment imagery, and the towns around [Lydde](location-id://8d32e0bd-538e-497c-a459-c4425bcc3a7d) that turned to the Lord in [Acts](book-key://ACT).",
       "type": "region",
@@ -25447,8 +25265,8 @@
     },
     {
       "id": "18f2765c-0f87-4fb4-b980-1d1aeb918932",
-      "name": "Saron (Gad)",
-      "kjvName": "Sharon (Gad)",
+      "name": "Sharon",
+      "kjvName": "Sharon",
       "oldName": null,
       "title": "district de Gad à l'est du [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
       "description": "Ce Saron est le district nommé avec [Galaad](location-id://00000000-0000-4000-8000-000000000089) et [Basan](location-id://af0d12bf-aa1c-494c-9f89-8288fd65ef3d), où habitaient des Gadites, en [1 Chronicles 5:16](verse-key://1CH 5:16); il se distingue de la plaine côtière de Saron, plus connue.",
@@ -26138,8 +25956,8 @@
     },
     {
       "id": "f646691f-a98d-461a-b8b8-100486256dfc",
-      "name": "Socoh (Shephelah)",
-      "kjvName": "Socoh (Shephelah)",
+      "name": "Socoh",
+      "kjvName": "Socoh",
       "oldName": "Soco",
       "title": "fortified Shephelah town near the [Valley of Elah](location-id://29f276d2-7c8e-4f2d-b8fc-1e42a5d2d893)",
       "description": "This Socoh was a lowland town of [Juda](location-id://00000000-0000-4000-8000-000000000119) near [Azéka](location-id://f345fc22-3282-4ad7-9817-3e2b38026e41) and the [Valley of Elah](location-id://29f276d2-7c8e-4f2d-b8fc-1e42a5d2d893), fortified by Rehoboam and later taken by the Philistines; it is distinct from the hill-country [Soco](location-id://9b32cc6e-9ecb-4a60-966f-c015601c6974) in [Joshua 15:48](verse-key://JOS 15:48).",
@@ -26164,8 +25982,8 @@
     },
     {
       "id": "9b32cc6e-9ecb-4a60-966f-c015601c6974",
-      "name": "Soco (hill country)",
-      "kjvName": "Socoh (hill country)",
+      "name": "Socoh",
+      "kjvName": "Socoh",
       "oldName": null,
       "title": "localité de la montagne de [Juda](location-id://00000000-0000-4000-8000-000000000119), près de [Schamir](location-id://566e5abb-f7e6-4341-a79f-c53d6cf5c7f3) et de [Jatthir](location-id://bb79e534-b816-4afc-89d6-7dacf78ea24d)",
       "description": "Cette Soco était une localité de la montagne de [Juda](location-id://00000000-0000-4000-8000-000000000119), citée avec [Schamir](location-id://566e5abb-f7e6-4341-a79f-c53d6cf5c7f3) et [Jatthir](location-id://bb79e534-b816-4afc-89d6-7dacf78ea24d), distincte de la localité plus connue de la Shéphélah, située près de la [Valley of Elah](location-id://29f276d2-7c8e-4f2d-b8fc-1e42a5d2d893).",
@@ -26213,9 +26031,9 @@
     },
     {
       "id": "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
-      "name": "Succoth (Egypte)",
-      "kjvName": "Succoth (Egypt)",
-      "oldName": "Succoth",
+      "name": "Succoth",
+      "kjvName": "Succoth",
+      "oldName": null,
       "title": "premier campement israélite nommé après [Ramsès](location-id://ba59e20a-1630-41b8-a91c-4a0a1dbf5b21), lors de l'Exode",
       "description": "Cette Succoth était la première étape nommée après [Ramsès](location-id://ba59e20a-1630-41b8-a91c-4a0a1dbf5b21), lors du départ d'Israël hors d'[Egypte](location-id://00000000-0000-4000-8000-000000000065), avant [Etham](location-id://864b6fae-f516-45b9-9493-b6a8e0ccd6eb), à l'extrémité du désert; son emplacement exact dans l'est du delta du Nil est débattu.",
       "type": "camp",
@@ -26240,8 +26058,8 @@
     },
     {
       "id": "95928260-0297-4497-9546-8a3d601d308c",
-      "name": "Succoth (Transjordan)",
-      "kjvName": "Succoth (Transjordan)",
+      "name": "Succoth",
+      "kjvName": "Succoth",
       "oldName": null,
       "title": "localité de la vallée du Jourdain où [Jacob](name-id://23ed64d8-8458-49af-9b51-f578ab3262d9) construisit des cabanes",
       "description": "Cette Succoth était la localité de Transjordanie, dans la vallée du Jourdain, où [Jacob](name-id://23ed64d8-8458-49af-9b51-f578ab3262d9) construisit des cabanes; elle fut plus tard attribuée près de [Gad](name-id://b68edd6a-6aea-4f9f-8c99-684d9a6f7a8b), fut mêlée à la poursuite menée par [Gédéon](name-id://c639ae62-acde-4142-a3f5-fd40204fc455) contre [Madian](location-id://00000000-0000-4000-8000-000000000152), et elle est nommée avec Tsarthan près du sol argileux utilisé pour les objets du temple de [Salomon](name-id://509b7c2f-b8bf-4a4d-a393-550a7a4b259f).",
@@ -26586,8 +26404,8 @@
       "name": "Thimnath-Sérach",
       "kjvName": "Timnathserah",
       "oldName": null,
-      "title": "variante orthographique de Timnathserah, ville reçue en héritage par [Josué](name-id://28e270de-d886-42b6-918b-665be906a816)",
-      "description": "Thimnath-Sérach est une forme moderne à trait d'union de Timnathserah, graphie KJV de la ville de la [montagne d'Ephraïm](location-id://00000000-0000-4000-8000-000000000155) qu'Israël donna à [Josué](name-id://28e270de-d886-42b6-918b-665be906a816) et où il fut enterré. Le site est traditionnellement rattaché à Kifl Haris, bien que cette identification ne soit pas certaine.",
+      "title": "[Joshua](name-id://28e270de-d886-42b6-918b-665be906a816)'s inheritance and burial city in [Mount Ephraim](location-id://00000000-0000-4000-8000-000000000155)",
+      "description": "Timnathserah was the city in [Mount Ephraim](location-id://00000000-0000-4000-8000-000000000155) that Israel gave to [Joshua](name-id://28e270de-d886-42b6-918b-665be906a816) and where he was buried. It is traditionally identified with Kifl Haris, though the exact site remains debated.",
       "type": "city",
       "relatedLocations": [
         "fc65dd60-74bc-48d8-bfd7-d6a41c2a4297",
@@ -27481,7 +27299,7 @@
       "kjvName": "Timnah",
       "oldName": null,
       "title": "localité de la région montagneuse de [Juda](location-id://00000000-0000-4000-8000-000000000119), distincte de [Thimna](location-id://00000000-0000-4000-8000-000000000223) dans la plaine",
-      "description": "Thimna est retenu ici pour la localité de la région montagneuse de [Juda](location-id://00000000-0000-4000-8000-000000000119) citée avec [Halhul](location-id://3a42aa99-ef7e-463a-a875-da51a48b6ceb), [Beth-Tsur](location-id://f6a8b0c2-5e7d-4f9a-b13c-6d8e0f2a4b5c) et [Guedor](location-id://12785454-38f5-42d6-ba3c-aae15b5174ff) dans [Joshua 15](chapter-key://JOS 15). Les autres mentions de Timnah ou de [Thimna](location-id://00000000-0000-4000-8000-000000000223) liées à [Samson](name-id://cc81f251-0c5e-452d-9ae8-5b96db780648), à la frontière entre Juda et [Dan](location-id://dadc79b1-e84f-40e0-ab31-2fa96b6ed4bd) et à la plaine philistine relèvent de la fiche Timnath.",
+      "description": "Thimna est retenu ici pour la localité de la région montagneuse de [Juda](location-id://00000000-0000-4000-8000-000000000119) citée avec [Halhul](location-id://3a42aa99-ef7e-463a-a875-da51a48b6ceb), [Beth-Tsur](location-id://65d009b2-d6fb-4e67-88fd-6b179616d0e8) et [Guedor](location-id://12785454-38f5-42d6-ba3c-aae15b5174ff) dans [Joshua 15](chapter-key://JOS 15). Les autres mentions de Timnah ou de [Thimna](location-id://00000000-0000-4000-8000-000000000223) liées à [Samson](name-id://cc81f251-0c5e-452d-9ae8-5b96db780648), à la frontière entre Juda et [Dan](location-id://dadc79b1-e84f-40e0-ab31-2fa96b6ed4bd) et à la plaine philistine relèvent de la fiche Timnath.",
       "type": "settlement",
       "relatedLocations": [
         "00000000-0000-4000-8000-000000000119",
@@ -27517,33 +27335,6 @@
       },
       "verses": [
         "JDG 2:9"
-      ],
-      "links": [],
-      "wikipedia": "https://en.wikipedia.org/wiki/Timnath-heres",
-      "uncertainty": true,
-      "matterRange": 68
-    },
-    {
-      "id": "6b2b5e8c-76ae-478f-8678-4b7aabd7a8af",
-      "name": "Thimnath-Sérach",
-      "kjvName": "Timnathserah",
-      "oldName": null,
-      "title": "ville de l'héritage et de la sépulture de [Josué](name-id://28e270de-d886-42b6-918b-665be906a816), dans la [montagne d'Ephraïm](location-id://00000000-0000-4000-8000-000000000155)",
-      "description": "Thimnath-Sérach, écrit Timnathserah dans la KJV, était la ville de la [montagne d'Ephraïm](location-id://00000000-0000-4000-8000-000000000155) qu'Israël donna à [Josué](name-id://28e270de-d886-42b6-918b-665be906a816) et où il fut enterré. On l'identifie traditionnellement à Kifl Haris, bien que l'emplacement exact reste débattu.",
-      "type": "city",
-      "relatedLocations": [
-        "00000000-0000-4000-8000-000000000222",
-        "fc65dd60-74bc-48d8-bfd7-d6a41c2a4297",
-        "0e95bdcb-42ff-4f2a-80d7-00c32ac05b2c"
-      ],
-      "modernIdentification": "Traditionnellement Kifl Haris, dans le centre de la Cisjordanie",
-      "coordinates": {
-        "latitude": 32.122353,
-        "longitude": 35.15045
-      },
-      "verses": [
-        "JOS 19:50",
-        "JOS 24:30"
       ],
       "links": [],
       "wikipedia": "https://en.wikipedia.org/wiki/Timnath-heres",
@@ -28197,7 +27988,7 @@
         "00000000-0000-4000-8000-000000000074",
         "00000000-0000-4000-8000-000000000103",
         "00000000-0000-4000-8000-000000000045",
-        "42017171-050f-4b41-bdae-3081853e3e98"
+        "00000000-0000-4000-8000-000000000122"
       ],
       "modernIdentification": null,
       "coordinates": null,
@@ -28592,7 +28383,7 @@
       "description": "La vallée de Succoth est la plaine basse associée à Succoth, dans la vallée du Jourdain, et est nommée dans [Psalm 108](chapter-key://PSA 108) comme un territoire mesuré par Dieu.",
       "type": "valley",
       "relatedLocations": [
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
+        "95928260-0297-4497-9546-8a3d601d308c",
         "00000000-0000-4000-8000-000000000201",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
       ],
@@ -28844,7 +28635,7 @@
       "kjvName": "Yiron",
       "oldName": "Iron",
       "title": "[Nephthali](name-id://e8c79c45-33b0-4b1e-9265-368c54b9604a) city called Iron in the KJV",
-      "description": "Yiron is the Hebrew form behind the KJV Iron, a city listed in [Nephthali](name-id://e8c79c45-33b0-4b1e-9265-368c54b9604a)'s inheritance with [Horem](location-id://e7bbda61-7b8d-464a-bc06-86db9d4a31ed), [Beth-Anath](location-id://baf670bc-6ce3-47e6-8c5e-67fded0d7e75), and [Beth-Schémesch](location-id://00000000-0000-4000-8000-000000000037) in [Joshua 19:38](verse-key://JOS 19:38); it is commonly identified with Yaroun in southern Lebanon.",
+      "description": "Yiron is the Hebrew form behind the KJV Iron, a city listed in [Nephthali](name-id://e8c79c45-33b0-4b1e-9265-368c54b9604a)'s inheritance with [Horem](location-id://e7bbda61-7b8d-464a-bc06-86db9d4a31ed), [Beth-Anath](location-id://00000000-0000-4000-8000-000000000030), and [Beth-Schémesch](location-id://00000000-0000-4000-8000-000000000037) in [Joshua 19:38](verse-key://JOS 19:38); it is commonly identified with Yaroun in southern Lebanon.",
       "type": "city",
       "relatedLocations": [
         "2ee651d9-d1e6-4096-b6db-6d49461a0dc9",
@@ -28872,9 +28663,9 @@
     },
     {
       "id": "00000000-0000-4000-8000-000000000238",
-      "name": "Zanoach of the Shephelah",
-      "kjvName": "Zanoah of the Shephelah",
-      "oldName": "Zanoach",
+      "name": "Zanoah",
+      "kjvName": "Zanoah",
+      "oldName": null,
       "title": "localité de la plaine de Juda rebâtie au temps de [Néhémie](name-id://46c4c07f-dde8-4466-a278-6e40a8d3e7f1)",
       "description": "Zanoach of the Shephelah était une localité du district de la plaine de [Juda](location-id://00000000-0000-4000-8000-000000000119), associée plus tard aux rapatriés qui réparèrent, à [Jérusalem](location-id://00000000-0000-4000-8000-000000000117), la [porte de la vallée](location-id://a1142449-1aa9-4dcd-ae43-388e5e0925d1) et se réinstallèrent dans les localités de Juda; on l'identifie généralement à Khirbet Zanu, près de l'actuel moshav Zanoah.",
       "type": "settlement",
@@ -28900,9 +28691,9 @@
     },
     {
       "id": "804c9231-2b6f-4b9b-945e-25f11acd4fb9",
-      "name": "Zanoach of the hill country",
-      "kjvName": "Zanoah of the hill country",
-      "oldName": "Zanoach",
+      "name": "Zanoah",
+      "kjvName": "Zanoah",
+      "oldName": null,
       "title": "localité de la région montagneuse de Juda, citée près de [Jatthir](location-id://bb79e534-b816-4afc-89d6-7dacf78ea24d) et de Jizreel",
       "description": "Zanoach of the hill country était une autre localité de Juda, dans la liste de Joshua pour la région montagneuse, distincte de la Zanoach de la plaine; Khirbet Zanuta, dans les collines du sud d'[Hébron](location-id://00000000-0000-4000-8000-000000000103), est proposé, mais l'identification reste incertaine.",
       "type": "settlement",
@@ -29245,11 +29036,11 @@
       "kjvName": "Zaphon",
       "oldName": null,
       "title": "localité de Gad dans le lot de la vallée du [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987)",
-      "description": "Tsaphon était une localité de l'héritage de [Gad](name-id://0b987f5d-4e64-4b73-a3e2-7f6b47dd7f46), citée avec [Succoth](location-id://f577cd82-77ac-4216-8c7d-86b5dd1bb0b3) et le reste du royaume de [Sihon](name-id://7aefa340-c02e-4e80-9ce5-24d4215f6341) dans la vallée du [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987); son emplacement précis est incertain.",
+      "description": "Tsaphon était une localité de l'héritage de [Gad](name-id://0b987f5d-4e64-4b73-a3e2-7f6b47dd7f46), citée avec [Succoth](location-id://95928260-0297-4497-9546-8a3d601d308c) et le reste du royaume de [Sihon](name-id://7aefa340-c02e-4e80-9ce5-24d4215f6341) dans la vallée du [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987); son emplacement précis est incertain.",
       "type": "settlement",
       "relatedLocations": [
         "a8e27fd5-3589-4590-8140-e867b7f142ed",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
+        "95928260-0297-4497-9546-8a3d601d308c",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
       ],
       "modernIdentification": null,
@@ -29296,12 +29087,12 @@
       "kjvName": "Zarethan",
       "oldName": "Zeredathah",
       "title": "[Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) valley place also rendered Zaretan, Zarthan, and Zeredathah",
-      "description": "Zarethan was a place in the [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) valley near [Adam](location-id://53580466-6123-4acf-8ac5-5357a2e6a567) and [Succoth](location-id://f577cd82-77ac-4216-8c7d-86b5dd1bb0b3), associated with Israel's Jordan crossing and with the clay ground where [Salomon](name-id://509b7c2f-b8bf-4a4d-a393-550a7a4b259f)'s bronze vessels were cast; the related KJV forms Zaretan, Zartanah, Zarthan, and Zeredathah likely point to the same area, whose exact site remains uncertain.",
+      "description": "Zarethan was a place in the [Jourdain](location-id://ac7e67b8-98a6-49fa-a8fd-6437b333b987) valley near [Adam](location-id://53580466-6123-4acf-8ac5-5357a2e6a567) and [Succoth](location-id://95928260-0297-4497-9546-8a3d601d308c), associated with Israel's Jordan crossing and with the clay ground where [Salomon](name-id://509b7c2f-b8bf-4a4d-a393-550a7a4b259f)'s bronze vessels were cast; the related KJV forms Zaretan, Zartanah, Zarthan, and Zeredathah likely point to the same area, whose exact site remains uncertain.",
       "type": "place",
       "relatedLocations": [
         "53580466-6123-4acf-8ac5-5357a2e6a567",
         "ac7e67b8-98a6-49fa-a8fd-6437b333b987",
-        "f577cd82-77ac-4216-8c7d-86b5dd1bb0b3",
+        "95928260-0297-4497-9546-8a3d601d308c",
         "c6ddfad2-cdfa-4992-9bb8-479e7c6bc9ca"
       ],
       "modernIdentification": null,
@@ -29374,9 +29165,9 @@
     },
     {
       "id": "3289d05d-0691-4de7-a747-9a945560607a",
-      "name": "Zeboim Valley",
-      "kjvName": "Zeboim Valley",
-      "oldName": "Valley of Zeboim",
+      "name": "Zeboim",
+      "kjvName": "Zeboim",
+      "oldName": null,
       "title": "Benjaminite valley on a Philistine raiding route",
       "description": "The valley of Zeboim was one of the directions taken by Philistine spoilers from [Micmasch](location-id://ee19b0f3-9647-4ed1-9f48-d9bef91d04fd) in [Saül](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb)'s day, toward the wilderness on [Benjamin](location-id://80f2867e-4e7c-43b6-aa11-7fd42550d4ef)'s eastern side; the exact valley is uncertain.",
       "type": "valley",
@@ -29713,9 +29504,9 @@
     },
     {
       "id": "212b3b0d-07c7-4506-99f7-2bd90c1942ce",
-      "name": "Ziph of the hill country",
-      "kjvName": "Ziph of the hill country",
-      "oldName": "Ziph",
+      "name": "Ziph",
+      "kjvName": "Ziph",
+      "oldName": null,
       "title": "localité de la région montagneuse de Juda, près du refuge de [David](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) dans le désert",
       "description": "Ziph of the hill country était une localité de Juda proche de [Maon](location-id://5dc48c50-612b-40c8-87f0-9948dab2dc29) et de Carmel, fortifiée par [Roboam](name-id://68d5eac0-52b9-4b0b-b484-8c7b5c3b8971) et associée au désert où [David](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) se cacha de [Saül](name-id://7dbe7bce-7888-4b8f-8804-c9910bb04fcb); on l'identifie généralement à Tell Zif, au sud-est d'[Hébron](location-id://00000000-0000-4000-8000-000000000103).",
       "type": "settlement",
@@ -29741,9 +29532,9 @@
     },
     {
       "id": "484839f0-202c-4d25-a69a-ba856717be0f",
-      "name": "Ziph of the Negeb",
-      "kjvName": "Ziph of the Negeb",
-      "oldName": "Ziph",
+      "name": "Ziph",
+      "kjvName": "Ziph",
+      "oldName": null,
       "title": "localité du sud de Juda, dans le district du Néguev",
       "description": "Ziph of the Negeb était une autre localité de la liste méridionale de [Juda](location-id://00000000-0000-4000-8000-000000000119), avec [Thélem](location-id://a91b54ef-50dc-4e9f-b3bc-c4c329af200d) et [Bealoth](location-id://411f8b7a-8f8c-4d57-91c0-6ae3e249a163), distincte de la Ziph mieux connue de la région montagneuse, près du refuge de [David](name-id://0e06ff0e-0ca5-4f9f-9a3b-874f91497f7c) dans le désert; son emplacement exact est inconnu.",
       "type": "settlement",
@@ -30457,7 +30248,6 @@
     ],
     "GEN 35:8": [
       "00000000-0000-4000-8000-000000000008",
-      "25e3ce53-95ff-4df4-911a-d91e33c82863",
       "00000000-0000-4000-8000-000000000032"
     ],
     "GEN 35:9": [
@@ -31772,8 +31562,7 @@
       "ac7e67b8-98a6-49fa-a8fd-6437b333b987"
     ],
     "NUM 32:8": [
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "NUM 32:9": [
       "00000000-0000-4000-8000-000000000074",
@@ -31818,7 +31607,6 @@
     ],
     "NUM 32:36": [
       "00000000-0000-4000-8000-000000000033",
-      "e10c14d7-9df4-4c20-aea2-c3107e64a1bc",
       "c9a05df3-f5c7-46c0-b70d-13287c2526c8"
     ],
     "NUM 32:37": [
@@ -32047,7 +31835,6 @@
       "9d819e62-aa5c-439f-b088-963ac7f22610",
       "0ad7bf6d-0adf-43e0-9262-2431a2d7af7c",
       "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98",
       "5b88ec17-6c67-409c-87f3-c656c80d89c9"
     ],
     "NUM 34:5": [
@@ -32116,7 +31903,6 @@
     "DEU 1:2": [
       "78c4ec57-21ca-4b05-986c-21ceb1e8f109",
       "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98",
       "4c6a65f7-43e9-4112-90d9-7f95bc44bfa4"
     ],
     "DEU 1:4": [
@@ -32137,8 +31923,7 @@
     ],
     "DEU 1:19": [
       "78c4ec57-21ca-4b05-986c-21ceb1e8f109",
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "DEU 1:24": [
       "00000000-0000-4000-8000-000000000074",
@@ -32188,7 +31973,6 @@
     ],
     "DEU 2:14": [
       "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98",
       "4b744ef9-9645-42c6-b96a-b603453ff114"
     ],
     "DEU 2:18": [
@@ -32421,8 +32205,7 @@
       "fd375008-258f-480d-ba13-b9fc0b750550"
     ],
     "DEU 9:23": [
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "DEU 9:26": [
       "00000000-0000-4000-8000-000000000065"
@@ -33043,8 +32826,7 @@
     "JOS 10:41": [
       "00000000-0000-4000-8000-000000000084",
       "00000000-0000-4000-8000-000000000088",
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "JOS 10:43": [
       "5d536a42-83f6-4caf-8fb3-c11de63ca7de"
@@ -33312,12 +33094,10 @@
     ],
     "JOS 14:6": [
       "5d536a42-83f6-4caf-8fb3-c11de63ca7de",
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "JOS 14:7": [
-      "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98"
+      "00000000-0000-4000-8000-000000000122"
     ],
     "JOS 14:13": [
       "00000000-0000-4000-8000-000000000103"
@@ -33340,7 +33120,6 @@
     "JOS 15:3": [
       "2551809c-81df-4029-905c-d7eabc661387",
       "00000000-0000-4000-8000-000000000122",
-      "42017171-050f-4b41-bdae-3081853e3e98",
       "5b88ec17-6c67-409c-87f3-c656c80d89c9"
     ],
     "JOS 15:4": [
@@ -33571,7 +33350,6 @@
     ],
     "JOS 15:58": [
       "65d009b2-d6fb-4e67-88fd-6b179616d0e8",
-      "f6a8b0c2-5e7d-4f9a-b13c-6d8e0f2a4b5c",
       "12785454-38f5-42d6-ba3c-aae15b5174ff",
       "3a42aa99-ef7e-463a-a875-da51a48b6ceb"
     ],
@@ -33910,7 +33688,6 @@
     ],
     "JOS 19:38": [
       "00000000-0000-4000-8000-000000000030",
-      "baf670bc-6ce3-47e6-8c5e-67fded0d7e75",
       "e7bbda61-7b8d-464a-bc06-86db9d4a31ed",
       "890bf339-eec0-44e1-9870-294bb14dd24b",
       "0d4ab817-d745-4f0d-a4e0-16860bad6bc0"
@@ -33947,8 +33724,7 @@
       "c3db0895-8d9d-4336-9cc0-cedc7bfbabda"
     ],
     "JOS 19:50": [
-      "00000000-0000-4000-8000-000000000222",
-      "6b2b5e8c-76ae-478f-8678-4b7aabd7a8af"
+      "00000000-0000-4000-8000-000000000222"
     ],
     "JOS 19:51": [
       "00000000-0000-4000-8000-000000000203"
@@ -34148,8 +33924,7 @@
     "JOS 24:30": [
       "0d1692fb-d846-45e4-9647-99ce91e3b4f6",
       "00000000-0000-4000-8000-000000000106",
-      "00000000-0000-4000-8000-000000000222",
-      "6b2b5e8c-76ae-478f-8678-4b7aabd7a8af"
+      "00000000-0000-4000-8000-000000000222"
     ],
     "JOS 24:32": [
       "00000000-0000-4000-8000-000000000065",
@@ -34230,8 +34005,7 @@
       "00000000-0000-4000-8000-000000000208"
     ],
     "JDG 1:33": [
-      "00000000-0000-4000-8000-000000000030",
-      "baf670bc-6ce3-47e6-8c5e-67fded0d7e75"
+      "00000000-0000-4000-8000-000000000030"
     ],
     "JDG 1:35": [
       "6d63bb71-0ada-4fc1-bfdd-fe6948d7cfd4",
@@ -34778,7 +34552,6 @@
     ],
     "JDG 18:28": [
       "00000000-0000-4000-8000-000000000035",
-      "1107b4f4-405b-4892-8436-8b3a7465b9d4",
       "00000000-0000-4000-8000-000000000208"
     ],
     "JDG 18:29": [
@@ -35717,7 +35490,6 @@
     ],
     "2SA 10:6": [
       "00000000-0000-4000-8000-000000000035",
-      "1107b4f4-405b-4892-8436-8b3a7465b9d4",
       "92a5973a-971c-40de-90f7-a3c5e4813dbc",
       "00000000-0000-4000-8000-000000000246"
     ],
@@ -35759,8 +35531,7 @@
       "00000000-0000-4000-8000-000000000117"
     ],
     "2SA 13:23": [
-      "00000000-0000-4000-8000-000000000024",
-      "36ef8d50-17d9-4ee3-bb6f-85ecf0b5f994"
+      "00000000-0000-4000-8000-000000000024"
     ],
     "2SA 13:37": [
       "008d7d3a-d291-42f3-9e43-23a183215867"
@@ -38100,8 +37871,7 @@
     ],
     "2CH 11:7": [
       "9115a436-027f-4c32-b221-735767cd01c6",
-      "65d009b2-d6fb-4e67-88fd-6b179616d0e8",
-      "f6a8b0c2-5e7d-4f9a-b13c-6d8e0f2a4b5c"
+      "65d009b2-d6fb-4e67-88fd-6b179616d0e8"
     ],
     "2CH 11:8": [
       "00000000-0000-4000-8000-000000000082",
@@ -38863,8 +38633,7 @@
       "4c916b4d-a2ed-47ac-853b-e512b1fb7068"
     ],
     "NEH 3:16": [
-      "65d009b2-d6fb-4e67-88fd-6b179616d0e8",
-      "f6a8b0c2-5e7d-4f9a-b13c-6d8e0f2a4b5c"
+      "65d009b2-d6fb-4e67-88fd-6b179616d0e8"
     ],
     "NEH 3:17": [
       "00000000-0000-4000-8000-000000000125"

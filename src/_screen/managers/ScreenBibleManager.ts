@@ -36,7 +36,10 @@ import { getAllScreenManagerBases } from './screenManagerBaseHelpers';
 import appProvider from '../../server/appProvider';
 import { applyAttachBackground } from './screenBackgroundHelpers';
 import type { BibleItemType } from '../../bible-list/bibleItemHelpers';
-import { unlocking } from '../../server/unlockingHelpers';
+import {
+    collectLiveOnScreenMap,
+    persistOnScreenEntry,
+} from './onScreenSettingPersistHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import Bible from '../../bible-list/Bible';
 import type { AnyObjectType } from '../../helper/typeHelpers';
@@ -84,6 +87,17 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     // Per screen, not module-level: a shared timer would collapse every
     // screen's metadata write into one and leave the others unpersisted.
     private readonly saveMetadataAttempt = genTimeoutAttempt(500);
+
+    // What the owner rebuilds the on-screen map from when it cannot be read
+    // (`persistOnScreenEntry`).
+    private readonly collectLiveBibleList = () => {
+        return collectLiveOnScreenMap(
+            ScreenBibleManager.getAllInstancesBase<ScreenBibleManager>(),
+            (instance) => {
+                return instance.screenViewData;
+            },
+        );
+    };
 
     constructor(screenManagerBase: ScreenManagerBase) {
         super(screenManagerBase);
@@ -177,16 +191,16 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         this._screenViewData = screenViewData;
         this.applyBibleViewData(screenViewData);
         this.render();
-        unlocking(`set-${screenManagerSettingNames.FULL_TEXT}`, () => {
-            const allBibleDataList = getBibleListOnScreenSetting();
-            if (screenViewData === null) {
-                delete allBibleDataList[this.key];
-            } else {
-                allBibleDataList[this.key] = screenViewData;
-            }
-            const string = JSON.stringify(allBibleDataList);
-            setSetting(screenManagerSettingNames.FULL_TEXT, string);
-            this.fireUpdateEvent();
+        persistOnScreenEntry({
+            lockKey: `set-${screenManagerSettingNames.FULL_TEXT}`,
+            settingName: screenManagerSettingNames.FULL_TEXT,
+            key: this.key,
+            value: screenViewData,
+            readMap: getBibleListOnScreenSetting,
+            collectLive: this.collectLiveBibleList,
+            onDone: () => {
+                this.fireUpdateEvent();
+            },
         });
         this.sendSyncScreen();
     }
@@ -223,11 +237,13 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             if (screenViewData === null) {
                 return;
             }
-            unlocking(`set-meta-${screenManagerSettingNames.FULL_TEXT}`, () => {
-                const allBibleDataList = getBibleListOnScreenSetting();
-                allBibleDataList[this.key] = screenViewData as any;
-                const string = JSON.stringify(allBibleDataList);
-                setSetting(screenManagerSettingNames.FULL_TEXT, string);
+            persistOnScreenEntry({
+                lockKey: `set-meta-${screenManagerSettingNames.FULL_TEXT}`,
+                settingName: screenManagerSettingNames.FULL_TEXT,
+                key: this.key,
+                value: screenViewData,
+                readMap: getBibleListOnScreenSetting,
+                collectLive: this.collectLiveBibleList,
             });
         });
     }

@@ -6,17 +6,14 @@ import { appSecureStorage } from '../../server/appSecureStorage';
 import {
     ensureDataDirMarkerIdSync,
     findMovedDataDirSync,
-    fsCheckDirExist,
-    fsDeleteFile,
     fsExistSync,
-    fsListFiles,
     fsMkDirSync,
     fsReadSync,
     fsUnlinkSync,
-    fsWriteFileSync,
+    fsWriteFileAtomicSync,
     getUserWritablePath,
     pathJoin,
-} from '../../server/fileHelpers';
+} from '../../server/storageFileHelpers';
 
 export const SELECTED_PARENT_DIR_SETTING_NAME = 'selected-parent-dir';
 // The chosen folder's marker id (`ensureDataDirMarkerIdSync`), kept beside its
@@ -141,6 +138,7 @@ class AppLocalStorage {
     }
 
     async getSelectedParentDirectory() {
+        const { fsCheckDirExist } = await import('../../server/fileHelpers');
         const selectedParentDir = appHomeStorage.getItem(
             SELECTED_PARENT_DIR_SETTING_NAME,
         );
@@ -211,7 +209,9 @@ class AppLocalStorage {
 
     setItem(key: string, value: string): void {
         const fullPath = this.toFullPath(key);
-        fsWriteFileSync(fullPath, value);
+        // Atomic: every window reads these files, and a half-written one read
+        // as broken JSON (`fsWriteFileAtomicSync`).
+        fsWriteFileAtomicSync(fullPath, value);
         cache.setSync(fullPath, value);
         // The file exists now; a stale "absent" entry would keep `getItem`
         // answering null for up to the cache window.
@@ -245,6 +245,7 @@ class AppLocalStorage {
      */
     async listKeys(): Promise<string[]> {
         try {
+            const { fsListFiles } = await import('../../server/fileHelpers');
             return await fsListFiles(this.localStorageDir);
         } catch (error) {
             handleError(error);
@@ -259,6 +260,8 @@ class AppLocalStorage {
     }
 
     async clear() {
+        const { fsDeleteFile, fsListFiles } =
+            await import('../../server/fileHelpers');
         const files = await fsListFiles(this.localStorageDir);
         try {
             await Promise.all(

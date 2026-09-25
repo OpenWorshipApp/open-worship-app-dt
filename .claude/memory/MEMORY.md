@@ -1,5 +1,6 @@
 <!-- Only what CLAUDE.md and the code do not already say. -->
 
+- [Renderer entry static closure — FIXED](renderer-entry-static-closure.md) — startup imports leaf helpers; About 1,056 KB → 236 KB
 - [Foreground sync shared refs](foreground-sync-shared-refs.md) — sync-grouped screens share one foreground-data object · [Screen sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky; color-note groups go silent
 - [Screen draw feature](screen-draw-feature.md) — FreeShow-style Draw overlay · [Screen focus spotlight](screen-focus-spotlight.md) — Focusing = its own `#focus` layer/manager, NOT a draw mode
 - [Codebase audit 2026-07](codebase-audit-2026-07.md) — audit findings FIXED 2026-07-22 (since committed)
@@ -48,7 +49,7 @@
 - [`/owa-robot-test presentingFlow` is a MODE](owa-robot-test-presenting-flow-mode.md) — 11 phases over 69 run-sheet rows
 - [Canvas audio & media links](canvas-audio-and-media-links.md) — `audio` item is preview-only
 - [Lyric passes the AppDocument type check](lyric-passes-appdocument-typecheck.md) — `checkIsThisType` is `instanceof`
-- [Settings write race corrupts the on-screen map](settings-write-race-corrupts-onscreen-map.md) — OPEN: non-atomic write
+- [Settings write race corrupts the on-screen map](settings-write-race-corrupts-onscreen-map.md) — FIXED (EN-38): only non-screen windows write the on-screen maps, through persistOnScreenEntry; setItem is atomic
 - [Monaco `.css` test failure — importable now](monaco-css-test-failure-local-open-lyric.md) — ONE test imports real open-lyric
 - [Console design system tokens](console-design-system-tokens.md) — `--app-*` tokens
 - [Vite caches a failed import resolution](vite-caches-failed-import-resolution.md) — serves an OLD module past a reload

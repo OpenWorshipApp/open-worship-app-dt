@@ -97,6 +97,9 @@ const fileUtils = {
     mkdir: fs.mkdir,
     writeFile: fs.writeFile,
     rename: fs.rename,
+    // A settings write lands whole: written beside the target, then renamed
+    // over it (`fsWriteFileAtomicSync`).
+    renameSync: fs.renameSync,
     unlink: fs.unlink,
     rmdir: fs.rmdir,
     readFile: fs.readFile,

@@ -31,6 +31,12 @@ vi.mock('../server/fileHelpers', () => ({
     selectDirs: vi.fn(),
 }));
 
+vi.mock('../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: vi.fn(() => null),
+    },
+}));
+
 import {
     checkIsDraggingFiles,
     MAX_DROPPED_PATHS,

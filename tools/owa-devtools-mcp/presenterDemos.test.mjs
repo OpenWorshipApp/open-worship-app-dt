@@ -7,7 +7,7 @@ import {
 } from './presenterDemos.mjs';
 
 describe('Presenter demos', () => {
-  it('offers 56 Presenter lessons with stable unique ids', () => {
+  it('offers 61 Presenter lessons with stable unique ids', () => {
     expect(PRESENTER_DEMO_IDS).toEqual([
       'presenter-bible-lookup',
       'presenter-document-list',
@@ -58,6 +58,11 @@ describe('Presenter demos', () => {
       'presenter-app-assistant',
       'presenter-ai-chat',
       'presenter-find',
+      'presenter-menu-file',
+      'presenter-menu-edit',
+      'presenter-menu-tools',
+      'presenter-menu-window',
+      'presenter-menu-help',
       'presenter-view-reload',
       'presenter-view-relaunch',
       'presenter-view-devtools',
@@ -67,7 +72,7 @@ describe('Presenter demos', () => {
       'presenter-view-reset-widgets',
     ]);
     expect(new Set(PRESENTER_DEMO_IDS).size).toBe(PRESENTER_DEMO_LIST.length);
-    expect(PRESENTER_DEMO_LIST).toHaveLength(56);
+    expect(PRESENTER_DEMO_LIST).toHaveLength(61);
     expect(PRESENTER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(
       true,
     );
@@ -111,6 +116,11 @@ describe('Presenter demos', () => {
       });
     }).map(({ id }) => id);
     expect(withoutSafeAction).toEqual([
+      'presenter-menu-file',
+      'presenter-menu-edit',
+      'presenter-menu-tools',
+      'presenter-menu-window',
+      'presenter-menu-help',
       'presenter-view-reload',
       'presenter-view-relaunch',
       'presenter-view-devtools',

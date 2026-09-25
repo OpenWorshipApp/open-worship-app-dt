@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-09-23",
+    "updated": "2026-09-24",
     "sections": [
         {
             "id": "panels",
@@ -457,7 +457,15 @@
                         "could not start walkthrough",
                         "walkthrough",
                         "don't show again",
-                        "help menu"
+                        "help menu",
+                        "file menu",
+                        "edit menu",
+                        "view menu",
+                        "tools menu",
+                        "window menu",
+                        "menu commands",
+                        "print without preview",
+                        "debug info"
                     ],
                     "resources": {
                         "recipe": "W-46",

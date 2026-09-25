@@ -7,7 +7,7 @@ import {
 } from './readerDemos.mjs';
 
 describe('Reader demos', () => {
-  it('offers 49 Reader lessons with stable unique ids', () => {
+  it('offers 54 Reader lessons with stable unique ids', () => {
     expect(READER_DEMO_IDS).toEqual([
       'reader-font-larger',
       'reader-font-smaller',
@@ -51,6 +51,11 @@ describe('Reader demos', () => {
       'reader-verse-marks',
       'reader-note-actions',
       'reader-header-tools',
+      'reader-menu-file',
+      'reader-menu-edit',
+      'reader-menu-tools',
+      'reader-menu-window',
+      'reader-menu-help',
       'reader-view-reload',
       'reader-view-relaunch',
       'reader-view-devtools',
@@ -60,7 +65,7 @@ describe('Reader demos', () => {
       'reader-view-reset-widgets',
     ]);
     expect(new Set(READER_DEMO_IDS).size).toBe(READER_DEMO_LIST.length);
-    expect(READER_DEMO_LIST).toHaveLength(49);
+    expect(READER_DEMO_LIST).toHaveLength(54);
     expect(READER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(true);
     expect(
       READER_DEMO_LIST.filter((demo) => demo.isFeatured !== false),

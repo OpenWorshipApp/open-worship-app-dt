@@ -35,6 +35,7 @@ export type FileUtilsType = {
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;
     rename: typeof fs.rename;
+    renameSync: typeof fs.renameSync;
     unlink: typeof fs.unlink;
     rmdir: typeof fs.rmdir;
     readFile: typeof fs.readFile;

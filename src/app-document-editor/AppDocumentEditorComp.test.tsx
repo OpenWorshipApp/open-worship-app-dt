@@ -69,6 +69,13 @@ vi.mock('../server/fileHelpers', () => ({
     appDocumentFileExtension: '.ows',
 }));
 
+vi.mock('../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+    },
+}));
+
 vi.mock('../helper/debuggerHelpers', () => ({
     useAppEffect: (effect: any) => effect,
 }));

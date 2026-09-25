@@ -4,7 +4,7 @@ import appProvider from './appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
-import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
 import {
     fsCheckFileExist,
     fsDeleteFile,
@@ -23,32 +23,12 @@ import { appError as logError } from '../helper/loggerHelpers';
 import { useAppEffect } from '../helper/appHooks';
 import type { ExtraBinPathsType } from '../helper/extra-bin/extraBinHelpers';
 import { EXTRA_BIN_MISSING_ERROR_MESSAGE } from '../helper/extra-bin/extraBinErrors';
+import { electronSendAsync } from './electronSendHelpers';
 
-export function genReturningEventName(eventName: string) {
-    return `${eventName}-return-${crypto.randomUUID()}`;
-}
-
-export function electronSendAsync<T>(
-    eventName: string,
-    data: AnyObjectType = {},
-) {
-    return new Promise<T>((resolve, reject) => {
-        const replyEventName = genReturningEventName(eventName);
-        appProvider.messageUtils.listenOnceForData(
-            replyEventName,
-            (_event, imageData: T) => {
-                if (imageData instanceof Error) {
-                    return reject(imageData);
-                }
-                resolve(imageData);
-            },
-        );
-        appProvider.messageUtils.sendData(eventName, {
-            ...data,
-            replyEventName,
-        });
-    });
-}
+export {
+    electronSendAsync,
+    genReturningEventName,
+} from './electronSendHelpers';
 
 export function showFileOrDirExplorer(dir: string) {
     appProvider.messageUtils.sendData('main:app:reveal-path', dir);

@@ -4,6 +4,7 @@ import type ScreenManagerBase from './ScreenManagerBase';
 import { parseJsonSafely } from '../../helper/helpers';
 import { genDerivedSettingReader } from '../../helper/derivedSettingHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
+import { checkIsOnScreenSettingWriter } from './onScreenSettingPersistHelpers';
 
 export type TypeScreenManagerSettingType = {
     screenId: number;
@@ -69,6 +70,12 @@ export function getValidOnScreen(data: { [key: string]: any }) {
 
 export function saveScreenManagersSetting(deletedScreenId?: number) {
     return unlocking(screenManagerSettingNames.MANAGERS, async () => {
+        // Not from a projector window, like the on-screen maps
+        // (`checkIsOnScreenSettingWriter`): one creating its single manager
+        // rewrote the whole list from its own, possibly stale, copy.
+        if (!checkIsOnScreenSettingWriter()) {
+            return;
+        }
         const allScreenManagerBases = getAllScreenManagerBases();
         const newInstanceSetting: TypeScreenManagerSettingType[] = [];
         for (const screenManagerBase of allScreenManagerBases) {
