@@ -141,6 +141,21 @@ export const READER_DEMO_LIST = [
     ],
   },
   {
+    id: 'reader-clear-reference-part',
+    label: 'Remove the last part of a reference',
+    detail:
+      'Keep the earlier book or chapter and correct only the last choice.',
+    title: 'Remove the last part of a reference',
+    steps: [
+      {
+        text: 'Remove only the last book, chapter, or verse choice with Clear input chunk.',
+        find: 'Clear input chunk',
+        translateFind: true,
+        action: 'click',
+      },
+    ],
+  },
+  {
     id: 'reader-names-lookup',
     label: 'Look up a Bible person or place',
     detail: 'Open the names and locations lookup beside the passage.',
@@ -429,10 +444,60 @@ export const READER_DEMO_LIST = [
     label: 'Show or hide Bibles and Bible Notes',
     detail: 'Toggle the side panel that keeps saved passages and notes.',
     title: 'Show or hide Bibles and Bible Notes',
+    isFeatured: false,
     steps: [
       {
-        text: 'Toggle the Bible and Notes panel at the left of the Reader.',
-        find: 'Bible and Notes',
+        text: 'Open View > Widgets, then check or uncheck Bible and Notes. The open pane itself is not a toggle.',
+      },
+    ],
+  },
+  {
+    id: 'reader-bibles-section',
+    label: 'Show or hide saved Bibles',
+    detail: 'Use View > Widgets to show or hide only the saved Bibles section.',
+    title: 'Show or hide saved Bibles',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open View > Widgets, then check or uncheck Bibles. The open pane itself is not a toggle.',
+      },
+    ],
+  },
+  {
+    id: 'reader-notes-section',
+    label: 'Show or hide Bible Notes',
+    detail: 'Use View > Widgets to show or hide only the Bible Notes section.',
+    title: 'Show or hide Bible Notes',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open View > Widgets, then check or uncheck Bible Notes. The open pane itself is not a toggle.',
+      },
+    ],
+  },
+  {
+    id: 'reader-filter-notes',
+    label: 'Filter Bible Notes by name',
+    detail: 'Focus Filter by name, then type part of the note you need.',
+    title: 'Filter Bible Notes by name',
+    steps: [
+      {
+        text: 'Click Filter by name, then type part of a note or note-file name.',
+        find: 'Filter by name',
+        translateFind: true,
+        action: 'click',
+      },
+    ],
+  },
+  {
+    id: 'reader-sort-notes',
+    label: 'Choose how Bible Notes are sorted',
+    detail: 'Open Sort and choose one of the available list orders.',
+    title: 'Choose how Bible Notes are sorted',
+    steps: [
+      {
+        text: 'Open the available list orders with Sort.',
+        find: 'Sort',
         translateFind: true,
         action: 'click',
       },
@@ -443,7 +508,6 @@ export const READER_DEMO_LIST = [
     label: 'Type a complete Bible reference',
     detail: 'Enter a reference such as John 3:16 and open it directly.',
     title: 'Type a complete Bible reference',
-    isFeatured: false,
     steps: [
       {
         text: 'Select Bible Reference, type a complete reference such as John 3:16, then choose the matching verse.',
@@ -543,10 +607,12 @@ export const READER_DEMO_LIST = [
     detail:
       'Enable automatic AI audio, play verse audio, repeat it, or refresh the source.',
     title: 'Use Bible audio and AI reading controls',
-    isFeatured: false,
     steps: [
       {
         text: 'Use Auto Play Audio AI when available to control automatic reading for supported passages.',
+        find: 'Auto Play Audio AI when available',
+        translateFind: true,
+        action: 'click',
       },
       {
         text: 'When audio is available, use the passage audio player to play, repeat, or refresh it.',
@@ -710,6 +776,35 @@ export const READER_DEMO_LIST = [
     steps: [
       {
         text: 'At the right of Bible Reference, use Go Back to Presenter, Settings, App Assistant, AI Chat, or Help.',
+      },
+    ],
+  },
+  {
+    id: 'reader-open-settings',
+    label: 'Open Reader Settings',
+    detail:
+      'Open Settings from the Reader header without leaving your passage.',
+    title: 'Open Reader Settings',
+    steps: [
+      {
+        text: 'Open the app settings with Setting in the Reader header.',
+        find: 'Setting',
+        translateFind: true,
+        action: 'click',
+      },
+    ],
+  },
+  {
+    id: 'reader-open-help',
+    label: 'Open Reader Help',
+    detail: 'Open Help for tips, updates, and information about the app.',
+    title: 'Open Reader Help',
+    steps: [
+      {
+        text: 'Open the help choices with Help in the Reader header.',
+        find: 'Help',
+        translateFind: true,
+        action: 'click',
       },
     ],
   },

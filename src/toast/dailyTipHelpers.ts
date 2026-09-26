@@ -222,6 +222,7 @@ function getReaderTips(): DailyTipType[] {
         'reader-previous-passage',
         'reader-next-passage',
         'reader-clear-reference',
+        'reader-clear-reference-part',
         'reader-type-reference',
         'reader-reference-shortcuts',
         'reader-history-chips',
@@ -242,12 +243,22 @@ function getReaderTips(): DailyTipType[] {
         'reader-scroll-top',
         'reader-bible-line-breaks',
         'reader-model-line-breaks',
+        'reader-ai-audio',
         'reader-edit-arrange-passages',
     ]);
     const notesIds = new Set([
         'reader-bible-notes-panel',
+        'reader-bibles-section',
+        'reader-notes-section',
+        'reader-filter-notes',
+        'reader-sort-notes',
         'reader-verse-marks',
         'reader-note-actions',
+    ]);
+    const shortcutIds = new Set([
+        'reader-header-tools',
+        'reader-open-settings',
+        'reader-open-help',
     ]);
     const viewMenuIds = new Set([
         'reader-view-reload',
@@ -275,7 +286,7 @@ function getReaderTips(): DailyTipType[] {
                     ? tran('Notes and marks')
                     : viewMenuIds.has(demo.id)
                       ? tran('View menu')
-                      : demo.id === 'reader-header-tools'
+                      : shortcutIds.has(demo.id)
                         ? tran('Reader shortcuts')
                         : tran('Study tools'));
         return {

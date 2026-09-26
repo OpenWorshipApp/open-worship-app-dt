@@ -2044,6 +2044,27 @@ const dictionary = {
     "Show this Bible's book buttons and start a fresh lookup.":
         'បង្ហាញប៊ូតុងសៀវភៅរបស់ព្រះគម្ពីរ ហើយចាប់ផ្ដើមស្វែងរកថ្មី។',
     'Change names and places language': 'ប្ដូរភាសាឈ្មោះ និងទីកន្លែង',
+    'Remove the last part of a reference': 'លុបផ្នែកចុងក្រោយនៃសេចក្ដីយោង',
+    'Keep the earlier book or chapter and correct only the last choice.':
+        'រក្សាសៀវភៅ ឬជំពូកមុន ហើយកែតែជម្រើសចុងក្រោយ។',
+    'Show or hide saved Bibles': 'បង្ហាញ ឬលាក់ព្រះគម្ពីរដែលបានរក្សាទុក',
+    'Use View > Widgets to show or hide only the saved Bibles section.':
+        'ប្រើ មើល > ធាតុក្រាហ្វិក ដើម្បីបង្ហាញ ឬលាក់តែផ្នែកព្រះគម្ពីរដែលបានរក្សាទុក។',
+    'Show or hide Bible Notes': 'បង្ហាញ ឬលាក់កំណត់ត្រាព្រះគម្ពីរ',
+    'Use View > Widgets to show or hide only the Bible Notes section.':
+        'ប្រើ មើល > ធាតុក្រាហ្វិក ដើម្បីបង្ហាញ ឬលាក់តែផ្នែកកំណត់ត្រាព្រះគម្ពីរ។',
+    'Filter Bible Notes by name': 'ត្រងកំណត់ត្រាព្រះគម្ពីរតាមឈ្មោះ',
+    'Focus Filter by name, then type part of the note you need.':
+        'ដាក់ទស្សន៍ទ្រនិចក្នុង ត្រងតាមឈ្មោះ ហើយវាយផ្នែកនៃកំណត់ត្រាដែលអ្នកត្រូវការ។',
+    'Choose how Bible Notes are sorted': 'ជ្រើសរបៀបតម្រៀបកំណត់ត្រាព្រះគម្ពីរ',
+    'Open Sort and choose one of the available list orders.':
+        'បើក តម្រៀប ហើយជ្រើសលំដាប់បញ្ជីមួយដែលមាន។',
+    'Open Reader Settings': 'បើកការកំណត់អ្នកអាន',
+    'Open Settings from the Reader header without leaving your passage.':
+        'បើកការកំណត់ពីក្បាលទំព័រអ្នកអាន ដោយមិនចាកចេញពីអត្ថបទរបស់អ្នក។',
+    'Open Reader Help': 'បើកជំនួយអ្នកអាន',
+    'Open Help for tips, updates, and information about the app.':
+        'បើកជំនួយសម្រាប់គន្លឹះ បច្ចុប្បន្នភាព និងព័ត៌មានអំពីកម្មវិធី។',
     'Open the language picker used by the people and places tools.':
         'បើកឧបករណ៍ជ្រើសភាសា សម្រាប់ឈ្មោះមនុស្ស និងទីកន្លែង។',
     'Choose how to copy a passage': 'ជ្រើសរបៀបចម្លងអត្ថបទ',

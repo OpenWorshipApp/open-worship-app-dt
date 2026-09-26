@@ -85,14 +85,20 @@ it is describing.
    once: most people use this window for the one thing they first saw it do.
    Press any of them to ask it, or type a few words in the box and the same list
    narrows itself as you type. **Fewer** folds it away again. 📸
-   **The Bible Reader also has 24 guided demos that need no AI model, key or
+   **The Bible Reader also has 30 guided demos that need no AI model, key or
    account.** Set **ASKING ABOUT** to **Bible Reader** and, in an empty chat,
    use **Try a guided demo**. The original four practise text size, opening
    John 3:16 with buttons and finding Bible words. Twenty more cover passage
    history, clearing the reference, people and places, two Bible versions,
    distraction-free reading, copy/split/save, automatic scrolling, line
    layout, cross references, names in the current passage, Resources, book
-   filters and the Bibles/Notes side panel. A card appears in the Reader. Press
+   filters and the Bibles/Notes side panel. Seven more practise typing a
+   complete reference, removing only its last part, automatic Bible audio,
+   note filtering and sorting, Settings and Help. The full Tips list also
+   explains how View > Widgets shows or hides the whole saved-passages panel,
+   saved Bibles, or Bible Notes; those three are self-guided because an open
+   pane is not itself a toggle.
+   A card appears in the Reader. Press
    **Do it** for one visible action at a time, or **Skip** to do that step
    yourself. The reference demo uses the Bible's own book, chapter and verse
    buttons, so it also works when those buttons are not in English. Study-view

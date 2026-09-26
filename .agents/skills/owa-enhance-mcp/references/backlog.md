@@ -8,6 +8,21 @@ Status: `open` · `doing` · `done` · `wontfix` (with a reason).
 
 ---
 
+### `MC-43` — expand Reader demos and cover them in Tips · done 2026-09-26
+
+The Reader assistant featured 24 zero-model practice choices while several
+safe, universal controls were only mentioned in broad self-guided lessons.
+Shipped seven more deterministic Reader choices: type a complete reference,
+remove one reference part, toggle automatic Bible audio, filter and sort
+notes, and open Reader Settings or Help. Added separate saved-Bibles and
+Bible-Notes visibility Tips too, but kept them self-guided after live testing
+proved an open pane is a labeled container rather than a pressable toggle. The
+shared catalog now supplies 61 Reader tips, 30 with a safe actionable start,
+while 30 are featured in the empty assistant. The previous whole-panel lesson
+is self-guided for the same reason, so the shelf grows by six while gaining
+seven working actions. No tool or schema enum was added, so the 53-tool surface
+and model token bill remain flat.
+
 ### `MC-42` — resilient Presenter tip demos · done 2026-09-23
 
 Presenter tips could outpace the long-running MCP host during development and
@@ -40,7 +55,6 @@ completed against the Reader; the localized reference demo pressed Khmer John,
 chapter 3 and verse 16, and the search demo explicitly changed a remembered
 Resources picker to Find. Model surface: 7,355 → 7,404 tokens/round, under the
 7,450 ratchet.
-
 
 ### `MC-39` — walkthroughs aimed at controls hidden behind ⋯ · done 2026-09-22
 

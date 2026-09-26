@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-09-23",
+    "updated": "2026-09-26",
     "sections": [
         {
             "id": "reading",

@@ -7,7 +7,7 @@ import {
 } from './readerDemos.mjs';
 
 describe('Reader demos', () => {
-  it('offers 54 Reader lessons with stable unique ids', () => {
+  it('offers 61 Reader lessons with stable unique ids', () => {
     expect(READER_DEMO_IDS).toEqual([
       'reader-font-larger',
       'reader-font-smaller',
@@ -16,6 +16,7 @@ describe('Reader demos', () => {
       'reader-previous-passage',
       'reader-next-passage',
       'reader-clear-reference',
+      'reader-clear-reference-part',
       'reader-names-lookup',
       'reader-names-language',
       'reader-add-bible',
@@ -34,6 +35,10 @@ describe('Reader demos', () => {
       'reader-resources',
       'reader-filter-books',
       'reader-bible-notes-panel',
+      'reader-bibles-section',
+      'reader-notes-section',
+      'reader-filter-notes',
+      'reader-sort-notes',
       'reader-type-reference',
       'reader-reference-shortcuts',
       'reader-history-chips',
@@ -51,6 +56,8 @@ describe('Reader demos', () => {
       'reader-verse-marks',
       'reader-note-actions',
       'reader-header-tools',
+      'reader-open-settings',
+      'reader-open-help',
       'reader-menu-file',
       'reader-menu-edit',
       'reader-menu-tools',
@@ -65,11 +72,45 @@ describe('Reader demos', () => {
       'reader-view-reset-widgets',
     ]);
     expect(new Set(READER_DEMO_IDS).size).toBe(READER_DEMO_LIST.length);
-    expect(READER_DEMO_LIST).toHaveLength(54);
+    expect(READER_DEMO_LIST).toHaveLength(61);
     expect(READER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(true);
     expect(
       READER_DEMO_LIST.filter((demo) => demo.isFeatured !== false),
-    ).toHaveLength(24);
+    ).toHaveLength(30);
+  });
+
+  it('gives every featured Reader demo a safe action to start with', () => {
+    const featured = READER_DEMO_LIST.filter(
+      (demo) => demo.isFeatured !== false,
+    );
+    expect(
+      featured.every((demo) =>
+        demo.steps.some(
+          (step) =>
+            typeof step.find === 'string' ||
+            typeof step.press === 'string' ||
+            step.action === 'rightClick',
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps pane visibility lessons self-guided because open panes are not toggles', () => {
+    for (const id of [
+      'reader-bible-notes-panel',
+      'reader-bibles-section',
+      'reader-notes-section',
+    ]) {
+      const demo = getReaderDemo(id);
+      expect(demo.isFeatured).toBe(false);
+      expect(demo.steps).toEqual([
+        expect.objectContaining({
+          text: expect.stringContaining('View > Widgets'),
+        }),
+      ]);
+      expect(demo.steps[0]).not.toHaveProperty('find');
+      expect(demo.steps[0]).not.toHaveProperty('action');
+    }
   });
 
   it('returns fresh steps and adds translated control labels', () => {

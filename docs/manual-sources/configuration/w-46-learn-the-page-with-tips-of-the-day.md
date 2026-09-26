@@ -26,11 +26,13 @@ control without having to search the manual.
    list for the current page. Search by a control or task, or scan the topic badges;
    the counter shows how many lessons match. Each lesson says what it teaches;
    choose one to return to its card and practise it at your own pace. The
-   Presenter has **61 topics**: 51 start with a safe **Do it** for a visible
-   control or shortcut, while ten native-menu lessons stay self-guided. They
+   Presenter has **74 topics**: 64 start with a safe **Do it** for a visible
+   control or shortcut, while ten disruptive or native-menu lessons stay self-guided. They
    cover documents and slides, audience screens, backgrounds and media, service
    planning, app help, and every native application menu from **File** through
-   **Help**. The Reader has **54 topics**. They cover reference entry and
+   **Help**. The Reader has **61 topics**: 30 start with a safe **Do it** and
+   31 stateful, file-dependent, native-menu, pane-visibility or audience-output lessons stay
+   self-guided. They cover reference entry and
    history, reading panes and formatting, Find and cross references,
    people/places and connection graphs, Resources, verse marks and notes,
    presenting a verse, the Reader header, every native application menu, and

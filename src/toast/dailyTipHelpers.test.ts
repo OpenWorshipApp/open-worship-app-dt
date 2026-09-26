@@ -61,7 +61,30 @@ describe('daily tip helpers', () => {
         expect(getDailyTips('reader').map(({ demoId }) => demoId)).toEqual(
             READER_DEMO_IDS,
         );
-        expect(getDailyTips('reader')).toHaveLength(54);
+        expect(getDailyTips('reader')).toHaveLength(61);
+    });
+
+    it('files the added Reader practice demos under useful tip topics', () => {
+        const tips = getDailyTips('reader');
+        expect(
+            tips.find(({ id }) => id === 'reader-clear-reference-part')
+                ?.category,
+        ).toBe('Getting started');
+        for (const id of [
+            'reader-bibles-section',
+            'reader-notes-section',
+            'reader-filter-notes',
+            'reader-sort-notes',
+        ]) {
+            expect(tips.find((tip) => tip.id === id)?.category, id).toBe(
+                'Notes and marks',
+            );
+        }
+        for (const id of ['reader-open-settings', 'reader-open-help']) {
+            expect(tips.find((tip) => tip.id === id)?.category, id).toBe(
+                'Reader shortcuts',
+            );
+        }
     });
 
     it('covers every native menu from File through Help on both pages', () => {

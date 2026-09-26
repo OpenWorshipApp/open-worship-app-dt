@@ -292,18 +292,23 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   wrong presses ≥10 → 0, recipes that start 33 → 37, honest refusals go UP
   because a wrong press is now a refusal that names what it found.
 - **The Presenter and Reader have checked-in demos that need no model**
-  (2026-09-22, expanded 2026-09-23, `readerDemos.mjs` and
-  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 49
-  Reader-only lessons through the same guarded card: the original font
-  larger/smaller, localized John 3:16 and Bible Find demos, plus passage
-  history, reference clearing, people/places, two versions, full view,
-  copy/split/save, scrolling, line layout, advanced study views, book filtering
-  and the Bibles/Notes panel. The catalog is
+  (2026-09-22, expanded 2026-09-23 and 2026-09-26, `readerDemos.mjs` and
+  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 61
+  Reader-only lessons through the same guarded card. Thirty are featured
+  in the Reader assistant's zero-model practice shelf: the original font
+  larger/smaller, localized John 3:16 and Bible Find demos; passage history,
+  reference clearing, people/places, two versions, full view, copy/split/save,
+  scrolling, line layout, advanced study views and book filtering; and direct
+  practice for typing a complete reference, removing one reference part,
+  automatic Bible audio, filtering and sorting notes, Settings and Help.
+  Thirty of the 61 Reader tips begin with a safe deterministic action;
+  stateful, file-dependent, native-menu, pane-visibility and audience-output
+  lessons stay self-guided. The catalog is
   shared with the chatbot's empty state, so the words a senior presses and the
   steps the MCP runs cannot drift. A demo changes one visible thing per **Do
   it** press; the search lesson names the Bible Online Lookup picker, selects
   **Find** even when it remembered Resources, and leaves the search box for the
-  person's own word. The Presenter catalog has 69 lessons across documents,
+  person's own word. The Presenter catalog has 74 lessons across documents,
   audience screens, FOREGROUND OVERLAYS, backgrounds and media, service
   planning, app help and the View menu. Sixty-four lessons now begin with a
   safe deterministic **Do it**
@@ -327,7 +332,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   "countdown" matching no countdown lesson). Tips also send their current
   inline lesson when a hot-reloaded
   renderer finds an older long-running MCP catalog. `demoId` is a string
-  validated against those catalogs at call time, not a 118-value schema enum
+  validated against those catalogs at call time, not a 135-value schema enum
   sent to the model on every round. This
   adds no tool, spends no provider credit and keeps schema cost flat as lessons
   are added.

@@ -2095,6 +2095,28 @@ const dictionary = {
         'Affichez les boutons des livres et commencez une nouvelle recherche.',
     'Change names and places language':
         'Changer la langue des noms et des lieux',
+    'Remove the last part of a reference':
+        "Retirer la dernière partie d'une référence",
+    'Keep the earlier book or chapter and correct only the last choice.':
+        'Gardez le livre ou le chapitre précédent et corrigez uniquement le dernier choix.',
+    'Show or hide saved Bibles': 'Afficher ou masquer les Bibles enregistrées',
+    'Use View > Widgets to show or hide only the saved Bibles section.':
+        'Utilisez Affichage > Widgets pour afficher ou masquer uniquement la section des Bibles enregistrées.',
+    'Show or hide Bible Notes': 'Afficher ou masquer les notes bibliques',
+    'Use View > Widgets to show or hide only the Bible Notes section.':
+        'Utilisez Affichage > Widgets pour afficher ou masquer uniquement la section des notes bibliques.',
+    'Filter Bible Notes by name': 'Filtrer les notes bibliques par nom',
+    'Focus Filter by name, then type part of the note you need.':
+        'Placez le curseur dans Filtrer par nom, puis saisissez une partie de la note recherchée.',
+    'Choose how Bible Notes are sorted': 'Choisir le tri des notes bibliques',
+    'Open Sort and choose one of the available list orders.':
+        'Ouvrez Trier et choisissez un des ordres disponibles pour la liste.',
+    'Open Reader Settings': 'Ouvrir les paramètres du Lecteur',
+    'Open Settings from the Reader header without leaving your passage.':
+        'Ouvrez les paramètres depuis l’en-tête du Lecteur sans quitter votre passage.',
+    'Open Reader Help': "Ouvrir l'aide du Lecteur",
+    'Open Help for tips, updates, and information about the app.':
+        "Ouvrez l'aide pour les astuces, les mises à jour et les informations sur l'application.",
     'Open the language picker used by the people and places tools.':
         'Ouvrez le sélecteur de langue des outils de personnes et de lieux.',
     'Choose how to copy a passage': 'Choisir comment copier un passage',

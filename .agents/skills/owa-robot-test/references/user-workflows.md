@@ -21,7 +21,19 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-26** (**W-46 — the automatic Tip of the Day waits five minutes.**
+**workflowsVersion: 2026-09-26a** (**W-42 and W-46 — the Reader gains seven more
+working zero-model demos, and broader Tips.** The empty Reader assistant now
+offers 30 deterministic practice choices: the added choices type a complete
+reference, remove one reference part, toggle automatic Bible audio, filter or
+sort notes, and open Settings or Help. All Tips now has 61 Reader lessons,
+including whole-panel and separate saved-Bibles/Bible-Notes visibility
+guidance; those three stay self-guided because live testing proved an open pane
+is a labeled container, not a pressable toggle. The old no-op whole-panel shelf
+entry was retired, so the shelf grows by six while gaining seven working
+actions. Thirty lessons begin with a safe action.
+CB-77 and GL-25 expanded.)
+
+Previous: **workflowsVersion: 2026-09-26** (**W-46 — the automatic Tip of the Day waits five minutes.**
 Reported with a picture of the card over the Presenter's top-right controls at launch:
 _"Tip of the Day should be delay at least 5 minutes at app launch"_. The card now
 appears five minutes after the app starts, counted from the launch, so a reload or a
@@ -3064,11 +3076,13 @@ control without having to search the manual.
    list for the current page. Search by a control or task, or scan the topic badges;
    the counter shows how many lessons match. Each lesson says what it teaches;
    choose one to return to its card and practise it at your own pace. The
-   Presenter has **61 topics**: 51 start with a safe **Do it** for a visible
-   control or shortcut, while ten native-menu lessons stay self-guided. They
+   Presenter has **74 topics**: 64 start with a safe **Do it** for a visible
+   control or shortcut, while ten disruptive or native-menu lessons stay self-guided. They
    cover documents and slides, audience screens, backgrounds and media, service
    planning, app help, and every native application menu from **File** through
-   **Help**. The Reader has **54 topics**. They cover reference entry and
+   **Help**. The Reader has **61 topics**: 30 start with a safe **Do it** and
+   31 stateful, file-dependent, native-menu, pane-visibility or audience-output lessons stay
+   self-guided. They cover reference entry and
    history, reading panes and formatting, Find and cross references,
    people/places and connection graphs, Resources, verse marks and notes,
    presenting a verse, the Reader header, every native application menu, and
@@ -3999,14 +4013,20 @@ it is describing.
    once: most people use this window for the one thing they first saw it do.
    Press any of them to ask it, or type a few words in the box and the same list
    narrows itself as you type. **Fewer** folds it away again. 📸
-   **The Bible Reader also has 24 guided demos that need no AI model, key or
+   **The Bible Reader also has 30 guided demos that need no AI model, key or
    account.** Set **ASKING ABOUT** to **Bible Reader** and, in an empty chat,
    use **Try a guided demo**. The original four practise text size, opening
    John 3:16 with buttons and finding Bible words. Twenty more cover passage
    history, clearing the reference, people and places, two Bible versions,
    distraction-free reading, copy/split/save, automatic scrolling, line
    layout, cross references, names in the current passage, Resources, book
-   filters and the Bibles/Notes side panel. A card appears in the Reader. Press
+   filters and the Bibles/Notes side panel. Seven more practise typing a
+   complete reference, removing only its last part, automatic Bible audio,
+   note filtering and sorting, Settings and Help. The full Tips list also
+   explains how View > Widgets shows or hides the whole saved-passages panel,
+   saved Bibles, or Bible Notes; those three are self-guided because an open
+   pane is not itself a toggle.
+   A card appears in the Reader. Press
    **Do it** for one visible action at a time, or **Skip** to do that step
    yourself. The reference demo uses the Bible's own book, chapter and verse
    buttons, so it also works when those buttons are not in English. Study-view
