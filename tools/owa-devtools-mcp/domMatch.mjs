@@ -244,8 +244,15 @@ export const DOM_MATCH_RUNTIME = `
             return true;
         }
         const tag = element.tagName.toLowerCase();
+        const role = element.getAttribute('role');
+        // A row of this app's own context menu is a plain div with a role, and
+        // it is the most pressable thing on the window while the menu is up.
+        // Left off this list it lost every tie to whatever container happened
+        // to share its words -- a named panel carries the component's name, so
+        // "choose Video Show" could ring the panel that name already opened
+        // instead of the menu row that opens it.
         return ['button', 'a', 'input', 'textarea', 'select', 'summary']
-            .includes(tag) || element.getAttribute('role') === 'button';
+            .includes(tag) || role === 'button' || role === 'menuitem';
     };
 
     // The most specific match wins, NOT the first one: document order sees a

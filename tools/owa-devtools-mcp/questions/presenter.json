@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-09-23",
+    "updated": "2026-09-25",
     "sections": [
         {
             "id": "orientation",
@@ -1325,6 +1325,43 @@
                     }
                 },
                 {
+                    "id": "background-folder-sessions",
+                    "text": "How do I switch between two background folders?",
+                    "kind": "howto",
+                    "keywords": [
+                        "two folders",
+                        "another folder",
+                        "second folder",
+                        "session",
+                        "usb stick",
+                        "swap folder",
+                        "extra folder"
+                    ],
+                    "resources": {
+                        "recipe": "W-08",
+                        "related": [
+                            "W-16"
+                        ],
+                        "find": "Background > Images",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "background-session-remove",
+                    "text": "How do I remove a background folder session?",
+                    "kind": "howto",
+                    "keywords": [
+                        "remove session",
+                        "rename session",
+                        "delete folder session",
+                        "too many sessions"
+                    ],
+                    "resources": {
+                        "recipe": "W-08",
+                        "find": "Background > Images"
+                    }
+                },
+                {
                     "id": "background-onto-slide",
                     "text": "How do I drag a picture onto a slide?",
                     "kind": "howto",
@@ -1521,11 +1558,12 @@
                         "photos",
                         "rotate pictures",
                         "gallery",
-                        "loop pictures"
+                        "loop pictures",
+                        "auto play pictures"
                     ],
                     "resources": {
                         "recipe": "W-09",
-                        "find": "Foreground",
+                        "find": "Image Show",
                         "guide": true
                     }
                 },
@@ -1587,6 +1625,155 @@
                         "tools": [
                             "owa_foreground"
                         ]
+                    }
+                },
+                {
+                    "id": "foreground-two-overlays",
+                    "text": "Can I show two pictures over the slide at the same time?",
+                    "kind": "howto",
+                    "keywords": [
+                        "two overlays",
+                        "logo and snow",
+                        "more than one picture",
+                        "sessions",
+                        "second overlay",
+                        "both at once"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Image Show",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "foreground-sessions",
+                    "text": "How do I keep two different countdowns ready?",
+                    "kind": "howto",
+                    "keywords": [
+                        "two countdowns",
+                        "two messages",
+                        "another set-up",
+                        "sessions",
+                        "save this look",
+                        "second marquee",
+                        "switch between set-ups",
+                        "without retyping"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Countdown",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "foreground-session-dot",
+                    "text": "Why does one of the session buttons have a dot on it?",
+                    "kind": "what",
+                    "keywords": [
+                        "dot on session",
+                        "session marked",
+                        "which session is showing",
+                        "on screen mark",
+                        "session on screen"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Messages"
+                    }
+                },
+                {
+                    "id": "foreground-always-on-top",
+                    "text": "How do I keep my logo above the other overlays?",
+                    "kind": "howto",
+                    "keywords": [
+                        "always on top",
+                        "z-index",
+                        "above",
+                        "in front of",
+                        "logo on top",
+                        "order of overlays",
+                        "layer order"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Always on Top",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "foreground-panels",
+                    "text": "How do I open two foreground panels side by side?",
+                    "kind": "howto",
+                    "keywords": [
+                        "own panel",
+                        "separate window",
+                        "side by side",
+                        "floating panel",
+                        "open both",
+                        "choose a component",
+                        "foreground menu"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Foreground",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "foreground-padding",
+                    "text": "My message text touches the edge of its box. How do I add space around it?",
+                    "kind": "howto",
+                    "keywords": [
+                        "padding",
+                        "space around the words",
+                        "text touches the edge",
+                        "room inside the box",
+                        "margin inside",
+                        "cramped message"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Padding",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "foreground-effects",
+                    "text": "How do I put a border or a shadow on an overlay?",
+                    "kind": "howto",
+                    "keywords": [
+                        "border",
+                        "frame",
+                        "box shadow",
+                        "drop shadow",
+                        "outline the box",
+                        "effects",
+                        "style the overlay",
+                        "make it look better"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Effects",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "foreground-text-readable",
+                    "text": "The words are hard to read over the video. What can I do?",
+                    "kind": "howto",
+                    "keywords": [
+                        "hard to read",
+                        "text over video",
+                        "unreadable words",
+                        "text shadow",
+                        "outline text",
+                        "glow behind the words",
+                        "contrast"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Text Shadow",
+                        "guide": true
                     }
                 }
             ]

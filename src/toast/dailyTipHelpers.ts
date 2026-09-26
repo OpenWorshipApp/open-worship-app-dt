@@ -113,8 +113,28 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-draw-spotlight',
         'presenter-keyboard-screencast',
     ]);
-    const backgroundIds = new Set([
+    // The overlay layer has a heading of its own rather than sitting under
+    // "Background and media": ten components, each with a lesson, would have
+    // buried the five background tabs they are filed beside -- and a volunteer
+    // hunting for the countdown is not thinking about backgrounds at all.
+    const foregroundIds = new Set([
         'presenter-foreground-panel',
+        'presenter-foreground-countdown',
+        'presenter-foreground-stopwatch',
+        'presenter-foreground-time',
+        'presenter-foreground-marquee-top',
+        'presenter-foreground-marquee-bottom',
+        'presenter-foreground-quick-text',
+        'presenter-foreground-video',
+        'presenter-foreground-image',
+        'presenter-foreground-camera',
+        'presenter-foreground-web',
+        'presenter-foreground-properties',
+        'presenter-foreground-sessions',
+        'presenter-foreground-clear',
+        'presenter-foreground-extras',
+    ]);
+    const backgroundIds = new Set([
         'presenter-colors-tab',
         'presenter-images-tab',
         'presenter-videos-tab',
@@ -127,7 +147,6 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-background-camera',
         'presenter-background-web',
         'presenter-play-audio',
-        'presenter-foreground-extras',
         'presenter-download-media',
     ]);
     const serviceIds = new Set([
@@ -157,13 +176,15 @@ function getPresenterTips(): DailyTipType[] {
                 ? tran('Documents and slides')
                 : screenIds.has(demo.id)
                   ? tran('Audience screens')
-                  : backgroundIds.has(demo.id)
-                    ? tran('Background and media')
-                    : serviceIds.has(demo.id)
-                      ? tran('Service planning')
-                      : viewMenuIds.has(demo.id)
-                        ? tran('View menu')
-                        : tran('Getting started'));
+                  : foregroundIds.has(demo.id)
+                    ? tran('Foreground overlays')
+                    : backgroundIds.has(demo.id)
+                      ? tran('Background and media')
+                      : serviceIds.has(demo.id)
+                        ? tran('Service planning')
+                        : viewMenuIds.has(demo.id)
+                          ? tran('View menu')
+                          : tran('Getting started'));
         return {
             id: demo.id,
             demoId: demo.id,

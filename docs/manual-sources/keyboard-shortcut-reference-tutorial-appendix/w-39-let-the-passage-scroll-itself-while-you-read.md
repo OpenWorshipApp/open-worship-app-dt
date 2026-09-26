@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-107]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-23"
+workflowsVersion: "2026-09-25"
 ---
 # W-39 — Let the passage scroll itself while you read
 
@@ -40,5 +40,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-107`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-25).
 :::

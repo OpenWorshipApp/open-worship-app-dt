@@ -138,6 +138,16 @@ $resize-corner-size: 16px;
 .floating-widget__content {
   flex: 1 1 auto;
   min-height: 0;
+  // The edge handles are drawn ON TOP of the body — they have to be, since the
+  // widget clips away anything placed outside it — and the app's scrollbars are
+  // 7px against a handle's 8px, so the right handle swallowed a vertical
+  // scrollbar whole (and the bottom one a horizontal): nothing of the bar was
+  // left to grab, only a resize cursor. The body keeps a handle's width clear on
+  // the two edges a scrollbar lands on, so the bar sits beside the strip that
+  // resizes rather than under it. Left and top stay flush: no scrollbar goes
+  // there, and the header already paints over the top handle.
+  margin-right: $resize-edge-thickness;
+  margin-bottom: $resize-edge-thickness;
   overflow: auto;
 
   .card {

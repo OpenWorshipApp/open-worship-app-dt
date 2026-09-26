@@ -1,6 +1,7 @@
 <!-- Only what CLAUDE.md and the code do not already say. -->
 
 - [Renderer entry static closure — FIXED](renderer-entry-static-closure.md) — startup imports leaf helpers; About 1,056 KB → 236 KB
+- [Foreground Effects live in one setting](foreground-effects-one-setting.md) — border/shadow/padding/text in ONE JSON key; `em` for the type, `px` for the box; the message stack counts the box
 - [Foreground sync shared refs](foreground-sync-shared-refs.md) — sync-grouped screens share one foreground-data object · [Screen sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky; color-note groups go silent
 - [Screen draw feature](screen-draw-feature.md) — FreeShow-style Draw overlay · [Screen focus spotlight](screen-focus-spotlight.md) — Focusing = its own `#focus` layer/manager, NOT a draw mode
 - [Codebase audit 2026-07](codebase-audit-2026-07.md) — audit findings FIXED 2026-07-22 (since committed)
@@ -55,7 +56,7 @@
 - [Vite caches a failed import resolution](vite-caches-failed-import-resolution.md) — serves an OLD module past a reload
 - [Drag-kind mime & dim target](drag-kind-mime-and-dim-target.md) — dragover gates on `application/x-owa-drag-<kind>`
 - [Canceled pointerdown kills click](canceled-pointerdown-kills-click.md) — a drag surface gets no click/dblclick
-- [Website items are screenshots, not iframes](website-screenshot-not-iframe.md) — live only on the projected screen
+- [Website items are screenshots, not iframes](website-screenshot-not-iframe.md) — live only on the projected screen; a local page's shot is keyed by its md5 and never expires
 - [vi.mock factory survives resetModules](vitest-mock-factory-survives-resetmodules.md) — test and module on different mocks
 - [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) — it also kills the user's open-lyric dev app
 - [View menu widget toggles](view-menu-widget-toggles.md) — View → Widgets ticks each pane; Reset Widgets Size
@@ -83,7 +84,7 @@
 - [DOM matcher is memoised in the page](dom-match-memoised-in-page.md) — `window.__owaDomMatch`/`__owaGuide` survive an edit
 - [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md) — a page-made KeyboardEvent fires them
 - [Glassy popup windows](glassy-popup-windows.md) — the chatbot popup is frosted by the OS compositor, not CSS
-- [Panels are named in the DOM](panel-name-in-dom.md) — an OPEN pane drew its name nowhere
+- [Panels are named in the DOM](panel-name-in-dom.md) — an OPEN pane, and a FLOATING one, drew its name nowhere; a foreground tile and its Background twin rang together
 - [A guide tucks the help window away](guide-tucks-help-window.md) — a walkthrough minimises the chatbot popup
 - [Hover-hidden controls](hover-hidden-controls.md) — clickable but painted only under the mouse
 - [Knowledge label i18n templates](knowledge-label-i18n-templates.md) — docs name controls as `[en:tran:Clear Bible]`
@@ -107,7 +108,7 @@
 - [Agent data tools back up first](agent-data-tools-backup-undo.md) — no backup, no change; `owa_undo` puts any change back
 - [History paths vs the read cache](history-read-cache-stale-paths.md) — a rename onto a cached path read back OLD bytes
 - [Reading a web page](mcp-read-website-tool.md) — `owa_read_website` is the only tool that reaches OUT
-- [A slide website loads in a box](slide-website-loads-in-a-box.md) — a shared document was the whole delivery; same-host exemption keeps an intranet slide working
+- [A slide website loads in a box](slide-website-loads-in-a-box.md) — a shared document was the whole delivery; same-host exemption keeps an intranet slide working, the webs-folder rule keeps the app's own `file:` pages working
 - [A CDP pin is exclusive](cdp-pin-is-exclusive.md) — a dead `OWA_CDP_PORT` used to fall through to the packaged app
 - [A preload must not eval at load](preload-must-not-eval-at-load.md) — a strict page CSP (chatbot dev, EVERY page packaged) kills the preload; the window never mounts
 - [The chatbot opens the window](chatbot-opens-the-window.md) — a walkthrough of a window that is not up opens it
@@ -138,7 +139,11 @@
 - [The AI Chat guest cannot reach this machine](aichat-guest-cannot-reach-loopback.md) — local/private addresses are cancelled
 - [A confirm needs a popup host](confirm-needs-a-popup-host.md) — `showAppConfirm` is `false` with no host; gates FAIL OPEN · [Popup deep link rides a setting](popup-deep-link-by-setting.md) — a URL param opens a DUPLICATE window; read on mount + focus via `getSettingForce`
 - [CRLF checkout breaks line regexes](crlf-checkout-line-regex.md) — split repo text on `/\r?\n/`; an anchored `(.*)$` silently matches nothing
+- [Canvas item blend mode](canvas-item-blend-mode.md) — every slide box has a Blend Mode, but the slide is an isolated group: it blends with the items UNDER it, never the screen background
+- [Canvas item shadow](canvas-item-shadow.md) — a slide box casts a **Box Shadow** (the rectangle) or a **Drop Shadow** (`filter:`, follows the letters / a picture's see-through edge); it rides `genShapeBoxStyle`, so the editor, the thumbnails, the projector and the print PDF agree
+- [Foreground blend mode & stacking](foreground-blend-mode-stacking.md) — Video/Image Show blend with the layers under them; a `z-index` or `isolation` on `#foreground` makes every blend a silent no-op · each component is its own floating panel picked from a status-board menu, one sticky row per session, the show never scrolls the grid
 - [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — an `infinite` color/border keyframe repaints a whole window at 60 fps; cap iterations; trace the Presenter with a screen SHOWING (EN-19)
 - [Own font list with weights](own-font-list-with-weights.md) — `font-list` is gone; the macOS/Linux branches never ran on a real machine
 - [Data folder path is aliased in file contents](portable-data-dir-alias.md) — `$DATA_DIR_PATH` in every escape level; raw readers see the alias; a marker re-finds the folder, setting NAMES go `@data_`, Repair Links fixes old paths
 - [Path handling lives in fileHelpers](path-handling-lives-in-filehelpers.md) — the user's rule: every path/file-name helper in `src/server/fileHelpers.ts`, no ad-hoc separator splits
+- [A new screen layer needs a z-index](screen-layer-needs-z-index-above-foreground.md) — a foreground overlay's own Always-on-Top number paints over a layer added after it

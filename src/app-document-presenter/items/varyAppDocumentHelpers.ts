@@ -5,6 +5,11 @@ import {
 
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import appProvider from '../../server/appProvider';
+import type { SlideAutoPlayOptionsType } from '../../slide-auto-play/slideAutoPlayRuleHelpers';
+import {
+    DEFAULT_SLIDE_AUTO_PLAY_OPTIONS,
+    toNextIndex,
+} from '../../slide-auto-play/slideAutoPlayRuleHelpers';
 import { getScreenManagerByScreenId } from '../../_screen/managers/screenManagerHelpers';
 import { slidePreviewerMethods } from './AppDocumentPreviewerFooterComp';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
@@ -108,10 +113,22 @@ export function showVarySlideInViewport(id: number) {
     }, 0);
 }
 
+/**
+ * The slide a step lands on, or null when there is none to land on.
+ *
+ * The slide-show options ride in here so an arrow key and a running show take
+ * the same route: with the default rules (`all`, one at a time) this is the
+ * walk it has always been, and `repeatKind` is what makes a show END rather
+ * than wrap. A disabled slide is stepped OVER, so the step counts slides the
+ * operator can actually see; the search stops once it has been round the
+ * list, which is what keeps a document of nothing but disabled slides from
+ * spinning here for ever.
+ */
 function findNextSlide(
     isNext: boolean,
     varySlides: VarySlideType[],
     itemId: number,
+    options: SlideAutoPlayOptionsType = DEFAULT_SLIDE_AUTO_PLAY_OPTIONS,
 ) {
     const enabledIds = varySlides
         .filter((item) => {
@@ -123,23 +140,35 @@ function findNextSlide(
     if (enabledIds.length === 0) {
         return null;
     }
-    if (enabledIds.length === 1 && enabledIds[0] === itemId) {
-        return null;
-    }
-    let index = varySlides.findIndex((item) => {
+    const index = varySlides.findIndex((item) => {
         return item.id === itemId;
     });
     if (index === -1) {
         return null;
     }
-    index += isNext ? 1 : -1;
-    index += varySlides.length;
-
-    const nextVarySlide = varySlides[index % varySlides.length] ?? null;
-    if (nextVarySlide?.isDisabled) {
-        return findNextSlide(isNext, varySlides, nextVarySlide.id);
+    if (enabledIds.length === 1 && enabledIds[0] === itemId) {
+        return null;
     }
-    return nextVarySlide;
+    let cursorIndex = index;
+    for (let taken = 0; taken < varySlides.length; taken += 1) {
+        const nextIndex = toNextIndex(cursorIndex, varySlides.length, {
+            isNext,
+            step: taken === 0 ? options.step : 1,
+            repeatKind: options.repeatKind,
+        });
+        if (nextIndex === null) {
+            return null;
+        }
+        const nextVarySlide = varySlides[nextIndex] ?? null;
+        if (nextVarySlide === null) {
+            return null;
+        }
+        if (!nextVarySlide.isDisabled) {
+            return nextVarySlide;
+        }
+        cursorIndex = nextIndex;
+    }
+    return null;
 }
 
 /**
@@ -160,15 +189,17 @@ function findNextSlide(
 export function handleNextItemSelecting({
     varySlides,
     isNext,
+    options = DEFAULT_SLIDE_AUTO_PLAY_OPTIONS,
 }: {
     varySlides: VarySlideType[];
     isNext: boolean;
+    options?: SlideAutoPlayOptionsType;
 }) {
     // The editor page draws no on-screen highlight and never moved a screen
     // from here; it can be open beside the presenter, and advancing from both
     // would step every screen twice.
     if (appProvider.isPageAppDocumentEditor) {
-        return;
+        return false;
     }
     const allVarySlides = varySlides.reduce((bucket, varySlide) => {
         bucket.push(varySlide);
@@ -196,6 +227,7 @@ export function handleNextItemSelecting({
                 isNext,
                 allVarySlides,
                 varySlide.id,
+                options,
             );
             if (targetItem === null) {
                 return bucket;
@@ -211,8 +243,10 @@ export function handleNextItemSelecting({
         },
         [],
     );
+    // Nothing to step to: with "no repeat" that is the show reaching the end
+    // of the document, which the caller turns into a stop.
     if (foundList.length === 0) {
-        return;
+        return false;
     }
     for (let i = 0; i < foundList.length; i++) {
         const { varySlide, screenId } = foundList[i];
@@ -230,6 +264,7 @@ export function handleNextItemSelecting({
             focusNoteEditor(varySlide);
         }, i * 100);
     }
+    return true;
 }
 
 export function getContainerDiv(): HTMLDivElement | null {

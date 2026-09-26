@@ -9,7 +9,10 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { showAudioPlayingToast } from '../helper/mediaControlHelpers';
+import {
+    checkAudioPlaying,
+    showAudioPlayingToast,
+} from '../helper/mediaControlHelpers';
 import { tran } from '../lang/langHelpers';
 import { toWidgetLabel } from '../others/labelIconHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -30,6 +33,7 @@ import { genAudioBodyChild } from './AudioBodyComp';
 import { useAppDocumentAudioData } from './backgroundHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { checkIsExtraBinMissingError } from '../helper/extra-bin/extraBinErrors';
+import { useBackgroundSessions } from './backgroundSessionHelpers';
 
 async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
@@ -92,15 +96,29 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
 export default function BackgroundAudiosComp() {
     const [activeMap, setActiveMap] = useState<{ [key: string]: boolean }>({});
     const handleItemClicking = useCallback((event: any) => {
-        const target = event.target;
-        const parentElement = target.parentElement;
+        const target = event.target as HTMLElement | null;
+        // Scrubbing, the volume and the repeat icon belong to the player, not
+        // to the row: without this, dragging a paused track's scrubber folded
+        // the row shut under the mouse.
+        if (target?.closest('audio') != null) {
+            return;
+        }
+        // The ROW, whatever inside it was clicked. This walked up exactly ONE
+        // parent, so a click on the name line looked for the marker inside
+        // the name line and found nothing -- the row simply did not open --
+        // while a click on the row's own padding searched the whole grid row
+        // and could reach the NEIGHBOUR's marker.
+        const rowElement = target?.closest('[data-file-item-file-src]');
+        if (!(rowElement instanceof HTMLElement)) {
+            return;
+        }
         // check is audio playing
-        const audioElement = parentElement.querySelector('audio');
+        const audioElement = rowElement.querySelector('audio');
         if (audioElement && !audioElement.paused) {
             showAudioPlayingToast();
             return;
         }
-        const childElement = parentElement.querySelector('[data-file-path]');
+        const childElement = rowElement.querySelector('[data-file-path]');
         if (childElement instanceof HTMLDivElement === false) {
             return;
         }
@@ -115,15 +133,45 @@ export default function BackgroundAudiosComp() {
             };
         });
     }, []);
+    // No `autoPlayPrefix`: this tab plays a track, it does not advance one, so
+    // its rail is the session chips alone.
+    const session = useBackgroundSessions({
+        target: 'background-audio',
+        dirSourceSettingName: dirSourceSettingNames.BACKGROUND_AUDIO,
+        // Switching session remounts the list, and an `<audio>` that is
+        // unmounted stops -- the very hazard this tab already refuses to be
+        // CLOSED for. Said in a toast rather than by greying the chips out: a
+        // control that stops working with no explanation reads as a broken
+        // app, and the track is usually about to end anyway.
+        checkCanChangeSession: () => {
+            if (!checkAudioPlaying()) {
+                return true;
+            }
+            showSimpleToast(
+                tran('Audio playing'),
+                tran('Please stop the audio before switching session.'),
+            );
+            return false;
+        },
+    });
     const mainElement = (
         <BackgroundMediaComp
+            // Keyed by session so switching re-reads that session's own folder
+            // instead of keeping the last one's list on screen.
+            key={session.activeId}
+            topBarChild={session.element}
             rendChild={genAudioBodyChild.bind(null, activeMap)}
             defaultFolderName={defaultDataDirNames.BACKGROUND_AUDIO}
             dragType={DragTypeEnum.BACKGROUND_AUDIO}
             extraMimetypeNames={['video']}
             onClick={handleItemClicking}
-            dirSourceSettingName={dirSourceSettingNames.BACKGROUND_AUDIO}
+            dirSourceSettingName={session.dirSourceSettingName}
             isNameOnTop={true}
+            // ONE track per row. An activated row grows a real
+            // `<audio controls>`, and Chromium strips the scrubber, the clock
+            // and the volume out of a narrow one -- which is what a second
+            // column left behind.
+            isSingleColumn
             genContextMenuItems={genAudioDownloadContextMenuItems}
             shouldHideFooter
             // An activated row grows an `<audio controls>`, so these rows are

@@ -8,12 +8,15 @@ import { DragTypeEnum } from '../helper/DragInf';
 // foreground now also serializes itself into the drag payload. The closure is
 // still set as well: it stays the fallback for anything that reads it directly.
 export const foregroundDragTargetList = [
+    'message',
     'countdown',
     'stopwatch',
     'time',
     'marquee-top',
     'marquee-bottom',
     'quick-text',
+    'video',
+    'image',
     'camera',
     'web',
 ] as const;
@@ -34,23 +37,29 @@ export type ForegroundDragDataType = {
  * a missing one would only show as a throw in a Khmer window.
  */
 const targetLabelMap: Record<ForegroundDragTargetType, string> = {
+    message: 'Messages',
     countdown: 'Countdown',
     stopwatch: 'Stopwatch',
     time: 'Time',
     'marquee-top': 'Marquee Top',
     'marquee-bottom': 'Marquee Bottom',
     'quick-text': 'Quick Text',
+    video: 'Video Show',
+    image: 'Image Show',
     camera: 'Camera Show',
     web: 'Web Show',
 };
 
 const targetIconMap: Record<ForegroundDragTargetType, string> = {
+    message: 'chat-left-text',
     countdown: 'hourglass-split',
     stopwatch: 'stopwatch',
     time: 'clock',
     'marquee-top': 'chevron-bar-up',
     'marquee-bottom': 'chevron-bar-down',
     'quick-text': 'chat-square-text',
+    video: 'camera-reels',
+    image: 'images',
     camera: 'camera-video',
     web: 'globe2',
 };
@@ -113,6 +122,14 @@ export function toForegroundDragLabel(
     if (target === 'quick-text') {
         return `${label}: ${(data.markdownText ?? '').substring(0, 60)}`;
     }
+    if (target === 'message') {
+        // One message reads as itself; several are identified by HOW MANY,
+        // because a rotating board's first line is rarely the memorable one.
+        const textList: string[] = data.textList ?? [];
+        return textList.length === 1
+            ? `${label}: ${(textList[0] ?? '').substring(0, 60)}`
+            : `${label}: ${textList.length}`;
+    }
     if (target === 'time') {
         return `${label}: ${data.title || 'UTC' + data.timezoneMinuteOffset}`;
     }
@@ -141,7 +158,17 @@ export async function applyForegroundDragData(
     { target, data }: ForegroundDragDataType,
 ) {
     const { extraStyle } = data;
-    if (target === 'countdown') {
+    if (target === 'message') {
+        screenForegroundManager.addMessageData({
+            // A stored run-sheet row replays the whole SESSION, so it lands
+            // under the same reserved id the panel's own "show all" uses --
+            // replaying twice must not stack two copies on the screen.
+            id: 'message-all',
+            textList: data.textList ?? [],
+            intervalSecond: data.intervalSecond ?? null,
+            extraStyle,
+        });
+    } else if (target === 'countdown') {
         screenForegroundManager.setCountdownData({
             dateTime: toCountdownDateTime(data),
             extraStyle,
@@ -174,5 +201,9 @@ export async function applyForegroundDragData(
         screenForegroundManager.addCameraData(data);
     } else if (target === 'web') {
         screenForegroundManager.addWebData(data);
+    } else if (target === 'video') {
+        screenForegroundManager.addVideoData(data);
+    } else if (target === 'image') {
+        screenForegroundManager.addImageData(data);
     }
 }

@@ -16,7 +16,7 @@ import type {
     MenuItemConstructorOptions,
 } from 'electron';
 import { existsSync, readFileSync } from 'node:fs';
-import { mkdir, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { release } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -33,9 +33,12 @@ import { htmlFiles } from './fsServe';
 // `aiHelpers`, which imports `isDev`/`toUnpackedPath` from here. Every use on
 // both sides is inside a function body.
 import {
-    checkIsCaptureUrlAllowed,
     guardCaptureWindow,
     prepareCaptureSession,
+    resolveCaptureTarget,
+    toCaptureDirPath,
+    WEB_CAPTURE_DEFAULT_DIR_NAME,
+    WEB_CAPTURE_DIR_SETTING_NAME_PREFIX,
 } from './webCaptureHelpers';
 
 export type OptionalPromise<T> = T | Promise<T>;
@@ -1438,6 +1441,63 @@ export async function printHTMLContent(htmlText: string) {
     await printWin.loadURL(pathToFileURL(contentFilePath).toString());
 }
 
+// `appLocalStorage`'s own two names. A directory setting is one file named
+// after its key under the data folder, and this is the only thing the main
+// process reads out of there -- the same shape as `checkIsAiEnabled` reading
+// `setting.json` before a renderer exists.
+const SELECTED_PARENT_DIR_SETTING_NAME = 'selected-parent-dir';
+const LOCAL_STORAGE_FOLDER_NAME = 'local-storage';
+// Short on purpose: it only has to spare the `readdir` while a whole panel of
+// tiles captures at once, never to hold the answer across a folder change.
+const WEB_CAPTURE_DIR_CACHE_MILLISECOND = 5000;
+let webCaptureDirCache: {
+    readAt: number;
+    dirPathList: string[];
+} | null = null;
+
+/**
+ * Where this app's OWN web pages live: the folder the Background **Webs** tab
+ * lists, plus whichever folder each Foreground **Web Show** panel was pointed
+ * at (they write `select-dir-web-bg-<session>` keys of their own). Only a page
+ * out of one of these may be captured off the disk -- see `webCaptureHelpers`.
+ */
+async function listWebCaptureDirPaths() {
+    const now = Date.now();
+    if (
+        webCaptureDirCache !== null &&
+        now - webCaptureDirCache.readAt < WEB_CAPTURE_DIR_CACHE_MILLISECOND
+    ) {
+        return webCaptureDirCache.dirPathList;
+    }
+    const dataDirPath =
+        ElectronSettingManager.getInstance().getClientSetting(
+            SELECTED_PARENT_DIR_SETTING_NAME,
+        ) || app.getPath('userData');
+    // The default stands whether or not a setting was ever written for it.
+    const dirPathList = [path.join(dataDirPath, WEB_CAPTURE_DEFAULT_DIR_NAME)];
+    const settingDirPath = path.join(dataDirPath, LOCAL_STORAGE_FOLDER_NAME);
+    try {
+        for (const fileName of await readdir(settingDirPath)) {
+            if (!fileName.startsWith(WEB_CAPTURE_DIR_SETTING_NAME_PREFIX)) {
+                continue;
+            }
+            const dirPath = toCaptureDirPath(
+                await readFile(path.join(settingDirPath, fileName), 'utf8'),
+                dataDirPath,
+            );
+            if (dirPath !== null && !dirPathList.includes(dirPath)) {
+                dirPathList.push(dirPath);
+            }
+        }
+    } catch (error) {
+        // No data folder chosen yet, or one that is not plugged in. The
+        // default above still stands and a refused capture still says so.
+        console.log('Could not read the web folders setting:', error);
+    }
+    webCaptureDirCache = { readAt: now, dirPathList };
+    return dirPathList;
+}
+
 export async function captureWebScreenShot(
     url: string,
     {
@@ -1456,17 +1516,20 @@ export async function captureWebScreenShot(
         delay,
     });
     // A website item's address comes out of a DOCUMENT, which may have been
-    // shared, so it is judged before a window exists for it: only a real web
-    // page, never `file:` reading the operator's disk through
-    // `webSecurity: false`. The wall that keeps the page off this machine and
-    // off the room's network is the session's, prepared here so it is in force
-    // before the first request. See `electron/webCaptureHelpers.ts`.
-    if (!checkIsCaptureUrlAllowed(url)) {
+    // shared, so it is judged before a window exists for it: a web address, or
+    // a page in one of this app's own Webs folders, and nothing else reading
+    // the operator's disk through `webSecurity: false`. The wall that keeps
+    // the page off this machine and off the room's network is the session's,
+    // prepared here so it is in force before the first request. See
+    // `electron/webCaptureHelpers.ts`.
+    const target = await resolveCaptureTarget(url, listWebCaptureDirPaths);
+    if (target === null) {
         throw new Error(
-            `Only a web address can be captured, not: ${url.substring(0, 100)}`,
+            'Only a web address, or a page in this app’s own Webs folder, ' +
+                `can be captured — not: ${url.substring(0, 100)}`,
         );
     }
-    const partition = await prepareCaptureSession(url);
+    const partition = await prepareCaptureSession(target);
     const captureWin = new BrowserWindow({
         show: false,
         width,
@@ -1480,7 +1543,7 @@ export async function captureWebScreenShot(
             partition,
         },
     });
-    guardCaptureWindow(captureWin);
+    guardCaptureWindow(captureWin, target);
     try {
         console.log('Loading page for capture');
         await captureWin.loadURL(url);

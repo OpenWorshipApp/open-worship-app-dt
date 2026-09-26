@@ -111,6 +111,11 @@ export function basicRenderBody(
     handleUrlRemoving: (urlSource: BackgroundWebUrlSource) => Promise<void>,
     onColorNoteChange: () => void,
     viewMode: BackgroundViewModeType,
+    // What this layer is showing. The file tiles are memoised and read that
+    // from the screen managers, which no prop carried -- so without it the
+    // grid went on marking the page that was up BEFORE. The URL tiles are not
+    // memoised and redraw with this body, so they never had the fault.
+    layerMarker: string,
     filePaths: string[],
 ) {
     const isListView = viewMode === 'list';
@@ -148,6 +153,7 @@ export function basicRenderBody(
                                         thumbnailHeight={thumbnailHeight}
                                         filePath={filePath}
                                         viewMode={viewMode}
+                                        layerMarker={layerMarker}
                                     />
                                 );
                             })}

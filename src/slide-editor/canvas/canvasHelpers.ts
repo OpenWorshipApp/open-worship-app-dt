@@ -193,6 +193,7 @@ export function tooling2BoxProps(
 export type ToolingBoxType = {
     backgroundColor?: AppColorType | null;
     rotate?: number;
+    blendMode?: string;
     horizontalAlignment?: HAlignmentType;
     verticalAlignment?: VAlignmentType;
     top?: number;

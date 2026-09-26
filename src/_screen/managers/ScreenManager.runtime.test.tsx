@@ -225,6 +225,23 @@ class MockFocusManager {
     }
 }
 
+class MockMaskManager {
+    static readonly eventNamePrefix = 'screen-mask-m';
+    static readonly receiveSyncScreen = vi.fn();
+
+    readonly screenId: number;
+    isShowing = false;
+    // No `clear`: `ScreenManager.clear()` deliberately leaves the mask alone,
+    // and giving the mock one would hide a regression that started clearing it.
+    clearMask = vi.fn();
+    delete = vi.fn();
+    sendSyncScreen = vi.fn();
+
+    constructor(screenManagerBase: any) {
+        this.screenId = screenManagerBase.screenId;
+    }
+}
+
 vi.mock('../../helper/loggerHelpers', () => ({
     appLog: appLogMock,
 }));
@@ -265,6 +282,10 @@ vi.mock('./ScreenDrawManager', () => ({
 
 vi.mock('./ScreenFocusManager', () => ({
     default: MockFocusManager,
+}));
+
+vi.mock('./ScreenMaskManager', () => ({
+    default: MockMaskManager,
 }));
 
 vi.mock('./screenManagerBaseHelpers', () => ({

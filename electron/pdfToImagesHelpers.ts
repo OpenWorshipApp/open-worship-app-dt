@@ -1,3 +1,5 @@
+import { rmSync } from 'node:fs';
+
 import { unlocking } from './electronHelpers';
 import { execute } from './processHelpers';
 
@@ -5,14 +7,78 @@ type PdfImagePreviewDataType = {
     isSuccessful: boolean;
     message?: string;
     filePaths?: string[];
+    pageCount?: number;
 };
 
-function genImage(filePath: string, outDir: string, width: number) {
+const PAGES_PER_BATCH = 12;
+
+function genImage(
+    filePath: string,
+    outDir: string,
+    width: number,
+    startPage: number,
+) {
     return execute<PdfImagePreviewDataType>('pdf-to-images.mjs', {
         filePath,
         outDir,
         width,
+        startPage,
+        endPage: startPage + PAGES_PER_BATCH,
     });
+}
+
+async function genImagesInBatches(
+    filePath: string,
+    outDir: string,
+    width: number,
+    onProgress?: (completed: number, total: number) => void,
+): Promise<PdfImagePreviewDataType> {
+    const filePaths: string[] = [];
+    let pageCount: number | undefined;
+    try {
+        for (
+            let startPage = 0;
+            pageCount === undefined || startPage < pageCount;
+            startPage += PAGES_PER_BATCH
+        ) {
+            // execute() starts a fresh child process. Its MuPDF heap is freed
+            // after each batch, even when the PDF contains many large pages.
+            const batch = await genImage(filePath, outDir, width, startPage);
+            if (!batch.isSuccessful) {
+                throw new Error(batch.message ?? 'PDF conversion failed');
+            }
+            if (
+                !Number.isInteger(batch.pageCount) ||
+                batch.pageCount! < 0 ||
+                (pageCount !== undefined && batch.pageCount !== pageCount)
+            ) {
+                throw new Error('PDF page count changed during conversion');
+            }
+            const expectedPages = Math.min(
+                PAGES_PER_BATCH,
+                batch.pageCount! - startPage,
+            );
+            if (batch.filePaths?.length !== expectedPages) {
+                throw new Error('PDF conversion returned an incomplete batch');
+            }
+            filePaths.push(...batch.filePaths);
+            pageCount = batch.pageCount;
+            onProgress?.(filePaths.length, pageCount!);
+        }
+        return { isSuccessful: true, filePaths };
+    } catch (error) {
+        for (const imagePath of filePaths) {
+            try {
+                rmSync(imagePath, { force: true });
+            } catch {
+                // Preserve the conversion error even if a preview was removed.
+            }
+        }
+        return {
+            isSuccessful: false,
+            message: error instanceof Error ? error.message : String(error),
+        };
+    }
 }
 
 // A small LRU: caching every converted PDF forever grows memory unbounded,
@@ -37,6 +103,7 @@ export function pdfToImages(
     outDir: string,
     width: number,
     isForce: boolean,
+    onProgress?: (completed: number, total: number) => void,
 ) {
     return unlocking<PdfImagePreviewDataType>(filePath, async () => {
         if (isForce) {
@@ -45,10 +112,21 @@ export function pdfToImages(
         const cachedData = dataMap.get(filePath);
         if (cachedData !== undefined) {
             setCachedData(filePath, cachedData);
+            onProgress?.(
+                cachedData.filePaths?.length ?? 0,
+                cachedData.filePaths?.length ?? 0,
+            );
             return cachedData;
         }
-        const data = await genImage(filePath, outDir, width);
-        setCachedData(filePath, data);
+        const data = await genImagesInBatches(
+            filePath,
+            outDir,
+            width,
+            onProgress,
+        );
+        if (data.isSuccessful) {
+            setCachedData(filePath, data);
+        }
         return data;
     });
 }

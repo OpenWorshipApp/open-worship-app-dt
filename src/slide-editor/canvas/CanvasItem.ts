@@ -14,6 +14,16 @@ import {
     cleanupProps,
 } from './canvasHelpers';
 import EventHandler from '../../event/EventHandler';
+import type { BlendModeType } from '../../helper/blendModeHelpers';
+import {
+    checkIsBlending,
+    toValidBlendMode,
+} from '../../helper/blendModeHelpers';
+import type { CanvasItemShadowType } from './canvasShadowHelpers';
+import {
+    cleanupCanvasShadow,
+    genCanvasShadowStyle,
+} from './canvasShadowHelpers';
 import { useAppEffect } from '../../helper/appHooks';
 import { useProgressBarComp } from '../../progress-bar/ProgressBarComp';
 import type { ClipboardInf } from '../../server/appHelpers';
@@ -33,6 +43,15 @@ export type CanvasItemPropsType = {
     type: CanvasItemKindType;
     // Absent on items saved before locking existed; absent means unlocked.
     locked?: boolean;
+    // How this box composites with the canvas items painted UNDER it in the
+    // same slide. Absent -- never the string `normal` -- means no blending, so
+    // every document written before this existed reads and re-saves byte for
+    // byte the same, and the common case costs no CSS declaration at all.
+    blendMode?: BlendModeType;
+    // The shadow this box casts, or nothing at all -- never a `none` kind,
+    // for the same reason `blendMode` is never the string `normal`. See
+    // `canvasShadowHelpers.ts`.
+    shadow?: CanvasItemShadowType;
 };
 
 // Everything about an item except what KIND it is: the box alone. Handed to a
@@ -42,6 +61,38 @@ export type CanvasItemPropsType = {
 export type CanvasItemBoxPropsType = Omit<CanvasItemPropsType, 'type'>;
 
 export type CanvasItemEventType = 'edit';
+
+/**
+ * Keeps `blendMode` a two-state field on disk: a real mode, or nothing at all.
+ * A value no browser knows would void the whole `style` declaration it lands
+ * in, and writing `normal` out would rewrite every slide document in the
+ * user's folder the first time it is opened.
+ */
+export function cleanupBlendMode(props: AnyObjectType) {
+    if (!checkIsBlending(props.blendMode)) {
+        delete props.blendMode;
+    } else {
+        props.blendMode = toValidBlendMode(props.blendMode);
+    }
+}
+
+/**
+ * The corner rounding a box paints with -- pixels win over the percentage, and
+ * a zero of both means square corners. Shared so the editor's selection
+ * outline traces the same shape the box does.
+ */
+export function genBoxBorderRadius(props: {
+    roundSizePixel?: number;
+    roundSizePercentage?: number;
+}): string | number | undefined {
+    if (props.roundSizePixel) {
+        return props.roundSizePixel;
+    }
+    if (props.roundSizePercentage) {
+        return `${props.roundSizePercentage / 2}%`;
+    }
+    return undefined;
+}
 
 export default abstract class CanvasItem<T extends CanvasItemPropsType>
     extends EventHandler<CanvasItemEventType>
@@ -63,6 +114,8 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             roundSizePixel: props.roundSizePixel ?? 0,
         };
         cleanupProps(this.props);
+        cleanupBlendMode(this.props);
+        cleanupCanvasShadow(this.props);
     }
 
     get id() {
@@ -91,12 +144,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
     abstract getStyle(): CSSProperties;
 
     static genShapeBoxStyle(props: CanvasItemPropsType): CSSProperties {
-        let borderRadius: string | number | undefined = undefined;
-        if (props.roundSizePixel) {
-            borderRadius = props.roundSizePixel;
-        } else if (props.roundSizePercentage) {
-            borderRadius = `${props.roundSizePercentage / 2}%`;
-        }
+        const borderRadius = genBoxBorderRadius(props);
         const shapeStyle: CSSProperties = {
             width: `${props.width}px`,
             height: `${props.height}px`,
@@ -107,6 +155,10 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             ...(borderRadius
                 ? { borderRadius: borderRadius, boxSizing: 'border-box' }
                 : {}),
+            // The shadow is the box's OWN dressing, unlike the blend below --
+            // so it belongs here, where the editor's box and the properties
+            // panel's preview read it too and show what the projector will.
+            ...genCanvasShadowStyle(props),
         };
         return shapeStyle;
     }
@@ -119,8 +171,27 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             transform: `rotate(${props.rotate}deg)`,
             position: 'absolute',
             ...this.genShapeBoxStyle(props),
+            ...CanvasItem.genBlendStyle(props),
         };
         return style;
+    }
+
+    /**
+     * A blended box composites with whatever is painted below it INSIDE the
+     * slide -- the items under it in the canvas-item list. The slide itself is
+     * an isolated group wherever it is drawn (the screen scales it with a
+     * `transform`, and so does the editor canvas and every preview), so the
+     * screen background behind the slide is deliberately NOT part of the
+     * blend: put a full-size image item at the bottom of the slide when that
+     * is what should be blended into.
+     *
+     * The declaration is left off entirely at `normal` so an unblended box
+     * costs nothing and never becomes its own stacking context.
+     */
+    static genBlendStyle(props: CanvasItemPropsType): CSSProperties {
+        return checkIsBlending(props.blendMode)
+            ? { mixBlendMode: props.blendMode as BlendModeType }
+            : {};
     }
 
     getBoxStyle(): CSSProperties {
@@ -166,6 +237,12 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             propsAny[key] = value;
         }
         cleanupProps(props);
+        // On `this.props`, not on the incoming patch: picking `Normal` back
+        // has to REMOVE the key that a previous pick wrote, and a patch that
+        // never mentioned `blendMode` must leave the stored one alone. The
+        // shadow's `No Shadow` works the same way.
+        cleanupBlendMode(propsAny);
+        cleanupCanvasShadow(propsAny);
     }
 
     clone() {
@@ -191,6 +268,10 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             (json.backgroundColor !== null &&
                 typeof json.backgroundColor !== 'string') ||
             typeof (json.locked ?? false) !== 'boolean' ||
+            (json.blendMode !== undefined &&
+                typeof json.blendMode !== 'string') ||
+            (json.shadow !== undefined &&
+                (typeof json.shadow !== 'object' || json.shadow === null)) ||
             !canvasItemList.includes(json.type)
         ) {
             throw new Error('Invalid canvas item data');

@@ -346,6 +346,10 @@ const dictionary = {
     'Reveal in Finder': 'Afficher dans le Finder',
     'Preview PDF': 'Prévisualiser le PDF',
     'Refresh PDF Images': 'Actualiser les images PDF',
+    'Exporting PDF Images': 'Conversion des pages PDF en images',
+    'Please wait while the PDF pages are being exported...':
+        'Veuillez patienter pendant la conversion des pages PDF en images...',
+    'Preparing PDF pages...': 'Préparation des pages PDF...',
     'Add New Screen': 'Ajouter un écran',
     'Refresh Preview': "Actualiser l'aperçu",
     'The application is started first time':
@@ -468,6 +472,7 @@ const dictionary = {
     'Add Action': 'Ajouter une action',
     'Apply on Screens': 'Appliquer aux écrans',
     'Clear Screen': "Effacer l'écran",
+    'Clear FG Messages': 'Effacer les messages (1er plan)',
     'Clear FG Marquee Top': 'Effacer le bandeau défilant haut (1er plan)',
     'Clear FG Marquee Bottom': 'Effacer le bandeau défilant bas (1er plan)',
     'Clear FG Quick Text': 'Effacer le texte rapide (1er plan)',
@@ -592,7 +597,6 @@ const dictionary = {
         "Lire automatiquement l'audio IA si disponible",
     'Backdrop Filter (PX):': "Filtre d'arrière-plan (PX) :",
     'Background Color:': "Couleur d'arrière-plan :",
-    'Background Images Slide Show': "Diaporama des images d'arrière-plan",
     'Bible key': 'Clé de Bible',
     'Bible Lookup': 'Recherche biblique',
     'Camera Show': 'Affichage de la caméra',
@@ -605,6 +609,34 @@ const dictionary = {
     'Clear Cache': 'Vider le cache',
     'Clear Color Note': 'Effacer la note de couleur',
     'Clear Foreground': 'Effacer le premier plan',
+    // --- Messages and Mask ---
+    Messages: 'Messages',
+    'Show All Messages': 'Afficher tous les messages',
+    'Hide Messages': 'Masquer les messages',
+    Message: 'Message',
+    'Add Message': 'Ajouter un message',
+    'Type a message': 'Saisissez un message',
+    'No message yet': 'Aucun message pour le moment',
+    'Show Message': 'Afficher le message',
+    'Hide Message': 'Masquer le message',
+    'Remove Message': 'Supprimer le message',
+    Rotate: 'Alterner',
+    'Show each message in turn': 'Afficher chaque message à tour de rôle',
+    'Seconds each message stays before the next':
+        "Secondes d'affichage de chaque message avant le suivant",
+    'Tick a screen first, then press the key again':
+        "Cochez d'abord un écran, puis appuyez à nouveau sur la touche",
+    Mask: 'Masque',
+    'Cover from the top': 'Couvrir depuis le haut',
+    'Cover from the bottom': 'Couvrir depuis le bas',
+    'Cover from the left': 'Couvrir depuis la gauche',
+    'Cover from the right': 'Couvrir depuis la droite',
+    'Mask color': 'Couleur du masque',
+    'Remove Mask': 'Retirer le masque',
+    'Clear All does not remove the mask':
+        'Tout effacer ne retire pas le masque',
+    'Cover the edges the projector overshoots':
+        'Couvrir les bords que le projecteur dépasse',
     'Clear Slide': 'Effacer la diapositive',
     Clear: 'Effacer',
     'Click to change Stage Number': 'Cliquer pour changer le numéro de scène',
@@ -779,6 +811,7 @@ const dictionary = {
     Strip: 'Ajuster',
     System: 'Système',
     'Text Color:': 'Couleur du texte :',
+    'Text Color': 'Couleur du texte',
     Theme: 'Thème',
     'There is no parent directory selected':
         "Aucun dossier parent n'est sélectionné",
@@ -837,11 +870,14 @@ const dictionary = {
         'Voulez-vous vraiment appliquer cette dimension à toutes les diapositives ?',
     Auto: 'Auto',
     'Backdrop Filter': "Filtre d'arrière-plan",
+    Blur: 'Flou',
     'Camera Error': 'Erreur de caméra',
     City: 'Ville',
     Collapse: 'Réduire',
     'Corner radius in pixels (0 to use %)':
         'Rayon des coins en pixels (0 pour utiliser %)',
+    'Countdown Date': 'Date du compte à rebours',
+    'Countdown Time': 'Heure du compte à rebours',
     'Count down for a duration': 'Décompter une durée',
     'Count down to a specific date & time':
         "Décompter jusqu'à une date et heure précises",
@@ -1810,6 +1846,56 @@ const dictionary = {
     'Open foreground controls': "Ouvrir les contrôles d'avant-plan",
     'Reach countdowns, clocks, marquees, and quick text.':
         'Accédez aux comptes à rebours, horloges, bandeaux et textes rapides.',
+    'Foreground overlays': "Calques d'avant-plan",
+    'Count down to the start of a service':
+        "Compter à rebours jusqu'au début du culte",
+    'Countdown counts a number of minutes, or down to a time on the clock.':
+        "Countdown compte un nombre de minutes, ou jusqu'à une heure précise.",
+    'Time how long something is running':
+        'Chronométrer la durée de quelque chose',
+    'Stopwatch counts up from zero on the audience screen.':
+        "Stopwatch compte à partir de zéro sur l'écran du public.",
+    'Show the time on the audience screen':
+        "Afficher l'heure sur l'écran du public",
+    'Time puts one clock up, or several for different cities.':
+        'Time affiche une horloge, ou plusieurs pour différentes villes.',
+    'Scroll a line of text across the top':
+        'Faire défiler une ligne de texte en haut',
+    'Marquee Top is a moving notice above everything else on the screen.':
+        "Marquee Top est un avis en mouvement au-dessus de tout le reste de l'écran.",
+    'Scroll a line of text across the bottom':
+        'Faire défiler une ligne de texte en bas',
+    'Marquee Bottom is the same moving notice, along the foot of the screen.':
+        "Marquee Bottom est le même avis en mouvement, au bas de l'écran.",
+    'Put a short message up for a moment':
+        'Afficher un court message un instant',
+    'Quick Text puts a few words up that go again by themselves.':
+        "Quick Text affiche quelques mots qui disparaissent d'eux-mêmes.",
+    'Play a clip over the slide': 'Lire un clip par-dessus la diapositive',
+    'Video Show plays a clip above the background, the slide and the passage.':
+        "Video Show lit un clip au-dessus de l'arrière-plan, de la diapositive et du passage.",
+    'Lay a picture over the slide': 'Poser une image par-dessus la diapositive',
+    'Image Show lays a logo, a frame or an announcement above everything else.':
+        'Image Show pose un logo, un cadre ou une annonce au-dessus de tout le reste.',
+    'Show a camera over the slide':
+        'Afficher une caméra par-dessus la diapositive',
+    'Camera Show puts a live camera picture above the slide, not behind it.':
+        'Camera Show place une image de caméra en direct au-dessus de la diapositive, pas derrière.',
+    'Show a web page over the slide':
+        'Afficher une page web par-dessus la diapositive',
+    'Web Show puts a page or a small web file above the slide.':
+        'Web Show place une page ou un petit fichier web au-dessus de la diapositive.',
+    'Place and size a foreground item':
+        "Placer et dimensionner un élément d'avant-plan",
+    'Use Properties for position, size, opacity and blending.':
+        "Utilisez Propriétés pour la position, la taille, l'opacité et le fondu.",
+    'Keep the lines you use every week':
+        'Conserver les lignes utilisées chaque semaine',
+    'Save named sessions inside a foreground component.':
+        "Enregistrez des sessions nommées dans un composant d'avant-plan.",
+    'Take a foreground item back off': "Retirer un élément d'avant-plan",
+    'Hide one component, or clear the whole foreground layer.':
+        "Masquez un composant, ou effacez toute la couche d'avant-plan.",
     'Open background colors': "Ouvrir les couleurs d'arrière-plan",
     'Choose a solid color for the selected audience screens.':
         'Choisissez une couleur unie pour les écrans du public sélectionnés.',
@@ -2143,6 +2229,131 @@ const dictionary = {
         'Restaurer la disposition de tous les panneaux',
     'Use View > Reset Widgets Size to restore defaults and reopen collapsed panels after confirmation.':
         'Utilisez Affichage > Réinitialiser la taille des widgets pour restaurer les valeurs par défaut et rouvrir les panneaux après confirmation.',
+    // --- Foreground media widgets and the blend-mode picker (2026-09-24).
+    // The blend names are the compositing senses: `Screen Blend` rather than
+    // `Screen`, which is the projector, and `Value` for CSS `luminosity`.
+    'Video Show': 'Affichage vidéo',
+    'Image Show': "Affichage d'image",
+    'Hide Video': 'Masquer la vidéo',
+    'Hide Image': "Masquer l'image",
+    'Clear FG Video Show': "Effacer l'affichage vidéo au premier plan",
+    'Clear FG Image Show': "Effacer l'affichage d'image au premier plan",
+    'Foreground Videos': 'Vidéos de premier plan',
+    'Foreground Images': 'Images de premier plan',
+    'Blend Mode': 'Mode de fusion',
+    'Blends this box with the items under it':
+        'Fusionne ce cadre avec les éléments en dessous',
+    Darker: 'Plus sombre',
+    Darken: 'Obscurcir',
+    Multiply: 'Multiplier',
+    'Color Burn': 'Densité couleur +',
+    Brighter: 'Plus clair',
+    Lighten: 'Éclaircir',
+    'Screen Blend': 'Fusion Superposition claire',
+    'Color Dodge': 'Densité couleur -',
+    Add: 'Addition',
+    'Stronger Contrast': 'Contraste renforcé',
+    Overlay: 'Incrustation',
+    'Soft Light': 'Lumière tamisée',
+    'Hard Light': 'Lumière crue',
+    Compare: 'Comparer',
+    Difference: 'Différence',
+    Exclusion: 'Exclusion',
+    'Color Parts': 'Composantes de couleur',
+    Hue: 'Teinte',
+    Saturation: 'Saturation',
+    Value: 'Valeur',
+    // --- Canvas item shadow (2026-09-25): a box shadow is the shadow of the
+    // RECTANGLE, a drop shadow the shadow of what is painted -- the letters of
+    // a box with no backing, or a picture with a see-through edge.
+    'No Shadow': 'Aucune ombre',
+    'Box Shadow': 'Ombre du cadre',
+    'Drop Shadow': 'Ombre portée',
+    'A box shadow follows the box, a drop shadow the letters or picture':
+        "L'ombre du cadre suit le cadre, l'ombre portée les lettres ou l'image",
+    'Shadow Offset X': "Décalage X de l'ombre",
+    'Shadow Offset Y': "Décalage Y de l'ombre",
+    'Shadow Blur': "Flou de l'ombre",
+    'Blur:': 'Flou :',
+    // --- Foreground media sessions: one saved set-up (folder, Properties,
+    // slide show) per session, several per widget.
+    Session: 'Session',
+    'Add Session': 'Ajouter une session',
+    'Please stop the audio before switching session.':
+        'Veuillez arrêter l’audio avant de changer de session.',
+    'Rename Session': 'Renommer la session',
+    'Remove Session': 'Supprimer la session',
+    'Always on Top': 'Toujours au premier plan',
+    'Z-Index': 'Ordre de superposition',
+    'Slide show is running': 'Le diaporama est en cours',
+    'Slide Show': 'Diaporama',
+    'Start Slide Show': 'Démarrer le diaporama',
+    'Stop Slide Show': 'Arrêter le diaporama',
+    'Slide Show Options': 'Options du diaporama',
+    'Close Slide Show Options': 'Fermer les options du diaporama',
+    'Repeat All': 'Tout répéter',
+    'Jumping Step': 'Pas de saut',
+    Step: 'Pas',
+    'Random Up To': "Aléatoire jusqu'à",
+    'Random Up To Seconds': "Aléatoire jusqu'à (secondes)",
+    'A New Wait Is Drawn For Each Slide':
+        'Une nouvelle attente est tirée au sort pour chaque diapositive',
+    'The Wait Drawn For This Slide':
+        "L'attente tirée au sort pour cette diapositive",
+    'Wait Until The Video Ends': 'Attendre la fin de la vidéo',
+    'Next When The Video Ends': 'Suivant à la fin de la vidéo',
+    'How Long This Video Runs': 'La durée de cette vidéo',
+    'Next In': 'Suivant dans',
+    'Play With Sound': 'Lire avec le son',
+    'Hide Slide Show Controls': 'Masquer les commandes du diaporama',
+    'On Screen': 'Sur l’écran',
+    // --- Foreground properties: the 3x3 position pad replaces two rows of
+    // align buttons, so each cell needs a name of its own.
+    'Top left': 'En haut à gauche',
+    'Top center': 'En haut au centre',
+    'Top right': 'En haut à droite',
+    'Middle left': 'Au milieu à gauche',
+    'Middle center': 'Au centre',
+    'Middle right': 'Au milieu à droite',
+    'Bottom left': 'En bas à gauche',
+    'Bottom center': 'En bas au centre',
+    'Bottom right': 'En bas à droite',
+    Position: 'Position',
+    Round: 'Arrondi',
+    'No Transition': 'Aucune transition',
+    Fade: 'Fondu',
+    'Slide In': 'Glissement',
+    // --- Foreground Effects: the frame, the shadow, the room around the
+    // words and how they are set. One fold under the Properties rows.
+    Effects: 'Effets',
+    Border: 'Bordure',
+    'Border Width': 'Épaisseur de la bordure',
+    'Border Color': 'Couleur de la bordure',
+    'Shadow Color': "Couleur de l'ombre",
+    Padding: 'Marge intérieure',
+    'Space inside the box, in text sizes':
+        "Espace à l'intérieur du cadre, en tailles de texte",
+    'Text Align': 'Alignement du texte',
+    'Line Height': 'Hauteur de ligne',
+    '0 keeps the screen line spacing': "0 garde l'interligne de l'écran",
+    'Letter Spacing': 'Espacement des lettres',
+    'Text Shadow Color': "Couleur de l'ombre du texte",
+    'Makes words readable over a picture or a video':
+        'Rend le texte lisible sur une image ou une vidéo',
+    'Text Style': 'Style du texte',
+    Italic: 'Italique',
+    Underline: 'Souligné',
+    Uppercase: 'Majuscules',
+    None: 'Aucun',
+    Solid: 'Continu',
+    Dashed: 'Tirets',
+    Dotted: 'Pointillés',
+    Double: 'Double',
+    Soft: 'Douce',
+    Medium: 'Moyenne',
+    Strong: 'Forte',
+    Glow: 'Halo',
+    Outline: 'Contour',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

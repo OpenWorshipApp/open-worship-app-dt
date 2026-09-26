@@ -4,6 +4,7 @@ import { tran } from '../../../lang/langHelpers';
 import { useSlideCanvasScale } from '../canvasEventHelpers';
 import BoxEditorController from '../../BoxEditorController';
 import CanvasItem, {
+    genBoxBorderRadius,
     useCanvasItemContext,
     useCanvasItemPropsContext,
     useEditingCanvasItemAndSetterContext,
@@ -90,43 +91,53 @@ export function BoxEditorComp() {
     );
 
     const wrapperRef = useRef<HTMLDivElement | null>(null);
+    const chromeRef = useRef<HTMLDivElement | null>(null);
     useAppEffect(() => {
         const wrapperElement = wrapperRef.current;
-        if (wrapperElement === null || !shouldControl) {
+        const chromeElement = chromeRef.current;
+        if (
+            wrapperElement === null ||
+            chromeElement === null ||
+            !shouldControl
+        ) {
             return;
         }
-        boxEditorController.initEvent(wrapperElement, async (groupMoves) => {
-            const canvasController = canvasControllerRef.current;
-            const canvasItem = canvasItemRef.current;
-            const info = boxEditorController.getInfo();
-            if (info === null) {
-                return;
-            }
-            if (groupMoves.length === 0) {
-                canvasController.editCanvasItemById(
-                    canvasItem.id,
+        boxEditorController.initEvent(
+            wrapperElement,
+            chromeElement,
+            async (groupMoves) => {
+                const canvasController = canvasControllerRef.current;
+                const canvasItem = canvasItemRef.current;
+                const info = boxEditorController.getInfo();
+                if (info === null) {
+                    return;
+                }
+                if (groupMoves.length === 0) {
+                    canvasController.editCanvasItemById(
+                        canvasItem.id,
+                        (latestCanvasItem) => {
+                            latestCanvasItem.applyProps(info);
+                        },
+                    );
+                    return;
+                }
+                // A single call so dragging a multi-selection lands as one
+                // undo step rather than one per box.
+                const movesById = new Map(
+                    groupMoves.map(({ id, ...props }) => {
+                        return [id, props];
+                    }),
+                );
+                canvasController.editCanvasItemsByIds(
+                    [canvasItem.id, ...movesById.keys()],
                     (latestCanvasItem) => {
-                        latestCanvasItem.applyProps(info);
+                        latestCanvasItem.applyProps(
+                            movesById.get(latestCanvasItem.id) ?? info,
+                        );
                     },
                 );
-                return;
-            }
-            // A single call so dragging a multi-selection lands as one undo
-            // step rather than one per box.
-            const movesById = new Map(
-                groupMoves.map(({ id, ...props }) => {
-                    return [id, props];
-                }),
-            );
-            canvasController.editCanvasItemsByIds(
-                [canvasItem.id, ...movesById.keys()],
-                (latestCanvasItem) => {
-                    latestCanvasItem.applyProps(
-                        movesById.get(latestCanvasItem.id) ?? info,
-                    );
-                },
-            );
-        });
+            },
+        );
         return () => {
             boxEditorController.release();
         };
@@ -178,79 +189,122 @@ export function BoxEditorComp() {
         boxClassName +=
             ' shadow-caught-hover-pointer' + (isEditing ? ' editable' : '');
     }
+    // The anchor both the box and its selection chrome hang off: a zero-sized
+    // point at the box centre, rotated in place. One description, applied to
+    // two elements, so the chrome can never be drawn a pixel off the box it
+    // frames -- and `BoxEditorController` writes the same three properties
+    // onto both while a drag is in flight.
+    const anchorStyle = {
+        width: '0',
+        height: '0',
+        top: `${props.top + props.height / 2}px`,
+        left: `${props.left + props.width / 2}px`,
+        transform: `rotate(${props.rotate}deg)`,
+    } as const;
     return (
-        <div
-            className={
-                'editor-controller-box-wrapper' +
-                (shouldControl ? ' controlling' : '')
-            }
-            ref={wrapperRef}
-            style={{
-                width: '0',
-                height: '0',
-                top: `${props.top + props.height / 2}px`,
-                left: `${props.left + props.width / 2}px`,
-                transform: `rotate(${props.rotate}deg)`,
-            }}
-        >
+        <>
             <div
-                className={boxClassName}
-                data-app-box-editor-id={canvasItem.id}
-                onClick={handleClick}
-                onDoubleClick={handleDoubleClick}
-                // While editing, the textarea's own wrapper commits the draft
-                // instead of opening a menu.
-                onContextMenu={isEditing ? undefined : handleContextMenu}
+                className={
+                    'editor-controller-box-wrapper' +
+                    (shouldControl ? ' controlling' : '')
+                }
+                ref={wrapperRef}
                 style={{
-                    // The wrapper above owns the box's position, so this
-                    // carries everything else `genBoxStyle` would give it —
-                    // `display: flex` included, or the renderer inside would
-                    // lay itself out as a block and wrap its text at a
-                    // different width than the screen output does.
-                    display: 'flex',
-                    transform: 'translate(-50%, -50%)',
-                    ...CanvasItem.genShapeBoxStyle(props),
+                    ...anchorStyle,
+                    // The box composites with the items under it exactly as it
+                    // will on the projector. It goes on the WRAPPER because
+                    // that is the only element between the box and the canvas
+                    // with no isolating ancestor -- the box's own
+                    // `translate(-50%, -50%)` already makes it a stacking
+                    // context, so a blend set there would have nothing to
+                    // blend with.
+                    ...CanvasItem.genBlendStyle(props),
                 }}
             >
-                {isEditing ? (
-                    <BoxEditorNormalTextEditModeComp />
-                ) : (
-                    <BoxEditorCanvasItemRenderComp />
-                )}
-                {isSelected ? (
-                    isLocked ? (
-                        <div
-                            className="locked-indicator"
-                            title={tran('Locked')}
-                        >
-                            🔒
-                        </div>
+                <div
+                    className={boxClassName}
+                    data-app-box-editor-id={canvasItem.id}
+                    onClick={handleClick}
+                    onDoubleClick={handleDoubleClick}
+                    // While editing, the textarea's own wrapper commits the
+                    // draft instead of opening a menu.
+                    onContextMenu={isEditing ? undefined : handleContextMenu}
+                    style={{
+                        // The wrapper above owns the box's position, so this
+                        // carries everything else `genBoxStyle` would give it —
+                        // `display: flex` included, or the renderer inside would
+                        // lay itself out as a block and wrap its text at a
+                        // different width than the screen output does.
+                        display: 'flex',
+                        transform: 'translate(-50%, -50%)',
+                        ...CanvasItem.genShapeBoxStyle(props),
+                    }}
+                >
+                    {isEditing ? (
+                        <BoxEditorNormalTextEditModeComp />
                     ) : (
-                        <div className="tools">
-                            <div
-                                className={`object ${boxEditorController.rotatorCN}`}
-                            />
-                            <div className="rotate-link" />
-                            {Object.keys(
-                                boxEditorController.resizeActorList,
-                            ).map((className) => {
-                                return (
-                                    <div
-                                        key={className}
-                                        className={`object ${className}`}
-                                        style={{
-                                            cursor: getRotatedResizeCursor(
-                                                className,
-                                                props.rotate,
-                                            ),
-                                        }}
-                                    />
-                                );
-                            })}
-                        </div>
-                    )
-                ) : null}
+                        <BoxEditorCanvasItemRenderComp />
+                    )}
+                </div>
             </div>
-        </div>
+            {isSelected ? (
+                // A SIBLING of the blended wrapper, not a child of the box:
+                // `mix-blend-mode` composites a whole element tree as one, so
+                // chrome drawn inside it would blend too -- and a `multiply`
+                // box on a dark canvas would take its own resize handles and
+                // outline down to black. Nothing here is a hit target except
+                // the handles themselves, so a click between them still
+                // reaches the box underneath.
+                <div
+                    className="editor-controller-box-chrome"
+                    ref={chromeRef}
+                    style={anchorStyle}
+                >
+                    <div
+                        className={
+                            'box-chrome-frame' + (isLocked ? ' locked' : '')
+                        }
+                        style={{
+                            transform: 'translate(-50%, -50%)',
+                            width: `${props.width}px`,
+                            height: `${props.height}px`,
+                            borderRadius: genBoxBorderRadius(props),
+                        }}
+                    >
+                        {isLocked ? (
+                            <div
+                                className="locked-indicator"
+                                title={tran('Locked')}
+                            >
+                                🔒
+                            </div>
+                        ) : (
+                            <div className="tools">
+                                <div
+                                    className={`object ${boxEditorController.rotatorCN}`}
+                                />
+                                <div className="rotate-link" />
+                                {Object.keys(
+                                    boxEditorController.resizeActorList,
+                                ).map((className) => {
+                                    return (
+                                        <div
+                                            key={className}
+                                            className={`object ${className}`}
+                                            style={{
+                                                cursor: getRotatedResizeCursor(
+                                                    className,
+                                                    props.rotate,
+                                                ),
+                                            }}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ) : null}
+        </>
     );
 }

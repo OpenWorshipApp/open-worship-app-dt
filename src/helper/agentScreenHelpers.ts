@@ -259,6 +259,19 @@ export function toForegroundSummary(
         return [];
     }
     const items: string[] = [];
+    // Messages lead, like they do in the launcher: they are what an operator
+    // puts up mid-service and the likeliest answer to "what is that on the
+    // screen?". A rotating set names its COUNT and its first line -- naming
+    // only whatever happens to be up would be stale before it was read.
+    for (const message of foregroundData.messageDataList ?? []) {
+        const textList = message.textList ?? [];
+        const first = `"${cutText(toPlainText(textList[0] ?? ''))}"`;
+        items.push(
+            message.intervalSecond !== null && textList.length > 1
+                ? `messages in turn (${textList.length}), first: ${first}`
+                : `message: ${first}`,
+        );
+    }
     if (foregroundData.countdownData) {
         const target = foregroundData.countdownData.dateTime;
         const when =
@@ -293,6 +306,12 @@ export function toForegroundSummary(
     }
     for (const web of foregroundData.webDataList ?? []) {
         items.push(`web page ${pathBasename(web.filePath ?? '')}`.trim());
+    }
+    for (const video of foregroundData.videoDataList ?? []) {
+        items.push(`video ${pathBasename(video.filePath ?? '')}`.trim());
+    }
+    for (const image of foregroundData.imageDataList ?? []) {
+        items.push(`picture ${pathBasename(image.filePath ?? '')}`.trim());
     }
     return items;
 }

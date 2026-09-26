@@ -236,9 +236,10 @@ export type PresentingFlowActionArmingType = {
  * `foregroundOnScreenMatcherMap` is: a new foreground widget is then a compile
  * error here instead of a widget with no way to clear it on its own.
  *
- * **The Foreground panel's "Background Images Slide Show" is deliberately absent**
- * — it drives `ScreenBackgroundManager`, not this layer, so `Clear Background`
- * already covers it and a clear here would do nothing.
+ * The Foreground panel's old "Background Images Slide Show" was never here —
+ * it drove `ScreenBackgroundManager`, not this layer. It has been removed
+ * outright: **Image Show** does the same job on the foreground, and it IS in
+ * this map.
  *
  * Each entry does what the panel's own hide button for that widget does (its
  * setter, sync group and all) — a list widget clears all of its items at once.
@@ -253,6 +254,13 @@ const foregroundClearMap: Record<
         clear: (manager: ScreenForegroundManager) => void;
     }
 > = {
+    message: {
+        label: 'Clear FG Messages',
+        badge: 'MS',
+        clear: (manager) => {
+            manager.setMessageDataList([]);
+        },
+    },
     'marquee-top': {
         label: 'Clear FG Marquee Top',
         badge: 'M↑',
@@ -293,6 +301,20 @@ const foregroundClearMap: Record<
         badge: 'TM',
         clear: (manager) => {
             manager.setTimeDataList([]);
+        },
+    },
+    video: {
+        label: 'Clear FG Video Show',
+        badge: 'VD',
+        clear: (manager) => {
+            manager.setVideoDataList([]);
+        },
+    },
+    image: {
+        label: 'Clear FG Image Show',
+        badge: 'IM',
+        clear: (manager) => {
+            manager.setImageDataList([]);
         },
     },
     camera: {

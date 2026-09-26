@@ -163,16 +163,27 @@ function toItemPathRefs(item: PresentingFlowItemType): PathRefType[] {
             },
         ];
     }
-    if (type === DragTypeEnum.FOREGROUND && item.data?.target === 'web') {
-        return [
-            {
-                kind: 'web',
-                get: () => toStringOrNull(item.data?.data?.filePath),
-                set: (newFilePath) => {
-                    item.data.data.filePath = newFilePath;
+    if (type === DragTypeEnum.FOREGROUND) {
+        // The foreground widgets that reference a FILE. Each one carries it at
+        // the same place in the payload, and each has its own folder to be put
+        // back into -- see `kindDirSettingNameMap`.
+        const foregroundKindMap: { [key: string]: ArchiveFileKindType } = {
+            web: 'web',
+            video: 'foreground-video',
+            image: 'foreground-image',
+        };
+        const kind = foregroundKindMap[item.data?.target];
+        if (kind !== undefined) {
+            return [
+                {
+                    kind,
+                    get: () => toStringOrNull(item.data?.data?.filePath),
+                    set: (newFilePath) => {
+                        item.data.data.filePath = newFilePath;
+                    },
                 },
-            },
-        ];
+            ];
+        }
     }
     return [];
 }

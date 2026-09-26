@@ -3,6 +3,7 @@ import {
     type ChangeEvent,
     type CSSProperties,
     useCallback,
+    useMemo,
     useRef,
 } from 'react';
 
@@ -21,6 +22,7 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
+import PropRowComp, { PropChipsComp } from './ForegroundPropRowComp';
 import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
 import type {
     ForegroundDataType,
@@ -36,6 +38,11 @@ import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import {
+    checkIsSessionData,
+    toSessionShowingList,
+    useForegroundSessions,
+} from './foregroundSessionHelpers';
 
 const FONT_SIZE_PRESETS = [0, 50, 75, 100, 150];
 const SPEED_PERCENTAGE_PRESETS = [50, 75, 100, 150, 200];
@@ -67,6 +74,7 @@ type MarqueeConfigType = {
         extraStyle: CSSProperties,
         speedPercentage: number,
         isForceChoosing: boolean,
+        sessionId: string,
     ) => void;
 };
 
@@ -93,13 +101,21 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
         setData: (screenForegroundManager, data) => {
             screenForegroundManager.setMarqueeTopData(data);
         },
-        show: (event, text, extraStyle, speedPercentage, isForceChoosing) => {
+        show: (
+            event,
+            text,
+            extraStyle,
+            speedPercentage,
+            isForceChoosing,
+            sessionId,
+        ) => {
             ScreenForegroundManager.setMarqueeTop(
                 event,
                 text,
                 extraStyle,
                 speedPercentage,
                 isForceChoosing,
+                sessionId,
             );
         },
     },
@@ -125,13 +141,21 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
         setData: (screenForegroundManager, data) => {
             screenForegroundManager.setMarqueeBottomData(data);
         },
-        show: (event, text, extraStyle, speedPercentage, isForceChoosing) => {
+        show: (
+            event,
+            text,
+            extraStyle,
+            speedPercentage,
+            isForceChoosing,
+            sessionId,
+        ) => {
             ScreenForegroundManager.setMarqueeBottom(
                 event,
                 text,
                 extraStyle,
                 speedPercentage,
                 isForceChoosing,
+                sessionId,
             );
         },
     },
@@ -141,54 +165,67 @@ function withFontSize(style: CSSProperties, fontSize: number): CSSProperties {
     return fontSize > 0 ? { ...style, fontSize: `${fontSize}px` } : style;
 }
 
-// One debouncer per position, otherwise a refresh on one marquee would cancel
-// the other's pending refresh.
-const attemptTimeoutMap: Record<
-    MarqueePositionType,
-    ReturnType<typeof genTimeoutAttempt>
-> = {
-    top: genTimeoutAttempt(500),
-    bottom: genTimeoutAttempt(500),
-};
+/** The keys ONE session of a marquee owns beyond its Properties. */
+function genOwnSettingNames(config: MarqueeConfigType, suffix: string) {
+    return [
+        `${config.textSettingName}${suffix}`,
+        `${config.fontSizeSettingName}${suffix}`,
+        `${config.speedSettingName}${suffix}`,
+    ];
+}
+
 function refreshAllMarquees(
     config: MarqueeConfigType,
     showingScreenIdDataList: [number, ForegroundMarqueeDataType][],
     extraStyle: CSSProperties,
     speedPercentage: number,
 ) {
-    attemptTimeoutMap[config.position](() => {
-        for (const [screenId, data] of showingScreenIdDataList) {
-            getScreenForegroundManagerInstances(
-                screenId,
-                (screenForegroundManager) => {
-                    config.setData(screenForegroundManager, {
-                        ...data,
-                        speedPercentage,
-                        extraStyle,
-                    });
-                },
-            );
-        }
-    });
+    for (const [screenId, data] of showingScreenIdDataList) {
+        getScreenForegroundManagerInstances(
+            screenId,
+            (screenForegroundManager) => {
+                config.setData(screenForegroundManager, {
+                    ...data,
+                    speedPercentage,
+                    extraStyle,
+                });
+            },
+        );
+    }
 }
 
-export default function ForegroundMarqueeComp({
-    position,
+/**
+ * The panel, ON ONE SESSION. Every field reads its setting when it mounts,
+ * so the wrapper underneath keys this by the session -- otherwise switching
+ * would leave the previous session's words in the box while writing them to
+ * the new session's keys.
+ */
+function MarqueeBodyComp({
+    config,
+    sessionId,
+    suffix,
+    prefix,
 }: Readonly<{
-    position: MarqueePositionType;
+    config: MarqueeConfigType;
+    sessionId: string;
+    suffix: string;
+    prefix: string;
 }>) {
-    const config = CONFIG_MAP[position];
-    useScreenForegroundManagerEvents(['update']);
+    // Per-instance: nothing here may assume this panel stays a single mount,
+    // and a shared one would drop the other marquee's pending refresh.
+    const attemptTimeout = useMemo(() => {
+        return genTimeoutAttempt(500);
+    }, []);
     const [text, setText] = useStateSettingString<string>(
-        config.textSettingName,
+        `${config.textSettingName}${suffix}`,
         config.defaultText,
     );
     const [fontSize, setFontSize] = useStateSettingNumber(
-        config.fontSizeSettingName,
+        `${config.fontSizeSettingName}${suffix}`,
         0,
     );
     const [speedPercentage, setSpeedPercentage] = useStateSettingNumber(
-        config.speedSettingName,
+        `${config.speedSettingName}${suffix}`,
         DEFAULT_MARQUEE_SPEED_PERCENTAGE,
     );
 
@@ -212,16 +249,25 @@ export default function ForegroundMarqueeComp({
     // size and speed controls live inside that hook's `extraControls`. The ref
     // lets those controls push a live update to every showing marquee.
     const genStyleRef = useRef<() => CSSProperties>(() => ({}));
+    const showingRef = useAppCurrentRef(showingScreenIdDataList);
+    // THIS session's marquee only. The panel lists every marquee of its
+    // position so the Hide row can always reach one, but a style belongs to
+    // the session it was set on -- see `toSessionShowingList`.
+    const getSessionShowing = () => {
+        return toSessionShowingList(showingRef.current, sessionId);
+    };
     const refreshShowing = (
         newFontSize: number,
         newSpeedPercentage: number,
     ) => {
-        refreshAllMarquees(
-            config,
-            showingScreenIdDataList,
-            withFontSize(genStyleRef.current(), newFontSize),
-            newSpeedPercentage,
-        );
+        attemptTimeout(() => {
+            refreshAllMarquees(
+                config,
+                getSessionShowing(),
+                withFontSize(genStyleRef.current(), newFontSize),
+                newSpeedPercentage,
+            );
+        });
     };
     const handleFontSizeSetting = (newFontSize: number) => {
         setFontSize(newFontSize);
@@ -247,101 +293,70 @@ export default function ForegroundMarqueeComp({
         fontFamily,
         fontWeight,
     } = useForegroundPropsSetting({
-        prefix: config.target,
+        prefix,
         isGeometry: false,
         onChange: (extraStyle) => {
-            refreshAllMarquees(
-                config,
-                showingScreenIdDataList,
-                withFontSize(extraStyle, fontSize),
-                speedPercentage,
-            );
+            attemptTimeout(() => {
+                refreshAllMarquees(
+                    config,
+                    getSessionShowing(),
+                    withFontSize(extraStyle, fontSize),
+                    speedPercentage,
+                );
+            });
         },
         extraControls: (
             <>
-                <div
-                    className="d-flex input-group m-1"
-                    style={{ width: '190px', height: '35px' }}
+                <PropRowComp
+                    iconClassName="bi bi-fonts"
+                    label={tran('Font Size')}
                     title={tran(config.fontSizeLabel)}
+                    isEngaged={fontSize !== 0}
                 >
-                    <span className="input-group-text">
-                        <i className="bi bi-fonts" />
-                    </span>
+                    <PropChipsComp
+                        label={tran('Quick font size')}
+                        values={FONT_SIZE_PRESETS}
+                        value={fontSize}
+                        setValue={handleFontSizeSetting}
+                        zeroLabel={tran('Auto')}
+                    />
                     <input
-                        className="form-control form-control-sm"
+                        className="fg-num"
                         type="number"
                         min="0"
-                        value={fontSize}
+                        aria-label={tran(config.fontSizeLabel)}
                         placeholder={tran('auto')}
+                        value={fontSize}
                         onChange={handleFontSizeChange}
                     />
-                    <span className="input-group-text">px</span>
-                </div>
-                <div
-                    className="btn-group btn-group-sm m-1"
-                    role="group"
-                    title={tran('Quick font size')}
-                >
-                    {FONT_SIZE_PRESETS.map((size) => {
-                        return (
-                            <button
-                                key={size}
-                                type="button"
-                                className={
-                                    'btn btn-outline-secondary' +
-                                    (fontSize === size ? ' active' : '')
-                                }
-                                onClick={() => handleFontSizeSetting(size)}
-                            >
-                                {size === 0 ? tran('Auto') : size}
-                            </button>
-                        );
-                    })}
-                </div>
-                <div
-                    className="d-flex input-group m-1"
-                    style={{ width: '190px', height: '35px' }}
+                    <span className="fg-unit-static">px</span>
+                </PropRowComp>
+                <PropRowComp
+                    iconClassName="bi bi-speedometer2"
+                    label={tran('Speed')}
                     title={tran(config.speedLabel)}
+                    isEngaged={
+                        speedPercentage !== DEFAULT_MARQUEE_SPEED_PERCENTAGE
+                    }
                 >
-                    <span className="input-group-text">
-                        <i className="bi bi-speedometer2" />
-                    </span>
+                    <PropChipsComp
+                        label={tran('Quick scroll speed')}
+                        values={SPEED_PERCENTAGE_PRESETS}
+                        value={speedPercentage}
+                        setValue={handleSpeedSetting}
+                    />
                     <input
-                        className="form-control form-control-sm"
+                        className="fg-num"
                         type="number"
                         min={MIN_MARQUEE_SPEED_PERCENTAGE}
                         max={MAX_MARQUEE_SPEED_PERCENTAGE}
                         step="10"
+                        aria-label={tran(config.speedLabel)}
                         value={speedPercentage}
                         onChange={handleSpeedChange}
                     />
-                    <span className="input-group-text">%</span>
-                </div>
-                <div
-                    className="btn-group btn-group-sm m-1"
-                    role="group"
-                    title={tran('Quick scroll speed')}
-                >
-                    {SPEED_PERCENTAGE_PRESETS.map((percentage) => {
-                        return (
-                            <button
-                                key={percentage}
-                                type="button"
-                                className={
-                                    'btn btn-outline-secondary' +
-                                    (speedPercentage === percentage
-                                        ? ' active'
-                                        : '')
-                                }
-                                onClick={() => handleSpeedSetting(percentage)}
-                            >
-                                {percentage === DEFAULT_MARQUEE_SPEED_PERCENTAGE
-                                    ? tran('Normal')
-                                    : `${percentage}%`}
-                            </button>
-                        );
-                    })}
-                </div>
+                    <span className="fg-unit-static">%</span>
+                </PropRowComp>
             </>
         ),
     });
@@ -352,7 +367,10 @@ export default function ForegroundMarqueeComp({
     const editorStyle: CSSProperties = {
         fontFamily: fontFamily || undefined,
         fontWeight: fontWeight && fontWeight !== '--' ? fontWeight : undefined,
-        height: '150px',
+        // A marquee is ONE scrolling line, and 150px of box for it was 66px
+        // of a floating panel that also has to show the file grid. The box
+        // resizes by its own corner for anyone who wants more.
+        height: '84px',
     };
 
     const handleShowing = useCallback(
@@ -363,9 +381,10 @@ export default function ForegroundMarqueeComp({
                 genExtraStyle(),
                 speedPercentage,
                 isForceChoosing,
+                sessionId,
             );
         },
-        [config, text, genExtraStyle, speedPercentage],
+        [config, text, genExtraStyle, speedPercentage, sessionId],
     );
     const handleShowingRef = useAppCurrentRef(handleShowing);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -380,12 +399,15 @@ export default function ForegroundMarqueeComp({
                 return;
             }
             config.setData(screenForegroundManager, {
+                // A LIVE drop from this panel is this session acting; a
+                // run-sheet row replayed weeks later carries none.
+                id: sessionId || undefined,
                 text,
                 speedPercentage,
                 extraStyle: genExtraStyle(),
             });
         },
-        [config, text, genExtraStyle, speedPercentage],
+        [config, text, genExtraStyle, speedPercentage, sessionId],
     );
     const handleHiding = useCallback(
         (screenId: number) => {
@@ -451,23 +473,18 @@ export default function ForegroundMarqueeComp({
         dragStore.onDropped = null;
     }, []);
     return (
-        <ForegroundLayoutComp
-            target={config.target}
-            fullChildHeaders={<h4>{tran(config.label)}</h4>}
-            childHeadersOnHidden={genHidingElement(true)}
-            isOnScreen={showingScreenIdDataList.length > 0}
-        >
+        <>
             {propsSetting}
-            <hr />
-            <div className="d-flex flex-column gap-2">
+            <div className="fg-body">
                 <div className="d-flex flex-wrap align-items-center gap-2">
                     <button
-                        className="btn btn-sm btn-outline-info"
+                        type="button"
+                        className="fg-quiet-btn"
                         title={tran(config.dateButtonLabel)}
                         onClick={handleDateSetting}
                     >
-                        <i className="bi bi-calendar-plus" />{' '}
-                        {tran("Today's Date")}
+                        <i className="bi bi-calendar-plus" />
+                        <span>{tran("Today's Date")}</span>
                     </button>
                     <div className="ms-auto d-flex gap-2">
                         <SavedTextSessionButtonsComp
@@ -478,22 +495,27 @@ export default function ForegroundMarqueeComp({
                         />
                     </div>
                 </div>
-                <div className="form-floating">
-                    <textarea
-                        id={config.textareaId}
-                        className="form-control"
-                        cols={30}
-                        rows={50}
-                        value={text}
-                        onChange={handleTextChange}
-                        placeholder={tran(config.placeholder)}
-                        style={editorStyle}
-                    />
-                    <label htmlFor={config.textareaId}>
-                        {tran(config.label)}
-                    </label>
-                </div>
-                <div className="d-flex">
+                {/*
+                 * No floating label: it repeated the panel's own title bar,
+                 * and Bootstrap's floating shell reserves a row of height to
+                 * hold the word. The box is still named for anything reading
+                 * by words, and the placeholder says what to type.
+                 */}
+                <textarea
+                    id={config.textareaId}
+                    className="fg-text-editor"
+                    aria-label={tran(config.label)}
+                    value={text}
+                    onChange={handleTextChange}
+                    placeholder={tran(config.placeholder)}
+                    style={editorStyle}
+                />
+                {/*
+                 * The take row: the one solid control in the panel, and --
+                 * right beside it rather than in a bordered box below -- what
+                 * it already put on a screen.
+                 */}
+                <div className="fg-actions">
                     <button
                         className="btn btn-primary"
                         title={tran(config.showLabel)}
@@ -509,9 +531,79 @@ export default function ForegroundMarqueeComp({
                         label={tran('Show on Screens')}
                         onOpening={handleContextMenuOpening}
                     />
+                    {genHidingElement(false)}
                 </div>
             </div>
-            {genHidingElement(false)}
+        </>
+    );
+}
+
+export default function ForegroundMarqueeComp({
+    position,
+}: Readonly<{
+    position: MarqueePositionType;
+}>) {
+    const config = CONFIG_MAP[position];
+    useScreenForegroundManagerEvents(['update']);
+    const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
+        (data) => {
+            return config.getData(data) !== null;
+        },
+    )
+        .map(([screenId, data]): [number, ForegroundMarqueeDataType] | null => {
+            const marqueeData = config.getData(data);
+            if (marqueeData === null) {
+                return null;
+            }
+            return [screenId, marqueeData];
+        })
+        .filter((item) => {
+            return item !== null;
+        });
+    const showingRef = useAppCurrentRef(showingScreenIdDataList);
+    // One session is one scroll ready to go -- the standing welcome in one,
+    // this morning's car-park notice in another -- each with its own words,
+    // its own speed and its own look.
+    const {
+        activeId,
+        suffix,
+        prefix,
+        element: sessionsElement,
+    } = useForegroundSessions({
+        widgetKey: config.target,
+        toPrefix: (sessionSuffix) => {
+            return `${config.target}${sessionSuffix}`;
+        },
+        toOwnSettingNames: genOwnSettingNames.bind(null, config),
+        checkIsOnScreen: (sessionId) => {
+            return showingScreenIdDataList.some(([, data]) => {
+                return checkIsSessionData(data, sessionId);
+            });
+        },
+        hideSession: (sessionId) => {
+            for (const [screenId, data] of showingRef.current) {
+                if (!checkIsSessionData(data, sessionId)) {
+                    continue;
+                }
+                getScreenForegroundManagerInstances(
+                    screenId,
+                    (screenForegroundManager) => {
+                        config.setData(screenForegroundManager, null);
+                    },
+                );
+            }
+        },
+    });
+    return (
+        <ForegroundLayoutComp target={config.target}>
+            {sessionsElement}
+            <MarqueeBodyComp
+                key={activeId}
+                config={config}
+                sessionId={activeId}
+                suffix={suffix}
+                prefix={prefix}
+            />
         </ForegroundLayoutComp>
     );
 }

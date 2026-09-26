@@ -6,6 +6,12 @@ export const dirSourceSettingNames = {
     BACKGROUND_VIDEO: `${SELECT_DIR}-video-bg`,
     BACKGROUND_WEB: `${SELECT_DIR}-web-bg`,
     BACKGROUND_AUDIO: `${SELECT_DIR}-audio-bg`,
+    // The foreground media widgets keep their OWN folders: an overlay clip
+    // (falling snow, sparks, a lower third) is not a background, and the two
+    // panels are pointed at different places often enough that sharing one
+    // setting would have each re-aiming the other.
+    FOREGROUND_IMAGE: `${SELECT_DIR}-image-fg`,
+    FOREGROUND_VIDEO: `${SELECT_DIR}-video-fg`,
     BIBLE_PRESENT: `${SELECT_DIR}-bible-presenter`,
     BIBLE_READ: `${SELECT_DIR}-bible-read`,
     BIBLE_NOTES: `${SELECT_DIR}-bible-notes`,
@@ -17,6 +23,8 @@ export const defaultDataDirNames = {
     BACKGROUND_VIDEO: 'videos',
     BACKGROUND_WEB: 'webs',
     BACKGROUND_AUDIO: 'audios',
+    FOREGROUND_IMAGE: 'foreground-images',
+    FOREGROUND_VIDEO: 'foreground-videos',
     BIBLE_PRESENT: 'bibles',
     BIBLE_READ: 'bibles-read',
     BIBLE_NOTES: 'bible-notes',

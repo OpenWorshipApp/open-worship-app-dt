@@ -158,6 +158,337 @@ export const PRESENTER_DEMO_LIST = [
         translateFind: true,
         action: 'click',
       },
+      {
+        text: 'The list that opens is every foreground component. A ticked box means its panel is already open, a number beside a name is the screen it is on right now, and a play mark means its slide show is running.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-countdown',
+    label: 'Count down to the start of a service',
+    detail:
+      'Countdown counts a number of minutes, or down to a time on the clock.',
+    title: 'Count down to the start of a service',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Countdown. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Countdown',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose "Count down for a duration" and set the hours and minutes, or "Count down to a specific date & time" and pick the moment. Tick the screens it should reach, then press Start Countdown. This lesson will not start it for you.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-stopwatch',
+    label: 'Time how long something is running',
+    detail: 'Stopwatch counts up from zero on the audience screen.',
+    title: 'Time how long something is running',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Stopwatch. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Stopwatch',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Start Stopwatch counts up from zero; Hide Stopwatch takes it off again. It is the one to reach for when the question is how long a section has run, not how long is left. This lesson will not start it for you.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-time',
+    label: 'Show the time on the audience screen',
+    detail: 'Time puts one clock up, or several for different cities.',
+    title: 'Show the time on the audience screen',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Time. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Time',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: "Add Time adds a clock. Give it a label, and either keep this device's timezone or choose a city to set its own. More than one clock can run at once. This lesson will not put one on a screen.",
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-marquee-top',
+    label: 'Scroll a line of text across the top',
+    detail:
+      'Marquee Top is a moving notice above everything else on the screen.',
+    title: 'Scroll a line of text across the top',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Marquee Top. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Marquee Top',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Type the words, set the font size and the speed, then press Show Marquee Top. The row of saved sessions above keeps the lines you use every week. This lesson will not put it on a screen.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-marquee-bottom',
+    label: 'Scroll a line of text across the bottom',
+    detail:
+      'Marquee Bottom is the same moving notice, along the foot of the screen.',
+    title: 'Scroll a line of text across the bottom',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Marquee Bottom. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Marquee Bottom',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Type the words, set the font size and the speed, then press Show Marquee Bottom. Top and bottom are separate, so one can carry a welcome while the other carries a notice. This lesson will not put it on a screen.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-quick-text',
+    label: 'Put a short message up for a moment',
+    detail: 'Quick Text puts a few words up that go again by themselves.',
+    title: 'Put a short message up for a moment',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Quick Text. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Quick Text',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Type the message -- Markdown is understood -- set how many seconds it stays and how long to wait first, then press Show Quick Text. Live shows it as you type. This lesson will not put it on a screen.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-video',
+    label: 'Play a clip over the slide',
+    detail:
+      'Video Show plays a clip above the background, the slide and the passage.',
+    title: 'Play a clip over the slide',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Video Show. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Video Show',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Pick a clip from the folder. Blend Mode is what makes it worth using: set it to Screen and the black behind falling snow or fireworks drops out, leaving only the effect over the live slide. This lesson will not put it on a screen.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-image',
+    label: 'Lay a picture over the slide',
+    detail:
+      'Image Show lays a logo, a frame or an announcement above everything else.',
+    title: 'Lay a picture over the slide',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Image Show. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Image Show',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Pick a picture from the folder, then use Properties for where it sits, how wide it is and how solid it looks. A transparent PNG needs no blend mode; a picture on black wants Screen. This lesson will not put it on a screen.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-camera',
+    label: 'Show a camera over the slide',
+    detail:
+      'Camera Show puts a live camera picture above the slide, not behind it.',
+    title: 'Show a camera over the slide',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Camera Show. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Camera Show',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose the camera, then size and place it with Properties. This is the overlay for a speaker inset; a camera as the whole background belongs in Background > Cameras instead. This lesson will not put it on a screen.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-web',
+    label: 'Show a web page over the slide',
+    detail: 'Web Show puts a page or a small web file above the slide.',
+    title: 'Show a web page over the slide',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Web Show. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Web Show',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Pick the page, then size and place it with Properties. It is the way to put a clock, a counter or a notice board over what is already showing. This lesson will not put it on a screen.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-properties',
+    label: 'Place and size a foreground item',
+    detail: 'Use Properties for position, size, opacity and blending.',
+    title: 'Place and size a foreground item',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Quick Text to open its panel.',
+        find: 'Quick Text',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        // Scoped to the panel by name: every open foreground panel has a
+        // Properties button, and they all read the same word. The plain word
+        // is kept behind it because a scope matches the panel's ENGLISH
+        // `data-widget-name` while the button itself is translated, so a Khmer
+        // window falls back to opening some panel's Properties rather than
+        // refusing the step outright.
+        text: 'Open Properties inside the Quick Text panel.',
+        find: 'Quick Text > Properties',
+        finds: ['Quick Text > Properties', 'Properties'],
+        translateFinds: true,
+        action: 'click',
+      },
+      {
+        text: 'Every foreground component carries this same strip, and each keeps its own settings: a pad for the corner it sits in, Width, Scale and Opacity, an X and Y nudge, Round for the corners, Blend Mode, and the transition it arrives with.',
+      },
+      {
+        text: 'Two of them are worth knowing. Always on Top turns on a Z-Index, which is what decides who wins when two overlays land in the same place. And Blend Mode set to Screen drops the black out of a clip, which is how falling snow shot on black ends up over the live slide.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-sessions',
+    label: 'Keep the lines you use every week',
+    detail: 'Save named sessions inside a foreground component.',
+    title: 'Keep the lines you use every week',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Marquee Top and look at the row of names above its text box.',
+        find: 'Marquee Top',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'That row is the saved sessions. + adds one, and the dots beside a name rename or remove it, so the welcome line and the offering notice can each keep their own wording and speed.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-clear',
+    label: 'Take a foreground item back off',
+    detail: 'Hide one component, or clear the whole foreground layer.',
+    title: 'Take a foreground item back off',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Mini Screen and find the screen card that is carrying the overlay.',
+        find: 'Mini Screen',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Each foreground panel has its own Hide button, which takes off only that component. The screen card has Clear Foreground, which takes off all of them at once. This lesson will not change a live screen.',
+      },
     ],
   },
   {
@@ -558,13 +889,13 @@ export const PRESENTER_DEMO_LIST = [
     isFeatured: false,
     steps: [
       {
-        text: 'Open Foreground and choose Countdown, Stopwatch, Clock, Marquee, or Quick Text.',
+        text: 'Open Foreground above the slide previews.',
         find: 'Foreground',
         translateFind: true,
         action: 'click',
       },
       {
-        text: 'Set its words or time, check the selected screens, then start it when ready. This lesson will not start it for you.',
+        text: 'Ten components share that list: Marquee Top and Marquee Bottom, Quick Text, Countdown, Stopwatch, Time, and Video, Image, Camera and Web Show. Each opens in a panel of its own, and each has a lesson of its own. This lesson will not start one for you.',
       },
     ],
   },

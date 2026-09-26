@@ -29,8 +29,13 @@ export named 'default'` — and a plain reload does NOT clear it, because the
 importer keeps requesting the same stamped URL. `grep 'export default'` on disk
 shows the export is right there. Confirm with
 `curl -sk 'https://localhost:3000/@fs/<abs path>?t=<stamp>'` — an empty body
-with only a sourcemap comment is the cached truncation. Same fix: touch
-`vite.config.ts`.
+with only a sourcemap comment is the cached truncation. Re-confirmed
+2026-09-24 (`ForegroundLayoutComp.tsx` after a `cat > … <<EOF`), and
+**appending one byte to the file itself cleared it** — `printf '
+' >> <file>`,
+then re-curl; `vite.config.ts` only if that does not. Note the file on disk
+typechecks and every test passes, so nothing but the SERVED module says
+what is wrong.
 
 **Sibling case (2026-08-30): a stale transform that serves an OLD, VALID version
 — the dangerous one, because nothing errors.** During QA of `src/graph-view/`

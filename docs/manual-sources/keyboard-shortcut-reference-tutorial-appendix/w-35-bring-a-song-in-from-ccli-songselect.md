@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-52, PL-103, PL-104]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-23"
+workflowsVersion: "2026-09-25"
 ---
 # W-35 — Bring a song in from CCLI SongSelect
 
@@ -59,5 +59,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-52` · `PL-103` · `PL-104`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-25).
 :::

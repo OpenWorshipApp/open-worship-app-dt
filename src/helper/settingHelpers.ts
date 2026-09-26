@@ -210,8 +210,16 @@ export function useStateSettingNumber(
     settingName: string,
     defaultNumber: number | (() => number),
 ): [number, Dispatch<SetStateAction<number>>] {
-    let defaultData = Number.parseInt(getSetting(settingName) ?? '', 10);
-    if (Number.isNaN(defaultData)) {
+    // parseFLOAT, not parseInt. The setter below writes the number as it is,
+    // so a fractional setting -- the foreground Scale slider steps by 0.1 --
+    // reached the disk as `1.5` and read back as `1`: the panel reset itself
+    // on every remount to a value the SCREEN was not using, because
+    // `genTransformScale` has always read that same key with `parseFloat`.
+    // `Number.isFinite` rather than `!Number.isNaN` because `parseFloat`
+    // accepts `Infinity` where `parseInt` gave NaN, and a widget scaled to
+    // infinity is not a value any caller here can use.
+    let defaultData = Number.parseFloat(getSetting(settingName) ?? '');
+    if (!Number.isFinite(defaultData)) {
         const resolvedDefault =
             typeof defaultNumber === 'function'
                 ? defaultNumber()

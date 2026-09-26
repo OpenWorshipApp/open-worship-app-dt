@@ -34,6 +34,7 @@ import {
 } from '../progress-bar/progressBarHelpers';
 import { handleError } from '../helper/errorHelpers';
 import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
+import { useBackgroundSessions } from './backgroundSessionHelpers';
 
 function rendChild(
     filePath: string,
@@ -180,12 +181,22 @@ async function genContextMenuItems(dirSource: DirSource) {
 }
 
 export default function BackgroundImagesComp() {
+    const session = useBackgroundSessions({
+        target: 'background-image',
+        dirSourceSettingName: dirSourceSettingNames.BACKGROUND_IMAGE,
+        autoPlayPrefix: 'background-image',
+    });
     return (
         <BackgroundMediaComp
+            // Keyed by session so switching re-reads that session's own
+            // folder instead of keeping the last one's list on screen.
+            key={session.activeId}
+            topBarChild={session.element}
+            autoPlayPrefix={session.autoPlayPrefix}
             defaultFolderName={defaultDataDirNames.BACKGROUND_IMAGE}
             dragType={DragTypeEnum.BACKGROUND_IMAGE}
             rendChild={rendChild}
-            dirSourceSettingName={dirSourceSettingNames.BACKGROUND_IMAGE}
+            dirSourceSettingName={session.dirSourceSettingName}
             genContextMenuItems={genContextMenuItems}
         />
     );

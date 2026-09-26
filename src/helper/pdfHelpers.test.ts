@@ -15,6 +15,12 @@ const {
     readSyncMock,
     closeSyncMock,
     cacheStoreMock,
+    showSimpleToastMock,
+    showProgressBarMock,
+    hideProgressBarMock,
+    startPdfConversionMock,
+    updatePdfConversionMock,
+    finishPdfConversionMock,
 } = vi.hoisted(() => ({
     electronSendAsyncMock: vi.fn(),
     fsCheckDirExistMock: vi.fn(),
@@ -31,6 +37,26 @@ const {
     // module scope in `pdfHelpers.ts`, so without this a size cached by one
     // test silently answers the next one.
     cacheStoreMock: new Map<string, unknown>(),
+    showSimpleToastMock: vi.fn(),
+    showProgressBarMock: vi.fn(),
+    hideProgressBarMock: vi.fn(),
+    startPdfConversionMock: vi.fn(() => true),
+    updatePdfConversionMock: vi.fn(),
+    finishPdfConversionMock: vi.fn(() => true),
+}));
+
+vi.mock('../lang/langHelpers', () => ({ tran: (text: string) => text }));
+vi.mock('../toast/toastHelpers', () => ({
+    showSimpleToast: showSimpleToastMock,
+}));
+vi.mock('../progress-bar/progressBarHelpers', () => ({
+    showProgressBar: showProgressBarMock,
+    hideProgressBar: hideProgressBarMock,
+}));
+vi.mock('./pdfConversionProgress', () => ({
+    startPdfConversion: startPdfConversionMock,
+    updatePdfConversion: updatePdfConversionMock,
+    finishPdfConversion: finishPdfConversionMock,
 }));
 
 vi.mock('../others/CacheManager', () => ({
@@ -141,6 +167,8 @@ describe('pdfHelpers', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        startPdfConversionMock.mockReturnValue(true);
+        finishPdfConversionMock.mockReturnValue(true);
         imageConstructedCount = 0;
         cacheStoreMock.clear();
 
@@ -287,13 +315,25 @@ describe('pdfHelpers', () => {
 
     test('generates preview images when no reusable cache exists', async () => {
         fsCheckDirExistMock.mockResolvedValue(false);
-        electronSendAsyncMock.mockResolvedValue({
-            isSuccessful: true,
-            filePaths: [
-                '/docs/sermon.pdf-images/page-2.png',
-                '/docs/sermon.pdf-images/page-1.png',
-            ],
-        });
+        electronSendAsyncMock.mockImplementation(
+            async (
+                _event: string,
+                _data: unknown,
+                onProgress: (progress: {
+                    completed: number;
+                    total: number;
+                }) => void,
+            ) => {
+                onProgress({ completed: 2, total: 10 });
+                return {
+                    isSuccessful: true,
+                    filePaths: [
+                        '/docs/sermon.pdf-images/page-2.png',
+                        '/docs/sermon.pdf-images/page-1.png',
+                    ],
+                };
+            },
+        );
 
         const result = await genPdfImagesPreview('/docs/sermon.pdf', true);
 
@@ -306,8 +346,48 @@ describe('pdfHelpers', () => {
                 outDir: '/docs/sermon.pdf-images',
                 isForce: true,
             },
+            expect.any(Function),
         );
         expect(result?.map((item) => item.pageNumber)).toEqual([1, 2]);
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Exporting PDF Images',
+            'Please wait while the PDF pages are being exported...',
+        );
+        expect(showProgressBarMock).toHaveBeenCalledWith(
+            'Exporting PDF Images: sermon.pdf',
+        );
+        expect(hideProgressBarMock).toHaveBeenCalledWith(
+            'Exporting PDF Images: sermon.pdf',
+        );
+        expect(updatePdfConversionMock).toHaveBeenCalledWith(
+            '/docs/sermon.pdf',
+            2,
+            10,
+        );
+    });
+
+    test('shares one conversion between simultaneous views of a PDF', async () => {
+        fsCheckDirExistMock.mockResolvedValue(false);
+        let finishConversion!: (result: unknown) => void;
+        electronSendAsyncMock.mockReturnValue(
+            new Promise((resolve) => {
+                finishConversion = resolve;
+            }),
+        );
+
+        const first = genPdfImagesPreview('/docs/sermon.pdf');
+        const second = genPdfImagesPreview('/docs/sermon.pdf');
+        expect(second).toBe(first);
+        await vi.waitFor(() => {
+            expect(electronSendAsyncMock).toHaveBeenCalledTimes(1);
+        });
+        finishConversion({
+            isSuccessful: true,
+            filePaths: ['/docs/sermon.pdf-images/page-1.png'],
+        });
+        await expect(first).resolves.toHaveLength(1);
+        expect(electronSendAsyncMock).toHaveBeenCalledTimes(1);
+        expect(showSimpleToastMock).toHaveBeenCalledTimes(1);
     });
 
     test('logs and returns null when PDF conversion fails', async () => {
@@ -323,6 +403,9 @@ describe('pdfHelpers', () => {
         expect(appErrorMock).toHaveBeenCalledWith(
             'Failed to generate PDF images preview:',
             'conversion failed',
+        );
+        expect(hideProgressBarMock).toHaveBeenCalledWith(
+            'Exporting PDF Images: sermon.pdf',
         );
     });
 });

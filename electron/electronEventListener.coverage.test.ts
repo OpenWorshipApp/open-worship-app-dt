@@ -548,13 +548,20 @@ describe('electronEventListener handlers', () => {
             filePath: '/tmp/a.pdf',
             outDir: '/tmp/out',
             isForce: true,
+            progressEventName: 'reply:pdf-progress',
         });
         expect(pdfToImages).toHaveBeenCalledWith(
             '/tmp/a.pdf',
             '/tmp/out',
             1280,
             true,
+            expect.any(Function),
         );
+        pdfToImages.mock.calls.at(-1)?.[4](12, 25);
+        expect(sender.send).toHaveBeenCalledWith('reply:pdf-progress', {
+            completed: 12,
+            total: 25,
+        });
 
         await call('main:app:pdf-pages-count', { filePath: '/tmp/a.pdf' });
         expect(getPagesCount).toHaveBeenCalledWith('/tmp/a.pdf');

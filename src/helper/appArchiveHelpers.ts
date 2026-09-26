@@ -63,7 +63,13 @@ export type ArchiveFileKindType =
     | 'image'
     | 'video'
     | 'audio'
-    | 'web';
+    | 'web'
+    // The Foreground panel's Video Show and Image Show keep their own folders,
+    // so a foreground clip carried in a presenting flow archive has to be put
+    // back in one of THOSE -- imported as `video` it would land among the
+    // backgrounds, where the widget that referenced it does not look.
+    | 'foreground-video'
+    | 'foreground-image';
 
 export const kindDirSettingNameMap: Record<ArchiveFileKindType, string> = {
     document: dirSourceSettingNames.APP_DOCUMENT,
@@ -83,6 +89,8 @@ export const kindDirSettingNameMap: Record<ArchiveFileKindType, string> = {
     video: dirSourceSettingNames.BACKGROUND_VIDEO,
     audio: dirSourceSettingNames.BACKGROUND_AUDIO,
     web: dirSourceSettingNames.BACKGROUND_WEB,
+    'foreground-video': dirSourceSettingNames.FOREGROUND_VIDEO,
+    'foreground-image': dirSourceSettingNames.FOREGROUND_IMAGE,
 };
 
 // The kinds that are an APP ITEM rather than a media file: the ones an import

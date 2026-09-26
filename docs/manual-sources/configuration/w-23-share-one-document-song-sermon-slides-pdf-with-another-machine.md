@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PL-77, PL-78, PL-79, PL-80, CM-36, CM-37]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-23"
+workflowsVersion: "2026-09-25"
 ---
 # W-23 — Share one document (song, sermon slides, PDF) with another machine
 
@@ -60,5 +60,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-77` · `PL-78` · `PL-79` · `PL-80` · `CM-36` · `CM-37`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-25).
 :::

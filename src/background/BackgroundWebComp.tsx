@@ -1,5 +1,6 @@
 import './BackgroundWebComp.scss';
 
+import type { ReactNode } from 'react';
 import { useCallback, useRef } from 'react';
 import { useState } from 'react';
 
@@ -16,6 +17,8 @@ import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
 import { tran } from '../lang/langHelpers';
 import { useZoomingRegistering } from '../others/AppRangeComp';
 import { useThumbnailWidthSetting } from './BackgroundMediaComp';
+import BackgroundAutoPlayComp from './BackgroundAutoPlayComp';
+import { genBackgroundLayerMarker } from './backgroundHelpers';
 import {
     type BackgroundWebUrlItemData,
     type BackgroundWebUrlSource,
@@ -31,19 +34,30 @@ import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { getMimetypeExtensions } from '../server/fileHelpers';
 import { basicRenderBody } from './BackgroundWebChildComp';
 import { useBackgroundViewModeSetting } from './BackgroundViewModeComp';
+import { useBackgroundSessions } from './backgroundSessionHelpers';
 
-export default function BackgroundWebComp() {
+/**
+ * The tab's own card rather than `BackgroundMediaComp`'s: half its tiles are
+ * saved URLs rather than files. Those URLs are deliberately NOT part of a
+ * folder session -- a link lives in no folder, so it is shown in every one.
+ */
+function RenderWebListComp({
+    dirSourceSettingName,
+    autoPlayPrefix,
+    topBarChild,
+}: Readonly<{
+    dirSourceSettingName: string;
+    autoPlayPrefix?: string;
+    topBarChild: ReactNode;
+}>) {
     const [thumbnailWidth, setThumbnailWidth] = useThumbnailWidthSetting();
-    const [viewMode, setViewMode] = useBackgroundViewModeSetting(
-        dirSourceSettingNames.BACKGROUND_WEB,
-    );
+    const [viewMode, setViewMode] =
+        useBackgroundViewModeSetting(dirSourceSettingName);
     const [urlItems, setUrlItems] = useState<BackgroundWebUrlItemData[]>(() => {
         return getBackgroundWebUrlItemList();
     });
     const urlSources = createBackgroundWebUrlSourceList(urlItems);
-    const dirSource = useGenDirSourceReload(
-        dirSourceSettingNames.BACKGROUND_WEB,
-    );
+    const dirSource = useGenDirSourceReload(dirSourceSettingName);
 
     useScreenBackgroundManagerEvents(['update']);
     useAppEffect(() => {
@@ -112,6 +126,12 @@ export default function BackgroundWebComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
+    // What this layer is showing: it marks the tiles, and empty means there is
+    // no show to control, so no strip -- an empty one would be a band across
+    // the top of the grid paying for a control that is not there.
+    const layerMarker = genBackgroundLayerMarker('web');
+    const hasAutoPlay = layerMarker !== '';
+
     const renderBody = basicRenderBody.bind(
         null,
         urlSources,
@@ -119,6 +139,7 @@ export default function BackgroundWebComp() {
         handleUrlRemoving,
         handleUrlColorNoteChange,
         viewMode,
+        layerMarker,
     );
 
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -130,9 +151,26 @@ export default function BackgroundWebComp() {
 
     return (
         <div
-            className="card w-100 h-100 app-zero-border-radius"
+            className={
+                'card w-100 h-100 app-zero-border-radius' +
+                ' background-has-media-bar'
+            }
             ref={containerRef}
         >
+            <div className="background-media-bar d-flex align-items-center px-1">
+                {topBarChild}
+                {/* The same slide show the Images and Videos tabs carry. This
+                    tab walks its own order, because half its tiles are saved
+                    URLs rather than files -- see
+                    `genBackgroundWebDisplayedSrcList`. */}
+                {hasAutoPlay && autoPlayPrefix !== undefined ? (
+                    <BackgroundAutoPlayComp
+                        prefix={autoPlayPrefix}
+                        backgroundType="web"
+                        dirSourceSettingName={dirSourceSettingName}
+                    />
+                ) : null}
+            </div>
             <div className="card-body">
                 {dirSource === null ? null : (
                     <FileListHandlerComp
@@ -158,5 +196,23 @@ export default function BackgroundWebComp() {
                 setViewMode={setViewMode}
             />
         </div>
+    );
+}
+
+export default function BackgroundWebComp() {
+    const session = useBackgroundSessions({
+        target: 'background-web',
+        dirSourceSettingName: dirSourceSettingNames.BACKGROUND_WEB,
+        autoPlayPrefix: 'background-web',
+    });
+    return (
+        <RenderWebListComp
+            // Keyed by session so switching re-reads that session's own
+            // folder instead of keeping the last one's list on screen.
+            key={session.activeId}
+            topBarChild={session.element}
+            dirSourceSettingName={session.dirSourceSettingName}
+            autoPlayPrefix={session.autoPlayPrefix}
+        />
     );
 }

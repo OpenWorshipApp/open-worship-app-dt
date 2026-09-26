@@ -259,9 +259,10 @@ machine's own LAN address and capturing it exactly as a website item does:
 `electron/webCaptureHelpers.ts` now holds it to: **a capture may talk to the
 site it was asked for and to the public internet; never to this machine, and
 never to anything else on the local network.** Its own memory-only session;
-permissions, downloads and `window.open` refused; `sandbox: true`; http(s) only
-at the first load and at every redirect; and `onBeforeRequest` over the same
-three patterns and the same `webUrlPolicy.mjs` dialect the guest's wall uses.
+permissions, downloads and `window.open` refused; `sandbox: true`; a judged
+first load and every redirect; and `onBeforeRequest` over four patterns — the
+guest's three plus `file:///*` — and the same `webUrlPolicy.mjs` dialect the
+guest's wall uses.
 The **same-host exemption** is the difference from the guest: no chat site ever
 needs a local address, but a church's intranet notice board is a legitimate
 slide, so a private page may load its own assets and nothing else private.
@@ -270,6 +271,25 @@ Loopback gets no exemption at all.
 `webSecurity` stays OFF — it might be load-bearing for a real user's slide,
 nothing measured says whether it is, and the wall closes what it would open.
 That is the residual, and it is why the wall rather than the flag is the fix.
+
+**Amended 2026-09-24: the app's own pages are `file:` URLs.** "http(s) only at
+the first load" was scheme-shaped, and the thing it has to separate is not the
+scheme. The Webs panel's **New File** writes an `.html` into
+`<data folder>/webs`, and the Background **Webs** tab, every Foreground **Web
+Show** widget and a slide's website item put it up as
+`file:///…/webs/x.html` — so the first cut switched every local tile off
+(globe-and-url placeholder, one `Only a web address can be captured` per file
+in the console) while a remote URL item beside them kept its picture. The rule
+now has a second half: **a local page may be captured only out of a folder
+this app's Webs panel was pointed at, and it may read that folder and nothing
+else of this machine.** The folders are the `select-dir-web-bg*` directory
+settings plus the default `<data folder>/webs`; the test is
+`resolveCaptureTarget` (extension as well as folder, `..` resolved first, case
+folded on Windows and macOS only), and `file:///*` joins the wall's patterns —
+without it no `file:` request was judged at all, so a SITE's page could read
+the disk through `webSecurity: false`. A shared document fails the same test
+by naming the other church's folders. Proven live by putting a fetching page
+in the webs folder: its own sibling READ, one folder up BLOCKED.
 
 **What is NOT closed, and is not claimed to be:**
 

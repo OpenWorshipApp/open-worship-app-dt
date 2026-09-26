@@ -3,7 +3,13 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const fileSourceGetInstance = vi.fn((filePath: string) => ({ filePath }));
+const fileSourceGetInstance = vi.fn((filePath: string) => ({
+    filePath,
+    src: `file://${filePath}`,
+    name: filePath,
+}));
+const playMediaElementMock = vi.fn();
+const releaseMediaElementMock = vi.fn();
 const applyTextStyleMock = vi.fn();
 const getLangDataAsyncMock = vi.fn(async (locale: string) => ({
     fontFamily: `Font-${locale}`,
@@ -72,6 +78,11 @@ vi.mock('../helper/FileSource', () => ({
     default: {
         getInstance: fileSourceGetInstance,
     },
+}));
+
+vi.mock('../helper/mediaHelpers', () => ({
+    playMediaElement: playMediaElementMock,
+    releaseMediaElement: releaseMediaElementMock,
 }));
 
 vi.mock('../background/RenderBackgroundWebIframeComp', () => ({
@@ -521,6 +532,60 @@ describe('screen render helpers', () => {
         await timing.handleRemoving();
         await web.handleRemoving();
         expect(animData.animOut).toHaveBeenCalledTimes(4);
+    });
+
+    test('a foreground clip is muted, loops, and hands its player back', async () => {
+        const { genHtmlForegroundVideo, genHtmlForegroundImage } =
+            await import('./screenForegroundHelpers');
+        playMediaElementMock.mockClear();
+        releaseMediaElementMock.mockClear();
+        const animData = {
+            duration: 0,
+            styleText: '',
+            animIn: vi.fn(async (element: HTMLElement, parent: HTMLElement) => {
+                parent.appendChild(element);
+            }),
+            animOut: vi.fn(async () => {}),
+        };
+        const parent = document.createElement('div');
+
+        const video = genHtmlForegroundVideo(
+            {
+                filePath: '/tmp/snow.mp4',
+                extraStyle: { mixBlendMode: 'screen', width: '100%' },
+            },
+            animData,
+        );
+        await video.handleAdding(parent);
+        const videoElement = parent.querySelector('video');
+        expect(videoElement).not.toBeNull();
+        // Chromium refuses to autoplay a clip that is not muted, and React
+        // does not write `muted` into static markup -- which is why this
+        // element is built by hand rather than rendered to a string.
+        expect(videoElement?.muted).toBe(true);
+        expect(videoElement?.loop).toBe(true);
+        expect(videoElement?.autoplay).toBe(true);
+        expect(videoElement?.style.mixBlendMode).toBe('screen');
+        expect(playMediaElementMock).toHaveBeenCalledOnce();
+
+        const image = genHtmlForegroundImage(
+            {
+                filePath: '/tmp/logo.png',
+                extraStyle: { mixBlendMode: 'multiply' },
+            },
+            animData,
+        );
+        await image.handleAdding(parent);
+        expect(parent.querySelector('img')?.style.mixBlendMode).toBe(
+            'multiply',
+        );
+
+        await video.handleRemoving();
+        await image.handleRemoving();
+        expect(animData.animOut).toHaveBeenCalledTimes(2);
+        // Taking a media element out of the document does not free its player.
+        expect(releaseMediaElementMock).toHaveBeenCalledOnce();
+        expect(releaseMediaElementMock).toHaveBeenCalledWith(videoElement);
     });
 
     test('a marquee only scrolls while its text overflows', async () => {

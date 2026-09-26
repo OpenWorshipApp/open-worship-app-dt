@@ -1,0 +1,86 @@
+// ------------------------------------------------------- the session rail
+//
+// The strip above a media grid answers two questions and nothing else: which
+// set-up am I on, and what is it doing right now. It used to answer them in
+// five visual languages -- bootstrap outline buttons, a rounded pill, a bare
+// red glyph, an input-group and a bordered box -- across ~600px, so it wrapped
+// to two lines in a 440px panel and ate a row of pictures. One height, one
+// gap, one border treatment.
+//
+// Its own file rather than the foreground panel's: the Background Images,
+// Videos and Webs tabs carry the same rail, and a class defined in a
+// stylesheet only the foreground imports would have drawn them unstyled.
+
+// No padding of its own: the chips run to its border, exactly as the slide
+// show's own segmented pill does, so the two stand the same 20px and the rail
+// costs one short row. This panel is routinely dragged down to 200px, where
+// six pixels of chrome is a third of a row of pictures.
+.media-sessions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  background: rgba(var(--bs-info-rgb), 0.05);
+  border: 1px solid var(--app-line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.media-session {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  // One height for every chip, declared here rather than by each bar that
+  // holds the rail: the foreground panel lines its own controls up with it.
+  // 18px inside a 1px group border is the slide show pill's own 20px.
+  height: 18px;
+  max-width: 11rem;
+  padding: 0 6px;
+  font-size: 0.76rem;
+  line-height: 1;
+  color: inherit;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  opacity: 0.65;
+
+  > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    opacity: 1;
+    background: rgba(var(--bs-info-rgb), 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--bs-info);
+    outline-offset: -1px;
+  }
+}
+
+// The chip being worked on takes the surface the controls beside it sit on,
+// so the rail reads as belonging to THIS session -- a tab joined to its panel,
+// which is what it is.
+.media-session-on {
+  opacity: 1;
+  background: var(--app-surface);
+  border-color: rgba(var(--bs-info-rgb), 0.45);
+}
+
+.media-session-add {
+  padding: 0 5px;
+  opacity: 0.75;
+}
+
+// Rendered only on the active chip (see the component). Nothing here hides
+// it, so nothing here reserves width for something invisible.
+.media-session-menu {
+  opacity: 0.6;
+
+  &:hover {
+    opacity: 1;
+  }
+}

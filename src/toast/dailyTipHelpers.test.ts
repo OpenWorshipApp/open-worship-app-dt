@@ -54,7 +54,7 @@ describe('daily tip helpers', () => {
         expect(getDailyTips('presenter').map(({ demoId }) => demoId)).toEqual(
             PRESENTER_DEMO_IDS,
         );
-        expect(getDailyTips('presenter')).toHaveLength(61);
+        expect(getDailyTips('presenter')).toHaveLength(74);
         expect(getDailyTips('reader').map(({ demoId }) => demoId)).toEqual(
             READER_DEMO_IDS,
         );
@@ -83,6 +83,49 @@ describe('daily tip helpers', () => {
                 ).toBe('show');
             }
         }
+    });
+
+    // The browser searches title, detail and category, and a volunteer types
+    // the word ON THE BUTTON. Written with friendly titles alone, the lesson
+    // for the Countdown could not be found by searching "countdown" -- so each
+    // one names its own component somewhere a search can reach.
+    it('finds a foreground lesson by the name on its own launcher row', () => {
+        const tips = getDailyTips('presenter');
+        for (const name of [
+            'Marquee Top',
+            'Marquee Bottom',
+            'Quick Text',
+            'Countdown',
+            'Stopwatch',
+            'Time',
+            'Video Show',
+            'Image Show',
+            'Camera Show',
+            'Web Show',
+        ]) {
+            const found = tips.filter(({ title, detail, category }) => {
+                return [title, detail, category ?? '']
+                    .join(' ')
+                    .toLocaleLowerCase()
+                    .includes(name.toLocaleLowerCase());
+            });
+            expect(
+                found.map(({ demoId }) => demoId),
+                `no lesson names ${name}`,
+            ).not.toHaveLength(0);
+        }
+    });
+
+    it('files every foreground lesson under one heading', () => {
+        const foreground = getDailyTips('presenter').filter(({ demoId }) => {
+            return demoId.startsWith('presenter-foreground-');
+        });
+        expect(foreground).toHaveLength(15);
+        expect(
+            foreground.every(({ category }) => {
+                return category === 'Foreground overlays';
+            }),
+        ).toBe(true);
     });
 
     it('keeps disruptive View commands in All tips, not the daily rotation', () => {

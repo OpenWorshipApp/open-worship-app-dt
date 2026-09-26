@@ -14,6 +14,8 @@ import type { ScreenDrawEventType } from './ScreenDrawManager';
 import ScreenDrawManager from './ScreenDrawManager';
 import type { ScreenFocusEventType } from './ScreenFocusManager';
 import ScreenFocusManager from './ScreenFocusManager';
+import type { ScreenMaskEventType } from './ScreenMaskManager';
+import ScreenMaskManager from './ScreenMaskManager';
 import appProvider from '../../server/appProvider';
 import { type ListenerType } from '../../event/EventHandler';
 
@@ -119,6 +121,19 @@ export function useScreenFocusManagerEvents(
         events,
         ScreenFocusManager as any,
         screenFocusManager,
+        callback,
+    );
+}
+
+export function useScreenMaskManagerEvents(
+    events: ScreenMaskEventType[],
+    screenMaskManager?: ScreenMaskManager,
+    callback?: ListenerType<void>,
+) {
+    useScreenEvents(
+        events,
+        ScreenMaskManager as any,
+        screenMaskManager,
         callback,
     );
 }

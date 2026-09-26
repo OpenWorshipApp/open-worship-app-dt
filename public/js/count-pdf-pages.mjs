@@ -1,24 +1,24 @@
 'use strict';
 /* eslint-disable */
 
-import { readFileSync } from 'node:fs';
-import { PDFDocument } from 'mupdf';
+import { openPdfFile } from './pdf-stream.mjs';
+import { basename } from 'node:path';
 
-process.on('message', ({ filePath }) => {
+export function countPDFPages(filePath) {
+  let pdf;
   try {
-    console.log(`Counting PDF pages for ${filePath}`);
-    const doc = PDFDocument.openDocument(
-      readFileSync(filePath),
-      'application/pdf',
-    );
-    const count = doc.countPages();
-    process.send(count);
+    pdf = openPdfFile(filePath);
+    return pdf.document.countPages();
   } catch (error) {
     console.log('Error counting PDF pages:', error.message);
-    process.send(null);
+    return null;
+  } finally {
+    pdf?.close();
   }
-});
+}
 
-setInterval(() => {
-  console.log('"Count PDF pages" still alive', Date.now());
-}, 1e3);
+if (process.send && basename(process.argv[1] ?? '') === 'count-pdf-pages.mjs') {
+  process.on('message', ({ filePath }) => {
+    process.send(countPDFPages(filePath));
+  });
+}

@@ -237,6 +237,12 @@ export default function DailyTipComp() {
                                     <button
                                         key={listedTip.id}
                                         type="button"
+                                        // The row reads as its number, title,
+                                        // category and detail run together --
+                                        // a name no screen reader announces
+                                        // usefully and nothing can press by.
+                                        // The title is what the row IS.
+                                        aria-label={listedTip.title}
                                         className={
                                             'list-group-item list-group-item-action' +
                                             (index === tipIndex

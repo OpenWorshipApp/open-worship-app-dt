@@ -4,7 +4,7 @@
     "window": "appDocumentEditor.html",
     "focus": "appDocumentEditor",
     "description": "The Slide Editor: the canvas a slide document is built on, and the list of slides beside it.",
-    "updated": "2026-09-02",
+    "updated": "2026-09-25",
     "sections": [
         {
             "id": "slides",
@@ -269,6 +269,46 @@
                     "resources": {
                         "recipe": "W-28",
                         "find": "Background",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "blend-box",
+                    "text": "How do I blend a box with the one behind it?",
+                    "kind": "howto",
+                    "keywords": [
+                        "blend mode",
+                        "multiply",
+                        "screen blend",
+                        "overlay",
+                        "see through",
+                        "mix",
+                        "transparent picture",
+                        "drop the black out"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "Blend Mode",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "shadow-box",
+                    "text": "How do I put a shadow behind a box?",
+                    "kind": "howto",
+                    "keywords": [
+                        "shadow",
+                        "box shadow",
+                        "drop shadow",
+                        "glow",
+                        "blur",
+                        "lift off the background",
+                        "shadow behind the letters",
+                        "logo shadow"
+                    ],
+                    "resources": {
+                        "recipe": "W-15",
+                        "find": "Shadow",
                         "guide": true
                     }
                 }

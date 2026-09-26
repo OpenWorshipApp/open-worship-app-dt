@@ -25,7 +25,9 @@ import {
     useAnyItemSelected,
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
-import SlideAutoPlayComp from '../../slide-auto-play/SlideAutoPlayComp';
+import SlideAutoPlayComp, {
+    type NextDataType,
+} from '../../slide-auto-play/SlideAutoPlayComp';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import {
     DEFAULT_THUMBNAIL_SIZE_FACTOR,
@@ -55,6 +57,7 @@ import {
     useSlidesPreviewerScope,
     useThumbnailScaleSettingOptions,
 } from './slidesPreviewerScopeHelpers';
+import PdfConversionProgressComp from './PdfConversionProgressComp';
 
 const movingKeys: KeyboardType[] = [...allArrows, 'PageUp', 'PageDown', ' '];
 const eventMaps: EventMapperType[] = movingKeys.map((key) => {
@@ -80,6 +83,11 @@ function useVarySlidesData() {
         selectedVaryAppDocument,
     );
     const refresh = useCallback(async () => {
+        if (
+            PdfAppDocument.checkIsThisType(selectedVaryAppDocumentRef.current)
+        ) {
+            setVarySlide(undefined);
+        }
         attemptTimeout(async () => {
             const appDocument = selectedVaryAppDocumentRef.current;
             const newVarySlides = await appDocument.getSlides();
@@ -181,6 +189,7 @@ function useVarySlidesData() {
 
     return {
         varySlides,
+        filePath: selectedVaryAppDocument.filePath,
         startLoading: () => {
             setVarySlide(undefined);
         },
@@ -228,13 +237,16 @@ function NoSlidesToDisplayComp({
     );
 }
 
-function LoadingSlidesComp() {
+function LoadingSlidesComp({
+    pdfFilePath,
+}: Readonly<{ pdfFilePath: string | null }>) {
     return (
         <div
-            className="w-100 d-flex justify-content-center align-items-center"
-            style={{ height: '100px' }}
+            className="w-100 d-flex flex-column justify-content-center align-items-center p-3"
+            style={{ minHeight: '140px' }}
         >
             <LoadingComp />
+            <PdfConversionProgressComp filePath={pdfFilePath} />
         </div>
     );
 }
@@ -249,6 +261,7 @@ export default function VarySlidesComp() {
     const scopeRef = useAppCurrentRef(scope);
     const {
         varySlides,
+        filePath,
         startLoading,
         isPDFAppDocument,
         isPptxAppDocument,
@@ -262,13 +275,16 @@ export default function VarySlidesComp() {
         thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;
     const isAnyItemSelected = useAnyItemSelected(varySlides);
     const varySlidesRef = useAppCurrentRef(varySlides);
-    const handleNext = useCallback((data: { isNext: boolean }) => {
+    const handleNext = useCallback((data: NextDataType) => {
         if (!varySlidesRef.current) {
             return;
         }
-        handleNextItemSelecting({
+        // The answer ENDS the show when it is false: with "no repeat" the
+        // document has run out, and nothing else would stop the clock.
+        return handleNextItemSelecting({
             varySlides: varySlidesRef.current,
             isNext: data.isNext,
+            options: data.options,
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -308,7 +324,11 @@ export default function VarySlidesComp() {
     }, [varySlides]);
 
     if (varySlides === undefined) {
-        return <LoadingSlidesComp />;
+        return (
+            <LoadingSlidesComp
+                pdfFilePath={isPDFAppDocument ? filePath : null}
+            />
+        );
     }
     if (varySlides === null) {
         return (
@@ -362,7 +382,7 @@ export default function VarySlidesComp() {
         };
     }
     return (
-        <div className="w-100 pb-5">
+        <div className="w-100 slide-auto-play-host">
             <MissingFontFamilyBannerComp
                 missingFontFamilyList={missingFontFamilyList ?? []}
                 {...fontRefreshProps}

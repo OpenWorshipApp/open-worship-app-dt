@@ -3,11 +3,14 @@ import type { CSSProperties, MouseEvent } from 'react';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { tran } from '../../lang/langHelpers';
 import {
+    genHtmlForegroundMessage,
     genHtmlForegroundCountdown,
+    genHtmlForegroundImage,
     genHtmlForegroundMarquee,
     genHtmlForegroundQuickText,
     genHtmlForegroundStopwatch,
     genHtmlForegroundTime,
+    genHtmlForegroundVideo,
     genHtmlForegroundWeb,
 } from '../screenForegroundHelpers';
 import { getForegroundDataListOnScreenSetting } from '../screenHelpers';
@@ -19,6 +22,7 @@ import {
     persistOnScreenEntry,
 } from './onScreenSettingPersistHelpers';
 import type {
+    ForegroundMessageDataType,
     ForegroundDataType,
     BasicScreenMessageType,
     ScreenMessageType,
@@ -26,9 +30,11 @@ import type {
     MarqueePositionType,
     ForegroundCameraDataType,
     ForegroundCountdownDataType,
+    ForegroundImageDataType,
     ForegroundTimeDataType,
     ForegroundQuickTextDataType,
     ForegroundStopwatchDataType,
+    ForegroundVideoDataType,
     ForegroundWebDataType,
 } from '../screenTypeHelpers';
 import { DEFAULT_MARQUEE_SPEED_PERCENTAGE } from '../screenTypeHelpers';
@@ -38,9 +44,74 @@ import {
 } from '../../server/comparisonHelpers';
 import type { OptionalPromise } from '../../helper/typeHelpers';
 import type ScreenEffectManager from './ScreenEffectManager';
+import type { TransitionEffectType } from '../transitionEffectHelpers';
 import { getCameraAndShowMedia } from '../../helper/cameraHelpers';
 
 export type ScreenForegroundEventType = 'update';
+
+/**
+ * The id carried by the one item the panel's "show all in turn" button
+ * puts up. It stands for the WHOLE set rather than for any one editor, so
+ * it can never collide with an editor's own id.
+ */
+export const MESSAGE_ALL_ID = 'message-all';
+
+/**
+ * The session part of a single-slot overlay's datum, and NOTHING when there is
+ * no session to name.
+ *
+ * The Default session's id is the empty string, so writing it out would leave
+ * every ordinary datum carrying one more key than the one a restored screen
+ * reads back from disk -- and `checkAreObjectsEqual` counts keys, so the
+ * overlay would be torn down and rebuilt on the first update after a restore.
+ */
+function toSessionIdPart(sessionId?: string) {
+    return sessionId === undefined || sessionId === '' ? {} : { id: sessionId };
+}
+
+/**
+ * The messages on a screen, read out of a saved foreground entry.
+ *
+ * It also folds in everything this slot has been. `Alert` and `Announcements`
+ * shipped as separate widgets and were merged into one `messageData`; that in
+ * turn became a LIST, because a session holds several message editors and each
+ * one can be on a screen by itself. A screen that still has an older entry on
+ * disk keeps what it was showing -- a silently dropped one is a message the
+ * operator left up and cannot find to take down.
+ */
+function toMessageDataList(foregroundData: any): any[] {
+    const messageDataList = foregroundData['messageDataList'] ?? null;
+    if (Array.isArray(messageDataList)) {
+        return messageDataList;
+    }
+    const messageData = foregroundData['messageData'] ?? null;
+    if (messageData !== null) {
+        return [{ id: MESSAGE_ALL_ID, ...messageData }];
+    }
+    const alertData = foregroundData['alertData'] ?? null;
+    if (alertData !== null) {
+        return [
+            {
+                id: MESSAGE_ALL_ID,
+                textList: [alertData.text ?? ''],
+                intervalSecond: null,
+                extraStyle: alertData.extraStyle,
+            },
+        ];
+    }
+    const announcementData = foregroundData['announcementData'] ?? null;
+    if (announcementData !== null) {
+        return [
+            {
+                id: MESSAGE_ALL_ID,
+                textList: announcementData.textList ?? [],
+                intervalSecond: announcementData.intervalSecond ?? null,
+                extraStyle: announcementData.extraStyle,
+            },
+        ];
+    }
+    return [];
+}
 
 export default class ScreenForegroundManager extends ScreenEventHandler<ScreenForegroundEventType> {
     static readonly eventNamePrefix: string = 'screen-foreground-m';
@@ -72,6 +143,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.foregroundData =
             ScreenForegroundManager.parseAllForegroundData(foregroundData);
         this.rendererMap = new Map<string, (data: any) => void>([
+            ['messageDataList', this.renderMessage.bind(this)],
             ['countdownData', this.renderCountdown.bind(this)],
             ['stopwatchData', this.renderStopwatch.bind(this)],
             ['timeDataList', this.renderTime.bind(this)],
@@ -80,11 +152,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ['quickTextData', this.renderQuickText.bind(this)],
             ['cameraDataList', this.renderCamera.bind(this)],
             ['webDataList', this.renderWeb.bind(this)],
+            ['videoDataList', this.renderVideo.bind(this)],
+            ['imageDataList', this.renderImage.bind(this)],
         ]);
         this.setterMap = new Map<
             string,
             (data: any, isNoSyncGroup?: boolean) => void
         >([
+            ['messageDataList', this.setMessageDataList.bind(this)],
             ['countdownData', this.setCountdownData.bind(this)],
             ['stopwatchData', this.setStopwatchData.bind(this)],
             ['timeDataList', this.setTimeDataList.bind(this)],
@@ -93,11 +168,29 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ['quickTextData', this.setQuickTextData.bind(this)],
             ['cameraDataList', this.setCameraDataList.bind(this)],
             ['webDataList', this.setWebDataList.bind(this)],
+            ['videoDataList', this.setVideoDataList.bind(this)],
+            ['imageDataList', this.setImageDataList.bind(this)],
         ]);
     }
 
     get styleAnimFade() {
         return this.effectManager.styleAnimList.fade;
+    }
+
+    /**
+     * The animation ONE overlay comes in with.
+     *
+     * The media widgets each choose their own per session, so this reads the
+     * datum first; anything without a choice falls back to the layer's own
+     * effect, and that to `fade`, which is what every foreground item used to
+     * be hardcoded to.
+     */
+    styleAnimFor(data: { transitionEffect?: TransitionEffectType } | null) {
+        const chosen = data?.transitionEffect ?? this.effectManager.effectType;
+        return (
+            this.effectManager.styleAnimList[chosen] ??
+            this.effectManager.styleAnimList.fade
+        );
     }
 
     static parseAllForegroundData(foregroundData: any): ForegroundDataType {
@@ -122,6 +215,12 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                       dateTime: new Date(rawStopwatchData.dateTime),
                   };
         const newForegroundData = {
+            // Defaulted to `null` like every other slot, and that is
+            // load-bearing rather than tidiness: `isShowing` asks
+            // `data !== null` of every value, so a key left `undefined` by an
+            // older saved entry would report the foreground as showing for
+            // ever -- lighting the Clear Foreground button on an empty screen.
+            messageDataList: toMessageDataList(foregroundData),
             countdownData,
             stopwatchData,
             timeDataList: foregroundData['timeDataList'] ?? [],
@@ -130,6 +229,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             quickTextData: foregroundData['quickTextData'] ?? null,
             cameraDataList: foregroundData['cameraDataList'] ?? [],
             webDataList: foregroundData['webDataList'] ?? [],
+            videoDataList: foregroundData['videoDataList'] ?? [],
+            imageDataList: foregroundData['imageDataList'] ?? [],
         };
         return newForegroundData;
     }
@@ -164,6 +265,15 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         removeHandler();
     }
 
+    /**
+     * The wrapper a widget is mounted into. It is deliberately left UNSTYLED:
+     * a widget's `mix-blend-mode` blends with whatever is painted below it in
+     * the nearest ancestor STACKING CONTEXT, and the background, the slide and
+     * the bible view are only reachable while neither this div nor
+     * `#foreground` makes one. Giving it a `z-index`, `isolation`, `opacity`
+     * below 1, a `filter`, a `transform` or `will-change` would turn every
+     * blend mode into a silent no-op.
+     */
     createDivContainer(
         data: any,
         removingHandler?: (container: HTMLElement) => Promise<void> | void,
@@ -288,6 +398,71 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         }
     }
 
+    renderMessage(data: ForegroundMessageDataType) {
+        const { handleAdding, handleRemoving } = genHtmlForegroundMessage(
+            data,
+            this.styleAnimFade,
+        );
+        const divContainer = this.createDivContainer(data, handleRemoving);
+        handleAdding(divContainer!);
+    }
+    setMessageDataList(
+        dataList: ForegroundMessageDataType[],
+        isNoSyncGroup = false,
+    ) {
+        this.applyForegroundDataWithSyncGroup(
+            {
+                ...this.foregroundData,
+                messageDataList: dataList,
+            },
+            isNoSyncGroup,
+        );
+    }
+    /**
+     * Put one editor's message up, REPLACING whatever that same editor had on
+     * this screen. Keyed by id like `addTimeData`: editing a message that is
+     * already showing and pressing Show again must change that one rather than
+     * stack a second copy of it on the screen.
+     */
+    addMessageData(data: ForegroundMessageDataType, isNoSyncGroup = false) {
+        const existingData = this.foregroundData.messageDataList.find(
+            (item) => {
+                return item.id === data.id;
+            },
+        );
+        if (
+            existingData !== undefined &&
+            checkAreObjectsEqual(existingData, data)
+        ) {
+            return;
+        }
+        const dataList = existingData
+            ? this.foregroundData.messageDataList.map((item) => {
+                  return item.id === data.id ? data : item;
+              })
+            : [...this.foregroundData.messageDataList, data];
+        this.setMessageDataList(dataList, isNoSyncGroup);
+    }
+    removeMessageData(id: string, isNoSyncGroup = false) {
+        const dataList = this.foregroundData.messageDataList.filter((item) => {
+            return item.id !== id;
+        });
+        this.setMessageDataList(dataList, isNoSyncGroup);
+    }
+    static async addMessageData(
+        event: MouseEvent,
+        data: ForegroundMessageDataType,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                screenForegroundManager.addMessageData(data);
+            },
+            isForceChoosing,
+        );
+    }
+
     renderCountdown(data: ForegroundCountdownDataType) {
         const { handleAdding, handleRemoving } = genHtmlForegroundCountdown(
             data,
@@ -308,16 +483,25 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             isNoSyncGroup,
         );
     }
+    /**
+     * `sessionId` rides LAST and optional on purpose: the panel passes which of
+     * its sessions is putting this up, and everything else that starts a
+     * countdown -- a dropped run-sheet row, the assistant -- carries no session
+     * at all and must keep the call it already makes.
+     */
     static async setCountdown(
         event: MouseEvent,
         dateTime: Date | null,
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
+        sessionId?: string,
     ) {
         this.setData(
             event,
             (screenForegroundManager) => {
-                const data = dateTime ? { dateTime, extraStyle } : null;
+                const data = dateTime
+                    ? { ...toSessionIdPart(sessionId), dateTime, extraStyle }
+                    : null;
                 screenForegroundManager.setCountdownData(data);
             },
             isForceChoosing,
@@ -344,17 +528,25 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             isNoSyncGroup,
         );
     }
+    /** `sessionId` -- see `setCountdown`. */
     static async setStopwatch(
         event: MouseEvent,
         dateTime: Date | null,
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
+        sessionId?: string,
     ) {
         this.setData(
             event,
             (screenForegroundManager) => {
                 const stopwatchData =
-                    dateTime === null ? null : { dateTime, extraStyle };
+                    dateTime === null
+                        ? null
+                        : {
+                              ...toSessionIdPart(sessionId),
+                              dateTime,
+                              extraStyle,
+                          };
                 screenForegroundManager.setStopwatchData(stopwatchData);
             },
             isForceChoosing,
@@ -470,12 +662,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             isNoSyncGroup,
         );
     }
+    /** `sessionId` -- see `setCountdown`. */
     static async setMarqueeTop(
         event: MouseEvent,
         text: string | null,
         extraStyle: CSSProperties = {},
         speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
         isForceChoosing = false,
+        sessionId?: string,
     ) {
         this.setData(
             event,
@@ -483,18 +677,25 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 const marqueeTopData =
                     text === null
                         ? null
-                        : { text, speedPercentage, extraStyle };
+                        : {
+                              ...toSessionIdPart(sessionId),
+                              text,
+                              speedPercentage,
+                              extraStyle,
+                          };
                 screenForegroundManager.setMarqueeTopData(marqueeTopData);
             },
             isForceChoosing,
         );
     }
+    /** `sessionId` -- see `setCountdown`. */
     static async setMarqueeBottom(
         event: MouseEvent,
         text: string | null,
         extraStyle: CSSProperties = {},
         speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
         isForceChoosing = false,
+        sessionId?: string,
     ) {
         this.setData(
             event,
@@ -502,7 +703,12 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 const marqueeBottomData =
                     text === null
                         ? null
-                        : { text, speedPercentage, extraStyle };
+                        : {
+                              ...toSessionIdPart(sessionId),
+                              text,
+                              speedPercentage,
+                              extraStyle,
+                          };
                 screenForegroundManager.setMarqueeBottomData(marqueeBottomData);
             },
             isForceChoosing,
@@ -532,6 +738,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             isNoSyncGroup,
         );
     }
+    /** `sessionId` -- see `setCountdown`. */
     static async setQuickText(
         event: MouseEvent,
         htmlText: string | null,
@@ -539,6 +746,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         timeSecondToLive: number,
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
+        sessionId?: string,
     ) {
         this.setData(
             event,
@@ -547,6 +755,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                     htmlText === null
                         ? null
                         : {
+                              ...toSessionIdPart(sessionId),
                               htmlText,
                               timeSecondDelay,
                               timeSecondToLive,
@@ -569,7 +778,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             parentContainer: divContainer!,
             ...data,
         };
-        getCameraAndShowMedia(newData, this.styleAnimFade).then(
+        getCameraAndShowMedia(newData, this.styleAnimFor(data)).then(
             (clearTracks) => {
                 store.clearCameraTracks = clearTracks ?? (() => {});
             },
@@ -630,7 +839,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     renderWeb(data: ForegroundWebDataType) {
         const { handleAdding, handleRemoving } = genHtmlForegroundWeb(
             data,
-            this.styleAnimFade,
+            this.styleAnimFor(data),
             {
                 width: this.screenManagerBase.width,
                 height: this.screenManagerBase.height,
@@ -683,6 +892,126 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             event,
             (screenForegroundManager) => {
                 screenForegroundManager.removeWebData(data);
+            },
+            isForceChoosing,
+        );
+    }
+
+    renderVideo(data: ForegroundVideoDataType) {
+        const { handleAdding, handleRemoving } = genHtmlForegroundVideo(
+            data,
+            this.styleAnimFor(data),
+        );
+        const divContainer = this.createDivContainer(data, handleRemoving);
+        handleAdding(divContainer!);
+    }
+    setVideoDataList(
+        dataList: ForegroundVideoDataType[],
+        isNoSyncGroup = false,
+    ) {
+        this.applyForegroundDataWithSyncGroup(
+            {
+                ...this.foregroundData,
+                videoDataList: dataList,
+            },
+            isNoSyncGroup,
+        );
+    }
+    addVideoData(data: ForegroundVideoDataType, isNoSyncGroup = false) {
+        if (checkIsItemInArray(data, this.foregroundData.videoDataList)) {
+            return;
+        }
+        const dataList = [...this.foregroundData.videoDataList, data];
+        this.setVideoDataList(dataList, isNoSyncGroup);
+    }
+    removeVideoData(data: ForegroundVideoDataType, isNoSyncGroup = false) {
+        const dataList = this.foregroundData.videoDataList.filter((item) => {
+            return !checkAreObjectsEqual(item, data);
+        });
+        this.setVideoDataList(dataList, isNoSyncGroup);
+    }
+    static async addVideoData(
+        event: MouseEvent,
+        data: ForegroundVideoDataType,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                screenForegroundManager.addVideoData(data);
+            },
+            isForceChoosing,
+        );
+    }
+    static async removeVideoData(
+        event: MouseEvent,
+        data: ForegroundVideoDataType,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                screenForegroundManager.removeVideoData(data);
+            },
+            isForceChoosing,
+        );
+    }
+
+    renderImage(data: ForegroundImageDataType) {
+        const { handleAdding, handleRemoving } = genHtmlForegroundImage(
+            data,
+            this.styleAnimFor(data),
+        );
+        const divContainer = this.createDivContainer(data, handleRemoving);
+        handleAdding(divContainer!);
+    }
+    setImageDataList(
+        dataList: ForegroundImageDataType[],
+        isNoSyncGroup = false,
+    ) {
+        this.applyForegroundDataWithSyncGroup(
+            {
+                ...this.foregroundData,
+                imageDataList: dataList,
+            },
+            isNoSyncGroup,
+        );
+    }
+    addImageData(data: ForegroundImageDataType, isNoSyncGroup = false) {
+        if (checkIsItemInArray(data, this.foregroundData.imageDataList)) {
+            return;
+        }
+        const dataList = [...this.foregroundData.imageDataList, data];
+        this.setImageDataList(dataList, isNoSyncGroup);
+    }
+    removeImageData(data: ForegroundImageDataType, isNoSyncGroup = false) {
+        const dataList = this.foregroundData.imageDataList.filter((item) => {
+            return !checkAreObjectsEqual(item, data);
+        });
+        this.setImageDataList(dataList, isNoSyncGroup);
+    }
+    static async addImageData(
+        event: MouseEvent,
+        data: ForegroundImageDataType,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                screenForegroundManager.addImageData(data);
+            },
+            isForceChoosing,
+        );
+    }
+    static async removeImageData(
+        event: MouseEvent,
+        data: ForegroundImageDataType,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                screenForegroundManager.removeImageData(data);
             },
             isForceChoosing,
         );
@@ -773,6 +1102,11 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     get containerStyle(): CSSProperties {
         return {
             pointerEvents: 'none',
+            // `absolute`, NOT the stylesheet's `fixed`, and with no `z-index`:
+            // `position: fixed` makes a stacking context, which would cut every
+            // blended widget off from the layers underneath it (see
+            // `createDivContainer`). The px dimensions are the other reason --
+            // the same markup is mounted in the CSS-scaled mini preview.
             position: 'absolute',
             width: `${this.screenManagerBase.width}px`,
             height: `${this.screenManagerBase.height}px`,

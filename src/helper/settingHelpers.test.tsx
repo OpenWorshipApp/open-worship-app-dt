@@ -304,6 +304,32 @@ describe('helper settingHelpers', () => {
         expect(numericDefaultProbe.value).toBe(8);
     });
 
+    test('reads a fractional number setting back as it was written', async () => {
+        // The foreground Scale slider steps by 0.1, so `1.5` is an ordinary
+        // stored value. Read with `parseInt` it came back as `1` and the panel
+        // silently reset itself every time it remounted.
+        getItemMock.mockReturnValue('1.5');
+        const fractionProbe = await renderSettingHook(() => {
+            return useStateSettingNumber('scale-setting', 1);
+        });
+
+        expect(fractionProbe.value).toBe(1.5);
+
+        await fractionProbe.update(0.4);
+        expect(setItemMock).toHaveBeenLastCalledWith('scale-setting', '0.4');
+
+        await unmountRoot();
+
+        // Junk still falls back, and `Infinity` is junk here even though
+        // `parseFloat` is happy to return it.
+        getItemMock.mockReturnValue('Infinity');
+        const infiniteProbe = await renderSettingHook(() => {
+            return useStateSettingNumber('scale-setting', 2);
+        });
+
+        expect(infiniteProbe.value).toBe(2);
+    });
+
     test('adds the reader prefix only on reader pages', () => {
         expect(getSettingPrefix()).toBe('');
 

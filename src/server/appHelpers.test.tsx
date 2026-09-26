@@ -27,6 +27,8 @@ const {
     const sendData = vi.fn();
     const sendDataSync = vi.fn();
     const listenOnceForData = vi.fn();
+    const listenForData = vi.fn();
+    const removeListener = vi.fn();
     const copyToClipboard = vi.fn();
     const getYTHelper = vi.fn();
     const extraBinPaths = {
@@ -63,6 +65,8 @@ const {
                 sendData,
                 sendDataSync,
                 listenOnceForData,
+                listenForData,
+                removeListener,
             },
             ytUtils: {
                 getYTHelper,
@@ -289,6 +293,53 @@ describe('appHelpers', () => {
 
         await expect(module.electronSendAsync('main:app:test')).rejects.toThrow(
             'boom',
+        );
+    });
+
+    test('forwards progress and removes its listener after the reply', async () => {
+        const module = await loadModule();
+        const progressCallback = vi.fn();
+        let sendProgress:
+            ((event: unknown, value: unknown) => void) | undefined;
+        let sendReply: ((event: unknown, value: unknown) => void) | undefined;
+        appProviderMock.messageUtils.listenForData.mockImplementation(
+            (_name: string, callback: typeof sendProgress) => {
+                sendProgress = callback;
+            },
+        );
+        appProviderMock.messageUtils.listenOnceForData.mockImplementation(
+            (_name: string, callback: typeof sendReply) => {
+                sendReply = callback;
+            },
+        );
+
+        const promise = module.electronSendAsync(
+            'main:app:pdf-to-images',
+            { filePath: '/docs/sermon.pdf' },
+            progressCallback,
+        );
+        sendProgress?.({}, { completed: 12, total: 25 });
+        sendReply?.({}, { isSuccessful: true });
+
+        await expect(promise).resolves.toEqual({ isSuccessful: true });
+        expect(progressCallback).toHaveBeenCalledWith({
+            completed: 12,
+            total: 25,
+        });
+        expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
+            'main:app:pdf-to-images',
+            {
+                filePath: '/docs/sermon.pdf',
+                replyEventName: 'main:app:pdf-to-images-return-uuid-123',
+                progressEventName:
+                    'main:app:pdf-to-images-return-uuid-123-progress',
+            },
+        );
+        expect(
+            appProviderMock.messageUtils.removeListener,
+        ).toHaveBeenCalledWith(
+            'main:app:pdf-to-images-return-uuid-123-progress',
+            expect.any(Function),
         );
     });
 

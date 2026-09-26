@@ -116,6 +116,12 @@ function fade(prefix: string) {
         styleText,
         animIn: (targetElement: HTMLElement, parentElement: HTMLElement) => {
             return new Promise((resolve) => {
+                // What the element asked for before the fade borrowed its
+                // opacity. A foreground widget's Opacity slider writes it
+                // straight onto `style.opacity` through `extraStyle`, and
+                // restoring a flat `1` here put every widget back to fully
+                // opaque one second after it appeared.
+                const authoredOpacity = targetElement.style.opacity || '1';
                 parentElement.appendChild(targetElement);
                 Object.assign(targetElement.style, {
                     ...genCssProps(anim.duration),
@@ -131,7 +137,7 @@ function fade(prefix: string) {
                     }
                     Object.assign(targetElement.style, {
                         animationName: undefined,
-                        opacity: '1',
+                        opacity: authoredOpacity,
                     });
                     resolve();
                 }, anim.duration + ANIM_END_DELAY_MILLISECOND);

@@ -86,6 +86,45 @@ describe('the shared DOM matcher', () => {
     expect(dm.findBest(['Bible > Videos'])?.element?.id).toBe('wrong');
   });
 
+  it('tells a foreground tile from the background tile it is a copy of', () => {
+    // Every foreground component reuses the Background tabs' own file grid,
+    // so the same file name is on screen twice. The floating panel drew its
+    // name nowhere, so both tiles reported the Presenter pane BEHIND them as
+    // the panel they were in -- `owa_find_ui "clock"` rang both and no scope
+    // could separate them. The panel carries `data-widget-name` now.
+    document.body.innerHTML = [
+      '<div data-widget-name="Presenter">',
+      '<div data-widget-name="Web Show">',
+      '<button id="foreground">clock</button></div>',
+      '<div data-widget-name="Background">',
+      '<button id="background">clock</button></div>',
+      '</div>',
+    ].join('');
+    const dm = install();
+    expect(dm.describe(document.getElementById('foreground')).inPanel).toBe(
+      'Web Show',
+    );
+    expect(dm.describe(document.getElementById('background')).inPanel).toBe(
+      'Background',
+    );
+    expect(dm.findBest(['Web Show > clock'])?.element?.id).toBe('foreground');
+    expect(dm.findBest(['Background > clock'])?.element?.id).toBe('background');
+  });
+
+  it('presses the menu row that opens a panel, not the panel it opened', () => {
+    // A context menu row is a plain div with a role, and the foreground
+    // launcher names its rows exactly as the panels they open are named. Left
+    // off the control list the row lost every tie to the open panel, so
+    // "choose Video Show" could ring the panel instead of the row.
+    document.body.innerHTML = [
+      '<div data-widget-name="Video Show"><span>the open panel</span></div>',
+      '<div role="menu"><div id="row" role="menuitem" title="Video Show">',
+      'Video Show</div></div>',
+    ].join('');
+    const dm = install();
+    expect(dm.findBest(['Video Show'])?.element?.id).toBe('row');
+  });
+
   it('refuses a scope that is not on screen rather than guessing', () => {
     document.body.innerHTML = [
       '<div data-widget-name="Bible">',

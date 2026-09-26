@@ -90,6 +90,24 @@ export const dataDirectories: DataDirectoryType[] = [
         iconClassName: 'bi-globe2',
     },
     {
+        // The overlay clips and pictures the Foreground panel's Video Show and
+        // Image Show list -- kept apart from the backgrounds because they are
+        // a different kind of material, and listed here so the Path Settings
+        // page can re-aim them and the whole-data archive carries them. A
+        // folder of overlay clips can be large; its row unticks like the
+        // Background Videos one.
+        title: 'Foreground Images',
+        settingName: dirSourceSettingNames.FOREGROUND_IMAGE,
+        defaultDirName: defaultDataDirNames.FOREGROUND_IMAGE,
+        iconClassName: 'bi-images',
+    },
+    {
+        title: 'Foreground Videos',
+        settingName: dirSourceSettingNames.FOREGROUND_VIDEO,
+        defaultDirName: defaultDataDirNames.FOREGROUND_VIDEO,
+        iconClassName: 'bi-camera-reels',
+    },
+    {
         title: 'Bible Present',
         settingName: dirSourceSettingNames.BIBLE_PRESENT,
         defaultDirName: defaultDataDirNames.BIBLE_PRESENT,

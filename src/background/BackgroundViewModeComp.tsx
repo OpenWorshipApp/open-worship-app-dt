@@ -3,10 +3,16 @@ import { tran } from '../lang/langHelpers';
 
 export type BackgroundViewModeType = 'thumbnail' | 'list';
 
-// Keyed per dir source so Images/Videos/Webs keep independent view modes.
+// Keyed per dir source so Images/Videos/Webs keep independent view modes --
+// and, since a folder session suffixes that name, so does each session: the
+// folder of small logos is a list and the folder of photographs is a grid.
+export function toBackgroundViewModeSettingName(dirSourceSettingName: string) {
+    return `bg-view-mode-${dirSourceSettingName}`;
+}
+
 export function useBackgroundViewModeSetting(dirSourceSettingName: string) {
     return useStateSettingString<BackgroundViewModeType>(
-        `bg-view-mode-${dirSourceSettingName}`,
+        toBackgroundViewModeSettingName(dirSourceSettingName),
         'thumbnail',
     );
 }

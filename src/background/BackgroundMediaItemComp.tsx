@@ -9,11 +9,13 @@ import FileSource from '../helper/FileSource';
 import type { DragTypeEnum } from '../helper/DragInf';
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
-import { handleDragStart } from '../helper/dragHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import type { RenderChildType } from './backgroundHelpers';
-import { genBackgroundMediaItemData } from './backgroundHelpers';
+import type {
+    GenMediaItemDataType,
+    RenderChildType,
+} from './backgroundHelpers';
+import { genBackgroundMediaItemDataByFilePath } from './backgroundHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import BackgroundListItemComp from './BackgroundListItemComp';
 import type { BackgroundViewModeType } from './BackgroundViewModeComp';
@@ -52,6 +54,7 @@ function BackgroundMediaItemComp({
     thumbnailHeight,
     filePath,
     viewMode = 'thumbnail',
+    genItemData = genBackgroundMediaItemDataByFilePath,
 }: Readonly<{
     rendChild: RenderChildType;
     genExtraItemContextMenuItems: (filePath: string) => ContextMenuItemType[];
@@ -63,22 +66,32 @@ function BackgroundMediaItemComp({
     thumbnailHeight: number;
     filePath: string;
     viewMode?: BackgroundViewModeType;
+    /**
+     * Which LAYER this tile belongs to. Left out it is the background, which
+     * is what every Background tab wants; the Foreground panel's media widgets
+     * pass their own so this same windowed grid drives `#foreground`.
+     */
+    genItemData?: GenMediaItemDataType;
+    /**
+     * Deliberately NOT read in this body. It is here so `memo` can see that
+     * the layer changed: whether this file is on a screen is read from the
+     * screen managers below, which no prop ever carried, so without it React
+     * skipped the redraw and the grid went on marking the PREVIOUS item.
+     */
+    layerMarker?: string;
 }>) {
     const fileSource = FileSource.getInstance(filePath);
     const {
         selectedCN,
         title,
         handleSelecting,
+        handleDragStart,
         backgroundType,
         isInScreen,
         selectedBackgroundSrcList,
-    } = genBackgroundMediaItemData(
-        fileSource.fullName,
-        fileSource.src,
-        dragType,
-    );
+    } = genItemData(filePath, dragType);
     const fileSourceRef = useAppCurrentRef(fileSource);
-    const dragTypeRef = useAppCurrentRef(dragType);
+    const handleDragStartRef = useAppCurrentRef(handleDragStart);
     const handleMediaDragStart = useCallback((event: any) => {
         // An audio row holds a real <audio controls>; dragging its scrubber or
         // volume slider must stay a scrub, not start a file drag.
@@ -86,7 +99,7 @@ function BackgroundMediaItemComp({
             event.preventDefault();
             return;
         }
-        handleDragStart(event, fileSourceRef.current, dragTypeRef.current);
+        handleDragStartRef.current(event);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const filePathRef = useAppCurrentRef(filePath);

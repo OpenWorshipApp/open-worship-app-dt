@@ -4,6 +4,7 @@ import electron, {
     clipboard,
     type FileFilter,
     type IpcMain,
+    type IpcMainEvent,
     nativeTheme,
     shell,
     systemPreferences,
@@ -222,7 +223,7 @@ export function initEventListenerApp(appController: ElectronAppController) {
 function onAsync<T1, T2>(
     ipc: IpcMain,
     eventName: string,
-    callee: (data: T1) => OptionalPromise<T2>,
+    callee: (data: T1, event: IpcMainEvent) => OptionalPromise<T2>,
 ): void {
     ipc.on(eventName, async (event, data: T1) => {
         const replyEventName = (data as any)?.replyEventName;
@@ -235,7 +236,7 @@ function onAsync<T1, T2>(
         // The renderer rejects when the reply is an Error instance.
         let result: T2 | Error;
         try {
-            result = await callee(data);
+            result = await callee(data, event);
         } catch (error) {
             console.error(`${eventName}:`, error);
             result = error instanceof Error ? error : new Error(String(error));
@@ -582,13 +583,34 @@ export function initEventOther(appController: ElectronAppController) {
     onAsync(
         ipcMain,
         'main:app:pdf-to-images',
-        (data: { filePath: string; outDir: string; isForce: boolean }) => {
+        (
+            data: {
+                filePath: string;
+                outDir: string;
+                isForce: boolean;
+                progressEventName?: string;
+            },
+            event,
+        ) => {
             const mainDisplay = appController.settingManager.primaryDisplay;
             return pdfToImages(
                 data.filePath,
                 data.outDir,
                 mainDisplay.size.width,
                 data.isForce,
+                (completed, total) => {
+                    if (!data.progressEventName) {
+                        return;
+                    }
+                    try {
+                        event.sender.send(data.progressEventName, {
+                            completed,
+                            total,
+                        });
+                    } catch {
+                        // A closed renderer should not abort PDF conversion.
+                    }
+                },
             );
         },
     );

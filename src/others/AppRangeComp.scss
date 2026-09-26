@@ -34,3 +34,47 @@
     opacity: 0.85;
   }
 }
+
+// The control-strip shape used by the foreground Properties panel: the pill
+// comes off (its cell already has a row to sit in), the zoom buttons are gone
+// and the value becomes a box you can type in. Four of these stack into a
+// column, so the number is tabular and right-aligned -- a figure that changes
+// width while you drag is a figure you cannot read while you drag.
+.app-range-compact {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+
+  .form-range {
+    flex: 1 1 auto;
+    // Yields to the label: below this the track stops being draggable and
+    // the typed value is the way in.
+    min-width: 32px;
+    padding: 0;
+  }
+
+  .app-range-value {
+    flex: 0 0 auto;
+    width: 3.4rem;
+    padding: 1px 4px;
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: inherit;
+    background: rgba(var(--bs-info-rgb), 0.06);
+    border: 1px solid var(--app-line);
+    border-radius: 4px;
+
+    &:hover,
+    &:focus {
+      background: rgba(var(--bs-info-rgb), 0.14);
+      outline: none;
+      border-color: rgba(var(--bs-info-rgb), 0.55);
+    }
+  }
+}

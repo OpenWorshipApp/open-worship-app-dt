@@ -352,6 +352,10 @@ const dictionary = {
     'Reveal in Finder': 'បង្ហាញនៅក្នុង Finder',
     'Preview PDF': 'មើល PDF',
     'Refresh PDF Images': 'ផ្ទុករូបភាព PDF ជាថ្មី',
+    'Exporting PDF Images': 'កំពុងបម្លែងទំព័រ PDF ទៅជារូបភាព',
+    'Please wait while the PDF pages are being exported...':
+        'សូមរង់ចាំ ខណៈពេលទំព័រ PDF កំពុងត្រូវបានបម្លែងជារូបភាព...',
+    'Preparing PDF pages...': 'កំពុងរៀបចំទំព័រ PDF...',
     'Add New Screen': 'បន្ថែមអេក្រង់ថ្មី',
     'Refresh Preview': 'ផ្ទុកមើលជាមុន',
     'The application is started first time':
@@ -472,6 +476,7 @@ const dictionary = {
     'Add Action': 'បន្ថែមសកម្មភាព',
     'Apply on Screens': 'អនុវត្តនៅលើអេក្រង់',
     'Clear Screen': 'លុបអេក្រង់',
+    'Clear FG Messages': 'លុប FG សារ',
     'Clear FG Marquee Top': 'លុប FG អក្សររត់ខាងលើ',
     'Clear FG Marquee Bottom': 'លុប FG អក្សររត់ខាងក្រោម',
     'Clear FG Quick Text': 'លុប FG អត្ថបទរហ័ស',
@@ -593,7 +598,6 @@ const dictionary = {
     'Auto Play Audio AI when available': 'លេងសំលេង AI ដោយស្វ័យប្រវត្តិនៅពេលមាន',
     'Backdrop Filter (PX):': 'Backdrop Filter (PX):',
     'Background Color:': 'ពណ៌ផ្ទៃខាងក្រោយ:',
-    'Background Images Slide Show': 'ការបង្ហាញស្លាយរូបភាពផ្ទៃខាងក្រោយ',
     'Bible key': 'កូនសោរព្រះគម្ពីរ',
     'Bible Lookup': 'ស្វែងរកព្រះគម្ពីរ',
     'Camera Show': 'បង្ហាញកាមេរ៉ា',
@@ -606,6 +610,33 @@ const dictionary = {
     'Clear Cache': 'លុប Cache',
     'Clear Color Note': 'លុបកំណត់សម្គាល់ពណ៌',
     'Clear Foreground': 'លុបផ្ទៃខាងមុខ',
+    // --- Messages and Mask ---
+    Messages: 'សារ',
+    'Show All Messages': 'បង្ហាញសារទាំងអស់',
+    'Hide Messages': 'លាក់សារ',
+    Message: 'សារ',
+    'Add Message': 'បន្ថែមសារ',
+    'Type a message': 'វាយសារនៅទីនេះ',
+    'No message yet': 'មិនទាន់មានសារនៅឡើយ',
+    'Show Message': 'បង្ហាញសារ',
+    'Hide Message': 'លាក់សារ',
+    'Remove Message': 'ដកសារចេញ',
+    Rotate: 'ផ្លាស់ប្តូរ',
+    'Show each message in turn': 'បង្ហាញសារនីមួយៗតាមវេន',
+    'Seconds each message stays before the next':
+        'វិនាទីដែលសារនីមួយៗបង្ហាញមុនបន្ទាប់',
+    'Tick a screen first, then press the key again':
+        'ជ្រើសរើសអេក្រង់ជាមុនសិន រួចចុចគ្រាប់ចុចម្តងទៀត',
+    Mask: 'របាំង',
+    'Cover from the top': 'បិទបាំងពីខាងលើ',
+    'Cover from the bottom': 'បិទបាំងពីខាងក្រោម',
+    'Cover from the left': 'បិទបាំងពីខាងឆ្វេង',
+    'Cover from the right': 'បិទបាំងពីខាងស្តាំ',
+    'Mask color': 'ពណ៌របាំង',
+    'Remove Mask': 'ដកចេញរបាំង',
+    'Clear All does not remove the mask': 'លុបទាំងអស់ មិនដកចេញរបាំងទេ',
+    'Cover the edges the projector overshoots':
+        'បិទបាំងគែមដែលម៉ាស៊ីនបញ្ចាំងលើស',
     'Clear Slide': 'លុបស្លាយ',
     Clear: 'លុប',
     'Click to change Stage Number': 'ចុចដើម្បីផ្លាស់ប្តូរលេខដំណាក់កាល',
@@ -780,6 +811,7 @@ const dictionary = {
     Strip: 'ដកចេញ',
     System: 'ប្រព័ន្ធ',
     'Text Color:': 'ពណ៌អក្សរ:',
+    'Text Color': 'ពណ៌អក្សរ',
     Theme: 'ស្បែក',
     'There is no parent directory selected': 'មិនមានថតមេត្រូវបានជ្រើសរើសទេ',
     'This will change all Slides': 'នេះនឹងផ្លាស់ប្តូរស្លាយទាំងអស់',
@@ -836,11 +868,14 @@ const dictionary = {
         'តើអ្នកពិតជាចង់អនុវត្តវិមាត្រនេះទៅកាន់ស្លាយទាំងអស់ឬ?',
     Auto: 'ស្វ័យប្រវត្តិ',
     'Backdrop Filter': 'តម្រងផ្ទៃខាងក្រោយ',
+    Blur: 'ព្រិល',
     'Camera Error': 'កំហុសកាមេរ៉ា',
     City: 'ទីក្រុង',
     Collapse: 'បង្រួម',
     'Corner radius in pixels (0 to use %)':
         'កាំជ្រុងគិតជាភីកសែល (0 ដើម្បីប្រើ %)',
+    'Countdown Date': 'កាលបរិច្ឆេទរាប់ថយក្រោយ',
+    'Countdown Time': 'ម៉ោងរាប់ថយក្រោយ',
     'Count down for a duration': 'រាប់ថយក្រោយតាមរយៈពេល',
     'Count down to a specific date & time':
         'រាប់ថយក្រោយទៅកាន់ថ្ងៃ និងម៉ោងជាក់លាក់',
@@ -1784,6 +1819,49 @@ const dictionary = {
     'Open foreground controls': 'បើកការគ្រប់គ្រងផ្ទៃខាងមុខ',
     'Reach countdowns, clocks, marquees, and quick text.':
         'ប្រើការរាប់ថយក្រោយ នាឡិកា អក្សររត់ និងអត្ថបទរហ័ស។',
+    'Foreground overlays': 'ស្រទាប់ផ្ទៃខាងមុខ',
+    'Count down to the start of a service':
+        'រាប់ថយក្រោយទៅកាន់ពេលចាប់ផ្តើមពិធីថ្វាយបង្គំ',
+    'Countdown counts a number of minutes, or down to a time on the clock.':
+        'Countdown រាប់ថយក្រោយតាមចំនួននាទី ឬទៅកាន់ម៉ោងជាក់លាក់។',
+    'Time how long something is running': 'កត់ត្រារយៈពេលដែលកំពុងដំណើរការ',
+    'Stopwatch counts up from zero on the audience screen.':
+        'Stopwatch រាប់ឡើងពីសូន្យនៅលើអេក្រង់អ្នកទស្សនា។',
+    'Show the time on the audience screen': 'បង្ហាញម៉ោងនៅលើអេក្រង់អ្នកទស្សនា',
+    'Time puts one clock up, or several for different cities.':
+        'Time បង្ហាញនាឡិកាមួយ ឬច្រើនសម្រាប់ទីក្រុងផ្សេងៗ។',
+    'Scroll a line of text across the top': 'រំកិលអត្ថបទមួយជួរនៅផ្នែកខាងលើ',
+    'Marquee Top is a moving notice above everything else on the screen.':
+        'Marquee Top គឺជាសារមានចលនានៅពីលើអ្វីៗទាំងអស់នៅលើអេក្រង់។',
+    'Scroll a line of text across the bottom':
+        'រំកិលអត្ថបទមួយជួរនៅផ្នែកខាងក្រោម',
+    'Marquee Bottom is the same moving notice, along the foot of the screen.':
+        'Marquee Bottom គឺជាសារមានចលនាដដែល នៅផ្នែកខាងក្រោមអេក្រង់។',
+    'Put a short message up for a moment': 'បង្ហាញសារខ្លីមួយក្នុងរយៈពេលខ្លី',
+    'Quick Text puts a few words up that go again by themselves.':
+        'Quick Text បង្ហាញពាក្យពីរបី ដែលបាត់ទៅវិញដោយខ្លួនឯង។',
+    'Play a clip over the slide': 'ចាក់វីដេអូពីលើស្លាយ',
+    'Video Show plays a clip above the background, the slide and the passage.':
+        'Video Show ចាក់វីដេអូនៅពីលើផ្ទៃខាងក្រោយ ស្លាយ និងខគម្ពីរ។',
+    'Lay a picture over the slide': 'ដាក់រូបភាពពីលើស្លាយ',
+    'Image Show lays a logo, a frame or an announcement above everything else.':
+        'Image Show ដាក់ឡូហ្គោ ស៊ុម ឬសេចក្តីជូនដំណឹងនៅពីលើអ្វីៗទាំងអស់។',
+    'Show a camera over the slide': 'បង្ហាញកាមេរ៉ាពីលើស្លាយ',
+    'Camera Show puts a live camera picture above the slide, not behind it.':
+        'Camera Show ដាក់រូបភាពកាមេរ៉ាផ្ទាល់នៅពីលើស្លាយ មិនមែននៅពីក្រោយទេ។',
+    'Show a web page over the slide': 'បង្ហាញទំព័របណ្តាញពីលើស្លាយ',
+    'Web Show puts a page or a small web file above the slide.':
+        'Web Show ដាក់ទំព័របណ្តាញ ឬឯកសារបណ្តាញតូចនៅពីលើស្លាយ។',
+    'Place and size a foreground item': 'កំណត់ទីតាំង និងទំហំធាតុផ្ទៃខាងមុខ',
+    'Use Properties for position, size, opacity and blending.':
+        'ប្រើផ្ទាំងលក្ខណសម្បត្តិសម្រាប់ទីតាំង ទំហំ ភាពថ្លា និងការលាយពណ៌។',
+    'Keep the lines you use every week':
+        'រក្សាទុកអត្ថបទដែលអ្នកប្រើរៀងរាល់សប្តាហ៍',
+    'Save named sessions inside a foreground component.':
+        'រក្សាទុកវគ្គដែលមានឈ្មោះនៅក្នុងធាតុផ្ទៃខាងមុខ។',
+    'Take a foreground item back off': 'ដកធាតុផ្ទៃខាងមុខចេញវិញ',
+    'Hide one component, or clear the whole foreground layer.':
+        'លាក់ធាតុមួយ ឬសម្អាតស្រទាប់ផ្ទៃខាងមុខទាំងមូល។',
     'Open background colors': 'បើកពណ៌ផ្ទៃខាងក្រោយ',
     'Choose a solid color for the selected audience screens.':
         'ជ្រើសពណ៌តែមួយសម្រាប់អេក្រង់អ្នកទស្សនាដែលបានជ្រើស។',
@@ -2082,6 +2160,129 @@ const dictionary = {
     'Restore every Reader panel layout': 'ស្ដារប្លង់ផ្ទាំងអ្នកអានទាំងអស់',
     'Use View > Reset Widgets Size to restore defaults and reopen collapsed panels after confirmation.':
         'ប្រើ មើល > កំណត់ទំហំធាតុក្រាហ្វិកឡើងវិញ ដើម្បីស្ដារលំនាំដើម និងបើកផ្ទាំងដែលបានបង្រួម បន្ទាប់ពីបញ្ជាក់។',
+    // --- Foreground media widgets and the blend-mode picker (2026-09-24).
+    // The blend names are the compositing senses: `Screen Blend` rather than
+    // `Screen`, which is the projector, and `Value` for CSS `luminosity`.
+    'Video Show': 'បង្ហាញវីដេអូ',
+    'Image Show': 'បង្ហាញរូបភាព',
+    'Hide Video': 'លាក់វីដេអូ',
+    'Hide Image': 'លាក់រូបភាព',
+    'Clear FG Video Show': 'សម្អាតការបង្ហាញវីដេអូខាងមុខ',
+    'Clear FG Image Show': 'សម្អាតការបង្ហាញរូបភាពខាងមុខ',
+    'Foreground Videos': 'វីដេអូខាងមុខ',
+    'Foreground Images': 'រូបភាពខាងមុខ',
+    'Blend Mode': 'របៀបលាយ',
+    'Blends this box with the items under it':
+        'លាយប្រអប់នេះជាមួយធាតុនៅខាងក្រោម',
+    Darker: 'ងងឹតជាង',
+    Darken: 'ធ្វើឱ្យងងឹត',
+    Multiply: 'គុណ',
+    'Color Burn': 'ដុតពណ៌',
+    Brighter: 'ភ្លឺជាង',
+    Lighten: 'ធ្វើឱ្យភ្លឺ',
+    'Screen Blend': 'លាយបែបស្គ្រីន',
+    'Color Dodge': 'បំភ្លឺពណ៌',
+    Add: 'បូក',
+    'Stronger Contrast': 'កម្រិតពណ៌ខ្លាំងជាង',
+    Overlay: 'ត្រួតលើ',
+    'Soft Light': 'ពន្លឺទន់',
+    'Hard Light': 'ពន្លឺរឹង',
+    Compare: 'ប្រៀបធៀប',
+    Difference: 'ភាពខុសគ្នា',
+    Exclusion: 'ការដកចេញ',
+    'Color Parts': 'ផ្នែកនៃពណ៌',
+    Hue: 'ពណ៌លាំៗ',
+    Saturation: 'ភាពតិត្ថិភាព',
+    Value: 'តម្លៃពន្លឺ',
+    // --- Canvas item shadow (2026-09-25): a box shadow is the shadow of the
+    // RECTANGLE, a drop shadow the shadow of what is painted -- the letters of
+    // a box with no backing, or a picture with a see-through edge.
+    'No Shadow': 'គ្មានស្រមោល',
+    'Box Shadow': 'ស្រមោលប្រអប់',
+    'Drop Shadow': 'ស្រមោលតាមរូបរាង',
+    'A box shadow follows the box, a drop shadow the letters or picture':
+        'ស្រមោលប្រអប់ដើរតាមប្រអប់ ស្រមោលតាមរូបរាងដើរតាមអក្សរ ឬរូបភាព',
+    'Shadow Offset X': 'ចម្ងាយស្រមោល X',
+    'Shadow Offset Y': 'ចម្ងាយស្រមោល Y',
+    'Shadow Blur': 'ភាពព្រិលនៃស្រមោល',
+    'Blur:': 'ព្រិល៖',
+    // --- Foreground media sessions: one saved set-up (folder, Properties,
+    // slide show) per session, several per widget.
+    Session: 'វគ្គ',
+    'Add Session': 'បន្ថែមវគ្គ',
+    'Please stop the audio before switching session.':
+        'សូមបញ្ចប់សំឡេង មុននឹងប្តូរវគ្គ។',
+    'Rename Session': 'ប្តូរឈ្មោះវគ្គ',
+    'Remove Session': 'លុបវគ្គ',
+    'Always on Top': 'នៅលើគេជានិច្ច',
+    'Z-Index': 'លំដាប់ស្រទាប់',
+    'Slide show is running': 'ការបង្ហាញស្លាយកំពុងដំណើរការ',
+    'Slide Show': 'ការបង្ហាញស្លាយ',
+    'Start Slide Show': 'ចាប់ផ្តើមការបង្ហាញស្លាយ',
+    'Stop Slide Show': 'បញ្ឈប់ការបង្ហាញស្លាយ',
+    'Slide Show Options': 'ជម្រើសការបង្ហាញស្លាយ',
+    'Close Slide Show Options': 'បិទជម្រើសការបង្ហាញស្លាយ',
+    'Repeat All': 'ធ្វើម្តងទៀតទាំងអស់',
+    'Jumping Step': 'ចំនួនលោតម្តង',
+    Step: 'ជំហាន',
+    'Random Up To': 'ចៃដន្យរឫូតដល់',
+    'Random Up To Seconds': 'ចៃដន្យរឫូតដល់វិនាទី',
+    'A New Wait Is Drawn For Each Slide':
+        'ចៃដន្យពេលរង់ចាំថ្មីសម្រាប់ស្លាយនីមួយៗ',
+    'The Wait Drawn For This Slide': 'ពេលរង់ចាំដែលចៃដន្យសម្រាប់ស្លាយនេះ',
+    'Wait Until The Video Ends': 'រង់ចាំរឫូតដល់វីដេអូចប់',
+    'Next When The Video Ends': 'បន្ទាប់នៅពេលវីដេអូចប់',
+    'How Long This Video Runs': 'រយៈពេលរបស់វីដេអូនេះ',
+    'Next In': 'បន្ទាប់ក្នុងរយៈពេល',
+    'Play With Sound': 'ចាក់ជាមួយសំលេង',
+    'Hide Slide Show Controls': 'លាក់ប៊ូតុងបញ្ជាការបង្ហាញស្លាយ',
+    'On Screen': 'លើអេក្រង់',
+    // --- Foreground properties: the 3x3 position pad replaces two rows of
+    // align buttons, so each cell needs a name of its own.
+    'Top left': 'ឆ្វេងខាងលើ',
+    'Top center': 'កណ្តាលខាងលើ',
+    'Top right': 'ស្តាំខាងលើ',
+    'Middle left': 'ឆ្វេងកណ្តាល',
+    'Middle center': 'កណ្តាលពិត',
+    'Middle right': 'ស្តាំកណ្តាល',
+    'Bottom left': 'ឆ្វេងខាងក្រោម',
+    'Bottom center': 'កណ្តាលខាងក្រោម',
+    'Bottom right': 'ស្តាំខាងក្រោម',
+    Position: 'ទីតាំង',
+    Round: 'ជ្រុងមូល',
+    'No Transition': 'គ្មានការផ្លាស់ប្តូរ',
+    Fade: 'រសាត់',
+    'Slide In': 'រុញចូល',
+    // --- Foreground Effects: the frame, the shadow, the room around the
+    // words and how they are set. One fold under the Properties rows.
+    Effects: 'ការតុបតែង',
+    Border: 'ស៊ុម',
+    'Border Width': 'កម្រាស់ស៊ុម',
+    'Border Color': 'ពណ៌ស៊ុម',
+    'Shadow Color': 'ពណ៌ស្រមោល',
+    Padding: 'ចន្លោះខាងក្នុង',
+    'Space inside the box, in text sizes': 'ចន្លោះខាងក្នុងប្រអប់ តាមទំហំអក្សរ',
+    'Text Align': 'ការតម្រឹមអក្សរ',
+    'Line Height': 'កម្ពស់ជួរ',
+    '0 keeps the screen line spacing': '0 រក្សាចន្លោះជួរដើមរបស់អេក្រង់',
+    'Letter Spacing': 'ចន្លោះតួអក្សរ',
+    'Text Shadow Color': 'ពណ៌ស្រមោលអក្សរ',
+    'Makes words readable over a picture or a video':
+        'ធ្វើឱ្យអក្សរអានបានច្បាស់លើរូបភាព ឬវីដេអូ',
+    'Text Style': 'រចនាបថអក្សរ',
+    Italic: 'អក្សរទ្រេត',
+    Underline: 'គូសបន្ទាត់ក្រោម',
+    Uppercase: 'អក្សរធំ',
+    None: 'គ្មាន',
+    Solid: 'បន្ទាត់ពេញ',
+    Dashed: 'បន្ទាត់ដាច់ៗ',
+    Dotted: 'បន្ទាត់ចុចៗ',
+    Double: 'បន្ទាត់ទ្វេ',
+    Soft: 'ស្រាល',
+    Medium: 'មធ្យម',
+    Strong: 'ខ្លាំង',
+    Glow: 'ពន្លឺរស្មី',
+    Outline: 'គែមអក្សរ',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

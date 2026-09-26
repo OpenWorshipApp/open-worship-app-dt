@@ -1,49 +1,14 @@
-import type { ChangeEvent } from 'react';
-
 import { tran } from '../../../lang/langHelpers';
 import { useCanvasItemPropsSetterContext } from '../CanvasItem';
 import { normalizeDegrees } from '../box/boxEditorHelpers';
-
-function PositionSizeFieldComp({
-    name,
-    title,
-    value,
-    unit = 'px',
-    onChange,
-}: Readonly<{
-    name: string;
-    title?: string;
-    value: number;
-    unit?: string;
-    onChange: (value: number) => void;
-}>) {
-    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const newValue = Number.parseFloat(event.target.value);
-        if (!Number.isNaN(newValue)) {
-            onChange(newValue);
-        }
-    };
-    return (
-        <div className="d-flex input-group input-group-sm" title={title}>
-            {/* Axis/dimension abbreviations are universal — not translated. */}
-            <div className="input-group-text">{name}</div>
-            <input
-                className="form-control form-control-sm"
-                type="number"
-                value={Math.round(value)}
-                onChange={handleChange}
-            />
-            <div className="input-group-text">{unit}</div>
-        </div>
-    );
-}
+import BoxNumberFieldComp from './BoxNumberFieldComp';
 
 export default function BoxPositionSizeComp() {
     const [props, setProps] = useCanvasItemPropsSetterContext();
     return (
         <div className="d-flex flex-column gap-1" style={{ maxWidth: '280px' }}>
             <div className="d-flex gap-1">
-                <PositionSizeFieldComp
+                <BoxNumberFieldComp
                     name="X:"
                     title={tran('Left')}
                     value={props.left}
@@ -51,7 +16,7 @@ export default function BoxPositionSizeComp() {
                         setProps({ left: value });
                     }}
                 />
-                <PositionSizeFieldComp
+                <BoxNumberFieldComp
                     name="Y:"
                     title={tran('Top')}
                     value={props.top}
@@ -61,7 +26,7 @@ export default function BoxPositionSizeComp() {
                 />
             </div>
             <div className="d-flex gap-1">
-                <PositionSizeFieldComp
+                <BoxNumberFieldComp
                     name="W:"
                     title={tran('Width')}
                     value={props.width}
@@ -69,7 +34,7 @@ export default function BoxPositionSizeComp() {
                         setProps({ width: Math.max(1, value) });
                     }}
                 />
-                <PositionSizeFieldComp
+                <BoxNumberFieldComp
                     name="H:"
                     title={tran('Height')}
                     value={props.height}
@@ -79,7 +44,7 @@ export default function BoxPositionSizeComp() {
                 />
             </div>
             <div className="d-flex gap-1">
-                <PositionSizeFieldComp
+                <BoxNumberFieldComp
                     name={tran('Rotate:')}
                     value={props.rotate}
                     unit="deg"

@@ -1,0 +1,298 @@
+@use '../others/variables.scss' as *;
+
+.presenter-foreground {
+  overflow-y: auto;
+}
+
+// The session strip and the Properties toggle of Video / Image / Web Show.
+// They stay put while the file grid under them scrolls: picking a folder,
+// switching session or adjusting the blend must not mean scrolling back up.
+// `--app-surface` rather than a transparent bar because the tiles pass UNDER
+// it. No inner scroll of its own: a component now has a panel to itself, and
+// a nested scrollbar hid the very session strip this bar exists to keep in
+// reach -- an opened Properties is the operator's own choice, and collapsing
+// it gives the list back.
+.foreground-media-bar {
+  position: sticky;
+  top: 0;
+  // Above the tiles, which carry their own `z-index: 2` screen-id overlays --
+  // at an equal z-index the later sibling wins and the file list painted
+  // straight through the Properties controls.
+  z-index: 10;
+  background-color: var(--app-surface);
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--app-line);
+}
+
+// The body of a media widget carries NO padding of its own: the sticky bar
+// above has to reach the very top of the scrollport, and `top: 0` sticks to
+// the padding box -- any padding there leaves a strip of tiles scrolling
+// above the bar. The list below pads itself instead.
+.foreground-media-body {
+  padding: 0 !important;
+  // Fill the panel even when the folder is empty or holds two files, so the
+  // drop target and the empty-folder message cover the panel the operator is
+  // looking at rather than a strip at the top of it.
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.foreground-media-list {
+  padding: 0.5rem;
+  flex: 1 1 auto;
+  // A flex child's floor is its content, so without this the windowed grid's
+  // own height wins and the panel grows a second scrollbar.
+  min-height: 0;
+}
+
+// ----------------------------------------------------------- the body
+//
+// Everything under the Properties strip: type the words, set the time, then
+// put it on the wall. It used to speak four dialects in one panel -- a teal
+// outline button, a green one, a grey one and a solid blue one, separated by
+// `<hr>` rules worth 32px each and wrapped in bordered cards inside a bordered
+// panel. The strip above it had already stopped doing that.
+//
+// The rule here is the one a playout desk follows: everything is quiet except
+// the control that takes something to air, and what IS on air is shown beside
+// it. So exactly one control per widget stays solid and coloured, and it is
+// always the one that reaches a projector.
+
+.fg-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  // Replaces an `<hr>`: the same separation for 8px instead of 32, and the
+  // hairline matches the one closing the strip rather than Bootstrap's.
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--app-line);
+}
+
+// Every control in the body that is NOT the one going to a screen. Same shape
+// as the strip's boxes, so Save, Saved and Today's Date stop being three
+// different colours competing with the one button that matters.
+.fg-quiet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  font-size: 0.76rem;
+  line-height: 1;
+  color: inherit;
+  background: rgba(var(--bs-info-rgb), 0.06);
+  border: 1px solid var(--app-line);
+  border-radius: 6px;
+
+  > i {
+    opacity: 0.75;
+  }
+
+  &:hover:not(:disabled) {
+    background: rgba(var(--bs-info-rgb), 0.14);
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--bs-info);
+    outline-offset: 1px;
+  }
+}
+
+// The take row. No surface and no card -- the button being the only solid
+// thing in the panel is the emphasis, and a box around it would be a second
+// way of saying the same thing.
+//
+// And no rule above it either: a line drawn here sat between a button and the
+// fields it acts on, which is the one place it does NOT belong. The countdown
+// showed this plainly -- two modes, and the separator fell inside each of
+// them instead of between the two. Lines go between GROUPS (below).
+.fg-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+// What is on a screen RIGHT NOW, beside the control that put it there --
+// which is where an operator looks when they need it gone. It was a bordered
+// box below, holding one full-size grey button per screen.
+.fg-onscreen {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+// Taking something off a screen is the one destructive press here, so it
+// answers in warning colour rather than in the strip's cyan -- but only on
+// hover, because at rest this row's job is to REPORT.
+.fg-hide {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 4px 0 8px;
+  font-size: 0.76rem;
+  line-height: 1;
+  color: inherit;
+  background: rgba(var(--bs-warning-rgb), 0.08);
+  border: 1px solid rgba(var(--bs-warning-rgb), 0.35);
+  border-radius: 6px;
+
+  &:hover {
+    color: var(--bs-warning);
+    background: rgba(var(--bs-warning-rgb), 0.18);
+    border-color: rgba(var(--bs-warning-rgb), 0.7);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--bs-warning);
+    outline-offset: 1px;
+  }
+}
+
+// A caption that names a group of rows, where the group used to be a card
+// with a border and a heading. The words do the work the border was doing.
+.fg-group-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  opacity: 0.65;
+}
+
+// The text editors. The floating label repeated the panel's own title, and
+// Bootstrap's floating shell reserves a row of height to hold it.
+.fg-text-editor {
+  width: 100%;
+  min-height: 96px;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  color: var(--bs-body-color);
+  background: var(--bs-body-bg);
+  border: 1px solid var(--app-line);
+  border-radius: 6px;
+  resize: vertical;
+
+  &:hover,
+  &:focus {
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+    outline: none;
+  }
+}
+
+// The strip's row grid, borrowed by a widget body for its own numbers. The
+// body already carries a separator, so this one drops the strip's.
+.fg-props-tail-plain {
+  padding-top: 0;
+  border-top: none;
+}
+
+// A named group of controls, where there used to be a bordered card with a
+// heading inside an already-bordered panel. The caption names it and the
+// spacing groups it; nothing needs to draw a box.
+.fg-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// Two ways of doing the same job -- a countdown to a clock time and a
+// countdown of so many minutes -- are alternatives, and this is the line that
+// says so. It is the only rule inside a widget body.
+.fg-group + .fg-group {
+  padding-top: 8px;
+  border-top: 1px solid var(--app-line);
+}
+
+.fg-fields {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+// One value with its icon and its unit, as a single box.
+//
+// It replaces Bootstrap's `input-group`, which spent a bordered segment per
+// PART -- an icon box, a word box, the field, a unit box: four borders and
+// ~38px of height to ask for a number of minutes, at a width hardcoded in the
+// markup (220px, 130px) so it could not answer to the panel it was in.
+.fg-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  margin: 0;
+  padding: 0 6px;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: inherit;
+  background: rgba(var(--bs-info-rgb), 0.06);
+  border: 1px solid var(--app-line);
+  border-radius: 6px;
+
+  > i {
+    opacity: 0.7;
+  }
+
+  &:focus-within {
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+  }
+
+  // The inner control has no box of its own -- the label around it is the
+  // box, which is what makes a `date` and a number look like one family.
+  //
+  // A checkbox is EXEMPT, and that is not a detail: a switch IS its box, so
+  // stripping the background and the border off it left the AM/PM toggle
+  // drawn as nothing at all -- a control that had to be guessed at and
+  // clicked blind.
+  > input:not([type='checkbox']) {
+    min-width: 0;
+    padding: 0;
+    font-size: inherit;
+    font-variant-numeric: tabular-nums;
+    color: inherit;
+    background: none;
+    border: none;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  // A `date`/`time` control sizes itself from its own text; the strip's
+  // number box does not belong on one.
+  > input:not(.fg-num):not([type='checkbox']) {
+    width: auto;
+    color-scheme: dark light;
+  }
+}
+
+// A word inside a field, where an `input-group` spent a bordered segment on
+// it. `UTC Offset` and `AM/PM` name the control beside them, so they read as
+// part of the box rather than as another control in the row.
+.fg-field-name {
+  white-space: nowrap;
+  font-size: 0.72rem;
+  opacity: 0.72;
+}
+
+// The one field that should take the leftover width: a city name is the only
+// free text in these widgets, and it was pinned at 250px in the markup.
+.fg-field-grow {
+  flex: 1 1 10rem;
+  min-width: 7rem;
+
+  > input {
+    width: 100%;
+  }
+}

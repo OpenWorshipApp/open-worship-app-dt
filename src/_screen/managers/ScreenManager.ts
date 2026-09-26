@@ -22,6 +22,7 @@ import { type GroupMembershipInf } from './ScreenEventHandler';
 import type ScreenEventHandler from './ScreenEventHandler';
 import ScreenDrawManager from './ScreenDrawManager';
 import ScreenFocusManager from './ScreenFocusManager';
+import ScreenMaskManager from './ScreenMaskManager';
 import { initScreenBibleStepping } from '../screenBibleSteppingHelpers';
 import { applyForegroundDragData } from '../../presenter-foreground/foregroundDragHelpers';
 
@@ -66,6 +67,7 @@ export default class ScreenManager extends ScreenManagerBase {
     readonly screenForegroundManager: ScreenForegroundManager;
     readonly screenDrawManager: ScreenDrawManager;
     readonly screenFocusManager: ScreenFocusManager;
+    readonly screenMaskManager: ScreenMaskManager;
     readonly backgroundEffectManager: ScreenEffectManager;
     readonly varyAppDocumentEffectManager: ScreenEffectManager;
     readonly foregroundEffectManager: ScreenEffectManager;
@@ -134,6 +136,15 @@ export default class ScreenManager extends ScreenManagerBase {
             this.screenId,
             (screenManagerBase) => {
                 return (screenManagerBase as ScreenManager).screenFocusManager;
+            },
+        );
+        this.screenMaskManager = new ScreenMaskManager(this);
+        setGroupMembershipInf(
+            this,
+            this.screenMaskManager,
+            this.screenId,
+            (screenManagerBase) => {
+                return (screenManagerBase as ScreenManager).screenMaskManager;
             },
         );
         this.registeredEventListeners = [];
@@ -276,6 +287,13 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenBackgroundManager.clear();
         this.screenDrawManager.clear();
         this.screenFocusManager.clear();
+        // `screenMaskManager` is deliberately NOT cleared here. A mask is the
+        // shape of the ROOM -- measured once so the picture stops short of an
+        // organ pipe or the bottom of a half-lowered screen -- not something
+        // being presented. Clearing it with the content would hand an operator
+        // who just pressed the panic key a picture spilling onto the wall, and
+        // leave them re-measuring a mask mid-service. It comes off from its own
+        // panel and nowhere else.
         this.fireUpdateEvent();
     }
 
@@ -311,6 +329,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenForegroundManager.delete();
         this.screenDrawManager.delete();
         this.screenFocusManager.delete();
+        this.screenMaskManager.delete();
         this.divRef = null;
         this.getElementsByDomSelector = () => [];
         this.noSyncGroupMap.clear();
@@ -396,6 +415,8 @@ export default class ScreenManager extends ScreenManagerBase {
             return ScreenDrawManager;
         } else if (type === 'focus') {
             return ScreenFocusManager;
+        } else if (type === 'mask') {
+            return ScreenMaskManager;
         }
         return null;
     }

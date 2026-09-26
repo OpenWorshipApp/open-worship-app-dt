@@ -173,6 +173,7 @@ export default function AppRangeComp({
     setValue,
     defaultSize,
     isShowValue,
+    isCompact = false,
 }: Readonly<{
     value: number;
     title: string;
@@ -180,6 +181,16 @@ export default function AppRangeComp({
     setValue: (newValue: number) => void;
     defaultSize: AppRangeDefaultType;
     isShowValue?: boolean;
+    /**
+     * The control-strip shape: no zoom buttons, no pill around it, and the
+     * value is a box you can TYPE in.
+     *
+     * The buttons are a whole step apart and the slider does the same job
+     * under the thumb, so beside four sliders in one panel they were ~200px
+     * spent on nothing -- and a value you can only reach by dragging is a
+     * value you cannot set exactly. Ctrl+wheel still steps it either way.
+     */
+    isCompact?: boolean;
 }>) {
     const fixedSize = (defaultSize.step.toString().split('.')[1] || '').length;
     const [localValue, setLocalValue] = useState(
@@ -220,7 +231,21 @@ export default function AppRangeComp({
     }, []);
     const handleRangeChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setLocalValue1Ref.current(Number.parseInt(event.target.value));
+            // parseFLOAT: `Scale` steps by 0.1, and parsing as an int threw
+            // away every fractional stop -- dragging it could only ever land
+            // on 1, 2 or 3. `roundSize` still snaps to the step after this.
+            setLocalValue1Ref.current(Number.parseFloat(event.target.value));
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const handleValueTyping = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            const typed = Number.parseFloat(event.target.value);
+            if (Number.isNaN(typed)) {
+                return;
+            }
+            setLocalValue1Ref.current(typed);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -233,13 +258,18 @@ export default function AppRangeComp({
     }, []);
     return (
         <div
-            className="form form-inline d-flex app-range"
+            className={
+                'form form-inline d-flex app-range' +
+                (isCompact ? ' app-range-compact' : '')
+            }
             title={title}
-            style={{ minWidth: '100px' }}
+            style={{ minWidth: isCompact ? '92px' : '100px' }}
         >
-            <div className="pointer" onClick={handleZoomOut}>
-                <i className="bi bi-zoom-out" />
-            </div>
+            {isCompact ? null : (
+                <div className="pointer" onClick={handleZoomOut}>
+                    <i className="bi bi-zoom-out" />
+                </div>
+            )}
             <input
                 id={id}
                 className="form-range px-1"
@@ -252,10 +282,24 @@ export default function AppRangeComp({
                 value={localValue}
                 onChange={handleRangeChange}
             />
-            <div className="pointer" onClick={handleZoomIn}>
-                <i className="bi bi-zoom-in" />
-            </div>
-            {isShowValue ? (
+            {isCompact ? null : (
+                <div className="pointer" onClick={handleZoomIn}>
+                    <i className="bi bi-zoom-in" />
+                </div>
+            )}
+            {isShowValue && isCompact ? (
+                <input
+                    className="app-range-value"
+                    type="number"
+                    aria-label={title}
+                    value={localValue}
+                    min={defaultSize.min}
+                    max={defaultSize.max}
+                    step={defaultSize.step}
+                    onChange={handleValueTyping}
+                />
+            ) : null}
+            {isShowValue && !isCompact ? (
                 <label
                     className="form-label"
                     style={{

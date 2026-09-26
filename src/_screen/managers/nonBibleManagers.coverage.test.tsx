@@ -33,6 +33,8 @@ const mocks = vi.hoisted(() => ({
     genMarquee: vi.fn(),
     genQuickText: vi.fn(),
     genWeb: vi.fn(),
+    genVideo: vi.fn(),
+    genImage: vi.fn(),
     getCameraAndShowMedia: vi.fn(),
     genPdfSlide: vi.fn(),
     genPptxSlide: vi.fn(),
@@ -138,12 +140,15 @@ vi.mock('../screenHelpers', () => ({
 }));
 
 vi.mock('../screenForegroundHelpers', () => ({
+    genHtmlForegroundMessage: mocks.genQuickText,
     genHtmlForegroundCountdown: mocks.genCountdown,
     genHtmlForegroundMarquee: mocks.genMarquee,
     genHtmlForegroundQuickText: mocks.genQuickText,
     genHtmlForegroundStopwatch: mocks.genStopwatch,
     genHtmlForegroundTime: mocks.genTime,
     genHtmlForegroundWeb: mocks.genWeb,
+    genHtmlForegroundVideo: mocks.genVideo,
+    genHtmlForegroundImage: mocks.genImage,
 }));
 
 vi.mock('../../helper/cameraHelpers', () => ({
@@ -336,6 +341,8 @@ describe('non-Bible manager coverage', () => {
             handleRemoving: vi.fn(async () => {}),
         }));
         mocks.genWeb.mockImplementation(() => createManagedRenderResult());
+        mocks.genVideo.mockImplementation(() => createManagedRenderResult());
+        mocks.genImage.mockImplementation(() => createManagedRenderResult());
         mocks.getCameraAndShowMedia.mockImplementation(
             async ({ parentContainer }) => {
                 parentContainer.appendChild(document.createElement('video'));

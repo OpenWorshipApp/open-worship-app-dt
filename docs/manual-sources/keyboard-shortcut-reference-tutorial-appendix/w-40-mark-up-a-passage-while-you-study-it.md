@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-108, RD-109, RD-110, RD-111, RD-112]
 screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-23"
+workflowsVersion: "2026-09-25"
 ---
 # W-40 — Mark up a passage while you study it
 
@@ -71,5 +71,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-108` · `RD-109` · `RD-110` · `RD-111` · `RD-112`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-25).
 :::

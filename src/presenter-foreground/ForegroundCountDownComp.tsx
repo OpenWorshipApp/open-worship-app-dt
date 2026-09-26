@@ -1,5 +1,5 @@
 import { type ChangeEvent, type CSSProperties } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
@@ -19,8 +19,31 @@ import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import {
+    checkIsSessionData,
+    toSessionShowingList,
+    useForegroundSessions,
+} from './foregroundSessionHelpers';
 
-function useTiming() {
+/**
+ * The keys ONE session of this panel owns beyond its Properties -- the target
+ * date and time of the first form, the hours and minutes of the second.
+ *
+ * Their names are the ones this widget has always written (`foreground-date`,
+ * not `foreground-countdown-date`), because the Default session's suffix is
+ * the empty string and renaming them would lose every countdown already set
+ * up. Session 2 writes the same names with `-<id>` after them.
+ */
+function genOwnSettingNames(suffix: string) {
+    return [
+        `foreground-date-setting${suffix}`,
+        `foreground-time-setting${suffix}`,
+        `foreground-hours-setting${suffix}`,
+        `foreground-minutes-setting${suffix}`,
+    ];
+}
+
+function useTiming(suffix: string) {
     const nowArray = () => {
         const date = new Date();
         const localISOString = date.toISOString();
@@ -36,17 +59,18 @@ function useTiming() {
         return timeStr.substring(0, timeStr.lastIndexOf(':'));
     };
     const [date, setDate] = useStateSettingString<string>(
-        'foreground-date-setting',
+        `foreground-date-setting${suffix}`,
         todayString(),
     );
     const [time, setTime] = useStateSettingString<string>(
-        'foreground-time-setting',
+        `foreground-time-setting${suffix}`,
         nowString(),
     );
     return { date, setDate, time, setTime, nowString, todayString };
 }
 
 const handleByDropped = (
+    sessionId: string,
     dateTime: Date,
     extraStyle: CSSProperties,
     event: any,
@@ -56,6 +80,9 @@ const handleByDropped = (
         return;
     }
     screenForegroundManager.setCountdownData({
+        // A LIVE drop from this panel is this session acting; a run-sheet row
+        // replayed weeks later carries none -- see `applyForegroundDragData`.
+        id: sessionId || undefined,
         dateTime,
         extraStyle,
     });
@@ -63,11 +90,15 @@ const handleByDropped = (
 
 function CountDownOnDatetimeComp({
     genStyle,
+    sessionId,
+    suffix,
 }: Readonly<{
     genStyle: () => CSSProperties;
+    sessionId: string;
+    suffix: string;
 }>) {
     const { date, setDate, time, setTime, nowString, todayString } =
-        useTiming();
+        useTiming(suffix);
     const getTargetDateTime = useCallback(() => {
         return new Date(date + ' ' + time);
     }, [date, time]);
@@ -78,9 +109,10 @@ function CountDownOnDatetimeComp({
                 getTargetDateTime(),
                 genStyle(),
                 isForceChoosing,
+                sessionId,
             );
         },
-        [getTargetDateTime, genStyle],
+        [getTargetDateTime, genStyle, sessionId],
     );
     const setDateRef = useAppCurrentRef(setDate);
     const setTimeRef = useAppCurrentRef(setTime);
@@ -112,11 +144,13 @@ function CountDownOnDatetimeComp({
     );
     const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
     const genStyleRef = useAppCurrentRef(genStyle);
+    const sessionIdRef = useAppCurrentRef(sessionId);
     const handleDraggingStart = useCallback((event: any) => {
         const targetDateTime = getTargetDateTimeRef.current();
         const extraStyle = genStyleRef.current();
         dragStore.onDropped = handleByDropped.bind(
             null,
+            sessionIdRef.current,
             targetDateTime,
             extraStyle,
         );
@@ -132,44 +166,43 @@ function CountDownOnDatetimeComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="app-border-white-round p-2">
-            <div className="d-flex align-items-center gap-1 mb-2 text-muted">
+        <div className="fg-group">
+            <span className="fg-group-name">
                 <i className="bi bi-calendar-event" />
-                <small>{tran('Count down to a specific date & time')}</small>
-            </div>
-            <div className="d-flex flex-wrap align-items-center gap-2">
-                <button
-                    title={tran('Reset Date and Time to Now')}
-                    className="btn btn-outline-warning"
-                    onClick={handleResetting}
-                >
-                    <i className="bi bi-arrow-counterclockwise" />{' '}
-                    {tran('Reset')}
-                </button>
-                <div className="input-group" style={{ width: 'auto' }}>
-                    <span className="input-group-text">
-                        <i className="bi bi-calendar3" />
-                    </span>
+                <span>{tran('Count down to a specific date & time')}</span>
+            </span>
+            <div className="fg-fields">
+                <label className="fg-field" title={tran('Countdown Date')}>
+                    <i className="bi bi-calendar3" />
                     <input
                         type="date"
-                        className="form-control"
+                        aria-label={tran('Countdown Date')}
                         value={date}
                         onChange={handleDateChange}
                         min={todayString()}
                     />
-                </div>
-                <div className="input-group" style={{ width: 'auto' }}>
-                    <span className="input-group-text">
-                        <i className="bi bi-clock" />
-                    </span>
+                </label>
+                <label className="fg-field" title={tran('Countdown Time')}>
+                    <i className="bi bi-clock" />
                     <input
                         type="time"
-                        className="form-control"
+                        aria-label={tran('Countdown Time')}
                         value={time}
                         onChange={handleTimeChange}
                         min={nowString()}
                     />
-                </div>
+                </label>
+                <button
+                    type="button"
+                    title={tran('Reset Date and Time to Now')}
+                    className="fg-quiet-btn"
+                    onClick={handleResetting}
+                >
+                    <i className="bi bi-arrow-counterclockwise" />
+                    <span>{tran('Reset')}</span>
+                </button>
+            </div>
+            <div className="fg-actions">
                 <button
                     className="btn btn-primary"
                     title={tran('Start Countdown to DateTime')}
@@ -192,15 +225,19 @@ function CountDownOnDatetimeComp({
 
 function CountDownInSetComp({
     genStyle,
+    sessionId,
+    suffix,
 }: Readonly<{
     genStyle: () => CSSProperties;
+    sessionId: string;
+    suffix: string;
 }>) {
     const [hours, setHours] = useStateSettingString<string>(
-        'foreground-hours-setting',
+        `foreground-hours-setting${suffix}`,
         '0',
     );
     const [minutes, setMinutes] = useStateSettingString<string>(
-        'foreground-minutes-setting',
+        `foreground-minutes-setting${suffix}`,
         '5',
     );
     const getDurationSecond = useCallback(() => {
@@ -224,9 +261,10 @@ function CountDownInSetComp({
                 targetDateTime,
                 style,
                 isForceChoosing,
+                sessionId,
             );
         },
-        [getTargetDateTime, genStyle],
+        [getTargetDateTime, genStyle, sessionId],
     );
     const handleShowingRef = useAppCurrentRef(handleShowing);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -252,10 +290,12 @@ function CountDownInSetComp({
     const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
     const getDurationSecondRef = useAppCurrentRef(getDurationSecond);
     const genStyleRef = useAppCurrentRef(genStyle);
+    const sessionIdRef = useAppCurrentRef(sessionId);
     const handleInSetDragStart = useCallback((event: any) => {
         const extraStyle = genStyleRef.current();
         dragStore.onDropped = handleByDropped.bind(
             null,
+            sessionIdRef.current,
             getTargetDateTimeRef.current(),
             extraStyle,
         );
@@ -273,44 +313,38 @@ function CountDownInSetComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="app-border-white-round p-2">
-            <div className="d-flex align-items-center gap-1 mb-2 text-muted">
+        <div className="fg-group">
+            <span className="fg-group-name">
                 <i className="bi bi-hourglass-split" />
-                <small>{tran('Count down for a duration')}</small>
-            </div>
-            <div className="d-flex flex-wrap align-items-center gap-2">
-                <div
-                    className="input-group"
-                    style={{ width: '130px' }}
-                    title={tran('Hours')}
-                >
-                    <span className="input-group-text">
-                        <i className="bi bi-clock-history" />
-                    </span>
+                <span>{tran('Count down for a duration')}</span>
+            </span>
+            <div className="fg-fields">
+                <label className="fg-field" title={tran('Hours')}>
+                    <i className="bi bi-clock-history" />
                     <input
-                        className="form-control"
+                        className="fg-num"
                         type="number"
+                        aria-label={tran('Hours')}
                         value={hours}
                         onChange={handleHoursChange}
                         min="0"
                     />
-                    <span className="input-group-text">h</span>
-                </div>
-                <div
-                    className="input-group"
-                    style={{ width: '130px' }}
-                    title={tran('Minutes')}
-                >
+                    <span className="fg-unit-static">h</span>
+                </label>
+                <label className="fg-field" title={tran('Minutes')}>
                     <input
-                        className="form-control"
+                        className="fg-num"
                         type="number"
+                        aria-label={tran('Minutes')}
                         value={minutes}
                         onChange={handleMinutesChange}
                         min="0"
                         max="59"
                     />
-                    <span className="input-group-text">m</span>
-                </div>
+                    <span className="fg-unit-static">m</span>
+                </label>
+            </div>
+            <div className="fg-actions">
                 <button
                     className="btn btn-primary"
                     title={tran('Start Countdown')}
@@ -330,25 +364,22 @@ function CountDownInSetComp({
     );
 }
 
-const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllCountdowns(
     showingScreenIds: [number, ForegroundCountdownDataType][],
     extraStyle: CSSProperties,
 ) {
-    attemptTimeout(() => {
-        for (const [screenId, data] of showingScreenIds) {
-            getScreenForegroundManagerInstances(
-                screenId,
-                (screenForegroundManager) => {
-                    screenForegroundManager.setCountdownData(null);
-                    screenForegroundManager.setCountdownData({
-                        ...data,
-                        extraStyle,
-                    });
-                },
-            );
-        }
-    });
+    for (const [screenId, data] of showingScreenIds) {
+        getScreenForegroundManagerInstances(
+            screenId,
+            (screenForegroundManager) => {
+                screenForegroundManager.setCountdownData(null);
+                screenForegroundManager.setCountdownData({
+                    ...data,
+                    extraStyle,
+                });
+            },
+        );
+    }
 }
 
 function handleCountdownHiding(screenId: number) {
@@ -359,6 +390,10 @@ function handleCountdownHiding(screenId: number) {
 
 export default function ForegroundCountDownComp() {
     useScreenForegroundManagerEvents(['update']);
+    // Per-instance: nothing here may assume this panel stays a single mount.
+    const attemptTimeout = useMemo(() => {
+        return genTimeoutAttempt(500);
+    }, []);
     const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
         (data) => {
             return data.countdownData !== null;
@@ -376,10 +411,44 @@ export default function ForegroundCountDownComp() {
         .filter((item) => {
             return item !== null;
         });
+    const showingRef = useAppCurrentRef(showingScreenIdDataList);
+    // One session is one countdown SET UP AND READY: the 5-minute one that
+    // starts the service, the one counting to a date on the wall at the back.
+    // Each keeps its own numbers and its own size, place and colours.
+    const {
+        activeId,
+        suffix,
+        prefix,
+        element: sessionsElement,
+    } = useForegroundSessions({
+        widgetKey: 'countdown',
+        toPrefix: (sessionSuffix) => {
+            return `countdown${sessionSuffix}`;
+        },
+        toOwnSettingNames: genOwnSettingNames,
+        checkIsOnScreen: (sessionId) => {
+            return showingScreenIdDataList.some(([, data]) => {
+                return checkIsSessionData(data, sessionId);
+            });
+        },
+        hideSession: (sessionId) => {
+            for (const [screenId, data] of showingRef.current) {
+                if (checkIsSessionData(data, sessionId)) {
+                    handleCountdownHiding(screenId);
+                }
+            }
+        },
+    });
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
-        prefix: 'countdown',
+        prefix,
         onChange: (extraStyle) => {
-            refreshAllCountdowns(showingScreenIdDataList, extraStyle);
+            attemptTimeout(() => {
+                // THIS session's countdown only -- see the stopwatch panel.
+                refreshAllCountdowns(
+                    toSessionShowingList(showingRef.current, activeId),
+                    extraStyle,
+                );
+            });
         },
         isFontSize: true,
     });
@@ -392,19 +461,37 @@ export default function ForegroundCountDownComp() {
         />
     );
     return (
-        <ForegroundLayoutComp
-            target="countdown"
-            fullChildHeaders={<h4>{tran('Countdown')}</h4>}
-            childHeadersOnHidden={genHidingElement(true)}
-            isOnScreen={showingScreenIdDataList.length > 0}
-        >
+        <ForegroundLayoutComp target="countdown">
+            {sessionsElement}
             {propsSetting}
-            <hr />
-            <div className="d-flex flex-column gap-2">
-                <CountDownOnDatetimeComp genStyle={genStyle} />
-                <CountDownInSetComp genStyle={genStyle} />
+            <div className="fg-body">
+                {/*
+                 * Keyed by the session so both forms re-read THEIR session's
+                 * own date and duration. Every field below reads its setting
+                 * once, when it mounts -- the same reason the Properties panel
+                 * above is keyed by its prefix.
+                 */}
+                <CountDownOnDatetimeComp
+                    key={`date-${activeId}`}
+                    genStyle={genStyle}
+                    sessionId={activeId}
+                    suffix={suffix}
+                />
+                <CountDownInSetComp
+                    key={`duration-${activeId}`}
+                    genStyle={genStyle}
+                    sessionId={activeId}
+                    suffix={suffix}
+                />
+                {/*
+                 * One report of what is on a screen for BOTH ways of starting
+                 * a countdown -- there is only ever one countdown up, and two
+                 * bordered boxes saying so was the panel repeating itself.
+                 */}
+                {showingScreenIdDataList.length > 0 ? (
+                    <div className="fg-actions">{genHidingElement(false)}</div>
+                ) : null}
             </div>
-            <div className="mt-2">{genHidingElement(false)}</div>
         </ForegroundLayoutComp>
     );
 }

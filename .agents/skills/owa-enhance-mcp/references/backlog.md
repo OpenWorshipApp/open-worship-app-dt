@@ -328,10 +328,11 @@ and never to anything else on the local network**:
   cached response belonging to anything the user is signed in to.
 - **Permissions, downloads and `window.open` refused**, plus `sandbox: true`
   and no preload.
-- **`checkIsCaptureUrlAllowed`** — http(s) only, at the first load and at every
-  redirect, which is what closes the `file://` disk read.
-- **The network wall**, `onBeforeRequest` over the same three patterns
-  (`*://*/*`, `ws://*/*`, `wss://*/*`) and the same `webUrlPolicy.mjs` dialect
+- **`resolveCaptureTarget`** — a web address, or one of the app's OWN local
+  pages, at the first load and at every redirect, which is what closes the
+  `file://` disk read.
+- **The network wall**, `onBeforeRequest` over four patterns (`*://*/*`,
+  `ws://*/*`, `wss://*/*`, `file:///*`) and the same `webUrlPolicy.mjs` dialect
   the guest's uses. The **same-host exemption** is what keeps a church's own
   intranet notice board working: a private page may load its own assets and
   nothing else private. Loopback gets no exemption at all.
@@ -348,6 +349,30 @@ machine not at all, and `file://` is refused in a sentence.
 (28 462 and 167 822 characters), so cross-origin assets on a public page are
 untouched. Unit rules in `electron/webCaptureHelpers.test.ts`, against the
 REAL dialect — a hand-written twin is what gets `127.1` and `0x7f.1` wrong.
+
+**Amended 2026-09-24 — the app makes local pages of its own, and "http(s)
+only" switched them all off.** Reported with a screenshot of the console: six
+`Only a web address can be captured, not: file:///…/webs/test1.html` errors,
+the Background **Webs** tab and the Foreground **Web Show** panel showing the
+globe-and-url placeholder for every file, and the one remote URL item beside
+them still carrying its picture. Those pages are the app's own: **New File** in
+that panel writes an `.html` into `<data folder>/webs` and the app's own editor
+edits it. The bullet above was scheme-shaped, and what separates those pages
+from `file:///C:/Users/.../setting.json` is the FOLDER. `resolveCaptureTarget`
+now takes a `file:` URL when it is an `.html`/`.htm` inside a folder the Webs
+panel was pointed at — the `select-dir-web-bg*` directory settings plus the
+default `<data folder>/webs`, read by `listWebCaptureDirPaths` in
+`electronHelpers.ts` (5 s cache, asked only for a URL that is not http(s)) —
+with `..` resolved away and case folded on Windows and macOS only. `file:///*`
+joined the wall's patterns, which is a TIGHTENING as well as a loosening: no
+`file:` request had ever been judged, so a SITE's page could read the disk
+through `webSecurity: false`, and now it cannot while a local page reaches its
+own folder and no further. A shared document fails the same test by naming the
+other church's folders; where the two really are the same item,
+`$DATA_DIR_PATH` has already rewritten it into this user's own webs folder.
+Proven live both ways with a page dropped in that folder that fetches a
+sibling and a file one level up: sibling READ, level up BLOCKED, and the six
+tiles came back with a clean console.
 
 ### `MC-17` — the outbound budget has no per-site memory · open
 

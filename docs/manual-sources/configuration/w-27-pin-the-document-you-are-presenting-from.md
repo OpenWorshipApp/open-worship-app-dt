@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PM-121, PM-122, PM-123, PL-01]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-23"
+workflowsVersion: "2026-09-25"
 ---
 # W-27 — Pin the document you are presenting from
 
@@ -42,5 +42,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-121` · `PM-122` · `PM-123` · `PL-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-25).
 :::

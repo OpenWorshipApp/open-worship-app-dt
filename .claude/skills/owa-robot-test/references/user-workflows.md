@@ -21,12 +21,90 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-24** (**W-46 — native-menu learning now covers every
+**workflowsVersion: 2026-09-25h** (**W-09 — a session's _Properties_ act on that session's OWN overlay.** Reported straight after the strip landed: _"each session should have its own properties"_ / _"`Properties` should be controlled per session"_. The values were already filed per session, and the panel already showed the right ones — what leaked was the live restyle: the refresh walked every overlay of that kind, so nudging Session 2's size or colour re-dressed the countdown Default had on the wall. It now walks only the entries that session owns. The Hide row is deliberately left alone: it reaches whatever is live from whichever session is in front, because there must always be a way to take something off a projector. Proven live 2026-09-25 by reading the screen's own saved style — Default's overlay held `opacity: 0.91` through a change to Session 2's, and followed a change to Default's. PM-146.)
+
+Previous: **workflowsVersion: 2026-09-25g** (**W-09 — EVERY foreground component keeps sessions now, not only the four that show a file.** Asked for directly, pointing at the **[en:tran:Video Show]** panel's own **Default / ＋** strip and circling the components in the launcher menu: _"I like the idea of multiple session, add this feature in the highlighted components"_. **[en:tran:Messages]**, **[en:tran:Marquee Top]**, **[en:tran:Marquee Bottom]**, **[en:tran:Quick Text]**, **[en:tran:Countdown]**, **[en:tran:Stopwatch]** and **[en:tran:Time]** now carry the same strip, each session holding that panel's own words or numbers AND its own _Properties_ — so the pre-service notice board and the mid-service alert sit side by side, already the right size in the right corner, instead of one being retyped over the other. **Default** still writes the very keys the widget always has, so nothing already set up moves. Verified live 2026-09-25 on the presenter: a second Messages session written to its own keys with Default's two editors untouched, both sessions' messages on one screen at once with each one's own Hide button, and the **[en:tran:Marquee Bottom]** slot handed from Session 2 back to Default with the on-screen dot moving with it. PM-146, PM-147.)
+
+Previous: **workflowsVersion: 2026-09-25f** (**W-08 — every background media tab keeps FOLDER SESSIONS.** Asked for directly, from the foreground **[en:tran:Image Show]** widget that already had them: _"I want this feature for Background Image, Background Video and Background Web… let user feel convenience to handle medias in different folders without changing the default selection"_, then Background Audio too. **[en:tran:Images]**, **[en:tran:Videos]**, **[en:tran:Webs]** and **[en:tran:Audios]** now carry the same **Default / ＋** strip, each session holding its own folder, view mode, sort and slide show, with **Default** still the folder Path Settings names. The strip and the slide show share ONE short row — the rail is the height of the slide-show pill now, in the foreground widgets too, which gives a 200px panel back most of a row of pictures. Verified live 2026-09-25 on the presenter: a second Images session written to its own folder key with Default's untouched, the strip surviving an empty folder, and the foreground widgets unchanged. PM-144, PM-145.)
+
+Previous: **workflowsVersion: 2026-09-25e** (**W-15 — a canvas box can cast a **[en:tran:Shadow]**, and there are two kinds.** Asked for directly. It sits under **[en:tran:Shape Properties]** with Glass Effect, Round and Blend Mode. **[en:tran:Box Shadow]** is the shadow of the box itself, rounded corners included — right for a text box with a backing colour; **[en:tran:Drop Shadow]** follows what is actually painted, so it hugs the letters of a box with no backing and the cut-out edge of a logo picture. How far it falls (**X:** / **Y:**), how soft it is (**[en:tran:Blur:]**) and its colour are shown only once a shadow is picked; **[en:tran:No Shadow]** takes it off again and leaves nothing behind. Verified live 2026-09-25 in the Document Editor on a text box: the box shadow a slab under the box, the drop shadow the ghosted words, both the same in the canvas and in the slide thumbnail. ED-48.)
+
+Previous: **workflowsVersion: 2026-09-25d** (**W-09 and W-47 — an overlay is DRESSED under
+[en:tran:Effects].** Reported with a picture of the Messages panel: the words in a
+message sat hard against the edge of their own coloured box, and nothing in
+_Properties_ could move them. Every foreground component now carries an
+**[en:tran:Effects]** fold holding a **[en:tran:Border]**, a
+**[en:tran:Shadow]** and **[en:tran:Padding]** — and, wherever the component
+shows words, **[en:tran:Text Align]**, **[en:tran:Line Height]**,
+**[en:tran:Letter Spacing]**, a **[en:tran:Text Shadow]** (Soft / Glow /
+Outline, for a notice over a moving video) and **[en:tran:Text Style]**. Padding
+and the text measures are in text sizes, so a box keeps its shape when the font
+size changes; stacked messages now count the padding and the frame, so they still
+sit one under another. Verified live 2026-09-25 on the dev Presenter and its real
+output window, in English and in Khmer.)
+
+Previous: **workflowsVersion: 2026-09-25c** (**W-47 — Messages is a session of message
+editors.** It shipped as two widgets (Alert, Announcements), was merged on
+sight, and the merged one was still one text box where a message could not span
+lines. Each message now has its OWN editor with its own show / move / remove,
+a message can be as many lines as it needs, several can be on a screen at once
+and they stack instead of covering each other, and
+**[en:tran:Show All Messages]** puts the whole session up — as one block, or
+one at a time with **[en:tran:Rotate]**. **[en:tran:Mask]** is unchanged.
+Verified live 2026-09-25 on the dev Presenter and its real output window: two
+multi-line messages up together, laid out one under the other; hide and
+re-show; and the bars covering a full-screen video overlay. Not
+keystroke-verified: the **F4** toggle, which is code only.)
+
+Previous: **workflowsVersion: 2026-09-24d** (**W-46 — native-menu learning now covers every
 menu from File through Help.** Presenter grows from 56 to 61 lessons and Reader
 from 49 to 54. Five searchable, self-guided overviews name every command under
 **File**, **Edit**, **Tools**, **Window**, and **Help**; the seven detailed
 **View** lessons remain. Conditional and macOS-only commands are included. GL-25
 expanded.)
+
+Previous: **workflowsVersion: 2026-09-24c** (**W-15 — every canvas item kind carries a
+[en:tran:Blend Mode].** It sits under **[en:tran:Shape Properties]** in the item's
+**[en:tran:Properties]**, beside Glass Effect and Round, and offers the same modes the
+foreground widgets do. It blends with the canvas items UNDER IT IN THE SAME SLIDE, not
+with the background attached to the slide: a lone blended box shows no change at all,
+so the recipe says to put a picture or video box behind it sized **[en:tran:Full]**.
+Verified live 2026-09-24 on two overlapping boxes with **[en:tran:Difference]**.
+ED-47.)
+
+Previous: **workflowsVersion: 2026-09-24b** (**W-09 — the component panel is just the component,
+and the menu is the status board.** No card header inside a panel any more: the floating
+panel's own bar already carries the name, the on-screen mark and Close, and the panel is
+now the ONE scroller, so the file grid fills it instead of stopping half way with the
+slide-show bar floating over the last row. That bar moved INTO the sticky row beside the
+sessions, _Properties_ and the screen buttons; **[en:tran:Start Slide Show]**,
+**[en:tran:Stop Slide Show]** and **[en:tran:Hide Slide Show Controls]** are named
+controls now rather than unnamed icons. Each session button carries its own on-screen dot
+and a ▶ while its show runs; the chooser menu carries the **screen numbers** and the same
+▶, and a row answers to its component's exact name. Removing a session takes its overlay
+off the screens first. The slide show no longer scrolls the file list under you.
+Verified live 2026-09-24. PM-128..PM-131.)
+
+Previous: **workflowsVersion: 2026-09-24a** (**W-09 — the Foreground is a menu of components, each
+in its own panel.** The Foreground tab now opens a context menu AT THE CURSOR; a picked
+component opens in its own floating panel that remembers size and place, and several can
+be open at once. `Background Images Slide Show` is gone -- **Image Show** does that job
+on the foreground layer. Every component gained **Always on Top** with a z-index number.
+Verified live 2026-09-24. PM-128..PM-131.)
+
+Previous: **workflowsVersion: 2026-09-24** (**W-09 — Video Show and Image Show, sessions, and a
+blend mode for every foreground overlay.** Two new Foreground widgets put a clip or a
+picture OVER the slide, and Web Show joins them on the same shape: the Background tabs'
+WINDOWED grid (a folder of 3 058 files mounts ~54 tiles), ONE Properties panel per
+widget, and **sessions** — each its own folder, Properties and slide show, so one Image
+Show can run a slide show over one folder while another holds a logo from another, both
+on screen. A session's slide show runs OUTSIDE React, so it keeps going while another
+session is being looked at and stops itself when its item is cleared. Video, Image,
+Camera and Web Show gained a **Blend Mode** picker offering all 16 CSS blends, grouped:
+a snow clip shot on black is shown with **Screen Blend** and only the snow lands over
+the live slide. Verified live 2026-09-24 on the real `screen.html?screenId=1` output —
+the clip's band let the slide text show through, lightened, instead of covering it.
+PM-128..PM-131 new.)
 
 Previous: **workflowsVersion: 2026-09-23e** (**W-46 — Presenter Show it is resilient and
 actionable.** Fifty-one of 56 lessons begin with a safe **Do it**; mixed lessons
@@ -1194,12 +1272,33 @@ _Verify: PL-01, PM-05..09, KB-05, KB-08._
 **Goal:** advance slides hands-free.
 
 1. Open a document's slides (W-03 step 1).
-2. Click the **stopwatch icon** in the Documents-tab footer — the auto-play widget
-   expands. 📸
-3. Type the interval in seconds, then click **play**. Slides advance on the timer.
-4. Click **pause** to stop, or the red **✕** to close the widget.
+2. Click the **stopwatch icon** at the bottom left of the slides previewer — a small
+   strip opens: **✕**, play, the seconds box, the countdown, and a sliders button. 📸
+3. Type the interval in seconds, then click **play**. Slides advance on the timer and
+   the countdown says how long until the next one.
+4. To change how it advances, click the **sliders** button. The rules open under the
+   strip:
+   - **[en:tran:Repeat All]** — keep going round. Unticked, the show stops at the last
+     slide and leaves it on the screen.
+   - **[en:tran:Step]** — how many slides each tick jumps.
+   - **[en:tran:Random Up To]** — wait a random whole number of seconds up to this,
+     drawn fresh for each slide. The draw is written into the seconds box before each
+     wait, so you can see what it chose.
+   - **[en:tran:Wait Until The Video Ends]** — clips only (Video Show, and a Videos
+     background list): wait the length of the clip that is up. The seconds box shows
+     that length.
 
-_Verify: PM-10._
+   Close the rules with their **✕** or the sliders button again.
+
+5. Click **pause** to stop, or the strip's **✕** to collapse it back to the stopwatch.
+
+The same strip runs a show over a **Background** list — **[en:tran:Images]**,
+**[en:tran:Videos]** and **[en:tran:Webs]**, appearing once that list has something on a
+screen — and over each **Image Show** / **Video Show** / **Web Show** session, where it
+rides the panel's top row. On the Webs list a saved **URL** is stepped just like a page
+file.
+
+_Verify: PM-10, PM-137, PM-138, PM-140._
 
 ### W-05 — Present song lyrics
 
@@ -1307,7 +1406,19 @@ showing on, and its colour dot — clicking a row still puts it on screen exactl
 thumbnail. Each tab remembers its own choice, and it survives restarting the app. The
 thumbnail-size slider only appears in thumbnail view.
 
-_Verify: PM-26..33, PM-101, PM-114, KB-04._
+**Folder sessions (Images / Videos / Webs / Audios).** Above each of those lists is a
+row of small buttons: **Default**, then any you add with **＋**. Each one is a folder of
+its own — with its own view mode, sort and slide show — so you can flick between this
+Sunday's pictures on a memory stick and your standing set of backgrounds without ever
+re-pointing the folder the app was set up with. **Default** IS that folder: it is the
+one Path Settings names, and adding sessions never touches it. A new session starts with
+no folder and offers to use the default one; the **⋮** on the session you are on (or a
+right-click on any of them) renames or removes it. Removing forgets that session's
+folder and slide show — never the files themselves. On the Images, Videos and Webs tabs
+the slide show sits on the same row, and a blue ▶ on a button means that session's show
+is still running while you look at another one.
+
+_Verify: PM-26..33, PM-101, PM-114, PM-144, PM-145, KB-04._
 
 ### W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -1316,8 +1427,17 @@ _Verify: PM-26..33, PM-101, PM-114, KB-04._
 **Audio:** in the Background panel, toggle the **[en:tran:Audios]** tab open, click play
 on a track — the tab is marked while playing; click stop to end. 📸
 
-**Foreground widgets** — open the middle **[en:tran:Foreground]** tab; each widget
-has its own controls and a Show/Start button:
+**Foreground widgets** — press the middle **[en:tran:Foreground]** tab and a menu
+opens **at the cursor** listing every component. Pick one and it opens in **its own
+floating panel**, which remembers its size and place across a restart; the menu closes
+itself. Open as many as you like side by side — the panels are independent. The menu is
+also the status board: a ticked box marks a panel that is already open, a component with
+something on a screen is marked the way the tab is **and carries the number of each
+screen it is on**, and a blue ▶ marks a component whose slide show is running — which is
+how you find a show that is still advancing behind a panel nobody has open. The panel
+itself has no second title bar to collapse: its own header carries the name, the
+on-screen mark and the close button. Each panel has its own controls and a Show/Start
+button:
 
 - **Marquee Top:** type the scrolling text, click Show — it scrolls along the top edge.
 - **Marquee Bottom:** type the scrolling text, click Show — it scrolls along the bottom
@@ -1328,8 +1448,74 @@ has its own controls and a Show/Start button:
 - **Quick Text:** type a short message, click Show.
 - **Countdown:** two modes — _to a date/time_ (set date + time, press Start) or _for a
   duration_ (set hours/minutes, press Start). Hide with its Hide button. 📸
-- **Stopwatch**, **Clock**, **Images slideshow**, **Camera overlay**, **Web overlay**:
-  same pattern — configure, Show, Hide.
+- **Stopwatch**, **Clock**, **Camera Show**: same pattern — configure, Show, Hide.
+- **[en:tran:Video Show]**, **[en:tran:Image Show]** and **[en:tran:Web Show]:** a clip,
+  a picture or a web page shown _over_ the slide instead of behind it. Each lists a
+  folder the same way the Background tabs do — only the rows on screen are built, so a
+  folder of thousands opens as fast as a folder of ten. Click a tile to put it up,
+  click it again to take it off, right-click to choose a display. A clip plays muted
+  and loops.
+- **Sessions — every foreground component keeps them.** They are the row of buttons
+  pinned at the top of the panel, with **＋** to add one, and a session is one saved
+  set-up of that panel: its **own** words or numbers **and** its **own**
+  _Properties_ (size, place, colours, effects). So **[en:tran:Messages]** holds the
+  pre-service notice board in one session and the mid-service alerts in another;
+  **[en:tran:Countdown]** holds the five-minute one that starts the service beside
+  the one counting to a date; **[en:tran:Marquee Bottom]** holds the standing welcome
+  beside this morning's car-park notice; **[en:tran:Time]** holds a wall of world
+  clocks beside the single service clock. Nothing has to be retyped over the set-up
+  that was working. On **[en:tran:Video Show]**, **[en:tran:Image Show]**,
+  **[en:tran:Camera Show]** and **[en:tran:Web Show]** a session also owns its **own
+  folder** and its **own slide show**, so one can run a show over your backgrounds
+  folder while another holds a logo from somewhere else, both on screen at once.
+- Right-click a session (or press its **⋮**) to rename or remove it. Only one session
+  is shown at a time, so each button carries its own marks: the on-screen dot when
+  that session has something up, and a blue ▶ while its slide show is advancing —
+  that dot is the only sign of something live belonging to a session you are not
+  looking at. Removing a session **takes what it put up off the screens first**, so
+  nothing is left behind with no button to hide it.
+- A session's _Properties_ act on **that session's own overlay and nothing else**.
+  The Hide row still reaches whatever is live, whichever session put it there —
+  there must always be a way to take something off a projector — but changing
+  size, colour or place while you are on another session no longer re-dresses
+  the overlay somebody else's session has on the wall.
+- **[en:tran:Messages]** and **[en:tran:Time]** hold several items per session
+  (several message editors, several clocks), so two sessions can each have something
+  up at once and both stay listed on the Hide row. **[en:tran:Countdown]**,
+  **[en:tran:Stopwatch]**, **[en:tran:Quick Text]** and the two marquees put **one**
+  thing on a screen, so showing from another session replaces what was there and the
+  on-screen dot moves to the session that now owns it.
+- The **[en:tran:Properties]** panel sits once beside the session buttons and governs
+  every item that session shows — position, width, scale, opacity, corner and blend.
+  That whole row — sessions, _Properties_, the slide show and the screen buttons that
+  take the item off — **stays put while the file list scrolls**.
+- **[en:tran:Always on Top]** (every foreground component, not just these) keeps a
+  widget over the others whatever order they went up in — a logo above the falling
+  snow. The number beside it separates two that are both on top: the higher wins.
+- The **stopwatch** button in that same row opens the slide show:
+  **[en:tran:Start Slide Show]** and the seconds beside it. It keeps running while you
+  are looking at another session, or with the whole Foreground panel closed, and stops
+  by itself when that session's item is cleared. The file list is **not** scrolled to
+  follow it — the tile that is up is marked when it happens to be in view, and the list
+  stays where you left it so you can keep looking for the next picture while the show
+  runs.
+- **[en:tran:Blend Mode]** (under _Properties_ on Video Show, Image Show, Camera Show
+  and Web Show) decides how the overlay mixes with whatever is under it. It is the
+  answer to a clip that has a black background: pick **[en:tran:Screen Blend]** and the
+  black drops out, leaving only the falling snow, sparks or light over the live slide.
+  **[en:tran:Multiply]** does the opposite — white drops out. **[en:tran:Normal]** is
+  the plain overlay that covers what is beneath it.
+- **[en:tran:Effects]** is a fold under _Properties_, on **every** component, and it
+  dresses the overlay: a **[en:tran:Border]** (style, thickness, colour), a
+  **[en:tran:Shadow]** (Soft / Medium / Strong / Glow, with a colour of its own) and
+  **[en:tran:Padding]** — the room between what is shown and the edge of its own box,
+  measured in text sizes so it keeps its proportions when you change the font size.
+  On the components that put WORDS on the screen there is more:
+  **[en:tran:Text Align]**, **[en:tran:Line Height]**, **[en:tran:Letter Spacing]**,
+  a **[en:tran:Text Shadow]** (Soft / Glow / Outline) — which is what makes a notice
+  readable over a busy picture or a moving video — and **[en:tran:Text Style]**:
+  italic, underline, UPPERCASE. The fold carries a dot while anything inside it is
+  set, so a look you cannot find is never the reason a message looks wrong. 📸
 - The shared properties row (font size / color / position) restyles the live widget.
 - Power move: **drag** a widget's Show button and **drop it on the mini screen** to
   start it there; **right-click** the button to choose a specific display.
@@ -1344,7 +1530,7 @@ show button is offered, never pressed unasked. **/countdown 5**, **/countdown
 10:30** and **/marquee Please silence your phones** do the same with no assistant,
 and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6).
 
-_Verify: PM-15..25, PM-28, PM-34, KB-03, KB-07, CB-67._
+_Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, KB-03, KB-07, CB-67._
 
 ### W-10 — Control what the audience sees (mini screen + clears)
 
@@ -1531,7 +1717,30 @@ in the same documents folder. 📸
    When you actually present the slide, the audience screen shows the **real, live
    page** — only your editing and preview views use the picture.
 
-6. Save with **Ctrl+S**.
+6. **Blend a box with the ones under it.** Select a box, and under
+   **[en:tran:Shape Properties]** in the right-hand **[en:tran:Properties]** tab pick a
+   **[en:tran:Blend Mode]** — **[en:tran:Multiply]** to darken, **[en:tran:Screen Blend]**
+   to drop black out of a clip, **[en:tran:Overlay]** for a texture over a photo. It
+   blends with the **canvas items underneath it in the same slide**, so it only shows
+   where the box overlaps another one; put a picture or video box behind, sized
+   **[en:tran:Full]**, and blend over that. It does **not** reach the background you
+   attached to the slide. **[en:tran:Normal]** turns it off again.
+7. **Give a box a shadow.** In the same **[en:tran:Shape Properties]** group, pick a
+   **[en:tran:Shadow]**. There are two kinds and they are not the same thing:
+   - **[en:tran:Box Shadow]** is the shadow of the box itself — its rectangle, with
+     whatever corner rounding you gave it. This is the one for a text box with a
+     coloured backing.
+   - **[en:tran:Drop Shadow]** is the shadow of what is actually painted, so it hugs
+     the **letters** of a box with no backing colour, and the cut-out edge of a logo
+     picture. Giving a see-through logo a box shadow draws a rectangle in mid-air
+     behind it — this is the setting that avoids that.
+
+   Three boxes then appear: **X:** and **Y:** are how far the shadow falls (either
+   way — a negative **Y:** throws it upwards), **[en:tran:Blur:]** is how soft it is,
+   and the colour row under them sets its colour and how see-through it is. Keep the
+   blur modest on an old machine: a big soft shadow is the one setting here that
+   costs the computer real work. **[en:tran:No Shadow]** takes it off again.
+8. Save with **Ctrl+S**.
 
 **Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
@@ -1539,7 +1748,7 @@ in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 **Web backgrounds:** Background panel → **Web** tab → **+** — the Web Editor opens;
 enter the URL and title, save, and the new item appears in the Web tab.
 
-_Verify: ED-01..11, ED-45, ED-46, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124._
+_Verify: ED-01..11, ED-45, ED-46, ED-47, ED-48, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124._
 
 ### W-43 — Remove a song, document or file (Move to Trash)
 
@@ -4222,3 +4431,64 @@ it is describing.
     use are then never started.
 
 _Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71._
+
+### W-47 — Put messages on the screen, and blank the edges of the picture
+
+**Goal:** handle the two things that come up around a service and are not
+slides — words everyone needs to read, and a projector whose picture spills off
+the screen.
+
+1. Open the **[en:tran:Foreground]** tab. The launcher that opens is a menu of
+   components, and the first row in it is **[en:tran:Messages]** — it is first
+   because it is the one you open in a hurry.
+2. **Write your messages.** Press **[en:tran:Add Message]** for each one. Every
+   message gets its own box and can be **as many lines as you like** — a line
+   break in the box is a line break on the screen. The arrows beside a box move
+   that message up or down the list; the ✕ removes it.
+3. **Put one up.** Press the screen button on a message's own row. It appears
+   over whatever is already on the screen — the slide, the verse, the background
+   — and it **stays there until you take it down**. There is no delay and no
+   countdown: nothing removes it but you. Press the same button again to take it
+   off; it now reads _hide_.
+4. **Several at once.** Show a second message and it sits **underneath** the
+   first rather than on top of it, however many lines each one has. Hide the one
+   above and the one below moves up to close the gap. This is how you put a
+   parking notice and an offering notice up together.
+5. **The whole set.** **[en:tran:Show All Messages]** puts every message up at
+   once as one block. Tick **[en:tran:Rotate]** first and a seconds box appears:
+   now the same button shows them **one at a time**, cycling until you hide it.
+   That is the notice board before a service.
+6. **Make it look like a notice.** Open **[en:tran:Properties]**, then the
+   **[en:tran:Effects]** fold under it. **[en:tran:Padding]** is the room between
+   your words and the edge of the coloured box behind them — it starts at a
+   quarter of a text size, and because it is measured in text sizes the box keeps
+   its shape when you change **[en:tran:Font Size]**. Add a
+   **[en:tran:Border]** to frame it, a **[en:tran:Shadow]** to lift it off the
+   picture, **[en:tran:Text Align]** to centre it, and a
+   **[en:tran:Text Shadow]** of **[en:tran:Outline]** when the message has to be
+   read over a busy photograph or a moving video. Changing any of them while
+   messages are showing restyles them where they stand and keeps them stacked. 📸
+7. **F4** is the shortcut: with a screen ticked it puts the session up, and
+   pressing it again takes everything down. If no screen is ticked it tells you
+   so rather than guessing.
+8. The text is plain. Typing `<b>loud</b>` puts those angle brackets on the
+   screen exactly as you typed them; a message is never treated as formatting.
+   Use the save buttons at the top to keep a whole session — every message in it
+   — and pick it back next week.
+9. **Blanking the edges.** If the projector's picture runs past your screen —
+   onto the wall, over an organ pipe, or below a screen that only comes half way
+   down — find the **[en:tran:Mask]** button in the **[en:tran:Mini Screen]**
+   footer, just right of the drawing button. Press it to open four sliders.
+10. Drag **[en:tran:Cover from the top]**, **[en:tran:Cover from the bottom]**,
+    **[en:tran:Cover from the left]** and **[en:tran:Cover from the right]** until
+    the picture stops where your screen does. The bars are solid and sit over
+    everything, including a video overlay. You can change the colour if black is
+    not the right answer for your room.
+11. **The mask is not content, and it behaves differently on purpose.** It is
+    measured once for the room and then left alone: it survives closing the
+    panel, it survives restarting the app, and **[en:tran:Clear All]** (F6) does
+    **not** remove it. That is deliberate — the panic key must never hand you a
+    picture spilling onto the wall. The only thing that removes it is
+    **[en:tran:Remove Mask]** in that same panel.
+
+_Verify: PM-134, PM-135, PM-136._

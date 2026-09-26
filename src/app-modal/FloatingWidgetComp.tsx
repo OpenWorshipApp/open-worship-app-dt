@@ -63,6 +63,17 @@ interface MyProps {
     // When set, the widget's size and location are saved under this setting key
     // and restored the next time it opens.
     persistKey?: string;
+    // The panel's own ENGLISH name, stamped into the DOM the way a resizable
+    // pane stamps its `toWidgetLabel` key. Without it a floating panel is a
+    // nameless box: everything inside it reports the pane BEHIND it as the
+    // panel it is in, so a control this panel shares with another place --
+    // the file grid a foreground component reuses from the Background tabs --
+    // cannot be told apart from its twin. `owa_find_ui "clock"` rang the
+    // Background tile and the Web Show tile at once, and no scope could
+    // separate them. Translated on screen, English here, for the same reason
+    // the panes are: a name only a Khmer window answers to is a name the
+    // matcher loses the moment the app is switched over.
+    widgetName?: string;
     // Bump this to pull the widget back to the front. For hosts whose "open"
     // gesture can land on a widget that is ALREADY open: pressing inside a
     // widget raises it, but a request coming from anywhere else in the app has
@@ -99,6 +110,7 @@ export default function FloatingWidgetComp({
     extraActionButtons = null,
     options = {},
     persistKey,
+    widgetName,
     raiseToken,
     onClose,
 }: PropsWithChildren<MyProps>) {
@@ -527,6 +539,7 @@ export default function FloatingWidgetComp({
         <div
             ref={widgetRef}
             data-bs-theme={theme}
+            data-widget-name={widgetName}
             className={[
                 'floating-widget',
                 isAboveModal ? 'floating-widget--above-modal' : '',

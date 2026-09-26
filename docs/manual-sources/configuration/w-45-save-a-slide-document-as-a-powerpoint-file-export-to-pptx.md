@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PL-106]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-23"
+workflowsVersion: "2026-09-25"
 ---
 # W-45 — Save a slide document as a PowerPoint file (Export to PPTX)
 
@@ -55,5 +55,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-106`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-23).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-25).
 :::

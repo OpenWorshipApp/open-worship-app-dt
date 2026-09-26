@@ -79,10 +79,20 @@ export type BackgroundSrcListType = {
 };
 
 export type ForegroundCountdownDataType = {
+    /**
+     * Which SESSION of the widget put this up. A session is one saved set-up of
+     * the panel -- its own words or numbers and its own Properties -- and it is
+     * what the panel's session strip marks as being on a screen. Only one of
+     * these can be up at a time, so a new one REPLACES whatever was there,
+     * whichever session owned it; an entry with no id is the Default session's.
+     */
+    id?: string;
     dateTime: Date;
     extraStyle?: CSSProperties;
 };
 export type ForegroundStopwatchDataType = {
+    /** The widget SESSION that put this up -- see `ForegroundCountdownDataType`. */
+    id?: string;
     dateTime: Date;
     extraStyle?: CSSProperties;
 };
@@ -100,27 +110,156 @@ export const DEFAULT_MARQUEE_SPEED_PERCENTAGE = 100;
 export const MIN_MARQUEE_SPEED_PERCENTAGE = 10;
 export const MAX_MARQUEE_SPEED_PERCENTAGE = 1000;
 export type ForegroundMarqueeDataType = {
+    /** The widget SESSION that put this up -- see `ForegroundCountdownDataType`. */
+    id?: string;
     text: string;
     speedPercentage?: number;
     extraStyle?: CSSProperties;
 };
+/**
+ * A line of text put up FAST and left up until somebody takes it down -- the
+ * unplanned mid-service message ("blue Toyota, lights on", "the nursery needs
+ * a parent").
+ *
+ * It is deliberately NOT Quick Text, which is markdown, has a delay and a
+ * time-to-live, and removes ITSELF. An alert carries no clock at all, because
+ * the thing that ends it is the person who put it up -- the operator must
+ * never be racing a countdown they cannot see.
+ *
+ * The text is PLAIN, and that is a safety property as much as a speed one:
+ * it is rendered as a React text child, so the markup is escaped by the
+ * renderer and never passes through `sanitizeHtml`, which is still a no-op
+ * placeholder in a renderer that has node integration.
+ */
+/**
+ * Words put over whatever else is live, and left there until somebody takes
+ * them down -- the unplanned mid-service message ("blue Toyota, lights on")
+ * and the notice board that runs before a service, which are the same thing
+ * with and without a rotation.
+ *
+ * Deliberately NOT Quick Text, which is markdown, has a delay and a
+ * time-to-live, and removes ITSELF. These carry no clock that ends them,
+ * because the thing that ends them is the person who put them up -- an
+ * operator must never be racing a countdown they cannot see.
+ *
+ * The text is PLAIN, and that is a safety property as much as a speed one: it
+ * is rendered as a React text child, so the renderer escapes it and it never
+ * passes through `sanitizeHtml`, which is still a no-op placeholder in a
+ * renderer that has node integration.
+ */
+export type ForegroundMessageDataType = {
+    /**
+     * Which EDITOR in the panel put this up. A session holds several message
+     * editors, each with its own Show button, so several messages can be on a
+     * screen at once and each has to be findable to take down again -- exactly
+     * how `timeDataList` keys its clocks.
+     *
+     * The one the "show all in turn" button puts up carries its own reserved
+     * id, because it stands for the whole set rather than for one editor.
+     */
+    id: string;
+    /**
+     * The message, as LINES. One editor's text is split on newlines, so a
+     * message may be several lines; a rotating set carries one entry per
+     * message instead.
+     */
+    textList: string[];
+    /**
+     * Seconds each entry holds before the next, or `null` to show the FIRST
+     * one and never move -- which is what one editor's Show does.
+     *
+     * Rotation is a timer that swaps the text and transitions `opacity` --
+     * there is no `infinite` keyframe anywhere in it, because this is mounted
+     * at rest for a whole pre-service slot and an infinite paint animation
+     * there is what held the idle Reader at 235 paints/s. Nothing rotates
+     * with fewer than two entries, so no timer is started for one.
+     */
+    intervalSecond: number | null;
+    extraStyle?: CSSProperties;
+};
+
 export type ForegroundQuickTextDataType = {
+    /** The widget SESSION that put this up -- see `ForegroundCountdownDataType`. */
+    id?: string;
     htmlText: string;
     timeSecondDelay: number;
     timeSecondToLive: number;
     extraStyle?: CSSProperties;
 };
 export type ForegroundCameraDataType = {
+    /**
+     * How this overlay comes in and goes out. Chosen per SESSION in the
+     * widget's own Properties, not on the screen's Tr: row -- that one
+     * covers a whole layer, and two overlays on the foreground at once
+     * is the ordinary case here.
+     */
+    transitionEffect?: TransitionEffectType;
     id: string;
     extraStyle?: CSSProperties;
 };
 export type ForegroundWebDataType = {
+    /**
+     * How this overlay comes in and goes out. Chosen per SESSION in the
+     * widget's own Properties, not on the screen's Tr: row -- that one
+     * covers a whole layer, and two overlays on the foreground at once
+     * is the ordinary case here.
+     */
+    transitionEffect?: TransitionEffectType;
     filePath: string;
     widthScale: number;
     heightScale: number;
+    /** The widget SESSION that put this up -- see `ForegroundVideoDataType`. */
+    id?: string;
+    extraStyle?: CSSProperties;
+};
+/**
+ * A clip or a picture shown OVER the slide rather than behind it -- the
+ * Foreground panel's Video Show and Image Show. Size and place come from
+ * `extraStyle` like every other foreground widget, which is also where the
+ * blend mode rides, so there is no `scaleType` here: a background fills the
+ * screen, an overlay is aimed by hand.
+ */
+export type ForegroundVideoDataType = {
+    /**
+     * How this overlay comes in and goes out. Chosen per SESSION in the
+     * widget's own Properties, not on the screen's Tr: row -- that one
+     * covers a whole layer, and two overlays on the foreground at once
+     * is the ordinary case here.
+     */
+    transitionEffect?: TransitionEffectType;
+    filePath: string;
+    /**
+     * Which SESSION of the widget put this up -- a session is one saved set-up
+     * (its own folder, Properties and slide show), and several of them are how
+     * one widget holds several overlays at once. Picking a new file replaces
+     * the entry with the same id and leaves every other session's alone.
+     */
+    id?: string;
+    extraStyle?: CSSProperties;
+    /**
+     * Let this clip be HEARD. Off by default and per session, because an
+     * overlay is decoration running under whatever the service is doing and
+     * an unmuted one fights the song; a clip that IS the moment -- a
+     * testimony, a trailer -- turns it on.
+     */
+    isSoundOn?: boolean;
+    /** 0-100, the clip's own level. Only meaningful with `isSoundOn`. */
+    soundVolume?: number;
+};
+export type ForegroundImageDataType = {
+    /**
+     * How this overlay comes in and goes out. Chosen per SESSION in the
+     * widget's own Properties, not on the screen's Tr: row -- that one
+     * covers a whole layer, and two overlays on the foreground at once
+     * is the ordinary case here.
+     */
+    transitionEffect?: TransitionEffectType;
+    filePath: string;
+    id?: string;
     extraStyle?: CSSProperties;
 };
 export type ForegroundDataType = {
+    messageDataList: ForegroundMessageDataType[];
     countdownData: ForegroundCountdownDataType | null;
     stopwatchData: ForegroundStopwatchDataType | null;
     timeDataList: ForegroundTimeDataType[];
@@ -129,6 +268,8 @@ export type ForegroundDataType = {
     quickTextData: ForegroundQuickTextDataType | null;
     cameraDataList: ForegroundCameraDataType[];
     webDataList: ForegroundWebDataType[];
+    videoDataList: ForegroundVideoDataType[];
+    imageDataList: ForegroundImageDataType[];
 };
 export type ForegroundSrcListType = {
     [key: string]: ForegroundDataType;
@@ -186,6 +327,36 @@ export type FocusDataType = {
     isContrast: boolean;
 };
 
+/**
+ * The BLANKING shape for a room -- solid bars that cover the edges of the
+ * projector's picture so it stops short of an organ pipe, a window frame, or
+ * the bottom of a screen that only comes half way down.
+ *
+ * Two things it is NOT, both deliberate:
+ *
+ * - It is not the Focus spotlight. That one is a live pointer, re-aimed by
+ *   hand, and it is gone the moment it is switched off. This is ROOM GEOMETRY:
+ *   measured once, right for as long as the projector sits where it sits.
+ * - It is therefore not content, so `ScreenManager.clear()` does NOT touch it.
+ *   `Clear All` mid-service must not hand the congregation a picture spilling
+ *   onto the wall above the screen, and an operator who pressed the panic key
+ *   is the last person who should have to re-measure a mask.
+ *
+ * Each inset is a percentage of the screen's own width or height, so one mask
+ * is right whatever resolution the display reports and survives the projector
+ * being swapped. Cost at rest is zero: four static divs, no timer, no
+ * animation, nothing that repaints once painted.
+ */
+export type MaskDataType = {
+    topPercentage: number;
+    rightPercentage: number;
+    bottomPercentage: number;
+    leftPercentage: number;
+    // `#rrggbb`. Black for a dark room; a projector with poor black level
+    // sometimes reads better masked in the wall's own colour.
+    color: string;
+};
+
 export type BoundsType = {
     x: number;
     y: number;
@@ -217,6 +388,7 @@ export const screenTypeList = [
     'sync-scroll-percentage',
     'draw',
     'focus',
+    'mask',
 ] as const;
 export type ScreenType = (typeof screenTypeList)[number];
 export type BasicScreenMessageType = {

@@ -90,6 +90,30 @@ const foregroundOnScreenMatcherMap: Record<
     ForegroundDragTargetType,
     (foregroundData: any, data: any) => boolean
 > = {
+    // Matched on the WORDS, like the marquees above and unlike the timers: two
+    // different messages are two different run-sheet rows, and only the one
+    // whose text is up should mark itself live. The whole list, so a row
+    // carrying this week's notices does not light up on last week's.
+    message: (foregroundData, data) => {
+        const rowTextList: string[] = data?.textList;
+        const showing: string[] | undefined = (
+            foregroundData.messageDataList ?? []
+        ).find((item: any) => {
+            return (
+                Array.isArray(item?.textList) &&
+                item.textList.length === (rowTextList ?? []).length
+            );
+        })?.textList;
+        if (!Array.isArray(showing) || !Array.isArray(rowTextList)) {
+            return false;
+        }
+        return (
+            showing.length === rowTextList.length &&
+            showing.every((text, index) => {
+                return text === rowTextList[index];
+            })
+        );
+    },
     countdown: (foregroundData) => {
         return foregroundData.countdownData != null;
     },
@@ -117,6 +141,16 @@ const foregroundOnScreenMatcherMap: Record<
     },
     web: (foregroundData, data) => {
         return (foregroundData.webDataList ?? []).some((item: any) => {
+            return item.filePath === data?.filePath;
+        });
+    },
+    video: (foregroundData, data) => {
+        return (foregroundData.videoDataList ?? []).some((item: any) => {
+            return item.filePath === data?.filePath;
+        });
+    },
+    image: (foregroundData, data) => {
+        return (foregroundData.imageDataList ?? []).some((item: any) => {
             return item.filePath === data?.filePath;
         });
     },

@@ -161,6 +161,8 @@ type PropsType = {
     takeDroppedFile?: (file: DroppedFileType) => boolean;
     userClassName?: string;
     defaultFolderName?: string;
+    /** See `NoDirSelectedComp`: hides the Settings route on the empty state. */
+    isDirSettingRouteHidden?: boolean;
     fileSelectionOption?: FileSelectionOptionType;
     checkIsOnScreen?: (filePaths: string[]) => Promise<boolean>;
     // Called with the generic "Add Local Files" entry so the list can append
@@ -189,6 +191,7 @@ export default function FileListHandlerComp({
     takeDroppedFile,
     userClassName,
     defaultFolderName,
+    isDirSettingRouteHidden,
     fileSelectionOption,
     checkIsOnScreen,
     genItemsAddingMenuItems,
@@ -350,6 +353,7 @@ export default function FileListHandlerComp({
                         <NoDirSelectedComp
                             dirSource={dirSource}
                             defaultFolderName={noDirFolderName}
+                            isDirSettingRouteHidden={isDirSettingRouteHidden}
                         />
                     ) : (
                         <ul className="list-group flex-fill d-flex">

@@ -63,17 +63,26 @@ const editorStyle = `
   cursor: pointer;
 }
 .app-box-editor.controllable {
-  outline: 2px dashed green;
   cursor: move;
   /* Claim touch gestures for dragging the box; without this the browser
      pans/zooms the canvas instead of moving the box on a touchscreen. */
   touch-action: none;
 }
 .app-box-editor.controllable.locked {
-  outline: 2px dashed orange;
   cursor: default;
 }
-.app-box-editor .locked-indicator {
+/* The selection outline lives on the chrome frame, NOT on the box: a box with
+   a mix-blend-mode composites its whole subtree as one group, and a dashed
+   green outline multiplied onto a dark canvas is an invisible outline. */
+.box-chrome-frame {
+  position: absolute;
+  outline: 2px dashed green;
+  box-sizing: border-box;
+}
+.box-chrome-frame.locked {
+  outline: 2px dashed orange;
+}
+.editor-controller-box-chrome .locked-indicator {
   position: absolute;
   top: 5px;
   right: 5px;
@@ -105,6 +114,16 @@ const editorStyle = `
   position: absolute;
   transform-origin: top left;
 }
+/* The selection chrome's own anchor: the same zero-sized, rotated point as the
+   wrapper above, drawn right after it so it paints over its box and under the
+   next one -- exactly where the chrome used to sit when it was a child. It is
+   a sibling so a blended box cannot blend its own handles away, and it is
+   click-through so pressing between two handles still reaches the box. */
+.editor-controller-box-chrome {
+  position: absolute;
+  transform-origin: top left;
+  pointer-events: none;
+}
 /* Marks the boxes that are selected AND unlocked, i.e. the ones a drag can
    move. BoxEditorController.resolveEditorElement uses this to pick the other
    members of a group drag, now that the wrapper alone no longer means
@@ -112,7 +131,7 @@ const editorStyle = `
 .editor-controller-box-wrapper.controlling {
   user-select: none;
 }
-.editor-controller-box-wrapper .object {
+.editor-controller-box-chrome .object {
   height: 14px;
   width: 14px;
   background-color: #1e88e5;
@@ -128,66 +147,68 @@ const editorStyle = `
      root's default content-box makes each handle 16px and sits it a pixel
      inside the corner it is supposed to mark. */
   box-sizing: border-box;
+  /* Back on, against the chrome anchor's own pointer-events: none. */
+  pointer-events: auto;
 }
-.editor-controller-box-wrapper .object:hover {
+.editor-controller-box-chrome .object:hover {
   background-color: #0d47a1;
 }
 /* A finger is far coarser than the 14px dots, so on touch devices grow an
    invisible hit area around each handle (events on ::before target the handle).
    Fine pointers (mouse) keep the exact 14px target. */
 @media (pointer: coarse) {
-  .editor-controller-box-wrapper .object::before {
+  .editor-controller-box-chrome .object::before {
     content: '';
     position: absolute;
     inset: -9px;
   }
 }
-.editor-controller-box-wrapper .object.left-top {
+.editor-controller-box-chrome .object.left-top {
   top: -7px;
   left: -7px;
   cursor: nw-resize;
 }
-.editor-controller-box-wrapper .object.left-bottom {
+.editor-controller-box-chrome .object.left-bottom {
   bottom: -7px;
   left: -7px;
   cursor: sw-resize;
 }
-.editor-controller-box-wrapper .object.right-top {
+.editor-controller-box-chrome .object.right-top {
   top: -7px;
   right: -7px;
   cursor: ne-resize;
 }
-.editor-controller-box-wrapper .object.right-bottom {
+.editor-controller-box-chrome .object.right-bottom {
   bottom: -7px;
   right: -7px;
   cursor: se-resize;
 }
-.editor-controller-box-wrapper .object.top-mid {
+.editor-controller-box-chrome .object.top-mid {
   top: -7px;
   left: calc(50% - 7px);
   cursor: n-resize;
 }
-.editor-controller-box-wrapper .object.left-mid {
+.editor-controller-box-chrome .object.left-mid {
   left: -7px;
   top: calc(50% - 7px);
   cursor: w-resize;
 }
-.editor-controller-box-wrapper .object.right-mid {
+.editor-controller-box-chrome .object.right-mid {
   right: -7px;
   top: calc(50% - 7px);
   cursor: e-resize;
 }
-.editor-controller-box-wrapper .object.bottom-mid {
+.editor-controller-box-chrome .object.bottom-mid {
   bottom: -7px;
   left: calc(50% - 7px);
   cursor: s-resize;
 }
-.editor-controller-box-wrapper .object.rotate {
+.editor-controller-box-chrome .object.rotate {
   top: -30px;
   left: calc(50% - 7px);
   cursor: alias;
 }
-.editor-controller-box-wrapper .rotate-link {
+.editor-controller-box-chrome .rotate-link {
   position: absolute;
   width: 1px;
   height: 15px;

@@ -1,82 +1,45 @@
-import { useCallback } from 'react';
+import './foregroundWidgets.scss';
+
 import type { CSSProperties, ReactNode } from 'react';
 
-import { useStateSettingBoolean } from '../helper/settingHelpers';
-import { useAppCurrentRef } from '../helper/appHooks';
-
+/**
+ * The body of one foreground component.
+ *
+ * There is no card header and no collapse chevron any more: every component
+ * now opens in its OWN floating panel, and that panel already carries the
+ * name, the on-screen mark and a close button. A second header inside it said
+ * the same word twice and hid the controls behind an extra press.
+ *
+ * It adds NO scroller either -- the panel's own `.floating-widget__content`
+ * is the one scrollport, which is what lets a media widget's session bar
+ * `position: sticky` to the top of it. A second scroller nested inside also
+ * shrank the windowed file grid's visible band to a couple of rows.
+ *
+ * It carries the body stylesheet because every foreground component renders
+ * through it -- including the two that keep a border of their own, since
+ * they sit in a LIST and the border is what separates one item from the next
+ * rather than a card around a card.
+ */
 export default function ForegroundLayoutComp({
     target,
-    fullChildHeaders,
-    childHeadersOnHidden,
-    extraHeaderStyle,
-    extraHeaderClassName,
     children,
     extraBodyClassName,
     extraBodyStyle,
-    isOnScreen = false,
 }: Readonly<{
     target: string;
-    fullChildHeaders?: ReactNode;
-    extraHeaderStyle?: CSSProperties;
-    extraHeaderClassName?: string;
-    childHeadersOnHidden?: ReactNode;
     children?: ReactNode;
     extraBodyClassName?: string;
     extraBodyStyle?: CSSProperties;
-    isOnScreen?: boolean;
 }>) {
-    const [isOpened, setIsOpened] = useStateSettingBoolean(
-        `foreground-${target}-show-opened`,
-        false,
-    );
-    const isOpenedRef = useAppCurrentRef(isOpened);
-    const setIsOpenedRef = useAppCurrentRef(setIsOpened);
-    const handleToggleOpened = useCallback(() => {
-        setIsOpenedRef.current(!isOpenedRef.current);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
     return (
         // The target is exposed so anything referencing this foreground (a
         // presenting flow row) can find and highlight the panel it came from.
-        <div className="card m-2" data-foreground-target={target}>
-            <div
-                className={'card-header d-flex' + (extraHeaderClassName ?? '')}
-                style={extraHeaderStyle}
-            >
-                <div
-                    className="d-flex app-ellipsis app-caught-hover-pointer flex-grow-1"
-                    onClick={handleToggleOpened}
-                >
-                    <i
-                        className={
-                            'app-caught-hover-pointer bi bi-chevron-' +
-                            (isOpened ? 'down' : 'right')
-                        }
-                    />
-                    <div
-                        className={
-                            'd-flex align-items-center' +
-                            (isOnScreen ? ' app-on-screen' : '')
-                        }
-                    >
-                        {fullChildHeaders}
-                    </div>
-                </div>
-                {isOpened ? null : (
-                    <div className="d-flex">{childHeadersOnHidden}</div>
-                )}
-            </div>
-            {isOpened ? (
-                <div
-                    className={
-                        'card-body app-inner-shadow p-2 ' +
-                        (extraBodyClassName ?? '')
-                    }
-                    style={extraBodyStyle}
-                >
-                    {children}
-                </div>
-            ) : null}
+        <div
+            className={'w-100 ' + (extraBodyClassName ?? '')}
+            style={extraBodyStyle}
+            data-foreground-target={target}
+        >
+            {children}
         </div>
     );
 }

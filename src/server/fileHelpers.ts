@@ -999,6 +999,26 @@ export async function fsGetFileSize(filePath: string) {
     return stat.size;
 }
 
+/**
+ * What a file looks like from the OUTSIDE — its size and when it last
+ * changed — or null when there is no file there.
+ *
+ * A stat, deliberately, not a read: this is for deciding whether something
+ * derived from a file's bytes (a checksum, a screenshot) can be reused, and
+ * asking that question must not cost as much as re-deriving the answer.
+ */
+export async function fsGetFileStamp(filePath: string) {
+    try {
+        const stat = await _fsStat(filePath);
+        if (!stat.isFile()) {
+            return null;
+        }
+        return { size: stat.size, modifiedAt: stat.mtimeMs };
+    } catch (_error) {
+        return null;
+    }
+}
+
 export async function fsList(dir: string) {
     if (!dir) {
         return [];
