@@ -2184,3 +2184,73 @@ catch, true for any session driving the live app: `performance_start_trace`
 and `lighthouse_audit` both RELOAD the window they are aimed at unless told
 `reload: false` / `mode: "snapshot"`. Same mirror rule:
 `.github/skills/owa-enhance` is a copy.
+
+## owa-upgrade-unit-test skill
+
+`.claude/skills/owa-upgrade-unit-test` owns the UNIT TEST SUITE and the climb
+to **99% line coverage**. `/owa-upgrade-unit-test [measure | plan | <path> |
+next | fix-flaky | gate | report]`. Where `/owa-robot-test` drives the live
+window and its `coverage-expansion/` tracks UI PATHS, this one moves vitest
+line coverage over both projects — `vitest.config.ts` (`src/**`,
+`tools/**/*.test.mjs`) and `vitest.electron.config.ts`.
+
+**The reported number is not the real number.** `npm run test:coverage` prints
+78.28% lines and `test:electron:coverage` 84.29%, both measured over the files
+a test happened to LOAD — v8 measures nothing else unless `coverage.include`
+is given, and neither committed config gives one. Over the whole surface the
+honest figure is **48.17% (25 395 / 52 715 lines across 986 files), 502 files
+at exactly 0%, 26 793 lines short of 99%** (measured 2026-09-26 @ `22217577`).
+That denominator can only shrink: deleting a test that loads a big untested
+file RAISES the reported percentage. So every number the skill states comes
+from `scripts/coverage-gap.mjs`, which measures loaded and unloaded files
+alike, writes only under the gitignored `test-results/unit-coverage/` (so
+`apply` survives a cleared conversation) and carries `--no-run`, `--surface=`,
+`--dir=`, `--uncovered=<file>` (the missing line RANGES), `--json` and
+`--goal=`.
+
+Three things that run costs if they are not known: full instrumentation is
+~2.5× slower (src 124 s against 55 s, electron 33 s against 9 s) and pushes
+`src/_screen/components.smoke.test.tsx` past the committed 10 s `testTimeout`,
+so the script passes `--testTimeout=60000`; **a failing test means vitest
+writes NO coverage report at all**, and the script says so rather than
+printing a stale number; and `lint:pre` is red on a Windows checkout for line
+endings alone (`core.autocrlf` true, no `endOfLine` in `.prettierrc` — ~1 270
+files), so check your own new files and never `npm run format` the tree.
+`lint:es` does not lint test files; prettier does.
+
+**The gap has a shape, and it names the cause.** By kind: `module` 70%,
+`helper` 57.3%, `component` **10.1%** (415 files — half the remaining gap),
+entry files 0%. The two dark folders are `src/presenting-flow` (29 files,
+0.4%, 28 at zero) and `src/presenter-foreground` (28 files, 0.2%) — neither is
+neglect: the 2026-08-24 prune that deleted `appProvider.mock.ts` took **65 test
+files** with it, including that entire presenting-flow suite and both `lang`
+km-completeness suites (memory `appprovider-mock-node-env`). Rebuilding them
+**without** re-adding a shared provider fake is the main job, because the
+deletion was the user's explicit decision — _"remove all mock for app-provider,
+I don't need mocking anymore"_ — and no shared mock, `setupFiles` injection or
+test-only provider shim may come back, whatever it does for the number.
+
+**Two rules bind every run.** The number comes from the script, never from
+`test:coverage`. And **a test must be able to FAIL**: an import-and-render that
+asserts nothing lights the same lines and catches nothing, so where a batched
+smoke harness is the right tool — it is, for 415 components, on the
+`src/_screen/components.smoke.test.tsx` pattern of one mock surface amortised
+over a folder — it still asserts something true, and the run reports the
+smoke-render share of its gain separately from the behavioural share. Branch
+coverage is reported beside lines for the same reason: lines rise with smoke
+renders while every `catch` stays unrun. A failing test is never deleted or
+`.skip`ped to raise a number, and a `tran()` key that throws during a render is
+a BUG FOUND, not a thing to mock around.
+
+Work is planned as `UT-xx` batches in `references/plan.md`, ranked by uncovered
+lines per hour rather than by file size; `references/baseline.md` carries the
+measured baseline, every exclusion **with its reason** (an exclusion moves the
+goalposts, so it is a decision, not a cleanup — the 19 renderer entry files are
+left undecided on purpose) and a six-rung ladder whose rung 6 is 99% locked
+behind a committed `coverage.thresholds`; `references/recipes.md` carries the
+repo's real idioms — the `// @vitest-environment jsdom` first line, `vi.hoisted`
+mock bundles, `createRoot` + `act` or `renderToStaticMarkup` (there is no
+`@testing-library/react` here), the `vi.mock`-factory-survives-`resetModules`
+fork, and a table of this app's recurring defect classes as ready-made test
+targets. Same mirror rule: `.agents/skills/owa-upgrade-unit-test` and
+`.github/skills/owa-upgrade-unit-test` are copies.

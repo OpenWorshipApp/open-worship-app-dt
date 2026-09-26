@@ -15,6 +15,7 @@
 - [Missing km key throws in dev](tran-missing-key-throws-in-dev.md) — `tran()` throws (blanks the page) on a missing key; `tranKeyCoverage.test.ts` catches STATIC keys since 2026-09-18
 - [Confirm popup labels are auto-tran'd](confirm-popup-labels-auto-tran.md) — ConfirmPopupComp `tran()`s the button labels
 - [Vitest env-leak flakes](vitest-env-leak-flakes.md) — node-env tests importing `appProvider` need a jsdom sibling
+- [The coverage number counts loaded files only](coverage-number-is-loaded-files-only.md) — `test:coverage` reads 78%; the honest figure is 48% with 502 files at 0%
 - [npm 12 install gotchas](npm-12-install-gotchas.md) — plain `npm i` fails on git deps and leaves electron broken
 - [open-lyric dist-repo dep](open-lyric-subtree-branch-dep.md) — a pre-built dist repo pinned to a tag
 - [Blob downloads pop a Save As dialog](blob-download-pops-save-dialog.md) — no will-download handler; orphans a .tmp
