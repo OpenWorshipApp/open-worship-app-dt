@@ -148,3 +148,5 @@
 - [Data folder path is aliased in file contents](portable-data-dir-alias.md) — `$DATA_DIR_PATH` in every escape level; raw readers see the alias; a marker re-finds the folder, setting NAMES go `@data_`, Repair Links fixes old paths
 - [Path handling lives in fileHelpers](path-handling-lives-in-filehelpers.md) — the user's rule: every path/file-name helper in `src/server/fileHelpers.ts`, no ad-hoc separator splits
 - [A new screen layer needs a z-index](screen-layer-needs-z-index-above-foreground.md) — a foreground overlay's own Always-on-Top number paints over a layer added after it
+- [A foreground camera opens its own stream per window](foreground-camera-deviceid-rotates.md) — `deviceId` rotates per document, so the screen window resolves by LABEL or the projector shows nothing, silently; `cameraHelpers` stays a leaf and reports through a callback
+- [Message editors hold their text in local state](message-editor-text-is-local-state.md) — a controlled textarea fed by the blank-line-joined session string ate every space and Enter typed at the END

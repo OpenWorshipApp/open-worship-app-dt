@@ -46,6 +46,7 @@ import type { OptionalPromise } from '../../helper/typeHelpers';
 import type ScreenEffectManager from './ScreenEffectManager';
 import type { TransitionEffectType } from '../transitionEffectHelpers';
 import { getCameraAndShowMedia } from '../../helper/cameraHelpers';
+import appProvider from '../../server/appProvider';
 
 export type ScreenForegroundEventType = 'update';
 
@@ -777,6 +778,21 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         const newData = {
             parentContainer: divContainer!,
             ...data,
+            // Said on the OPERATOR'S window only. This same method runs in the
+            // screen window, and a toast there is the projector -- the one
+            // place a message about a broken camera must never land. A camera
+            // that would not open used to be a console line and nothing else,
+            // so the mini preview showed it, the widget showed an on-screen
+            // dot, and the wall stayed empty with nothing to explain it.
+            onUnavailable: (cameraName: string) => {
+                if (appProvider.isPageScreen) {
+                    return;
+                }
+                showSimpleToast(
+                    tran('Camera Not Available'),
+                    `${tran('Could not open the camera')}: ${cameraName}`,
+                );
+            },
         };
         getCameraAndShowMedia(newData, this.styleAnimFor(data)).then(
             (clearTracks) => {

@@ -51,12 +51,21 @@ function toIdListSettingName(suffix: string) {
     return `foreground-time-id-list${suffix}`;
 }
 
-function getSystemTimezoneMinuteOffset() {
+/**
+ * HOURS, despite every surrounding name. `TimingController` multiplies this by
+ * `60 * 60 * 1000`, so hours is what the whole chain has always meant -- the
+ * box just used to be labelled `min`, and a volunteer who typed the minute
+ * offset for their city (420 for Phnom Penh) got a clock weeks out. The data
+ * field and the setting key keep the old `...MinuteOffset` spelling on purpose:
+ * they are persisted in `screen-foreground-manager` and in one setting file per
+ * clock, and renaming them would blank a clock that is already on a screen.
+ */
+function getSystemTimezoneHourOffset() {
     const date = new Date();
     return -date.getTimezoneOffset() / 60;
 }
 
-function getMinuteOffsetFromCity(event: any) {
+function getHourOffsetFromCity(event: any) {
     return new Promise<[string, number] | null>((resolve) => {
         const cityNames = tz
             .names()
@@ -76,8 +85,8 @@ function getMinuteOffsetFromCity(event: any) {
                     childBefore: genContextMenuItemIcon('clock'),
                     menuElement: title,
                     onSelect: () => {
-                        const minuteOffset = tz(name).utcOffset() / 60;
-                        resolve([title, minuteOffset]);
+                        const hourOffset = tz(name).utcOffset() / 60;
+                        resolve([title, hourOffset]);
                     },
                 };
             }),
@@ -104,7 +113,7 @@ function TimeInSetComp({
     const [timezoneMinuteOffset, setTimezoneMinuteOffset] =
         useStateSettingNumber(
             `foreground-timezone-minute-offset-setting-${id}`,
-            getSystemTimezoneMinuteOffset,
+            getSystemTimezoneHourOffset,
         );
     const [is24HourFormat, setIs24HourFormat] = useStateSettingBoolean(
         `foreground-time-is-24-hour-format-setting-${id}`,
@@ -153,12 +162,12 @@ function TimeInSetComp({
         setTimezoneMinuteOffset,
     );
     const handleUseCurrentTimezone = useCallback(() => {
-        setTimezoneMinuteOffsetRef.current(getSystemTimezoneMinuteOffset());
+        setTimezoneMinuteOffsetRef.current(getSystemTimezoneHourOffset());
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const setCityNameRef = useAppCurrentRef(setCityName);
     const handleChooseCity = useCallback(async (event: any) => {
-        const result = await getMinuteOffsetFromCity(event);
+        const result = await getHourOffsetFromCity(event);
         if (result === null) {
             return;
         }
@@ -175,9 +184,15 @@ function TimeInSetComp({
     );
     const handleTimezoneOffsetChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setTimezoneMinuteOffsetRef.current(
-                Number.parseInt(event.target.value),
-            );
+            // HOURS, and `parseFloat` rather than `parseInt`: India is +5:30
+            // and Nepal +5:45, and truncating those put the clock half an hour
+            // out. An empty or half-typed box parses to NaN, which would reach
+            // `TimingController` as an Invalid Date -- hold the old value.
+            const newOffset = Number.parseFloat(event.target.value);
+            if (Number.isNaN(newOffset)) {
+                return;
+            }
+            setTimezoneMinuteOffsetRef.current(newOffset);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -252,18 +267,19 @@ function TimeInSetComp({
                 </label>
                 <label
                     className="fg-field"
-                    title={tran('Timezone Minute Offset')}
+                    title={tran('Timezone Hour Offset')}
                 >
                     <i className="bi bi-clock" />
                     <span className="fg-field-name">{tran('UTC Offset')}</span>
                     <input
                         className="fg-num"
                         type="number"
-                        aria-label={tran('Timezone Minute Offset')}
+                        step="0.25"
+                        aria-label={tran('Timezone Hour Offset')}
                         value={timezoneMinuteOffset}
                         onChange={handleTimezoneOffsetChange}
                     />
-                    <span className="fg-unit-static">min</span>
+                    <span className="fg-unit-static">h</span>
                 </label>
                 <label className="fg-field" htmlFor={`time-format-${id}`}>
                     <input
@@ -338,8 +354,9 @@ function getAllShowingScreenIdDataList() {
 
 function ForegroundTimeItemComp({
     id,
+    itemNumber,
     onRemove,
-}: Readonly<{ id: string; onRemove?: () => void }>) {
+}: Readonly<{ id: string; itemNumber: number; onRemove?: () => void }>) {
     useScreenForegroundManagerEvents(['update']);
     const showingScreenIdDataList = getAllShowingScreenIdDataList().filter(
         ([, data]) => data.id === id,
@@ -360,6 +377,7 @@ function ForegroundTimeItemComp({
         },
         isFontSize: true,
     });
+    const removeLabel = `${tran('Remove Time')} ${itemNumber}`;
     return (
         <ForegroundLayoutComp
             target={'time-' + id}
@@ -368,9 +386,17 @@ function ForegroundTimeItemComp({
             extraBodyClassName="app-border-white-round p-2"
         >
             {onRemove ? (
-                <i
-                    className="bi bi-x-lg float-end app-caught-hover-pointer"
-                    style={{ color: 'red' }}
+                // A real button, named and numbered. It used to be a bare
+                // `<i onClick>` with no title, aria-label, role or tabIndex:
+                // absent from the accessibility tree, unreachable from the
+                // keyboard, and the only control in this panel a screen reader
+                // could not announce. The number matters for the same reason it
+                // does on a message -- three clocks otherwise give three
+                // controls with one name.
+                <button
+                    className="btn btn-sm btn-outline-danger float-end"
+                    title={removeLabel}
+                    aria-label={removeLabel}
                     onClick={() => {
                         for (const [
                             screenId,
@@ -380,7 +406,9 @@ function ForegroundTimeItemComp({
                         }
                         onRemove();
                     }}
-                />
+                >
+                    <i className="bi bi-x-lg" />
+                </button>
             ) : null}
             {propsSetting}
             <div className="fg-body">
@@ -442,11 +470,12 @@ function TimeBodyComp({ suffix }: Readonly<{ suffix: string }>) {
     return (
         <>
             <div className="d-flex flex-wrap gap-1">
-                {idList.map((id) => {
+                {idList.map((id, index) => {
                     return (
                         <ForegroundTimeItemComp
                             key={id}
                             id={id}
+                            itemNumber={index + 1}
                             onRemove={
                                 idList.length > 1
                                     ? () => {

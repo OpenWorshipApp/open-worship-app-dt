@@ -195,6 +195,16 @@ export type ForegroundCameraDataType = {
      */
     transitionEffect?: TransitionEffectType;
     id: string;
+    /**
+     * The device's label as it read when the overlay was added. Chromium
+     * rotates `deviceId` per origin and per SESSION, and the screen window is
+     * a different document from the presenter -- so the id saved here can be
+     * dead by the time `screen.html` tries to open it. The label is what
+     * `resolveCameraDeviceId` falls back to, exactly as the slide camera item
+     * already does; without it the projector silently showed nothing while the
+     * mini preview kept working.
+     */
+    label?: string;
     extraStyle?: CSSProperties;
 };
 export type ForegroundWebDataType = {

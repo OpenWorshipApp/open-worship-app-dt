@@ -47,16 +47,18 @@ function RenderCameraInfoComp({
         }
         return await getCameraAndShowMedia({
             id: cameraInfo.deviceId,
+            label: cameraInfo.label,
             parentContainer: containerRef.current,
             width,
         });
-    }, [cameraInfo.deviceId, width]);
+    }, [cameraInfo.deviceId, cameraInfo.label, width]);
     const handleShowing = useCallback(
         (event: any, isForceChoosing = false) => {
             ScreenForegroundManager.addCameraData(
                 event,
                 {
                     id: cameraInfo.deviceId,
+                    label: cameraInfo.label,
                     extraStyle: genStyle(),
                     transitionEffect: getForegroundTransition(
                         `camera-${cameraInfo.deviceId}`,
@@ -81,6 +83,7 @@ function RenderCameraInfoComp({
             }
             screenForegroundManager.addCameraData({
                 id: cameraInfo.deviceId,
+                label: cameraInfo.label,
                 extraStyle: genStyle(),
                 transitionEffect: getForegroundTransition(
                     `camera-${cameraInfo.deviceId}`,
@@ -99,6 +102,7 @@ function RenderCameraInfoComp({
             genForegroundDragInf('camera', () => {
                 return {
                     id: cameraInfoRef.current.deviceId,
+                    label: cameraInfoRef.current.label,
                     extraStyle: genStyleRef.current(),
                     transitionEffect: getForegroundTransition(
                         `camera-${cameraInfoRef.current.deviceId}`,

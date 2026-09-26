@@ -1,4 +1,10 @@
-import { type ChangeEvent, useCallback, useMemo } from 'react';
+import {
+    type ChangeEvent,
+    useCallback,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import type { CSSProperties } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
@@ -27,7 +33,7 @@ import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
 import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
-import { useAppCurrentRef } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { useForegroundSessions } from './foregroundSessionHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -291,8 +297,35 @@ function MessageBodyComp({
     // mounted. That is on purpose: an id is the handle for "this editor's
     // message on that screen", and a session reloaded from disk has nothing on
     // a screen yet.
-    const messageList = useMemo(() => {
+    /**
+     * The editors are LOCAL state, deliberately not derived from the stored
+     * string.
+     *
+     * A session is stored as its messages joined by a blank line, and that
+     * format cannot carry a message's OWN trailing newline: `toMessageList`
+     * therefore strips trailing whitespace as it parses. With the textarea's
+     * value read straight back out of that, every space and every Enter typed
+     * AT THE END of a message was parsed off again before it could be drawn --
+     * the caret simply would not move, while typing in the middle worked. The
+     * setting stays the persisted form; what is being typed lives here.
+     */
+    const [messageList, setMessageList] = useState<MessageEditorType[]>(() => {
         return toMessageList(storedText, suffix);
+    });
+    // What this panel last wrote, so a change that came from OUTSIDE it -- the
+    // saved-text picker, or switching session -- still re-seeds the editors,
+    // while our own writes do not bounce back through the lossy parse.
+    const lastAppliedRef = useRef({ storedText, suffix });
+    useAppEffect(() => {
+        const lastApplied = lastAppliedRef.current;
+        if (
+            lastApplied.storedText === storedText &&
+            lastApplied.suffix === suffix
+        ) {
+            return;
+        }
+        lastAppliedRef.current = { storedText, suffix };
+        setMessageList(toMessageList(storedText, suffix));
     }, [storedText, suffix]);
     // PER-INSTANCE, not module-level: a module-level timer collapses every
     // mount into one, and nothing here may assume this panel stays a single
@@ -390,6 +423,7 @@ function MessageBodyComp({
         isFontSize: true,
     });
     const genStyleRef = useAppCurrentRef(genStyle);
+    const suffixRef = useAppCurrentRef(suffix);
     const prefixRef = useAppCurrentRef(prefix);
     const messageAllIdRef = useAppCurrentRef(messageAllId);
     const messageListRef = useAppCurrentRef(messageList);
@@ -397,20 +431,38 @@ function MessageBodyComp({
     const isRotatingRef = useAppCurrentRef(isRotating);
     const intervalSecondRef = useAppCurrentRef(intervalSecond);
 
+    // The one place the editors and the setting are changed together. It
+    // records what it wrote so the re-seed effect above can tell this panel's
+    // own write apart from one that arrived from somewhere else.
+    const applyMessageList = useCallback(
+        (newMessageList: MessageEditorType[]) => {
+            setMessageList(newMessageList);
+            const newStoredText = toStoredText(newMessageList);
+            lastAppliedRef.current = {
+                storedText: newStoredText,
+                suffix: suffixRef.current,
+            };
+            setStoredTextRef.current(newStoredText);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const applyMessageListRef = useAppCurrentRef(applyMessageList);
     const handleTextChange = useCallback(
         (id: string, text: string) => {
             const newMessageList = messageListRef.current.map((message) => {
                 return message.id === id ? { ...message, text } : message;
             });
-            setStoredTextRef.current(toStoredText(newMessageList));
+            applyMessageListRef.current(newMessageList);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
     const handleAdding = useCallback(() => {
-        setStoredTextRef.current(
-            toStoredText([...messageListRef.current, { id: '', text: '' }]),
-        );
+        applyMessageListRef.current([
+            ...messageListRef.current,
+            { id: '', text: '' },
+        ]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleRemoving = useCallback((id: string) => {
@@ -431,7 +483,7 @@ function MessageBodyComp({
         const newMessageList = messageListRef.current.filter((message) => {
             return message.id !== id;
         });
-        setStoredTextRef.current(toStoredText(newMessageList));
+        applyMessageListRef.current(newMessageList);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleMoving = useCallback((id: string, offset: number) => {
@@ -446,7 +498,7 @@ function MessageBodyComp({
         const newMessageList = [...currentList];
         const [moved] = newMessageList.splice(index, 1);
         newMessageList.splice(newIndex, 0, moved);
-        setStoredTextRef.current(toStoredText(newMessageList));
+        applyMessageListRef.current(newMessageList);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -660,6 +712,9 @@ function MessageBodyComp({
         showingScreenIdDataList,
         messageAllId,
     );
+    const isAddingBlocked = messageList.some((message) => {
+        return message.text.trim() === '';
+    });
     return (
         <>
             {propsSetting}
@@ -667,7 +722,18 @@ function MessageBodyComp({
                 <div className="d-flex align-items-center gap-2">
                     <button
                         className="btn btn-sm btn-outline-primary"
-                        title={tran('Add Message')}
+                        title={
+                            isAddingBlocked
+                                ? tran('Type in the empty message first')
+                                : tran('Add Message')
+                        }
+                        // A session is stored as its messages joined by a blank
+                        // line, so a second EMPTY editor cannot survive the
+                        // round trip -- `toStoredText` collapses them to one.
+                        // Pressing Add again therefore did nothing at all, with
+                        // the button still lit. Disabled says so, the same way
+                        // each editor's own Show already does.
+                        disabled={isAddingBlocked}
                         onClick={handleAdding}
                     >
                         <i className="bi bi-plus-lg" /> {tran('Add Message')}
