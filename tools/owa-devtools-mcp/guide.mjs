@@ -1571,8 +1571,19 @@ const GUIDE_RUNTIME = `
             // does nothing at all. Same one-press-one-action shape as the
             // list: this press opens the menu, withMore names the item it
             // brought up, the next press chooses it.
-            if (step.action === 'rightClick' &&
-                target.getAttribute('role') === 'separator') {
+            // A right-click step's FIRST press opens a menu; only the press
+            // after it chooses. pendingFind is exactly that marker -- it is
+            // set when the previous press brought the step's words up -- so
+            // while it is empty this press is still the opening one and must
+            // RIGHT-click whatever it found, never left-click it.
+            //
+            // Without this, a rightClick step whose words happened to match
+            // something already on screen fell straight through to a plain
+            // click. Measured 2026-09-26: asked to open a background video's
+            // menu, the card left-clicked the tile and PRESENTED the video to
+            // the projector. A walkthrough must never change what the
+            // congregation sees while trying to open a menu.
+            if (step.action === 'rightClick' && state.pendingFind === null) {
                 const at = dm.openContextMenu(target);
                 return await withMore({ done: true, did: 'right-clicked', at });
             }

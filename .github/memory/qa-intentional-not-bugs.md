@@ -11,11 +11,17 @@ metadata:
 Traced to source during the 2026-07-29 robot run. Each looks like a defect on screen; all
 four are deliberate. Don't file them again.
 
-1. **PPTX documents show a blank first slide card.** A 5-slide `.pptx` renders **6** cards
-   in the presenter, card #1 empty. `PptxAppDocument.getSlides()`
-   (`src/app-document-list/PptxAppDocument.ts:76-141`) prepends `slide0` with
-   `htmlFilePath: BLANK_HTML_SLIDE_SRC` and returns `[slide0, ...dataList]`. So the real
-   slide *n* is card *n+1* — matters when restoring a presented slide.
+1. **PDF, PPTX and DOCX documents all show a blank first slide card.** A 5-slide
+   `.pptx` renders **6** cards, card #1 empty — and so does a 1-page `.pdf` (2 cards)
+   and a `.docx`. All three prepend it: `PptxAppDocument.getSlides()`
+   (`src/app-document-list/PptxAppDocument.ts:96`) and `DocxAppDocument.getSlides()`
+   (`DocxAppDocument.ts:99`) prepend `slide0` with `htmlFilePath: BLANK_HTML_SLIDE_SRC`,
+   `PdfAppDocument.getSlides()` (`PdfAppDocument.ts:76`) with
+   `imagePreviewSrc: BLANK_IMAGE_SLIDE_SRC`; each returns `[slide0, ...dataList]`. So the
+   real slide *n* is card *n+1* — matters when restoring a presented slide, and
+   `owa_app_state` reports the padded `slideCount` (a 1-page PDF says 2). Re-verified
+   live 2026-09-26; earlier revisions of this note named PPTX only, which made the PDF
+   case look like a fresh bug.
 2. **Presenting a bible item replaces the live background.** `applyNewBibleItemJson` calls
    `applyAttachBackground(...)` (`src/_screen/managers/ScreenBibleManager.ts:387`, the call
    at `:405` → `screenBackgroundHelpers.ts:6-28`); each bible item carries an *attached

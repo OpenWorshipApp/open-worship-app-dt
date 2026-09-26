@@ -120,6 +120,14 @@ describe('helpers', () => {
         expect(checkIsSameObjects({ a: 1 }, { a: 2 })).toBe(false);
         expect(checkIsSameValues([{ ok: true }], [{ ok: true }])).toBe(true);
         expect(checkIsSameValues('a', 'b')).toBe(false);
+
+        // An array of PRIMITIVES used to compare as different from itself:
+        // checkIsSameArrays handed each element to checkIsSameObjects, which
+        // rejects anything that is not an Object.
+        expect(checkIsSameArrays([1, 2], [1, 2])).toBe(true);
+        expect(checkIsSameArrays(['a'], ['b'])).toBe(false);
+        expect(checkIsSameValues({ keys: ['a'] }, { keys: ['a'] })).toBe(true);
+        expect(checkIsSameValues({ keys: ['a'] }, { keys: ['b'] })).toBe(false);
     });
 
     test('extracts numeric and geometric helper values', () => {

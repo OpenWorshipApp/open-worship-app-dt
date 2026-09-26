@@ -181,7 +181,7 @@ function FilePreviewAppDocumentNormalComp({
         <div className="w-100 h-100 app-ellipsis">
             <i
                 className="bi bi-file-earmark-slides"
-                title={tran('PowerPoint Document')}
+                title={tran('Slide Document')}
             />
             {fileSource.name}
             {canSave && <span style={{ color: 'red' }}>*</span>}

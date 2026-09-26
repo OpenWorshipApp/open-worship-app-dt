@@ -1,11 +1,12 @@
 import { useCallback, useMemo } from 'react';
 
-import { getDefaultScreenDisplay } from '../../_screen/managers/screenHelpers';
+import { getPresentingScreenDisplay } from '../../_screen/managers/screenHelpers';
 import {
     useSlideWrongDimension,
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
 import type { WrongDimensionType } from '../../app-document-list/AppDocument';
+import type { DisplayType } from '../../_screen/screenTypeHelpers';
 import AppDocument from '../../app-document-list/AppDocument';
 import { FileEditingMenuComp } from '../../editing-manager/editingHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
@@ -13,11 +14,15 @@ import { tran } from '../../lang/langHelpers';
 
 function CheckingDimensionComp({
     wrongDimension,
+    screenDisplay,
 }: Readonly<{
     wrongDimension: WrongDimensionType;
+    // Passed in rather than read again here: an unmemoised read was a
+    // synchronous IPC on every render, and the check and the fix have to
+    // agree on WHICH display they are talking about.
+    screenDisplay: DisplayType;
 }>) {
     const selectedVaryAppDocument = useVaryAppDocumentContext();
-    const screenDisplay = getDefaultScreenDisplay();
     const selectedVaryAppDocumentRef = useAppCurrentRef(
         selectedVaryAppDocument,
     );
@@ -57,7 +62,7 @@ function CheckingDimensionComp({
 export default function SlidesMenuComp() {
     const selectedVaryAppDocument = useVaryAppDocumentContext();
     const screenDisplay = useMemo(() => {
-        return getDefaultScreenDisplay();
+        return getPresentingScreenDisplay();
     }, []);
     const wrongDimension = useSlideWrongDimension(
         selectedVaryAppDocument,
@@ -71,7 +76,10 @@ export default function SlidesMenuComp() {
             editableDocument={selectedVaryAppDocument}
             extraChildren={
                 wrongDimension === null ? null : (
-                    <CheckingDimensionComp wrongDimension={wrongDimension} />
+                    <CheckingDimensionComp
+                        wrongDimension={wrongDimension}
+                        screenDisplay={screenDisplay}
+                    />
                 )
             }
         />

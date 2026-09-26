@@ -15,6 +15,7 @@ import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import {
     AUDIO_PLAYING_CHANGE_EVENT,
     checkAudioPlaying,
+    checkBackgroundAudioPlaying,
     showAudioPlayingToast,
 } from '../helper/mediaControlHelpers';
 import type {
@@ -54,16 +55,14 @@ function RenderAudiosTabComp({
     useAppEffect(() => {
         const registerEvent = EventHandler.registerEventListener(
             [AUDIO_PLAYING_CHANGE_EVENT],
-            (audio: HTMLAudioElement | null) => {
-                if (
-                    audio !== null &&
-                    audio.dataset.isBackgroundAudio === 'true' &&
-                    !audio.paused
-                ) {
-                    setIsPlaying(true);
-                    return;
-                }
-                setIsPlaying(false);
+            () => {
+                // Deliberately ignoring the payload. Starting a track pauses
+                // the others first, and each of those pauses fires its own
+                // `null` AFTER this event, so taking the last payload turned
+                // the dot off while a track was still playing -- and left it
+                // off, because every later play pauses a sibling too. Ask the
+                // DOM, which is the only thing that knows what is running.
+                setIsPlaying(checkBackgroundAudioPlaying());
             },
         );
         return () => {

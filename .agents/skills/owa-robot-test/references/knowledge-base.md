@@ -409,6 +409,50 @@ Keep the main window on `presenter.html`.
   is a **High** finding. (Its jsdom twin `HandleAlertComp.test.tsx` was deleted in the
   2026-08-24 test prune — the live `window.tryPopup()` probe is now the only coverage.)
 
+- **`press_key ContextMenu` opens the app's own right-click menu on the FOCUSED element**
+  (verified 2026-09-26). There is no right-click tool, and this is the way in: click a
+  focusable control so it takes focus, then press `ContextMenu`. It reached the colour
+  swatch menu (`Copy '#000080' to clipboard`, `CM-48`) and the media-session chip menu
+  (`Rename Session` / `Remove Session`). It does **not** work on background/document list
+  ITEMS, which are plain divs and never take focus — for those, press the item's own
+  `⋮` (`ContextMenuDotsButtonComp`), which opens the same menu.
+- ⚠️ **A uid from an earlier turn is usually dead in the Background grid, and `click`
+  still reports success.** The grid re-renders on every screen event (it re-marks which
+  tile is on screen), so a `⋮` clicked from a stale snapshot does nothing at all and
+  looks exactly like a broken control — four attempts across two lists read as "the item
+  menu is dead" before a same-turn snapshot+click opened it first time. **Snapshot and
+  click in the same turn.**
+- ⚠️ **`take_snapshot` and `owa_find_ui` can both miss an open context menu.** Three
+  consecutive attempts reported no `menuitem` while a `take_screenshot` showed the menu
+  plainly open. **Verify a context menu with a screenshot**, not with the a11y tree.
+- ⚠️ **`fill` on an `input[type=color]` does not drive React's `onChange`.** The DOM value
+  changes and `owa_find_ui` reads it back, but React's `localColor` never updates — so the
+  Enter/blur that commits (`SelectCustomColorComp` is `isNoImmediate` in both background
+  pickers) re-applies the colour that is ALREADY live, and `applyBackgroundSrc`'s same-src
+  toggle then **clears the background**. It reads exactly like "choosing a custom colour
+  wipes the background"; it is a harness artifact, not a bug. `PM-90`'s "a new colour
+  applies" half is not provable with these tools.
+- **Background media click is a TOGGLE** — for images *and* videos (verified 2026-09-26;
+  earlier revisions said media had not been re-tested). One click applies, a second click
+  on the same item clears (`ScreenBackgroundManager.applyBackgroundSrc` returns null when
+  `this.backgroundSrc?.src === data.src`). Unlike a slide card, which re-applies.
+- **The live-tab marker is `●`, not `*`** — `.app-on-screen::before { content: 'cf' }`
+  (`src/others/appInit.scss`). `take_snapshot` shows it in the accessible name
+  (`button "●Videos"`); `owa_list_ui` strips it. The matrix's `PM-27` said `*` until
+  2026-09-26.
+- **Scope the thumbnail slider.** `owa_type "Thumbnail Size"` unscoped matches the
+  **Presenter's** `Slide Thumbnail Size Scale` (max 200), not the Background footer's
+  `Thumbnail Size` (max 500) — it silently resizes the wrong panel. Use
+  `Background > Thumbnail Size`.
+- **A web background looks blank on the mini screen when the PAGE is blank.** The mini
+  screen shows the captured screenshot and the projector shows a live iframe (by design,
+  `PM-125`) — so a black page like `clock.html` reads as "the mini preview is not
+  rendering it". Re-test with a page that has a strong flat colour (`snow.html` is dark
+  red) before filing anything.
+- **An empty slide draws nothing on the output, and that is correct.** `Peaching` slide 1
+  has `items: []` and only an attached background; `owa_slide_file action:"slides"` is the
+  cheap way to tell an empty slide from a slide that failed to render.
+
 ---
 
 ## 6. `.app-on-screen` / live-output semantics — and driving the screen window

@@ -197,6 +197,24 @@ describe('slide models', () => {
         expect(Slide.checkIsThisType(errorSlide)).toBe(true);
     });
 
+    test('normalises a pre-type slide before comparing it', () => {
+        // The Slide constructor stamps  onto everything it builds, so a
+        // document saved before that field existed differed from its own
+        // loaded form and every one of its slides showed the unsaved marker.
+        const legacy: any = {
+            id: 0,
+            metadata: { width: 1920, height: 1080 },
+            canvasItems: [],
+        };
+        expect(Slide.toComparableJson(legacy).type).toBe('slide');
+        expect(legacy.type).toBeUndefined();
+
+        // Already normal: returned untouched, so a big document allocates
+        // nothing on this path.
+        const modern: any = { ...legacy, type: 'slide' };
+        expect(Slide.toComparableJson(modern)).toBe(modern);
+    });
+
     test('covers PdfSlide DOM serialization and file helpers', async () => {
         vi.stubGlobal(
             'Image',

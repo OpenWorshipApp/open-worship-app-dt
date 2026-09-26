@@ -200,7 +200,10 @@ export default class AppDocument
         const originalSlide = jsonItems[index];
         slide.isChanged =
             originalSlide === undefined ||
-            !checkIsSameValues(slide.toJson(), originalSlide);
+            !checkIsSameValues(
+                slide.toJson(),
+                Slide.toComparableJson(originalSlide),
+            );
     }
 
     async getMaxSlideId() {

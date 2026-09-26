@@ -265,6 +265,7 @@ const dictionary = {
     Previewer: 'Aperçu',
     Slides: 'Diapositives',
     'Slide Notes': 'Notes de diapositive',
+    'Slide Document': 'Document de diapositives',
     Canvas: 'Canevas',
     'Slide Editor Ground': "Zone de l'éditeur de diapositives",
     'Slide Editor Canvas': "Canevas de l'éditeur de diapositives",
@@ -284,7 +285,8 @@ const dictionary = {
     'Remove Stage': 'Retirer la scène',
     'Base Stage': 'Scène de base',
     'Base stage is always shown': 'La scène de base est toujours affichée',
-    'Add another stage layout': 'Ajouter une autre disposition de scène',
+    'Choose a stage layout to add':
+        'Choisir une disposition de scène à ajouter',
     'All stage layouts are shown':
         'Toutes les dispositions de scène sont affichées',
     'Stage Style': 'Style de scène',

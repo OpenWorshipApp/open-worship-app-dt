@@ -233,28 +233,49 @@ export default function LyricSlidesPreviewerComp() {
     );
 
     const stagesRef = useAppCurrentRef(stages);
-    // The lowest stage that has a layout and is not on screen yet. `null` once
-    // every one of them is shown, which is what disables the add button —
-    // previously it just kept incrementing past the last real stage.
-    const nextStage = useMemo(() => {
-        const unusedStages = getAvailableLyricStages().filter((stage) => {
+    // Every stage that HAS a layout and is not on screen yet. Empty once all of
+    // them are shown, which is what disables the add button — it used to keep
+    // incrementing past the last real stage.
+    const unusedStages = useMemo(() => {
+        return getAvailableLyricStages().filter((stage) => {
             return !stages.includes(stage);
         });
-        return unusedStages.length === 0 ? null : unusedStages[0];
     }, [stages]);
-    const nextStageRef = useAppCurrentRef(nextStage);
+    const unusedStagesRef = useAppCurrentRef(unusedStages);
     const lyricAppDocumentEntriesRef = useAppCurrentRef(
         lyricAppDocumentEntries,
     );
 
-    const handleStageAdding = useCallback(() => {
-        if (nextStageRef.current === null) {
+    // The button ASKS which stage rather than taking the lowest unused one: the
+    // stages are a set, not a sequence, so a user who removed stage 1 and kept
+    // stage 2 could never get stage 1 back without removing the other first.
+    // The menu also says what is left — a count the disabled button alone could
+    // not give — and each item carries the stage's own accent, the same colour
+    // its chip and pane already wear.
+    const handleStageAdding = useCallback((event: any) => {
+        const stagesToAdd = unusedStagesRef.current;
+        if (stagesToAdd.length === 0) {
             return;
         }
-        const newStages = [...stagesRef.current, nextStageRef.current].filter(
-            (stage) => stage !== BASE_STAGE,
+        showAppContextMenu(
+            event,
+            stagesToAdd.map((stage) => {
+                return {
+                    childBefore: genContextMenuItemIcon('easel2', {
+                        color: getStageAccentColor(stage),
+                    }),
+                    menuElement: `${tran('Stage')} ${stage}`,
+                    onSelect: () => {
+                        // Sorted, so the panes read left to right in stage
+                        // order whatever order they were picked in.
+                        const newStages = [...stagesRef.current, stage]
+                            .filter((eachStage) => eachStage !== BASE_STAGE)
+                            .sort((stageA, stageB) => stageA - stageB);
+                        setStageSetting(newStages.join(','));
+                    },
+                };
+            }),
         );
-        setStageSetting(newStages.join(','));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     // Every pane listens on the lyric's own file source, so ONE update event
@@ -337,12 +358,13 @@ export default function LyricSlidesPreviewerComp() {
                 <button
                     type="button"
                     className="btn btn-sm btn-outline-info stage-previewer-add"
-                    disabled={nextStage === null}
-                    title={tran(
-                        nextStage === null
-                            ? 'All stage layouts are shown'
-                            : 'Add another stage layout',
-                    )}
+                    disabled={unusedStages.length === 0}
+                    aria-haspopup="menu"
+                    title={
+                        unusedStages.length === 0
+                            ? tran('All stage layouts are shown')
+                            : tran('Choose a stage layout to add')
+                    }
                     onClick={handleStageAdding}
                 >
                     <i className="bi bi-plus-lg" />

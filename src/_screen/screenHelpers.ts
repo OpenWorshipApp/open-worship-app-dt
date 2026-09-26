@@ -93,9 +93,7 @@ export function setDisplay({ screenId, displayId }: SetDisplayType) {
     });
 }
 
-export function getAllShowingScreenIds(): number[] {
-    return messageUtils.sendDataSync('main:app:get-screens');
-}
+export { getAllShowingScreenIds } from './managers/screenHelpers';
 
 export function showScreen({ screenId, displayId }: SetDisplayType) {
     return electronSendAsync<void>('main:app:show-screen', {

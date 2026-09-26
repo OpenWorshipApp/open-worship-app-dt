@@ -159,6 +159,7 @@ export default function ColorPickerComp({
                     selectedColor={localColor}
                     onColorChange={handleColorChanging}
                     isNoImmediate={isNoImmediate}
+                    canNoColor={onNoColor !== undefined}
                 />
                 {localColor !== null && (
                     <OpacitySliderComp

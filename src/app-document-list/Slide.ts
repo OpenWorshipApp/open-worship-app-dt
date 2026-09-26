@@ -220,6 +220,19 @@ export default class Slide
         return this.originalJson;
     }
 
+    // The constructor stamps `type: 'slide'` onto every slide it builds, so
+    // a document written before that field existed carries it on the loaded
+    // side and not in the saved file. Comparing the two raw shapes marked
+    // EVERY slide of such a document unsaved, for ever. Normalise the saved
+    // side the same way before comparing. The argument is returned untouched
+    // in the common case, so a 200-slide document allocates nothing.
+    static toComparableJson(json: SlidePropsType): SlidePropsType {
+        if (json.type === 'slide') {
+            return json;
+        }
+        return { ...json, type: 'slide' };
+    }
+
     checkIsWrongDimension(dim: { width: number; height: number }) {
         return dim.width !== this.width || dim.height !== this.height;
     }

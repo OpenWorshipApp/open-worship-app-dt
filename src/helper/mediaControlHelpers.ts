@@ -121,6 +121,34 @@ export function checkAudioPlaying() {
     );
 }
 
+export const BACKGROUND_AUDIO_ATTR = 'data-is-background-audio';
+
+/**
+ * Is a track from the background AUDIOS list playing right now, read off the
+ * DOM rather than off an event payload?
+ *
+ * The payload cannot answer it. Starting a track PAUSES every other `<audio>`
+ * first (`handleAudioPlaying`), and each of those pauses fires its own
+ * `AUDIO_PLAYING_CHANGE_EVENT(null)` -- asynchronously, so the `null` lands
+ * AFTER the event for the track that just started. A listener that simply took
+ * the last payload turned the tab's on-air dot OFF while a track was still
+ * playing, and never turned it back on, because every later play pauses a
+ * sibling too. The DOM is the only thing that knows which track is running.
+ *
+ * Narrower than `checkAudioPlaying`, which answers "is ANY audio playing" for
+ * the unload guard: this one is about the Audios TAB, so it counts only the
+ * players that tab owns.
+ */
+export function checkBackgroundAudioPlaying() {
+    return Array.from(
+        document.querySelectorAll<HTMLAudioElement>(
+            `audio[${BACKGROUND_AUDIO_ATTR}="true"]`,
+        ),
+    ).some((audioElement) => {
+        return !audioElement.paused;
+    });
+}
+
 function checkGuardedMediaPlaying(root: ParentNode): boolean {
     return hasPlayingMediaDeep(
         root,

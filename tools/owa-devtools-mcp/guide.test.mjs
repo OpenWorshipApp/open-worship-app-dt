@@ -1064,6 +1064,57 @@ describe('a step whose control is a divider', () => {
     expect(done.lastResult.label).toBe('Close First Widget');
   });
 
+  it('right-clicks a target it found instead of pressing it', async () => {
+    // Measured 2026-09-26 on the live app: a rightClick step naming a
+    // background video ("1_cv") found the tile, fell through to a plain
+    // click, and PRESENTED the video to the projector instead of opening
+    // its menu. The opening press must never left-click what it found.
+    let wasPressed = false;
+    let rightClickedAt = null;
+    document.body.innerHTML = '<button id="tile">1_cv</button>';
+    const tile = document.getElementById('tile');
+    tile.getBoundingClientRect = () => {
+      return { x: 10, y: 10, width: 100, height: 80, top: 10, left: 10 };
+    };
+    document.elementFromPoint = () => tile;
+    tile.addEventListener('click', () => {
+      wasPressed = true;
+    });
+    tile.addEventListener('contextmenu', (event) => {
+      rightClickedAt = { x: event.clientX, y: event.clientY };
+      const item = document.createElement('button');
+      item.id = 'item';
+      item.textContent = 'Copy Path to Clipboard';
+      document.body.append(item);
+    });
+
+    const guide = startGuide({
+      mode: 'demo',
+      steps: [
+        {
+          text: 'Right-click 1_cv and choose Copy Path to Clipboard.',
+          finds: ['1_cv', 'Copy Path to Clipboard'],
+          action: 'rightClick',
+        },
+      ],
+    });
+    expect(guide.isTargetFound).toBe(true);
+
+    const after = await window.__owaGuide.act();
+    expect(after.lastResult.did).toBe('right-clicked');
+    expect(rightClickedAt).not.toBe(null);
+    // The whole point: the tile was never pressed, so nothing reached a
+    // screen.
+    expect(wasPressed).toBe(false);
+    expect(after.lastResult.more).toBe('Copy Path to Clipboard');
+    // Still on the step -- the next press is the one that chooses.
+    expect(after.stepNumber).toBe(1);
+
+    const done = await window.__owaGuide.act();
+    expect(done.lastResult.did).toBe('clicked');
+    expect(done.lastResult.label).toBe('Copy Path to Clipboard');
+  });
+
   it('does not right-click some list when the divider is not there', async () => {
     // One panel collapsed: no divider, only its strip and a list the
     // region fallback would otherwise open a menu on.
