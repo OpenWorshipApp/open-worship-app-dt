@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [PM-134, PM-135, PM-136]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-25"
+workflowsVersion: "2026-09-26"
 ---
 # W-47 — Put messages on the screen, and blank the edges of the picture
 
@@ -71,5 +71,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-134` · `PM-135` · `PM-136`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-25).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-26).
 :::

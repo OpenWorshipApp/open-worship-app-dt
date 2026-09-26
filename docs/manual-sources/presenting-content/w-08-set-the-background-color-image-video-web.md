@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-26, PM-27, PM-28, PM-29, PM-30, PM-31, PM-32, PM-33, PM-101, PM-114, PM-144, PM-145, KB-04]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-25"
+workflowsVersion: "2026-09-26"
 ---
 # W-08 — Set the background (color / image / video / web)
 
@@ -50,5 +50,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-26` · `PM-27` · `PM-28` · `PM-29` · `PM-30` · `PM-31` · `PM-32` · `PM-33` · `PM-101` · `PM-114` · `PM-144` · `PM-145` · `KB-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-25).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-26).
 :::

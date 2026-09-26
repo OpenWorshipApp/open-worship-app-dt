@@ -35,8 +35,12 @@ vi.mock('./finderOverlayHelpers', async (importOriginal) => {
 // Read inside the menu builder, so a getter over mutable state lets one test
 // build the menu as a Store install without `vi.resetModules()`.
 const platformFlags = vi.hoisted(() => {
-    return { isWindowsStore: false };
+    return { aiEnabled: false, isWindowsStore: false };
 });
+
+vi.mock('./aiHelpers', () => ({
+    checkIsAiEnabled: () => platformFlags.aiEnabled,
+}));
 
 vi.mock('./electronHelpers', () => ({
     copyDebugInfoToClipboard,
@@ -67,6 +71,7 @@ describe('electronMenu', () => {
     beforeEach(() => {
         electronMockState.reset();
         platformFlags.isWindowsStore = false;
+        platformFlags.aiEnabled = false;
         copyDebugInfoToClipboard.mockClear();
         goDownload.mockClear();
         openFindOverlay.mockClear();
@@ -223,6 +228,9 @@ describe('electronMenu', () => {
             (item: any) => item.label === 'Find',
         );
 
+        findItem.click(undefined, undefined);
+        expect(openFindOverlay).not.toHaveBeenCalled();
+
         findItem.click(undefined, mainWin);
 
         expect(openFindOverlay).toHaveBeenCalledWith(mainWin);
@@ -316,6 +324,22 @@ describe('electronMenu', () => {
 
         clickSubmenuItem(helpMenu, 'Check for Updates Online');
         expect(goDownload).toHaveBeenCalledTimes(1);
+
+        clickSubmenuItem(helpMenu, 'AI Chat');
+        expect(appController.openAiChatPage).toHaveBeenCalledTimes(1);
+    });
+
+    test('shows the help assistant only when AI features are enabled', () => {
+        platformFlags.aiEnabled = true;
+        const appController = createAppController();
+        initMenu(appController as any);
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        const helpMenu = template.find((item: any) => item.role === 'help');
+
+        clickSubmenuItem(helpMenu, 'App Help (Chatbot)');
+
+        expect(appController.openChatbotPage).toHaveBeenCalledTimes(1);
     });
 
     test('a Store install drops "Check for Updates Online"', () => {
@@ -609,6 +633,8 @@ describe('electronMenu', () => {
 function createAppController() {
     return {
         openAboutPage: vi.fn(),
+        openAiChatPage: vi.fn(),
+        openChatbotPage: vi.fn(),
         openFindPage: vi.fn(),
         mainController: {
             gotoSettingHomePage: vi.fn(),

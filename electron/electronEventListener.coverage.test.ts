@@ -7,9 +7,19 @@ vi.mock('electron', async () => {
 
 const {
     attemptClosing,
+    answerAiChatMicrophoneAsk,
+    answerGuideHelp,
+    askGuideHelp,
+    captureOAuthRedirectUrl,
+    captureWindowImage,
     captureWebScreenShot,
+    clearAiChatGuestData,
     docxToHtmls,
     getDocxToHtmlsVersion,
+    findScreenWindow,
+    getMcpToken,
+    getMcpUrl,
+    getRemoteDebuggingPort,
     getSystemFontListMap,
     getPagesCount,
     getPptxSlidesCount,
@@ -21,10 +31,16 @@ const {
     previewPrintCurrentWindow,
     printHTMLContent,
     pptxToHtmls,
+    readWebPage,
+    relaunchApp,
     screenControllerMocks,
     screenInstance,
+    sendChatAttachment,
     sendMenuClicked,
+    setGuideRunning,
     setCustomMenusData,
+    takeChatAttachment,
+    tarAppend,
     tarCreate,
     tarExtract,
     closeFindOverlayMock,
@@ -33,9 +49,19 @@ const {
     stopFindOverlayDraggingMock,
 } = vi.hoisted(() => ({
     attemptClosing: vi.fn(),
+    answerAiChatMicrophoneAsk: vi.fn(),
+    answerGuideHelp: vi.fn(),
+    askGuideHelp: vi.fn(),
+    captureOAuthRedirectUrl: vi.fn(),
+    captureWindowImage: vi.fn(),
     captureWebScreenShot: vi.fn(),
+    clearAiChatGuestData: vi.fn(async () => undefined),
     docxToHtmls: vi.fn(),
     getDocxToHtmlsVersion: vi.fn(),
+    findScreenWindow: vi.fn(),
+    getMcpToken: vi.fn(() => 'mcp-token'),
+    getMcpUrl: vi.fn(() => 'http://127.0.0.1:43123/mcp'),
+    getRemoteDebuggingPort: vi.fn(() => 51234),
     getSystemFontListMap: vi.fn(async () => ({
         Arial: ['400', '700'],
         'Khmer OS': ['400'],
@@ -50,6 +76,8 @@ const {
     previewPrintCurrentWindow: vi.fn(async () => undefined),
     printHTMLContent: vi.fn(async () => undefined),
     pptxToHtmls: vi.fn(),
+    readWebPage: vi.fn(),
+    relaunchApp: vi.fn(),
     screenControllerMocks: {
         closeAll: vi.fn(),
         createInstance: vi.fn(),
@@ -63,8 +91,12 @@ const {
         destroyInstance: vi.fn(),
         sendMessage: vi.fn(),
     },
+    sendChatAttachment: vi.fn(),
     sendMenuClicked: vi.fn(),
+    setGuideRunning: vi.fn(),
     setCustomMenusData: vi.fn(),
+    takeChatAttachment: vi.fn(() => ({ image: 'pending' })),
+    tarAppend: vi.fn(),
     tarCreate: vi.fn(),
     tarExtract: vi.fn(),
     closeFindOverlayMock: vi.fn(),
@@ -79,7 +111,11 @@ vi.mock('./fontListHelpers', () => ({
 
 vi.mock('./electronHelpers', () => ({
     attemptClosing,
+    answerGuideHelp,
+    askGuideHelp,
+    captureWindowImage,
     captureWebScreenShot,
+    findScreenWindow,
     getUpdatePageUrl: vi.fn(
         () => 'ms-windows-store://pdp/?ProductId=9NBLGGH4NNS1',
     ),
@@ -88,9 +124,29 @@ vi.mock('./electronHelpers', () => ({
     messageChannels: { screenMessage: 'app:screen:message' },
     previewPrintCurrentWindow,
     printHTMLContent,
+    sendChatAttachment,
+    setGuideRunning,
+    takeChatAttachment,
+    tarAppend,
     tarCreate,
     tarExtract,
 }));
+
+vi.mock('./aiHelpers', () => ({
+    getMcpToken,
+    getMcpUrl,
+    getRemoteDebuggingPort,
+}));
+
+vi.mock('./aiChatGuestHelpers', () => ({
+    AI_CHAT_MICROPHONE_ANSWER_CHANNEL: 'main:app:ai-chat-microphone-answer',
+    answerAiChatMicrophoneAsk,
+    clearAiChatGuestData,
+}));
+
+vi.mock('./oauthHelpers', () => ({ captureOAuthRedirectUrl }));
+vi.mock('./taskbarHelpers', () => ({ relaunchApp }));
+vi.mock('./webPageHelpers', () => ({ readWebPage }));
 
 // The bar's own web contents is the IPC sender; main resolves it to the page
 // it searches. Here the fixture pairs them up directly.
@@ -187,6 +243,7 @@ function createAppController(overrides: Record<string, any> = {}) {
         },
         resetThemeBackgroundColor: vi.fn(),
         reloadAll: vi.fn(),
+        sendMessageToAll: vi.fn(),
         ...overrides,
     } as any;
 }
@@ -498,6 +555,14 @@ describe('electronEventListener handlers', () => {
             'main:app:found-in-page',
             { activeMatchOrdinal: 2, matches: 7, finalUpdate: true },
         );
+        overlayWebContents.isDestroyed = () => true;
+        overlayWebContents.send.mockClear();
+        foundInPageCalls[0][1]({}, {
+            activeMatchOrdinal: 3,
+            matches: 7,
+            finalUpdate: true,
+        } as any);
+        expect(overlayWebContents.send).not.toHaveBeenCalled();
     });
 
     test('close and drag requests reach the overlay helpers', () => {
@@ -562,6 +627,13 @@ describe('electronEventListener handlers', () => {
             completed: 12,
             total: 25,
         });
+
+        await call('main:app:pdf-to-images', {
+            filePath: '/tmp/no-progress.pdf',
+            outDir: '/tmp/out',
+            isForce: false,
+        });
+        pdfToImages.mock.calls.at(-1)?.[4](1, 1);
 
         await call('main:app:pdf-pages-count', { filePath: '/tmp/a.pdf' });
         expect(getPagesCount).toHaveBeenCalledWith('/tmp/a.pdf');
@@ -832,6 +904,153 @@ describe('electronEventListener handlers', () => {
         expect(setCustomMenusData).toHaveBeenLastCalledWith('lang', null);
     });
 
+    test('app IPC exposes AI endpoints, guest cleanup, microphone answers, and screenshots', async () => {
+        const appController = createAppController();
+        const screenWin = createMockBrowserWindow();
+        findScreenWindow.mockReturnValue(screenWin);
+        captureWindowImage.mockResolvedValue('data:image/png;base64,SHOT');
+        initEventListenerApp(appController);
+
+        const endpointsEvent: any = {};
+        findOnHandler('main:app:get-ai-endpoints')(endpointsEvent);
+        expect(endpointsEvent.returnValue).toEqual({
+            mcpUrl: 'http://127.0.0.1:43123/mcp',
+            mcpToken: 'mcp-token',
+            cdpPort: 51234,
+        });
+
+        const sender = { id: 77, send: vi.fn() };
+        await findOnHandler('main:app:clear-ai-chat-data')(
+            { sender },
+            { replyEventName: 'reply:clear' },
+        );
+        expect(clearAiChatGuestData).toHaveBeenCalledTimes(1);
+        expect(sender.send).toHaveBeenCalledWith('reply:clear', true);
+
+        findOnHandler('main:app:ai-chat-microphone-answer')(
+            { sender },
+            { allow: true },
+        );
+        expect(answerAiChatMicrophoneAsk).toHaveBeenCalledWith(77, {
+            allow: true,
+        });
+
+        sender.send.mockClear();
+        await findOnHandler('main:app:capture-window')(
+            { sender },
+            { replyEventName: 'reply:main' },
+        );
+        expect(captureWindowImage).toHaveBeenCalledWith(appController.mainWin);
+        expect(sender.send).toHaveBeenCalledWith(
+            'reply:main',
+            'data:image/png;base64,SHOT',
+        );
+
+        await findOnHandler('main:app:capture-window')(
+            { sender },
+            { replyEventName: 'reply:screen', screenId: 4 },
+        );
+        expect(findScreenWindow).toHaveBeenCalledWith(4);
+        expect(captureWindowImage).toHaveBeenLastCalledWith(screenWin);
+    });
+
+    test('routes remaining main-process services and walkthrough messages', async () => {
+        const appController = createAppController();
+        initEventOther(appController);
+        const sender = { send: vi.fn() };
+        const call = async (eventName: string, data: Record<string, any>) => {
+            await findOnHandler(eventName)(
+                { sender },
+                { replyEventName: `reply:${eventName}`, ...data },
+            );
+        };
+
+        await call('main:app:oauth-authorize', {
+            authorizeUrl: 'https://accounts.example/authorize',
+            redirectUriPrefix: 'https://app.example/callback',
+        });
+        expect(captureOAuthRedirectUrl).toHaveBeenCalledTimes(1);
+
+        await call('main:app:tar-append', {
+            archiveFilePath: '/tmp/archive.tar',
+            inputDir: '/tmp/input',
+            files: ['new.txt'],
+        });
+        expect(tarAppend).toHaveBeenCalledWith(
+            '/tmp/archive.tar',
+            '/tmp/input',
+            ['new.txt'],
+        );
+
+        findOnHandler('main:app:copy-to-clipboard')({}, null);
+        expect(electronMockState.clipboard.writeText).not.toHaveBeenCalled();
+        findOnHandler('main:app:copy-to-clipboard')({}, 'copied');
+        expect(electronMockState.clipboard.writeText).toHaveBeenCalledWith(
+            'copied',
+        );
+
+        electronMockState.shell.openExternal.mockRejectedValueOnce(
+            new Error('no browser'),
+        );
+        findOnHandler('main:app:go-update')({});
+        await flushPromises();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            'Failed to open the update page:',
+            expect.any(Error),
+        );
+
+        findOnHandler('main:app:relaunch')({});
+        expect(relaunchApp).toHaveBeenCalledTimes(1);
+        findOnHandler('all:app:extra-bin-changed')({});
+        expect(appController.sendMessageToAll).toHaveBeenCalledWith(
+            'main:app:extra-bin-changed',
+        );
+
+        await call('main:app:read-web-page', {
+            url: 'https://example.com',
+            maxChars: 400,
+        });
+        expect(readWebPage).toHaveBeenCalledWith(
+            'https://example.com',
+            expect.objectContaining({ maxChars: 400 }),
+        );
+
+        const mainEvent: any = { sender: appController.mainWin.webContents };
+        findOnHandler('all:app:check-is-main-window')(mainEvent);
+        expect(mainEvent.returnValue).toBe(true);
+
+        const unknownSender = { id: 'unknown' };
+        findOnHandler('all:app:guide-running')(
+            { sender: unknownSender },
+            { isRunning: true },
+        );
+        findOnHandler('all:app:guide-help')(
+            { sender: unknownSender },
+            { question: 'where?' },
+        );
+        expect(setGuideRunning).not.toHaveBeenCalled();
+        expect(askGuideHelp).not.toHaveBeenCalled();
+
+        const win = createMockBrowserWindow();
+        electronMockState.setBrowserWindowFactory(() => win);
+        electronMockState.BrowserWindowMock();
+        findOnHandler('all:app:guide-running')(
+            { sender: win.webContents },
+            { isRunning: true },
+        );
+        findOnHandler('all:app:guide-help')({ sender: win.webContents }, null);
+        findOnHandler('all:app:guide-help-answer')({}, null);
+        findOnHandler('all:app:chat-attach')({}, null);
+        const attachmentEvent: any = {};
+        findOnHandler('main:app:take-chat-attachment')(attachmentEvent);
+
+        expect(setGuideRunning).toHaveBeenCalledWith(win, true);
+        expect(askGuideHelp).toHaveBeenCalledWith(win, {});
+        expect(answerGuideHelp).toHaveBeenCalledWith({});
+        expect(sendChatAttachment).toHaveBeenCalledWith({});
+        expect(attachmentEvent.returnValue).toEqual({ image: 'pending' });
+    });
+
     test('client settings are read, written, deleted, listed, and cleared', () => {
         const appController = createAppController();
         initEventOther(appController);
@@ -880,5 +1099,31 @@ describe('electronEventListener handlers', () => {
         expect(call({ key: '', type: 'is-available' })).toBe(true);
         // an unknown operation returns nothing rather than throwing
         expect(call({ key: 'a', type: 'unknown' as any })).toBeNull();
+    });
+
+    test('retries an empty or failed system-font enumeration', async () => {
+        getSystemFontListMap
+            .mockResolvedValueOnce({})
+            .mockRejectedValueOnce(new Error('font helper failed'));
+        vi.resetModules();
+        const fresh = await import('./electronEventListener');
+        const electron = (await import('electron')) as any;
+        fresh.initEventOther(createAppController());
+        await flushPromises();
+        const fontHandler = electron.ipcMain.on.mock.calls.find(
+            ([name]: [string]) => name === 'main:app:get-font-list',
+        )?.[1];
+        const sender = { send: vi.fn() };
+
+        await fontHandler(
+            { sender },
+            { replyEventName: 'reply:fonts-after-empty' },
+        );
+
+        expect(sender.send).toHaveBeenCalledWith(
+            'reply:fonts-after-empty',
+            null,
+        );
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));
     });
 });

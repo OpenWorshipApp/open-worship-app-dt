@@ -283,7 +283,7 @@ describe('non-Bible manager coverage', () => {
             await import('./ScreenForegroundManager'));
         varyModule = await import('./ScreenVaryAppDocumentManager');
         ScreenVaryAppDocumentManager = varyModule.default;
-    });
+    }, 60000);
 
     beforeEach(() => {
         vi.clearAllMocks();

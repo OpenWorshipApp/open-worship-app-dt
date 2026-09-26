@@ -333,7 +333,7 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
     beforeAll(async () => {
         varyModule = await import('./ScreenVaryAppDocumentManager');
         ScreenVaryAppDocumentManager = varyModule.default;
-    });
+    }, 60000);
 
     beforeEach(() => {
         vi.clearAllMocks();

@@ -17,9 +17,12 @@ vi.mock('../lang/langHelpers', () => ({
 }));
 
 import {
+    DAILY_TIP_AUTO_SHOW_DELAY_MS,
+    DAILY_TIP_LAUNCHED_AT_SESSION_KEY,
     DAILY_TIPS_DISABLED_SETTING_NAME,
     disableDailyTips,
     getAreDailyTipsDisabled,
+    getDailyTipAutoShowDelay,
     getDailyTipGuide,
     getDailyTipPage,
     getDailyTips,
@@ -244,5 +247,44 @@ describe('daily tip helpers', () => {
             'false',
         );
         expect(getAreDailyTipsDisabled()).toBe(false);
+    });
+
+    it('holds the automatic tip for five minutes from launch', () => {
+        const storage = new Map<string, string>();
+        const sessionStorage = {
+            getItem: (key: string) => storage.get(key) ?? null,
+            setItem: (key: string, value: string) => {
+                storage.set(key, value);
+            },
+        };
+        const launchedAt = 1_000_000;
+        expect(getDailyTipAutoShowDelay(sessionStorage, launchedAt)).toBe(
+            DAILY_TIP_AUTO_SHOW_DELAY_MS,
+        );
+        expect(DAILY_TIP_AUTO_SHOW_DELAY_MS).toBeGreaterThanOrEqual(
+            5 * 60 * 1000,
+        );
+        expect(storage.get(DAILY_TIP_LAUNCHED_AT_SESSION_KEY)).toBe(
+            `${launchedAt}`,
+        );
+        // A reload or page switch two minutes in keeps the launch's clock.
+        expect(
+            getDailyTipAutoShowDelay(sessionStorage, launchedAt + 120_000),
+        ).toBe(DAILY_TIP_AUTO_SHOW_DELAY_MS - 120_000);
+        expect(
+            getDailyTipAutoShowDelay(
+                sessionStorage,
+                launchedAt + DAILY_TIP_AUTO_SHOW_DELAY_MS + 1,
+            ),
+        ).toBe(0);
+        // A stamp that cannot be a past launch starts the wait again.
+        storage.set(DAILY_TIP_LAUNCHED_AT_SESSION_KEY, 'not a time');
+        expect(getDailyTipAutoShowDelay(sessionStorage, launchedAt)).toBe(
+            DAILY_TIP_AUTO_SHOW_DELAY_MS,
+        );
+        storage.set(DAILY_TIP_LAUNCHED_AT_SESSION_KEY, `${launchedAt * 2}`);
+        expect(getDailyTipAutoShowDelay(sessionStorage, launchedAt)).toBe(
+            DAILY_TIP_AUTO_SHOW_DELAY_MS,
+        );
     });
 });

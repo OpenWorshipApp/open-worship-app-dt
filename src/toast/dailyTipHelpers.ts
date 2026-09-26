@@ -67,6 +67,26 @@ function getCanDemoFromToolResult(result: unknown): boolean | null {
 
 export const DAILY_TIP_SESSION_KEY = 'daily-tip-auto-shown';
 
+// The automatic card waits this long after launch: at launch the volunteer is
+// opening the service and reaching for the very header controls it covers.
+// Help → Tips of the Day is never delayed.
+export const DAILY_TIP_AUTO_SHOW_DELAY_MS = 5 * 60 * 1000;
+export const DAILY_TIP_LAUNCHED_AT_SESSION_KEY = 'daily-tip-launched-at';
+
+// Counted from the launch, not from this page load: session storage outlives a
+// reload and a Presenter/Reader switch, so neither restarts the wait.
+export function getDailyTipAutoShowDelay(
+    storage: Pick<Storage, 'getItem' | 'setItem'> = globalThis.sessionStorage,
+    now = Date.now(),
+) {
+    let launchedAt = Number(storage.getItem(DAILY_TIP_LAUNCHED_AT_SESSION_KEY));
+    if (!Number.isFinite(launchedAt) || launchedAt <= 0 || launchedAt > now) {
+        launchedAt = now;
+        storage.setItem(DAILY_TIP_LAUNCHED_AT_SESSION_KEY, `${now}`);
+    }
+    return Math.max(0, launchedAt + DAILY_TIP_AUTO_SHOW_DELAY_MS - now);
+}
+
 function getAppMenuCategory(id: string) {
     if (id.endsWith('menu-file')) {
         return tran('File menu');

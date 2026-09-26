@@ -62,6 +62,10 @@ vi.mock('./fsServe', () => ({
 
 vi.mock('./electronHelpers', () => ({
     getAppThemeBackgroundColor: vi.fn(() => '#fefefe'),
+    messageChannels: {
+        openAiChatPage: 'main:app:open-aichat-page',
+        openChatbotPage: 'main:app:open-chatbot-page',
+    },
 }));
 
 import { electronMockState } from './testElectronModule';
@@ -88,6 +92,14 @@ describe('ElectronAppController', () => {
         expect(syncMainWindow).toHaveBeenCalledWith(mainWin);
         expect(mainController.sendMessage).toHaveBeenCalledWith(
             'main:app:open-about-page',
+        );
+        controller.openChatbotPage();
+        controller.openAiChatPage();
+        expect(mainController.sendMessage).toHaveBeenCalledWith(
+            'main:app:open-chatbot-page',
+        );
+        expect(mainController.sendMessage).toHaveBeenCalledWith(
+            'main:app:open-aichat-page',
         );
     });
 
@@ -164,5 +176,40 @@ describe('ElectronAppController', () => {
         )?.[1] as () => void;
         didFinishLoad();
         expect(controller.settingManager.mainHtmlPath).toBe('setting.html');
+    });
+
+    test('creates one singleton and broadcasts only to live non-screen windows', async () => {
+        const { default: Controller } = await import('./ElectronAppController');
+        const { BrowserWindow } = (await import('electron')) as any;
+        const first = Controller.getInstance();
+        expect(Controller.getInstance()).toBe(first);
+
+        const live = {
+            isDestroyed: vi.fn(() => false),
+            webContents: {
+                getURL: vi.fn(() => 'https://localhost:3000/setting.html'),
+                send: vi.fn(),
+            },
+        };
+        const screen = {
+            isDestroyed: vi.fn(() => false),
+            webContents: {
+                getURL: vi.fn(() => 'https://localhost:3000/screen.html?id=2'),
+                send: vi.fn(),
+            },
+        };
+        const destroyed = {
+            isDestroyed: vi.fn(() => true),
+            webContents: { getURL: vi.fn(), send: vi.fn() },
+        };
+        BrowserWindow.getAllWindows.mockReturnValue([live, screen, destroyed]);
+
+        first.sendMessageToAll('all:changed', { value: 1 });
+
+        expect(live.webContents.send).toHaveBeenCalledWith('all:changed', {
+            value: 1,
+        });
+        expect(screen.webContents.send).not.toHaveBeenCalled();
+        expect(destroyed.webContents.send).not.toHaveBeenCalled();
     });
 });

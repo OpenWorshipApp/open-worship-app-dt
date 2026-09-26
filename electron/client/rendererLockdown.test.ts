@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
     checkShouldLockdownRenderer,
@@ -83,6 +83,38 @@ describe('lockdownRenderer', () => {
         expect(scope.process.binding).toBeUndefined();
         expect(scope.process.dlopen).toBeUndefined();
         expect(Object.isFrozen(scope.process)).toBe(true);
+    });
+
+    it('keeps nextTick asynchronous in the decoy process', async () => {
+        const scope = genNodeScope();
+        lockdownRenderer(scope);
+        const callback = vi.fn();
+
+        scope.process.nextTick(callback);
+        expect(callback).not.toHaveBeenCalled();
+        await Promise.resolve();
+        expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    it('redefines process when an assignment is silently ignored', () => {
+        const realProcess = { platform: 'linux', env: { SECRET: 'value' } };
+        const scope: any = {};
+        Object.defineProperty(scope, 'process', {
+            configurable: true,
+            get: () => realProcess,
+            set: () => {},
+        });
+
+        expect(lockdownRenderer(scope)).toContain('process');
+        expect(scope.process).not.toBe(realProcess);
+        expect(scope.process).toMatchObject({ platform: 'linux', env: {} });
+        expect(Object.getOwnPropertyDescriptor(scope, 'process')).toMatchObject(
+            {
+                configurable: false,
+                enumerable: false,
+                writable: false,
+            },
+        );
     });
 
     // A lockdown that quietly did nothing would be worse than none: everything

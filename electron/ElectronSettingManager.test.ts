@@ -180,6 +180,21 @@ describe('ElectronSettingManager', () => {
         expect(manager.getPopupWinBounds('presenter.html')).toBeNull();
     });
 
+    test('ignores invalid popup geometry', () => {
+        const manager = genManagerWithDisplays();
+
+        manager.setPopupWinBounds('chatbot.html', {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 640,
+            isMaximized: false,
+        });
+
+        expect(manager.getPopupWinBounds('chatbot.html')).toBeNull();
+        expect(writeFileSync).not.toHaveBeenCalled();
+    });
+
     test('tolerates an empty or unreadable setting file', () => {
         const consoleLogSpy = vi
             .spyOn(console, 'log')
@@ -390,6 +405,39 @@ describe('ElectronSettingManager', () => {
         expect(
             electronMockState.safeStorage.encryptString,
         ).not.toHaveBeenCalled();
+    });
+
+    test('returns no persisted secret when the OS store is unavailable', () => {
+        electronMockState.safeStorage.isEncryptionAvailable.mockReturnValue(
+            false,
+        );
+        readFileSync.mockReturnValue(
+            JSON.stringify({ secureSetting: { token: 'stale' } }),
+        );
+        const manager = new ElectronSettingManager();
+
+        expect(manager.getSecureSetting('token')).toBeNull();
+    });
+
+    test('does not persist a secret that the OS store cannot encrypt', () => {
+        readFileSync.mockReturnValue('{}');
+        electronMockState.safeStorage.encryptString.mockImplementation(() => {
+            throw new Error('keyring locked');
+        });
+        const manager = new ElectronSettingManager();
+
+        manager.setSecureSetting('token', 'secret');
+
+        expect(manager.settingObject.secureSetting).toEqual({});
+        expect(writeFileSync).not.toHaveBeenCalled();
+    });
+
+    test('reuses the process-wide manager', () => {
+        readFileSync.mockReturnValue('{}');
+
+        expect(ElectronSettingManager.getInstance()).toBe(
+            ElectronSettingManager.getInstance(),
+        );
     });
 
     test('strips legacy cleartext credentials on load, exactly once', () => {

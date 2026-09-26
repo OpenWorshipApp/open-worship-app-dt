@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126]
 screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-25"
+workflowsVersion: "2026-09-26"
 ---
 # W-29 — Look up a Bible name or place (people, tribes, cities, maps)
 
@@ -99,5 +99,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-25).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-26).
 :::

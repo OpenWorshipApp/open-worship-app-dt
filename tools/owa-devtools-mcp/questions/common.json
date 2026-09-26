@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-09-24",
+    "updated": "2026-09-26",
     "sections": [
         {
             "id": "panels",
@@ -482,6 +482,10 @@
                         "show tips again",
                         "don't show again",
                         "automatic tips",
+                        "tip not showing",
+                        "no tip at startup",
+                        "when does the tip appear",
+                        "five minutes",
                         "settings"
                     ],
                     "resources": {

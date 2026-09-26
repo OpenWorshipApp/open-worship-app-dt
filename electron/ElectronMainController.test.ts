@@ -111,6 +111,7 @@ describe('ElectronMainController', () => {
 
         // An unsupported same-origin page is blocked without opening a browser.
         expect(allow('https://localhost:3000/setting.html')).toHaveBeenCalled();
+        expect(allow('not a valid URL')).toHaveBeenCalled();
         // An allowed page name under an unexpected path (not what genRouteUrl
         // would produce) is still rejected.
         expect(
@@ -264,6 +265,27 @@ describe('ElectronMainController', () => {
                     data: { isShowing: false },
                 },
             );
+        } finally {
+            processExit.mockRestore();
+        }
+    });
+
+    test('reloads the current safe page after recovery and reuses its singleton', () => {
+        const processExit = vi
+            .spyOn(process, 'exit')
+            .mockImplementation((() => undefined) as any);
+        try {
+            const settingManager = { mainHtmlPath: 'presenter.html' } as any;
+            const controller =
+                ElectronMainController.getInstance(settingManager);
+            expect(ElectronMainController.getInstance(settingManager)).toBe(
+                controller,
+            );
+            settingManager.mainHtmlPath = 'setting.html';
+            const recover = applyRendererRecovery.mock.calls[0][1];
+            recover();
+
+            expect(loadURL).toHaveBeenCalledWith(controller.win);
         } finally {
             processExit.mockRestore();
         }

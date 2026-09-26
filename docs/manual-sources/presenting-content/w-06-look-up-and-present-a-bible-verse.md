@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, CB-61]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-25"
+workflowsVersion: "2026-09-26"
 ---
 # W-06 — Look up and present a Bible verse
 
@@ -36,5 +36,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `CB-61`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-25).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-26).
 :::

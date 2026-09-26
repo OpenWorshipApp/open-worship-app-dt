@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [NAV-20, NAV-21, ST-22, GL-17, GL-18]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-25"
+workflowsVersion: "2026-09-26"
 ---
 # W-31 — Hide, show, and reset the app's panels (View menu)
 
@@ -68,5 +68,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-20` · `NAV-21` · `ST-22` · `GL-17` · `GL-18`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-25).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-26).
 :::

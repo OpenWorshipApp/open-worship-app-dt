@@ -5,13 +5,21 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
+const { fromPartition, importEsm } = vi.hoisted(() => ({
+    fromPartition: vi.fn(),
+    importEsm: vi.fn(),
+}));
+
 vi.mock('electron', () => {
     return {
-        session: { fromPartition: vi.fn() },
+        session: { fromPartition },
     };
 });
 vi.mock('./aiHelpers', () => {
-    return { importEsm: vi.fn(), toMcpPackagePath: vi.fn() };
+    return {
+        importEsm,
+        toMcpPackagePath: vi.fn(() => '/mock/webUrlPolicy.mjs'),
+    };
 });
 
 import path from 'node:path';
@@ -24,11 +32,17 @@ import {
 } from '../src/helper/constants';
 import {
     checkIsCaptureNavigationAllowed,
+    checkIsCaptureFileRequestAllowed,
     checkIsCaptureRequestAllowed,
     checkIsCaptureRequestAllowedForTarget,
     checkIsCaptureUrlAllowed,
     checkIsPathInsideDir,
+    guardCaptureSessionRequests,
+    guardCaptureWindow,
+    lockDownCaptureSession,
+    prepareCaptureSession,
     resolveCaptureTarget,
+    toCaptureFilePath,
     toCaptureDirPath,
     WEB_CAPTURE_DEFAULT_DIR_NAME,
     WEB_CAPTURE_DIR_SETTING_NAME_PREFIX,
@@ -267,5 +281,112 @@ describe('checkIsCaptureRequestAllowed', () => {
 
     it('refuses a request it cannot parse', () => {
         expect(checkAllowed('not a url', 'example.com')).toBe(false);
+    });
+});
+
+describe('capture session and window guards', () => {
+    it('loads the address policy before deciding deferred requests', async () => {
+        let requestHandler: any;
+        const captureSession = {
+            webRequest: {
+                onBeforeRequest: vi.fn((_filter, handler) => {
+                    requestHandler = handler;
+                }),
+            },
+            setPermissionRequestHandler: vi.fn(),
+            setPermissionCheckHandler: vi.fn(),
+            on: vi.fn(),
+        };
+        importEsm.mockResolvedValue(policy);
+        fromPartition.mockReturnValue(captureSession);
+        guardCaptureSessionRequests(captureSession as any, {
+            kind: 'web',
+            hostname: 'example.com',
+        });
+        const callback = vi.fn();
+
+        requestHandler({ url: 'https://cdn.example.com/a.js' }, callback);
+        await vi.waitFor(() => {
+            expect(callback).toHaveBeenCalledWith({ cancel: false });
+        });
+        expect(importEsm).toHaveBeenCalledWith(
+            expect.stringContaining('webUrlPolicy.mjs'),
+        );
+
+        const immediateCallback = vi.fn();
+        requestHandler(
+            { url: 'http://127.0.0.1:43123/mcp' },
+            immediateCallback,
+        );
+        expect(immediateCallback).toHaveBeenCalledWith({ cancel: true });
+    });
+
+    it('locks permissions and downloads once and prepares the isolated partition', async () => {
+        const permissionHandlers: any[] = [];
+        let downloadHandler: any;
+        const captureSession = {
+            webRequest: { onBeforeRequest: vi.fn() },
+            setPermissionRequestHandler: vi.fn((handler) => {
+                permissionHandlers.push(handler);
+            }),
+            setPermissionCheckHandler: vi.fn((handler) => {
+                permissionHandlers.push(handler);
+            }),
+            on: vi.fn((_name, handler) => {
+                downloadHandler = handler;
+            }),
+        };
+        fromPartition.mockReturnValue(captureSession);
+
+        expect(lockDownCaptureSession()).toBe(captureSession);
+        expect(lockDownCaptureSession()).toBe(captureSession);
+        const done = vi.fn();
+        permissionHandlers[0](null, 'camera', done);
+        expect(done).toHaveBeenCalledWith(false);
+        expect(permissionHandlers[1]()).toBe(false);
+        const downloadEvent = { preventDefault: vi.fn() };
+        downloadHandler(downloadEvent);
+        expect(downloadEvent.preventDefault).toHaveBeenCalledTimes(1);
+        expect(
+            await prepareCaptureSession({
+                kind: 'web',
+                hostname: 'example.com',
+            }),
+        ).toBe('owa-capture-website');
+    });
+
+    it('refuses malformed file requests and navigation out of the target', () => {
+        expect(toCaptureFilePath('not a url')).toBeNull();
+        expect(toCaptureFilePath('file:///C:/bad%ZZ')).toBeNull();
+        expect(
+            checkIsCaptureFileRequestAllowed('not a url', websDirPath, policy),
+        ).toBe(false);
+
+        const listeners = new Map<string, (...args: any[]) => void>();
+        const win = {
+            webContents: {
+                setWindowOpenHandler: vi.fn(),
+                on: vi.fn((name, handler) => listeners.set(name, handler)),
+            },
+        };
+        guardCaptureWindow(win as any, {
+            kind: 'web',
+            hostname: 'example.com',
+        });
+        expect(win.webContents.setWindowOpenHandler.mock.calls[0][0]()).toEqual(
+            { action: 'deny' },
+        );
+        const allowedEvent = { preventDefault: vi.fn() };
+        listeners.get('will-navigate')?.(
+            allowedEvent,
+            'https://example.com/next',
+        );
+        expect(allowedEvent.preventDefault).not.toHaveBeenCalled();
+        const refusedEvent = { preventDefault: vi.fn() };
+        listeners.get('will-redirect')?.(
+            refusedEvent,
+            'file:///C:/private/setting.json',
+        );
+        expect(refusedEvent.preventDefault).toHaveBeenCalledTimes(1);
     });
 });

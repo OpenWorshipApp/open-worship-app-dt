@@ -1,21 +1,29 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { mkdir, readdir, rm, writeFile, tarC, tarX, tarR } = vi.hoisted(() => ({
-    mkdir: vi.fn(),
-    readdir: vi.fn(),
-    rm: vi.fn(),
-    writeFile: vi.fn(),
-    tarC: vi.fn(async () => undefined),
-    tarX: vi.fn(async () => undefined),
-    tarR: vi.fn(async () => undefined),
-}));
+const { mkdir, readdir, readFile, rm, writeFile, tarC, tarX, tarR } =
+    vi.hoisted(() => ({
+        mkdir: vi.fn(),
+        readdir: vi.fn(),
+        readFile: vi.fn(),
+        rm: vi.fn(),
+        writeFile: vi.fn(),
+        tarC: vi.fn(async () => undefined),
+        tarX: vi.fn(async () => undefined),
+        tarR: vi.fn(async () => undefined),
+    }));
 
 vi.mock('electron', async () => {
     const mod = await import('./testElectronModule');
     return mod.createElectronModuleMock();
 });
 
-vi.mock('node:fs/promises', () => ({ mkdir, readdir, rm, writeFile }));
+vi.mock('node:fs/promises', () => ({
+    mkdir,
+    readdir,
+    readFile,
+    rm,
+    writeFile,
+}));
 
 vi.mock('tar', () => ({ c: tarC, x: tarX, r: tarR }));
 
@@ -24,6 +32,7 @@ const { settingManagerMock } = vi.hoisted(() => ({
         getPopupWinBounds: vi.fn(() => null as any),
         setPopupWinBounds: vi.fn(),
         clearPopupWinBounds: vi.fn(),
+        getClientSetting: vi.fn(() => ''),
     },
 }));
 
@@ -36,17 +45,22 @@ vi.mock('./ElectronSettingManager', () => ({
 }));
 
 import {
+    captureWindowImage,
     captureWebScreenShot,
     copyDebugInfoToClipboard,
+    findScreenWindow,
+    genTimeoutAttempt,
     guardBrowsing,
     POPUP_FRAME_NAME_PREFIX,
     previewPrintCurrentWindow,
     printCurrentWindow,
     printHTMLContent,
     resetPopupWindowsBounds,
+    sendChatAttachment,
     tarAppend,
     tarCreate,
     tarExtract,
+    takeChatAttachment,
 } from './electronHelpers';
 import { electronMockState } from './testElectronModule';
 import {
@@ -76,6 +90,7 @@ describe('electronHelpers coverage', () => {
         vi.clearAllMocks();
         mkdir.mockResolvedValue(undefined);
         readdir.mockResolvedValue([]);
+        readFile.mockResolvedValue('');
         rm.mockResolvedValue(undefined);
         writeFile.mockResolvedValue(undefined);
         tarC.mockResolvedValue(undefined);
@@ -84,6 +99,7 @@ describe('electronHelpers coverage', () => {
         settingManagerMock.getPopupWinBounds.mockClear().mockReturnValue(null);
         settingManagerMock.setPopupWinBounds.mockClear();
         settingManagerMock.clearPopupWinBounds.mockClear();
+        settingManagerMock.getClientSetting.mockClear().mockReturnValue('');
         consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
         consoleErrorSpy = vi
             .spyOn(console, 'error')
@@ -497,6 +513,43 @@ describe('electronHelpers coverage', () => {
         vi.runAllTimers();
     });
 
+    test('reset skips dead windows, cascades matching popups, and unmaximizes them', () => {
+        vi.useFakeTimers();
+        settingManagerMock.getPopupWinBounds.mockReturnValue({
+            x: 200,
+            y: 150,
+            width: 500,
+            height: 400,
+            isMaximized: false,
+        });
+        const parentWin = createMockBrowserWindow();
+        const first = openPopup(parentWin, {
+            url: 'https://localhost:3000/about.html?uuid=one',
+        }).popupWin;
+        const second = openPopup(parentWin, {
+            url: 'https://localhost:3000/about.html?uuid=two',
+        }).popupWin;
+        const dead = openPopup(parentWin, {
+            url: 'https://localhost:3000/about.html?uuid=three',
+        }).popupWin;
+        second.isMaximized.mockReturnValue(true);
+        dead.isDestroyed.mockReturnValue(true);
+        electronMockState.browserWindows.push(createMockBrowserWindow());
+
+        resetPopupWindowsBounds(parentWin as any);
+
+        expect(second.unmaximize).toHaveBeenCalledTimes(1);
+        expect(first.setBounds).toHaveBeenCalled();
+        expect(second.setBounds).toHaveBeenCalledWith(
+            expect.objectContaining({
+                x: expect.any(Number),
+                y: expect.any(Number),
+            }),
+        );
+        expect(dead.setBounds).not.toHaveBeenCalled();
+        vi.runAllTimers();
+    });
+
     test('a failed print is reported rather than thrown', () => {
         const win = createMockBrowserWindow({
             webContents: createMockWebContents({
@@ -685,5 +738,165 @@ describe('electronHelpers coverage', () => {
             expect.any(Error),
         );
         expect(captureWin.close).toHaveBeenCalledTimes(2);
+    });
+
+    test('routes one pending screenshot to the help window and then forgets it', () => {
+        expect(sendChatAttachment({ image: 'first' })).toBe(false);
+        expect(takeChatAttachment()).toEqual({ image: 'first' });
+        expect(takeChatAttachment()).toBeNull();
+
+        const chatbotWin = createWindowAt(
+            'https://localhost:3000/chatbot.html?uuid=chatbot',
+            { x: 0, y: 0 },
+        );
+        electronMockState.browserWindows.push(chatbotWin);
+
+        expect(sendChatAttachment({ image: 'second' })).toBe(true);
+        expect(chatbotWin.webContents.send).toHaveBeenCalledWith(
+            'main:app:chat-attach',
+            { image: 'second' },
+        );
+        expect(takeChatAttachment()).toEqual({ image: 'second' });
+    });
+
+    test('captures only a live window and finds a showing screen by id', async () => {
+        const destroyedWin = createWindowAt(
+            'https://localhost:3000/screen.html?screenId=2',
+            { x: 0, y: 0 },
+            { isDestroyed: vi.fn(() => true) },
+        );
+        const screenWin = createWindowAt(
+            'https://localhost:3000/screen.html?screenId=2',
+            { x: 0, y: 0 },
+        );
+        screenWin.webContents.capturePage.mockResolvedValue({
+            toDataURL: () => 'data:image/png;base64,SCREEN',
+        });
+        electronMockState.browserWindows.push(destroyedWin, screenWin);
+
+        expect(findScreenWindow(2)).toBe(screenWin);
+        expect(findScreenWindow(3)).toBeNull();
+        await expect(captureWindowImage(null)).rejects.toThrow(
+            'That window is not open',
+        );
+        await expect(captureWindowImage(destroyedWin as any)).rejects.toThrow(
+            'That window is not open',
+        );
+        await expect(captureWindowImage(screenWin as any)).resolves.toBe(
+            'data:image/png;base64,SCREEN',
+        );
+    });
+
+    test('can run a throttled attempt immediately and debounce the next one', () => {
+        vi.useFakeTimers();
+        const call = vi.fn();
+        const schedule = genTimeoutAttempt(100, false);
+
+        schedule(call);
+        schedule(call);
+        expect(call).toHaveBeenCalledTimes(1);
+        vi.advanceTimersByTime(100);
+        expect(call).toHaveBeenCalledTimes(2);
+
+        schedule(call, true);
+        expect(call).toHaveBeenCalledTimes(3);
+    });
+
+    test('opens ordinary web popups externally and denies the Electron window', () => {
+        const parentWin = createMockBrowserWindow();
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        expect(
+            windowOpenHandler({
+                url: 'https://example.com/help',
+                frameName: 'ordinary-link',
+                features: '',
+            } as any),
+        ).toEqual({ action: 'deny' });
+        expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
+            'https://example.com/help',
+        );
+    });
+
+    test('honours left, top, centre, and bottom popup alignment', () => {
+        vi.useFakeTimers();
+        const parentWin = createMockBrowserWindow({
+            getBounds: vi.fn(() => ({
+                x: 100,
+                y: 200,
+                width: 800,
+                height: 600,
+            })),
+        });
+
+        const leftTop = openPopup(parentWin, {
+            features:
+                'popup,width=200,height=100,appAlignHorizontal=left,' +
+                'appAlignVertical=top',
+        }).response.overrideBrowserWindowOptions;
+        expect(leftTop).toMatchObject({ x: 100, y: 200 });
+
+        const centreBottom = openPopup(parentWin, {
+            url: 'https://localhost:3000/find.html?uuid=other',
+            features:
+                'popup,width=200,height=100,appAlignHorizontal=center,' +
+                'appAlignVertical=bottom',
+        }).response.overrideBrowserWindowOptions;
+        expect(centreBottom).toMatchObject({ x: 400, y: 800 });
+        vi.runAllTimers();
+    });
+
+    test('allows captures only from registered local Webs folders and caches the lookup', async () => {
+        const captureWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                capturePage: vi.fn(async () => ({
+                    toDataURL: () => 'data:image/png;base64,LOCAL',
+                })),
+            }),
+        });
+        electronMockState.setBrowserWindowFactory(() => captureWin);
+        settingManagerMock.getClientSetting.mockReturnValue(
+            'C:\\mock-user-data',
+        );
+        readdir.mockResolvedValue([
+            'select-dir-web-bg-session-a',
+            'unrelated-setting',
+        ]);
+        readFile.mockResolvedValue('$DATA_DIR_PATH/extra-webs');
+        const localUrl = 'file:///C:/mock-user-data/extra-webs/page.html';
+
+        await expect(
+            captureWebScreenShot(localUrl, {
+                width: 320,
+                height: 200,
+                delay: 0,
+            }),
+        ).resolves.toBe('data:image/png;base64,LOCAL');
+        await expect(
+            captureWebScreenShot('file:///private/setting.json', {
+                width: 320,
+                height: 200,
+                delay: 0,
+            }),
+        ).rejects.toThrow('Only a web address');
+        expect(readdir).toHaveBeenCalledTimes(1);
+
+        vi.useFakeTimers();
+        vi.setSystemTime(Date.now() + 6000);
+        readdir.mockRejectedValueOnce(new Error('drive unplugged'));
+        await expect(
+            captureWebScreenShot('file:///C:/outside/page.html', {
+                width: 320,
+                height: 200,
+                delay: 0,
+            }),
+        ).rejects.toThrow('Only a web address');
+        expect(consoleLogSpy).toHaveBeenCalledWith(
+            'Could not read the web folders setting:',
+            expect.any(Error),
+        );
+        vi.useRealTimers();
     });
 });

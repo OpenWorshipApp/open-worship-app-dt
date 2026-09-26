@@ -371,6 +371,34 @@ describe('archive password protection', () => {
     );
 
     test(
+        'refuses the exact same input and output path on a case-sensitive volume',
+        async () => {
+            const descriptor = Object.getOwnPropertyDescriptor(
+                process,
+                'platform',
+            );
+            Object.defineProperty(process, 'platform', {
+                configurable: true,
+                value: 'linux',
+            });
+            try {
+                const plainFilePath = await writeFixture(
+                    'same.tar',
+                    randomBytes(64),
+                );
+                await expect(
+                    encryptFile(plainFilePath, plainFilePath, PASSWORD),
+                ).rejects.toThrow('cannot be written over');
+            } finally {
+                if (descriptor !== undefined) {
+                    Object.defineProperty(process, 'platform', descriptor);
+                }
+            }
+        },
+        REAL_FILE_TIMEOUT,
+    );
+
+    test(
         'leaves nothing behind when the payload cannot be read',
         async () => {
             const encryptedFilePath = toPath('archive.enc');

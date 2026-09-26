@@ -21,7 +21,12 @@ vi.mock('node:fs/promises', () => ({ mkdir, readdir, rm, writeFile }));
 import {
     checkIsAiEnabled,
     enableRemoteDebugging,
+    getMcpToken,
+    getMcpUrl,
+    getRemoteDebuggingPort,
+    initAi,
     publishAiEndpoints,
+    startMcpHost,
 } from './aiHelpers';
 import { electronMockState } from './testElectronModule';
 
@@ -191,5 +196,173 @@ describe('aiHelpers', () => {
 
         await expect(publishAiEndpoints(0)).resolves.toBe(null);
         expect(writeFile).not.toHaveBeenCalled();
+    });
+
+    test('waits briefly for Chromium to report its port', async () => {
+        writeSetting('true');
+        enableRemoteDebugging();
+        vi.useFakeTimers();
+
+        const resultPromise = publishAiEndpoints(201);
+        await vi.advanceTimersByTimeAsync(400);
+
+        await expect(resultPromise).resolves.toBeNull();
+        vi.useRealTimers();
+    });
+
+    test('starts one lazy MCP host and exposes its discovery credentials', async () => {
+        writeSetting('true');
+        process.env.OWA_MCP_PORT = '43123';
+        const host = {
+            port: 43123,
+            url: 'http://127.0.0.1:43123/mcp',
+            token: 'secret-token',
+            close: vi.fn(),
+        };
+        const startOwaMcpHost = vi.fn().mockResolvedValue(host);
+        const RealFunction = globalThis.Function;
+        globalThis.Function = new Proxy(RealFunction, {
+            construct: () => async () => ({ startOwaMcpHost }),
+        });
+        vi.resetModules();
+        try {
+            const fresh = await import('./aiHelpers');
+            await expect(fresh.startMcpHost()).resolves.toBe(host);
+            await expect(fresh.startMcpHost()).resolves.toBe(host);
+            expect(startOwaMcpHost).toHaveBeenCalledTimes(1);
+            expect(startOwaMcpHost).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    port: 43123,
+                    getCdpPort: expect.any(Function),
+                    logger: expect.any(Function),
+                }),
+            );
+            expect(process.env.OWA_KNOWLEDGE_DIR).toContain(
+                path.join('electron-build', 'knowledge'),
+            );
+            expect(fresh.getMcpUrl()).toBe(host.url);
+            expect(fresh.getMcpToken()).toBe(host.token);
+            expect(fresh.getRemoteDebuggingPort()).toBeNull();
+            await fresh.initAi();
+        } finally {
+            globalThis.Function = RealFunction;
+            delete process.env.OWA_MCP_PORT;
+            delete process.env.OWA_KNOWLEDGE_DIR;
+        }
+    });
+
+    test('fails closed when the lazy MCP module cannot start', async () => {
+        writeSetting('true');
+        const RealFunction = globalThis.Function;
+        globalThis.Function = new Proxy(RealFunction, {
+            construct: () => async () => {
+                throw new Error('module unavailable');
+            },
+        });
+        vi.resetModules();
+        const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+        try {
+            const fresh = await import('./aiHelpers');
+            await expect(fresh.startMcpHost()).resolves.toBeNull();
+            expect(log).toHaveBeenCalledWith(
+                'Failed to start the MCP host:',
+                expect.any(Error),
+            );
+        } finally {
+            globalThis.Function = RealFunction;
+        }
+    });
+
+    test('publishes the MCP details and removes stale discovery files', async () => {
+        writeSetting('true');
+        const host = {
+            port: 43124,
+            url: 'http://127.0.0.1:43124/mcp',
+            token: 'published-token',
+            close: vi.fn(),
+        };
+        const startOwaMcpHost = vi.fn().mockResolvedValue(host);
+        const RealFunction = globalThis.Function;
+        globalThis.Function = new Proxy(RealFunction, {
+            construct: () => async () => ({ startOwaMcpHost }),
+        });
+        vi.resetModules();
+        const kill = vi.spyOn(process, 'kill').mockImplementation((pid) => {
+            if (pid === 11111) {
+                const error = new Error('not allowed') as NodeJS.ErrnoException;
+                error.code = 'EPERM';
+                throw error;
+            }
+            if (pid === 22222) {
+                const error = new Error('gone') as NodeJS.ErrnoException;
+                error.code = 'ESRCH';
+                throw error;
+            }
+            return true;
+        });
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+        try {
+            const fresh = await import('./aiHelpers');
+            await fresh.startMcpHost();
+            fresh.enableRemoteDebugging();
+            writeFileSync(
+                path.join(dirPath, 'DevToolsActivePort'),
+                '51235\n/devtools/browser/def',
+            );
+            readdir.mockResolvedValue([
+                'not-a-pid.json',
+                `${process.pid}.json`,
+                '11111.json',
+                '22222.json',
+            ]);
+
+            await expect(fresh.publishAiEndpoints(0)).resolves.toBe(51235);
+
+            expect(rm).toHaveBeenCalledWith(
+                expect.stringContaining(path.join('', '22222.json')),
+                { force: true },
+            );
+            expect(rm).toHaveBeenCalledTimes(1);
+            const published = JSON.parse(writeFile.mock.calls[0][1] as string);
+            expect(published).toMatchObject({
+                port: 51235,
+                mcpUrl: host.url,
+                mcpToken: host.token,
+            });
+            expect(fresh.getRemoteDebuggingPort()).toBe(51235);
+            const logger = startOwaMcpHost.mock.calls[0][0].logger;
+            logger('ready');
+            expect(console.log).toHaveBeenCalledWith(
+                '[owa-devtools-mcp]',
+                'ready',
+            );
+        } finally {
+            globalThis.Function = RealFunction;
+            kill.mockRestore();
+        }
+    });
+
+    test('contains endpoint publication failures and disabled initialization', async () => {
+        writeSetting('true');
+        enableRemoteDebugging();
+        writeFileSync(path.join(dirPath, 'DevToolsActivePort'), '51236\npath');
+        mkdir.mockRejectedValueOnce(new Error('read-only temp'));
+        const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+        await expect(publishAiEndpoints(0)).resolves.toBeNull();
+        expect(log).toHaveBeenCalledWith(
+            'Failed to publish the agent endpoints:',
+            expect.any(Error),
+        );
+
+        writeSetting('false');
+        await expect(initAi()).resolves.toBeUndefined();
+        expect(log).toHaveBeenCalledWith(
+            'AI features are disabled in settings',
+        );
+        expect(getMcpUrl()).toBeNull();
+        expect(getMcpToken()).toBeNull();
+        expect(getRemoteDebuggingPort()).toBe(51236);
+        await expect(startMcpHost()).resolves.toBeNull();
     });
 });

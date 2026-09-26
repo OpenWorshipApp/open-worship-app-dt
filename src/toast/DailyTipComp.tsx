@@ -14,6 +14,7 @@ import {
     DAILY_TIP_SESSION_KEY,
     disableDailyTips,
     getAreDailyTipsDisabled,
+    getDailyTipAutoShowDelay,
     getDailyTipPage,
     getDailyTips,
     pickDailyTipIndex,
@@ -28,24 +29,26 @@ type DailyTipMenuClickType = {
     isBrowseDailyTips?: boolean;
 };
 
+// Read again when the delay ends: "Don't show again" may have been pressed in
+// Settings meanwhile, or a tip already opened from Help.
+function checkIsAutoTipBlocked() {
+    return (
+        getAreDailyTipsDisabled() ||
+        globalThis.sessionStorage.getItem(DAILY_TIP_SESSION_KEY) === 'true'
+    );
+}
+
+function markAutoTipShown() {
+    globalThis.sessionStorage.setItem(DAILY_TIP_SESSION_KEY, 'true');
+}
+
 export default function DailyTipComp() {
     const page = getDailyTipPage(appProvider.currentHomePage);
     const tips = useMemo(
         () => (page === null ? [] : getDailyTips(page)),
         [page],
     );
-    const [tipIndex, setTipIndex] = useState<number | null>(() => {
-        if (
-            page === null ||
-            !checkIsMainWindow() ||
-            getAreDailyTipsDisabled() ||
-            globalThis.sessionStorage.getItem(DAILY_TIP_SESSION_KEY) === 'true'
-        ) {
-            return null;
-        }
-        globalThis.sessionStorage.setItem(DAILY_TIP_SESSION_KEY, 'true');
-        return pickDailyTipIndex(page, tips);
-    });
+    const [tipIndex, setTipIndex] = useState<number | null>(null);
     const [isStarting, setIsStarting] = useState(false);
     const [isBrowsing, setIsBrowsing] = useState(false);
     const [searchText, setSearchText] = useState('');
@@ -73,6 +76,8 @@ export default function DailyTipComp() {
         if (page === null || tips.length === 0) {
             return;
         }
+        // A tip asked for from Help stands in for this launch's automatic one.
+        markAutoTipShown();
         setErrorMessage('');
         setIsBrowsing(false);
         setTipIndex(pickDailyTipIndex(page, tips));
@@ -82,6 +87,7 @@ export default function DailyTipComp() {
         if (page === null || tips.length === 0) {
             return;
         }
+        markAutoTipShown();
         setErrorMessage('');
         setSearchText('');
         setTipIndex((oldIndex) => {
@@ -89,6 +95,26 @@ export default function DailyTipComp() {
         });
         setIsBrowsing(true);
     }, [page, tips]);
+
+    const showAutoTip = useCallback(() => {
+        if (page === null || tips.length === 0 || checkIsAutoTipBlocked()) {
+            return;
+        }
+        markAutoTipShown();
+        setTipIndex((oldIndex) => {
+            return oldIndex ?? pickDailyTipIndex(page, tips);
+        });
+    }, [page, tips]);
+
+    useAppEffect(() => {
+        if (page === null || !checkIsMainWindow() || checkIsAutoTipBlocked()) {
+            return;
+        }
+        const timeoutId = setTimeout(showAutoTip, getDailyTipAutoShowDelay());
+        return () => {
+            clearTimeout(timeoutId);
+        };
+    }, [page, showAutoTip]);
 
     useAppEffect(() => {
         if (!checkIsMainWindow()) {

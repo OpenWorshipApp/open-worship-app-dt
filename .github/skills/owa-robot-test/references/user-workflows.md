@@ -21,7 +21,15 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-25h** (**W-09 — a session's _Properties_ act on that session's OWN overlay.** Reported straight after the strip landed: _"each session should have its own properties"_ / _"`Properties` should be controlled per session"_. The values were already filed per session, and the panel already showed the right ones — what leaked was the live restyle: the refresh walked every overlay of that kind, so nudging Session 2's size or colour re-dressed the countdown Default had on the wall. It now walks only the entries that session owns. The Hide row is deliberately left alone: it reaches whatever is live from whichever session is in front, because there must always be a way to take something off a projector. Proven live 2026-09-25 by reading the screen's own saved style — Default's overlay held `opacity: 0.91` through a change to Session 2's, and followed a change to Default's. PM-146.)
+**workflowsVersion: 2026-09-26** (**W-46 — the automatic Tip of the Day waits five minutes.**
+Reported with a picture of the card over the Presenter's top-right controls at launch:
+_"Tip of the Day should be delay at least 5 minutes at app launch"_. The card now
+appears five minutes after the app starts, counted from the launch, so a reload or a
+Presenter/Reader switch does not restart the wait; **Help → Tips of the Day** is not
+delayed, and a tip opened from Help stands in for that launch's automatic one. GL-25
+expanded.)
+
+Previous: **workflowsVersion: 2026-09-25h** (**W-09 — a session's _Properties_ act on that session's OWN overlay.** Reported straight after the strip landed: _"each session should have its own properties"_ / _"`Properties` should be controlled per session"_. The values were already filed per session, and the panel already showed the right ones — what leaked was the live restyle: the refresh walked every overlay of that kind, so nudging Session 2's size or colour re-dressed the countdown Default had on the wall. It now walks only the entries that session owns. The Hide row is deliberately left alone: it reaches whatever is live from whichever session is in front, because there must always be a way to take something off a projector. Proven live 2026-09-25 by reading the screen's own saved style — Default's overlay held `opacity: 0.91` through a change to Session 2's, and followed a change to Default's. PM-146.)
 
 Previous: **workflowsVersion: 2026-09-25g** (**W-09 — EVERY foreground component keeps sessions now, not only the four that show a file.** Asked for directly, pointing at the **[en:tran:Video Show]** panel's own **Default / ＋** strip and circling the components in the launcher menu: _"I like the idea of multiple session, add this feature in the highlighted components"_. **[en:tran:Messages]**, **[en:tran:Marquee Top]**, **[en:tran:Marquee Bottom]**, **[en:tran:Quick Text]**, **[en:tran:Countdown]**, **[en:tran:Stopwatch]** and **[en:tran:Time]** now carry the same strip, each session holding that panel's own words or numbers AND its own _Properties_ — so the pre-service notice board and the mid-service alert sit side by side, already the right size in the right corner, instead of one being retyped over the other. **Default** still writes the very keys the widget always has, so nothing already set up moves. Verified live 2026-09-25 on the presenter: a second Messages session written to its own keys with Default's two editors untouched, both sessions' messages on one screen at once with each one's own Hide button, and the **[en:tran:Marquee Bottom]** slot handed from Session 2 back to Default with the on-screen dot moving with it. PM-146, PM-147.)
 
@@ -3042,10 +3050,15 @@ _Verify: CB-68._
 **Goal:** learn the Presenter or Bible Reader at your own pace and see the exact
 control without having to search the manual.
 
-1. The first Presenter or Bible Reader page opened in an app launch shows one
-   **Tip of the Day** in the top-right corner. It stays there until you choose an
-   action. The tip belongs to that page only, and the first tip is chosen at random
-   without repeating the last automatic tip shown for that page.
+1. Five minutes after the app starts, the Presenter or Bible Reader page in
+   front shows one **Tip of the Day** in the top-right corner — never at launch,
+   when it would cover the controls you reach for while opening the service.
+   Reloading or switching between Presenter and Reader does not restart those
+   five minutes. The card stays there until you choose an action. The tip
+   belongs to that page only, and the first tip is chosen at random without
+   repeating the last automatic tip shown for that page. **Help → Tips of the
+   Day** opens one at once, and a tip opened that way stands in for that
+   launch's automatic card.
 2. Click **Next tip** to move through that page's tips in order. The list wraps to
    the first tip after the last. Click **All tips** to open the numbered learning
    list for the current page. Search by a control or task, or scan the topic badges;
