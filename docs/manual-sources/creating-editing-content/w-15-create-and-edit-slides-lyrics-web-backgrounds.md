@@ -62,6 +62,7 @@ in the same documents folder. 📸
    and the colour row under them sets its colour and how see-through it is. Keep the
    blur modest on an old machine: a big soft shadow is the one setting here that
    costs the computer real work. **[en:tran:No Shadow]** takes it off again.
+
 8. Save with **Ctrl+S**.
 
 **Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens

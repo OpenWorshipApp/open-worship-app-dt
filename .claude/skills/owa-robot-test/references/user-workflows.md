@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-26a** (**W-42 and W-46 — the Reader gains seven more
+**workflowsVersion: 2026-09-26b** (**W-16, W-34 and W-35 reconciled with the live Settings UI.** Clear All Settings is confirmed before it clears; Other General Options includes the Daily Tips switch; the Bible tab documents XML import/edit and Bible Data archives; deleting an XML also removes its cache; and SongSelect uses unique coverage ID ST-57 while Repair Links remains ST-52.)
+
+Previous: **workflowsVersion: 2026-09-26a** (**W-42 and W-46 — the Reader gains seven more
 working zero-model demos, and broader Tips.** The empty Reader assistant now
 offers 30 deterministic practice choices: the added choices type a complete
 reference, remove one reference part, toggle automatic Bible audio, filter or
@@ -779,7 +781,7 @@ real singing order (chorus repeated after every verse). Driven live 2026-08-24: 
 present with SongSelect signed out and in, all 36 rows with count badge, instant filter,
 Blessed Assurance imported (`Structure: V1CV2CV3C`) and previewing Verse 1 → Chorus →
 Verse 2 → Chorus → Verse 3 → Chorus.
-New matrix rows ST-52, PL-103, PL-104, PL-105.
+New matrix rows ST-57, PL-103, PL-104, PL-105.
 **Same-day addendum: the `Add Items` sub menu is gone.** Every way of filling a file list —
 **Add Local Files**, **Import**, **Import From URL**, **Download From URL**,
 **Import From Public Domain Songs**, **Import From SongSelect**, **Paste Image**,
@@ -1760,6 +1762,7 @@ in the same documents folder. 📸
    and the colour row under them sets its colour and how see-through it is. Keep the
    blur modest on an old machine: a big soft shadow is the one setting here that
    costs the computer real work. **[en:tran:No Shadow]** takes it off again.
+
 8. Save with **Ctrl+S**.
 
 **Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
@@ -1826,14 +1829,16 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
      are pointed at where it is now; a link to something that still exists is left as it
      is. A box says how many links it repaired, and the app reloads to show them. 📸
    - **Reset buttons** (`Reset All Child Directories` / `Clear All Settings`):
-     **these erase configuration; use with care.** `Reset All Child Directories`
-     asks for confirmation first; `Clear All Settings` does **not**.
+     **these erase configuration; use with care.** Both ask for confirmation first.
+   - **Show Tips of the Day automatically:** controls whether the Presenter and Bible
+     Reader show an automatic tip after the next app launch.
    - Panel sizes are no longer reset from here — see **W-31**.
-3. **Bible** tab: search available Bible versions, download new ones, enable/disable
-   downloaded ones. 📸
-4. Click **Apply Settings** (top-right) to apply — the app windows reload.
+3. **Bible** tab: import a Bible XML from a file or URL, edit installed XML Bibles,
+   or export/import a **Bible Data** archive. The old online version list is
+   development-only and can be unavailable. 📸
+4. Click **Apply Settings** (bottom-left) to apply — the app windows reload.
 
-_Verify: ST-01..09, ST-52, LT-02..04._
+_Verify: ST-01..ST-09, ST-22, ST-52, LT-02..04._
 
 ### W-17 — Find text anywhere (Find bar) & About
 
@@ -3392,8 +3397,8 @@ matters** — the last two take their suggestions from the language you set firs
 
 > **Removing one.** The 🗑 next to a translation asks _Are you sure to delete bible XML
 > "…"?_ — **Yes** sends the file to the Recycle Bin. Its badge disappears from every bible
-> menu. (A small hidden `…​.xml.cache` folder is left beside it in the app's bible folder;
-> it is harmless, and reusing the same code later just refills it.)
+> menu. The sibling `…​.xml.cache` folder is removed too, so stale parsed data cannot
+> reappear if the same key is imported later.
 
 > **Putting the KJV back.** The **KJV** row — and only that row — carries an extra
 > orange ↺ button, **[en:tran:Reset Bible XML]**, to the LEFT of the ✏️ pencil.
@@ -3461,7 +3466,7 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 > **SongSelect sign-in expired, please sign in again in Settings**; no internet says
 > **Could not reach SongSelect**.
 
-_Verify: ST-52, PL-103, PL-104._
+_Verify: ST-57, PL-103, PL-104._
 
 ### W-36 — Import a public domain song (no account needed)
 

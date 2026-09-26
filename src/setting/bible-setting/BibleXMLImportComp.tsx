@@ -1,5 +1,5 @@
 import { useCallback, useState, useTransition } from 'react';
-import type { SyntheticEvent, MouseEvent } from 'react';
+import type { ChangeEvent, SyntheticEvent, MouseEvent } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -21,10 +21,11 @@ export default function BibleXMLImportComp({
     loadBibleKeys: () => void;
 }>) {
     const [isShowingExample, setIsShowingExample] = useState(false);
-    const [isFileSelected, setIsFileSelected] = useState(false);
+    const [selectedFileName, setSelectedFileName] = useState('');
     const [urlText, setUrlText] = useState('');
     const [isPending, startTransition] = useTransition();
     const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
+    const isFileSelected = selectedFileName !== '';
     const isValidUrl = checkIsValidUrl(urlText);
     const handleFileCanceling = useCallback((form: any) => {
         if (form instanceof HTMLFormElement) {
@@ -33,7 +34,7 @@ export default function BibleXMLImportComp({
                 inputFile.value = '';
             }
         }
-        setIsFileSelected(false);
+        setSelectedFileName('');
     }, []);
     const isFileSelectedRef = useAppCurrentRef(isFileSelected);
     const isValidUrlRef = useAppCurrentRef(isValidUrl);
@@ -91,9 +92,12 @@ export default function BibleXMLImportComp({
         setIsShowingExample(!isShowingExampleRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handleFileSelected = useCallback(() => {
-        setIsFileSelected(true);
-    }, []);
+    const handleFileSelected = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setSelectedFileName(event.currentTarget.files?.[0]?.name ?? '');
+        },
+        [],
+    );
     const handleCancelSelection = useCallback(
         (event: MouseEvent<HTMLButtonElement>) => {
             const form = event.currentTarget.form;
@@ -146,11 +150,28 @@ export default function BibleXMLImportComp({
                         }}
                     >
                         <input
-                            className="form-control"
+                            id="bible-xml-file-input"
+                            className="visually-hidden"
                             type="file"
                             name="file"
+                            accept=".xml,text/xml,application/xml"
+                            aria-describedby="bible-xml-file-name"
                             onChange={handleFileSelected}
                         />
+                        <label
+                            className="btn btn-outline-secondary"
+                            htmlFor="bible-xml-file-input"
+                        >
+                            {tran('Choose File')}
+                        </label>
+                        <div
+                            id="bible-xml-file-name"
+                            className="form-control text-truncate"
+                            aria-live="polite"
+                            title={selectedFileName || tran('No file chosen')}
+                        >
+                            {selectedFileName || tran('No file chosen')}
+                        </div>
                         {isFileSelected ? (
                             <button
                                 className="btn btn-sm btn-danger"
@@ -168,9 +189,11 @@ export default function BibleXMLImportComp({
                             pointerEvents: isFileSelected ? 'none' : 'auto',
                         }}
                     >
-                        <span>or</span>
+                        <span>{tran('Or')}</span>
                         <div className="input-group">
-                            <div className="input-group-text">URL:</div>
+                            <div className="input-group-text">
+                                {tran('URL:')}
+                            </div>
                             <input
                                 className={
                                     'form-control form-control-sm' +

@@ -23,6 +23,9 @@ export default function InputPopupComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleOkClicking = useCallback(() => {
+        if (inputDataRef.current.canConfirm?.() === false) {
+            return;
+        }
         popupWidgetManager.openInput?.(null);
         inputDataRef.current.onConfirm(true);
         // eslint-disable-next-line react-hooks/exhaustive-deps

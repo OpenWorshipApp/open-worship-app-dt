@@ -31,6 +31,7 @@ import {
 } from '../../helper/xmlHelpers';
 import { appLog } from '../../helper/loggerHelpers';
 import appProvider from '../../server/appProvider';
+import { checkIsBibleKeyTaken } from './bibleKeyHelpers';
 
 // The root element's open tag (which carries the bible key attribute) lives
 // within the first few KB of the file, so reading the whole multi-MB XML file
@@ -399,11 +400,12 @@ async function guessingBibleKey(xmlElementOrText: Element | string) {
                 getGuessingBibleKeys(xmlElementOrText),
             ),
             {
+                canConfirm: () => !checkIsBibleKeyTaken(newKey, takenBibleKeys),
                 extraStyles: { maxWidth: '700px' },
             },
         );
         if (isConfirmInput) {
-            bibleKey = newKey;
+            bibleKey = newKey.trim();
         }
         const isConfirm = await showAppConfirm(
             tran('Confirm Key for Bible'),

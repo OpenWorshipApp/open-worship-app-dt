@@ -82,8 +82,8 @@ matters** — the last two take their suggestions from the language you set firs
 
 > **Removing one.** The 🗑 next to a translation asks _Are you sure to delete bible XML
 > "…"?_ — **Yes** sends the file to the Recycle Bin. Its badge disappears from every bible
-> menu. (A small hidden `…​.xml.cache` folder is left beside it in the app's bible folder;
-> it is harmless, and reusing the same code later just refills it.)
+> menu. The sibling `…​.xml.cache` folder is removed too, so stale parsed data cannot
+> reappear if the same key is imported later.
 
 > **Putting the KJV back.** The **KJV** row — and only that row — carries an extra
 > orange ↺ button, **[en:tran:Reset Bible XML]**, to the LEFT of the ✏️ pencil.

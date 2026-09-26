@@ -363,6 +363,15 @@ const dictionary = {
     'Open bible lookup popup': 'Ouvrir la recherche biblique',
     Cancel: 'Annuler',
     Ok: 'OK',
+    'Choose File': 'Choisir un fichier',
+    'No file chosen': 'Aucun fichier choisi',
+    Or: 'ou',
+    'URL:': 'URL :',
+    'Key is already taken': 'Cette clé est déjà utilisée',
+    'File saved at:': 'Fichier enregistré à :',
+    'Failed to save Bible data':
+        "Échec de l'enregistrement des données bibliques",
+    'Bible XML data not found': 'Données bibliques XML introuvables',
     'Cancel selection': 'Annuler la sélection',
     'Quick Exit': 'Quitter rapidement',
     'Are you sure you want to quit the app?':

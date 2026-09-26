@@ -16,11 +16,10 @@ import {
     bibleExtraUri,
     bibleInfoUri,
 } from './schemas/bibleEditorUriHelpers';
-import { getBibleXMLDataFromKey } from './bibleXMLHelpers';
 import { tran } from '../../lang/langHelpers';
-import { showSimpleToast } from '../../toast/toastHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { warnIfBibleKeyDirty } from './bibleEditorDirtyHelpers';
+import { downloadBibleJSON } from './bibleXMLDownloadHelpers';
 import {
     BIBLE_EDITOR_BODY_HEIGHT,
     BIBLE_EDITOR_FOOTER_HEIGHT,
@@ -80,25 +79,6 @@ function RenderChoiceComp({
     );
 }
 
-async function downloadBibleJSON(bibleKey: string) {
-    const bibleXMLData = await getBibleXMLDataFromKey(bibleKey);
-    if (bibleXMLData === null) {
-        showSimpleToast(
-            'error',
-            `Bible XML data for key "${bibleKey}" not found.`,
-        );
-        return;
-    }
-    const blob = new Blob([JSON.stringify(bibleXMLData, null, 2)], {
-        type: 'application/json',
-    });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${bibleKey}.json`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-}
 export default function BibleXMLDataPreviewComp({
     bibleKey,
 }: Readonly<{
@@ -163,7 +143,7 @@ export default function BibleXMLDataPreviewComp({
                 <button
                     className="btn btn-sm btn-success ms-2"
                     onClick={() => {
-                        downloadBibleJSON(bibleKey);
+                        void downloadBibleJSON(bibleKey);
                     }}
                 >
                     {tran('Download')}

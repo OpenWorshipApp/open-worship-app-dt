@@ -8,6 +8,26 @@ Status: `open` · `doing` · `done` · `wontfix` (with a reason).
 
 ---
 
+### `MC-44` — the redaction net missed OpenAI's own key format · done 2026-09-26
+
+Found while checking whether an OAuth-issued OpenRouter key would be scrubbed,
+by calling `redactSecrets` on one key of each shape. The generic provider-key
+rule was `\bsk-[A-Za-z0-9]{20,}` — letters and digits only — so it stopped at
+the second hyphen of every current format: OpenAI's `sk-proj-` (what the
+dashboard hands out today), `sk-svcacct-` and `sk-admin-`, and OpenRouter's
+`sk-or-v1-`, all went through WHOLE unless a `Bearer` or a named field such as
+`apiKey:` sat in front. Two garbled-marker bugs rode beside it: with no capture
+group, the second argument `replace` passes its callback is the match's
+OFFSET, not `undefined`, so every such marker read `11[redacted …]`; and the
+named-credential rule re-redacted a value the key rule had already replaced
+(`[redacted` is eight characters), leaving `… firewall] by the app firewall]`.
+The old tests asked only `not.toContain`, which all three passed. Now one rule
+`\bsk-[A-Za-z0-9_-]{20,}` covers every `sk-` family (the Anthropic-first
+ordering it needed is gone), the callback asks `typeof keep === 'string'`,
+the named rule skips a value that is already a marker, and
+`firewall.test.mjs` checks EXACT output for six formats plus `sk-SK` (the
+Slovak locale tag) left alone.
+
 ### `MC-43` — expand Reader demos and cover them in Tips · done 2026-09-26
 
 The Reader assistant featured 24 zero-model practice choices while several
@@ -173,7 +193,8 @@ the calls it makes.
 credentials. A secret in an unanticipated shape gets through. This is accepted
 rather than solved: it is why the tools that dump memory wholesale are denied
 outright instead of being trusted to the net. Revisit if a new provider or
-credential shape lands.
+credential shape lands — `MC-44` is what happens when nobody does: OpenAI's
+own `sk-proj-` format, its default, was getting through whole.
 
 ---
 
