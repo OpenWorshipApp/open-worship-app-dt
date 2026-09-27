@@ -1,6 +1,6 @@
 # OWA Robot Test — Observation Knowledge Base
 
-docVersion: 2026-09-19
+docVersion: 2026-09-26
 
 Field notes for agents/skills doing black-box QA of the **running** Open Worship App.
 Everything here was **verified against the live app**, not inferred. Read this before a run
@@ -504,15 +504,29 @@ round and proves the interlock still works, which is itself worth a line in the 
 | `[debug] [vite] connecting… / connected` | dev HMR |
 | `[log] printHtmlText` and an empty `[log]` | benign; the empty log repeats on interaction (cleanup candidate, not a bug) |
 | `TypeError: Cannot get bible list` at `getOnlineBibleInfoList` (Settings → Bible tab) | **intended** — the online bible `info.json` fetch failed or is unavailable (e.g. offline/dev); the error is caught and logged by `handleError`, the function returns `null`, and the UI simply shows no online bible list |
+| `Unrecognized feature: 'web-share'.` (slide editor, or any page showing a LIVE YouTube box) | Chromium in Electron does not know the `web-share` permission, and the YouTube box's iframe asks for it in its `allow` list (the standard YouTube embed snippet, `BoxEditorNormalViewYouTubeModeComp.tsx`). One per live player; since 2026-09-26 only the editing canvas and a screen run one — a thumbnail is a still (ED-51). Observed 2026-09-26 |
 | `[warn] If you are profiling the playground app, please ensure you turn off the debug view…` (reader page) | third-party dev-mode noise from the bundled **`bible-note`** dependency (`node_modules/bible-note/dist/bible-note.mjs`) — nothing in `src/` emits it. Observed 2026-09-11 |
 
 Real console issues to flag: uncaught errors, unhandled promise rejections, React
 key/warning spam, failed dynamic imports.
 
 ## 8. Known-benign network — DO NOT report
-- On presenter load the **same live background video is fetched repeatedly** (3× observed
-  2026-07-06 with `award background(1).mp4`; **11×** observed 2026-07-08 with `6_cv.mp4`, all
-  `200`) — redundant I/O, not an error, but worth tracking as it may be growing.
+- On presenter load the **same live background video is fetched a handful of times** (3×
+  observed 2026-07-06 with `award background(1).mp4`; **11×** observed 2026-07-08 with
+  `6_cv.mp4`, all `200`) — the Videos tab's own thumbnails plus the live background, at
+  LOAD only. Redundant I/O, not an error.
+- ⚠️ **A background video re-fetched once per LOOP, forever, was a real defect and is
+  fixed** (2026-09-26). It is the one shape of this to still report if it comes back.
+  `ScreenBackgroundManager._handleBackgroundVideo` used to run the end-of-clip fade by
+  calling `render()`, which builds a fresh `<video src=…>`; `file://` media is not cached,
+  so each lap was a full `range: bytes=0-` read — 37 re-reads of one 2.6 MB clip in a few
+  minutes on one screen (~470 MB/hour). `_fadeOverVideoLoop` now fades the element that is
+  already playing, and the clip's own `loop` restarts it. **How to check:** filter the
+  screen (or presenter) target's requests to `resourceTypes: ["media"]`, note the count and
+  the highest reqid, wait longer than the clip, and re-list. The count must NOT grow, and
+  the reqid base must be unchanged (a base that moved means the page reloaded and the log
+  reset — that measurement is void, take another). Confirm a repeat is a full read, not a
+  media range seek, with `get_network_request` — a re-read shows `range: bytes=0-`.
 - `file://` media loads are normal.
 Real network issues to flag: `4xx`/`5xx` on app assets, blocked/CORS, broken images/media.
 
@@ -536,6 +550,17 @@ Real network issues to flag: `4xx`/`5xx` on app assets, blocked/CORS, broken ima
   named: `Help`, `Full view`, `AI Chat`, `App Assistant`, `Setting`, the five clear buttons…),
   so both older observations — "Help's name is a raw URL" and "the fullscreen toggle has no
   name" — are retired. An unnamed node there is now a **regression**, not the status quo.
+- ⚠️ **Scanning for UNNAMED nodes is not enough — scan for controls that are MISSING.** A
+  styled `<i>`/`<div>` with an `onClick` and a `title` is named to `owa_find_ui` (which
+  reads the DOM) and absent from `take_snapshot` (which reads the accessibility tree), so
+  it looks fine from either side alone. Cross-check the two: anything `owa_find_ui` returns
+  with `tag: "i"` or `tag: "div"` that has no matching node in the snapshot is
+  keyboard-unreachable and has no uid, which also silently blocks any coverage row that
+  needs to press it. Four such controls were found and fixed in the mini-screen previewer
+  on 2026-09-26 (Full view, the Stage picker, the floating ⋮, both audio Repeat toggles);
+  the fix is `role="button"` + `tabIndex={0}` + `aria-pressed` where it toggles +
+  `onKeyDown={pressElementLikeButton}`. That helper dispatches the click at the element's
+  own centre, which is also what lets a context menu it opens position itself.
 
 ---
 

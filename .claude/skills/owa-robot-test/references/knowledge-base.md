@@ -504,6 +504,7 @@ round and proves the interlock still works, which is itself worth a line in the 
 | `[debug] [vite] connecting… / connected` | dev HMR |
 | `[log] printHtmlText` and an empty `[log]` | benign; the empty log repeats on interaction (cleanup candidate, not a bug) |
 | `TypeError: Cannot get bible list` at `getOnlineBibleInfoList` (Settings → Bible tab) | **intended** — the online bible `info.json` fetch failed or is unavailable (e.g. offline/dev); the error is caught and logged by `handleError`, the function returns `null`, and the UI simply shows no online bible list |
+| `Unrecognized feature: 'web-share'.` (slide editor, or any page showing a LIVE YouTube box) | Chromium in Electron does not know the `web-share` permission, and the YouTube box's iframe asks for it in its `allow` list (the standard YouTube embed snippet, `BoxEditorNormalViewYouTubeModeComp.tsx`). One per live player; since 2026-09-26 only the editing canvas and a screen run one — a thumbnail is a still (ED-51). Observed 2026-09-26 |
 | `[warn] If you are profiling the playground app, please ensure you turn off the debug view…` (reader page) | third-party dev-mode noise from the bundled **`bible-note`** dependency (`node_modules/bible-note/dist/bible-note.mjs`) — nothing in `src/` emits it. Observed 2026-09-11 |
 
 Real console issues to flag: uncaught errors, unhandled promise rejections, React

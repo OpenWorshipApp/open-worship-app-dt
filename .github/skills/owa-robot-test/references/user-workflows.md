@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-26c** (**W-14 — the Bible Note window stops saving
+**workflowsVersion: 2026-09-26d** (**W-28 — a colour dropped on a LOCKED box is refused.** Found by the `appDocumentEditor.html` robot run (report-20260926-1950): the drop repainted a 🔒 box that every other tool leaves alone. It now keeps its colour, a _This item is locked_ toast says why, and nothing is added. Verified live 2026-09-26 on the dev editor; an unlocked box still repaints. ED-43.)
+
+Previous: **workflowsVersion: 2026-09-26c** (**W-14 — the Bible Note window stops saving
 itself and gains the editing control.** Reported as a note that would not open:
 the `bible-note` editor autosaves continuously and saves whatever state it is
 in, so a cleared editor reached the note file as a root with no children --
@@ -2852,7 +2854,8 @@ walking the Insert menu — just drag it out of the panel you are already browsi
 4. **Colours are the special one.** Drop a colour **on top of an existing box** and it
    **repaints that box** — no new box is added. Drop it on **empty canvas** and you get a
    new coloured rectangle instead. That rectangle is an ordinary text box underneath, so
-   you can double-click it and type into it later. 📸
+   you can double-click it and type into it later. A **locked** box (🔒) keeps its colour:
+   the app says _This item is locked_ and adds nothing — unlock it first. 📸
 5. Anything you drop in is an ordinary box: move it, resize it, reorder it, and **Undo**
    (Ctrl+Z) takes it straight back out. Save with **Ctrl+S**.
 

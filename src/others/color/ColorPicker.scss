@@ -1,6 +1,26 @@
 .color-picker {
   max-width: 270px;
 
+  // The chevron (and, collapsed, the color chip) as a button that looks like
+  // the plain row it replaced.
+  .color-picker-toggle {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+
+    &:focus-visible {
+      outline: 2px solid var(--bs-info);
+      outline-offset: -2px;
+    }
+  }
+
   .item {
     width: 30px;
     height: 30px;

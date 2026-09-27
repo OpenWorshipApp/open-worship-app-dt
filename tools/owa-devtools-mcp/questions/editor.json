@@ -4,7 +4,7 @@
     "window": "appDocumentEditor.html",
     "focus": "appDocumentEditor",
     "description": "The Slide Editor: the canvas a slide document is built on, and the list of slides beside it.",
-    "updated": "2026-09-25",
+    "updated": "2026-09-26",
     "sections": [
         {
             "id": "slides",
@@ -270,6 +270,24 @@
                         "recipe": "W-28",
                         "find": "Background",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "drop-colour-locked-box",
+                    "text": "Why doesn’t dropping a colour change my box?",
+                    "kind": "fix",
+                    "keywords": [
+                        "colour",
+                        "color",
+                        "locked",
+                        "padlock",
+                        "will not change",
+                        "repaint",
+                        "drop"
+                    ],
+                    "resources": {
+                        "recipe": "W-28",
+                        "find": "Unlock"
                     }
                 },
                 {

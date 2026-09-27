@@ -4,8 +4,17 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { getAllCameraDevicesMock } = vi.hoisted(() => ({
+const { getAllCameraDevicesMock, showSimpleToastMock } = vi.hoisted(() => ({
     getAllCameraDevicesMock: vi.fn(),
+    showSimpleToastMock: vi.fn(),
+}));
+
+vi.mock('../../toast/toastHelpers', () => ({
+    showSimpleToast: showSimpleToastMock,
+}));
+
+vi.mock('../../lang/langHelpers', () => ({
+    tran: (value: string) => value,
 }));
 
 // `cameraHelpers` destructures `navigator.mediaDevices` at module load, which
@@ -24,8 +33,9 @@ import {
 
 const positionEvent = { clientX: 0, clientY: 0, target: null };
 
-function genCanvasControllerMock() {
+function genCanvasControllerMock(canvasItems: any[] = []) {
     return {
+        canvas: { canvasItems },
         genNewMediaItemFromFilePath: vi.fn().mockResolvedValue('media-item'),
         genNewYouTubeItem: vi.fn().mockReturnValue('youtube-item'),
         genNewWebsiteItem: vi.fn().mockReturnValue('website-item'),
@@ -250,6 +260,24 @@ describe('applyCanvasBackgroundDropPlan', () => {
             backgroundColor: '#123456',
         });
         expect(canvasController.addNewItems).not.toHaveBeenCalled();
+    });
+
+    test('refuses to recolor a locked box and says why', async () => {
+        showSimpleToastMock.mockReset();
+        const canvasController = genCanvasControllerMock([
+            { id: 7, isLocked: true },
+        ]);
+
+        await applyCanvasBackgroundDropPlan(
+            canvasController,
+            { kind: 'color', color: '#123456' as any },
+            positionEvent,
+            7,
+        );
+
+        expect(canvasController.editCanvasItemById).not.toHaveBeenCalled();
+        expect(canvasController.addNewItems).not.toHaveBeenCalled();
+        expect(showSimpleToastMock).toHaveBeenCalledTimes(1);
     });
 
     test('inserts a colored box when a color lands on bare canvas', async () => {

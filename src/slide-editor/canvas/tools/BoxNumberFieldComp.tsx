@@ -37,13 +37,26 @@ export default function BoxNumberFieldComp({
         }
     };
     return (
-        <div className="d-flex input-group input-group-sm" title={title}>
+        <div
+            className="d-flex flex-nowrap input-group input-group-sm"
+            title={title}
+            // Bootstrap gives an input group `width: 100%`; in a row that may
+            // wrap, that would put every field on a line of its own. Growing
+            // from nothing lets two share a row while they fit, and wrap once
+            // they do not.
+            style={{ flex: '1 1 0', width: 'auto' }}
+        >
             {/* Axis/dimension abbreviations are universal — not translated. */}
             <div className="input-group-text">{name}</div>
             <input
                 className="form-control form-control-sm"
                 type="number"
                 aria-label={title ?? name}
+                // Room for four digits, a sign and the spin arrows (em of the
+                // input's own small font). Without a floor the field shrank
+                // with the pane until "1036" read as "10"; with it, a narrow
+                // pane puts one field per row instead.
+                style={{ minWidth: '5em' }}
                 value={Math.round(value)}
                 min={min}
                 max={max}

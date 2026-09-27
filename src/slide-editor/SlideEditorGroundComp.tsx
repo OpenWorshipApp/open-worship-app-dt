@@ -1,10 +1,16 @@
 import './SlideEditorPreviewerComp.scss';
+import './canvas/SlideEditorCanvasComp.scss';
 
 import { use } from 'react';
 
 import SlideEditorComp from './SlideEditorComp';
 import AppErrorBoundaryComp from '../others/AppErrorBoundaryComp';
-import { SelectedEditingSlideContext } from '../app-document-list/appDocumentHelpers';
+import {
+    SelectedEditingSlideContext,
+    SelectedVaryAppDocumentContext,
+    VaryAppDocumentContext,
+} from '../app-document-list/appDocumentHelpers';
+import SlidesMenuComp from '../app-document-presenter/items/SlidesMenuComp';
 import AppDocument from '../app-document-list/AppDocument';
 import type Slide from '../app-document-list/Slide';
 import FileSource from '../helper/FileSource';
@@ -22,6 +28,39 @@ function checkIsEditableSlide(slide: Slide) {
     );
 }
 
+/**
+ * The editor with no slide to edit -- most often because the last one was just
+ * deleted. The Undo / Redo / Discard / Save row lives in the canvas footer, so
+ * it used to go with the canvas, and a document that had just lost every slide
+ * was left dirty with nothing on screen to undo or save it.
+ */
+function RenderNoSlideComp() {
+    const selectedAppDocumentContext = use(SelectedVaryAppDocumentContext);
+    const selectedVaryAppDocument =
+        selectedAppDocumentContext?.selectedVaryAppDocument ?? null;
+    const editableDocument =
+        AppDocument.checkIsThisType(selectedVaryAppDocument) &&
+        selectedVaryAppDocument.isEditable
+            ? selectedVaryAppDocument
+            : null;
+    return (
+        <div className="card w-100 h-100">
+            <div className="card-body d-flex justify-content-center align-items-center">
+                <span className="text-muted">{tran('No slide selected')}</span>
+            </div>
+            {editableDocument === null ? null : (
+                <div className="card-footer w-100 m-0 p-0">
+                    <div className="slide-editor-canvas-footer w-100 d-flex">
+                        <VaryAppDocumentContext value={editableDocument}>
+                            <SlidesMenuComp />
+                        </VaryAppDocumentContext>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function SlideEditorGroundComp() {
     const selectedSlideContext = use(SelectedEditingSlideContext);
     const selectedSlideEditing =
@@ -30,7 +69,7 @@ export default function SlideEditorGroundComp() {
         selectedSlideEditing === null ||
         !checkIsEditableSlide(selectedSlideEditing)
     ) {
-        return <div>{tran('No slide selected')}</div>;
+        return <RenderNoSlideComp />;
     }
     // Bounded: a throw in here (a document whose extension does not match what
     // this editor can open is one way) used to unmount the whole window, header

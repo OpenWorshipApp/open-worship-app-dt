@@ -1,5 +1,6 @@
 import ContextMenuDotsButtonComp from '../../../context-menu/ContextMenuDotsButtonComp';
 import CanvasItemRendererComp from '../../CanvasItemRendererComp';
+import { SlideThumbnailContext } from '../box/slideThumbnailContext';
 import { useCanvasControllerContext } from '../CanvasController';
 import {
     CanvasItemContext,
@@ -89,7 +90,9 @@ export default function ToolCanvasItemsComp() {
                                 }}
                             >
                                 <CanvasItemContext value={canvasItem}>
-                                    <CanvasItemRendererComp />
+                                    <SlideThumbnailContext value={true}>
+                                        <CanvasItemRendererComp />
+                                    </SlideThumbnailContext>
                                 </CanvasItemContext>
                             </div>
                         </div>

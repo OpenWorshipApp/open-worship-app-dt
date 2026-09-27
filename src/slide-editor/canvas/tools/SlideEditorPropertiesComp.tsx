@@ -12,7 +12,10 @@ export default function SlideEditorPropertiesComp({
         <div
             className="d-flex flex-column w-100 h-100 p-1"
             style={{
-                overflowX: 'hidden',
+                // `auto`, never `hidden`: focusing a field scrolls this box
+                // sideways to show it, and with `hidden` there was no way back
+                // -- labels stayed cut off on the left until a reload.
+                overflowX: 'auto',
             }}
         >
             <SlidePropertyEditorComp />

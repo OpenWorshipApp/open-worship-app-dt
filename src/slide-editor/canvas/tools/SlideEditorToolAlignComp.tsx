@@ -88,11 +88,34 @@ export default function SlideEditorToolAlignComp({
                 aria-label={tran('Vertical alignment')}
             >
                 {genElements({
-                    elements: [
-                        ['bi-align-top', 'start', tran('Align top')],
-                        ['bi-align-middle', 'center', tran('Align middle')],
-                        ['bi-align-bottom', 'end', tran('Align bottom')],
-                    ],
+                    // The text group gets names of its own: box and text
+                    // alignment sit in one panel, and two sets of buttons
+                    // both called "Align top" cannot be told apart by a
+                    // screen reader or by anything that finds a control by
+                    // its name.
+                    elements: isText
+                        ? [
+                              ['bi-align-top', 'start', tran('Text align top')],
+                              [
+                                  'bi-align-middle',
+                                  'center',
+                                  tran('Text align middle'),
+                              ],
+                              [
+                                  'bi-align-bottom',
+                                  'end',
+                                  tran('Text align bottom'),
+                              ],
+                          ]
+                        : [
+                              ['bi-align-top', 'start', tran('Align top')],
+                              [
+                                  'bi-align-middle',
+                                  'center',
+                                  tran('Align middle'),
+                              ],
+                              ['bi-align-bottom', 'end', tran('Align bottom')],
+                          ],
                     dataKey: 'verticalAlignment',
                     data,
                     onData,

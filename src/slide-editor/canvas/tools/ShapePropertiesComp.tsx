@@ -117,7 +117,7 @@ function ShadowPropertiesComp() {
             </div>
             {shadow === null ? null : (
                 <>
-                    <div className="d-flex gap-1">
+                    <div className="d-flex flex-wrap gap-1">
                         <BoxNumberFieldComp
                             name="X:"
                             title={tran('Shadow Offset X')}
@@ -211,6 +211,9 @@ export default function ShapePropertiesComp() {
                 <input
                     className="form-control form-control-sm"
                     type="number"
+                    // Named for itself: the words beside it are a separate
+                    // element, so it read as an unnamed spin box.
+                    aria-label={tran('Glass Effect')}
                     min={0}
                     value={props.backdropFilter}
                     onChange={handleBackdropFilterChange}
@@ -255,6 +258,7 @@ export default function ShapePropertiesComp() {
                     <input
                         className="form-control form-control-sm"
                         type="number"
+                        aria-label={tran('Round Size Pixel')}
                         value={roundSizePixel}
                         min={0}
                         onChange={handleRoundPixelChange}

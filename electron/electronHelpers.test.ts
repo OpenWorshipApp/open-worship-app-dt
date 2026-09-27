@@ -53,6 +53,7 @@ import {
     askGuideHelp,
     answerGuideHelp,
     sweepStalePrintPreviewFiles,
+    toEditorWindowKey,
     toShortcutKey,
     toUnpackedPath,
     unlocking,
@@ -825,5 +826,38 @@ describe('electronHelpers', () => {
         vi.advanceTimersByTime(1);
         expect(callback).toHaveBeenCalledTimes(1);
         vi.useRealTimers();
+    });
+});
+
+describe('toEditorWindowKey', () => {
+    const base = 'https://localhost:3000/appDocumentEditor.html';
+
+    test('names the same window for two slides of one document', () => {
+        const first = toEditorWindowKey(
+            `${base}?file=a.ows&uuid=app_document_editor&id=2`,
+        );
+        const second = toEditorWindowKey(
+            `${base}?file=a.ows&id=1&uuid=app_document_editor`,
+        );
+        const noSlide = toEditorWindowKey(
+            `${base}?file=a.ows&uuid=app_document_editor`,
+        );
+        expect(first).not.toBeNull();
+        expect(first).toBe(second);
+        expect(first).toBe(noSlide);
+    });
+
+    test('keeps two documents apart', () => {
+        expect(toEditorWindowKey(`${base}?file=a.ows&id=1`)).not.toBe(
+            toEditorWindowKey(`${base}?file=b.ows&id=1`),
+        );
+    });
+
+    test('ignores other pages and the in-place editor', () => {
+        expect(
+            toEditorWindowKey('https://localhost:3000/setting.html?uuid=x'),
+        ).toBeNull();
+        expect(toEditorWindowKey(base)).toBeNull();
+        expect(toEditorWindowKey('not a url')).toBeNull();
     });
 });

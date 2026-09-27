@@ -21,6 +21,7 @@ function SizingComp() {
 
     const canvasControllerRef = useAppCurrentRef(canvasController);
     const canvasItemRef = useAppCurrentRef(canvasItem);
+    const isMedia = checkIsMediaCanvasItemType(canvasItem.type);
     const handleSizing = useCallback((kind: 'full' | 'original' | 'strip') => {
         canvasControllerRef.current.editCanvasItemById(
             canvasItemRef.current.id,
@@ -53,24 +54,29 @@ function SizingComp() {
                 >
                     {tran('Full')}
                 </button>
-                <button
-                    className="btn btn-sm btn-outline-secondary"
-                    title={tran('Set to original size')}
-                    onClick={() => {
-                        return handleSizing('original');
-                    }}
-                >
-                    {tran('Original Size')}
-                </button>
-                {checkIsMediaCanvasItemType(canvasItem.type) ? (
-                    <button
-                        className="btn btn-sm btn-outline-secondary"
-                        onClick={() => {
-                            return handleSizing('strip');
-                        }}
-                    >
-                        {tran('Strip')}
-                    </button>
+                {/* Only a picture or a video HAS an original size. On any other
+                    box the size it has is all there is, so the button did
+                    nothing -- and still cost a step of undo history. */}
+                {isMedia ? (
+                    <>
+                        <button
+                            className="btn btn-sm btn-outline-secondary"
+                            title={tran('Set to original size')}
+                            onClick={() => {
+                                return handleSizing('original');
+                            }}
+                        >
+                            {tran('Original Size')}
+                        </button>
+                        <button
+                            className="btn btn-sm btn-outline-secondary"
+                            onClick={() => {
+                                return handleSizing('strip');
+                            }}
+                        >
+                            {tran('Strip')}
+                        </button>
+                    </>
                 ) : null}
             </div>
         </SlideEditorToolTitleComp>
@@ -143,7 +149,10 @@ export default function SlideEditorToolsBoxComp() {
         <div
             className="app-inner-shadow ps-1"
             style={{
-                minWidth: '300px',
+                // The same floor as the text tools. It was 300px, wider than
+                // the tools pane on a 1366/1536-wide screen, so every Box
+                // Properties row ran ~40px past the pane's edge.
+                minWidth: '200px',
             }}
         >
             {canShowBackgroundColor ? (

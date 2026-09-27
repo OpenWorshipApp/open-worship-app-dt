@@ -7,7 +7,7 @@ export default function BoxPositionSizeComp() {
     const [props, setProps] = useCanvasItemPropsSetterContext();
     return (
         <div className="d-flex flex-column gap-1" style={{ maxWidth: '280px' }}>
-            <div className="d-flex gap-1">
+            <div className="d-flex flex-wrap gap-1">
                 <BoxNumberFieldComp
                     name="X:"
                     title={tran('Left')}
@@ -25,7 +25,7 @@ export default function BoxPositionSizeComp() {
                     }}
                 />
             </div>
-            <div className="d-flex gap-1">
+            <div className="d-flex flex-wrap gap-1">
                 <BoxNumberFieldComp
                     name="W:"
                     title={tran('Width')}
@@ -43,7 +43,7 @@ export default function BoxPositionSizeComp() {
                     }}
                 />
             </div>
-            <div className="d-flex gap-1">
+            <div className="d-flex flex-wrap gap-1">
                 <BoxNumberFieldComp
                     name={tran('Rotate:')}
                     value={props.rotate}

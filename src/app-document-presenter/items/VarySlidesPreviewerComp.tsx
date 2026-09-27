@@ -53,6 +53,9 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     await createNewSlidesFromDroppedData(appDocument, files);
 }
 
+// The document menu button's height (`--app-action-rail`, 22px) plus a gap.
+const DOCUMENT_MENU_BUTTON_ROOM = 26;
+
 export default function VarySlidesPreviewerComp() {
     const containerRef = useRef<HTMLDivElement | null>(null);
     // One per mounted previewer, so everything below can ask for ITS container
@@ -181,7 +184,18 @@ export default function VarySlidesPreviewerComp() {
                         onOpening={handleContextMenu}
                     />
                 </div>
-                <div>
+                <div
+                    style={{
+                        // Room for the sticky menu button above, which would
+                        // otherwise sit exactly on the first card's own `⋮`
+                        // (both are right-aligned): pressing slide 1's menu
+                        // opened the document's instead. Padding, not a row, so
+                        // it scrolls away with the list.
+                        paddingTop: isDisplayingEditingMenu
+                            ? undefined
+                            : DOCUMENT_MENU_BUTTON_ROOM,
+                    }}
+                >
                     {isDisplayingEditingMenu ? (
                         <div
                             className="w-100 app-outer-shadow"

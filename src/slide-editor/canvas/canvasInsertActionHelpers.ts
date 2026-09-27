@@ -67,7 +67,7 @@ async function handleInsertingMediaLink(
     canvasController: CanvasController,
     event?: any,
 ) {
-    const url = await askForURL(tran('Insert Media Link'), tran('Media URL:'));
+    const url = await askForURL(tran('Insert Media Link'), 'Media URL:');
     if (url === null) {
         return;
     }
@@ -84,7 +84,7 @@ async function handleInsertingYouTube(
     canvasController: CanvasController,
     event?: any,
 ) {
-    const url = await askForURL(tran('Insert YouTube'), tran('YouTube URL:'));
+    const url = await askForURL(tran('Insert YouTube'), 'YouTube URL:');
     if (url === null) {
         return;
     }
@@ -98,7 +98,7 @@ async function handleInsertingWebsite(
     canvasController: CanvasController,
     event?: any,
 ) {
-    const url = await askForURL(tran('Insert Website'), tran('Website URL:'));
+    const url = await askForURL(tran('Insert Website'), 'Website URL:');
     if (url === null) {
         return;
     }

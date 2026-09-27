@@ -5,7 +5,12 @@ import { useCallback, useState } from 'react';
 
 import colorList from '../color-list.json';
 import type { AppColorType } from './colorHelpers';
-import { transparentColor, colorToTransparent } from './colorHelpers';
+import {
+    transparentColor,
+    colorToTransparent,
+    checkIsColorDark,
+    removeOpacityFromHexColor,
+} from './colorHelpers';
 import OpacitySliderComp from './OpacitySliderComp';
 import RenderColorsComp from './RenderColorsComp';
 import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
@@ -17,6 +22,23 @@ import { copyToClipboard } from '../../server/appHelpers';
 import { tran } from '../../lang/langHelpers';
 
 freezeObject(colorList);
+
+/**
+ * The text color the collapsed chip writes its own hex in. The chip is painted
+ * in the color it names, so a fixed text color vanishes on the one swatch that
+ * matches it (`#ffffff` in white on white). A mostly see-through color shows
+ * the panel behind it instead, and keeps the theme's own text.
+ */
+function genPreviewTextStyle(color: AppColorType | null | undefined) {
+    if (!color || colorToTransparent(color) < 128) {
+        return {};
+    }
+    const isDark = checkIsColorDark(removeOpacityFromHexColor(color));
+    return {
+        color: isDark ? '#ffffff' : '#000000',
+        textShadow: 'none',
+    };
+}
 
 function setOpacity(color: string, opacity: number) {
     const hex = transparentColor(opacity);
@@ -72,10 +94,12 @@ export default function ColorPickerComp({
                 onNoColorRef.current?.(defaultColorRef.current, event);
                 return;
             }
-            const newColorStr = setOpacity(
-                newColor as string,
-                opacityRef.current,
-            );
+            // Alpha 0 is only ever "no color" (the slider stops at 1), so a
+            // color picked from there must come out visible: carrying the 0
+            // over stored an invisible `#FF000000` for "red".
+            const opacityToKeep =
+                opacityRef.current === 0 ? 255 : opacityRef.current;
+            const newColorStr = setOpacity(newColor as string, opacityToKeep);
             applyNewColorRef.current(newColorStr, event);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,20 +142,32 @@ export default function ColorPickerComp({
     if (isCollapsable && !isOpened) {
         return (
             <div
-                className="app-flex-item color-picker app-caught-hover-pointer "
+                className="app-flex-item color-picker"
                 onContextMenu={handleContextMenuOpening}
-                onClick={handleOpen}
             >
-                <i className="bi bi-chevron-right" />
-                <div
-                    className="h-100 px-1 app-ellipsis text-color-preview"
-                    style={{
-                        backgroundColor: color ?? 'transparent',
-                        width: 'calc(100% - 10px)',
-                    }}
+                {/* A real button, so the picker can be reached and opened
+                    from the keyboard and has a name -- it was a clickable
+                    div. Beside the `⋮`, not around it: a button may not hold
+                    another. */}
+                <button
+                    type="button"
+                    className="color-picker-toggle app-caught-hover-pointer"
+                    aria-expanded={false}
+                    aria-label={`${tran('Choose Color')}: ${color ?? ''}`}
+                    onClick={handleOpen}
                 >
-                    {color}
-                </div>
+                    <i className="bi bi-chevron-right" />
+                    <span
+                        className="h-100 px-1 app-ellipsis text-color-preview"
+                        style={{
+                            backgroundColor: color ?? 'transparent',
+                            width: 'calc(100% - 10px)',
+                            ...genPreviewTextStyle(color),
+                        }}
+                    >
+                        {color}
+                    </span>
+                </button>
                 <ContextMenuDotsButtonComp
                     onOpening={handleContextMenuOpening}
                 />
@@ -144,10 +180,16 @@ export default function ColorPickerComp({
             onContextMenu={handleContextMenuOpening}
         >
             {isCollapsable ? (
-                <i
-                    className="app-caught-hover-pointer bi bi-chevron-down"
+                <button
+                    type="button"
+                    className="color-picker-toggle app-caught-hover-pointer"
+                    aria-expanded={true}
+                    aria-label={tran('Collapse')}
+                    title={tran('Collapse')}
                     onClick={handleClose}
-                />
+                >
+                    <i className="bi bi-chevron-down" />
+                </button>
             ) : null}
             <ContextMenuDotsButtonComp
                 className="float-end"

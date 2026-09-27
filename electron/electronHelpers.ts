@@ -542,6 +542,46 @@ function toUrlWithSortedParams(url: string, isRemovingUuid = false) {
     return urlObj.toString();
 }
 
+/**
+ * The document a Slide Editor popup is open on, or `null` for any other page.
+ *
+ * `openAppDocumentEditorExternal` adds the slide to focus as `id`, so the same
+ * document asked for from two different slides produced two different URLs --
+ * and two editor windows on one file, each with its own undo history. This is
+ * the URL with the two parameters that only say HOW to open it (`id`, `uuid`)
+ * taken off, so both requests name the same window.
+ */
+export function toEditorWindowKey(url: string) {
+    if (!URL.canParse(url)) {
+        return null;
+    }
+    const urlObj = new URL(url);
+    const pageName = urlObj.pathname.split('/').pop() ?? '';
+    if (
+        pageName !== htmlFiles.appDocumentEditor ||
+        !urlObj.searchParams.has('file')
+    ) {
+        return null;
+    }
+    urlObj.searchParams.delete('id');
+    return toUrlWithSortedParams(urlObj.toString(), true);
+}
+
+function findEditorWindowToRetarget(url: string) {
+    const editorKey = toEditorWindowKey(url);
+    if (editorKey === null) {
+        return null;
+    }
+    return (
+        BrowserWindow.getAllWindows().find((win) => {
+            return (
+                !win.isDestroyed() &&
+                toEditorWindowKey(win.webContents.getURL()) === editorKey
+            );
+        }) ?? null
+    );
+}
+
 export type PopupWindowFeaturesType = {
     popup?: boolean;
     x?: number;
@@ -1218,6 +1258,20 @@ function handlePopupWindowOpen(
     }
     if (selfWindows.length > 0) {
         return { action: 'deny' };
+    }
+    if (groupWindows.length === 0) {
+        // The same document already has an editor window, open on another
+        // slide: move THAT window to the slide asked for. Its unsaved edits
+        // are on disk in the editing history, so the reload loses nothing.
+        const editorWin = findEditorWindowToRetarget(options.url);
+        if (editorWin !== null) {
+            editorWin.webContents.loadURL(options.url);
+            if (editorWin.isMinimized()) {
+                editorWin.restore();
+            }
+            editorWin.focus();
+            return { action: 'deny' };
+        }
     }
 
     // Where the user last left this kind of popup wins over the page's own
