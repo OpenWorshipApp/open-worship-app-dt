@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-27** (**W-05 — Add Stage is the same picker the mini
+**workflowsVersion: 2026-09-27a** (**W-10 — the mini screen draws each monitor's own desktop wallpaper behind what it renders, in place of the checkered pattern.** Asked for directly: the pattern stood for "the audience screen is transparent here" and said nothing about what that means on the wall. The backdrop is the WALLPAPER read from the operating system, never a capture of the display -- a capture drags in every other window that happens to be up, so a screen assigned to the machine's own monitor drew a picture of the app inside itself, and it would have to be retaken to stay honest. A wallpaper is a file: read once per display, shared by every card on it, released with the last one, and laid out the way the desktop lays it out (Fill / Fit / Stretch / Centre / Tile). **[en:tran:Show Monitor Wallpaper]** in the mini-screen menu puts the pattern back and **Refresh Preview** re-reads it. Verified live 2026-09-27 on the dev presenter across two displays. New matrix row SP-23.)
+
+Previous: **workflowsVersion: 2026-09-27** (**W-05 — Add Stage is the same picker the mini
 screen's `St:` badge opens.** Asked for directly, with both menus circled in one
 picture. The Stage Previewer could offer Stage 1 and then nothing — it went dead
 — while a screen's stage number increments without a ceiling, so a screen set to
@@ -1611,6 +1613,13 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, KB-03, KB-07, 
 
 - The **mini screen** (right column, bottom) always mirrors the audience view; the
   zoom slider under it only rescales your preview, not the output. 📸
+- Behind everything the card draws sits **that monitor's own desktop wallpaper**.
+  The audience screen is a transparent window, so wherever you have put nothing
+  up this is genuinely what the room would see. Right-click an empty part of the
+  mini-screen panel (or press the **⋮** at its bottom-right) → **[en:tran:Show Monitor Wallpaper]**
+  turns it off and puts the plain checkered pattern back; **Refresh Preview** in
+  the same menu re-reads it after you change your desktop background. A machine
+  that will not say what its background is keeps the pattern.
 - Each screen has its own preview card with a **header** and **footer** of controls:
 - **Show / hide the screen** (header, leftmost — or press **F5**): turns the physical
   output display on or off. The icon fills in and brightens while showing. It is
@@ -1634,7 +1643,7 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, KB-03, KB-07, 
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
   (0–4, or increment/decrement) for stage-view setups.
 
-_Verify: PR-04..07, SP-01..09, KB-03..07, KB-13._
+_Verify: PR-04..07, SP-01..09, SP-23, KB-03..07, KB-13._
 
 ---
 

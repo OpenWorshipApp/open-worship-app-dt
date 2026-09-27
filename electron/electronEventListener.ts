@@ -24,6 +24,11 @@ import {
     encryptFile,
 } from './archiveCryptoHelpers';
 import {
+    forgetDisplayWallpapers,
+    readDisplayWallpaper,
+    type DisplaySizeType,
+} from './displayWallpaperHelpers';
+import {
     attemptClosing,
     captureWebScreenShot,
     captureWindowImage,
@@ -216,6 +221,34 @@ export function initEventListenerApp(appController: ElectronAppController) {
                     ? appController.mainWin
                     : findScreenWindow(screenId),
             );
+        },
+    );
+
+    // A monitor's DESKTOP BACKGROUND, for the mini screen previewer's backdrop.
+    // The screen windows are transparent, so what the audience sees where the
+    // app draws nothing is that display's wallpaper -- this is how the card can
+    // show it instead of a checkered "nothing here" pattern. Deliberately the
+    // wallpaper FILE rather than a screen capture: no other window is in it, and
+    // it needs no retaking. Null (rather than an error) when this machine will
+    // not say what its background is.
+    onAsync(
+        ipcMain,
+        'main:app:read-display-wallpaper',
+        async ({
+            displayIndex,
+            width,
+            sizes,
+            isForced,
+        }: {
+            displayIndex: number;
+            width?: number;
+            sizes?: DisplaySizeType[];
+            isForced?: boolean;
+        }) => {
+            if (isForced) {
+                forgetDisplayWallpapers();
+            }
+            return await readDisplayWallpaper({ displayIndex, width, sizes });
         },
     );
 }

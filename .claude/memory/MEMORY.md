@@ -87,6 +87,7 @@
 - [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md) — a page-made KeyboardEvent fires them
 - [Glassy popup windows](glassy-popup-windows.md) — the chatbot popup is frosted by the OS compositor, not CSS
 - [Panels are named in the DOM](panel-name-in-dom.md) — an OPEN pane, and a FLOATING one, drew its name nowhere; a foreground tile and its Background twin rang together
+- [The mini screen draws the monitor's wallpaper](mini-screen-monitor-wallpaper.md) — the backdrop is the desktop WALLPAPER read from the OS, never a `desktopCapturer` shot: a capture holds every other window, and the card for a screen on this machine's own monitor drew the app inside itself
 - [A guide tucks the help window away](guide-tucks-help-window.md) — a walkthrough minimises the chatbot popup
 - [Hover-hidden controls](hover-hidden-controls.md) — clickable but painted only under the mouse
 - [Knowledge label i18n templates](knowledge-label-i18n-templates.md) — docs name controls as `[en:tran:Clear Bible]`

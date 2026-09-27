@@ -352,6 +352,7 @@ const dictionary = {
     'Preparing PDF pages...': 'Préparation des pages PDF...',
     'Add New Screen': 'Ajouter un écran',
     'Refresh Preview': "Actualiser l'aperçu",
+    'Show Monitor Wallpaper': "Afficher le fond d'écran du moniteur",
     'The application is started first time':
         "L'application est lancée pour la première fois",
     Close: 'Fermer',

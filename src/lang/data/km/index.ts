@@ -359,6 +359,7 @@ const dictionary = {
     'Preparing PDF pages...': 'កំពុងរៀបចំទំព័រ PDF...',
     'Add New Screen': 'បន្ថែមអេក្រង់ថ្មី',
     'Refresh Preview': 'ផ្ទុកមើលជាមុន',
+    'Show Monitor Wallpaper': 'បង្ហាញផ្ទាំងរូបភាពអេក្រង់',
     'The application is started first time':
         'កម្មវិធីត្រូវបានចាប់ផ្តើមជាលើកដំបូង',
     Close: 'បិទ',
