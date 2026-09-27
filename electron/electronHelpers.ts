@@ -184,6 +184,12 @@ export async function tarExtract(
  * keep the regenerable per-document caches (`<doc>.histories`,
  * `<doc>.pdf-images`, `<doc>.pptx-htmls`, …) out of a data archive: they are
  * rebuilt on demand and together can dwarf the documents themselves.
+ *
+ * `excludeEntryPaths` names WHOLE entries instead, exactly as they would be
+ * written. A data archive uses it for the files it is about to append a
+ * different version of -- a document whose unsaved state is what should
+ * travel -- so the archive holds one entry for that file rather than two, the
+ * stale one first.
  */
 export async function tarCreate(
     inputDir: string,
@@ -191,16 +197,21 @@ export async function tarCreate(
     files: string[],
     isGzip = false,
     excludeNamePatterns?: string[],
+    excludeEntryPaths?: string[],
 ) {
     const { c: tarC } = await import('tar');
     const excludeRegexes = (excludeNamePatterns ?? []).map((pattern) => {
         return new RegExp(pattern);
     });
+    const excludedPathSet = new Set(excludeEntryPaths ?? []);
     const filter =
-        excludeRegexes.length === 0
+        excludeRegexes.length === 0 && excludedPathSet.size === 0
             ? undefined
             : (entryPath: string) => {
                   // tar hands over `/`-separated paths on every platform.
+                  if (excludedPathSet.has(entryPath)) {
+                      return false;
+                  }
                   return !entryPath.split('/').some((segment) => {
                       return excludeRegexes.some((regex) => {
                           return regex.test(segment);

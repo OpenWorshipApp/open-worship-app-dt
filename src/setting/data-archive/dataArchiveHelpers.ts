@@ -20,6 +20,9 @@ import DirSource from '../../helper/DirSource';
 // wholesale, and a mocked named export comes back `undefined` — which here would
 // be baked silently into the exclusion regex below.
 import { HISTORY_DIR_NAME_SUFFIX } from '../../editing-manager/editingHistoryPathHelpers';
+import EditingHistoryManager, {
+    sanitizeForUpdatingComparison,
+} from '../../editing-manager/EditingHistoryManager';
 import { handleError } from '../../helper/errorHelpers';
 import FileSource from '../../helper/FileSource';
 import {
@@ -33,6 +36,7 @@ import {
     ensureDirectory,
     fsCheckDirExist,
     fsCloneFile,
+    fsCreateFile,
     fsDeleteFile,
     fsGetFileSize,
     fsList,
@@ -262,6 +266,88 @@ function toTarEntries(folders: ExportableDataFolderType[], entries: string[]) {
     });
 }
 
+/**
+ * The exported files whose LIVE state is not what is on disk, as
+ * `{ entryPath, text }` ready to be written into a staging dir.
+ *
+ * An editable document -- a slide document, a lyric, a presenting flow, a
+ * bible note -- holds what has been typed into it in its EDITING HISTORY
+ * until somebody presses Save, and this archive is written straight from the
+ * folders. Without this, a backup taken minutes before a service carries the
+ * sermon notes as they were this morning, and nothing about the archive says
+ * so.
+ *
+ * The `.histories` folders themselves still stay out (they are the undo
+ * stack, and for one 300KB note they run to megabytes): what travels is the
+ * head's own text under the FILE's name, so the other machine opens the
+ * document exactly as this one is showing it.
+ *
+ * Only the top level of each folder is looked at, which is the level the app
+ * itself treats as a Documents / Bible Notes / Presenting Flows folder, and
+ * only the history folders in it are opened -- so a data set of media costs
+ * one listing per folder and not one stat per file.
+ */
+export async function collectUnsavedDataEntries(
+    folders: ExportableDataFolderType[],
+    entries: string[],
+) {
+    const unsavedEntries: { entryPath: string; text: string }[] = [];
+    for (const [index, folder] of folders.entries()) {
+        // A filtered folder archives named files and holds no documents.
+        if (folder.dataDirectory.fileNamePattern !== undefined) {
+            continue;
+        }
+        let dirEntries;
+        try {
+            dirEntries = await fsList(folder.dirPath);
+        } catch (error) {
+            handleError(error);
+            continue;
+        }
+        for (const dirEntry of dirEntries) {
+            if (
+                dirEntry.isFile ||
+                !dirEntry.name.endsWith(HISTORY_DIR_NAME_SUFFIX)
+            ) {
+                continue;
+            }
+            const fileFullName = dirEntry.name.slice(
+                0,
+                -HISTORY_DIR_NAME_SUFFIX.length,
+            );
+            const filePath = pathJoin(folder.dirPath, fileFullName);
+            try {
+                const manager = EditingHistoryManager.getInstance(filePath);
+                const headText = await manager.getCurrentHistory();
+                if (headText === null) {
+                    continue;
+                }
+                // The same comparison the editing menu lights its Save button
+                // on: `metadata.lastEditDate` moves on its own, so a raw
+                // compare calls every document modified forever.
+                const savedText = await manager.getOriginalData();
+                if (
+                    sanitizeForUpdatingComparison(headText) ===
+                    sanitizeForUpdatingComparison(savedText)
+                ) {
+                    continue;
+                }
+                // The RAW head, not the sanitized one -- that copy exists only
+                // to answer "is anything pending".
+                unsavedEntries.push({
+                    entryPath: `${entries[index]}/${fileFullName}`,
+                    text: headText,
+                });
+            } catch (error) {
+                // One unreadable head is no reason to refuse somebody's whole
+                // backup: that file is archived as it sits on disk instead.
+                handleError(error);
+            }
+        }
+    }
+    return unsavedEntries;
+}
+
 async function attemptDeletingFile(filePath: string) {
     try {
         await fsDeleteFile(filePath);
@@ -305,12 +391,21 @@ export async function createDataArchive(
         ? `${archiveFilePath}.plain.part`
         : archiveFilePath;
     try {
+        const unsavedEntries = await collectUnsavedDataEntries(
+            folders,
+            entries,
+        );
         await tarCreate(
             ancestorDir,
             plainFilePath,
             toTarEntries(folders, entries),
             false,
             EXCLUDED_NAME_PATTERNS,
+            // Left out of this pass because the pass after it writes the same
+            // entry from the document's live state. One entry per file.
+            unsavedEntries.map((entry) => {
+                return entry.entryPath;
+            }),
         );
         const manifest: DataArchiveManifestType = {
             version: ARCHIVE_VERSION,
@@ -325,9 +420,23 @@ export async function createDataArchive(
         const stagingDir = await createWorkDir('owadata-manifest');
         try {
             await writeArchiveManifest(stagingDir, manifest);
+            for (const { entryPath, text } of unsavedEntries) {
+                await fsCreateFile(
+                    pathJoin(stagingDir, ...entryPath.split('/')),
+                    text,
+                    true,
+                );
+            }
             // Appended BEFORE any wrapping: `tar.r` only works on a plain tar,
-            // and it certainly cannot append to ciphertext.
-            await tarAppend(plainFilePath, stagingDir, [MANIFEST_FILE_NAME]);
+            // and it certainly cannot append to ciphertext. The unsaved
+            // documents ride the same append -- they are a handful of text
+            // files, not the gigabytes the main pass refuses to stage.
+            await tarAppend(plainFilePath, stagingDir, [
+                MANIFEST_FILE_NAME,
+                ...unsavedEntries.map((entry) => {
+                    return entry.entryPath;
+                }),
+            ]);
         } finally {
             await safeDeleteDir(stagingDir);
         }

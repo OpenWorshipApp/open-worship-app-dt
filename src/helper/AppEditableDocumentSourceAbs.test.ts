@@ -90,6 +90,7 @@ function createHistoryManager() {
         }),
         save: vi.fn(async () => true),
         discard: vi.fn(),
+        deleteHistories: vi.fn(async () => {}),
         undo: vi.fn(() => 'undo-result'),
         redo: vi.fn(() => 'redo-result'),
     };
@@ -317,7 +318,11 @@ describe('AppEditableDocumentSourceAbs', () => {
 
         await documentSource.preDelete();
         expect(deleteMetaDataFileMock).toHaveBeenCalledWith(filePath);
-        expect(history.discard).toHaveBeenCalledTimes(1);
+        // The whole folder, not the Discard button: that one no-ops when there
+        // is nothing to walk back, and left the history behind for the next
+        // file of this name to inherit.
+        expect(history.deleteHistories).toHaveBeenCalledTimes(1);
+        expect(history.discard).not.toHaveBeenCalled();
 
         expect(documentSource.historyUndo()).toBe('undo');
         expect(documentSource.historyRedo()).toBe('redo');

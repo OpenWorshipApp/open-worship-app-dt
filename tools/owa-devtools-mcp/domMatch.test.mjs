@@ -125,6 +125,26 @@ describe('the shared DOM matcher', () => {
     expect(dm.findBest(['Video Show'])?.element?.id).toBe('row');
   });
 
+  it('does not let a parent pane pass for the panel a scope named', () => {
+    // The Reader's two note panes sit inside one called "Bible and Notes",
+    // which holds both words of "Bible Notes" -- so every control in the
+    // BIBLES pane counted as being in scope, and the press landed on the
+    // wrong panel's button. Measured on the live app 2026-09-27.
+    document.body.innerHTML = [
+      '<div data-widget-name="Bible and Notes">',
+      '<div data-widget-name="Bibles">',
+      '<button id="bibles" title="More Options"></button></div>',
+      '<div data-widget-name="Bible Notes">',
+      '<button id="notes" title="More Options"></button></div>',
+      '</div>',
+    ].join('');
+    const dm = install();
+    expect(dm.findBest(['Bible Notes > More Options'])?.element?.id).toBe(
+      'notes',
+    );
+    expect(dm.findBest(['Bibles > More Options'])?.element?.id).toBe('bibles');
+  });
+
   it('refuses a scope that is not on screen rather than guessing', () => {
     document.body.innerHTML = [
       '<div data-widget-name="Bible">',

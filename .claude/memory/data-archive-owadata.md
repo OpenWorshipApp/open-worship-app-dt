@@ -104,3 +104,18 @@ Other non-obvious bits:
 Gotcha found while building it: a checkbox list that derives its next value from the
 `useState` value drops all but the last toggle when several land in one React batch — the
 selection must be read from a ref. Docs: matrix NAV-17..NAV-19, workflow W-25.
+
+**It carries a document's LIVE state, not only its saved file** (2026-09-27).
+The archive is written straight from the folders, and an editable document --
+a slide document, a lyric, a presenting flow, a bible note -- keeps what has
+been typed into it in its editing history until somebody presses Save. So a
+backup taken minutes before a service carried the sermon notes as they were
+that morning, silently. `collectUnsavedDataEntries` lists the top level of
+each whole-folder entry for `*.histories` directories, compares each head with
+its file through `sanitizeForUpdatingComparison` (the same question the
+editing menu lights Save on), and the head's own text is written into the
+manifest staging dir under the FILE's entry path and appended with the
+manifest. Those entries are handed to `tarCreate` as `excludeEntryPaths` so
+the copying pass skips them -- one entry per file, never the stale one
+followed by the live one. The `.histories` folders themselves still stay out:
+they are the undo stack, and for one 300KB note they run to megabytes.

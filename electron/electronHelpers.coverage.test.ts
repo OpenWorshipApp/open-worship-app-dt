@@ -165,6 +165,29 @@ describe('electronHelpers coverage', () => {
         expect(filter('documents/a.ows')).toBe(true);
     });
 
+    test('tar-create leaves out whole entries named for replacement', async () => {
+        // A data archive appends the LIVE state of a document whose editing
+        // head is ahead of the file, so the pass that copies must skip that
+        // one entry -- otherwise the archive holds it twice, stale copy first.
+        await tarCreate(
+            '/tmp/in',
+            '/tmp/a.tar',
+            ['documents'],
+            false,
+            undefined,
+            ['documents/sermon.ows'],
+        );
+        const { filter } = tarC.mock.calls.at(-1)?.[0] as {
+            filter: (entryPath: string) => boolean;
+        };
+
+        expect(filter('documents/sermon.ows')).toBe(false);
+        // an exact entry, not a prefix and not a name
+        expect(filter('documents/sermon.ows.bg.json')).toBe(true);
+        expect(filter('lyrics/sermon.ows')).toBe(true);
+        expect(filter('documents')).toBe(true);
+    });
+
     test('appends to an existing tar', async () => {
         await tarAppend('/tmp/a.tar', '/tmp/staging', ['manifest.json']);
         expect(tarR).toHaveBeenCalledWith(

@@ -118,7 +118,9 @@ export default class PdfAppDocument
     }
 
     async preDelete() {
-        super.preDelete();
+        // AWAITED: the base takes the editing history away, and letting that
+        // run loose is the very race its own comment exists to prevent.
+        await super.preDelete();
         removePdfImagesPreview(this.filePath);
     }
 }

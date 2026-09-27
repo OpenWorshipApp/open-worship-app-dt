@@ -470,9 +470,19 @@ export const DOM_MATCH_RUNTIME = `
         return matchTier(lowered, parsed.text);
     };
 
+    // A scope NAMES a panel, so it has to fit one -- tier 3 ("every word of
+    // it somewhere in the label, any order") is not a name, it is a bag of
+    // words, and every panel on the way up counts as a container. Measured
+    // 2026-09-27: owa_click of "Bible Notes > More Options" pressed the BIBLES
+    // panel's button, because both panes sit inside one called "Bible and
+    // Notes" -- which holds "bible" and "notes" and so passed. The whole
+    // point of writing a scope is to say which of two look-alikes is meant,
+    // and a press on the wrong one is the one outcome it exists to prevent.
+    const SCOPE_MAX_TIER = 2;
     const checkIsInScope = (path, scope) => {
         return path.some((name) => {
-            return matchTier(name.toLowerCase(), scope) !== -1;
+            const tier = matchTier(name.toLowerCase(), scope);
+            return tier !== -1 && tier <= SCOPE_MAX_TIER;
         });
     };
 

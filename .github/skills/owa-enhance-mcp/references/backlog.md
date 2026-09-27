@@ -638,6 +638,31 @@ same action.
 
 ## Done
 
+### `MC-45` — a scope named one panel and pressed a control in its sibling · done 2026-09-27
+
+Found while testing bible notes, not by a report. `owa_click "Bible Notes >
+More Options"` pressed the **Bibles** panel's button, and `owa_find_ui`
+listed that panel's controls first. The scope is the one thing a caller
+writes to say WHICH of two look-alikes is meant, so getting it wrong is the
+single outcome it exists to prevent — and in the Reader those two panels are
+a `⋮` apart.
+
+`checkIsInScope` accepted ANY tier off `matchTier`, including tier 3 ("every
+word of the needle somewhere in the label, in any order"). Both note panes
+sit inside a pane called **Bible and Notes**, which holds "bible" and
+"notes" — so every control under it, the Bibles pane's included, passed the
+scope. Tier 3 is a bag of words; a panel NAME is not. Scopes are held to
+tiers 0–2 now (`SCOPE_MAX_TIER`), which leaves every real one untouched:
+`Background > Videos` and `Web Show > clock` are tier 0 on their own pane.
+
+Proven both ways: the new `domMatch.test.mjs` case fails on the old
+comparison and passes on the new one, and a FRESH server driven against the
+live Reader answers `Bible Notes > More Options` with 15 matches all in
+**Bible Notes**, `Bibles > More Options` with 15 all in **Bibles**. (The
+running server and the page both cache the matcher, so a live re-check needs
+a new server and a page reload — `dom-match-memoised-in-page`.)
+
+
 ### `MC-32` — a string evaluated at load killed every strict-CSP window's preload · done 2026-09-18
 
 Found by this skill's own live check, not by a report: the chatbot window

@@ -70,6 +70,16 @@ write snapshots the head beside the file (`snapshotAgentNoteFile`), and
 words the tool wrote were what the file held and not what the note window, or an
 export, would show.
 
+**The editor's ghost suggestion is never stored** (2026-09-27). `bible-note`'s
+autocomplete draws the rest of a word as a token node ("list (TAB)") the user
+has not typed, and the editor serializes whatever state it is in -- so the
+ghost reached the history and, on a Save, the file. It was the ONLY difference
+between the saved file and the pending head of a real note.
+`dropTransientNodes` takes it out at both ends of
+`toEditorContent`/`toStoredContent`, behind a SUBSTRING guard: this runs on
+every change the editor reports, and parsing a 300KB note per keystroke to
+learn there is nothing to remove is the work this app cannot spend.
+
 **The Bible Notes LIST still writes the file straight through** — an item added,
 deleted, recoloured, a verse marked: one press, nothing to review, and a
 highlight that waits for a Save is a highlight that gets lost. `Note.save()`

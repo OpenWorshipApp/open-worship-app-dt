@@ -203,6 +203,45 @@ describe('ArchiveFileCollector live content', () => {
         ]);
     });
 
+    // The two halves in one: the bytes an export stages under an archive path
+    // are the bytes an import reads back from that same path and writes into
+    // the user's folder. Nothing here runs tar -- what it holds to is that the
+    // override travels under the ENTRY, so the note that lands is the one the
+    // window was showing and not the one the file held.
+    test('the bytes staged under an entry are the file an import writes', async () => {
+        const collector = new ArchiveFileCollector();
+        await collector.addFile('/tmp/extract/note.own', 'note');
+        collector.setFileContent('/tmp/extract/note.own', 'UNSAVED HEAD');
+        const { archiveFiles } = await stageArchiveFiles(
+            collector,
+            '/tmp/staging',
+            [],
+        );
+        const [entry] = archiveFiles;
+        expect(h.writtenTo).toEqual([
+            {
+                targetPath: `/tmp/staging/${entry.archivePath}`,
+                content: 'UNSAVED HEAD',
+            },
+        ]);
+
+        const { localFilePathByOriginalPath } = await importArchiveFiles(
+            '/tmp/extract',
+            archiveFiles,
+            new Map([['note', '/Volumes/USB/data/bible-notes']] as const),
+        );
+        // read from the very entry the override was staged into
+        expect(h.copiedTo).toEqual([
+            {
+                dirPath: '/Volumes/USB/data/bible-notes',
+                fileFullName: 'note.own',
+            },
+        ]);
+        expect(localFilePathByOriginalPath.get('/tmp/extract/note.own')).toBe(
+            '/Volumes/USB/data/bible-notes/note.own',
+        );
+    });
+
     test('a path nobody collected cannot be given content', async () => {
         const collector = new ArchiveFileCollector();
         expect(collector.setFileContent('/tmp/extract/note.own', 'x')).toBe(

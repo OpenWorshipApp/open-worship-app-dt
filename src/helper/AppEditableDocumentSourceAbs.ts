@@ -240,7 +240,7 @@ export default abstract class AppEditableDocumentSourceAbs<
         // -- `owa_undo` putting a deleted document back, moments later -- must
         // not find the old history folder half-deleted underneath it.
         await super.preDelete();
-        await this.editingHistoryManager.discard();
+        await this.editingHistoryManager.deleteHistories();
     }
 
     historyUndo() {

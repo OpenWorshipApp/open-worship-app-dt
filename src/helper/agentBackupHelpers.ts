@@ -140,7 +140,7 @@ async function getNoteEditableClass() {
                         await import('../editing-manager/EditingHistoryManager');
                     await EditingHistoryManager.getInstance(
                         filePath,
-                    ).fileLineHandler.clearHistories();
+                    ).deleteHistories();
                 },
             };
         },

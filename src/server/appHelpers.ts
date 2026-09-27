@@ -79,12 +79,15 @@ export function tarExtract(
 
 // `excludeNamePatterns` are regex sources matched against each path segment;
 // a matching folder (the regenerable per-document caches) is left out.
+// `excludeEntryPaths` names whole entries, for a file whose live state is
+// appended in its place.
 export function tarCreate(
     inputDir: string,
     outputFilePath: string,
     files: string[],
     isGzip = false,
     excludeNamePatterns?: string[],
+    excludeEntryPaths?: string[],
 ) {
     return electronSendAsync<void>('main:app:tar-create', {
         inputDir,
@@ -92,6 +95,7 @@ export function tarCreate(
         files,
         isGzip,
         excludeNamePatterns,
+        excludeEntryPaths,
     });
 }
 
@@ -545,8 +549,9 @@ export function removeOpacityFromHexColor(hexColor: string) {
 export function printHtmlText() {
     appProvider.messageUtils.sendData('all:app:print');
 }
+// Reachable from the DevTools console on purpose; the `console.log` that used
+// to announce it here ran at module load in EVERY renderer.
 (globalThis as any).printHtmlText = printHtmlText;
-console.log('printHtmlText');
 
 export function timeToTimeString(time: number) {
     const hours = Math.floor(time / 3600);

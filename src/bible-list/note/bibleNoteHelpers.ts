@@ -89,16 +89,69 @@ const EMPTY_EDITOR_STATE_CONTENT = JSON.stringify({
     },
 });
 
+/**
+ * The editor's own ghost suggestion -- the one node kind that must never be
+ * kept.
+ *
+ * `bible-note`'s autocomplete draws the rest of a word as a token node
+ * ("list (TAB)") that the user has not typed and may never accept, and the
+ * editor serializes whatever state it is in. So the ghost reached the note's
+ * editing history and, on a Save, the file -- found in a real note on
+ * 2026-09-26, where the ONLY difference between the saved file and the
+ * pending head was one of these. A note exported or printed with one in it
+ * carries a word nobody wrote.
+ *
+ * Taken out at both ends, like the childless root above: nothing poisonous is
+ * written, and a note already holding one opens clean.
+ */
+const TRANSIENT_NODE_TYPE = 'autocomplete';
+
+/**
+ * The guard is a SUBSTRING test, and it is the whole reason this is
+ * affordable: the editor reports a change on every keystroke, and parsing a
+ * 300KB note each time to learn there was nothing to take out is exactly the
+ * work this app cannot spend. An escaped `\"autocomplete\"` inside somebody's
+ * own text does not match, and a note that really holds one pays one parse.
+ */
+function dropTransientNodes(content: string) {
+    if (!content.includes(`"${TRANSIENT_NODE_TYPE}"`)) {
+        return content;
+    }
+    try {
+        const jsonData = JSON.parse(content);
+        let isChanged = false;
+        const walk = (node: any) => {
+            if (!Array.isArray(node?.children)) {
+                return;
+            }
+            const keptChildren = node.children.filter((child: any) => {
+                return child?.type !== TRANSIENT_NODE_TYPE;
+            });
+            if (keptChildren.length !== node.children.length) {
+                node.children = keptChildren;
+                isChanged = true;
+            }
+            node.children.forEach(walk);
+        };
+        walk(jsonData?.root);
+        return isChanged ? JSON.stringify(jsonData) : content;
+    } catch (_error) {
+        // Not this editor's state at all, so not ours to rewrite.
+        return content;
+    }
+}
+
 /** What a note item's stored text becomes on its way INTO the editor. */
 export function toEditorContent(content: string) {
     return checkIsEmptyNoteContent(content)
         ? EMPTY_EDITOR_STATE_CONTENT
-        : content;
+        : dropTransientNodes(content);
 }
 
 /** And on its way back OUT, where an empty note is stored as no text at all. */
 export function toStoredContent(content: string) {
-    return checkIsEmptyNoteContent(content) ? '' : content;
+    const keptContent = dropTransientNodes(content);
+    return checkIsEmptyNoteContent(keptContent) ? '' : keptContent;
 }
 export function checkIsEmptyNoteContent(content: string) {
     const trimmedContent = content.trim();

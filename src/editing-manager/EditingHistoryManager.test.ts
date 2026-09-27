@@ -612,6 +612,31 @@ describe('EditingHistoryManager', () => {
         clearSpy.mockRestore();
     });
 
+    // A folder holding its first entry and nothing else has no step to walk
+    // back, so `discard()` -- the button a user presses -- answers true and
+    // clears NOTHING. A delete that cleaned up through it therefore left the
+    // folder on disk, where the next file of that name reads it as its own
+    // unsaved state.
+    test('deleteHistories takes the folder a discard would have left', async () => {
+        const filePath = '/docs/gone.owa';
+        mocks.dirs.add('/docs');
+        mocks.files.set(filePath, 'version 1');
+
+        const { default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+        const manager = new EditingHistoryManager(filePath);
+        await manager.fileLineHandler.ensureHistoriesDir();
+        expect(await manager.checkHasHistories()).toBe(true);
+        expect(await manager.checkCanUndo()).toBe(false);
+        expect(await manager.checkCanRedo()).toBe(false);
+
+        expect(await manager.discard()).toBe(true);
+        expect(await manager.checkHasHistories()).toBe(true);
+
+        await manager.deleteHistories();
+        expect(await manager.checkHasHistories()).toBe(false);
+    });
+
     test('save reports an unreadable history and a failed write', async () => {
         const filePath = '/docs/save.owa';
         mocks.dirs.add('/docs');

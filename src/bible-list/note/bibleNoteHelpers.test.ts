@@ -742,6 +742,72 @@ describe('checkIsEmptyNoteContent', () => {
         expect(checkIsEmptyNoteContent(toEditorContent(''))).toBe(false);
     });
 
+    // The editor's autocomplete draws the rest of a word as a token node the
+    // user has not typed; the editor serializes whatever state it is in, so it
+    // reached the note's history and, on a Save, the file. A real note was
+    // found holding one as its only pending change.
+    describe('the ghost suggestion node', () => {
+        const withGhost = (text: string) => {
+            return JSON.stringify({
+                root: {
+                    children: [
+                        {
+                            type: 'paragraph',
+                            children: [
+                                { type: 'text', text },
+                                {
+                                    type: 'autocomplete',
+                                    text: 'list (TAB)',
+                                    mode: 'token',
+                                    uuid: 'terfi',
+                                },
+                            ],
+                        },
+                    ],
+                },
+            });
+        };
+
+        test('never reaches what is stored', () => {
+            const stored = toStoredContent(withGhost('make a '));
+            expect(stored).not.toContain('autocomplete');
+            expect(stored).toContain('make a ');
+            expect(JSON.parse(stored).root.children[0].children).toHaveLength(
+                1,
+            );
+        });
+
+        test('a note already holding one opens without it', () => {
+            expect(toEditorContent(withGhost('make a '))).not.toContain(
+                'autocomplete',
+            );
+        });
+
+        test('the words the user typed are untouched', () => {
+            const plain = JSON.stringify({
+                root: {
+                    children: [
+                        {
+                            type: 'paragraph',
+                            children: [
+                                { type: 'text', text: 'about autocomplete' },
+                            ],
+                        },
+                    ],
+                },
+            });
+            // The guard looks for a quoted node type, so the word in somebody's
+            // own sentence is neither matched nor rewritten.
+            expect(toStoredContent(plain)).toBe(plain);
+        });
+
+        test('content that is not an editor state is left alone', () => {
+            expect(toStoredContent('"autocomplete" oops {')).toBe(
+                '"autocomplete" oops {',
+            );
+        });
+    });
+
     // Long content is never parsed -- an empty state cannot be long, and a
     // 60KB note would otherwise be parsed on every autosave.
     test('long content is not parsed', () => {

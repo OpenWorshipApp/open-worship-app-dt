@@ -468,6 +468,20 @@ export default class EditingHistoryManager {
         return sanitizedHistoryText !== sanitizedText;
     }
 
+    /**
+     * The whole history folder, gone, because the FILE is going.
+     *
+     * NOT `discard()`, which is the button a USER presses: that one answers
+     * "there is nothing to walk back" with a no-op, so a delete that cleaned
+     * up through it cleaned up only conditionally. A folder holding one entry
+     * -- what `ensureHistoriesDir` leaves when the write after it fails -- was
+     * left on disk for the next file of that name to read as its own unsaved
+     * state.
+     */
+    async deleteHistories() {
+        await this.fileLineHandler.clearHistories();
+    }
+
     async discard() {
         if (!((await this.checkCanRedo()) || (await this.checkCanUndo()))) {
             return true;

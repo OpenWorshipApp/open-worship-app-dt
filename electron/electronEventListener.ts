@@ -455,6 +455,7 @@ export function initEventOther(appController: ElectronAppController) {
             files: string[];
             isGzip?: boolean;
             excludeNamePatterns?: string[];
+            excludeEntryPaths?: string[];
         }) => {
             return tarCreate(
                 data.inputDir,
@@ -462,6 +463,7 @@ export function initEventOther(appController: ElectronAppController) {
                 data.files,
                 data.isGzip,
                 data.excludeNamePatterns,
+                data.excludeEntryPaths,
             );
         },
     );
