@@ -138,7 +138,24 @@ function NotePreview({ note }: Readonly<{ note: Note }>) {
                     'accordion-header d-flex app-caught-hover-pointer' +
                     ' app-cue-group'
                 }
+                role="button"
+                tabIndex={0}
+                // The only way to open or close a note file, and it was a bare
+                // div: no keyboard could reach it, a screen reader read the
+                // whole folder out as one unnamed thing, and `owa_click` had
+                // nothing to aim at -- a click on the ROW does not reach a
+                // handler sitting on a child of it.
+                aria-expanded={note.isOpened}
+                aria-label={fileSource.name}
                 onClick={handleToggleOpened}
+                onKeyDown={(event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') {
+                        return;
+                    }
+                    // Otherwise Space scrolls the panel out from under it.
+                    event.preventDefault();
+                    handleToggleOpened();
+                }}
             >
                 <div className="flex-fill">
                     <i

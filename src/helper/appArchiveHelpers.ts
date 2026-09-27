@@ -244,6 +244,11 @@ export class ArchiveFileCollector {
     // Sidecars are rewritten before archiving, so they are staged as content
     // rather than copied from disk.
     readonly extraContentByArchivePath = new Map<string, string>();
+    // What to STAGE for a file whose LIVE content is not what is on disk -- an
+    // editable item whose window keeps its unsaved text in the editing history.
+    // Keyed by the same original path, so the manifest entry, the collision
+    // rules and the whole import side are untouched: only the bytes differ.
+    readonly contentByOriginalPath = new Map<string, string>();
     // A document reached both as a slide entry and as a document entry must not
     // archive its sidecar twice.
     private readonly seenBackgroundMetaPaths = new Set<string>();
@@ -270,6 +275,22 @@ export class ArchiveFileCollector {
             archivePath: this.nextArchivePath(originalPath),
             kind,
         });
+        return true;
+    }
+
+    /**
+     * Stage `content` for an already-added file instead of copying the file.
+     *
+     * The file still has to EXIST and be added first: what this replaces is the
+     * bytes, not the entry, so a caller cannot smuggle a file into a bundle
+     * this way. Answers whether the override was taken, so a caller that
+     * resolved live content for a path nobody collected learns about it.
+     */
+    setFileContent(originalPath: string, content: string) {
+        if (!this.entryByOriginalPath.has(originalPath)) {
+            return false;
+        }
+        this.contentByOriginalPath.set(originalPath, content);
         return true;
     }
 
@@ -380,10 +401,18 @@ export async function stageArchiveFiles(
     if (hasFiles) {
         await ensureDirectory(pathJoin(stagingDir, ARCHIVE_FILES_DIR));
         for (const archiveFile of archiveFiles) {
-            await fsCloneFile(
-                archiveFile.originalPath,
-                pathJoin(stagingDir, ...archiveFile.archivePath.split('/')),
+            const targetPath = pathJoin(
+                stagingDir,
+                ...archiveFile.archivePath.split('/'),
             );
+            const liveContent = collector.contentByOriginalPath.get(
+                archiveFile.originalPath,
+            );
+            if (liveContent === undefined) {
+                await fsCloneFile(archiveFile.originalPath, targetPath);
+            } else {
+                await fsCreateFile(targetPath, liveContent, true);
+            }
         }
         for (const [
             archivePath,

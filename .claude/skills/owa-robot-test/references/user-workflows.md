@@ -21,7 +21,18 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-26d** (**W-28 — a colour dropped on a LOCKED box is refused.** Found by the `appDocumentEditor.html` robot run (report-20260926-1950): the drop repainted a 🔒 box that every other tool leaves alone. It now keeps its colour, a _This item is locked_ toast says why, and nothing is added. Verified live 2026-09-26 on the dev editor; an unlocked box still repaints. ED-43.)
+**workflowsVersion: 2026-09-26e** (**W-41 — an exported note carries what you
+typed last, not what you saved last.** The note window keeps your typing in the
+note's editing history until you press **[en:tran:Save]** (W-14), and the
+bundle was written from the file on disk -- so a note edited this morning and
+not yet saved went to the other machine as it was yesterday, with nothing about
+the bundle saying so. Both exports read the note the way its own window does
+now: the whole page from the file's `⋮`, and one note from its own `⋮`. Proven
+live 2026-09-26 -- text typed into the window and never saved came back out of
+the `.owanote.tar.gz` and the `.owabn.tar.gz`, while the file on disk still held
+the old words. PR-30, PR-31.)
+
+Previous: **workflowsVersion: 2026-09-26d** (**W-28 — a colour dropped on a LOCKED box is refused.** Found by the `appDocumentEditor.html` robot run (report-20260926-1950): the drop repainted a 🔒 box that every other tool leaves alone. It now keeps its colour, a _This item is locked_ toast says why, and nothing is added. Verified live 2026-09-26 on the dev editor; an unlocked box still repaints. ED-43.)
 
 Previous: **workflowsVersion: 2026-09-26c** (**W-14 — the Bible Note window stops saving
 itself and gains the editing control.** Reported as a note that would not open:
@@ -3953,6 +3964,11 @@ to it — travels as one bundle.
    > the sound file you attached. That makes this bundle much larger than a bible list's,
    > so give a note full of video a moment to finish.
 
+   > **It carries what you typed last, not what you saved last.** A note window
+   > keeps your typing until you press **[en:tran:Save]** (W-14), and the bundle
+   > is written from the note as that window has it — so nothing you have typed
+   > is left behind, whether or not you remembered to save it first.
+
 4. On the other machine, click the `⋮` at the top of the **Bible Notes** panel → **[en:tran:Import]** and pick the file — or **drag the `.owanote.tar.gz` (or `.owanote.enc`) onto
    the Bible Notes panel**. A protected one asks for its password first.
    **[en:tran:Import From URL]** works here too if the bundle is on the web. 📸
@@ -3964,7 +3980,7 @@ to it — travels as one bundle.
 
 6. To move a **single note** instead of the whole page, use the `⋮` on that note →
    **Export**, and **Import** on the note file you want it to land in — any note file,
-   not only **Default**.
+   not only **Default**. That one carries your unsaved typing too.
 
 _Verify: PR-30, PR-31, CM-69, CM-98, CM-99._
 

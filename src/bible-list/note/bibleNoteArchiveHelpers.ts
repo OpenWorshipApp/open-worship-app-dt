@@ -2,6 +2,10 @@ import type {
     ArchiveFileCollector,
     ArchiveFileKindType,
 } from '../../helper/appArchiveHelpers';
+// The MANAGER, never `Note`: this module must not load the note model (that
+// closes a cycle, see `readNoteItemContents`), and all it needs of the editing
+// history is the text the head holds.
+import EditingHistoryManager from '../../editing-manager/EditingHistoryManager';
 import { handleError } from '../../helper/errorHelpers';
 import FileSource from '../../helper/FileSource';
 import type { SingleItemArchiveConfigType } from '../../helper/singleItemArchiveHelpers';
@@ -51,14 +55,17 @@ export const BIBLE_NOTE_ARCHIVE_DOT_EXTENSION = '.owanote.tar.gz';
 /**
  * Every embedded path across every item of the note.
  *
- * The file is walked as RAW JSON rather than through `Note`/`NoteItem`: the
+ * The note is walked as RAW JSON rather than through `Note`/`NoteItem`: the
  * `Note.items` setter rebuilds every item through `NoteItem.toJson()`, so any
  * field those classes do not carry would be dropped on the way back out — and
  * loading the note model from here would close a module cycle besides.
  */
-async function readNoteItemContents(filePath: string) {
+function toNoteItemContents(jsonText: string | null) {
+    if (jsonText === null) {
+        return null;
+    }
     try {
-        const jsonData = parseJson(await fsReadFile(filePath)) as {
+        const jsonData = parseJson(jsonText) as {
             items?: unknown;
         } | null;
         if (jsonData === null || !Array.isArray(jsonData.items)) {
@@ -71,11 +78,62 @@ async function readNoteItemContents(filePath: string) {
     }
 }
 
+async function readNoteItemContents(filePath: string) {
+    try {
+        return toNoteItemContents(await fsReadFile(filePath));
+    } catch (error) {
+        handleError(error);
+        return null;
+    }
+}
+
+/**
+ * The note as its own WINDOW has it, which is not always what is on disk.
+ *
+ * The note editor writes into the editing history and never into the file --
+ * the human presses Save -- so a note typed into five minutes ago still reads
+ * on disk as it did this morning. An export is that note leaving the machine,
+ * and a bundle says nothing about which of the two copies it holds, so it
+ * carries the newer one.
+ *
+ * `null` means the file on disk is the truth and is copied verbatim: no
+ * history has ever been written beside it, the head reads exactly the same, or
+ * the head is not a readable note at all -- an unparseable head is what makes
+ * a note refuse to open, and it must never be the thing that leaves.
+ */
+export async function readLiveNoteContent(filePath: string) {
+    try {
+        const editingHistoryManager =
+            EditingHistoryManager.getInstance(filePath);
+        // One cheap stat for the usual case: no note window has ever been
+        // opened on this file, so the file is all there is.
+        if (!(await editingHistoryManager.checkHasHistories())) {
+            return null;
+        }
+        const headContent = await editingHistoryManager.getCurrentHistory();
+        if (headContent === null || toNoteItemContents(headContent) === null) {
+            return null;
+        }
+        const savedContent = await fsReadFile(filePath);
+        return headContent === savedContent ? null : headContent;
+    } catch (error) {
+        handleError(error);
+        return null;
+    }
+}
+
 export async function collectNoteEmbeddedFiles(
     collector: ArchiveFileCollector,
     filePath: string,
+    content: string | null = null,
 ) {
-    const jsonData = await readNoteItemContents(filePath);
+    // The content being EXPORTED, not the file: a picture dropped into a note
+    // that has not been saved yet is pointed at by the text that travels, so
+    // it has to travel too.
+    const jsonData =
+        content === null
+            ? await readNoteItemContents(filePath)
+            : toNoteItemContents(content);
     if (jsonData === null) {
         return;
     }
@@ -146,6 +204,7 @@ const CONFIG: SingleItemArchiveConfigType = {
     importTitle: 'Import Bible Note',
     urlLabel: 'Bible Note Archive URL:',
     itemLabel: 'bible note',
+    readItemContent: readLiveNoteContent,
     collectExtraFiles: collectNoteEmbeddedFiles,
     getExtraPresetDirPaths: getNoteAssetDirPaths,
     applyImportedExtraFiles: applyImportedNoteEmbeddedFiles,

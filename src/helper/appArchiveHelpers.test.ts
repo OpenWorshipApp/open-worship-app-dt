@@ -11,6 +11,8 @@ const h = vi.hoisted(() => {
         },
         copiedTo: [] as { dirPath: string; fileFullName: string }[],
         importedPathByName: new Map<string, string>(),
+        clonedTo: [] as { sourcePath: string; targetPath: string }[],
+        writtenTo: [] as { targetPath: string; content: string }[],
     };
 });
 
@@ -47,6 +49,15 @@ vi.mock('../server/fileHelpers', async (importOriginal) => {
         fsCheckFileExist: async (filePath: string) => {
             return filePath.startsWith('/tmp/extract/');
         },
+        ensureDirectory: async () => {},
+        fsCloneFile: async (sourcePath: string, targetPath: string) => {
+            h.clonedTo.push({ sourcePath, targetPath });
+            return true;
+        },
+        fsCreateFile: async (targetPath: string, content: string) => {
+            h.writtenTo.push({ targetPath, content });
+            return true;
+        },
         fsCopyFilePathToPath: async (
             _sourcePath: string,
             dirPath: string,
@@ -61,7 +72,8 @@ vi.mock('../server/fileHelpers', async (importOriginal) => {
     };
 });
 
-const { importArchiveFiles } = await import('./appArchiveHelpers');
+const { ArchiveFileCollector, importArchiveFiles, stageArchiveFiles } =
+    await import('./appArchiveHelpers');
 
 const WINDOWS_DATA_DIR = String.raw`C:\Users\x\data`;
 const dirPathByKind = new Map([
@@ -72,6 +84,8 @@ const dirPathByKind = new Map([
 beforeEach(() => {
     h.sessionData.defaultStorageDirPath = '/Volumes/USB/data';
     h.copiedTo.length = 0;
+    h.clonedTo.length = 0;
+    h.writtenTo.length = 0;
     h.importedPathByName.clear();
 });
 
@@ -158,5 +172,44 @@ describe('importArchiveFiles across operating systems', () => {
         expect([...localFilePathByOriginalPath.keys()]).toEqual([
             String.raw`${WINDOWS_DATA_DIR}\videos\intro.mp4`,
         ]);
+    });
+});
+
+// An editable item keeps unsaved work in its editing history and only reaches
+// the file on a Save, so what an export has to carry is not always what is on
+// disk. The bytes are overridden; the entry, and therefore the whole import
+// side, is not.
+describe('ArchiveFileCollector live content', () => {
+    test('stages the override instead of copying the file', async () => {
+        const collector = new ArchiveFileCollector();
+        await collector.addFile('/tmp/extract/note.own', 'note');
+        await collector.addFile('/tmp/extract/picture.png', 'note-asset');
+        expect(
+            collector.setFileContent('/tmp/extract/note.own', 'HEAD TEXT'),
+        ).toBe(true);
+        await stageArchiveFiles(collector, '/tmp/staging', []);
+        expect(h.writtenTo).toEqual([
+            {
+                targetPath: '/tmp/staging/files/001-note.own',
+                content: 'HEAD TEXT',
+            },
+        ]);
+        // everything without one is still copied, byte for byte
+        expect(h.clonedTo).toEqual([
+            {
+                sourcePath: '/tmp/extract/picture.png',
+                targetPath: '/tmp/staging/files/002-picture.png',
+            },
+        ]);
+    });
+
+    test('a path nobody collected cannot be given content', async () => {
+        const collector = new ArchiveFileCollector();
+        expect(collector.setFileContent('/tmp/extract/note.own', 'x')).toBe(
+            false,
+        );
+        await stageArchiveFiles(collector, '/tmp/staging', []);
+        expect(h.writtenTo).toEqual([]);
+        expect(h.clonedTo).toEqual([]);
     });
 });

@@ -96,7 +96,16 @@ export type AgentFileActionType =
     | 'delete'
     | AgentSlideActionType;
 
-export type AgentFileKindNameType = AgentEditableKindType;
+/**
+ * The two kinds of DOCUMENT `owa_lyric_file` / `owa_slide_file` write. It used
+ * to be an alias of `AgentEditableKindType`, which is a different question --
+ * that one is "has an editing history" and a bible NOTE has one too, without
+ * being a document these tools can create or validate.
+ */
+export type AgentFileKindNameType = Extract<
+    AgentEditableKindType,
+    'slide' | 'lyric'
+>;
 
 export type AgentFileRequestType = {
     kind?: AgentFileKindNameType;

@@ -9,7 +9,12 @@
  * undo put a document's unsaved edits back into a file that did not exist yet.
  */
 
-export type AgentEditableKindType = 'slide' | 'lyric';
+// `note` is here for what it CARRIES, not because a bible note is an
+// `AppEditableDocumentSourceAbs`: it is not. A note file has an editing
+// history all the same -- the note window writes into it and the human
+// presses Save -- so a rename has to take that history with the file, a
+// delete has to take it away, and an undo has to put it back.
+export type AgentEditableKindType = 'slide' | 'lyric' | 'note';
 
 /**
  * One thing an undo puts back. Taken BEFORE a change, so each carries the

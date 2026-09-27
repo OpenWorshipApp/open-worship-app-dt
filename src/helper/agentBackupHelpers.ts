@@ -92,7 +92,65 @@ async function getFileSourceClass() {
     return FileSourceClass;
 }
 
+/**
+ * A bible note in the shape the three things above ask of an editable
+ * document -- read its live state, put a state back, clean up on delete.
+ *
+ * `Note` is deliberately NOT an `AppEditableDocumentSourceAbs` (the Bible
+ * Notes list writes the file straight through, and only the note WINDOW goes
+ * through the history), so it has no `getInstance`. It has the history all
+ * the same, and everything here is about the history.
+ */
+async function getNoteEditableClass() {
+    const { default: Note } = await import('../bible-list/note/Note');
+    return {
+        getInstance(filePath: string) {
+            return {
+                async getJsonData() {
+                    // NULL when this note has no history folder, and that is
+                    // the point: `fromFilePathEditing` falls back to the file
+                    // when there is none, and backing THAT up as an "editing"
+                    // state would have an undo build a history folder for a
+                    // note nobody ever opened a window on -- whose first
+                    // entry is a whole clone of the file.
+                    const { default: EditingHistoryManager } =
+                        await import('../editing-manager/EditingHistoryManager');
+                    const manager = EditingHistoryManager.getInstance(filePath);
+                    if (!(await manager.checkHasHistories())) {
+                        return null;
+                    }
+                    const note = await Note.fromFilePathEditing(filePath);
+                    return note === null ? null : note.toJson();
+                },
+                async setJsonData(jsonData: any) {
+                    // A new history STEP, exactly like a document's
+                    // `setJsonData`: putting a state back is itself something
+                    // the user can walk out of again in the note window.
+                    await Note.fromJson(filePath, jsonData).addEditingHistory();
+                },
+                async preDelete() {
+                    const { attachBackgroundManager } =
+                        await import('../others/AttachBackgroundManager');
+                    await attachBackgroundManager.deleteMetaDataFile(filePath);
+                    // The FOLDER, not `discard()`: that one is a no-op when
+                    // there is no step to walk back, and the whole point here
+                    // is that nothing of this file is left for a note made
+                    // under the same name to inherit.
+                    const { default: EditingHistoryManager } =
+                        await import('../editing-manager/EditingHistoryManager');
+                    await EditingHistoryManager.getInstance(
+                        filePath,
+                    ).fileLineHandler.clearHistories();
+                },
+            };
+        },
+    };
+}
+
 async function getEditableClass(kind: AgentEditableKindType) {
+    if (kind === 'note') {
+        return await getNoteEditableClass();
+    }
     if (kind === 'lyric') {
         const { default: Lyric } = await import('../lyric-list/Lyric');
         return Lyric;

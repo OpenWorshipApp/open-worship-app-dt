@@ -1204,7 +1204,7 @@
         "You get one <name>.owanote.tar.gz file in your Downloads folder — <name>.owanote.enc if you set a password — and the app opens the folder on it.",
         "On the other machine, click the ⋮ at the top of the Bible Notes panel → [en:tran:Import] and pick the file — or drag the .owanote.tar.gz (or .owanote.enc) onto the Bible Notes panel. A protected one asks for its password first. [en:tran:Import From URL] works here too if the bundle is on the web.",
         "The note file appears in that machine's notes folder with all its notes, your highlights and comments, and its pictures and clips playing from the local copies.",
-        "To move a single note instead of the whole page, use the ⋮ on that note → Export, and Import on the note file you want it to land in — any note file, not only Default."
+        "To move a single note instead of the whole page, use the ⋮ on that note → Export, and Import on the note file you want it to land in — any note file, not only Default. That one carries your unsaved typing too."
       ]
     },
     {

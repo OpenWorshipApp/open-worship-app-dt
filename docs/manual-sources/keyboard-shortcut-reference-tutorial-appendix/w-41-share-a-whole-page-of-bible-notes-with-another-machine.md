@@ -24,6 +24,11 @@ to it — travels as one bundle.
    > the sound file you attached. That makes this bundle much larger than a bible list's,
    > so give a note full of video a moment to finish.
 
+   > **It carries what you typed last, not what you saved last.** A note window
+   > keeps your typing until you press **[en:tran:Save]** (W-14), and the bundle
+   > is written from the note as that window has it — so nothing you have typed
+   > is left behind, whether or not you remembered to save it first.
+
 4. On the other machine, click the `⋮` at the top of the **Bible Notes** panel → **[en:tran:Import]** and pick the file — or **drag the `.owanote.tar.gz` (or `.owanote.enc`) onto
    the Bible Notes panel**. A protected one asks for its password first.
    **[en:tran:Import From URL]** works here too if the bundle is on the web. 📸
@@ -35,7 +40,7 @@ to it — travels as one bundle.
 
 6. To move a **single note** instead of the whole page, use the `⋮` on that note →
    **Export**, and **Import** on the note file you want it to land in — any note file,
-   not only **Default**.
+   not only **Default**. That one carries your unsaved typing too.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:

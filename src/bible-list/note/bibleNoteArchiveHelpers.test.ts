@@ -7,6 +7,8 @@ const {
     ensureDirectoryMock,
     fireUpdateEventMock,
     handleErrorMock,
+    checkHasHistoriesMock,
+    getCurrentHistoryMock,
 } = vi.hoisted(() => ({
     addFileMock: vi.fn(),
     fsCreateFileMock: vi.fn(),
@@ -14,6 +16,8 @@ const {
     ensureDirectoryMock: vi.fn(),
     fireUpdateEventMock: vi.fn(),
     handleErrorMock: vi.fn(),
+    checkHasHistoriesMock: vi.fn(),
+    getCurrentHistoryMock: vi.fn(),
 }));
 
 vi.mock('../../server/fileHelpers', () => ({
@@ -28,6 +32,16 @@ vi.mock('../../helper/FileSource', () => ({
 }));
 vi.mock('../../helper/errorHelpers', () => ({
     handleError: handleErrorMock,
+}));
+// Mocked, not imported: the real one reaches `FileSource` and through it
+// `appProvider`, which touches `document` while this node-env file loads.
+vi.mock('../../editing-manager/EditingHistoryManager', () => ({
+    default: {
+        getInstance: () => ({
+            checkHasHistories: checkHasHistoriesMock,
+            getCurrentHistory: getCurrentHistoryMock,
+        }),
+    },
 }));
 vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: { tmpFilesDir: '/data/tmp-files' },
@@ -47,6 +61,7 @@ vi.mock('../../helper/singleItemArchiveHelpers', () => ({
 const {
     applyImportedNoteEmbeddedFiles,
     collectNoteEmbeddedFiles,
+    readLiveNoteContent,
     BIBLE_NOTE_ARCHIVE_DOT_EXTENSION,
 } = await import('./bibleNoteArchiveHelpers');
 
@@ -92,6 +107,66 @@ describe('bible-list/note bibleNoteArchiveHelpers', () => {
             fsReadFileMock.mockResolvedValue('not json at all');
             await collectNoteEmbeddedFiles(collector, '/notes/Default.own');
             expect(addFileMock).not.toHaveBeenCalled();
+        });
+
+        test('walks the content being EXPORTED, not the file', async () => {
+            fsReadFileMock.mockResolvedValue(
+                toNoteFileText([
+                    { content: toLexicalContent('/saved/old.png') },
+                ]),
+            );
+            await collectNoteEmbeddedFiles(
+                collector,
+                '/notes/Default.own',
+                toNoteFileText([
+                    { content: toLexicalContent('/unsaved/new.png') },
+                ]),
+            );
+            // the picture the unsaved text points at, never the saved one
+            expect(addFileMock.mock.calls).toEqual([
+                ['/unsaved/new.png', 'note-asset'],
+            ]);
+            expect(fsReadFileMock).not.toHaveBeenCalled();
+        });
+    });
+
+    // The note editor writes into the editing history and the human presses
+    // Save, so the file on disk is behind whenever a note window has unsaved
+    // text -- and an export is the note leaving the machine.
+    describe('readLiveNoteContent', () => {
+        test('is the file when no history was ever written beside it', async () => {
+            checkHasHistoriesMock.mockResolvedValue(false);
+            expect(await readLiveNoteContent('/notes/Default.own')).toBe(null);
+            expect(getCurrentHistoryMock).not.toHaveBeenCalled();
+        });
+
+        test('is the unsaved head when it differs from the file', async () => {
+            const headText = toNoteFileText([{ content: 'typed just now' }]);
+            checkHasHistoriesMock.mockResolvedValue(true);
+            getCurrentHistoryMock.mockResolvedValue(headText);
+            fsReadFileMock.mockResolvedValue(
+                toNoteFileText([{ content: 'saved this morning' }]),
+            );
+            expect(await readLiveNoteContent('/notes/Default.own')).toBe(
+                headText,
+            );
+        });
+
+        test('is the file when the head reads exactly the same', async () => {
+            const sameText = toNoteFileText([{ content: 'nothing pending' }]);
+            checkHasHistoriesMock.mockResolvedValue(true);
+            getCurrentHistoryMock.mockResolvedValue(sameText);
+            fsReadFileMock.mockResolvedValue(sameText);
+            expect(await readLiveNoteContent('/notes/Default.own')).toBe(null);
+        });
+
+        test('a head that is not a readable note never leaves', async () => {
+            checkHasHistoriesMock.mockResolvedValue(true);
+            getCurrentHistoryMock.mockResolvedValue('half-written garbage');
+            fsReadFileMock.mockResolvedValue(
+                toNoteFileText([{ content: 'the good copy' }]),
+            );
+            expect(await readLiveNoteContent('/notes/Default.own')).toBe(null);
         });
     });
 

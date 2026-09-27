@@ -75,6 +75,21 @@ export default class Note
         );
     }
 
+    /**
+     * One item as the note WINDOW has it -- its unsaved text when there is
+     * any, the saved item otherwise.
+     *
+     * The LIST holds what is saved, which is what the panel is for; an EXPORT
+     * is the item leaving the machine, and handing the other side a copy from
+     * before the last thing typed loses that work with nothing on screen to
+     * say so. Falls back to this instance's own item, so a head that cannot be
+     * read costs the caller nothing.
+     */
+    async getEditingItemById(id: number) {
+        const headNote = await Note.fromFilePathEditing(this.filePath);
+        return headNote?.getItemById(id) ?? this.getItemById(id);
+    }
+
     setItemById(id: number, item: NoteItem) {
         const items = this.items;
         const newItems = items.map((item1) => {
@@ -387,6 +402,30 @@ export default class Note
         headNote.updateNoteItem(noteItem, true);
         await headNote.addEditingHistory();
         this.originalJson = headNote.toJson();
+    }
+
+    /**
+     * Bring a leftover editing head into step for ONE item whose text was just
+     * written to the FILE from outside a note window.
+     *
+     * `save()` rebases the other way round on purpose: a note window's unsaved
+     * typing has to survive the list adding, deleting or recolouring an item.
+     * That rule assumes the WINDOW is the only thing that ever writes item
+     * text, which is true of the app itself and not of the agent note tools --
+     * they write the file (refusing while a window is open), and the leftover
+     * head then holds OLDER words than the file does. The window shows the
+     * head, and so does an export, so without this the change reads as never
+     * having happened.
+     *
+     * Only ever for a file that already HAS a history: a note nobody has
+     * opened a window on must not gain one here -- its first entry is a whole
+     * clone of the file, which for a 300KB note is 300KB for nothing.
+     */
+    async syncItemEditingHistory(noteItem: NoteItem) {
+        if (!(await this.editingHistoryManager.checkHasHistories())) {
+            return;
+        }
+        await this.addItemEditingHistory(noteItem);
     }
 
     /**
