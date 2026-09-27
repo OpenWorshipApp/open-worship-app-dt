@@ -209,7 +209,9 @@ export default function BibleXMLEditorComp({
                         className="btn btn-sm btn-secondary m-1"
                         onClick={handleToggleFullView}
                     >
-                        {isFullView ? 'Exit Full View' : 'Full View'}
+                        {isFullView
+                            ? tran('Exit full view')
+                            : tran('Full view')}
                     </button>
                 </div>
                 {isChanged ? (

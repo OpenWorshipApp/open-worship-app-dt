@@ -17,7 +17,7 @@ import {
 } from '../../lang/langHelpers';
 import { useAppEffect } from '../appHooks';
 import BibleItem from '../../bible-list/BibleItem';
-import { getModelChapterCount } from './bibleLogicHelpers1';
+import { getModelChapterCount, getModelKeyBookMap } from './bibleLogicHelpers1';
 import CacheManager from '../../others/CacheManager';
 import type { BibleMinimalInfoType } from './bibleDownloadHelpers';
 import { getAllLocalBibleInfoList } from './bibleDownloadHelpers';
@@ -191,6 +191,35 @@ export async function getVersesCount(
     });
 }
 
+// "Psalm 23:1" typed into a Khmer Bible: no Khmer book is called "Psalm",
+// but the model's own (English) name is, and every Bible shares the model's
+// book keys. Tried LAST, so a Bible's own names always win.
+function modelBookToKey(book: string) {
+    const lowerBook = book.trim().toLocaleLowerCase();
+    if (!lowerBook) {
+        return null;
+    }
+    for (const [bookKey, modelBook] of Object.entries(getModelKeyBookMap())) {
+        if (modelBook.toLocaleLowerCase() === lowerBook) {
+            return bookKey;
+        }
+    }
+    return null;
+}
+
+// "Psalms 23:1" (no such book) => "23:1": the part of an input no book
+// matched that was already a chapter, or a chapter and verses, so picking the
+// book it was meant to be does not throw that part away. Digits of any
+// script (`\p{Nd}`), so a Khmer `២៣:១` is kept too.
+const TRAILING_REFERENCE_REGEX = /\s(\p{Nd}+(?::\p{Nd}*(?:-\p{Nd}*)?)?)$/u;
+export function toTrailingReference(guessingBook: string | null) {
+    if (!guessingBook) {
+        return null;
+    }
+    const matches = TRAILING_REFERENCE_REGEX.exec(guessingBook.trim());
+    return matches?.[1] ?? null;
+}
+
 async function transformExtracted(
     bibleKey: string,
     book: string,
@@ -217,6 +246,7 @@ async function transformExtracted(
                     break;
                 }
             }
+            bookKey ??= modelBookToKey(book);
             if (bookKey === null) {
                 return null;
             }

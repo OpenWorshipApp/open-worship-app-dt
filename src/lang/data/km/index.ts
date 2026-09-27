@@ -362,7 +362,7 @@ const dictionary = {
     'The application is started first time':
         'កម្មវិធីត្រូវបានចាប់ផ្តើមជាលើកដំបូង',
     Close: 'បិទ',
-    'Toggle Widget Full View': 'បិទ/បើក ទិដ្ឋភាពពេញលេញរបស់វីដេអូ',
+    'Toggle Widget Full View': 'បិទ/បើក ទិដ្ឋភាពពេញលេញរបស់ផ្ទាំង',
     'Split Vertical to': 'បំបែកបញ្ឈរទៅ',
     'Split Horizontal to': 'បំបែកផ្ដេកទៅ',
     'Loading Bible Data': 'កំពុងផ្ទុកទិន្នន័យព្រះគម្ពីរ',
