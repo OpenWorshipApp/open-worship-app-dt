@@ -285,10 +285,8 @@ const dictionary = {
     'Remove Stage': 'Retirer la scène',
     'Base Stage': 'Scène de base',
     'Base stage is always shown': 'La scène de base est toujours affichée',
-    'Choose a stage layout to add':
-        'Choisir une disposition de scène à ajouter',
-    'All stage layouts are shown':
-        'Toutes les dispositions de scène sont affichées',
+    'Choose a stage to add': 'Choisir une scène à ajouter',
+    'Maximum stages are shown': 'Le nombre maximal de scènes est affiché',
     'Stage Style': 'Style de scène',
     'Reset Stage Style': 'Réinitialiser le style de scène',
     'Applies to every song': "S'applique à tous les chants",

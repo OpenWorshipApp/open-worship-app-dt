@@ -21,7 +21,20 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-26e** (**W-41 — an exported note carries what you
+**workflowsVersion: 2026-09-27** (**W-05 — Add Stage is the same picker the mini
+screen's `St:` badge opens.** Asked for directly, with both menus circled in one
+picture. The Stage Previewer could offer Stage 1 and then nothing — it went dead
+— while a screen's stage number increments without a ceiling, so a screen set to
+`St: 3` showed a render the previewer had no pane for. Both menus now list the
+same five numbered stages (one already shown is listed and greyed, never
+removed) and close on **Increment · Stage N**, one past the highest stage on
+screen. Every stage number keeps its own style record, so a third and a fourth
+stage are two more looks rather than two copies of stage 1 — proven live by
+turning stage 4 dark and watching stage 3 stay light. New step 6, steps
+renumbered, and the stage-style steps stop naming `Stage 1` as the only other
+stage. PM-148.)
+
+Previous: **workflowsVersion: 2026-09-26e** (**W-41 — an exported note carries what you
 typed last, not what you saved last.** The note window keeps your typing in the
 note's editing history until you press **[en:tran:Save]** (W-14), and the
 bundle was written from the file on disk -- so a note edited this morning and
@@ -1368,30 +1381,41 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
    a backing track travels with the song. 📸
 5. Links the app cannot show — a PDF, or a line that is not a web address — still get
    their named slide, just an empty one.
-6. To change how a stage's slides **look**, click the **⚙** on that stage's chip
-   (`Stage 0`, `Stage 1`) in the Stage Previewer header. A small **Stage Style** window
+6. **One song can be previewed at several stages at once.** **[en:tran:Add Stage]** in
+    the Stage Previewer header opens the same menu the mini screen's **St:** badge does:
+    **Stage 0** to **Stage 4** — a stage already on screen is listed but greyed out — and
+    **Increment · Stage N** at the foot, which adds one past the highest stage you have.
+    Increment is how you get past Stage 4, and it is what matches a screen whose **St:**
+    number you have already pushed up there. Each stage arrives as its own chip and its
+    own pane, in its own colour; the **×** on a chip takes that stage away again, and the
+    padlocked **Stage 0** stays. 📸
+7. To change how a stage's slides **look**, click the **⚙** on that stage's chip
+   (`Stage 0`, `Stage 3`, …) in the Stage Previewer header. A small **Stage Style** window
    opens — drag it anywhere, it remembers where you left it. It sets **Slide Padding**,
    **Background Opacity**, **Extra Font Size**, a **Light/Dark** theme, and a
    **Custom CSS** box for anything else. 📸
-7. These settings belong to the **stage**, not to the song — every song you open uses
-   them, which is why the panel says _Applies to every song_. Stage 0 and Stage 1 keep
-   separate settings, so you can leave the projected stage plain and make the chord
-   stage larger. Custom CSS is **added to** the stage's built-in look rather than
-   replacing it, so stage 0 keeps hiding its chords whatever you type.
-8. **Reset** puts that stage back to the defaults.
-9. A screen already showing a slide keeps it — present the slide again to push the new
-   look out to it.
-10. **Edit the words while the song is open and the verses follow by themselves.** Change the
+8. These settings belong to the **stage**, not to the song — every song you open uses
+   them, which is why the panel says _Applies to every song_. **Every stage number keeps
+   its own settings**, so you can leave the projected stage plain, make the chord stage
+   larger, and give a third stage a dark theme for the person on the sound desk. Stage 0
+   is the plain lyrics-only look; every stage from 1 up starts from the chord-and-notes
+   look and differs only by what you set here. Custom CSS is **added to** the stage's
+   built-in look rather than replacing it, so stage 0 keeps hiding its chords whatever
+   you type.
+9. **Reset** puts that stage back to the defaults.
+10. A screen already showing a slide keeps it — present the slide again to push the new
+    look out to it.
+11. **Edit the words while the song is open and the verses follow by themselves.** Change the
     song in the **Lyric Editor** (right-click the song → **edit**) — or in any other window —
     and within a second or two the rendered song **and every Stage Previewer pane** show the
     new words. You do not have to re-pick the song, and you do not have to save first: the
     editor keeps your unsaved work on disk, and that is what the verses render. 📸
-11. If you ever need to force it — a song changed by something outside the app, say — the
+12. If you ever need to force it — a song changed by something outside the app, say — the
     **⋮** at the right end of the Stage Previewer header holds **Reload**, which re-renders
     every stage at once. The same **Reload** sits in the right-click menu of a stage pane and
     of the rendered song above it.
 
-_Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, XW-08._
+_Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
 
 ### W-06 — Look up and present a Bible verse
 

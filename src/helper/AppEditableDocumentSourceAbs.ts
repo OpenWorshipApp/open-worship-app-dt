@@ -55,9 +55,18 @@ export abstract class AppDocumentSourceAbs {
         return FileSource.getInstance(this.filePath);
     }
 
+    /**
+     * `cacheKeySuffix` is what lets ONE class hand out more than one instance
+     * per file. The key is the class name plus the path, so without it a class
+     * is an identity: the lyric stages need the opposite — stage 2 and stage 3
+     * share `LyricAppDocumentStage1`'s layout but must not share its instance,
+     * or the second pane renders a byte-identical clone of the first. Empty by
+     * default, so every existing caller keys exactly as it did before.
+     */
     static _getInstance<T extends AppDocumentSourceAbs>(
         filePath: string,
         createInstance: () => T,
+        cacheKeySuffix = '',
     ) {
         const extensions = getMimetypeExtensions(this.mimetypeName);
         const fileSource = FileSource.getInstance(filePath);
@@ -67,7 +76,9 @@ export abstract class AppDocumentSourceAbs {
                     `expected extensions: ${extensions.join(', ')}`,
             );
         }
-        const cacheKey = `${this.name}:${this.mimetypeName}:${filePath}`;
+        const cacheKey =
+            `${this.name}:${this.mimetypeName}:${filePath}` +
+            (cacheKeySuffix === '' ? '' : `:${cacheKeySuffix}`);
         if (!cache.has(cacheKey)) {
             const instance = createInstance();
             cache.set(cacheKey, instance as any);

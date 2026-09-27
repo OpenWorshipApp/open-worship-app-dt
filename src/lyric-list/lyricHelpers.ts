@@ -115,46 +115,57 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
 }
 
 /**
- * Stage number -> the class that renders it, indexed by stage.
+ * Stage number -> the LAYOUT that renders it, indexed by stage.
  *
- * The instance cache keys on the CLASS name + file path
- * (`AppDocumentSourceAbs._getInstance`), so a stage only gets an identity of
- * its own by having a class of its own. This list is therefore also the
- * authoritative answer to "how many stages exist" — `getAvailableLyricStages`
- * below is what the previewer offers, so adding a layout here is all it takes
- * to make another stage selectable.
+ * A layout, not an identity: stage 0 is the plain one and every stage from 1
+ * up is rendered by the last entry, so this list says how a stage LOOKS, never
+ * how many stages there are. What a stage number of its own buys past the end
+ * of this list is its own `lyric-stage-style-<stage>` record — padding,
+ * opacity, font boost, theme and custom CSS — which is what the Stage
+ * Previewer's ⚙ edits, and its own cached slides. Adding a layout here gives
+ * that stage number a different starting look; it does not change what is
+ * selectable.
  */
 const LYRIC_APP_DOCUMENT_STAGE_CLASSES = [
     LyricAppDocumentStage0,
     LyricAppDocumentStage1,
 ];
 
-export function getAvailableLyricStages() {
-    return LYRIC_APP_DOCUMENT_STAGE_CLASSES.map((_, stage) => {
-        return stage;
-    });
+/**
+ * A stage number is any non-negative integer — screens have always allowed one
+ * (the mini screen's `St:` menu increments without a ceiling), so the previewer
+ * and everything that reads a PERSISTED stage have to accept the same range or
+ * a screen set to `St: 3` shows a stage nothing can preview.
+ */
+export function checkIsValidLyricStage(stage: number) {
+    return Number.isInteger(stage) && stage >= 0;
 }
 
 /**
- * Resolves to a REGISTERED stage, and reports which one it landed on.
+ * Resolves a stage to its document, and reports the stage it landed on.
  *
- * The returned number is the stage actually rendered, not the one asked for:
- * every unregistered stage used to fall through to `LyricAppDocumentStage1`,
- * which handed back the very same cached instance stage 1 was already using —
- * so a second pane rendered a byte-identical clone under a label claiming it
- * was something else, and `genCacheKey`'s `stage:` part could not tell the two
- * apart either. Callers that resolve a PERSISTED stage (presenting flow items,
- * `lyricSlideScreenHelpers`) need this to stay total, so an out-of-range stage
- * clamps to the nearest registered one instead of failing.
+ * Total on purpose — callers resolve a PERSISTED number (presenting flow
+ * items, `lyricSlideScreenHelpers`, a screen's `St:`) — so a negative or
+ * non-finite stage lands on the base stage rather than failing. It no longer
+ * clamps at the top: a stage past the layout list keeps its OWN number and
+ * gets its own instance (see `getStageInstance`), because the number is what
+ * picks the stage's style record, and clamping used to hand stage 2 back the
+ * stage-1 document while still echoing `2` to the caller.
  */
 export function getLyricAppDocumentStageByStage(
     filePath: string,
     stage: number,
 ): [number, LyricAppDocumentStageAbstract] {
-    const resolvedStage = Math.min(
-        Math.max(Number.isFinite(stage) ? Math.trunc(stage) : 0, 0),
-        LYRIC_APP_DOCUMENT_STAGE_CLASSES.length - 1,
+    const resolvedStage = Math.max(
+        Number.isFinite(stage) ? Math.trunc(stage) : 0,
+        0,
     );
-    const StageClass = LYRIC_APP_DOCUMENT_STAGE_CLASSES[resolvedStage];
-    return [resolvedStage, StageClass.getInstance(filePath)];
+    const StageClass =
+        LYRIC_APP_DOCUMENT_STAGE_CLASSES[
+            Math.min(resolvedStage, LYRIC_APP_DOCUMENT_STAGE_CLASSES.length - 1)
+        ];
+    return [
+        resolvedStage,
+        StageClass.getStageInstance(filePath, resolvedStage),
+    ];
 }

@@ -69,6 +69,42 @@ function genFormControlFontCss(fontFamily?: string) {
                 }`;
 }
 export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocument {
+    /**
+     * The cached document for ONE stage number, whichever layout renders it.
+     *
+     * There are two layouts and no ceiling on stage numbers: stage 0 is the
+     * plain one, every stage from 1 up is rendered by
+     * `LyricAppDocumentStage1`. So the layout class can no longer BE the
+     * identity — a `getInstance(filePath)` keyed on the class alone handed
+     * stage 2 and stage 3 the one stage-1 instance, and a second pane rendered
+     * a byte-identical clone of the first under a label claiming otherwise.
+     * The stage goes into the cache key instead, and is STAMPED on the new
+     * instance: `stage` is a class field (`LyricAppDocumentStage1` declares
+     * `1`), so it is the default this overwrites, and everything that varies by
+     * stage — `stageStyle`, `genCacheKey`, the slide's own `stage` — reads it
+     * at call time rather than at construction. See `LyricAppDocument.stageStyle`.
+     */
+    static getStageInstance(
+        this: typeof LyricAppDocumentStageAbstract,
+        filePath: string,
+        stage: number,
+    ): LyricAppDocumentStageAbstract {
+        // `this` is whichever CONCRETE layout class was called — the cast only
+        // tells the compiler that, since the declaring class is abstract.
+        const StageClass = this as unknown as new (
+            filePath: string,
+        ) => LyricAppDocumentStageAbstract;
+        return this._getInstance<LyricAppDocumentStageAbstract>(
+            filePath,
+            () => {
+                const instance = new StageClass(filePath);
+                instance.stage = stage;
+                return instance;
+            },
+            `stage:${stage}`,
+        );
+    }
+
     get basicOpenLyricOptions() {
         const canvasItemBounds = this.canvasItemBounds;
         // Read ONCE for the whole options object: each access re-reads the

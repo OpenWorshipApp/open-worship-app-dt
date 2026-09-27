@@ -13,7 +13,7 @@ import { type DataInputType } from '../resize-actor/flexSizeHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import type LyricAppDocument from './LyricAppDocument';
 import {
-    getAvailableLyricStages,
+    checkIsValidLyricStage,
     getLyricAppDocumentStageByStage,
 } from './lyricHelpers';
 import { tran } from '../lang/langHelpers';
@@ -21,7 +21,11 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genLyricReloadContextMenuItem } from './lyricContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { getLabelIconName, toIconedLabel } from '../others/labelIconHelpers';
-import { getStageAccentColor } from '../_screen/screenHelpers';
+import {
+    getStageAccentColor,
+    STAGE_NUMBER_CHOICE_COUNT,
+} from '../_screen/screenHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import LyricStageStyleFloatingComp from './LyricStageStyleFloatingComp';
 import {
     closeLyricStageStyleFloating,
@@ -36,21 +40,22 @@ function getLyricAppDocuments(
     stageSetting: string,
     lyricManager: LyricManager,
 ) {
-    // Only stages that HAVE a layout may be shown, and each at most once. A
-    // stage with no class of its own resolves to another stage's cached
-    // instance, so letting one through renders a duplicate pane rather than a
-    // new one. A setting persisted before this was enforced can still name
-    // those, hence the filter rather than a plain parse.
-    const availableStages = getAvailableLyricStages();
+    // Any non-negative integer is a stage, each at most once, SORTED so the
+    // panes read left to right in stage order whatever order the setting names
+    // them in. The cap is the memory guard: every pane renders the whole song
+    // again, so a hand-edited setting naming forty stages must not open forty
+    // panes — and past a handful they are slivers nobody can read anyway.
     const stages = [
         ...new Set(
             stageSetting
                 .split(',')
                 .map((stage) => parseInt(stage.trim(), 10))
-                .filter((stage) => availableStages.includes(stage))
+                .filter(checkIsValidLyricStage)
                 .filter((stage) => stage !== BASE_STAGE),
         ),
-    ];
+    ]
+        .sort((stageA, stageB) => stageA - stageB)
+        .slice(0, MAX_STAGE_PANE_COUNT - 1);
     stages.unshift(BASE_STAGE);
 
     const entries = stages.map((stage) => {
@@ -63,6 +68,16 @@ function getLyricAppDocuments(
 }
 
 const BASE_STAGE = 0;
+
+/**
+ * How many stage panes may be open at once, the base stage included.
+ *
+ * Stage numbers themselves are unbounded — this is the only ceiling, and it is
+ * a memory one: a pane holds a whole song's rendered HTML, and they are laid
+ * out side by side, so the eighth is already unreadable before it is
+ * expensive. Eight is also where the stage accent colours start repeating.
+ */
+const MAX_STAGE_PANE_COUNT = 8;
 
 const STAGE_ACCENT_VAR_NAME = '--stage-accent';
 
@@ -233,49 +248,68 @@ export default function LyricSlidesPreviewerComp() {
     );
 
     const stagesRef = useAppCurrentRef(stages);
-    // Every stage that HAS a layout and is not on screen yet. Empty once all of
-    // them are shown, which is what disables the add button — it used to keep
-    // incrementing past the last real stage.
-    const unusedStages = useMemo(() => {
-        return getAvailableLyricStages().filter((stage) => {
-            return !stages.includes(stage);
-        });
+    // The stage a new one gets: one past the highest shown, exactly like the
+    // mini screen's Increment. `stages` always holds the base stage, so there
+    // is nothing for `Math.max` to be empty about.
+    const nextStage = useMemo(() => {
+        return Math.max(...stages) + 1;
     }, [stages]);
-    const unusedStagesRef = useAppCurrentRef(unusedStages);
+    const nextStageRef = useAppCurrentRef(nextStage);
+    const isFull = stages.length >= MAX_STAGE_PANE_COUNT;
     const lyricAppDocumentEntriesRef = useAppCurrentRef(
         lyricAppDocumentEntries,
     );
 
-    // The button ASKS which stage rather than taking the lowest unused one: the
-    // stages are a set, not a sequence, so a user who removed stage 1 and kept
-    // stage 2 could never get stage 1 back without removing the other first.
-    // The menu also says what is left — a count the disabled button alone could
-    // not give — and each item carries the stage's own accent, the same colour
-    // its chip and pane already wear.
+    // The same menu the mini screen's `St:` badge opens, and deliberately so:
+    // that one is where a stage number is CHOSEN for a projector, this one is
+    // where the pane that previews it is added, and a volunteer who learns one
+    // has learned the other. So it offers the same shortlist of numbers plus
+    // the same Increment past the end of it — stage numbers have no ceiling,
+    // and the shortlist alone could never reach the stage a screen was already
+    // set to. A number already on screen stays LISTED and disabled rather than
+    // disappearing: the menu is then the whole picture, positions do not move
+    // under the mouse, and the chips beside the button already say which those
+    // are. Each item carries the stage's own accent, the colour its chip and
+    // pane wear.
     const handleStageAdding = useCallback((event: any) => {
-        const stagesToAdd = unusedStagesRef.current;
-        if (stagesToAdd.length === 0) {
+        const currentStages = stagesRef.current;
+        if (currentStages.length >= MAX_STAGE_PANE_COUNT) {
             return;
         }
-        showAppContextMenu(
-            event,
-            stagesToAdd.map((stage) => {
-                return {
-                    childBefore: genContextMenuItemIcon('easel2', {
-                        color: getStageAccentColor(stage),
-                    }),
-                    menuElement: `${tran('Stage')} ${stage}`,
-                    onSelect: () => {
-                        // Sorted, so the panes read left to right in stage
-                        // order whatever order they were picked in.
-                        const newStages = [...stagesRef.current, stage]
-                            .filter((eachStage) => eachStage !== BASE_STAGE)
-                            .sort((stageA, stageB) => stageA - stageB);
-                        setStageSetting(newStages.join(','));
-                    },
-                };
-            }),
-        );
+        const addStage = (stage: number) => {
+            // Sorted, so the panes read left to right in stage order whatever
+            // order they were picked in.
+            const newStages = [...currentStages, stage]
+                .filter((eachStage) => eachStage !== BASE_STAGE)
+                .sort((stageA, stageB) => stageA - stageB);
+            setStageSetting(newStages.join(','));
+        };
+        const items: ContextMenuItemType[] = Array.from(
+            { length: STAGE_NUMBER_CHOICE_COUNT },
+            (_, stage) => stage,
+        ).map((stage) => {
+            return {
+                childBefore: genContextMenuItemIcon('easel2', {
+                    color: getStageAccentColor(stage),
+                }),
+                menuElement: `${tran('Stage')} ${stage}`,
+                disabled: currentStages.includes(stage),
+                onSelect: () => {
+                    addStage(stage);
+                },
+            };
+        });
+        const stageToIncrementTo = nextStageRef.current;
+        items.push({
+            childBefore: genContextMenuItemIcon('plus-circle'),
+            menuElement:
+                `${tran('Increment')} · ` +
+                `${tran('Stage')} ${stageToIncrementTo}`,
+            onSelect: () => {
+                addStage(stageToIncrementTo);
+            },
+        });
+        showAppContextMenu(event, items);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     // Every pane listens on the lyric's own file source, so ONE update event
@@ -350,20 +384,19 @@ export default function LyricSlidesPreviewerComp() {
                 {/*
                     Spelled out rather than a bare `+` glyph: this is the only
                     way to get a second stage, so it has to read as an action
-                    even to someone who has never seen the panel before.
-                    Disabled once every stage that HAS a layout is on screen —
-                    it used to keep counting upwards and each extra chip added a
-                    pane rendering a duplicate of the last real stage.
+                    even to someone who has never seen the panel before. It only
+                    ever goes dead at the pane ceiling — there is no highest
+                    stage to run out of.
                 */}
                 <button
                     type="button"
                     className="btn btn-sm btn-outline-info stage-previewer-add"
-                    disabled={unusedStages.length === 0}
+                    disabled={isFull}
                     aria-haspopup="menu"
                     title={
-                        unusedStages.length === 0
-                            ? tran('All stage layouts are shown')
-                            : tran('Choose a stage layout to add')
+                        isFull
+                            ? tran('Maximum stages are shown')
+                            : tran('Choose a stage to add')
                     }
                     onClick={handleStageAdding}
                 >

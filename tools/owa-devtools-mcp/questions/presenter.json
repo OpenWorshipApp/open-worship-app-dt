@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-09-25",
+    "updated": "2026-09-27",
     "sections": [
         {
             "id": "orientation",
@@ -823,6 +823,26 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "song-add-stage",
+                    "text": "How do I add another stage to the Stage Previewer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "add stage",
+                        "another stage",
+                        "second stage",
+                        "stage 2",
+                        "stage 3",
+                        "increment stage",
+                        "more stages",
+                        "chord stage"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "find": "Add Stage",
                         "guide": true
                     }
                 },

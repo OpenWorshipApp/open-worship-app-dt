@@ -19,7 +19,10 @@ import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
 import { useStateSettingString } from '../../helper/settingHelpers';
 import { DRAW_MODE_SETTING_PREFIX } from '../managers/screenSettingKeyHelpers';
 import type { DrawModeType } from '../screenTypeHelpers';
-import { getStageAccentColor } from '../screenHelpers';
+import {
+    getStageAccentColor,
+    STAGE_NUMBER_CHOICE_COUNT,
+} from '../screenHelpers';
 import { useScreenMaskManagerEvents } from '../managers/screenEventHelpers';
 
 const LazyMiniScreenAudioHandlersComp = lazy(() => {
@@ -91,7 +94,7 @@ function getNewStageNumber(
     onChange: (newStageNumber: number) => void,
 ) {
     const items: ContextMenuItemType[] = Array.from(
-        { length: 5 },
+        { length: STAGE_NUMBER_CHOICE_COUNT },
         (_, i) => i,
     ).map((i) => {
         return {

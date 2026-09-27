@@ -514,3 +514,13 @@ export function getStageAccentColor(stage: number) {
     const index = Math.abs(stage) % STAGE_ACCENT_COLOR_LIST.length;
     return STAGE_ACCENT_COLOR_LIST[index];
 }
+
+/**
+ * How many stage numbers a picker offers outright, before its Increment item.
+ *
+ * Shared by the mini screen's `St:` menu and the Stage Previewer's **Add
+ * Stage** menu so the two cannot drift: there is no ceiling on a stage number,
+ * so a picker is a shortlist plus a way past it, and a volunteer who learns one
+ * menu has learned the other.
+ */
+export const STAGE_NUMBER_CHOICE_COUNT = 5;

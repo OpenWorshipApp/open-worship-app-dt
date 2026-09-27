@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [GL-25]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-26"
+workflowsVersion: "2026-09-27"
 ---
 # W-46 — Learn the page with Tips of the Day
 
@@ -85,5 +85,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `GL-25`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-26).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-27).
 :::

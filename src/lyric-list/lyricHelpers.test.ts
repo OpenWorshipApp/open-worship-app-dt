@@ -1,23 +1,25 @@
 import { describe, expect, test, vi } from 'vitest';
 
 // `lyricHelpers` pulls the whole open-lyric + FileSource + language stack in at
-// module load and none of it participates in resolving a stage to its class, so
-// it is all stubbed. The two stage classes are stubbed down to the only thing
-// the resolution uses: a per-class `getInstance` cached on the file path, which
-// is what `AppDocumentSourceAbs._getInstance` does for real (it keys on the
-// CLASS NAME plus the path, which is why a stage only gets an identity of its
-// own by having a class of its own). `initOpenLyric` runs against the same
-// stubs: what it is tested for is the order it awaits things in.
+// module load and none of it participates in resolving a stage to its document,
+// so it is all stubbed. The two stage classes are stubbed down to the only thing
+// the resolution uses: `getStageInstance`, cached on the file path AND the
+// stage, which is what `LyricAppDocumentStageAbstract.getStageInstance` does for
+// real (`_getInstance` keys on the class name plus the path, and the stage goes
+// in as the suffix — which is what gives a stage past the layout list an
+// identity of its own). `initOpenLyric` runs against the same stubs: what it is
+// tested for is the order it awaits things in.
 const mocks = vi.hoisted(() => {
-    const genStageClass = (stage: number) => {
+    const genStageClass = (layoutStage: number) => {
         const instances = new Map<string, any>();
         return {
-            stage,
-            getInstance: vi.fn((filePath: string) => {
-                if (!instances.has(filePath)) {
-                    instances.set(filePath, { stage, filePath });
+            layoutStage,
+            getStageInstance: vi.fn((filePath: string, stage: number) => {
+                const cacheKey = `${filePath}:${stage}`;
+                if (!instances.has(cacheKey)) {
+                    instances.set(cacheKey, { layoutStage, stage, filePath });
                 }
-                return instances.get(filePath);
+                return instances.get(cacheKey);
             }),
         };
     };
@@ -56,21 +58,29 @@ vi.mock('./lyricPrintHelpers', () => ({
 }));
 
 import {
-    getAvailableLyricStages,
+    checkIsValidLyricStage,
     getLyricAppDocumentStageByStage,
     initOpenLyric,
 } from './lyricHelpers';
 
 const FILE_PATH = '/songs/aa3.owl';
 
-describe('getAvailableLyricStages', () => {
-    test('lists exactly the stages that have a layout class', () => {
-        expect(getAvailableLyricStages()).toEqual([0, 1]);
+describe('checkIsValidLyricStage', () => {
+    test('accepts every non-negative integer, and nothing else', () => {
+        expect(checkIsValidLyricStage(0)).toBe(true);
+        expect(checkIsValidLyricStage(1)).toBe(true);
+        // Past the layout list on purpose: a screen's `St:` increments without
+        // a ceiling, so the previewer has to be able to show what a screen can
+        // already be set to.
+        expect(checkIsValidLyricStage(7)).toBe(true);
+        expect(checkIsValidLyricStage(-1)).toBe(false);
+        expect(checkIsValidLyricStage(1.5)).toBe(false);
+        expect(checkIsValidLyricStage(NaN)).toBe(false);
     });
 });
 
 describe('getLyricAppDocumentStageByStage', () => {
-    test('each registered stage resolves to a document of its own', () => {
+    test('each stage resolves to a document of its own', () => {
         const [stage0, document0] = getLyricAppDocumentStageByStage(
             FILE_PATH,
             0,
@@ -90,19 +100,33 @@ describe('getLyricAppDocumentStageByStage', () => {
         expect(first).toBe(second);
     });
 
-    // The regression. An unregistered stage used to fall through to
-    // `LyricAppDocumentStage1` while still echoing back the stage that was
-    // ASKED for, so the caller believed it held a distinct stage-2 document
-    // when it held stage 1's own cached instance. The Stage Previewer trusted
-    // that number for its chip label and rendered a byte-identical second pane.
-    test('an unregistered stage clamps AND reports the stage it landed on', () => {
-        const [stage, document] = getLyricAppDocumentStageByStage(FILE_PATH, 2);
+    // The regression, and the reason the clamp went. A stage past the layout
+    // list used to fall through to `LyricAppDocumentStage1` while still echoing
+    // back the stage that was ASKED for, so the caller believed it held a
+    // distinct stage-2 document when it held stage 1's own cached instance —
+    // the Stage Previewer trusted that number for its chip label and rendered a
+    // byte-identical second pane. A stage past the list now keeps its number,
+    // borrows the last layout, and gets an instance of its own.
+    test('a stage past the layout list keeps its number and its own instance', () => {
+        const [stage2, document2] = getLyricAppDocumentStageByStage(
+            FILE_PATH,
+            2,
+        );
+        const [stage3, document3] = getLyricAppDocumentStageByStage(
+            FILE_PATH,
+            3,
+        );
         const [, stage1Document] = getLyricAppDocumentStageByStage(
             FILE_PATH,
             1,
         );
-        expect(stage).toBe(1);
-        expect(document).toBe(stage1Document);
+        expect(stage2).toBe(2);
+        expect(stage3).toBe(3);
+        expect(document2).not.toBe(stage1Document);
+        expect(document2).not.toBe(document3);
+        // Borrowed layout, own number.
+        expect((document2 as any).layoutStage).toBe(1);
+        expect(document2.stage).toBe(2);
     });
 
     test('a negative or non-finite stage clamps to the base stage', () => {

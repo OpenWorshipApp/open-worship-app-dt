@@ -287,6 +287,17 @@ describe('non-Bible manager coverage', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        // jsdom implements none of these and writes a "Not
+        // implemented" page of stack to the console for every call.
+        vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(
+            undefined,
+        );
+        vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(
+            () => {},
+        );
+        vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(
+            () => {},
+        );
         vi.useRealTimers();
         document.body.innerHTML = '';
 
@@ -1294,11 +1305,11 @@ describe('non-Bible manager coverage', () => {
         expect(manager.backgroundSrc).toBeNull();
     });
 
-    test('the end-of-video fade re-uses the playing element and reads nothing', async () => {
+    test('the end-of-video crossfade covers the wrap and re-uses one copy', async () => {
         const base = createScreenManagerBase(25);
         const effectManager = createEffectManager();
-        // Mirror what the real fade leaves behind, or the opacity assertion
-        // below passes whether or not the code restores anything.
+        // Mirror what the real fade leaves behind, or the assertions below
+        // pass whether or not the code puts anything back.
         effectManager.styleAnimList.fade.animOut = vi.fn(
             async (element: HTMLElement) => {
                 element.style.opacity = '0';
@@ -1325,21 +1336,68 @@ describe('non-Bible manager coverage', () => {
             .mockImplementation(() => {});
         // What a foreground Opacity slider would have authored.
         container.style.opacity = '0.5';
+        mocks.getIsFadingAtTheEndSetting.mockReturnValue(true);
 
         await manager._fadeOverVideoLoop(container, video);
 
         const { animIn, animOut } = effectManager.styleAnimList.fade;
-        expect(animOut).toHaveBeenCalledWith(container);
-        expect(animIn).toHaveBeenCalledWith(container, rootContainer);
-        // `animOut` leaves `opacity: 0` behind and `animIn` treats whatever it
-        // finds there as the value to restore, so the authored one has to be
-        // put back between the two -- otherwise the background fades in to
-        // fully transparent and stays there.
-        expect(container.style.opacity).toBe('0.5');
+        // NOTHING fades out. The copy coming in covers the clip that is still
+        // playing its last seconds; dipping the one element to zero and back
+        // -- which is what this did for a while -- goes through black, and
+        // that black is the blank the audience sees at the end of every clip.
+        expect(animOut).not.toHaveBeenCalled();
+        const twin = rootContainer.lastElementChild as HTMLElement;
+        expect(twin).not.toBe(container);
+        expect(animIn).toHaveBeenCalledWith(twin, rootContainer);
+        expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+        // The copy comes in at the opacity the background asked for, and the
+        // clip that just ended is parked out of sight rather than removed.
+        expect(twin.style.opacity).toBe('0.5');
+        expect(container.style.opacity).toBe('0');
+        expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
         // Nothing may go back through `render()`: that is what re-read the
         // whole clip from disk on every lap.
         expect(renderSpy).not.toHaveBeenCalled();
-        expect(container.querySelectorAll('video')).toHaveLength(1);
+
+        // The next lap hands back to the copy that is already there -- two
+        // elements for the life of the background, not one more per lap.
+        const twinVideo = twin.querySelector('video') as HTMLVideoElement;
+        await manager._fadeOverVideoLoop(twin, twinVideo);
+        expect(rootContainer.children).toHaveLength(2);
+        expect(rootContainer.lastElementChild).toBe(container);
+        expect(container.style.opacity).toBe('0.5');
+        expect(twin.style.opacity).toBe('0');
+
+        rootContainer.remove();
+    });
+
+    test('clearing a background takes both halves of the crossfade away', async () => {
+        const base = createScreenManagerBase(27);
+        const effectManager = createEffectManager();
+        const manager = new ScreenBackgroundManager(base, effectManager);
+        const rootContainer = document.createElement('div');
+        const showing = document.createElement('div');
+        const parked = document.createElement('div');
+        // The parked half of a crossfade is already invisible.
+        parked.style.opacity = '0';
+        rootContainer.append(parked, showing);
+        document.body.appendChild(rootContainer);
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(
+            rootContainer as any,
+        );
+        vi.spyOn(manager, 'backgroundSrc', 'get').mockReturnValue(null as any);
+
+        manager.render();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        // Only the last child used to go, which left the parked copy -- and
+        // its media player -- behind for the rest of the service.
+        expect(rootContainer.children).toHaveLength(0);
+        // The parked one is not faded out on its way: `animOut` puts
+        // `opacity: 1` on first, which would bring a frozen frame INTO view.
+        expect(effectManager.styleAnim.animOut).toHaveBeenCalledTimes(1);
+        expect(effectManager.styleAnim.animOut).toHaveBeenCalledWith(showing);
 
         rootContainer.remove();
     });
