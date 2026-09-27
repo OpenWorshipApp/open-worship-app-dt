@@ -77,6 +77,7 @@
 - [Modal layer & above-modal widgets](modal-layer-above-modal.md) — ModalLayerContext for widgets in the modal's tree
 - [Bible-XML cache is key-scoped](bible-xml-cache-key-scoped.md) — every writer must call `clearBibleXMLCache`
 - [experiments/html-in-canvas is dev-only](experiments-html-in-canvas.md) — build-excluded scratch harness
+- [Bible note editor writes a history](bible-note-editing-history.md) — its autosave bricked a note with a childless root; Save is a press now
 - [Verse marks are note items](verse-marks-note-items.md) — highlights/comments live in `.note` files as a second kind
 - [Agent access & in-app chatbot](agent-access-mcp-chatbot.md) — no fixed CDP port
 - [`.claude/` edits need a knowledge rebuild](claude-dir-edits-need-knowledge-rebuild.md) — `node extra-work/build-knowledge.mjs`

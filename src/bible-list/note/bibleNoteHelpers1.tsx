@@ -8,19 +8,46 @@ import { useThemeSource } from '../../others/themeHelpers';
 import { useAppEffect, useAppEffectAsync } from '../../helper/appHooks';
 import { useWatchStateSettingString } from '../../helper/settingHelpers';
 import { BIBLE_KEY_SETTING_NAME } from './bibleNoteHelpers';
+import BibleNoteEditingMenuComp from './BibleNoteEditingMenuComp';
+import type Note from './Note';
+import type NoteItem from './NoteItem';
 import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
 export function useBibleNoteControl({
     bibleNote,
+    note,
+    noteItem,
     setIsShowingBibleLookup,
     isReadOnly = false,
 }: {
     bibleNote: BibleNote;
+    note: Note;
+    noteItem: NoteItem;
     setIsShowingBibleLookup: (isShowing: boolean) => void;
     isReadOnly?: boolean;
 }) {
     const themeSource = useThemeSource();
+    useAppEffect(() => {
+        if (isReadOnly) {
+            // A preview writes nothing, so it has nothing to save.
+            return;
+        }
+        bibleNote.prependFooterActionButton({
+            id: 'editing-history',
+            description: tran('Save'),
+            // NO `shortcutKey`: the footer presses the FIRST button it finds
+            // inside an entry, which here would be Undo. Ctrl+S is registered
+            // by the menu itself.
+            children: (
+                <BibleNoteEditingMenuComp
+                    note={note}
+                    noteItem={noteItem}
+                    bibleNote={bibleNote}
+                />
+            ),
+        });
+    }, [bibleNote, note, noteItem, isReadOnly]);
     useAppEffect(() => {
         bibleNote.setColorScheme(themeSource.theme as 'light' | 'dark');
     }, [themeSource.theme]);

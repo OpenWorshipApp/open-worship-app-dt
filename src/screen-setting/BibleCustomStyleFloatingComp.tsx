@@ -30,8 +30,13 @@ export default function BibleCustomStyleFloatingComp() {
     const label = tran('Bible Properties');
     return createPortal(
         <div className="app app-floating-widget-portal" data-bs-theme={theme}>
+            {/* Named like every foreground floating panel: without it every
+                control inside reported the pane BEHIND it as the panel it was
+                in, so nothing could be scoped to this one -- its own close
+                button was findable only as a bare "Close floating widget". */}
             <FloatingWidgetComp
                 title={label}
+                widgetName="Bible Properties"
                 persistKey="floating-widget-rect-bible-property"
                 onClose={() => {
                     setIsBibleCustomStyleFloatingShowing(false);

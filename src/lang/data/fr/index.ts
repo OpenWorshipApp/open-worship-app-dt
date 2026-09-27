@@ -1127,6 +1127,8 @@ const dictionary = {
         'Veuillez mettre en pause tous les audios et vidéos avant de quitter la page.',
     Undo: 'Annuler',
     Redo: 'Rétablir',
+    'Undo Saved Change': 'Annuler la modification du fichier',
+    'Redo Saved Change': 'Rétablir la modification du fichier',
     Help: 'Aide',
     'Bible Properties': 'Propriétés de la Bible',
     'Thumbnail View': 'Vue en miniatures',

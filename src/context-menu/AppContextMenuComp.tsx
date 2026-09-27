@@ -78,7 +78,16 @@ function ContextMenuItemComp({
             onKeyDown={handleKeyDown}
         >
             {item.childBefore || null}
-            <div className="app-ellipsis flex-fill">{item.menuElement}</div>
+            {/* Wraps rather than ellipsises. The menu is capped at 210px, so
+                a single nowrap line silently cut any label longer than that --
+                and the one place it bit was the display chooser, where the
+                resolution is exactly what tells two screens apart and exactly
+                what fell off the end ("*(1921141341): 1494x934 (pri..."). The
+                row carries the full text as its `title` either way, but a
+                projector control should be readable without hovering it. */}
+            <div className="app-context-menu-item-label flex-fill">
+                {item.menuElement}
+            </div>
             {item.keyboardShortcut !== undefined
                 ? genContextMenuItemShortcutKey(item.keyboardShortcut)
                 : null}

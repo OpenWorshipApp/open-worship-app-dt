@@ -32,14 +32,12 @@ import type {
     ScreenMessageType,
     StyleAnimType,
 } from '../screenTypeHelpers';
-import { ANIM_END_DELAY_MILLISECOND } from '../transitionEffectHelpers';
 import { getIsFadingAtTheEndSetting } from '../../background/videoBackgroundHelpers';
 import { appLog } from '../../helper/loggerHelpers';
 
 export type ScreenBackgroundManagerEventType = 'update' | 'color-set';
 
 const FADING_DURATION_SECOND = 3;
-const FADING_DURATION_MILLISECOND = FADING_DURATION_SECOND * 1000;
 export const BACKGROUND_VIDEO_FADING_SETTING_NAME =
     dirSourceSettingNames.BACKGROUND_VIDEO + '-fading-at-end';
 
@@ -438,20 +436,53 @@ class ScreenBackgroundManager
                 return;
             }
             videoElement.removeEventListener('timeupdate', fadeOutListener);
-            this.render({
-                ...this.effectManager.styleAnimList.fade,
-                animOut: async () => {
-                    const duration =
-                        FADING_DURATION_MILLISECOND +
-                        ANIM_END_DELAY_MILLISECOND;
-                    await new Promise<void>((resolve) => {
-                        setTimeout(resolve, duration);
-                    });
-                },
-                duration: FADING_DURATION_MILLISECOND,
-            });
+            await this._fadeOverVideoLoop(container, videoElement);
         };
         videoElement.addEventListener('timeupdate', fadeOutListener);
+    }
+
+    /**
+     * The end-of-clip fade, done on the element that is already playing.
+     *
+     * This used to call `render()`, which builds a whole new background from
+     * `genHtmlBackground` -- a fresh `<video src=...>`. Chromium does not cache
+     * a `file://` media resource, so every loop re-read the clip from byte 0:
+     * measured on a live screen, 37 full `range: bytes=0-` fetches of one
+     * 2.6 MB background in a few minutes, about 470 MB an hour for ONE clip on
+     * ONE screen. A church looping a 100 MB HD background re-read 100 MB every
+     * loop, for the whole service, on the low-spec machines this app is for.
+     *
+     * None of that bought anything: the element already carries `loop`, so it
+     * restarts itself. The re-render existed only to dip the opacity across
+     * the wrap. So dip the opacity across the wrap, and read nothing.
+     */
+    async _fadeOverVideoLoop(
+        container: HTMLElement,
+        videoElement: HTMLVideoElement,
+    ) {
+        const rootContainer = this.rootContainer;
+        if (rootContainer === null || !container.isConnected) {
+            return;
+        }
+        const fadeAnim = this.effectManager.styleAnimList.fade;
+        // `animIn` treats whatever sits on `style.opacity` as the value the
+        // element ASKED for and restores it at the end -- and `animOut` leaves
+        // a `0` there. Carry the authored value across by hand, or the
+        // background fades back in to fully transparent and stays there.
+        const authoredOpacity = container.style.opacity || '1';
+        await fadeAnim.animOut(container);
+        // The clip's own `loop` has wrapped it back to the start by now.
+        if (!container.isConnected) {
+            return;
+        }
+        container.style.opacity = authoredOpacity;
+        await fadeAnim.animIn(container, rootContainer);
+        // Re-arm for the next lap, unless the background was swapped while
+        // the fade was in flight -- that swap built its own element and armed
+        // its own listener.
+        if (container.isConnected && videoElement.isConnected) {
+            this._handleBackgroundVideo(container as HTMLDivElement);
+        }
     }
 
     render(overrideAnimData?: StyleAnimType) {

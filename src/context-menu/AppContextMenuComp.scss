@@ -19,6 +19,13 @@
     overflow-y: auto;
 
     .app-context-menu-item {
+      .app-context-menu-item-label {
+        // Break inside a long unbroken run too: a display label is one
+        // `Name(1921141341): 1494x934` token as far as the line breaker is
+        // concerned, so plain wrapping alone would still overflow it.
+        overflow-wrap: anywhere;
+      }
+
       &.disabled {
         opacity: 0.4;
         cursor: not-allowed !important;

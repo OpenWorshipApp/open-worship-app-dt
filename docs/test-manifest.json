@@ -360,7 +360,9 @@
       "steps": [
         "In the right column (Presenter) or the Reader, switch to the [en:tran:Notes] sub-tab.",
         "Open a note for editing — the Bible Note editor opens in its own window.",
-        "Type your note and save (Ctrl+S)."
+        "Type your note. Nothing is written to the note file yet — your typing is kept in an editing history, and the row of buttons that appears at the bottom right of the window is how you decide what happens to it.",
+        "Press [en:tran:Save] (Ctrl+S) to write it into the note file.",
+        "[en:tran:Undo Saved Change] and [en:tran:Redo Saved Change] walk that history — they step through what has been typed since the last save, and they still work after the window has been closed and opened again, so an edit made by mistake can always be taken back. [en:tran:Discard changed] throws the unsaved typing away and returns the note to what was last saved."
       ]
     },
     {

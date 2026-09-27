@@ -14,6 +14,7 @@ import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelper
 import AppSuspenseComp from '../../others/AppSuspenseComp';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { pressElementLikeButton } from '../../helper/helpers';
 import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
 import { useStateSettingString } from '../../helper/settingHelpers';
 import { DRAW_MODE_SETTING_PREFIX } from '../managers/screenSettingKeyHelpers';
@@ -346,6 +347,9 @@ export default function ScreenPreviewerFooterComp() {
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const stageLabel =
+        `${tran('Stage')} ${stageNumber}: ` +
+        `${tran('Click to change Stage Number')}`;
     return (
         <div
             className="card-footer w-100"
@@ -391,19 +395,37 @@ export default function ScreenPreviewerFooterComp() {
                         />
                     </div>
                 </div>
-                <div
-                    className="flex-grow-1 d-flex justify-content-end"
-                    title={`${tran('Stage')} ${stageNumber}`}
-                >
+                <div className="flex-grow-1 d-flex justify-content-end">
+                    {/* Role, focus and the key press belong on the one element
+                        that carries the name, like every other icon-control in
+                        this footer. Without them this was a bare <div onClick>:
+                        no keyboard could reach it, a screen reader announced
+                        nothing, and it was absent from the accessibility tree
+                        entirely -- which also meant nothing could open its
+                        menu. The name used to sit on BOTH this element and its
+                        wrapper, so anything reading a control by its words got
+                        it twice ("St:0 Stage 0: Click to change Stage Number").
+                        `St:` itself stays an untranslated mnemonic, like the
+                        BG/SL/BB/FG codes above it and `Tr:` beside it -- the
+                        row is one line tall, and translating abbreviations is
+                        what blanked the slide editor's tools panel once. It is
+                        aria-hidden so the translated name is announced instead
+                        of the letters. */}
                     <div
                         className="d-flex app-caught-hover-pointer me-1"
-                        title={`${tran('Stage')} ${stageNumber}: ${tran('Click to change Stage Number')}`}
+                        role="button"
+                        tabIndex={0}
+                        title={stageLabel}
+                        aria-label={stageLabel}
                         style={{
                             color: getStageAccentColor(stageNumber),
                         }}
                         onClick={handleStageNumberChange}
+                        onKeyDown={pressElementLikeButton}
                     >
-                        <small className="mx-1">St:</small>
+                        <small className="mx-1" aria-hidden="true">
+                            St:
+                        </small>
                         <div
                             className="px-0"
                             style={{

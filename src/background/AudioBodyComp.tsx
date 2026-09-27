@@ -13,6 +13,7 @@ import { useStateSettingBoolean } from '../helper/settingHelpers';
 import appProvider from '../server/appProvider';
 import { getFileMetaData } from '../server/fileHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { pressElementLikeButton } from '../helper/helpers';
 
 function getAudioRepeatSettingName(src: string) {
     const md5 = appProvider.systemUtils.generateMD5(src);
@@ -40,6 +41,7 @@ export default function AudioBodyComp({
         setIsRepeatingRef.current(!isRepeatingRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const repeatLabel = `${tran('Repeat this audio')}: ${fileSource.fullName}`;
     return (
         <div className="w-100" data-file-path={filePath}>
             <div className="d-flex align-items-center w-100 my-2">
@@ -63,15 +65,27 @@ export default function AudioBodyComp({
                     {tran('Browser does not support audio.')}
                 </audio>
                 <div>
+                    {/* Named with the track and given button semantics: the
+                        mini-screen previewer has a control with this same
+                        title, so bare "Repeat this audio" identified neither
+                        one, and as a plain <i> this was unreachable by
+                        keyboard and absent from the accessibility tree. It
+                        also persists its state, so a press that lands on the
+                        wrong one of the two outlives the session. */}
                     <i
                         className="bi bi-repeat-1 p-1"
-                        title={tran('Repeat this audio')}
+                        role="button"
+                        tabIndex={0}
+                        title={repeatLabel}
+                        aria-label={repeatLabel}
+                        aria-pressed={isRepeating}
                         style={{
                             fontSize: '1.5rem',
                             opacity: isRepeating ? 1 : 0.5,
                             color: isRepeating ? 'green' : 'inherit',
                         }}
                         onClick={handleToggleRepeating}
+                        onKeyDown={pressElementLikeButton}
                     />
                 </div>
             </div>

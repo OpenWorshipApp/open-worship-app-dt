@@ -18,6 +18,7 @@ const h = vi.hoisted(() => ({
     fsExistSyncMock: vi.fn(() => true),
     getAppFilePathFromFileMock: vi.fn(),
     noteFromFilePathMock: vi.fn(),
+    noteFromFilePathEditingMock: vi.fn(),
     getAllLangsAsyncMock: vi.fn(),
     getCurrentLocaleMock: vi.fn(() => 'en'),
     initLangCssMock: vi.fn(),
@@ -103,7 +104,10 @@ vi.mock('../../helper/localFileHelpers', () => ({
     getAppFilePathFromFile: h.getAppFilePathFromFileMock,
 }));
 vi.mock('./Note', () => ({
-    default: { fromFilePath: h.noteFromFilePathMock },
+    default: {
+        fromFilePath: h.noteFromFilePathMock,
+        fromFilePathEditing: h.noteFromFilePathEditingMock,
+    },
 }));
 vi.mock('../../lang/langHelpers', () => ({
     DEFAULT_LANG_CODE: 'en',
@@ -152,10 +156,24 @@ vi.mock('../../helper/bible-helpers/bibleStyleHelpers', () => ({
 
 import {
     BIBLE_KEY_SETTING_NAME,
+    checkIsEmptyNoteContent,
     getBibleNoteData,
     getBibleNoteSelectedBibleKey,
     initBibleNote,
+    toEditorContent,
+    toStoredContent,
 } from './bibleNoteHelpers';
+
+const EMPTY_ROOT_CONTENT = JSON.stringify({
+    root: {
+        children: [],
+        direction: null,
+        format: '',
+        indent: 0,
+        type: 'root',
+        version: 1,
+    },
+});
 
 async function flush() {
     await new Promise((r) => setTimeout(r, 5));
@@ -167,6 +185,11 @@ describe('bible-list/note bibleNoteHelpers', () => {
         h.genTimeoutAttemptMock.mockReturnValue((fn: any) => fn());
         // An ordinary note window unless a test says otherwise.
         h.getBibleNotePreviewFilePathMock.mockReturnValue(null);
+        // An editable window reads its EDITING head; the fixtures describe one
+        // note, so the head read simply follows the file read.
+        h.noteFromFilePathEditingMock.mockImplementation((filePath: string) => {
+            return h.noteFromFilePathMock(filePath);
+        });
         h.fsExistSyncMock.mockReturnValue(true);
         h.pathJoinMock.mockImplementation((...p: string[]) => p.join('/'));
         h.pathResolveMock.mockImplementation((p: string) => `/abs/${p}`);
@@ -226,7 +249,10 @@ describe('bible-list/note bibleNoteHelpers', () => {
             const note = {
                 filePath: '/notes/a.note',
                 reload: vi.fn(async () => {}),
+                reloadEditing: vi.fn(async () => {}),
                 getItemById: vi.fn(() => ({ id: 7, content: 'reloaded' })),
+                updateNoteItem: vi.fn(),
+                addItemEditingHistory: vi.fn(async () => {}),
                 updateAndSaveNoteItem: vi.fn(async () => true),
             };
             const bibleNote = await initBibleNote({
@@ -256,14 +282,13 @@ describe('bible-list/note bibleNoteHelpers', () => {
             expect(capturedConfig.loadData()).toBe('note content');
             // unchanged data is a no-op
             await capturedConfig.saveData('note content');
-            expect(note.updateAndSaveNoteItem).not.toHaveBeenCalled();
-            // changed data persists
+            expect(note.addItemEditingHistory).not.toHaveBeenCalled();
+            // changed data goes into the EDITING HISTORY, never the file
             await capturedConfig.saveData('new data');
             expect(noteItem.content).toBe('new data');
-            expect(note.updateAndSaveNoteItem).toHaveBeenCalledWith(
-                noteItem,
-                true,
-            );
+            expect(note.updateNoteItem).toHaveBeenCalledWith(noteItem, true);
+            expect(note.addItemEditingHistory).toHaveBeenCalledWith(noteItem);
+            expect(note.updateAndSaveNoteItem).not.toHaveBeenCalled();
         });
 
         test('a read-only note is locked and never saved', async () => {
@@ -274,7 +299,7 @@ describe('bible-list/note bibleNoteHelpers', () => {
             expect((bibleNote as any).isReadOnly).toBe(true);
             await capturedConfig.saveData('new data');
             expect(noteItem.content).toBe('note content');
-            expect(note.updateAndSaveNoteItem).not.toHaveBeenCalled();
+            expect(note.addItemEditingHistory).not.toHaveBeenCalled();
         });
 
         test('an ordinary note is not locked', async () => {
@@ -293,7 +318,10 @@ describe('bible-list/note bibleNoteHelpers', () => {
                 await capturedWatchCb('change');
                 // No 3s grace: there is no typing in a preview to protect.
                 await vi.advanceTimersByTimeAsync(0);
+                // A preview follows the FILE; only an editable window has an
+                // editing head of its own to follow.
                 expect(note.reload).toHaveBeenCalled();
+                expect(note.reloadEditing).not.toHaveBeenCalled();
                 expect(bibleNote.content).toBe('reloaded');
                 expect(noteItem.content).toBe('reloaded');
                 expect(note.updateAndSaveNoteItem).not.toHaveBeenCalled();
@@ -302,9 +330,43 @@ describe('bible-list/note bibleNoteHelpers', () => {
             }
         });
 
-        test('loadData returns null for empty content', async () => {
+        // NOT null: null tells the composer to leave the root alone, and what
+        // the package then puts there is its own Genesis 1 playground demo.
+        test('loadData opens empty content on one empty paragraph', async () => {
             await setupInit(genNoteItem({ content: '' }));
-            expect(capturedConfig.loadData()).toBeNull();
+            const loaded = JSON.parse(capturedConfig.loadData());
+            expect(loaded.root.children).toHaveLength(1);
+            expect(loaded.root.children[0].type).toBe('paragraph');
+        });
+
+        // A root with no children is what the editor refuses to load back
+        // (Lexical error #38), which left the note window blank for good.
+        test('loadData never hands back a childless root', async () => {
+            await setupInit(genNoteItem({ content: EMPTY_ROOT_CONTENT }));
+            const loaded = JSON.parse(capturedConfig.loadData());
+            expect(loaded.root.children.length).toBeGreaterThan(0);
+        });
+
+        test('saveData stores a childless root as no content', async () => {
+            const { note, noteItem } = await setupInit();
+            await capturedConfig.saveData(EMPTY_ROOT_CONTENT);
+            expect(noteItem.content).toBe('');
+            expect(note.addItemEditingHistory).toHaveBeenCalled();
+            // and an item already emptied is not written again
+            note.addItemEditingHistory.mockClear();
+            await capturedConfig.saveData(EMPTY_ROOT_CONTENT);
+            expect(note.addItemEditingHistory).not.toHaveBeenCalled();
+        });
+
+        test('file watch empties rather than loading a childless root', async () => {
+            const { note, bibleNote } = await setupInit();
+            note.getItemById.mockReturnValue({
+                id: 7,
+                content: EMPTY_ROOT_CONTENT,
+            });
+            await capturedWatchCb('change');
+            await flush();
+            expect(JSON.parse(bibleNote.content).root.children).toHaveLength(1);
         });
 
         test('getLangCode detects language or defaults to en', async () => {
@@ -475,7 +537,8 @@ describe('bible-list/note bibleNoteHelpers', () => {
             // change events reload and copy new content
             await capturedWatchCb('change');
             await flush();
-            expect(note.reload).toHaveBeenCalled();
+            expect(note.reloadEditing).toHaveBeenCalled();
+            expect(note.reload).not.toHaveBeenCalled();
         });
 
         test('file watch skips when the item is unchanged or missing', async () => {
@@ -487,7 +550,10 @@ describe('bible-list/note bibleNoteHelpers', () => {
             const note = {
                 filePath: '/notes/a.note',
                 reload: vi.fn(async () => {}),
+                reloadEditing: vi.fn(async () => {}),
                 getItemById: vi.fn(() => null),
+                updateNoteItem: vi.fn(),
+                addItemEditingHistory: vi.fn(async () => {}),
                 updateAndSaveNoteItem: vi.fn(),
             };
             await initBibleNote({
@@ -516,7 +582,7 @@ describe('bible-list/note bibleNoteHelpers', () => {
                 (bibleNote as any).isFocusing = true;
                 await capturedWatchCb('change');
                 await vi.advanceTimersByTimeAsync(3_000);
-                expect(note.reload).toHaveBeenCalled();
+                expect(note.reloadEditing).toHaveBeenCalled();
             } finally {
                 vi.useRealTimers();
             }
@@ -552,6 +618,7 @@ describe('bible-list/note bibleNoteHelpers', () => {
             });
             const data = await getBibleNoteData();
             expect(data?.isReadOnly).toBe(true);
+            expect(h.noteFromFilePathEditingMock).not.toHaveBeenCalled();
             // Found by its full path, not looked up in the notes folder.
             expect(h.noteFromFilePathMock).toHaveBeenCalledWith(
                 '/elsewhere/GEN.1.own',
@@ -584,6 +651,10 @@ describe('bible-list/note bibleNoteHelpers', () => {
             const data = await getBibleNoteData();
             expect(data).not.toBeNull();
             expect(data?.isReadOnly).toBe(false);
+            // Unsaved text comes back with the window, so it opens on the head
+            expect(h.noteFromFilePathEditingMock).toHaveBeenCalledWith(
+                '/notes/note.note',
+            );
             expect(document.title).toContain('MyNote: Item Title');
             expect(document.title).not.toContain('Read-only');
         });
@@ -638,5 +709,45 @@ describe('bible-list/note bibleNoteHelpers', () => {
             });
             expect(await getBibleNoteData()).toBeNull();
         });
+    });
+});
+
+describe('checkIsEmptyNoteContent', () => {
+    test('an empty string and a childless root are empty', () => {
+        expect(checkIsEmptyNoteContent('')).toBe(true);
+        expect(checkIsEmptyNoteContent('   ')).toBe(true);
+        expect(checkIsEmptyNoteContent(EMPTY_ROOT_CONTENT)).toBe(true);
+    });
+
+    test('a root with a child is not empty', () => {
+        expect(
+            checkIsEmptyNoteContent(
+                JSON.stringify({
+                    root: { children: [{ type: 'paragraph' }] },
+                }),
+            ),
+        ).toBe(false);
+    });
+
+    test('anything that is not an editor state is left alone', () => {
+        expect(checkIsEmptyNoteContent('GEN 3:20')).toBe(false);
+        expect(checkIsEmptyNoteContent('{oops')).toBe(false);
+        expect(checkIsEmptyNoteContent('null')).toBe(false);
+    });
+
+    test('the two conversions are a round trip', () => {
+        expect(toStoredContent(EMPTY_ROOT_CONTENT)).toBe('');
+        expect(toStoredContent('real text')).toBe('real text');
+        expect(toEditorContent('real text')).toBe('real text');
+        expect(checkIsEmptyNoteContent(toEditorContent(''))).toBe(false);
+    });
+
+    // Long content is never parsed -- an empty state cannot be long, and a
+    // 60KB note would otherwise be parsed on every autosave.
+    test('long content is not parsed', () => {
+        const longChildless = JSON.stringify({
+            root: { children: [], padding: 'x'.repeat(600) },
+        });
+        expect(checkIsEmptyNoteContent(longChildless)).toBe(false);
     });
 });

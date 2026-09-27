@@ -21,7 +21,21 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-26b** (**W-16, W-34 and W-35 reconciled with the live Settings UI.** Clear All Settings is confirmed before it clears; Other General Options includes the Daily Tips switch; the Bible tab documents XML import/edit and Bible Data archives; deleting an XML also removes its cache; and SongSelect uses unique coverage ID ST-57 while Repair Links remains ST-52.)
+**workflowsVersion: 2026-09-26c** (**W-14 — the Bible Note window stops saving
+itself and gains the editing control.** Reported as a note that would not open:
+the `bible-note` editor autosaves continuously and saves whatever state it is
+in, so a cleared editor reached the note file as a root with no children --
+which Lexical then REFUSES to load back (`Minified Lexical error #38`), leaving
+the window blank for good. Typing now lands in that note file's editing history
+instead, and **[en:tran:Undo Saved Change]** / **[en:tran:Redo Saved Change]** /
+**[en:tran:Discard changed]** / **[en:tran:Save]** sit at the bottom right of
+the window, the same control the slide document and lyric editors carry. A note
+closed with unsaved text comes back holding it. Proven live 2026-09-26: one word
+of typing left the 304KB note file untouched and cost ONE 49KB history entry --
+against 10 entries of 608KB before the writes were debounced and the file
+indented. PU-03.)
+
+Previous: **workflowsVersion: 2026-09-26b** (**W-16, W-34 and W-35 reconciled with the live Settings UI.** Clear All Settings is confirmed before it clears; Other General Options includes the Daily Tips switch; the Bible tab documents XML import/edit and Bible Data archives; deleting an XML also removes its cache; and SongSelect uses unique coverage ID ST-57 while Repair Links remains ST-52.)
 
 Previous: **workflowsVersion: 2026-09-26a** (**W-42 and W-46 — the Reader gains seven more
 working zero-model demos, and broader Tips.** The empty Reader assistant now
@@ -1699,7 +1713,20 @@ _Verify: RD-10, RD-49, RD-50, RD-51, RD-52._
 
 1. In the right column (Presenter) or the Reader, switch to the **[en:tran:Notes]** sub-tab.
 2. Open a note for editing — the **Bible Note** editor opens in its own window. 📸
-3. Type your note and save (**Ctrl+S**).
+3. Type your note. Nothing is written to the note file yet — your typing is kept
+   in an editing history, and the row of buttons that appears at the bottom
+   right of the window is how you decide what happens to it.
+4. Press **[en:tran:Save]** (**Ctrl+S**) to write it into the note file.
+5. **[en:tran:Undo Saved Change]** and **[en:tran:Redo Saved Change]** walk that
+   history — they step through what has been typed since the last save, and they
+   still work after the window has been closed and opened again, so an edit made
+   by mistake can always be taken back. **[en:tran:Discard changed]** throws the
+   unsaved typing away and returns the note to what was last saved.
+
+::: tip
+The arrows at the TOP of the window are the text editor's own undo and redo;
+the ones at the bottom are the note FILE's.
+:::
 
 _Verify: PR-03, PU-03, KB-11._
 

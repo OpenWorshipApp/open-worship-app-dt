@@ -1,0 +1,72 @@
+/*
+ * The editing control sits in the `bible-note` editor's OWN footer, in the row
+ * of `.action-button` pills — 27px tall, transparent, one glyph each. Bootstrap's
+ * `btn btn-sm` is taller, wider and block-coloured, so the four buttons read as
+ * a toolbar dropped on top of that row rather than part of it.
+ *
+ * Scoped to this window: the same component is the slide document editor's
+ * toolbar, where a filled button is right because it stands alone.
+ */
+.bible-note-editing-menu {
+  display: inline-flex;
+  align-items: center;
+
+  .editing-menu-body {
+    // the shared toolbar is a fixed 200px block; here it is four icons
+    width: auto;
+    gap: 1px;
+    padding: 0;
+  }
+
+  .editing-menu-body.btn-group > .btn {
+    // Narrower than the `.action-button` pills around them and the same
+    // height, so the four read as one compact cluster sitting on the
+    // footer's baseline instead of four buttons pushing the row apart.
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 0;
+    width: 22px;
+    height: 24px;
+    padding: 0 !important;
+    border-radius: 11px;
+    font-size: 0.75rem;
+    line-height: 1;
+
+    // The glyph and nothing else, like every other icon in this row: no
+    // surface and no ring, so the colour is the only thing that speaks.
+    background-color: transparent;
+    border: 0;
+    box-shadow: none;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      // the footer's own hover, so a press reads as part of the same row
+      background-color: var(--playground-action-hover-bg);
+    }
+
+    /*
+         * Beats `genDisabledStyle`'s inline `opacity: 0.1`, which is invisible
+         * against this footer; the package dims its own disabled buttons to
+         * 0.6. Inline styles cannot be outranked by specificity alone.
+         */
+    &:disabled {
+      opacity: 0.35 !important;
+      cursor: not-allowed;
+    }
+  }
+
+  // Each keeps the meaning it already had; the fill and the ring went away.
+  .editing-menu-body.btn-group > .btn-info {
+    color: var(--bs-info);
+  }
+
+  .editing-menu-body.btn-group > .btn-danger {
+    color: var(--bs-danger);
+  }
+
+  .editing-menu-body.btn-group > .btn-success {
+    color: var(--bs-success);
+  }
+}

@@ -1,4 +1,5 @@
 import { AppDocumentSourceAbs } from '../../helper/AppEditableDocumentSourceAbs';
+import EditingHistoryManager from '../../editing-manager/EditingHistoryManager';
 import { dirSourceSettingNames } from '../../helper/constants';
 import { notifyElementHighlight } from '../../helper/domHelpers';
 import { handleError } from '../../helper/errorHelpers';
@@ -304,7 +305,7 @@ export default class Note
     }
 
     static async create(dir: string, name: string) {
-        const data = JSON.stringify({
+        const data = Note.toJsonString({
             metadata: super.genMetadata(),
             items: [],
         });
@@ -332,10 +333,141 @@ export default class Note
         return this.originalJson;
     }
 
+    get editingHistoryManager() {
+        return EditingHistoryManager.getInstance(this.filePath);
+    }
+
+    /**
+     * A structural change made from the LIST -- an item added, deleted,
+     * reordered or recoloured, a verse marked -- still goes straight to the
+     * file: it is one press with nothing to review, and a highlight that only
+     * appears once somebody presses Save is a highlight that gets lost.
+     *
+     * What it must not do is leave a note WINDOW's editing head behind. That
+     * head carries the whole file as it was when the window last wrote to it,
+     * so a Save pressed there afterwards would put a deleted item back or drop
+     * a mark made since. The head is rebased instead: this file's structure,
+     * keeping whatever unsaved text the head holds.
+     */
     async save() {
-        const jsonData = this.toJson();
-        const jsonString = JSON.stringify(jsonData);
-        return await this.fileSource.writeFileData(jsonString);
+        const jsonString = Note.toJsonString(this.toJson());
+        const isSuccess = await this.fileSource.writeFileData(jsonString);
+        if (isSuccess) {
+            await this.rebaseEditingHistory();
+        }
+        return isSuccess;
+    }
+
+    /**
+     * The note EDITOR writes here, never to the file. An autosave that reaches
+     * the disk is how a note is lost -- the editor serializes whatever state it
+     * is in, including a cleared one -- so its writes land in the editing
+     * history, where they are undoable and restorable, and the human presses
+     * Save.
+     */
+    async addEditingHistory() {
+        await this.editingHistoryManager.addHistory(
+            Note.toJsonString(this.toJson()),
+        );
+    }
+
+    /**
+     * One note ITEM's text, written onto whatever the head holds NOW.
+     *
+     * Rebased every time rather than written from this instance, because a
+     * second note window on the same file writes into the SAME history and its
+     * own copy of the note is as old as the moment it opened -- so writing that
+     * copy straight out would drop whatever the other window has typed since,
+     * and the list's structural changes with it. This instance is moved on to
+     * match, so the next write starts from the same place.
+     */
+    async addItemEditingHistory(noteItem: NoteItem) {
+        const headNote =
+            (await Note.fromFilePathEditing(this.filePath)) ?? this;
+        headNote.updateNoteItem(noteItem, true);
+        await headNote.addEditingHistory();
+        this.originalJson = headNote.toJson();
+    }
+
+    /**
+     * INDENTED, and that is a performance decision, not a taste one.
+     *
+     * The editing history keeps a LINE diff of every step
+     * (`EditingHistoryManager`'s `createPatch`). Written as one long line, a
+     * note file has no lines to diff -- a single typed letter came back as
+     * "replace the whole file", so one word of typing left 5.6MB of patches
+     * beside a 300KB file. Indented, only the edited item's own `content` line
+     * changes, and the file itself grows by a few hundred bytes. The saved file
+     * is written this way too, because the history's first entry is a CLONE of
+     * it and a format that disagreed would diff the whole file once more.
+     */
+    static toJsonString(jsonData: NoteType) {
+        return JSON.stringify(jsonData, null, 2);
+    }
+
+    private async rebaseEditingHistory() {
+        const editingHistoryManager = this.editingHistoryManager;
+        // One cheap stat for the usual case: no note window has ever been
+        // opened on this file, so there is nothing to keep in step.
+        if (!(await editingHistoryManager.checkHasHistories())) {
+            return;
+        }
+        const headJsonString = await editingHistoryManager.getCurrentHistory();
+        const headNote = Note.fromJsonString(this.filePath, headJsonString);
+        if (headNote === null) {
+            return;
+        }
+        const rebasedNote = this.clone();
+        rebasedNote.takeItemContentsFrom(headNote);
+        const rebasedJsonString = Note.toJsonString(rebasedNote.toJson());
+        // Already in step -- appending here would only make the window's Save
+        // button light up over a change nobody made.
+        if (rebasedJsonString === headJsonString) {
+            return;
+        }
+        await editingHistoryManager.addHistory(rebasedJsonString);
+    }
+
+    /**
+     * Only the items' own TEXT is taken -- the list owns which items exist, in
+     * what order and with what titles; a note window owns what is typed inside
+     * one. A verse item's `content` is its verse reference rather than editor
+     * text, so it is left alone.
+     */
+    private takeItemContentsFrom(otherNote: Note) {
+        const otherItemMap = new Map(
+            otherNote.items.map((item) => [item.id, item]),
+        );
+        const noteItems = this.items;
+        for (const noteItem of noteItems) {
+            const otherItem = otherItemMap.get(noteItem.id);
+            if (otherItem === undefined || noteItem.isVerseItem) {
+                continue;
+            }
+            noteItem.content = otherItem.content;
+        }
+        this.items = noteItems;
+    }
+
+    historyUndo() {
+        return this.editingHistoryManager.undo();
+    }
+
+    historyRedo() {
+        return this.editingHistoryManager.redo();
+    }
+
+    historyDiscard() {
+        return this.editingHistoryManager.discard();
+    }
+
+    /**
+     * What the note window's Save press does: the editing head becomes the
+     * file. NOT `save()`, which writes this in-memory instance -- the head is
+     * what the editor has been writing into and what its Undo walks.
+     */
+    saveEditingHistory() {
+        return this.editingHistoryManager.save();
     }
 
     notifyNewNoteItemAdded(noteItemId: number) {
@@ -346,8 +478,7 @@ export default class Note
         });
     }
 
-    static async fromFilePath(filePath: string) {
-        const jsonString = await FileSource.readFileData(filePath);
+    private static fromJsonString(filePath: string, jsonString: string | null) {
         if (!jsonString) {
             return null;
         }
@@ -360,8 +491,45 @@ export default class Note
         return null;
     }
 
+    static async fromFilePath(filePath: string) {
+        const note = this.fromJsonString(
+            filePath,
+            await FileSource.readFileData(filePath),
+        );
+        if (note !== null) {
+            return note;
+        }
+        // RECOVERY, and only that: the file is missing or no longer readable as
+        // a note, and the editing head is the last copy of it anything here
+        // still has. A readable file never reaches this line, so nothing about
+        // the ordinary case changes.
+        return this.fromFilePathEditing(filePath);
+    }
+
+    /**
+     * The note as the note WINDOW has it: the editing head while something is
+     * unsaved, the file on disk otherwise. Only that window reads this way --
+     * the Bible Notes list shows what is saved, which is what the panel is for.
+     */
+    static async fromFilePathEditing(filePath: string) {
+        const editingHistoryManager =
+            EditingHistoryManager.getInstance(filePath);
+        return this.fromJsonString(
+            filePath,
+            await editingHistoryManager.getCurrentHistory(),
+        );
+    }
+
     async reload() {
         const newNote = await Note.fromFilePath(this.filePath);
+        if (newNote === null) {
+            return;
+        }
+        this.originalJson = newNote.toJson();
+    }
+
+    async reloadEditing() {
+        const newNote = await Note.fromFilePathEditing(this.filePath);
         if (newNote === null) {
             return;
         }

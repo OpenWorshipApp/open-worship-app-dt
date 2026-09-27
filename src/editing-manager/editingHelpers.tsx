@@ -7,7 +7,6 @@ import { tran } from '../lang/langHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import EditingHistoryManager from './EditingHistoryManager';
-import type AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
 import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import { toShortcutKey } from '../event/KeyboardEventListener';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
@@ -68,9 +67,26 @@ export function useEditingHistoryStatus(filePath: string) {
     return status;
 }
 
-const savingEventMapper: KeyboardEventMapper = {
+export const savingEventMapper: KeyboardEventMapper = {
     allControlKey: ['Ctrl'],
     key: 's',
+};
+
+/**
+ * What this menu actually presses.
+ *
+ * A structural type rather than `AppEditableDocumentSourceAbs`: the Bible note
+ * window drives the very same history over a note file, and a `Note` is not one
+ * of those -- the Bible Notes list still writes that file straight through, so
+ * only the window's own `save` goes through the history. Every editable
+ * document satisfies this as it stands.
+ */
+export type EditingHistoryHolderType = {
+    filePath: string;
+    historyUndo: () => unknown;
+    historyRedo: () => unknown;
+    historyDiscard: () => unknown;
+    save: () => unknown;
 };
 
 function genDisabledStyle(isDisabled: boolean) {
@@ -87,7 +103,7 @@ function MenuIsModifying({
     caDiscard,
     canSave,
 }: Readonly<{
-    editableDocument: AppEditableDocumentSourceAbs<any>;
+    editableDocument: EditingHistoryHolderType;
     caDiscard: boolean;
     canSave: boolean;
 }>) {
@@ -142,9 +158,19 @@ function MenuIsModifying({
 export function FileEditingMenuComp({
     extraChildren,
     editableDocument,
+    undoLabel,
+    redoLabel,
 }: Readonly<{
     extraChildren?: ReactNode | null;
-    editableDocument: AppEditableDocumentSourceAbs<any>;
+    editableDocument: EditingHistoryHolderType;
+    /**
+     * Named by the caller where a plain `Undo` would be the SECOND control of
+     * that name in one window -- the Bible note window carries the rich-text
+     * editor's own undo arrow as well, and two buttons reading `Undo` are one
+     * the user has to guess at and one `owa_click` cannot tell apart.
+     */
+    undoLabel?: string;
+    redoLabel?: string;
 }>) {
     const { canUndo, canRedo, canSave } = useEditingHistoryStatus(
         editableDocument.filePath,
@@ -167,8 +193,8 @@ export function FileEditingMenuComp({
             <button
                 className="btn btn-sm btn-info"
                 type="button"
-                title={tran('Undo')}
-                aria-label={tran('Undo')}
+                title={undoLabel ?? tran('Undo')}
+                aria-label={undoLabel ?? tran('Undo')}
                 disabled={!canUndo}
                 style={genDisabledStyle(!canUndo)}
                 onClick={handleUndo}
@@ -178,8 +204,8 @@ export function FileEditingMenuComp({
             <button
                 className="btn btn-sm btn-info"
                 type="button"
-                title={tran('Redo')}
-                aria-label={tran('Redo')}
+                title={redoLabel ?? tran('Redo')}
+                aria-label={redoLabel ?? tran('Redo')}
                 disabled={!canRedo}
                 style={genDisabledStyle(!canRedo)}
                 onClick={handleRedo}

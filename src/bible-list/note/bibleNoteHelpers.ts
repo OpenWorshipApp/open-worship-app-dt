@@ -41,6 +41,92 @@ import { genStringListSettingManager } from '../../helper/SettingManager';
 import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
 import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
+/**
+ * A serialized editor state whose root holds NO children at all.
+ *
+ * Lexical refuses to load one back: `setEditorState` throws on a state whose
+ * node map holds the root alone (`Minified Lexical error #38`), and the throw
+ * happens inside `LexicalComposer`'s own initialisation -- so the editor tree
+ * unmounts and the note window paints NOTHING. That note can never be opened
+ * again, whatever is done to it from the list.
+ *
+ * A childless root is exactly what a note opened and never typed in serializes
+ * to: a brand-new item's `content` is `''`, `loadData` therefore hands the
+ * composer `null`, and `null` tells the composer to leave the root ALONE rather
+ * than seed it with a paragraph -- then the editor's own autosave writes that
+ * childless root into the file. So it is normalised to "no content" at BOTH
+ * ends: nothing poisonous is ever written, and a file already holding one opens
+ * as the empty note it is.
+ */
+const EMPTY_EDITOR_STATE_MAX_LENGTH = 512;
+
+/**
+ * One empty paragraph -- what an editor opened on a blank note must be handed.
+ *
+ * Handing it `null` instead does NOT mean "start blank" to `LexicalComposer`:
+ * it means "leave the root alone", and what `bible-note` then puts in the root
+ * is its own Genesis 1 PLAYGROUND DEMO, which the autosave wrote into the
+ * user's note. The state has to be a real one, and a real one with a child --
+ * a childless root is the state `setEditorState` refuses (above).
+ */
+const EMPTY_EDITOR_STATE_CONTENT = JSON.stringify({
+    root: {
+        children: [
+            {
+                children: [],
+                direction: null,
+                format: '',
+                indent: 0,
+                type: 'paragraph',
+                version: 1,
+            },
+        ],
+        direction: null,
+        format: '',
+        indent: 0,
+        type: 'root',
+        version: 1,
+    },
+});
+
+/** What a note item's stored text becomes on its way INTO the editor. */
+export function toEditorContent(content: string) {
+    return checkIsEmptyNoteContent(content)
+        ? EMPTY_EDITOR_STATE_CONTENT
+        : content;
+}
+
+/** And on its way back OUT, where an empty note is stored as no text at all. */
+export function toStoredContent(content: string) {
+    return checkIsEmptyNoteContent(content) ? '' : content;
+}
+export function checkIsEmptyNoteContent(content: string) {
+    const trimmedContent = content.trim();
+    if (trimmedContent === '') {
+        return true;
+    }
+    // An empty state is a fixed handful of root fields and no children, so it
+    // can never be long -- anything bigger is content, and parsing a 60KB note
+    // on every autosave to learn that is work for nothing.
+    if (trimmedContent.length > EMPTY_EDITOR_STATE_MAX_LENGTH) {
+        return false;
+    }
+    try {
+        const children = JSON.parse(trimmedContent)?.root?.children;
+        return Array.isArray(children) && children.length === 0;
+    } catch (_error) {
+        // Not this editor's state at all, so not ours to call empty.
+        return false;
+    }
+}
+
+/**
+ * How long the editor has to go quiet before its text is written into the
+ * editing history. Long enough that a word is one step and one write, short
+ * enough that a window closed straight after a sentence still keeps it.
+ */
+const EDITING_HISTORY_DEBOUNCE_MILLISECOND = 1_000;
+
 export const BIBLE_KEY_SETTING_NAME = 'bible-note-bible-key';
 export function getBibleNoteSelectedBibleKey() {
     return getSetting(BIBLE_KEY_SETTING_NAME) || BIBLE_KJV_KEY;
@@ -241,20 +327,56 @@ export async function initBibleNote({
     // reference and simply keeps it — the window closing is what frees it.
     const { namesLookupManager, locationsLookupManager } =
         await acquireLookupData();
+    // Per WINDOW, and the editor in it is the only writer: `bible-note` saves
+    // on every keystroke, and one history entry per letter is both 600KB of
+    // disk for a word and an Undo that walks back one character at a time.
+    // Trailing, so what lands is always the newest text.
+    const historyAttemptTimeout = genTimeoutAttempt(
+        EDITING_HISTORY_DEBOUNCE_MILLISECOND,
+    );
+    let pendingHistoryItem: NoteItem | null = null;
+    const writeEditingHistory = async () => {
+        const itemToWrite = pendingHistoryItem;
+        if (itemToWrite === null) {
+            return;
+        }
+        pendingHistoryItem = null;
+        await note.addItemEditingHistory(itemToWrite);
+    };
+    // A window closed a moment after the last letter must not lose it. Nothing
+    // can be AWAITED here, so this is a best effort on top of the debounce
+    // rather than instead of it -- which is why the wait is short.
+    const handleUnloading = () => {
+        void writeEditingHistory();
+    };
+    globalThis.addEventListener('beforeunload', handleUnloading);
+    globalThis.addEventListener('pagehide', handleUnloading);
     const bibleNoteProps: BibleNoteProps = {
         namesLookupManager,
         locationsLookupManager,
         getLangCode,
         editorExtraFontFamilies,
         loadData: () => {
-            return noteItem.content || null;
+            return toEditorContent(noteItem.content);
         },
         saveData: async (data: string) => {
-            if (isReadOnly || data === noteItem.content) {
+            if (isReadOnly) {
                 return;
             }
-            noteItem.content = data;
-            await note.updateAndSaveNoteItem(noteItem, true);
+            // Normalised on the way IN as well, so the file never comes to
+            // hold the one value the editor refuses to load back.
+            const newContent = toStoredContent(data);
+            if (newContent === noteItem.content) {
+                return;
+            }
+            noteItem.content = newContent;
+            // The EDITING HISTORY, never the file: the editor saves itself
+            // constantly and saves whatever state it is in, so a bad moment
+            // used to reach the disk with nothing to undo it. The human
+            // presses Save.
+            note.updateNoteItem(noteItem, true);
+            pendingHistoryItem = noteItem;
+            historyAttemptTimeout(writeEditingHistory);
         },
         storageManager: storageManager as any,
         stickyNoteExtraFontFamilies,
@@ -303,12 +425,19 @@ export async function initBibleNote({
                             setTimeout(resolve, 3_000);
                         });
                     }
-                    await note.reload();
+                    // The EDITING head, not the file: an item added or a verse
+                    // marked from the list rebases that head onto the new file,
+                    // so what comes back here still carries this window's own
+                    // unsaved text instead of wiping it.
+                    await (isReadOnly ? note.reload() : note.reloadEditing());
                     const newNoteItem = note.getItemById(noteItem.id);
-                    if (
-                        newNoteItem === null ||
-                        newNoteItem.content === noteItem.content
-                    ) {
+                    if (newNoteItem === null) {
+                        return;
+                    }
+                    // Same normalisation the file is read through: the editor
+                    // throws on a childless root here too.
+                    const newContent = toStoredContent(newNoteItem.content);
+                    if (newContent === noteItem.content) {
                         return;
                     }
                     if (isReadOnly) {
@@ -316,9 +445,9 @@ export async function initBibleNote({
                         // is what does that in an editable window -- so a file
                         // edited back to what it was would otherwise never be
                         // shown again.
-                        noteItem.content = newNoteItem.content;
+                        noteItem.content = newContent;
                     }
-                    bibleNote.content = newNoteItem.content;
+                    bibleNote.content = toEditorContent(newContent);
                 });
             },
         );
@@ -352,7 +481,11 @@ async function getNoteAndNoteItem() {
     if (fsExistSync(filePath) === false) {
         throw new Error(`Note file not found: ${fileFullName}`);
     }
-    const note = await Note.fromFilePath(filePath);
+    // A preview shows what is SAVED; an editable window opens on its own
+    // editing head, so a note closed with unsaved text comes back holding it.
+    const note = await (isReadOnly
+        ? Note.fromFilePath(filePath)
+        : Note.fromFilePathEditing(filePath));
     if (note === null) {
         throw new Error(`Failed to load note from file: ${fileFullName}`);
     }

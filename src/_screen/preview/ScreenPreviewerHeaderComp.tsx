@@ -6,10 +6,11 @@ import {
     useScreenManagerBaseContext,
     useScreenManagerEvents,
 } from '../managers/screenManagerHooks';
-import { type KeyboardEvent, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import ShowingScreenIconComp from './ShowingScreenIcon';
 import { tran } from '../../lang/langHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { pressElementLikeButton } from '../../helper/helpers';
 
 export default function ScreenPreviewerHeaderComp({
     isFullView,
@@ -39,14 +40,6 @@ export default function ScreenPreviewerHeaderComp({
         setIsFullViewRef.current(!isFullViewRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handleLockKeyingUp = useCallback(
-        (event: KeyboardEvent<HTMLElement>) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                handleToggleLock();
-            }
-        },
-        [handleToggleLock],
-    );
     const fullViewLabel = isFullView
         ? tran('Exit full view')
         : tran('Full view');
@@ -77,7 +70,11 @@ export default function ScreenPreviewerHeaderComp({
                         {/* Named, focusable and key-operable on purpose: this
                             was an anonymous <i> with an onClick, so a screen
                             reader announced nothing, the keyboard could not
-                            reach it, and no tool could find it by label. */}
+                            reach it, and no tool could find it by label.
+                            Every icon-control in this header and its footer
+                            needs the same four things -- the fix used to stop
+                            at this one, which left the Full view toggle beside
+                            it out of the accessibility tree entirely. */}
                         <i
                             className={
                                 `bi bi-${isLocked ? 'lock-fill' : 'unlock'}` +
@@ -90,7 +87,7 @@ export default function ScreenPreviewerHeaderComp({
                             aria-label={lockLabel}
                             aria-pressed={isLocked}
                             onClick={handleToggleLock}
-                            onKeyUp={handleLockKeyingUp}
+                            onKeyDown={pressElementLikeButton}
                         />
                     </div>
                     <div className="ms-2">
@@ -102,9 +99,13 @@ export default function ScreenPreviewerHeaderComp({
                                         : 'arrows-fullscreen'
                                 }` + ' app-caught-hover-pointer'
                             }
+                            role="button"
+                            tabIndex={0}
                             title={fullViewLabel}
                             aria-label={fullViewLabel}
+                            aria-pressed={isFullView}
                             onClick={handleToggleFullView}
+                            onKeyDown={pressElementLikeButton}
                         />
                     </div>
                     {/* The screen's own menu — the one a right-click anywhere on

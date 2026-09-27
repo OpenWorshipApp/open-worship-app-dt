@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: c56a2c6e-966a-423b-8bff-4b856646eb12
-  modified: 2026-08-05T03:57:24.171Z
+  modified: 2026-09-27T01:19:43.389Z
 ---
 
 Traced to source during the 2026-07-29 robot run. Each looks like a defect on screen; all
@@ -31,8 +31,16 @@ four are deliberate. Don't file them again.
 3. **`Syncing video time (from screen)` flooding the console at ~4 Hz** is a startup
    transient while the freshly-opened screen video catches up, not a runaway loop. Measured
    steady state: 1 seek per 15 s. Note the mini-preview `<video>` is **re-created** when the
-   screen opens and on every loop, so a probe listener attached to it silently goes stale —
-   check `el.isConnected` before trusting a measurement.
+   screen opens, so a probe listener attached to it silently goes stale — check
+   `el.isConnected` before trusting a measurement. It is **no longer re-created on every
+   loop** (fixed 2026-09-26): `_handleBackgroundVideo`'s end-of-clip fade called `render()`,
+   which builds a whole new background from `genHtmlBackground`, and Chromium does not cache
+   a `file://` media resource — so every lap was a full `range: bytes=0-` re-read of the
+   clip. Measured live at 37 re-reads of one 2.6 MB background in a few minutes on ONE
+   screen (~470 MB/hour; a 100 MB HD loop re-reads 100 MB a lap, all service, on the
+   low-spec machines this app targets). The element already carries `loop`, so the
+   re-render bought nothing but the opacity dip. `_fadeOverVideoLoop` now fades the playing
+   element out and back in; re-measured after, 0 media requests across ~5 loops.
 4. **A presented PDF slide showing a blank projector output with a scrollbar** is the
    `pdf-full-width` setting, not a render bug (verified 2026-08-04). `On Screen Width:
    Full Width` (`PageBaseAppearanceSettingComp`, shown in the previewer footer only while a

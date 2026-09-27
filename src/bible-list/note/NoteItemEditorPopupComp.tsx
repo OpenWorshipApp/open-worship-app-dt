@@ -15,6 +15,8 @@ import {
     toShortcutKey,
     useKeyboardRegistering,
 } from '../../event/KeyboardEventListener';
+import type Note from './Note';
+import type NoteItem from './NoteItem';
 
 function BibleNoteBibleLookupComp({
     bibleNote,
@@ -115,10 +117,23 @@ function BibleNoteBibleLookupComp({
 
 export default function NoteItemEditorPopupComp({
     bibleNote,
+    note,
+    noteItem,
     isReadOnly = false,
-}: Readonly<{ bibleNote: BibleNote; isReadOnly?: boolean }>) {
+}: Readonly<{
+    bibleNote: BibleNote;
+    note: Note;
+    noteItem: NoteItem;
+    isReadOnly?: boolean;
+}>) {
     const [isShowingBibleLookup, setIsShowingBibleLookup] = useState(false);
-    useBibleNoteControl({ bibleNote, setIsShowingBibleLookup, isReadOnly });
+    useBibleNoteControl({
+        bibleNote,
+        note,
+        noteItem,
+        setIsShowingBibleLookup,
+        isReadOnly,
+    });
     // The lookup exists to INSERT a passage, which a read-only note refuses.
     if (isShowingBibleLookup && !isReadOnly) {
         return (
