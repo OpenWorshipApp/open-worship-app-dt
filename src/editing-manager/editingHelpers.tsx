@@ -6,24 +6,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { tran } from '../lang/langHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import EditingHistoryManager from './EditingHistoryManager';
+import EditingHistoryManager, {
+    sanitizeForUpdatingComparison,
+} from './EditingHistoryManager';
 import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import { toShortcutKey } from '../event/KeyboardEventListener';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
-function sanitizeForUpdatingComparison(jsonText: string | null) {
-    if (jsonText === null) {
-        return null;
-    }
-    try {
-        const jsonData = JSON.parse(jsonText);
-        jsonData.metadata ??= {};
-        jsonData.metadata.lastEditDate = '';
-        return JSON.stringify(jsonData);
-    } catch (_error) {}
-    return jsonText;
-}
 export function useEditingHistoryStatus(filePath: string) {
     const [status, setStatus] = useState({
         canUndo: false,

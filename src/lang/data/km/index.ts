@@ -671,6 +671,9 @@ const dictionary = {
     Delete: 'លុប',
     'Dictionary for Selected Text': 'វចនានុក្រមសម្រាប់អត្ថបទដែលបានជ្រើសរើស',
     Disable: 'បិទដំណើរការ',
+    'Discard Change': 'បោះបង់ការផ្លាស់ប្តូរ',
+    'Drop every unsaved change in this note file?':
+        'បោះបង់រាល់ការផ្លាស់ប្តូរដែលមិនទាន់រក្សាទុក ក្នុងឯកសារកំណត់ចំណាំនេះ?',
     'Discard changed': 'បោះបង់ការផ្លាស់ប្តូរ',
     'Download From URL': 'ទាញយកពី URL',
     'Import From URL': 'នាំចូលពី URL',

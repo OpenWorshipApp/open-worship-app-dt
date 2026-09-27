@@ -673,6 +673,9 @@ const dictionary = {
     Delete: 'Supprimer',
     'Dictionary for Selected Text': 'Dictionnaire pour le texte sélectionné',
     Disable: 'Désactiver',
+    'Discard Change': 'Abandonner les modifications',
+    'Drop every unsaved change in this note file?':
+        'Abandonner toutes les modifications non enregistrées de ce fichier de notes ?',
     'Discard changed': 'Abandonner les modifications',
     'Download From URL': 'Télécharger depuis une URL',
     'Import From URL': 'Importer depuis une URL',

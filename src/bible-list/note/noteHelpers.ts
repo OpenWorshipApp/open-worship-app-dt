@@ -81,6 +81,11 @@ export async function openNoteItemContextMenu(
         );
         return;
     }
+    // Asked once, as the menu is OPENED, because it reads the head and the
+    // file: never per render and never per list row. The note WINDOW's own
+    // Discard button answers the same question through the same method, so
+    // the two cannot disagree about whether anything is pending.
+    const canDiscardChange = await note.editingHistoryManager.checkCanDiscard();
     const menuItem: ContextMenuItemType[] = [
         {
             childBefore: genContextMenuItemIcon('files'),
@@ -97,6 +102,32 @@ export async function openNoteItemContextMenu(
                 moveNoteItemTo(event1, note, noteItem);
             },
         },
+        ...(canDiscardChange
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon('x-octagon', {
+                          color: 'var(--bs-warning)',
+                      }),
+                      menuElement: tran('Discard Change'),
+                      onSelect: async () => {
+                          const isOk = await showAppConfirm(
+                              tran('Discard Change'),
+                              tran(
+                                  'Drop every unsaved change in this note file?',
+                              ),
+                              {
+                                  cancelButtonLabel: 'No',
+                                  confirmButtonLabel: 'Yes',
+                              },
+                          );
+                          if (!isOk) {
+                              return;
+                          }
+                          await note.historyDiscard();
+                      },
+                  },
+              ]
+            : []),
         {
             childBefore: genContextMenuItemIcon('trash3', {
                 color: 'var(--bs-danger)',
