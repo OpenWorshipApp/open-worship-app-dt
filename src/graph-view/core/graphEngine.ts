@@ -460,6 +460,19 @@ export function createGraphEngine(
             );
         },
 
+        /** Resolved source wording is presentation state, not an undo step. */
+        setResolvedTitle(graphKey: string, rootKey: string, title: string) {
+            replace(
+                graphKey,
+                (graph) => {
+                    return graph.rootKey !== rootKey || graph.title === title
+                        ? (graph as GraphViewType)
+                        : { ...graph, title };
+                },
+                null,
+            );
+        },
+
         clearPath(graphKey: string) {
             replace(graphKey, (graph) => {
                 return graph.pathNodeKeyList.length === 0

@@ -1,4 +1,5 @@
 import { genAppMenuDemos } from './appMenuDemos.mjs';
+import { READER_EXTRA_DEMO_LIST } from './readerExtraDemos.mjs';
 
 // Small, deterministic Bible Reader lessons. They live beside the guide
 // engine because the chatbot window and every outside MCP client must start
@@ -808,6 +809,7 @@ export const READER_DEMO_LIST = [
       },
     ],
   },
+  ...READER_EXTRA_DEMO_LIST,
   ...genAppMenuDemos('reader'),
   {
     id: 'reader-view-reload',
@@ -914,14 +916,33 @@ export const READER_DEMO_LIST = [
 
 export const READER_DEMO_IDS = READER_DEMO_LIST.map((demo) => demo.id);
 
+function checkIsActionableStep(step) {
+  return (
+    typeof step.find === 'string' ||
+    (step.finds ?? []).length > 0 ||
+    typeof step.press === 'string'
+  );
+}
+
 /** A fresh localized copy, so callers can safely drop or decorate steps. */
 export function getReaderDemo(id, translate = (value) => value) {
   const source = READER_DEMO_LIST.find((demo) => demo.id === id);
   if (source === undefined) {
     return null;
   }
+  const canDemo = source.steps.some(checkIsActionableStep);
+  // Scope and control are separate translation keys. Translating the joined
+  // path silently falls back to English and misses a localized panel.
+  const translateLabel = (label) =>
+    label
+      .split(' > ')
+      .map((part) => translate(part))
+      .join(' > ');
   return {
     ...source,
+    label: translate(source.label),
+    detail: translate(source.detail),
+    title: translate(source.title),
     steps: source.steps.map((sourceStep) => {
       const {
         translateFind,
@@ -935,14 +956,14 @@ export function getReaderDemo(id, translate = (value) => value) {
       ];
       if (translateFind) {
         const key = translateFind === true ? step.find : translateFind;
-        const translated = translate(key);
+        const translated = translateLabel(key);
         if (translated !== key) {
           finds.push(`${translated}${translateSuffix}`);
         }
       }
       if (translateFinds === true) {
         for (const find of [...finds]) {
-          const translated = translate(find);
+          const translated = translateLabel(find);
           if (translated !== find) {
             finds.push(translated);
           }
@@ -950,6 +971,7 @@ export function getReaderDemo(id, translate = (value) => value) {
       }
       return {
         ...step,
+        ...(canDemo && !checkIsActionableStep(step) ? { kind: 'look' } : {}),
         ...(translateValue === true ? { value: translate(step.value) } : {}),
         ...(finds.length === 0
           ? {}

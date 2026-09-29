@@ -7,6 +7,7 @@ import {
 } from '../helper/settingHelpers';
 import {
     checkIsForeignAbsolutePath,
+    pathDirname,
     pathResolve,
     selectDirs,
     toPathCompareKey,
@@ -152,6 +153,41 @@ export function addResourcesFolders(
         addedDirPaths,
         duplicatedDirPaths,
     };
+}
+
+/**
+ * The candidates the list does not already show: not on it themselves, and not
+ * within `coveredDepth` levels of a listed folder -- the scan's own depth, so
+ * that folder's box is listing their files already. Without the second half, a
+ * `<data dir>/resources` put on the list whole would have each folder in it
+ * offered again, and one press would draw every file in it twice.
+ *
+ * The depth is passed in rather than imported, so this module stays free of the
+ * scanner and the bible tables it carries.
+ */
+export function filterUnlistedResourcesFolders(
+    candidateDirPaths: string[],
+    dirPathList: string[],
+    coveredDepth: number,
+) {
+    const listedKeys = new Set(
+        sanitizeResourcesFolderList(dirPathList).map(toDirPathCompareKey),
+    );
+    return sanitizeResourcesFolderList(candidateDirPaths).filter((dirPath) => {
+        let currentDirPath = dirPath;
+        for (let depth = 0; depth <= coveredDepth; depth++) {
+            if (listedKeys.has(toDirPathCompareKey(currentDirPath))) {
+                return false;
+            }
+            const parentDirPath = pathDirname(currentDirPath);
+            // A drive root is its own parent.
+            if (parentDirPath === currentDirPath) {
+                break;
+            }
+            currentDirPath = parentDirPath;
+        }
+        return true;
+    });
 }
 
 /**

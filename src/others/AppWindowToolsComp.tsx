@@ -9,6 +9,8 @@ import './theme-override-light.scss';
 import AppAssistantComp from './AppAssistantComp';
 import PresentingControlComp from '../presenting-control/PresentingControlComp';
 import { useThemeSource } from './themeHelpers';
+import ToastComp from '../toast/ToastComp';
+import appProvider from '../server/appProvider';
 
 /**
  * What every window of the app gets, declared once.
@@ -39,6 +41,10 @@ export default function AppWindowToolsComp() {
         >
             <PresentingControlComp />
             <AppAssistantComp />
+            {/* These entries have no app/popup layout to host their toasts. */}
+            {appProvider.isPageLyricEditor || appProvider.isPageLWShare ? (
+                <ToastComp />
+            ) : null}
         </div>
     );
 }

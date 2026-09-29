@@ -78,6 +78,177 @@ const dictionary = {
     'Messages > Properties': 'Messages > Propriétés',
     'Quick Text > Properties': 'Quick Text > Propriétés',
     'Image Show > Properties': 'Image Show > Propriétés',
+    'Applies to each app page on the next launch.':
+        'S’applique à chaque page de l’application au prochain lancement.',
+    'Explore General settings': 'Explorer les paramètres généraux',
+    'Manage Bible versions': 'Gérer les versions bibliques',
+    'Find AI and extra tools': 'Trouver l’IA et les outils supplémentaires',
+    'Bible Note': 'Note biblique',
+    'Web Editor': 'Éditeur de page web',
+    'Lyric Editor': 'Éditeur de paroles',
+    'Local Web Share': 'Partage web local',
+    'Explore folders, language, appearance, and automatic tips in General settings.':
+        'Découvrez les dossiers, la langue, l’apparence et les astuces automatiques dans les paramètres généraux.',
+    'Open Bible settings to manage the installed Bible versions.':
+        'Ouvrez les paramètres bibliques pour gérer les versions de la Bible installées.',
+    'Find AI features and extra binaries in Others settings.':
+        'Retrouvez les fonctions d’IA et les programmes supplémentaires dans les autres paramètres.',
+    'Select a slide, then select an item on its canvas to edit it.':
+        'Sélectionnez une diapositive, puis un élément sur sa zone de travail pour le modifier.',
+    'Review your slide edits before saving. Use Undo to reverse an edit.':
+        'Vérifiez vos modifications avant d’enregistrer. Utilisez Annuler pour revenir sur une modification.',
+    'Edit your note here, then use Save to keep your changes.':
+        'Modifiez votre note ici, puis utilisez Enregistrer pour conserver vos modifications.',
+    'Edit the web page beside its preview and review it before saving.':
+        'Modifiez la page web à côté de son aperçu et vérifiez-la avant d’enregistrer.',
+    'Edit the song sections and check their preview before saving.':
+        'Modifiez les sections du chant et vérifiez leur aperçu avant d’enregistrer.',
+    'Start the server when you are ready to share, then use its address or QR code on the same network.':
+        'Démarrez le serveur lorsque vous êtes prêt à partager, puis utilisez son adresse ou son code QR sur le même réseau.',
+    // Reader demo titles and practical tips.
+    'Find and replay Reader demos':
+        'Trouver et rejouer les démonstrations du Lecteur',
+    'Use Help > All tips, search a task, then choose Show it to practise one step at a time.':
+        'Dans Aide > Tous les conseils, recherchez une tâche, puis choisissez Montrer pour pratiquer étape par étape.',
+    'Copy only the passage reference':
+        'Copier uniquement la référence du passage',
+    'Use Copy Title when you need a reference for an outline without the verse text.':
+        'Utilisez Copier le titre pour insérer une référence dans un plan sans le texte des versets.',
+    'Copy only the Bible words': 'Copier uniquement les mots de la Bible',
+    'Use Copy Text to paste the passage into your study notes without its title.':
+        'Utilisez Copier le texte pour coller le passage dans vos notes sans son titre.',
+    'Copy the reference and Bible words':
+        'Copier la référence et le texte biblique',
+    'Use Copy All to keep the passage reference with the text you paste.':
+        'Utilisez Copier tout pour garder la référence avec le texte collé.',
+    'Copy a verse key for study files':
+        'Copier une clé de verset pour les fichiers d’étude',
+    'Use Copy Verse Full Key for a stable book, chapter and verse identifier.':
+        'Utilisez Copier la clé complète du verset pour obtenir un identifiant du livre, du chapitre et du verset.',
+    'Copy a chapter key for Resources':
+        'Copier une clé de chapitre pour les ressources',
+    'Use Copy Chapter Full Key as the starting point for a chapter resource filename.':
+        'Utilisez Copier la clé complète du chapitre pour commencer le nom d’un fichier de ressource du chapitre.',
+    'Read the installed Bible information':
+        'Lire les informations de la Bible installée',
+    'Clear the reference, then open Bible Information to check the translation and publisher.':
+        'Effacez la référence, puis ouvrez Informations bibliques pour vérifier la traduction et l’éditeur.',
+    'Adjust or stop automatic scrolling':
+        'Régler ou arrêter le défilement automatique',
+    'Double-click the bottom chevron to speed up, right-click to slow down, or Alt+right-click to stop.':
+        'Double-cliquez sur le chevron du bas pour accélérer, faites un clic droit pour ralentir ou Alt+clic droit pour arrêter.',
+    'Remove an extra Bible version':
+        'Retirer une version biblique supplémentaire',
+    'Use the remove icon beside an extra version when you want one translation again.':
+        'Utilisez l’icône de retrait à côté d’une version supplémentaire pour revenir à une seule traduction.',
+    'Keep reading panes scrolling together':
+        'Faire défiler les volets de lecture ensemble',
+    'Give passages the same color note to follow corresponding verses as you scroll.':
+        'Attribuez la même couleur aux passages pour suivre les versets correspondants pendant le défilement.',
+    'Split directly into another translation':
+        'Diviser directement vers une autre traduction',
+    'Use Split Horizontal to or Split Vertical to from a passage menu, then choose a Bible.':
+        'Dans le menu du passage, utilisez Diviser horizontalement vers ou Diviser verticalement vers, puis choisissez une Bible.',
+    'Choose the Bible formatting model':
+        'Choisir le modèle de mise en forme biblique',
+    'Use Change Bible Model Info in the footer; choosing a different model reloads the Reader.':
+        'Utilisez Changer le modèle biblique dans le pied de page ; un autre modèle recharge le Lecteur.',
+    'Find the Reader saved-passage folder':
+        'Trouver le dossier des passages enregistrés du Lecteur',
+    'Use Show path editor in Bibles to inspect the folder used for Reader passage lists.':
+        'Utilisez Afficher l’éditeur de chemin dans Bibles pour examiner le dossier des listes du Lecteur.',
+    'Create a saved Bible list': 'Créer une liste de passages bibliques',
+    'Open Bibles > More Options > New File to keep passages for a study in their own list.':
+        'Ouvrez Bibles > Plus d’options > Nouveau fichier pour regrouper les passages d’une étude.',
+    'Reopen a saved passage in the Reader':
+        'Rouvrir un passage enregistré dans le Lecteur',
+    'Expand a Bibles list, then double-click a passage; hold Shift to open it beside the current passage.':
+        'Dépliez une liste Bibles et double-cliquez sur un passage ; maintenez Maj pour l’ouvrir à côté du passage actuel.',
+    'Arrange saved Bible passages':
+        'Organiser les passages bibliques enregistrés',
+    'Use a passage row menu for Duplicate, Move To, Move up or Move down, and its color circle to group it.':
+        'Le menu d’un passage propose Dupliquer, Déplacer vers, Monter et Descendre ; son cercle de couleur permet de le classer.',
+    'Import or export a Bible list': 'Importer ou exporter une liste biblique',
+    'Export from a list file menu; Import or Import From URL from the Bibles panel menu.':
+        'Exportez depuis le menu du fichier ; utilisez Importer ou Importer depuis une URL dans le menu Bibles.',
+    'Manage saved Bible list files': 'Gérer les fichiers de listes bibliques',
+    'Right-click a list file for Rename, Duplicate, Reload, Copy Path to Clipboard and file location.':
+        'Faites un clic droit sur une liste pour Renommer, Dupliquer, Recharger, Copier le chemin ou afficher son emplacement.',
+    'Find the Bible Notes folder': 'Trouver le dossier des notes bibliques',
+    'Use Show path editor in Bible Notes when you need to locate or choose your note library.':
+        'Utilisez Afficher l’éditeur de chemin dans Notes bibliques pour trouver ou choisir votre bibliothèque de notes.',
+    'Create a Bible Notes file': 'Créer un fichier de notes bibliques',
+    'Use Bible Notes > More Options > New File to group notes for a topic or study.':
+        'Utilisez Notes bibliques > Plus d’options > Nouveau fichier pour regrouper les notes d’un sujet ou d’une étude.',
+    'Add a note to the right file': 'Ajouter une note au bon fichier',
+    'Expand your chosen Bible Notes file and press its New Note Item plus button.':
+        'Dépliez le fichier de notes choisi et appuyez sur son bouton plus Nouvelle note.',
+    'Arrange and move Bible note items':
+        'Organiser et déplacer les notes bibliques',
+    'Use a note row menu to Duplicate, Move To, Move up or Move down; drag between note files.':
+        'Le menu d’une note propose Dupliquer, Déplacer vers, Monter et Descendre ; vous pouvez aussi glisser entre fichiers.',
+    'Import and export Bible notes': 'Importer et exporter des notes bibliques',
+    'Import note files from the panel menu, import an item into a file, or Export the file or item you need.':
+        'Importez des fichiers depuis le menu du panneau, un élément dans un fichier, ou exportez le fichier ou l’élément voulu.',
+    'Manage Bible Notes files': 'Gérer les fichiers de notes bibliques',
+    'Use a note file menu for Rename, Duplicate, Reload, Copy All Items and Move All Items To.':
+        'Le menu d’un fichier propose Renommer, Dupliquer, Recharger, Copier tous les éléments et Tout déplacer vers.',
+    'Search for words selected in a verse':
+        'Rechercher les mots sélectionnés dans un verset',
+    'Select Bible words, right-click them, then choose Search in Bible Search.':
+        'Sélectionnez des mots bibliques, faites un clic droit, puis choisissez Rechercher dans la recherche biblique.',
+    'Choose the verse for cross references':
+        'Choisir le verset des références croisées',
+    'Open Cross Reference, then select a verse to follow its related passages.':
+        'Ouvrez Références croisées, puis sélectionnez un verset pour suivre les passages associés.',
+    'Filter the people and places lookup':
+        'Filtrer les personnes et les lieux bibliques',
+    'Switch Names or Locations, search the list, and use Filter by name type for people.':
+        'Choisissez Noms ou Lieux, recherchez dans la liste et filtrez les personnes par type de nom.',
+    'Read a place and open its map':
+        'Lire les détails d’un lieu et ouvrir sa carte',
+    'Choose Locations in the names lookup, open a place, then use Open in Google Maps if available.':
+        'Choisissez Lieux dans la recherche de noms, ouvrez un lieu, puis Ouvrir dans Google Maps si disponible.',
+    'Find a resource by filename':
+        'Trouver une ressource par son nom de fichier',
+    'In Resources, use Search file name to narrow the files; clear the words when finished.':
+        'Dans Ressources, utilisez Rechercher un nom de fichier pour filtrer, puis effacez les mots à la fin.',
+    'Show resources without chapter names':
+        'Afficher les ressources sans nom de chapitre',
+    'Toggle Others in Resources to include files that do not use a book and chapter filename.':
+        'Activez Autres dans Ressources pour inclure les fichiers sans nom de livre et de chapitre.',
+    'Refresh or extend the Resources library':
+        'Actualiser ou étendre la bibliothèque de ressources',
+    'Use the Resources menu for Add Folder or Reload, and a folder menu for Refresh or Add Files.':
+        'Le menu Ressources propose Ajouter un dossier et Recharger ; le menu d’un dossier propose Actualiser et Ajouter des fichiers.',
+    'Keep study resources with app data':
+        'Conserver les ressources avec les données de l’application',
+    'Use a resource folder menu > Copy to Data Directory to make a portable library copy.':
+        'Utilisez le menu d’un dossier de ressources > Copier dans le dossier de données pour créer une copie portable.',
+    'Show one kind of graph relationship':
+        'Afficher un seul type de relation du graphe',
+    'In an open graph, toggle relation chips or right-click a chip to show only that relationship.':
+        'Dans un graphe ouvert, activez les étiquettes de relation ou faites un clic droit pour isoler une relation.',
+    'Find a connection between Bible records':
+        'Trouver un lien entre des personnages ou lieux bibliques',
+    'Open Graph Preview, press Find Connection, choose Path to, then run the search.':
+        'Ouvrez l’aperçu du graphe, appuyez sur Trouver un lien, choisissez Chemin vers, puis lancez la recherche.',
+    'Fit and rearrange a connection graph':
+        'Ajuster et réorganiser un graphe de relations',
+    'Use Fit to view, Re-layout, Zoom, Collapse all, Undo and Redo inside the graph.':
+        'Utilisez Ajuster à la vue, Réorganiser, Zoom, Tout réduire, Annuler et Rétablir dans le graphe.',
+    'Copy or export a connection graph':
+        'Copier ou exporter un graphe de relations',
+    'Use the graph Copy menu for Markdown or diagram text; Presets also offers Save as image and Print.':
+        'Le menu Copier du graphe propose Markdown et du texte de diagramme ; Préréglages propose aussi Enregistrer en image et Imprimer.',
+    'Save and revisit a graph preset':
+        'Enregistrer et retrouver un préréglage de graphe',
+    'Use Presets > Save preset to name your graph, then pick it from Presets later.':
+        'Utilisez Préréglages > Enregistrer un préréglage pour nommer le graphe et le retrouver plus tard.',
+    'Resize or close one Reader panel':
+        'Redimensionner ou fermer un volet du Lecteur',
+    'Drag a panel divider, or right-click it for Reset Size, Close First Widget and Close Second Widget.':
+        'Glissez une séparation ou faites un clic droit pour Réinitialiser la taille, Fermer le premier volet et Fermer le second volet.',
     'Are you sure you want to clear all settings?':
         'Voulez-vous vraiment effacer tous les paramètres ?',
     'Reveal Original': "Afficher l'original",
@@ -117,6 +288,7 @@ const dictionary = {
     'The data directory is inside this folder':
         'Le dossier de données se trouve dans ce dossier',
     'Cannot copy folder': 'Impossible de copier le dossier',
+    'In the data directory': 'Dans le dossier de données',
     // --- Resources: copying picked files INTO one of the user's folders.
     'Add Files': 'Ajouter des fichiers',
     'file copied': 'fichier copié',
@@ -663,6 +835,7 @@ const dictionary = {
     'Add Extra Bible': 'Ajouter une autre Bible',
     'Add Time': 'Ajouter une horloge',
     'Advance Bible Lookup': 'Recherche biblique avancée',
+    'Advance Lookup': 'Recherche avancée',
     'Apply All Slides': 'Appliquer à toutes les diapositives',
     'Apply changed dimension to this slide':
         'Appliquer la nouvelle dimension à cette diapositive',

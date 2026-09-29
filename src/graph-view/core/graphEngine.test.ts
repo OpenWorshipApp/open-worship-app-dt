@@ -45,6 +45,56 @@ function createTestEngine() {
 }
 
 describe('graph history', () => {
+    test('resolving the root title preserves the graph and its edit history', () => {
+        const { engine, graphKey, getGraph } = createTestEngine();
+        const rootKey = getGraph().rootKey;
+        const initial = getGraph();
+        engine.setResolvedTitle(graphKey, rootKey, 'ឫស');
+        expect(getGraph()).toEqual({ ...initial, title: 'ឫស' });
+        expect(getGraph().nodeList).toBe(initial.nodeList);
+        expect(getGraph().edgeList).toBe(initial.edgeList);
+        expect(engine.canUndo(graphKey)).toBe(false);
+
+        engine.moveNode(graphKey, rootKey, 120, 60);
+        engine.undo(graphKey);
+        engine.setResolvedTitle(graphKey, rootKey, 'Root');
+        expect(engine.canUndo(graphKey)).toBe(false);
+        expect(engine.canRedo(graphKey)).toBe(true);
+        expect(engine.redo(graphKey)).toBe(true);
+        expect(getGraph().nodeList[0].x).toBe(120);
+        // A restored snapshot can carry old wording; resolving it again must
+        // leave the actual edit as the next undo step.
+        engine.setResolvedTitle(graphKey, rootKey, 'Root');
+        expect(engine.undo(graphKey)).toBe(true);
+        expect(getGraph().nodeList[0].x).toBe(0);
+        expect(engine.canUndo(graphKey)).toBe(false);
+    });
+
+    test('title resolution ignores stale roots and leaves other graphs alone', () => {
+        const { engine, graphKey, getGraph } = createTestEngine();
+        const secondKey = engine.open({
+            sourceId: 'test',
+            root: { kind: 'name', recordId: 'second', name: 'Second' },
+        });
+        const initial = engine.getSnapshot();
+        let notifications = 0;
+        engine.subscribe(() => {
+            notifications++;
+        });
+        engine.setResolvedTitle(graphKey, 'stale-root', 'Wrong root');
+        engine.setResolvedTitle('closed-graph', getGraph().rootKey, 'Closed');
+        engine.setResolvedTitle(graphKey, getGraph().rootKey, 'Root');
+        expect(engine.getSnapshot()).toBe(initial);
+        expect(notifications).toBe(0);
+
+        engine.setResolvedTitle(graphKey, getGraph().rootKey, 'Translated');
+        expect(getGraph().title).toBe('Translated');
+        expect(notifications).toBe(1);
+        expect(
+            engine.getSnapshot().find((graph) => graph.key === secondKey),
+        ).toBe(initial.find((graph) => graph.key === secondKey));
+    });
+
     test('a fresh graph has nothing to undo or redo', () => {
         const { engine, graphKey } = createTestEngine();
         expect(engine.canUndo(graphKey)).toBe(false);

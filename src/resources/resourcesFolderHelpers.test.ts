@@ -28,6 +28,10 @@ vi.mock('../server/fileHelpers', () => ({
         const resolved = dirPath.startsWith('/') ? dirPath : `/cwd/${dirPath}`;
         return resolved.endsWith('/') ? resolved.slice(0, -1) : resolved;
     },
+    // A root is its own parent, as `path.dirname` has it.
+    pathDirname: (dirPath: string) => {
+        return dirPath.slice(0, dirPath.lastIndexOf('/')) || '/';
+    },
     // Mirror the real ones on macOS/Linux (tested in `fileHelpers.test.ts`).
     checkIsForeignAbsolutePath: (dirPath: string) => {
         return /^[A-Za-z]:[\\/]/.test(dirPath);
@@ -51,6 +55,7 @@ import {
     addResourcesFolders,
     addResourcesFoldersToList,
     carryResourcesFolderSettings,
+    filterUnlistedResourcesFolders,
     getResourcesFolderList,
     promptAddResourcesFolders,
     removeResourcesFolderSettings,
@@ -208,6 +213,65 @@ describe('addResourcesFoldersToList', () => {
         getItemMock.mockReturnValue('["/d/resources/pdf"]');
         expect(addResourcesFoldersToList(['/d/resources/pdf/'])).toEqual([]);
         expect(setItemMock).not.toHaveBeenCalled();
+    });
+});
+
+describe('filterUnlistedResourcesFolders', () => {
+    const CANDIDATES = ['/d/resources/pdf', '/d/resources/YouTube'];
+
+    beforeEach(() => {
+        state.isLinux = false;
+    });
+
+    test('offers every candidate when nothing is listed', () => {
+        expect(filterUnlistedResourcesFolders(CANDIDATES, [], 2)).toEqual(
+            CANDIDATES,
+        );
+    });
+
+    test("leaves out one already listed, by the file system's spelling rules", () => {
+        expect(
+            filterUnlistedResourcesFolders(
+                CANDIDATES,
+                ['/a/songs', '/D/Resources/PDF/'],
+                2,
+            ),
+        ).toEqual(['/d/resources/YouTube']);
+    });
+
+    test('keeps both casings apart on Linux, where they are two folders', () => {
+        state.isLinux = true;
+        expect(
+            filterUnlistedResourcesFolders(CANDIDATES, ['/d/resources/PDF'], 2),
+        ).toEqual(CANDIDATES);
+    });
+
+    test('offers nothing a listed folder is already scanning', () => {
+        // `resources` listed whole: its box already lists every file in them,
+        // and adding one would draw each of those files twice.
+        expect(
+            filterUnlistedResourcesFolders(CANDIDATES, ['/d/resources'], 2),
+        ).toEqual([]);
+        // Two levels up is still inside the scan's reach.
+        expect(filterUnlistedResourcesFolders(CANDIDATES, ['/d'], 2)).toEqual(
+            [],
+        );
+    });
+
+    test('offers a folder a listed ancestor is too far above to scan', () => {
+        expect(
+            filterUnlistedResourcesFolders(CANDIDATES, ['/d/resources'], 0),
+        ).toEqual(CANDIDATES);
+        expect(filterUnlistedResourcesFolders(CANDIDATES, ['/d'], 1)).toEqual(
+            CANDIDATES,
+        );
+    });
+
+    test('stops at the root rather than walking past it', () => {
+        // A depth deeper than the path is tall: the root is its own parent.
+        expect(filterUnlistedResourcesFolders(['/pdf'], ['/a'], 5)).toEqual([
+            '/pdf',
+        ]);
     });
 });
 

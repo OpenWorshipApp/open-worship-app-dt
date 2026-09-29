@@ -50,7 +50,7 @@ export default function RenderBibleEditingHeaderComp() {
             }
             title={BIBLE_VERSE_TEXT_TITLE}
         >
-            <div className="d-flex w-100 h-100">
+            <div className="bible-view-header d-flex w-100 h-100">
                 <RenderTitleMaterialComp
                     bibleItem={viewController.selectedBibleItem}
                     onBibleKeyChange={handleBibleKeyChange}

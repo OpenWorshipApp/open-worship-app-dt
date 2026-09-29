@@ -18,6 +18,7 @@ import {
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
+import ResourcesDataDirFoldersComp from './ResourcesDataDirFoldersComp';
 import ResourcesDirBoxComp from './ResourcesDirBoxComp';
 import {
     copyResourcesFolderToDataDir,
@@ -31,6 +32,7 @@ import {
     readDroppedPaths,
 } from './resourcesDropHelpers';
 import {
+    addResourcesFolders,
     carryResourcesFolderSettings,
     getResourcesFolderList,
     RESOURCES_OTHERS_SHOWING_SETTING_NAME,
@@ -102,6 +104,19 @@ export default function ResourcesRendererComp({
         const newDirPathList = await promptAddResourcesFolders(
             dirPathListRef.current,
         );
+        if (newDirPathList === null) {
+            return;
+        }
+        setResourcesFolderList(newDirPathList);
+        setDirPathList(newDirPathList);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // One press on a folder already in `<data dir>/resources`: no picker, no
+    // toast -- its box appearing, files and all, is the answer.
+    const handleAddingDataDirFolder = useCallback((dirPath: string) => {
+        const { newDirPathList } = addResourcesFolders(dirPathListRef.current, [
+            dirPath,
+        ]);
         if (newDirPathList === null) {
             return;
         }
@@ -498,6 +513,15 @@ export default function ResourcesRendererComp({
                     })}
                 </div>
             )}
+            {/*
+             * Below the shelf in both states: with nothing listed yet it is the
+             * quickest way in, and with a shelf it never pushes a box down.
+             */}
+            <ResourcesDataDirFoldersComp
+                dirPathList={dirPathList}
+                reloadCount={reloadCount}
+                onAddFolder={handleAddingDataDirFolder}
+            />
         </div>
     );
 }

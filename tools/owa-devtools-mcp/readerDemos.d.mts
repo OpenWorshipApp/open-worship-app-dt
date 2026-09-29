@@ -6,6 +6,7 @@ export type ReaderDemoStepType = {
   value?: string;
   press?: string;
   skipIfVisible?: string;
+  kind?: 'look';
 };
 
 export type ReaderDemoType = {
@@ -14,6 +15,7 @@ export type ReaderDemoType = {
   detail: string;
   title: string;
   isFeatured?: boolean;
+  category?: string;
   steps: ReaderDemoStepType[];
 };
 

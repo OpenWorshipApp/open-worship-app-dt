@@ -7,12 +7,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 const {
     checkDirExistMock,
     getFolderListMock,
+    listDirentsMock,
     scanResourceFilesMock,
     setFolderListMock,
     showSimpleToastMock,
 } = vi.hoisted(() => ({
     checkDirExistMock: vi.fn(),
     getFolderListMock: vi.fn(),
+    listDirentsMock: vi.fn(),
     scanResourceFilesMock: vi.fn(),
     setFolderListMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
@@ -45,7 +47,13 @@ vi.mock('../toast/toastHelpers', () => ({
 vi.mock('../server/fileHelpers', async (importOriginal) => {
     const original =
         await importOriginal<typeof import('../server/fileHelpers')>();
-    return { ...original, fsCheckDirExist: checkDirExistMock };
+    return {
+        ...original,
+        fsCheckDirExist: checkDirExistMock,
+        // Only ever `<data dir>/resources` here: the folder boxes' own walk is
+        // stubbed below, so this is the panel's one read of the data folder.
+        fsListDirents: listDirentsMock,
+    };
 });
 
 // The folder boxes walk the disk on mount; this panel's own behaviour is what
@@ -65,6 +73,7 @@ vi.mock('./resourcesScanHelpers', async (importOriginal) => {
 // is what the assertions below read.
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
+        defaultStorageDirPath: '/data',
         getItem: () => null,
         setItem: () => {},
         removeItem: () => {},
@@ -85,6 +94,7 @@ vi.mock('../server/appProvider', () => ({
                 const joined = paths.join('/');
                 return joined.endsWith('/') ? joined.slice(0, -1) : joined;
             },
+            join: (...paths: string[]) => paths.join('/'),
         },
     },
 }));
@@ -137,6 +147,8 @@ describe('ResourcesRendererComp folder dropping', () => {
         showSimpleToastMock.mockReset();
         checkDirExistMock.mockReset();
         checkDirExistMock.mockResolvedValue(true);
+        listDirentsMock.mockReset();
+        listDirentsMock.mockResolvedValue([]);
         scanResourceFilesMock.mockResolvedValue({
             filePaths: [],
             searchedFilePaths: [],
@@ -289,6 +301,8 @@ describe('ResourcesRendererComp Others', () => {
     beforeEach(() => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
         getFolderListMock.mockReturnValue(['/a/songs']);
+        listDirentsMock.mockReset();
+        listDirentsMock.mockResolvedValue([]);
         scanResourceFilesMock.mockResolvedValue({
             filePaths: [],
             searchedFilePaths: [],
@@ -364,5 +378,140 @@ describe('ResourcesRendererComp Others', () => {
                 '[title="/a/songs/Jesus-family-line.jpeg"]',
             ),
         ).not.toBeNull();
+    });
+});
+
+describe('ResourcesRendererComp data directory folders', () => {
+    let container: HTMLDivElement | null = null;
+    let root: Root | null = null;
+
+    function genDirent(name: string, isDirectory = true) {
+        return { name, isFile: !isDirectory, isDirectory };
+    }
+
+    beforeEach(() => {
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        getFolderListMock.mockReturnValue([]);
+        setFolderListMock.mockReset();
+        showSimpleToastMock.mockReset();
+        listDirentsMock.mockReset();
+        // Out of order, with the two things that must never be offered: a
+        // copy still being written, and a plain file.
+        listDirentsMock.mockResolvedValue([
+            genDirent('YouTube'),
+            genDirent('.copying-1-notes'),
+            genDirent('readme.txt', false),
+            genDirent('pdf'),
+        ]);
+        scanResourceFilesMock.mockResolvedValue({
+            filePaths: [],
+            searchedFilePaths: [],
+            isTruncated: false,
+            isSearchTruncated: false,
+            otherFilePaths: [],
+            isOthersTruncated: false,
+        });
+        container = document.createElement('div');
+        document.body.appendChild(container);
+    });
+
+    afterEach(async () => {
+        if (root) {
+            await act(async () => {
+                root?.unmount();
+            });
+            root = null;
+        }
+        container?.remove();
+        container = null;
+    });
+
+    async function renderPanel() {
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<ResourcesRendererComp targets={PSA_1} />);
+        });
+        // The data folder is read in an effect; let its `setState` land.
+        await act(async () => {
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        });
+    }
+
+    function getOfferedNames() {
+        return Array.from(
+            container?.querySelectorAll('.app-resources-suggestion') ?? [],
+        ).map((button) => {
+            return button.textContent;
+        });
+    }
+
+    test('an empty panel offers the folders already in the data directory', async () => {
+        await renderPanel();
+
+        expect(listDirentsMock).toHaveBeenCalledWith('/data/resources');
+        expect(container?.textContent).toContain('In the data directory');
+        // Sorted by name, folders only, nothing hidden.
+        expect(getOfferedNames()).toEqual(['pdf', 'YouTube']);
+        // The way in by hand is still there beside them.
+        expect(container?.textContent).toContain('Add Folder');
+    });
+
+    test('one press shelves the folder and takes it off the offer', async () => {
+        await renderPanel();
+        const button = container?.querySelector<HTMLButtonElement>(
+            '[title="Add Folder: /data/resources/pdf"]',
+        );
+        if (!button) {
+            throw new Error('Missing pdf suggestion');
+        }
+
+        await act(async () => {
+            button.click();
+        });
+
+        expect(setFolderListMock).toHaveBeenCalledWith(['/data/resources/pdf']);
+        // Drawn as a box at once -- no picker, no toast.
+        expect(
+            container
+                ?.querySelector('.app-resources-group-header')
+                ?.getAttribute('title'),
+        ).toBe('/data/resources/pdf');
+        expect(showSimpleToastMock).not.toHaveBeenCalled();
+        expect(getOfferedNames()).toEqual(['YouTube']);
+    });
+
+    test('a folder already on the list is not offered', async () => {
+        getFolderListMock.mockReturnValue(['/data/resources/YouTube']);
+        await renderPanel();
+
+        expect(getOfferedNames()).toEqual(['pdf']);
+    });
+
+    test('nothing is drawn once the list already covers every folder there', async () => {
+        // `resources` itself on the list already scans both of them.
+        getFolderListMock.mockReturnValue(['/data/resources']);
+        await renderPanel();
+
+        expect(
+            container?.querySelector('.app-resources-suggestions'),
+        ).toBeNull();
+        expect(container?.textContent).not.toContain('In the data directory');
+    });
+
+    test('a data directory with no resources folder offers nothing', async () => {
+        listDirentsMock.mockRejectedValue(
+            Object.assign(new Error('missing'), { code: 'ENOENT' }),
+        );
+        await renderPanel();
+
+        expect(
+            container?.querySelector('.app-resources-suggestions'),
+        ).toBeNull();
+        expect(container?.textContent).toContain('Add Folder');
     });
 });

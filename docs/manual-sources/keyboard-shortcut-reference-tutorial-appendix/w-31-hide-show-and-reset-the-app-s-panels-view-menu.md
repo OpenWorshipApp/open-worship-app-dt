@@ -25,6 +25,9 @@ the only way in a popup window, whose menu bar is hidden.
    `Document List`, `Presenting Flow List`, `Presenter`, `Background`,
    `Bible and Notes`, `Mini Screen`, `Bibles`, `Bible Notes`, `Previewer`, `Slides`,
    `Note`.
+   In the Reader, the three horizontal sections are **[en:tran:Bible and Notes]**,
+   **[en:tran:Bible Lookup]**, and **[en:tran:Advance Lookup]**. The top-right
+   **[en:tran:Advance Bible Lookup]** binoculars toggle that same Advance Lookup section.
    - **Ticked** = the panel is open. **Unticked** = it is collapsed to its strip.
    - `Note` — the document and slide notes under the slide previews (W-03) — is the
      one panel that **starts unticked**: it ships collapsed to its green strip,

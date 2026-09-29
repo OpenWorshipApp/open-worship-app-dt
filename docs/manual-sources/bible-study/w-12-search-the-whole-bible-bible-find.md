@@ -12,8 +12,13 @@ workflowsVersion: "2026-09-28"
 **Goal:** find verses by words, not reference.
 
 1. In the Bible Reader (or the lookup dialog), click **[en:tran:Advance Bible Lookup]** (the
-   magnifier at the top right of the lookup) —
-   a second panel ("Bible Online Lookup") appears beside the picker, with **[en:tran:Find]** chosen in its dropdown. 📸
+   binoculars at the top right of the lookup) to open **[en:tran:Advance Lookup]**,
+   the rightmost horizontal section beside **[en:tran:Bible and Notes]** and
+   **[en:tran:Bible Lookup]**. Choose **[en:tran:Find]** in its dropdown; it remembers
+   the last study view used. The binoculars mirror the section's open/closed state. 📸
+   Close or resize it with its divider just like the other sections, and click its
+   collapsed **[en:tran:Advance Lookup]** strip to reopen it. The toolbar stays available
+   above the sections, even with **[en:tran:Bible Lookup]** collapsed.
 2. Type your search words. Every verse containing them is listed, with **the word you
    searched for marked** in each one, so you can see at a glance why a verse is there.
    The reference — _Psalm 23:1_ — leads each result; clicking anywhere on the result

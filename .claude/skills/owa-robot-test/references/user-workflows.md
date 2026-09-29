@@ -36,6 +36,13 @@ Previous: **workflowsVersion: 2026-09-28a** (**W-06 — generate a slide documen
 Previous: **workflowsVersion: 2026-09-28** (**W-46 — fourteen additional Presenter-only lessons for Bible Lookup, media libraries, service flows, Messages, Effects and image slide shows.** Presenter 74 → 88 topics; Reader remains 61. Live guide actions open controls and leave audience output unchanged.)
 
 Previous: **workflowsVersion: 2026-09-27a** (**W-10 — the mini screen draws each monitor's own desktop wallpaper behind what it renders, in place of the checkered pattern.** Asked for directly: the pattern stood for "the audience screen is transparent here" and said nothing about what that means on the wall. The backdrop is the WALLPAPER read from the operating system, never a capture of the display -- a capture drags in every other window that happens to be up, so a screen assigned to the machine's own monitor drew a picture of the app inside itself, and it would have to be retaken to stay honest. A wallpaper is a file: read once per display, shared by every card on it, released with the last one, and laid out the way the desktop lays it out (Fill / Fit / Stretch / Centre / Tile). **[en:tran:Show Monitor Wallpaper]** in the mini-screen menu puts the pattern back and **Refresh Preview** re-reads it. Verified live 2026-09-27 on the dev presenter across two displays. New matrix row SP-23.)
+Previous: **workflowsVersion: 2026-09-28-lookup-sections** (W-12 and W-31: Advance Lookup is a normal horizontal section beside Bible and Notes and Bible Lookup; the toolbar mirrors its section state. RD-08. Verified on the dev Reader.)
+
+Previous: **workflowsVersion: 2026-09-28-resources-offer** (**W-37 step 3 — the folders already in the data folder's `resources` are offered with one press.** Asked for with a picture of an empty Resources view beside Explorer showing `pdf` and `YouTube` in `<data folder>/resources`: that folder belongs to Resources, yet a folder in it was reachable only through the folder picker. Each one not already shown is listed under **In the data directory**, below the shelf (or under **Add Folder** when it is empty); a press adds it with no picker. Verified live 2026-09-28 on the dev Reader: a scratch `zz-probe-offer` was offered alone — a hidden `.copying-…` folder, a plain file and the listed `pdf`/`YouTube` were not — one press drew its box with its `LEV.19.*` file and the heading went away, and the list was saved as `$DATA_DIR_PATH\resources\zz-probe-offer`. RD-122.)
+
+Previous: **workflowsVersion: 2026-09-28-page-tips** (**W-46: tips in each operator page, focused-window All tips, and demos in the originating window.**)
+
+Previous: **workflowsVersion: 2026-09-28-reader** (**W-46: Reader catalog expanded to 99 lessons with practical usage tips; 49 start with safe actions.**)
 
 Previous: **workflowsVersion: 2026-09-27** (**W-05 — Add Stage is the same picker the mini
 screen's `St:` badge opens.** Asked for directly, with both menus circled in one
@@ -1729,8 +1736,13 @@ _Verify: RD-01..07, RD-11, RD-19, RD-38._
 **Goal:** find verses by words, not reference.
 
 1. In the Bible Reader (or the lookup dialog), click **[en:tran:Advance Bible Lookup]** (the
-   magnifier at the top right of the lookup) —
-   a second panel ("Bible Online Lookup") appears beside the picker, with **[en:tran:Find]** chosen in its dropdown. 📸
+   binoculars at the top right of the lookup) to open **[en:tran:Advance Lookup]**,
+   the rightmost horizontal section beside **[en:tran:Bible and Notes]** and
+   **[en:tran:Bible Lookup]**. Choose **[en:tran:Find]** in its dropdown; it remembers
+   the last study view used. The binoculars mirror the section's open/closed state. 📸
+   Close or resize it with its divider just like the other sections, and click its
+   collapsed **[en:tran:Advance Lookup]** strip to reopen it. The toolbar stays available
+   above the sections, even with **[en:tran:Bible Lookup]** collapsed.
 2. Type your search words. Every verse containing them is listed, with **the word you
    searched for marked** in each one, so you can see at a glance why a verse is there.
    The reference — _Psalm 23:1_ — leads each result; clicking anywhere on the result
@@ -3202,10 +3214,10 @@ _Verify: CB-68._
 
 ### W-46 — Learn the page with Tips of the Day
 
-**Goal:** learn the Presenter or Bible Reader at your own pace and see the exact
+**Goal:** learn each operator page at your own pace and see the exact
 control without having to search the manual.
 
-1. Five minutes after the app starts, the Presenter or Bible Reader page in
+1. Five minutes after the window starts, the operator page in
    front shows one **Tip of the Day** in the top-right corner — never at launch,
    when it would cover the controls you reach for while opening the service.
    Reloading or switching between Presenter and Reader does not restart those
@@ -3213,7 +3225,10 @@ control without having to search the manual.
    belongs to that page only, and the first tip is chosen at random without
    repeating the last automatic tip shown for that page. **Help → Tips of the
    Day** opens one at once, and a tip opened that way stands in for that
-   launch's automatic card.
+   page's automatic card. Settings, Slide Editor, Bible Note, Web Editor, Lyric
+   Editor, and Local Web Share also have their own tips. Each page remembers
+   whether its automatic tip has already appeared; visiting another page lets
+   you learn that page too. Audience screens and help-only windows show no tips.
 2. Click **Next tip** to move through that page's tips in order. The list wraps to
    the first tip after the last. Click **All tips** to open the numbered learning
    list for the current page. Search by a control or task, or scan the topic name
@@ -3230,38 +3245,50 @@ control without having to search the manual.
    flow, and **[en:tran:Messages]** for separate notices, rotation and spacing.
    Foreground lessons explain **[en:tran:Effects]** and preparing an Image Show
    slide show; output and style changes stay in your hands.
-   The Reader has **61 topics**: 30 start with a safe **Do it** and
-   31 stateful, file-dependent, native-menu, pane-visibility or audience-output lessons stay
+   The Reader has **99 topics**: 49 start with a safe **Do it** and
+   50 stateful, file-dependent, native-menu, pane-visibility or audience-output lessons stay
    self-guided. They cover reference entry and
    history, reading panes and formatting, Find and cross references,
    people/places and connection graphs, Resources, verse marks and notes,
    presenting a verse, the Reader header, every native application menu, and
    detailed lessons for every command under **View**. The **×** closes the card
-   for now; reloading or moving between
-   Presenter and Reader does not show a second automatic card in the same app
-   launch.
-3. Click **Show it** to start a numbered card in the current page, with the control
-   ringed in red. This uses a checked-in walkthrough and no model or provider
-   credit. The Presenter's deterministic walkthroughs only open, toggle, or
+   for now; reloading a page does not show its automatic card again in the same
+   window session. A page whose delay expires while it is behind another window
+   waits until you focus it.
+3. In Settings, **Help → All tips** shows three lessons for **General**,
+   **Bible**, and **Others**. Choose **Explore General settings**, then **Show it**:
+   the demo card and its red outline appear inside Settings.
+   **Show it** always starts in the originating window, even when a popup and
+   the main window show the same kind of page. With an actionable lesson, the control
+   is ringed in red. This uses a checked-in walkthrough and no model or provider
+   credit. The deterministic walkthroughs open, copy, toggle, or
    adjust safe app controls. Press **Do it** once per actionable step; when the
    safe setup is complete, an explanation-only follow-up uses **Next**, never a
    disabled or failing **Do it**. If the renderer refreshed before the local
    walkthrough service, Show it sends the current lesson inline and still opens
    the card. Steps that would present, control an audience screen, export, or use
    a disruptive native-menu action remain self-guided numbered cards.
+   In the Reader, search for **[en:tran:Copy Text]**, **[en:tran:New File]**,
+   **[en:tran:Search file name]**, or **[en:tran:Find Connection]** to find a
+   focused lesson. Each tip explains when to use that control. Saved Bibles
+   lists and Bible Notes have separate folder, creation, organization and
+   import/export tips; graph and Resources tools have their own lessons too.
+   Use **Back** to revisit a guide step. If a panel is hidden, reopen it through
+   **View → Widgets** before practising. An older walkthrough service can
+   show the complete Reader lesson as a self-guided fallback.
    Reader lessons that depend on selected text, files, a graph, or the native
    menu are self-guided too. They explain the exact action but do not reload,
    relaunch, export, reset the layout, open Developer Tools, or change what the
    congregation sees. If **AI features** is off, the app
    offers to open Settings → Others because the local walkthrough server is
    switched off with it.
-4. Click **Don't show again** to stop automatic tips on both pages in future app
+4. Click **Don't show again** to stop automatic tips on all operator pages in future app
    launches. This does not remove the lessons: use **Help → Tips of the Day** to
    open one suggestion, or **Help → All tips** to browse the whole learning list
    for the page in front. Opening either from Help does not turn automatic tips
    back on. To restore the automatic card, open **Settings → General → Other
    General Options**, turn on **[en:tran:Show Tips of the Day automatically]**, and
-   start the app again. The switch restores tips for both Presenter and Bible Reader.
+   start the app again. The switch restores tips for every supported operator page.
 
 The **File**, **Edit**, **Tools**, **Window**, and **Help** overviews name every
 row users can encounter, including conditional and macOS-only rows, so searching
@@ -3326,6 +3353,9 @@ the only way in a popup window, whose menu bar is hidden.
    `Document List`, `Presenting Flow List`, `Presenter`, `Background`,
    `Bible and Notes`, `Mini Screen`, `Bibles`, `Bible Notes`, `Previewer`, `Slides`,
    `Note`.
+   In the Reader, the three horizontal sections are **[en:tran:Bible and Notes]**,
+   **[en:tran:Bible Lookup]**, and **[en:tran:Advance Lookup]**. The top-right
+   **[en:tran:Advance Bible Lookup]** binoculars toggle that same Advance Lookup section.
    - **Ticked** = the panel is open. **Unticked** = it is collapsed to its strip.
    - `Note` — the document and slide notes under the slide previews (W-03) — is the
      one panel that **starts unticked**: it ships collapsed to its green strip,
@@ -3680,6 +3710,17 @@ all count as book-level too.
    pick the folder your files are in. You can add as many as you want — the **⋮ More
    Options** button, or a right-click anywhere in the view including the empty space below
    the folders, offers **Add Folder** again. Adding the same folder twice does nothing. 📸
+   **Folders already in your data folder are one press away.** Everything
+   **[en:tran:Copy to Data Directory]** (step 8) makes lands in a `resources` folder inside
+   your data folder, and so does what **[en:tran:Import Data]** (W-25) brings back. Any
+   folder in there that is not on the list yet is listed at the bottom of the view under
+   **[en:tran:In the data directory]** — the first time, right under the **Add Folder**
+   button. Click one and it becomes a group straight away, with its matching files already
+   listed and no folder picker; it leaves that list as it joins the shelf, and
+   **[en:tran:Remove Folder]** puts it back. A folder you make in there while the view is
+   open appears after **[en:tran:Reload]**. Nothing is offered that the view already shows —
+   including every folder in there when the whole `resources` folder is itself on the list —
+   and the heading is not drawn at all when there is nothing to offer. 📸
    **Or drag the folder straight in.** Take it from your file manager — Explorer, Finder —
    and drop it anywhere on the Resources view: while you hold it there the view outlines
    itself and its top line reads **[en:tran:Drop folders here]** in place of the patterns,
@@ -3845,7 +3886,7 @@ all count as book-level too.
 > A file you expected that is simply **not listed** is usually more than two folders down:
 > add the folder it sits in (or the one above it) as a group of its own.
 
-_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, CM-93._
+_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, CM-93._
 
 ---
 

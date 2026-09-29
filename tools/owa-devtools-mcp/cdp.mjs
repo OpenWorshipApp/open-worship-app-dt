@@ -82,6 +82,7 @@ export async function getVersion(port) {
 export function pickTarget(targets, match) {
     if (match) {
         return (
+            targets.find((target) => target.url === match) ??
             targets.find((target) => {
                 return target.url.includes(match);
             }) ?? null

@@ -71,7 +71,7 @@ export function RenderTitleMaterialComp({
     };
     return (
         <div
-            className="d-flex text-nowrap w-100 h-100"
+            className="bible-view-title-material d-flex text-nowrap w-100 h-100"
             style={{
                 overflowX: 'auto',
             }}
@@ -84,7 +84,7 @@ export function RenderTitleMaterialComp({
                     <AudioAIEnablingComp bibleItem={bibleItem} />
                 </div>
             </div>
-            <div className="d-flex flex-fill">
+            <div className="bible-view-title-content d-flex flex-fill">
                 <div className="d-flex ps-1">
                     <div style={{ margin: 'auto' }}>
                         <BibleKeySelectionMiniComp
@@ -101,7 +101,7 @@ export function RenderTitleMaterialComp({
                         />
                     ))}
                 </div>
-                <div className="app-flex-item">
+                <div className="bible-view-reference app-flex-item">
                     {materialContext.titleElement}
                 </div>
             </div>

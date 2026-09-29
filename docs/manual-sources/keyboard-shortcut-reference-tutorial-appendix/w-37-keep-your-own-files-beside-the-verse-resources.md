@@ -2,8 +2,8 @@
 id: W-37
 title: "Keep your own files beside the verse (Resources)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, CM-93]
-screenshots: 15
+verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, CM-93]
+screenshots: 16
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-09-28"
 ---
@@ -41,6 +41,17 @@ all count as book-level too.
    pick the folder your files are in. You can add as many as you want — the **⋮ More
    Options** button, or a right-click anywhere in the view including the empty space below
    the folders, offers **Add Folder** again. Adding the same folder twice does nothing. 📸
+   **Folders already in your data folder are one press away.** Everything
+   **[en:tran:Copy to Data Directory]** (step 8) makes lands in a `resources` folder inside
+   your data folder, and so does what **[en:tran:Import Data]** (W-25) brings back. Any
+   folder in there that is not on the list yet is listed at the bottom of the view under
+   **[en:tran:In the data directory]** — the first time, right under the **Add Folder**
+   button. Click one and it becomes a group straight away, with its matching files already
+   listed and no folder picker; it leaves that list as it joins the shelf, and
+   **[en:tran:Remove Folder]** puts it back. A folder you make in there while the view is
+   open appears after **[en:tran:Reload]**. Nothing is offered that the view already shows —
+   including every folder in there when the whole `resources` folder is itself on the list —
+   and the heading is not drawn at all when there is nothing to offer. 📸
    **Or drag the folder straight in.** Take it from your file manager — Explorer, Finder —
    and drop it anywhere on the Resources view: while you hold it there the view outlines
    itself and its top line reads **[en:tran:Drop folders here]** in place of the patterns,
@@ -209,7 +220,7 @@ all count as book-level too.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `CM-93`
+`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `CM-93`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-09-28).
 :::

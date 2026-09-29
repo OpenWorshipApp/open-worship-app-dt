@@ -25,6 +25,7 @@ import {
     getDailyTipAutoShowDelay,
     getDailyTipGuide,
     getDailyTipPage,
+    getDailyTipSessionKey,
     getDailyTips,
     pickDailyTipIndex,
     rememberDailyTip,
@@ -37,10 +38,54 @@ describe('daily tip helpers', () => {
         settingValues.clear();
     });
 
-    it('recognizes only the two pages that have tips', () => {
+    it('recognizes operator pages and excludes output and help windows', () => {
         expect(getDailyTipPage('/presenter.html')).toBe('presenter');
         expect(getDailyTipPage('/reader.html')).toBe('reader');
-        expect(getDailyTipPage('/setting.html')).toBeNull();
+        for (const page of [
+            'setting',
+            'appDocumentEditor',
+            'bibleNote',
+            'webEditor',
+            'lyricEditor',
+            'lwShare',
+        ] as const) {
+            expect(getDailyTipPage(`/${page}.html?uuid=popup`)).toBe(page);
+            expect(getDailyTips(page).length).toBeGreaterThan(0);
+        }
+        for (const page of [
+            'screen',
+            'chatbot',
+            'about',
+            'finder',
+            'markdownPreview',
+        ]) {
+            expect(getDailyTipPage(`/${page}.html`)).toBeNull();
+        }
+    });
+
+    it('keeps the automatic shown marker independent for each page', () => {
+        expect(
+            new Set(
+                (['reader', 'presenter', 'setting'] as const).map((page) =>
+                    getDailyTipSessionKey(page),
+                ),
+            ).size,
+        ).toBe(3);
+    });
+
+    it('starts a tip in its exact originating window', async () => {
+        const page = 'https://localhost:3000/reader.html?uuid=popup';
+        const callTool = vi.fn().mockResolvedValue('{}');
+        await startDailyTipGuide(
+            'reader',
+            getDailyTips('reader')[0],
+            callTool,
+            page,
+        );
+        expect(callTool).toHaveBeenCalledWith(
+            'owa_guide_start',
+            expect.objectContaining({ page }),
+        );
     });
 
     it('keeps tips page-specific and connected to built-in demos', () => {
@@ -61,7 +106,7 @@ describe('daily tip helpers', () => {
         expect(getDailyTips('reader').map(({ demoId }) => demoId)).toEqual(
             READER_DEMO_IDS,
         );
-        expect(getDailyTips('reader')).toHaveLength(61);
+        expect(getDailyTips('reader')).toHaveLength(99);
     });
 
     it('files the added Reader practice demos under useful tip topics', () => {
@@ -75,6 +120,8 @@ describe('daily tip helpers', () => {
             'reader-notes-section',
             'reader-filter-notes',
             'reader-sort-notes',
+            'reader-bibles-new-list',
+            'reader-notes-share',
         ]) {
             expect(tips.find((tip) => tip.id === id)?.category, id).toBe(
                 'Notes and marks',
@@ -84,6 +131,42 @@ describe('daily tip helpers', () => {
             expect(tips.find((tip) => tip.id === id)?.category, id).toBe(
                 'Reader shortcuts',
             );
+        }
+    });
+
+    it('preserves the Reader usage instructions when falling back to an older host', () => {
+        const tip = getDailyTips('reader').find(
+            ({ id }) => id === 'reader-copy-text',
+        )!;
+        const guide = getDailyTipGuide('reader', tip);
+        expect(guide?.mode).toBe('show');
+        expect(guide?.steps).toHaveLength(3);
+        expect(guide?.steps[2].text).toContain('Paste');
+    });
+
+    it('makes the new Reader tasks searchable by their control names', () => {
+        const tips = getDailyTips('reader');
+        for (const label of [
+            'Copy Text',
+            'Copy Title',
+            'Copy All',
+            'Copy Verse Full Key',
+            'Copy Chapter Full Key',
+            'New File',
+            'Show path editor',
+            'Import From URL',
+            'Search file name',
+            'Others',
+            'Find Connection',
+            'Re-layout',
+            'Save preset',
+        ]) {
+            expect(
+                tips.some(({ title, detail }) =>
+                    `${title} ${detail}`.includes(label),
+                ),
+                label,
+            ).toBe(true);
         }
     });
 
@@ -215,6 +298,7 @@ describe('daily tip helpers', () => {
         await startDailyTipGuide('presenter', tip!, callTool);
         expect(callTool).toHaveBeenNthCalledWith(1, 'owa_guide_start', {
             demoId: 'presenter-build-flow',
+            page: 'presenter.html',
         });
         expect(callTool).toHaveBeenNthCalledWith(
             2,

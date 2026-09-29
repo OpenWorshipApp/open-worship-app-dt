@@ -11,7 +11,8 @@ import {
 import appProvider from '../server/appProvider';
 import { checkIsMainWindow } from '../server/appHelpers';
 import {
-    DAILY_TIP_SESSION_KEY,
+    getDailyTipSessionKey,
+    getDailyTipPageLabel,
     disableDailyTips,
     getAreDailyTipsDisabled,
     getDailyTipAutoShowDelay,
@@ -21,6 +22,7 @@ import {
     rememberDailyTip,
     startDailyTipGuide,
 } from './dailyTipHelpers';
+import type { DailyTipPageType } from './dailyTipHelpers';
 
 const MENU_KEY = 'daily-tips';
 
@@ -31,15 +33,16 @@ type DailyTipMenuClickType = {
 
 // Read again when the delay ends: "Don't show again" may have been pressed in
 // Settings meanwhile, or a tip already opened from Help.
-function checkIsAutoTipBlocked() {
+function checkIsAutoTipBlocked(page: DailyTipPageType) {
     return (
         getAreDailyTipsDisabled() ||
-        globalThis.sessionStorage.getItem(DAILY_TIP_SESSION_KEY) === 'true'
+        globalThis.sessionStorage.getItem(getDailyTipSessionKey(page)) ===
+            'true'
     );
 }
 
-function markAutoTipShown() {
-    globalThis.sessionStorage.setItem(DAILY_TIP_SESSION_KEY, 'true');
+function markAutoTipShown(page: DailyTipPageType) {
+    globalThis.sessionStorage.setItem(getDailyTipSessionKey(page), 'true');
 }
 
 export default function DailyTipComp() {
@@ -76,8 +79,8 @@ export default function DailyTipComp() {
         if (page === null || tips.length === 0) {
             return;
         }
-        // A tip asked for from Help stands in for this launch's automatic one.
-        markAutoTipShown();
+        // A tip asked for from Help stands in for this page's automatic one.
+        markAutoTipShown(page);
         setErrorMessage('');
         setIsBrowsing(false);
         setTipIndex(pickDailyTipIndex(page, tips));
@@ -87,7 +90,7 @@ export default function DailyTipComp() {
         if (page === null || tips.length === 0) {
             return;
         }
-        markAutoTipShown();
+        markAutoTipShown(page);
         setErrorMessage('');
         setSearchText('');
         setTipIndex((oldIndex) => {
@@ -97,31 +100,37 @@ export default function DailyTipComp() {
     }, [page, tips]);
 
     const showAutoTip = useCallback(() => {
-        if (page === null || tips.length === 0 || checkIsAutoTipBlocked()) {
+        if (
+            page === null ||
+            tips.length === 0 ||
+            checkIsAutoTipBlocked(page) ||
+            !appProvider.getIsWindowFocused()
+        ) {
             return;
         }
-        markAutoTipShown();
+        markAutoTipShown(page);
         setTipIndex((oldIndex) => {
             return oldIndex ?? pickDailyTipIndex(page, tips);
         });
     }, [page, tips]);
 
     useAppEffect(() => {
-        if (page === null || !checkIsMainWindow() || checkIsAutoTipBlocked()) {
+        if (page === null || checkIsAutoTipBlocked(page)) {
             return;
         }
         const timeoutId = setTimeout(showAutoTip, getDailyTipAutoShowDelay());
+        const handleFocus = () => {
+            if (getDailyTipAutoShowDelay() === 0) showAutoTip();
+        };
+        globalThis.addEventListener('focus', handleFocus);
         return () => {
             clearTimeout(timeoutId);
+            globalThis.removeEventListener('focus', handleFocus);
         };
     }, [page, showAutoTip]);
 
     useAppEffect(() => {
-        if (!checkIsMainWindow()) {
-            return;
-        }
         if (page === null) {
-            setAppMenuItems(MENU_KEY, null);
             return;
         }
         const unregister = registerAppMenuClicked<DailyTipMenuClickType>(
@@ -137,25 +146,28 @@ export default function DailyTipComp() {
                 }
             },
         );
-        setAppMenuItems(
-            MENU_KEY,
-            {
-                help: [
-                    {
-                        label: tran('Tips of the Day'),
-                        clickData: { isOpenDailyTip: true },
-                    },
-                    {
-                        label: tran('All tips'),
-                        clickData: { isBrowseDailyTips: true },
-                    },
-                ],
-            },
-            { isRoutedToFocusedWindow: true },
-        );
+        // The main window owns the shared menu; every supported window listens.
+        // Closing a popup must not withdraw the menu for the remaining windows.
+        if (checkIsMainWindow())
+            setAppMenuItems(
+                MENU_KEY,
+                {
+                    help: [
+                        {
+                            label: tran('Tips of the Day'),
+                            clickData: { isOpenDailyTip: true },
+                        },
+                        {
+                            label: tran('All tips'),
+                            clickData: { isBrowseDailyTips: true },
+                        },
+                    ],
+                },
+                { isRoutedToFocusedWindow: true },
+            );
         return () => {
             unregister();
-            setAppMenuItems(MENU_KEY, null);
+            if (checkIsMainWindow()) setAppMenuItems(MENU_KEY, null);
         };
     }, [openAllTips, openTip, page]);
 
@@ -189,7 +201,12 @@ export default function DailyTipComp() {
         setIsStarting(true);
         try {
             const { callTool } = await import('../chatbot/mcpClient');
-            await startDailyTipGuide(page, tip, callTool);
+            await startDailyTipGuide(
+                page,
+                tip,
+                callTool,
+                globalThis.location.href,
+            );
             setTipIndex(null);
         } catch (_error) {
             setErrorMessage(tran('Could not start this walkthrough.'));
@@ -225,8 +242,12 @@ export default function DailyTipComp() {
                     {isBrowsing
                         ? page === 'presenter'
                             ? tran('All Presenter tips')
-                            : tran('All Reader tips')
-                        : tran('Tip of the Day')}
+                            : page === 'reader'
+                              ? tran('All Reader tips')
+                              : `${tran('All tips')} · ${getDailyTipPageLabel(page)}`
+                        : page === 'presenter' || page === 'reader'
+                          ? tran('Tip of the Day')
+                          : `${tran('Tip of the Day')} · ${getDailyTipPageLabel(page)}`}
                 </span>
                 {isBrowsing ? null : (
                     <button

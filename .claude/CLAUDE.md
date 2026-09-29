@@ -291,9 +291,18 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   W-17) walk their bold-led bullets and paragraphs. Do it across the manual:
   wrong presses ≥10 → 0, recipes that start 33 → 37, honest refusals go UP
   because a wrong press is now a refusal that names what it found.
+- **Tips belong to the operator page** (2026-09-28). In addition to Presenter
+  and Reader, `pageDemos.mjs` supplies local lessons for Settings, Slide Editor,
+  Bible Note, Web Editor, Lyric Editor and Local Web Share. `DailyTipComp`
+  listens for the focused-window Help menu in every supported window; only the
+  main window owns the shared menu registration. Its automatic shown marker is
+  per page, with the existing five-minute delay and global opt-out. A hidden
+  window waits for focus. `demoHelpers.mjs` routes built-in demos to their
+  declared page and preserves an explicit same-page URL, so Show it stays in
+  the originating popup; `pickTarget` prefers an exact URL before a substring.
 - **The Presenter and Reader have checked-in demos that need no model**
   (2026-09-22, expanded 2026-09-23 and 2026-09-26, `readerDemos.mjs` and
-  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 61
+  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 99
   Reader-only lessons through the same guarded card. Thirty are featured
   in the Reader assistant's zero-model practice shelf: the original font
   larger/smaller, localized John 3:16 and Bible Find demos; passage history,
@@ -301,8 +310,12 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   scrolling, line layout, advanced study views and book filtering; and direct
   practice for typing a complete reference, removing one reference part,
   automatic Bible audio, filtering and sorting notes, Settings and Help.
-  Thirty of the 61 Reader tips begin with a safe deterministic action;
-  stateful, file-dependent, native-menu, pane-visibility and audience-output
+  Forty-nine of the 99 Reader tips begin with a safe deterministic action;
+  Reader additions cover copying formats, saved list and note file management,
+  Resources, names and graphs with practical searchable tips. Mixed steps use
+  `look` after the safe action, and scoped labels translate each part.
+  The coverage map is `tools/owa-devtools-mcp/reader-demo-coverage.md`.
+  Stateful, file-dependent, native-menu, pane-visibility and audience-output
   lessons stay self-guided. The catalog is
   shared with the chatbot's empty state, so the words a senior presses and the
   steps the MCP runs cannot drift. A demo changes one visible thing per **Do

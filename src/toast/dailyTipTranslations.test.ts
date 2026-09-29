@@ -6,6 +6,7 @@ import french from '../lang/data/fr';
 import khmer from '../lang/data/km';
 import { PRESENTER_DEMO_LIST } from '../../tools/owa-devtools-mcp/presenterDemos.mjs';
 import { READER_DEMO_LIST } from '../../tools/owa-devtools-mcp/readerDemos.mjs';
+import { PAGE_DEMO_LIST } from '../../tools/owa-devtools-mcp/pageDemos.mjs';
 
 const CATALOG_TEXT = [
     'Search tips',
@@ -23,6 +24,7 @@ const CATALOG_TEXT = [
     'Study tools',
     ...PRESENTER_DEMO_LIST.flatMap(({ label, detail }) => [label, detail]),
     ...READER_DEMO_LIST.flatMap(({ label, detail }) => [label, detail]),
+    ...PAGE_DEMO_LIST.flatMap(({ label, detail }) => [label, detail]),
 ];
 
 describe.each([

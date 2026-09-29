@@ -55,9 +55,7 @@ export default function SettingGeneralOtherOptionsComp() {
                         {tran('Show Tips of the Day automatically')}
                     </label>
                     <div className="form-text">
-                        {tran(
-                            'Applies to the Presenter and Bible Reader on the next app launch.',
-                        )}
+                        {tran('Applies to each app page on the next launch.')}
                     </div>
                 </div>
                 <button

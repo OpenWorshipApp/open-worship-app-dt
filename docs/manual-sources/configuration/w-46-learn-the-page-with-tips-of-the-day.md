@@ -9,10 +9,10 @@ workflowsVersion: "2026-09-28"
 ---
 # W-46 — Learn the page with Tips of the Day
 
-**Goal:** learn the Presenter or Bible Reader at your own pace and see the exact
+**Goal:** learn each operator page at your own pace and see the exact
 control without having to search the manual.
 
-1. Five minutes after the app starts, the Presenter or Bible Reader page in
+1. Five minutes after the window starts, the operator page in
    front shows one **Tip of the Day** in the top-right corner — never at launch,
    when it would cover the controls you reach for while opening the service.
    Reloading or switching between Presenter and Reader does not restart those
@@ -20,7 +20,10 @@ control without having to search the manual.
    belongs to that page only, and the first tip is chosen at random without
    repeating the last automatic tip shown for that page. **Help → Tips of the
    Day** opens one at once, and a tip opened that way stands in for that
-   launch's automatic card.
+   page's automatic card. Settings, Slide Editor, Bible Note, Web Editor, Lyric
+   Editor, and Local Web Share also have their own tips. Each page remembers
+   whether its automatic tip has already appeared; visiting another page lets
+   you learn that page too. Audience screens and help-only windows show no tips.
 2. Click **Next tip** to move through that page's tips in order. The list wraps to
    the first tip after the last. Click **All tips** to open the numbered learning
    list for the current page. Search by a control or task, or scan the topic name
@@ -37,38 +40,50 @@ control without having to search the manual.
    flow, and **[en:tran:Messages]** for separate notices, rotation and spacing.
    Foreground lessons explain **[en:tran:Effects]** and preparing an Image Show
    slide show; output and style changes stay in your hands.
-   The Reader has **61 topics**: 30 start with a safe **Do it** and
-   31 stateful, file-dependent, native-menu, pane-visibility or audience-output lessons stay
+   The Reader has **99 topics**: 49 start with a safe **Do it** and
+   50 stateful, file-dependent, native-menu, pane-visibility or audience-output lessons stay
    self-guided. They cover reference entry and
    history, reading panes and formatting, Find and cross references,
    people/places and connection graphs, Resources, verse marks and notes,
    presenting a verse, the Reader header, every native application menu, and
    detailed lessons for every command under **View**. The **×** closes the card
-   for now; reloading or moving between
-   Presenter and Reader does not show a second automatic card in the same app
-   launch.
-3. Click **Show it** to start a numbered card in the current page, with the control
-   ringed in red. This uses a checked-in walkthrough and no model or provider
-   credit. The Presenter's deterministic walkthroughs only open, toggle, or
+   for now; reloading a page does not show its automatic card again in the same
+   window session. A page whose delay expires while it is behind another window
+   waits until you focus it.
+3. In Settings, **Help → All tips** shows three lessons for **General**,
+   **Bible**, and **Others**. Choose **Explore General settings**, then **Show it**:
+   the demo card and its red outline appear inside Settings.
+   **Show it** always starts in the originating window, even when a popup and
+   the main window show the same kind of page. With an actionable lesson, the control
+   is ringed in red. This uses a checked-in walkthrough and no model or provider
+   credit. The deterministic walkthroughs open, copy, toggle, or
    adjust safe app controls. Press **Do it** once per actionable step; when the
    safe setup is complete, an explanation-only follow-up uses **Next**, never a
    disabled or failing **Do it**. If the renderer refreshed before the local
    walkthrough service, Show it sends the current lesson inline and still opens
    the card. Steps that would present, control an audience screen, export, or use
    a disruptive native-menu action remain self-guided numbered cards.
+   In the Reader, search for **[en:tran:Copy Text]**, **[en:tran:New File]**,
+   **[en:tran:Search file name]**, or **[en:tran:Find Connection]** to find a
+   focused lesson. Each tip explains when to use that control. Saved Bibles
+   lists and Bible Notes have separate folder, creation, organization and
+   import/export tips; graph and Resources tools have their own lessons too.
+   Use **Back** to revisit a guide step. If a panel is hidden, reopen it through
+   **View → Widgets** before practising. An older walkthrough service can
+   show the complete Reader lesson as a self-guided fallback.
    Reader lessons that depend on selected text, files, a graph, or the native
    menu are self-guided too. They explain the exact action but do not reload,
    relaunch, export, reset the layout, open Developer Tools, or change what the
    congregation sees. If **AI features** is off, the app
    offers to open Settings → Others because the local walkthrough server is
    switched off with it.
-4. Click **Don't show again** to stop automatic tips on both pages in future app
+4. Click **Don't show again** to stop automatic tips on all operator pages in future app
    launches. This does not remove the lessons: use **Help → Tips of the Day** to
    open one suggestion, or **Help → All tips** to browse the whole learning list
    for the page in front. Opening either from Help does not turn automatic tips
    back on. To restore the automatic card, open **Settings → General → Other
    General Options**, turn on **[en:tran:Show Tips of the Day automatically]**, and
-   start the app again. The switch restores tips for both Presenter and Bible Reader.
+   start the app again. The switch restores tips for every supported operator page.
 
 The **File**, **Edit**, **Tools**, **Window**, and **Help** overviews name every
 row users can encounter, including conditional and macOS-only rows, so searching

@@ -91,6 +91,155 @@ const dictionary = {
     'Messages > Properties': 'Messages > លក្ខណសម្បត្តិ',
     'Quick Text > Properties': 'Quick Text > លក្ខណសម្បត្តិ',
     'Image Show > Properties': 'Image Show > លក្ខណសម្បត្តិ',
+    'Applies to each app page on the next launch.':
+        'អនុវត្តចំពោះទំព័រនីមួយៗរបស់កម្មវិធី នៅពេលបើកលើកក្រោយ។',
+    'Explore General settings': 'ស្វែងយល់ពីការកំណត់ទូទៅ',
+    'Manage Bible versions': 'គ្រប់គ្រងកំណែព្រះគម្ពីរ',
+    'Find AI and extra tools': 'ស្វែងរក AI និងឧបករណ៍បន្ថែម',
+    'Bible Note': 'កំណត់ត្រាព្រះគម្ពីរ',
+    'Web Editor': 'កម្មវិធីកែសម្រួលទំព័របណ្ដាញ',
+    'Lyric Editor': 'កម្មវិធីកែសម្រួលទំនុកច្រៀង',
+    'Local Web Share': 'ចែករំលែកតាមបណ្ដាញមូលដ្ឋាន',
+    'Explore folders, language, appearance, and automatic tips in General settings.':
+        'ស្វែងយល់អំពីថត ភាសា រូបរាង និងគន្លឹះស្វ័យប្រវត្តិ ក្នុងការកំណត់ទូទៅ។',
+    'Open Bible settings to manage the installed Bible versions.':
+        'បើកការកំណត់ព្រះគម្ពីរ ដើម្បីគ្រប់គ្រងកំណែព្រះគម្ពីរដែលបានដំឡើង។',
+    'Find AI features and extra binaries in Others settings.':
+        'ស្វែងរកមុខងារ AI និងកម្មវិធីបន្ថែម ក្នុងការកំណត់ផ្សេងៗ។',
+    'Select a slide, then select an item on its canvas to edit it.':
+        'ជ្រើសស្លាយ រួចជ្រើសធាតុនៅលើផ្ទៃស្លាយ ដើម្បីកែសម្រួល។',
+    'Review your slide edits before saving. Use Undo to reverse an edit.':
+        'ពិនិត្យការកែសម្រួលស្លាយមុនពេលរក្សាទុក។ ប្រើ មិនធ្វើវិញ ដើម្បីត្រឡប់ការកែសម្រួល។',
+    'Edit your note here, then use Save to keep your changes.':
+        'កែសម្រួលកំណត់ត្រានៅទីនេះ រួចប្រើ រក្សាទុក ដើម្បីរក្សាការផ្លាស់ប្ដូរ។',
+    'Edit the web page beside its preview and review it before saving.':
+        'កែសម្រួលទំព័របណ្ដាញនៅក្បែរការមើលជាមុន ហើយពិនិត្យមុនពេលរក្សាទុក។',
+    'Edit the song sections and check their preview before saving.':
+        'កែសម្រួលផ្នែកនៃបទចម្រៀង ហើយពិនិត្យការមើលជាមុន មុនពេលរក្សាទុក។',
+    'Start the server when you are ready to share, then use its address or QR code on the same network.':
+        'ចាប់ផ្ដើមម៉ាស៊ីនមេនៅពេលអ្នករួចរាល់ដើម្បីចែករំលែក រួចប្រើអាសយដ្ឋាន ឬកូដ QR របស់វាលើបណ្ដាញតែមួយ។',
+    // Reader demo titles and practical tips.
+    'Find and replay Reader demos': 'ស្វែងរក និងអនុវត្តការបង្ហាញអ្នកអានឡើងវិញ',
+    'Use Help > All tips, search a task, then choose Show it to practise one step at a time.':
+        'ចូល ជំនួយ > គន្លឹះទាំងអស់ ស្វែងរកកិច្ចការ រួចជ្រើសបង្ហាញ ដើម្បីអនុវត្តម្តងមួយជំហាន។',
+    'Copy only the passage reference': 'ចម្លងតែយោងបទគម្ពីរ',
+    'Use Copy Title when you need a reference for an outline without the verse text.':
+        'ប្រើ ចម្លងចំណងជើង ដើម្បីដាក់យោងក្នុងគ្រោងមេរៀន ដោយគ្មានអត្ថបទខគម្ពីរ។',
+    'Copy only the Bible words': 'ចម្លងតែអត្ថបទគម្ពីរ',
+    'Use Copy Text to paste the passage into your study notes without its title.':
+        'ប្រើ ចម្លងអត្ថបទ ដើម្បីបិទភ្ជាប់បទគម្ពីរក្នុងកំណត់ត្រា ដោយគ្មានចំណងជើង។',
+    'Copy the reference and Bible words': 'ចម្លងយោង និងអត្ថបទគម្ពីរ',
+    'Use Copy All to keep the passage reference with the text you paste.':
+        'ប្រើ ចម្លងទាំងអស់ ដើម្បីរក្សាយោងជាមួយអត្ថបទដែលអ្នកបិទភ្ជាប់។',
+    'Copy a verse key for study files':
+        'ចម្លងលេខសម្គាល់ខគម្ពីរសម្រាប់ឯកសារសិក្សា',
+    'Use Copy Verse Full Key for a stable book, chapter and verse identifier.':
+        'ប្រើ ចម្លងលេខសម្គាល់ខពេញ ដើម្បីយកលេខសម្គាល់សៀវភៅ ជំពូក និងខគម្ពីរ។',
+    'Copy a chapter key for Resources': 'ចម្លងលេខសម្គាល់ជំពូកសម្រាប់ធនធាន',
+    'Use Copy Chapter Full Key as the starting point for a chapter resource filename.':
+        'ប្រើ ចម្លងលេខសម្គាល់ជំពូកពេញ ជាចំណុចចាប់ផ្តើមនៃឈ្មោះឯកសារធនធានជំពូក។',
+    'Read the installed Bible information': 'អានព័ត៌មានគម្ពីរដែលបានដំឡើង',
+    'Clear the reference, then open Bible Information to check the translation and publisher.':
+        'សម្អាតយោង រួចបើកព័ត៌មានគម្ពីរ ដើម្បីពិនិត្យការបកប្រែ និងអ្នកបោះពុម្ព។',
+    'Adjust or stop automatic scrolling':
+        'កែតម្រូវ ឬបញ្ឈប់ការរមូរដោយស្វ័យប្រវត្តិ',
+    'Double-click the bottom chevron to speed up, right-click to slow down, or Alt+right-click to stop.':
+        'ចុចពីរដងលើព្រួញខាងក្រោមដើម្បីបង្កើនល្បឿន ចុចស្តាំដើម្បីបន្ថយ ឬ Alt+ចុចស្តាំដើម្បីបញ្ឈប់។',
+    'Remove an extra Bible version': 'ដកកំណែគម្ពីរបន្ថែមចេញ',
+    'Use the remove icon beside an extra version when you want one translation again.':
+        'ប្រើរូបតំណាងដកចេញក្បែរកំណែបន្ថែម ពេលអ្នកចង់អានការបកប្រែតែមួយវិញ។',
+    'Keep reading panes scrolling together': 'ឱ្យផ្ទាំងអានរមូរជាមួយគ្នា',
+    'Give passages the same color note to follow corresponding verses as you scroll.':
+        'ដាក់សម្គាល់ពណ៌ដូចគ្នាឱ្យបទគម្ពីរ ដើម្បីតាមខគម្ពីរដែលត្រូវគ្នាពេលរមូរ។',
+    'Split directly into another translation':
+        'បំបែកផ្ទាំងទៅការបកប្រែផ្សេងដោយផ្ទាល់',
+    'Use Split Horizontal to or Split Vertical to from a passage menu, then choose a Bible.':
+        'ក្នុងម៉ឺនុយបទគម្ពីរ ប្រើបំបែកផ្ដេកទៅ ឬបំបែកបញ្ឈរទៅ រួចជ្រើសគម្ពីរ។',
+    'Choose the Bible formatting model': 'ជ្រើសម៉ូដែលរៀបចំទម្រង់គម្ពីរ',
+    'Use Change Bible Model Info in the footer; choosing a different model reloads the Reader.':
+        'ប្រើ ប្ដូរព័ត៌មានម៉ូដែលគម្ពីរ នៅបាតផ្ទាំង។ ការជ្រើសម៉ូដែលផ្សេងនឹងផ្ទុកអ្នកអានឡើងវិញ។',
+    'Find the Reader saved-passage folder': 'រកថតបទគម្ពីរដែលអ្នកអានបានរក្សាទុក',
+    'Use Show path editor in Bibles to inspect the folder used for Reader passage lists.':
+        'ប្រើ បង្ហាញប្រអប់កែផ្លូវ នៅក្នុងគម្ពីរ ដើម្បីពិនិត្យថតបញ្ជីបទគម្ពីររបស់អ្នកអាន។',
+    'Create a saved Bible list': 'បង្កើតបញ្ជីបទគម្ពីរ',
+    'Open Bibles > More Options > New File to keep passages for a study in their own list.':
+        'បើក គម្ពីរ > ជម្រើសបន្ថែម > ឯកសារថ្មី ដើម្បីដាក់បទគម្ពីរសម្រាប់ការសិក្សាក្នុងបញ្ជីផ្ទាល់ខ្លួន។',
+    'Reopen a saved passage in the Reader': 'បើកបទគម្ពីរដែលបានរក្សាទុកឡើងវិញ',
+    'Expand a Bibles list, then double-click a passage; hold Shift to open it beside the current passage.':
+        'ពង្រីកបញ្ជីគម្ពីរ រួចចុចពីរដងលើបទគម្ពីរ។ សង្កត់ Shift ដើម្បីបើកក្បែរបទគម្ពីរបច្ចុប្បន្ន។',
+    'Arrange saved Bible passages': 'រៀបចំបទគម្ពីរដែលបានរក្សាទុក',
+    'Use a passage row menu for Duplicate, Move To, Move up or Move down, and its color circle to group it.':
+        'ប្រើម៉ឺនុយជួរបទគម្ពីរ ដើម្បីចម្លង ផ្លាស់ទីទៅ រំកិលឡើង ឬចុះ និងប្រើរង្វង់ពណ៌ដើម្បីចាត់ក្រុម។',
+    'Import or export a Bible list': 'នាំចូល ឬនាំចេញបញ្ជីគម្ពីរ',
+    'Export from a list file menu; Import or Import From URL from the Bibles panel menu.':
+        'នាំចេញតាមម៉ឺនុយឯកសារបញ្ជី ហើយនាំចូល ឬនាំចូលពី URL តាមម៉ឺនុយផ្ទាំងគម្ពីរ។',
+    'Manage saved Bible list files': 'គ្រប់គ្រងឯកសារបញ្ជីគម្ពីរ',
+    'Right-click a list file for Rename, Duplicate, Reload, Copy Path to Clipboard and file location.':
+        'ចុចស្តាំលើឯកសារបញ្ជី ដើម្បីប្ដូរឈ្មោះ ចម្លង ផ្ទុកឡើងវិញ ចម្លងផ្លូវ ឬបង្ហាញទីតាំងឯកសារ។',
+    'Find the Bible Notes folder': 'រកថតកំណត់ត្រាគម្ពីរ',
+    'Use Show path editor in Bible Notes when you need to locate or choose your note library.':
+        'ប្រើ បង្ហាញប្រអប់កែផ្លូវ ក្នុងកំណត់ត្រាគម្ពីរ ដើម្បីរក ឬជ្រើសបណ្ណាល័យកំណត់ត្រា។',
+    'Create a Bible Notes file': 'បង្កើតឯកសារកំណត់ត្រាគម្ពីរ',
+    'Use Bible Notes > More Options > New File to group notes for a topic or study.':
+        'ប្រើ កំណត់ត្រាគម្ពីរ > ជម្រើសបន្ថែម > ឯកសារថ្មី ដើម្បីចាត់ក្រុមកំណត់ត្រាតាមប្រធានបទ ឬការសិក្សា។',
+    'Add a note to the right file': 'បន្ថែមកំណត់ត្រាក្នុងឯកសារដែលត្រូវការ',
+    'Expand your chosen Bible Notes file and press its New Note Item plus button.':
+        'ពង្រីកឯកសារកំណត់ត្រាគម្ពីរដែលអ្នកជ្រើស រួចចុចប៊ូតុងបូកកំណត់ត្រាថ្មីរបស់វា។',
+    'Arrange and move Bible note items': 'រៀបចំ និងផ្លាស់ទីកំណត់ត្រាគម្ពីរ',
+    'Use a note row menu to Duplicate, Move To, Move up or Move down; drag between note files.':
+        'ប្រើម៉ឺនុយជួរកំណត់ត្រា ដើម្បីចម្លង ផ្លាស់ទីទៅ រំកិលឡើង ឬចុះ ឬអូសរវាងឯកសារកំណត់ត្រា។',
+    'Import and export Bible notes': 'នាំចូល និងនាំចេញកំណត់ត្រាគម្ពីរ',
+    'Import note files from the panel menu, import an item into a file, or Export the file or item you need.':
+        'នាំចូលឯកសារកំណត់ត្រាពីម៉ឺនុយផ្ទាំង នាំចូលកំណត់ត្រាមួយក្នុងឯកសារ ឬនាំចេញឯកសារ ឬកំណត់ត្រាដែលត្រូវការ។',
+    'Manage Bible Notes files': 'គ្រប់គ្រងឯកសារកំណត់ត្រាគម្ពីរ',
+    'Use a note file menu for Rename, Duplicate, Reload, Copy All Items and Move All Items To.':
+        'ប្រើម៉ឺនុយឯកសារកំណត់ត្រា ដើម្បីប្ដូរឈ្មោះ ចម្លង ផ្ទុកឡើងវិញ ចម្លងធាតុទាំងអស់ ឬផ្លាស់ទីទាំងអស់ទៅ។',
+    'Search for words selected in a verse':
+        'ស្វែងរកពាក្យដែលបានជ្រើសក្នុងខគម្ពីរ',
+    'Select Bible words, right-click them, then choose Search in Bible Search.':
+        'ជ្រើសពាក្យគម្ពីរ ចុចស្តាំ រួចជ្រើស ស្វែងរកក្នុងការស្វែងរកគម្ពីរ។',
+    'Choose the verse for cross references': 'ជ្រើសខគម្ពីរសម្រាប់យោងឆ្លង',
+    'Open Cross Reference, then select a verse to follow its related passages.':
+        'បើកយោងឆ្លង រួចជ្រើសខគម្ពីរ ដើម្បីតាមបទគម្ពីរដែលពាក់ព័ន្ធ។',
+    'Filter the people and places lookup': 'ត្រងមនុស្ស និងទីកន្លែងក្នុងគម្ពីរ',
+    'Switch Names or Locations, search the list, and use Filter by name type for people.':
+        'ប្ដូររវាងឈ្មោះ និងទីកន្លែង ស្វែងរកក្នុងបញ្ជី ហើយប្រើតម្រងប្រភេទឈ្មោះសម្រាប់មនុស្ស។',
+    'Read a place and open its map': 'អានអំពីទីកន្លែង និងបើកផែនទី',
+    'Choose Locations in the names lookup, open a place, then use Open in Google Maps if available.':
+        'ជ្រើសទីកន្លែងក្នុងការរកឈ្មោះ បើកទីកន្លែងមួយ រួចប្រើបើកក្នុង Google Maps បើមាន។',
+    'Find a resource by filename': 'រកធនធានតាមឈ្មោះឯកសារ',
+    'In Resources, use Search file name to narrow the files; clear the words when finished.':
+        'ក្នុងធនធាន ប្រើស្វែងរកឈ្មោះឯកសារដើម្បីត្រង ហើយសម្អាតពាក្យពេលចប់។',
+    'Show resources without chapter names': 'បង្ហាញធនធានដែលគ្មានឈ្មោះជំពូក',
+    'Toggle Others in Resources to include files that do not use a book and chapter filename.':
+        'ប្ដូរ ផ្សេងៗ ក្នុងធនធាន ដើម្បីបញ្ចូលឯកសារដែលមិនប្រើឈ្មោះសៀវភៅ និងជំពូក។',
+    'Refresh or extend the Resources library':
+        'ធ្វើបច្ចុប្បន្នភាព ឬបន្ថែមបណ្ណាល័យធនធាន',
+    'Use the Resources menu for Add Folder or Reload, and a folder menu for Refresh or Add Files.':
+        'ប្រើម៉ឺនុយធនធានសម្រាប់បន្ថែមថត ឬផ្ទុកឡើងវិញ និងម៉ឺនុយថតសម្រាប់ធ្វើឱ្យថ្មី ឬបន្ថែមឯកសារ។',
+    'Keep study resources with app data':
+        'រក្សាធនធានសិក្សាជាមួយទិន្នន័យកម្មវិធី',
+    'Use a resource folder menu > Copy to Data Directory to make a portable library copy.':
+        'ប្រើម៉ឺនុយថតធនធាន > ចម្លងទៅថតទិន្នន័យ ដើម្បីធ្វើច្បាប់ចម្លងបណ្ណាល័យដែលអាចយកតាមខ្លួន។',
+    'Show one kind of graph relationship': 'បង្ហាញទំនាក់ទំនងក្រាហ្វតែមួយប្រភេទ',
+    'In an open graph, toggle relation chips or right-click a chip to show only that relationship.':
+        'ក្នុងក្រាហ្វដែលបើក ប្ដូរប៊ូតុងប្រភេទទំនាក់ទំនង ឬចុចស្តាំលើវា ដើម្បីបង្ហាញតែទំនាក់ទំនងនោះ។',
+    'Find a connection between Bible records': 'រកទំនាក់ទំនងរវាងទិន្នន័យគម្ពីរ',
+    'Open Graph Preview, press Find Connection, choose Path to, then run the search.':
+        'បើកមើលក្រាហ្វ ចុចរកទំនាក់ទំនង ជ្រើសផ្លូវទៅ រួចដំណើរការស្វែងរក។',
+    'Fit and rearrange a connection graph':
+        'សម្រប និងរៀបចំក្រាហ្វទំនាក់ទំនងឡើងវិញ',
+    'Use Fit to view, Re-layout, Zoom, Collapse all, Undo and Redo inside the graph.':
+        'ប្រើសម្របតាមទិដ្ឋភាព រៀបចំឡើងវិញ ពង្រីកបង្រួម បង្រួមទាំងអស់ មិនធ្វើវិញ និងធ្វើឡើងវិញ ក្នុងក្រាហ្វ។',
+    'Copy or export a connection graph': 'ចម្លង ឬនាំចេញក្រាហ្វទំនាក់ទំនង',
+    'Use the graph Copy menu for Markdown or diagram text; Presets also offers Save as image and Print.':
+        'ប្រើម៉ឺនុយចម្លងក្នុងក្រាហ្វសម្រាប់ Markdown ឬអត្ថបទដ្យាក្រាម។ ម៉ឺនុយគំរូក៏មានរក្សាទុកជារូបភាព និងបោះពុម្ព។',
+    'Save and revisit a graph preset': 'រក្សាទុក និងបើកគំរូក្រាហ្វឡើងវិញ',
+    'Use Presets > Save preset to name your graph, then pick it from Presets later.':
+        'ប្រើ គំរូ > រក្សាទុកគំរូ ដើម្បីដាក់ឈ្មោះក្រាហ្វ រួចជ្រើសវាពីគំរូនៅពេលក្រោយ។',
+    'Resize or close one Reader panel': 'ប្ដូរទំហំ ឬបិទផ្ទាំងអ្នកអានមួយ',
+    'Drag a panel divider, or right-click it for Reset Size, Close First Widget and Close Second Widget.':
+        'អូសបន្ទាត់បែងចែកផ្ទាំង ឬចុចស្តាំ ដើម្បីកំណត់ទំហំឡើងវិញ បិទផ្ទាំងទីមួយ ឬបិទផ្ទាំងទីពីរ។',
     'Are you sure you want to clear all settings?':
         'តើអ្នកពិតជាចង់លុបការកំណត់ទាំងអស់ឬ?',
     'Reveal Original': 'បង្ហាញកន្លែងដើម',
@@ -130,6 +279,7 @@ const dictionary = {
     'The data directory is inside this folder':
         'ថតទិន្នន័យស្ថិតនៅក្នុងថតនេះ ដូច្នេះមិនអាចចម្លងចូលខ្លួនវាបានទេ',
     'Cannot copy folder': 'មិនអាចចម្លងថតបានទេ',
+    'In the data directory': 'នៅក្នុងថតទិន្នន័យ',
     // --- Resources: copying picked files INTO one of the user's folders.
     'Add Files': 'បន្ថែមឯកសារ',
     'file copied': 'ឯកសារត្រូវបានចម្លង',
@@ -660,6 +810,7 @@ const dictionary = {
     'Add Extra Bible': 'បន្ថែមព្រះគម្ពីរ',
     'Add Time': 'បន្ថែមម៉ោង',
     'Advance Bible Lookup': 'ស្វែងរកព្រះគម្ពីរកម្រិតខ្ពស់',
+    'Advance Lookup': 'ស្វែងរកកម្រិតខ្ពស់',
     'Apply All Slides': 'អនុវត្តទៅកាន់គ្រប់ស្លាយ',
     'Apply changed dimension to this slide':
         'អនុវត្តទំហំដែលបានផ្លាស់ប្តូរទៅកាន់ស្លាយនេះ',

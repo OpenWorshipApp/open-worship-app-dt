@@ -21,10 +21,10 @@ import LocationNameLookupToggleComp from '../location-name-lookup/LocationNameLo
 const INPUT_GROUP_WIDTH = 395;
 
 export default function RenderBibleLookupHeaderComp({
-    setIsAdvanceLookupOpened,
+    toggleAdvanceLookup,
     isAdvanceLookupOpened,
 }: Readonly<{
-    setIsAdvanceLookupOpened: (isAdvanceLookupOpened: boolean) => void;
+    toggleAdvanceLookup: () => void;
     isAdvanceLookupOpened: boolean;
 }>) {
     const viewController = useLookupBibleItemControllerContext();
@@ -73,9 +73,7 @@ export default function RenderBibleLookupHeaderComp({
                 <div className="mx-2">
                     <AdvanceLookupHandlerComp
                         isAdvanceLookupOpened={isAdvanceLookupOpened}
-                        handleToggleLookupOnline={() =>
-                            setIsAdvanceLookupOpened(!isAdvanceLookupOpened)
-                        }
+                        handleToggleLookupOnline={toggleAdvanceLookup}
                     />
                 </div>
             ) : (
@@ -91,7 +89,7 @@ export default function RenderBibleLookupHeaderComp({
                         }
                     >
                         <RenderExtraButtonsRightComp
-                            setIsAdvanceLookupOpened={setIsAdvanceLookupOpened}
+                            toggleAdvanceLookup={toggleAdvanceLookup}
                             isAdvanceLookupOpened={isAdvanceLookupOpened}
                         >
                             <RenderExportWordComp />

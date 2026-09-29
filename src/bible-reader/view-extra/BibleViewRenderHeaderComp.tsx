@@ -39,7 +39,7 @@ export default function BibleViewRenderHeaderComp({
     }, []);
     return (
         <div
-            className="card-header d-flex app-top-hover-motion-1 p-0"
+            className="card-header bible-view-header d-flex app-top-hover-motion-1 p-0"
             style={{ height: 'unset' }}
         >
             <RenderTitleMaterialComp

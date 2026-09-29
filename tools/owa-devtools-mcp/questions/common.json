@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-09-26",
+    "updated": "2026-09-28",
     "sections": [
         {
             "id": "panels",
@@ -447,6 +447,10 @@
                         "all tips",
                         "what can I do",
                         "learn this page",
+                        "settings tips",
+                        "tips per page",
+                        "focused window",
+                        "demo target page",
                         "presenter lessons",
                         "background media",
                         "service order",

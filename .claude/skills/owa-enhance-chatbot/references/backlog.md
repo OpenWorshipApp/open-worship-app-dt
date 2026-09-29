@@ -13,6 +13,19 @@ tools → cost → capability → polish.**
 
 ---
 
+## EC-192 · Tips and demos follow the operator window — `done` 2026-09-28
+
+Before: Settings had no tip catalog and DailyTipComp refused popup listeners.
+One session marker suppressed a second page, and a built-in demo ignored the
+caller’s full URL. After: all eight operator pages have lessons, popup menus
+listen locally, automatic tips are tracked per page, and demo targeting retains
+an exact same-page URL. Settings All tips and its General guide were observed
+in the live Settings window, with a red ring on General. The focused tests
+cover popup menu dispatch, per-page timing, translations, and exact URL routing.
+No provider call was made; the improvement is easier page learning and reliable
+rung-3 placement. Host/model counts remain 53/24; schema cost falls from 7,397
+to 7,394 model tokens per round.
+
 ## EC-191 · Presenter Show it could fail or leave a dead Do it — `done` 2026-09-23
 
 The reported **Build a service presenting flow** tip displayed “Could not start

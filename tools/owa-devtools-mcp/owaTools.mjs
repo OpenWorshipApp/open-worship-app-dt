@@ -58,8 +58,7 @@ import {
   matchQuestions,
   outlineQuestions,
 } from './questions.mjs';
-import { getReaderDemo, READER_DEMO_IDS } from './readerDemos.mjs';
-import { getPresenterDemo, PRESENTER_DEMO_IDS } from './presenterDemos.mjs';
+import { getBuiltInDemo, getBuiltInDemoPage } from './demoHelpers.mjs';
 import { checkAgentFileName } from './agentFileName.mjs';
 import {
   AGENT_FILE_ACTIONS,
@@ -1932,7 +1931,7 @@ export function registerOwaTools(server) {
           .string()
           .optional()
           .describe(
-            'A built-in Presenter or Reader demo id selected in the app; ' +
+            'A built-in page demo id selected in the app; ' +
               'no model-written steps needed.',
           ),
         manualId: z.string().optional(),
@@ -1985,27 +1984,17 @@ export function registerOwaTools(server) {
           );
         }
         const builtInDemoPage =
-          demoId === undefined
-            ? null
-            : READER_DEMO_IDS.includes(demoId)
-              ? 'reader.html'
-              : PRESENTER_DEMO_IDS.includes(demoId)
-                ? 'presenter.html'
-                : null;
+          demoId === undefined ? null : getBuiltInDemoPage(demoId, page);
         const demoLanguage =
           builtInDemoPage === null
             ? null
             : await readAppLanguage(builtInDemoPage);
         const builtInDemo =
-          builtInDemoPage === 'reader.html'
-            ? getReaderDemo(demoId, (label) => {
+          builtInDemoPage === null
+            ? null
+            : getBuiltInDemo(demoId, (label) => {
                 return tranText(label, demoLanguage ?? 'en');
-              })
-            : builtInDemoPage === 'presenter.html'
-              ? getPresenterDemo(demoId, (label) => {
-                  return tranText(label, demoLanguage ?? 'en');
-                })
-              : null;
+              });
         if (demoId !== undefined && builtInDemo === null) {
           throw new Error(`Unknown built-in demo "${demoId}".`);
         }

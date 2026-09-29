@@ -8,14 +8,14 @@ Status: `open` · `doing` · `done` · `wontfix` (with a reason).
 
 ---
 
-### `MC-46` — more Presenter-only demos and tips · done 2026-09-28
+### `MC-46` — Presenter and Reader demos and tips · done 2026-09-28
 
 Added fourteen lessons to the shared Presenter catalog (74 → 88; 78 have a
 safe actionable start). They cover Bible Lookup references, Keep Open, history
 and study tools; media filters, sorting and folders; flow filters and sorting;
 Messages, notice rotation/spacing, foreground Effects and Image Show preparation.
 Titles and descriptions are translated into Khmer and French, and tips stay
-in their existing topic groups. Reader remains at 61 lessons.
+in their existing topic groups.
 
 Library targets retain the named panel and use the exact localized label so a
 Background filter cannot press the Documents or Bible Notes filter. The Khmer
@@ -34,6 +34,42 @@ Khmer tip titles/descriptions were checked live. MCP before/after:
 53 host tools / 24 model tools / ~7,397 model schema tokens per round; no schema
 change. Policy probe: 25/25. No safety, schema cost or developer-interface
 tradeoff; the small lesson catalog grows only with text.
+#### Reader feature demos and practical tips
+
+Reader-only inventory found saved Bible lists and note-file management absent
+from the original 61 lessons; copy formats, Resources and graph tools were
+buried in broad overviews. Added 38 focused lessons (99 total), each with a
+searchable usage tip and Khmer/French title and detail. Nineteen additions
+start with a safe named action, bringing that total to 49; the featured
+assistant shelf remains 30. File choices, graph records, native menus,
+destructive steps, exports and congregation output remain self-guided.
+
+Reader mixed lessons now mark explanation steps as `look`, so the card says
+Next after opening a menu instead of offering a Do it with nothing to press.
+Scoped targets translate the panel and control independently. Older-host
+inline fallback preserves the full Reader instructions in show mode.
+`tools/owa-devtools-mcp/reader-demo-coverage.md` maps the Reader surface to
+the lessons and explains how to use them. No tool, public argument or policy
+change is needed: baseline 53 tools, 24 to the model, ~7,397 schema tokens per
+round. The policy baseline passed 16 checks; its Presenter-only checks were
+skipped to honor the Reader-only scope, not counted as passing.
+
+Verification: 67 focused tests passed. All 19 new action-bearing lessons
+completed through fresh stdio servers; retries resolved interruptions from
+concurrent development reloads and a Bible Information popup left open by the
+test driver. The Reader's All tips counter showed 99, searching Copy Text
+found its focused tip, and Show it started the HTTP guide with the Copy
+control ringed; the final instruction was a `look` step. The after-probe again
+passed 16 policy checks and skipped Presenter checks. The host still lists 53
+tools, 24 to the model; the measured ~7,394 tokens/round is within the 7,450
+ratchet (a concurrent schema wording change accounts for the three-token
+difference, not this catalog). File exports and destructive choices were not
+executed.
+
+Tradeoff: more static lesson text in the local catalog, no per-question schema
+growth, provider calls or new retained state. Benefits both developer and
+volunteer callers through the same guide; security policy stays intact.
+
 
 ### `MC-44` — the redaction net missed OpenAI's own key format · done 2026-09-26
 

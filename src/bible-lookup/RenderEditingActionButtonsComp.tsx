@@ -141,6 +141,7 @@ export default function RenderEditingActionButtonsComp({
     useKeyboardRegistering(
         eventMaps,
         (event) => {
+            event.preventDefault();
             if (event.key.toLowerCase() === 's') {
                 viewController.addBibleItemLeft(bibleItem, bibleItem);
             } else {

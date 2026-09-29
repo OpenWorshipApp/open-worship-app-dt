@@ -1,5 +1,11 @@
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { tran } from '../lang/langHelpers';
+import { detectBotFocus } from '../../tools/owa-devtools-mcp/botFocus.mjs';
+import type { BotFocusType } from '../../tools/owa-devtools-mcp/botFocus.mjs';
+import {
+    getPageDemo,
+    PAGE_DEMO_LIST,
+} from '../../tools/owa-devtools-mcp/pageDemos.mjs';
 import {
     getPresenterDemo,
     PRESENTER_DEMO_LIST,
@@ -15,7 +21,7 @@ export {
     setAreDailyTipsEnabled,
 } from './dailyTipSettingHelpers';
 
-export type DailyTipPageType = 'presenter' | 'reader';
+export type DailyTipPageType = BotFocusType;
 
 export type DailyTipType = {
     id: string;
@@ -66,6 +72,31 @@ function getCanDemoFromToolResult(result: unknown): boolean | null {
 }
 
 export const DAILY_TIP_SESSION_KEY = 'daily-tip-auto-shown';
+
+export function getDailyTipSessionKey(page: DailyTipPageType) {
+    return `${DAILY_TIP_SESSION_KEY}-${page}`;
+}
+
+export function getDailyTipPageLabel(page: DailyTipPageType) {
+    switch (page) {
+        case 'presenter':
+            return tran('Presenter tip');
+        case 'reader':
+            return tran('Reader tip');
+        case 'setting':
+            return tran('Setting');
+        case 'appDocumentEditor':
+            return tran('Slide Editor');
+        case 'bibleNote':
+            return tran('Bible Note');
+        case 'webEditor':
+            return tran('Web Editor');
+        case 'lyricEditor':
+            return tran('Lyric Editor');
+        case 'lwShare':
+            return tran('Local Web Share');
+    }
+}
 
 // The automatic card waits this long after launch: at launch the volunteer is
 // opening the service and reaching for the very header controls it covers.
@@ -288,6 +319,7 @@ function getReaderTips(): DailyTipType[] {
     return READER_DEMO_LIST.map((demo) => {
         const menuCategory = getAppMenuCategory(demo.id);
         const category =
+            (demo.category === undefined ? undefined : tran(demo.category)) ??
             menuCategory ??
             (navigationIds.has(demo.id)
                 ? tran('Getting started')
@@ -312,17 +344,18 @@ function getReaderTips(): DailyTipType[] {
 }
 
 export function getDailyTipPage(homePage: string): DailyTipPageType | null {
-    if (homePage.includes('presenter.html')) {
-        return 'presenter';
-    }
-    if (homePage.includes('reader.html')) {
-        return 'reader';
-    }
-    return null;
+    return detectBotFocus(homePage);
 }
 
 export function getDailyTips(page: DailyTipPageType): DailyTipType[] {
-    return page === 'presenter' ? getPresenterTips() : getReaderTips();
+    if (page === 'presenter') return getPresenterTips();
+    if (page === 'reader') return getReaderTips();
+    return PAGE_DEMO_LIST.filter((demo) => demo.page === page).map((demo) => ({
+        id: demo.id,
+        demoId: demo.id,
+        title: tran(demo.label),
+        detail: tran(demo.detail),
+    }));
 }
 
 export function getDailyTipGuide(
@@ -332,7 +365,9 @@ export function getDailyTipGuide(
     const demo =
         page === 'presenter'
             ? getPresenterDemo(tip.demoId, tran)
-            : getReaderDemo(tip.demoId, tran);
+            : page === 'reader'
+              ? getReaderDemo(tip.demoId, tran)
+              : getPageDemo(tip.demoId, tran);
     if (demo === null) {
         return null;
     }
@@ -353,6 +388,12 @@ export function getDailyTipGuide(
             step.action === 'rightClick'
         );
     });
+    // Old hosts cannot receive the built-in `look` metadata through the public
+    // step schema. Keep the entire Reader lesson as a walkthrough on fallback
+    // rather than dropping the instructions after its opening action.
+    if (page === 'reader' && actionableSteps.length < steps.length) {
+        return { title: tip.title, steps, mode: 'show' };
+    }
     return {
         title: tip.title,
         steps: actionableSteps.length === 0 ? steps : actionableSteps,
@@ -364,11 +405,13 @@ export async function startDailyTipGuide(
     page: DailyTipPageType,
     tip: DailyTipType,
     callTool: DailyTipCallToolType,
+    targetPage = `${page}.html`,
 ) {
     const guide = getDailyTipGuide(page, tip);
     try {
         const result = await callTool('owa_guide_start', {
             demoId: tip.demoId,
+            page: targetPage,
         });
         // During development the renderer can hot-reload a newly actionable
         // lesson while Electron's MCP host still knows its older, show-only
@@ -395,7 +438,7 @@ export async function startDailyTipGuide(
     }
     await callTool('owa_guide_start', {
         ...guide,
-        page: `${page}.html`,
+        page: targetPage,
     });
 }
 

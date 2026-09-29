@@ -51,3 +51,15 @@ through `toWidgetLabel`. One that sets `widgetName` by hand should set
 cannot find a panel, check the panel is _named_ first — and verify in BOTH the
 open and the collapsed state: a fix proven in one of them is not a fix, which is
 exactly how this bug came back after being closed once.
+
+**A scope must FIT the panel, not merely share its words** (2026-09-27,
+`SCOPE_MAX_TIER` in `domMatch.mjs`). `checkIsInScope` took any tier
+`matchTier` returned, tier 3 included -- "every word of the needle somewhere
+in the label, in any order". The Reader's two note panes sit inside one named
+**Bible and Notes**, which holds both words of "Bible Notes", so
+`owa_click "Bible Notes > More Options"` passed the scope on that ANCESTOR
+and pressed the **Bibles** panel's button. Scopes are tiers 0-2 now; the real
+ones (`Background > Videos`, `Web Show > clock`) are tier 0 on their own pane
+and unaffected. A live re-check needs a fresh server AND a page reload -- the
+server caches the module and the page memoises `window.__owaDomMatch`
+([[mcp-tool-edit-two-processes]], [[dom-match-memoised-in-page]]).

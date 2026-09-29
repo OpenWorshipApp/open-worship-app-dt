@@ -34,6 +34,42 @@
 .bible-view {
   min-width: 200px;
   border: 1px solid transparent;
+  container-type: inline-size;
+
+  // Hover-hidden actions still occupy their row. In a split pane, let that
+  // row wrap below the passage instead of squeezing the title out of view.
+  @container (max-width: 550px) {
+    .bible-view-header {
+      flex-wrap: wrap;
+      align-content: flex-start;
+
+      > .app-low-hover-visible-0 {
+        max-width: 100%;
+        overflow-x: auto;
+      }
+    }
+
+    .bible-view-title-material {
+      flex: 0 0 100%;
+      min-width: 0;
+      height: auto !important;
+    }
+
+    .bible-view-title-content {
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    .bible-view-reference {
+      min-width: 0;
+      flex: 1 1 auto;
+
+      .title {
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+    }
+  }
 
   .card-header {
     .bible-extra-key:hover {

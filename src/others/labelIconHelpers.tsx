@@ -33,6 +33,7 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     Notes: 'journal-text',
     Note: 'sticky',
     'Bible Lookup': 'search',
+    'Advance Lookup': 'binoculars',
     'Bible Online Lookup': 'cloud-arrow-down',
     Lookup: 'search',
     Find: 'search',

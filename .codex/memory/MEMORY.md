@@ -38,7 +38,7 @@
 - [Presenting Flow screen pinning](presenting-flow-screen-pinning.md) — `Set Specific Screen` rides `chooseScreenIds` · [Presenting Flow screen actions](presenting-flow-screen-actions.md) — a run sheet can hold things to DO · [Presenting Flow `Screen: Show` / `Screen: Hide`](presenting-flow-screen-show-hide.md) — the only actions that NAME screens · [Presenting Flow `Slide: Media Control`](presenting-flow-media-control.md) — CC-only action, settings on the ATTACHMENT
 - [Presenting Flow auto next](presenting-flow-auto-next.md) — a cursor move restarts the timers · [Presenting Flow CC elements](presenting-flow-cc-elements.md) — followers that ride a host's present · [Presenting Flow Keyboard Event](presenting-flow-keyboard-event.md) — Ctrl/Shift only, unique per sheet
 - [Downloads are protocol-aware now](http-downloads-protocol-aware.md) — only `initHttpRequest` speaks plain http
-- [`.owapf.tar.gz` presenting flow archive](presenting-flow-archive-owapf.md) — bundles whole documents behind references · [Single-item archives (`.owadoc` / `.owbible` / `.owanote`)](document-archive-owadoc.md) — one file + everything attached · [Whole-data archive (`.owadata.tar`)](data-archive-owadata.md) — File → Export/Import Data · [Archive password protection](archive-password-protection.md) — every export asks
+- [`.owapf.tar.gz` presenting flow archive](presenting-flow-archive-owapf.md) — bundles whole documents behind references · [Single-item archives (`.owadoc` / `.owbible` / `.owanote`)](document-archive-owadoc.md) — one file + everything attached · [Whole-data archive (`.owadata.tar`)](data-archive-owadata.md) — File → Export/Import Data; carries a document's unsaved state, never its `.histories` · [Archive password protection](archive-password-protection.md) — every export asks
 - [Bible XML archive (`.owabdata`)](bible-xml-archive-owabdata.md) — import REFUSES a colliding item · [Bible XML import from a link](bible-xml-import-from-url.md) — the key is guessed from the file's attributes
 - [Presenting Flow drag & setting rules](presenting-flow-drag-and-settings-rules.md) — `presentingFlowDraggingStore` rules · [Presenting flow cue gutter](presenting-flow-cue-gutter.md) — one left column shared by the tree and the run player
 - [Full reference resolves in both lookups](bible-lookup-full-ref-resolves.md) — `John 3:16` renders in the modal AND the Reader
@@ -77,6 +77,7 @@
 - [Modal layer & above-modal widgets](modal-layer-above-modal.md) — ModalLayerContext for widgets in the modal's tree
 - [Bible-XML cache is key-scoped](bible-xml-cache-key-scoped.md) — every writer must call `clearBibleXMLCache`
 - [experiments/html-in-canvas is dev-only](experiments-html-in-canvas.md) — build-excluded scratch harness
+- [Bible note editor writes a history](bible-note-editing-history.md) — its autosave bricked a note with a childless root; Save is a press now, and an EXPORT reads the head so unsaved typing travels
 - [Verse marks are note items](verse-marks-note-items.md) — highlights/comments live in `.note` files as a second kind
 - [Agent access & in-app chatbot](agent-access-mcp-chatbot.md) — no fixed CDP port
 - [`.claude/` edits need a knowledge rebuild](claude-dir-edits-need-knowledge-rebuild.md) — `node extra-work/build-knowledge.mjs`
@@ -144,6 +145,7 @@
 - [Canvas item shadow](canvas-item-shadow.md) — a slide box casts a **Box Shadow** (the rectangle) or a **Drop Shadow** (`filter:`, follows the letters / a picture's see-through edge); it rides `genShapeBoxStyle`, so the editor, the thumbnails, the projector and the print PDF agree
 - [Foreground blend mode & stacking](foreground-blend-mode-stacking.md) — Video/Image Show blend with the layers under them; a `z-index` or `isolation` on `#foreground` makes every blend a silent no-op · each component is its own floating panel picked from a status-board menu, one sticky row per session, the show never scrolls the grid
 - [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — an `infinite` color/border keyframe repaints a whole window at 60 fps; cap iterations; trace the Presenter with a screen SHOWING (EN-19)
+- [A looping video crossfades with a twin](video-loop-crossfade-two-elements.md) — one element cannot crossfade with itself (a dip to black at every clip end), and a copy per lap re-reads the whole clip
 - [Own font list with weights](own-font-list-with-weights.md) — `font-list` is gone; the macOS/Linux branches never ran on a real machine
 - [Data folder path is aliased in file contents](portable-data-dir-alias.md) — `$DATA_DIR_PATH` in every escape level; raw readers see the alias; a marker re-finds the folder, setting NAMES go `@data_`, Repair Links fixes old paths
 - [Path handling lives in fileHelpers](path-handling-lives-in-filehelpers.md) — the user's rule: every path/file-name helper in `src/server/fileHelpers.ts`, no ad-hoc separator splits
