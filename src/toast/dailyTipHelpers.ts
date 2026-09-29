@@ -117,6 +117,7 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-pin-document',
         'presenter-thumbnail-size',
         'presenter-preview-width',
+        'presenter-note-panel',
         'presenter-present-slide',
         'presenter-auto-play',
         'presenter-present-lyrics',
@@ -153,6 +154,11 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-foreground-sessions',
         'presenter-foreground-clear',
         'presenter-foreground-extras',
+        'presenter-foreground-messages',
+        'presenter-foreground-message-rotation',
+        'presenter-foreground-message-spacing',
+        'presenter-foreground-effects',
+        'presenter-foreground-slideshow',
     ]);
     const backgroundIds = new Set([
         'presenter-colors-tab',
@@ -168,11 +174,16 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-background-web',
         'presenter-play-audio',
         'presenter-download-media',
+        'presenter-background-filter',
+        'presenter-background-sort',
+        'presenter-background-folder',
     ]);
     const serviceIds = new Set([
         'presenter-flow-list',
         'presenter-build-flow',
         'presenter-share-flow',
+        'presenter-flow-filter',
+        'presenter-flow-sort',
     ]);
     const viewMenuIds = new Set([
         'presenter-view-reload',

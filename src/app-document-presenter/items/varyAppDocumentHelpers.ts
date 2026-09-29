@@ -16,6 +16,7 @@ import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpe
 import { bringDomToTopView } from '../../helper/helpers';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 import { notifyElementHighlight } from '../../helper/domHelpers';
+import { checkIsTypingTarget } from '../../presenting-control/presentingControlShortcutHelpers';
 import Slide from '../../app-document-list/Slide';
 import PptxSlide from '../../app-document-list/PptxSlide';
 import EventHandler from '../../event/EventHandler';
@@ -216,10 +217,14 @@ export function handleNextItemSelecting({
             }[],
             varySlide,
         ) => {
-            const onScreenList = ScreenVaryAppDocumentManager.getDataList(
-                varySlide.filePath,
-                varySlide.id,
-            );
+            // The LIVE managers, not the persisted map they save into: the
+            // save is lock-deferred, so a quick second press used to step
+            // from the slide that had already left the screen.
+            const onScreenList =
+                ScreenVaryAppDocumentManager.getPresentingDataList(
+                    varySlide.filePath,
+                    varySlide.id,
+                );
             if (onScreenList.length === 0) {
                 return bucket;
             }
@@ -271,6 +276,44 @@ export function getContainerDiv(): HTMLDivElement | null {
     return document.querySelector(`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`);
 }
 
+/**
+ * Whether this previewer may answer a navigation key.
+ *
+ * Which previewer owns the arrows is DOM focus, and it has to be: several are
+ * mounted at once — a floating document preview, one pane per lyric stage —
+ * and every one of them gets this callback, so letting each act would step
+ * every open previewer at the same time.
+ *
+ * What was missing is that nothing ever hands that focus BACK. Every file list
+ * in the app is a tab stop of its own (`FileListHandlerComp`), so picking the
+ * next song leaves focus on the Documents list; a popup closing, or this
+ * previewer re-mounting because the selected document changed kind, leaves it
+ * on `<body>`. `document.activeElement === null` was meant to be the rescue
+ * and is unreachable — Chromium parks focus on `<body>`, never on null
+ * (measured 2026-09-28) — so the key was swallowed in silence with a projector
+ * waiting.
+ *
+ * Unowned focus is now claimed, by ONE previewer: the first in the document,
+ * which is the main panel.
+ */
+function checkCanMoveSlide(element: HTMLDivElement) {
+    const { activeElement } = document;
+    // Inside the panel counts — the sticky document menu button and the slide
+    // menu row are in there, and pressing one must not disarm the arrows.
+    if (activeElement === element || element.contains(activeElement)) {
+        return true;
+    }
+    const isUnowned = activeElement === null || activeElement === document.body;
+    if (!isUnowned || element !== getContainerDiv()) {
+        return false;
+    }
+    // Take it, so the panel shows its focus border and the next key lands here
+    // with no detour. `preventScroll`: the list must not jump under the
+    // operator just because a key arrived.
+    element.focus({ preventScroll: true });
+    return true;
+}
+
 export function handleSlideMoving(
     event: KeyboardEvent | ReactKeyboardEvent<any>,
     varySlides: VarySlideType[],
@@ -288,10 +331,8 @@ export function handleSlideMoving(
     if (element === null) {
         return;
     }
-    if (document.activeElement === null) {
-        element.focus();
-        return;
-    } else if (document.activeElement !== element) {
+    // A field being typed into keeps its own arrows, wherever it sits.
+    if (checkIsTypingTarget(event) || !checkCanMoveSlide(element)) {
         return;
     }
     event.preventDefault();

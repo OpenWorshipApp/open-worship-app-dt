@@ -96,6 +96,38 @@ async function initSettingKeyPathMigration() {
     }
 }
 
+// Kept in the DATA folder's own settings, beside the two above.
+const PREVIEWER_NOTE_CLOSE_MIGRATION_SETTING_NAME =
+    'previewer-note-close-migration';
+
+/**
+ * Per data folder, once: the presenter previewer's Note pane ships CLOSED now,
+ * and a shipped default is only ever read for a document with no stored layout
+ * -- so every document opened before this version is closed here instead
+ * (`previewerNoteCloseMigration`). Same claim-first pattern as the two above,
+ * and it must run BEFORE a previewer renders, which reads its layout
+ * synchronously.
+ */
+async function initPreviewerNoteCloseMigration() {
+    if (
+        appLocalStorage.getItem(PREVIEWER_NOTE_CLOSE_MIGRATION_SETTING_NAME) !==
+        null
+    ) {
+        return;
+    }
+    appLocalStorage.setItem(
+        PREVIEWER_NOTE_CLOSE_MIGRATION_SETTING_NAME,
+        'true',
+    );
+    try {
+        const { default: migratePreviewerNoteClose } =
+            await import('./helper/previewerNoteCloseMigration');
+        await migratePreviewerNoteClose();
+    } catch (error) {
+        handleError(error);
+    }
+}
+
 export async function init(callback: () => void = () => {}) {
     // First, before anything reads a file: the migration below reads settings,
     // and some windows (`lyricEditor`) read their data without awaiting `init`.
@@ -103,6 +135,7 @@ export async function init(callback: () => void = () => {}) {
         appLocalStorage.defaultStorageDirPath;
     await initPresentingFlowRenameMigration();
     await initSettingKeyPathMigration();
+    await initPreviewerNoteCloseMigration();
     initFontFamily();
     const currentLocale = getCurrentLocale();
     // Keep the document language in sync with the app locale so assistive tech

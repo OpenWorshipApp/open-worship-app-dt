@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [NAV-20, NAV-21, ST-22, GL-17, GL-18]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-27"
+workflowsVersion: "2026-09-28"
 ---
 # W-31 — Hide, show, and reset the app's panels (View menu)
 
@@ -23,8 +23,12 @@ the only way in a popup window, whose menu bar is hidden.
    You get one tick-box per panel on the page you are looking at, e.g. on the
    presenter: `App Presenter Left` / `App Presenter Middle` / `App Presenter Right`,
    `Document List`, `Presenting Flow List`, `Presenter`, `Background`,
-   `Bible and Notes`, `Mini Screen`, `Bibles`, `Bible Notes`, `Previewer`, `Slides`.
+   `Bible and Notes`, `Mini Screen`, `Bibles`, `Bible Notes`, `Previewer`, `Slides`,
+   `Note`.
    - **Ticked** = the panel is open. **Unticked** = it is collapsed to its strip.
+   - `Note` — the document and slide notes under the slide previews (W-03) — is the
+     one panel that **starts unticked**: it ships collapsed to its green strip,
+     because most services never need it. Tick it, or click the strip, to open it.
 2. Click a ticked one — that panel collapses to its green strip, and the space goes to
    its neighbour. 📸
 3. Click it again — the panel comes straight back. Nothing reloads and nothing you
@@ -68,5 +72,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-20` · `NAV-21` · `ST-22` · `GL-17` · `GL-18`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-27).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-28).
 :::

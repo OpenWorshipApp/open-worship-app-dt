@@ -106,6 +106,20 @@ vi.mock('../background/RenderBackgroundWebIframeComp', () => ({
     },
 }));
 
+// Stands in for the real still-picture box so this test never drags in the
+// capture chain (a hidden BrowserWindow IPC) to prove which branch was taken.
+const genWebScreenShotElementMock = vi.fn(
+    (url: string, _getCaptureSize: () => { width: number; height: number }) => {
+        const element = document.createElement('div');
+        element.setAttribute('data-web-shot-url', url);
+        return element;
+    },
+);
+
+vi.mock('./managers/screenWebsiteHelpers', () => ({
+    genWebScreenShotElement: genWebScreenShotElementMock,
+}));
+
 vi.mock('../helper/sanitizeHelpers', () => ({
     sanitizeHtml: (html: string) => {
         return html.replaceAll(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
@@ -509,6 +523,7 @@ describe('screen render helpers', () => {
         await timing.handleAdding(parent);
         expect(parent.querySelector('#ampm')?.textContent).toMatch(/AM|PM/);
 
+        // The PROJECTED screen is the only place a web overlay is live.
         const web = genHtmlForegroundWeb(
             {
                 filePath: '/tmp/web.html',
@@ -518,12 +533,14 @@ describe('screen render helpers', () => {
             },
             animData,
             { width: 1920, height: 1080 },
+            true,
         );
         await web.handleAdding(parent);
 
         expect(animData.animIn).toHaveBeenCalledTimes(4);
         expect(fileSourceGetInstance).toHaveBeenCalledWith('/tmp/web.html');
         expect(parent.querySelector('iframe')).not.toBeNull();
+        expect(genWebScreenShotElementMock).not.toHaveBeenCalled();
         expect(parent.textContent).toContain('Tokyo');
 
         // clearing a layer pauses its ticker before animating the overlay out
@@ -532,6 +549,49 @@ describe('screen render helpers', () => {
         await timing.handleRemoving();
         await web.handleRemoving();
         expect(animData.animOut).toHaveBeenCalledTimes(4);
+    });
+
+    test('a web overlay is a still picture off the projected screen', async () => {
+        const { genHtmlForegroundWeb } =
+            await import('./screenForegroundHelpers');
+        const animData = {
+            duration: 0,
+            styleText: '',
+            animIn: vi.fn(async (element: HTMLElement, parent: HTMLElement) => {
+                parent.appendChild(element);
+            }),
+            animOut: vi.fn(async () => {}),
+        };
+        const parent = document.createElement('div');
+
+        const web = genHtmlForegroundWeb(
+            {
+                filePath: '/tmp/web.html',
+                widthScale: 0.5,
+                heightScale: 0.5,
+                extraStyle: { opacity: 0.5 },
+            },
+            animData,
+            { width: 1920, height: 1080 },
+            false,
+        );
+        await web.handleAdding(parent);
+
+        // The mini screen previews every overlay the operator puts up; a live
+        // iframe there runs the page's scripts, timers and media for as long
+        // as it is on screen.
+        expect(parent.querySelector('iframe')).toBeNull();
+        expect(
+            parent
+                .querySelector('[data-web-shot-url]')
+                ?.getAttribute('data-web-shot-url'),
+        ).toBe('file:///tmp/web.html');
+        // Taken at the screen's OWN bounds, which is the cache entry the Webs
+        // panel and the web background have already populated.
+        expect(genWebScreenShotElementMock.mock.calls[0][1]()).toEqual({
+            width: 1920,
+            height: 1080,
+        });
     });
 
     test('a foreground clip is muted, loops, and hands its player back', async () => {

@@ -726,12 +726,17 @@ describe('canvasContextMenuHelpers', () => {
         ).toEqual(['Lock', 'Copy', 'Duplicate', 'Edit', 'Delete']);
         expect(selectedItemMenu[2]).toBeUndefined();
 
-        selectedItemMenuItems[1].onSelect();
+        setCopiedItemsMock.mockResolvedValueOnce(true);
+        await selectedItemMenuItems[1].onSelect();
         expect(setCopiedItemsMock).toHaveBeenCalledWith([textCanvasItem]);
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Copied',
             'Canvas item copied',
         );
+        showSimpleToastMock.mockClear();
+        setCopiedItemsMock.mockResolvedValueOnce(false);
+        await selectedItemMenuItems[1].onSelect();
+        expect(showSimpleToastMock).not.toHaveBeenCalled();
 
         selectedItemMenuItems[2].onSelect();
         expect(canvasController.duplicateItems).toHaveBeenCalledWith([

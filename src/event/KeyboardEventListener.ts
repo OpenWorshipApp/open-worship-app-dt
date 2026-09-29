@@ -115,7 +115,26 @@ export default class KeyboardEventListener extends EventHandler<string> {
         return getLastItem(this._layers);
     }
 
+    // A widget is either up or it is not: there is no such thing as a second
+    // context menu. An `open` that no `close` ever answers used to push a
+    // DUPLICATE, and `removeLayer` takes ONE occurrence off — so the stack kept
+    // a layer nobody owned, every key went on dispatching as
+    // `context-menu>...`, and EVERY `root` shortcut (Ctrl+B, F5–F10, the slide
+    // arrows, Ctrl+Shift+P) was dead for the rest of the session with nothing
+    // left to release it. Measured live on 2026-09-28 at
+    // `['root', 'context-menu', 'context-menu', 'context-menu']` — two quick
+    // right-clicks on the slides previewer are enough, because its menu is
+    // built asynchronously and the second press comes before there is a
+    // backdrop to swallow it.
+    //
+    // Re-asserting instead of stacking: the widget moves to the TOP, which is
+    // what a second `open` means, and one `close` is enough to let the app
+    // have its keyboard back.
     static addLayer(layer: AppWidgetType) {
+        const index = this._layers.indexOf(layer);
+        if (index > -1) {
+            this._layers.splice(index, 1);
+        }
         this._layers.push(layer);
     }
 

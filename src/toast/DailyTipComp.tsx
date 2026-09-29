@@ -209,17 +209,35 @@ export default function DailyTipComp() {
             aria-atomic="true"
         >
             <div className="toast-header">
-                <strong className="me-auto">
+                <i
+                    className="bi bi-lightbulb app-daily-tip-mark"
+                    aria-hidden="true"
+                />
+                {/*
+                 * The page name is dropped from the card deliberately: the
+                 * volunteer is standing in that page, and the header row it
+                 * cost is the reason the card covered the controls behind it.
+                 * "Don't show again" sits here rather than beside the actions
+                 * -- it is the least-wanted press and had equal weight with
+                 * the one the card exists for.
+                 */}
+                <span className="me-auto app-daily-tip-kind">
                     {isBrowsing
                         ? page === 'presenter'
                             ? tran('All Presenter tips')
                             : tran('All Reader tips')
-                        : `${tran('Tip of the Day')} · ${
-                              page === 'presenter'
-                                  ? tran('Presenter tip')
-                                  : tran('Reader tip')
-                          }`}
-                </strong>
+                        : tran('Tip of the Day')}
+                </span>
+                {isBrowsing ? null : (
+                    <button
+                        type="button"
+                        className="btn btn-link app-daily-tip-quiet"
+                        disabled={isStarting}
+                        onClick={handleDisable}
+                    >
+                        {tran("Don't show again")}
+                    </button>
+                )}
                 <button
                     type="button"
                     className="btn-close"
@@ -233,10 +251,7 @@ export default function DailyTipComp() {
             <div className="toast-body app-selectable-text">
                 {isBrowsing ? (
                     <>
-                        <p className="small mb-2">
-                            {tran('Choose a tip to practise at your own pace.')}
-                        </p>
-                        <div className="input-group input-group-sm mb-2">
+                        <div className="input-group input-group-sm mb-1">
                             <span className="input-group-text">
                                 <i className="bi bi-search" />
                             </span>
@@ -280,20 +295,29 @@ export default function DailyTipComp() {
                                             setIsBrowsing(false);
                                         }}
                                     >
-                                        <span className="d-flex gap-2 align-items-start">
-                                            <span className="badge text-bg-secondary mt-1">
+                                        <span className="d-flex gap-2 align-items-baseline">
+                                            <span className="app-daily-tip-index app-data">
                                                 {index + 1}
                                             </span>
                                             <span>
-                                                <span className="d-block fw-semibold">
+                                                <span className="app-daily-tip-title d-block">
                                                     {listedTip.title}
                                                 </span>
-                                                {listedTip.category ? (
-                                                    <span className="badge text-bg-light border mb-1">
-                                                        {listedTip.category}
-                                                    </span>
-                                                ) : null}
-                                                <span className="d-block small">
+                                                {/*
+                                                 * The category used to be a
+                                                 * bordered badge on a line of
+                                                 * its own -- 150 rows paying
+                                                 * a row each. It leads the
+                                                 * detail line now, told apart
+                                                 * by weight rather than by a
+                                                 * separator glyph.
+                                                 */}
+                                                <span className="app-daily-tip-detail d-block">
+                                                    {listedTip.category ? (
+                                                        <span className="app-daily-tip-category">
+                                                            {listedTip.category}
+                                                        </span>
+                                                    ) : null}
                                                     {listedTip.detail}
                                                 </span>
                                             </span>
@@ -302,14 +326,14 @@ export default function DailyTipComp() {
                                 );
                             })}
                             {filteredTips.length === 0 ? (
-                                <div className="list-group-item text-muted small">
+                                <div className="list-group-item app-daily-tip-detail">
                                     {tran('No tips found')}
                                 </div>
                             ) : null}
                         </div>
                         <button
                             type="button"
-                            className="btn btn-sm btn-outline-secondary mt-2"
+                            className="btn btn-outline-secondary mt-1"
                             onClick={() => setIsBrowsing(false)}
                         >
                             {tran('Back to tip')}
@@ -317,17 +341,25 @@ export default function DailyTipComp() {
                     </>
                 ) : (
                     <>
-                        <div className="fw-semibold">{tip.title}</div>
+                        <div className="app-daily-tip-title">{tip.title}</div>
                         <div className="app-daily-tip-detail">{tip.detail}</div>
                         {errorMessage ? (
-                            <div className="text-danger mb-2" role="alert">
+                            <div
+                                className="text-danger app-daily-tip-error"
+                                role="alert"
+                            >
                                 {errorMessage}
                             </div>
                         ) : null}
-                        <div className="app-daily-tip-actions">
+                        {/*
+                         * One segmented group rather than four loose buttons:
+                         * they are the same kind of thing, and a group cannot
+                         * wrap into a second row in a longer language.
+                         */}
+                        <div className="btn-group app-daily-tip-actions">
                             <button
                                 type="button"
-                                className="btn btn-sm btn-primary"
+                                className="btn btn-primary"
                                 disabled={isStarting}
                                 onClick={() => void handleShow()}
                             >
@@ -337,27 +369,24 @@ export default function DailyTipComp() {
                             </button>
                             <button
                                 type="button"
-                                className="btn btn-sm btn-outline-secondary"
+                                className="btn btn-outline-secondary"
                                 disabled={isStarting}
                                 onClick={handleNext}
                             >
                                 {tran('Next tip')}
                             </button>
+                            {/*
+                             * Both were coloured (secondary + info) beside the
+                             * filled primary. One filled button is the only
+                             * thing here that needs a hue.
+                             */}
                             <button
                                 type="button"
-                                className="btn btn-sm btn-outline-info"
+                                className="btn btn-outline-secondary"
                                 disabled={isStarting}
                                 onClick={openAllTips}
                             >
                                 {tran('All tips')}
-                            </button>
-                            <button
-                                type="button"
-                                className="btn btn-sm btn-link"
-                                disabled={isStarting}
-                                onClick={handleDisable}
-                            >
-                                {tran("Don't show again")}
                             </button>
                         </div>
                     </>

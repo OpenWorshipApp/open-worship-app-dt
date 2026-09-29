@@ -20,7 +20,7 @@ const {
     htmlFromJsonMock: vi.fn(),
     imageFromJsonMock: vi.fn(),
     navigatorClipboard: {
-        read: vi.fn(),
+        readText: vi.fn(),
         writeText: vi.fn(),
     },
     textFromJsonMock: vi.fn(),
@@ -29,6 +29,11 @@ const {
     youtubeFromJsonMock: vi.fn(),
     websiteFromJsonMock: vi.fn(),
     cameraFromJsonMock: vi.fn(),
+}));
+
+vi.mock('../../server/clipboardHelpers', () => ({
+    readTextFromClipboard: navigatorClipboard.readText,
+    writeTextToClipboard: navigatorClipboard.writeText,
 }));
 
 vi.mock('../../helper/helpers', () => ({
@@ -98,15 +103,6 @@ vi.mock('./CanvasItemCamera', () => ({
 }));
 
 import Canvas from './Canvas';
-
-function createClipboardItem(text: string, types = ['text/plain']) {
-    return {
-        types,
-        getType: vi.fn(async () => ({
-            text: async () => text,
-        })),
-    };
-}
 
 describe('Canvas', () => {
     beforeEach(() => {
@@ -257,19 +253,17 @@ describe('Canvas', () => {
     });
 
     test('reads copied canvas items from the clipboard and writes serialized items back', async () => {
-        navigatorClipboard.read.mockResolvedValue([
-            createClipboardItem(
-                '{"type":"text","id":1}\n{"type":"unknown","id":2}\n{bad-json',
-            ),
-            createClipboardItem('ignored-image-data', ['image/png']),
-        ]);
+        navigatorClipboard.readText.mockResolvedValue(
+            '{"type":"text","id":1}\n{"type":"unknown","id":2}\n{bad-json',
+        );
         errorFromJsonErrorMock.mockReturnValueOnce({ type: 'error', id: 2 });
 
         expect(await Canvas.getCopiedCanvasItems()).toEqual([
             { type: 'text', id: 1 },
         ]);
 
-        Canvas.setCopiedItems([
+        navigatorClipboard.writeText.mockResolvedValue(true);
+        await Canvas.setCopiedItems([
             { clipboardSerialize: vi.fn(() => '{"type":"text","id":1}') },
             { clipboardSerialize: vi.fn(() => '{"type":"image","id":2}') },
         ] as any);
@@ -277,5 +271,7 @@ describe('Canvas', () => {
         expect(navigatorClipboard.writeText).toHaveBeenCalledWith(
             '{"type":"text","id":1}\n{"type":"image","id":2}',
         );
+        navigatorClipboard.readText.mockResolvedValue(null);
+        await expect(Canvas.getCopiedCanvasItems()).resolves.toEqual([]);
     });
 });

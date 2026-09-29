@@ -119,6 +119,157 @@ vi.mock('../popup-widget/popupWidgetHelpers', () => ({
 
 import AppDocument from './AppDocument';
 
+describe('AppDocument.changeSlidesFont', () => {
+    const text = (id: number, extra: object = {}) => ({
+        id,
+        type: 'text',
+        text: 'Keep these words',
+        fontSize: 45,
+        fontFamily: 'Arial',
+        fontWeight: '700',
+        left: 20,
+        top: 30,
+        color: '#ffffff',
+        ...extra,
+    });
+    const fixture = () => ({
+        metadata: { note: 'Keep the document note' },
+        items: [
+            {
+                id: 10,
+                name: 'First',
+                metadata: { width: 1920, height: 1080 },
+                canvasItems: [
+                    text(1),
+                    text(2, {
+                        type: 'bible',
+                        bibleRenderingList: [
+                            { title: 'A verse', text: 'Verse words' },
+                        ],
+                    }),
+                    text(3, { locked: true }),
+                    { id: 4, type: 'image', src: 'image.png' },
+                ],
+            },
+            {
+                id: 20,
+                isDisabled: true,
+                canvasItems: [
+                    text(1, { type: 'html', html: '<p>Hello</p>' }),
+                    text(2),
+                ],
+            },
+        ],
+    });
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mocks.baseGetJsonDataMock.mockResolvedValue(fixture());
+    });
+
+    test('updates all text-bearing items, including disabled slides, in one unsaved history entry', async () => {
+        const expected = fixture();
+        for (const slide of expected.items) {
+            for (const item of slide.canvasItems) {
+                if (item.id !== 3 && item.type !== 'image') {
+                    Object.assign(item, { fontSize: 72 });
+                }
+            }
+        }
+        const doc = new AppDocument('/docs/a.ows');
+        expect(await doc.changeSlidesFont({ fontSize: 72 })).toBe(4);
+        expect(mocks.baseGetJsonDataMock).toHaveBeenCalledExactlyOnceWith(
+            false,
+        );
+        expect(mocks.setJsonDataMock).toHaveBeenCalledExactlyOnceWith(expected);
+        expect(mocks.saveMock).not.toHaveBeenCalled();
+    });
+
+    test('scopes an item id to its own slide and keeps all other content and styles', async () => {
+        const expected = fixture();
+        Object.assign(expected.items[1].canvasItems[0], {
+            fontFamily: 'Verdana',
+        });
+        const doc = new AppDocument('/docs/a.ows');
+        expect(
+            await doc.changeSlidesFont(
+                { fontFamily: 'Verdana' },
+                {
+                    targets: [{ slideId: 20, itemIds: [1] }],
+                },
+            ),
+        ).toBe(1);
+        expect(mocks.setJsonDataMock).toHaveBeenCalledExactlyOnceWith(expected);
+    });
+
+    test('accepts whole-slide targets and locked items only when explicitly included', async () => {
+        const doc = new AppDocument('/docs/a.ows');
+        expect(
+            await doc.changeSlidesFont(
+                { fontSize: 90 },
+                {
+                    targets: [{ slideId: 10 }],
+                    includeLocked: true,
+                },
+            ),
+        ).toBe(3);
+        const data = mocks.setJsonDataMock.mock.calls[0][0];
+        expect(data.items[0].canvasItems[2]).toMatchObject({
+            fontSize: 90,
+            locked: true,
+        });
+        expect(data.items[1]).toEqual(fixture().items[1]);
+    });
+
+    test.each([
+        { targets: [] },
+        { targets: [{ slideId: 10, itemIds: [] }] },
+        { targets: [{ slideId: 999 }] },
+        { targets: [{ slideId: 10, itemIds: [3, 4, 999] }] },
+    ])(
+        'empty, missing or ineligible targets do not fall back to all items: %j',
+        async ({ targets }) => {
+            expect(
+                await new AppDocument('/docs/a.ows').changeSlidesFont(
+                    { fontSize: 72 },
+                    { targets },
+                ),
+            ).toBe(0);
+            expect(mocks.setJsonDataMock).not.toHaveBeenCalled();
+        },
+    );
+
+    test.each([0, -1, NaN, Infinity])(
+        'refuses invalid size %s without reading or writing',
+        async (fontSize) => {
+            expect(
+                await new AppDocument('/docs/a.ows').changeSlidesFont({
+                    fontSize,
+                }),
+            ).toBe(0);
+            expect(mocks.baseGetJsonDataMock).not.toHaveBeenCalled();
+            expect(mocks.setJsonDataMock).not.toHaveBeenCalled();
+        },
+    );
+
+    test('does not create history for unchanged values or a noneditable document', async () => {
+        const doc = new AppDocument('/docs/a.ows');
+        expect(await doc.changeSlidesFont({ fontSize: 45 })).toBe(0);
+        expect(await doc.changeSlidesFont({ fontFamily: 'Arial' })).toBe(0);
+        doc.isEditable = false;
+        expect(await doc.changeSlidesFont({ fontSize: 72 })).toBe(0);
+        expect(mocks.setJsonDataMock).not.toHaveBeenCalled();
+    });
+
+    test('clears an explicit family without altering the weight or size', async () => {
+        const doc = new AppDocument('/docs/a.ows');
+        expect(await doc.changeSlidesFont({ fontFamily: '' })).toBe(4);
+        expect(
+            mocks.setJsonDataMock.mock.calls[0][0].items[0].canvasItems[0],
+        ).toEqual(text(1, { fontFamily: null }));
+    });
+});
+
 describe('AppDocument.getJsonData', () => {
     beforeEach(() => {
         vi.clearAllMocks();

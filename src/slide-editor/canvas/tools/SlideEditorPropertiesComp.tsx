@@ -2,6 +2,7 @@ import { tran } from '../../../lang/langHelpers';
 import type CanvasItem from '../CanvasItem';
 import CanvasItemPropsEditorComp from './CanvasItemPropsEditorComp';
 import SlidePropertyEditorComp from './SlidePropertyEditorComp';
+import DocumentFontEditorComp from './DocumentFontEditorComp';
 
 export default function SlideEditorPropertiesComp({
     canvasItems,
@@ -19,6 +20,7 @@ export default function SlideEditorPropertiesComp({
             }}
         >
             <SlidePropertyEditorComp />
+            <DocumentFontEditorComp />
             {canvasItems.length === 0 ? (
                 <div className="d-flex justify-content-center align-items-center h-100">
                     <div>

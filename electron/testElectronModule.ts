@@ -106,6 +106,7 @@ export const electronMockState = {
     },
     clipboard: {
         writeText: vi.fn(),
+        readText: vi.fn(),
     },
     net: {
         fetch: vi.fn((url: string) => Promise.resolve(url)),
@@ -194,6 +195,7 @@ export const electronMockState = {
         this.shell.showItemInFolder.mockClear();
         this.shell.trashItem.mockClear();
         this.clipboard.writeText.mockClear();
+        this.clipboard.readText.mockReset();
         this.net.fetch.mockClear();
         this.protocol.handle.mockClear();
         this.protocol.registerSchemesAsPrivileged.mockClear();

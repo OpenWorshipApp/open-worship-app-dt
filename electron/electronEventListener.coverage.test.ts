@@ -989,6 +989,18 @@ describe('electronEventListener handlers', () => {
             'copied',
         );
 
+        electronMockState.clipboard.readText.mockReturnValue('confirmed');
+        await call('main:app:write-clipboard-text', { text: 'confirmed' });
+        expect(sender.send).toHaveBeenLastCalledWith(
+            'reply:main:app:write-clipboard-text',
+            true,
+        );
+        await call('main:app:read-clipboard-text', {});
+        expect(sender.send).toHaveBeenLastCalledWith(
+            'reply:main:app:read-clipboard-text',
+            'confirmed',
+        );
+
         electronMockState.shell.openExternal.mockRejectedValueOnce(
             new Error('no browser'),
         );

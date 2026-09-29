@@ -29,6 +29,68 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    // Presenter-only practice lessons.
+    'Type a complete reference in Bible Lookup':
+        'វាយឯកសារយោងពេញលេញក្នុងការស្វែងរកព្រះគម្ពីរ',
+    'Enter a book, chapter and verse range together, then check the preview.':
+        'បញ្ចូលកណ្ឌ ជំពូក និងចន្លោះខជាមួយគ្នា រួចពិនិត្យមើលជាមុន។',
+    'Keep Bible Lookup open between passages':
+        'រក្សាការស្វែងរកព្រះគម្ពីរឱ្យនៅបើករវាងបទគម្ពីរ',
+    'Use Keep Open when preparing several Bible passages in a row.':
+        'ប្រើ រក្សាឱ្យនៅបើក ពេលរៀបចំបទគម្ពីរជាច្រើនជាបន្តបន្ទាប់។',
+    'Reuse a passage from lookup history':
+        'ប្រើបទគម្ពីរពីប្រវត្តិស្វែងរកឡើងវិញ',
+    'Bring back an earlier reference from the history above Bible Lookup.':
+        'យកឯកសារយោងមុនពីប្រវត្តិនៅខាងលើការស្វែងរកព្រះគម្ពីរមកវិញ។',
+    'Explore study tools in Bible Lookup':
+        'ស្វែងយល់ពីឧបករណ៍សិក្សាក្នុងការស្វែងរកព្រះគម្ពីរ',
+    'Find words, cross references and local Resources without leaving the Presenter.':
+        'ស្វែងរកពាក្យ ឯកសារយោងឆ្លង និងធនធានក្នុងម៉ាស៊ីន ដោយមិនចាកចេញពីផ្ទាំងបង្ហាញ។',
+    'Find media by its file name': 'ស្វែងរកមេឌៀតាមឈ្មោះឯកសារ',
+    'Use the Background name filter to narrow a busy media folder.':
+        'ប្រើតម្រងឈ្មោះក្នុងផ្ទាំងផ្ទៃខាងក្រោយ ដើម្បីបង្រួមបញ្ជីមេឌៀ។',
+    'Sort a media folder before the service': 'តម្រៀបថតមេឌៀមុនការថ្វាយបង្គំ',
+    'Open Background Sort to choose the order of media files.':
+        'បើក តម្រៀប ក្នុងផ្ទាំងផ្ទៃខាងក្រោយ ដើម្បីជ្រើសរើសលំដាប់ឯកសារមេឌៀ។',
+    'Check which media folder is open': 'ពិនិត្យថាតើថតមេឌៀណាកំពុងបើក',
+    'Reveal the Background path editor when an expected file is missing.':
+        'បង្ហាញប្រអប់កែផ្លូវក្នុងផ្ទាំងផ្ទៃខាងក្រោយ ពេលរកឯកសារដែលចង់បានមិនឃើញ។',
+    'Find a service flow by name': 'ស្វែងរកលំដាប់ថ្វាយបង្គំតាមឈ្មោះ',
+    'Filter the Presenting Flow List to find the right service order.':
+        'ត្រងបញ្ជីលំដាប់បង្ហាញ ដើម្បីរកលំដាប់ថ្វាយបង្គំដែលត្រឹមត្រូវ។',
+    'Organize the list of service flows': 'រៀបចំបញ្ជីលំដាប់ថ្វាយបង្គំ',
+    'Use Presenting Flow List Sort without rearranging the cues inside a flow.':
+        'តម្រៀបបញ្ជីលំដាប់បង្ហាញ ដោយមិនប្ដូរលំដាប់ជំហាននៅក្នុងវា។',
+    'Prepare several audience messages': 'រៀបចំសារជាច្រើនសម្រាប់អ្នកចូលរួម',
+    'Use Messages for separate notices with their own Show and Hide controls.':
+        'ប្រើ សារ សម្រាប់សេចក្ដីជូនដំណឹងដាច់ដោយឡែក ដែលមានប៊ូតុងបង្ហាញ និងលាក់រៀងៗខ្លួន។',
+    'Rotate notices before the service':
+        'ប្ដូរសេចក្ដីជូនដំណឹងជាបន្តបន្ទាប់មុនការថ្វាយបង្គំ',
+    'Use Messages Rotate and its seconds setting for a repeating notice board.':
+        'ប្រើការប្ដូរសារវេនគ្នា និងការកំណត់វិនាទី ដើម្បីបង្ហាញសេចក្ដីជូនដំណឹងម្ដងហើយម្ដងទៀត។',
+    'Give audience messages room to breathe':
+        'បន្ថែមចន្លោះឱ្យសារសម្រាប់អ្នកចូលរួមងាយអាន',
+    'Use Messages Properties and Effects for padding, line height and text contrast.':
+        'ប្រើ លក្ខណសម្បត្តិ និងបែបផែនរបស់សារ ដើម្បីកំណត់ចន្លោះក្នុងប្រអប់ កម្ពស់បន្ទាត់ និងភាពច្បាស់នៃអក្សរ។',
+    'Find border and shadow effects for an overlay':
+        'រកបែបផែនស៊ុម និងស្រមោលសម្រាប់ធាតុជាន់ពីលើ',
+    'Open Quick Text, then explore the Effects section inside Properties.':
+        'បើក អត្ថបទរហ័ស រួចស្វែងយល់ពីផ្នែកបែបផែនក្នុងលក្ខណសម្បត្តិ។',
+    'Prepare an image overlay slide show':
+        'រៀបចំការបង្ហាញរូបភាពជាបន្តបន្ទាប់ជាន់ពីលើ',
+    'Find Image Show slide show controls and timing options before starting playback.':
+        'រកឧបករណ៍បញ្ជា និងការកំណត់ពេលក្នុងផ្ទាំងបង្ហាញរូបភាព មុនចាប់ផ្ដើមចាក់។',
+    'Background > Videos': 'Background > វីដេអូ',
+    'Background > Images': 'Background > រូបភាព',
+    'Background > Filter by name': 'Background > ត្រងតាមឈ្មោះ',
+    'Background > Sort': 'Background > តម្រៀប',
+    'Background > Show path editor': 'Background > Show path editor',
+    'Presenting Flow List > Sort': 'Presenting Flow List > តម្រៀប',
+    'Presenting Flow List > Filter by name':
+        'Presenting Flow List > ត្រងតាមឈ្មោះ',
+    'Messages > Properties': 'Messages > លក្ខណសម្បត្តិ',
+    'Quick Text > Properties': 'Quick Text > លក្ខណសម្បត្តិ',
+    'Image Show > Properties': 'Image Show > លក្ខណសម្បត្តិ',
     'Are you sure you want to clear all settings?':
         'តើអ្នកពិតជាចង់លុបការកំណត់ទាំងអស់ឬ?',
     'Reveal Original': 'បង្ហាញកន្លែងដើម',
@@ -422,6 +484,9 @@ const dictionary = {
     New: 'ថ្មី',
     'Slides are copied': 'ស្លាយត្រូវបានចម្លង',
     Copied: 'បានចម្លង',
+    'Copy failed': 'ការចម្លងបានបរាជ័យ',
+    'Could not copy to the clipboard. Try again.':
+        'មិនអាចចម្លងទៅក្ដារតម្បៀតខ្ទាស់បានទេ។ សូមព្យាយាមម្ដងទៀត។',
     'Canvas item copied': 'ធាតុផ្ទាំងបានចម្លង',
     'Enable Background Audio Handlers':
         'បើក/បិទ អ្នកគ្រប់គ្រងសំលេងផ្ទៃខាងក្រោយ',
@@ -661,6 +726,18 @@ const dictionary = {
     'Copy Text': 'ចម្លងអក្សរ',
     'Copy Title': 'ចម្លងចំណងជើង',
     'Copy Verse Full Key': 'ចម្លងកូនសោរពេញខគម្ពីរ',
+    'Generate Slides': 'បង្កើតស្លាយ',
+    'Leave empty for Auto. Text shrinks to fit.':
+        'ទុកទទេសម្រាប់ទំហំស្វ័យប្រវត្តិ។ អក្សរនឹងរួមតូចដើម្បីឱ្យសមនឹងស្លាយ។',
+    'The next verse appears quietly at the bottom right':
+        'ខបន្ទាប់បង្ហាញដោយស្រាលនៅជ្រុងខាងក្រោមស្តាំ',
+    'Choose Bible versions to include on each slide':
+        'ជ្រើសរើសកំណែព្រះគម្ពីរដែលត្រូវដាក់ក្នុងស្លាយនីមួយៗ',
+    'A title slide, then one verse per slide with all selected Bible versions':
+        'ស្លាយចំណងជើង បន្ទាប់មកមួយខក្នុងមួយស្លាយជាមួយកំណែព្រះគម្ពីរដែលបានជ្រើសរើសទាំងអស់',
+    'Bible passage is unavailable in': 'មិនមានខគម្ពីរនេះក្នុង',
+    'Unable to generate slides from this Bible item':
+        'មិនអាចបង្កើតស្លាយពីខគម្ពីរនេះបានទេ',
     Copy: 'ចម្លង',
     Countdown: 'រាប់ថយក្រោយ',
     'Create Anthropic api key': 'បង្កើត Anthropic api key',
@@ -851,6 +928,18 @@ const dictionary = {
     'Bible Reader': 'អានព្រះគម្ពីរ',
     'Add Bible Item': 'បន្ថែមខព្រះគម្ពីរ',
     'Font Size': 'ទំហំតួអក្សរ',
+    'Bulk Font': 'ពុម្ពអក្សរសម្រាប់ធាតុច្រើន',
+    'Apply to text, Bible and HTML items.':
+        'អនុវត្តលើធាតុអត្ថបទ ព្រះគម្ពីរ និង HTML។',
+    'Apply to': 'អនុវត្តលើ',
+    'All Slides': 'ស្លាយទាំងអស់',
+    'Choose slides and items': 'ជ្រើសរើសស្លាយ និងធាតុ',
+    'Apply Font Size': 'អនុវត្តទំហំតួអក្សរ',
+    'Apply Font Family': 'អនុវត្តពុម្ពអក្សរ',
+    'Include locked items': 'រួមបញ្ចូលធាតុដែលបានចាក់សោ',
+    'Failed to apply font changes': 'មិនអាចអនុវត្តការផ្លាស់ប្តូរពុម្ពអក្សរ',
+    'No items needed updating': 'គ្មានធាតុត្រូវការកែប្រែ',
+    'Updated items:': 'ធាតុដែលបានកែប្រែ៖',
     'Keep Open': 'កុំបិទ',
     'Should New Lines': 'គួរតែបង្កើតបន្ទាត់ថ្មី',
     'Use Model New Lines': 'ប្រើបន្ទាត់ថ្មីគំរូ',
@@ -1925,6 +2014,9 @@ const dictionary = {
     'Fit the selected document to width': 'ដាក់ឯកសារដែលបានជ្រើសឱ្យពេញទទឹង',
     'Toggle full-width document previews without changing the screen.':
         'ប្តូរទិដ្ឋភាពឯកសារពេញទទឹង ដោយមិនប្តូរអេក្រង់អ្នកទស្សនា។',
+    'Write a note on a document or slide': 'សរសេរកំណត់ត្រាលើឯកសារ ឬស្លាយ',
+    'Open the Note panel under the slide previews; it starts closed.':
+        'បើកផ្ទាំងកំណត់ត្រានៅក្រោមរូបមើលជាមុនស្លាយ វាបិទតាំងពីដំបូង។',
     'Present a slide from a document': 'បង្ហាញស្លាយពីឯកសារ',
     'Select a document, then send one of its slide cards to the audience.':
         'ជ្រើសឯកសារ បន្ទាប់មកផ្ញើកាតស្លាយមួយរបស់វាទៅអ្នកទស្សនា។',

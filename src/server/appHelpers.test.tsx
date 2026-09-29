@@ -386,15 +386,19 @@ describe('appHelpers', () => {
                 true,
             ),
         ).resolves.toBeUndefined();
-        expect(module.copyToClipboard('lyrics')).toBe(true);
+        appProviderMock.messageUtils.listenOnceForData.mockImplementationOnce(
+            (_channel, callback) => callback({}, true),
+        );
+        await expect(module.copyToClipboard('lyrics')).resolves.toBe(true);
 
         expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
             'main:app:reveal-path',
             '/docs',
         );
-        expect(
-            appProviderMock.systemUtils.copyToClipboard,
-        ).toHaveBeenCalledWith('lyrics');
+        expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
+            'main:app:write-clipboard-text',
+            expect.objectContaining({ text: 'lyrics' }),
+        );
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Copy',
             'Text has been copied to clip',
@@ -780,11 +784,9 @@ describe('appHelpers', () => {
             ),
         };
         const readMock = vi.fn(async () => [imageItem, textItem]);
-        const readTextMock = vi.fn(async () => 'copied text');
         vi.stubGlobal('navigator', {
             clipboard: {
                 read: readMock,
-                readText: readTextMock,
             },
         });
 
@@ -795,6 +797,9 @@ describe('appHelpers', () => {
             blobs.push(blob);
         }
         expect(blobs).toEqual([imageBlob]);
+        appProviderMock.messageUtils.listenOnceForData.mockImplementationOnce(
+            (_channel, callback) => callback({}, 'copied text'),
+        );
         await expect(module.readTextFromClipboard()).resolves.toBe(
             'copied text',
         );
@@ -802,9 +807,10 @@ describe('appHelpers', () => {
         readMock.mockRejectedValueOnce(new Error('no access'));
         await expect(module.checkIsImagesInClipboard()).resolves.toBe(false);
 
-        readTextMock.mockRejectedValueOnce(new Error('blocked'));
+        appProviderMock.messageUtils.listenOnceForData.mockImplementationOnce(
+            (_channel, callback) => callback({}, new Error('blocked')),
+        );
         await expect(module.readTextFromClipboard()).resolves.toBeNull();
-        expect(handleErrorMock).toHaveBeenCalledWith(expect.any(Error));
     });
 
     test('formats colors, printing, times, and window-on-top hook state', async () => {

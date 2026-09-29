@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-09-27",
+    "updated": "2026-09-28",
     "sections": [
         {
             "id": "orientation",
@@ -149,6 +149,23 @@
                         "related": [
                             "W-31"
                         ]
+                    }
+                },
+                {
+                    "id": "presenter-practice-library",
+                    "text": "Where can I practise Presenter tasks with guided demos?",
+                    "kind": "howto",
+                    "keywords": [
+                        "all tips",
+                        "lessons",
+                        "learn",
+                        "training",
+                        "practice"
+                    ],
+                    "resources": {
+                        "recipe": "W-46",
+                        "menu": "Help → All tips",
+                        "guide": true
                     }
                 }
             ]
@@ -649,7 +666,33 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "find": "Note"
+                        "related": ["W-31"],
+                        "find": "Note",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "open-note-panel",
+                    "text": "How do I open the Note panel under the slides?",
+                    "kind": "howto",
+                    "keywords": [
+                        "note",
+                        "note panel",
+                        "document note",
+                        "slide note",
+                        "closed",
+                        "collapsed",
+                        "green strip",
+                        "missing",
+                        "gone",
+                        "disappeared"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "related": ["W-31"],
+                        "find": "Note",
+                        "menu": "View → Widgets → Note",
+                        "guide": true
                     }
                 },
                 {
@@ -954,6 +997,28 @@
                         "guide": true
                     },
                     "starterRank": 1
+                },
+                {
+                    "id": "generate-bible-slides",
+                    "text": "How do I generate Bible slides with multiple versions and an upcoming verse preview?",
+                    "kind": "howto",
+                    "keywords": [
+                        "generate slides",
+                        "bible slides",
+                        "multiple translations",
+                        "English and Khmer",
+                        "next verse",
+                        "upcoming verse",
+                        "Bible slide font size",
+                        "Bible slide light theme",
+                        "Bible slide dark theme",
+                        "Bible font"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "find": "Generate Slides",
+                        "guide": true
+                    }
                 },
                 {
                     "id": "present-verse-for-me",
@@ -1793,6 +1858,26 @@
                     "resources": {
                         "recipe": "W-09",
                         "find": "Text Shadow",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "messages-practice",
+                    "text": "How can I learn to prepare several notices in Messages?",
+                    "kind": "howto",
+                    "keywords": [
+                        "announcements",
+                        "rotate",
+                        "spacing",
+                        "notice board",
+                        "practice"
+                    ],
+                    "resources": {
+                        "recipe": "W-46",
+                        "related": [
+                            "W-09"
+                        ],
+                        "menu": "Help → All tips",
                         "guide": true
                     }
                 }

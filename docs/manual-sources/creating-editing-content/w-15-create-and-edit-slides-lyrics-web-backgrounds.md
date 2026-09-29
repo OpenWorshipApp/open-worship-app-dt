@@ -2,10 +2,10 @@
 id: W-15
 title: "Create and edit slides / lyrics / web backgrounds"
 section: "Creating & editing content"
-verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-45, ED-46, ED-47, ED-48, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124]
-screenshots: 5
+verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124]
+screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-27"
+workflowsVersion: "2026-09-28"
 ---
 # W-15 — Create and edit slides / lyrics / web backgrounds
 
@@ -63,7 +63,28 @@ in the same documents folder. 📸
    blur modest on an old machine: a big soft shadow is the one setting here that
    costs the computer real work. **[en:tran:No Shadow]** takes it off again.
 
-8. Save with **Ctrl+S**.
+8. **Apply a font setting to several items.** Under **[en:tran:Properties]**, expand
+   **[en:tran:Bulk Font]**. Leave **[en:tran:Apply to]** on **[en:tran:All Slides]**
+   for the whole document, or pick **[en:tran:Choose slides and items]**. Tick a
+   slide to select its text items; expand its **[en:tran:Canvas Items]** list to
+   tick individual items. You can combine items from several slides. A partially
+   selected slide shows a dash in its checkbox. Text, Bible and HTML items are
+   included; media items have no font setting. Locked items stay unchanged unless
+   you tick **[en:tran:Include locked items]**. Enter a positive **[en:tran:Font Size]**
+   in pixels and press **[en:tran:Apply Font Size]**, or choose a
+   **[en:tran:Font Family]** and press **[en:tran:Apply Font Family]**. Each button
+   applies only that property, leaving the other styles and positions intact.
+   The result reports how many items changed. Each application is one
+   **[en:tran:Undo]** step; **[en:tran:Redo]** reapplies it. 📸
+9. **Type an exact color.** Select a box, then click the hex value beside
+   **[en:tran:Background Color]** or under **[en:tran:Text Properties] → [en:tran:Color]**.
+   Type or paste a hex color, then press **Enter** or click away to apply it.
+   Three-, four-, six- and eight-digit hex values work, with or without `#`;
+   eight digits include opacity, for example `#2468AC80`. **Escape** cancels the
+   unfinished edit. Invalid or incomplete values return to the current color
+   without changing the slide. The arrow still opens the swatches and opacity
+   slider. **[en:tran:Undo]** / **[en:tran:Redo]** restore and reapply changes. 📸
+10. Save with **Ctrl+S**.
 
 **Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
@@ -74,7 +95,7 @@ enter the URL and title, save, and the new item appears in the Web tab.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-43` · `PM-33` · `PM-124`
+`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-21` · `ED-25` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `ED-52` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-43` · `PM-33` · `PM-124`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-27).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-28).
 :::

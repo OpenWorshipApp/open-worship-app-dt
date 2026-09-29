@@ -11,6 +11,10 @@ import CanvasItemYouTube from './CanvasItemYouTube';
 import CanvasItemWebsite from './CanvasItemWebsite';
 import CanvasItemCamera from './CanvasItemCamera';
 import type Slide from '../../app-document-list/Slide';
+import {
+    readTextFromClipboard,
+    writeTextToClipboard,
+} from '../../server/clipboardHelpers';
 
 export default class Canvas {
     slide: Slide;
@@ -92,21 +96,12 @@ export default class Canvas {
     }
 
     static async getCopiedCanvasItems() {
-        const clipboardItems = await navigator.clipboard.read();
+        const text = await readTextFromClipboard();
         const copiedCanvasItems: CanvasItem<any>[] = [];
-        const textPlainType = 'text/plain';
-        for (const clipboardItem of clipboardItems) {
-            if (clipboardItem.types.includes(textPlainType)) {
-                const blob = await clipboardItem.getType(textPlainType);
-                const text = await blob.text();
-                const texts = text.split('\n');
-                for (const text of texts) {
-                    const copiedCanvasItem =
-                        this.clipboardDeserializeCanvasItem(text);
-                    if (copiedCanvasItem !== null) {
-                        copiedCanvasItems.push(copiedCanvasItem);
-                    }
-                }
+        for (const line of text?.split('\n') ?? []) {
+            const copiedCanvasItem = this.clipboardDeserializeCanvasItem(line);
+            if (copiedCanvasItem !== null) {
+                copiedCanvasItems.push(copiedCanvasItem);
             }
         }
         return copiedCanvasItems;
@@ -118,6 +113,6 @@ export default class Canvas {
                 return item.clipboardSerialize();
             })
             .join('\n');
-        navigator.clipboard.writeText(data);
+        return writeTextToClipboard(data);
     }
 }

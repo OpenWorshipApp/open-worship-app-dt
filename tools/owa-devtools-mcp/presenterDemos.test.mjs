@@ -7,7 +7,7 @@ import {
 } from './presenterDemos.mjs';
 
 describe('Presenter demos', () => {
-  it('offers 74 Presenter lessons with stable unique ids', () => {
+  it('offers 89 Presenter lessons with stable unique ids', () => {
     expect(PRESENTER_DEMO_IDS).toEqual([
       'presenter-bible-lookup',
       'presenter-document-list',
@@ -46,6 +46,7 @@ describe('Presenter demos', () => {
       'presenter-pin-document',
       'presenter-thumbnail-size',
       'presenter-preview-width',
+      'presenter-note-panel',
       'presenter-present-slide',
       'presenter-auto-play',
       'presenter-present-lyrics',
@@ -76,6 +77,20 @@ describe('Presenter demos', () => {
       'presenter-menu-tools',
       'presenter-menu-window',
       'presenter-menu-help',
+      'presenter-lookup-reference',
+      'presenter-lookup-keep-open',
+      'presenter-lookup-history',
+      'presenter-lookup-study-tools',
+      'presenter-background-filter',
+      'presenter-background-sort',
+      'presenter-background-folder',
+      'presenter-flow-filter',
+      'presenter-flow-sort',
+      'presenter-foreground-messages',
+      'presenter-foreground-message-rotation',
+      'presenter-foreground-message-spacing',
+      'presenter-foreground-effects',
+      'presenter-foreground-slideshow',
       'presenter-view-reload',
       'presenter-view-relaunch',
       'presenter-view-devtools',
@@ -85,13 +100,13 @@ describe('Presenter demos', () => {
       'presenter-view-reset-widgets',
     ]);
     expect(new Set(PRESENTER_DEMO_IDS).size).toBe(PRESENTER_DEMO_LIST.length);
-    expect(PRESENTER_DEMO_LIST).toHaveLength(74);
+    expect(PRESENTER_DEMO_LIST).toHaveLength(89);
     expect(PRESENTER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(
       true,
     );
     expect(
       PRESENTER_DEMO_LIST.filter((demo) => demo.isFeatured !== false),
-    ).toHaveLength(24);
+    ).toHaveLength(25);
   });
 
   it('returns fresh steps with translated alternatives', () => {
@@ -102,6 +117,60 @@ describe('Presenter demos', () => {
     expect(first.steps[0].finds).toContain('translated:Full view');
     first.steps.shift();
     expect(second.steps).toHaveLength(1);
+  });
+
+  it('keeps library actions inside their named panel in every translation', () => {
+    for (const [id, panel] of [
+      ['presenter-background-filter', 'Background'],
+      ['presenter-background-sort', 'Background'],
+      ['presenter-background-folder', 'Background'],
+      ['presenter-flow-filter', 'Presenting Flow List'],
+      ['presenter-flow-sort', 'Presenting Flow List'],
+    ]) {
+      const demo = getPresenterDemo(id, (text) =>
+        text.replace(' > ', ' > translated:'),
+      );
+      for (const step of demo.steps.filter((one) =>
+        one.find?.includes(' > '),
+      )) {
+        expect(step.finds.every((find) => find.startsWith(`${panel} > `))).toBe(
+          true,
+        );
+        expect(step.finds.some((find) => find.includes('translated:'))).toBe(
+          true,
+        );
+        expect(step.finds).not.toContain(step.find);
+      }
+    }
+  });
+
+  it('keeps notice output, style changes and playback out of the new foreground demos', () => {
+    for (const id of [
+      'presenter-foreground-messages',
+      'presenter-foreground-message-rotation',
+      'presenter-foreground-message-spacing',
+      'presenter-foreground-effects',
+      'presenter-foreground-slideshow',
+    ]) {
+      const demo = getPresenterDemo(id);
+      const actions = demo.steps.filter((step) => step.kind !== 'look');
+      expect(actions).toHaveLength(2);
+      expect(actions[0].find).toBe('Foreground');
+      expect(['Messages', 'Quick Text', 'Image Show']).toContain(
+        actions[1].find,
+      );
+      // A bare localized "Messages" also matches "Documents" in Khmer.
+      // Both prerequisites must test the actual foreground panel instead.
+      expect(actions[0].skipIfVisible).toBe(`${actions[1].find} > Properties`);
+      expect(actions[1].skipIfVisible).toBe(actions[0].skipIfVisible);
+      for (const step of actions) {
+        expect(step.action).toBe('click');
+        expect(step.press).toBeUndefined();
+        expect(step.value).toBeUndefined();
+        expect(step.skipIfVisible).toBeTypeOf('string');
+      }
+      expect(demo.steps.at(-1).kind).toBe('look');
+    }
   });
 
   it('keeps live-screen and native-menu lessons self-guided', () => {

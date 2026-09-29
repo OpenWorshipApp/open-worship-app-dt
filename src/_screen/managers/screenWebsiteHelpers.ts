@@ -190,6 +190,72 @@ export function hydrateWebsiteFrames(frames: Element[], isPageScreen: boolean) {
     }
 }
 
+type WebCaptureSizeType = { width: number; height: number };
+
+/**
+ * The still a web page is drawn as wherever a live iframe would cost more than
+ * it is worth — a box that fills its parent and fetches ONE screenshot into
+ * itself. Shared by the web BACKGROUND and the Web Show foreground overlay,
+ * because the rule is the same for both and the reason is the same: a preview
+ * nobody presents from must not keep a page's scripts, timers and media
+ * running.
+ *
+ * `getCaptureSize` answers what the shot is taken AT, never what it is drawn
+ * at: `captureWebScreenShot` keys on `url-width-height-delay`, so every
+ * surface asking at the display bounds shares one hidden window and one cache
+ * entry. It is a callback rather than a value so a size that needs the
+ * blocking display IPC is only paid for on the preview path, and so a failure
+ * landing inside the `try` below can never surface as an unhandled rejection.
+ *
+ * Nothing is drawn on a failure: the caller's own fallback (a globe-and-url
+ * placeholder, or an empty box) is better than a broken picture.
+ */
+export function genWebScreenShotElement(
+    url: string,
+    getCaptureSize: () => WebCaptureSizeType | PromiseLike<WebCaptureSizeType>,
+) {
+    const container = document.createElement('div');
+    Object.assign(container.style, {
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        backgroundColor: 'transparent',
+    });
+    void (async () => {
+        try {
+            const { captureWebScreenShot } = await importCapturing();
+            const { width, height } = await getCaptureSize();
+            const imageData = await captureWebScreenShot(url, {
+                width,
+                height,
+                // The same delay `useWebCapturing` uses, so this lands on the
+                // cache entry the Webs panel and the slide thumbnails already
+                // populated rather than opening its own hidden window.
+                delay: 3000,
+            });
+            if (!imageData) {
+                return;
+            }
+            const image = document.createElement('img');
+            image.alt = '';
+            image.src = imageData;
+            Object.assign(image.style, {
+                width: '100%',
+                height: '100%',
+                // `cover` is what the live iframe does: it is laid out at the
+                // capture size and scaled by `Math.max` of the two ratios
+                // inside a clipped box.
+                objectFit: 'cover',
+                display: 'block',
+            });
+            container.replaceChildren(image);
+        } catch (error) {
+            handleError(error);
+        }
+    })();
+    return container;
+}
+
 /**
  * The same rule for a web BACKGROUND: live only on the projected screen, a
  * screenshot on the presenter's mini screen. A background covers the whole
@@ -216,46 +282,11 @@ export function genWebBackgroundElement(url: string, isPageScreen: boolean) {
         iframe.src = url;
         return iframe;
     }
-    const container = document.createElement('div');
-    Object.assign(container.style, {
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden',
-        backgroundColor: 'transparent',
+    return genWebScreenShotElement(url, async () => {
+        // Imported here rather than at the top so `screenHelpers` stays out of
+        // a screen window's static graph.
+        const { getDefaultScreenDisplay } = await import('./screenHelpers');
+        const { bounds } = getDefaultScreenDisplay();
+        return { width: bounds.width, height: bounds.height };
     });
-    void (async () => {
-        try {
-            // Captured at the default display bounds with the same delay
-            // `useWebCapturing` uses, so this lands on the cache entry the Webs
-            // panel and the slide thumbnails already populated rather than
-            // opening its own hidden window.
-            const [{ captureWebScreenShot }, { getDefaultScreenDisplay }] =
-                await Promise.all([
-                    importCapturing(),
-                    import('./screenHelpers'),
-                ]);
-            const screenDisplay = getDefaultScreenDisplay();
-            const imageData = await captureWebScreenShot(url, {
-                width: screenDisplay.bounds.width,
-                height: screenDisplay.bounds.height,
-                delay: 3000,
-            });
-            if (!imageData) {
-                return;
-            }
-            const image = document.createElement('img');
-            image.alt = '';
-            image.src = imageData;
-            Object.assign(image.style, {
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block',
-            });
-            container.replaceChildren(image);
-        } catch (error) {
-            handleError(error);
-        }
-    })();
-    return container;
 }

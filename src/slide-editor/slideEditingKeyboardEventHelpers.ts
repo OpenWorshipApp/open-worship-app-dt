@@ -175,8 +175,10 @@ export async function onSlideItemsKeyboardEvent(
             )
         ) {
             if (allSelectedSlides.length > 0) {
-                AppDocument.setCopiedSlides(allSelectedSlides);
-                showSimpleToast(tran('Copied'), tran('Slides are copied'));
+                consumeEvent(event);
+                if (await AppDocument.setCopiedSlides(allSelectedSlides)) {
+                    showSimpleToast(tran('Copied'), tran('Slides are copied'));
+                }
             }
             isHandled = true;
         } else if (
@@ -297,8 +299,10 @@ export async function onCanvasKeyboardEvent(
             event,
         )
     ) {
-        Canvas.setCopiedItems(selectedCanvasItems);
-        showSimpleToast(tran('Copied'), tran('Items are copied'));
+        consumeEvent(event);
+        if (await Canvas.setCopiedItems(selectedCanvasItems)) {
+            showSimpleToast(tran('Copied'), tran('Items are copied'));
+        }
         isHandled = true;
     } else if (
         checkIsKeyboardEventMatch(

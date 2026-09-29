@@ -746,6 +746,26 @@ describe('CanvasItem models', () => {
         );
         expect(legacyHtml).not.toContain('<sup');
 
+        const compact = CanvasItemBibleItem.fromJson({
+            ...bibleJson,
+            isCompactTitle: true,
+            html: '<div>old full-size heading</div>',
+        } as any).toJson() as any;
+        expect(compact.html).toContain('font-size:0.55em');
+        expect(compact.html).toContain('Genesis 1:1');
+        expect(compact.html).not.toContain('<svg');
+        expect(compact.html).not.toContain('old full-size heading');
+
+        const light = CanvasItemBibleItem.fromJson({
+            ...fromBibleItemJson,
+            isCompactTitle: true,
+            isLightTheme: true,
+        } as any).toJson() as any;
+        expect(light.html).toContain('color:#496b19');
+        expect(light.html).toContain('>1</sup>Blessed is the man');
+        expect(light.html).toContain('font-size:0.55em');
+        expect(fromBibleItemJson.html).not.toContain('color:#496b19');
+
         bibleValidateMock.mockImplementationOnce(() => {
             throw new Error('Invalid bible item');
         });

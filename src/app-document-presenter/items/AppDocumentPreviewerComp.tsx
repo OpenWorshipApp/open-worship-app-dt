@@ -63,9 +63,24 @@ function EditorComp({
                 flexSizeNamePrefix,
             )}
             isHorizontal={false}
+            // The Note pane ships CLOSED: a document or slide note is a
+            // thing few volunteers ever write, and an open pane spends a
+            // seventh of the previewer on two empty boxes on the machines
+            // this app is built for.
+            //
+            // The flag's number is what the pane HANDED its sibling when it
+            // closed, and this one never opened -- the slides' `6` is their
+            // own, so there is nothing to give back and it is `0`. Opening
+            // the pane therefore lands on 6:1, exactly the layout it had when
+            // it shipped open, and closing it again writes the usual `7` and
+            // `['second', 1]`. Reopened by the green `Note` strip under the
+            // slides, by View > Widgets > Note, or by Reset Widgets Size --
+            // the `presenter-note-panel` lesson walks that, and
+            // `previewerNoteCloseMigration` closes it once for the documents
+            // that were already remembering it open.
             flexSizeDefault={{
                 v1: ['6'],
-                v2: ['1'],
+                v2: ['1', ['second', 0]],
             }}
             dataInput={[
                 {

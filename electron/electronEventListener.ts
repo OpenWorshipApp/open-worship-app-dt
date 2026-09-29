@@ -12,6 +12,7 @@ import electron, {
 } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
+import { writeClipboardText } from './clipboardHelpers';
 import { getMcpToken, getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
 import {
     AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
@@ -568,8 +569,19 @@ export function initEventOther(appController: ElectronAppController) {
         if (typeof text !== 'string' || text.length === 0) {
             return;
         }
-        clipboard.writeText(text);
+        void writeClipboardText(text);
     });
+
+    onAsync(
+        ipcMain,
+        'main:app:write-clipboard-text',
+        (data: { text?: unknown }) => {
+            return writeClipboardText(data?.text);
+        },
+    );
+    onAsync(ipcMain, 'main:app:read-clipboard-text', () =>
+        clipboard.readText(),
+    );
 
     ipcMain.on('main:app:reveal-path', (_, filePath: string) => {
         if (typeof filePath !== 'string' || filePath.length === 0) {

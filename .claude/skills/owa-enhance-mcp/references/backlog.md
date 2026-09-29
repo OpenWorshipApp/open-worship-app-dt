@@ -8,6 +8,33 @@ Status: `open` · `doing` · `done` · `wontfix` (with a reason).
 
 ---
 
+### `MC-46` — more Presenter-only demos and tips · done 2026-09-28
+
+Added fourteen lessons to the shared Presenter catalog (74 → 88; 78 have a
+safe actionable start). They cover Bible Lookup references, Keep Open, history
+and study tools; media filters, sorting and folders; flow filters and sorting;
+Messages, notice rotation/spacing, foreground Effects and Image Show preparation.
+Titles and descriptions are translated into Khmer and French, and tips stay
+in their existing topic groups. Reader remains at 61 lessons.
+
+Library targets retain the named panel and use the exact localized label so a
+Background filter cannot press the Documents or Bible Notes filter. The Khmer
+live check caught English "Images" matching a folder-path button, and bare
+"Messages" matching part of the translated "Documents" label. Translated scoped
+targets and panel-scoped visibility checks avoid both collisions; regressions
+cover those choices. Opening steps skip an already-visible panel. Output,
+playback and style changes remain
+explanation-only: opening Properties would be safe, changing a live overlay
+would not. The existing path-editor tooltip is English even in localized UI;
+its scoped target deliberately retains that literal label.
+
+Measured through a fresh server: all fourteen lessons reached their explanatory
+steps, and screen contents were identical before and after. English, French and
+Khmer tip titles/descriptions were checked live. MCP before/after:
+53 host tools / 24 model tools / ~7,397 model schema tokens per round; no schema
+change. Policy probe: 25/25. No safety, schema cost or developer-interface
+tradeoff; the small lesson catalog grows only with text.
+
 ### `MC-44` — the redaction net missed OpenAI's own key format · done 2026-09-26
 
 Found while checking whether an OAuth-issued OpenRouter key would be scrubbed,

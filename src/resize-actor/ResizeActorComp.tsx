@@ -79,8 +79,10 @@ export default function ResizeActorComp({
             node.style.flexGrow = '';
             node.style.flex = node.dataset['fsDefault'] ?? '1';
         }
-        // `flexSizeDefault` is frozen, and it carries no disabled flag — which
-        // is what re-opens every widget that is open by default.
+        // `flexSizeDefault` is frozen, and a disabled flag is on it only
+        // where the pane ships CLOSED (the previewer's Note pane) — which is
+        // what re-opens every widget that is open by default while leaving
+        // that one the way it shipped.
         setFlexSize1(structuredClone(flexSizeDefault) as FlexSizeType);
     });
     useAppEffect(() => {

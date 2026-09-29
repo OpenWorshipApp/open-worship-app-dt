@@ -2,10 +2,10 @@
 id: W-03
 title: "Present a slide from a document"
 section: "Presenting content"
-verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, KB-05, KB-08]
+verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-149, KB-05, KB-08]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-27"
+workflowsVersion: "2026-09-28"
 ---
 # W-03 — Present a slide from a document
 
@@ -27,11 +27,17 @@ Tips:
 - The stopwatch icon in the same footer opens **auto-play**: set seconds, press play,
   and slides advance automatically; the red ✕ closes it (W-04).
 - **Pin the document so you cannot lose it by a stray click** — see W-27.
+- **Notes for yourself:** under the slide previews there is a thin green **Note**
+  strip. Click it and a **Document Note** box (one for the whole document) and a
+  **Slide Note** box (one per slide) open below the slides. They are saved for you as
+  you type and are **never sent to an audience screen**. The panel starts closed, so
+  it costs nothing until you want it; to put it away again drag the divider above it
+  down to the bottom edge, or untick **View → Widgets → Note** (W-31).
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `KB-05` · `KB-08`
+`PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-149` · `KB-05` · `KB-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-27).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-28).
 :::

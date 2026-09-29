@@ -63,6 +63,25 @@ function createSlideJson(id: number) {
 }
 
 describe('slide models', () => {
+    test('bundled Bible fonts loaded in the renderer are available to text boxes', async () => {
+        getFontFamiliesMock.mockResolvedValue([]);
+        vi.stubGlobal('document', {
+            fonts: new Set([
+                { family: '"app-Battambang"', status: 'loaded' },
+                { family: 'Failed Font', status: 'error' },
+            ]),
+        });
+        const slide = new Slide('/docs/bible.ows', {
+            ...createSlideJson(0),
+            canvasItems: ['app-Battambang', 'Missing Font', 'Failed Font'].map(
+                (fontFamily) => ({ type: 'text', fontFamily }) as any,
+            ),
+        });
+        expect(await slide.getUnavailableFontFamilies()).toEqual([
+            'Missing Font',
+            'Failed Font',
+        ]);
+    });
     beforeEach(() => {
         vi.clearAllMocks();
         vi.unstubAllGlobals();

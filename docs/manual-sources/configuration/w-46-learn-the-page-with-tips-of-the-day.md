@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [GL-25]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-27"
+workflowsVersion: "2026-09-28"
 ---
 # W-46 — Learn the page with Tips of the Day
 
@@ -23,14 +23,21 @@ control without having to search the manual.
    launch's automatic card.
 2. Click **Next tip** to move through that page's tips in order. The list wraps to
    the first tip after the last. Click **All tips** to open the numbered learning
-   list for the current page. Search by a control or task, or scan the topic badges;
+   list for the current page. Search by a control or task, or scan the topic name
+   that leads each lesson's line;
    the counter shows how many lessons match. Each lesson says what it teaches;
    choose one to return to its card and practise it at your own pace. The
-   Presenter has **74 topics**: 64 start with a safe **Do it** for a visible
+   Presenter has **89 topics**: 79 start with a safe **Do it** for a visible
    control or shortcut, while ten disruptive or native-menu lessons stay self-guided. They
    cover documents and slides, audience screens, backgrounds and media, service
    planning, app help, and every native application menu from **File** through
-   **Help**. The Reader has **61 topics**: 30 start with a safe **Do it** and
+   **Help**. _Write a note on a document or slide_ opens the previewer's **Note**
+   panel, which ships closed (W-03, W-31). Presenter lessons also cover lookup references and history, study
+   tools inside Bible Lookup, media folder filtering and sorting, finding a service
+   flow, and **[en:tran:Messages]** for separate notices, rotation and spacing.
+   Foreground lessons explain **[en:tran:Effects]** and preparing an Image Show
+   slide show; output and style changes stay in your hands.
+   The Reader has **61 topics**: 30 start with a safe **Do it** and
    31 stateful, file-dependent, native-menu, pane-visibility or audience-output lessons stay
    self-guided. They cover reference entry and
    history, reading panes and formatting, Find and cross references,
@@ -85,5 +92,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `GL-25`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-27).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-28).
 :::

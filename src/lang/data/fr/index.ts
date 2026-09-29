@@ -11,6 +11,73 @@ const numList = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 // `tranKeyCoverage.test.ts` holds this file to. Machine-translated
 // (2026-09-21); a native speaker should review the phrasing.
 const dictionary = {
+    // Presenter-only practice lessons.
+    'Type a complete reference in Bible Lookup':
+        'Saisir une référence complète dans la recherche biblique',
+    'Enter a book, chapter and verse range together, then check the preview.':
+        'Saisissez le livre, le chapitre et les versets ensemble, puis vérifiez l’aperçu.',
+    'Keep Bible Lookup open between passages':
+        'Garder la recherche biblique ouverte entre les passages',
+    'Use Keep Open when preparing several Bible passages in a row.':
+        'Utilisez Garder ouvert pour préparer plusieurs passages bibliques à la suite.',
+    'Reuse a passage from lookup history':
+        'Réutiliser un passage de l’historique de recherche',
+    'Bring back an earlier reference from the history above Bible Lookup.':
+        'Retrouvez une référence précédente dans l’historique au-dessus de la recherche biblique.',
+    'Explore study tools in Bible Lookup':
+        'Découvrir les outils d’étude de la recherche biblique',
+    'Find words, cross references and local Resources without leaving the Presenter.':
+        'Recherchez des mots, des références croisées et des ressources locales depuis le Présentateur.',
+    'Find media by its file name': 'Rechercher un média par son nom de fichier',
+    'Use the Background name filter to narrow a busy media folder.':
+        'Utilisez le filtre par nom d’Arrière-plan pour réduire la liste des médias.',
+    'Sort a media folder before the service':
+        'Trier un dossier de médias avant le culte',
+    'Open Background Sort to choose the order of media files.':
+        'Ouvrez Trier dans Arrière-plan pour choisir l’ordre des fichiers multimédias.',
+    'Check which media folder is open':
+        'Vérifier quel dossier de médias est ouvert',
+    'Reveal the Background path editor when an expected file is missing.':
+        'Affichez l’éditeur de chemin d’Arrière-plan si un fichier attendu est introuvable.',
+    'Find a service flow by name':
+        'Rechercher un déroulement de culte par son nom',
+    'Filter the Presenting Flow List to find the right service order.':
+        'Filtrez la liste des déroulements pour retrouver le bon ordre du culte.',
+    'Organize the list of service flows':
+        'Organiser la liste des déroulements de culte',
+    'Use Presenting Flow List Sort without rearranging the cues inside a flow.':
+        'Triez la liste des déroulements sans modifier l’ordre des étapes d’un déroulement.',
+    'Prepare several audience messages':
+        'Préparer plusieurs messages pour le public',
+    'Use Messages for separate notices with their own Show and Hide controls.':
+        'Utilisez Messages pour des annonces séparées avec leurs propres commandes Afficher et Masquer.',
+    'Rotate notices before the service':
+        'Faire défiler les annonces avant le culte',
+    'Use Messages Rotate and its seconds setting for a repeating notice board.':
+        'Utilisez la rotation des Messages et sa durée en secondes pour répéter les annonces.',
+    'Give audience messages room to breathe':
+        'Aérer les messages destinés au public',
+    'Use Messages Properties and Effects for padding, line height and text contrast.':
+        'Utilisez Propriétés et Effets des Messages pour les marges, l’interligne et le contraste.',
+    'Find border and shadow effects for an overlay':
+        'Trouver les effets de bordure et d’ombre d’une superposition',
+    'Open Quick Text, then explore the Effects section inside Properties.':
+        'Ouvrez Texte rapide, puis découvrez la section Effets dans Propriétés.',
+    'Prepare an image overlay slide show':
+        'Préparer un diaporama d’images en superposition',
+    'Find Image Show slide show controls and timing options before starting playback.':
+        'Repérez les commandes et la durée du diaporama dans Affichage d’images avant de le lancer.',
+    'Background > Videos': 'Background > Vidéos',
+    'Background > Images': 'Background > Images',
+    'Background > Filter by name': 'Background > Filtrer par nom',
+    'Background > Sort': 'Background > Trier',
+    'Background > Show path editor': 'Background > Show path editor',
+    'Presenting Flow List > Sort': 'Presenting Flow List > Trier',
+    'Presenting Flow List > Filter by name':
+        'Presenting Flow List > Filtrer par nom',
+    'Messages > Properties': 'Messages > Propriétés',
+    'Quick Text > Properties': 'Quick Text > Propriétés',
+    'Image Show > Properties': 'Image Show > Propriétés',
     'Are you sure you want to clear all settings?':
         'Voulez-vous vraiment effacer tous les paramètres ?',
     'Reveal Original': "Afficher l'original",
@@ -416,6 +483,9 @@ const dictionary = {
     New: 'Nouveau',
     'Slides are copied': 'Diapositives copiées',
     Copied: 'Copié',
+    'Copy failed': 'Échec de la copie',
+    'Could not copy to the clipboard. Try again.':
+        'Impossible de copier dans le presse-papiers. Réessayez.',
     'Canvas item copied': 'Élément du canevas copié',
     'Enable Background Audio Handlers':
         "Activer la gestion audio d'arrière-plan",
@@ -661,6 +731,19 @@ const dictionary = {
     'Copy Text': 'Copier le texte',
     'Copy Title': 'Copier le titre',
     'Copy Verse Full Key': 'Copier la clé complète du verset',
+    'Generate Slides': 'Générer des diapositives',
+    'Leave empty for Auto. Text shrinks to fit.':
+        'Laissez vide pour Auto. Le texte est réduit si nécessaire.',
+    'The next verse appears quietly at the bottom right':
+        'Le verset suivant apparaît discrètement en bas à droite',
+    'Choose Bible versions to include on each slide':
+        'Choisissez les versions bibliques à inclure sur chaque diapositive',
+    'A title slide, then one verse per slide with all selected Bible versions':
+        'Une diapositive de titre, puis un verset par diapositive dans toutes les versions sélectionnées',
+    'Bible passage is unavailable in':
+        'Ce passage biblique est indisponible dans',
+    'Unable to generate slides from this Bible item':
+        'Impossible de générer des diapositives à partir de ce passage biblique',
     Copy: 'Copier',
     Countdown: 'Compte à rebours',
     'Create Anthropic api key': 'Créer une clé API Anthropic',
@@ -852,6 +935,18 @@ const dictionary = {
     'Bible Reader': 'Lecteur biblique',
     'Add Bible Item': 'Ajouter un élément biblique',
     'Font Size': 'Taille de police',
+    'Bulk Font': 'Police de plusieurs éléments',
+    'Apply to text, Bible and HTML items.':
+        'Appliquer aux éléments texte, Bible et HTML.',
+    'Apply to': 'Appliquer à',
+    'All Slides': 'Toutes les diapositives',
+    'Choose slides and items': 'Choisir les diapositives et les éléments',
+    'Apply Font Size': 'Appliquer la taille de police',
+    'Apply Font Family': 'Appliquer la famille de police',
+    'Include locked items': 'Inclure les éléments verrouillés',
+    'Failed to apply font changes': 'Impossible de modifier la police',
+    'No items needed updating': 'Aucun élément à modifier',
+    'Updated items:': 'Éléments modifiés :',
     'Keep Open': 'Garder ouvert',
     'Should New Lines': 'Retours à la ligne',
     'Use Model New Lines': 'Utiliser les retours à la ligne du modèle',
@@ -1960,6 +2055,10 @@ const dictionary = {
         'Ajuster le document sélectionné à la largeur',
     'Toggle full-width document previews without changing the screen.':
         "Basculez les aperçus en pleine largeur sans modifier l'écran du public.",
+    'Write a note on a document or slide':
+        'Écrire une note sur un document ou une diapositive',
+    'Open the Note panel under the slide previews; it starts closed.':
+        'Ouvrez le panneau Note sous les aperçus de diapositives ; il est fermé au départ.',
     'Present a slide from a document':
         'Présenter une diapositive depuis un document',
     'Select a document, then send one of its slide cards to the audience.':

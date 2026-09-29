@@ -591,6 +591,41 @@ class ScreenVaryAppDocumentManager
         });
     }
 
+    /**
+     * What each screen is showing RIGHT NOW, asked of the live managers.
+     *
+     * `getDataList` above answers from the PERSISTED map, which is the same
+     * answer one write behind: that save goes through `unlocking`, so with a
+     * second screen or a sync group holding the lock it can be ~100ms late.
+     * Stepping a slide has to know where the run actually is — reading the
+     * lagging copy made a quick second arrow press recompute "next" from the
+     * slide that had already left the screen, and the projector looked stuck.
+     *
+     * Falls back to the persisted map when there is no live manager at all: a
+     * window that draws no screen previews has nothing to ask.
+     */
+    static getPresentingDataList(filePath?: string, varySlideId?: number) {
+        const instanceList = this.getAllInstances();
+        if (instanceList.length === 0) {
+            return this.getDataList(filePath, varySlideId);
+        }
+        const dataList: [string, VarySlideScreenDataType][] = [];
+        for (const instance of instanceList) {
+            const data = instance.varySlideData;
+            if (data === null) {
+                continue;
+            }
+            if (filePath !== undefined && data.filePath !== filePath) {
+                continue;
+            }
+            if (varySlideId !== undefined && data.itemJson.id !== varySlideId) {
+                continue;
+            }
+            dataList.push([instance.key, data]);
+        }
+        return dataList;
+    }
+
     applySlideSrcWithSyncGroup(
         varySlideScreenData: VarySlideScreenDataType | null,
     ) {

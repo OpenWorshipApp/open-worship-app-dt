@@ -7,7 +7,11 @@ import AppDocument from '../../app-document-list/AppDocument';
 import { useZoomingRegistering } from '../../others/AppRangeComp';
 import { defaultRangeSize } from './AppDocumentPreviewerFooterComp';
 import SlidesMenuComp from './SlidesMenuComp';
-import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
+import {
+    getContainerDiv,
+    SLIDE_ITEMS_CONTAINER_CLASS_NAME,
+} from './varyAppDocumentHelpers';
+import { checkIsTypingTarget } from '../../presenting-control/presentingControlShortcutHelpers';
 import {
     SelectedEditingSlideContext,
     toKeyByFilePath,
@@ -97,6 +101,28 @@ export default function VarySlidesPreviewerComp() {
     }, []);
 
     const varyAppDocument = useVaryAppDocumentContext();
+    // Picking a document is the operator saying what they are presenting from
+    // next, and the arrows have to answer straight away. The click that picked
+    // it left DOM focus on the Documents list — a tab stop of its own — and
+    // slide navigation is gated on THIS panel holding focus, so the first press
+    // of Right did nothing at all, in silence, with a projector waiting.
+    //
+    // Only the main panel takes it (a floating preview must not pull the
+    // keyboard off the panel behind it), never out of a field being typed into
+    // (a half-typed bible reference keeps its caret), and never when the panel
+    // already has it.
+    useAppEffect(() => {
+        const element = containerRef.current;
+        if (
+            element === null ||
+            element !== getContainerDiv() ||
+            element.contains(document.activeElement) ||
+            checkIsTypingTarget(null)
+        ) {
+            return;
+        }
+        element.focus({ preventScroll: true });
+    }, [varyAppDocument.filePath]);
     const onSlideItemsKeyboardEvent = useSlideItemsControlEventContext();
     const thumbnailScaleSettingOptions = useThumbnailScaleSettingOptions();
     const [thumbSizeScale, setThumbnailSizeScale] =

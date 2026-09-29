@@ -29,6 +29,9 @@ export type CanvasItemBiblePropsType = {
         bibleKeys: string[];
         bibleItemTarget: BibleTargetType;
         bibleRenderingList: BibleRenderedType[];
+        // Generated reading slides keep the reference subordinate to the verse.
+        isCompactTitle?: boolean;
+        isLightTheme?: boolean;
     };
 
 // A verse block is much longer than a title, so it starts smaller than a text
@@ -73,14 +76,17 @@ function escapeHtml(text: string) {
         .replaceAll('>', '&gt;');
 }
 
-function genVersesHtml({ text, verses }: BibleRenderedType) {
+function genVersesHtml(
+    { text, verses }: BibleRenderedType,
+    isLightTheme = false,
+) {
     if (verses === undefined || verses.length === 0) {
         return escapeHtml(text);
     }
     return verses
         .map(({ num, text }) => {
             return (
-                `<sup style="${VERSE_NUMBER_STYLE}">${escapeHtml(num)}</sup>` +
+                `<sup style="${VERSE_NUMBER_STYLE}${isLightTheme ? ';color:#496b19' : ''}">${escapeHtml(num)}</sup>` +
                 escapeHtml(text)
             );
         })
@@ -154,16 +160,20 @@ export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBibleProps
         });
     }
     // `bibleRenderingList` stays the source of truth; `html` is what gets shown.
-    static genHtml(bibleRenderingList: BibleRenderedType[]) {
+    static genHtml(
+        bibleRenderingList: BibleRenderedType[],
+        isCompactTitle = false,
+        isLightTheme = false,
+    ) {
         return bibleRenderingList
             .map((bibleRendered) => {
                 const title = this.formatBibleVerseTitle(bibleRendered.title);
                 return (
                     '<div style="width:100%">' +
-                    `<div style="${TITLE_STYLE}">${BOOK_ICON_SVG}` +
+                    `<div style="${TITLE_STYLE}${isCompactTitle ? ';font-size:0.55em;opacity:0.65;margin-bottom:0.25em' : ''}">${isCompactTitle ? '' : BOOK_ICON_SVG}` +
                     `<div>${title}</div>` +
                     '</div>' +
-                    `<div style="padding: 0.3em;">${genVersesHtml(bibleRendered)}</div>` +
+                    `<div style="padding: ${isCompactTitle ? '0.05em' : '0.3em'};">${genVersesHtml(bibleRendered, isLightTheme)}</div>` +
                     '</div>'
                 );
             })
@@ -176,7 +186,11 @@ export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBibleProps
             // so items saved by an older renderer pick up the current markup.
             const newJson = {
                 ...json,
-                html: CanvasItemBibleItem.genHtml(json.bibleRenderingList),
+                html: CanvasItemBibleItem.genHtml(
+                    json.bibleRenderingList,
+                    json.isCompactTitle === true,
+                    json.isLightTheme === true,
+                ),
             };
             this.validate(newJson);
             return new CanvasItemBibleItem(newJson);

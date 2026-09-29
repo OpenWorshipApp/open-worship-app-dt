@@ -2,10 +2,10 @@
 id: W-06
 title: "Look up and present a Bible verse"
 section: "Presenting content"
-verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, CB-61]
-screenshots: 3
+verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, CB-61, CM-101]
+screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-27"
+workflowsVersion: "2026-09-28"
 ---
 # W-06 — Look up and present a Bible verse
 
@@ -31,10 +31,33 @@ workflowsVersion: "2026-09-27"
    the answer says what is on the screen now; it is not saved to the **Bibles**
    list. 📸
 
+8. To make an editable slide document from a saved passage, open that item's
+   **⋮** menu in the Presenter's **Bibles** list and choose
+   **[en:tran:Generate Slides]**. In the floating panel, select any additional
+   Bible versions to include. The original version stays selected. Enter an optional
+   **[en:tran:Font Size]** in pixels, or leave it empty for **[en:tran:Auto]**.
+   Choose **[en:tran:Dark]** or **[en:tran:Light]** under **[en:tran:Theme]** to set
+   the generated slides' background and text colors. Both themes retain the
+   translucent, inset background. 📸
+9. Click **[en:tran:Generate Slides]** in the panel. The new document contains a
+   title slide with the passage and Bible keys, then one slide per verse, with
+   all selected versions together. Each version uses its own configured font.
+   Compact margins leave room for the text; long verses resize to fit, with a
+   consistent reading size throughout the passage, reducing your chosen size only
+   when needed to fit. The upcoming verse appears
+   at the bottom right in muted text at 85% of the current verse's font size.
+   The last slide has no upcoming verse. 📸
+10. Find the file in **Documents**. Its name uses the English reference and all
+    selected keys, for example `Genesis 1 3-5 KJV-ពគប.ows` (the colon becomes a
+    space for the filename). Generating again adds a numbered suffix to preserve
+    the earlier file. **[en:tran:Cancel]** closes the panel without creating a
+    file. If a selected version lacks a verse, generation reports it without
+    saving a partial passage.
+
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `CB-61`
+`NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `CB-61` · `CM-101`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-27).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-28).
 :::

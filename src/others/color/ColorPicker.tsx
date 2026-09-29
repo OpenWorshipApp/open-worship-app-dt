@@ -16,7 +16,10 @@ import RenderColorsComp from './RenderColorsComp';
 import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { freezeObject } from '../../helper/helpers';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
-import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import {
+    createMouseEvent,
+    showAppContextMenu,
+} from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { copyToClipboard } from '../../server/appHelpers';
 import { tran } from '../../lang/langHelpers';
@@ -52,6 +55,66 @@ function setOpacity(color: string, opacity: number) {
     return newColor.join('');
 }
 
+function ColorValueInputComp({
+    color,
+    label,
+    onColorChange,
+}: Readonly<{
+    color: AppColorType | null | undefined;
+    label: string;
+    onColorChange: (color: string, event: MouseEvent) => void;
+}>) {
+    const [draft, setDraft] = useState(color ?? '');
+    useAppEffect(() => {
+        setDraft(color ?? '');
+    }, [color]);
+    const applyDraft = (input: HTMLInputElement) => {
+        let hex = draft.trim().replace(/^#/, '');
+        if (!/^(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i.test(hex)) {
+            setDraft(color ?? '');
+            return;
+        }
+        if (hex.length < 5) {
+            hex = hex.replace(/./g, '$&$&');
+        }
+        const nextColor = `#${hex.toUpperCase()}`;
+        setDraft(nextColor);
+        if (nextColor !== color?.toUpperCase()) {
+            const bounds = input.getBoundingClientRect();
+            onColorChange(nextColor, createMouseEvent(bounds.x, bounds.y));
+        }
+    };
+    return (
+        <input
+            type="text"
+            className="color-picker-value px-1 text-color-preview"
+            aria-label={label}
+            title={label}
+            value={draft}
+            autoComplete="off"
+            spellCheck={false}
+            style={{
+                backgroundColor: color ?? 'transparent',
+                ...genPreviewTextStyle(color),
+            }}
+            onFocus={(event) => event.currentTarget.select()}
+            onChange={(event) => setDraft(event.currentTarget.value)}
+            onBlur={(event) => applyDraft(event.currentTarget)}
+            onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === 'Escape') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (event.key === 'Escape') {
+                        setDraft(color ?? '');
+                    } else {
+                        applyDraft(event.currentTarget);
+                    }
+                }
+            }}
+        />
+    );
+}
+
 export default function ColorPickerComp({
     defaultColor,
     color,
@@ -59,6 +122,7 @@ export default function ColorPickerComp({
     onNoColor,
     isCollapsable = false,
     isNoImmediate = false,
+    colorInputLabel,
 }: Readonly<{
     defaultColor: AppColorType;
     color: AppColorType | null | undefined;
@@ -66,6 +130,7 @@ export default function ColorPickerComp({
     onNoColor?: (color: AppColorType, event: MouseEvent) => void;
     isCollapsable?: boolean;
     isNoImmediate?: boolean;
+    colorInputLabel?: string;
 }>) {
     const [isOpened, setIsOpened] = useState(false);
     const [localColor, setLocalColor] = useState(color);
@@ -145,29 +210,35 @@ export default function ColorPickerComp({
                 className="app-flex-item color-picker"
                 onContextMenu={handleContextMenuOpening}
             >
-                {/* A real button, so the picker can be reached and opened
-                    from the keyboard and has a name -- it was a clickable
-                    div. Beside the `⋮`, not around it: a button may not hold
-                    another. */}
                 <button
                     type="button"
                     className="color-picker-toggle app-caught-hover-pointer"
                     aria-expanded={false}
                     aria-label={`${tran('Choose Color')}: ${color ?? ''}`}
+                    style={colorInputLabel ? { flex: '0 0 auto' } : undefined}
                     onClick={handleOpen}
                 >
                     <i className="bi bi-chevron-right" />
-                    <span
-                        className="h-100 px-1 app-ellipsis text-color-preview"
-                        style={{
-                            backgroundColor: color ?? 'transparent',
-                            width: 'calc(100% - 10px)',
-                            ...genPreviewTextStyle(color),
-                        }}
-                    >
-                        {color}
-                    </span>
+                    {!colorInputLabel && (
+                        <span
+                            className="h-100 px-1 app-ellipsis text-color-preview"
+                            style={{
+                                backgroundColor: color ?? 'transparent',
+                                width: 'calc(100% - 10px)',
+                                ...genPreviewTextStyle(color),
+                            }}
+                        >
+                            {color}
+                        </span>
+                    )}
                 </button>
+                {colorInputLabel && (
+                    <ColorValueInputComp
+                        color={localColor}
+                        label={colorInputLabel}
+                        onColorChange={applyNewColor}
+                    />
+                )}
                 <ContextMenuDotsButtonComp
                     onOpening={handleContextMenuOpening}
                 />

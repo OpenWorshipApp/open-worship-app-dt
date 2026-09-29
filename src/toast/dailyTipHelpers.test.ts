@@ -57,7 +57,7 @@ describe('daily tip helpers', () => {
         expect(getDailyTips('presenter').map(({ demoId }) => demoId)).toEqual(
             PRESENTER_DEMO_IDS,
         );
-        expect(getDailyTips('presenter')).toHaveLength(74);
+        expect(getDailyTips('presenter')).toHaveLength(89);
         expect(getDailyTips('reader').map(({ demoId }) => demoId)).toEqual(
             READER_DEMO_IDS,
         );
@@ -146,12 +146,31 @@ describe('daily tip helpers', () => {
         const foreground = getDailyTips('presenter').filter(({ demoId }) => {
             return demoId.startsWith('presenter-foreground-');
         });
-        expect(foreground).toHaveLength(15);
+        expect(foreground).toHaveLength(20);
         expect(
             foreground.every(({ category }) => {
                 return category === 'Foreground overlays';
             }),
         ).toBe(true);
+    });
+
+    it('groups new Presenter lessons under the panel they teach', () => {
+        const tips = getDailyTips('presenter');
+        for (const [id, category] of [
+            ['presenter-background-filter', 'Background and media'],
+            ['presenter-background-sort', 'Background and media'],
+            ['presenter-background-folder', 'Background and media'],
+            ['presenter-flow-filter', 'Service planning'],
+            ['presenter-flow-sort', 'Service planning'],
+            ['presenter-lookup-history', 'Getting started'],
+        ]) {
+            expect(tips.find((tip) => tip.id === id)?.category, id).toBe(
+                category,
+            );
+            expect(getDailyTips('reader').some((tip) => tip.id === id)).toBe(
+                false,
+            );
+        }
     });
 
     it('keeps disruptive View commands in All tips, not the daily rotation', () => {

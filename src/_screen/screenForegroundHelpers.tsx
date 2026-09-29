@@ -26,6 +26,8 @@ import FileSource from '../helper/FileSource';
 import RenderBackgroundWebIframeComp from '../background/RenderBackgroundWebIframeComp';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { playMediaElement, releaseMediaElement } from '../helper/mediaHelpers';
+import appProvider from '../server/appProvider';
+import { genWebScreenShotElement } from './managers/screenWebsiteHelpers';
 
 const MARQUEE_SLIDE_MILLISECOND = 500;
 
@@ -470,24 +472,26 @@ export function genHtmlForegroundTime(
     };
 }
 
+/**
+ * A page shown OVER the slide, and the same rule a web BACKGROUND follows:
+ * LIVE only on the projected screen, a still screenshot everywhere else. The
+ * presenter's mini screen is a preview -- it redraws whenever a screen event
+ * fires and one is mounted per screen -- so a live iframe there keeps that
+ * page's scripts, timers and media running in the operator's window for as
+ * long as the overlay is up, for a picture two inches across. The shot is
+ * taken at the screen's own bounds, which is the entry the Webs panel and the
+ * web background have already populated.
+ */
 export function genHtmlForegroundWeb(
     webData: ForegroundWebDataType,
     animData: StyleAnimType,
     displayDim: { width: number; height: number },
+    isPageScreen = appProvider.isPageScreen,
 ) {
     const { filePath, extraStyle = {}, widthScale, heightScale } = webData;
     const width = Math.round(displayDim.width * widthScale);
     const height = Math.round(displayDim.height * heightScale);
     const fileSource = FileSource.getInstance(filePath);
-    const htmlString = renderToStaticMarkup(
-        <RenderBackgroundWebIframeComp
-            iframeSource={fileSource}
-            width={width}
-            height={height}
-            targetWidth={displayDim.width}
-            targetHeight={displayDim.height}
-        />,
-    );
     // extraStyle carries the widget positioning (alignment + X/Y offset via
     // left/top/transform), sizing and box styling. It must live on the element
     // that is actually mounted. The iframe already uses its own `transform` to
@@ -496,7 +500,29 @@ export function genHtmlForegroundWeb(
     // the bare iframe (as before) dropped extraStyle entirely, pinning every
     // web overlay to the top-left corner.
     const container = document.createElement('div');
-    container.innerHTML = htmlString;
+    if (isPageScreen) {
+        container.innerHTML = renderToStaticMarkup(
+            <RenderBackgroundWebIframeComp
+                iframeSource={fileSource}
+                width={width}
+                height={height}
+                targetWidth={displayDim.width}
+                targetHeight={displayDim.height}
+            />,
+        );
+    } else {
+        // The box below is `displayDim` scaled by `widthScale`, so a shot at
+        // the display's own bounds has exactly the box's aspect ratio and
+        // `cover` crops nothing -- the same picture the live iframe draws.
+        container.appendChild(
+            genWebScreenShotElement(fileSource.src, () => {
+                return {
+                    width: displayDim.width,
+                    height: displayDim.height,
+                };
+            }),
+        );
+    }
     Object.assign(container.style, extraStyle, {
         width: `${width}px`,
         height: `${Math.round(displayDim.height * widthScale)}px`,

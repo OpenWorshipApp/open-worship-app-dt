@@ -54,7 +54,22 @@ vi.mock('./appProvider', async () => {
                 existsSync: (filePath: string) => {
                     return h.files.has(filePath) || h.dirEntries.has(filePath);
                 },
-                stat: (_filePath: string, callback: any) => {
+                stat: (filePath: string, callback: any) => {
+                    const parent = win32.dirname(filePath);
+                    if (
+                        !h.files.has(filePath) &&
+                        !h.dirEntries.has(filePath) &&
+                        !h.dirEntries
+                            .get(parent)
+                            ?.includes(win32.basename(filePath))
+                    ) {
+                        callback(
+                            Object.assign(new Error('Not found'), {
+                                code: 'ENOENT',
+                            }),
+                        );
+                        return;
+                    }
                     callback(null, {
                         isFile: () => true,
                         isDirectory: () => false,
@@ -91,6 +106,7 @@ import {
     fsWriteFile,
     fsWriteFileSync,
     getPortableFileNameProblem,
+    getAvailableFileName,
     PORTABLE_NAME_MAX_LENGTH,
     rebaseDataDirPath,
     repairDataDirLinksInText,
@@ -217,6 +233,38 @@ describe('getPortableFileNameProblem', () => {
                 'a'.repeat(PORTABLE_NAME_MAX_LENGTH + 1),
             ),
         ).toBe('too-long');
+    });
+});
+
+describe('getAvailableFileName', () => {
+    test('keeps the title when free and numbers collisions without writing', async () => {
+        const dir = 'C:\\generated-bible-test';
+        h.files.clear();
+        expect(
+            await getAvailableFileName(dir, 'Genesis 1 3-5 KJV-ពគប', '.ows'),
+        ).toBe('Genesis 1 3-5 KJV-ពគប');
+        h.files.set(`${dir}\\Genesis 1 3-5 KJV-ពគប.ows`, 'original');
+        h.files.set(`${dir}\\Genesis 1 3-5 KJV-ពគប (2).ows`, 'second');
+        expect(
+            await getAvailableFileName(dir, 'Genesis 1 3-5 KJV-ពគប', '.ows'),
+        ).toBe('Genesis 1 3-5 KJV-ពគប (3)');
+        expect(h.files.get(`${dir}\\Genesis 1 3-5 KJV-ពគប.ows`)).toBe(
+            'original',
+        );
+        expect(h.files.size).toBe(2);
+    });
+    test('leaves room for the suffix on a maximum-length name', async () => {
+        h.files.clear();
+        const name = 'A'.repeat(PORTABLE_NAME_MAX_LENGTH);
+        h.files.set(`C:\\generated-bible-test\\${name}.ows`, 'original');
+        const available = await getAvailableFileName(
+            'C:\\generated-bible-test',
+            name,
+            '.ows',
+        );
+        expect(available).toHaveLength(PORTABLE_NAME_MAX_LENGTH);
+        expect(available.endsWith(' (2)')).toBe(true);
+        expect(getPortableFileNameProblem(available)).toBeNull();
     });
 });
 

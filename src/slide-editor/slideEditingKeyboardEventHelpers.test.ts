@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('../app-document-list/AppDocument', () => ({
     default: {
@@ -49,6 +49,9 @@ import {
     onCanvasKeyboardEvent,
     onSlideItemsKeyboardEvent,
 } from './slideEditingKeyboardEventHelpers';
+import AppDocument from '../app-document-list/AppDocument';
+import Canvas from './canvas/Canvas';
+import { showSimpleToast } from '../toast/toastHelpers';
 
 function genKeyEvent(key: string, ctrlKey = false) {
     return {
@@ -62,6 +65,61 @@ function genKeyEvent(key: string, ctrlKey = false) {
 }
 
 describe('slideEditingKeyboardEventHelpers', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    test.each([true, false])(
+        'slide copy consumes the key before awaiting and reports only success (%s)',
+        async (copied) => {
+            let finish!: (ok: boolean) => void;
+            vi.mocked(AppDocument.setCopiedSlides).mockReturnValueOnce(
+                new Promise((resolve) => {
+                    finish = resolve;
+                }),
+            );
+            const event = genKeyEvent('c', true);
+            const pending = onSlideItemsKeyboardEvent(
+                {
+                    holdingSlides: [{ id: 1 }] as any,
+                    selectedSlideEditing: null,
+                    setHoldingSlides: vi.fn(),
+                    varyAppDocument: {} as any,
+                },
+                event,
+            );
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(showSimpleToast).not.toHaveBeenCalled();
+            finish(copied);
+            await pending;
+            expect(showSimpleToast).toHaveBeenCalledTimes(copied ? 1 : 0);
+        },
+    );
+
+    test.each([true, false])(
+        'canvas copy consumes the key before awaiting and reports only success (%s)',
+        async (copied) => {
+            let finish!: (ok: boolean) => void;
+            vi.mocked(Canvas.setCopiedItems).mockReturnValueOnce(
+                new Promise((resolve) => {
+                    finish = resolve;
+                }),
+            );
+            const event = genKeyEvent('c', true);
+            const pending = onCanvasKeyboardEvent(
+                {
+                    stopAllModes: vi.fn(),
+                    canvasController: {} as any,
+                    selectedCanvasItems: [{ id: 1 }] as any,
+                    setSelectedCanvasItems: vi.fn(),
+                },
+                event,
+            );
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(showSimpleToast).not.toHaveBeenCalled();
+            finish(copied);
+            await pending;
+            expect(showSimpleToast).toHaveBeenCalledTimes(copied ? 1 : 0);
+        },
+    );
     // A default action can only be cancelled while the event is being
     // dispatched. Cancelling it after an `await` let Ctrl+A in the slide list
     // also select all the text in the window.

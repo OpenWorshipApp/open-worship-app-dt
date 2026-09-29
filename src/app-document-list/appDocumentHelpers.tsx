@@ -158,8 +158,9 @@ export function genSlideContextMenuItems(
                 ? copyShortcutMapper
                 : undefined,
             onSelect: async () => {
-                AppDocument.setCopiedSlides([slide]);
-                showSimpleToast(tran('Copied'), tran('Slide is copied'));
+                if (await AppDocument.setCopiedSlides([slide])) {
+                    showSimpleToast(tran('Copied'), tran('Slide is copied'));
+                }
             },
         },
         {
@@ -239,8 +240,9 @@ export function genSelectedSlidesContextMenuItems(
             menuElement: tran('Copy'),
             keyboardShortcut: copyShortcutMapper,
             onSelect: async () => {
-                AppDocument.setCopiedSlides(slides);
-                showSimpleToast(tran('Copied'), tran('Slides are copied'));
+                if (await AppDocument.setCopiedSlides(slides)) {
+                    showSimpleToast(tran('Copied'), tran('Slides are copied'));
+                }
             },
         },
         {
@@ -700,10 +702,10 @@ export async function getSelectedVaryAppDocument() {
     if (injectedAppDocumentFilePath !== null) {
         const fileSource = FileSource.getInstance(injectedAppDocumentFilePath);
         document.title = `${appProvider.windowTitle} - ${fileSource.name}`;
-        return AppDocument.getInstance(injectedAppDocumentFilePath);
     }
     const selectedAppDocumentFilePath =
-        await getSelectedVaryAppDocumentFilePathWithEnsure();
+        injectedAppDocumentFilePath ??
+        (await getSelectedVaryAppDocumentFilePathWithEnsure());
     if (selectedAppDocumentFilePath === null) {
         return null;
     }
@@ -727,9 +729,15 @@ export async function getSelectedEditingSlideFilePath(): Promise<{
     id: number;
 } | null> {
     if (injectedAppDocumentFilePath !== null) {
-        const appDocument = AppDocument.getInstance(
-            injectedAppDocumentFilePath,
-        );
+        const appDocument = await getSelectedVaryAppDocument();
+        // Resolve the real document kind before reading slides. A lyric/PDF
+        // belongs to the entry guard, not to the editable .ows parser.
+        if (
+            !AppDocument.checkIsThisType(appDocument) ||
+            !appDocument.isEditable
+        ) {
+            return null;
+        }
         const id = getParamIdNum(globalThis.location.href);
         const slides = await appDocument.getSlides();
         let selectedSlide = slides[0];

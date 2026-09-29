@@ -127,7 +127,15 @@ export const setDisablingSetting = (
     target?: DisabledType,
 ) => {
     const settingString = toSettingString(flexSizeName);
-    const flexSize = getFlexSizeSetting(flexSizeName, defaultSize);
+    // Off the DOM, not off the stored blob. Both closers -- the divider's
+    // `close` and the View menu's `handleClosing` -- hand this pane's grow to
+    // a sibling by writing `style.flexGrow` and then call this, so the stored
+    // sibling is one grow behind the moment it is written. Nothing showed
+    // while the app stayed open (the DOM is right), but after a reload the
+    // sibling rendered at its old grow and reopening subtracted the closed
+    // pane's space a SECOND time -- a panel reopened once per session shrank
+    // its neighbour a little every time.
+    const flexSize = genFlexSizeSetting(flexSizeName, defaultSize);
     const key = dataFlexSizeKeyToKey(flexSizeName, dataFlexSizeKey);
     flexSize[key][1] = target;
     setSetting(settingString, JSON.stringify(flexSize));

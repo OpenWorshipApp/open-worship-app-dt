@@ -24,6 +24,9 @@ import { useAppEffect } from '../helper/appHooks';
 import type { ExtraBinPathsType } from '../helper/extra-bin/extraBinHelpers';
 import { EXTRA_BIN_MISSING_ERROR_MESSAGE } from '../helper/extra-bin/extraBinErrors';
 import { electronSendAsync } from './electronSendHelpers';
+import { writeTextToClipboard } from './clipboardHelpers';
+
+export { readTextFromClipboard } from './clipboardHelpers';
 
 export {
     electronSendAsync,
@@ -165,8 +168,10 @@ export function checkIsEncryptedFile(filePath: string) {
  * clipboard to find out which landed. It is the TOAST's title, so it arrives
  * already translated.
  */
-export function copyToClipboard(str: string, title?: string) {
-    appProvider.systemUtils.copyToClipboard(str);
+export async function copyToClipboard(str: string, title?: string) {
+    if (!(await writeTextToClipboard(str))) {
+        return false;
+    }
     showSimpleToast(
         title ?? tran('Copy'),
         tran('Text has been copied to clip'),
@@ -526,16 +531,6 @@ export async function* readImagesFromClipboard() {
                 yield blob;
             }
         }
-    }
-}
-
-export async function readTextFromClipboard() {
-    try {
-        const text = await navigator.clipboard.readText();
-        return text;
-    } catch (error) {
-        handleError(error);
-        return null;
     }
 }
 

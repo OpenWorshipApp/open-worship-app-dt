@@ -680,6 +680,26 @@ export const PRESENTER_DEMO_LIST = [
     ],
   },
   {
+    id: 'presenter-note-panel',
+    label: 'Write a note on a document or slide',
+    detail: 'Open the Note panel under the slide previews; it starts closed.',
+    title: 'Write a note on a document or slide',
+    steps: [
+      {
+        text: 'Click the green Note strip under the slide previews. The Note panel starts closed, because most services never need it.',
+        find: 'Note',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Document Note on the left belongs to the whole document. Slide Note on the right is one box per slide. Both are saved for you and neither is ever sent to an audience screen.',
+      },
+      {
+        text: 'To put the panel away again, drag the divider above it down to the bottom edge, or untick View > Widgets > Note.',
+      },
+    ],
+  },
+  {
     id: 'presenter-present-slide',
     label: 'Present a slide from a document',
     detail:
@@ -895,7 +915,7 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Ten components share that list: Marquee Top and Marquee Bottom, Quick Text, Countdown, Stopwatch, Time, and Video, Image, Camera and Web Show. Each opens in a panel of its own, and each has a lesson of its own. This lesson will not start one for you.',
+        text: 'Eleven components share that list: Messages, Marquee Top and Marquee Bottom, Quick Text, Countdown, Stopwatch, Time, and Video, Image, Camera and Web Show. Each opens in a panel of its own, and each has a lesson of its own. This lesson will not start one for you.',
       },
     ],
   },
@@ -1139,6 +1159,392 @@ export const PRESENTER_DEMO_LIST = [
   },
   ...genAppMenuDemos('presenter'),
   {
+    id: 'presenter-lookup-reference',
+    label: 'Type a complete reference in Bible Lookup',
+    detail:
+      'Enter a book, chapter and verse range together, then check the preview.',
+    title: 'Type a complete reference in Bible Lookup',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Bible Lookup at the top of the Presenter.',
+        find: 'Bible Lookup',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Bible Reference',
+      },
+      {
+        text: 'Check the Bible version, then type a complete reference such as John 3:16-18 in the reference box. Use the book name in that Bible version. Check the passage preview before presenting it.',
+      },
+      {
+        text: 'Choosing a reference prepares the passage. Show Bible Item sends it to the selected screens; this lesson leaves that press to you.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-lookup-keep-open',
+    label: 'Keep Bible Lookup open between passages',
+    detail: 'Use Keep Open when preparing several Bible passages in a row.',
+    title: 'Keep Bible Lookup open between passages',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Bible Lookup to find Keep Open beside its header controls.',
+        find: 'Bible Lookup',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Bible Reference',
+      },
+      {
+        text: 'Tick Keep Open if you want the lookup to stay open after adding a Bible item. Untick it when you want the popup to close after the choice.',
+      },
+      {
+        text: 'Keep Open changes the popup behavior. Check the version, reference and selected screens separately before using Show Bible Item.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-lookup-history',
+    label: 'Reuse a passage from lookup history',
+    detail:
+      'Bring back an earlier reference from the history above Bible Lookup.',
+    title: 'Reuse a passage from lookup history',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Bible Lookup and look at the reference chips above its input.',
+        find: 'Bible Lookup',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Bible Reference',
+      },
+      {
+        text: 'Double-click a history chip to put that passage back into the lookup. The version travels with the reference, so check both before presenting it again.',
+      },
+      {
+        text: 'If the history is empty, look up a passage first. A history chip can also be dragged into the saved Bibles list when you want to keep it for another service.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-lookup-study-tools',
+    label: 'Explore study tools in Bible Lookup',
+    detail:
+      'Find words, cross references and local Resources without leaving the Presenter.',
+    title: 'Explore study tools in Bible Lookup',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Bible Lookup in the Presenter.',
+        find: 'Bible Lookup',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Bible Reference',
+      },
+      {
+        text: 'Open Advance Bible Lookup if its side panel is closed. Its Bible Online Lookup picker remembers the last choice: choose Find for words, Cross Reference for related verses, or Location-Name for people and places.',
+      },
+      {
+        text: 'Choose Resources to browse your own study files for the current book and chapter. Book-level resources also appear in each chapter; Others includes files without a book-and-chapter name.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-background-filter',
+    label: 'Find media by its file name',
+    detail: 'Use the Background name filter to narrow a busy media folder.',
+    title: 'Find media by its file name',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open the Background panel if it is collapsed.',
+        find: 'Background',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Background > Videos',
+      },
+      {
+        text: 'Choose Images in Background to practise with a file library.',
+        find: 'Background > Images',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Toggle Filter by name inside Background.',
+        find: 'Background > Filter by name',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Type part of a file name in the filter box. An empty result may mean the filter or folder is wrong; clear the words to see the whole folder again. Filtering does not present a file.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-background-sort',
+    label: 'Sort a media folder before the service',
+    detail: 'Open Background Sort to choose the order of media files.',
+    title: 'Sort a media folder before the service',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open the Background panel if it is collapsed.',
+        find: 'Background',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Background > Videos',
+      },
+      {
+        text: 'Choose Images in Background to practise with a file library.',
+        find: 'Background > Images',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Open Sort inside Background.',
+        find: 'Background > Sort',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose the ordering that helps you find the next item. Sorting changes how this library is displayed; it does not rename files or start playback.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-background-folder',
+    label: 'Check which media folder is open',
+    detail:
+      'Reveal the Background path editor when an expected file is missing.',
+    title: 'Check which media folder is open',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open the Background panel if it is collapsed.',
+        find: 'Background',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Background > Videos',
+      },
+      {
+        text: 'Choose Images in Background to practise with a file library.',
+        find: 'Background > Images',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Toggle Show path editor inside Background.',
+        find: 'Background > Show path editor',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Read the folder path before changing it. Each media library can point to a different folder; also check Filter by name when a file seems to be missing.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-flow-filter',
+    label: 'Find a service flow by name',
+    detail: 'Filter the Presenting Flow List to find the right service order.',
+    title: 'Find a service flow by name',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open the Presenting Flow List if it is collapsed.',
+        find: 'Presenting Flow List',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Presenting Flow List > Sort',
+      },
+      {
+        text: 'Toggle Filter by name above the Presenting Flow List.',
+        find: 'Presenting Flow List > Filter by name',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Type part of the service name. Clear the filter to restore the full list. Use Preview Presenting Flow on the flow you choose to inspect its running order before advancing it.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-flow-sort',
+    label: 'Organize the list of service flows',
+    detail:
+      'Use Presenting Flow List Sort without rearranging the cues inside a flow.',
+    title: 'Organize the list of service flows',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open the Presenting Flow List if it is collapsed.',
+        find: 'Presenting Flow List',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Presenting Flow List > Sort',
+      },
+      {
+        text: 'Open Sort above the Presenting Flow List.',
+        find: 'Presenting Flow List > Sort',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose how the flow files are listed. The cue order inside each flow stays as you arranged it; inspect that order in its run player before the service.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-messages',
+    label: 'Prepare several audience messages',
+    detail:
+      'Use Messages for separate notices with their own Show and Hide controls.',
+    title: 'Prepare several audience messages',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Messages > Properties',
+      },
+      {
+        text: 'Choose Messages to open its floating panel.',
+        find: 'Messages',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Messages > Properties',
+      },
+      {
+        text: 'Use Add Message for each separate notice. Each editor keeps its own words and Show or Hide controls; move the notices into the order you want before showing them.',
+      },
+      {
+        text: 'Check the selected screens, then show only the notices you need. Show All Messages sends the set together. This lesson prepares the panel and leaves every audience action to you.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-message-rotation',
+    label: 'Rotate notices before the service',
+    detail:
+      'Use Messages Rotate and its seconds setting for a repeating notice board.',
+    title: 'Rotate notices before the service',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Messages > Properties',
+      },
+      {
+        text: 'Choose Messages to open its floating panel.',
+        find: 'Messages',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Messages > Properties',
+      },
+      {
+        text: 'Prepare the notices with Add Message. Rotate, below the editors, shows each message in turn; when enabled, its seconds box sets how long each stays before the next.',
+      },
+      {
+        text: 'Give people enough time to read the longest notice. Check the selected screens before Show All Messages. The lesson does not turn rotation on or send any notice.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-message-spacing',
+    label: 'Give audience messages room to breathe',
+    detail:
+      'Use Messages Properties and Effects for padding, line height and text contrast.',
+    title: 'Give audience messages room to breathe',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Messages > Properties',
+      },
+      {
+        text: 'Choose Messages to open its floating panel.',
+        find: 'Messages',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Messages > Properties',
+      },
+      {
+        text: 'Open Properties inside Messages, then Effects. Padding adds room between the words and their box; Line Height changes the spacing within a message. Text Shadow and the text and background colors can improve contrast.',
+      },
+      {
+        text: 'Keep notices short and check the audience preview, especially when several messages are stacked or long lines wrap. Properties can update messages already on screen, so this lesson leaves those settings to you.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-effects',
+    label: 'Find border and shadow effects for an overlay',
+    detail:
+      'Open Quick Text, then explore the Effects section inside Properties.',
+    title: 'Find border and shadow effects for an overlay',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
+      },
+      {
+        text: 'Choose Quick Text to open its floating panel.',
+        find: 'Quick Text',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
+      },
+      {
+        text: 'Open Properties in Quick Text and expand Effects. Border, Shadow and Padding style the box; Text Align, Line Height and Text Shadow style the words.',
+      },
+      {
+        text: 'Each foreground component keeps its own settings. A change can reach an overlay already on screen; prepare the appearance before showing it. This lesson opens the panel without changing its style.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-slideshow',
+    label: 'Prepare an image overlay slide show',
+    detail:
+      'Find Image Show slide show controls and timing options before starting playback.',
+    title: 'Prepare an image overlay slide show',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Image Show > Properties',
+      },
+      {
+        text: 'Choose Image Show to open its floating panel.',
+        find: 'Image Show',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Image Show > Properties',
+      },
+      {
+        text: 'Check the folder and the pictures listed. Expand Slide Show and open Slide Show Options to review the interval and Repeat All before starting.',
+      },
+      {
+        text: 'An Image Show is a foreground overlay above other screen content. Check its size, position and selected screens before Start Slide Show. This lesson leaves playback stopped or running as you had it.',
+      },
+    ],
+  },
+  {
     id: 'presenter-view-reload',
     label: 'Reload or force-reload the Presenter',
     detail:
@@ -1272,7 +1678,14 @@ export function getPresenterDemo(id, translate = (value) => value) {
       if (translateFind && typeof step.find === 'string') {
         const translated = translate(step.find);
         if (translated !== step.find) {
-          finds.push(translated);
+          if (step.find.includes(' > ') && step.finds === undefined) {
+            // A scoped control has one exact localized name. In a Khmer
+            // window the English "Images" can match the folder path button
+            // instead of the Images tab; do not try that stale name first.
+            finds.splice(0, finds.length, translated);
+          } else {
+            finds.push(translated);
+          }
         }
       }
       if (translateFinds === true) {

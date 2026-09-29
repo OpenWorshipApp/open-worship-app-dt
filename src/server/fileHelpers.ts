@@ -614,6 +614,30 @@ export function addExtension(name: string, extension: string) {
     return `${name}${extension}`;
 }
 
+/** Keep a generated title, adding a numbered suffix when it is already taken. */
+export async function getAvailableFileName(
+    dirPath: string,
+    name: string,
+    dotExtension: string,
+) {
+    let candidate = name;
+    for (let number = 2; ; number++) {
+        if (
+            !(await fsCheckFileExist(
+                dirPath,
+                addExtension(candidate, dotExtension),
+            ))
+        ) {
+            return candidate;
+        }
+        const suffix = ` (${number})`;
+        candidate =
+            Array.from(name)
+                .slice(0, PORTABLE_NAME_MAX_LENGTH - suffix.length)
+                .join('') + suffix;
+    }
+}
+
 export const createNewFileDetail = async (
     dir: string,
     name: string,

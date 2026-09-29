@@ -185,9 +185,10 @@ export function showCanvasItemContextMenu(
                       key: 'c',
                   }
                 : undefined,
-            onSelect: () => {
-                Canvas.setCopiedItems([canvasItem]);
-                showSimpleToast(tran('Copied'), tran('Canvas item copied'));
+            onSelect: async () => {
+                if (await Canvas.setCopiedItems([canvasItem])) {
+                    showSimpleToast(tran('Copied'), tran('Canvas item copied'));
+                }
             },
         },
         {

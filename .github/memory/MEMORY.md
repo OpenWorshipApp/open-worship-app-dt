@@ -53,6 +53,7 @@
 - [Lyric passes the AppDocument type check](lyric-passes-appdocument-typecheck.md) — `checkIsThisType` is `instanceof`
 - [Settings write race corrupts the on-screen map](settings-write-race-corrupts-onscreen-map.md) — FIXED (EN-38): only non-screen windows write the on-screen maps, through persistOnScreenEntry; setItem is atomic
 - [Monaco `.css` test failure — importable now](monaco-css-test-failure-local-open-lyric.md) — ONE test imports real open-lyric
+- [Bootstrap button vars are dead](bootstrap-btn-vars-are-dead.md) — `.app .btn` hardcodes `padding`, so `--bs-btn-padding-*` silently does nothing
 - [Console design system tokens](console-design-system-tokens.md) — `--app-*` tokens
 - [Vite caches a failed import resolution](vite-caches-failed-import-resolution.md) — serves an OLD module past a reload
 - [Drag-kind mime & dim target](drag-kind-mime-and-dim-target.md) — dragover gates on `application/x-owa-drag-<kind>`
@@ -60,6 +61,8 @@
 - [Website items are screenshots, not iframes](website-screenshot-not-iframe.md) — live only on the projected screen; a local page's shot is keyed by its md5 and never expires
 - [vi.mock factory survives resetModules](vitest-mock-factory-survives-resetmodules.md) — test and module on different mocks
 - [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) — it also kills the user's open-lyric dev app
+- [The previewer's Note pane ships closed](previewer-note-pane-ships-closed.md) — a changed default is invisible to anyone with a stored layout; it took a one-off migration
+- [A widget close must persist the absorbed grow](widget-close-must-persist-absorbed-grow.md) — the neighbour shrank a little on every close/reload/reopen lap
 - [View menu widget toggles](view-menu-widget-toggles.md) — View → Widgets ticks each pane; Reset Widgets Size
 - [`appFilePath` is a prototype getter](appfilepath-is-a-prototype-getter.md) — plain assignment silently no-ops
 - [Media binaries install on demand](extra-bin-on-demand.md) — yt-dlp/ffmpeg/qjs live in `<data parent>/extra-bin/<platform>` (one folder per OS since EN-29)
@@ -85,6 +88,8 @@
 - [MCP tool edits leave two processes out of step](mcp-tool-edit-two-processes.md) — your own tools serve STALE code
 - [DOM matcher is memoised in the page](dom-match-memoised-in-page.md) — `window.__owaDomMatch`/`__owaGuide` survive an edit
 - [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md) — a page-made KeyboardEvent fires them
+- [A leaked keyboard layer kills EVERY shortcut](keyboard-layer-stack-leak.md) — an unbalanced widget `open` stuck the stack above `root`; two quick right-clicks were enough
+- [Slide arrows need the panel's focus](slide-arrows-need-panel-focus.md) — picking a document used to move focus to the list and the arrows went dead; `activeElement` is BODY, never null
 - [Glassy popup windows](glassy-popup-windows.md) — the chatbot popup is frosted by the OS compositor, not CSS
 - [Panels are named in the DOM](panel-name-in-dom.md) — an OPEN pane, and a FLOATING one, drew its name nowhere; a foreground tile and its Background twin rang together
 - [The mini screen draws the monitor's wallpaper](mini-screen-monitor-wallpaper.md) — the backdrop is the desktop WALLPAPER read from the OS, never a `desktopCapturer` shot: a capture holds every other window, and the card for a screen on this machine's own monitor drew the app inside itself

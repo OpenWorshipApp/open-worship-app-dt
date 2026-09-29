@@ -161,6 +161,7 @@ export default function SlideEditorToolsBoxComp() {
                     isInline
                 >
                     <SlideEditorToolsColorComp
+                        label={tran('Background Color')}
                         color={props.backgroundColor}
                         handleNoColoring={handleNoColoring}
                         handleColorChanging={handleColorChanging}

@@ -6,6 +6,7 @@ export type PresenterDemoStepType = {
   value?: string;
   press?: string;
   kind?: 'act' | 'look';
+  skipIfVisible?: string;
 };
 
 export type PresenterDemoType = {

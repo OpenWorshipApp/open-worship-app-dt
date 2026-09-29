@@ -21,7 +21,23 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-27** (**W-05 — Add Stage is the same picker the mini
+**workflowsVersion: 2026-09-28f** (**W-46 — the Tip of the Day card is compact.** The card is 320x100 instead of 390x169: the title band is a quiet label row (no page name beside "Tip of the Day"), **Don't show again** moved into that row beside a red close mark, and **Show it / Next tip / All tips** are one small segmented group. In **All tips** the topic is a word leading each lesson's line rather than a bordered badge on a line of its own. Verified live on the dev presenter 2026-09-28.)
+
+Previous: **workflowsVersion: 2026-09-28e** (**W-03 / W-31 — the previewer's Note panel now starts CLOSED.** A document or slide note is a thing few volunteers ever write, and the panel spent a seventh of the previewer on two empty boxes. It is reopened by the green **Note** strip under the slide previews, by View > Widgets > Note, or by Reset Widgets Size, and the Tips of the Day lesson _Write a note on a document or slide_ walks that. Documents that were already remembering it open are closed once on the next launch. Verified live on the dev presenter 2026-09-28.)
+
+Previous: **workflowsVersion: 2026-09-28d** (**W-06 — Generate Slides offers Font Size and Dark/Light themes.** Optional size in canvas pixels, automatic fitting, theme-aware verse numbers and a muted upcoming verse at 85%. Existing translucent, inset backgrounds are retained. Verified live with English and Khmer in both themes.)
+
+Previous: **workflowsVersion: 2026-09-28c** (**W-15 — Background Color and Text Color accept direct hex entry.** Enter or leaving the field applies; Escape cancels. Verified in the live Document Editor, including transparency and Undo/Redo.)
+
+Previous: **workflowsVersion: 2026-09-28b** (**W-15 — Bulk Font applies font size or family to all slides, selected slides, or individual text-bearing canvas items.** Locked items are opt-in; each application is one undoable change. Verified in the live Document Editor. New ED-52.)
+
+Previous: **workflowsVersion: 2026-09-28a** (**W-06 — generate a slide document from a saved Bible passage.** Choose additional Bible versions, create a title slide and one slide per verse, with each version's font, compact margins and a muted next verse at 85% of the current text size. Verified in Presenter with KJV and Khmer. New CM-101.)
+
+Previous: **workflowsVersion: 2026-09-28** (**W-46 — fourteen additional Presenter-only lessons for Bible Lookup, media libraries, service flows, Messages, Effects and image slide shows.** Presenter 74 → 88 topics; Reader remains 61. Live guide actions open controls and leave audience output unchanged.)
+
+Previous: **workflowsVersion: 2026-09-27a** (**W-10 — the mini screen draws each monitor's own desktop wallpaper behind what it renders, in place of the checkered pattern.** Asked for directly: the pattern stood for "the audience screen is transparent here" and said nothing about what that means on the wall. The backdrop is the WALLPAPER read from the operating system, never a capture of the display -- a capture drags in every other window that happens to be up, so a screen assigned to the machine's own monitor drew a picture of the app inside itself, and it would have to be retaken to stay honest. A wallpaper is a file: read once per display, shared by every card on it, released with the last one, and laid out the way the desktop lays it out (Fill / Fit / Stretch / Centre / Tile). **[en:tran:Show Monitor Wallpaper]** in the mini-screen menu puts the pattern back and **Refresh Preview** re-reads it. Verified live 2026-09-27 on the dev presenter across two displays. New matrix row SP-23.)
+
+Previous: **workflowsVersion: 2026-09-27** (**W-05 — Add Stage is the same picker the mini
 screen's `St:` badge opens.** Asked for directly, with both menus circled in one
 picture. The Stage Previewer could offer Stage 1 and then nothing — it went dead
 — while a screen's stage number increments without a ceiling, so a screen set to
@@ -1326,8 +1342,14 @@ Tips:
 - The stopwatch icon in the same footer opens **auto-play**: set seconds, press play,
   and slides advance automatically; the red ✕ closes it (W-04).
 - **Pin the document so you cannot lose it by a stray click** — see W-27.
+- **Notes for yourself:** under the slide previews there is a thin green **Note**
+  strip. Click it and a **Document Note** box (one for the whole document) and a
+  **Slide Note** box (one per slide) open below the slides. They are saved for you as
+  you type and are **never sent to an audience screen**. The panel starts closed, so
+  it costs nothing until you want it; to put it away again drag the divider above it
+  down to the bottom edge, or untick **View → Widgets → Note** (W-31).
 
-_Verify: PL-01, PM-05..09, KB-05, KB-08._
+_Verify: PL-01, PM-05..09, PM-149, KB-05, KB-08._
 
 ### W-04 — Auto-play slides on a timer
 
@@ -1441,7 +1463,30 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
    the answer says what is on the screen now; it is not saved to the **Bibles**
    list. 📸
 
-_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, CB-61._
+8. To make an editable slide document from a saved passage, open that item's
+   **⋮** menu in the Presenter's **Bibles** list and choose
+   **[en:tran:Generate Slides]**. In the floating panel, select any additional
+   Bible versions to include. The original version stays selected. Enter an optional
+   **[en:tran:Font Size]** in pixels, or leave it empty for **[en:tran:Auto]**.
+   Choose **[en:tran:Dark]** or **[en:tran:Light]** under **[en:tran:Theme]** to set
+   the generated slides' background and text colors. Both themes retain the
+   translucent, inset background. 📸
+9. Click **[en:tran:Generate Slides]** in the panel. The new document contains a
+   title slide with the passage and Bible keys, then one slide per verse, with
+   all selected versions together. Each version uses its own configured font.
+   Compact margins leave room for the text; long verses resize to fit, with a
+   consistent reading size throughout the passage, reducing your chosen size only
+   when needed to fit. The upcoming verse appears
+   at the bottom right in muted text at 85% of the current verse's font size.
+   The last slide has no upcoming verse. 📸
+10. Find the file in **Documents**. Its name uses the English reference and all
+    selected keys, for example `Genesis 1 3-5 KJV-ពគប.ows` (the colon becomes a
+    space for the filename). Generating again adds a numbered suffix to preserve
+    the earlier file. **[en:tran:Cancel]** closes the panel without creating a
+    file. If a selected version lacks a verse, generation reports it without
+    saving a partial passage.
+
+_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, CB-61, CM-101._
 
 ### W-07 — Style the on-screen Bible text
 
@@ -1611,6 +1656,13 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, KB-03, KB-07, 
 
 - The **mini screen** (right column, bottom) always mirrors the audience view; the
   zoom slider under it only rescales your preview, not the output. 📸
+- Behind everything the card draws sits **that monitor's own desktop wallpaper**.
+  The audience screen is a transparent window, so wherever you have put nothing
+  up this is genuinely what the room would see. Right-click an empty part of the
+  mini-screen panel (or press the **⋮** at its bottom-right) → **[en:tran:Show Monitor Wallpaper]**
+  turns it off and puts the plain checkered pattern back; **Refresh Preview** in
+  the same menu re-reads it after you change your desktop background. A machine
+  that will not say what its background is keeps the pattern.
 - Each screen has its own preview card with a **header** and **footer** of controls:
 - **Show / hide the screen** (header, leftmost — or press **F5**): turns the physical
   output display on or off. The icon fills in and brightens while showing. It is
@@ -1634,7 +1686,7 @@ _Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, KB-03, KB-07, 
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
   (0–4, or increment/decrement) for stage-view setups.
 
-_Verify: PR-04..07, SP-01..09, KB-03..07, KB-13._
+_Verify: PR-04..07, SP-01..09, SP-23, KB-03..07, KB-13._
 
 ---
 
@@ -1827,7 +1879,28 @@ in the same documents folder. 📸
    blur modest on an old machine: a big soft shadow is the one setting here that
    costs the computer real work. **[en:tran:No Shadow]** takes it off again.
 
-8. Save with **Ctrl+S**.
+8. **Apply a font setting to several items.** Under **[en:tran:Properties]**, expand
+   **[en:tran:Bulk Font]**. Leave **[en:tran:Apply to]** on **[en:tran:All Slides]**
+   for the whole document, or pick **[en:tran:Choose slides and items]**. Tick a
+   slide to select its text items; expand its **[en:tran:Canvas Items]** list to
+   tick individual items. You can combine items from several slides. A partially
+   selected slide shows a dash in its checkbox. Text, Bible and HTML items are
+   included; media items have no font setting. Locked items stay unchanged unless
+   you tick **[en:tran:Include locked items]**. Enter a positive **[en:tran:Font Size]**
+   in pixels and press **[en:tran:Apply Font Size]**, or choose a
+   **[en:tran:Font Family]** and press **[en:tran:Apply Font Family]**. Each button
+   applies only that property, leaving the other styles and positions intact.
+   The result reports how many items changed. Each application is one
+   **[en:tran:Undo]** step; **[en:tran:Redo]** reapplies it. 📸
+9. **Type an exact color.** Select a box, then click the hex value beside
+   **[en:tran:Background Color]** or under **[en:tran:Text Properties] → [en:tran:Color]**.
+   Type or paste a hex color, then press **Enter** or click away to apply it.
+   Three-, four-, six- and eight-digit hex values work, with or without `#`;
+   eight digits include opacity, for example `#2468AC80`. **Escape** cancels the
+   unfinished edit. Invalid or incomplete values return to the current color
+   without changing the slide. The arrow still opens the swatches and opacity
+   slider. **[en:tran:Undo]** / **[en:tran:Redo]** restore and reapply changes. 📸
+10. Save with **Ctrl+S**.
 
 **Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
@@ -1835,7 +1908,7 @@ in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 **Web backgrounds:** Background panel → **Web** tab → **+** — the Web Editor opens;
 enter the URL and title, save, and the new item appears in the Web tab.
 
-_Verify: ED-01..11, ED-45, ED-46, ED-47, ED-48, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124._
+_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-43, PM-33, PM-124._
 
 ### W-43 — Remove a song, document or file (Move to Trash)
 
@@ -3143,14 +3216,21 @@ control without having to search the manual.
    launch's automatic card.
 2. Click **Next tip** to move through that page's tips in order. The list wraps to
    the first tip after the last. Click **All tips** to open the numbered learning
-   list for the current page. Search by a control or task, or scan the topic badges;
+   list for the current page. Search by a control or task, or scan the topic name
+   that leads each lesson's line;
    the counter shows how many lessons match. Each lesson says what it teaches;
    choose one to return to its card and practise it at your own pace. The
-   Presenter has **74 topics**: 64 start with a safe **Do it** for a visible
+   Presenter has **89 topics**: 79 start with a safe **Do it** for a visible
    control or shortcut, while ten disruptive or native-menu lessons stay self-guided. They
    cover documents and slides, audience screens, backgrounds and media, service
    planning, app help, and every native application menu from **File** through
-   **Help**. The Reader has **61 topics**: 30 start with a safe **Do it** and
+   **Help**. _Write a note on a document or slide_ opens the previewer's **Note**
+   panel, which ships closed (W-03, W-31). Presenter lessons also cover lookup references and history, study
+   tools inside Bible Lookup, media folder filtering and sorting, finding a service
+   flow, and **[en:tran:Messages]** for separate notices, rotation and spacing.
+   Foreground lessons explain **[en:tran:Effects]** and preparing an Image Show
+   slide show; output and style changes stay in your hands.
+   The Reader has **61 topics**: 30 start with a safe **Do it** and
    31 stateful, file-dependent, native-menu, pane-visibility or audience-output lessons stay
    self-guided. They cover reference entry and
    history, reading panes and formatting, Find and cross references,
@@ -3244,8 +3324,12 @@ the only way in a popup window, whose menu bar is hidden.
    You get one tick-box per panel on the page you are looking at, e.g. on the
    presenter: `App Presenter Left` / `App Presenter Middle` / `App Presenter Right`,
    `Document List`, `Presenting Flow List`, `Presenter`, `Background`,
-   `Bible and Notes`, `Mini Screen`, `Bibles`, `Bible Notes`, `Previewer`, `Slides`.
+   `Bible and Notes`, `Mini Screen`, `Bibles`, `Bible Notes`, `Previewer`, `Slides`,
+   `Note`.
    - **Ticked** = the panel is open. **Unticked** = it is collapsed to its strip.
+   - `Note` — the document and slide notes under the slide previews (W-03) — is the
+     one panel that **starts unticked**: it ships collapsed to its green strip,
+     because most services never need it. Tick it, or click the strip, to open it.
 2. Click a ticked one — that panel collapses to its green strip, and the space goes to
    its neighbour. 📸
 3. Click it again — the panel comes straight back. Nothing reloads and nothing you

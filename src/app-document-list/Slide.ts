@@ -181,12 +181,25 @@ export default class Slide
             return [];
         }
         const fontFamilies = this.fontFamilies();
+        // Bible fonts are bundled @font-face resources, not OS-installed fonts.
+        // Generated title/next-verse text boxes use those same family names.
+        const registeredFonts = new Set<string>();
+        globalThis.document?.fonts?.forEach((font) => {
+            if (font.status !== 'error') {
+                registeredFonts.add(
+                    font.family.replaceAll(/['"]/g, '').trim().toLowerCase(),
+                );
+            }
+        });
         const unavailableFonts: string[] = [];
         for (const fontFamily of fontFamilies) {
             const isFontAvailable = availableFontFamilies.includes(
                 fontFamily.trim().toLowerCase(),
             );
-            if (!isFontAvailable) {
+            if (
+                !isFontAvailable &&
+                !registeredFonts.has(fontFamily.trim().toLowerCase())
+            ) {
                 unavailableFonts.push(fontFamily);
             }
         }

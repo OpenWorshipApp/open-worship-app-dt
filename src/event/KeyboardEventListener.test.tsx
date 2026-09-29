@@ -75,6 +75,43 @@ describe('KeyboardEventListener', () => {
         container = null;
     });
 
+    test('re-asserts a layer instead of stacking it, so one close is enough', () => {
+        // A widget that opens twice without closing in between -- an async
+        // context-menu builder racing itself, a host unmounted with its menu
+        // open -- used to push a DUPLICATE, and `removeLayer` takes one
+        // occurrence off. The stack kept a layer nobody owned and every
+        // `root` shortcut under it (Ctrl+B, F5-F10, the slide arrows) was
+        // dead for the rest of the session.
+        KeyboardEventListener.addLayer('context-menu');
+        KeyboardEventListener.addLayer('context-menu');
+        KeyboardEventListener.addLayer('context-menu');
+        expect((KeyboardEventListener as any)._layers).toEqual([
+            'root',
+            'context-menu',
+        ]);
+
+        KeyboardEventListener.removeLayer('context-menu');
+        expect(KeyboardEventListener.getLastLayer()).toBe('root');
+        expect(
+            KeyboardEventListener.toEventMapperKey({ key: 'ArrowRight' }),
+        ).toBe('root>ArrowRight');
+    });
+
+    test('a second widget re-asserting moves it to the top of the stack', () => {
+        KeyboardEventListener.addLayer('presenting-control');
+        KeyboardEventListener.addLayer('context-menu');
+        KeyboardEventListener.addLayer('presenting-control');
+        expect((KeyboardEventListener as any)._layers).toEqual([
+            'root',
+            'context-menu',
+            'presenting-control',
+        ]);
+        KeyboardEventListener.removeLayer('presenting-control');
+        expect(KeyboardEventListener.getLastLayer()).toBe('context-menu');
+        KeyboardEventListener.removeLayer('context-menu');
+        expect(KeyboardEventListener.getLastLayer()).toBe('root');
+    });
+
     test('formats shortcut keys for each platform and rejects incompatible control maps', () => {
         setPlatform('windows');
         expect(toShortcutKey({ key: 'a' })).toBe('A');

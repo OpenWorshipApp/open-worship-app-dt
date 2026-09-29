@@ -308,12 +308,12 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   steps the MCP runs cannot drift. A demo changes one visible thing per **Do
   it** press; the search lesson names the Bible Online Lookup picker, selects
   **Find** even when it remembered Resources, and leaves the search box for the
-  person's own word. The Presenter catalog has 74 lessons across documents,
+  person's own word. The Presenter catalog has 89 lessons across documents,
   audience screens, FOREGROUND OVERLAYS, backgrounds and media, service
-  planning, app help and the View menu. Sixty-four lessons now begin with a
+  planning, app help and the View menu. Seventy-nine lessons now begin with a
   safe deterministic **Do it**
-  action, then turn any explanation-only follow-up into **Next**; only Reload,
-  Relaunch, Developer Tools, Widgets, and Reset Widgets remain fully self-guided.
+  action, then turn any explanation-only follow-up into **Next**; ten native-menu
+  or disruptive lessons remain fully self-guided.
   No lesson can present, reload, relaunch, reset layout, or open Developer Tools
   for the person. **The foreground had two vague lessons for ten components**
   (2026-09-24): one per component now — Marquee Top / Bottom, Quick Text,
@@ -332,8 +332,13 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   "countdown" matching no countdown lesson). Tips also send their current
   inline lesson when a hot-reloaded
   renderer finds an older long-running MCP catalog. `demoId` is a string
-  validated against those catalogs at call time, not a 135-value schema enum
-  sent to the model on every round. This
+  validated against those catalogs at call time, not a growing schema enum
+  sent to the model on every round. Fourteen additional Presenter-only lessons
+  (2026-09-28) cover lookup
+  references/history/study tools, media folders/filtering/sorting, flow
+  filtering/sorting, Messages/rotation/spacing, overlay Effects and Image Show
+  playback preparation. Library controls keep their panel scope in every
+  language, and already-open panels are skipped. This
   adds no tool, spends no provider credit and keeps schema cost flat as lessons
   are added.
 - **The screens tool says what is ON the projector, not only whether it is on**
