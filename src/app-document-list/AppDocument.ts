@@ -239,7 +239,19 @@ export default class AppDocument
         return index;
     }
 
-    async updateSlide(slide: Slide) {
+    /**
+     * Registered as pending the moment it is called, then run.
+     *
+     * The canvas edits through here fire-and-forget — `setCanvasItems` must
+     * not stutter mid-drag waiting on a disk write — so `Ctrl+Z` pressed
+     * straight after an arrow-nudge used to reach the editing history before
+     * the nudge did and take back the edit BEFORE it instead.
+     */
+    updateSlide(slide: Slide) {
+        return this.trackPendingWrite(this.applySlideUpdate(slide));
+    }
+
+    private async applySlideUpdate(slide: Slide) {
         const index = await this.getSlideIndex(slide);
         if (index === -1) {
             return;

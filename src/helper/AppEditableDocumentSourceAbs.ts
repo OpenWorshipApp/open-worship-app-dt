@@ -171,7 +171,16 @@ export default abstract class AppEditableDocumentSourceAbs<
      */
     private pendingWrite: Promise<void> = Promise.resolve();
 
-    private trackWrite<R>(writing: Promise<R>) {
+    /**
+     * Register an edit that is on its way, SYNCHRONOUSLY, at the moment it is
+     * started.
+     *
+     * It has to be at the start, not where the write finally lands: the canvas
+     * path reaches `setJsonData` only after two awaits (`getSlideIndex`, then
+     * `getSlides`), so an undo fired in the same breath found nothing pending
+     * and raced past it anyway.
+     */
+    trackPendingWrite<R>(writing: Promise<R>) {
         // Settled, not resolved: a failed write must not leave every later
         // undo waiting on a rejected promise. Wrapped, because a subclass's
         // history manager may answer synchronously.
@@ -193,7 +202,7 @@ export default abstract class AppEditableDocumentSourceAbs<
     async setJsonData(jsonData: T) {
         const Class = this.constructor as typeof AppEditableDocumentSourceAbs;
         const jsonString = Class.toJsonString(jsonData);
-        return this.trackWrite(
+        return this.trackPendingWrite(
             this.editingHistoryManager.addHistory(jsonString),
         );
     }

@@ -10,6 +10,9 @@ vi.mock('../server/appProvider', () => ({
 
 vi.mock('../app-modal/PrimitiveModalComp', () => ({
     default: ({ children }: { children: React.ReactNode }) => children,
+    // The popup registers its Enter/Escape under this layer explicitly — it
+    // renders the wrapper that claims it, so it sits above the provider.
+    POPUP_KEYBOARD_LAYER: 'popup',
 }));
 
 vi.mock('./HeaderAlertPopupComp', () => ({
