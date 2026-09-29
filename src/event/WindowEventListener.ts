@@ -5,9 +5,17 @@ import KeyboardEventListener from './KeyboardEventListener';
 
 export type AppWidgetType =
     | 'root'
+    // Claimed by `ModalComp` for as long as a modal is open. It used to be
+    // declared here and never fired by anything, so every `root` shortcut
+    // stayed live UNDER an open modal — measured 2026-09-28: `F6` pressed with
+    // the Bible Lookup open cleared a live screen, and the slide arrows stepped
+    // the projector from behind it.
     | 'bible-lookup'
     | 'slide-edit'
     | 'setting'
+    // A blocking popup — confirm / alert / input (`PrimitiveModalComp`). The
+    // question it is asking is the only thing the keyboard should answer.
+    | 'popup'
     | 'context-menu'
     // The app-wide annotation overlay (src/presenting-control). It claims a
     // layer for as long as the controller is OPEN, not just while a tool is

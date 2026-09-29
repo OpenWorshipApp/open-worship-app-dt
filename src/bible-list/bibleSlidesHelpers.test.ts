@@ -38,6 +38,7 @@ const h = vi.hoisted(() => {
         BibleCanvasItem,
         create: vi.fn(),
         getVerses: vi.fn(),
+        getBibleInfoIsRtl: vi.fn(),
         getAvailableFileName: vi.fn(),
         refresh: vi.fn(),
         toast: vi.fn(),
@@ -72,6 +73,7 @@ vi.mock('../helper/constants', () => ({
 }));
 vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
     getVerses: h.getVerses,
+    getBibleInfoIsRtl: h.getBibleInfoIsRtl,
 }));
 vi.mock('../helper/bible-helpers/bibleModelHelpers', () => ({
     BIBLE_KJV_KEY: 'KJV',
@@ -98,6 +100,7 @@ vi.mock('../slide-editor/canvas/canvasHelpers', () => ({
         fontSize: `${props.fontSize}px`,
         fontFamily: props.fontFamily,
     }),
+    toTextDirection: (isRtl: boolean) => (isRtl ? 'rtl' : undefined),
 }));
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
 vi.mock('../helper/errorHelpers', () => ({ handleError: h.error }));
@@ -143,6 +146,7 @@ beforeEach(() => {
     vi.clearAllMocks();
     h.directory.isDirPathValid = true;
     h.getVerses.mockResolvedValue({ 3: 'verse 3', 4: 'verse 4', 5: 'verse 5' });
+    h.getBibleInfoIsRtl.mockResolvedValue(false);
     h.getAvailableFileName.mockImplementation(async (_dir, name) => name);
     h.create.mockResolvedValue({ filePath: '/documents/new.ows' });
     Object.defineProperty(document, 'fonts', {
@@ -266,6 +270,38 @@ describe('Bible slide generation', () => {
                 expect(preview.fontSize).toBeCloseTo(32 * 0.85);
                 expect(preview.color).toBe('#18233066');
             }
+        }
+    });
+
+    test('follows each Bible own reading direction, and only its own', async () => {
+        // The Aramaic Peshitta reads right to left; the Khmer beside it does
+        // not, and one box must never take the other one direction.
+        h.getBibleInfoIsRtl.mockImplementation(async (bibleKey: string) => {
+            return bibleKey === 'Aramaic';
+        });
+        await generateBibleItemSlides(passage('Aramaic'), ['ពគប']);
+        const slides = h.create.mock.calls[0][2];
+        const [rtlTitle, ltrTitle] = slides[0].canvasItems.slice(1);
+        expect(rtlTitle.textDirection).toBe('rtl');
+        expect(ltrTitle.textDirection).toBeUndefined();
+        for (const slide of slides.slice(1)) {
+            const [rtlVerse, ltrVerse] = slide.canvasItems.slice(1, 3);
+            expect(rtlVerse).toMatchObject({
+                textDirection: 'rtl',
+                textHorizontalAlignment: 'right',
+            });
+            expect(ltrVerse.textDirection).toBeUndefined();
+            expect(ltrVerse.textHorizontalAlignment).toBe('left');
+            const previews = slide.canvasItems.slice(3);
+            if (previews.length === 0) {
+                continue;
+            }
+            expect(previews[0]).toMatchObject({
+                textDirection: 'rtl',
+                textHorizontalAlignment: 'right',
+            });
+            expect(previews[1].textDirection).toBeUndefined();
+            expect(previews[1].textHorizontalAlignment).toBe('left');
         }
     });
 

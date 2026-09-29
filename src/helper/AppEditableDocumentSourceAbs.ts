@@ -158,10 +158,44 @@ export default abstract class AppEditableDocumentSourceAbs<
         return JSON.stringify(jsonData, null, 2);
     }
 
+    /**
+     * The edits still on their way into the editing history.
+     *
+     * Several write paths are fire-and-forget by design — `setCanvasItems`
+     * calls the async `updateSlide` without awaiting it, because the canvas
+     * must not stutter mid-drag. An undo that arrives before that write lands
+     * therefore stepped over the very edit it was meant to take back: measured
+     * 2026-09-28, `Ctrl+Z` pressed straight after an arrow-nudge was a silent
+     * no-op, and the same press worked after a two-second pause. This is one
+     * promise, never a list, so it costs nothing to hold.
+     */
+    private pendingWrite: Promise<void> = Promise.resolve();
+
+    private trackWrite<R>(writing: Promise<R>) {
+        // Settled, not resolved: a failed write must not leave every later
+        // undo waiting on a rejected promise. Wrapped, because a subclass's
+        // history manager may answer synchronously.
+        const settled = Promise.resolve(writing).then(
+            () => {},
+            () => {},
+        );
+        this.pendingWrite = this.pendingWrite.then(() => {
+            return settled;
+        });
+        return writing;
+    }
+
+    /** Resolves once every edit made so far is in the editing history. */
+    async waitForPendingWrite() {
+        await this.pendingWrite;
+    }
+
     async setJsonData(jsonData: T) {
         const Class = this.constructor as typeof AppEditableDocumentSourceAbs;
         const jsonString = Class.toJsonString(jsonData);
-        return this.editingHistoryManager.addHistory(jsonString);
+        return this.trackWrite(
+            this.editingHistoryManager.addHistory(jsonString),
+        );
     }
 
     async getMetadata() {
@@ -254,16 +288,23 @@ export default abstract class AppEditableDocumentSourceAbs<
         await this.editingHistoryManager.deleteHistories();
     }
 
-    historyUndo() {
+    // All four wait for the in-flight edits first (see `pendingWrite`): undo,
+    // redo and save all mean "of everything done so far", and a discard that
+    // raced a write would leave the write landing on top of it.
+    async historyUndo() {
+        await this.waitForPendingWrite();
         return this.editingHistoryManager.undo();
     }
-    historyRedo() {
+    async historyRedo() {
+        await this.waitForPendingWrite();
         return this.editingHistoryManager.redo();
     }
-    historyDiscard() {
+    async historyDiscard() {
+        await this.waitForPendingWrite();
         return this.editingHistoryManager.discard();
     }
-    historySave(sanitizeData?: (data: string) => string | null) {
+    async historySave(sanitizeData?: (data: string) => string | null) {
+        await this.waitForPendingWrite();
         return this.editingHistoryManager.save(sanitizeData);
     }
 }

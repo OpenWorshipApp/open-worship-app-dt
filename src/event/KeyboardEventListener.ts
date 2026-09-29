@@ -1,4 +1,6 @@
 import {
+    createContext,
+    use,
     useMemo,
     type DependencyList,
     type KeyboardEvent as ReactKeyboardEvent,
@@ -350,12 +352,29 @@ function genEventNames(eventMappers: EventMapperType[], layer?: string) {
     });
     return eventNames;
 }
+/**
+ * Which layer the keys registered UNDER THIS SUBTREE belong to.
+ *
+ * The layer cannot be taken from the stack at mount for a subtree that is the
+ * very thing claiming it: the stack is pushed in an effect, and effects run
+ * child-first, so a modal's own keys would pin `root` and go dead the moment
+ * the modal's layer went up — the trap `miniScreenOverlayControlComps` already
+ * works around by passing its layer by hand at every call.
+ *
+ * React context is read during RENDER, parent first, so a provider above the
+ * subtree settles this for everything inside it with no call site to change.
+ * `null` (the default) keeps the historical behaviour for everything that is
+ * not inside a claiming subtree.
+ */
+export const KeyboardLayerContext = createContext<AppWidgetType | null>(null);
+
 export function useKeyboardRegistering(
     eventMappers: EventMapperType[],
     listener: KeyboardListenerType,
     deps: DependencyList,
     layer?: AppWidgetType,
 ) {
+    const contextLayer = use(KeyboardLayerContext);
     // Pin the layer at mount. Callers pass inline mapper arrays, so the memo
     // recomputes every render — if a background component re-renders while a
     // modal layer is on top, deriving the layer lazily would re-register its
@@ -365,7 +384,9 @@ export function useKeyboardRegistering(
     const mountLayer = useMemo(() => {
         return KeyboardEventListener.getLastLayer() ?? undefined;
     }, []);
-    const targetLayer = layer ?? mountLayer;
+    // An explicit layer wins (a host that owns one), then the subtree's own
+    // (a modal claiming the keyboard), then what was on top at mount.
+    const targetLayer = layer ?? contextLayer ?? mountLayer;
     const eventNames = useMemo(() => {
         const eventNames = genEventNames(eventMappers, targetLayer);
         return eventNames;

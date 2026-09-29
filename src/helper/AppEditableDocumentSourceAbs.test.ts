@@ -324,9 +324,12 @@ describe('AppEditableDocumentSourceAbs', () => {
         expect(history.deleteHistories).toHaveBeenCalledTimes(1);
         expect(history.discard).not.toHaveBeenCalled();
 
-        expect(documentSource.historyUndo()).toBe('undo');
-        expect(documentSource.historyRedo()).toBe('redo');
-        expect(documentSource.historyDiscard()).toBe('discard');
+        // All four await the edits still in flight first, so they answer with
+        // a promise now: an undo that raced an un-awaited write used to step
+        // over the very edit it was meant to take back.
+        await expect(documentSource.historyUndo()).resolves.toBe('undo');
+        await expect(documentSource.historyRedo()).resolves.toBe('redo');
+        await expect(documentSource.historyDiscard()).resolves.toBe('discard');
         await expect(documentSource.historySave()).resolves.toBe(true);
     });
 });

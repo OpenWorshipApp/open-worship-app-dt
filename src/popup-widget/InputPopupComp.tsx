@@ -2,7 +2,9 @@ import './popupWidget.scss';
 import './InputPopupComp.scss';
 
 import { useCallback } from 'react';
-import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
+import PrimitiveModalComp, {
+    POPUP_KEYBOARD_LAYER,
+} from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
 import { popupWidgetManager, type InputDataType } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
@@ -39,6 +41,10 @@ export default function InputPopupComp({
             }
         },
         [inputData],
+        // Explicitly, not from the context: this component RENDERS the
+        // wrapper that claims the layer, so it sits ABOVE the provider and
+        // would otherwise register on `root` -- silenced by its own popup.
+        POPUP_KEYBOARD_LAYER,
     );
     useKeyboardRegistering(
         [{ key: 'Enter' }],
@@ -48,6 +54,10 @@ export default function InputPopupComp({
             }
         },
         [inputData],
+        // Explicitly, not from the context: this component RENDERS the
+        // wrapper that claims the layer, so it sits ABOVE the provider and
+        // would otherwise register on `root` -- silenced by its own popup.
+        POPUP_KEYBOARD_LAYER,
     );
     return (
         <PrimitiveModalComp>

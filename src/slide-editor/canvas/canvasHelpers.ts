@@ -154,6 +154,13 @@ export const hAlignmentList = ['left', 'center', 'right'] as const;
 export type HAlignmentType = (typeof hAlignmentList)[number];
 export const vAlignmentList = ['start', 'center', 'end'] as const;
 export type VAlignmentType = (typeof vAlignmentList)[number];
+export const textDirectionList = ['ltr', 'rtl'] as const;
+export type TextDirectionType = (typeof textDirectionList)[number];
+// Only a right-to-left box says so: left-to-right is what every box already
+// does, and writing it out would put the field into every slide file.
+export function toTextDirection(isRtl: boolean) {
+    return isRtl ? ('rtl' as TextDirectionType) : undefined;
+}
 
 export function cleanupProps(props: AnyObjectType) {
     delete props.horizontalAlignment;
@@ -280,6 +287,11 @@ export type TextStylePropsType = {
     fontWeight: string | null;
     textHorizontalAlignment: HAlignmentType;
     textVerticalAlignment: VAlignmentType;
+    // Reading direction of the words in the box, taken from the Bible key's
+    // own locale (Aramaic, Hebrew, Arabic...). Absent on every item saved
+    // before it existed, and on every left-to-right one, so it stays out of
+    // the slide JSON unless it says something.
+    textDirection?: TextDirectionType;
 };
 
 export function genTextStyle(props: TextStylePropsType): CSSProperties {
@@ -296,6 +308,9 @@ export function genTextStyle(props: TextStylePropsType): CSSProperties {
         alignItems: props.textVerticalAlignment,
         justifyContent: props.textHorizontalAlignment,
         textAlign: props.textHorizontalAlignment,
+        // Left out rather than defaulted to 'ltr' so a box inside a
+        // right-to-left slide still inherits its parent.
+        direction: props.textDirection,
         padding: `${props.fontSize / 10}px`,
     };
 }
@@ -305,7 +320,9 @@ export function checkIsValidTextStyleProps(json: AnyObjectType) {
         typeof json.color === 'string' &&
         typeof json.fontSize === 'number' &&
         (json.fontFamily === null || typeof json.fontFamily === 'string') &&
-        (json.fontWeight === null || typeof json.fontWeight === 'string')
+        (json.fontWeight === null || typeof json.fontWeight === 'string') &&
+        (json.textDirection === undefined ||
+            textDirectionList.includes(json.textDirection))
     );
 }
 

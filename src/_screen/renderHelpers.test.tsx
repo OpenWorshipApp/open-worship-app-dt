@@ -28,6 +28,7 @@ vi.mock('../lang/langHelpers', () => ({
     DEFAULT_LOCALE: 'en-US',
     getLangDataAsync: getLangDataAsyncMock,
     tran: (value: string) => value,
+    checkIsRtl: (locale: string) => locale === 'arc',
 }));
 
 vi.mock('../helper/helpers', async () => {

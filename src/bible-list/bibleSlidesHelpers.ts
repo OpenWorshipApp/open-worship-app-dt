@@ -1,7 +1,10 @@
 import AppDocument from '../app-document-list/AppDocument';
 import Slide from '../app-document-list/Slide';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
-import { getVerses } from '../helper/bible-helpers/bibleInfoHelpers';
+import {
+    getBibleInfoIsRtl,
+    getVerses,
+} from '../helper/bible-helpers/bibleInfoHelpers';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import DirSource from '../helper/DirSource';
@@ -16,7 +19,10 @@ import CanvasItemBibleItem from '../slide-editor/canvas/CanvasItemBibleItem';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
 import type { CanvasItemBiblePropsType } from '../slide-editor/canvas/CanvasItemBibleItem';
 import type { CanvasItemTextPropsType } from '../slide-editor/canvas/CanvasItemText';
-import { genTextStyle } from '../slide-editor/canvas/canvasHelpers';
+import {
+    genTextStyle,
+    toTextDirection,
+} from '../slide-editor/canvas/canvasHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type BibleItem from './BibleItem';
 import { escapeHtmlText } from '../helper/sanitizeHelpers';
@@ -305,6 +311,14 @@ export async function generateBibleItemSlides(
         };
         const backgroundItem = genBackground(boxParams);
         titleSlide.canvasItems = [backgroundItem];
+        // A Bible's own locale says which way its script reads (Aramaic,
+        // Hebrew, Arabic...), and every box generated for that key follows it
+        // -- the verses, the reference above them and the next-verse line.
+        const textDirections = await Promise.all(
+            bibleKeys.map(async (bibleKey) => {
+                return toTextDirection(await getBibleInfoIsRtl(bibleKey));
+            }),
+        );
         const fontFamilies: string[] = [];
         for (const [index, bibleKey] of bibleKeys.entries()) {
             const titleBibleItem = bibleItem.clone();
@@ -317,6 +331,7 @@ export async function generateBibleItemSlides(
                 ),
                 fontFamily: (await getBibleFontFamily(bibleKey)) || 'Arial',
                 fontSize: readingFontSize * (112 / 88),
+                textDirection: textDirections[index],
             });
             fontFamilies.push(titleItem.props.fontFamily!);
             if (titleItem.props.fontFamily) {
@@ -355,6 +370,9 @@ export async function generateBibleItemSlides(
                     fontSize: readingFontSize,
                     isCompactTitle: true,
                     isLightTheme,
+                    textDirection: textDirections[index],
+                    textHorizontalAlignment:
+                        textDirections[index] === 'rtl' ? 'right' : 'left',
                     html: CanvasItemBibleItem.genHtml(
                         canvasItem.props.bibleRenderingList,
                         true,
@@ -389,7 +407,9 @@ export async function generateBibleItemSlides(
                         fontSize: readingFontSize * NEXT_VERSE_FONT_RATIO,
                         color: previewColor,
                         backgroundColor: '#00000000',
-                        textHorizontalAlignment: 'left',
+                        textDirection: textDirections[index],
+                        textHorizontalAlignment:
+                            textDirections[index] === 'rtl' ? 'right' : 'left',
                         textVerticalAlignment: 'end',
                         left: 0,
                         top: 0,

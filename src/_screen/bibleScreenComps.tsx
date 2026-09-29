@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import type { LanguageDataType, LocaleType } from '../lang/langHelpers';
+import { checkIsRtl } from '../lang/langHelpers';
 
 export type BibleRenderVerseType = {
     num: string;
@@ -24,6 +25,17 @@ export type LyricRenderedType = {
         text: string;
     }[];
 };
+
+// A column reads the way its own Bible does, whatever the rest of the screen
+// is doing: the table's stylesheet hardcodes `text-align: left`, so a
+// right-to-left Bible has to say so here or its lines come out ragged on the
+// wrong side of the column.
+function genDirectionStyle(locale: LocaleType) {
+    if (!checkIsRtl(locale)) {
+        return null;
+    }
+    return { dir: 'rtl', style: { textAlign: 'right' as const } };
+}
 
 function VerseTextElementComp({
     langData,
@@ -62,17 +74,20 @@ export function BibleBibleTableComp({
         });
     }, [bibleRenderingList]);
     const rendTableHeader = (
-        { langData, bibleKey, title }: BibleItemRenderingLangType,
+        { langData, bibleKey, title, locale }: BibleItemRenderingLangType,
         i: number,
     ) => {
+        const direction = genDirectionStyle(locale);
         return (
             <th
                 key={title}
                 className="header"
+                dir={direction?.dir}
                 style={{
                     fontFamily: langData.fontFamily,
                     height: '118px',
                     overflow: 'hidden',
+                    ...direction?.style,
                 }}
             >
                 <div
@@ -96,9 +111,14 @@ export function BibleBibleTableComp({
     const renderTrBody = (_: any, i: number) => {
         return (
             <tr key={i}>
-                {bibleRenderingList.map(({ langData, verses }, j) => {
+                {bibleRenderingList.map(({ langData, verses, locale }, j) => {
+                    const direction = genDirectionStyle(locale);
                     return (
-                        <td key={j}>
+                        <td
+                            key={j}
+                            dir={direction?.dir}
+                            style={direction?.style}
+                        >
                             <VerseTextElementComp
                                 langData={langData}
                                 verseInfo={verses[i]}
@@ -110,11 +130,12 @@ export function BibleBibleTableComp({
         );
     };
     const renderTdBody = (
-        { langData, verses }: BibleItemRenderingLangType,
+        { langData, verses, locale }: BibleItemRenderingLangType,
         i: number,
     ) => {
+        const direction = genDirectionStyle(locale);
         return (
-            <td key={i}>
+            <td key={i} dir={direction?.dir} style={direction?.style}>
                 {verses.map((verseInfo, j) => {
                     return (
                         <VerseTextElementComp

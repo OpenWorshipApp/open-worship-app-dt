@@ -2,7 +2,9 @@ import './popupWidget.scss';
 import './AlertPopupComp.scss';
 
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
-import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
+import PrimitiveModalComp, {
+    POPUP_KEYBOARD_LAYER,
+} from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
 import {
     popupWidgetManager,
@@ -30,6 +32,10 @@ export default function AlertPopupComp({
             handClose();
         },
         [alertData],
+        // Explicitly, not from the context: this component RENDERS the
+        // wrapper that claims the layer, so it sits ABOVE the provider and
+        // would otherwise register on `root` -- silenced by its own popup.
+        POPUP_KEYBOARD_LAYER,
     );
     return (
         <PrimitiveModalComp>
