@@ -90,12 +90,14 @@ export default function VirtualGridComp<T>({
 }>) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [containerWidth, setContainerWidth] = useState(0);
-    // The part of a row that is not its item: a card's header and margins.
-    // Only for the `getItemHeight` path -- the measured one needs no such
-    // split, since it measures the whole row.
-    const [measuredExtraHeight, setMeasuredExtraHeight] = useState<
-        number | null
-    >(null);
+    // The part of a row that is not its item: a card's header and margins,
+    // and the row it was read off. Only for the `getItemHeight` path -- the
+    // measured one needs no such split, since it measures the whole row.
+    const [measuredChrome, setMeasuredChrome] = useState<{
+        rowIndex: number;
+        extraHeight: number;
+    } | null>(null);
+    const measuredExtraHeight = measuredChrome?.extraHeight ?? null;
 
     useAppEffect(() => {
         const container = containerRef.current;
@@ -118,11 +120,6 @@ export default function VirtualGridComp<T>({
 
     const columns =
         columnCount ?? toColumnCount(containerWidth, itemWidth, itemGap);
-    // A new zoom level or a new column count means the old measurement is
-    // about a row that no longer exists.
-    useAppEffect(() => {
-        setMeasuredExtraHeight(null);
-    }, [estimateRowHeight, columns]);
 
     const rowCount = toRowCount(items.length, columns);
     const toKey = getItemKey ?? String;
@@ -223,18 +220,20 @@ export default function VirtualGridComp<T>({
             }
             const measure = () => {
                 const height = element.getBoundingClientRect().height;
-                if (height <= 0) {
+                const contentHeight = toContentHeightRef.current(rowIndex);
+                // Shorter than its own items: a card whose body is drawn by a
+                // root of its own (a slide's shadow root) has not drawn it
+                // yet, and the observer brings the real height when it does.
+                if (height <= 0 || height < contentHeight) {
                     return;
                 }
-                const extraHeight = Math.max(
-                    0,
-                    height - toContentHeightRef.current(rowIndex),
-                );
-                setMeasuredExtraHeight((previousHeight) => {
-                    return previousHeight !== null &&
-                        Math.abs(previousHeight - extraHeight) <= 1
-                        ? previousHeight
-                        : extraHeight;
+                const extraHeight = height - contentHeight;
+                setMeasuredChrome((previous) => {
+                    return previous !== null &&
+                        previous.rowIndex === rowIndex &&
+                        Math.abs(previous.extraHeight - extraHeight) <= 1
+                        ? previous
+                        : { rowIndex, extraHeight };
                 });
             };
             // On a timer as well as on the observer: a window that is not on
@@ -252,14 +251,19 @@ export default function VirtualGridComp<T>({
         [toContentHeightRef],
     );
 
-    // The chrome is measured once per layout, and only on the path that needs
-    // it: the ref is attached until a height is known, so scrolling does not
-    // re-observe a new first row every time.
+    // The chrome is measured only on the path that needs it, off ONE row: the
+    // first one drawn, which is then KEPT, so scrolling does not re-observe a
+    // new first row every time. It stays observed rather than read once: a
+    // slide card's body is sized inside its own shadow root, a render after
+    // this grid's, so right after a zoom the row still has the OLD cards'
+    // height -- read once, that left every row as tall as the previous zoom's
+    // (a gap of ~150px under each row of cards at the smallest zoom). The
+    // chrome does not change with the zoom or the column count, so there is
+    // nothing to reset when they do.
     const isMeasuringRows = getItemHeight === undefined;
-    const chromeMeasuringIndex =
-        !isMeasuringRows && measuredExtraHeight === null
-            ? rows[0]?.index
-            : undefined;
+    const chromeMeasuringIndex = isMeasuringRows
+        ? undefined
+        : (measuredChrome?.rowIndex ?? rows[0]?.index);
     // Every row is the SAME block of `columns` cells, centred as a whole, so a
     // half-empty last row still starts on the column its neighbours start on.
     // Centring each row's own items instead would shift a short last row left

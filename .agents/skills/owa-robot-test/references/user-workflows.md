@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-09-28f** (**W-46 — the Tip of the Day card is compact.** The card is 320x100 instead of 390x169: the title band is a quiet label row (no page name beside "Tip of the Day"), **Don't show again** moved into that row beside a red close mark, and **Show it / Next tip / All tips** are one small segmented group. In **All tips** the topic is a word leading each lesson's line rather than a bordered badge on a line of its own. Verified live on the dev presenter 2026-09-28.)
+**workflowsVersion: 2026-09-29** (**W-46 — the Tip of the Day card takes itself off after one minute, and says so while it is there.** A 3px bar along the card's bottom edge drains left to right over that minute; resting the mouse pointer on the card freezes the bar and the minute with it, and moving away carries on from where it stopped rather than granting a fresh minute. **Next tip** starts the minute again, **All tips** holds it while the list is open, and the card is still closed at once by **×**. Verified live on the dev Reader and Slide Editor 2026-09-29.)
+
+Previous: **workflowsVersion: 2026-09-28f** (**W-46 — the Tip of the Day card is compact.** The card is 320x100 instead of 390x169: the title band is a quiet label row (no page name beside "Tip of the Day"), **Don't show again** moved into that row beside a red close mark, and **Show it / Next tip / All tips** are one small segmented group. In **All tips** the topic is a word leading each lesson's line rather than a bordered badge on a line of its own. Verified live on the dev presenter 2026-09-28.)
 
 Previous: **workflowsVersion: 2026-09-28e** (**W-03 / W-31 — the previewer's Note panel now starts CLOSED.** A document or slide note is a thing few volunteers ever write, and the panel spent a seventh of the previewer on two empty boxes. It is reopened by the green **Note** strip under the slide previews, by View > Widgets > Note, or by Reset Widgets Size, and the Tips of the Day lesson _Write a note on a document or slide_ walks that. Documents that were already remembering it open are closed once on the next launch. Verified live on the dev presenter 2026-09-28.)
 
@@ -3221,7 +3223,12 @@ control without having to search the manual.
    front shows one **Tip of the Day** in the top-right corner — never at launch,
    when it would cover the controls you reach for while opening the service.
    Reloading or switching between Presenter and Reader does not restart those
-   five minutes. The card stays there until you choose an action. The tip
+   five minutes. The card then takes itself off after one minute: a thin bar
+   along its bottom edge drains over that minute, and resting the mouse
+   pointer on the card freezes the bar and the minute with it, so nothing
+   disappears while you are reading it. Moving away carries on from where the
+   bar stopped. **Next tip** starts the minute again, browsing **All tips**
+   holds it, and **×** closes the card at once. The tip
    belongs to that page only, and the first tip is chosen at random without
    repeating the last automatic tip shown for that page. **Help → Tips of the
    Day** opens one at once, and a tip opened that way stands in for that

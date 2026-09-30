@@ -28,7 +28,11 @@ vi.mock('../helper/textSelectionHelpers', () => ({
 
 import KeyboardEventListener from '../event/KeyboardEventListener';
 import WindowEventListener from '../event/WindowEventListener';
-import { contextControl, showAppContextMenu } from './appContextMenuHelpers';
+import {
+    contextControl,
+    setPositionMenu,
+    showAppContextMenu,
+} from './appContextMenuHelpers';
 
 /**
  * Stand in for `useAppContextMenuData`, which owns the real delegator: it is
@@ -119,5 +123,28 @@ describe('showAppContextMenu', () => {
         showAppContextMenu(new MouseEvent('contextmenu') as any, []);
         expect(seen).toHaveLength(0);
         expect(KeyboardEventListener.getLastLayer()).toBe('root');
+    });
+
+    test('positions an overflowing menu inward and honours an explicit height', () => {
+        const menu = document.createElement('div');
+        vi.spyOn(menu, 'getBoundingClientRect').mockReturnValue({
+            width: 300,
+            height: 250,
+        } as DOMRect);
+        const event = new MouseEvent('contextmenu', {
+            clientX: 900,
+            clientY: 700,
+            cancelable: true,
+        });
+        setPositionMenu(menu, event, {
+            maxHeigh: 120,
+            style: { color: 'red' },
+        });
+        expect(event.defaultPrevented).toBe(true);
+        expect(menu.style.right).toBe('100px');
+        expect(menu.style.bottom).toBe('100px');
+        expect(menu.style.maxWidth).toBe('210px');
+        expect(menu.style.maxHeight).toBe('120px');
+        expect(menu.style.color).toBe('red');
     });
 });

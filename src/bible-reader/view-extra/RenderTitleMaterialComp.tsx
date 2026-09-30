@@ -70,13 +70,8 @@ export function RenderTitleMaterialComp({
         },
     };
     return (
-        <div
-            className="bible-view-title-material d-flex text-nowrap w-100 h-100"
-            style={{
-                overflowX: 'auto',
-            }}
-        >
-            <div className="d-flex">
+        <div className="bible-view-title-material d-flex align-items-center text-nowrap">
+            <div className="bible-view-title-lead d-flex">
                 <div className="ms-1">
                     <ItemColorNoteComp item={colorNoteHandler} />
                 </div>
@@ -85,7 +80,7 @@ export function RenderTitleMaterialComp({
                 </div>
             </div>
             <div className="bible-view-title-content d-flex flex-fill">
-                <div className="d-flex ps-1">
+                <div className="bible-view-title-keys d-flex ps-1">
                     <div style={{ margin: 'auto' }}>
                         <BibleKeySelectionMiniComp
                             bibleKey={bibleItem.bibleKey}

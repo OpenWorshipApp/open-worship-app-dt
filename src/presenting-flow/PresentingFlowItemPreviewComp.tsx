@@ -14,7 +14,10 @@ import {
     genSlideHeightGetter,
     THUMBNAIL_EXTRA_HEIGHT,
     THUMBNAIL_EXTRA_WIDTH,
+    toVarySlideGridItemKey,
+    toVarySlideGridItems,
     toVarySlideKey,
+    type VarySlideGridItemType,
 } from '../app-document-presenter/items/varySlideGridHelpers';
 import { DATA_QUERY_KEY } from '../app-document-presenter/items/varyAppDocumentHelpers';
 import VirtualGridComp from '../virtual-list/VirtualGridComp';
@@ -380,6 +383,7 @@ function useScreenReachProps(presentingFlowItem: PresentingFlowItem) {
 function VarySlidePreviewComp({
     varyAppDocument,
     varySlide,
+    cardSlide,
     index,
     thumbnailWidth,
     presetScreenIds,
@@ -398,6 +402,10 @@ function VarySlidePreviewComp({
 }: Readonly<{
     varyAppDocument: VaryAppDocumentType;
     varySlide: VarySlideType;
+    // The card drawn, where it is not `varySlide` itself: a PPTX sub-slide,
+    // which a grid lays out in a cell of its own. Everything this card's run
+    // sheet keeps -- pins, parking, the cursor -- is still about `varySlide`.
+    cardSlide?: VarySlideType;
     index: number;
     thumbnailWidth: number;
     presetScreenIds: number[];
@@ -531,7 +539,10 @@ function VarySlidePreviewComp({
                 <VaryAppDocumentContext value={varyAppDocument}>
                     <VarySlideRenderWrapperComp
                         thumbSize={thumbnailWidth}
-                        varySlide={varySlide}
+                        varySlide={cardSlide ?? varySlide}
+                        ownerSlide={
+                            cardSlide === undefined ? undefined : varySlide
+                        }
                         index={index}
                     />
                 </VaryAppDocumentContext>
@@ -847,13 +858,21 @@ function PresentingFlowDocumentItemPreviewComp({
     const getSlideHeight = useMemo(() => {
         return genSlideHeightGetter(thumbnailWidth);
     }, [thumbnailWidth]);
+    const getGridItemHeight = useMemo(() => {
+        return (gridItem: VarySlideGridItemType) => {
+            return getSlideHeight(gridItem.varySlide);
+        };
+    }, [getSlideHeight]);
+    // A card per cell: a PPTX slide's sub-slides are cells of their own.
+    const gridItems = useMemo(() => {
+        return toVarySlideGridItems(data?.varySlides ?? []);
+    }, [data]);
     if (data === undefined) {
         return <LoadingComp />;
     }
     if (data === null) {
         return <div>{tran('Fail to read file data')}</div>;
     }
-    const { varySlides } = data;
     return (
         <div className="w-100" ref={containerRef}>
             {/* Only the rows on screen are mounted: every slide card carries a
@@ -864,15 +883,20 @@ function PresentingFlowDocumentItemPreviewComp({
                 cannot know before drawing them. */}
             <VirtualGridComp
                 isEnabled={!hasAnySlideCc}
-                items={varySlides}
-                getItemKey={toVarySlideKey}
-                renderItem={(varySlide, i) => {
+                items={gridItems}
+                getItemKey={toVarySlideGridItemKey}
+                renderItem={(gridItem) => {
+                    const varySlide = gridItem.ownerSlide;
+                    const isOwnCard = gridItem.varySlide === varySlide;
                     return (
                         <VarySlidePreviewComp
-                            key={toVarySlideKey(varySlide)}
+                            key={toVarySlideGridItemKey(gridItem)}
                             varyAppDocument={data.varyAppDocument}
                             varySlide={varySlide}
-                            index={i}
+                            cardSlide={
+                                isOwnCard ? undefined : gridItem.varySlide
+                            }
+                            index={gridItem.index}
                             thumbnailWidth={thumbnailWidth}
                             presentingFlowFilePath={presentingFlowItem.filePath}
                             itemKey={itemKey}
@@ -906,8 +930,9 @@ function PresentingFlowDocumentItemPreviewComp({
                                 index,
                                 slideId: varySlide.id,
                             }}
+                            // Drawn once, under the slide's own card.
                             ccItems={
-                                hasAnySlideCc
+                                hasAnySlideCc && isOwnCard
                                     ? presentingFlowItem.getSlideCcItems(
                                           varySlide.id,
                                       )
@@ -924,11 +949,11 @@ function PresentingFlowDocumentItemPreviewComp({
                     );
                 }}
                 itemWidth={thumbnailWidth + THUMBNAIL_EXTRA_WIDTH}
-                getItemHeight={getSlideHeight}
+                getItemHeight={getGridItemHeight}
                 estimateRowHeight={
-                    (varySlides.length === 0
+                    (gridItems.length === 0
                         ? 0
-                        : getSlideHeight(varySlides[0])) +
+                        : getGridItemHeight(gridItems[0])) +
                     THUMBNAIL_EXTRA_HEIGHT
                 }
                 rowClassName="d-flex"

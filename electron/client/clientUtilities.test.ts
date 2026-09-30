@@ -153,7 +153,13 @@ describe('fileUtils', () => {
         const selected = new File(['a'], 'selected.txt');
         const input = document.createElement('input');
         Object.defineProperty(input, 'files', { value: [selected] });
-        input.dispatchEvent(new Event('change', { bubbles: true }));
+        document.body.appendChild(input);
+        try {
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        } finally {
+            input.remove();
+        }
+        expect(Object.hasOwn(selected, 'appFilePath')).toBe(true);
         expect((selected as File & { appFilePath: string }).appFilePath).toBe(
             '/tmp/item.txt',
         );
@@ -165,6 +171,7 @@ describe('fileUtils', () => {
             value: { files: [dropped] },
         });
         document.dispatchEvent(dropEvent);
+        expect(Object.hasOwn(dropped, 'appFilePath')).toBe(true);
         expect((dropped as File & { appFilePath: string }).appFilePath).toBe(
             '/tmp/drop.txt',
         );
@@ -181,7 +188,12 @@ describe('fileUtils', () => {
         const selected = new File(['a'], 'memory.txt');
         const input = document.createElement('input');
         Object.defineProperty(input, 'files', { value: [selected] });
-        input.dispatchEvent(new Event('change', { bubbles: true }));
+        document.body.appendChild(input);
+        try {
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        } finally {
+            input.remove();
+        }
         document.dispatchEvent(new Event('change', { bubbles: true }));
         document.dispatchEvent(new Event('drop', { bubbles: true }));
 

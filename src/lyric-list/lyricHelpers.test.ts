@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, expect, test, vi } from 'vitest';
 
 // `lyricHelpers` pulls the whole open-lyric + FileSource + language stack in at
@@ -26,12 +28,24 @@ const mocks = vi.hoisted(() => {
     return {
         stage0: genStageClass(0),
         stage1: genStageClass(1),
+        stage2: genStageClass(2),
+        stage3: genStageClass(3),
+        stage4: genStageClass(4),
+        stage5: genStageClass(5),
         getContentMock: vi.fn(async () => ''),
         initAllLangCssMock: vi.fn(async (): Promise<any[]> => []),
+        addPluginMock: vi.fn(),
     };
 });
 
-vi.mock('open-lyric', () => ({ OpenLyric: class {} }));
+vi.mock('open-lyric', () => ({
+    OpenLyric: class {
+        addPlugin = mocks.addPluginMock;
+    },
+}));
+vi.mock('open-lyric-plugin-player', () => ({
+    OpenLyricPluginPlayer: class {},
+}));
 vi.mock('./Lyric', () => ({
     default: {
         getInstance: vi.fn(() => ({ getContent: mocks.getContentMock })),
@@ -39,6 +53,10 @@ vi.mock('./Lyric', () => ({
 }));
 vi.mock('./LyricAppDocumentStage0', () => ({ default: mocks.stage0 }));
 vi.mock('./LyricAppDocumentStage1', () => ({ default: mocks.stage1 }));
+vi.mock('./LyricAppDocumentStage2', () => ({ default: mocks.stage2 }));
+vi.mock('./LyricAppDocumentStage3', () => ({ default: mocks.stage3 }));
+vi.mock('./LyricAppDocumentStage4', () => ({ default: mocks.stage4 }));
+vi.mock('./LyricAppDocumentStage5', () => ({ default: mocks.stage5 }));
 vi.mock('../lang/langHelpers', () => ({
     genOpenLyricFontFaces: vi.fn(),
     initAllLangCss: mocks.initAllLangCssMock,
@@ -62,6 +80,7 @@ import {
     getLyricAppDocumentStageByStage,
     initOpenLyric,
 } from './lyricHelpers';
+import { OpenLyricPluginPlayer } from 'open-lyric-plugin-player';
 
 const FILE_PATH = '/songs/aa3.owl';
 
@@ -100,14 +119,20 @@ describe('getLyricAppDocumentStageByStage', () => {
         expect(first).toBe(second);
     });
 
-    // The regression, and the reason the clamp went. A stage past the layout
-    // list used to fall through to `LyricAppDocumentStage1` while still echoing
-    // back the stage that was ASKED for, so the caller believed it held a
-    // distinct stage-2 document when it held stage 1's own cached instance —
-    // the Stage Previewer trusted that number for its chip label and rendered a
-    // byte-identical second pane. A stage past the list now keeps its number,
-    // borrows the last layout, and gets an instance of its own.
-    test('a stage past the layout list keeps its number and its own instance', () => {
+    // Stages 2 and 3 are the singers' look-ahead layouts (current section plus
+    // the next one or two), each a layout of its own.
+    test('stages 4 and 5 render with their own layouts', () => {
+        [4, 5].forEach((stage) => {
+            const [resolvedStage, document] = getLyricAppDocumentStageByStage(
+                FILE_PATH,
+                stage,
+            );
+            expect(resolvedStage).toBe(stage);
+            expect((document as any).layoutStage).toBe(stage);
+        });
+    });
+
+    test('stages 2 and 3 render with their own look-ahead layouts', () => {
         const [stage2, document2] = getLyricAppDocumentStageByStage(
             FILE_PATH,
             2,
@@ -116,17 +141,41 @@ describe('getLyricAppDocumentStageByStage', () => {
             FILE_PATH,
             3,
         );
+        expect(stage2).toBe(2);
+        expect(stage3).toBe(3);
+        expect((document2 as any).layoutStage).toBe(2);
+        expect((document3 as any).layoutStage).toBe(3);
+    });
+
+    // The regression, and the reason the clamp went. A stage past the layout
+    // list used to fall through to `LyricAppDocumentStage1` while still echoing
+    // back the stage that was ASKED for, so the caller believed it held a
+    // distinct document when it held stage 1's own cached instance — the Stage
+    // Previewer trusted that number for its chip label and rendered a
+    // byte-identical second pane. A stage past the list now keeps its number
+    // and gets an instance of its own. It borrows the STAGE-1 layout, not the
+    // last one: a screen set to `St: 6` looked like stage 1 before the
+    // look-ahead layouts existed and must not change under a volunteer.
+    test('a stage past the layout list keeps its number and its own instance', () => {
+        const [stage6, document6] = getLyricAppDocumentStageByStage(
+            FILE_PATH,
+            6,
+        );
+        const [stage7, document7] = getLyricAppDocumentStageByStage(
+            FILE_PATH,
+            7,
+        );
         const [, stage1Document] = getLyricAppDocumentStageByStage(
             FILE_PATH,
             1,
         );
-        expect(stage2).toBe(2);
-        expect(stage3).toBe(3);
-        expect(document2).not.toBe(stage1Document);
-        expect(document2).not.toBe(document3);
+        expect(stage6).toBe(6);
+        expect(stage7).toBe(7);
+        expect(document6).not.toBe(stage1Document);
+        expect(document6).not.toBe(document7);
         // Borrowed layout, own number.
-        expect((document2 as any).layoutStage).toBe(1);
-        expect(document2.stage).toBe(2);
+        expect((document6 as any).layoutStage).toBe(1);
+        expect(document6.stage).toBe(6);
     });
 
     test('a negative or non-finite stage clamps to the base stage', () => {
@@ -152,5 +201,9 @@ describe('initOpenLyric', () => {
         expect(mocks.initAllLangCssMock).toHaveBeenCalledTimes(1);
         expect(isRegistered).toBe(true);
         expect(openLyricPreviewer).toBeDefined();
+        expect(mocks.addPluginMock).toHaveBeenCalledExactlyOnceWith(
+            'player',
+            expect.any(OpenLyricPluginPlayer),
+        );
     });
 });

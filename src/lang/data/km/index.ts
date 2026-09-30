@@ -2026,6 +2026,7 @@ const dictionary = {
     'Applies to the Presenter and Bible Reader on the next app launch.':
         'អនុវត្តចំពោះទំព័រអ្នកបង្ហាញ និងទំព័រអ្នកអានព្រះគម្ពីរ នៅពេលបើកកម្មវិធីលើកក្រោយ។',
     'Starting walkthrough…': 'កំពុងចាប់ផ្តើមការណែនាំ…',
+    'This tip closes by itself': 'គន្លឹះនេះនឹងបិទដោយខ្លួនឯង',
     'Could not start this walkthrough.': 'មិនអាចចាប់ផ្តើមការណែនាំនេះបានទេ។',
     'File menu': 'ម៉ឺនុយ ឯកសារ',
     'Edit menu': 'ម៉ឺនុយ កែសម្រួល',

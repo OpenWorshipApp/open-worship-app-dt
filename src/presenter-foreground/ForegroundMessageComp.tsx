@@ -98,10 +98,10 @@ function genOwnSettingNames(suffix: string) {
  * file -- is the Default session's, which is where the controls for it are.
  */
 const MESSAGE_ID_REGEX = /^message-(?:\d+|all)(?:-(.+))?$/;
-function toMessageSessionId(id: string) {
+export function toMessageSessionId(id: string) {
     return MESSAGE_ID_REGEX.exec(id)?.[1] ?? '';
 }
-function toMessageAllId(suffix: string) {
+export function toMessageAllId(suffix: string) {
     return `${MESSAGE_ALL_ID}${suffix}`;
 }
 const DEFAULT_INTERVAL_SECOND = 8;
@@ -114,12 +114,12 @@ const MESSAGE_SEPARATOR = '\n\n';
 const BLANK_LINE_REGEX = /\n\s*\n/;
 const TRAILING_WS_REGEX = /\s+$/;
 
-type MessageEditorType = {
+export type MessageEditorType = {
     id: string;
     text: string;
 };
 
-function toStoredText(messageList: MessageEditorType[]) {
+export function toStoredText(messageList: MessageEditorType[]) {
     const storedText = messageList
         .map((message) => {
             return message.text;
@@ -139,7 +139,7 @@ function toStoredText(messageList: MessageEditorType[]) {
  * that has just been added has no text yet, and it has to stay on screen long
  * enough to be typed into. Only a completely empty session has no editors.
  */
-function toMessageList(
+export function toMessageList(
     storedText: string,
     suffix: string,
 ): MessageEditorType[] {
@@ -161,7 +161,7 @@ function toMessageList(
 }
 
 /** The lines ONE editor puts on the screen. Trailing blanks are dropped. */
-function toLineList(text: string) {
+export function toLineList(text: string) {
     return text.split('\n').filter((line, index, lines) => {
         return line.trim() !== '' || index < lines.length - 1;
     });
@@ -226,7 +226,7 @@ function withStackOffset(
  * `marginTop` away -- so touching any control while two messages were up
  * dropped them back on top of each other.
  */
-function genStackedMessageDataList(
+export function genStackedMessageDataList(
     messageList: MessageEditorType[],
     shownIdList: string[],
     extraStyle: CSSProperties,
@@ -261,7 +261,7 @@ function genStackedMessageDataList(
     return dataList;
 }
 
-function checkIsShowingId(
+export function checkIsShowingId(
     showingScreenIdDataList: [number, ForegroundMessageDataType][],
     id: string,
 ) {

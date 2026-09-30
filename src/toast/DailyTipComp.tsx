@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 
 import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { askToEnableAI } from '../helper/ai/aiEnableHelpers';
@@ -11,6 +12,7 @@ import {
 import appProvider from '../server/appProvider';
 import { checkIsMainWindow } from '../server/appHelpers';
 import {
+    DAILY_TIP_AUTO_CLOSE_MS,
     getDailyTipSessionKey,
     getDailyTipPageLabel,
     disableDailyTips,
@@ -54,6 +56,7 @@ export default function DailyTipComp() {
     const [tipIndex, setTipIndex] = useState<number | null>(null);
     const [isStarting, setIsStarting] = useState(false);
     const [isBrowsing, setIsBrowsing] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const tip = tipIndex === null ? null : (tips[tipIndex] ?? null);
@@ -177,6 +180,44 @@ export default function DailyTipComp() {
         }
     }, [page, tip]);
 
+    const handleHovering = useCallback(() => setIsHovered(true), []);
+    const handleUnhovering = useCallback(() => setIsHovered(false), []);
+    const closeTip = useCallback(() => {
+        setIsBrowsing(false);
+        // A card closed from under the pointer -- Show it, or the timer
+        // itself -- never gets its `mouseleave`, so the next one would open
+        // already held.
+        setIsHovered(false);
+        setTipIndex(null);
+    }, []);
+
+    // A minute is the card's whole life. The pointer resting on it holds that
+    // minute where it is, and so does browsing the list or starting a
+    // walkthrough -- the bar and this timer are held by the SAME flag, so what
+    // the bar shows is always what is left. The remaining time is carried
+    // across a pause rather than restarted: a hover must not buy a new minute.
+    // Focus is deliberately not a second hold: a click leaves its own button
+    // focused, and the card would then sit there for good.
+    const isCountdownPaused = isHovered || isStarting;
+    const remainingRef = useRef(DAILY_TIP_AUTO_CLOSE_MS);
+    useAppEffect(() => {
+        remainingRef.current = DAILY_TIP_AUTO_CLOSE_MS;
+    }, [isBrowsing, tip]);
+    useAppEffect(() => {
+        if (tip === null || isBrowsing || isCountdownPaused) {
+            return;
+        }
+        const startedAt = Date.now();
+        const timeoutId = setTimeout(closeTip, remainingRef.current);
+        return () => {
+            clearTimeout(timeoutId);
+            remainingRef.current = Math.max(
+                0,
+                remainingRef.current - (Date.now() - startedAt),
+            );
+        };
+    }, [closeTip, isBrowsing, isCountdownPaused, tip]);
+
     const handleNext = useCallback(() => {
         setErrorMessage('');
         setIsBrowsing(false);
@@ -186,9 +227,8 @@ export default function DailyTipComp() {
     }, [tips.length]);
     const handleDisable = useCallback(() => {
         disableDailyTips();
-        setIsBrowsing(false);
-        setTipIndex(null);
-    }, []);
+        closeTip();
+    }, [closeTip]);
     const handleShow = useCallback(async () => {
         if (page === null || tip === null || isStarting) {
             return;
@@ -207,13 +247,13 @@ export default function DailyTipComp() {
                 callTool,
                 globalThis.location.href,
             );
-            setTipIndex(null);
+            closeTip();
         } catch (_error) {
             setErrorMessage(tran('Could not start this walkthrough.'));
         } finally {
             setIsStarting(false);
         }
-    }, [isStarting, page, tip]);
+    }, [closeTip, isStarting, page, tip]);
 
     if (page === null || tip === null) {
         return null;
@@ -224,6 +264,8 @@ export default function DailyTipComp() {
             role="status"
             aria-live="polite"
             aria-atomic="true"
+            onMouseEnter={handleHovering}
+            onMouseLeave={handleUnhovering}
         >
             <div className="toast-header">
                 <i
@@ -263,10 +305,7 @@ export default function DailyTipComp() {
                     type="button"
                     className="btn-close"
                     aria-label={tran('Close')}
-                    onClick={() => {
-                        setIsBrowsing(false);
-                        setTipIndex(null);
-                    }}
+                    onClick={closeTip}
                 />
             </div>
             <div className="toast-body app-selectable-text">
@@ -413,6 +452,34 @@ export default function DailyTipComp() {
                     </>
                 )}
             </div>
+            {/*
+             * The only clock on the card. It is a `transform` on one 3px rule
+             * rather than a width or a number counting down: a repainting
+             * toast costs frames on the machines this app is built for, and a
+             * per-second tick would re-render the card sixty times over.
+             * Keyed by the tip so Next tip starts the minute again.
+             */}
+            {isBrowsing ? null : (
+                <div
+                    className="app-daily-tip-countdown"
+                    title={tran('This tip closes by itself')}
+                    style={
+                        {
+                            // One source for the minute: the stylesheet reads
+                            // the same constant the timer counts.
+                            '--app-daily-tip-countdown-time': `${DAILY_TIP_AUTO_CLOSE_MS}ms`,
+                        } as CSSProperties
+                    }
+                >
+                    <div
+                        key={tip.id}
+                        className={
+                            'app-daily-tip-countdown-bar' +
+                            (isCountdownPaused ? ' app-paused' : '')
+                        }
+                    />
+                </div>
+            )}
         </div>
     );
 }

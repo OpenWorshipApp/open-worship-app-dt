@@ -522,5 +522,11 @@ export function getStageAccentColor(stage: number) {
  * Stage** menu so the two cannot drift: there is no ceiling on a stage number,
  * so a picker is a shortlist plus a way past it, and a volunteer who learns one
  * menu has learned the other.
+ *
+ * Six so the shortlist is every stage with a LAYOUT of its own — 0 to 5, see
+ * `LYRIC_APP_DOCUMENT_STAGE_CLASSES` in `lyricHelpers` (not imported: this
+ * module is on the screen's startup path, that one pulls in open-lyric). A
+ * stage past them only renders stage 1 again under its own style, so it can
+ * stay behind Increment. Raise this when a layout is added.
  */
-export const STAGE_NUMBER_CHOICE_COUNT = 5;
+export const STAGE_NUMBER_CHOICE_COUNT = 6;

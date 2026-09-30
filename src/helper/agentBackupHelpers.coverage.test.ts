@@ -7,7 +7,18 @@ const { state, mocks } = vi.hoisted(() => ({
         listed: [] as string[],
         mimeFiles: [] as string[],
     },
-    mocks: { handleError: vi.fn() },
+    mocks: {
+        handleError: vi.fn(),
+        fsCreateDir: vi.fn(),
+        fsDeleteFile: vi.fn(),
+        fsWriteFile: vi.fn(),
+        trashAllMaterialFiles: vi.fn(),
+        renameAllMaterialFiles: vi.fn(),
+        deleteMetaDataFile: vi.fn(),
+        moveFilePath: vi.fn(),
+        preDelete: vi.fn(),
+        fireUpdateEvent: vi.fn(),
+    },
 }));
 
 vi.mock('./constants', () => ({
@@ -17,15 +28,12 @@ vi.mock('./errorHelpers', () => ({ handleError: mocks.handleError }));
 vi.mock('../server/fileHelpers', () => ({
     fsCheckDirExist: async (path: string) => state.existing.has(path),
     fsCheckFileExist: async (path: string) => state.existing.has(path),
-    fsCreateDir: vi.fn(),
-    fsDeleteFile: vi.fn(),
+    fsCreateDir: mocks.fsCreateDir,
+    fsDeleteFile: mocks.fsDeleteFile,
     fsListFiles: async () => state.listed,
     fsListFilesWithMimetype: async () => state.mimeFiles,
     fsReadFile: async (path: string) => state.texts.get(path) ?? '',
-    fsWriteFile: vi.fn(async (path: string, text: string) => {
-        state.existing.add(path);
-        state.texts.set(path, text);
-    }),
+    fsWriteFile: mocks.fsWriteFile,
     pathJoin: (...parts: string[]) => {
         const joined = parts.join('/').replace(/\/{2,}/g, '/');
         return joined.replace(/\/[^/]+\/\.\.\//g, '/');
@@ -38,8 +46,34 @@ vi.mock('./FileSource', () => ({
     default: {
         getInstance: (path: string) => ({
             name: path.split('/').at(-1)?.split('.')[0],
+            trash: async () => state.existing.delete(path),
+            renameTo: async (newName: string) => {
+                const renamedPath = `${path.slice(0, path.lastIndexOf('/') + 1)}${newName}${path.slice(path.lastIndexOf('.'))}`;
+                state.existing.delete(path);
+                state.existing.add(renamedPath);
+                return {
+                    filePath: renamedPath,
+                    fireUpdateEvent: mocks.fireUpdateEvent,
+                };
+            },
+            writeFileData: async (text: string) => {
+                state.existing.add(path);
+                state.texts.set(path, text);
+                return true;
+            },
+            fireUpdateEvent: mocks.fireUpdateEvent,
         }),
     },
+}));
+vi.mock('../server/appHelpers', () => ({
+    trashAllMaterialFiles: mocks.trashAllMaterialFiles,
+    renameAllMaterialFiles: mocks.renameAllMaterialFiles,
+}));
+vi.mock('../others/AttachBackgroundManager', () => ({
+    attachBackgroundManager: { deleteMetaDataFile: mocks.deleteMetaDataFile },
+}));
+vi.mock('../editing-manager/EditingHistoryManager', () => ({
+    default: { moveFilePath: mocks.moveFilePath },
 }));
 
 import {
@@ -51,8 +85,12 @@ import {
     handleAgentUndoRequest,
     listAgentBackups,
     listAgentFiles,
+    renameAgentFile,
+    runWithAgentBackup,
+    saveAgentBackup,
     snapshotAgentFile,
     snapshotAgentSidecars,
+    trashAgentFile,
     toAgentFilePath,
     undoAgentBackup,
 } from './agentBackupHelpers';
@@ -63,6 +101,10 @@ beforeEach(() => {
     state.texts.clear();
     state.listed = [];
     state.mimeFiles = [];
+    mocks.fsWriteFile.mockImplementation(async (path: string, text: string) => {
+        state.existing.add(path);
+        state.texts.set(path, text);
+    });
 });
 
 describe('agent backup public contracts', () => {
@@ -178,5 +220,83 @@ describe('agent backup public contracts', () => {
         await expect(
             handleAgentUndoRequest({ action: 'undo', id: '   ' }),
         ).resolves.toMatchObject({ isError: true });
+    });
+
+    test('persists data before visible metadata and creates the backup directory', async () => {
+        const meta = await saveAgentBackup('Changed a song', [
+            { type: 'file', filePath: '/songs/One.owl', text: 'old song' },
+        ]);
+
+        expect(mocks.fsCreateDir).toHaveBeenCalledWith('/data/agent-backups');
+        expect(mocks.fsWriteFile).toHaveBeenCalledTimes(2);
+        const [dataPath] = mocks.fsWriteFile.mock.calls[0];
+        const [metaPath] = mocks.fsWriteFile.mock.calls[1];
+        expect(dataPath).toContain('.data.json');
+        expect(metaPath).toContain('.meta.json');
+        expect(meta.summary).toBe('Changed a song');
+        expect(meta.filePaths).toEqual(['/songs/One.owl']);
+        expect(JSON.parse(state.texts.get(dataPath) ?? '')).toMatchObject({
+            id: meta.id,
+            restores: [{ filePath: '/songs/One.owl', text: 'old song' }],
+        });
+    });
+
+    test('does not run a change when persisting its backup fails', async () => {
+        mocks.fsWriteFile.mockRejectedValueOnce(new Error('disk full'));
+        const change = vi.fn(async () => 'changed');
+
+        await expect(runWithAgentBackup('Change', [], change)).rejects.toThrow(
+            'Nothing was changed',
+        );
+        expect(change).not.toHaveBeenCalled();
+    });
+
+    test('marks a saved backup unfinished when its following change fails', async () => {
+        const change = vi.fn(async () => {
+            throw new Error('write failed');
+        });
+
+        await expect(runWithAgentBackup('Change', [], change)).rejects.toThrow(
+            'write failed',
+        );
+        const metaWrite = mocks.fsWriteFile.mock.calls.at(-1);
+        expect(metaWrite?.[0]).toContain('.meta.json');
+        expect(JSON.parse(metaWrite?.[1] ?? '')).toHaveProperty('failedAt');
+    });
+
+    test('moves a file to trash before cleaning its material sidecars', async () => {
+        state.existing.add('/songs/One.owl');
+        await trashAgentFile('/songs/One.owl');
+
+        expect(mocks.trashAllMaterialFiles).toHaveBeenCalledOnce();
+        expect(mocks.deleteMetaDataFile).toHaveBeenCalledWith('/songs/One.owl');
+    });
+
+    test('refuses a delete that the OS trash leaves in place', async () => {
+        state.existing.add('/songs/One.owl');
+        const fileSource = await import('./FileSource');
+        vi.spyOn(fileSource.default, 'getInstance').mockReturnValueOnce({
+            name: 'One',
+            trash: vi.fn(),
+        } as any);
+
+        await expect(trashAgentFile('/songs/One.owl')).rejects.toThrow(
+            'could not be moved to the trash',
+        );
+        expect(mocks.trashAllMaterialFiles).not.toHaveBeenCalled();
+    });
+
+    test('renames a document history and material files before announcing an update', async () => {
+        state.existing.add('/songs/One.owl');
+        await expect(
+            renameAgentFile('/songs/One.owl', 'Two', 'lyric'),
+        ).resolves.toBe('/songs/Two.owl');
+
+        expect(mocks.moveFilePath).toHaveBeenCalledWith(
+            '/songs/One.owl',
+            '/songs/Two.owl',
+        );
+        expect(mocks.renameAllMaterialFiles).toHaveBeenCalledOnce();
+        expect(mocks.fireUpdateEvent).toHaveBeenCalledOnce();
     });
 });

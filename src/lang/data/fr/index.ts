@@ -2079,6 +2079,7 @@ const dictionary = {
     'Applies to the Presenter and Bible Reader on the next app launch.':
         "S'applique au Présentateur et au Lecteur biblique au prochain démarrage de l'application.",
     'Starting walkthrough…': 'Démarrage du guide…',
+    'This tip closes by itself': "L'astuce se ferme toute seule",
     'Could not start this walkthrough.': 'Impossible de démarrer ce guide.',
     'File menu': 'Menu Fichier',
     'Edit menu': 'Menu Édition',

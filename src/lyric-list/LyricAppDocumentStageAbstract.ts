@@ -72,11 +72,11 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
     /**
      * The cached document for ONE stage number, whichever layout renders it.
      *
-     * There are two layouts and no ceiling on stage numbers: stage 0 is the
-     * plain one, every stage from 1 up is rendered by
+     * There are a few layouts and no ceiling on stage numbers: every stage
+     * past `lyricHelpers`' layout list is rendered by
      * `LyricAppDocumentStage1`. So the layout class can no longer BE the
      * identity — a `getInstance(filePath)` keyed on the class alone handed
-     * stage 2 and stage 3 the one stage-1 instance, and a second pane rendered
+     * stage 4 and stage 5 the one stage-1 instance, and a second pane rendered
      * a byte-identical clone of the first under a label claiming otherwise.
      * The stage goes into the cache key instead, and is STAMPED on the new
      * instance: `stage` is a class field (`LyricAppDocumentStage1` declares

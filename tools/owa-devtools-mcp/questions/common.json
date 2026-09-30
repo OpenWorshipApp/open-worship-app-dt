@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-09-28",
+    "updated": "2026-09-29",
     "sections": [
         {
             "id": "panels",
@@ -474,6 +474,27 @@
                     "resources": {
                         "recipe": "W-46",
                         "find": "All tips"
+                    }
+                },
+                {
+                    "id": "tip-of-the-day-disappeared",
+                    "text": "Why did the Tip of the Day disappear on its own?",
+                    "kind": "why",
+                    "keywords": [
+                        "tip disappeared",
+                        "tip closed by itself",
+                        "tip went away",
+                        "tip vanished",
+                        "how long does the tip stay",
+                        "countdown",
+                        "progress bar",
+                        "one minute",
+                        "keep the tip open",
+                        "pause the tip"
+                    ],
+                    "resources": {
+                        "recipe": "W-46",
+                        "find": "Tip of the Day"
                     }
                 },
                 {

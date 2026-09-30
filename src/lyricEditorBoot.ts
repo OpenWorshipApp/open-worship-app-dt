@@ -5,6 +5,7 @@ import {
     OpenLyricDashboard,
     EditorOpenLyricPlugin,
 } from 'open-lyric';
+import { OpenLyricPluginPlayer } from 'open-lyric-plugin-player';
 
 import { dirSourceSettingNames } from './helper/constants.ts';
 import DirSource from './helper/DirSource.ts';
@@ -68,6 +69,9 @@ export function getDashboardInstance() {
 
     const openLyric = new OpenLyric();
     dashboard.openLyric = openLyric;
+
+    const openLyricPlayer = new OpenLyricPluginPlayer();
+    openLyric.addPlugin('player', openLyricPlayer);
 
     const openLyricMarkdownManager = new OpenLyricMarkdownManager();
     dashboard.openLyricMarkdownManager = openLyricMarkdownManager;

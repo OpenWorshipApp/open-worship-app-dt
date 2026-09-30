@@ -248,12 +248,14 @@ describe('getSystemFontListMap', () => {
         expect(file).toMatch(
             /WindowsPowerShell[\\/]v1\.0[\\/]powershell\.exe$/i,
         );
-        expect(args.slice(0, 3)).toEqual([
+        expect(args.slice(0, 5)).toEqual([
             '-NoProfile',
             '-NonInteractive',
+            '-WindowStyle',
+            'Hidden',
             '-EncodedCommand',
         ]);
-        const script = Buffer.from(args[3], 'base64').toString('utf16le');
+        const script = Buffer.from(args[5], 'base64').toString('utf16le');
         // The weights must come off real faces: `FamilyTypefaces` hands out
         // WPF's simulated bold too, which gave every one-weight family a
         // `700` it does not ship.

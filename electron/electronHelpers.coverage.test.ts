@@ -303,6 +303,116 @@ describe('electronHelpers coverage', () => {
         expect(selfWin.focus).toHaveBeenCalledTimes(1);
     });
 
+    test.each([false, true])(
+        'reuses the editor for the same document at another slide (minimized: %s)',
+        (isMinimized) => {
+            const base = 'https://localhost:3000/appDocumentEditor.html';
+            const oldUrl = `${base}?file=sermon.ows&id=1&uuid=old`;
+            const nextUrl = `${base}?uuid=new&id=4&file=sermon.ows`;
+            const closedEditor = createWindowAt(
+                oldUrl,
+                { x: 10, y: 20 },
+                {
+                    isDestroyed: vi.fn(() => true),
+                },
+            );
+            const otherEditor = createWindowAt(`${base}?file=other.ows&id=1`, {
+                x: 20,
+                y: 30,
+            });
+            const editor = createWindowAt(
+                oldUrl,
+                { x: 30, y: 40 },
+                {
+                    isMinimized: vi.fn(() => isMinimized),
+                },
+            );
+            const parent = createMockBrowserWindow();
+            electronMockState.browserWindows.push(
+                closedEditor,
+                otherEditor,
+                editor,
+                parent,
+            );
+            guardBrowsing(parent as any, { preload: '/tmp/preload.js' } as any);
+            const open =
+                parent.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+            expect(
+                open({
+                    url: nextUrl,
+                    frameName: `${POPUP_FRAME_NAME_PREFIX}_editor`,
+                    features: 'popup',
+                }),
+            ).toEqual({ action: 'deny' });
+            expect(editor.webContents.loadURL).toHaveBeenCalledExactlyOnceWith(
+                nextUrl,
+            );
+            expect(editor.focus).toHaveBeenCalledOnce();
+            expect(editor.restore).toHaveBeenCalledTimes(isMinimized ? 1 : 0);
+            for (const untouched of [closedEditor, otherEditor, parent]) {
+                expect(untouched.webContents.loadURL).not.toHaveBeenCalled();
+                expect(untouched.focus).not.toHaveBeenCalled();
+            }
+        },
+    );
+
+    test('opens a new editor when only a different document is open', () => {
+        const base = 'https://localhost:3000/appDocumentEditor.html';
+        const otherEditor = createWindowAt(`${base}?file=other.ows&id=1`, {
+            x: 0,
+            y: 0,
+        });
+        const parent = createMockBrowserWindow();
+        electronMockState.browserWindows.push(otherEditor, parent);
+        guardBrowsing(parent as any, { preload: '/tmp/preload.js' } as any);
+        const open = parent.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        expect(
+            open({
+                url: `${base}?file=sermon.ows&id=4`,
+                frameName: `${POPUP_FRAME_NAME_PREFIX}_editor`,
+                features: 'popup',
+            }).action,
+        ).toBe('allow');
+        expect(otherEditor.webContents.loadURL).not.toHaveBeenCalled();
+        expect(otherEditor.focus).not.toHaveBeenCalled();
+    });
+
+    test('cascades a new group member while preserving the remembered popup size', () => {
+        vi.useFakeTimers();
+        settingManagerMock.getPopupWinBounds.mockReturnValue({
+            x: 1400,
+            y: 100,
+            width: 460,
+            height: 640,
+            isMaximized: false,
+        });
+        const group = createWindowAt(
+            'https://localhost:3000/about.html?uuid=one',
+            { x: 100, y: 200 },
+        );
+        const parent = createMockBrowserWindow();
+        electronMockState.browserWindows.push(group, parent);
+        guardBrowsing(parent as any, { preload: '/tmp/preload.js' } as any);
+        const open = parent.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        const response = open({
+            url: 'https://localhost:3000/about.html?uuid=two',
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_about`,
+            features: 'popup',
+        });
+        expect(response.action).toBe('allow');
+        expect(response.overrideBrowserWindowOptions).toMatchObject({
+            x: 120,
+            y: 220,
+            width: 460,
+            height: 640,
+        });
+        vi.runAllTimers();
+        expect(group.focus).toHaveBeenCalledOnce();
+    });
+
     test('reopening the chatbot sends it the current app page', () => {
         vi.useFakeTimers();
         const url = 'https://localhost:3000/chatbot.html?uuid=chatbot';

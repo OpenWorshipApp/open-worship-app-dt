@@ -86,7 +86,11 @@ class ShadowingParentWidthCustomHTMLTag extends HTMLElement {
     disconnectedCallback() {
         // Deferred: a React reparent fires disconnect+reconnect synchronously,
         // and unmounting synchronously here would run inside React's commit.
-        queueMicrotask(() => {
+        // A TASK, not a microtask: in a node-integrated Electron renderer a
+        // microtask checkpoint can run in the middle of that same commit, and
+        // the microtask version still logged "Attempted to synchronously
+        // unmount a root while React was already rendering" per card.
+        setTimeout(() => {
             if (this.isConnected || this.root === null) {
                 return;
             }

@@ -101,6 +101,12 @@ export function getDailyTipPageLabel(page: DailyTipPageType) {
 // The automatic card waits this long after launch: at launch the volunteer is
 // opening the service and reaching for the very header controls it covers.
 // Help → Tips of the Day is never delayed.
+// The card opens over the very header controls the volunteer is reaching for,
+// so it takes itself off again rather than waiting to be dismissed. The bar
+// along its bottom edge is the clock; hovering or focusing the card pauses
+// both, so nothing vanishes from under a hand that is still reading it.
+export const DAILY_TIP_AUTO_CLOSE_MS = 60 * 1000;
+
 export const DAILY_TIP_AUTO_SHOW_DELAY_MS = 5 * 60 * 1000;
 export const DAILY_TIP_LAUNCHED_AT_SESSION_KEY = 'daily-tip-launched-at';
 

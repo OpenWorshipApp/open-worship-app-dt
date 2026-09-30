@@ -64,10 +64,16 @@ export default function VarySlideRenderWrapperComp({
     thumbSize,
     varySlide,
     index,
+    ownerSlide,
 }: Readonly<{
     thumbSize: number;
     varySlide: VarySlideType;
     index: number;
+    // Given by a grid that lays out every card as its own cell
+    // (`toVarySlideGridItems`): the slide this card belongs to. With it, a
+    // PPTX slide draws its own card only -- its sub-slides are cells of their
+    // own -- and a sub-slide's menu is its PPTX slide's.
+    ownerSlide?: VarySlideType;
 }>) {
     const setSelectedVarySlide = useSelectedEditingSlideSetterContext();
     const setSelectedVarySlideRef = useAppCurrentRef(setSelectedVarySlide);
@@ -113,6 +119,12 @@ export default function VarySlideRenderWrapperComp({
                 pptxSlide={varySlide}
                 width={thumbSize}
                 index={index}
+                isWithSubSlides={ownerSlide === undefined}
+                menuSlide={
+                    PptxSlide.checkIsThisType(ownerSlide)
+                        ? (ownerSlide as PptxSlide)
+                        : undefined
+                }
             />
         );
     }

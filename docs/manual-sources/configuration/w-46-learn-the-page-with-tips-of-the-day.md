@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [GL-25]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-09-28"
+workflowsVersion: "2026-09-29"
 ---
 # W-46 — Learn the page with Tips of the Day
 
@@ -16,7 +16,12 @@ control without having to search the manual.
    front shows one **Tip of the Day** in the top-right corner — never at launch,
    when it would cover the controls you reach for while opening the service.
    Reloading or switching between Presenter and Reader does not restart those
-   five minutes. The card stays there until you choose an action. The tip
+   five minutes. The card then takes itself off after one minute: a thin bar
+   along its bottom edge drains over that minute, and resting the mouse
+   pointer on the card freezes the bar and the minute with it, so nothing
+   disappears while you are reading it. Moving away carries on from where the
+   bar stopped. **Next tip** starts the minute again, browsing **All tips**
+   holds it, and **×** closes the card at once. The tip
    belongs to that page only, and the first tip is chosen at random without
    repeating the last automatic tip shown for that page. **Help → Tips of the
    Day** opens one at once, and a tip opened that way stands in for that
@@ -107,5 +112,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `GL-25`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-09-28).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-09-29).
 :::

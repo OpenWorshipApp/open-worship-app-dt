@@ -46,4 +46,29 @@ of `document.onkeydown`'s closure over raw CDP —
 hands back a DIFFERENT instance with an empty stack (see
 [[dev-hmr-stale-state-qa]]), which reads as false evidence.
 
+**A modal or popup now CLAIMS a layer, and its own keys have to go with it**
+(2026-09-28). `'bible-lookup'`, `'slide-edit'` and `'setting'` were declared in
+`AppWidgetType` and **never fired by anything** — `git log -S` says never, in
+the whole history — so every `root` shortcut stayed live UNDER an open modal:
+measured, `F6` pressed with the Bible Lookup open cleared a live screen, and
+the slide arrows stepped the projector from behind it. `ModalComp` claims
+`'bible-lookup'` and `PrimitiveModalComp` (confirm / alert / input) claims a
+new `'popup'`, both through `useKeyboardLayerClaim` in
+`src/event/keyboardLayerHelpers.ts`, which REFCOUNTS per layer — the lookup's
+Info popup is a modal inside a modal, so the inner one closing must not hand
+the keyboard back.
+
+The claiming subtree's OWN keys are the hard half, and there are two rules:
+- **Inside the wrapper**: `KeyboardLayerContext` (exported from
+  `KeyboardEventListener`) carries the layer down. Read during RENDER, parent
+  first, which is what makes it work where the stack cannot — the claim goes up
+  in an EFFECT, and effects run child-first, so a child reading the stack at
+  mount pins `root` and goes dead the instant the layer rises. That is the same
+  trap `miniScreenOverlayControlComps` documents.
+- **The component that RENDERS the wrapper** sits ABOVE its own provider, so
+  context does not reach it: `ConfirmPopupComp`, `AlertPopupComp`,
+  `InputPopupComp` and `BibleInfoPopupComp` pass the layer to
+  `useKeyboardRegistering` by hand. Miss this and the popup's own Escape is
+  silenced by the popup itself — which is exactly what happened first.
+
 Related: [[slide-arrows-need-panel-focus]], [[synthetic-keys-drive-app-shortcuts]].

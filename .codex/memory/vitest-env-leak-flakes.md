@@ -53,3 +53,17 @@ Separately, `npm run lint` occasionally aborts with **all 183 src test files**
 "Vitest failed to find the runner" and `Tests no tests`. That is a transient
 worker-startup flake, not a code break — re-run before investigating (and read
 the log body, not the exit code — `npm run lint` is `&&`-chained, per CLAUDE.md).
+
+## DOM event fixtures must reach the listener (2026-09-29)
+
+`electron/client/clientUtilities.test.ts` dispatched a bubbling `change` event
+on a detached file input. The `document` capture listener never received it,
+but the test still passed because `File.prototype.appFilePath` returned the
+expected path without the event handler running. Coverage exposed the gap.
+
+Append the input to `document.body`, dispatch the event, and remove the input
+in `finally`. Assert the event's specific effect: file-path injection creates
+an **own** `appFilePath` property, so `Object.hasOwn(file, 'appFilePath')` proves
+the handler ran while reading the property alone can hit the prototype getter.
+Check the refused-path case with an attached input too; otherwise a negative
+assertion passes simply because the event reached nobody.

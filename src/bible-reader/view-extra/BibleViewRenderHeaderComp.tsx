@@ -3,10 +3,10 @@ import { useCallback } from 'react';
 import ContextMenuDotsButtonComp from '../../context-menu/ContextMenuDotsButtonComp';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import RenderActionButtonsComp from '../../bible-lookup/RenderActionButtonsComp';
-import { HoverMotionHandler } from '../../helper/domHelpers';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { RenderTitleMaterialComp } from './RenderTitleMaterialComp';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { tran } from '../../lang/langHelpers';
 
 export default function BibleViewRenderHeaderComp({
     bibleItem,
@@ -38,36 +38,30 @@ export default function BibleViewRenderHeaderComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div
-            className="card-header bible-view-header d-flex app-top-hover-motion-1 p-0"
-            style={{ height: 'unset' }}
-        >
+        <div className="card-header bible-view-header p-0">
             <RenderTitleMaterialComp
                 bibleItem={bibleItem}
                 onBibleKeyChange={handleBibleKeyChange}
             />
-            <div
-                className={`${HoverMotionHandler.lowVisibleClassname}-0 app-opacity-hover`}
-                data-opacity-hover="0.1"
-            >
-                <RenderActionButtonsComp bibleItem={bibleItem} />
+            <div className="bible-view-header-end">
+                {/* Floats over the title's end while the header is hovered,
+                    so it takes no room from the passage at rest. */}
+                <div className="bible-view-header-actions">
+                    <RenderActionButtonsComp bibleItem={bibleItem} />
+                    <button
+                        type="button"
+                        className="bible-view-header-close"
+                        title={tran('Close')}
+                        aria-label={tran('Close')}
+                        onClick={handleDelete}
+                    >
+                        <i className="bi bi-x-lg" />
+                    </button>
+                </div>
+                {/* The view's own menu. No handler: the bible view around
+                    this header owns it. */}
+                <ContextMenuDotsButtonComp />
             </div>
-            <div
-                className={`${HoverMotionHandler.lowDisplayClassname}-0 app-opacity-hover`}
-                data-min-parent-width="550"
-                data-opacity-hover="0.2"
-            >
-                <i
-                    className="bi bi-x-lg app-caught-hover-pointer"
-                    style={{
-                        color: 'var(--bs-danger-text-emphasis)',
-                    }}
-                    onClick={handleDelete}
-                />
-            </div>
-            {/* The view's own menu. No handler: the bible view around this
-                header owns it. */}
-            <ContextMenuDotsButtonComp />
         </div>
     );
 }

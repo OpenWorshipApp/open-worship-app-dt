@@ -300,6 +300,20 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   window waits for focus. `demoHelpers.mjs` routes built-in demos to their
   declared page and preserves an explicit same-page URL, so Show it stays in
   the originating popup; `pickTarget` prefers an exact URL before a substring.
+  **The card takes itself off after a minute** (2026-09-29,
+  `DAILY_TIP_AUTO_CLOSE_MS`), which is the other half of not covering the
+  controls a volunteer is reaching for. It is TWO clocks held by one flag: a
+  `setTimeout` that carries its remaining time across a pause, and a 3px bar
+  along the card's bottom edge running a finite `transform: scaleX()` -- never
+  a width, a repaint or a per-second tick, which would re-render the card
+  sixty times over a busy panel. The pointer resting on the card pauses both
+  (`animation-play-state` + the effect's teardown), so leaving carries on from
+  where the bar stopped rather than granting a fresh minute; browsing All tips
+  and starting a walkthrough hold it too. Focus is deliberately NOT a second
+  hold -- a click leaves its own button focused and the card would sit there
+  for good. The bar is exempted from the global `prefers-reduced-motion` clamp
+  in `interaction.scss` for the reason the spinners are: clamped to 0.001ms it
+  empties at once and then contradicts a card that is still there.
 - **The Presenter and Reader have checked-in demos that need no model**
   (2026-09-22, expanded 2026-09-23 and 2026-09-26, `readerDemos.mjs` and
   `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 99
@@ -1860,10 +1874,11 @@ same words as the panel it opened.
   `press_key`, `Delete`/`Backspace`) do NOT change the model unless the Electron
   window has genuine OS **foreground** focus. `select_page` bringToFront alone is
   not enough; if real typing is required, ask the user to click the window.
-- **Much of the UI is painted only under the mouse.** Toolbars like the six
-  icons above a bible view are laid out and clickable the whole time and
-  hidden with `visibility` (a `:hover` rule on an ancestor several levels
-  up), so `getBoundingClientRect` says they are on screen and a screenshot
+- **Much of the UI is painted only under the mouse.** Toolbars like the
+  icons in a bible view's header are laid out the whole time and painted
+  away by a `:hover` rule on an ancestor (`visibility` on most such rows;
+  that one is `opacity` + `pointer-events: none`, floated over the title's
+  end), so `getBoundingClientRect` says they are on screen and a screenshot
   says they are not. `domMatch.mjs` classifies with `checkVisibility` —
   `shown` / `hidden` (painted away, revealable) / `gone` (no box) — reports
   `showsOnHover` on a match, and FORCES the hover before ringing, clicking

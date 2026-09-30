@@ -7,34 +7,107 @@ file size: a folder whose files share one domain needs one mock surface, so
 Status is `open` · `in progress` · `done (before → after)`. A batch is done
 when `coverage-gap.mjs` says so, not when the tests are written.
 
-**From 48.17% to 99% is +26 793 covered lines.** The batches below account for
-roughly the first 12 000. Re-plan after UT-06 — the shape of the remainder
-changes once the dark folders are gone.
+## Current status — 2026-09-29
+
+Both suites pass. The whole surface measures **54.91% (29 672 / 54 038 lines)**;
+Electron measures **99.03% (2 654 / 2 680)**, with **93.08% branches**.
+The continuing UT-03b run added 11 behavioural tests and 314 covered lines.
+See [baseline.md](./baseline.md) for the before/after, concurrent changes,
+failures repaired and timings.
+
+UT-10 and UT-00 are complete; UT-03 has a completed document-lifecycle sub-batch.
+Recommended next: UT-02's foreground component harness, then UT-01's remaining
+preview components and UT-04's persistence helpers. No threshold was changed.
+
+### `UT-10` · restore the renderer measurement
+
+`done` · two failing suites repaired · the full measurement is green again
+
+Files: `src/lyric-list/lyricHelpers.test.ts` and
+`src/bible-list/bibleSlidesHelpers.test.ts`; inspect their implementation twins
+before updating expectations.
+
+The player-plugin import reached Open Lyric's DOM-dependent internals. Added
+the jsdom pragma, a file-local plugin mock and `addPlugin` to the local Open
+Lyric stub. The existing test asserts registration and retains its font check.
+
+The Bible test's obsolete right-alignment expectation now matches LTR text;
+size, muted color, placement and the separate mixed RTL/LTR test all pass.
+
+Verification: focused tests and both full-surface measurements passed. The full
+gate result is recorded in the baseline. No application bug was confirmed and
+no production code was changed by this batch.
+
+### Fresh renderer priorities
+
+| Batch | Current gap | Next scope and predicted gain |
+| --- | --- | --- |
+| UT-03 | `agentNoteHelpers.ts`: 194; `agentBibleListHelpers.ts`: 191; `agentBackupHelpers.ts`: 159 uncovered lines | File-local backup/storage/domain mocks; refusal and successful CRUD/restore cases. Estimate +250–400 behavioural lines across several runs. |
+| UT-01 | Presenting-flow: 702 uncovered of 2 527; **72.2%** | 20 existing test files. Extend file-local screen/provider harnesses for preview components and outstanding timer/event paths; estimate +300–500 lines, reporting smoke separately. |
+| UT-04 | `bibleXMLJsonDataHelpers.ts`: 339; `fileHelpers.ts`: 230 uncovered | Filesystem/cache error paths with per-file mocks; estimate +200–350 behavioural lines. |
+| UT-02 | Foreground: 1 486 uncovered of 1 489 | Remains nearly untested; larger component work after lifecycle coverage. |
+
+### `UT-03a` · document lifecycle — completed part of UT-03
+
+`done` · `src/helper/agentFileHelpers.ts`: **22.63% → 74.07%**, **+125 lines**
+
+43 new cases in `agentFileHelpers.coverage.test.ts`, sharing one file-local mock
+surface for storage, document classes, validators and the backup boundary.
+They exercise both songs and slide documents: delayed backup before create,
+no backup/no mutation, collision and name refusal, preserved metadata on update,
+unsaved/undo reporting, rename/trash dispatch, failed snapshots/writes, timestamp
+insensitivity, and the 60-name library cap. Actual backup persistence and
+individual slide-edit algorithms remain separate follow-up scopes.
+
+### `UT-03b` · backup, Bible Notes and Bibles-list lifecycles — completed
+
+`done` · whole surface **54.33% → 54.91%**, **+314 behavioural lines**
+
+Eleven file-local tests extended `agentBackupHelpers.coverage.test.ts` and
+`agentDataDispatch.coverage.test.ts`. They verify the safety order that matters:
+a backup writes data before visible metadata; a failed snapshot prevents the
+mutation; a failed mutation is recorded for recovery; and trash/rename clean up
+or retain the associated material correctly. Bible Notes and Bibles lists now
+exercise their add/update/delete and whole-file create/rename/delete routes,
+including read-only verse marks and detached item backgrounds. No shared
+`appProvider` mock was added.
+
+The detailed UT-01–UT-09 proposals and running-total table below retain the **2026-09-26 historical
+proposal**, not a current ranking or forecast. No batch is marked done without
+a successful measurement of its own surface.
 
 ---
 
 ## Tier 0 — the surface that can actually reach 99% now
 
-### `UT-00` · `electron/**` — 533 uncovered of 2 519 (78.84%)
-`open` · **the whole electron surface to 99% in one batch** · 46 files, 16 at 0%
+### `UT-00` · `electron/**` — 26 uncovered of 2 680 (99.03%)
+`done` · **98.28% → 99.03%, +20 covered lines** · 48 files, none at 0%
 
-Measured on its own, the electron main process is already at **78.84%** and is
-**508 covered lines from 99%** — an order of magnitude less work than any
-other batch, on a surface that is small, has a real mock
-(`createElectronModuleMock()`), and has 30 green test files to copy from.
+Final full measurement: 40 files / 463 tests passed in 16.27 s.
+Predicted +20–30 lines; actual **+20**. The table records the gaps before this
+batch; the current worklist contains the remaining 26 lines.
 
 | Uncovered | Lines | Now | File |
 | --- | --- | --- | --- |
-| 74 | 162 | 54% | `electron/aiChatGuestHelpers.ts` |
-| 74 | 506 | 85% | `electron/electronHelpers.ts` |
-| 57 | 66 | 14% | `electron/webPageHelpers.ts` |
-| 36 | 104 | 65% | `electron/aiHelpers.ts` |
-| 34 | 292 | 88% | `electron/electronEventListener.ts` |
+| 14 | 530 | 97.35% | `electron/electronHelpers.ts` |
+| 10 | 108 | 90.74% | `electron/displayWallpaperHelpers.ts` |
+| 4 | 104 | 96.15% | `electron/aiHelpers.ts` |
+| 4 | 300 | 98.66% | `electron/electronEventListener.ts` |
+| 3 | 38 | 92.10% | `electron/client/fileUtils.ts` |
 
-Do this first. It is the only batch that ends with a **surface at the goal**,
-which is worth more than the same hours spread thinly — it proves the target is
-reachable, exercises the whole measure → write → prove → gate loop end to end,
-and produces the first `coverage.thresholds` worth committing (§6 `gate`).
+Added behaviour checks for retargeting the same document's editor, leaving
+unrelated/destroyed editors alone, popup cascading with remembered size,
+wallpaper fit/fallback/cache expiry, and connected file-input events. Clipboard
+debug output remains a gap. Wallpaper coverage is now 100% lines.
+
+Mock surface: the existing `createElectronModuleMock()` plus per-file
+`vi.hoisted` filesystem/process/native-image stubs and fake timers. Changes are in
+`electronHelpers.coverage.test.ts`, `displayWallpaperHelpers.test.ts`, and
+`client/clientUtilities.test.ts`. Platform branches remain deterministic.
+
+Reaching 99% lines does not close the 93.08% branch gap. Any threshold remains
+a separate user decision; a threshold over loaded files would not lock in this
+whole-surface measurement.
 
 Watch the `resetModules` fork while working here: it is the electron suite's
 signature failure and every assertion reads "0 calls" when it bites. See
@@ -56,8 +129,9 @@ The whole 12-file suite was deleted. Biggest: `PresentingFlowItem.ts` (309),
 `PresentingFlowItemPreviewComp.tsx` (192), `presentingFlowArchiveHelpers.ts`
 (171), `presentingFlowAutoNextHelpers.ts` (129).
 
-*Mock surface:* one `vi.hoisted` bundle for `appProvider`, `fileHelpers`,
-`FileSource` and the settings store, shared by the folder. Start with the two
+*Mock surface:* one file-local `vi.hoisted` bundle for `appProvider`, `fileHelpers`,
+`FileSource` and the settings store per batched harness, never exported to other
+test files. Start with the two
 model classes — they are pure state machines and need the least of it.
 
 *What to assert:* the recorded behaviour, from memory —
@@ -195,7 +269,7 @@ the user.** See *Exclusions* in [baseline.md](./baseline.md).
 
 ---
 
-## Running total
+## Historical running-total forecast — requires remeasurement
 
 | After | Est. lines | Est. honest coverage |
 | --- | --- | --- |

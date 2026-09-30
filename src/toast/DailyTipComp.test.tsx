@@ -45,6 +45,7 @@ vi.mock('../chatbot/mcpClient', () => ({ callTool: state.callTool }));
 
 import DailyTipComp from './DailyTipComp';
 import {
+    DAILY_TIP_AUTO_CLOSE_MS,
     DAILY_TIP_AUTO_SHOW_DELAY_MS,
     getDailyTipSessionKey,
 } from './dailyTipHelpers';
@@ -59,6 +60,7 @@ async function sendMenu(data: object) {
 
 describe('tips in each window', () => {
     beforeEach(() => {
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
         vi.useFakeTimers();
         vi.clearAllMocks();
         sessionStorage.clear();
@@ -75,6 +77,7 @@ describe('tips in each window', () => {
         await act(async () => root.unmount());
         container.remove();
         vi.useRealTimers();
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = false;
     });
 
     it('opens All tips in a focused popup even with automatic tips disabled', async () => {
@@ -115,6 +118,54 @@ describe('tips in each window', () => {
                 .click(),
         );
         await act(async () => window.dispatchEvent(new Event('focus')));
+        expect(container.textContent).toBe('');
+    });
+
+    it('takes the tip off after a minute and holds it under the pointer', async () => {
+        await act(async () => root.render(<DailyTipComp />));
+        await sendMenu({ isOpenDailyTip: true });
+        const card = container.querySelector<HTMLElement>('.app-daily-tip')!;
+        const bar = card.querySelector('.app-daily-tip-countdown-bar')!;
+        expect(bar.className).not.toContain('app-paused');
+        await act(async () =>
+            vi.advanceTimersByTime(DAILY_TIP_AUTO_CLOSE_MS / 2),
+        );
+        expect(container.textContent).not.toBe('');
+
+        // Reading it holds the minute where it is: the bar stops with the
+        // timer, and the half already spent is not handed back on leaving.
+        await act(async () =>
+            card.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })),
+        );
+        expect(
+            container.querySelector('.app-daily-tip-countdown-bar')!.className,
+        ).toContain('app-paused');
+        await act(async () => vi.advanceTimersByTime(DAILY_TIP_AUTO_CLOSE_MS));
+        expect(container.textContent).not.toBe('');
+        await act(async () =>
+            card.dispatchEvent(new MouseEvent('mouseout', { bubbles: true })),
+        );
+        await act(async () =>
+            vi.advanceTimersByTime(DAILY_TIP_AUTO_CLOSE_MS / 2),
+        );
+        expect(container.textContent).toBe('');
+    });
+
+    it('starts the minute again on Next tip', async () => {
+        await act(async () => root.render(<DailyTipComp />));
+        await sendMenu({ isOpenDailyTip: true });
+        await act(async () =>
+            vi.advanceTimersByTime(DAILY_TIP_AUTO_CLOSE_MS - 1000),
+        );
+        const button = [...container.querySelectorAll('button')].find(
+            (element) => element.textContent === 'Next tip',
+        )!;
+        await act(async () => button.click());
+        await act(async () =>
+            vi.advanceTimersByTime(DAILY_TIP_AUTO_CLOSE_MS - 1000),
+        );
+        expect(container.textContent).not.toBe('');
+        await act(async () => vi.advanceTimersByTime(1000));
         expect(container.textContent).toBe('');
     });
 

@@ -139,6 +139,36 @@
       }
     }
 
+    // The minute the card has left, drawn as one rule along its bottom edge.
+    // It animates `transform` alone -- a width, a `background-position` or a
+    // number ticking every second would repaint the card over a busy panel for
+    // a whole minute, which is the one thing a toast on a low-spec machine
+    // must not do. Finite by construction: it runs once and the card is gone.
+    .app-daily-tip-countdown {
+      height: 3px;
+      overflow: hidden;
+      border-bottom-left-radius: inherit;
+      border-bottom-right-radius: inherit;
+      // No `opacity` on the track: it would dim the bar inside it too, and
+      // the bar is the thing being read.
+      background-color: var(--app-line);
+    }
+
+    .app-daily-tip-countdown-bar {
+      height: 100%;
+      background-color: var(--app-accent);
+      transform-origin: left center;
+      animation: app-daily-tip-counting-down
+        var(--app-daily-tip-countdown-time, 60s) linear forwards;
+    }
+
+    // A pointer resting on the card holds the minute where it is -- the JS
+    // timer behind it is held by the SAME flag, so the bar is never telling a
+    // different story from the card's own life.
+    .app-daily-tip-countdown-bar.app-paused {
+      animation-play-state: paused;
+    }
+
     .app-daily-tip-list {
       max-height: min(42vh, 320px);
       overflow-x: hidden;
@@ -173,6 +203,30 @@
         }
       }
     }
+  }
+}
+
+// Exempt from the global `prefers-reduced-motion` clamp in `interaction.scss`
+// for the reason the spinners are: this is not decoration, it is the only
+// notice that the card is about to take itself off. Clamped to 0.001ms the bar
+// empties at once and the card then sits there for a minute contradicting it.
+// A 60s linear shrink of one 3px rule is the gentlest motion in the app.
+@media (prefers-reduced-motion: reduce) {
+  .app-toast-stack > .app-daily-tip .app-daily-tip-countdown {
+    > .app-daily-tip-countdown-bar {
+      animation-duration: var(--app-daily-tip-countdown-time, 60s) !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+}
+
+@keyframes app-daily-tip-counting-down {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
   }
 }
 

@@ -90,6 +90,7 @@
 - [Synthetic keys drive app shortcuts](synthetic-keys-drive-app-shortcuts.md) — a page-made KeyboardEvent fires them
 - [A leaked keyboard layer kills EVERY shortcut](keyboard-layer-stack-leak.md) — an unbalanced widget `open` stuck the stack above `root`; two quick right-clicks were enough
 - [Slide arrows need the panel's focus](slide-arrows-need-panel-focus.md) — picking a document used to move focus to the list and the arrows went dead; `activeElement` is BODY, never null
+- [An undo must not overtake its own edit](document-write-then-undo-race.md) — fire-and-forget writes are tracked; register the write where it STARTS, not where it lands
 - [Glassy popup windows](glassy-popup-windows.md) — the chatbot popup is frosted by the OS compositor, not CSS
 - [Panels are named in the DOM](panel-name-in-dom.md) — an OPEN pane, and a FLOATING one, drew its name nowhere; a foreground tile and its Background twin rang together
 - [The mini screen draws the monitor's wallpaper](mini-screen-monitor-wallpaper.md) — the backdrop is the desktop WALLPAPER read from the OS, never a `desktopCapturer` shot: a capture holds every other window, and the card for a screen on this machine's own monitor drew the app inside itself

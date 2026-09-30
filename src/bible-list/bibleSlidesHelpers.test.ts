@@ -217,7 +217,7 @@ describe('Bible slide generation', () => {
         expect(document.body.children).toHaveLength(0);
     });
 
-    test('places a smaller muted next verse at bottom right, and omits it from title and final slide', async () => {
+    test('places a smaller muted next verse at the bottom, aligned with its language, and omits it from title and final slide', async () => {
         await generateBibleItemSlides(passage(), ['KJV', 'ពគប']);
         const slides = h.create.mock.calls[0][2];
         expect(slides[0].canvasItems).toHaveLength(3);
@@ -232,7 +232,7 @@ describe('Bible slide generation', () => {
                 expect(preview.fontSize).toBeLessThan(main.fontSize);
                 expect(preview.fontSize / main.fontSize).toBeCloseTo(0.85);
                 expect(preview.color).toBe('#ffffff59');
-                expect(preview.textHorizontalAlignment).toBe('right');
+                expect(preview.textHorizontalAlignment).toBe('left');
                 expect(preview.top).toBeGreaterThan(
                     slide.canvasItems[2].top + slide.canvasItems[2].height,
                 );

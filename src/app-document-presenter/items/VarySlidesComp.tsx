@@ -39,7 +39,9 @@ import {
     genSlideHeightGetter,
     THUMBNAIL_EXTRA_HEIGHT,
     THUMBNAIL_EXTRA_WIDTH,
-    toVarySlideKey,
+    toVarySlideGridItemKey,
+    toVarySlideGridItems,
+    type VarySlideGridItemType,
 } from './varySlideGridHelpers';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 import { tran } from '../../lang/langHelpers';
@@ -294,6 +296,15 @@ export default function VarySlidesComp() {
     const getSlideHeight = useMemo(() => {
         return genSlideHeightGetter(varySlideThumbnailSize);
     }, [varySlideThumbnailSize]);
+    const getGridItemHeight = useMemo(() => {
+        return (gridItem: VarySlideGridItemType) => {
+            return getSlideHeight(gridItem.varySlide);
+        };
+    }, [getSlideHeight]);
+    // A card per cell: a PPTX slide's sub-slides are cells of their own.
+    const gridItems = useMemo(() => {
+        return toVarySlideGridItems(varySlides ?? []);
+    }, [varySlides]);
 
     useAppEffect(() => {
         if (!varySlides?.length) {
@@ -392,24 +403,25 @@ export default function VarySlidesComp() {
                 thousand slides used to build a thousand of them before the
                 first one could be looked at. */}
             <VirtualGridComp
-                items={varySlides}
-                getItemKey={toVarySlideKey}
-                renderItem={(varySlide, index) => {
+                items={gridItems}
+                getItemKey={toVarySlideGridItemKey}
+                renderItem={(gridItem) => {
                     return (
                         <VarySlideRenderWrapperComp
-                            key={varySlide.id}
+                            key={toVarySlideGridItemKey(gridItem)}
                             thumbSize={varySlideThumbnailSize}
-                            varySlide={varySlide}
-                            index={index}
+                            varySlide={gridItem.varySlide}
+                            ownerSlide={gridItem.ownerSlide}
+                            index={gridItem.index}
                         />
                     );
                 }}
                 itemWidth={varySlideThumbnailSize + THUMBNAIL_EXTRA_WIDTH}
-                getItemHeight={getSlideHeight}
+                getItemHeight={getGridItemHeight}
                 estimateRowHeight={
-                    (varySlides.length === 0
+                    (gridItems.length === 0
                         ? 0
-                        : getSlideHeight(varySlides[0])) +
+                        : getGridItemHeight(gridItems[0])) +
                     THUMBNAIL_EXTRA_HEIGHT
                 }
                 rowClassName="d-flex"

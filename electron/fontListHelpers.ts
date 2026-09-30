@@ -383,6 +383,11 @@ export async function getSystemFontListMap(): Promise<FontListMapType> {
             await runCommand(getPowerShellPath(), [
                 '-NoProfile',
                 '-NonInteractive',
+                // `windowsHide` prevents Node from creating a console, but
+                // PowerShell also needs its own instruction not to surface a
+                // window when Windows starts it through its host.
+                '-WindowStyle',
+                'Hidden',
                 '-EncodedCommand',
                 encodedScript,
             ]),

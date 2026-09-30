@@ -132,6 +132,74 @@ describe('on Windows', () => {
         expect(wallpaper?.fit).toBe('tile');
     });
 
+    test.each([
+        ['6', 'contain'],
+        ['2', 'fill'],
+        ['0', 'center'],
+    ])('maps Windows wallpaper style %s to %s', async (style, fit) => {
+        answerCommand(() =>
+            genRegistryOutput([
+                ['WallPaper', WALLPAPER_FILE_PATH],
+                ['WallpaperStyle', style],
+            ]),
+        );
+        expect(await helpers.readDisplayWallpaper({ displayIndex: 0 })).toEqual(
+            {
+                imageDataUrl: EXPECTED_DATA_URL,
+                color: null,
+                fit,
+            },
+        );
+    });
+
+    test.each(['0 0', '0 invalid 0'])(
+        'ignores malformed background color %s while keeping the image',
+        async (background) => {
+            answerCommand((_command, args) =>
+                genRegistryOutput(
+                    args.includes('HKCU\\Control Panel\\Colors')
+                        ? [['Background', background]]
+                        : [['WallPaper', WALLPAPER_FILE_PATH]],
+                ),
+            );
+            expect(
+                await helpers.readDisplayWallpaper({ displayIndex: 0 }),
+            ).toEqual({
+                imageDataUrl: EXPECTED_DATA_URL,
+                color: null,
+                fit: 'cover',
+            });
+        },
+    );
+
+    test('falls back to the registry image when the monitor cache folder is unavailable', async () => {
+        mocks.readdirSync.mockImplementation(() => {
+            throw new Error('unavailable');
+        });
+        const wallpaper = await helpers.readDisplayWallpaper({
+            displayIndex: 0,
+            sizes: [{ width: 1920, height: 1080 }],
+        });
+        expect(mocks.createFromPath).toHaveBeenCalledExactlyOnceWith(
+            WALLPAPER_FILE_PATH,
+        );
+        expect(wallpaper?.imageDataUrl).toBe(EXPECTED_DATA_URL);
+    });
+
+    test('keeps the desktop color when the wallpaper file cannot be read', async () => {
+        mocks.statSync.mockImplementation(() => {
+            throw new Error('missing file');
+        });
+        expect(await helpers.readDisplayWallpaper({ displayIndex: 0 })).toEqual(
+            {
+                imageDataUrl: null,
+                color: 'rgb(0, 0, 0)',
+                fit: 'cover',
+            },
+        );
+        expect(mocks.createFromPath).not.toHaveBeenCalled();
+    });
+
     test("a monitor's own pre-fitted copy wins, and is drawn edge to edge", async () => {
         mocks.readdirSync.mockReturnValue([
             'CachedImage_1920_1080_POS4.jpg',
@@ -197,6 +265,31 @@ describe('on Windows', () => {
 });
 
 describe('what it holds', () => {
+    test('overlapping reads leave one expiry timer and release the cached image', async () => {
+        const wallpapers = await Promise.all([
+            helpers.readDisplayWallpaper({ displayIndex: 0 }),
+            helpers.readDisplayWallpaper({ displayIndex: 0 }),
+        ]);
+        expect(wallpapers[0]).toEqual(wallpapers[1]);
+        expect(vi.getTimerCount()).toBe(1);
+        mocks.execFile.mockClear();
+        await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+        expect(vi.getTimerCount()).toBe(0);
+        await helpers.readDisplayWallpaper({ displayIndex: 0 });
+        expect(mocks.execFile).toHaveBeenCalledTimes(2);
+    });
+
+    test('does not upscale an image already smaller than the requested width', async () => {
+        const image = genImage(100);
+        mocks.createFromPath.mockReturnValue(image);
+        const wallpaper = await helpers.readDisplayWallpaper({
+            displayIndex: 0,
+            width: 400,
+        });
+        expect(image.resize).not.toHaveBeenCalled();
+        expect(wallpaper?.imageDataUrl).toBe(EXPECTED_DATA_URL);
+    });
+
     test('a second card on the same display spawns nothing', async () => {
         await helpers.readDisplayWallpaper({ displayIndex: 0 });
         mocks.execFile.mockClear();
@@ -243,6 +336,18 @@ describe('on macOS', () => {
         helpers = await import('./displayWallpaperHelpers');
     });
 
+    test.each([null, ''])(
+        'returns no wallpaper when the desktop lookup returns %s',
+        async (stdout) => {
+            answerCommand(() => stdout);
+            await expect(
+                helpers.readDisplayWallpaper({ displayIndex: 0 }),
+            ).resolves.toBeNull();
+            expect(mocks.statSync).not.toHaveBeenCalled();
+            expect(mocks.createFromPath).not.toHaveBeenCalled();
+        },
+    );
+
     test('takes the picture of the desktop at this display position', async () => {
         await helpers.readDisplayWallpaper({ displayIndex: 1 });
         expect(mocks.createFromPath).toHaveBeenCalledWith('/Users/x/two.jpg');
@@ -266,6 +371,24 @@ describe('on Linux', () => {
         vi.resetModules();
         helpers = await import('./displayWallpaperHelpers');
     });
+
+    test.each([null, "''", "'https://example.com/wallpaper.jpg'"])(
+        'uses only the color when the picture URI is %s',
+        async (uri) => {
+            answerCommand((_command, args) =>
+                args.includes('primary-color') ? "'#2e3436'" : uri,
+            );
+            expect(
+                await helpers.readDisplayWallpaper({ displayIndex: 0 }),
+            ).toEqual({
+                imageDataUrl: null,
+                color: '#2e3436',
+                fit: 'cover',
+            });
+            expect(mocks.statSync).not.toHaveBeenCalled();
+            expect(mocks.createFromPath).not.toHaveBeenCalled();
+        },
+    );
 
     test('decodes the GNOME picture URI and keeps the primary colour', async () => {
         const wallpaper = await helpers.readDisplayWallpaper({

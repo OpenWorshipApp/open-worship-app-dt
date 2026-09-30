@@ -1,5 +1,6 @@
 import { toKeyByFilePath } from '../../app-document-list/appDocumentHelpers';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
+import PptxSlide from '../../app-document-list/PptxSlide';
 
 /**
  * What every windowed grid of slide cards needs to lay one out, shared by the
@@ -35,4 +36,44 @@ export function genSlideHeightGetter(thumbnailWidth: number) {
         }
         return (thumbnailWidth * varySlide.height) / varySlide.width;
     };
+}
+
+/**
+ * One CARD of a slide grid. A PPTX slide cut into sub-slides (2, 2.01, 2.02)
+ * draws a card for each, and every one of them has to be its own cell: laid
+ * out as one cell holding several cards, the row squeezed them into the room
+ * of fewer, those rows came out narrower than the rest, and the row height
+ * measured off such a row left every later row too short, overlapping the row
+ * below it.
+ *
+ * `ownerSlide` is the slide the card belongs to -- itself, or the PPTX slide a
+ * sub-slide was cut from -- which is what the card's menu, pins and parking
+ * are about. `index` is the card's own number less one (`PptxSlide.calcIndex`
+ * for a sub-slide), the same one the badge shows.
+ */
+export type VarySlideGridItemType = {
+    varySlide: VarySlideType;
+    ownerSlide: VarySlideType;
+    index: number;
+};
+
+export function toVarySlideGridItems(varySlides: VarySlideType[]) {
+    const gridItems: VarySlideGridItemType[] = [];
+    varySlides.forEach((varySlide, i) => {
+        gridItems.push({ varySlide, ownerSlide: varySlide, index: i });
+        if (PptxSlide.checkIsThisType(varySlide)) {
+            varySlide.subSlides.forEach((subSlide, j) => {
+                gridItems.push({
+                    varySlide: subSlide,
+                    ownerSlide: varySlide,
+                    index: PptxSlide.calcIndex(i, j),
+                });
+            });
+        }
+    });
+    return gridItems;
+}
+
+export function toVarySlideGridItemKey(gridItem: VarySlideGridItemType) {
+    return toVarySlideKey(gridItem.varySlide);
 }
