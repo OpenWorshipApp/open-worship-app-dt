@@ -412,6 +412,27 @@ describe('varyAppDocumentHelpers', () => {
             filePath: '/docs/main.ows',
         });
 
+        // A sub-slide on screen steps like any other card: it is a cell of its
+        // own in the grid, so nothing else owns it.
+        getDataListMock.mockImplementation(
+            (_filePath?: string, id?: number) => {
+                return id === 5 ? [['10', { id: 5 }]] : [];
+            },
+        );
+        screenManager.screenVaryAppDocumentManager.toSlideData.mockClear();
+        handleNextItemSelecting({
+            varySlides: [slide1, slide2, slide3, pptxParent],
+            isNext: true,
+        });
+        vi.runAllTimers();
+
+        expect(
+            screenManager.screenVaryAppDocumentManager.toSlideData,
+        ).toHaveBeenCalledWith('/docs/main.ows', {
+            id: 1,
+            filePath: '/docs/main.ows',
+        });
+
         Object.defineProperty(document, 'activeElement', {
             configurable: true,
             get: () => container,

@@ -183,9 +183,10 @@ function findNextSlide(
  * (the operator has scrolled away from it), and reading the DOM then said
  * "nothing is showing" and left the projector where it was.
  *
- * Only the cards' OWN ids are asked, never a pptx sub-slide's: a sub-slide is
- * a step inside its parent card and has no card of its own, exactly as before.
- * It is still a valid TARGET, which is what `allVarySlides` is for.
+ * A pptx sub-slide is asked too. It is a card of its own in the grid
+ * (`toVarySlideGridItems`), clicking it puts ITS id on the screen, and asking
+ * only the parents left a presented sub-slide unowned: nothing matched, and
+ * the arrow keys went dead on it.
  */
 export function handleNextItemSelecting({
     varySlides,
@@ -209,7 +210,7 @@ export function handleNextItemSelecting({
         }
         return bucket;
     }, [] as VarySlideType[]);
-    const foundList = varySlides.reduce(
+    const foundList = allVarySlides.reduce(
         (
             bucket: {
                 varySlide: VarySlideType;
